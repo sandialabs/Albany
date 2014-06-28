@@ -11,9 +11,7 @@
 
 Albany::StateManager::StateManager() :
   stateVarsAreAllocated(false),
-  stateInfo(Teuchos::rcp(new StateInfoStruct)),
-  time(0.0),
-  timeOld(0.0)
+  stateInfo(Teuchos::rcp(new StateInfoStruct))
 {
 }
 
@@ -746,10 +744,10 @@ Albany::StateManager::getStateArray(SAType type, const int ws) const
   switch(type){
 
   case ELEM:
-    return disc->getStateArrays().elemStateArrays[ws];
+    return getStateArrays().elemStateArrays[ws];
     break;
   case NODE:
-    return disc->getStateArrays().nodeStateArrays[ws];
+    return getStateArrays().nodeStateArrays[ws];
     break;
   default:
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: Cannot match state array type in getStateArray()" << std::endl);

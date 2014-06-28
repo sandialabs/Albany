@@ -9,7 +9,7 @@
 #include "Piro_Epetra_LOCASolver.hpp"
 
 /* GAH FIXME - Silence warning:
-TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:
+TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
         "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
 Please remove when issue is resolved
 */

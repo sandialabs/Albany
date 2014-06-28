@@ -59,7 +59,7 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 
 #ifdef ALBANY_SEACAS
 
-  if(output) 
+  if(output)
      stk_classic::io::set_field_role(*node_field, Ioss::Field::TRANSIENT);
 
 #endif

@@ -1,0 +1,18 @@
+## /projects/cubit/claro.Lin64.14.0/bin/clarox
+## Cubit Version 14.0
+## Cubit Build 387434 
+## Revised 2013-07-31 11:16:24 -0600 (Wed, 31 Jul 2013)
+## Running 01/09/2014 12:49:59 PM
+## Command Options:
+## -warning = On
+## -information = On
+set geometry engine acis
+create sphere radius 1
+volume 1 size auto factor 1.5
+mesh volume 1
+set duplicate block elements off
+block 1 surface 1
+block 1 element type SHELL9
+set large exodus file on
+set large exodus file on
+export genesis "./uniform_30_quad9.g" block 1 overwrite

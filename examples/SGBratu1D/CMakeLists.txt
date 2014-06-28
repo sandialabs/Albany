@@ -16,6 +16,11 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
                  ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
   add_test(${testName} ${AlbanySG.exe})
+
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientSG.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputTransientSG.xml COPYONLY)
+  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
+  add_test(${testName}_Transient ${AlbanySG.exe} inputTransientSG.xml)
 endif ()
 endif ()
 

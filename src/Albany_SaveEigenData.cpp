@@ -27,9 +27,10 @@ SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Obse
     nSaveAsStates = nsave; //in future, perhaps allow this to be set in LOCA params?
   }
 
-  std::cout << "\nSaveEigenData: Will save up to " 
-       << nsave << " eigenvectors, and output "
-       << nSaveAsStates << " as states." << std::endl;
+//IK, 4/4/14: commented out b/c there was too much output 
+//  std::cout << "\nSaveEigenData: Will save up to " 
+//       << nsave << " eigenvectors, and output "
+//       << nSaveAsStates << " as states." << std::endl;
   
   noxObserver = observer;
   pAlbStateMgr = pStateMgr;

@@ -41,6 +41,7 @@
 	<Parameter  name="Method" type="string" value="Tangent"/>
       </ParameterList>
       <ParameterList name="Stepper">
+	<Parameter  name="Continuation Method" type="string" value="Arc Length"/>
 	<Parameter  name="Initial Value" type="double" value="1.0"/>
 	<Parameter  name="Continuation Parameter" type="string" value="Quadratic Nonlinear Factor"/>
 	<Parameter  name="Max Steps" type="int" value="20"/>

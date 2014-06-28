@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
 
     // If no analysis section set in input file, default to simple "Solve"
     std::string analysisPackage = slvrfctry->getAnalysisParameters().get("Analysis Package","Solve");
-    status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p);
+    status = Piro::PerformAnalysis(appThyra, slvrfctry->getAnalysisParameters(), p); 
 
 //    Dakota::RealVector finalValues = dakota.getFinalSolution().continuous_variables();
 //    std::cout << "\nAlbany_Dakota: Final Values from Dakota = "

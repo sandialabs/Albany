@@ -22,17 +22,19 @@ int main(int ac, char* av[])
   input_file = "input.e";
 
   command_line_processor.setOption(
-                                   "input",
-                                   &input_file,
-                                   "Input File Name");
+      "input",
+      &input_file,
+      "Input File Name"
+  );
 
   std::string
   output_file = "output.e";
 
   command_line_processor.setOption(
-                                   "output",
-                                   &output_file,
-                                   "Output File Name");
+      "output",
+      &output_file,
+      "Output File Name"
+  );
 
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
@@ -61,32 +63,33 @@ int main(int ac, char* av[])
   LCM::Topology
   topology(input_file, output_file);
 
-  topology.createBoundary();
-  topology.outputBoundary();
+  //topology.createBoundary();
+  //topology.outputBoundary();
 
-  std::string
-  gviz_filename_uu = LCM::parallelize_string("output-uu") + ".dot";
-  topology.outputToGraphviz(
-      gviz_filename_uu,
-      LCM::Topology::UNIDIRECTIONAL_UNILEVEL);
+  topology.setEntitiesOpen();
 
+#if defined(LCM_GRAPHVIZ)
   std::string
-  gviz_filename_um = LCM::parallelize_string("output-um") + ".dot";
-  topology.outputToGraphviz(
-      gviz_filename_um,
-      LCM::Topology::UNDIRECTIONAL_MULTILEVEL);
+  gviz_filename = LCM::parallelize_string("before") + ".dot";
 
-  std::string
-  gviz_filename_bu = LCM::parallelize_string("output-bu") + ".dot";
-  topology.outputToGraphviz(
-      gviz_filename_bu,
-      LCM::Topology::BIDIRECTIONAL_UNILEVEL);
+  LCM::Topology::OutputType const
+  type = LCM::Topology::UNIDIRECTIONAL_UNILEVEL;
 
+  topology.outputToGraphviz(gviz_filename, type);
+#endif
   std::string
-  gviz_filename_bm = LCM::parallelize_string("output-bm") + ".dot";
-  topology.outputToGraphviz(
-      gviz_filename_bm,
-      LCM::Topology::BIDIRECTIONAL_MULTILEVEL);
+  boundary_filename = LCM::parallelize_string("before") + ".vtk";
+  topology.outputBoundary(boundary_filename);
+
+
+  topology.splitOpenFaces();
+
+#if defined(LCM_GRAPHVIZ)
+  gviz_filename = LCM::parallelize_string("after") + ".dot";
+  topology.outputToGraphviz(gviz_filename, type);
+#endif
+  boundary_filename = LCM::parallelize_string("after") + ".vtk";
+  topology.outputBoundary(boundary_filename);
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   discretization_ptr = topology.getDiscretization();
@@ -94,6 +97,8 @@ int main(int ac, char* av[])
   Albany::STKDiscretization &
   stk_discretization =
       static_cast<Albany::STKDiscretization &>(*discretization_ptr);
+
+  stk_discretization.updateMesh();
 
   // Need solution for output call
   Teuchos::RCP<Epetra_Vector>

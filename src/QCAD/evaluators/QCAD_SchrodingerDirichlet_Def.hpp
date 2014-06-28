@@ -198,6 +198,57 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 }
 
 // **********************************************************************
+// Specialization: DistParamDeriv
+// **********************************************************************
+template<typename Traits>
+SchrodingerDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+SchrodingerDirichlet(Teuchos::ParameterList& p) :
+  SchrodingerDirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void SchrodingerDirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+
+  const std::vector<std::vector<int> >& nsNodes = 
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  int num_cols = fpVT->getNumVectors();
+
+  if (trans) {
+    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
+    Teuchos::ArrayRCP<ST> VpT_nonconstView; 
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+  
+      for (int i=0; i<num_cols; i++){
+	//(*Vp)[i][lunk] = 0.0;
+        VpT_nonconstView = VpT->getDataNonConst(i); 
+        VpT_nonconstView[lunk] = 0.0; 
+      }
+    }
+  }
+
+  else {
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      int lunk = nsNodes[inode][this->offset];
+
+      for (int i=0; i<num_cols; i++) {
+  	//(*fpV)[i][lunk] = 0.0;
+  	fpVT_nonconstView = fpVT->getDataNonConst(i); 
+        fpVT_nonconstView[lunk] = 0.0; 
+      }
+    }
+  }
+}
+
+// **********************************************************************
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 

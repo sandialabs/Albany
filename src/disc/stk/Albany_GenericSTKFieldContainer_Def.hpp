@@ -106,14 +106,11 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     } // End scalar at center of element
     else if(st.entity == StateStruct::NodalData) { // Data at the node points
 
-        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
+        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
                = sis->getNodalDataBlock()->getNodeContainer();
-// Either should have a ptr to the container
-//        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
-//               = sis->getNodalDataVector()->getNodeContainer();
 
         (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
-
+ 
     } // end Node class - anything else is an error
     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
             "Error: GenericSTKFieldContainer - cannot match unknown entity : " << st.entity << std::endl);

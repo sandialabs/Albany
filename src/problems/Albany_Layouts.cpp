@@ -57,7 +57,7 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
   cell_tensor4   = rcp(new MDALayout<Cell,Dim,Dim,Dim,Dim>(worksetSize,numDim,numDim,numDim,numDim));
   face_tensor4   = rcp(new MDALayout<Cell,Face,Dim,Dim,Dim,Dim>(worksetSize,numFace,numDim,numDim,numDim,numDim));
 
-  node_node_scalar = rcp(new MDALayout<Node>(worksetSize));
+  node_node_scalar = rcp(new MDALayout<Node,Dim>(worksetSize,1));
   node_node_vector = rcp(new MDALayout<Node,Dim>(worksetSize,vecDim));
   node_node_tensor = rcp(new MDALayout<Node,Dim,Dim>(worksetSize,numDim,numDim));
 

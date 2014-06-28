@@ -1,0 +1,40 @@
+#!/bin/bash
+#-------------------------------------------
+#
+# Platform and User-Specific Paths and environment variables
+#
+# This file must be modified for each user/machine
+#
+# GAH 08/11
+#-------------------------------------------
+
+#source .bash_profile
+# Outside variables for parallel
+# module load openmpi-1.4/gcc-4.1.2
+
+# Set these to whatever you like
+SCRIPTDIR=/ascldap/users/gahanse/Codes/AlbanyBuild
+NIGHTLYDIR=$SCRIPTDIR/Results
+
+#set this correctly
+BOOSTDIR=/ascldap/users/gahanse/local/boost_1_47_0
+NETCDFDIR=/ascldap/users/gahanse/local
+#set this correctly, to software.sandia.gov user name
+SSGUSER=ghansen
+
+# Don't change these
+TRILDIR=$NIGHTLYDIR/Trilinos
+TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build/
+TRILINSTALLDIR=$TRIBUILDDIR/install
+ALBDIR=$NIGHTLYDIR/Albany
+TRIKOTADIR=$TRILDIR/packages/TriKota
+
+# Set these to whatever you like
+TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
+ALBOUTDIR=$NIGHTLYDIR/Albany_out
+DAKOUTDIR=$NIGHTLYDIR/Dakota_out
+
+# Must be set
+TRILINOS_BRANCH=master
+ALBANY_BRANCH=master
+

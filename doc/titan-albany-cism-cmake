@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#To configure Albany on Hopper: source this file 
+
+#IK, 10/1/13
+#prior to configuring you need to load the following modules: 
+
+rm -f CMakeCache.txt
+
+TRILINOS_INSTALL_DIR=/ccs/proj/cli062/cism-albany/Trilinos/build/install
+BUILD_DIR=`pwd`
+CISM_INCLUDE_DIR=/ccs/proj/cli062/cism-albany/cism/felix_interface_branch/libdycore
+
+cmake  \
+    -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINOS_INSTALL_DIR \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+    -D ENABLE_DEMO_PDES=OFF -D ENABLE_SG_MP=OFF -D ENABLE_MOR=OFF -DENABLE_QCAD=OFF  -DENABLE_ASCR=OFF \
+    -D ENABLE_FELIX:BOOL=ON \
+    -D ENABLE_FAST_FELIX:BOOL=ON \
+    -D ENABLE_LCM:BOOL=OFF \
+    -D ENABLE_INSTALL:BOOL=ON \
+    -D ENABLE_CISM_INTERFACE:BOOL=ON \
+    -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
+    -D CISM_INCLUDE_DIR:FILEPATH=$CISM_INCLUDE_DIR \
+    ..
+
+# ToDO: get this working on Titan
+#    -D ENABLE_GPTL:BOOL=ON \
+#    -D GPTL_INCLUDE_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
+#    -D GPTL_LIBRARY_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
+

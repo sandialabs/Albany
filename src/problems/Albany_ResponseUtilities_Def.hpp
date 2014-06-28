@@ -14,7 +14,9 @@
 #include "PHAL_ResponseFieldIntegral.hpp"
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
-#include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
+#ifdef ALBANY_FELIX
+  #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
+#endif
 #ifdef ALBANY_QCAD
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
@@ -77,6 +79,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
+#ifdef ALBANY_FELIX
+
   else if (responseName == "Surface Velocity Mismatch")
   {
     RCP<FELIX::ResponseSurfaceVelocityMismatch<EvalT,Traits> > res_ev =
@@ -85,6 +89,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
+
+#endif
 
   else if (responseName == "Center Of Mass")
   {

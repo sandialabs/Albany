@@ -37,7 +37,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, TRACTION, LATERAL};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL};
   enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -115,24 +115,32 @@ protected:
                           const int cellDims,
                           int local_side_id);
    
-  //Basal bc
 #ifdef ALBANY_FELIX
+  //Basal bc
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		                  const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-   		                  const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-                          const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id);
-  
+   		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		       const Intrepid::FieldContainer<ScalarT>& dof_side,
+                       const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                       const shards::CellTopology & celltopo,
+                       const int cellDims,
+                       int local_side_id);
+
+  void calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+   		                    const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+   		                    const Intrepid::FieldContainer<ScalarT>& dof_side,
+                          	    const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+	                            const shards::CellTopology & celltopo,
+          	                    const int cellDims,
+                   	            int local_side_id);
+  //Lateral bc 
   void calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-     		              const Intrepid::FieldContainer<ScalarT>& thickness_side,
-     		              const Intrepid::FieldContainer<ScalarT>& elevation_side,
-     		              const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-                          const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id);
+     		         const Intrepid::FieldContainer<ScalarT>& thickness_side,
+     		         const Intrepid::FieldContainer<ScalarT>& elevation_side,
+     		         const Intrepid::FieldContainer<ScalarT>& dof_side,
+                         const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                         const shards::CellTopology & celltopo,
+                         const int cellDims,
+                         int local_side_id);
 #endif
    // Do the side integration
   void evaluateNeumannContribution(typename Traits::EvalData d);
@@ -240,6 +248,19 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+};
+
+// **************************************************************
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class Neumann<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public NeumannBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+public:
+  Neumann(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
 };
 
 // **************************************************************

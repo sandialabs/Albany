@@ -14,10 +14,16 @@
 
 #include <cassert>
 
+#include <stk_mesh/base/FieldData.hpp>
+
 #include "Teuchos_ScalarTraits.hpp"
 #include "Topology_Types.h"
+#include "Topology_Utils.h"
 
 namespace LCM{
+
+// Forward declaration
+class Topology;
 
 ///
 /// Base class for fracture criteria
@@ -30,7 +36,7 @@ public:
 
   virtual
   bool
-  check(Entity const & entity) const = 0;
+  check(Entity const & entity) = 0;
 
   virtual
   ~AbstractFractureCriterion() {}
@@ -49,20 +55,18 @@ class FractureCriterionRandom : public AbstractFractureCriterion {
 
 public:
 
-  FractureCriterionRandom(size_t const element_rank, double const probability) :
+  FractureCriterionRandom(double const probability) :
   AbstractFractureCriterion(),
-  element_rank_(element_rank), probability_(probability) {}
+  probability_(probability) {}
 
   bool
-  check(Entity const & entity) const
+  check(Entity const & entity)
   {
     EntityRank const
     rank = entity.entity_rank();
 
-    assert(static_cast<size_t>(rank) == element_rank_ - 1);
-
     stk_classic::mesh::PairIterRelation const
-    relations = entity.relations(element_rank_);
+    relations = entity.relations(rank + 1);
 
     assert(relations.size() == 2);
 
@@ -80,11 +84,115 @@ private:
 
 private:
 
-  size_t
-  element_rank_;
+  double
+  probability_;
+};
+
+///
+/// Fracture criterion that open only once (for debugging)
+///
+class FractureCriterionOnce : public AbstractFractureCriterion {
+
+public:
+
+  FractureCriterionOnce(double const probability) :
+  AbstractFractureCriterion(),
+  probability_(probability),
+  open_(true) {}
+
+  bool
+  check(Entity const & entity)
+  {
+    EntityRank const
+    rank = entity.entity_rank();
+
+    stk_classic::mesh::PairIterRelation const
+    relations = entity.relations(rank + 1);
+
+    assert(relations.size() == 2);
+
+    double const
+    random = 0.5 * Teuchos::ScalarTraits<double>::random() + 0.5;
+
+    bool const
+    is_open = random < probability_ && open_;
+
+    if (is_open == true) open_ = false;
+
+    return is_open;
+  }
+
+private:
+
+  FractureCriterionOnce();
+  FractureCriterionOnce(FractureCriterionOnce const &);
+  FractureCriterionOnce & operator=(FractureCriterionOnce const &);
+
+private:
 
   double
   probability_;
+
+  bool
+  open_;
+};
+
+///
+/// Traction fracture criterion
+///
+class FractureCriterionTraction : public AbstractFractureCriterion {
+
+public:
+
+  FractureCriterionTraction(
+      Topology & topology,
+      std::string const & stress_name,
+      double const critical_traction,
+      double const beta);
+
+  bool
+  check(Entity const & entity);
+
+private:
+
+  FractureCriterionTraction();
+  FractureCriterionTraction(FractureCriterionTraction const &);
+  FractureCriterionTraction & operator=(FractureCriterionTraction const &);
+
+  void
+  computeNormals();
+
+private:
+
+  Topology &
+  topology_;
+
+  Albany::STKDiscretization &
+  stk_discretization_;
+
+  Albany::AbstractSTKMeshStruct &
+  stk_mesh_struct_;
+
+  stk_classic::mesh::BulkData &
+  bulk_data_;
+
+  stk_classic::mesh::fem::FEMMetaData &
+  meta_data_;
+
+  Intrepid::Index
+  dimension_;
+
+  TensorFieldType &
+  stress_field_;
+
+  double
+  critical_traction_;
+
+  double
+  beta_;
+
+  std::vector<Intrepid::Vector<double> >
+  normals_;
 };
 
 } // namespace LCM

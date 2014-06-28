@@ -17,40 +17,40 @@
 
 namespace LCM {
 
-  const unsigned emptyMask_     = 0x00;
-  const unsigned inexactMask_   = 0x01;
-  const unsigned divbyzeroMask_ = 0x02;
-  const unsigned underflowMask_ = 0x04;
-  const unsigned overflowMask_  = 0x08;
-  const unsigned invalidMask_   = 0x10;
+const unsigned emptyMask_     = 0x00;
+const unsigned inexactMask_   = 0x01;
+const unsigned divbyzeroMask_ = 0x02;
+const unsigned underflowMask_ = 0x04;
+const unsigned overflowMask_  = 0x08;
+const unsigned invalidMask_   = 0x10;
 
-  class FloatingPoint {
+class FloatingPoint {
 
-  public:
+public:
 
-    FloatingPoint();
-    virtual ~FloatingPoint();
+  FloatingPoint();
+  virtual ~FloatingPoint();
 
-    void trapInexact();
-    void trapDivbyzero();
-    void trapUnderflow();
-    void trapOverflow();
-    void trapInvalid();
+  void trapInexact();
+  void trapDivbyzero();
+  void trapUnderflow();
+  void trapOverflow();
+  void trapInvalid();
 
 
-  private:
+private:
 
-    static bool active_;
-    static unsigned mask_;
-    static unsigned oldMask_;
+  static bool active_;
+  static unsigned mask_;
+  static unsigned oldMask_;
 
-    // obtain and store current masks status;
-    unsigned getCurrentMask();
+  // obtain and store current masks status;
+  unsigned getCurrentMask();
 
-    // set mask
-    void setMask(unsigned mask);
+  // set mask
+  void setMask(unsigned mask);
 
-  };
+};
 
 } // namespace LCM
 

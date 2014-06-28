@@ -1,0 +1,130 @@
+## /Applications/Cubit-14.1/Cubit.app/Contents/MacOS/Cubitx
+## Cubit Version 14.1
+## Cubit Build 388475
+## Revised 2013-09-25 16:28:00 -0600 (Wed, 25 Sep 2013)
+## Running 03/14/2014 03:30:02 PM
+## Command Options:
+## -warning = On
+## -information = On
+undo on
+#{radius = 15.}
+#{midRadius = 5.}
+#{smallRadius = 1.}
+#{thickness = 0.5}
+#{numIntervals = 8}
+#{radSize = 3.1415927*2.0*radius/4./numIntervals}
+#{midSize = 3.1415927*2.0*midRadius/4./numIntervals}
+#{smallSize = 3.1415927*2.0*smallRadius/4./numIntervals}
+create cylinder height {thickness} radius {radius}
+create cylinder height {thickness} radius {midRadius}
+subtract volume 2 from volume 1 keep
+delete volume 1
+create cylinder height {thickness} radius {smallRadius}
+subtract volume 4 from volume 2 keep
+delete volume 2
+webcut volume all with plane yplane offset 0 noimprint nomerge
+webcut volume all with plane xplane offset 0 noimprint nomerge
+
+surface 18 38 67 97 44 24 merge off
+
+imprint all
+merge all
+
+## outer curves
+curve 129 79 137 90 interval {numIntervals}
+curve 130 80 88 135 interval {numIntervals}
+curve 123 scheme bias fine size {midSize} coarse size {radSize} start vertex 70
+curve 22 scheme bias fine size {midSize} coarse size {radSize} start vertex 6
+curve 77 scheme bias fine size {midSize} coarse size {radSize} start vertex 48 
+curve 16 scheme bias fine size {midSize} coarse size {radSize} start vertex 17
+curve 30 scheme bias fine size {midSize} coarse size {radSize} start vertex 22
+surface 83 51 87 59 scheme trimesh
+mesh surface 83 51 87 59
+
+## mid-radius curves
+curve 143 96 104 154 interval {numIntervals}
+curve 155 scheme bias fine size {smallSize} coarse size {midSize} start vertex 79
+curve 58 scheme bias fine size {smallSize} coarse size {midSize} start vertex 10
+curve 109 scheme bias fine size {smallSize} coarse size {midSize} start vertex 56
+curve 52 scheme bias fine size {smallSize} coarse size {midSize} start vertex 27
+curve 66 scheme bias fine size {smallSize} coarse size {midSize} start vertex 29
+surface 107 103 71 79 scheme trimesh
+mesh surface 107 103 71 79
+
+## uniform region
+surface 92 64 66 99 size {smallSize}
+surface 92 64 66 99 scheme trimesh
+mesh surface 66
+mesh surface 92 
+mesh surface 64
+mesh surface 99
+
+## plant seeds on opposite side
+surface 94 96 62 69 size {smallSize}
+
+## outer curves
+curve 138 89 81 127 interval {numIntervals}
+curve 125 scheme bias fine size {midSize} coarse size {radSize} start vertex 72
+curve 20 scheme bias fine size {midSize} coarse size {radSize} start vertex 5
+curve 75 scheme bias fine size {midSize} coarse size {radSize} start vertex 46
+curve 18 scheme bias fine size {midSize} coarse size {radSize} start vertex 18
+curve 28 scheme bias fine size {midSize} coarse size {radSize} start vertex 21
+
+## mid-radius curves
+curve 87 82 128 136 interval {numIntervals}
+curve 157 scheme bias fine size {smallSize} coarse size {midSize} start vertex 80
+curve 56 scheme bias fine size {smallSize} coarse size {midSize} start vertex 9
+curve 107 scheme bias fine size {smallSize} coarse size {midSize} start vertex 55
+curve 54 scheme bias fine size {smallSize} coarse size {midSize} start vertex 28
+curve 64 scheme bias fine size {smallSize} coarse size {midSize} start vertex 30
+
+## small curves
+curve 106 95 144 152 interval {numIntervals}
+
+volume all scheme tetmesh
+mesh volume all 
+
+## removing lower surface
+delete volume 3 5 9 11 4 10
+unmerge all
+
+## smooth mesh
+volume all smooth scheme condition number beta 1.5 cpu 10
+
+## reflect smoothed mesh
+body all copy reflect y
+
+## turning the merging of crack surfaces
+surface 130 135 141 merge off
+
+## merging bodies
+merge all
+
+# establish blocks
+block 1 volume all
+block 1 element type tetra10
+
+# establish nodesets
+
+# outer node
+nodeset 1 surface with (x_coord*x_coord + y_coord*y_coord) > {radius*radius*0.99999} and (x_coord*x_coord + y_coord*y_coord) < {radius*radius*1.00001}
+nodeset 2 surface with z_coord > {-thickness/2.*1.00001} and z_coord < {-thickness/2.*0.99999}
+nodeset 3 surface with z_coord < {thickness/2.*1.00001} and z_coord > {thickness/2.*0.99999}
+
+## Turning off sidesets with subdivision - need check this...
+## sideset for cohesive surface element - need wrt so we can using coordinates to assign
+## sideset 1 surface 19 wrt volume 6
+## sideset 1 surface 39 wrt volume 8 
+## sideset 1 surface 63 wrt volume 7
+
+#nodesets for moving mesh
+nodeset 4 curve 213
+nodeset 5 curve 27
+
+nodeset 4 move 0.0 -0.001 0.0
+nodeset 5 move 0.0  0.001 0.0
+
+#scale to put everything in meters
+body all scale 0.001 0.001 0.001
+
+export genesis "KfieldTet10.g" overwrite

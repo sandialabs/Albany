@@ -225,69 +225,99 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   Epetra_Import importOperator(nodes_map, serial_nodes_map);
 
   Epetra_Vector temp(serial_nodes_map);
-  Epetra_Vector sHeightVec(nodes_map);
-  Epetra_Vector thickVec(nodes_map);
-  Epetra_Vector bFrictionVec(nodes_map);
-
-  std::string fname = params->get<std::string>("Surface Height File Name", "surface_height.ascii");
-  read2DFileSerial(fname, temp, comm);
-  sHeightVec.Import(temp, importOperator, Insert);
-  fname = params->get<std::string>("Thickness File Name", "thickness.ascii");
-  read2DFileSerial(fname, temp, comm);
-  thickVec.Import(temp, importOperator, Insert);
-  fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
-  read2DFileSerial(fname, temp, comm);
-  bFrictionVec.Import(temp, importOperator, Insert);
-
-  fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
-
-  std::vector<Epetra_Vector> temperatureVecInterp(numLayers + 1, Epetra_Vector(nodes_map)), temperatureVec;
+  Teuchos::RCP<Epetra_Vector> sHeightVec;
+  Teuchos::RCP<Epetra_Vector> thickVec;
+  Teuchos::RCP<Epetra_Vector> bFrictionVec;
+  Teuchos::RCP<std::vector<Epetra_Vector> > temperatureVecInterp;
+  Teuchos::RCP<std::vector<Epetra_Vector> > sVelocityVec;
+  Teuchos::RCP<std::vector<Epetra_Vector> > velocityRMSVec;
 
 
-  readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
+  bool hasSurfaceHeight =  std::find(req.begin(), req.end(), "Surface Height") != req.end();
+
+  {
+    sHeightVec = Teuchos::rcp(new Epetra_Vector(nodes_map));
+    std::string fname = params->get<std::string>("Surface Height File Name", "surface_height.ascii");
+    read2DFileSerial(fname, temp, comm);
+    sHeightVec->Import(temp, importOperator, Insert);
+  }
 
 
-  int il0, il1, verticalTSize(temperatureVec.size());
-  double h0(0.0);
+  bool hasThickness =  std::find(req.begin(), req.end(), "Thickness") != req.end();
 
-  for (int il = 0; il < numLayers + 1; il++) {
-    if (levelsNormalizedThickness[il] <= temperatureNormalizedZ[0]) {
-      il0 = 0;
-      il1 = 0;
-      h0 = 1.0;
+  {
+    std::string fname = params->get<std::string>("Thickness File Name", "thickness.ascii");
+    read2DFileSerial(fname, temp, comm);
+    thickVec = Teuchos::rcp(new Epetra_Vector(nodes_map));
+    thickVec->Import(temp, importOperator, Insert);
+  }
+
+
+  bool hasBasalFriction = std::find(req.begin(), req.end(), "Basal Friction") != req.end();
+  if(hasBasalFriction) {
+    std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
+    read2DFileSerial(fname, temp, comm);
+    bFrictionVec = Teuchos::rcp(new Epetra_Vector(nodes_map));
+    bFrictionVec->Import(temp, importOperator, Insert);
+  }
+
+  bool hasTemperature = std::find(req.begin(), req.end(), "Temperature") != req.end();
+  if(hasTemperature) {
+    std::vector<Epetra_Vector> temperatureVec;
+    temperatureVecInterp = Teuchos::rcp(new std::vector<Epetra_Vector>(numLayers + 1, Epetra_Vector(nodes_map)));
+    std::string fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
+    readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
+
+
+    int il0, il1, verticalTSize(temperatureVec.size());
+    double h0(0.0);
+
+    for (int il = 0; il < numLayers + 1; il++) {
+      if (levelsNormalizedThickness[il] <= temperatureNormalizedZ[0]) {
+        il0 = 0;
+        il1 = 0;
+        h0 = 1.0;
+      }
+
+      else if (levelsNormalizedThickness[il] >= temperatureNormalizedZ[verticalTSize - 1]) {
+        il0 = verticalTSize - 1;
+        il1 = verticalTSize - 1;
+        h0 = 0.0;
+      }
+
+      else {
+        int k = 0;
+        while (levelsNormalizedThickness[il] > temperatureNormalizedZ[++k])
+          ;
+        il0 = k - 1;
+        il1 = k;
+        h0 = (temperatureNormalizedZ[il1] - levelsNormalizedThickness[il]) / (temperatureNormalizedZ[il1] - temperatureNormalizedZ[il0]);
+      }
+
+      for (int i = 0; i < nodes_map.NumMyElements(); i++)
+        (*temperatureVecInterp)[il][i] = h0 * temperatureVec[il0][i] + (1.0 - h0) * temperatureVec[il1][i];
     }
-
-    else if (levelsNormalizedThickness[il] >= temperatureNormalizedZ[verticalTSize - 1]) {
-      il0 = verticalTSize - 1;
-      il1 = verticalTSize - 1;
-      h0 = 0.0;
-    }
-
-    else {
-      int k = 0;
-      while (levelsNormalizedThickness[il] > temperatureNormalizedZ[++k])
-        ;
-      il0 = k - 1;
-      il1 = k;
-      h0 = (temperatureNormalizedZ[il1] - levelsNormalizedThickness[il]) / (temperatureNormalizedZ[il1] - temperatureNormalizedZ[il0]);
-    }
-
-    for (int i = 0; i < nodes_map.NumMyElements(); i++)
-      temperatureVecInterp[il][i] = h0 * temperatureVec[il0][i] + (1.0 - h0) * temperatureVec[il1][i];
   }
 
   std::vector<Epetra_Vector> tempSV(neq_, Epetra_Vector(serial_nodes_map));
-  std::vector<Epetra_Vector> sVelocityVec(neq_, Epetra_Vector(nodes_map));
-  std::vector<Epetra_Vector> velocityRMSVec(neq_, Epetra_Vector(nodes_map));
-  fname = params->get<std::string>("Surface Velocity File Name", "surface_velocity.ascii");
-  readFileSerial(fname, tempSV, comm);
-  for (int i = 0; i < tempSV.size(); i++)
-    sVelocityVec[i].Import(tempSV[i], importOperator, Insert);
 
-  fname = params->get<std::string>("Velocity RMS File Name", "velocity_RMS.ascii");
-  readFileSerial(fname, tempSV, comm);
-  for (int i = 0; i < tempSV.size(); i++)
-    velocityRMSVec[i].Import(tempSV[i], importOperator, Insert);
+  bool hasSurfaceVelocity = std::find(req.begin(), req.end(), "Surface Velocity") != req.end();
+  if(hasSurfaceVelocity) {
+    std::string fname = params->get<std::string>("Surface Velocity File Name", "surface_velocity.ascii");
+    readFileSerial(fname, tempSV, comm);
+    sVelocityVec = Teuchos::rcp(new std::vector<Epetra_Vector> (neq_, Epetra_Vector(nodes_map)));
+    for (int i = 0; i < tempSV.size(); i++)
+      (*sVelocityVec)[i].Import(tempSV[i], importOperator, Insert);
+  }
+
+  bool hasVelocityRMS = std::find(req.begin(), req.end(), "Velocity RMS") != req.end();
+  if(hasVelocityRMS) {
+    std::string fname = params->get<std::string>("Velocity RMS File Name", "velocity_RMS.ascii");
+    readFileSerial(fname, tempSV, comm);
+    velocityRMSVec = Teuchos::rcp(new std::vector<Epetra_Vector> (neq_, Epetra_Vector(nodes_map)));
+    for (int i = 0; i < tempSV.size(); i++)
+      (*velocityRMSVec)[i].Import(tempSV[i], importOperator, Insert);
+  }
 
   if (comm->MyPID() == 0) std::cout << " done." << std::endl;
 
@@ -318,12 +348,6 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
-  AbstractSTKFieldContainer::ScalarFieldType* thickness_field = fieldContainer->getThicknessField();
-  AbstractSTKFieldContainer::VectorFieldType* surfaceVelocity_field = fieldContainer->getSurfaceVelocityField();
-  AbstractSTKFieldContainer::VectorFieldType* velocityRMS_field = fieldContainer->getVelocityRMSField();
-  AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
-  AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
 
   std::vector<long long int> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
@@ -343,28 +367,36 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     coord[0] = coord2d[0];
     coord[1] = coord2d[1];
 
-#ifdef ALBANY_FELIX
     int lid = nodes_map.LID((long long int)(node2dId));
-    double* sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, *node);
-    sHeight[0] = sHeightVec[lid];
+    coord[2] = (*sHeightVec)[lid] - (*thickVec)[lid] * (1. - levelsNormalizedThickness[il]);
 
-    double* thick = stk_classic::mesh::field_data(*thickness_field, *node);
-    thick[0] = thickVec[lid];
+    if(hasSurfaceHeight) {
+      double* sHeight = stk_classic::mesh::field_data(*fieldContainer->getSurfaceHeightField(), *node);
+      sHeight[0] = (*sHeightVec)[lid];
+    }
 
-    double* sVelocity = stk_classic::mesh::field_data(*surfaceVelocity_field, *node);
-    sVelocity[0] = sVelocityVec[0][lid];
-    sVelocity[1] = sVelocityVec[1][lid];
+    if(hasThickness) {
+      double* thick = stk_classic::mesh::field_data(*fieldContainer->getThicknessField(), *node);
+      thick[0] = (*thickVec)[lid];
+    }
 
-    double* velocityRMS = stk_classic::mesh::field_data(*velocityRMS_field, *node);
-    velocityRMS[0] = velocityRMSVec[0][lid];
-    velocityRMS[1] = velocityRMSVec[1][lid];
+    if(hasSurfaceVelocity) {
+      double* sVelocity = stk_classic::mesh::field_data(*fieldContainer->getSurfaceVelocityField(), *node);
+      sVelocity[0] = (*sVelocityVec)[0][lid];
+      sVelocity[1] = (*sVelocityVec)[1][lid];
+    }
 
-    double* bFriction = stk_classic::mesh::field_data(*basal_friction_field, *node);
-    bFriction[0] = bFrictionVec[lid];
-    coord[2] = sHeight[0] - thick[0] * (1. - levelsNormalizedThickness[il]);
-#else
-    coord[2] = 0;
-#endif
+    if(hasVelocityRMS) {
+      double* velocityRMS = stk_classic::mesh::field_data(*fieldContainer->getVelocityRMSField(), *node);
+      velocityRMS[0] = (*velocityRMSVec)[0][lid];
+      velocityRMS[1] = (*velocityRMSVec)[1][lid];
+    }
+
+    if(hasBasalFriction) {
+      double* bFriction = stk_classic::mesh::field_data(*fieldContainer->getBasalFrictionField(), *node);
+      bFriction[0] = (*bFrictionVec)[lid];
+    }
+
   }
 
   long long int tetrasLocalIdsOnPrism[3][4];
@@ -390,7 +422,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       prismMpasIds[j] = mpasLowerId;
       prismGlobalIds[j] = lowerId;
       prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
-      tempOnPrism += 1. / NumBaseElemeNodes / 2. * (temperatureVecInterp[il][node2dLId] + temperatureVecInterp[il + 1][node2dLId]);
+      if(hasTemperature)
+        tempOnPrism += 1. / NumBaseElemeNodes / 2. * ((*temperatureVecInterp)[il][node2dLId] + (*temperatureVecInterp)[il + 1][node2dLId]);
     }
 
     switch (ElemShape) {
@@ -406,11 +439,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
         }
         int* p_rank = (int*) stk_classic::mesh::field_data(*proc_rank_field, elem);
         p_rank[0] = comm->MyPID();
-#ifdef ALBANY_FELIX
-        double* temperature = stk_classic::mesh::field_data(*temperature_field,
-            elem);
-        temperature[0] = tempOnPrism;
-#endif
+        if(hasTemperature) {
+          double* temperature = stk_classic::mesh::field_data(*fieldContainer->getTemperatureField(), elem);
+          temperature[0] = tempOnPrism;
+        }
       }
     }
       break;
@@ -424,11 +456,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       }
       int* p_rank = (int*) stk_classic::mesh::field_data(*proc_rank_field, elem);
       p_rank[0] = comm->MyPID();
-#ifdef ALBANY_FELIX
-      double* temperature = stk_classic::mesh::field_data(*temperature_field,
-          elem);
+      if(hasTemperature) {
+        double* temperature = stk_classic::mesh::field_data(*fieldContainer->getTemperatureField(), elem);
       temperature[0] = tempOnPrism;
-#endif
+      }
     }
     }
   }

@@ -43,17 +43,19 @@ public:
 
 private:
  
+  const double pi;
+
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> sphere_coord;
 
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> hs;
 
   unsigned int numQPs, numDims, numNodes;
   
-  ScalarT gravity; // gravity parameter
+  ScalarT hs0; // Mountain Height
 
   enum SURFHEIGHTTYPE {NONE, MOUNTAIN};
   SURFHEIGHTTYPE hs_type;

@@ -38,6 +38,7 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasFlowFactorField(){ return false; }
     bool hasSurfaceVelocityField(){ return false; }
     bool hasVelocityRMSField(){ return false; }
+    bool hasSphereVolumeField(){ return buildSphereVolume; }
 
     void fillSolnVector(Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
     void fillSolnVectorT(Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
@@ -54,6 +55,8 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     void initializeSTKAdaptation();
 
     bool haveResidual;
+
+    bool buildSphereVolume;
 
     // Containers for residual and solution
 

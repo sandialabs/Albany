@@ -22,6 +22,7 @@
 #include "Shards_Array.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
+//#include "Adapt_NodalDataBlock.hpp"
 
 namespace Albany {
 
@@ -101,6 +102,9 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<const Tpetra_Map>
     getNodeMapT() const = 0;
 
+    //! Get Nodal block data
+//    virtual Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() = 0;
+
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
@@ -125,6 +129,7 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const = 0;
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const = 0;
+    virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const = 0;
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;

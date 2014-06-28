@@ -185,7 +185,6 @@ add_executable(
   )
 
 IF (ALBANY_LAME OR ALBANY_LAMENT)
-
   IF(ALBANY_64BIT_INT)
   add_executable(utLameStress_elastic
     ${Albany_SOURCE_DIR}/src/PHAL_Dimension.cpp
@@ -252,7 +251,7 @@ ELSE(BUILD_SHARED_LIBS)
   ENDIF()
 ENDIF(BUILD_SHARED_LIBS)
 
-
+   
 #Linking tests
 target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})

@@ -65,8 +65,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       *out << "Albany_IOSS: Loading STKMesh from Exodus file  " 
            << params->get<std::string>("Exodus Input File Name") << std::endl;
 
-      stk_classic::io::create_input_mesh("exodusii",
-//      create_input_mesh("exodusii",
+      stk_classic::io::create_input_mesh("exodusII",
+//      create_input_mesh("exodusII",
                                  params->get<std::string>("Exodus Input File Name"),
                                  Albany::getMpiCommFromEpetraComm(*comm), 
                                  *metaData, *mesh_data,
@@ -148,7 +148,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // end debugging
 #endif
 
-  int cub = params->get("Cubature Degree",3);
+  const int cub      = params->get("Cubature Degree",3);
+  const int default_cub_rule = static_cast<int>(Intrepid::PL_GAUSS);
+  const Intrepid::EIntrepidPLPoly cub_rule = static_cast<Intrepid::EIntrepidPLPoly>(params->get("Cubature Rule",default_cub_rule));
   int worksetSizeMax = params->get("Workset Size",50);
 
   // Get number of elements per element block using Ioss for use
@@ -172,7 +174,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
     this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                                   nsNames, ssNames, worksetSize, partVec[0]->name(), 
-                                                                  this->ebNameToIndex, this->interleavedOrdering));
+                                                                  this->ebNameToIndex, this->interleavedOrdering,cub_rule));
 
   }
   else {
@@ -184,7 +186,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                                                      nsNames, ssNames, worksetSize, partVec[eb]->name(), 
-                                                                     this->ebNameToIndex, this->interleavedOrdering));
+                                                                     this->ebNameToIndex, this->interleavedOrdering,cub_rule));
       std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl; 
     }
 
@@ -241,8 +243,8 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
    * and puts it in mesh_data (in_region), and reads the metaData into metaData.
    */
 
-  stk_classic::io::create_input_mesh("exodusii",
-//  create_input_mesh("exodusii",
+  stk_classic::io::create_input_mesh("exodusII",
+//  create_input_mesh("exodusII",
                              params->get<std::string>("Exodus Input File Name"), 
                              peZeroComm, 
                              *metaData, *mesh_data,
@@ -394,11 +396,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
-//  coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
-//#ifdef ALBANY_FELIX
-//  surfaceHeight_field = metaData->get_field<ScalarFieldType>(std::string("surface height"));
-//#endif
-
   // Refine the mesh before starting the simulation if indicated
   uniformRefineMesh(comm);
 
@@ -407,7 +404,6 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
-
 }
 
 double

@@ -100,6 +100,17 @@ public:
 };
 
 // **************************************************************
+// DistParamDeriv
+// **************************************************************
+template<typename Traits>
+class SchrodingerDirichlet<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public SchrodingerDirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  SchrodingerDirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
 // Stochastic Galerkin Residual 
 // **************************************************************
 #ifdef ALBANY_SG_MP

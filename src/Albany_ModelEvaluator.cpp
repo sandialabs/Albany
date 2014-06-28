@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Albany_ModelEvaluator.hpp"
+#include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
@@ -14,18 +15,18 @@
 
 Albany::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<Albany::Application>& app_,
-  const Teuchos::RCP<Teuchos::ParameterList>& appParams) 
+  const Teuchos::RCP<Teuchos::ParameterList>& appParams)
   : app(app_),
     supplies_prec(app_->suppliesPreconditioner())
 {
-  Teuchos::RCP<Teuchos::FancyOStream> out = 
+  Teuchos::RCP<Teuchos::FancyOStream> out =
     Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
-  Teuchos::ParameterList& parameterParams = 
+  Teuchos::ParameterList& parameterParams =
     problemParams.sublist("Parameters");
-  int num_param_vecs = 
+  num_param_vecs =
     parameterParams.get("Number of Parameter Vectors", 0);
   bool using_old_parameter_list = false;
   if (parameterParams.isType<int>("Number")) {
@@ -45,21 +46,21 @@ Albany::ModelEvaluator::ModelEvaluator(
       pList = &(parameterParams.sublist(Albany::strint("Parameter Vector",i)));
     int numParameters = pList->get<int>("Number");
     TEUCHOS_TEST_FOR_EXCEPTION(
-      numParameters == 0, 
+      numParameters == 0,
       Teuchos::Exceptions::InvalidParameter,
       std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
       "Parameter vector " << i << " has zero parameters!" << std::endl);
-    param_names[i] = 
+    param_names[i] =
       Teuchos::rcp(new Teuchos::Array<std::string>(numParameters));
     for (int j=0; j<numParameters; j++) {
-      (*param_names[i])[j] = 
-	pList->get<std::string>(Albany::strint("Parameter",j));
+      (*param_names[i])[j] =
+        pList->get<std::string>(Albany::strint("Parameter",j));
     }
-    *out << "Number of parameters in parameter vector " << i << " = " 
-	 << numParameters << std::endl;
+    *out << "Number of parameters in parameter vector " << i << " = "
+         << numParameters << std::endl;
   }
 
-  // Setup sacado and epetra storage for parameters  
+  // Setup sacado and epetra storage for parameters
   sacado_param_vec.resize(num_param_vecs);
   epetra_param_map.resize(num_param_vecs);
   epetra_param_vec.resize(num_param_vecs);
@@ -74,18 +75,38 @@ Albany::ModelEvaluator::ModelEvaluator(
       *(param_names[i]), sacado_param_vec[i]);
 
     // Create Epetra map for parameter vector
-    epetra_param_map[i] = 
+    epetra_param_map[i] =
       Teuchos::rcp(new Epetra_LocalMap((int) sacado_param_vec[i].size(), 0, comm));
 
     // Create Epetra vector for parameters
-    epetra_param_vec[i] = 
+    epetra_param_vec[i] =
       Teuchos::rcp(new Epetra_Vector(*(epetra_param_map[i])));
     for (unsigned int j=0; j<sacado_param_vec[i].size(); j++)
       (*(epetra_param_vec[i]))[j] = sacado_param_vec[i][j].baseValue;
 
     p_sg_vals[i].resize(sacado_param_vec[i].size());
     p_mp_vals[i].resize(sacado_param_vec[i].size());
-  }  
+  }
+
+  // Setup distributed parameters
+  distParamLib = app->getDistParamLib();
+  Teuchos::ParameterList& distParameterParams =
+    problemParams.sublist("Distributed Parameters");
+  num_dist_param_vecs =
+    distParameterParams.get("Number of Parameter Vectors", 0);
+  dist_param_names.resize(num_dist_param_vecs);
+  *out << "Number of distributed parameters vectors  = " << num_dist_param_vecs
+       << std::endl;
+  for (int i=0; i<num_dist_param_vecs; i++) {
+    std::string name =
+      distParameterParams.get<std::string>(Albany::strint("Parameter",i));
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !distParamLib->has(name),
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
+      "Invalid distributed parameter name " << name << std::endl);
+    dist_param_names[i] = name;
+  }
 
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
 }
@@ -114,23 +135,24 @@ Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_p_map(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    l >= static_cast<int>(epetra_param_map.size()) || l < 0, 
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
     Teuchos::Exceptions::InvalidParameter,
-    std::endl << 
+    std::endl <<
     "Error!  Albany::ModelEvaluator::get_p_map():  " <<
     "Invalid parameter index l = " << l << std::endl);
-
-  return epetra_param_map[l];
+  if (l < num_param_vecs) 
+    return epetra_param_map[l];
+  return Petra::TpetraMap_To_EpetraMap(distParamLib->get(dist_param_names[l-num_param_vecs])->map(), app->getComm());
 }
 
 Teuchos::RCP<const Epetra_Map>
 Albany::ModelEvaluator::get_g_map(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    l >= app->getNumResponses() || l < 0, 
+    l >= app->getNumResponses() || l < 0,
     Teuchos::Exceptions::InvalidParameter,
-    std::endl << 
-    "Error!  Albany::ModelEvaluator::get_g_map():  " << 
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::get_g_map():  " <<
     "Invalid response index l = " << l << std::endl);
 
   return app->getResponse(l)->responseMap();
@@ -139,13 +161,16 @@ Albany::ModelEvaluator::get_g_map(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string> >
 Albany::ModelEvaluator::get_p_names(int l) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_p_names():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::get_p_names():  " <<
+    "Invalid parameter index l = " << l << std::endl);
 
-  return param_names[l];
+  if (l < num_param_vecs)
+    return param_names[l];
+  return Teuchos::rcp(new Teuchos::Array<std::string>(1, dist_param_names[l-num_param_vecs]));
 }
 
 Teuchos::RCP<const Epetra_Vector>
@@ -175,22 +200,30 @@ Albany::ModelEvaluator::get_x_dotdot_init() const
   return x_dotdot_init;
 }
 
+
 Teuchos::RCP<const Epetra_Vector>
 Albany::ModelEvaluator::get_p_init(int l) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0, 
-		     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_p_init():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-  
-  return epetra_param_vec[l];
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::get_p_init():  " <<
+    "Invalid parameter index l = " << l << std::endl);
+
+  if (l < num_param_vecs)
+    return epetra_param_vec[l];
+  Teuchos::RCP<Epetra_Vector> epetra_param_vec_to_return; 
+  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector(), *epetra_param_vec_to_return, 
+                                      app->getComm()); 
+  return epetra_param_vec_to_return; 
+  //return distParamLib->get(dist_param_names[l-num_param_vecs])->vector();
 }
 
 Teuchos::RCP<Epetra_Operator>
 Albany::ModelEvaluator::create_W() const
 {
-  return 
+  return
     Teuchos::rcp(new Epetra_CrsMatrix(::Copy, *(app->getJacobianGraph())));
 }
 
@@ -207,15 +240,34 @@ Albany::ModelEvaluator::create_WPrec() const
 }
 
 Teuchos::RCP<Epetra_Operator>
+Albany::ModelEvaluator::create_DfDp_op(int j) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= num_param_vecs+num_dist_param_vecs || j < num_param_vecs,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::create_DfDp_op():  " <<
+    "Invalid parameter index j = " << j << std::endl);
+
+   std::cout << "In Albany::ModelEvaluator::create_DfDo_op!  This is not implemented for Tpetra_Operator..."  <<
+                 "so code will crash...  IK, 6/28/14." << std::endl; 
+
+//IK, 6/27/14: commented out for now for code to compile...
+//NEED TO FIX!  Issue that DistributedParameterDerivativeOp is a Tpetra_Operator now.... what to do??
+  //return Teuchos::rcp(new DistributedParameterDerivativeOp(
+  //                      app, dist_param_names[j-num_param_vecs]));
+}
+
+Teuchos::RCP<Epetra_Operator>
 Albany::ModelEvaluator::create_DgDx_op(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    j >= app->getNumResponses() || j < 0, 
+    j >= app->getNumResponses() || j < 0,
     Teuchos::Exceptions::InvalidParameter,
-    std::endl << 
-    "Error!  Albany::ModelEvaluator::create_DgDx_op():  " << 
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::create_DgDx_op():  " <<
     "Invalid response index j = " << j << std::endl);
-  
+
   return app->getResponse(j)->createGradientOp();
 }
 
@@ -223,12 +275,12 @@ Teuchos::RCP<Epetra_Operator>
 Albany::ModelEvaluator::create_DgDx_dot_op(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    j >= app->getNumResponses() || j < 0, 
+    j >= app->getNumResponses() || j < 0,
     Teuchos::Exceptions::InvalidParameter,
-    std::endl << 
-    "Error!  Albany::ModelEvaluator::create_DgDx_dot_op():  " << 
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::create_DgDx_dot_op():  " <<
     "Invalid response index j = " << j << std::endl);
-  
+
   return app->getResponse(j)->createGradientOp();
 }
 
@@ -236,14 +288,15 @@ Teuchos::RCP<Epetra_Operator>
 Albany::ModelEvaluator::create_DgDx_dotdot_op(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    j >= app->getNumResponses() || j < 0, 
+    j >= app->getNumResponses() || j < 0,
     Teuchos::Exceptions::InvalidParameter,
-    std::endl << 
-    "Error!  Albany::ModelEvaluator::create_DgDx_dotdot_op():  " << 
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::create_DgDx_dotdot_op():  " <<
     "Invalid response index j = " << j << std::endl);
-  
+
   return app->getResponse(j)->createGradientOp();
 }
+
 
 EpetraExt::ModelEvaluator::InArgs
 Albany::ModelEvaluator::createInArgs() const
@@ -258,23 +311,23 @@ Albany::ModelEvaluator::createInArgs() const
   inArgs.setSupports(IN_ARG_alpha,true);
   inArgs.setSupports(IN_ARG_omega,true);
   inArgs.setSupports(IN_ARG_beta,true);
-  inArgs.set_Np(param_names.size());
+  inArgs.set_Np(num_param_vecs+num_dist_param_vecs);
 
 #ifdef ALBANY_SG_MP
   inArgs.setSupports(IN_ARG_x_sg,true);
   inArgs.setSupports(IN_ARG_x_dot_sg,true);
   inArgs.setSupports(IN_ARG_x_dotdot_sg,true);
-  for (int i=0; i<param_names.size(); i++)
+  for (int i=0; i<num_param_vecs; i++)
     inArgs.setSupports(IN_ARG_p_sg, i, true);
   inArgs.setSupports(IN_ARG_sg_basis,true);
   inArgs.setSupports(IN_ARG_sg_quadrature,true);
   inArgs.setSupports(IN_ARG_sg_expansion,true);
-  
+
   inArgs.setSupports(IN_ARG_x_mp,true);
   inArgs.setSupports(IN_ARG_x_dot_mp,true);
   inArgs.setSupports(IN_ARG_x_dotdot_mp,true);
-  for (int i=0; i<param_names.size(); i++)
-    inArgs.setSupports(IN_ARG_p_mp, i, true); 
+  for (int i=0; i<num_param_vecs; i++)
+    inArgs.setSupports(IN_ARG_p_mp, i, true);
 #endif
 
   return inArgs;
@@ -294,10 +347,13 @@ Albany::ModelEvaluator::createOutArgs() const
   outArgs.set_W_properties(
     DerivativeProperties(DERIV_LINEARITY_UNKNOWN, DERIV_RANK_FULL, true));
   if (supplies_prec) outArgs.setSupports(OUT_ARG_WPrec, true);
-  outArgs.set_Np_Ng(param_names.size(), n_g);
+  outArgs.set_Np_Ng(num_param_vecs+num_dist_param_vecs, n_g);
 
-  for (int i=0; i<param_names.size(); i++)
+  for (int i=0; i<num_param_vecs; i++)
     outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
+  for (int i=0; i<num_dist_param_vecs; i++)
+    outArgs.setSupports(OUT_ARG_DfDp, i+num_param_vecs,
+                        DerivativeSupport(DERIV_LINEAR_OP));
   for (int i=0; i<n_g; i++) {
     if (app->getResponse(i)->isScalarResponse()) {
       outArgs.setSupports(OUT_ARG_DgDx, i,
@@ -316,9 +372,19 @@ Albany::ModelEvaluator::createOutArgs() const
                           DerivativeSupport(DERIV_LINEAR_OP));
     }
 
-    for (int j=0; j<param_names.size(); j++)
+    for (int j=0; j<num_param_vecs; j++)
       outArgs.setSupports(OUT_ARG_DgDp, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
+    if (app->getResponse(i)->isScalarResponse()) {
+      for (int j=0; j<num_dist_param_vecs; j++)
+        outArgs.setSupports(OUT_ARG_DgDp, i, j+num_param_vecs,
+                            DerivativeSupport(DERIV_TRANS_MV_BY_ROW));
+    }
+    else {
+      for (int j=0; j<num_dist_param_vecs; j++)
+        outArgs.setSupports(OUT_ARG_DgDp, i, j+num_param_vecs,
+                            DerivativeSupport(DERIV_LINEAR_OP));
+    }
   }
 
 
@@ -326,7 +392,7 @@ Albany::ModelEvaluator::createOutArgs() const
   // Stochastic
   outArgs.setSupports(OUT_ARG_f_sg,true);
   outArgs.setSupports(OUT_ARG_W_sg,true);
-  for (int i=0; i<param_names.size(); i++)
+  for (int i=0; i<num_param_vecs; i++)
     outArgs.setSupports(OUT_ARG_DfDp_sg, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++)
     outArgs.setSupports(OUT_ARG_g_sg, i, true);
@@ -347,7 +413,7 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.setSupports(OUT_ARG_DgDx_dotdot_sg, i,
                           DerivativeSupport(DERIV_LINEAR_OP));
     }
-    for (int j=0; j<param_names.size(); j++)
+    for (int j=0; j<num_param_vecs; j++)
       outArgs.setSupports(OUT_ARG_DgDp_sg, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
   }
@@ -355,7 +421,7 @@ Albany::ModelEvaluator::createOutArgs() const
   // Multi-point
   outArgs.setSupports(OUT_ARG_f_mp,true);
   outArgs.setSupports(OUT_ARG_W_mp,true);
-  for (int i=0; i<param_names.size(); i++)
+  for (int i=0; i<num_param_vecs; i++)
     outArgs.setSupports(OUT_ARG_DfDp_mp, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++)
     outArgs.setSupports(OUT_ARG_g_mp, i, true);
@@ -377,7 +443,7 @@ Albany::ModelEvaluator::createOutArgs() const
       outArgs.setSupports(OUT_ARG_DgDx_dotdot_mp, i,
                           DerivativeSupport(DERIV_LINEAR_OP));
     }
-    for (int j=0; j<param_names.size(); j++)
+    for (int j=0; j<num_param_vecs; j++)
       outArgs.setSupports(OUT_ARG_DgDp_mp, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
   }
@@ -386,9 +452,9 @@ Albany::ModelEvaluator::createOutArgs() const
   return outArgs;
 }
 
-void 
-Albany::ModelEvaluator::evalModel(const InArgs& inArgs, 
-				 const OutArgs& outArgs) const
+void
+Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
+                                 const OutArgs& outArgs) const
 {
   Teuchos::TimeMonitor Timer(*timer); //start timer
   //
@@ -430,11 +496,22 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     beta = inArgs.get_beta();
     curr_time  = inArgs.get_t();
   }
-  for (int i=0; i<inArgs.Np(); i++) {
+  for (int i=0; i<num_param_vecs; i++) {
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
     if (p != Teuchos::null) {
-      for (unsigned int j=0; j<sacado_param_vec[i].size(); j++)
-	sacado_param_vec[i][j].baseValue = (*p)[j];
+      for (unsigned int j=0; j<sacado_param_vec[i].size(); j++) {
+        sacado_param_vec[i][j].baseValue = (*p)[j];
+      }
+    }
+  }
+  for (int i=0; i<num_dist_param_vecs; i++) {
+    Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i+num_param_vecs);
+    //create Tpetra copy of p
+    Teuchos::RCP<const Tpetra_Vector> pT;
+    if (p != Teuchos::null) {
+      pT = Petra::EpetraVector_To_TpetraVectorConst(*p, commT, nodeT); 
+      //*(distParamLib->get(dist_param_names[i])->vector()) = *p;
+      *(distParamLib->get(dist_param_names[i])->vector()) = *pT;
     }
   }
 
@@ -456,7 +533,7 @@ std::cout << "The current solution length is: " << x->MyLength() << std::endl;
 x->Print(std::cout);
 
 }
-  
+
   // Get preconditioner operator, if requested
   Teuchos::RCP<Epetra_Operator> WPrec_out;
   if (outArgs.supports(OUT_ARG_WPrec)) WPrec_out = outArgs.get_WPrec();
@@ -468,19 +545,8 @@ x->Print(std::cout);
 
   // W matrix
   if (W_out != Teuchos::null) {
-    app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(),*x, 
-			       sacado_param_vec, f_out.get(), *W_out_crs);
-    /*cout << "W_out_crs" << endl; 
-    cout << *W_out_crs << endl; 
-    cout << "x_dot" << endl; 
-    cout << x_dot << endl; 
-    cout << "f" << endl; 
-    cout << f_out << endl; 
-    cout << "x" << endl; 
-    cout << *x << endl; 
-    cout << "curr_time" << endl; 
-    cout << curr_time << endl; 
-    */
+    app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(),*x,
+                               sacado_param_vec, f_out.get(), *W_out_crs);
     f_already_computed=true;
 if(test_var != 0){
 //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
@@ -491,8 +557,8 @@ W_out_crs->Print(std::cout);
   }
 
   if (WPrec_out != Teuchos::null) {
-    app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(), *x, 
-			       sacado_param_vec, f_out.get(), *Extra_W_crs);
+    app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(), *x,
+                               sacado_param_vec, f_out.get(), *Extra_W_crs);
     f_already_computed=true;
 if(test_var != 0){
 //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
@@ -504,12 +570,12 @@ Extra_W_crs->Print(std::cout);
     app->computeGlobalPreconditioner(Extra_W_crs, WPrec_out);
   }
 
-  // df/dp
-  for (int i=0; i<outArgs.Np(); i++) {
-    Teuchos::RCP<Epetra_MultiVector> dfdp_out = 
+  // scalar df/dp
+  for (int i=0; i<num_param_vecs; i++) {
+    Teuchos::RCP<Epetra_MultiVector> dfdp_out =
       outArgs.get_DfDp(i).getMultiVector();
     if (dfdp_out != Teuchos::null) {
-      Teuchos::Array<int> p_indexes = 
+      Teuchos::Array<int> p_indexes =
         outArgs.get_DfDp(i).getDerivativeMultiVector().getParamIndexes();
       Teuchos::RCP<ParamVec> p_vec;
       if (p_indexes.size() == 0)
@@ -517,13 +583,13 @@ Extra_W_crs->Print(std::cout);
       else {
         p_vec = Teuchos::rcp(new ParamVec);
         for (int j=0; j<p_indexes.size(); j++)
-          p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family, 
+          p_vec->addParam(sacado_param_vec[i][p_indexes[j]].family,
                           sacado_param_vec[i][p_indexes[j]].baseValue);
       }
 
-      app->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false, x_dot.get(), x_dotdot.get(), *x, 
+      app->computeGlobalTangent(0.0, 0.0, 0.0, curr_time, false, x_dot.get(), x_dotdot.get(), *x,
                                 sacado_param_vec, p_vec.get(),
-                                NULL, NULL, NULL, NULL, f_out.get(), NULL, 
+                                NULL, NULL, NULL, NULL, f_out.get(), NULL,
                                 dfdp_out.get());
 
       f_already_computed=true;
@@ -534,18 +600,30 @@ f_out->Print(std::cout);
     }
   }
 
+  // distributed df/dp
+  for (int i=0; i<num_dist_param_vecs; i++) {
+    Teuchos::RCP<Epetra_Operator> dfdp_out =
+      outArgs.get_DfDp(i+num_param_vecs).getLinearOp();
+    if (dfdp_out != Teuchos::null) {
+      Teuchos::RCP<DistributedParameterDerivativeOp> dfdp_op =
+        Teuchos::rcp_dynamic_cast<DistributedParameterDerivativeOp>(dfdp_out);
+      dfdp_op->set(curr_time, x_dotT, x_dotdotT, xT,
+                   Teuchos::rcp(&sacado_param_vec,false));
+    }
+  }
+
   // f
   if (app->is_adjoint) {
     Derivative f_deriv(f_out, DERIV_TRANS_MV_BY_ROW);
     int response_index = 0; // need to add capability for sending this in
-    app->evaluateResponseDerivative(response_index, curr_time, x_dot.get(), x_dotdot.get(), *x, 
-				    sacado_param_vec, NULL, 
-				    NULL, f_deriv, Derivative(), Derivative(), Derivative());
+    app->evaluateResponseDerivative(response_index, curr_time, x_dot.get(), x_dotdot.get(), *x,
+                                    sacado_param_vec, NULL,
+                                    NULL, f_deriv, Derivative(), Derivative(), Derivative());
   }
   else {
     if (f_out != Teuchos::null && !f_already_computed) {
-      app->computeGlobalResidual(curr_time, x_dot.get(), x_dotdot.get(), *x, 
-  			         sacado_param_vec, *f_out);
+      app->computeGlobalResidual(curr_time, x_dot.get(), x_dotdot.get(), *x,
+                                 sacado_param_vec, *f_out);
 if(test_var != 0){
 std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
 f_out->Print(std::cout);
@@ -575,7 +653,7 @@ f_out->Print(std::cout);
     }
 
     // dg/dp
-    for (int j=0; j<outArgs.Np(); j++) {
+    for (int j=0; j<num_param_vecs; j++) {
       Teuchos::RCP<Epetra_MultiVector> dgdp_out =
         outArgs.get_DgDp(i,j).getMultiVector();
       //Declare Tpetra copy of dgdp_out
@@ -629,26 +707,33 @@ f_out->Print(std::cout);
 #ifdef ALBANY_SG_MP
   InArgs::sg_const_vector_t x_sg = inArgs.get_x_sg();
   if (x_sg != Teuchos::null) {
-    app->init_sg(inArgs.get_sg_basis(), 
-		 inArgs.get_sg_quadrature(), 
-		 inArgs.get_sg_expansion(), 
-		 x_sg->productComm());
+    app->init_sg(inArgs.get_sg_basis(),
+                 inArgs.get_sg_quadrature(),
+                 inArgs.get_sg_expansion(),
+                 x_sg->productComm());
     InArgs::sg_const_vector_t x_dot_sg  = inArgs.get_x_dot_sg();
     InArgs::sg_const_vector_t x_dotdot_sg  = inArgs.get_x_dotdot_sg();
+    if (x_dot_sg != Teuchos::null || x_dotdot_sg != Teuchos::null) {
+      alpha = inArgs.get_alpha();
+      omega = inArgs.get_omega();
+      beta = inArgs.get_beta();
+      curr_time  = inArgs.get_t();
+    }
+
     InArgs::sg_const_vector_t epetra_p_sg = inArgs.get_p_sg(0);
     Teuchos::Array<int> p_sg_index;
-    for (int i=0; i<inArgs.Np(); i++) {
+    for (int i=0; i<num_param_vecs; i++) {
       InArgs::sg_const_vector_t p_sg = inArgs.get_p_sg(i);
       if (p_sg != Teuchos::null) {
-	p_sg_index.push_back(i);
-	for (int j=0; j<p_sg_vals[i].size(); j++) {
-	  int num_sg_blocks = p_sg->size();
-	  p_sg_vals[i][j].reset(app->getStochasticExpansion(), num_sg_blocks);
-	  p_sg_vals[i][j].copyForWrite();
-	  for (int l=0; l<num_sg_blocks; l++) {
-	    p_sg_vals[i][j].fastAccessCoeff(l) = (*p_sg)[l][j];
-	  }
-	}
+        p_sg_index.push_back(i);
+        for (int j=0; j<p_sg_vals[i].size(); j++) {
+          int num_sg_blocks = p_sg->size();
+          p_sg_vals[i][j].reset(app->getStochasticExpansion(), num_sg_blocks);
+          p_sg_vals[i][j].copyForWrite();
+          for (int l=0; l<num_sg_blocks; l++) {
+            p_sg_vals[i][j].fastAccessCoeff(l) = (*p_sg)[l][j];
+          }
+        }
       }
     }
 
@@ -658,21 +743,21 @@ f_out->Print(std::cout);
 
     // W_sg
     if (W_sg != Teuchos::null) {
-      Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> W_sg_crs(W_sg->basis(), 
-							   W_sg->map());
+      Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> W_sg_crs(W_sg->basis(),
+                                                           W_sg->map());
       for (int i=0; i<W_sg->size(); i++)
-	W_sg_crs.setCoeffPtr(
-	  i,
-	  Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_sg->getCoeffPtr(i)));
-      app->computeGlobalSGJacobian(alpha, beta, omega, curr_time, 
-				   x_dot_sg.get(),  x_dotdot_sg.get(), *x_sg, 
-				   sacado_param_vec, p_sg_index, p_sg_vals,
-				   f_sg.get(), W_sg_crs);
+        W_sg_crs.setCoeffPtr(
+          i,
+          Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_sg->getCoeffPtr(i)));
+      app->computeGlobalSGJacobian(alpha, beta, omega, curr_time,
+                                   x_dot_sg.get(),  x_dotdot_sg.get(), *x_sg,
+                                   sacado_param_vec, p_sg_index, p_sg_vals,
+                                   f_sg.get(), W_sg_crs);
       f_sg_computed = true;
     }
 
     // df/dp_sg
-    for (int i=0; i<outArgs.Np(); i++) {
+    for (int i=0; i<num_param_vecs; i++) {
       Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dfdp_sg
         = outArgs.get_DfDp_sg(i).getMultiVector();
       if (dfdp_sg != Teuchos::null) {
@@ -699,9 +784,9 @@ f_out->Print(std::cout);
     }
 
     if (f_sg != Teuchos::null && !f_sg_computed)
-      app->computeGlobalSGResidual(curr_time, x_dot_sg.get(), x_dotdot_sg.get(),*x_sg, 
-				   sacado_param_vec, p_sg_index, p_sg_vals,
-				   *f_sg);
+      app->computeGlobalSGResidual(curr_time, x_dot_sg.get(), x_dotdot_sg.get(),*x_sg,
+                                   sacado_param_vec, p_sg_index, p_sg_vals,
+                                   *f_sg);
 
     // Response functions
     for (int i=0; i<outArgs.Ng(); i++) {
@@ -723,7 +808,7 @@ f_out->Print(std::cout);
       }
 
       // dg/dp
-      for (int j=0; j<outArgs.Np(); j++) {
+      for (int j=0; j<num_param_vecs; j++) {
         Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > dgdp_sg =
           outArgs.get_DgDp_sg(i,j).getMultiVector();
         if (dgdp_sg != Teuchos::null) {
@@ -750,9 +835,9 @@ f_out->Print(std::cout);
       }
 
       if (g_sg != Teuchos::null && !g_sg_computed)
-	app->evaluateSGResponse(i, curr_time, x_dot_sg.get(), x_dotdot_sg.get(), *x_sg, 
-				sacado_param_vec, p_sg_index, p_sg_vals, 
-				*g_sg);
+        app->evaluateSGResponse(i, curr_time, x_dot_sg.get(), x_dotdot_sg.get(), *x_sg,
+                                sacado_param_vec, p_sg_index, p_sg_vals,
+                                *g_sg);
     }
   }
 
@@ -763,22 +848,29 @@ f_out->Print(std::cout);
   if (x_mp != Teuchos::null) {
     mp_const_vector_t x_dot_mp  = inArgs.get_x_dot_mp();
     mp_const_vector_t x_dotdot_mp  = inArgs.get_x_dotdot_mp();
+    if (x_dot_mp != Teuchos::null || x_dotdot_mp != Teuchos::null) {
+      alpha = inArgs.get_alpha();
+      omega = inArgs.get_omega();
+      beta = inArgs.get_beta();
+      curr_time  = inArgs.get_t();
+    }
+
     Teuchos::Array<int> p_mp_index;
-    for (int i=0; i<inArgs.Np(); i++) {
+    for (int i=0; i<num_param_vecs; i++) {
       mp_const_vector_t p_mp = inArgs.get_p_mp(i);
       if (p_mp != Teuchos::null) {
-	p_mp_index.push_back(i);
-	for (int j=0; j<p_mp_vals[i].size(); j++) {
-	  int num_mp_blocks = p_mp->size();
-	  p_mp_vals[i][j].reset(num_mp_blocks);
-	  p_mp_vals[i][j].copyForWrite();
-	  for (int l=0; l<num_mp_blocks; l++) {
-	    p_mp_vals[i][j].fastAccessCoeff(l) = (*p_mp)[l][j];
-	  }
-	}
+        p_mp_index.push_back(i);
+        for (int j=0; j<p_mp_vals[i].size(); j++) {
+          int num_mp_blocks = p_mp->size();
+          p_mp_vals[i][j].reset(num_mp_blocks);
+          p_mp_vals[i][j].copyForWrite();
+          for (int l=0; l<num_mp_blocks; l++) {
+            p_mp_vals[i][j].fastAccessCoeff(l) = (*p_mp)[l][j];
+          }
+        }
       }
     }
-    
+
     mp_vector_t f_mp = outArgs.get_f_mp();
     mp_operator_t W_mp = outArgs.get_W_mp();
     bool f_mp_computed = false;
@@ -787,18 +879,18 @@ f_out->Print(std::cout);
     if (W_mp != Teuchos::null) {
       Stokhos::ProductContainer<Epetra_CrsMatrix> W_mp_crs(W_mp->map());
       for (int i=0; i<W_mp->size(); i++)
-	W_mp_crs.setCoeffPtr(
-	  i,
-	  Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_mp->getCoeffPtr(i)));
-      app->computeGlobalMPJacobian(alpha, beta, omega, curr_time, 
-				   x_dot_mp.get(), x_dotdot_mp.get(), *x_mp, 
-				   sacado_param_vec, p_mp_index, p_mp_vals,
-				   f_mp.get(), W_mp_crs);
+        W_mp_crs.setCoeffPtr(
+          i,
+          Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_mp->getCoeffPtr(i)));
+      app->computeGlobalMPJacobian(alpha, beta, omega, curr_time,
+                                   x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
+                                   sacado_param_vec, p_mp_index, p_mp_vals,
+                                   f_mp.get(), W_mp_crs);
       f_mp_computed = true;
     }
 
     // df/dp_mp
-    for (int i=0; i<outArgs.Np(); i++) {
+    for (int i=0; i<num_param_vecs; i++) {
       Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dfdp_mp
         = outArgs.get_DfDp_mp(i).getMultiVector();
       if (dfdp_mp != Teuchos::null) {
@@ -825,9 +917,9 @@ f_out->Print(std::cout);
     }
 
     if (f_mp != Teuchos::null && !f_mp_computed)
-      app->computeGlobalMPResidual(curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp, 
-				   sacado_param_vec, p_mp_index, p_mp_vals,
-				   *f_mp);
+      app->computeGlobalMPResidual(curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
+                                   sacado_param_vec, p_mp_index, p_mp_vals,
+                                   *f_mp);
 
     // Response functions
     for (int i=0; i<outArgs.Ng(); i++) {
@@ -849,7 +941,7 @@ f_out->Print(std::cout);
       }
 
       // dg/dp
-      for (int j=0; j<outArgs.Np(); j++) {
+      for (int j=0; j<num_param_vecs; j++) {
         Teuchos::RCP< Stokhos::ProductEpetraMultiVector > dgdp_mp =
           outArgs.get_DgDp_mp(i,j).getMultiVector();
         if (dgdp_mp != Teuchos::null) {
@@ -875,9 +967,9 @@ f_out->Print(std::cout);
       }
 
       if (g_mp != Teuchos::null && !g_mp_computed)
-	app->evaluateMPResponse(i, curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp, 
-				sacado_param_vec, p_mp_index, p_mp_vals, 
-				*g_mp);
+        app->evaluateMPResponse(i, curr_time, x_dot_mp.get(), x_dotdot_mp.get(), *x_mp,
+                                sacado_param_vec, p_mp_index, p_mp_vals,
+                                *g_mp);
     }
   }
 #endif //ALBANY_SG_MP

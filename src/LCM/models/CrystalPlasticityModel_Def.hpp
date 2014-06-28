@@ -8,8 +8,9 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
 
-#define  PRINT_DEBUG
+//#define  PRINT_DEBUG
 #define  PRINT_OUTPUT
+//#define  DECOUPLE
 #include <typeinfo>
 #include <Sacado_Traits.hpp>
 namespace LCM
@@ -42,9 +43,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       C(i,j,i,j) = C(j,i,j,i) = c44_;
     }
   }
-#ifdef PRINT_DEBUG
-  std::cout << "C\n" << C << "\n";
-#endif
 // NOTE check if basis is given else default
 // NOTE default to coordinate axes and also construct 3rd direction if only 2 given
   orientation_.set_dimension(num_dims_);
@@ -62,12 +60,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   }
   // rotate elastic tensor and slip systems to match given orientation
   C_ = Intrepid::kronecker(orientation_,C);
-#ifdef PRINT_DEBUG
-  std::cout << "Q[x]C\n" << C_ << "\n";
-  std::cout << "c " << c11_ << " " << c12_ << " " << c44_ << "\n";
-  std::cout << "orientation\n" << orientation_ << "\n";
-#endif
-  for (int num_ss; num_ss < num_slip_; ++num_ss) {
+  for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
@@ -86,22 +79,26 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   std::cout << "<<< done with parameter list\n";
 #endif
 
-  // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
-  this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
-
-  // retrive appropriate field name strings
+  // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
-  std::string L_string = (*field_name_map_)["Velocity_Gradient"]; // NOTE does not work
+  std::string L_string = (*field_name_map_)["Velocity_Gradient"]; 
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+
+  // define the dependent fields
+  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
+  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
+  this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
+
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
 
   // define the state variables
   //
@@ -112,7 +109,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  //this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
   this->num_state_variables_++;
@@ -121,7 +119,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  //this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // L
   this->num_state_variables_++;
@@ -130,7 +129,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  //this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
   // mechanical source
   this->num_state_variables_++;
@@ -139,7 +139,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
 
 #ifdef PRINT_DEBUG
   std::cout << "<<< done in cp constructor\n";
@@ -155,22 +155,25 @@ computeState(typename Traits::EvalData workset,
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp compute state\n";
 #endif
-  // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
-  PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
-
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+
+  // extract dependent MDFields
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
+  PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
+  PHX::MDField<ScalarT> time = *eval_fields["Time"];
 
   // get state variables
   Albany::MDArray previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
@@ -178,9 +181,10 @@ computeState(typename Traits::EvalData workset,
   ScalarT tau, dgamma;
   ScalarT g0, tauC, m;
   ScalarT dt = delta_time(0);
-  Intrepid::Tensor<ScalarT> Fp_temp(num_dims_),Fpinv(num_dims_);
+  ScalarT tcurrent = time(0);
+  Intrepid::Tensor<ScalarT> Fp_temp(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
-  Intrepid::Tensor<ScalarT> sigma(num_dims_);
+  Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
   Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
   Intrepid::Tensor<RealType> P(num_dims_);
   I_=Intrepid::eye<RealType>(num_dims_);
@@ -192,7 +196,7 @@ computeState(typename Traits::EvalData workset,
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
 #ifdef PRINT_OUTPUT
-      std::cout << ">>> cell " << cell << " point " << pt << " <<<\n";
+//    std::cout << ">>> cell " << cell << " point " << pt << " <<<\n";
 #endif
       // fill local tensors
       F.fill(&def_grad(cell, pt, 0, 0));
@@ -203,10 +207,10 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute stress 
-      computeStress(F,Fp,sigma);
-#ifdef PRINT_DEBUG
-      std::cout << "sigma-PRE\n" << sigma << "\n"; 
-      std::cout << "number of slip systems " << num_slip_ << "\n"; 
+      computeStress(F,Fp,sigma,S);
+#ifdef PRINT_OUTPUT
+      double dgammas[24];
+      double taus[24];
 #endif
       if (num_slip_ >0) { // crystal plasticity
         // compute velocity gradient
@@ -214,37 +218,26 @@ computeState(typename Traits::EvalData workset,
         for (std::size_t s(0); s < num_slip_; ++s) {
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
-          tau = Intrepid::dotdot(P,sigma);
-#ifdef PRINT_DEBUG
-          std::cout << s << " tau " << tau << "\n"; 
-#endif
+          tau = Intrepid::dotdot(P,S);
+          int sign = tau < 0 ? -1 : 1;
           // compute  dgammas
           g0   = slip_systems_[s].gamma_dot_0_;
           tauC = slip_systems_[s].tau_critical_;
           m    = slip_systems_[s].gamma_exp_;
-          dgamma = dt*g0*std::pow(tau/tauC,m);
+          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
           L += (dgamma* P);
-        }
-#ifdef PRINT_DEBUG
-        std::cout << "L\n" << L << "\n"; 
+#ifdef PRINT_OUTPUT
+          dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);
+          taus[s] = Sacado::ScalarValue<ScalarT>::eval(tau);
 #endif
+        }
         // update plastic deformation gradient
         expL = Intrepid::exp(L);
-#ifdef PRINT_DEBUG
-        std::cout << "expL\n" << expL << "\n"; 
-#endif
         Fp_temp = expL * Fp;
         Fp = Fp_temp;
-#ifdef PRINT_DEBUG
-        std::cout << "Fp-POST\n" << Fp << "\n"; 
-#endif
         // recompute stress
-        computeStress(F,Fp,sigma);
-#ifdef PRINT_DEBUG
-        std::cout << "sigma-POST\n" << sigma << "\n"; 
-#endif
+        computeStress(F,Fp,sigma,S);
       }
-      // history
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
@@ -254,35 +247,41 @@ computeState(typename Traits::EvalData workset,
         }
       }
 #ifdef PRINT_OUTPUT
-#if 0
-      out <<  "F  "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(F);
-      out <<  "Fp "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(Fp);
-      out <<  "T  "<< Sacado::ScalarValue<Intrepid::Tensor<ScalarT> >::eval(sigma);
-#else
       if (cell == 0 && pt == 0) {
+      out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
+          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
         }
       }
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
+          out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
         }
       }
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          out <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
+          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
         }
+      }
+      for (std::size_t i(0); i < num_dims_; ++i) {
+        for (std::size_t j(0); j < num_dims_; ++j) {
+          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
+        }
+      }
+      for (std::size_t s(0); s < num_slip_; ++s) {
+        out << std::setprecision(12) <<  dgammas[s] << " ";
+      }
+      for (std::size_t s(0); s < num_slip_; ++s) {
+        out << std::setprecision(12) <<  taus[s] << " ";
       }
       out << "\n";
       }
 #endif
-#endif
     }
   }
 #ifdef PRINT_DEBUG
-  std::cout << "<<< done in cp compute state\n";
+  std::cout << "<<< done in cp compute state\n" << std::flush;
 #endif
 }
 //------------------------------------------------------------------------------
@@ -290,22 +289,21 @@ template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeStress(Intrepid::Tensor<ScalarT> const & F,
               Intrepid::Tensor<ScalarT> const & Fp,
-              Intrepid::Tensor<ScalarT>       & sigma) 
+              Intrepid::Tensor<ScalarT>       & sigma, 
+              Intrepid::Tensor<ScalarT>       & S) 
 
 {
   // Saint Venant–Kirchhoff model
-  std::cout << "F\n" << F << "\n";
-  std::cout << "Fp\n" << Fp << "\n";
   Fpinv_ = Intrepid::inverse(Fp);
-  std::cout << "Fp-1\n" << Fpinv_ << "\n";
+#ifdef DECOUPLE
+  std::cout << "ELASTIC STRESS ONLY\n";
+  Fe_ = F;
+#else
   Fe_ = F * Fpinv_;
-  std::cout << "Fe\n" << Fe_ << "\n";
+#endif
   E_ = 0.5*( Intrepid::transpose(Fe_) * Fe_ - I_);
-  std::cout << "E\n" << E_ << "\n";
-  S_ = Intrepid::dotdot(C_,E_);
-  std::cout << "S\n" << S_ << "\n";
-  sigma = (1.0 / Intrepid::det(F) ) * F* S_ * Intrepid::transpose(F);
-  
+  S = Intrepid::dotdot(C_,E_);
+  sigma = (1.0 / Intrepid::det(F) ) * F* S * Intrepid::transpose(F);
 }
 //------------------------------------------------------------------------------
 }

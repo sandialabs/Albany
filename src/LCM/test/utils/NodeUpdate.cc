@@ -85,8 +85,7 @@ int main(int ac, char* av[])
   topology.removeNodeRelations();
 
   // Check for failure criterion
-  std::map<stk_classic::mesh::EntityKey, bool> entity_open;
-  topology.setEntitiesOpen(entity_open);
+  topology.setEntitiesOpen();
   std::string gviz_output = LCM::parallelize_string("output") + ".dot";
   topology.outputToGraphviz(gviz_output);
 
@@ -95,7 +94,7 @@ int main(int ac, char* av[])
 
   // begin mesh fracture
   std::cout << "begin mesh fracture\n";
-  topology.splitOpenFaces(entity_open);
+  topology.splitOpenFaces();
 
   //std::string gviz_output = "output.dot";
   //topology.output_to_graphviz(gviz_output,entity_open);
@@ -139,7 +138,7 @@ int main(int ac, char* av[])
   for (int i = 0; i < element_lst.size(); ++i){
     std::vector<double> centroid(3);
     std::vector<double> disp(3);
-    stk_classic::mesh::PairIterRelation relations = 
+    stk_classic::mesh::PairIterRelation relations =
       element_lst[i]->relations(LCM::NODE_RANK);
     // Get centroid of the element
     for (int j = 0; j < relations.size(); ++j){

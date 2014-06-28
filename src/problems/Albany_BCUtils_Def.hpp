@@ -190,6 +190,53 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   }
 
   ///
+  /// Schwarz BC specific
+  ///
+  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+
+    std::string
+    ss = traits_type::constructBCName(nodeSetIDs[i], "Schwarz");
+
+    if (BCparams.isSublist(ss)) {
+      // grab the sublist
+      ParameterList &
+      sub_list = BCparams.sublist(ss);
+
+      if (sub_list.get<std::string>("BC Function") == "Schwarz") {
+
+        RCP<ParameterList>
+        p = rcp(new ParameterList);
+
+        p->set<int>("Type", traits_type::typeSw);
+
+        p->set<std::string>(
+            "Coupled Block",
+            sub_list.get<std::string>("Coupled Block")
+        );
+
+        // Fill up ParameterList with things DirichletBase wants
+        p->set< RCP<DataLayout> >("Data Layout", dummy);
+        p->set< std::string > ("Dirichlet Name", ss);
+        p->set< RealType >("Dirichlet Value", 0.0);
+        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+        p->set< int > ("Equation Offset", 0);
+        // if set to zero, the cubature degree of the side
+        // will be set to that of the element
+        p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+        std::stringstream
+        ess;
+
+        ess << "Evaluator for " << ss;
+        evaluators_to_build[ess.str()] = p;
+
+        bcs.push_back(ss);
+      }
+    }
+  }
+
+  ///
   /// Kfield BC specific
   ///
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
@@ -365,11 +412,14 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             p->set<double> ("L", L);
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
-
-            if(isVectorField) {
-              p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
-            }
-
+            if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
+            else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
+          }
+          else if(conditions[k] == "basal_scalar_field") {
+            p->set<string>("Beta Field Name", "Basal Friction");
+            p->set<std::string> ("DOF Name", dof_names[0]);
+            p->set<bool> ("Vector Field", isVectorField);
+            if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "lateral") {
@@ -546,7 +596,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
    {
      RCP<ParameterList> p = rcp(new ParameterList());
      p->set<int>("Type", traits_type::typeGBF);
- 
+
      // for new way
      p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
      p->set< string >("Basal Friction Name", "Basal Friction");
@@ -695,9 +745,11 @@ Albany::DirichletTraits::getValidBCParameters(
   for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
     std::string ss = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "K");
     std::string tt = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "twist");
+    std::string ww = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "Schwarz");
     std::string uu = Albany::DirichletTraits::constructBCName(nodeSetIDs[i], "CoordFunc");
     validPL->sublist(ss, false, "");
     validPL->sublist(tt, false, "");
+    validPL->sublist(ww, false, "");
     validPL->sublist(uu, false, "");
   }
 

@@ -30,7 +30,8 @@ namespace Albany {
                   const double * beta_at_nodes_Ptr, 
                   const double * surf_height_at_nodes_Ptr, 
                   const double * flwa_at_active_elements_Ptr,
-                  const int nNodes, const int nElementsActive, const int nCellsActive); 
+                  const int nNodes, const int nElementsActive, 
+                  const int nCellsActive, const int verbosity); 
 
     ~CismSTKMeshStruct();
 
@@ -96,6 +97,7 @@ namespace Albany {
     Teuchos::RCP<Epetra_Map> basal_face_map; //basalface map 
     bool hasRestartSol;
     double restartTime;
+    int debug_output_verbosity; 
   };
 
 }

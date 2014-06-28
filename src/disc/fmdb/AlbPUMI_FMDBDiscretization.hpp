@@ -86,6 +86,7 @@ template<class Output>
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print coords for debugging
@@ -204,6 +205,32 @@ template<class Output>
       abort();
     }
 
+    int getGlobalDOF(const int inode, const int eq) const
+    {
+      return getDOF(inode,eq);
+    }
+
+    // Copy field data from Epetra_Vector to APF
+    void setField(
+        const char* name,
+        const Epetra_Vector& data,
+        bool overlapped,
+        int offset = 0);
+    void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
+        const Epetra_Vector& data, bool overlapped);
+
+    // Copy field data from APF to Epetra_Vector
+    void getField(
+        const char* name,
+        Epetra_Vector& data,
+        bool overlapped,
+        int offset = 0) const;
+    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
+        Epetra_Vector& data, bool overlapped) const;
+
+    // Rename exodus output file when the problem is resized
+    void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
+
   private:
 
     //! Private to prohibit copying
@@ -317,6 +344,7 @@ template<class Output>
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
     Albany::WsLIDList  elemGIDws;

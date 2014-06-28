@@ -30,7 +30,6 @@ void Albany_RythmosObserver::observeStartTimeStep(
     const int timeStepIter
     )
 {
-
   if(initial_step)
 
     initial_step = false;
@@ -38,6 +37,9 @@ void Albany_RythmosObserver::observeStartTimeStep(
   else
 
     return;
+
+std::cout << "AGS:: Hack do not observe first step" << std::endl; return;
+
 
   // Print the initial condition
 
@@ -94,6 +96,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
   Teuchos::RCP<const Thyra::VectorBase<ScalarType> > solution_dot;
   if (solnandsens != Teuchos::null) {
     solution = solnandsens->getVectorBlock(0);
+// Next line bombs with BDF
     solution_dot = solnandsens_dot->getVectorBlock(0);
   }
   else {
@@ -105,6 +108,7 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
 
   const Epetra_Vector soln= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution));
 
+  // Comment out this section for BDF
   if(solution_dot != Teuchos::null){
     const Epetra_Vector soln_dot= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), solution_dot));
     impl.observeSolution(time, soln, Teuchos::constOptInArg(soln_dot));
@@ -113,4 +117,19 @@ void Albany_RythmosObserver::observeCompletedTimeStep(
     impl.observeSolution(time, soln, Teuchos::null);
   }
 
+  // Add this section for output of sensitivities instead of soution
+  /*
+  if (solnandsens != Teuchos::null) {
+    std::cout << "AGS: Albany_RythmosObserver writing out sensitivity vectors: " 
+              << solnandsens->productSpace()->numBlocks()-1 << std::endl;
+    Teuchos::RCP<const Thyra::VectorBase<ScalarType> > sensvec;
+    for (int i=1; i < solnandsens->productSpace()->numBlocks(); i++) {
+      sensvec = solnandsens->getVectorBlock(i);
+      const Epetra_Vector sens= *(Thyra::get_Epetra_Vector(impl.getNonOverlappedMap(), sensvec));
+      // tweak time a little bit
+      impl.observeSolution(time*(1.0 + 1.0e-4*i), sens, Teuchos::null);
+    }
+  }
+  else  impl.observeSolution(time, soln, Teuchos::null);
+  */
 }

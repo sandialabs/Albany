@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#-------------------------------------------
+#
+# Prototype script to checkout, compile Dakota
+#
+#
+# BvBW  10/06/08
+# AGS  04/09
+#-------------------------------------------
+
+#-------------------------------------------
+# setup and housekeeping
+#-------------------------------------------
+
+set -e
+
+DUMMY1=${NIGHTLYDIR:?NIGHTLYDIR not set}
+DUMMY2=${TRIKOTADIR:?TRIKOTADIR: not set}
+
+if [ -a $NIGHTLYDIR/dakota-stable.src.tar ]; then \rm $NIGHTLYDIR/dakota-stable.src.tar
+fi
+if [ -a $NIGHTLYDIR/dakota-stable.src.tar.gz ]; then \rm $NIGHTLYDIR/dakota-stable.src.tar.gz
+fi
+
+cd $NIGHTLYDIR
+
+#-------------------------------------------
+# copy, configure, build, install Dakota
+#-------------------------------------------
+
+wget -nv --no-check-certificate \
+ https://development.sandia.gov/dakota/distributions/dakota/stable/dakota-stable.src.tar.gz
+gunzip dakota-stable.src.tar.gz
+
+cd $TRIKOTADIR
+
+tar xf $NIGHTLYDIR/dakota-stable.src.tar
+
+/bin/rm -rf Dakota
+mv dakota-*.src Dakota

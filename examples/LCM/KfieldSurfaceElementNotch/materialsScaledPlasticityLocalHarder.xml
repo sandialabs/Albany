@@ -5,17 +5,28 @@
   
     <ParameterList name="block_1">
       <Parameter name="material" type="string" value="Metal" />
+      <!-- Address volumetric locking under isochoric deformations through kinematics -->
+      <!-- Weighting a combination of a volume averaged J (det[F]) and a local J -->
       <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <!-- Stabilization Parameters > 0.0 will yield non-constant J's throughout the element -->
+      <!-- For uncoupled, hyperelastic models, 0.0 will yield a constant pressure -->
       <Parameter name="Average J Stabilization Parameter" type="double" value = "0.0"/>
+      <!-- For any model type, ensure a volume averaged pressure for the force calulation --> 
       <Parameter name="Volume Average Pressure" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="block_2">
       <Parameter name="material" type="string" value="Fast Metal" />
+      <!-- Address volumetric locking under isochoric deformations through kinematics -->
+      <!-- Weighting a combination of a volume averaged J (det[F]) and a local J -->
       <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <!-- Stabilization Parameters > 0.0 will yield non-constant J's throughout the element -->
+      <!-- For uncoupled, hyperelastic models, 0.0 will yield a constant pressure -->
       <Parameter name="Average J Stabilization Parameter" type="double" value = "0.0"/>
+      <!-- For any model type, ensure a volume averaged pressure for the force calulation -->
       <Parameter name="Volume Average Pressure" type="bool" value="true"/>
       <Parameter name="Surface Element" type="bool" value="true" />
       <Parameter name = "Localization thickness parameter" type = "double" value = "1.0e-2"/>
+      <!-- Turning off the membrane forces - we are only integrating the traction for the forces -->
       <Parameter name="Compute Membrane Forces" type="bool" value="false"/>
     </ParameterList>
   </ParameterList>

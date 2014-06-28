@@ -61,6 +61,8 @@ class NodalDataBlock {
     Teuchos::RCP<const Tpetra_CrsGraph> getNodalGraph()
          { return nodalGraph; }
 
+    LO getBlocksize(){ return blocksize; }
+
   private:
 
     struct NodeFieldSize {

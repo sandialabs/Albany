@@ -22,7 +22,6 @@ SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 IF (DEFINED ALBANY_TRILINOS_DIR)
   SET(CMAKE_PREFIX_PATH ${ALBANY_TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
 ENDIF()
-
 FIND_PACKAGE(Trilinos REQUIRED)
 
 # Trilinos_BIN_DIRS probably should be defined in the Trilinos config. Until it is, set it here.
@@ -46,18 +45,6 @@ MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
-
-IF(ENABLE_PERIDIGM)
-  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
-  FIND_PACKAGE(Peridigm REQUIRED)
-  MESSAGE("\nFound Peridigm!  Here are the details: ")
-  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
-  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
-  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
-  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
-  MESSAGE("End of Peridigm details\n")
-  SET(ALBANY_PERIDIGM TRUE)
-ENDIF()
 
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
@@ -295,6 +282,24 @@ ELSE()
   SET(ALBANY_LCM FALSE)
 ENDIF()
 
+# set optional dependency on Peridigm peridynamics code, defaults to Disabled
+OPTION(ENABLE_PERIDIGM "Flag to turn on Albany-Peridigm code coupling" OFF)
+IF(ENABLE_PERIDIGM)
+  SET(CMAKE_PREFIX_PATH ${PERIDIGM_DIR} ${CMAKE_PREFIX_PATH})
+  FIND_PACKAGE(Peridigm REQUIRED)
+  MESSAGE("\nFound Peridigm!  Here are the details: ")
+  MESSAGE("   Peridigm_DIR = ${Peridigm_DIR}")
+  MESSAGE("   Peridigm_LIBRARIES = ${Peridigm_LIBRARIES}")
+  MESSAGE("   Peridigm_INCLUDE_DIRS = ${Peridigm_INCLUDE_DIRS}")
+  MESSAGE("   Peridigm_LIBRARY_DIRS = ${Peridigm_LIBRARY_DIRS}")
+  MESSAGE("End of Peridigm details\n")
+  ADD_DEFINITIONS(-DALBANY_PERIDIGM)
+  SET(ALBANY_PERIDIGM TRUE)
+ELSE()
+  MESSAGE("-- PERIDIGM  is NOT Enabled.")
+  SET(ALBANY_PERIDIGM FALSE)
+ENDIF()
+
 # Set optional build of QCAD (Quantum Device Modeling and Design) defaults to ON
 OPTION(ENABLE_QCAD "Flag to turn on QCAD Source code" ON)
 IF (ENABLE_QCAD)
@@ -317,19 +322,40 @@ ELSE()
   SET(ALBANY_FELIX FALSE)
 ENDIF()
 
-# Set optional build of AERAS (Atmosphere Dynamics LDRD), defaults to Disabled
-OPTION(ENABLE_AERAS "Flag to turn on AERAS Source code" OFF)
+# Set optional build of CISM Interface for FELIX (Land Ice SciDAC project),
+# defaults to Disabled
+
+OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
+IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
+  ADD_DEFINITIONS(-DCISM_HAS_FELIX)
+  MESSAGE("-- CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
+  SET(CISM_HAS_FELIX TRUE)
+  IF (NOT CISM_INCLUDE_DIR)
+    MESSAGE("\nError:  CISM_INCLUDE_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- CISM_INCLUDE_DIR ${CISM_INCLUDE_DIR}")
+  ENDIF()
+ELSEIF(ENABLE_CISM_INTERFACE AND (NOT ENABLE_FELIX))
+  MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires ENABLE_FELIX
+to be ON\n")
+ELSE()
+  MESSAGE("-- CISM_INTERFACE     is NOT Enabled.")
+  SET(CISM_HAS_FELIX FALSE)
+ENDIF()
+
+# Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
+OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
 IF (ENABLE_AERAS)
   ADD_DEFINITIONS(-DALBANY_AERAS)
-  MESSAGE("-- AERAS     is Enabled, compiling with -DALBANY_AERAS")
+  MESSAGE("-- Aeras     is Enabled, compiling with -DALBANY_AERAS")
   SET(ALBANY_AERAS TRUE)
 ELSE()
-  MESSAGE("-- AERAS     is NOT Enabled.")
+  MESSAGE("-- Aeras     is NOT Enabled.")
   SET(ALBANY_AERAS FALSE)
 ENDIF()
 
 # optional dependency on LAME, defaults to FALSE
-OPTION(ENABLE_LAME "Flag to turn on LAME lmaterial library source code" OFF)
+OPTION(ENABLE_LAME "Flag to turn on LAME material library source code" OFF)
 IF(ENABLE_LAME)
   MESSAGE("-- LAME      is enabled, compiling with -DALBANY_LAME")
   ADD_DEFINITIONS(-DALBANY_LAME)
@@ -461,7 +487,7 @@ IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
     MESSAGE(FATAL_ERROR "\nError:  SCOREC option requires ZOLTAN with PARMETIS built in\n")
   ENDIF()
   MESSAGE("-- SCOREC    is enabled, compiling with -DALBANY_SCOREC")
-  ADD_DEFINITIONS(-DALBANY_SCOREC)
+  ADD_DEFINITIONS(-DALBANY_SCOREC -DTRILINOS)
   SET(ALBANY_SCOREC TRUE)
   IF(ALBANY_MPI)
     ADD_DEFINITIONS(-DPUMI_PARALLEL)
@@ -493,6 +519,17 @@ ELSE()
   SET(ALBANY_SCOREC FALSE)
 ENDIF()
 
+# ParaView's Catalyst CoProcessing package
+OPTION(ENABLE_CATALYST "Flag to turn on support for the Catalyst CoProcessing library" OFF)
+IF (ENABLE_CATALYST)
+  ADD_DEFINITIONS(-DALBANY_CATALYST)
+  MESSAGE("-- Catalyst  is Enabled, compiling with -DALBANY_CATALYST")
+  SET(ALBANY_CATALYST TRUE)
+ELSE()
+  MESSAGE("-- Catalyst  is NOT Enabled.")
+  SET(ALBANY_CATALYST FALSE)
+ENDIF()
+
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
 OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" ON)
@@ -507,7 +544,6 @@ ELSE()
     MESSAGE(FATAL_ERROR "\nError:  ASCR code requires ENABLE_SG_MP to be ON\n")
   ENDIF()
 ENDIF()
-
 
 ## Other Miscellaneous Albany Options here:
 MESSAGE("\nMiscellaneous Albany Options:")
@@ -594,11 +630,42 @@ ELSE (ENABLE_DAKOTA_RESTART_EXAMPLES)
   SET (ALBANY_DAKOTA_RESTART_EXAMPLES FALSE)
 ENDIF (ENABLE_DAKOTA_RESTART_EXAMPLES)
 
+# add a target to generate API documentation with Doxygen
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/albanyMainPage.doc ${CMAKE_CURRENT_BINARY_DIR}/albanyMainPage.doc)
+add_custom_target(doc
+${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+COMMENT "Generating API documentation with Doxygen" VERBATIM
+)
+endif(DOXYGEN_FOUND)
+
 ## End of CMake options to Albany
 
 add_subdirectory(src)
 
 enable_testing()
+
+#  Timeout real long running tests
+
+IF(ALBANY_CTEST_TIMEOUT)
+    MESSAGE("-- Setting maximum test run time to be       ${ALBANY_CTEST_TIMEOUT} seconds")
+ELSE()
+    MESSAGE("-- No limits are set on maximum test run time")
+ENDIF()
+
+# Make a clean build target for convenience
+
+ADD_CUSTOM_TARGET( cmake_clean
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CMakeCache.txt
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/Makefile
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/cmake_install.cmake
+    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
+)
+
 IF(ALBANY_MPI)
   IF(ALBANY_MPI_OPTIONS)
     SET(MPIEX  ${ALBANY_MPI_EXEC})

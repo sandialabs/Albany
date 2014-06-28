@@ -1,0 +1,222 @@
+                       Ray's Felix Cheatsheet 
+                       ======================
+
+  I. Where does data come from, what kind of data do we need, what is the 
+     quality of this data?
+
+
+   a) Data needed by Felix to run steady simulation and compute velocities:   
+         1) 3d mesh OR 2d mesh + upper surface elevation + thickness of the ice
+         2) beta friction field
+         3) temperature field
+
+      Mauro indicated that CISM can solve for temperature and velocities
+      at the same time, implying that CISM doesn't need a supplied 
+      temperature field (but it does not heat flux along with
+      surface temperatures as BCs for the temperature equation).
+   
+   b) Some 2D data is available in netcdf files corresponding to a uniform
+      structured quadrilateral mesh.  Steve Price and/or Matt Norman helped
+      collect this data from publicly available information and put it
+      in the proper format. I suspect that 1)-6) listed below comes from
+      post-processed measurements?? Some netcdf data (e.g., 
+      /global/project/projectdirs/piscees/data/gis/complete/greenland_1km_2013_10_01.nc)
+      includes:
+
+         1) thickness of floating and grounded ice: thk
+         2) basal heat flux : bheatflx
+         3) bedrock elevation : topg
+         4) upper surface elevation: usrf
+         5) annual mean air temperature: artm
+         6) (x,y) coordinates: x1,y1
+         7) surface mass balance (snow accumulation/melting/runoff) which
+            actually comes from a climate simulation : acab
+         8) surface velocities: vx, vy 
+         9) RMS errors: ex and ey are errors associated with vx and vy. 
+
+
+      Note: usurf-thk gives the lower surface of the ice, which coincides with
+            topg where the ice is grounded.
+
+   c) Some data is grabbed from CISM when it is coupled to Felix. My 
+      understanding is that we often grab CISM data in this coupled mode
+      and then export it in a format (e.g., exodus) so that we can run
+      Felix uncoupled from CISM. Other data is perhaps dumped from
+      CISM and read by either Felix or by some optimization procedure:
+
+         1) CISM 3D grid
+         2) CISM computed temperature  (5km steady computation)
+         3) CISM flow rates
+         4) beta fields imported from the mesh
+
+      Mauro notes that when we grab temperature fields from CISM, these
+      implicitly are based on a calibrated beta field(Price et Al. PNAS, 2011).
+      Mauro also indicates that in the future, temperature fields might be
+      computed via the optimization procedure associated with d).
+
+   d) Data used by Mauro/Steve/Georg in generating beta and modified thickness
+      fields needed by Felix:
+
+         1) netcdf surface mass balance from climate simulation
+         3) netcdf 2d geometry + surface elevation + thickness
+         4) CISM computed temperatures
+         5) netcdf surface velocities measures + errors on surface velocity and
+            on bedrock topography measurements.
+
+      The modified thickness fields are filtered versions of the 
+      thickness which is better for simulations (see e) just below).
+      Mauro does some kind of optimization to produce beta/thickness
+      fields where he attempts to minimize discrepancies between available
+      data and his computed versions of surface mass balance and surface
+      velocities. Mauro also notes that this optimization is carried
+      out in 3D and that in the future temperatures might be part of the
+      optimization and then dumped for FELIX use.
+
+   e) Data is generally noisy. Mauro pointed out that for the measured 
+      thickness it is very hard to measure the position of the bedrock 
+      topography. Errors in the thickness cause huge non-physical transients
+      at the beginning of non-steady simulations. This is because the ice is
+      not at equilibrium with the given noisy geometry and the computed 
+      surface mass balance. Thus, the optimization produces a thickness field
+      so that the ice is close to mechanical equilibrium with the given
+      surface mass balance.
+
+   f) It appears that our finest resolution for most of this data is 1km,
+      though it sounds like we can at least get some of it to higher
+      resolution. Given issues with data noise, it is not totally clear
+      what is a desired resolution. Additionally, when performing scaling/
+      convergence studies, it is often safest to start with lower resolution
+      data (that might be interpolated to higher resolution) so that all
+      simulations being compared have consistent data sets. Specifically,
+      Mauro indicates that the following were smoothed for the convergence
+      study: basal friction, thickness, surface height. In this way, solution
+      gradients are not too large (relatively to spatial resolution) and
+      we are more likely to reproduce theoretical convergence rates.
+      Currently, temperature is not smoothed (as it is already pretty smooth).
+      I should note that even if some data is at lower resolution or
+      smoothed out, our convergence studies indicate that there is still 
+      value in refining the simulation mesh.
+
+ II. Where do meshes come from?
+
+   a) Mauro's can make 2D meshes (uniform or non-uniform triangles and quads)
+      and extrude them into 3D. When triangles are extruded, there is an option
+      to make tets. Ray has some concerns about the ability of the linear 
+      solver to handle these tet meshes (see below). Mauro has solved some
+      tet problems with ILU, so he has at least some positive experience.
+
+      Mauro Mesh Details
+      ------------------
+      1) 2D quad mesh via Matlab scripts
+
+          i. import thickness field from netcdf (e.g. 1km grid on Hopper).
+         ii. select quads that with non-zero ice thickness.
+        iii. build quad connectivity and detect boundary edges.
+
+      2) 2D triangle mesh via Matlab scripts and mesh generator 'Triangle'.
+
+          i. import thickness field from netcdf (e.g. 1km grid on Hopper).
+         ii. select triangles with non-zero ice thickness.
+        iii. build triangle connectivity and detect boundary edges.
+         iv. optionally invoke Triangle (boundary edges and holes as input)
+          v. optionally refine Triangle mesh constraining triangle areas
+             to be smaller than a a quantity proportional to the inverse 
+             of the gradient of the measured surface velocity.
+
+        Step iv. gives a truly unstructured mesh while v. provides refinement. 
+
+
+      Mauro generates an ASCII mesh file that can be read by Felix to 
+      produce 2D exo files, which can be partitioned offline. Felix 
+      takes care of extruding, using thickness and surface elevation 
+      fields. Extrusion is primarily done in parallel with the exception of
+      the the serial import of the ASCII files (e.g., thickness.ascii)
+
+   b) Irina can import 3D meshes from CISM. These meshes are essentially
+      on structured (hex) meshes. At the moment, the finest that I have
+      seen is 1km.  I'm not sure if this was created by taking raw data from
+      a lower resolution than just refining it (in some smooth way) or not.
+      I also do not know what limitations/practical issues exist in
+      terms of getting higher resolution data. I know that we can refine
+      meshes (and perhaps refine required fields) via Glen Hansen's adaptive
+      mesh capability.
+
+
+      I'm not sure how/if we can easily get beta/temperature fields
+      with these CISM meshes.  Mauro notes that it should be possible to 
+      interpolate the fields obtained with the inverse problem onto the
+      grid that CISM imports, so that perhaps Felix can grab these. In
+      theory when running CISM-Albany, beta/temp fields could be written to a
+      *.nc file that is read into CISM, and could be passed to Albany through
+      the CISM-Albany interface.  However, the Greenland problems don't write
+      beta/temp fields to .nc files.
+
+      I believe mesh imports occur by running CISM/Albany. The mesh is read
+      into CISM from a *.nc file, and then Albany will write out a *.exo file 
+      with the mesh/solution that can be then be used without CISM.
+      If you run transient CISM/Albany, then apparently the Albany computed 
+      solution and the mesh at each time step is written to a .nc file.  
+      By the way, the mesh can change from time step to time step.  One
+      last issue is how the CISM mesh is converted to an appropriate Albany
+      mesh. I think Albany's form of the mesh is created on the CISM side
+      (in some code that Irina wrote that assigns global IDs/creates the
+      element connectivity) from raw data in the .nc file.
+             
+
+   c) MPAS can also be linked to Felix. MPAS is a finite volume ocean/climate
+      library developed at Los Alamos. It works on Voronoi meshes, which are
+      dual to the Delaunay triangulations that Felix wants. At the present 
+      time Felix can already generate online the Delaunay triangulations (
+      and then extrude them) given a GIS in MPAS format. Currently, we don't
+      have too many exciting MPAS meshes, just uniform. Some day Mauro dreams
+      of taking triangular meshes produced by Triangle and building a Voronoi
+      dual for use in MPAS. Steve Price noted that M. Hoffman and D. Jacobsen 
+      have recently made some progress. Currently, they can take a var. res.
+      mesh created using triangle and then parse it so that the corresponding
+      MPAS voronoi tessellation (VT) is built. It won't necessarily have all
+      the nice properties of an MPAS generated mesh (i.e., it won't be a CVT)
+      but he thinks it will still work with MPAS. 
+
+III. Lateral BCs
+
+   a) Laterals can either be run with homogeneous or non-homogeneous 
+      Neumann BCs. The non-homogeneous BCs would take into account
+      the back-pressure of the ocean on lateral cliffs that is needed
+      to properly deal with floating ice. Back-pressure also comes from 
+      the bottom of the ice. However, the first-order formulation
+      depends only on horizontal velocities, and so it is not possible 
+      to prescribe a normal stress at the bottom or upper surface.
+      Thus, we do not prescribe a different BC at the bottom other
+      than setting basal friction to zero.  In a full Stokes model,
+      however, we would have to enforce a floating condition on the
+      bottom surface. 
+
+   b) When one includes the line 
+
+       <Parameter name="NBC on SS lateralside for DOF all set lateral" type="Array(double)" value="{0.0, 0.0, 0.0, 0.0, 0.0}"/>
+
+      we can have non-homogeneous Neumann BCs where the ice is floating and 
+      homogeneous Neumann BCs where it is grounded.  However, I believe if you
+      put all 0.0's for the lateral BC, it amounts to using a stress-free BC
+      at the lateral boundary. So some magic numbers need to be supplied?
+      When this line is commented out we automatically have homogeneous Neumann
+      BCs everywhere on lateral boundary.  I believe for science runs we want
+      non-homogeneous for floating portions of ice, but perhaps for scaling
+      studies/convergence tests it is convenient to do homogeneous everywhere.
+
+      Note: pressure is assumed to be hydrostatic.  This implies that the
+      non-homogeneous term depends on the thickness, portion of ice immersed
+      and the density of water. As sea ice level is z=0 and the densities
+      of water and ice are given and constant, we have all the information
+      needed to prescribe non-homogeneous lateral BCs.
+
+      I'm not totally sure what Irina means, but it sounds like the lateral
+      BC's haven't been tested that much. Irina notes "Mauro or I should 
+      include/test this line in the input file to make sure it is in the right
+      format, the sign is right, etc (so don't just add the lateral BC line to
+      a problem that didn't have it as the code might do something weird).  I
+      haven't tested the lateral BC at all with the CISM meshes for Greenland
+      actually -- just shelf some time back." One final comment from Mauro
+      "Regarding floating BC, I think that for CISM-Albany to work with 
+      floating bcs we only need to construct the lateral sides when building
+      the stk mesh."

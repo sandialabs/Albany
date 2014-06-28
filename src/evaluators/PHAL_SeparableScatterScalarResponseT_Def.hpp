@@ -147,6 +147,107 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (dgdxdot != Teuchos::null)
     dgdxdot->doExport(*overlapped_dgdxdot, *workset.x_importerT, Tpetra::ADD);
 }
+// **********************************************************************
+// Specialization: Distributed Parameter Derivative
+// **********************************************************************
+
+template<typename Traits>
+SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+SeparableScatterScalarResponseT(const Teuchos::ParameterList& p,
+                               const Teuchos::RCP<Albany::Layouts>& dl)
+{
+  this->setup(p,dl);
+}
+
+template<typename Traits>
+void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+preEvaluate(typename Traits::PreEvalData workset)
+{
+  /*
+  // Initialize derivatives
+  Teuchos::RCP<Epetra_MultiVector> dgdx = workset.dgdx;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  if (dgdx != Teuchos::null) {
+    dgdx->PutScalar(0.0);
+    overlapped_dgdx->PutScalar(0.0);
+  }
+
+  Teuchos::RCP<Epetra_MultiVector> dgdxdot = workset.dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot =
+    workset.overlapped_dgdxdot;
+  if (dgdxdot != Teuchos::null) {
+    dgdxdot->PutScalar(0.0);
+    overlapped_dgdxdot->PutScalar(0.0);
+  }
+  */
+}
+
+template<typename Traits>
+void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  /*
+  // Here we scatter the *local* response derivative
+  Teuchos::RCP<Epetra_MultiVector> dgdx = workset.overlapped_dgdx;
+  Teuchos::RCP<Epetra_MultiVector> dgdxdot = workset.overlapped_dgdxdot;
+  Teuchos::RCP<Epetra_MultiVector> dg;
+  if (dgdx != Teuchos::null)
+    dg = dgdx;
+  else
+    dg = dgdxdot;
+
+  // Loop over cells in workset
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
+      workset.wsElNodeEqID[cell];
+
+    // Loop over responses
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      ScalarT& val = this->local_response(cell, res);
+
+      // Loop over nodes in cell
+      for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
+        int neq = nodeID[node_dof].size();
+
+        // Loop over equations per node
+        for (unsigned int eq_dof=0; eq_dof<neq; eq_dof++) {
+
+          // local derivative component
+          int deriv = neq * node_dof + eq_dof;
+
+          // local DOF
+          int dof = nodeID[node_dof][eq_dof];
+
+          // Set dg/dx
+          dg->SumIntoMyValue(dof, res, val.dx(deriv));
+
+        } // column equations
+      } // column nodes
+    } // response
+  } // cell
+  */
+}
+
+template<typename Traits>
+void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+postEvaluate(typename Traits::PostEvalData workset)
+{
+  /*
+  // Here we scatter the *global* response
+  Teuchos::RCP<Epetra_Vector> g = workset.g;
+  if (g != Teuchos::null)
+    for (std::size_t res = 0; res < this->global_response.size(); res++) {
+      (*g)[res] = this->global_response[res].val();
+  }
+
+  // Here we scatter the *global* response derivatives
+  Teuchos::RCP<Epetra_MultiVector> dgdx = workset.dgdx;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
+  if (dgdx != Teuchos::null)
+    dgdx->Export(*overlapped_dgdx, *workset.x_importer, Add);
+  */
+}
+
 
 // **********************************************************************
 // Specialization: Stochastic Galerkin Jacobian

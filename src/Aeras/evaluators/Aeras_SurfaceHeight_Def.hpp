@@ -11,26 +11,24 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Albany_Layouts.hpp"
-
+#include "Aeras_ShallowWaterConstants.hpp"
 
 namespace Aeras {
 
-const double pi = 3.1415926535897932385;
  
 //**********************************************************************
 template<typename EvalT, typename Traits>
 SurfaceHeight<EvalT, Traits>::
 SurfaceHeight(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec (p.get<std::string> ("QP Coordinate Vector Name"), dl->qp_gradient),
-  hs    (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar) 
+  sphere_coord (p.get<std::string> ("Spherical Coord Name"), dl->qp_gradient),
+  hs    (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
+  pi(Aeras::ShallowWaterConstants::self().pi)
 {
   Teuchos::ParameterList* hs_list = 
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string hsType = hs_list->get("Type", "None");
-  //I think gravity is not needed here...  IK, 2/5/14
-  gravity = hs_list->get<double>("Gravity", 1.0); //Default: g=1
 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   if (hsType == "None"){ 
@@ -40,11 +38,14 @@ SurfaceHeight(const Teuchos::ParameterList& p,
   else if (hsType == "Mountain") {
    *out << "Mountain surface height!" << std::endl;
    hs_type = MOUNTAIN;
-   //IK, 2/6/14: this is not quite right yet.  Need to check with group what is correct layout for coordVec...
-   //As is code will compile but there will be a failure to meet dependencies at runtime. 
-   coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-            p.get<std::string>("QP Coordinate Vector Name"),dl->qp_gradient);
-   this->addDependentField(coordVec);
+   sphere_coord = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Spherical Coord Name"),dl->qp_gradient);
+   this->addDependentField(sphere_coord);
+
+   hs0 = 2000.; //meters are units
+
+   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Mountain Height", this, paramLib);
   }
 
   this->addEvaluatedField(hs);
@@ -65,7 +66,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(hs,fm);
   if (hs_type == MOUNTAIN)  
-    this->utils.setFieldData(coordVec,fm); 
+    this->utils.setFieldData(sphere_coord,fm); 
 }
 
 //**********************************************************************
@@ -76,7 +77,7 @@ template<typename EvalT,typename Traits>
 typename SurfaceHeight<EvalT,Traits>::ScalarT& 
 SurfaceHeight<EvalT,Traits>::getValue(const std::string &n)
 {
-  return gravity;
+  if (n=="Mountain Height") return hs0;
 }
 
 
@@ -87,22 +88,19 @@ evaluateFields(typename Traits::EvalData workset)
 {
   switch (hs_type) {
     case NONE: //no surface height: hs = 0
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) 
           hs(cell,qp) = 0.0; 
       }
       break; 
     case MOUNTAIN:  //surface height for test case 5
-    //IK, 2/6/14: This is not quite right so far.  Question above regarding coordVec needs to be answered first. 
-    //Depending on the answer, may need to convert coordVec from cartesian coordinates to (lambda, theta) coordinates.
       const double R = pi/9.0; 
-      const double lambdac = 2.0*pi/3.0; 
+      const double lambdac = 1.5*pi;
       const double thetac = pi/6.0;  
-      const double hs0 = 2000; //meters are units 
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (std::size_t qp = 0; qp < numQPs; ++qp) {
-          MeshScalarT lambda = coordVec(cell,qp,0);
-          MeshScalarT theta = coordVec(cell,qp,1);
+      for (int cell=0; cell < workset.numCells; ++cell) {
+        for (int qp = 0; qp < numQPs; ++qp) {
+          MeshScalarT lambda = sphere_coord(cell,qp,0);
+          MeshScalarT theta = sphere_coord(cell,qp,1);
           MeshScalarT radius2 = (lambda-lambdac)*(lambda-lambdac) + (theta-thetac)*(theta-thetac);
           //r^2 = min(R^2, (lambda-lambdac)^2 + (theta-thetac)^2); 
           MeshScalarT r;  

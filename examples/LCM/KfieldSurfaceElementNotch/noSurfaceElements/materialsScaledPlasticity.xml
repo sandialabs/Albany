@@ -1,0 +1,50 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="TestMat" />
+      <Parameter name="Weighted Volume Average J" type="bool" value="true" />
+      <Parameter name="Average J Stabilization Parameter" type="double" value = "0.0"/>
+      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="TestMat">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.96e2"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.3"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+      <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.714"/>
+      <Parameter name="dYdT Value" type="double" value="0.000"/>
+    </ParameterList>
+    <ParameterList name="Hardening Modulus">
+      <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.0"/>
+      <Parameter name="dHdT Value" type="double" value="0.000"/>
+    </ParameterList>
+    <Parameter name="Saturation Modulus" type="double" value="2.07"/>
+    <Parameter name="Saturation Exponent" type="double" value="1.0"/>>
+    <!-- Output Flags -->
+    <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+    <Parameter name="Output eqps" type="bool" value="true"/> 
+    <Parameter name="Output Yield Surface" type="bool" value="true"/>
+    <Parameter name="Output Fp" type="bool" value="true"/>
+    <Parameter name="Output J" type="bool" value="true"/>
+    </ParameterList>
+    
+  </ParameterList>
+
+</ParameterList>

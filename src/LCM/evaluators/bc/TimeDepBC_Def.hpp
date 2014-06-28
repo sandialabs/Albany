@@ -14,19 +14,19 @@
 
 namespace LCM {
 
-template <typename EvalT, typename Traits> 
+template <typename EvalT, typename Traits>
 TimeDepBC_Base<EvalT, Traits>::
 TimeDepBC_Base(Teuchos::ParameterList& p) :
   offset(p.get<int>("Equation Offset")),
-  
+
   PHAL::DirichletBase<EvalT, Traits>(p)
 {
   timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
   BCValues = p.get<Teuchos::Array<RealType> >("BC Values").toVector();
 
   TEUCHOS_TEST_FOR_EXCEPTION( !(timeValues.size() == BCValues.size()),
-			      Teuchos::Exceptions::InvalidParameter,
-			      "Dimension of \"Time Values\" and \"BC Values\" do not match" );
+                              Teuchos::Exceptions::InvalidParameter,
+                              "Dimension of \"Time Values\" and \"BC Values\" do not match" );
 }
 
 // **********************************************************************
@@ -36,8 +36,8 @@ TimeDepBC_Base<EvalT, Traits>::
 computeVal(RealType time)
 {
   TEUCHOS_TEST_FOR_EXCEPTION( time > timeValues.back(),
-			      Teuchos::Exceptions::InvalidParameter,
-			      "Error: current time value exceeds range of time values given in the input file" );
+                              Teuchos::Exceptions::InvalidParameter,
+                              "Time is growing unbounded!" );
   ScalarT Val;
   RealType slope;
   unsigned int Index(0);
@@ -67,7 +67,7 @@ TimeDepBC(Teuchos::ParameterList& p) :
 
 // **********************************************************************
 template<typename Traits>
-void 
+void
 TimeDepBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
@@ -81,12 +81,12 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   RealType time = dirichletWorkset.current_time;
   // Grab the vector off node GIDs for this Node Set ID from the std::map
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   int lunk; // global and local indicies into unknown vector
   ScalarT Val;
-  
+
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     lunk = nsNodes[inode][this->offset];
 
@@ -124,9 +124,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   RealType time = dirichletWorkset.current_time;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType* matrixEntries;
@@ -149,7 +149,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
   {
     lunk = nsNodes[inode][this->offset];
-    
+
     Val = this->computeVal(time);
     
     // replace jac values for the X dof
@@ -196,18 +196,18 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
 
   RealType time = dirichletWorkset.current_time;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   int lunk; // global and local indicies into unknown vector
   ScalarT Val;
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     lunk = nsNodes[inode][this->offset];
-    
+
     Val = this->computeVal(time);
 
     if (fT != Teuchos::null) {
@@ -233,6 +233,75 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   }
 }
 
+// **********************************************************************
+// Specialization: DistParamDeriv
+// **********************************************************************
+template<typename Traits>
+TimeDepBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+TimeDepBC(Teuchos::ParameterList& p) :
+  TimeDepBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+{
+}
+// **********************************************************************
+template<typename Traits>
+void TimeDepBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset)
+{
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  int num_cols = fpVT->getNumVectors();
+
+  //
+  // We're currently assuming Dirichlet BC's can't be distributed parameters.
+  // Thus we don't need to actually evaluate the BC's here.  The code to do
+  // so is still here, just commented out for future reference.
+  //
+
+  // RealType time = dirichletWorkset.current_time;
+  const std::vector<std::vector<int> >& nsNodes =
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<double*>& nsNodeCoords =
+    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+
+  int lunk; // global and local indicies into unknown vector
+  // ScalarT Val;
+
+  // For (df/dp)^T*V we zero out corresponding entries in V
+  if (trans) {
+    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
+    Teuchos::ArrayRCP<ST> VpT_nonconstView; 
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+    {
+      lunk = nsNodes[inode][this->offset];
+
+      // Val = this->computeVal(time);
+
+      for (int col=0; col<num_cols; ++col) {
+        //(*Vp)[col][lunk] = 0.0;
+        VpT_nonconstView = VpT->getDataNonConst(col); 
+        VpT_nonconstView[lunk] = 0.0; 
+      }
+    }
+  }
+
+  // for (df/dp)*V we zero out corresponding entries in df/dp
+  else {
+    for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
+    {
+      lunk = nsNodes[inode][this->offset];
+
+      // Val = this->computeVal(time);
+
+      for (int col=0; col<num_cols; ++col) {
+        //(*fpV)[col][lunk] = 0.0;
+        fpVT_nonconstView = fpVT->getDataNonConst(col); 
+        fpVT_nonconstView[lunk] = 0.0; 
+      }
+    }
+  }
+}
+
 
 // **********************************************************************
 // Specialization: Stochastic Galerkin Residual
@@ -249,13 +318,13 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f = 
+  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
     dirichletWorkset.sg_x;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType time = dirichletWorkset.current_time;
@@ -286,16 +355,16 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly> f = 
+  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
-  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > jac = 
+  Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > jac =
     dirichletWorkset.sg_Jac;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
     dirichletWorkset.sg_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType* matrixEntries;
@@ -313,24 +382,24 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   int lunk; // local indicies into unknown vector
   ScalarT Val;
 
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     lunk = nsNodes[inode][this->offset];
-    
+
     Val = this->computeVal(time);
-    
-    // replace jac values for the X dof 
-    for (int block=0; block<nblock_jac; block++) 
+
+    // replace jac values for the X dof
+    for (int block=0; block<nblock_jac; block++)
     {
-      (*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries, 
-				     matrixIndices);
+      (*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries,
+                                     matrixIndices);
       for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
     }
     (*jac)[0].ReplaceMyValues(lunk, 1, &diag, &lunk);
-    
+
     if (fillResid)
-      for (int block=0; block<nblock; block++) 
-	(*f)[block][lunk] = ((*x)[block][lunk] - Val.val().coeff(block));
+      for (int block=0; block<nblock; block++)
+        (*f)[block][lunk] = ((*x)[block][lunk] - Val.val().coeff(block));
   }
 }
 
@@ -348,19 +417,19 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f = 
+  Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> fp = 
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> fp =
     dirichletWorkset.sg_fp;
-  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> JV = 
+  Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> JV =
     dirichletWorkset.sg_JV;
-  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x = 
+  Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
     dirichletWorkset.sg_x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   int nblock = x->size();
@@ -373,25 +442,25 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   RealType time = dirichletWorkset.current_time;
   int lunk; // global and local indicies into unknown vector
   ScalarT Val;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     lunk = nsNodes[inode][this->offset];
-    
+
     Val = this->computeVal(time);
 
     if (f != Teuchos::null)
-      for (int block=0; block<nblock; block++) 
-	(*f)[block][lunk] = (*x)[block][lunk] - Val.val().coeff(block);
+      for (int block=0; block<nblock; block++)
+        (*f)[block][lunk] = (*x)[block][lunk] - Val.val().coeff(block);
 
-    if (JV != Teuchos::null) 
+    if (JV != Teuchos::null)
       for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-	(*JV)[0][i][lunk] = j_coeff*(*Vx)[i][lunk];
-    
-    if (fp != Teuchos::null) 
+        (*JV)[0][i][lunk] = j_coeff*(*Vx)[i][lunk];
+
+    if (fp != Teuchos::null)
       for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-	for (int block=0; block<nblock; block++) 
-	  (*fp)[block][i][lunk] = 
-	    -Val.dx(dirichletWorkset.param_offset+i).coeff(block);
+        for (int block=0; block<nblock; block++)
+          (*fp)[block][i][lunk] =
+            -Val.dx(dirichletWorkset.param_offset+i).coeff(block);
   }
 }
 
@@ -410,27 +479,27 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::ProductEpetraVector> f = 
+  Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector> x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
     dirichletWorkset.mp_x;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType time = dirichletWorkset.current_time;
   int lunk; // global and local indicies into unknown vector
   ScalarT Val;
-  
+
   int nblock = x->size();
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     lunk = nsNodes[inode][0];
 
     Val = this->computeVal(time);
 
-    for (int block=0; block<nblock; block++) 
+    for (int block=0; block<nblock; block++)
       (*f)[block][lunk] = ((*x)[block][lunk] - Val.coeff(block));
   }
 }
@@ -449,16 +518,16 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::ProductEpetraVector> f = 
+  Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;
-  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > jac = 
+  Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > jac =
     dirichletWorkset.mp_Jac;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector> x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
     dirichletWorkset.mp_x;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   RealType* matrixEntries;
@@ -475,25 +544,25 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   RealType time = dirichletWorkset.current_time;
   int lunk; // local indicies into unknown vector
   ScalarT Val;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     lunk = nsNodes[inode][this->offset];
-    
+
     Val = this->computeVal(time);
-    
+
     // replace jac values
-    for (int block=0; block<nblock_jac; block++) 
+    for (int block=0; block<nblock_jac; block++)
     {
-      (*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries, 
-				     matrixIndices);
-      for (int i=0; i<numEntries; i++) 
-	matrixEntries[i]=0;
+      (*jac)[block].ExtractMyRowView(lunk, numEntries, matrixEntries,
+                                     matrixIndices);
+      for (int i=0; i<numEntries; i++)
+        matrixEntries[i]=0;
       (*jac)[block].ReplaceMyValues(lunk, 1, &diag, &lunk);
     }
-    
+
     if (fillResid)
-      for (int block=0; block<nblock; block++) 
-	(*f)[block][lunk] = ((*x)[block][lunk] - Val.val().coeff(block));
+      for (int block=0; block<nblock; block++)
+        (*f)[block][lunk] = ((*x)[block][lunk] - Val.val().coeff(block));
   }
 }
 
@@ -511,19 +580,19 @@ template<typename Traits>
 void TimeDepBC<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Stokhos::ProductEpetraVector> f = 
+  Teuchos::RCP<Stokhos::ProductEpetraVector> f =
     dirichletWorkset.mp_f;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> fp = 
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> fp =
     dirichletWorkset.mp_fp;
-  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> JV = 
+  Teuchos::RCP<Stokhos::ProductEpetraMultiVector> JV =
     dirichletWorkset.mp_JV;
-  Teuchos::RCP<const Stokhos::ProductEpetraVector> x = 
+  Teuchos::RCP<const Stokhos::ProductEpetraVector> x =
     dirichletWorkset.mp_x;
   Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
   const RealType j_coeff = dirichletWorkset.j_coeff;
-  const std::vector<std::vector<int> >& nsNodes = 
+  const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
-  const std::vector<double*>& nsNodeCoords = 
+  const std::vector<double*>& nsNodeCoords =
     dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
 
   int nblock = x->size();
@@ -531,28 +600,28 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   RealType time = dirichletWorkset.current_time;
   int lunk; // global and local indicies into unknown vector
   ScalarT Val;
-  for (unsigned int inode = 0; inode < nsNodes.size(); inode++) 
+  for (unsigned int inode = 0; inode < nsNodes.size(); inode++)
   {
     lunk = nsNodes[inode][this->offset];
-    
+
     Val = this->computeVal(time);
 
     if (f != Teuchos::null)
-      for (int block=0; block<nblock; block++) 
-	(*f)[block][lunk] = (*x)[block][lunk] - Val.val().coeff(block);
+      for (int block=0; block<nblock; block++)
+        (*f)[block][lunk] = (*x)[block][lunk] - Val.val().coeff(block);
 
 
-    if (JV != Teuchos::null) 
+    if (JV != Teuchos::null)
       for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-	for (int block=0; block<nblock; block++) 
-	  (*JV)[block][i][lunk] = j_coeff*(*Vx)[i][lunk];
+        for (int block=0; block<nblock; block++)
+          (*JV)[block][i][lunk] = j_coeff*(*Vx)[i][lunk];
 
-    
-    if (fp != Teuchos::null) 
+
+    if (fp != Teuchos::null)
       for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-	for (int block=0; block<nblock; block++)
-	  (*fp)[block][i][lunk] = 
-	    -Val.dx(dirichletWorkset.param_offset+i).coeff(block);
+        for (int block=0; block<nblock; block++)
+          (*fp)[block][i][lunk] =
+            -Val.dx(dirichletWorkset.param_offset+i).coeff(block);
   }
 }
 #endif //ALBANY_SG_MP

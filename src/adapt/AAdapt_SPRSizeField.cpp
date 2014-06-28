@@ -80,9 +80,9 @@ void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
   apf::Field* f = mesh->findField("solution");
-  apf::Field* solution_gradient = apf::getGradIPField(f,"solution_gradient",cub_degree);
-  field = apf::getSPRSizeField(solution_gradient,rel_err);
-  apf::destroyField(solution_gradient);
+  apf::Field* sol_grad = apf::getGradIPField(f,"sol_grad",cub_degree);
+  field = apf::getSPRSizeField(sol_grad,rel_err);
+  apf::destroyField(sol_grad);
 
 }
 

@@ -48,7 +48,7 @@
       </ParameterList>
     </ParameterList>
   </ParameterList>
-
+  
   <!-- MESH -->
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
@@ -78,11 +78,11 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="2"/>
+	<Parameter  name="Max Steps" type="int" value="2"/>         
 	<Parameter  name="Max Value" type="double" value="5.0"/>
-	<Parameter  name="Min Value" type="double" value="0.0"/>
+	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
-	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
+	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
 	<ParameterList name="Eigensolver">
 	  <Parameter name="Method" type="string" value="Anasazi"/>
 	  <Parameter name="Operator" type="string" value="Jacobian Inverse"/>
@@ -91,7 +91,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="0.5"/>
+	<Parameter  name="Initial Step Size" type="double" value="0.5"/> 
 	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
@@ -110,7 +110,7 @@
 	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
-		  <ParameterList name="Forward Solve">
+		  <ParameterList name="Forward Solve"> 
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
@@ -137,12 +137,12 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack2">
+		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILUT"/>
-		  <ParameterList name="Ifpack2 Settings">
+		  <Parameter name="Prec Type" type="string" value="ILU"/>
+		  <ParameterList name="Ifpack Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>

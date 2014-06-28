@@ -19,7 +19,7 @@
 #include "PHAL_AlbanyTraits.hpp"
 
 namespace PHAL {
-/** \brief Gathers solution values from the Newton solution vector into 
+/** \brief Gathers solution values from the Newton solution vector into
     the nodal fields of the field manager
 
     Currently makes an assumption that the stride is constant for dofs
@@ -35,24 +35,24 @@ template<typename EvalT, typename Traits>
 class DirichletBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
-    public Sacado::ParameterAccessor<EvalT, SPL_Traits>  
+    public Sacado::ParameterAccessor<EvalT, SPL_Traits>
    {
-  
+
 private:
 
   //typedef typename Traits::Residual::ScalarT ScalarT;
   typedef typename EvalT::ScalarT ScalarT;
 
 public:
-  
+
   DirichletBase(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm);
-  
+
   // This function will be overloaded with template specialized code
   void evaluateFields(typename Traits::EvalData d)=0;
-  
+
   virtual ScalarT& getValue(const std::string &n) { return value; }
 
 protected:
@@ -70,7 +70,7 @@ protected:
 template<typename EvalT, typename Traits> class Dirichlet;
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class Dirichlet<PHAL::AlbanyTraits::Residual,Traits>
@@ -103,7 +103,18 @@ public:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class Dirichlet<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public DirichletBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  Dirichlet(Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+};
+
+// **************************************************************
+// Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -137,7 +148,7 @@ public:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class Dirichlet<PHAL::AlbanyTraits::MPResidual,Traits>
@@ -184,12 +195,12 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
 
 public:
-  
+
   DirichletAggregator(Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm) {};
-  
+
   // This function will be overloaded with template specialized code
   void evaluateFields(typename Traits::EvalData d) {};
 };

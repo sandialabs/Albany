@@ -90,7 +90,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
 
     remeshFileIndex++;
 
-  }
 
   // display # entities before adaptation
 
@@ -214,7 +213,6 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
-  
   return validPL;
 }
 

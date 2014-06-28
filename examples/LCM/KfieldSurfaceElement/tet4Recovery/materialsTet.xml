@@ -1,0 +1,33 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="block_1">
+      <Parameter name="material" type="string" value="TestMat" />
+    </ParameterList>
+ </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="TestMat">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Neohookean"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.96e11"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.3"/>
+      </ParameterList>
+    
+      <!-- Output Flags -->
+        <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+
+    </ParameterList>
+    
+  </ParameterList>
+
+</ParameterList>

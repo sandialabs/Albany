@@ -1,0 +1,147 @@
+<ParameterList>
+  <ParameterList name="Problem">
+    <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
+    <Parameter name="Solution Method" type="string" value="Transient"/>
+    <ParameterList name="Shallow Water Problem">
+      <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
+    </ParameterList>
+    <ParameterList name="Dirichlet BCs">
+    </ParameterList>
+    <ParameterList name="Initial Condition"> 
+       <Parameter name="Function" type="string" value="Aeras RossbyHaurwitzWave"/>
+       <Parameter name="Function Data" type="Array(double)" value="{4.0}"/>
+       <!--Parameter name="Function Data" type="Array(double)" value="{R}"/-->
+    </ParameterList>
+    
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 1" type="string" value="Solution Max Value"/>
+      <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+    </ParameterList>
+    <ParameterList name="Parameters">
+      <Parameter name="Number" type="int" value="0"/>
+      <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF Depth"/>
+      <Parameter name="Parameter 1" type="string" value="Gravity"/>
+    </ParameterList>
+  </ParameterList>
+  <ParameterList name="Discretization">
+    <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/uniform_16_quad9.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="TC6.exo"/>
+    <Parameter name="Cubature Degree" type="int" value="3"/>
+    <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Exodus Write Interval" type="int" value="5"/>
+  </ParameterList>
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="3"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3176.21714542, 10565.4298972, 746271.338122}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>
+  </ParameterList>
+  <ParameterList name="Piro">
+    <ParameterList name="Rythmos Solver">
+
+      <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="false"/>
+      
+      <ParameterList name="NonLinear Solver">
+         <ParameterList name="VerboseObject">
+            <Parameter name="Verbosity Level" type="string" value="low"/>
+         </ParameterList>
+      </ParameterList>
+      <ParameterList name="Rythmos">
+        
+         <ParameterList name="Integrator Settings">
+           <Parameter name="Final Time" type="double" value="11280"/>
+           <!-- change to 12*24*3600 to get full 12 days -->
+           <ParameterList name="Integrator Selection">
+	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
+	     <ParameterList name="Default Integrator">
+                <ParameterList name="VerboseObject">
+                  <Parameter name="Verbosity Level" type="string" value="low"/>
+                </ParameterList>
+             </ParameterList>
+           </ParameterList>
+         </ParameterList>
+         
+         <ParameterList name="Stepper Settings">
+           <ParameterList name="Stepper Selection">
+              <Parameter name="Stepper Type" type="string" value="Explicit RK"/>
+           </ParameterList>
+           
+           <ParameterList name="Runge Kutta Butcher Tableau Selection">
+              <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="Singly Diagonal IRK 2 Stage 3rd order"/-->
+              <Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="Explicit 2 Stage 2nd order by Runge"/>
+              <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="IRK 1 Stage Theta Method"/-->
+           </ParameterList>
+         </ParameterList>
+
+         <ParameterList name="Integration Control Strategy Selection">
+           <Parameter name="Integration Control Strategy Type" type="string"
+                 value="Simple Integration Control Strategy"/>
+           <ParameterList name="Simple Integration Control Strategy">
+             <Parameter name="Take Variable Steps" type="bool" value="false"/>
+             <Parameter name="Fixed dt" type="double" value="180"/>
+            <!-- change "Fixed dt" to 90 if running longer time, e.g., 12*24*3600 to get full 12 days -->
+             <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
+             <ParameterList name="VerboseObject">
+               <Parameter name="Verbosity Level" type="string" value="low"/>
+             </ParameterList>
+           </ParameterList>
+         </ParameterList>
+      </ParameterList>
+      <ParameterList name="Stratimikos">
+	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	<ParameterList name="Linear Solver Types">
+	  <ParameterList name="Belos">
+	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+	    <ParameterList name="Solver Types">
+	      <ParameterList name="Block GMRES">
+ 		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+		<Parameter name="Output Frequency" type="int" value="10"/>
+		<Parameter name="Output Style" type="int" value="1"/>
+		<Parameter name="Verbosity" type="int" value="0"/>
+		<Parameter name="Maximum Iterations" type="int" value="100"/>
+		<Parameter name="Block Size" type="int" value="1"/>
+		<Parameter name="Num Blocks" type="int" value="100"/>
+		<Parameter name="Flexible Gmres" type="bool" value="0"/>
+	      </ParameterList>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+	<Parameter name="Preconditioner Type" type="string" value="ML"/>
+	<ParameterList name="Preconditioner Types">
+	  <ParameterList name="Ifpack">
+	    <Parameter name="Prec Type" type="string" value="ILU"/>
+	    <Parameter name="Overlap" type="int" value="1"/>
+	    <ParameterList name="Ifpack Settings">
+	      <Parameter name="fact: level-of-fill" type="int" value="1"/>
+	    </ParameterList>
+	  </ParameterList>
+	  <ParameterList name="ML">
+	    <Parameter name="Base Method Defaults" type="string" value="SA"/>
+	    <ParameterList name="ML Settings">
+	      <Parameter name="aggregation: type" type="string" value="Uncoupled"/>
+	      <Parameter name="coarse: max size" type="int" value="20"/>
+	      <Parameter name="coarse: pre or post" type="string" value="post"/>
+	      <Parameter name="coarse: sweeps" type="int" value="1"/>
+	      <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+	      <Parameter name="prec type" type="string" value="MGV"/>
+	      <Parameter name="smoother: type" type="string" value="Gauss-Seidel"/>
+	      <Parameter name="smoother: damping factor" type="double" value="0.66"/>
+	      <Parameter name="smoother: pre or post" type="string" value="both"/>
+	      <Parameter name="smoother: sweeps" type="int" value="1"/>
+	      <Parameter name="ML output" type="int" value="1"/>
+	    </ParameterList>
+	  </ParameterList>
+	</ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

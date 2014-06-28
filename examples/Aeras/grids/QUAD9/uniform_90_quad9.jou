@@ -1,0 +1,24 @@
+## /projects/cubit/claro.Lin64.14.0/bin/clarox
+## Cubit Version 14.0
+## Cubit Build 387434 
+## Revised 2013-07-31 11:16:24 -0600 (Wed, 31 Jul 2013)
+## Running 01/09/2014 12:49:59 PM
+## Command Options:
+## -warning = On
+## -information = On
+set geometry engine acis
+create sphere radius 1
+# az_interval = muiltiple of 8
+# az_interval/4 = elements along cube-sphere edge
+#  18 = 72/4
+volume 1 scheme sphere az_interval 72 
+mesh volume 1
+# Refine by a factor of 5
+# 18 * 5 = 90 per cube sphere edge
+refine volume 1 numsplit 4 bias 1 smooth
+set duplicate block elements off
+block 1 surface 1
+block 1 element type SHELL9
+set large exodus file on
+set large exodus file on
+export genesis "./uniform_90_quad9.g" block 1 overwrite

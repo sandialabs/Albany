@@ -56,7 +56,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray timeOld = (*workset.stateArrayPtr)[timeName];
   deltaTime(0) = time(0) - timeOld(0);
-
+  //std::cout << "time = " << time(0) << ", timeOld = " << timeOld(0) << "\n";
 }
 
 // **********************************************************************

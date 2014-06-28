@@ -18,7 +18,7 @@
 #include "Epetra_Vector.h"
 
 namespace PHAL {
-/** \brief Gathers solution values from the Newton solution vector into 
+/** \brief Gathers solution values from the Newton solution vector into
     the nodal fields of the field manager
 
     Currently makes an assumption that the stride is constant for dofs
@@ -28,25 +28,25 @@ namespace PHAL {
 */
 // **************************************************************
 // Base Class with Generic Implementations: Specializations for
-// Automatic Differentiation Below 
+// Automatic Differentiation Below
 // **************************************************************
 
 template<typename EvalT, typename Traits>
 class GatherSolutionBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>  {
-  
+
 public:
-  
+
   GatherSolutionBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
-  
+
   // This function requires template specialization, in derived class below
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
-  
+
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -74,12 +74,12 @@ template<typename EvalT, typename Traits> class GatherSolution;
 
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::Residual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::Residual, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -97,7 +97,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::Jacobian,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -115,7 +115,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::Tangent,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::Tangent, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -127,6 +127,23 @@ private:
 };
 
 // **************************************************************
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+
+public:
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Albany::Layouts>& dl);
+  GatherSolution(const Teuchos::ParameterList& p);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  const std::size_t numFields;
+};
+
+// **************************************************************
 // Stochastic Galerkin Residual
 // **************************************************************
 
@@ -134,7 +151,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::SGResidual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -152,7 +169,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::SGJacobian,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -169,7 +186,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::SGTangent,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -187,7 +204,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::MPResidual,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -205,7 +222,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::MPJacobian,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
@@ -222,7 +239,7 @@ private:
 template<typename Traits>
 class GatherSolution<PHAL::AlbanyTraits::MPTangent,Traits>
    : public GatherSolutionBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
-  
+
 public:
   GatherSolution(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);

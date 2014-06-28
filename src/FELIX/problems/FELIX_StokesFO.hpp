@@ -258,6 +258,13 @@ FELIX::StokesFO::constructEvaluators(
     ev = rcp(new FELIX::StokesFOBodyForce<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  RCP<ParameterList> paramList = rcp(new ParameterList("Param List"));
+  { // response
+    RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
+    paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
+  }
+
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Stokes", dl->dummy);
     fm0.requireField<EvalT>(res_tag);
@@ -269,7 +276,7 @@ FELIX::StokesFO::constructEvaluators(
           (evalUtils.constructGatherVelocityRMSEvaluator());
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
-    return respUtils.constructResponses(fm0, *responseList, Teuchos::null, stateMgr);
+    return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
 
   return Teuchos::null;

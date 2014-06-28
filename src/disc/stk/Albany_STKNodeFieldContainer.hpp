@@ -41,7 +41,7 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-buildSTKNodeField(const std::string& name, const std::vector<int>& dim, 
+buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
                     stk_classic::mesh::fem::FEMMetaData* metaData,
                     stk_classic::mesh::BulkData* bulkData, const bool output);
 

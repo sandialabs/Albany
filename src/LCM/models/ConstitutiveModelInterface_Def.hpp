@@ -15,6 +15,7 @@
 #include "GursonModel.hpp"
 #include "J2FiberModel.hpp"
 #include "J2Model.hpp"
+#include "CreepModel.hpp"
 #include "MooneyRivlinModel.hpp"
 #include "NeohookeanModel.hpp"
 #include "RIHMRModel.hpp"
@@ -27,6 +28,7 @@
 #include "DruckerPragerModel.hpp"
 #include "CrystalPlasticityModel.hpp"
 #include "TvergaardHutchinsonModel.hpp"
+#include "AnisotropicViscoplasticModel.hpp"
 
 namespace LCM
 {
@@ -199,63 +201,64 @@ void ConstitutiveModelInterface<EvalT, Traits>::
 initializeModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl)
 {
-  std::string model_name =
-      p->sublist("Material Model").get<std::string>("Model Name");
+  std::string
+  model_name = p->sublist("Material Model").get<std::string>("Model Name");
+
+  std::string const
+  error_msg = "Undefined material model name";
+
+  Teuchos::RCP<ConstitutiveModel<EvalT, Traits> >
+  model = Teuchos::null;
+
+  using Teuchos::rcp;
 
   if (model_name == "Neohookean") {
-    this->model_ = Teuchos::rcp(new LCM::NeohookeanModel<EvalT, Traits>(p, dl));
+    model = rcp(new NeohookeanModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Creep") {
+    model = rcp(new CreepModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2") {
-    this->model_ = Teuchos::rcp(new LCM::J2Model<EvalT, Traits>(p, dl));
+    model = rcp(new J2Model<EvalT, Traits>(p, dl));
   } else if (model_name == "CrystalPlasticity") {
-    this->model_ = Teuchos::rcp(new LCM::CrystalPlasticityModel<EvalT, Traits>(p, dl));
+    model = rcp(new CrystalPlasticityModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
-    this->model_ = Teuchos::rcp(
-        new LCM::AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
+    model = rcp(new AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Gurson") {
-    this->model_ = Teuchos::rcp(new LCM::GursonModel<EvalT, Traits>(p, dl));
+    model = rcp(new GursonModel<EvalT, Traits>(p, dl));
   } else if (model_name == "GursonHMR") {
-    this->model_ = Teuchos::rcp(new LCM::GursonHMRModel<EvalT, Traits>(p, dl));
+    model = rcp(new GursonHMRModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Mooney Rivlin") {
-    this->model_ = Teuchos::rcp(
-        new LCM::MooneyRivlinModel<EvalT, Traits>(p, dl));
+    model = rcp(new MooneyRivlinModel<EvalT, Traits>(p, dl));
   } else if (model_name == "RIHMR") {
-    this->model_ = Teuchos::rcp(new LCM::RIHMRModel<EvalT, Traits>(p, dl));
+    model = rcp(new RIHMRModel<EvalT, Traits>(p, dl));
   } else if (model_name == "J2Fiber") {
-    this->model_ = Teuchos::rcp(new LCM::J2FiberModel<EvalT, Traits>(p, dl));
+    model = rcp(new J2FiberModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Anisotropic Damage") {
-    this->model_ = Teuchos::rcp(
-        new LCM::AnisotropicDamageModel<EvalT, Traits>(p, dl));
+    model = rcp(new AnisotropicDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elastic Damage") {
-    this->model_ = Teuchos::rcp(
-        new LCM::ElasticDamageModel<EvalT, Traits>(p, dl));
+    model = rcp(new ElasticDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Saint Venant Kirchhoff") {
-    this->model_ = Teuchos::rcp(
-        new LCM::StVenantKirchhoffModel<EvalT, Traits>(p, dl));
+    model = rcp(new StVenantKirchhoffModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AAA") {
-    this->model_ = Teuchos::rcp(new LCM::AAAModel<EvalT, Traits>(p, dl));
+    model = rcp(new AAAModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Linear Elastic") {
-    this->model_ = Teuchos::rcp(
-        new LCM::LinearElasticModel<EvalT, Traits>(p, dl));
+    model = rcp(new LinearElasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Hyperelastic Damage") {
-    this->model_ = Teuchos::rcp(
-        new LCM::HyperelasticDamageModel<EvalT, Traits>(p, dl));
+    model = rcp(new HyperelasticDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Cap Explicit") {
-    this->model_ = Teuchos::rcp(
-        new LCM::CapExplicitModel<EvalT, Traits>(p, dl));
+    model = rcp(new CapExplicitModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Cap Implicit") {
-      this->model_ = Teuchos::rcp(
-        new LCM::CapImplicitModel<EvalT, Traits>(p, dl));
+    model = rcp(new CapImplicitModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Drucker Prager") {
-      this->model_ = Teuchos::rcp(
-        new LCM::DruckerPragerModel<EvalT, Traits>(p, dl));
+    model = rcp(new DruckerPragerModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Tvergaard Hutchinson") {
-      this->model_ = Teuchos::rcp(
-        new LCM::TvergaardHutchinsonModel<EvalT, Traits>(p, dl));
+    model = rcp(new TvergaardHutchinsonModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "Viscoplastic") {
+    model = rcp(new AnisotropicViscoplasticModel<EvalT, Traits>(p, dl));
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-        std::logic_error,
-        "Undefined material model name");
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, error_msg);
   }
+
+  this->model_ = model;
 }
 
 //------------------------------------------------------------------------------

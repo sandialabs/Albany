@@ -41,6 +41,7 @@ public:
 
 private:
 
+  const int spatialDimension;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs;
 
@@ -56,17 +57,28 @@ private:
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
 
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord; 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint>     jacobian_det; 
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
+  PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> jacobian_inv_node;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+
+  const double earthRadius;
+  void div_check(const int spatialDim, const int numelements) const;
+  void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
+                            const Intrepid::FieldContainer<MeshScalarT> &,
+                            const int e,
+                            const double rrearth=1) const;
+  void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
+
 };
 }
 

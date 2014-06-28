@@ -16,16 +16,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputEdgeDBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputEdgeDBC.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBC.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputT.xml COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputSerialT.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputSerialT.xml COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputSerialExoOutT.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputSerialExoOutT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputEdgeDBCT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputEdgeDBCT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBCT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBCT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCubeFMDB.sms
@@ -59,20 +49,6 @@ IF(ENABLE_MESHMODEL)
       NAME ${testName}_Mmodel_VtxDBC 
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
       COMMAND ${Albany.exe} inputVtxDBC.xml)
-  if (ALBANY_IFPACK2)
-    add_test(
-      NAME ${testName}_Mmodel_Traction_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${AlbanyT.exe} inputT.xml)
-    add_test(
-      NAME ${testName}_Mmodel_EdgeDBC_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${AlbanyT.exe} inputEdgeDBCT.xml)
-    add_test(
-      NAME ${testName}_Mmodel_VtxDBC_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${AlbanyT.exe} inputVtxDBCT.xml)
-  ENDIF()
 ENDIF()
 
 IF(ENABLE_PARASOLID)

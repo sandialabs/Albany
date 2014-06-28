@@ -49,7 +49,6 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
   numQPs = vector_dl->dimension(1);
   numDims = vector_dl->dimension(2);
   numVertices = vert_vector_dl->dimension(2);
-
   this->addDependentField(qp_weights);
   this->addDependentField(coordVec);
   this->addDependentField(coordVec_vertices);

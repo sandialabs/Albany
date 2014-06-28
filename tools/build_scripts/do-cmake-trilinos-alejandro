@@ -1,0 +1,61 @@
+#!/bin/bash
+
+if [ -f ./CMakeCache.txt ]; then
+    rm CMakeCache.txt
+fi
+
+SOURCE_DIR=${TRILDIR:-..}
+INSTALL_DIR=${TRILINSTALLDIR:-$(pwd)/install}
+
+cmake -D CMAKE_CXX_FLAGS:STRING="$CMAKE_CXX_FLAGS" \
+      -D CMAKE_C_FLAGS:STRING="" \
+      -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR \
+      -D CMAKE_BUILD_TYPE:STRING="$BUILD_STRING" \
+      -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+      -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+      -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+      -D TPL_ENABLE_MPI:BOOL=ON \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+      -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
+\
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+    -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+        -D TPL_ENABLE_Netcdf:BOOL=ON \
+        -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+        -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
+        -D TPL_ENABLE_HDF5:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D Trilinos_ENABLE_Shards:BOOL=ON \
+      -D Trilinos_ENABLE_Sacado:BOOL=ON \
+      -D Teuchos_ENABLE_COMPLEX:BOOL=ON \
+      -D Sacado_ENABLE_COMPLEX:BOOL=ON \
+      -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+      -D EpetraExt_USING_HDF5:BOOL=OFF \
+      -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+      -D Trilinos_ENABLE_Belos:BOOL=ON \
+      -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+      -D Trilinos_ENABLE_NOX:BOOL=ON \
+      -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+      -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+      -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+      -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+      -D Trilinos_ENABLE_Piro:BOOL=ON \
+      -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+      -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_Teko:BOOL=ON \
+      -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+      -D Trilinos_ENABLE_TESTS:BOOL=OFF \
+      -D Intrepid_ENABLE_TESTS:BOOL=ON \
+      -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
+      -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+       $SOURCE_DIR

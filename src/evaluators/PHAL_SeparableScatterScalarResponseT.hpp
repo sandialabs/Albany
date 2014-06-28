@@ -117,6 +117,38 @@ private:
 };
 
 // **************************************************************
+// Distributed Parameter Derivative
+// **************************************************************
+template<typename Traits>
+class SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public ScatterScalarResponseBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>,
+    public SeparableScatterScalarResponseBaseT<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  SeparableScatterScalarResponseT(const Teuchos::ParameterList& p,
+                                 const Teuchos::RCP<Albany::Layouts>& dl);
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm) {
+    ScatterScalarResponseBase<EvalT, Traits>::postRegistrationSetup(d,vm);
+    SeparableScatterScalarResponseBaseT<EvalT,Traits>::postRegistrationSetup(d,vm);
+  }
+  void preEvaluate(typename Traits::PreEvalData d);
+  void evaluateFields(typename Traits::EvalData d);
+  void postEvaluate(typename Traits::PostEvalData d);
+protected:
+  typedef PHAL::AlbanyTraits::DistParamDeriv EvalT;
+  SeparableScatterScalarResponseT() {}
+  void setup(const Teuchos::ParameterList& p,
+             const Teuchos::RCP<Albany::Layouts>& dl) {
+    ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
+    SeparableScatterScalarResponseBaseT<EvalT,Traits>::setup(p,dl);
+    numNodes = dl->node_scalar->dimension(1);
+  }
+private:
+  typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
+  int numNodes;
+}; 
+
+// **************************************************************
 // Stochastic Galerkin Jacobian
 // **************************************************************
 #ifdef ALBANY_SG_MP

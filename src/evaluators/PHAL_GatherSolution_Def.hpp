@@ -370,9 +370,99 @@ evaluateFields(typename Traits::EvalData workset)
             *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
         }
       }
+      if (workset.accelerationTerms && this->enableAcceleration) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dotdot[eq])(cell,node);
+          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
+            *valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
+                workset.n_coeff*VxdotdotT->getData(k)[eqID[this->offset + eq]];
+          }
+          else
+            *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
+        }
+      }
     }
   }
 
+}
+
+// **********************************************************************
+
+// **********************************************************************
+// Specialization: Distributed Parameter Derivative
+// **********************************************************************
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+GatherSolution(const Teuchos::ParameterList& p,
+               const Teuchos::RCP<Albany::Layouts>& dl) :
+  GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,dl),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>::numFieldsBase)
+{
+}
+
+template<typename Traits>
+GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+GatherSolution(const Teuchos::ParameterList& p) :
+  GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p,p.get<Teuchos::RCP<Albany::Layouts> >("Layouts Struct")),
+  numFields(GatherSolutionBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>::numFieldsBase)
+{
+}
+
+// **********************************************************************
+template<typename Traits>
+void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
+
+  //get const (read-only) view of xT and xdotT
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+
+  if (this->vectorField) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          (this->valVec[0])(cell,node,eq) = xT_constView[eqID[this->offset + eq]];
+        if (workset.transientTerms && this->enableTransient) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->valVec_dot[0])(cell,node,eq) = xdotT_constView[eqID[this->offset + eq]];
+        }
+        if (workset.accelerationTerms && this->enableAcceleration) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->valVec_dotdot[0])(cell,node,eq) = xdotdotT_constView[eqID[this->offset + eq]];
+        }
+      }
+    }
+  } else {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+        for (std::size_t eq = 0; eq < numFields; eq++)
+          (this->val[eq])(cell,node) = xT_constView[eqID[this->offset + eq]];
+        if (workset.transientTerms && this->enableTransient) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->val_dot[eq])(cell,node) = xdotT_constView[eqID[this->offset + eq]];
+        }
+        if (workset.accelerationTerms && this->enableAcceleration) {
+          for (std::size_t eq = 0; eq < numFields; eq++)
+            (this->val_dotdot[eq])(cell,node) = xdotdotT_constView[eqID[this->offset + eq]];
+        }
+      }
+    }
+  }
 }
 
 // **********************************************************************

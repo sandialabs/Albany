@@ -22,34 +22,25 @@
 bool LCM::FloatingPoint::active_ = false;
 unsigned  LCM::FloatingPoint::oldMask_ = LCM::emptyMask_;
 
-//
-//
-//
-
 namespace LCM {
 
-  FloatingPoint::FloatingPoint()
-  {
+FloatingPoint::FloatingPoint()
+{
+  if (active_) return;
 
-    if (active_) return;
+  oldMask_ = getCurrentMask();
+  active_  = true;
+  return;
+}
 
-    oldMask_ = getCurrentMask();
-    active_  = true;
-    return;
+FloatingPoint::~FloatingPoint()
+{
+  if (!active_) return;
 
-  }
-
-  FloatingPoint::~FloatingPoint()
-  {
-
-    if (!active_) return;
-
-    setMask(oldMask_);
-    active_ = false;
-    return;
-
-  }
-
+  setMask(oldMask_);
+  active_ = false;
+  return;
+}
 
 }
 
@@ -68,82 +59,68 @@ namespace LCM {
 
 namespace LCM {
 
-  void FloatingPoint::trapInexact()
-  {
+void FloatingPoint::trapInexact()
+{
+  fesettrapenable(FE_INEXACT);
+  return;
+}
 
-    fesettrapenable(FE_INEXACT);
-    return;
+void FloatingPoint::trapDivbyzero()
+{
+  fesettrapenable(FE_DIVBYZERO);
+  return;
+}
 
-  }
+void FloatingPoint::trapUnderflow()
+{
+  fesettrapenable(FE_UNDERFLOW);
+  return;
+}
 
-  void FloatingPoint::trapDivbyzero()
-  {
+void FloatingPoint::trapOverflow()
+{
+  fesettrapenable(FE_OVERFLOW);
+  return;
+}
 
-    fesettrapenable(FE_DIVBYZERO);
-    return;
+void FloatingPoint::trapInvalid()
+{
+  fesettrapenable(FE_INVALID);
+  return;
+}
 
-  }
+// get current trap mask
 
-  void FloatingPoint::trapUnderflow()
-  {
+unsigned FloatingPoint::getCurrentMask()
+{
+  unsigned currentMask = emptyMask_;
+  int currentTraps = fegettrapenable();
 
-    fesettrapenable(FE_UNDERFLOW);
-    return;
+  if (currentTraps & FE_INEXACT)   currentMask |= inexactMask_;
+  if (currentTraps & FE_DIVBYZERO) currentMask |= divbyzeroMask_;
+  if (currentTraps & FE_UNDERFLOW) currentMask |= underflowMask_;
+  if (currentTraps & FE_OVERFLOW)  currentMask |= overflowMask_;
+  if (currentTraps & FE_INVALID)   currentMask |= invalidMask_;
 
-  }
+  return currentMask;
+}
 
-  void FloatingPoint::trapOverflow()
-  {
+// set mask
 
-    fesettrapenable(FE_OVERFLOW);
-    return;
+void FloatingPoint::setMask(unsigned mask)
+{
+  int currentTraps = 0;
 
-  }
+  if (mask & inexactMask_)   currentTraps |= FE_INEXACT;
+  if (mask & divbyzeroMask_) currentTraps |= FE_DIVBYZERO;
+  if (mask & underflowMask_) currentTraps |= FE_UNDERFLOW;
+  if (mask & overflowMask_)  currentTraps |= FE_OVERFLOW;
+  if (mask & invalidMask_)   currentTraps |= FE_INVALID;
 
-  void FloatingPoint::trapInvalid()
-  {
+  fesettrapenable(currentTraps);
 
-    fesettrapenable(FE_INVALID);
-    return;
-
-  }
-
-  // get current trap mask
-
-  unsigned FloatingPoint::getCurrentMask()
-  {
-
-    unsigned currentMask = emptyMask_;
-    int currentTraps = fegettrapenable();
-
-    if (currentTraps & FE_INEXACT)   currentMask |= inexactMask_;
-    if (currentTraps & FE_DIVBYZERO) currentMask |= divbyzeroMask_;
-    if (currentTraps & FE_UNDERFLOW) currentMask |= underflowMask_;
-    if (currentTraps & FE_OVERFLOW)  currentMask |= overflowMask_;
-    if (currentTraps & FE_INVALID)   currentMask |= invalidMask_;
-
-    return currentMask;
-
-  }
-
-  // set mask
-
-  void FloatingPoint::setMask(unsigned mask)
-  {
-
-    int currentTraps = 0;
-
-    if (mask & inexactMask_)   currentTraps |= FE_INEXACT;
-    if (mask & divbyzeroMask_) currentTraps |= FE_DIVBYZERO;
-    if (mask & underflowMask_) currentTraps |= FE_UNDERFLOW;
-    if (mask & overflowMask_)  currentTraps |= FE_OVERFLOW;
-    if (mask & invalidMask_)   currentTraps |= FE_INVALID;
-
-    fesettrapenable(currentTraps);
-
-    return;
-
-  }
+  return;
+}
 
 }
 
@@ -206,53 +183,39 @@ void LCM::FloatingPoint::setMask(unsigned mask)
 
 void LCM::FloatingPoint::trapInexact()
 {
-
   return;
-
 }
 
 void LCM::FloatingPoint::trapDivbyzero()
 {
-
   return;
-
 }
 
 void LCM::FloatingPoint::trapUnderflow()
 {
-
   return;
-
 }
 
 void LCM::FloatingPoint::trapOverflow()
 {
-
   return;
-
 }
 
 void LCM::FloatingPoint::trapInvalid()
 {
-
   return;
-
 }
 
 unsigned LCM::FloatingPoint::getCurrentMask()
 {
-
   return emptyMask_;
-
 }
 
 // set mask
 
 void LCM::FloatingPoint::setMask(unsigned mask)
 {
-
   return;
-
 }
 
 #endif // linux

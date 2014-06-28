@@ -59,6 +59,19 @@ SET(HEADERS ${HEADERS}
 
 ENDIF()
 
+# Topology Modification depends on LCM
+IF(ALBANY_LCM)
+
+SET(SOURCES ${SOURCES}
+    AAdapt_TopologyModification.cpp
+   )
+
+SET(HEADERS ${HEADERS}
+    AAdapt_TopologyModification.hpp
+   )
+
+ENDIF()
+
 IF(ALBANY_LCM AND ALBANY_STK_PERCEPT)
 
 SET(SOURCES ${SOURCES}

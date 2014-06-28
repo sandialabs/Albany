@@ -1,0 +1,46 @@
+<ParameterList>
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="Block0">
+      <Parameter name="material" type="string" value="Metal" />
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Metal">
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
+      </ParameterList>
+      <!-- Crystal Elasticity moduli and orientation -->
+      <ParameterList name="Crystal Elasticity">
+        <Parameter name="C11" type="double" value="168.4"/>
+        <Parameter name="C12" type="double" value="121.4"/>
+        <Parameter name="C44" type="double" value="75.4"/>
+        <Parameter name="Basis Vector 1" type="Array(double)" value="{1.0,0.0,0.0}"/>
+        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0,1.0,0.0}"/>
+        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
+      </ParameterList>
+
+      <!-- Crystal Plasticity Slip System -->
+      <Parameter name="Number of Slip Systems" type="int" value="2"/>
+      <ParameterList name="Slip System 1">
+        <Parameter name="Slip Direction" type="Array(double)" value="{1.0,0.0,0.0}"/>
+        <Parameter name="Slip Normal" type="Array(double)"    value="{0.0,1.0,0.0}"/>
+        <Parameter name="Tau Critical" type="double" value="1.0"/>
+        <Parameter name="Gamma Dot" type="double" value="1.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
+      </ParameterList>
+      <ParameterList name="Slip System 2">
+        <Parameter name="Slip Direction" type="Array(double)" value="{0.0,1.0,0.0}"/>
+        <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,0.0,0.0}"/>
+        <Parameter name="Tau Critical" type="double" value="1.0"/>
+        <Parameter name="Gamma Dot" type="double" value="1.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
+      </ParameterList>
+    
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>

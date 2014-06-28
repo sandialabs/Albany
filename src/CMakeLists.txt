@@ -54,6 +54,10 @@ SET(HEADERS
   Albany_SaveEigenData.hpp
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
+  Albany_DistributedParameterLibrary.hpp
+  Albany_DistributedParameterDerivativeOp.hpp
+#  Albany_DistributedParameterLibrary_Epetra.hpp
+  Albany_DistributedParameterLibrary_Tpetra.hpp
   )
 
 #problems
@@ -205,6 +209,8 @@ SET(SOURCES ${SOURCES}
   evaluators/Adapt_ElementSizeField.cpp
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   evaluators/PHAL_GatherVelocityRMS.cpp
+  evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -324,6 +330,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
   evaluators/PHAL_GatherVelocityRMS.hpp
   evaluators/PHAL_GatherVelocityRMS_Def.hpp
+  evaluators/PHAL_GatherScalarNodalParameter.hpp
+  evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
   )
 
 SET(PDE_HDRS ${PDE_HDRS}
@@ -380,6 +388,17 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PNP_ConcentrationResid.hpp
   evaluators/PNP_ConcentrationResid_Def.hpp
   )
+
+# FELIX
+IF (ALBANY_FELIX)
+  SET(SOURCES ${SOURCES}
+    evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
+    evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+  )
+ENDIF()
 
 # ASCR
 IF(ALBANY_ASCR)

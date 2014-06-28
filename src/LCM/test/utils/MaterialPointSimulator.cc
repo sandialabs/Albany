@@ -123,6 +123,8 @@ int main(int ac, char* av[])
 
   //---------------------------------------------------------------------------
   // Deformation gradient
+  // initially set the deformation gradient to the identity
+
   Teuchos::ArrayRCP<ScalarT> def_grad(9);
   for (int i(0); i < 9; ++i)
     def_grad[i] = 0.0;
@@ -154,6 +156,7 @@ int main(int ac, char* av[])
   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDetDefGrad =
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
 
+  //---------------------------------------------------------------------------
   // Instantiate a field manager
   PHX::FieldManager<Traits> fieldManager;
 
@@ -176,11 +179,29 @@ int main(int ac, char* av[])
     material_db->getElementBlockParam<std::string>(element_block_name,"material");
   Teuchos::ParameterList& paramList =
     material_db->getElementBlockSublist(element_block_name,matName);
+  Teuchos::ParameterList& mpsParams =
+    paramList.sublist("Material Point Simulator");
 
   // Get loading parameters from .xml file
-  std::string load_case = paramList.get<std::string>("Loading Case Name","uniaxial");
-  int number_steps = paramList.get<int>("Number of Steps",10);
-  double step_size = paramList.get<double>("Step Size",1.0e-2);
+  std::string load_case = mpsParams.get<std::string>("Loading Case Name","uniaxial");
+  int number_steps = mpsParams.get<int>("Number of Steps",10);
+  double step_size = mpsParams.get<double>("Step Size",1.0e-2);
+
+  //---------------------------------------------------------------------------
+  // Temperature (optional)
+  if (mpsParams.get<bool>("Use Temperature", false)) {
+    Teuchos::ArrayRCP<ScalarT> temperature(1);
+    temperature[0] = mpsParams.get<double>("Temperature",1.0);
+    // SetField evaluator, which will be used to manually assign a value
+    // to the detdefgrad field
+    Teuchos::ParameterList setTempP("SetFieldTemperature");
+    setTempP.set<std::string>("Evaluated Field Name", "Temperature");
+    setTempP.set<Teuchos::RCP<PHX::DataLayout> >(
+       "Evaluated Field Data Layout", dl->qp_scalar);
+    setTempP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", temperature);
+    Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldTemperature =
+      Teuchos::rcp(new LCM::SetField<Residual, Traits>(setTempP));
+  }
 
   //---------------------------------------------------------------------------
   // Constitutive Model Parameters
@@ -231,7 +252,7 @@ int main(int ac, char* av[])
 
   // check if the material wants the tangent to be checked
   bool check_stability;
-  check_stability = paramList.get<bool>("Check Stability", false);
+  check_stability = mpsParams.get<bool>("Check Stability", false);
 
   if (check_stability) {
     Teuchos::ParameterList bcPL;
@@ -309,7 +330,7 @@ int main(int ac, char* av[])
 
   // grab the output file name
   std::string output_file =
-    paramList.get<std::string>("Output File Name","output.exo");
+    mpsParams.get<std::string>("Output File Name","output.exo");
 
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
@@ -346,27 +367,59 @@ int main(int ac, char* av[])
   // create MDFields
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Cauchy_Stress",dl->qp_tensor);
 
+  // construct the final deformation gradient based on the loading case
+  std::vector<ScalarT> F_vector(9,0.0);
+  if (load_case == "uniaxial") {
+    F_vector[0] = 1.0 + number_steps * step_size;
+    F_vector[4] = 1.0;
+    F_vector[8] = 1.0;
+  } else if (load_case == "simple-shear") {
+    F_vector[0] = 1.0;
+    F_vector[1] = number_steps * step_size;
+    F_vector[4] = 1.0;
+    F_vector[8] = 1.0;
+  } else if (load_case == "hydrostatic") {
+    F_vector[0] = 1.0 + number_steps * step_size;
+    F_vector[4] = 1.0 + number_steps * step_size;
+    F_vector[8] = 1.0 + number_steps * step_size;
+  } else if (load_case == "general") {
+    F_vector = mpsParams.get<Teuchos::Array<double> >("Deformation Gradient Components").toVector();
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               std::runtime_error,
+                               "Impropoer Loading Case in Material Point Simulator block");
+  }
+    
+
+  Intrepid::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
+  Intrepid::Tensor<ScalarT> log_F_tensor = Intrepid::log(F_tensor);
+
+  std::cout << "F\n" << F_tensor << std::endl;
+  std::cout << "log F\n" << log_F_tensor << std::endl;
+  
   //
   // Setup loading scenario and instantiate evaluatFields
   //
   for (int istep(0); istep <= number_steps; ++istep) {
 
     std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
+    // alpha \in [0,1]
+    double alpha = double(istep) / number_steps;
+    std::cout << "alpha: " << alpha << std::endl;
+    Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
+    Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
 
-    // applied deformation gradient
-    if (load_case == "uniaxial") {
-      def_grad[0] = 1.0 + istep * step_size;
-    } else if (load_case == "simple-shear") {
-      def_grad[1] = istep * step_size;
-    } else if (load_case == "hydrostatic") {
-      def_grad[0] = 1.0 + istep * step_size;
-      def_grad[4] = 1.0 + istep * step_size;
-      def_grad[8] = 1.0 + istep * step_size;
+    std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
+    std::cout << "current F\n" << current_F << std::endl;
+
+    for (int i=0; i<3; ++i) {
+      for (int j=0; j<3; ++j) {
+        def_grad[3*i + j] = current_F(i,j);
+      }
     }
 
     // jacobian
-    Intrepid::Tensor<ScalarT> Ftensor(3, &def_grad[0]);
-    detdefgrad[0] = Intrepid::det(Ftensor);
+    detdefgrad[0] = Intrepid::det(current_F);
 
     // Call the evaluators, evaluateFields() is the function that
     // computes stress based on deformation gradient

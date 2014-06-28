@@ -8,18 +8,20 @@
 // Generic implementations that can be used by derived problems
 
 Albany::AbstractProblem::AbstractProblem(
-         const Teuchos::RCP<Teuchos::ParameterList>& params_,
-         const Teuchos::RCP<ParamLib>& paramLib_,
-         const int neq_) :
+  const Teuchos::RCP<Teuchos::ParameterList>& params_,
+  const Teuchos::RCP<ParamLib>& paramLib_,
+  //const Teuchos::RCP<DistParamLib>& distParamLib_,
+  const int neq_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   neq(neq_),
   params(params_),
   paramLib(paramLib_),
+  //distParamLib(distParamLib_),
   rigidBodyModes(Teuchos::rcp(new Piro::MLRigidBodyModes(neq_)))
 {}
 
-unsigned int 
-Albany::AbstractProblem::numEquations() const 
+unsigned int
+Albany::AbstractProblem::numEquations() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION( neq <= 0,
                     Teuchos::Exceptions::InvalidParameter,
@@ -29,8 +31,8 @@ Albany::AbstractProblem::numEquations() const
 
 void
 Albany::AbstractProblem::setNumEquations(const int neq_)
-{ 
-  neq = neq_; 
+{
+  neq = neq_;
   rigidBodyModes->setNumPDEs(neq_);
 }
 
@@ -58,7 +60,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->set<std::string>("Cubit Base Filename", "", "Base name of three Cubit files");
   validPL->set<int>("Phalanx Graph Visualization Detail", 0,
                     "Flag to select outpuy of Phalanx Graph and level of detail");
-  validPL->set<bool>("Use Physics-Based Preconditioner", false, 
+  validPL->set<bool>("Use Physics-Based Preconditioner", false,
       "Flag to create signal that this problem will creat its own preconditioner");
 
   validPL->sublist("Initial Condition", false, "");
@@ -67,6 +69,7 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Absorption", false, "");
   validPL->sublist("Response Functions", false, "");
   validPL->sublist("Parameters", false, "");
+  validPL->sublist("Distributed Parameters", false, "");
   validPL->sublist("Teko", false, "");
   validPL->sublist("Dirichlet BCs", false, "");
   validPL->sublist("Neumann BCs", false, "");
@@ -74,10 +77,10 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
   validPL->sublist("Catalyst", false, "");
   validPL->set<bool>("Solve Adjoint", false, "");
 
-  validPL->set<bool>("Ignore Residual In Jacobian", false, 
-		     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
-  validPL->set<double>("Perturb Dirichlet", 0.0, 
-		     "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
+  validPL->set<bool>("Ignore Residual In Jacobian", false,
+                     "Ignore residual calculations while computing the Jacobian (only generally appropriate for linear problems)");
+  validPL->set<double>("Perturb Dirichlet", 0.0,
+                     "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
 
   validPL->sublist("Model Order Reduction", false, "Specify the options relative to model order reduction");
 

@@ -163,15 +163,12 @@ public:
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
 
-
 private:
   //! Private to prohibit copying
   StateManager(const StateManager&);
 
   //! Private to prohibit copying
   StateManager& operator=(const StateManager&);
-
-private:
 
   //! boolean to enforce that allocate gets called once, and after registration and befor gets
   bool stateVarsAreAllocated;
@@ -187,9 +184,6 @@ private:
   Teuchos::RCP<EigendataStruct> eigenData;
   Teuchos::RCP<Epetra_MultiVector> auxData;
 
-  // Experiment in dealing with Time
-  double time;
-  double timeOld;
 };
 
 }

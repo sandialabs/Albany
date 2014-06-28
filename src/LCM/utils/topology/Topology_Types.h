@@ -34,6 +34,9 @@
 #include <Teuchos_ScalarTraits.hpp>
 #include <Teuchos_CommandLineProcessor.hpp>
 
+//Intrepid includes
+#include <Intrepid_MiniTensor.h>
+
 // Albany includes
 #include "Albany_AbstractSTKFieldContainer.hpp"
 #include "Albany_AbstractDiscretization.hpp"
@@ -65,12 +68,13 @@ typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;
 typedef boost::property<VertexName, EntityRank> VertexProperty;
 typedef boost::property<EdgeName, EdgeId> EdgeProperty;
-typedef boost::listS List;
-typedef boost::vecS Vector;
-typedef boost::bidirectionalS Undirected;
+typedef boost::listS ListS;
+typedef boost::vecS VectorS;
+typedef boost::bidirectionalS Directed;
+typedef boost::undirectedS Undirected;
 
 typedef boost::adjacency_list<
-    List, List, Undirected, VertexProperty, EdgeProperty> Graph;
+    ListS, ListS, Directed, VertexProperty, EdgeProperty> Graph;
 
 typedef boost::property_map<Graph, VertexName>::type VertexNamePropertyMap;
 typedef boost::property_map<Graph, EdgeName>::type EdgeNamePropertyMap;
@@ -85,10 +89,20 @@ typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
     IntScalarFieldType;
 
+typedef Albany::AbstractSTKFieldContainer::VectorFieldType
+    VectorFieldType;
+
+typedef Albany::AbstractSTKFieldContainer::TensorFieldType
+    TensorFieldType;
+
 // Specific to topological manipulation
 typedef std::pair<Entity*, Entity*> EntityPair;
+typedef std::map<Vertex, size_t> ComponentMap;
+typedef std::map<Entity*, Entity*> ElementNodeMap;
 
 enum FractureState {CLOSED = 0, OPEN = 1};
+
+enum VTKCellType {INVALID = 0, VERTEX = 1, LINE = 2, TRIANGLE = 5, QUAD = 9};
 
 static EntityRank const
 INVALID_RANK = stk_classic::mesh::fem::FEMMetaData::INVALID_RANK;

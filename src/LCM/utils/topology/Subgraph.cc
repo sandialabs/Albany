@@ -175,169 +175,6 @@ Subgraph::addVertex(EntityRank vertex_rank)
   return local_vertex;
 }
 
-//------------------------------------------------------------------------------
-void
-Subgraph::communicate_and_create_shared_entities(Entity   & node,
-    EntityKey   new_node_key){
-
-  stk_classic::CommAll comm(getBulkData()->parallel());
-
-  {
-    stk_classic::mesh::PairIterEntityComm entity_comm = node.sharing();
-
-    for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
-
-      unsigned proc = entity_comm.first->proc;
-      comm.send_buffer(proc).pack<EntityKey>(node.key())
-                                  .pack<EntityKey>(new_node_key);
-
-    }
-  }
-
-  comm.allocate_buffers(getBulkData()->parallel_size()/4 );
-
-  {
-    stk_classic::mesh::PairIterEntityComm entity_comm = node.sharing();
-
-    for (; entity_comm.first != entity_comm.second; ++entity_comm.first) {
-
-      unsigned proc = entity_comm.first->proc;
-      comm.send_buffer(proc).pack<EntityKey>(node.key())
-                                  .pack<EntityKey>(new_node_key);
-
-    }
-  }
-
-  comm.communicate();
-
-  const stk_classic::mesh::PartVector no_parts;
-
-  for (size_t process = 0; process < getBulkData()->parallel_size(); ++process) {
-    EntityKey old_key;
-    EntityKey new_key;
-
-    while ( comm.recv_buffer(process).remaining()) {
-
-      comm.recv_buffer(process).unpack<EntityKey>(old_key)
-                                     .unpack<EntityKey>(new_key);
-
-      Entity * new_entity = & getBulkData()->declare_entity(new_key.rank(), new_key.id(), no_parts);
-      //std::cout << " Proc: " << getBulkData()->parallel_rank() << " created entity: (" << new_entity->identifier() << ", " <<
-      //new_entity->entity_rank() << ")." << '\n';
-
-    }
-  }
-
-}
-
-//------------------------------------------------------------------------------
-void
-Subgraph::bcast_key(unsigned root, EntityKey&   node_key){
-
-  stk_classic::CommBroadcast comm(getBulkData()->parallel(), root);
-
-  unsigned rank = getBulkData()->parallel_rank();
-
-  if(rank == root)
-
-    comm.send_buffer().pack<EntityKey>(node_key);
-
-  comm.allocate_buffer();
-
-  if(rank == root)
-
-    comm.send_buffer().pack<EntityKey>(node_key);
-
-  comm.communicate();
-
-  comm.recv_buffer().unpack<EntityKey>(node_key);
-
-}
-
-//------------------------------------------------------------------------------
-Vertex
-Subgraph::cloneVertex(Vertex & vertex)
-{
-
-  // Get the vertex rank
-  EntityRank
-  vertex_rank = Subgraph::getVertexRank(vertex);
-
-  EntityKey
-  vertex_key = Subgraph::localToGlobal(vertex);
-
-  // Determine which processor should create the new vertex
-  Entity *
-  old_vertex = getBulkData()->get_entity(vertex_key);
-
-  // For now, the owner of the new vertex is the same as the owner of the old one
-  int owner_proc = old_vertex->owner_rank();
-
-  // The owning processor inserts a new vertex into the stk mesh
-  // First have to request a new entity of rank N
-  std::vector<size_t> requests(getSpaceDimension() + 1, 0); // number of entity ranks. 1 + number of dimensions
-  EntityVector new_entity;
-  const stk_classic::mesh::PartVector no_parts;
-
-  int my_proc = getBulkData()->parallel_rank();
-  int source;
-  Entity *global_vertex;
-  EntityKey global_vertex_key;
-  EntityKey::raw_key_type gvertkey;
-
-  if(my_proc == owner_proc){
-
-    // Insert the vertex into the stk mesh
-    // First have to request a new entity of rank N
-    requests[vertex_rank] = 1;
-
-    // have stk build the new entity, then broadcast the key
-
-    getBulkData()->generate_new_entities(requests, new_entity);
-    global_vertex = new_entity[0];
-    //std::cout << " Proc: " << getBulkData()->parallel_rank() << " created entity: (" << global_vertex->identifier() << ", " <<
-    //global_vertex->entity_rank() << ")." << '\n';
-    global_vertex_key = global_vertex->key();
-    gvertkey = global_vertex_key.raw_key();
-
-  }
-  else {
-
-    // All other processors do a no-op
-
-    getBulkData()->generate_new_entities(requests, new_entity);
-
-  }
-
-  Subgraph::bcast_key(owner_proc, global_vertex_key);
-
-  if(my_proc != owner_proc){ // All other processors receive the key
-
-    // Get the vertex from stk
-
-    const stk_classic::mesh::PartVector no_parts;
-    Entity * new_entity = & getBulkData()->declare_entity(global_vertex_key.rank(), global_vertex_key.id(), no_parts);
-
-  }
-
-  // Insert the vertex into the subgraph
-  Vertex local_vertex = boost::add_vertex(*this);
-
-  // Update maps
-  local_global_vertex_map_.insert(
-      std::map<Vertex, EntityKey>::value_type(local_vertex,
-          global_vertex_key));
-  global_local_vertex_map_.insert(
-      std::map<EntityKey, Vertex>::value_type(global_vertex_key,
-          local_vertex));
-
-  // store entity rank to the vertex property
-  VertexNamePropertyMap vertex_property_map = boost::get(VertexName(), *this);
-  boost::put(vertex_property_map, local_vertex, vertex_rank);
-
-  return local_vertex;
-}
-
 //
 // Remove vertex in subgraph
 //
@@ -501,6 +338,40 @@ Subgraph::getEdgeId(Edge const edge)
   return boost::get(edge_property_map, edge);
 }
 
+// Here we use the connected components algorithm, which requires
+// and undirected graph. These types are needed to build that graph
+// without the overhead that was used for the subgraph.
+// The adjacency list type must use a vector container for the vertices
+// so that they can be converted to indices to determine the components.
+typedef boost::adjacency_list<VectorS, VectorS, Undirected> UGraph;
+typedef boost::graph_traits<UGraph>::vertex_descriptor UVertex;
+typedef boost::graph_traits<UGraph>::edge_descriptor UEdge;
+
+namespace {
+
+void
+writeGraphviz(std::string const & output_filename, UGraph const & graph) {
+  // Open output file
+  std::ofstream
+  gviz_out;
+
+  gviz_out.open(output_filename.c_str(), std::ios::out);
+
+  if (gviz_out.is_open() == false) {
+    std::cout << "Unable to open graphviz output file :";
+    std::cout << output_filename << '\n';
+    return;
+  }
+
+  boost::write_graphviz(gviz_out, graph);
+
+  gviz_out.close();
+
+  return;
+}
+
+} // anonymous namespace
+
 //
 // Function determines whether the input vertex is an articulation
 // point of the subgraph.
@@ -511,15 +382,6 @@ Subgraph::testArticulationPoint(
     size_t & number_components,
     ComponentMap & component_map)
 {
-  // Here we use the connected components algorithm, which requires
-  // and undirected graph. These types are needed to build that graph
-  // without the overhead that was used for the subgraph.
-  // The adjacency list type must use a vector container for the vertices
-  // so that they can be converted to indices to determine the components.
-  typedef boost::adjacency_list<Vector, Vector, Undirected> UGraph;
-  typedef boost::graph_traits<UGraph>::vertex_descriptor UVertex;
-  typedef boost::graph_traits<UGraph>::edge_descriptor UEdge;
-
   // Map to and from undirected graph and subgraph
   std::map<UVertex, Vertex>
   u_sub_vertex_map;
@@ -574,7 +436,6 @@ Subgraph::testArticulationPoint(
     UVertex
     usource = (*source_map_iterator).second;
 
-    // write the edges in the subgraph
     OutEdgeIterator
     out_edge_begin;
 
@@ -604,6 +465,10 @@ Subgraph::testArticulationPoint(
     }
   }
 
+#if defined(LCM_GRAPHVIZ)
+  writeGraphviz("undirected.dot", graph);
+#endif
+
   std::vector<size_t>
   components(boost::num_vertices(graph));
 
@@ -616,10 +481,10 @@ Subgraph::testArticulationPoint(
     vertex = (*i).second;
 
     size_t
-    component_number = static_cast<size_t>((*i).first);
+    u_vertex = static_cast<size_t>((*i).first);
 
     std::pair<Vertex, size_t>
-    component = std::make_pair(vertex, components[component_number]);
+    component = std::make_pair(vertex, components[u_vertex]);
 
     component_map.insert(component);
   }
@@ -694,60 +559,42 @@ Subgraph::cloneBoundaryEntity(Vertex vertex)
   return new_vertex;
 }
 
-//------------------------------------------------------------------------------
+//
+// Restore element to node connectivity needed by STK.
+//
 void
-Subgraph::cloneBoundaryEntity(Vertex & vertex, Vertex & new_vertex,
-    std::map<EntityKey, bool> & entity_open)
+Subgraph::updateElementNodeConnectivity(Entity & point, ElementNodeMap & map)
 {
-  // Check that number of in_edges = 2
-  boost::graph_traits<Graph>::degree_size_type num_in_edges =
-      boost::in_degree(vertex, *this);
-  if (num_in_edges != 2) return;
+  for (ElementNodeMap::iterator i = map.begin(); i != map.end(); ++i) {
+    Entity &
+    element = *(i->first);
 
-  // Check that vertex = open
-  EntityKey vertex_key = Subgraph::localToGlobal(vertex);
-  assert(entity_open[vertex_key]==true);
+    // Identify relation id and remove
+    PairIterRelation
+    relations = element.relations(NODE_RANK);
 
-  // Get the vertex rank
-  //    EntityRank vertex_rank = Subgraph::getVertexRank(vertex);
+    EdgeId
+    edge_id = relations[0].identifier();
 
-  // Create a new vertex of same rank as vertex
-  //    newVertex = Subgraph::add_vertex(vertex_rank);
-  new_vertex = Subgraph::cloneVertex(vertex);
+    bool
+    found = false;
 
-  // Copy the out_edges of vertex to new_vertex
-  OutEdgeIterator out_edge_begin;
-  OutEdgeIterator out_edge_end;
-  boost::tie(out_edge_begin, out_edge_end) = boost::out_edges(vertex, *this);
-  for (OutEdgeIterator i = out_edge_begin; i != out_edge_end; ++i) {
-    Edge edge = *i;
-    EdgeId edgeId = Subgraph::getEdgeId(edge);
-    Vertex target = boost::target(edge, *this);
-    Subgraph::addEdge(edgeId, new_vertex, target);
+    for (size_t j = 0; j < relations.size(); ++j) {
+      if (relations[j].entity() == &point) {
+        edge_id = relations[j].identifier();
+        found = true;
+        break;
+      }
+    }
+
+    assert(found == true);
+
+    getBulkData()->destroy_relation(element, point, edge_id);
+
+    Entity &
+    new_point = *(i->second);
+    getBulkData()->declare_relation(element, new_point, edge_id);
   }
-
-  // Copy all out edges not in the subgraph to the new vertex
-  Subgraph::cloneOutEdges(vertex, new_vertex);
-
-  // Remove one of the edges from vertex, copy to new_vertex
-  // Arbitrarily remove the first edge from original vertex
-  InEdgeIterator in_edge_begin;
-  InEdgeIterator in_edge_end;
-  boost::tie(in_edge_begin, in_edge_end) = boost::in_edges(vertex, *this);
-  Edge edge = *(in_edge_begin);
-  EdgeId edgeId = Subgraph::getEdgeId(edge);
-  Vertex source = boost::source(edge, *this);
-  Subgraph::removeEdge(source, vertex);
-
-  // Add edge to new vertex
-  Subgraph::addEdge(edgeId, source, new_vertex);
-
-  // Have to clone the out edges of the original entity to the new entity.
-  // These edges are not in the subgraph
-
-  // Clone process complete, set entity_open to false
-  entity_open[vertex_key] = false;
-
   return;
 }
 
@@ -760,7 +607,6 @@ Subgraph::splitArticulationPoint(Vertex vertex)
   EntityRank
   vertex_rank = Subgraph::getVertexRank(vertex);
 
-  // Create undirected graph
   size_t
   number_components;
 
@@ -769,8 +615,10 @@ Subgraph::splitArticulationPoint(Vertex vertex)
 
   testArticulationPoint(vertex, number_components, components);
 
+  assert(number_components > 0);
+
   // The function returns an updated connectivity map.
-  // If the vertex rank is not node, then this map will be of size 0.
+  // If the vertex rank is not node, then this map will be empty.
   std::map<Entity*, Entity*>
   new_connectivity;
 
@@ -778,48 +626,53 @@ Subgraph::splitArticulationPoint(Vertex vertex)
 
   // If more than one component, split vertex in subgraph and stk mesh.
   std::vector<Vertex>
-  new_vertices;
+  new_vertices(number_components - 1);
 
-  for (size_t i = 0; i < number_components - 1; ++i) {
+  for (size_t i = 0; i < new_vertices.size(); ++i) {
     Vertex
     new_vertex = addVertex(vertex_rank);
 
-    new_vertices.push_back(new_vertex);
+    new_vertices[i] = new_vertex;
   }
 
   // Create a map of elements to new node numbers
   // only if the input vertex is a node
   if (vertex_rank == NODE_RANK) {
+    Entity *
+    point = getBulkData()->get_entity(localToGlobal(vertex));
+
     for (ComponentMap::iterator i = components.begin();
         i != components.end(); ++i) {
-
-      size_t
-      component_number = (*i).second;
 
       Vertex
       current_vertex = (*i).first;
 
+      size_t
+      component_number = (*i).second;
+
       EntityRank
       current_rank = getVertexRank(current_vertex);
 
-      // Only add to map if the vertex is an element
-      if (current_rank == getCellRank() && component_number != 0) {
+      if (current_rank != getCellRank()) continue;
 
-        Entity *
-        element = getBulkData()->get_entity(localToGlobal(current_vertex));
+      if (component_number == number_components - 1) continue;
 
-        Vertex
-        new_vertex = new_vertices[component_number - 1];
+      Entity *
+      element = getBulkData()->get_entity(localToGlobal(current_vertex));
 
-        Entity *
-        new_node = getBulkData()->get_entity(localToGlobal(new_vertex));
+      Vertex
+      new_vertex = new_vertices[component_number];
 
-        std::pair<Entity*, Entity*>
-        nc = std::make_pair(element, new_node);
+      Entity *
+      new_node = getBulkData()->get_entity(localToGlobal(new_vertex));
 
-        new_connectivity.insert(nc);
-      }
+      std::pair<Entity*, Entity*>
+      nc = std::make_pair(element, new_node);
+
+      new_connectivity.insert(nc);
     }
+
+    updateElementNodeConnectivity(*point, new_connectivity);
   }
 
   // Copy the out edges of the original vertex to the new vertex
@@ -858,8 +711,7 @@ Subgraph::splitArticulationPoint(Vertex vertex)
     Entity &
     entity = *(getBulkData()->get_entity(localToGlobal(source)));
 
-    // Only replace edge if vertex not in component 0
-    if (vertex_component != 0) {
+    if (vertex_component < number_components - 1) {
       EdgeId
       edge_id = getEdgeId(edge);
 
@@ -883,128 +735,21 @@ Subgraph::splitArticulationPoint(Vertex vertex)
     ComponentMap::const_iterator
     component_iterator = components.find(source);
 
-    size_t vertex_component = (*component_iterator).second;
+    size_t
+    vertex_component = (*component_iterator).second;
+
+    assert(vertex_component < number_components - 1);
 
     removeEdge(source, vertex);
 
     Vertex
-    new_vertex = new_vertices[vertex_component - 1];
+    new_vertex = new_vertices[vertex_component];
 
     std::pair<Edge, bool>
     inserted = addEdge(edge_id, source, new_vertex);
 
-    assert(inserted.second==true);
+    assert(inserted.second == true);
   }
-
-  return new_connectivity;
-}
-
-//----------------------------------------------------------------------------
-//
-// Splits an articulation point.
-//
-std::map<Entity*, Entity*>
-Subgraph::splitArticulationPoint(Vertex vertex,
-    std::map<EntityKey, bool> & entity_open)
-{
-  // Check that vertex = open
-  EntityKey vertex_key = Subgraph::localToGlobal(vertex);
-  assert(entity_open[vertex_key]==true);
-
-  // get rank of vertex
-  EntityRank vertex_rank = Subgraph::getVertexRank(vertex);
-
-  // Create undirected graph
-  size_t num_components;
-  ComponentMap components;
-  Subgraph::testArticulationPoint(vertex, num_components, components);
-
-  // The function returns an updated connectivity map. If the vertex
-  //   rank is not node, then this map will be of size 0.
-  std::map<Entity*, Entity*> new_connectivity;
-
-  // Check number of connected components in undirected graph. If =
-  // 1, return
-  if (num_components == 1) return new_connectivity;
-
-  // If number of connected components > 1, split vertex in subgraph and stk mesh
-  // number of new vertices = numComponents - 1
-  std::vector<Vertex> new_vertex;
-  for (int i = 0; i < num_components - 1; ++i) {
-    //      Vertex newVert = Subgraph::add_vertex(vertex_rank);
-    Vertex new_vert = Subgraph::cloneVertex(vertex);
-    new_vertex.push_back(new_vert);
-  }
-
-  // create a map of elements to new node numbers
-  // only do this if the input vertex is a node (don't require otherwise)
-  if (vertex_rank == 0) {
-    for (ComponentMap::iterator i = components.begin();
-        i != components.end(); ++i) {
-      int component_num = (*i).second;
-      Vertex current_vertex = (*i).first;
-      EntityRank current_rank = Subgraph::getVertexRank(current_vertex);
-      // Only add to map if the vertex is an element
-      if (current_rank == getSpaceDimension() && component_num != 0) {
-        Entity* element =
-            getBulkData()->get_entity(Subgraph::localToGlobal(current_vertex));
-        Entity* new_node =
-            getBulkData()->
-            get_entity(Subgraph::localToGlobal(new_vertex[component_num - 1]));
-        new_connectivity.
-        insert(std::map<Entity*, Entity*>::value_type(element, new_node));
-      }
-    }
-  }
-
-  // Copy the out edges of the original vertex to the new vertex
-  for (int i = 0; i < new_vertex.size(); ++i) {
-    Subgraph::cloneOutEdges(vertex, new_vertex[i]);
-  }
-
-  // vector for edges to be removed. Vertex is source and edgeId the
-  // local id of the edge
-  std::vector<std::pair<Vertex, EdgeId> > removed;
-
-  // Iterate over the in edges of the vertex to determine which will
-  // be removed
-  InEdgeIterator in_edge_begin;
-  InEdgeIterator in_edge_end;
-  boost::tie(in_edge_begin, in_edge_end) = boost::in_edges(vertex, *this);
-  for (InEdgeIterator i = in_edge_begin; i != in_edge_end; ++i) {
-    Edge edge = *i;
-    Vertex source = boost::source(edge, *this);
-
-    ComponentMap::const_iterator componentIterator =
-        components.find(source);
-    int vertComponent = (*componentIterator).second;
-    Entity& entity =
-        *(getBulkData()->get_entity(Subgraph::localToGlobal(source)));
-    // Only replace edge if vertex not in component 0
-    if (vertComponent != 0) {
-      EdgeId edgeId = Subgraph::getEdgeId(edge);
-      removed.push_back(std::make_pair(source, edgeId));
-    }
-  }
-
-  // remove all edges in vector removed and replace with new edges
-  for (std::vector<std::pair<Vertex, EdgeId> >::iterator i = removed.begin();
-      i != removed.end(); ++i) {
-    std::pair<Vertex, EdgeId> edge = *i;
-    Vertex source = edge.first;
-    EdgeId edgeId = edge.second;
-    ComponentMap::const_iterator componentIterator =
-        components.find(source);
-    int vertComponent = (*componentIterator).second;
-
-    Subgraph::removeEdge(source, vertex);
-    std::pair<Edge, bool> inserted =
-        Subgraph::addEdge(edgeId, source,new_vertex[vertComponent - 1]);
-    assert(inserted.second==true);
-  }
-
-  // split process complete, set entity_open to false
-  entity_open[vertex_key] = false;
 
   return new_connectivity;
 }
@@ -1031,11 +776,11 @@ Subgraph::cloneOutEdges(Vertex old_vertex, Vertex new_vertex)
   // Iterate over the out edges of the old vertex and check against the
   // out edges of the new vertex. If the edge does not exist, add.
   PairIterRelation
-  old_relations = old_entity.relations(old_entity.entity_rank() - 1);
+  old_relations = relations_one_down(old_entity);
 
   for (size_t i = 0; i < old_relations.size(); ++i) {
     PairIterRelation
-    new_relations = new_entity.relations(new_entity.entity_rank() - 1);
+    new_relations = relations_one_down(new_entity);
 
     // assume the edge doesn't exist
     bool
@@ -1044,6 +789,7 @@ Subgraph::cloneOutEdges(Vertex old_vertex, Vertex new_vertex)
     for (size_t j = 0; j < new_relations.size(); ++j) {
       if (old_relations[i].entity() == new_relations[j].entity()) {
         exists = true;
+        break;
       }
     }
 
@@ -1061,138 +807,116 @@ Subgraph::cloneOutEdges(Vertex old_vertex, Vertex new_vertex)
   return;
 }
 
-/**
- * \brief Output the graph associated with the mesh to graphviz .dot
- * file for visualization purposes.
- *
- * \param[in] output file
- * \param[in] map of entity and boolean value is open
- *
- * Similar to outputToGraphviz function in Topology class.
- * If fracture criterion for entity is satisfied, the entity and all
- * associated lower order entities are marked open. All open entities are
- * displayed as such in output file.
- *
- * To create final output figure, run command below from terminal:
- *   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
- */
-void Subgraph::outputToGraphviz(std::string & gviz_output,
-    std::map<EntityKey, bool> entity_open)
+//
+// \brief Output the graph associated with the mesh to graphviz .dot
+// file for visualization purposes.
+//
+// \param[in] output file
+//
+// Similar to outputToGraphviz function in Topology class.
+// If fracture criterion for entity is satisfied, the entity and all
+// associated lower order entities are marked open. All open entities are
+// displayed as such in output file.
+//
+// To create final output figure, run command below from terminal:
+//   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
+//
+void
+Subgraph::outputToGraphviz(std::string const & output_filename)
 {
   // Open output file
-  std::ofstream gviz_out;
-  gviz_out.open(gviz_output.c_str(), std::ios::out);
+  std::ofstream
+  gviz_out;
 
-  std::cout << "Write graph to graphviz dot file\n";
+  gviz_out.open(output_filename.c_str(), std::ios::out);
 
-  if (gviz_out.is_open()) {
-    // Write beginning of file
-    gviz_out << "digraph mesh {\n" << "  node [colorscheme=paired12]\n"
-        << "  edge [colorscheme=paired12]\n";
+  if (gviz_out.is_open() == false) {
+    std::cout << "Unable to open graphviz output file: ";
+    std::cout << output_filename << '\n';
+    return;
+  }
 
-    VertexIterator vertex_begin;
-    VertexIterator vertex_end;
-    boost::tie(vertex_begin, vertex_end) = vertices(*this);
+  std::cout << "Write graph to graphviz dot file: ";
+  std::cout << output_filename << '\n';
 
-    for (VertexIterator i = vertex_begin; i != vertex_end; ++i) {
-      EntityKey key = localToGlobal(*i);
-      Entity & entity = *(getBulkData()->get_entity(key));
-      std::string label;
-      std::string color;
+  // Write beginning of file
+  gviz_out << dot_header();
 
-      // Write the entity name
-      switch (entity.entity_rank()) {
-      // nodes
-      case 0:
-        label = "Node";
-        if (entity_open[entity.key()] == false)
-          color = "6";
-        else
-          color = "5";
-        break;
-        // segments
-      case 1:
-        label = "Segment";
-        if (entity_open[entity.key()] == false)
-          color = "4";
-        else
-          color = "3";
-        break;
-        // faces
-      case 2:
-        label = "Face";
-        if (entity_open[entity.key()] == false)
-          color = "2";
-        else
-          color = "1";
-        break;
-        // volumes
-      case 3:
-        label = "Element";
-        if (entity_open[entity.key()] == false)
-          color = "8";
-        else
-          color = "7";
-        break;
-      }
-      gviz_out << "  \"" << entity.identifier() << "_" << entity.entity_rank()
-                     << "\" [label=\" " << label << " " << entity.identifier()
-                     << "\",style=filled,fillcolor=\"" << color << "\"]\n";
+  VertexIterator
+  vertices_begin;
 
-      // write the edges in the subgraph
-      OutEdgeIterator out_edge_begin;
-      OutEdgeIterator out_edge_end;
-      boost::tie(out_edge_begin, out_edge_end) = out_edges(*i, *this);
+  VertexIterator
+  vertices_end;
 
-      for (OutEdgeIterator j = out_edge_begin; j != out_edge_end; ++j) {
-        Edge out_edge = *j;
-        Vertex source = boost::source(out_edge, *this);
-        Vertex target = boost::target(out_edge, *this);
+  boost::tie(vertices_begin, vertices_end) = vertices(*this);
 
-        EntityKey sourceKey = localToGlobal(source);
-        Entity & global_source = *(getBulkData()->get_entity(sourceKey));
+  for (VertexIterator i = vertices_begin; i != vertices_end; ++i) {
 
-        EntityKey targetKey = localToGlobal(target);
-        Entity & global_target = *(getBulkData()->get_entity(targetKey));
+    EntityKey
+    key = localToGlobal(*i);
 
-        EdgeId edgeId = getEdgeId(out_edge);
+    Entity &
+    entity = *(getBulkData()->get_entity(key));
 
-        switch (edgeId) {
-        case 0:
-          color = "6";
-          break;
-        case 1:
-          color = "4";
-          break;
-        case 2:
-          color = "2";
-          break;
-        case 3:
-          color = "8";
-          break;
-        case 4:
-          color = "10";
-          break;
-        case 5:
-          color = "12";
-          break;
-        default:
-          color = "9";
-        }
-        gviz_out << "  \"" << global_source.identifier() << "_"
-            << global_source.entity_rank() << "\" -> \""
-            << global_target.identifier() << "_"
-            << global_target.entity_rank() << "\" [color=\"" << color << "\"]"
-            << "\n";
-      }
+    EntityRank const
+    rank = entity.entity_rank();
+
+    FractureState const
+    fracture_state = getFractureState(entity);
+
+    gviz_out << dot_entity(entity.identifier(), rank, fracture_state);
+
+    // write the edges in the subgraph
+    OutEdgeIterator
+    out_edge_begin;
+
+    OutEdgeIterator
+    out_edge_end;
+
+    boost::tie(out_edge_begin, out_edge_end) = out_edges(*i, *this);
+
+    for (OutEdgeIterator j = out_edge_begin; j != out_edge_end; ++j) {
+
+      Edge
+      out_edge = *j;
+
+      Vertex
+      source = boost::source(out_edge, *this);
+
+      Vertex
+      target = boost::target(out_edge, *this);
+
+      EntityKey
+      source_key = localToGlobal(source);
+
+      Entity &
+      global_source = *(getBulkData()->get_entity(source_key));
+
+      EntityKey
+      target_key = localToGlobal(target);
+
+      Entity &
+      global_target = *(getBulkData()->get_entity(target_key));
+
+      EdgeId
+      edge_id = getEdgeId(out_edge);
+
+      gviz_out << dot_relation(
+          global_source.identifier(),
+          global_source.entity_rank(),
+          global_target.identifier(),
+          global_target.entity_rank(),
+          edge_id
+      );
 
     }
 
-    // File end
-    gviz_out << "}";
-    gviz_out.close();
-  } else
-    std::cout << "Unable to open graphviz output file 'output.dot'\n";
+  }
+
+  // File end
+  gviz_out << dot_footer();
+
+  gviz_out.close();
 
   return;
 }

@@ -8,9 +8,11 @@
 #define ALBANY_STKDISCRETIZATION_HPP
 
 #include <vector>
+#include <utility>
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
+
 #include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
@@ -37,6 +39,7 @@
 namespace Albany {
 
 /*
+=======
   struct MeshGraph {
 
        std::vector<std::size_t> start;
@@ -109,6 +112,7 @@ namespace Albany {
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
 
     //! Print the coordinates for debugging
 
@@ -177,6 +181,18 @@ namespace Albany {
     int getGlobalDOF(const int inode, const int eq) const;
 
 
+    //! used when NetCDF output on a latitude-longitude grid is requested.
+    // Each struct contains a latitude/longitude index and it's parametric
+    // coordinates in an element.
+    struct interp {
+      std::pair<double, double> parametric_coords;
+      std::pair<unsigned, unsigned> latitude_longitude;
+    };
+
+    const stk_classic::mesh::fem::FEMMetaData& getSTKMetaData(){ return metaData; }
+
+    const stk_classic::mesh::BulkData& getSTKBulkData(){ return bulkData; }
+
   private:
 
     //! Private to prohibit copying
@@ -227,6 +243,9 @@ namespace Albany {
     void computeSideSets();
     //! Call stk_io for creating exodus output file
     void setupExodusOutput();
+    //! Call stk_io for creating NetCDF output file
+    void setupNetCDFOutput();
+    int processNetCDFOutputRequest(const Epetra_Vector&);
     //! Find the local side id number within parent element
     unsigned determine_local_side_id( const stk_classic::mesh::Entity & elem , stk_classic::mesh::Entity & side );
     //! Call stk_io for creating exodus output file
@@ -299,6 +318,7 @@ namespace Albany {
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
+    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
     WsLIDList  elemGIDws;
@@ -320,6 +340,11 @@ namespace Albany {
 
     // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
+
+    int netCDFp;
+    int netCDFOutputRequest;
+    std::vector<int> varSolns;
+    Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp> > >::type interpolateData;
 
     // Storage used in periodic BCs to un-roll coordinates. Pointers saved for destructor.
     std::vector<double*>  toDelete;

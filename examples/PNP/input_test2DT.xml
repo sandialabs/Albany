@@ -2,6 +2,7 @@
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="PNP 2D"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
+    <Parameter name="Number of Species" type="int" value="2"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF Phi" type="double" value="2.0"/>

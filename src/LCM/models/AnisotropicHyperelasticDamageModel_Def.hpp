@@ -36,9 +36,12 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
     direction_f2_(p->get<Teuchos::Array<RealType> >("Fiber 2 Orientation Vector")
         .toVector())
 {
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+
   // define the dependent fields
-  this->dep_field_map_.insert(std::make_pair("F", dl->qp_tensor));
-  this->dep_field_map_.insert(std::make_pair("J", dl->qp_scalar));
+  this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
+  this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Poissons Ratio", dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Elastic Modulus", dl->qp_scalar));
 
@@ -71,7 +74,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // matrix energy
   this->num_state_variables_++;
@@ -80,7 +83,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Matrix Energy", false));
   //
   // fiber 1 energy
   this->num_state_variables_++;
@@ -89,7 +92,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fiber 1 Energy", false));
   //
   // fiber 2 energy
   this->num_state_variables_++;
@@ -98,7 +101,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fiber 2 Energy", false));
   //
   // matrix damage
   this->num_state_variables_++;
@@ -107,7 +110,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Matrix Damage", false));
   //
   // fiber 1 damage
   this->num_state_variables_++;
@@ -116,7 +119,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fiber 1 Damage", false));
   //
   // fiber 2 damage
   this->num_state_variables_++;
@@ -125,7 +128,7 @@ AnisotropicHyperelasticDamageModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Fiber 2 Damage", false));
 
 }
 //----------------------------------------------------------------------------
@@ -139,13 +142,9 @@ computeState(typename Traits::EvalData workset,
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
   //cout.precision(15);
 
-  // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields["F"];
-  PHX::MDField<ScalarT> J = *dep_fields["J"];
-  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
-  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
-
   // retrive appropriate field name strings
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string matrix_energy_string = (*field_name_map_)["Matrix_Energy"];
   std::string f1_energy_string = (*field_name_map_)["F1_Energy"];
@@ -153,6 +152,12 @@ computeState(typename Traits::EvalData workset,
   std::string matrix_damage_string = (*field_name_map_)["Matrix_Damage"];
   std::string f1_damage_string = (*field_name_map_)["F1_Damage"];
   std::string f2_damage_string = (*field_name_map_)["F2_Damage"];
+
+  // extract dependent MDFields
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
+  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
+  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];

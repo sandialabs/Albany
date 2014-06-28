@@ -19,22 +19,22 @@ namespace PHAL {
 
 /** \brief Handles scattering of scalar response functions into epetra
  * data structures.
- * 
+ *
  * Base implementation useable by specializations below
  */
-template<typename EvalT, typename Traits> 
+template<typename EvalT, typename Traits>
 class ScatterScalarResponseBase
   : public virtual PHX::EvaluatorWithBaseImpl<Traits>,
     public virtual PHX::EvaluatorDerived<EvalT, Traits>  {
-  
+
 public:
-  
+
   ScatterScalarResponseBase(const Teuchos::ParameterList& p,
-		      const Teuchos::RCP<Albany::Layouts>& dl);
-  
+                      const Teuchos::RCP<Albany::Layouts>& dl);
+
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
-  
+                             PHX::FieldManager<Traits>& vm);
+
   void evaluateFields(typename Traits::EvalData d) {}
 
   //! Get tag for response field (to determine the number of responses)
@@ -48,7 +48,7 @@ public:
   getEvaluatedFieldTag() const {
     return scatter_operation;
   }
-  
+
 protected:
 
   // Default constructor for child classes
@@ -56,7 +56,7 @@ protected:
 
   // Child classes should call setup once p is filled out
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl);
+             const Teuchos::RCP<Albany::Layouts>& dl);
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
@@ -77,20 +77,20 @@ template<typename EvalT, typename Traits> class ScatterScalarResponse {};
 
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class ScatterScalarResponse<PHAL::AlbanyTraits::Residual,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::Residual, Traits>  {
 public:
   ScatterScalarResponse(const Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl);
+                  const Teuchos::RCP<Albany::Layouts>& dl);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::Residual EvalT;
   ScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
+             const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
   }
 private:
@@ -109,13 +109,13 @@ class ScatterScalarResponse<PHAL::AlbanyTraits::Tangent,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::Tangent, Traits>  {
 public:
   ScatterScalarResponse(const Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl);
+                  const Teuchos::RCP<Albany::Layouts>& dl);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::Tangent EvalT;
   ScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
+             const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
   }
 private:
@@ -123,7 +123,11 @@ private:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Distributed Parameter Derivative -- No implementation can be provided
+// **************************************************************
+
+// **************************************************************
+// Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -131,13 +135,13 @@ class ScatterScalarResponse<PHAL::AlbanyTraits::SGResidual,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
 public:
   ScatterScalarResponse(const Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl);
+                  const Teuchos::RCP<Albany::Layouts>& dl);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::SGResidual EvalT;
   ScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
+             const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
   }
 private:
@@ -156,13 +160,13 @@ class ScatterScalarResponse<PHAL::AlbanyTraits::SGTangent,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
 public:
   ScatterScalarResponse(const Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl);
+                  const Teuchos::RCP<Albany::Layouts>& dl);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::SGTangent EvalT;
   ScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
+             const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
   }
 private:
@@ -170,20 +174,20 @@ private:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class ScatterScalarResponse<PHAL::AlbanyTraits::MPResidual,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
 public:
   ScatterScalarResponse(const Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl);
+                  const Teuchos::RCP<Albany::Layouts>& dl);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::MPResidual EvalT;
   ScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
+             const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
   }
 private:
@@ -202,13 +206,13 @@ class ScatterScalarResponse<PHAL::AlbanyTraits::MPTangent,Traits>
   : public ScatterScalarResponseBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
 public:
   ScatterScalarResponse(const Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl);
+                  const Teuchos::RCP<Albany::Layouts>& dl);
   void postEvaluate(typename Traits::PostEvalData d);
 protected:
   typedef PHAL::AlbanyTraits::MPTangent EvalT;
   ScatterScalarResponse() {}
   void setup(const Teuchos::ParameterList& p,
-	     const Teuchos::RCP<Albany::Layouts>& dl) {
+             const Teuchos::RCP<Albany::Layouts>& dl) {
     ScatterScalarResponseBase<EvalT,Traits>::setup(p,dl);
   }
 private:

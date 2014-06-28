@@ -205,6 +205,81 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 }
 
 // **********************************************************************
+// Specialization: DistParamDeriv
+// **********************************************************************
+template<typename Traits, typename cfunc_traits>
+DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>::
+DirichletCoordFunction(Teuchos::ParameterList& p) :
+  DirichletCoordFunction_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>(p) {
+}
+// **********************************************************************
+template<typename Traits, typename cfunc_traits>
+void DirichletCoordFunction<PHAL::AlbanyTraits::DistParamDeriv, Traits, cfunc_traits>::
+evaluateFields(typename Traits::EvalData dirichletWorkset) {
+
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
+  //non-const view of VpT 
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
+  bool trans = dirichletWorkset.transpose_dist_param_deriv;
+  int num_cols = fpVT->getNumVectors();
+
+  //
+  // We're currently assuming Dirichlet BC's can't be distributed parameters.
+  // Thus we don't need to actually evaluate the BC's here.  The code to do
+  // so is still here, just commented out for future reference.
+  //
+
+  const std::vector<std::vector<int> >& nsNodes =
+    dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
+  const std::vector<double*>& nsNodeCoords =
+    dirichletWorkset.nodeSetCoords->find(this->nodeSetID)->second;
+
+  // RealType time = dirichletWorkset.current_time;
+  int number_of_components = this->func.getNumComponents();
+
+  // double* coord;
+  // std::vector<ScalarT> BCVals(number_of_components);
+
+  // For (df/dp)^T*V we zero out corresponding entries in V
+  if (trans) {
+    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
+    //non-const view of VpT 
+    Teuchos::ArrayRCP<ST> VpT_nonconstView; 
+    for(unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      // coord = nsNodeCoords[inode];
+      // this->func.computeBCs(coord, BCVals, time);
+
+      for(unsigned int j = 0; j < number_of_components; j++) {
+        int offset = nsNodes[inode][j];
+        for (int col=0; col<num_cols; ++col) {
+          //(*Vp)[col][offset] = 0.0;
+          VpT_nonconstView = VpT->getDataNonConst(col); 
+          VpT_nonconstView[offset] = 0.0; 
+        }
+      }
+    }
+  }
+
+  // for (df/dp)*V we zero out corresponding entries in df/dp
+  else {
+    for(unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+      // coord = nsNodeCoords[inode];
+      // this->func.computeBCs(coord, BCVals, time);
+
+      for(unsigned int j = 0; j < number_of_components; j++) {
+        int offset = nsNodes[inode][j];
+        for (int col=0; col<num_cols; ++col) {
+          //(*fpV)[col][offset] = 0.0;
+          fpVT_nonconstView = fpVT->getDataNonConst(col); 
+          fpVT_nonconstView[offset] = 0.0; 
+        }
+      }
+    }
+  }
+
+}
+
+// **********************************************************************
 // Specialization: Stochastic Galerkin Residual
 // **********************************************************************
 #ifdef ALBANY_SG_MP

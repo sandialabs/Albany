@@ -1,0 +1,53 @@
+## cubitx
+## Cubit Version 12.1
+## Cubit Build 44018
+## Revised 2010-08-12 10:36:21 -0600 (Thu, 12 Aug 2010)
+## Running 01/14/2013 09:47:25 AM
+## Command Options:
+## -warning = On
+## -information = On
+journal off
+brick x 1 y 1 z 1
+move body 1 x 0.5 y 0.5 z 0.5
+curve 1 to 8 interval 5
+curve 9 to 12 interval 1
+block 1 surf 1
+block 1 element quad4
+mesh surf 1 
+
+sideset 11 curve 3
+sideset 11 name "sideset0"
+sideset 12 curve 1
+sideset 12 name "sideset1"
+sideset 13 curve 4
+sideset 13 name "sideset2"
+sideset 14 curve 2
+sideset 14 name "sideset3"
+
+
+nodeset 21 curve 3
+nodeset 21 name "nodeset0"
+nodeset 22 curve 1
+nodeset 22 name "nodeset1"
+nodeset 23 curve 4
+nodeset 23 name "nodeset2"
+nodeset 24 curve 2
+nodeset 24 name "nodeset3"
+nodeset 99 vertex in surf 1 with x_coord == 0 and y_coord == 0
+nodeset 99 name "nodeset99"
+
+
+
+export genesis "square_quad4.exo"  overwrite
+
+#refine surf 1 numsplit 1
+#export genesis "square_tri3_ns1.exo" overwrite
+
+#refine surf 1 numsplit 1
+#export genesis "square_tri3_ns2.exo" overwrite
+
+#refine surf 1 numsplit 1
+#export genesis "square_tri3_ns3.exo" overwrite
+
+
+

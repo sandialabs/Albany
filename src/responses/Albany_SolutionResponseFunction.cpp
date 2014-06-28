@@ -367,9 +367,9 @@ evaluateSGResponse(const double curr_time,
 
 void
 Albany::SolutionResponseFunction::
-evaluateSGTangent(const double alpha,
-		  const double beta,
-		  const double omega,
+evaluateSGTangent(const double alpha, 
+		  const double beta, 
+		  const double omega, 
 		  const double current_time,
 		  bool sum_derivs,
 		  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
@@ -460,9 +460,9 @@ evaluateMPResponse(const double curr_time,
 
 void
 Albany::SolutionResponseFunction::
-evaluateMPTangent(const double alpha,
-		  const double beta,
-		  const double omega,
+evaluateMPTangent(const double alpha, 
+		  const double beta, 
+		  const double omega, 
 		  const double current_time,
 		  bool sum_derivs,
 		  const Stokhos::ProductEpetraVector* mp_xdot,

@@ -224,26 +224,21 @@ int main(int argc, char *argv[]) {
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
-    if (writeToMatrixMarketSoln == true) {
+    if (writeToMatrixMarketSoln == true) { 
 
       //create serial map that puts the whole solution on processor 0
-      /*int numMyElements = (xfinal->Comm().MyPID() == 0) ? app->getDiscretization()->getMap()->NumGlobalElements() : 0;
+      int numMyElements = (xfinal->Comm().MyPID() == 0) ? app->getDiscretization()->getMap()->NumGlobalElements() : 0;
       const Epetra_Map serial_map(-1, numMyElements, 0, xfinal->Comm());
 
       //create importer from parallel map to serial map and populate serial solution xfinal_serial
       Epetra_Import importOperator(serial_map, *app->getDiscretization()->getMap());
       Epetra_Vector xfinal_serial(serial_map);
-      xfinal_serial.Import(*app->getDiscretization()->getSolutionField(), importOperator, Insert);*/
+      xfinal_serial.Import(*app->getDiscretization()->getSolutionField(), importOperator, Insert);
 
       //writing to MatrixMarket file
-      //EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
-      //EpetraExt::BlockMapToMatrixMarketFile("distr_map.mm", *app->getDiscretization()->getMap());
-      //EpetraExt::BlockMapToMatrixMarketFile("ser_map.mm", serial_map);
-      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", *app->getDiscretization()->getSolutionField());
-      EpetraExt::BlockMapToMatrixMarketFile("map.mm", *app->getDiscretization()->getMap());
-      //
+      EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
     }
-    if (writeToCoutSoln == true)
+    if (writeToCoutSoln == true) 
        std::cout << "xfinal: " << *xfinal << std::endl;
 
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;

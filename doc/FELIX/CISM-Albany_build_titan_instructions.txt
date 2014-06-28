@@ -1,0 +1,111 @@
+
+This document was written by I. Kalashnikova (ikalash@sandia.gov) on March 21,
+2014. 
+
+This file describes how to build CISM-Albany on Titan, and how to run a few transient problems. 
+I will assume you start this process in the directory: ~/ (your home
+directory). 
+
+1.) Get Trilinos, Albany and the felix_interface branch from their
+repositories: 
+
+module load git
+module load subversion
+git clone software.sandia.gov:/space/git/Trilinos
+git clone software.sandia.gov:/space/git/Albany
+svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/felix_interface
+
+***NOTE: If you previously had a software.sandia.gov account but your password
+does not work, you need to have it re-issued due to a migration of software to
+a new server in March 2014.  You can email me (ikalash@sandia.gov) for more
+information. 
+
+2.) Build Trilinos as follows.
+
+(a) Configure Trilinos:
+
+    cd ~/Trilinos
+    mkdir build
+    cd build
+    cp ~/Albany/doc/titan-trilinos-cmake .
+    cp ~/Albany/doc/titan_modules_trilinos.sh .
+    source titan_modules_trilinos.sh 
+    source titan-trilinos-cmake 
+
+(b) Make Trilinos: 
+
+    make -j 8 
+
+(c) Install Trilinos: 
+    make install -j 8 
+
+3.) Build Albany as follows.  
+
+(a) Configure Albany. 
+
+    cd ~/Albany
+    mkdir cism-build
+    cd cism-build
+    cp ~/Albany/doc/titan-albany-cism-cmake
+    cp ~/Albany/doc/titan_modules.sh .
+    (source titan_modules.sh ***only do this if you did not just do this in the same window when you built Trilinos!)
+    module unload cmake
+    module load cmake (***you need to change the version of cmake for Albany from the one used in Trilinos.)
+    Edit titan-albany-cism-cmake.  Change at the top of this file TRILINOS_INSTALL_DIR and CISM_INCLUDE_DIR to the paths of your Trilinos install and your CISM 
+    libdycore directory.  In this case: 
+      TRILINOS_INSTALL_DIR=~/Trilinos/build/install
+      CISM_INCLUDE_DIR=~/felix_interface/libdycore
+    source titan-albany-cism-cmake 
+
+(b) Make Albany: 
+    make -j 8 
+ 
+(c) Install Albany: 
+    make install -j 8 
+
+(d) Check that the ~/Albany/build/install directory exists.  If it does not it
+means your cmake probably was not high enough.  It should be high enough if
+you use the cmake in titan_modules.sh .
+
+4.) Build CISM-Albany as follows.
+
+(a) cd ~/felix_interface/builds/titan-gnu-felix
+    (source titan_modules.sh ***only do this if you did not just do this in the same window when you built Trilinos/Albany!)
+    Edit titan-gnu-cmake.  Change at the top of this file TRILINOS_INSTALL_DIR and ALBANY_INSTALL_DIR to point to your Trilinos and Albany installs respectively.  In this case: 
+      TRILINOS_INSTALL_DIR=~/Trilinos/build/install
+      ALBANY_INSTALL_DIR=~/Albany/cism-build/install
+    source titan-gnu-cmake
+
+(b) Make CISM: 
+    make -j 8 
+
+5.) Now you are ready to run!  CISM-Albany is run through the simple_glide
+executable.  I have input files ready to run Dome and 4km
+GIS in a transient regime.  You can get them as follows: 
+
+   cd ~/
+   cp /ccs/proj/cli062/cism-albany/cism/problems.tar.gz .
+   tar -zxvf problems.tar.gz 
+   Before running, please create the following directory: /lustre/atlas/scratch/$USER/cli062/problems
+
+   To run Dome: 
+   cd problems/Dome
+   Open job.pbs and edit the aprun line to point to your simple_glide executable: 
+   ~/felix_interfaces/builds/titan-gnu-felix/example-drivers/simple_glide/src/simple_glide 
+   in the example here.  Change also the "cp -r /ccs/proj/cli062/cism-albany/cism/problems/Dome" line to "~/problems/Dome" in this case (where you have the Dome problem input data)
+   qsub job.pbs 
+   You can play with different numbers of cores.  Also you can play with tend in dome.albany.config (make it longer to do a longer-time simulation for example).
+
+   To run Gis4km: 
+   Same as Dome but for job.pbs in problems/Gis4km. 
+
+   The results will appear in the directory: /lustre/atlas/scratch/$USER/cli062/problems
+
+   
+
+ 
+    
+
+
+
+

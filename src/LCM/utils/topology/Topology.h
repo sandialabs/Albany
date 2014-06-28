@@ -38,44 +38,14 @@ public:
   Topology(RCP<Albany::AbstractDiscretization> & discretization);
 
   ///
-  /// \brief Create mesh data structure
-  ///
-  /// \param[in] Albany discretization object
-  /// \param[in] Fracture criterion object
-  ///
-  /// Use if already have an Albany mesh object, and want to
-  /// fracture the mesh based on a criterion.
-  ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization,
-      RCP<AbstractFractureCriterion> & fracture_criterion);
-
-  ///
   /// \brief Iterates over the boundary entities of the mesh of (all entities
   /// of rank dimension-1) and checks fracture criterion.
-  ///
-  /// \param map of entity and boolean value is entity open
   ///
   /// If fracture_criterion is met, the entity and all lower order entities
   /// associated with it are marked as open.
   ///
-  void
-  setEntitiesOpen(std::map<EntityKey, bool> & open_entity_map);
-
-  void
+  size_t
   setEntitiesOpen();
-
-  ///
-  /// \brief Iterates over the boundary entities contained in the passed-in
-  /// vector and opens each edge traversed.
-  ///
-  /// \param vector of faces to open, map of entity and boolean value is entity opened
-  ///
-  /// If entity is in the vector, the entity and all lower order entities
-  /// associated with it are marked as open.
-  ///
-  void
-  setEntitiesOpen(EntityVector const & fractured_faces,
-      std::map<EntityKey, bool>& open_entity_map);
 
   ///
   /// \brief Output the graph associated with the mesh to graphviz .dot
@@ -88,7 +58,7 @@ public:
   ///
   enum OutputType {
     UNIDIRECTIONAL_UNILEVEL,
-    UNDIRECTIONAL_MULTILEVEL,
+    UNIDIRECTIONAL_MULTILEVEL,
     BIDIRECTIONAL_UNILEVEL,
     BIDIRECTIONAL_MULTILEVEL
   };
@@ -112,21 +82,6 @@ public:
   ///
   void
   graphInitialization();
-
-  ///
-  /// \brief Removes unneeded relations from the mesh.
-  ///
-  /// stk_classic::mesh::create_adjacent_entities creates full mesh representation of
-  /// the mesh instead of the default of only the elements and nodes. All
-  /// entities created by the function are connected through relationships.
-  /// Graph algorithms require relationships to only exist between entities
-  /// separated by one degree, e.g. elements and faces in a 3D graph.
-  /// Function removes all other relationships.
-  ///
-  /// \note Valid for 2D and 3D meshes.
-  ///
-  void
-  removeExtraRelations();
 
   ///
   /// \brief Creates temporary nodal connectivity for the elements
@@ -158,17 +113,10 @@ public:
   getElementToNodeConnectivity();
 
   ///
-  /// \brief Returns array of pointers to Entities for the element to
-  ///        node relations
-  ///
-  void
-  removeElementToNodeConnectivity(std::vector<EntityVector> & v);
-
-  ///
   /// \brief After mesh manipulations are complete, need to recreate
   ///        a stk mesh understood by Albany_STKDiscretization.
   ///
-  /// Recreates the nodal connectivity using connectivity_temp_.
+  /// Recreates the nodal connectivity using connectivity_.
   ///
   /// \attention must be called before mesh modification has ended
   ///
@@ -176,15 +124,9 @@ public:
   restoreElementToNodeConnectivity();
 
   ///
-  /// \brief After mesh manipulations are complete, need to recreate
-  ///        a stk mesh understood by Albany_STKDiscretization.
-  void
-  restoreElementToNodeConnectivity(std::vector<EntityVector> & v);
-
+  /// \brief Determine the nodes associated with a boundary entity (face).
   ///
-  /// \brief Determine the nodes associated with a face.
-  ///
-  /// \param[in] Face entity
+  /// \param[in] Boundary entity
   ///
   /// \return vector of nodes for the face
   ///
@@ -195,16 +137,16 @@ public:
   /// \attention Assumes all mesh elements are same type.
   ///
   EntityVector
-  getFaceNodes(Entity * entity);
-
-  EntityVector
   getBoundaryEntityNodes(Entity const & boundary_entity);
+
+  std::vector<Intrepid::Vector<double> >
+  getNodalCoordinates();
 
   ///
   /// \brief Output boundary
   ///
   void
-  outputBoundary();
+  outputBoundary(std::string const & output_filename);
 
   ///
   /// \brief Create boundary mesh
@@ -213,10 +155,16 @@ public:
   createBoundary();
 
   ///
+  /// \brief Get a connectivity list of the boundary
+  ///
+  std::vector<std::vector<EntityId> >
+  getBoundary();
+
+  ///
   /// \brief Create surface element connectivity
   ///
-  /// \param[in] Face 1
-  /// \param[in] Face 2
+  /// \param[in] Face top
+  /// \param[in] Face bottom
   /// \return Cohesive connectivity
   ///
   /// Given the two faces after insertion process, create the
@@ -225,7 +173,8 @@ public:
   /// \attention Assumes that all elements have the same topology
   ////
   EntityVector
-  createSurfaceElementConnectivity(Entity const & face1, Entity const & face2);
+  createSurfaceElementConnectivity(
+      Entity const & face_top, Entity const & face_bottom);
 
   ///
   /// \brief Create vectors describing the vertices and edges of the
@@ -261,15 +210,6 @@ public:
   ///
   void
   splitOpenFaces();
-
-  void
-  splitOpenFaces(std::map<EntityKey, bool> & open_entity_map);
-
-  void
-  splitOpenFaces(
-      std::map<EntityKey, bool> & open_entity_map,
-      std::vector<EntityVector>& old_connectivity,
-      std::vector<EntityVector>& new_connectivity);
 
   ///
   /// \brief Adds a new entity of rank 3 to the mesh
@@ -585,7 +525,7 @@ public:
   /// \brief Practice creating the barycentric subdivision
   ///
   void
-  barycentricSubdivision_();
+  barycentricSubdivisionAlt();
 
   ///
   /// \brief Divide former mesh segments by half
@@ -594,16 +534,16 @@ public:
   divideSegmentsHalf();
 
   void
-  addcentroid();
+  addCentroid();
 
   void
-  connectcentroid();
+  connectCentroid();
 
   void
-  addnewfaces();
+  addNewFaces();
 
   void
-  connectnewfaces();
+  connectNewFaces();
 
   ///
   /// Accessors and mutators
@@ -623,6 +563,10 @@ public:
   RCP<Albany::AbstractDiscretization> &
   getDiscretization()
   {return discretization_;}
+
+  Albany::STKDiscretization *
+  getSTKDiscretization()
+  {return static_cast<Albany::STKDiscretization*>(discretization_.get());}
 
   BulkData *
   getBulkData()
@@ -750,7 +694,7 @@ private:
 
   RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
-  std::vector<EntityVector> connectivity_temp_;
+  std::vector<EntityVector> connectivity_;
 
   std::map<int, int> element_global_to_local_ids_;
 
