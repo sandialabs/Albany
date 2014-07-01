@@ -533,6 +533,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
+                     ./SEE/
+                     ./SEE/problems
+                     ./SEE/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -579,25 +582,8 @@ ENDIF()
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-##  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
-## parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
-#  IF(DEFINED ENABLE_PARASOLID AND DEFINED ENABLE_ACIS)
-#    set(SCOREC_LIB GMIParasolid pskernel GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
-#  ELSEIF(ENABLE_PARASOLID)
-##    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-##    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
-#  ELSEIF(ENABLE_ACIS)
-#    set(SCOREC_LIB GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-#  ELSE()
-##    set(SCOREC_LIB FMDB MeshAdapt GMIMeshModel SCORECUtil ipcomman)
-#  ENDIF()
-#  # postpend boost libraries to support FMDB serialization calls
-##    set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
-
   SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
-  SET(FMDB_INCLUDE_DIR "${TRILINOS_INCLUDE_DIRS}/SCOREC")
-  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
-
+  include_directories (${ALBANY_FMDB_INCLUDE_DIRS})
 ELSE()
   set(SCOREC_LIB )
   SET(ALBANY_FMDB_INCLUDE_DIRS )
@@ -701,9 +687,12 @@ ENDIF()
 
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
-
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
+ENDIF()
 
+IF (ALBANY_SEE)
+  add_subdirectory(SEE)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
 ENDIF()
 
 IF(ALBANY_CATALYST)

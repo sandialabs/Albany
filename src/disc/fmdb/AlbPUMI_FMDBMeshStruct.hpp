@@ -17,28 +17,11 @@
 #include "EpetraExt_MultiComm.h"
 #include <PHAL_Dimension.hpp>
 
-/* DAI: the conversion functions to STK are contained in
-   an #ifdef TRILINOS block in this header file.
-   This will be fixed when time allows. */
-#define TRILINOS
-#include <pumi_mesh.h>
-#undef TRILINOS
-
-#include <pumi_geom.h>
-
-#ifdef SCOREC_ACIS
-#include <pumi_geom_acis.h>
-#endif
-#ifdef SCOREC_PARASOLID
-#include <pumi_geom_parasolid.h>
-#endif
-
 #include <apf.h>
 #include <apfMesh2.h>
-#include <apfPUMI.h>
-
-#define NG_EX_ENTITY_TYPE_MAX 15
-#define ENT_DIMS 4
+#include <apfMDS.h>
+#include <apfSTK.h>
+#include <gmi.h>
 
 namespace AlbPUMI {
 
@@ -73,8 +56,9 @@ namespace AlbPUMI {
     std::vector<std::string> ssNames;
 
     msType meshSpecsType();
-    pMeshMdl getMesh() { return mesh; }
-    pumi::pGModel getMdl() { return model; }
+    apf::Mesh2* getMesh() { return mesh; }
+    gmi_model* getMdl() { return model; }
+    apf::StkModels& getSets() { return sets; }
 
     // Solution history
     int solutionFieldHistoryDepth;
@@ -94,7 +78,6 @@ namespace AlbPUMI {
     int numDim;
     int cubatureDegree;
     bool interleavedOrdering;
-    apf::Mesh2* apfMesh;
     bool solutionInitialized;
     bool residualInitialized;
 
@@ -111,14 +94,11 @@ namespace AlbPUMI {
 
     std::string outputFileName;
     int outputInterval;
-    int useDistributedMesh;
 
 private:
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
-
-    const CellTopologyData *getCellTopologyData(const FMDB_EntTopo topo);
 
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
@@ -130,19 +110,14 @@ private:
     // Information that changes when the mesh adapts
     Albany::DynamicDataArray<Albany::CellSpecs>::type meshDynamicData;
 
-    pumi::pGModel model;
-    pMeshMdl mesh;
+    apf::Mesh2* mesh;
+    gmi_model* model;
+    apf::StkModels sets;
 
     bool compositeTet;
 
-#ifndef SCOREC_ACIS
-    int PUMI_Geom_RegisterAcis() {
-      fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Acis\n");
-      exit(1);
-    }
-#endif
 #ifndef SCOREC_PARASOLID
-    int PUMI_Geom_RegisterParasolid() {
+    int gmi_register_parasolid() {
       fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Parasolid\n");
       exit(1);
     }

@@ -6,55 +6,43 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputSerial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputSerial.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputSerialExoOut.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputSerialExoOut.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputEdgeDBC.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputEdgeDBC.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBC.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBC.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputEdgeDBCT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputEdgeDBCT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBCT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBCT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube.dmg COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCubeFMDB.sms
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCubeFMDB.sms COPYONLY)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/inputSerial.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/inputSerial.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/unitCube.xmt_txt
-               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/unitCube.xmt_txt COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Parasolid/unitCubeFMDB.sms
-               ${CMAKE_CURRENT_BINARY_DIR}/Parasolid/unitCubeFMDB.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_1.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_1.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_2.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_2.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_3.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_3.smb COPYONLY)
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(ENABLE_MESHMODEL)
-  add_test(
-      NAME ${testName}_Mmodel_Traction 
+  if (ALBANY_IFPACK2)
+    add_test(
+      NAME ${testName}_Mmodel_Traction_Tpetra
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} input.xml)
-  add_test(
-      NAME ${testName}_Mmodel_EdgeDBC 
+      COMMAND ${AlbanyT.exe} inputT.xml)
+    add_test(
+      NAME ${testName}_Mmodel_EdgeDBC_Tpetra
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} inputEdgeDBC.xml)
-  add_test(
-      NAME ${testName}_Mmodel_VtxDBC 
+      COMMAND ${AlbanyT.exe} inputEdgeDBCT.xml)
+    add_test(
+      NAME ${testName}_Mmodel_VtxDBC_Tpetra
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
-      COMMAND ${Albany.exe} inputVtxDBC.xml)
-ENDIF()
-
-IF(ENABLE_PARASOLID)
-  add_test(
-      NAME ${testName}_Parasolid_Traction 
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Parasolid
-      COMMAND ${Albany.exe} input.xml)
+      COMMAND ${AlbanyT.exe} inputVtxDBCT.xml)
+  ENDIF()
 ENDIF()
 

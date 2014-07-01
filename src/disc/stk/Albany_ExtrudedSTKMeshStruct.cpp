@@ -458,7 +458,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       p_rank[0] = comm->MyPID();
       if(hasTemperature) {
         double* temperature = stk_classic::mesh::field_data(*fieldContainer->getTemperatureField(), elem);
-      temperature[0] = tempOnPrism;
+        temperature[0] = tempOnPrism;
       }
     }
     }

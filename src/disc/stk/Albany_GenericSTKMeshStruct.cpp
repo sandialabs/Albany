@@ -640,39 +640,6 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     if(comm->MyPID() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
-#if 0 // Other experiments at rebalancing
-
-    // Configure Zoltan to use graph-based partitioning
-    Teuchos::ParameterList graph;
-    Teuchos::ParameterList lb_method;
-    lb_method.set("LOAD BALANCING METHOD"      , "4");
-    graph.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()) = lb_method;
-
-    stk_classic::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
-
-    *out << "Universal part " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    *out << "Owned part " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-    stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
-
-    *out << "After rebal " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    *out << "After rebal nelements " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
-      metaData->node_rank(), &selector);
-
-    if(comm->MyPID() == 0){
-
-      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
-
-    }
-#endif
-
 #endif  //ALBANY_ZOLTAN
 
 }
@@ -749,39 +716,6 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMeshT(const Teuchos::RCP<Teuc
 
     if(comm->getRank() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-#if 0 // Other experiments at rebalancing
-
-    // Configure Zoltan to use graph-based partitioning
-    Teuchos::ParameterList graph;
-    Teuchos::ParameterList lb_method;
-    lb_method.set("LOAD BALANCING METHOD"      , "4");
-    graph.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()) = lb_method;
-
-    stk_classic::rebalance::Zoltan zoltan_partitiona(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph);
-
-    *out << "Universal part " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(selector, bulkData->buckets(metaData->element_rank())) << endl;
-    *out << "Owned part " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-    stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partitiona);
-
-    *out << "After rebal " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    *out << "After rebal nelements " << comm->MyPID() << "  " <<
-      stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
-      metaData->node_rank(), &selector);
-
-    if(comm->MyPID() == 0){
-
-      *out << "Before second rebal: Imbalance threshold is = " << imbalance << endl;
-
-    }
-#endif
 
 #endif  //ALBANY_ZOLTAN
 

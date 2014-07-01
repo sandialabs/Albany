@@ -7,6 +7,7 @@
 #include "AAdapt_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 #include <ma.h>
+#include <PCU.h>
 
 template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
@@ -21,8 +22,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct =
       pumi_discretization->getFMDBMeshStruct();
 
-  mesh = fmdbMeshStruct->apfMesh;
-  pumiMesh = fmdbMeshStruct->getMesh();
+  mesh = fmdbMeshStruct->getMesh();
 
   szField = Teuchos::rcp(new SizeField(pumi_discretization));
 
@@ -91,10 +91,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     remeshFileIndex++;
 
 
-  // display # entities before adaptation
-
-  FMDB_Mesh_DspSize(pumiMesh);
-
   // attach qp data to mesh if solution transfer is turned on
   bool shouldTransferIPData = adapt_params_->get<bool>("Transfer IP Data",false);
   if (shouldTransferIPData)
@@ -141,9 +137,6 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   
   // replace nodes' displaced coordinates with coordinates
   apf::displaceMesh(mesh,solutionField,-1.0);
-
-  // display # entities after adaptation
-  FMDB_Mesh_DspSize(pumiMesh);
 
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call

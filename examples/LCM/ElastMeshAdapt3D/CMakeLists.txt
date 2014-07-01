@@ -22,8 +22,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodelT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMmodelT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
-               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-fmdb.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_1.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_1.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_2.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_2.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_3.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_3.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-model.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-model.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-gmi.sat
