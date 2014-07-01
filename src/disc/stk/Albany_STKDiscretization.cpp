@@ -611,7 +611,7 @@ void Albany::STKDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const
      int out_step = stk_classic::io::process_output_request(*mesh_data, bulkData, time_label);
 
      if (mapT->getComm()->getRank()==0) {
-       *out << "Albany::STKDiscretization::writeSolution: writing time " << time;
+       *out << "Albany::STKDiscretization::writeSolutionT: writing time " << time;
        if (time_label != time) *out << " with label " << time_label;
        *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
      }

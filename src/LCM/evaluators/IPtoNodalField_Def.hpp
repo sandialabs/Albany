@@ -46,9 +46,9 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   // register the nodal weights
   this->addDependentField(weights_);  
-  this->p_state_mgr_->registerStateVariable(nodal_weights_name_,
+  this->p_state_mgr_->registerNodalBlockStateVariable(nodal_weights_name_,
                                             dl->node_node_scalar,
-                                            dl->dummy, "all", 
+                                            dl->dummy, "all",
                                             "scalar", 0.0, false,
                                             true);
 
@@ -82,21 +82,21 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
     this->addDependentField(ip_fields_[field]);
 
     if (ip_field_layouts_[field] == "Scalar" ) {
-      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
                                                 dl->node_node_scalar,
-                                                dl->dummy, "all", 
+                                                dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     } else if (ip_field_layouts_[field] == "Vector" ) {
-      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
                                                 dl->node_node_vector,
-                                                dl->dummy, "all", 
+                                                dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     } else if (ip_field_layouts_[field] == "Tensor" ) {
-      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
                                                 dl->node_node_tensor,
-                                                dl->dummy, "all", 
+                                                dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     }
@@ -158,7 +158,6 @@ evaluateFields(typename Traits::EvalData workset)
   int num_nodes = this->num_nodes_;
   int num_dims  = this->num_dims_;
   int num_pts   = this->num_pts_;
-  int blocksize = node_data->getBlocksize();
 
   // deal with weights
   int  node_weight_offset;

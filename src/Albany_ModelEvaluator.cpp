@@ -249,13 +249,16 @@ Albany::ModelEvaluator::create_DfDp_op(int j) const
     "Error!  Albany::ModelEvaluator::create_DfDp_op():  " <<
     "Invalid parameter index j = " << j << std::endl);
 
-   std::cout << "In Albany::ModelEvaluator::create_DfDo_op!  This is not implemented for Tpetra_Operator..."  <<
-                 "so code will crash...  IK, 6/28/14." << std::endl; 
-
 //IK, 6/27/14: commented out for now for code to compile...
-//NEED TO FIX!  Issue that DistributedParameterDerivativeOp is a Tpetra_Operator now.... what to do??
-  //return Teuchos::rcp(new DistributedParameterDerivativeOp(
-  //                      app, dist_param_names[j-num_param_vecs]));
+//DistributedParameterDerivativeOp is a Tpetra_Operator now.... 
+//I think distributed responses will work only once we switch to Albany_ModelEvaluatorT in Tpetra branch.  
+
+//return Teuchos::rcp(new DistributedParameterDerivativeOp(
+//                      app, dist_param_names[j-num_param_vecs]));
+  TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
+  	       		"Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  << 
+                        "Distributed parameters won't work yet in Tpetra branch."<<
+			std::endl);
 }
 
 Teuchos::RCP<Epetra_Operator>

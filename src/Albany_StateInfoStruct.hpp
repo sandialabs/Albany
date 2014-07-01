@@ -132,7 +132,7 @@ public:
    const_iterator end() const { return sis.end(); }
 
 // Create storage on access - only if used
-   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return nodal_data_block; }
+   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() {return nodal_data_block; } 
    Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector(){ return nodal_data_vector; }
 
    Teuchos::RCP<Adapt::NodalDataBlock> createNodalDataBlock(){ 
