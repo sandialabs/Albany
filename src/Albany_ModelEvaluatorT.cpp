@@ -16,6 +16,7 @@
 
 
 #include "Albany_ModelEvaluatorT.hpp"
+#include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
@@ -38,7 +39,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   Teuchos::ParameterList& parameterParams =
     problemParams.sublist("Parameters");
 
-  int num_param_vecs =
+  num_param_vecs =
     parameterParams.get("Number of Parameter Vectors", 0);
   bool using_old_parameter_list = false;
   if (parameterParams.isType<int>("Number")) {
@@ -87,6 +88,26 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
     *out << "Number of parameters in parameter vector "
       << l << " = " << numParameters << std::endl;
+  }
+  
+  // Setup distributed parameters
+  distParamLib = app->getDistParamLib();
+  Teuchos::ParameterList& distParameterParams =
+    problemParams.sublist("Distributed Parameters");
+  num_dist_param_vecs =
+    distParameterParams.get("Number of Parameter Vectors", 0);
+  dist_param_names.resize(num_dist_param_vecs);
+  *out << "Number of distributed parameters vectors  = " << num_dist_param_vecs
+       << std::endl;
+  for (int i=0; i<num_dist_param_vecs; i++) {
+    std::string name =
+      distParameterParams.get<std::string>(Albany::strint("Parameter",i));
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      !distParamLib->has(name),
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
+      "Invalid distributed parameter name " << name << std::endl);
+    dist_param_names[i] = name;
   }
 
   Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > response_names;
@@ -224,12 +245,16 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 Albany::ModelEvaluatorT::get_p_space(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= static_cast<int>(tpetra_param_map.size()) || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl <<
-      "Error!  Albany::ModelEvaluatorT::get_p_space():  " <<
-      "Invalid parameter index l = " << l << std::endl);
-  Teuchos::RCP<const Tpetra_Map> map = tpetra_param_map[l];
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluatorT::get_p_space():  " <<
+    "Invalid parameter index l = " << l << std::endl);
+  Teuchos::RCP<const Tpetra_Map> map; 
+  if (l < num_param_vecs)
+    map = tpetra_param_map[l];  
+  //IK, 7/1/14: commenting this out for now
+  //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map(); 
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(map);
   return tpetra_param_space;
 }
@@ -254,13 +279,16 @@ Albany::ModelEvaluatorT::get_g_space(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string> >
 Albany::ModelEvaluatorT::get_p_names(int l) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= static_cast<int>(param_names.size()) || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl <<
-      "Error!  Albany::ModelEvaluatorT::get_p_names():  " <<
-      "Invalid parameter index l = " << l << std::endl);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluatorT::get_p_names():  " <<
+    "Invalid parameter index l = " << l << std::endl);
 
-  return param_names[l];
+  if (l < num_param_vecs)
+    return param_names[l];
+  return Teuchos::rcp(new Teuchos::Array<std::string>(1, dist_param_names[l-num_param_vecs]));
 }
 
 
@@ -301,6 +329,22 @@ Albany::ModelEvaluatorT::create_W_prec() const
   const bool W_prec_not_supported = true;
   TEUCHOS_TEST_FOR_EXCEPT(W_prec_not_supported);
   return Teuchos::null;
+}
+
+Teuchos::RCP<Thyra::LinearOpBase<ST> >
+Albany::ModelEvaluatorT::create_DfDp_op_impl(int j) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= num_param_vecs+num_dist_param_vecs || j < num_param_vecs,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluatorT::create_DfDp_op_impl():  " <<
+    "Invalid parameter index j = " << j << std::endl);
+
+  const Teuchos::RCP<Tpetra_Operator> DfDp = Teuchos::rcp(new DistributedParameterDerivativeOp(
+                      app, dist_param_names[j-num_param_vecs]));
+
+  return Thyra::createLinearOp(DfDp); 
 }
 
 
@@ -383,8 +427,7 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
   result.setModelEvalDescription(this->description());
 
   const int n_g = app->getNumResponses();
-  const int n_p = param_names.size();
-  result.set_Np_Ng(n_p, n_g);
+  result.set_Np_Ng(num_param_vecs+num_dist_param_vecs, n_g);
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
 
@@ -395,35 +438,51 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
         Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
         true));
 
-  for (int l = 0; l < param_names.size(); ++l) {
+  for (int l = 0; l < num_param_vecs; ++l) {
     result.setSupports(
         Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, l,
         Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
   }
+  for (int i=0; i<num_dist_param_vecs; i++)
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, 
+        i+num_param_vecs,
+        Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP);
 
-  for (int j = 0; j < n_g; ++j) {
+  for (int i = 0; i < n_g; ++i) {
     Thyra::ModelEvaluatorBase::DerivativeSupport dgdx_support;
-    if (app->getResponse(j)->isScalarResponse()) {
+    if (app->getResponse(i)->isScalarResponse()) {
       dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
     } else {
       dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
     }
 
     result.setSupports(
-        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, j, dgdx_support);
+        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, i, dgdx_support);
     result.setSupports(
-        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, j, dgdx_support);
+        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, i, dgdx_support);
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
     //result.setSupports(
-    //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, j, dgdx_support);
+    //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
 
-    for (int l = 0; l < param_names.size(); l++)
+    for (int l = 0; l < num_param_vecs; l++)
       result.setSupports(
-          Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, j, l,
+          Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, l,
           Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
-
-    result.set_g(j, thyra_response_vec[j]);
-
+    
+    if (app->getResponse(i)->isScalarResponse()) {
+      for (int j=0; j<num_dist_param_vecs; j++)
+        result.setSupports(
+           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j+num_param_vecs,
+           Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
+    }
+    else {
+      for (int j=0; j<num_dist_param_vecs; j++)
+        result.setSupports(
+           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j+num_param_vecs,
+           Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP);
+    }
+    result.set_g(i, thyra_response_vec[i]);
   }
 
   return result;
@@ -625,7 +684,7 @@ Albany::ModelEvaluatorT::createInArgsImpl() const
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
   //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_omega, true);
 
-  result.set_Np(param_names.size());
+  result.set_Np(num_param_vecs+num_dist_param_vecs);
 
   return result;
 }

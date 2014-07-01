@@ -81,6 +81,9 @@ public:
 protected:
   /** \name Overridden from Thyra::ModelEvaluatorDefaultBase<ST> . */
   //@{
+   
+  //! Create operator form of df/dp for distributed parameters
+   Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DfDp_op_impl(int j) const;
 
   //! Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_op_impl(int j) const;
@@ -103,6 +106,9 @@ private:
   //! Application object
   Teuchos::RCP<Albany::Application> app;
 
+  //! Number of parameter vectors
+  int num_param_vecs;
+
   Thyra::ModelEvaluatorBase::InArgs<ST> createInArgsImpl() const;
 
   //! Cached nominal values
@@ -124,6 +130,15 @@ private:
   Teuchos::Array<Teuchos::RCP<Thyra::VectorBase<ST> > > thyra_response_vec;
 
   Teuchos::RCP<Teuchos::Time> timer;
+  
+  //! Number of distributed parameter vectors
+  int num_dist_param_vecs;
+
+  //! List of enabled distributed parameters
+  Teuchos::Array<std::string> dist_param_names;
+
+  //! Distributed parameter library
+  Teuchos::RCP<DistParamLib> distParamLib;
 };
 
 }

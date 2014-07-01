@@ -108,8 +108,6 @@ evaluateFields(typename Traits::EvalData workset)
   // If active, intialize data needed for differentiation
   if (is_active) {
     Teuchos::RCP<const Tpetra_MultiVector> VpT = workset.VpT;
-    Teuchos::ArrayRCP<ST> VpT_constView; 
-    //const Epetra_MultiVector& Vp = *(workset.Vp);
     const int num_cols = VpT->getNumVectors();
     const int num_deriv = this->numNodes;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -134,11 +132,9 @@ evaluateFields(typename Traits::EvalData workset)
 
         // Store Vp entries
         local_Vp[node].resize(num_cols);
-        for (int col=0; col<num_cols; ++col){
+        for (size_t col=0; col<num_cols; ++col){
           //local_Vp[node][col] = Vp[col][eqID[0]];
-//IK - NEED TO FIX THIS! - 6/27/14
-          //VpT_constView = VpT->getData(col); 
-          //local_Vp[node][col] = VpT_constView[eqID[0]]; 
+          local_Vp[node][col] = VpT->getData(col)[eqID[0]]; 
         }
       }
     }
