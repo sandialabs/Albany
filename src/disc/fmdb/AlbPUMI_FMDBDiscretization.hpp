@@ -158,7 +158,7 @@ template<class Output>
         const ST* data,
         bool overlapped,
         int offset = 0);
-    void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
+    void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
         const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
@@ -216,7 +216,7 @@ template<class Output>
         const Epetra_Vector& data,
         bool overlapped,
         int offset = 0);
-    void setSplitFields(std::vector<std::string> names, std::vector<int> indices, 
+    void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
         const Epetra_Vector& data, bool overlapped);
 
     // Copy field data from APF to Epetra_Vector
@@ -227,9 +227,6 @@ template<class Output>
         int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         Epetra_Vector& data, bool overlapped) const;
-
-    // Rename exodus output file when the problem is resized
-    void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
 
   private:
 
@@ -376,7 +373,7 @@ template<class Output>
     // storage to save the node coordinates of the nodesets visible to this PE
     std::map<std::string, std::vector<double> > nodeset_node_coords;
 
-    // Needed to pass coordinates to ML. 
+    // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     // counter for limiting data writes to output file

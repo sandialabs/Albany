@@ -89,6 +89,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     pumi_discretization->reNameExodusOutput(str);
 
     remeshFileIndex++;
+  }
 
 
   // attach qp data to mesh if solution transfer is turned on
@@ -102,7 +103,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     solutionField = mesh->findField(adaptVector.c_str());
   else
     solutionField = mesh->findField("solution");
-  
+
   // replace nodes' coordinates with displaced coordinates
   if ( ! PCU_Comm_Self())
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
@@ -134,18 +135,18 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
     apf::destroyField(mesh->findField("size"));
   }
-  
+
   // replace nodes' displaced coordinates with coordinates
   apf::displaceMesh(mesh,solutionField,-1.0);
 
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(shouldTransferIPData);
- 
+
   // detach QP fields from the apf mesh
   if (shouldTransferIPData)
     pumi_discretization->detachQPData();
-  
+
   return true;
 
 }
@@ -161,7 +162,7 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(
 
     // does state variable exist?
     std::string stateName;
-    
+
     Albany::StateArrays& sa = disc->getStateArrays();
     Albany::StateArrayVec& esa = sa.elemStateArrays;
     Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
@@ -176,9 +177,9 @@ AAdapt::MeshAdapt<SizeField>::checkValidStateVariable(
     if (!exists)
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
           "Error!    Invalid State Variable Parameter!");
-    
+
     // is state variable a 3x3 tensor?
-    
+
     std::vector<int> dims;
     esa[0][name].dimensions(dims);
     int size = dims.size();
@@ -249,7 +250,7 @@ template<class SizeField>
 Teuchos::RCP<const Teuchos::ParameterList>
 AAdapt::MeshAdaptE<SizeField>::getValidAdapterParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = 
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidMeshAdaptParams");
   return meshAdapt.getValidAdapterParameters(validPL);
 }
@@ -286,7 +287,7 @@ template<class SizeField>
 Teuchos::RCP<const Teuchos::ParameterList>
 AAdapt::MeshAdaptT<SizeField>::getValidAdapterParameters() const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL = 
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
     this->getGenericAdapterParams("ValidMeshAdaptParams");
   return meshAdapt.getValidAdapterParameters(validPL);
 }

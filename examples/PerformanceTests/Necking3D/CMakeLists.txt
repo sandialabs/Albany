@@ -24,8 +24,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLD.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputLD.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLD.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputPlasLD.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole_fmdb_14k.sms
-               ${CMAKE_CURRENT_BINARY_DIR}/eighth_bar_hole_fmdb_14k.sms COPYONLY)
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole_fmdb_14k.sms
+#               ${CMAKE_CURRENT_BINARY_DIR}/eighth_bar_hole_fmdb_14k.sms COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole.xmt_txt
                ${CMAKE_CURRENT_BINARY_DIR}/eighth_bar_hole.xmt_txt COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole_mmodel.dmg
@@ -59,35 +59,35 @@ ENDFOREACH()
 
 # 3. Create the test with this name and standard executable
 
-# 
+#
 # IF(ENABLE_PARASOLID)
-# 
+#
 #   IF(NOT ALBANY_PARALLEL_ONLY)
 #     add_test(NAME ${testName}_SERIAL_PARASOLID
 #       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=inputElastSPRAdaptParasolid.xml
 #       "-DFILENAME=eighth_bar_hole_output.pvd" -P
 #       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 #   ENDIF()
-#   
+#
 #   add_test(NAME ${testName}_PARASOLID
 #     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastSPRAdaptParasolid.xml
 #     "-DFILENAME=eighth_bar_hole_output.pvd" -P
 #     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-# 
+#
 # ENDIF()
-# 
+#
 # IF(ENABLE_MESHMODEL)
-# 
+#
 #   IF(NOT ALBANY_PARALLEL_ONLY)
 #     add_test(NAME ${testName}_SERIAL_MMODEL
 #       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=inputElastSPRAdaptMmodel.xml
 #       "-DFILENAME=eighth_bar_hole_output.pvd" -P
 #       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 #   ENDIF()
-# 
+#
 #   add_test(NAME ${testName}_MMODEL
 #     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastSPRAdaptMmodel.xml
 #     "-DFILENAME=eighth_bar_hole_output.pvd" -P
 #     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-# 
+#
 # ENDIF()
