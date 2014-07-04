@@ -16,10 +16,6 @@
 
 
 # 1. Copy Input file from source to binary dir
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptParasolid.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptParasolid.xml COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptMmodel.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptMmodel.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLD.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputLD.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLD.xml
@@ -69,15 +65,8 @@ ENDFOREACH()
 
 IF(ENABLE_MESHMODEL)
 
-  IF(NOT ALBANY_PARALLEL_ONLY)
-    add_test(NAME ${testName}_SERIAL_MMODEL
-      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=inputElastSPRAdaptMmodel.xml
-      "-DFILENAME=eighth_bar_hole_output.pvd" -P
-      ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  ENDIF()
-
   add_test(NAME ${testName}_MMODEL
-    COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastSPRAdaptMmodel.xml
+    COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputLD.xml
     "-DFILENAME=eighth_bar_hole_output.pvd" -P
     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
 
