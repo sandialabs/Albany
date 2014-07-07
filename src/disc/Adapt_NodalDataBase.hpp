@@ -52,6 +52,9 @@ class NodalDataBase {
     void registerBlockState(const std::string &stateName, int ndofs);
     void registerVectorState(const std::string &stateName, int ndofs);
 
+    LO getBlocksize(){ return blocksize; }
+    LO getVecsize(){ return vectorsize; }
+
     Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){
 
       TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(nodal_data_block), std::logic_error,

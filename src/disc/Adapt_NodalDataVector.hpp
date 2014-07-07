@@ -64,6 +64,8 @@ class NodalDataVector {
 
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
+    LO getVecSize(){ return vectorsize; }
+
   private:
 
     NodalDataVector();

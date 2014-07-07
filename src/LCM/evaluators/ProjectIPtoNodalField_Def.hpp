@@ -60,6 +60,7 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
 
   // loop over the number of fields and register
+  // Number of Fields is read off the input file - this is the number of named fields (scalar, vector, or tensor) to transfer
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
 
   // resize field vectors
@@ -74,18 +75,19 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
     nodal_field_names_[field] = "proj_nodal_" + ip_field_names_[field];
 
     if (ip_field_layouts_[field] == "Scalar") {
-      PHX::MDField<ScalarT> s(ip_field_names_[field],dl->qp_scalar);
+      PHX::MDField<ScalarT> s(ip_field_names_[field], dl->qp_scalar);
       ip_fields_[field] = s;
     } else if (ip_field_layouts_[field] == "Vector") {
-      PHX::MDField<ScalarT> v(ip_field_names_[field],dl->qp_vector);
+      PHX::MDField<ScalarT> v(ip_field_names_[field], dl->qp_vector);
       ip_fields_[field] = v;
     } else if (ip_field_layouts_[field] == "Tensor") {
-      PHX::MDField<ScalarT> t(ip_field_names_[field],dl->qp_tensor);
+      PHX::MDField<ScalarT> t(ip_field_names_[field], dl->qp_tensor);
       ip_fields_[field] = t;
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Field Layout unknown");
     }
 
+    // incoming integration point field to transfer
     this->addDependentField(ip_fields_[field]);
 
     if (ip_field_layouts_[field] == "Scalar" ) {
@@ -110,17 +112,7 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   }
 
   // COunt the total number of vectors in the multivector
-  int  offset;
-  int  ndofs;
-  num_vecs_ = 0;
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-  for (int field(0); field < number_of_fields_; ++field) {
-
-    node_data->getNDofsAndOffset(nodal_field_names_[field], offset, ndofs);
-    num_vecs_ += ndofs;
-
-  }
+  num_vecs_ = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize();
 
   // Create field tag
   field_tag_ =
@@ -183,13 +175,14 @@ preEvaluate(typename Traits::PreEvalData workset)
   }
   else {
 
+     this->mass_matrix->resumeFill();
+
      // Zero the solution and mass matrix in preparation for summation / solution operations
      this->mass_matrix->setAllToScalar(0.0);
      this->source_load_vector->putScalar(0.0);
 
   }
 
-  this->mass_matrix->resumeFill();
 
 }
 
@@ -233,6 +226,7 @@ evaluateFields(typename Traits::EvalData workset)
           mass_value += this->wBF(cell, rnode, qp) * this->BF(cell, cnode, qp);
 
         vals.push_back(mass_value);
+//std::cout << "Row : " << global_row << " Col : " << global_col << " Val : " << mass_value << std::endl;
       }
 
       this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
@@ -241,6 +235,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   // deal with each of the fields in the multivector that stores the RHS of the projection
+
+//std::cout << "Number of fields : " << this->number_of_fields_ << std::endl;
 
   for (int field(0); field < this->number_of_fields_; ++field) {
     int  node_var_offset;
@@ -267,6 +263,8 @@ evaluateFields(typename Traits::EvalData workset)
                 this->source_load_vector->sumIntoGlobalValue(global_row,
                   node_var_offset + dim0*num_dims + dim1,
                   this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp));
+//std::cout << "vector row : " << global_row << " col : " << node_var_offset + dim0*num_dims + dim1 << " value : " <<
+//this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp) << std::endl;
               }
             }
           }
