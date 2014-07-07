@@ -7,9 +7,13 @@
 #include "Adapt_NodalDataVector.hpp"
 #include "Tpetra_Import_decl.hpp"
 
-Adapt::NodalDataVector::NodalDataVector() :
-  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
-  blocksize(0),
+Adapt::NodalDataVector::NodalDataVector(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
+                                        NodeFieldSizeVector& nodeVectorLayout_,
+                                        NodeFieldSizeMap& nodeVectorMap_, LO& vectorsize_) :
+  nodeContainer(nodeContainer_),
+  nodeVectorLayout(nodeVectorLayout_),
+  nodeVectorMap(nodeVectorMap_),
+  vectorsize(vectorsize_),
   mapsHaveChanged(false)
 {
 
@@ -30,7 +34,7 @@ Adapt::NodalDataVector::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeG
                             node));
 
   // Build the vector and accessors
-  overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, blocksize));
+  overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
 
   mapsHaveChanged = true;
 
@@ -48,7 +52,7 @@ Adapt::NodalDataVector::resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
 
 
   // Build the vector and accessors
-  local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, blocksize));
+  local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
 
   mapsHaveChanged = true;
 
@@ -74,41 +78,18 @@ Adapt::NodalDataVector::exportAddNodalDataVector(){
 }
 
 void
-Adapt::NodalDataVector::registerState(const std::string &stateName, int ndofs){
-
-   // save the nodal data field names and lengths in order of allocation which implies access order
-
-   NodeFieldSizeMap::const_iterator it;
-   it = nodeMap.find(stateName);
-
-   TEUCHOS_TEST_FOR_EXCEPTION((it != nodeMap.end()), std::logic_error,
-           std::endl << "Error: found duplicate entry " << stateName << " in NodalDataVector" << std::endl);
-
-   NodeFieldSize size;
-   size.name = stateName;
-   size.offset = blocksize;
-   size.ndofs = ndofs;
-
-   nodeMap[stateName] = nodeLayout.size();
-   nodeLayout.push_back(size);
-
-   blocksize += ndofs;
-
-}
-
-void
 Adapt::NodalDataVector::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const {
 
    NodeFieldSizeMap::const_iterator it;
-   it = nodeMap.find(stateName);
+   it = nodeVectorMap.find(stateName);
 
-   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeMap.end()), std::logic_error,
+   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeVectorMap.end()), std::logic_error,
            std::endl << "Error: cannot find state " << stateName << " in NodalDataVector" << std::endl);
 
    std::size_t value = it->second;
 
-   offset = nodeLayout[value].offset;
-   ndofs = nodeLayout[value].ndofs;
+   offset = nodeVectorLayout[value].offset;
+   ndofs = nodeVectorLayout[value].ndofs;
 
 }
 
@@ -116,7 +97,7 @@ void
 Adapt::NodalDataVector::saveNodalDataState() const {
 
    // save the nodal data arrays back to stk
-   for(NodeFieldSizeVector::const_iterator i = nodeLayout.begin(); i != nodeLayout.end(); ++i){
+   for(NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin(); i != nodeVectorLayout.end(); ++i){
 
       // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
 
@@ -130,7 +111,7 @@ void
 Adapt::NodalDataVector::saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const {
 
    // save the nodal data arrays back to stk
-   for(NodeFieldSizeVector::const_iterator i = nodeLayout.begin(); i != nodeLayout.end(); ++i){
+   for(NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin(); i != nodeVectorLayout.end(); ++i){
 
       // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
 
@@ -139,5 +120,15 @@ Adapt::NodalDataVector::saveNodalDataState(const Teuchos::RCP<const Tpetra_Multi
    }
 
 }
+
+void
+Adapt::NodalDataVector::initializeVectors(ST value){
+
+    overlap_node_vec->putScalar(value);
+
+    local_node_vec->putScalar(value);
+
+}
+
 
 

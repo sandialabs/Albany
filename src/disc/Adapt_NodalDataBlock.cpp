@@ -7,9 +7,13 @@
 #include "Adapt_NodalDataBlock.hpp"
 #include "Tpetra_Import_decl.hpp"
 
-Adapt::NodalDataBlock::NodalDataBlock() :
-  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
-  blocksize(0),
+Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
+                                      NodeFieldSizeVector& nodeBlockLayout_,
+                                      NodeFieldSizeMap& nodeBlockMap_, LO& blocksize_) :
+  nodeContainer(nodeContainer_),
+  nodeBlockLayout(nodeBlockLayout_),
+  nodeBlockMap(nodeBlockMap_),
+  blocksize(blocksize_),
   mapsHaveChanged(false)
 {
 
@@ -96,29 +100,6 @@ void
 Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 
  overlap_node_vec->doImport(*local_node_vec, *importer, Tpetra::ADD);
-
-}
-
-void
-Adapt::NodalDataBlock::registerState(const std::string &stateName, int ndofs){
-
-   // save the nodal data field names and lengths in order of allocation which implies access order
-
-   NodeFieldSizeMap::const_iterator it;
-   it = nodeBlockMap.find(stateName);
-
-   TEUCHOS_TEST_FOR_EXCEPTION((it != nodeBlockMap.end()), std::logic_error,
-           std::endl << "Error: found duplicate entry " << stateName << " in NodalDataBlock" << std::endl);
-
-   NodeFieldSize size;
-   size.name = stateName;
-   size.offset = blocksize;
-   size.ndofs = ndofs;
-
-   nodeBlockMap[stateName] = nodeBlockLayout.size();
-   nodeBlockLayout.push_back(size);
-
-   blocksize += ndofs;
 
 }
 

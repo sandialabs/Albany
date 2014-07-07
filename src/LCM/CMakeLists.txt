@@ -199,6 +199,7 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBase.cpp
     ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
     ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataVector.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -222,6 +223,7 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBase.cpp
     ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
     ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataVector.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -251,7 +253,7 @@ ELSE(BUILD_SHARED_LIBS)
   ENDIF()
 ENDIF(BUILD_SHARED_LIBS)
 
-   
+
 #Linking tests
 target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})

@@ -117,8 +117,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   neq = neq_;
 
-  this->nodal_data_block = sis->getNodalDataBlock();
-  this->nodal_data_vector = sis->getNodalDataVector();
+  this->nodal_data_base = sis->getNodalDataBase();
 
   if (bulkData == NULL)
 

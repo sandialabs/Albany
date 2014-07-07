@@ -208,10 +208,10 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
   neq = neq_;
 
   Teuchos::Array<std::string> defaultLayout;
-  solVectorLayout = 
+  solVectorLayout =
     params->get<Teuchos::Array<std::string> >("Solution Vector Components", defaultLayout);
 
-  if (solVectorLayout.size() == 0) { 
+  if (solVectorLayout.size() == 0) {
     int valueType;
     if (neq==1)
       valueType = apf::SCALAR;
@@ -225,7 +225,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     apf::createFieldOn(mesh,"residual",valueType);
     apf::createFieldOn(mesh,"solution",valueType);
   }
-  else 
+  else
     splitFields(solVectorLayout);
 
   solutionInitialized = false;
@@ -247,7 +247,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     std::vector<int>& dim = st.dim;
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
-               = sis->getNodalDataBlock()->getNodeContainer();
+               = sis->getNodalDataBase()->getNodeContainer();
         (*nodeContainer)[st.name] = AlbPUMI::buildPUMINodeField(st.name, dim, st.output);
     }
     else if (dim.size() == 2) {
@@ -384,7 +384,7 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layouts of solution vector components");
   validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
-  
+
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
 

@@ -152,8 +152,7 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->createNodalDataBlock(); }
-  Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector(){ return stateInfo->createNodalDataVector(); }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase(){ return stateInfo->createNodalDataBase(); }
 
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();

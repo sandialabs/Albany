@@ -33,6 +33,9 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
 
 {
 
+  this->addDependentField(wBF);
+  this->addDependentField(BF);
+
   //! get and validate ProjectIPtoNodalField parameter list
   Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -68,7 +71,7 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   for (int field(0); field < number_of_fields_; ++field) {
     ip_field_names_[field] = plist->get<std::string>(Albany::strint("IP Field Name", field));
     ip_field_layouts_[field] = plist->get<std::string>(Albany::strint("IP Field Layout", field));
-    nodal_field_names_[field] = "nodal_" + ip_field_names_[field];
+    nodal_field_names_[field] = "proj_nodal_" + ip_field_names_[field];
 
     if (ip_field_layouts_[field] == "Scalar") {
       PHX::MDField<ScalarT> s(ip_field_names_[field],dl->qp_scalar);
@@ -110,10 +113,11 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   int  offset;
   int  ndofs;
   num_vecs_ = 0;
-  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   for (int field(0); field < number_of_fields_; ++field) {
 
-    node_data->getNDofsAndOffset(ip_field_names_[field], offset, ndofs);
+    node_data->getNDofsAndOffset(nodal_field_names_[field], offset, ndofs);
     num_vecs_ += ndofs;
 
   }
@@ -132,6 +136,10 @@ void ProjectIPtoNodalFieldBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
+
+  this->utils.setFieldData(BF,fm);
+  this->utils.setFieldData(wBF,fm);
+
   for (int field(0); field < number_of_fields_; ++field) {
     this->utils.setFieldData(ip_fields_[field],fm);
   }
@@ -153,10 +161,13 @@ template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   node_data->initializeVectors(0.0);
 
-  Teuchos::RCP<Tpetra_CrsGraph> currentGraph = node_data->getNodalGraph();
+  Teuchos::RCP<Tpetra_CrsGraph> currentGraph =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
+
 //  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getOverlapMap();
   Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getLocalMap();
 
@@ -178,6 +189,8 @@ preEvaluate(typename Traits::PreEvalData workset)
 
   }
 
+  this->mass_matrix->resumeFill();
+
 }
 
 //------------------------------------------------------------------------------
@@ -189,7 +202,8 @@ evaluateFields(typename Traits::EvalData workset)
   // and summed
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
 
   int num_nodes = this->num_nodes_;
@@ -199,6 +213,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Assumes: mass_matrix is the right size and ready to fill
 
   // Fill the mass matrix
+
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int rnode = 0; rnode < num_nodes; ++rnode) {
@@ -260,8 +275,6 @@ evaluateFields(typename Traits::EvalData workset)
     } // end cell loop
   } // end field loop
 
-  this->mass_matrix->fillComplete();
-
 }
 //------------------------------------------------------------------------------
 template<typename Traits>
@@ -278,7 +291,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Note: we are in postEvaluate so all PEs call this
 
   // Get the node data vector container
-  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+
+  this->mass_matrix->fillComplete();
 
   // Do the solve
   // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
@@ -384,12 +400,14 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::ArrayView<MT> norm_b = Teuchos::arrayViewFromVector(norm_b_vec);
   Teuchos::ArrayView<MT> norm_res = Teuchos::arrayViewFromVector(norm_res_vec);
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
-    y = Thyra::createMembers(domainVs, this->num_vecs_);
+//    y = Thyra::createMembers(domainVs, this->num_vecs_);
+    y = Thyra::createMembers(rangeVs, domainVs);
 
   // Compute the column norms of the right-hand side b.
   Thyra::norms_2( *b, norm_b );
 
   // Compute y=A*x, where x is the solution from the linear solver.
+//  A->apply(  Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0 );
   A->apply(  Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0 );
 
   // Compute A*x-b = y-b

@@ -251,19 +251,19 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
 
   dl->dimensions(stateRef.dim);
 
-  Teuchos::RCP<Adapt::NodalDataBlock> nodalDataBlock = getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
   if ( dl->rank() == 2 ){ // node vector
     // register the state with the nodalDataBlock also
-    nodalDataBlock->registerState(stateName, stateRef.dim[1]);
+    nodalDataBase->registerBlockState(stateName, stateRef.dim[1]);
   }
   else if ( dl->rank() == 3 ){ // node tensor
     // register the state with the nodalDataBlock also
-    nodalDataBlock->registerState(stateName, stateRef.dim[1]*stateRef.dim[2]);
+    nodalDataBase->registerBlockState(stateName, stateRef.dim[1]*stateRef.dim[2]);
   }
   else { // node scalar
     // register the state with the nodalDataBlock also
-    nodalDataBlock->registerState(stateName, 1);
+    nodalDataBase->registerBlockState(stateName, 1);
   }
 
   stateRef.output = outputToExodus;
@@ -283,19 +283,19 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
     pstateRef.output = false;
     dl->dimensions(pstateRef.dim);
 
-    Teuchos::RCP<Adapt::NodalDataBlock> nodalDataBlock = getNodalDataBlock();
+    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
     if ( dl->rank() == 2 ){ // node vector
       // register the state with the nodalDataBlock also
-      nodalDataBlock->registerState(stateName_old, pstateRef.dim[1]);
+      nodalDataBase->registerBlockState(stateName_old, pstateRef.dim[1]);
     }
     else if ( dl->rank() == 3 ){ // node tensor
       // register the state with the nodalDataBlock also
-      nodalDataBlock->registerState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
+      nodalDataBase->registerBlockState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
     }
     else { // node scalar
       // register the state with the nodalDataBlock also
-      nodalDataBlock->registerState(stateName_old, 1);
+      nodalDataBase->registerBlockState(stateName_old, 1);
     }
   }
 
@@ -355,19 +355,19 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
   dl->dimensions(stateRef.dim);
 
 
-  Teuchos::RCP<Adapt::NodalDataVector> nodalDataVector = getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
   if ( dl->rank() == 2 ){ // node vector
     // register the state with the nodalDataBlock also
-    nodalDataVector->registerState(stateName, stateRef.dim[1]);
+    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
   }
   else if ( dl->rank() == 3 ){ // node tensor
     // register the state with the nodalDataBlock also
-    nodalDataVector->registerState(stateName, stateRef.dim[1]*stateRef.dim[2]);
+    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]*stateRef.dim[2]);
   }
   else { // node scalar
     // register the state with the nodalDataBlock also
-    nodalDataVector->registerState(stateName, 1);
+    nodalDataBase->registerVectorState(stateName, 1);
   }
 
   stateRef.output = outputToExodus;
@@ -388,19 +388,19 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
     dl->dimensions(pstateRef.dim);
 
 
-    Teuchos::RCP<Adapt::NodalDataVector> nodalDataVector = getNodalDataVector();
+    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
     if ( dl->rank() == 2 ){ // node vector
       // register the state with the nodalDataVector also
-      nodalDataVector->registerState(stateName_old, pstateRef.dim[1]);
+      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]);
     }
     else if ( dl->rank() == 3 ){ // node tensor
       // register the state with the nodalDataVector also
-      nodalDataVector->registerState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
+      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
     }
     else { // node scalar
       // register the state with the nodalDataVector also
-      nodalDataVector->registerState(stateName_old, 1);
+      nodalDataBase->registerVectorState(stateName_old, 1);
     }
 
   }

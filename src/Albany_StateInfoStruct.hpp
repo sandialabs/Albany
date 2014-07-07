@@ -23,12 +23,9 @@
 #include "Shards_Array.hpp"
 #include "Intrepid_Polylib.hpp"
 
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataBase.hpp"
 
-#include "Adapt_NodalDataBlock.hpp"
-#include "Adapt_NodalDataVector.hpp"
-
-  //! Container for minimal mesh specification info needed to 
+  //! Container for minimal mesh specification info needed to
   //  construct an Albany Problem
 
 namespace Albany {
@@ -43,14 +40,14 @@ typedef std::vector<StateArray> StateArrayVec;
   };
 
   struct MeshSpecsStruct {
-    MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_, 
+    MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_,
                     int cubatureDegree_, std::vector<std::string> nsNames_,
                     std::vector<std::string> ssNames_,
                     int worsetSize_, const std::string ebName_,
                     const std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
                     const Intrepid::EIntrepidPLPoly cubatureRule_ = Intrepid::PL_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
-          nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_), 
+          nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_),
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
           interleavedOrdering(interleavedOrdering_),
           cubatureRule(cubatureRule_) {}
@@ -74,12 +71,12 @@ struct StateStruct {
   enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, QuadPoint};
   typedef std::vector<int> FieldDims;
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent): 
-        name(name_), responseIDtoRequire(""), output(true), 
+  StateStruct (const std::string& name_, MeshFieldEntity ent):
+        name(name_), responseIDtoRequire(""), output(true),
 	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
   {};
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent, const FieldDims& dims, const std::string& type): 
+  StateStruct (const std::string& name_, MeshFieldEntity ent, const FieldDims& dims, const std::string& type):
         name(name_), responseIDtoRequire(""), output(true), dim(dims), initType(type),
 	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
   {};
@@ -105,7 +102,7 @@ struct StateStruct {
   std::map<std::string, std::string> nameMap;
 
   //For proper PHAL_SaveStateField functionality - maybe only needed temporarily?
-  std::string responseIDtoRequire; //If nonzero length, the responseID for response 
+  std::string responseIDtoRequire; //If nonzero length, the responseID for response
                                    // field manager to require (assume dummy data layout)
   bool output;
   bool restartDataAvailable;
@@ -132,26 +129,19 @@ public:
    const_iterator end() const { return sis.end(); }
 
 // Create storage on access - only if used
-   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() {return nodal_data_block; } 
-   Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector(){ return nodal_data_vector; }
+   Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() {return nodal_data_base; }
 
-   Teuchos::RCP<Adapt::NodalDataBlock> createNodalDataBlock(){ 
-        if(Teuchos::is_null(nodal_data_block))
-            nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock);
-        return nodal_data_block; 
-   }
-   Teuchos::RCP<Adapt::NodalDataVector> createNodalDataVector(){ 
-        if(Teuchos::is_null(nodal_data_vector))
-            nodal_data_vector = Teuchos::rcp(new Adapt::NodalDataVector);
-        return nodal_data_vector; 
+   Teuchos::RCP<Adapt::NodalDataBase> createNodalDataBase(){
+        if(Teuchos::is_null(nodal_data_base))
+            nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
+        return nodal_data_base;
    }
 
 private:
 
    std::vector<Teuchos::RCP<StateStruct> > sis;
-   Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
-   Teuchos::RCP<Adapt::NodalDataVector> nodal_data_vector;
-   
+   Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
+
 };
 
 }

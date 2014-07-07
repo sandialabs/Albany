@@ -22,9 +22,9 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 {
 
   //! get and validate IPtoNodalField parameter list
-  Teuchos::ParameterList* plist = 
+  Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
-  Teuchos::RCP<const Teuchos::ParameterList> reflist = 
+  Teuchos::RCP<const Teuchos::ParameterList> reflist =
     this->getValidIPtoNodalFieldParameters();
   plist->validateParameters(*reflist,0);
 
@@ -45,7 +45,7 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
 
   // register the nodal weights
-  this->addDependentField(weights_);  
+  this->addDependentField(weights_);
   this->p_state_mgr_->registerNodalBlockStateVariable(nodal_weights_name_,
                                             dl->node_node_scalar,
                                             dl->dummy, "all",
@@ -103,7 +103,7 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   }
 
   // Create field tag
-  field_tag_ = 
+  field_tag_ =
     Teuchos::rcp(new PHX::Tag<ScalarT>("IP to Nodal Field", dl->dummy));
 
   this->addEvaluatedField(*field_tag_);
@@ -137,7 +137,8 @@ template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataBlock> node_data =
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
   node_data->initializeVectors(0.0);
 }
 
@@ -150,7 +151,8 @@ evaluateFields(typename Traits::EvalData workset)
   // and summed
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataBlock> node_data =
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
@@ -190,28 +192,28 @@ evaluateFields(typename Traits::EvalData workset)
         for (int pt = 0; pt < num_pts; ++pt) {
           if (this->ip_field_layouts_[field] == "Scalar" ) {
             // save the scalar component
-            data[first_local_dof + node_var_offset] += 
+            data[first_local_dof + node_var_offset] +=
               this->ip_fields_[field](cell,pt) * this->weights_(cell,pt);
           } else if (this->ip_field_layouts_[field] == "Vector" ) {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
-              data[first_local_dof + node_var_offset + dim0] += 
+              data[first_local_dof + node_var_offset + dim0] +=
                 this->ip_fields_[field](cell,pt,dim0) * this->weights_(cell,pt);
             }
           } else if (this->ip_field_layouts_[field] == "Tensor" ) {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               for (int dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
-                data[first_local_dof + node_var_offset + dim0*num_dims + dim1] += 
+                data[first_local_dof + node_var_offset + dim0*num_dims + dim1] +=
                   this->ip_fields_[field](cell,pt,dim0,dim1) * this->weights_(cell,pt);
               }
             }
           }
         }
-      }    
+      }
     } // end cell loop
   } // end field loop
-} 
+}
 //------------------------------------------------------------------------------
 template<typename Traits>
 void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
@@ -220,7 +222,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Note: we are in postEvaluate so all PEs call this
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataBlock> node_data =
+     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();

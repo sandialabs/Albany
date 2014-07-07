@@ -925,8 +925,8 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
-  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
-    stkMeshStruct->nodal_data_block->resizeLocalMap(indicesT, commT);
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
+    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
 
   indicesT.resize(numOwnedNodes * neq);
 
@@ -974,8 +974,8 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
 
-  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block))
-    stkMeshStruct->nodal_data_block->resizeOverlapMap(indicesT, commT);
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
+    stkMeshStruct->nodal_data_base->resizeOverlapMap(indicesT, commT);
 
   coordinates.resize(3*numOverlapNodes);
 
@@ -1329,9 +1329,10 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
 // Process node data sets if present
 
-  if(Teuchos::nonnull(stkMeshStruct->nodal_data_block)){
+  if(Teuchos::nonnull(stkMeshStruct->nodal_data_base) &&
+    stkMeshStruct->nodal_data_base->isNodeDataPresent()){
 
-    Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_block->getNodeContainer();
+    Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_base->getNodeContainer();
 
     stk_classic::mesh::get_buckets( select_owned_in_part ,
                             bulkData.buckets( metaData.node_rank() ) ,
@@ -2125,8 +2126,8 @@ Albany::STKDiscretization::meshToGraph()
 */
 
   // No need to construct a graph if we are not pocessing nodal data
-  if(Teuchos::is_null(stkMeshStruct->nodal_data_block)) return;
-
+  if(Teuchos::is_null(stkMeshStruct->nodal_data_base)) return;
+  if(!stkMeshStruct->nodal_data_base->isNodeDataPresent()) return;
 
   // setup the CRS graph used for solution transfer and projection mass matrices
   // Assume the Crs row size is 10
@@ -2316,7 +2317,7 @@ Albany::STKDiscretization::meshToGraph()
     nodalGraph->fillComplete();
 
     // Pass the graph RCP to the nodal data block
-    stkMeshStruct->nodal_data_block->updateNodalGraph(nodalGraph);
+    stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
 
 }
 

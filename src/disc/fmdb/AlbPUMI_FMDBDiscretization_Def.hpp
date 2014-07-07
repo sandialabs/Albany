@@ -555,8 +555,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
                                                 indices, commT, nodeT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
-  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
-    fmdbMeshStruct->nodal_data_block->resizeLocalMap(indices, commT);
+  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
+    fmdbMeshStruct->nodal_data_base->resizeLocalMap(indices, commT);
   indices.resize(numOwnedNodes*neq);
   for (int i=0; i < numOwnedNodes; ++i)
     for (int j=0; j < neq; ++j) {
@@ -591,8 +591,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
                                               dofIndices, commT, nodeT);
   overlap_map = Teuchos::rcp(new Epetra_Map(-1, dofIndices.size(),
 					    &(dofIndices[0]), 0, *comm));
-  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block))
-    fmdbMeshStruct->nodal_data_block->resizeOverlapMap(nodeIndices, commT);
+  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
+    fmdbMeshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
 }
 
 template<class Output>
@@ -850,7 +850,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
 // Process node data sets if present
 
-  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_block)) {
+  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base) &&
+    fmdbMeshStruct->nodal_data_base->isNodeDataPresent()) {
 
     std::vector< std::vector<apf::Node> > nbuckets; // bucket of nodes
     int numNodeBuckets =  (int)ceil((double)numOwnedNodes / (double)worksetSize);
@@ -871,7 +872,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
         }
       }
 
-    Teuchos::RCP<Albany::NodeFieldContainer> node_states = fmdbMeshStruct->nodal_data_block->getNodeContainer();
+    Teuchos::RCP<Albany::NodeFieldContainer> node_states = fmdbMeshStruct->nodal_data_base->getNodeContainer();
 
     stateArrays.nodeStateArrays.resize(numNodeBuckets);
 

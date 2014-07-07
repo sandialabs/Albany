@@ -13,6 +13,8 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "Adapt_NodalFieldUtils.hpp"
+
 namespace Adapt {
 
 /*!
@@ -23,7 +25,9 @@ class NodalDataVector {
 
   public:
 
-    NodalDataVector();
+    NodalDataVector(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer,
+                    NodeFieldSizeVector& nodeVectorLayout,
+                    NodeFieldSizeMap& nodeVectorMap, LO& vectorsize);
 
     //! Destructor
     virtual ~NodalDataVector(){}
@@ -49,7 +53,7 @@ class NodalDataVector {
     Teuchos::RCP<const Tpetra_Map> getOverlapMap() const { return overlap_node_map; }
     Teuchos::RCP<const Tpetra_Map> getLocalMap() const { return local_node_map; }
 
-    void initializeVectors(ST value){overlap_node_vec->putScalar(value); local_node_vec->putScalar(value); }
+    void initializeVectors(ST value);
 
     void initializeExport();
 
@@ -60,28 +64,9 @@ class NodalDataVector {
 
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
-    void registerState(const std::string &stateName, int ndofs);
-
-    Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
-
-    void updateNodalGraph(const Teuchos::RCP<Tpetra_CrsGraph>& nGraph)
-         { nodalGraph = nGraph; }
-
-    Teuchos::RCP<Tpetra_CrsGraph> getNodalGraph()
-         { return nodalGraph; }
-
   private:
 
-    struct NodeFieldSize {
-
-       std::string name;
-       int offset;
-       int ndofs;
-
-    };
-
-    typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
-    typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
+    NodalDataVector();
 
     Teuchos::RCP<const Tpetra_Map> overlap_node_map;
     Teuchos::RCP<const Tpetra_Map> local_node_map;
@@ -95,12 +80,10 @@ class NodalDataVector {
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
-    NodeFieldSizeVector nodeLayout;
-    NodeFieldSizeMap nodeMap;
+    NodeFieldSizeVector& nodeVectorLayout;
+    NodeFieldSizeMap& nodeVectorMap;
 
-    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
-
-    LO blocksize;
+    LO& vectorsize;
 
     bool mapsHaveChanged;
 
