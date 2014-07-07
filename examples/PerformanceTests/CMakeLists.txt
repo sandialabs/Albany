@@ -40,7 +40,7 @@ IF(ALBANY_LCM)
   add_subdirectory(TLPoroElasticity3D)
 
   IF(ALBANY_SEACAS)
-    #add_subdirectory(Necking3D)
+    add_subdirectory(Necking3D)
   ENDIF()
 
   IF(ALBANY_HYDRIDE)
