@@ -6,28 +6,28 @@
 
 SET(SEE_DIR ${Albany_SOURCE_DIR}/src/SEE)
 
-file (GLOB amp-problem-sources
+file (GLOB see-problem-sources
   "${SEE_DIR}/problems/*.cpp"
 )
-file (GLOB amp-problem-headers
+file (GLOB see-problem-headers
   "${SEE_DIR}/problems/*.hpp"
 )
 
-file (GLOB amp-evaluator-sources
+file (GLOB see-evaluator-sources
   "${SEE_DIR}/evaluators/*.cpp"
 )
-file (GLOB amp-evaluator-headers
+file (GLOB see-evaluator-headers
   "${SEE_DIR}/evaluators/*.hpp"
 )
 
 set(SOURCES
-  ${amp-problem-sources}
-  ${amp-evaluator-sources}
+  ${see-problem-sources}
+  ${see-evaluator-sources}
   )
 
 set(HEADERS
-  ${amp-problem-headers}
-  ${amp-evaluator-headers}
+  ${see-problem-headers}
+  ${see-evaluator-headers}
  )
 
 set(INCLUDE_DIRS

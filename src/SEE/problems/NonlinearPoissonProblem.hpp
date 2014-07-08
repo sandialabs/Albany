@@ -96,6 +96,7 @@ protected:
 #include "Albany_EvaluatorUtils.hpp"
 #include "Albany_ResponseUtilities.hpp"
 
+#include "NonlinearPoissonSource.hpp"
 #include "NonlinearPoissonResidual.hpp"
 
 template <typename EvalT>
@@ -184,6 +185,19 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     (evalUtils.constructComputeBasisFunctionsEvaluator(
       elem_type,intrepid_basis,elem_cubature));
 
+  { // Source Function
+    RCP<ParameterList> p = rcp(new ParameterList("Source Function"));
+
+    //Input
+    p->set<string>("Coordinate Name","Coord Vec");
+
+    //Output
+    p->set<string>("Source Name", "Source");
+
+    ev = rcp(new SEE::NonlinearPoissonSource<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // Nonlinear Poisson Residual
     RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
 
@@ -193,6 +207,7 @@ Albany::NonlinearPoissonProblem::constructEvaluators(
     p->set<string>("Unknown Name","u");
     p->set<string>("Unknown Gradient Name","u Gradient");
     p->set<string>("Unknown Time Derivative Name","u_dot");
+    p->set<string>("Source Name","Source");
 
     //Output
     p->set<string>("Residual Name", "u Residual");

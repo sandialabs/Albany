@@ -26,6 +26,8 @@ NonlinearPoissonResidual(const Teuchos::ParameterList& p,
                dl->qp_vector),
   u_dot_      (p.get<std::string>("Unknown Time Derivative Name"),
                dl->qp_scalar),
+  source_     (p.get<std::string>("Source Name"),
+               dl->qp_scalar),
   residual_   (p.get<std::string>("Residual Name"),
                dl->node_scalar)
 {
@@ -40,6 +42,7 @@ NonlinearPoissonResidual(const Teuchos::ParameterList& p,
   this->addDependentField(u_grad_);
   if (enable_transient_) 
     this->addDependentField(u_dot_);
+  this->addDependentField(source_);
   
   this->addEvaluatedField(residual_);
   
@@ -65,6 +68,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(u_grad_,fm);
   if (enable_transient_)
     this->utils.setFieldData(u_dot_,fm);
+  this->utils.setFieldData(source_,fm);
 
   this->utils.setFieldData(residual_,fm);
 }
@@ -91,8 +95,17 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
+  // source function
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+      for (std::size_t node = 0; node < num_nodes_; ++node) {
+        residual_(cell,node) +=
+          w_bf_(cell,node,qp) * source_(cell,qp);
+      }
+    }
+  }
+
 }
 
 //**********************************************************************
 }
-
