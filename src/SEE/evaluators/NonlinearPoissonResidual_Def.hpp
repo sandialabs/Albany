@@ -99,7 +99,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
       for (std::size_t node = 0; node < num_nodes_; ++node) {
-        residual_(cell,node) +=
+        residual_(cell,node) -=
           w_bf_(cell,node,qp) * source_(cell,qp);
       }
     }
