@@ -76,7 +76,7 @@ ENDIF()
 IF(ALBANY_SCOREC)
   add_subdirectory(ElastMeshAdapt3D)
   add_subdirectory(J2PlasticityFMDBTet10)
-  add_subdirectory(StaticElasticity3DFMDB)
+  add_subdirectory(SCOREC)
 ENDIF()
 
 IF(ALBANY_STK_PERCEPT)
