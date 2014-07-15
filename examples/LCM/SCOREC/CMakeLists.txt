@@ -6,7 +6,7 @@
 
 # SCOREC ##################
 
-# 1. Copy Input file from source to binary dir
+# 1. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-serial0.smb
@@ -19,5 +19,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube2.smb
                ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube2.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube3.smb
                ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube3.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-quad.dmg
+               ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube-quad.dmg COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-quad-serial0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube-quad-serial0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-quad0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube-quad0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-quad1.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube-quad1.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-quad2.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube-quad2.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/meshes/cube/cube-quad3.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/meshes/cube/cube-quad3.smb COPYONLY)
 
 add_subdirectory(Elasticity)
+add_subdirectory(J2Tet10)

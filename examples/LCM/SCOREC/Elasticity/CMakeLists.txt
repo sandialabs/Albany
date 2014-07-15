@@ -21,7 +21,7 @@ set(testName "SCOREC_${testRoot}")
 
 # 3. Create the test with this name and standard executable
 IF(ENABLE_MESHMODEL)
-  if (ALBANY_IFPACK2)
+  IF(ALBANY_IFPACK2)
     add_test(
       NAME ${testName}_Mmodel_Traction_Tpetra
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
@@ -40,4 +40,3 @@ IF(ENABLE_MESHMODEL)
       COMMAND ${AlbanyT.exe} inputRenameT.xml)
   ENDIF()
 ENDIF()
-
