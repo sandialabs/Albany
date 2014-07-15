@@ -4,8 +4,6 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
-# SCOREC ##################
+# SCOREC/meshes ##################
 
-add_subdirectory(meshes)
-add_subdirectory(Elasticity)
-add_subdirectory(J2Tet10)
+add_subdirectory(cube)
