@@ -132,6 +132,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
 
   ma::adapt(input);
 
+  mesh->verify();
+
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
     apf::destroyField(mesh->findField("size"));
   }
