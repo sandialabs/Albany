@@ -140,6 +140,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
 
   // replace nodes' displaced coordinates with coordinates
   apf::displaceMesh(mesh,solutionField,-1.0);
+  
+  mesh->verify();
 
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
