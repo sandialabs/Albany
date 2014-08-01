@@ -12,25 +12,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputEdgeDBCT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputEdgeDBCT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputVtxDBCT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputVtxDBCT.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube.dmg
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube.dmg COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube0.smb
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube0.smb COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_0.smb
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_0.smb COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_1.smb
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_1.smb COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_2.smb
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_2.smb COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/unitCube_4_3.smb
-               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/unitCube_4_3.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MeshModel/inputRenameT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MeshModel/inputRenameT.xml COPYONLY)
 
-# 2. Name the test with the directory name
-get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+# 2. Name the test with the directory name, prepended by SCOREC_
+get_filename_component(testRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set(testName "SCOREC_${testRoot}")
 
 # 3. Create the test with this name and standard executable
 IF(ENABLE_MESHMODEL)
-  if (ALBANY_IFPACK2)
+  IF(ALBANY_IFPACK2)
     add_test(
       NAME ${testName}_Mmodel_Traction_Tpetra
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
@@ -43,6 +34,9 @@ IF(ENABLE_MESHMODEL)
       NAME ${testName}_Mmodel_VtxDBC_Tpetra
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
       COMMAND ${AlbanyT.exe} inputVtxDBCT.xml)
+    add_test(
+      NAME ${testName}_Mmodel_Rename_Tpetra
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/MeshModel
+      COMMAND ${AlbanyT.exe} inputRenameT.xml)
   ENDIF()
 ENDIF()
-

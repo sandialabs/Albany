@@ -62,6 +62,21 @@ AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria(
   return false;
 }
 
+/* this is a stop-gap measure to prevent inverted elements
+   caused by (un)deformation for larger meshes while we
+   transition the simulation method away from the use
+   of the reference coordinates */
+static void fixShapesAfterConversion(ma::Mesh* m)
+{
+  /* it should be all right to use the "identity"
+     size field (i.e. just measures true length in space)
+     because currently Albany uses isotropic size fields,
+     which yield the same quality measure on an element */
+  ma::Input* in = ma::configureIdentity(m);
+  in->shouldFixShape = true;
+  ma::adapt(in);
+}
+
 template<class SizeField>
 bool
 AAdapt::MeshAdapt<SizeField>::adaptMesh(
@@ -109,6 +124,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     fprintf(stderr,"assuming deformation problem: displacing coordinates\n");
   apf::displaceMesh(mesh,solutionField);
 
+  mesh->verify();
+
   szField->setParams(adapt_params_->get<double>("Target Element Size", 0.1),
 		     adapt_params_->get<double>("Error Bound", 0.01),
 		     adapt_params_->get<std::string>("State Variable", ""));
@@ -132,12 +149,18 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
 
   ma::adapt(input);
 
+  mesh->verify();
+
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
     apf::destroyField(mesh->findField("size"));
   }
 
   // replace nodes' displaced coordinates with coordinates
   apf::displaceMesh(mesh,solutionField,-1.0);
+
+  fixShapesAfterConversion(mesh);
+  
+  mesh->verify();
 
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call

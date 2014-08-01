@@ -176,6 +176,12 @@ IF(ALBANY_MOR)
   add_subdirectory(MOR)
 ENDIF()
 
+# SEE   ##################
+
+IF(ALBANY_SEE)
+  add_subdirectory(SEE)
+ENDIF()
+
 IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)
 ENDIF()

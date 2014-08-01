@@ -45,17 +45,39 @@ if __name__ == "__main__":
         logfile.write("\n**** Error, machine name argument required (-machine my_machine_name)\n")
         result = 1
 
-    executable_name = "None"
+    # gold standard performance data for this machine
+    perf_gold_file = open("data.perf")
+    buff = read_line(perf_gold_file)
+    gold_perf_data = []
+    while buff != None:
+        vals = string.splitfields(buff)
+        if machine_name in vals:
+            gold_perf_data = vals
+        buff = read_line(perf_gold_file)
+    if gold_perf_data == []:
+        logfile.write("\n**** Error, reference (gold) performance data not found for machine " + machine_name + "\n")
+        result = 1
+    gold_num_proc = int(gold_perf_data[1])
+    gold_wallclock_time = float(gold_perf_data[2])
+    gold_wallclock_time_tolerance = float(gold_perf_data[3])
+
+    path_name = "None"
     if "-executable" in sys.argv:
-        executable_name = sys.argv[sys.argv.index("-executable") + 1]
-        logfile.write("\n**** Executable name = " + executable_name + "\n")
+        path_name = sys.argv[sys.argv.index("-executable") + 1]
     else:
-        logfile.write("\n**** Error, executable name argument required (-executable my_executable_name)\n")
         result = 1
 
+    executable_name = path_name + "/" + gold_perf_data[4]
+    input_file_name = gold_perf_data[5]
+    logfile.write("\n**** Executable name = " + executable_name + "\n")
+    logfile.write("\n**** Input file name = " + input_file_name + "\n")
+
+    if gold_num_proc == 1:
     # run Albany: serial for now
-    #command = ["mpiexec", "-np", "4", "../../../src/Albany", "input.xml"]    
-    command = [executable_name, "input.xml"]    
+        command = [executable_name, input_file_name]    
+    else:
+        command = ["mpirun", "-np", gold_perf_data[1], executable_name, input_file_name]    
+
     p = Popen(command, stdout=PIPE)
     return_code = p.wait()
     if return_code != 0:
@@ -74,21 +96,6 @@ if __name__ == "__main__":
     wallclock_time_index = stdout_vals.index("Time***")
     wallclock_time = float(stdout_vals[wallclock_time_index+1])
 
-    # gold standard performance data for this machine
-    perf_gold_file = open("data.perf")
-    buff = read_line(perf_gold_file)
-    gold_perf_data = []
-    while buff != None:
-        vals = string.splitfields(buff)
-        if machine_name in vals:
-            gold_perf_data = vals
-        buff = read_line(perf_gold_file)
-    if gold_perf_data == []:
-        logfile.write("\n**** Error, reference (gold) performance data not found for machine " + machine_name + "\n")
-        result = 1
-    gold_num_proc = int(gold_perf_data[1])
-    gold_wallclock_time = float(gold_perf_data[2])
-    gold_wallclock_time_tolerance = float(gold_perf_data[3])
 
     if(wallclock_time > gold_wallclock_time + gold_wallclock_time_tolerance):
         result = 1

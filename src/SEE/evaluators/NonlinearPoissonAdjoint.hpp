@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef NONLINEARPOISSONRESIDUAL_HPP
-#define NONLINEARPOISSONRESIDUAL_HPP
+#ifndef NONLINEARPOISSONADJOINT_HPP
+#define NONLINEARPOISSONADJOINT_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -14,20 +14,20 @@
 
 namespace SEE {
 ///
-/// \brief Nonlinear Poisson Residual
+/// \brief Nonlinear Poisson Adjoint
 ///
-/// This evaluator computes the residual to a nonliner
-/// Poisson's problem
+/// This evaluator computes the residual of the
+/// adjoint of a nonliner Poisson's problem
 ///
 template<typename EvalT, typename Traits>
-class NonlinearPoissonResidual : 
+class NonlinearPoissonAdjoint : 
   public PHX::EvaluatorWithBaseImpl<Traits>,
   public PHX::EvaluatorDerived<EvalT, Traits>
 {
 
 public:
 
-  NonlinearPoissonResidual(const Teuchos::ParameterList& p,
+  NonlinearPoissonAdjoint(const Teuchos::ParameterList& p,
       const Teuchos::RCP<Albany::Layouts>& dl);
 
   void 
@@ -46,8 +46,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> w_grad_bf_;
   PHX::MDField<ScalarT,Cell,QuadPoint> u_;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> u_grad_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> u_dot_;
-  PHX::MDField<ScalarT,Cell,QuadPoint> source_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> lambda_;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> lambda_grad_;
 
   PHX::MDField<ScalarT,Cell,Node> residual_;
 
@@ -55,8 +55,6 @@ private:
   unsigned int num_dims_;
   unsigned int num_nodes_;
   unsigned int workset_size_;
-
-  bool enable_transient_;
 
 };
 }
