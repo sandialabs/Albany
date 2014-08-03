@@ -105,7 +105,6 @@ AAdapt::MeshAdapt<SizeField>::beforeAdapt(
 		     adapt_params_->get<std::string>("State Variable", ""));
 
   szField->copyInputFields();
-  mesh->verify();
 }
 
 template<class SizeField>
@@ -113,7 +112,6 @@ void
 AAdapt::MeshAdapt<SizeField>::adaptInPartition(
     const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
 {
-  mesh->verify();
   szField->computeError();
 
   ma::Input* input = ma::configure(mesh,&(*szField));
@@ -131,9 +129,7 @@ AAdapt::MeshAdapt<SizeField>::adaptInPartition(
     input->maximumImbalance = lbMaxImbalance;
   }
 
-  mesh->verify();
   ma::adapt(input);
-  mesh->verify();
 
   szField->freeSizeField();
 }

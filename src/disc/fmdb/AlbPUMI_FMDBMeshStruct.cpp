@@ -83,8 +83,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     model_file = params->get<std::string>("Mesh Model Input File Name");
 
   mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
-  mesh->verify();
   model = apf::getMdsModel(mesh);
+
+  mesh->verify();
 
   int d = mesh->getDimension();
   loadSets(params, sets, "Element Block Associations",   d,     d);
