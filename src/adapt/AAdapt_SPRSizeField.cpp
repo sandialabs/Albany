@@ -9,6 +9,7 @@
 #include "Epetra_Import.h"
 
 #include <apfSPR.h>
+#include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   comm(disc->getComm()),
@@ -54,7 +55,8 @@ double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
 void
 AAdapt::SPRSizeField::copyInputFields()
 {
-  apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,cub_degree);
+  apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
+  apf::Field* eps = apf::createField(mesh, "eps", apf::MATRIX, fs);
   global_numbering = pumi_disc->getAPFGlobalNumbering();
   apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
