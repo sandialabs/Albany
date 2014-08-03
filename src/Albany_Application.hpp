@@ -68,7 +68,7 @@ namespace Albany {
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm,
 		const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Epetra_Vector>& initial_guess =
+		const Teuchos::RCP<const Tpetra_Vector>& initial_guess =
 		Teuchos::null);
 
     //! Destructor
@@ -100,11 +100,13 @@ namespace Albany {
 
     //! Get initial solution
     Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
-
-    //! Get Tpetra initial solution
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
+    //! Get Tpetra initial solution
+//    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
+
     //! Get initial solution dot
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
 
     //! Get the solution memory manager

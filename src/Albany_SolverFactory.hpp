@@ -9,6 +9,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_Application.hpp"
+//#include "Albany_ApplicationT.hpp"
 
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_VectorBase.hpp"
@@ -52,43 +53,45 @@ namespace Albany {
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 
    // Thyra version of above
    virtual Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createT(
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
     //Thyra version of above
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createAndGetAlbanyAppT(
       Teuchos::RCP<Application>& albanyApp,
+//      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
     //Thyra version of above
     Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,
+//      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
-      const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
     Teuchos::ParameterList& getAnalysisParameters() const
       { return appParams->sublist("Piro").sublist("Analysis"); }

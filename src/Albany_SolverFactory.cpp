@@ -7,9 +7,10 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_ObserverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
-#include "Albany_PiroObserverT.hpp"
+//#include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
+//#include "Albany_ModelFactoryT.hpp"
 
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Piro_ProviderBase.hpp"
@@ -192,7 +193,7 @@ Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
@@ -202,9 +203,10 @@ Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createT(
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
+//  Teuchos::RCP<Albany::ApplicationT> dummyAlbanyApp;
   return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
@@ -213,7 +215,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -320,7 +322,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     Teuchos::RCP<Application>& albanyApp,
     const Teuchos::RCP<const Epetra_Comm>& appComm,
     const Teuchos::RCP<const Epetra_Comm>& solverComm,
-    const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
@@ -379,14 +381,16 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
+//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
   RCP<Albany::Application> app;
+//  RCP<Albany::ApplicationT> app;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =
     createAlbanyAppAndModelT(app, appComm, initial_guess);
 
@@ -424,7 +428,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }
 
   const RCP<LOCA::Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
-  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
 
   if(solMgrT->isAdaptive()){
     Piro::AdaptiveSolverFactory piroFactory;
@@ -440,7 +444,7 @@ Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   // Create application
   albanyApp = rcp(new Albany::Application(Albany::createTeuchosCommFromEpetraComm(appComm), appParams, initial_guess));
@@ -460,11 +464,13 @@ Albany::SolverFactory::createAlbanyAppAndModel(
 Teuchos::RCP<Thyra::ModelEvaluator<ST> >
 Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
+//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   // Create application
   albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+//  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams, initial_guess));
 
   // Validate Response list: may move inside individual Problem class
   RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
