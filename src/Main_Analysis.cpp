@@ -16,7 +16,7 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 
 // Global variable that denotes this is not the Tpetra executable
-extern const bool TpetraBuild = false;
+bool TpetraBuild = false;
 
 int main(int argc, char *argv[]) {
 

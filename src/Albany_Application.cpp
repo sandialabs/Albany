@@ -52,7 +52,7 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 
-extern const int TpetraBuild;
+extern bool TpetraBuild;
 
 
 Albany::Application::
@@ -251,7 +251,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   if(!TpetraBuild){
     RCP<Epetra_Vector> initial_guessE;
     if (Teuchos::nonnull(initial_guess)) {
-      Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, comm);
+      Petra::TpetraVector_To_EpetraVector(initial_guess, initial_guessE, comm);
     }
     solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guessE));
   }

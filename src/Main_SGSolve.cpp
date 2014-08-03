@@ -16,6 +16,8 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 
+#include "Petra_Converters.hpp"
+
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:
         "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
@@ -27,7 +29,7 @@ Please remove when issue is resolved
 #include "Stokhos_Epetra.hpp"
 
 // Global variable that denotes this is not the Tpetra executable
-extern const bool TpetraBuild = false;
+bool TpetraBuild = false;
 
 int main(int argc, char *argv[]) {
 
@@ -138,8 +140,14 @@ int main(int argc, char *argv[]) {
 
     // Create SG solver
     Teuchos::RCP<Albany::Application> app;
+    Teuchos::ParameterList kokkosNodeParams;
+    Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
+    Teuchos::RCP<const Tpetra_Vector> initial_guessT;
+    if (Teuchos::nonnull(ig)) {
+      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*ig, tapp_comm, nodeT);
+    }
     Teuchos::RCP<EpetraExt::ModelEvaluator> model =
-      sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
+      sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, initial_guessT);
 
     // Hack in rigid body modes for ML
     {

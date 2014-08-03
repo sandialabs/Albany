@@ -7,7 +7,7 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_ObserverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
-//#include "Albany_PiroObserverT.hpp"
+#include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
 //#include "Albany_ModelFactoryT.hpp"
@@ -52,6 +52,10 @@
 
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
+
+#include "Petra_Converters.hpp"
+
+extern bool TpetraBuild;
 
 namespace Albany {
 
@@ -222,7 +226,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
-      return rcp(new QCAD::Solver(appParams, solverComm, initial_guess));
+      RCP<Epetra_Vector> initial_guessE;
+      if(Teuchos::nonnull(initial_guess))
+        Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, appComm);
+      return rcp(new QCAD::Solver(appParams, solverComm, initial_guessE));
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
@@ -230,7 +237,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
-      const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
+      RCP<Epetra_Vector> initial_guessE;
+      if(Teuchos::nonnull(initial_guess))
+        Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, appComm);
+      const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guessE));
       const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
       // Create and setup the Piro solver factory
@@ -360,8 +370,14 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 //      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
-      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-      return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+      if(TpetraBuild){
+        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+      }
+      else {
+        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+      }
     }
   }
 
@@ -428,15 +444,28 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   }
 
   const RCP<LOCA::Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
-  const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
 
   if(solMgrT->isAdaptive()){
     Piro::AdaptiveSolverFactory piroFactory;
-    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+    if(TpetraBuild){
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+    }
+    else {
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+    }
   }
   else {
     Piro::SolverFactory piroFactory;
-    return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    if(TpetraBuild){
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    }
+    else {
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    }
   }
 }
 

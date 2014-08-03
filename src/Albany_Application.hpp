@@ -113,9 +113,6 @@ namespace Albany {
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> getAdaptSolMgrT(){ return solMgrT;}
 
-    //! Get Tpetra initial solution dot
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
-
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
 
