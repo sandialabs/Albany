@@ -62,9 +62,10 @@ AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria(
   return false;
 }
 
+
 template<class SizeField>
-bool
-AAdapt::MeshAdapt<SizeField>::adaptMesh(
+void
+AAdapt::MeshAdapt<SizeField>::beforeAdapt(
     const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
     Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
 {
@@ -98,18 +99,21 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     pumi_discretization->attachQPData();
 
   std::string adaptVector = adapt_params_->get<std::string>("Adaptation Displacement Vector","");
-  apf::Field* solutionField;
-  if (adaptVector.length() != 0)
-    solutionField = mesh->findField(adaptVector.c_str());
-  else
-    solutionField = mesh->findField("solution");
-
-  mesh->verify();
 
   szField->setParams(adapt_params_->get<double>("Target Element Size", 0.1),
 		     adapt_params_->get<double>("Error Bound", 0.01),
 		     adapt_params_->get<std::string>("State Variable", ""));
 
+  szField->copyInputFields();
+  mesh->verify();
+}
+
+template<class SizeField>
+void
+AAdapt::MeshAdapt<SizeField>::adaptInPartition(
+    const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+{
+  mesh->verify();
   szField->computeError();
 
   ma::Input* input = ma::configure(mesh,&(*szField));
@@ -127,14 +131,22 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     input->maximumImbalance = lbMaxImbalance;
   }
 
+  mesh->verify();
   ma::adapt(input);
-
   mesh->verify();
 
-  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 ) {
-    apf::destroyField(mesh->findField("size"));
-  }
+  szField->freeSizeField();
+}
 
+template<class SizeField>
+void
+AAdapt::MeshAdapt<SizeField>::afterAdapt(
+    const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+{
+  mesh->verify();
+
+  bool shouldTransferIPData = adapt_params_->get<bool>("Transfer IP Data",false);
+  szField->freeInputFields();
   // Throw away all the Albany data structures and re-build them from the mesh
   // Note that the solution transfer for the QP fields happens in this call
   pumi_discretization->updateMesh(shouldTransferIPData);
@@ -142,11 +154,43 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   // detach QP fields from the apf mesh
   if (shouldTransferIPData)
     pumi_discretization->detachQPData();
-
-  return true;
-
 }
 
+struct AdaptCallback
+{
+  virtual void run() = 0;
+};
+
+template <class T>
+struct AdaptCallbackOf : public AdaptCallback
+{
+  T* adapter;
+  const Teuchos::RCP<Teuchos::ParameterList>* adapt_params;
+  void run() {
+    adapter->adaptInPartition(*adapt_params);
+  }
+};
+
+extern struct AdaptCallback* globalCallback;
+
+void adaptShrunken(apf::Mesh2* m);
+
+template<class SizeField>
+bool
+AAdapt::MeshAdapt<SizeField>::adaptMesh(
+    const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+    Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+{
+  beforeAdapt(adapt_params_, output_stream_);
+
+  AdaptCallbackOf<AAdapt::MeshAdapt<SizeField> > callback;
+  callback.adapter = this;
+  callback.adapt_params = &adapt_params_;
+  globalCallback = &callback;
+
+  adaptShrunken(mesh);
+  afterAdapt(adapt_params_);
+}
 
 template<class SizeField>
 void

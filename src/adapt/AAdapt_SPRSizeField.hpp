@@ -30,6 +30,9 @@ class SPRSizeField : public ma::IsotropicFunction {
 
     void computeError();
 
+    void copyInputFields();
+    void freeInputFields();
+    void freeSizeField();
 
   private:
 

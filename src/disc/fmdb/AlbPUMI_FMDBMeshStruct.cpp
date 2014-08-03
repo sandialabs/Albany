@@ -60,6 +60,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   PCU_Comm_Init();
+  PCU_Protect();
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
   std::string mesh_file = params->get<std::string>("FMDB Input File Name");
@@ -82,6 +83,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     model_file = params->get<std::string>("Mesh Model Input File Name");
 
   mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
+  mesh->verify();
   model = apf::getMdsModel(mesh);
 
   int d = mesh->getDimension();

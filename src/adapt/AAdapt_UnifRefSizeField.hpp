@@ -25,9 +25,12 @@ class UnifRefSizeField : public ma::IsotropicFunction {
 
     void setParams(double element_size, double err_bound,
 		   const std::string state_var_name);
-  
+
     void computeError();
 
+    void copyInputFields() {};
+    void freeInputFields() {};
+    void freeSizeField() {};
 
   private:
 

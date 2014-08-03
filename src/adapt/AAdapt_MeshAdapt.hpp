@@ -48,6 +48,11 @@ class MeshAdapt {
     Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters(
         Teuchos::RCP<Teuchos::ParameterList>& validPL) const;
 
+    void beforeAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+        Teuchos::RCP<Teuchos::FancyOStream>& output_stream_);
+    void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+    void afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+
   private:
 
     // Disallow copy and assignment

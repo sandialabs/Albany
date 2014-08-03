@@ -52,7 +52,9 @@ double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
 }
 
 void
-AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
+AAdapt::SPRSizeField::copyInputFields()
+{
+  apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,cub_degree);
   global_numbering = pumi_disc->getAPFGlobalNumbering();
   apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
@@ -73,6 +75,16 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
   mesh->end(it);
 }
 
+void AAdapt::SPRSizeField::freeSizeField()
+{
+  apf::destroyField(mesh->findField("size"));
+}
+
+void AAdapt::SPRSizeField::freeInputFields()
+{
+  apf::destroyField(mesh->findField("eps"));
+}
+
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
@@ -83,13 +95,10 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 
 }
 
-
 void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
-  apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,cub_degree);
-  getFieldFromStateVariable(eps);
+  apf::Field* eps = mesh->findField("eps");
   field = apf::getSPRSizeField(eps,rel_err);
-  apf::destroyField(eps);
 
 }
