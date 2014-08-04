@@ -29,6 +29,7 @@
 #endif /* ALBANY_IFPACK2 */
 
 #ifdef ALBANY_MUELU
+#include <Thyra_MueLuPreconditionerFactory.hpp>
 #include "Stratimikos_MueluTpetraHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
@@ -425,14 +426,24 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
 #ifdef ALBANY_IFPACK2
     {
+#ifdef ALBANY_64BIT_INT
+      typedef Thyra::PreconditionerFactoryBase<ST> Base;
+      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+#else
       typedef Thyra::PreconditionerFactoryBase<double> Base;
       typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+#endif
 
       linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
     }
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
+#ifdef ALBANY_64BIT_INT
+    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
+    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+#else
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+#endif
 #endif /* ALBANY_MUELU */
     linearSolverBuilder.setParameterList(Piro::extractStratimikosParams(piroParams));
 

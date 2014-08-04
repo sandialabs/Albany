@@ -24,14 +24,14 @@
 //#  include "Tpetra_SerialPlatform.hpp"
 //#endif
 
-//#ifdef HAVE_MUELU
+#ifdef ALBANY_MUELU
 #include <Thyra_MueLuPreconditionerFactory.hpp>
 #include "Stratimikos_MueluTpetraHelpers.hpp"
-//#endif
+#endif
 
-//#ifdef HAVE_IFPACK2
+#ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
-//#endif
+#endif
 
 
 
@@ -135,20 +135,21 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   // Setup linear solver
 
-//#ifdef HAVE_MUELU
+#ifdef ALBANY_MUELU
     {
       Thyra::addMueLuToStratimikosBuilder(this->linearSolverBuilder); 
       Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder,"MueLu-Tpetra");
     }
-//#endif // MUELU
-//#ifdef HAVE_IFPACK2
+#endif // MUELU
+
+#ifdef ALBANY_IFPACK2
     {
       typedef Thyra::PreconditionerFactoryBase<ST> Base;
       typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
 
       this->linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
     }
-//#endif // IFPACK2
+#endif // IFPACK2
 
   bool have_solver_pl = plist->isSublist("Solver Options");
   if(have_solver_pl){
