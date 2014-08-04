@@ -169,7 +169,7 @@ struct AdaptCallbackOf : public AdaptCallback
 
 extern struct AdaptCallback* globalCallback;
 
-void adaptShrunken(apf::Mesh2* m);
+void adaptShrunken(apf::Mesh2* m, double minPartDensity);
 
 template<class SizeField>
 bool
@@ -184,7 +184,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   callback.adapt_params = &adapt_params_;
   globalCallback = &callback;
 
-  adaptShrunken(mesh);
+  double minPartDensity = adapt_params_->get<double>("Minimum Part Density", 1000);
+  adaptShrunken(mesh, minPartDensity);
   afterAdapt(adapt_params_);
 }
 
@@ -243,6 +244,7 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
   validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
+  validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   return validPL;
 }
 

@@ -18,16 +18,15 @@ static double getAveragePartDensity(apf::Mesh* m)
   return nElements / PCU_Comm_Peers();
 }
 
-static int getShrinkFactor(apf::Mesh* m)
+static int getShrinkFactor(apf::Mesh* m, double minPartDensity)
 {
-  double const minPartDensity = 1000;
   double partDensity = getAveragePartDensity(m);
   int factor = 1;
   while (partDensity < minPartDensity) {
-    factor *= 2;
-    partDensity *= 2;
     if (factor >= PCU_Comm_Peers())
       break;
+    factor *= 2;
+    partDensity *= 2;
   }
   assert(PCU_Comm_Peers() % factor == 0);
   return factor;
@@ -48,9 +47,9 @@ static void theCallback(apf::Mesh2*)
   globalCallback->run();
 }
 
-void adaptShrunken(apf::Mesh2* m)
+void adaptShrunken(apf::Mesh2* m, double minPartDensity)
 {
-  int factor = getShrinkFactor(m);
+  int factor = getShrinkFactor(m, minPartDensity);
   if (factor == 1)
     globalCallback->run();
   else {
