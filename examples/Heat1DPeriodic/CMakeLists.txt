@@ -6,6 +6,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+
 
 # 1'. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBelos.xml
