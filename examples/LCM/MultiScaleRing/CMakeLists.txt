@@ -5,6 +5,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_nobridge.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_nobridge.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_nobridgeT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_nobridgeT.xml COPYONLY)
 
 # 2. Copy mesh file from source to binary dir. We only need a single file as there is only
 #    one master process used in this test.
@@ -22,3 +24,4 @@ add_executable(MPALE_dummy MPALE_dummy.C)
 # 7. Run the Albany test
 
 add_test(${testName}_nobridge_SERIAL ${SerialAlbany.exe} input_nobridge.xml)
+add_test(${testName}_nobridge_SERIAL_Tpetra ${SerialAlbanyT.exe} input_nobridgeT.xml)
