@@ -5,11 +5,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMatrixFree.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMatrixFree.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputProbeLame.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputProbeLame.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputProbeLameT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputProbeLameT.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName}_MatrixFree ${Albany.exe} inputMatrixFree.xml)
+add_test(${testName}_MatrixFree_Tpetra ${AlbanyT.exe} inputMatrixFree.xml)
 add_test(${testName}_ProbeLame ${Albany.exe} inputProbeLame.xml)
+add_test(${testName}_ProbeLame_Tpetra ${AlbanyT.exe} inputProbeLameT.xml)
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)
