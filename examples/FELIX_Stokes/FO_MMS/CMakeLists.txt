@@ -13,36 +13,57 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #  First test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincos2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincos2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincos2DT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincos2DT.xml COPYONLY)
 add_test(${testName}_SinCosGlen ${Albany.exe} input_fo_sincos2D.xml)
+add_test(${testName}_SinCosGlen_Tpetra ${AlbanyT.exe} input_fo_sincos2DT.xml)
 
 #  Second test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincosz.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincosz.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincoszT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincoszT.xml COPYONLY)
 add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_fo_sincosz.xml)
+add_test(${testName}_SinCosZ3DPeriodicXY_Tpetra ${AlbanyT.exe}
+input_fo_sincoszT.xml)
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_SinCosZ3DPeriodicXY PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+  set_tests_properties (${testName}_SinCosZ3DPeriodicXY_Tpetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()
 
 #  Third test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumann.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumann.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumannT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumannT.xml COPYONLY)
 add_test(${testName}_SinExp_Neumann ${Albany.exe} input_fo_sinexp_neumann.xml)
+add_test(${testName}_SinExp_Neumann_Tpetra ${AlbanyT.exe}
+input_fo_sinexp_neumannT.xml)
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_SinExp_Neumann PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+  set_tests_properties (${testName}_SinExp_Neumann_Tpetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()
 
 
 #  Fourth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basalT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basalT.xml COPYONLY)
 add_test(${testName}_CosExp_Basal ${Albany.exe} input_fo_cosexp_basal.xml)
+add_test(${testName}_CosExp_Basal_Tpetra ${AlbanyT.exe} input_fo_cosexp_basalT.xml)
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_CosExp_Basal PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+  set_tests_properties (${testName}_CosExp_Basal_Tpetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()
 
 #  Fifth test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLaw.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLaw.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basal_all_glensLawT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basal_all_glensLawT.xml COPYONLY)
 add_test(${testName}_FO_CosExp_BasalAll ${SerialAlbany.exe} input_fo_cosexp_basal_all_glensLaw.xml)
+add_test(${testName}_FO_CosExp_BasalAll_Tpetra ${SerialAlbanyT.exe}
+input_fo_cosexp_basal_all_glensLawT.xml)
 
 
