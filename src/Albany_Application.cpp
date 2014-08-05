@@ -52,13 +52,13 @@ using Teuchos::rcpFromRef;
 int countJac; //counter which counts instances of Jacobian (for debug output)
 int countRes; //counter which counts instances of residual (for debug output)
 
-extern const int TpetraBuild;
+extern bool TpetraBuild;
 
 
 Albany::Application::
 Application(const RCP<const Teuchos_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
-	    const RCP<const Epetra_Vector>& initial_guess) :
+	    const RCP<const Tpetra_Vector>& initial_guess) :
   comm(Albany::createEpetraCommFromTeuchosComm(comm_)),
   commT(comm_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -238,19 +238,25 @@ Application(const RCP<const Teuchos_Comm>& comm_,
                                           problem->getFieldRequirements(),
                                           problem->getNullSpace());
 
-
+/*
   RCP<const Tpetra_Vector> initial_guessT;
   if (Teuchos::nonnull(initial_guess)) {
     initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT);
   }
+*/
 
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
-  if(!TpetraBuild)
-    solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guess));
+  if(!TpetraBuild){
+    RCP<Epetra_Vector> initial_guessE;
+    if (Teuchos::nonnull(initial_guess)) {
+      Petra::TpetraVector_To_EpetraVector(initial_guess, initial_guessE, comm);
+    }
+    solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guessE));
+  }
 
-  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guessT, paramLib, stateMgr, commT));
+  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guess, paramLib, stateMgr, commT));
 
   // Now setup response functions (see note above)
   for (int i=0; i<responses.size(); i++)

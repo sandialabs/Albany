@@ -14,6 +14,8 @@
 #include <Teuchos_ParameterList.hpp>
 #include "Albany_ProblemUtils.hpp"
 
+#include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
 namespace LCM
 {
 /// 
@@ -59,6 +61,8 @@ protected:
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters() const;
 
+  void setDefaultSolverParameters(const Teuchos::RCP<Teuchos::ParameterList>& pl) const;
+
   int number_of_fields_;
 
   std::vector<std::string> ip_field_names_;
@@ -85,6 +89,9 @@ protected:
   Teuchos::RCP<Tpetra_CrsMatrix> mass_matrix;
   Teuchos::RCP<Tpetra_MultiVector> source_load_vector;
   Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector;
+
+  Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory;
 
 };
 

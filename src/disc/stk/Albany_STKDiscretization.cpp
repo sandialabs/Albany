@@ -2265,7 +2265,6 @@ Albany::STKDiscretization::meshToGraph()
         // loop over the elements surrounding node ncnt
       for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
         stk_classic::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
-//std::cout << "   Element is : " << elem->identifier() << std::endl;
 
         stk_classic::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
 
@@ -2287,7 +2286,6 @@ Albany::STKDiscretization::meshToGraph()
                 int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
 
                 std::size_t global_node_id = gid(*rel[local_node].entity());
-//std::cout << "      Local test node is : " << local_node + 1 << " offset is : " << k << " global node is : " << global_node_id + 1 <<  std::endl;
 
 /*
                   if(in_list(global_node_id,
@@ -2316,8 +2314,19 @@ Albany::STKDiscretization::meshToGraph()
 
     nodalGraph->fillComplete();
 
+    // Create Owned graph by exporting overlap with known row map
+
+    Teuchos::RCP<Tpetra_CrsGraph> localNodeGraph = Teuchos::rcp(new Tpetra_CrsGraph(node_mapT, 10));
+
+    // Create non-overlapped matrix using two maps and export object
+    Teuchos::RCP<Tpetra_Export> nodeExporter = Teuchos::rcp(new Tpetra_Export(overlap_node_mapT, node_mapT));
+    localNodeGraph->doExport(*nodalGraph, *nodeExporter, Tpetra::INSERT);
+    localNodeGraph->fillComplete();
+
+
     // Pass the graph RCP to the nodal data block
-    stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
+//    stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
+    stkMeshStruct->nodal_data_base->updateNodalGraph(localNodeGraph);
 
 }
 

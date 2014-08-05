@@ -147,6 +147,28 @@ void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>
      epetraVector_[i] = array[i];
 }
 
+void Petra::TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>& tpetraVector_,
+                                  Teuchos::RCP<Epetra_Vector>& epetraVector_, const Teuchos::RCP<const Epetra_Comm>& comm_)
+{
+
+  // Build the epetra vector if needed
+  if(Teuchos::is_null(epetraVector_)){
+
+    Teuchos::RCP<const Tpetra_Map> tpetraMap = tpetraVector_->getMap();
+    Teuchos::RCP<Epetra_Map> emap = TpetraMap_To_EpetraMap(tpetraMap, comm_);
+    epetraVector_ = Teuchos::rcp(new Epetra_Vector(*emap));
+
+  }
+
+  //Copy tpetraVector_ to epetraVector_
+  Teuchos::Array<ST> array(tpetraVector_->getMap()->getNodeNumElements());
+  tpetraVector_->get1dCopy(array);
+  for (std::size_t i=0; i<tpetraVector_->getMap()->getNodeNumElements(); ++i)
+     (*epetraVector_)[i] = array[i];
+
+}
+
+
 //TpetraMultiVector_To_EpetraMultiVector: copies Tpetra::MultiVector object into its analogous
 //Epetra_MultiVector object
 void Petra::TpetraMultiVector_To_EpetraMultiVector(const Teuchos::RCP<const Tpetra_MultiVector>& tpetraMV_,

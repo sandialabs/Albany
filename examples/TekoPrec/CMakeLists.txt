@@ -6,6 +6,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
+add_test(${testName}_Tpetra ${AlbanyT.exe} input.xml)
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

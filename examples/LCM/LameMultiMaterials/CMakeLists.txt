@@ -19,6 +19,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/100_blocks_1.0_size_1.0_meshSize.g
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMultiMat_100.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMultiMat_100.xml COPYONLY)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMultiMat_100T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMultiMat_100T.xml COPYONLY)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_100.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials_100.xml COPYONLY)
 
@@ -27,7 +30,12 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 add_test(${testName}_SingleMaterial_SERIAL ${SerialAlbany.exe} inputSingleMaterial.xml)
+add_test(${testName}_SingleMaterial_SERIAL_Tpetra ${SerialAlbanyT.exe} inputSingleMaterial.xml)
 
 add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbany.exe} inputMultiMat_10.xml)
+add_test(${testName}_MultiMaterial_10_SERIAL_Tpetra ${SerialAlbanyT.exe} inputMultiMat_10.xml)
+
 add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbany.exe} inputMultiMat_100.xml)
+add_test(${testName}_MultiMaterial_100_SERIAL_Tpetra ${SerialAlbanyT.exe}
+inputMultiMat_100T.xml)
 

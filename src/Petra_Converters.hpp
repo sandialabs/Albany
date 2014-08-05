@@ -69,6 +69,10 @@ void TpetraCrsMatrix_To_EpetraCrsMatrix(const Teuchos::RCP<Tpetra_CrsMatrix>& tp
 void TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>& tpetraVector_,
                                   Epetra_Vector& epetraVector_, const Teuchos::RCP<const Epetra_Comm>& comm_); 
 
+void TpetraVector_To_EpetraVector(const Teuchos::RCP<const Tpetra_Vector>& tpetraVector_,
+                                  Teuchos::RCP<Epetra_Vector>& epetraVector_,
+                                  const Teuchos::RCP<const Epetra_Comm>& comm_); 
+
 //EpetraVector_To_TpetraVectorConst: copies const Epetra_Vector to const Tpetra_Vector
 Teuchos::RCP<const Tpetra_Vector> EpetraVector_To_TpetraVectorConst(const Epetra_Vector& epetraVector_, 
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
