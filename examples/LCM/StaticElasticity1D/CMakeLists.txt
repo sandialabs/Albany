@@ -62,4 +62,16 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(${testName} ${AlbanyAnalysis.exe})
+  if (ALBANY_IFPACK2) 
+  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis_Tpetra NAME)
+  add_test(${testName} ${AlbanyAnalysisT.exe} inputAnalysisT.xml)
+  endif() 
+endif ()
+
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.xml AND ALBANY_IFPACK2)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysisT.xml COPYONLY)
+
+  get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis_Tpetra NAME)
+  add_test(${testName} ${AlbanyAnalysisT.exe} inputAnalysisT.xml)
 endif ()

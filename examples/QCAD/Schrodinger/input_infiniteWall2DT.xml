@@ -41,7 +41,7 @@
     <Parameter name="2D Elements" type="int" value="50"/>
     <Parameter name="2D Scale" type="double" value="2.0"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="output/wavefns_infiniteWall2D.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="output/wavefns_infiniteWall2D_tpetra.exo"/>
   </ParameterList>
 
   <ParameterList name="Regression Results">

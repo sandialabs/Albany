@@ -123,8 +123,6 @@ int main(int argc, char *argv[]) {
 
     setupTimer.~TimeMonitor();
 
-    *out << "Before main solve" << std::endl;
-
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
     // By default, request the sensitivities if not explicitly disabled
