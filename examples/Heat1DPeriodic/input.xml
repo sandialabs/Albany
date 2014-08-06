@@ -47,7 +47,7 @@
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Stratimikos">
-	<Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	<Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">

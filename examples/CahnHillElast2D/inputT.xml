@@ -23,7 +23,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
     <Parameter name="Exodus Input File Name" type="string" value="domain.exo"/>
-    <Parameter name="Exodus Output File Name" type="string" value="domain_out.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="domain_out_tpetra.exo"/>
     <Parameter name="Use Serial Mesh" type="bool" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
@@ -44,7 +44,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Stratimikos">
-        <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+        <Parameter name="Linear Solver Type" type="string" value="Belos"/>
         <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">      

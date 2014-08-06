@@ -77,7 +77,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="../input_exodus/pmoscap.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="output/potential_pmoscapT.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="output/potential_pmoscap_tpetra.exo" />
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
 

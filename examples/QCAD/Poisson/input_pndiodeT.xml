@@ -73,7 +73,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="../input_exodus/pndiode.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="output/potential_pndiodeT.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="output/potential_pndiode_tpetra.exo" />
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
 
