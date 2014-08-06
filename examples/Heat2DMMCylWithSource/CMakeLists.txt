@@ -51,6 +51,10 @@ add_test(NAME ${testName}
      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 if (ALBANY_IFPACK2)
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
+add_test(NAME ${testName}_Tpetra
+     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}"
+     "-DTEST_ARGS=inputT.xml"
+     "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
+     ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
+     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endif ()
