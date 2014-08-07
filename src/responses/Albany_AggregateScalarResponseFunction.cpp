@@ -30,6 +30,16 @@ setup()
   }
 }
 
+void
+Albany::AggregateScalarResponseFunction::
+setupT()
+{
+  typedef Teuchos::Array<Teuchos::RCP<ScalarResponseFunction> > ResponseArray;
+  for (ResponseArray::iterator it = responses.begin(), it_end = responses.end(); it != it_end; ++it) {
+    (*it)->setupT();
+  }
+}
+
 Albany::AggregateScalarResponseFunction::
 ~AggregateScalarResponseFunction()
 {

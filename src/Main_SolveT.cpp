@@ -80,8 +80,9 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
 #ifdef ALBANY_CHECK_FPE
-	_mm_setcsr(_MM_MASK_MASK &~
-		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+//	_mm_setcsr(_MM_MASK_MASK &~
+//		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+    _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 #endif
 
   using Teuchos::RCP;

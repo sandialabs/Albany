@@ -42,6 +42,9 @@ namespace Albany {
     //! Setup response function
     virtual void setup() = 0;
 
+    //! Setup response function
+    virtual void setupT() = 0;
+
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
     

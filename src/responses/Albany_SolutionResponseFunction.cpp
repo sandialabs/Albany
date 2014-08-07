@@ -39,15 +39,6 @@ setup()
   culled_map = buildCulledMap(*x_map, keepDOF);
   importer = Teuchos::rcp(new Epetra_Import(*culled_map, *x_map));
 
-  // Build culled map and importer - Tpetra
-  Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
-  const Epetra_Comm& comm = *application->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
-  //Tpetra version of culled_map
-  culled_mapT = buildCulledMapT(*x_mapT, keepDOF);
-
-  importerT = Teuchos::rcp(new Tpetra_Import(x_mapT, culled_mapT));
-
   // Create graph for gradient operator -- diagonal matrix
   gradient_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *culled_map, 1, true));
@@ -57,6 +48,22 @@ setup()
   }
   gradient_graph->FillComplete();
   gradient_graph->OptimizeStorage();
+
+}
+
+void
+Albany::SolutionResponseFunction::
+setupT()
+{
+
+  // Build culled map and importer - Tpetra
+  Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
+  const Epetra_Comm& comm = *application->getComm();
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+  //Tpetra version of culled_map
+  culled_mapT = buildCulledMapT(*x_mapT, keepDOF);
+
+  importerT = Teuchos::rcp(new Tpetra_Import(x_mapT, culled_mapT));
 
   // Create graph for gradient operator -- diagonal matrix: Tpetra version
   Teuchos::ArrayView<GO> rowAV;

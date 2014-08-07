@@ -28,6 +28,9 @@ namespace Albany {
     //! Setup response function
     virtual void setup();
 
+    //! Setup response function
+    virtual void setupT();
+
     //! Destructor
     virtual ~AggregateScalarResponseFunction();
 

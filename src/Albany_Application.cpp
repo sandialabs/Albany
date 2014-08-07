@@ -259,8 +259,14 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guess, paramLib, stateMgr, commT));
 
   // Now setup response functions (see note above)
-  for (int i=0; i<responses.size(); i++)
-    responses[i]->setup();
+  if(!TpetraBuild){
+    for (int i=0; i<responses.size(); i++)
+      responses[i]->setup();
+  }
+  else {
+    for (int i=0; i<responses.size(); i++)
+      responses[i]->setupT();
+  }
 
   // Set up memory for workset
   fm = problem->getFieldManager();

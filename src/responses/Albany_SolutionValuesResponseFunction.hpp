@@ -38,6 +38,9 @@ namespace Albany {
     //! Setup response function
     virtual void setup();
 
+    //! Setup response function
+    virtual void setupT();
+
     //! Evaluate responses
     virtual void
     evaluateResponse(const double current_time,

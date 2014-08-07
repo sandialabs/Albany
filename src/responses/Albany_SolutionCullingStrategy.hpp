@@ -18,6 +18,7 @@ namespace Albany {
 class SolutionCullingStrategyBase {
 public:
   virtual void setup() {}
+  virtual void setupT() {}
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const = 0;
 

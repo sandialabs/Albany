@@ -441,6 +441,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_64BIT_INT
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+//    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu");
 #else
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif

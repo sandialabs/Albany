@@ -37,6 +37,12 @@ setup()
   this->updateSolutionImporter();
 }
 
+void
+Albany::SolutionValuesResponseFunction::
+setupT()
+{
+}
+
 unsigned int
 Albany::SolutionValuesResponseFunction::
 numResponses() const

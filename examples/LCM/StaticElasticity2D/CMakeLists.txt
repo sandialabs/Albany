@@ -20,7 +20,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
 # 2'. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra NAME)
 # 3'. Create the test with this name and standard executable
-add_test(${testName} ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

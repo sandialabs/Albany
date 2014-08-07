@@ -108,6 +108,9 @@ namespace Albany {
     //! Setup response function
     virtual void setup() {}
 
+    //! Setup response function
+    virtual void setupT() {}
+
     /*! 
      * \brief Is this response function "scalar" valued, i.e., has a replicated
      * local response map.
