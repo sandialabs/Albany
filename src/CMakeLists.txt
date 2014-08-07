@@ -638,9 +638,9 @@ IF (ALBANY_MOR)
 ENDIF ()
 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
-add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
+#add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
-SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
+#SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 set(ALL_LIBRARIES
   ${ALBANY_CI_LIB}

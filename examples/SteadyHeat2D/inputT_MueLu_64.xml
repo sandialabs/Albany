@@ -96,7 +96,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
+	      <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
 		  <Parameter name="Overlap" type="int" value="1"/>

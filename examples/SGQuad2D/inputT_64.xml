@@ -9,7 +9,7 @@
     </ParameterList>
     <ParameterList name="Source Functions">
       <ParameterList name="Quadratic">
-        <Parameter name="Nonlinear Factor" type="double" value="0.25"/>
+        <Parameter name="Nonlinear Factor" type="double" value="0.5"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Thermal Conductivity">
@@ -30,8 +30,18 @@
 		 value="Thermal Conductivity KL Random Variable 1"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Number of Response Vectors" type="int" value="2"/>
+      <ParameterList name="Response Vector 0">
+	<Parameter name="Name" type="string" value="Aggregated"/>
+	<Parameter name="Number" type="int" value="1"/>
+	<Parameter name="Response 0" type="string" value="PHAL Field IntegralT"/>
+	<ParameterList name="ResponseParams 0">
+	  <Parameter name="Field Name" type="string" value="Temperature"/>
+	</ParameterList>
+      </ParameterList>
+      <ParameterList name="Response Vector 1">
+	<Parameter name="Name" type="string" value="Solution"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
@@ -41,11 +51,11 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{1.1823}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{1.2854}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)"
-		value="{-0.02486, -0.007349}"/>
+		value="{-0.08859, -0.008466}"/>
     <Parameter  name="Number of Dakota Comparisons" type="int" value="0"/>
   </ParameterList>
   <ParameterList name="Piro">
@@ -84,10 +94,10 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
-		  <ParameterList name="Forward Solve"> 
+		  <ParameterList name="Forward Solve">
 		    <ParameterList name="AztecOO Settings">
 		      <Parameter name="Aztec Solver" type="string" value="GMRES"/>
 		      <Parameter name="Convergence Test" type="string" value="r0"/>
@@ -114,14 +124,15 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
+	      <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="MueLu">
 		    <Parameter name="multigrid algorithm" type="string" value="sa"/>
-		    <Parameter name="smoother: type" type="string" value="MueLu symmetric Gauss-Seidel"/>
-		    <Parameter name="smoother: pre or post" type="string" 
+		    <Parameter name="smoother: type" type="string"
+			       value="MueLu symmetric Gauss-Seidel"/>
+		    <Parameter name="smoother: pre or post" type="string"
 			       value="both"/>
-		    <Parameter name="coarse: type" type="string" 
+		    <Parameter name="coarse: type" type="string"
 			       value="Amesos-KLU"/>
 		</ParameterList>
 	      </ParameterList>
@@ -150,3 +161,4 @@
     </ParameterList>
   </ParameterList>
 </ParameterList>
+
