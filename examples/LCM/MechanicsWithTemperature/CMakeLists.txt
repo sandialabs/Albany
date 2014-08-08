@@ -10,11 +10,24 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2D.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materialsTransientHeat2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materialsTransientHeat2D.xml COPYONLY)
 
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/ThermalExpansionT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureT.xml COPYONLY)
+endif()
+
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.xml)
+
+if (ALBANY_IFPACK2) 
+add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.xml)
+endif()
 
 # Thermal Expansion test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansion.xml

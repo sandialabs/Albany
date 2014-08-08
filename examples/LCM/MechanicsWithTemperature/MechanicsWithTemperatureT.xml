@@ -3,10 +3,10 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
 
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
 
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="ThermalExpansionMaterials.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="MechanicsWithTemperatureMaterials.xml"/>
 
     <ParameterList name="Temperature">
       <Parameter name="Variable Type" type="string" value="DOF"/>
@@ -14,13 +14,19 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS NodeSet1 for DOF Z" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF X">
+        <Parameter name="Number of points" type="int" value="3"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
+        <Parameter name="BC Values" type="Array(double)"   value="{ 0.0, 0.1 }"/>
+      </ParameterList>
       <Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF T">
-        <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
-        <Parameter name="BC Values" type="Array(double)"   value="{ 293.0, 400.0 }"/>
-      </ParameterList>
+      <!--<Parameter name="DBC on NS NodeSet2 for DOF T" type="double" value="293.0"/> -->
+      <!--<Parameter name="DBC on NS NodeSet3 for DOF T" type="double" value="293.0"/> -->
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
@@ -36,23 +42,23 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="5"/>
-    <Parameter name="2D Elements" type="int" value="5"/>
-    <Parameter name="3D Elements" type="int" value="5"/>
+    <Parameter name="1D Elements" type="int" value="3"/>
+    <Parameter name="2D Elements" type="int" value="3"/>
+    <Parameter name="3D Elements" type="int" value="3"/>
     <Parameter name="Method" type="string" value="STK3D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="tm2.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, Temp, S}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V, TempRes, S}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>    
-    <Parameter  name="Test Values" type="Array(double)" value="{100.012918728}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{79.278998}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="100"/>
+        <Parameter name="Num Time Steps" type="int" value="100"/>
       <Parameter name="Final Time" type="double" value="1.0"/>
       <Parameter name="Max State Error" type="double" value="1e-4"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>

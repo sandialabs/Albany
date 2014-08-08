@@ -49,6 +49,8 @@ endif()
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.xml COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.xml
+                 ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysisT.xml COPYONLY)
 
   if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in

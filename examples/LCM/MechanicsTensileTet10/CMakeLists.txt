@@ -7,6 +7,10 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NotchedTensileTet10.xml
                ${CMAKE_CURRENT_BINARY_DIR}/NotchedTensileTet10.xml COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NotchedTensileTet10T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/NotchedTensileTet10T.xml COPYONLY)
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/notched_tensile_tet10.g
