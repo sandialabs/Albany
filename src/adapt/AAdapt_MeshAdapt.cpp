@@ -6,7 +6,6 @@
 
 #include "AAdapt_MeshAdapt.hpp"
 #include "AAdapt_MeshAdapt_Def.hpp"
-#include <apfAlbany.h>
 
 MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptE)
 MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptT)
@@ -40,20 +39,14 @@ static void warnAboutShrinking(int factor)
         nprocs);
 }
 
-struct AdaptCallback* globalCallback;
-
-static void theCallback(apf::Mesh2*)
-{
-  globalCallback->run();
-}
-
-void adaptShrunken(apf::Mesh2* m, double minPartDensity)
+void adaptShrunken(apf::Mesh2* m, double minPartDensity,
+    Parma_GroupCode& callback)
 {
   int factor = getShrinkFactor(m, minPartDensity);
   if (factor == 1)
-    globalCallback->run();
+    callback.run(0);
   else {
     warnAboutShrinking(factor);
-    alb::shrinkPartition(m, factor, theCallback);
+    Parma_ShrinkPartition(m, factor, callback);
   }
 }

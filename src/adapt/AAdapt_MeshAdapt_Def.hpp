@@ -8,6 +8,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include <ma.h>
 #include <PCU.h>
+#include <parma.h>
 
 template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
@@ -152,22 +153,15 @@ AAdapt::MeshAdapt<SizeField>::afterAdapt(
     pumi_discretization->detachQPData();
 }
 
-struct AdaptCallback
-{
-  virtual void run() = 0;
-};
-
 template <class T>
-struct AdaptCallbackOf : public AdaptCallback
+struct AdaptCallbackOf : public Parma_GroupCode
 {
   T* adapter;
   const Teuchos::RCP<Teuchos::ParameterList>* adapt_params;
-  void run() {
+  void run(int group) {
     adapter->adaptInPartition(*adapt_params);
   }
 };
-
-extern struct AdaptCallback* globalCallback;
 
 void adaptShrunken(apf::Mesh2* m, double minPartDensity);
 
@@ -182,10 +176,8 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   AdaptCallbackOf<AAdapt::MeshAdapt<SizeField> > callback;
   callback.adapter = this;
   callback.adapt_params = &adapt_params_;
-  globalCallback = &callback;
-
   double minPartDensity = adapt_params_->get<double>("Minimum Part Density", 1000);
-  adaptShrunken(mesh, minPartDensity);
+  adaptShrunken(mesh, minPartDensity, callback);
   afterAdapt(adapt_params_);
 }
 
