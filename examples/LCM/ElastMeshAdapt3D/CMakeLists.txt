@@ -44,17 +44,12 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 
-IF(ENABLE_PARASOLID)
+IF(ENABLE_MESHMODEL)
   if (ALBANY_IFPACK2)
     add_test(NAME ${testName}_ElastAdapt_Tpetra
        COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputElastAdaptT.xml
        "-DFILENAME=necking-64rgn_outputT.pvd" -P
        ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-  endif()
-ENDIF()
-
-IF(ENABLE_MESHMODEL)
-  if (ALBANY_IFPACK2)
     add_test(NAME ${testName}_Mmodel_Tpetra
        COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputMmodelT.xml
        "-DFILENAME=necking-64rgn_outputT.pvd" -P
