@@ -393,11 +393,20 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
       const ST* soln, const double time_value,
       const bool overlapped){
 
-  if (fmdbMeshStruct->outputFileName.empty())
-    return;
+  if (solNames.size() == 0)
+    this->setField("solution",soln,overlapped);
+  else
+    this->setSplitFields(solNames,solIndex,soln,overlapped);
+
+  fmdbMeshStruct->solutionInitialized = true;
 
   // Skip this write unless the proper interval has been reached
   if(outputInterval++ % fmdbMeshStruct->outputInterval)
+    return;
+
+  outputInterval = 0;
+
+  if (fmdbMeshStruct->outputFileName.empty())
     return;
 
   double time_label = monotonicTimeLabel(time_value);
@@ -408,15 +417,6 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
     if (time_label != time_value) *out << " with label " << time_label;
     *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
   }
-
-  if (solNames.size() == 0)
-    this->setField("solution",soln,overlapped);
-  else
-    this->setSplitFields(solNames,solIndex,soln,overlapped);
-
-  fmdbMeshStruct->solutionInitialized = true;
-
-  outputInterval = 0;
 
   apf::Field* f;
   int order = fmdbMeshStruct->cubatureDegree;
