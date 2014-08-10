@@ -68,12 +68,3 @@ writeFile(const double time_val)
   write(outputFileName.c_str(),time_val);
 }
 
-void
-AlbPUMI::FMDBExodus::
-debugMeshWrite(const char* fn)
-{
-  std::string filename = fn;
-  filename += ".exo";
-  write(filename.c_str(),0.0);
-}
-

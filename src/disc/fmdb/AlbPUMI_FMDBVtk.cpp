@@ -83,8 +83,3 @@ writeFile(const double time_value){
 
 }
 
-void
-AlbPUMI::FMDBVtk::
-debugMeshWrite(const char* fn){
-  apf::writeVtkFiles(fn,mesh);
-}

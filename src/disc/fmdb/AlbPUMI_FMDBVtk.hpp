@@ -24,8 +24,6 @@ class FMDBVtk {
     void writeFile(const double time);
     void setFileName(const std::string& fname){ outputFileName = fname; }
 
-    void debugMeshWrite(const char* filename);
-
   private:
 
     std::ofstream vtu_collection_file;
