@@ -24,7 +24,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_SG NAME)
-  add_test(${testName} ${AlbanySG.exe})
+  add_test(${testName} ${AlbanySG.exe} inputSG.xml)
 endif ()
 endif ()
 
