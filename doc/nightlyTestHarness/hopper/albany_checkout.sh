@@ -28,7 +28,7 @@ mkdir $ALBOUTDIR
 # git clone Albany
 #-------------------------------------------
 
-git clone software.sandia.gov:/space/git/Albany > $ALBOUTDIR/albany_checkout.out 2>&1
+git clone git@github.com:gahansen/Albany.git > $ALBOUTDIR/albany_checkout.out 2>&1
 
 cd Albany
 echo "Switching Albany to branch ", $ALBANY_BRANCH
