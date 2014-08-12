@@ -1,5 +1,9 @@
 <Project name="Albany">
+  <SubProject name="AlbanySrc">
+  </SubProject>
   <SubProject name="AlbanyTpetraBranch">
+  </SubProject>
+  <SubProject name="AlbanyTpetra64">
   </SubProject>
   <SubProject name="Trilinos">
   </SubProject>
