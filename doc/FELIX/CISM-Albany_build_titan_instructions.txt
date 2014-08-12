@@ -12,7 +12,19 @@ repositories:
 module load git
 module load subversion
 git clone software.sandia.gov:/space/git/Trilinos
-git clone software.sandia.gov:/space/git/Albany
+***If you don't have a software.sandia.gov account, you can checkout the
+public Trilinos as follows: 
+git clone https://software.sandia.gov/trilinos/repositories/publicTrilinos
+
+git clone git@github.com:gahansen/Albany.git
+***In August 2014, the Albany repository moved to github.  
+To be able to clone from github, you need to create a github account, 
+and generate ssh keys / communicate them to github for the machine you're
+building on.  Instructions for generating the ssh keys can be found here: 
+https://help.github.com/articles/generating-ssh-keys .
+More info on Albany on github can be found here:
+https://github.com/gahansen/Albany/wiki .
+
 svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/felix_interface
 
 ***NOTE: If you previously had a software.sandia.gov account but your password
