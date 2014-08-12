@@ -206,22 +206,22 @@ endif()
 ENDIF()
 
 # Update Albany
-#SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
-#SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
-#
-#set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-#CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
-#message("Found ${count} changed files")
-#
-#IF(CTEST_DO_SUBMIT)
-#CTEST_SUBMIT(PARTS Update
-#          RETURN_VALUE  HAD_ERROR
-#            )
-#
-#if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot update Albany!")
-#endif()
-#ENDIF()
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Update
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot update Albany!")
+endif()
+ENDIF()
 
 # Update Albany Tpetra branch
 SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetraBranch)
@@ -262,17 +262,18 @@ SET(CONFIGURE_OPTIONS
   "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTPL_ENABLE_Netcdf:STRING=ON"
-  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_Netcdf_LIBRARIES:STRING=${PREFIX_DIR}/lib/libnetcdf.a;${PREFIX_DIR}/lib/libhdf5_hl.a;${PREFIX_DIR}/lib/libhdf5.a;${PREFIX_DIR}/lib/libz.a"
   "-DTPL_ENABLE_HDF5:STRING=ON"
-  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/include"
-  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/lib"
+  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTPL_ENABLE_Zlib:STRING=ON"
   "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
-  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/parallel/ParMetis-4.0.3/include"
-  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/parallel/ParMetis-4.0.3/lib"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
@@ -280,7 +281,8 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
-  "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+  "-DZoltan_ENABLE_ULLONG_IDS:BOOL=ON"
+  "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
   "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
   "-DTPL_ENABLE_Parasolid:BOOL=ON"
@@ -380,87 +382,87 @@ execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" "install"
 file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
   "${makeInstallLog}")
 
-# Configure the Albany build
+# Configure the Albany build (master branch without SCOREC tools)
 
-#SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
-#SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
-#
-#SET(CONFIGURE_OPTIONS
-#  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-#  "-DENABLE_LCM:BOOL=ON"
-#  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-#  "-DENABLE_HYDRIDE:BOOL=ON"
-#  "-DENABLE_SCOREC:BOOL=ON"
-#  "-DENABLE_SG_MP:BOOL=ON"
-#  )
-#
-#if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
-#  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
-#endif()
-#
-#CTEST_CONFIGURE(
-#          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-#          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-#          OPTIONS "${CONFIGURE_OPTIONS}"
-#          RETURN_VALUE HAD_ERROR
-#          APPEND
-#)
-#
-#if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot configure Albany build!")
-#endif()
-#
-#IF(CTEST_DO_SUBMIT)
-#CTEST_SUBMIT(PARTS Configure
-#          RETURN_VALUE  HAD_ERROR
-#            )
-#
-#if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot submit Albany configure results!")
-#endif()
-#ENDIF()
-#
-## Build Albany
-#
-#CTEST_BUILD(
-#          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-#          RETURN_VALUE  HAD_ERROR
-#          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-#          APPEND
-#)
-#
-#if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot build Albany!")
-#endif()
-#
-#IF(CTEST_DO_SUBMIT)
-#CTEST_SUBMIT(PARTS Build
-#          RETURN_VALUE  HAD_ERROR
-#            )
-#
-#if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot submit Albany build results!")
-#endif()
-#ENDIF()
-#
-## Run Albany tests
-#
-#CTEST_TEST(
-#              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-##              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-##              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-#              #NUMBER_FAILED  TEST_NUM_FAILED
-#)
-#
-#IF(CTEST_DO_SUBMIT)
-#CTEST_SUBMIT(PARTS Test
-#          RETURN_VALUE  HAD_ERROR
-#            )
-#
-#if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot submit Albany test results!")
-#endif()
-#ENDIF()
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+
+SET(CONFIGURE_OPTIONS
+  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DENABLE_LCM:BOOL=ON"
+  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+  "-DENABLE_HYDRIDE:BOOL=ON"
+  "-DENABLE_SCOREC:BOOL=OFF"
+  "-DENABLE_SG_MP:BOOL=ON"
+  )
+
+if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
+  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
+endif()
+
+CTEST_CONFIGURE(
+          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+          OPTIONS "${CONFIGURE_OPTIONS}"
+          RETURN_VALUE HAD_ERROR
+          APPEND
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure Albany build!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Configure
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany configure results!")
+endif()
+ENDIF()
+
+# Build Albany
+
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+          APPEND
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Albany!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Build
+          RETURN_VALUE  HAD_ERROR
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany build results!")
+endif()
+ENDIF()
+
+# Run Albany tests
+
+CTEST_TEST(
+              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+              #NUMBER_FAILED  TEST_NUM_FAILED
+)
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Test
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany test results!")
+endif()
+ENDIF()
 
 # Configure the Albany Tpetra branch build
 
@@ -541,6 +543,91 @@ CTEST_SUBMIT(PARTS Test
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany Tpetra branch test results!")
+endif()
+ENDIF()
+
+# Configure the Albany Tpetra branch build using GO = long long
+
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetra64)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetra64)
+
+SET(CONFIGURE_OPTIONS
+  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DENABLE_64BIT_INT:BOOL=ON"
+  "-DENABLE_LCM:BOOL=ON"
+  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+  "-DENABLE_HYDRIDE:BOOL=ON"
+  "-DENABLE_SCOREC:BOOL=ON"
+  "-DENABLE_SG_MP:BOOL=ON"
+  )
+
+if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyT64")
+  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyT64)
+endif()
+
+# The 64 bit build pulls code from the Tpetra branch - checked out in AlbanyTpetra
+
+CTEST_CONFIGURE(
+          BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT64"
+          SOURCE "${CTEST_SOURCE_DIRECTORY}/AlbanyTpetra"
+          OPTIONS "${CONFIGURE_OPTIONS}"
+          RETURN_VALUE HAD_ERROR
+          APPEND
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure Albany Tpetra 64 branch build!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Configure
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany Tpetra 64 branch configure results!")
+endif()
+ENDIF()
+
+# Build Albany Tpetra 64 branch
+
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT64"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+          APPEND
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Albany Tpetra 64 branch!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Build
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany Tpetra 64 branch build results!")
+endif()
+ENDIF()
+
+# Run Albany Tpetra 64 branch tests
+
+CTEST_TEST(
+              BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT64"
+#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+              #NUMBER_FAILED  TEST_NUM_FAILED
+)
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Test
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany Tpetra 64 branch test results!")
 endif()
 ENDIF()
 
