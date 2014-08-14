@@ -8,4 +8,5 @@
 
 add_subdirectory(meshes)
 add_subdirectory(Elasticity)
+add_subdirectory(ElastAdapt)
 add_subdirectory(J2Tet10)

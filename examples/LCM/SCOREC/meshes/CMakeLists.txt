@@ -7,3 +7,4 @@
 # SCOREC/meshes ##################
 
 add_subdirectory(cube)
+add_subdirectory(bar)
