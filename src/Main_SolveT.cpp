@@ -85,6 +85,20 @@ int main(int argc, char *argv[]) {
     _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 #endif
 
+#ifdef ALBANY_64BIT_INT
+// Albany currently assumes sizeof(long) == sizeof(long long) when compiled for 64 bit ints
+
+	if(sizeof(long) != sizeof(long long)){
+
+		std::cerr << "Error: The current 64 bit build of Albany assumes that sizeof(long) == sizeof(long long)."
+			<< " sizeof(long) = " << sizeof(long) << "; sizeof(long long) = " << sizeof(long long) << std::endl;
+
+        exit(1);
+
+    }
+
+#endif
+
   using Teuchos::RCP;
   using Teuchos::rcp;
 

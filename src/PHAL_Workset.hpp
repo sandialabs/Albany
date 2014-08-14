@@ -136,8 +136,8 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > dist_param_index;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
   Teuchos::ArrayRCP<double>  wsSphereVolume;

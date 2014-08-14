@@ -97,9 +97,9 @@ namespace Albany {
     WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -303,9 +303,10 @@ namespace Albany {
     std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
 
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+    //! Connectivity array [workset, element, local-node] => GID
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;

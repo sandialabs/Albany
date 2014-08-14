@@ -113,10 +113,10 @@ class AbstractDiscretization {
     virtual const SideSetList& getSideSets(const int ws) const = 0;
 
     //! Get map from (Ws, El, Local Node, Eq) -> unkLID
-    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
        getWsElNodeEqID() const = 0;
 
-    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
        getWsElNodeID() const = 0;
 
     //! Retrieve coodinate ptr_field (ws, el, node)

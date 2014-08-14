@@ -86,7 +86,7 @@ computeBCs(
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
   typedef
-  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type
+  Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type
   WSELND;
 
   WSELND const &

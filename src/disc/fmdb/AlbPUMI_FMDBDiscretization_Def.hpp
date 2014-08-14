@@ -116,14 +116,14 @@ AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
 }
 
 template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
 template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeID() const
 {
   return wsElNodeID;

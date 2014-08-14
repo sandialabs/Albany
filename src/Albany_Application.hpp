@@ -1000,9 +1000,9 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
                                                 const int& ws)
 {
 
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
         wsElNodeEqID = disc->getWsElNodeEqID();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
         wsElNodeID = disc->getWsElNodeID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();

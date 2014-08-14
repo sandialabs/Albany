@@ -250,7 +250,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get the node data block container
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
 
   int num_nodes = this->num_nodes_;
   int num_dims  = this->num_dims_;

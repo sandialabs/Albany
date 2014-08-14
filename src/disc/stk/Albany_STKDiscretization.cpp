@@ -165,13 +165,13 @@ Albany::STKDiscretization::getNodeMapT() const
 }
 
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 Albany::STKDiscretization::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
 Albany::STKDiscretization::getWsElNodeID() const
 {
   return wsElNodeID;

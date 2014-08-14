@@ -69,10 +69,11 @@ template<class Output>
    //! Get connectivity map from elementGID to workset
     Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
 
-    //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
+    //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+    //! Get map from (Ws, El, Local Node) -> NodeGID
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -146,7 +147,7 @@ template<class Output>
     // not supported in FMDB now
     void transformMesh(){}
 
-    GO getDOF(const GO inode, const int eq) const
+    LO getDOF(const LO inode, const int eq) const
     {
       if (interleavedOrdering) return inode*neq + eq;
       else  return inode + numOwnedNodes*eq;
@@ -205,10 +206,12 @@ template<class Output>
       abort();
     }
 
-    int getGlobalDOF(const int inode, const int eq) const
+/*
+    LO getGlobalDOF(const LO inode, const int eq) const
     {
       return getDOF(inode,eq);
     }
+*/
 
     // Copy field data from Epetra_Vector to APF
     void setField(
@@ -324,9 +327,10 @@ template<class Output>
     std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
 
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+    //! Connectivity array [workset, element, local-node] => GID
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;

@@ -154,7 +154,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
 
   int num_nodes = this->num_nodes_;
@@ -225,7 +225,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
 
   // Build the exporter
