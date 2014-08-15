@@ -1,0 +1,69 @@
+
+This file summarizes what is missing in Trilinos / Albany as of Aug. 2014, which 
+prevents running the AlbanyT executable in the Albany Tpetra branch.
+
+
+Piro: 
+- Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  
+Without this, it is not possible to select specialized time integration schemes
+with the AlbanyT executable.  Albany problems affected: Aeras, ComprNS, LinComprNS, 
+NSRayleighBernard2D, NSVortexShedding2D.
+- Need to add Piro_Thyra_InvertMassMatrixDecorator* to piro package of Trilinos.
+- Need to add Piro_Thyra_VelocityVerletSolver* to piro package of Trilinos.
+This requires extending the Thyra model evaluator to work with xdotdot.
+Albany problems affected: 
+- Need to add Piro_Thyra_TrapezoidRuleSolver* to piro package of Trilinos.
+Albany problems affected: LCM/Dynamics 
+
+
+Ifpack2: 
+- It appears ILU is not available in Ifpack2, just ILUT.
+
+
+MueLu:
+- For repartitioning, the coordinates need to be passed from Albany -> MueLu.  To do this, 
+a piro class called Piro_MueLuNullSpace utils needs to be written.  The following are examples that require
+repartitioning using coordinates so they will not work properly with MueLu: 
+LCM/StaticElasticity3D/input.xml 
+LCM/StaticElasticity3D/inputTraction.xml
+LCM/ThermoElasticity3D/input.xml 
+LCM/MechanicsTensileTet10/NotchedTensileTet10.xml 
+- The following tests that use MueLu have a seg fault.  Need to figure out what is the problem:
+FELIX/FO_Test/input_fo_confinedShelf.xml (seg fault in parallel only)
+FELIX/FO_Test/input_fo_confinedShelf_depthIntBC.xml (seg fault in parallel only)
+QCAD/Poisson/input_mosdot_3D_tet10.xml
+- The following examples required "aggregation: local aggregates" and "aggregation: nodes per aggregate" 
+to be implemented in the METIS/ParMETIS interface:
+LCM/MechanicsWithTemperature/ThermalExpansion.xml
+LCM/MechanicsWithTemperature/MechanicsWithTemperature.xml
+
+
+Amesos2: 
+- Amesos2 is not at all hooked up to Stratimikos.  Need to do this.  
+Albany problems affected: LCM/ThermoPoroMechanics3D, LCM/TLPoroElasticity2D, 
+LCM/TLPoroElasticity3D, LCM/UnSatPoroElasticity3D, LCM/MechanicsPorePressure/inputOrthogonalFlow.xml
+
+
+Comments:
+- "NOX" can be called in parameter list under "Piro" instead of "ThyraNOX" when 
+running with the AlbanyT executable (e.g., SteadyHeat2D/inputThyra.xml, TransientHeat2D/inputThyra.xml). 
+- All examples in Albany tpetra branch need to be been converted to use Belos instead of AztecOO. 
+The former will not work with the AlbanyT executable if requesting more than 1 
+sensitivity (epetraToThyra and MV dimension != 1 error).  Still to do: FELIX examples, LCM examples.
+
+
+TO DOs (Irina K., Andy, et al.): 
+- Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
+- Remove AztecOO and replace by Belos in tpetra branch. 
+- Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
+- Convert / test exodiff/python tests.
+- Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion
+- Email QCAD developers (Rick, Erik).
+- Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
+- Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems
+- Anasazi seg fault when running inputT.xml for NSVortexShedding2D problem. 
+- Sensitivities are different when running with Belos comapred to AztecOO for FELIX_Stokes/FO_Test/*interpSurf.xml (with Albany executable)!
+- Different responses when running with Belos than AztecOO for: LinComprNS/input2D_drivenPulse.xml, LinComprNS/input3Dunsteady.xml, 
+LinComprNS/input3DunsteadyNS.xml...
+
+
