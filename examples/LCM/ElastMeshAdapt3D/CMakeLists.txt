@@ -18,10 +18,16 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdaptT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdaptT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdaptSerialT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdaptSerialT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodelT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputMmodelT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking.dmg
+               ${CMAKE_CURRENT_BINARY_DIR}/necking.dmg COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn0.smb
                ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_0.smb
@@ -46,6 +52,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 IF(ENABLE_MESHMODEL)
   if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_ElastAdapt_SERIAL_Tpetra
+       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbanyT.exe}" -DTEST_ARGS=inputElastAdaptSerialT.xml
+       "-DFILENAME=necking_serial_outputT.pvd" -P
+       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
     add_test(NAME ${testName}_ElastAdapt_Tpetra
        COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputElastAdaptT.xml
        "-DFILENAME=necking-64rgn_outputT.pvd" -P

@@ -598,20 +598,23 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
 {
-  // GAH: the following assumes all element blocks in the problem have the same
-  // number of nodes per element and that the cell topologies are the same.
+
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
+  std::vector<int> n_nodes_in_elem;
   cells.reserve(m->count(numDim));
   apf::MeshIterator* it = m->begin(numDim);
   apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
+  GO node_sum = 0;
+  while ((e = m->iterate(it))){
     cells.push_back(e);
+    int nnodes = apf::countElementNodes(m->getShape(),m->getType(e));
+    n_nodes_in_elem.push_back(nnodes);
+    node_sum += nnodes;
+  }
   m->end(it);
-  //got cells, count the nodes on the first one
-  int nodes_per_element = apf::countElementNodes(
-      m->getShape(),m->getType(cells[0]));
+  int nodes_per_element = std::ceil((double)node_sum / (double)cells.size());
   /* construct the overlap graph of all local DOFs as they
      are coupled by element-node connectivity */
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(
@@ -622,10 +625,10 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
   for (size_t i=0; i < cells.size(); ++i) {
     apf::NewArray<long> cellNodes;
     apf::getElementNumbers(globalNumbering,cells[i],cellNodes);
-    for (int j=0; j < nodes_per_element; ++j) {
+    for (int j=0; j < n_nodes_in_elem[i]; ++j) {
       for (int k=0; k < neq; ++k) {
         GO row = getDOF(cellNodes[j],k);
-        for (int l=0; l < nodes_per_element; ++l) {
+        for (int l=0; l < n_nodes_in_elem[i]; ++l) {
           for (int m=0; m < neq; ++m) {
             GO col = getDOF(cellNodes[l],m);
             Teuchos::ArrayView<GO> colAV = Teuchos::arrayView(&col, 1);

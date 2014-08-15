@@ -26,7 +26,20 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.xml)
 
 if (ALBANY_IFPACK2) 
-add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.xml)
+  if (NOT ALBANY_64BIT_INT)
+    add_test(${testName}TransientHeat2D_Tpetra ${AlbanyT.exe} MechanicsTransientHeat2DT.xml)
+  endif ()
+endif()
+if (ALBANY_MUELU_EXAMPLES)
+  if (ALBANY_64BIT_INT)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu_64.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu_64.xml COPYONLY)
+    add_test(${testName}TransientHeat2D_Tpetra_64 ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu_64.xml)
+  else ()
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsTransientHeat2DT_MueLu.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/MechanicsTransientHeat2DT_MueLu.xml COPYONLY)
+    add_test(${testName}TransientHeat2D_Tpetra_MueLu ${AlbanyT.exe} MechanicsTransientHeat2DT_MueLu.xml)
+  endif ()
 endif()
 
 # Thermal Expansion test

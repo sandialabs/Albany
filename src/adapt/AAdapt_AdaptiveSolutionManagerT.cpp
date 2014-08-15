@@ -216,6 +216,12 @@ adaptProblem() {
 
   }
 
+  *out << "Mesh adaptation was NOT successfully performed!" << std::endl;
+
+  *out << "Mesh adaptation machinery has returned a FAILURE error code, exiting Albany!" << std::endl;
+
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Mesh adaptation failed!\n");
+
   return false;
 
 }
