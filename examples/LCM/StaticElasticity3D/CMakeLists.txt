@@ -18,6 +18,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName} ${Albany.exe})
 add_test(${testName}_Traction ${Albany.exe} inputTraction.xml)
 
+if (ALBANY_IFPACK2)
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_Traction_Tpetra ${AlbanyT.exe} inputTractionT.xml)
+endif()
+
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)

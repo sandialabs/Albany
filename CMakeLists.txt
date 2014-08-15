@@ -140,6 +140,10 @@ ENDIF()
 
 # MPI check -- defaults to TRUE
 # MESSAGE("-- Checking if MPI is enabled in Trilinos:")
+  
+
+ADD_DEFINITIONS(-DPIRO_HAS_TPETRA)
+
 LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
 IF (MPI_List_ID GREATER -1)
   MESSAGE("-- Looking for MPI in Trilinos:    Found, compiling with -DALBANY_MPI")

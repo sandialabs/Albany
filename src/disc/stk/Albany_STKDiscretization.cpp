@@ -456,52 +456,76 @@ Albany::STKDiscretization::setupMLCoords()
 
   if(rigidBodyModes.is_null()) return;
 
-  if(!rigidBodyModes->isMLUsed()) return;
+  if(!rigidBodyModes->isMLUsed() & !rigidBodyModes->isMueLuUsed()) return;
 
   // Function to return x,y,z at owned nodes as double*, specifically for ML
   int numDim = stkMeshStruct->numDim;
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   rigidBodyModes->resize(numDim, numOwnedNodes);
+  
+  //If ML preconditioner is selected
+  if (rigidBodyModes->isMLUsed()) {
 
-  double *xx;
-  double *yy;
-  double *zz;
+    double *xx;
+    double *yy;
+    double *zz;
 
-  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
+    rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
 
-  for (int i=0; i < numOwnedNodes; i++)  {
-    int node_gid = gid(ownednodes[i]);
-    int node_lid = node_mapT->getLocalElement(node_gid);
+    for (int i=0; i < numOwnedNodes; i++)  {
+      int node_gid = gid(ownednodes[i]);
+      int node_lid = node_mapT->getLocalElement(node_gid);
 
-    double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
-    if (numDim > 0) xx[node_lid] = X[0];
-    if (numDim > 1) yy[node_lid] = X[1];
-    if (numDim > 2) zz[node_lid] = X[2];
-  }
-
-
-  //see if user wants to write the coordinates to matrix market file
-  bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
-  //if user wants to write the coordinates to matrix market file, write them to matrix market file
-  if (writeCoordsToMMFile == true) {
-    //IK, 10/29/13: neet to convert to tpetra!
-    if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
-    //Writing of coordinates to MatrixMarket file for Ray
-    Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-    Epetra_Vector xCoords(Copy, *node_map, xx);
-    EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
-    if (yy != NULL) {
-      Epetra_Vector yCoords(Copy, *node_map, yy);
-      EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
+      double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
+      if (numDim > 0) xx[node_lid] = X[0];
+      if (numDim > 1) yy[node_lid] = X[1];
+      if (numDim > 2) zz[node_lid] = X[2];
     }
-    if (zz != NULL){
-      Epetra_Vector zCoords(Copy, *node_map, zz);
-      EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
-    }
-  }
 
-  rigidBodyModes->informML();
+
+    //see if user wants to write the coordinates to matrix market file
+    bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
+    //if user wants to write the coordinates to matrix market file, write them to matrix market file
+    if (writeCoordsToMMFile == true) {
+      //IK, 10/29/13: neet to convert to tpetra!
+      if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
+      //Writing of coordinates to MatrixMarket file for Ray
+      Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
+      Epetra_Vector xCoords(Copy, *node_map, xx);
+      EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
+      if (yy != NULL) {
+        Epetra_Vector yCoords(Copy, *node_map, yy);
+        EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
+      }
+      if (zz != NULL){
+        Epetra_Vector zCoords(Copy, *node_map, zz);
+        EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
+      }
+    }
+    rigidBodyModes->informML();
+  }
+  
+  //If MueLu preconditioner is selected
+  if (rigidBodyModes->isMueLuUsed()) {
+    std::cout << "MueLu selected!" << std::endl;
+    double *xxyyzz; //make this ST? 
+    rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
+    
+    for (int i=0; i < numOwnedNodes; i++)  {
+      int node_gid = gid(ownednodes[i]);
+      int node_lid = node_mapT->getLocalElement(node_gid);
+
+      double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
+      for (int i=0; i<numDim; i++) 
+        xxyyzz[i*numOwnedNodes + node_lid] = X[i]; 
+    }
+   Teuchos::ArrayView<ST> xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*(numDim+1));
+   Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, numDim+1));
+   
+   rigidBodyModes->informMueLu(xyzMV); 
+   }
+
 
 }
 
