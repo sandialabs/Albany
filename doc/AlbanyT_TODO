@@ -24,8 +24,6 @@ MueLu:
 - For repartitioning, the coordinates need to be passed from Albany -> MueLu.  To do this, 
 a piro class called Piro_MueLuNullSpace utils needs to be written.  The following are examples that require
 repartitioning using coordinates so they will not work properly with MueLu: 
-LCM/StaticElasticity3D/input.xml 
-LCM/StaticElasticity3D/inputTraction.xml
 LCM/ThermoElasticity3D/input.xml 
 LCM/MechanicsTensileTet10/NotchedTensileTet10.xml 
 - The following tests that use MueLu have a seg fault.  Need to figure out what is the problem:
