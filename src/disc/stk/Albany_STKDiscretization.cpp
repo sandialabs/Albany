@@ -257,7 +257,7 @@ Albany::STKDiscretization::getCoordinates() const
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   for (int i=0; i < numOverlapNodes; i++)  {
-    int node_gid = gid(overlapnodes[i]);
+    GO node_gid = gid(overlapnodes[i]);
     int node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
     double* x = stk_classic::mesh::field_data(*coordinates_field, *overlapnodes[i]);
@@ -474,7 +474,7 @@ Albany::STKDiscretization::setupMLCoords()
     rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
 
     for (int i=0; i < numOwnedNodes; i++)  {
-      int node_gid = gid(ownednodes[i]);
+      GO node_gid = gid(ownednodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
@@ -513,7 +513,7 @@ Albany::STKDiscretization::setupMLCoords()
     rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
     
     for (int i=0; i < numOwnedNodes; i++)  {
-      int node_gid = gid(ownednodes[i]);
+      GO node_gid = gid(ownednodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
@@ -888,10 +888,10 @@ Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
 }
 
 
-inline int Albany::STKDiscretization::gid(const stk_classic::mesh::Entity& node) const
+inline GO Albany::STKDiscretization::gid(const stk_classic::mesh::Entity& node) const
 { return node.identifier()-1; }
 
-inline int Albany::STKDiscretization::gid(const stk_classic::mesh::Entity* node) const
+inline GO Albany::STKDiscretization::gid(const stk_classic::mesh::Entity* node) const
 { return gid(*node); }
 
 int Albany::STKDiscretization::getOwnedDOF(const int inode, const int eq) const
@@ -906,7 +906,7 @@ int Albany::STKDiscretization::getOverlapDOF(const int inode, const int eq) cons
   else  return inode + numOverlapNodes*eq;
 }
 
-int Albany::STKDiscretization::getGlobalDOF(const int inode, const int eq) const
+GO Albany::STKDiscretization::getGlobalDOF(const GO inode, const int eq) const
 {
   if (interleavedOrdering) return inode*neq + eq;
   else  return inode + numGlobalNodes*eq;
@@ -1227,7 +1227,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       // loop over local nodes
       for (int j=0; j < nodes_per_element; j++) {
         stk_classic::mesh::Entity& rowNode = * rel[j].entity();
-        int node_gid = gid(rowNode);
+        GO node_gid = gid(rowNode);
         int node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
@@ -1584,7 +1584,7 @@ void Albany::STKDiscretization::computeNodeSets()
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
     *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
-      int node_gid = gid(nodes[i]);
+      GO node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
       nodeSets[ns->first][i].resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
@@ -2237,7 +2237,7 @@ Albany::STKDiscretization::meshToGraph()
       // loop over nodes within the element
       for (std::size_t ncnt=0; ncnt < rel.size(); ncnt++) {
         stk_classic::mesh::Entity& rowNode = * rel[ncnt].entity();
-        int nodeGID = gid(rowNode);
+        GO nodeGID = gid(rowNode);
         int nodeLID = overlap_node_mapT->getLocalElement(nodeGID);
 
         /*
@@ -2298,7 +2298,7 @@ Albany::STKDiscretization::meshToGraph()
         for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
           stk_classic::mesh::Entity& node_a = * rel[lnode].entity();
           // entry is the GID of each node
-          std::size_t entry = gid(node_a);
+          GO entry = gid(node_a);
 
           // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
           // "ncnt", add "entry" to the adj list
@@ -2309,7 +2309,7 @@ Albany::STKDiscretization::meshToGraph()
 
                 int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
 
-                std::size_t global_node_id = gid(*rel[local_node].entity());
+                GO global_node_id = gid(*rel[local_node].entity());
 
 /*
                   if(in_list(global_node_id,

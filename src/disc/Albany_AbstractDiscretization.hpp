@@ -33,7 +33,7 @@ class SideStruct {
 
   public:
 
-    int elem_GID; // the global id of the element containing the side
+    GO elem_GID; // the global id of the element containing the side
     int elem_LID; // the local id of the element containing the side
     int elem_ebIndex; // The index of the element block that contains the element
     unsigned side_local_id; // The local id of the side relative to the owning element
@@ -51,7 +51,7 @@ class wsLid {
 
 };
 
-typedef std::map<int, wsLid > WsLIDList;
+typedef std::map<GO, wsLid > WsLIDList;
 
 template <typename T>
 struct WorksetArray {

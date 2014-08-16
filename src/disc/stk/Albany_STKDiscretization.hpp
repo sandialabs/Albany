@@ -178,7 +178,7 @@ namespace Albany {
     int getOverlapDOF(const int inode, const int eq) const;
 
     //! Locate nodal dofs using global indexing
-    int getGlobalDOF(const int inode, const int eq) const;
+    GO getGlobalDOF(const GO inode, const int eq) const;
 
 
     //! used when NetCDF output on a latitude-longitude grid is requested.
@@ -201,8 +201,8 @@ namespace Albany {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
-    inline int gid(const stk_classic::mesh::Entity& node) const;
-    inline int gid(const stk_classic::mesh::Entity* node) const;
+    inline GO gid(const stk_classic::mesh::Entity& node) const;
+    inline GO gid(const stk_classic::mesh::Entity* node) const;
 
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result) const;
@@ -337,7 +337,7 @@ namespace Albany {
     //! Number of elements on this processor
     int numOwnedNodes;
     int numOverlapNodes;
-    int numGlobalNodes;
+    GO numGlobalNodes;
 
     // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;

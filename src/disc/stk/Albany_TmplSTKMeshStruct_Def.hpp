@@ -20,6 +20,10 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+// Test 64 bit Tpetra address space
+const GO StartIndex = 0;
+//const GO StartIndex = 2147483647L; // 2^31 - 1
+
 template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -269,9 +273,14 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Create just enough of the mesh to figure out number of owned elements 
   // so that the problem setup can know the worksetSize
 
-  elem_map = Teuchos::rcp(new Epetra_Map(total_elems, 0, *comm)); // Distribute the elems equally
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+  Teuchos::ParameterList kokkosNodeParams;
+  const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
 
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+  // Distribute the elems equally
+  elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, commT, Tpetra::GloballyDistributed, nodeT)); 
+
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getNodeNumElements());
 
   // Build a map to get the EB name given the index
 
@@ -412,7 +421,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::DeclareParts(
 
 template <unsigned Dim, class traits>
 void
-Albany::EBSpecsStruct<Dim, traits>::Initialize(unsigned int nnelems[], double blLen[]){
+Albany::EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]){
 
     name = "Block0";
 
@@ -444,7 +453,7 @@ Albany::EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]){
 
 template<>
 void
-Albany::EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]){
+Albany::EBSpecsStruct<0>::Initialize(GO nelems[], double blLen[]){
     // Never more than one element block in a 0D problem
     name = "Block0";
     blLength[0] = blLen[0];
@@ -607,11 +616,11 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   }
 
   // Create elements and node IDs
-  for (int i=0; i<elem_map->NumMyElements(); i++) {
-    const unsigned int elem_GID = elem_map->GID(i);
-    const unsigned int left_node  = elem_GID;
-    unsigned int right_node = left_node+1;
-    if (periodic_x) right_node %= elem_map->NumGlobalElements();
+  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+    const GO elem_GID = elem_map->getGlobalElement(i);
+    const GO left_node  = elem_GID;
+    GO right_node = left_node+1;
+    if (periodic_x) right_node %= elem_map->getGlobalNumElements();
 //    if (rightNode < right_node) rightNode = right_node;
 
     stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
@@ -653,9 +662,9 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
     // set the coordinate values for these nodes
     double* lnode_coord = stk_classic::mesh::field_data(*coordinates_field, lnode);
-    lnode_coord[0] = x[0][left_node];
+    lnode_coord[0] = x[0][left_node - StartIndex];
     double* rnode_coord = stk_classic::mesh::field_data(*coordinates_field, rnode);
-    rnode_coord[0] = x[0][right_node];
+    rnode_coord[0] = x[0][right_node - StartIndex];
 
 /*
     if(proc_rank_field){
@@ -665,17 +674,17 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 */
 
     // Set node sets. There are no side sets currently with 1D problems (only 2D and 3D)
-    if (left_node==0) {
+    if (left_node==StartIndex) {
        singlePartVec[0] = nsPartVec["NodeSet0"];
        bulkData->change_entity_parts(lnode, singlePartVec);
 
     }
-    if (right_node==(unsigned int)elem_map->NumGlobalElements()) {
+    if (right_node==elem_map->getGlobalNumElements()) {
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
     // Periodic case -- right node is wrapped to left side
-    if (right_node==0) {
+    if (right_node==StartIndex) {
       singlePartVec[0] = nsPartVec["NodeSet0"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
@@ -715,19 +724,19 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
       this->PBCStruct.scale[1] = scale[1];
   }
 
-  for (int i=0; i<elem_map->NumMyElements(); i++) {
+  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
 
-    const unsigned int elem_GID = elem_map->GID(i);
-    const unsigned int x_GID = elem_GID % nelem[0]; // mesh column number
-    const unsigned int y_GID = elem_GID / nelem[0]; // mesh row number
+    const GO elem_GID = elem_map->getGlobalElement(i);
+    const GO x_GID = elem_GID % nelem[0]; // mesh column number
+    const GO y_GID = elem_GID / nelem[0]; // mesh row number
 
-    const unsigned  int x_GIDplus1 = (x_GID+1)%mod_x; // = x_GID+1 unless last element of periodic system
-    const unsigned  int y_GIDplus1 = (y_GID+1)%mod_y; // = y_GID+1 unless last element of periodic system
+    const GO x_GIDplus1 = (x_GID+1)%mod_x; // = x_GID+1 unless last element of periodic system
+    const GO y_GIDplus1 = (y_GID+1)%mod_y; // = y_GID+1 unless last element of periodic system
 
-    const unsigned int lower_left  =  x_GID      + nodes_x * y_GID;
-    const unsigned int lower_right =  x_GIDplus1 + nodes_x * y_GID;
-    const unsigned int upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1;
-    const unsigned int upper_left  =  x_GID      + nodes_x * y_GIDplus1;
+    const GO lower_left  =  x_GID      + nodes_x * y_GID;
+    const GO lower_right =  x_GIDplus1 + nodes_x * y_GID;
+    const GO upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1;
+    const GO upper_left  =  x_GID      + nodes_x * y_GIDplus1;
 
     // get ID of quadrilateral -- will be doubled for trianlges below
     stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
@@ -994,8 +1003,8 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   }
 
   // Create elements and node IDs
-  for (int i=0; i<elem_map->NumMyElements(); i++) {
-    const unsigned int elem_GID = elem_map->GID(i);
+  for (int i=0; i<elem_map->getNodeNumElements(); i++) {
+    const unsigned int elem_GID = elem_map->getGlobalElement(i);
     const unsigned int z_GID    = elem_GID / (nelem[0]*nelem[1]); // mesh column number
     const unsigned int xy_plane = elem_GID % (nelem[0]*nelem[1]); 
     const unsigned int x_GID    = xy_plane % nelem[0]; // mesh column number

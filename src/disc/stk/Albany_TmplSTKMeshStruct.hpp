@@ -29,7 +29,7 @@ struct EBSpecsStruct {
     typedef traits traits_type;
 
     //! Single element block initializer
-    void Initialize(unsigned int nnelems[], double blLength[]);
+    void Initialize(GO nnelems[], double blLength[]);
 
     //! Multiple element block initializer
     void Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
@@ -115,12 +115,12 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
          std::vector<std::string> ssNames,
          std::vector<std::string> nsNames);
 
-    unsigned int nelem[traits_type::size];
+    GO nelem[traits_type::size];
     double scale[traits_type::size];
     unsigned int numEB;
     std::vector<double> x[traits_type::size];
 //    std::vector<std::vector<double> > x;
-    Teuchos::RCP<Epetra_Map> elem_map;
+    Teuchos::RCP<Tpetra_Map> elem_map;
     std::vector<EBSpecsStruct<Dim, traits> > EBSpecs;
 
     bool periodic_x, periodic_y, periodic_z;
@@ -175,7 +175,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
   template<> int  EBSpecsStruct<0>::numElems(int i);
   template<> void EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]);
 
-  template<> void EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]);
+  template<> void EBSpecsStruct<0>::Initialize(GO nelems[], double blLen[]);
   template<> void EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
   template<> void EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
   template<> void EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
