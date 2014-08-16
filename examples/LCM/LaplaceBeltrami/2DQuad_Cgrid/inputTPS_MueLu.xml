@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="LaplaceBeltrami 3D"/>
-    <Parameter name="Method" type="string" value="Laplace"/>
+    <Parameter name="Name" type="string" value="LaplaceBeltrami 2D"/>
+    <Parameter name="Method" type="string" value="TPSLaplace"/>
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="DBC on NS nodelist_1 for DOF CoordFunc">
         <Parameter name="BC Function" type="string" value="Identity"/>
@@ -21,8 +21,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
-    <Parameter name="Exodus Input File Name" type="string" value="3d_cgrid_tetra4.e"/>
-    <Parameter name="Exodus Output File Name" type="string" value="3DTet_Cgrid.exo"/>
+    <Parameter name="Exodus Input File Name" type="string" value="2d_cgrid_quad4.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="2DQuad_Cgrid_TPS.exo"/>
     <Parameter name="Transfer Solution to Coordinates" type="bool" value="1"/>
     <!-- Single point integration of quads     
     <Parameter name="Cubature Degree" type="int" value="1"/> 
@@ -31,7 +31,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter name="Number of Comparisons" type="int" value="2"/>
-    <Parameter name="Test Values" type="Array(double)" value="{ 3.977397265903,  1375.757759924}"/>
+    <Parameter name="Test Values" type="Array(double)" value="{4.82718141824, 417.550993023}"/>
     <Parameter name="Relative Tolerance" type="double" value="1.0e-6"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
@@ -76,7 +76,7 @@
 
                   <ParameterList name="VerboseObject">
                     <Parameter name="Verbosity Level" type="string" value="none"/>
-                    <!--Parameter name="Output File" type="string" value="3DTet_Cgrid.dat"/-->
+                    <!--Parameter name="Output File" type="string" value="2DQuad.Cgrid_TPS.dat"/-->
                   </ParameterList>
 
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
@@ -95,7 +95,7 @@
                 </ParameterList>
               </ParameterList>
 <!-- Preconditioner -->
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
+              <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
               <ParameterList name="Preconditioner Types">
 <!-- Ifpack -->
                 <ParameterList name="Ifpack2">
@@ -115,7 +115,7 @@
                     <Parameter name="coarse: type" type="string"
                                value="Amesos-KLU"/>
                     <Parameter name="number of equations" type="int"
-                               value="3"/>
+                               value="2"/>
                 </ParameterList>
 
               </ParameterList>

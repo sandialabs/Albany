@@ -179,6 +179,9 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   double minPartDensity = adapt_params_->get<double>("Minimum Part Density", 1000);
   adaptShrunken(mesh, minPartDensity, callback);
   afterAdapt(adapt_params_);
+
+  return true;
+
 }
 
 template<class SizeField>
