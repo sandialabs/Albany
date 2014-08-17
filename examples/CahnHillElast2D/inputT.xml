@@ -35,7 +35,7 @@
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="0.1"/>
+      <Parameter name="Final Time" type="double" value="1.0"/>
       <Parameter name="Max State Error" type="double" value="0.001"/>
       <Parameter name="Alpha" type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">

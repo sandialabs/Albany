@@ -134,6 +134,8 @@ namespace LCM {
 
     //! storing the DataLayouts
     const Teuchos::RCP<Albany::Layouts>& dl_;
+
+    ScalarT dummy;
   };
 }
 

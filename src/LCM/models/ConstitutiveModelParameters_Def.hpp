@@ -244,7 +244,14 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string &n)
     if (n == Albany::strint(n + " KL Random Variable", i))
       return rv_map_[it2->first][i];
   }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Constituitive model " << n << " not supported in getValue" << std::endl);
+
+  // Need to return something here or the Clang compiler complains a couple screenfuls of commentary
+  return dummy;
+
 }
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModelParameters<EvalT, Traits>::
