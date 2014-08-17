@@ -36,7 +36,7 @@ struct EBSpecsStruct {
 
     //! Query function to determine if a given i, j, k value is in this element block
     // Note that elemNo is the logical lower left corner of the element being queried
-    bool inEB(const std::vector<int>& elemNo){ for(std::size_t i = 0; i < elemNo.size(); i++){
+    bool inEB(const std::vector<GO>& elemNo){ for(std::size_t i = 0; i < elemNo.size(); i++){
           if(elemNo[i] < min[i]) return false;
           if(elemNo[i] >= max[i]) return false;
         }
@@ -44,20 +44,20 @@ struct EBSpecsStruct {
     }
 
     //! Calculate the number of elements in this block on the given dimension
-    int numElems(int dim){ return (max[dim] - min[dim]);}
+    GO numElems(int dim){ return (max[dim] - min[dim]);}
 
     //! Calculate the sizes of the elements in this element block
 //    void calcElemSizes(std::vector<std::vector<double> > &h){ 
     void calcElemSizes(std::vector<double> h[]){ 
 //        for(std::size_t i = 0; i < h.size(); i++)
         for(unsigned i = 0; i < Dim; i++)
-          for(unsigned j = min[i]; j < max[i]; j++)
+          for(GO j = min[i]; j < max[i]; j++)
             h[i][j] = blLength[i] / double(max[i] - min[i]);
     }
 
     std::string name;      // Name of element block
-    int min[traits_type::size];       // Minimum logical coordinate of the block 
-    int max[traits_type::size];       // Maximum logical coordinate of the block 
+    GO min[traits_type::size];       // Minimum logical coordinate of the block 
+    GO max[traits_type::size];       // Maximum logical coordinate of the block 
     double blLength[traits_type::size];      
 
 };
@@ -172,7 +172,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 
 // Now, the explicit template function declarations (templated on dimension)
 
-  template<> int  EBSpecsStruct<0>::numElems(int i);
+  template<> GO  EBSpecsStruct<0>::numElems(int i);
   template<> void EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]);
 
   template<> void EBSpecsStruct<0>::Initialize(GO nelems[], double blLen[]);

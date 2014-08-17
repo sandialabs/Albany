@@ -942,7 +942,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   numOwnedNodes = ownednodes.size();
   Teuchos::Array<GO> indicesT(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; i++) indicesT[i] = gid(ownednodes[i]);
-  // node_mapT = Teuchos::rcp(new Map(-1, indicesT(), 0, commT));
+
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
 
   node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
@@ -958,7 +958,6 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
     for (std::size_t j=0; j < neq; j++)
       indicesT[getOwnedDOF(i,j)] = getGlobalDOF(gid(ownednodes[i]),j);
 
- //mapT = Teuchos::rcp(new Map(-1, indicesT(), 0, commT));
   mapT = Teuchos::null; // delete existing map happens here on remesh
 
   mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);

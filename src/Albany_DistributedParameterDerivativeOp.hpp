@@ -57,6 +57,7 @@ namespace Albany {
     //! If set true, transpose of this operator will be applied.
     virtual int SetUseTranspose(bool UseTranspose) {
       use_transpose = UseTranspose;
+      return 0;
     }
 
     /*!

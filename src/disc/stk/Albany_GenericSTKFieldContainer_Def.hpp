@@ -141,8 +141,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
 
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-    //      const unsigned node_gid = bucket[i].identifier();
-    const int node_gid = bucket[i].identifier() - 1;
+    const GO node_gid = bucket[i].identifier() - 1;
     int node_lid = node_map->LID(node_gid);
 
     for(std::size_t j = 0; j < num_vec_components; j++)
@@ -175,8 +174,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &
 
     for (std::size_t i=0; i < num_nodes_in_bucket; i++)  {
 
-//      const unsigned node_gid = bucket[i].identifier();
-      const int node_gid = bucket[i].identifier() - 1;
+      const GO node_gid = bucket[i].identifier() - 1;
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       for (std::size_t j=0; j<num_vec_components; j++) {
@@ -207,8 +205,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vect
 
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-    //      const unsigned node_gid = bucket[i].identifier();
-    const int node_gid = bucket[i].identifier() - 1;
+    const GO node_gid = bucket[i].identifier() - 1;
     int node_lid = node_map->LID(node_gid);
 
     soln[getDOF(node_lid, offset)] = solution_array(i);
@@ -238,7 +235,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
 
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-    const int node_gid = bucket[i].identifier() - 1;
+    const GO node_gid = bucket[i].identifier() - 1;
     int node_lid = node_map->LID(node_gid);
 
     for(std::size_t j = 0; j < num_vec_components; j++)
@@ -273,7 +270,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
 
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-    const int node_gid = bucket[i].identifier() - 1;
+    const GO node_gid = bucket[i].identifier() - 1;
     int node_lid = node_mapT->getLocalElement(node_gid);
 
     for(std::size_t j = 0; j < num_vec_components; j++)
@@ -304,8 +301,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
 
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-    //      const unsigned node_gid = bucket[i].identifier();
-    const int node_gid = bucket[i].identifier() - 1;
+    const GO node_gid = bucket[i].identifier() - 1;
     int node_lid = node_map->LID(node_gid);
 
     solution_array(i) = soln[getDOF(node_lid, offset)];
@@ -337,8 +333,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpet
 
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-    //      const unsigned node_gid = bucket[i].identifier();
-    const int node_gid = bucket[i].identifier() - 1;
+    const GO node_gid = bucket[i].identifier() - 1;
     int node_lid = node_mapT->getLocalElement(node_gid);
 
     solution_array(i) = solnT_constView[getDOF(node_lid, offset)];
@@ -368,8 +363,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vec
 
     for (std::size_t i=0; i < num_nodes_in_bucket; i++)  {
 
-//      const unsigned node_gid = bucket[i].identifier();
-      const int node_gid = bucket[i].identifier() - 1;
+      const GO node_gid = bucket[i].identifier() - 1;
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       solnT.replaceLocalValue(getDOF(node_lid, offset), solution_array(i));

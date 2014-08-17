@@ -47,7 +47,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
 */
 
-  int total_elems;
+  GO total_elems;
 
   int input_nEB = params->get<int>("Element Blocks", -1); // Read the number of element blocks. -1 if not listed
 
@@ -139,7 +139,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   }
   else { // Element blocks are present in input
 
-    std::vector<int> min(Dim), max(Dim);
+    std::vector<GO> min(Dim), max(Dim);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-compare"
@@ -148,8 +148,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
 #pragma clang diagnostic pop
 
-      min[i] = INT_MAX;
-      max[i] = INT_MIN;
+      min[i] = std::numeric_limits<GO>::max();
+      max[i] = std::numeric_limits<GO>::min();
 
       nelem[i] = 0;
 
@@ -277,7 +277,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   Teuchos::ParameterList kokkosNodeParams;
   const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
 
-  // Distribute the elems equally
+  // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
   elem_map = Teuchos::rcp(new Tpetra_Map(total_elems, StartIndex, commT, Tpetra::GloballyDistributed, nodeT)); 
 
   int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->getNodeNumElements());
@@ -440,9 +440,9 @@ Albany::EBSpecsStruct<Dim, traits>::Initialize(GO nnelems[], double blLen[]){
 // Specializations to read the element block information for each dimension
 
 template<>
-int
+GO
 Albany::EBSpecsStruct<0>::numElems(int i){ 
-    return 1;
+    return 1L;
 }
 
 template<>
@@ -604,9 +604,8 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   stk_classic::mesh::PartVector nodePartVec;
   stk_classic::mesh::PartVector singlePartVec(1);
 
-  std::vector<int> elemNumber(1);
+  std::vector<GO> elemNumber(1);
   unsigned int ebNo;
-  unsigned int rightNode=0;
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
@@ -679,7 +678,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(lnode, singlePartVec);
 
     }
-    if (right_node==elem_map->getGlobalNumElements()) {
+    if (right_node==elem_map->getGlobalNumElements() + StartIndex) {
       singlePartVec[0] = nsPartVec["NodeSet1"];
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
@@ -704,14 +703,14 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
   // STK
   stk_classic::mesh::PartVector nodePartVec;
   stk_classic::mesh::PartVector singlePartVec(1);
-  std::vector<int> elemNumber(2);
+  std::vector<GO> elemNumber(2);
   unsigned int ebNo;
 
   // Create elements and node IDs
   
-  const unsigned int nodes_x = periodic_x ? nelem[0] : nelem[0] + 1;
-  const unsigned int mod_x   = periodic_x ? nelem[0] : std::numeric_limits<unsigned int>::max();
-  const unsigned int mod_y   = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
+  const GO nodes_x = periodic_x ? nelem[0] : nelem[0] + 1;
+  const GO mod_x   = periodic_x ? nelem[0] : std::numeric_limits<GO>::max();
+  const GO mod_y   = periodic_y ? nelem[1] : std::numeric_limits<GO>::max();
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
@@ -801,7 +800,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
          bulkData->declare_relation(side, llnode, 1); 
 
       }
-      if (x_GIDplus1==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
+      if (x_GIDplus1==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
          singlePartVec[0] = ssPartVec["SideSet1"];
          stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
@@ -825,7 +824,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
          bulkData->declare_relation(side, lrnode, 1); 
 
       }
-      if (y_GIDplus1==(unsigned int)nelem[1]) { // top edge of mesh, elem2 has side 1 on upper boundary
+      if (y_GIDplus1==nelem[1]) { // top edge of mesh, elem2 has side 1 on upper boundary
 
          singlePartVec[0] = ssPartVec["SideSet3"];
          stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
@@ -861,7 +860,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
          bulkData->declare_relation(side, llnode, 1); 
 
       }
-      if (x_GIDplus1==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
+      if (x_GIDplus1==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
          singlePartVec[0] = ssPartVec["SideSet1"];
 
@@ -887,7 +886,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
          bulkData->declare_relation(side, lrnode, 1); 
 
       }
-      if (y_GIDplus1==(unsigned int)nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
+      if (y_GIDplus1==nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
 
          singlePartVec[0] = ssPartVec["SideSet3"];
 
@@ -918,7 +917,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(llnode, singlePartVec);
        bulkData->change_entity_parts(ulnode, singlePartVec);
     }
-    if ((x_GIDplus1)==(unsigned int)nelem[0]) { // right of elem is on right bdy
+    if ((x_GIDplus1)==nelem[0]) { // right of elem is on right bdy
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
@@ -928,7 +927,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(llnode, singlePartVec);
        bulkData->change_entity_parts(lrnode, singlePartVec);
     }
-    if ((y_GIDplus1)==(unsigned int)nelem[1]) { // top of elem is on top bdy
+    if ((y_GIDplus1)==nelem[1]) { // top of elem is on top bdy
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec);
        bulkData->change_entity_parts(urnode, singlePartVec);
@@ -948,23 +947,19 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
     // Single node at origin
     if (x_GID==0 && y_GID==0) {
-//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(llnode, singlePartVec);
     }
     // Periodic cases
     if (x_GIDplus1==0 && y_GIDplus1==0) {
-//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(urnode, singlePartVec);
     }
     if (x_GID==0 && y_GIDplus1==0)  {
-//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(ulnode, singlePartVec);
     }
     if (x_GIDplus1==0 && y_GID==0) { // single node at bottom corner
-//cout << "EUREKA99 " << endl;
        singlePartVec[0] = nsPartVec["NodeSet99"];
        bulkData->change_entity_parts(lrnode, singlePartVec);
     }
@@ -978,14 +973,14 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
   stk_classic::mesh::PartVector nodePartVec;
   stk_classic::mesh::PartVector singlePartVec(1);
-  std::vector<int> elemNumber(3);
+  std::vector<GO> elemNumber(3);
   unsigned int ebNo;
 
-  const unsigned int nodes_x  = periodic_x ? nelem[0] : nelem[0] + 1;
-  const unsigned int nodes_xy = (periodic_y && periodic_y) ? nodes_x * nelem[1] : nodes_x*(nelem[1] + 1);
-  const unsigned int mod_x    = periodic_x ? nelem[0] : std::numeric_limits<unsigned int>::max();
-  const unsigned int mod_y    = periodic_y ? nelem[1] : std::numeric_limits<unsigned int>::max();
-  const unsigned int mod_z    = periodic_z ? nelem[2] : std::numeric_limits<unsigned int>::max();
+  const GO nodes_x  = periodic_x ? nelem[0] : nelem[0] + 1;
+  const GO nodes_xy = (periodic_y && periodic_y) ? nodes_x * nelem[1] : nodes_x*(nelem[1] + 1);
+  const GO mod_x    = periodic_x ? nelem[0] : std::numeric_limits<GO>::max();
+  const GO mod_y    = periodic_y ? nelem[1] : std::numeric_limits<GO>::max();
+  const GO mod_z    = periodic_z ? nelem[2] : std::numeric_limits<GO>::max();
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
@@ -1004,25 +999,25 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
   // Create elements and node IDs
   for (int i=0; i<elem_map->getNodeNumElements(); i++) {
-    const unsigned int elem_GID = elem_map->getGlobalElement(i);
-    const unsigned int z_GID    = elem_GID / (nelem[0]*nelem[1]); // mesh column number
-    const unsigned int xy_plane = elem_GID % (nelem[0]*nelem[1]); 
-    const unsigned int x_GID    = xy_plane % nelem[0]; // mesh column number
-    const unsigned int y_GID    = xy_plane / nelem[0]; // mesh row number
+    const GO elem_GID = elem_map->getGlobalElement(i);
+    const GO z_GID    = elem_GID / (nelem[0]*nelem[1]); // mesh column number
+    const GO xy_plane = elem_GID % (nelem[0]*nelem[1]); 
+    const GO x_GID    = xy_plane % nelem[0]; // mesh column number
+    const GO y_GID    = xy_plane / nelem[0]; // mesh row number
  
-    const unsigned  int x_GIDplus1 = (x_GID+1)%mod_x; // = x_GID+1 unless last element of periodic system
-    const unsigned  int y_GIDplus1 = (y_GID+1)%mod_y; // = y_GID+1 unless last element of periodic system
-    const unsigned  int z_GIDplus1 = (z_GID+1)%mod_z; // = z_GID+1 unless last element of periodic system
+    const GO x_GIDplus1 = (x_GID+1)%mod_x; // = x_GID+1 unless last element of periodic system
+    const GO y_GIDplus1 = (y_GID+1)%mod_y; // = y_GID+1 unless last element of periodic system
+    const GO z_GIDplus1 = (z_GID+1)%mod_z; // = z_GID+1 unless last element of periodic system
 
-    const unsigned int lower_left  =  x_GID      + nodes_x * y_GID      + nodes_xy*z_GID;
-    const unsigned int lower_right =  x_GIDplus1 + nodes_x * y_GID      + nodes_xy*z_GID;
-    const unsigned int upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1 + nodes_xy*z_GID;
-    const unsigned int upper_left  =  x_GID      + nodes_x * y_GIDplus1 + nodes_xy*z_GID;
+    const GO lower_left  =  x_GID      + nodes_x * y_GID      + nodes_xy*z_GID;
+    const GO lower_right =  x_GIDplus1 + nodes_x * y_GID      + nodes_xy*z_GID;
+    const GO upper_right =  x_GIDplus1 + nodes_x * y_GIDplus1 + nodes_xy*z_GID;
+    const GO upper_left  =  x_GID      + nodes_x * y_GIDplus1 + nodes_xy*z_GID;
 
-    const unsigned int lower_left_back  =  x_GID      + nodes_x * y_GID      + nodes_xy * z_GIDplus1;
-    const unsigned int lower_right_back =  x_GIDplus1 + nodes_x * y_GID      + nodes_xy * z_GIDplus1;
-    const unsigned int upper_right_back =  x_GIDplus1 + nodes_x * y_GIDplus1 + nodes_xy * z_GIDplus1;
-    const unsigned int upper_left_back  =  x_GID      + nodes_x * y_GIDplus1 + nodes_xy * z_GIDplus1;
+    const GO lower_left_back  =  x_GID      + nodes_x * y_GID      + nodes_xy * z_GIDplus1;
+    const GO lower_right_back =  x_GIDplus1 + nodes_x * y_GID      + nodes_xy * z_GIDplus1;
+    const GO upper_right_back =  x_GIDplus1 + nodes_x * y_GIDplus1 + nodes_xy * z_GIDplus1;
+    const GO upper_left_back  =  x_GID      + nodes_x * y_GIDplus1 + nodes_xy * z_GIDplus1;
 
     stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
 
@@ -1123,7 +1118,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
      bulkData->declare_relation(side, ulnode, 3); 
 
     }
-    if ((x_GIDplus1)==(unsigned int)nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
+    if ((x_GIDplus1)==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
 
 
       // elem has side 1 (1265) on right boundary
@@ -1159,7 +1154,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->declare_relation(side, llnodeb, 4); 
 
     }
-    if ((y_GIDplus1)==(unsigned int)nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
+    if ((y_GIDplus1)==nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
 
      // elem has side 2 (2376) on top boundary
 
@@ -1195,7 +1190,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
      bulkData->declare_relation(side, lrnode, 1); 
 
   }
-  if ((z_GIDplus1)==(unsigned int)nelem[2]) {
+  if ((z_GIDplus1)==nelem[2]) {
 
       // elem has side 5 (4567) on back boundary
 
@@ -1224,7 +1219,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
     }
-    if ((x_GIDplus1)==(unsigned int)nelem[0]) {
+    if ((x_GIDplus1)==nelem[0]) {
        singlePartVec[0] = nsPartVec["NodeSet1"];
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
@@ -1238,7 +1233,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
     }
-    if ((y_GIDplus1)==(unsigned int)nelem[1]) {
+    if ((y_GIDplus1)==nelem[1]) {
        singlePartVec[0] = nsPartVec["NodeSet3"];
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
@@ -1252,7 +1247,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
     }
-    if ((z_GIDplus1)==(unsigned int)nelem[2]) {
+    if ((z_GIDplus1)==nelem[2]) {
        singlePartVec[0] = nsPartVec["NodeSet5"];
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
