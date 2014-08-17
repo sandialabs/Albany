@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
-SET(CTEST_DO_SUBMIT ON)
-SET(CTEST_TEST_TYPE Nightly)
+#SET(CTEST_DO_SUBMIT ON)
+#SET(CTEST_TEST_TYPE Nightly)
 
-#SET(CTEST_DO_SUBMIT OFF)
-#SET(CTEST_TEST_TYPE Experimental)
+SET(CTEST_DO_SUBMIT OFF)
+SET(CTEST_TEST_TYPE Experimental)
 
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
 #set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
-set( CTEST_DASHBOARD_ROOT   "/fasttmp/ghansen/nightly" ) # writable path
+set( CTEST_DASHBOARD_ROOT   "/lore/ghansen/nightly" ) # writable path
 set( CTEST_CMAKE_GENERATOR  "Unix Makefiles" ) # What is your compilation apps ?
 set( CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
@@ -255,6 +255,11 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
   "-DTPL_ENABLE_Matio:BOOL=OFF"
+  "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
+  "-DTPL_ENABLE_X11:BOOL=OFF"
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
   "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
@@ -264,7 +269,7 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Netcdf:STRING=ON"
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTPL_Netcdf_LIBRARIES:STRING=${PREFIX_DIR}/lib/libnetcdf.a;${PREFIX_DIR}/lib/libhdf5_hl.a;${PREFIX_DIR}/lib/libhdf5.a;${PREFIX_DIR}/lib/libz.a"
+  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
   "-DTPL_ENABLE_HDF5:STRING=ON"
   "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
@@ -280,6 +285,7 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+  "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
   "-DZoltan_ENABLE_ULLONG_IDS:BOOL=ON"
   "-DTeuchos_ENABLE_LONG_LONG_INT:BOOL=ON"
@@ -347,7 +353,8 @@ ENDIF()
 # Trilinos
 SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
 SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
-SET(CTEST_BUILD_TARGET all)
+#SET(CTEST_BUILD_TARGET all)
+SET(CTEST_BUILD_TARGET install)
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
@@ -372,15 +379,15 @@ if(HAD_ERROR)
 endif()
 ENDIF()
 
-execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" "install" 
-  WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY} 
-  RESULT_VARIABLE makeInstallResult 
-  OUTPUT_VARIABLE makeInstallLog 
-  ERROR_VARIABLE makeInstallLog
-)
+#execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" "install" 
+#  WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY} 
+#  RESULT_VARIABLE makeInstallResult 
+#  OUTPUT_VARIABLE makeInstallLog 
+#  ERROR_VARIABLE makeInstallLog
+#)
 
-file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
-  "${makeInstallLog}")
+#file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
+#  "${makeInstallLog}")
 
 # Configure the Albany build (master branch without SCOREC tools)
 
@@ -423,6 +430,10 @@ endif()
 ENDIF()
 
 # Build Albany
+
+SET(CTEST_BUILD_TARGET all)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -506,6 +517,10 @@ ENDIF()
 
 # Build Albany Tpetra branch
 
+SET(CTEST_BUILD_TARGET all)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT"
           RETURN_VALUE  HAD_ERROR
@@ -565,15 +580,19 @@ if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyT64")
   FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyT64)
 endif()
 
-# The 64 bit build pulls code from the Tpetra branch - checked out in AlbanyTpetra
+# The 64 bit build pulls code from the Tpetra branch - checked out in AlbanyT
 
 CTEST_CONFIGURE(
           BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT64"
-          SOURCE "${CTEST_SOURCE_DIRECTORY}/AlbanyTpetra"
+          SOURCE "${CTEST_SOURCE_DIRECTORY}/AlbanyT"
           OPTIONS "${CONFIGURE_OPTIONS}"
           RETURN_VALUE HAD_ERROR
           APPEND
 )
+
+# Read the CTestCustom.cmake file to turn off ignored tests
+
+CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Albany Tpetra 64 branch build!")
@@ -590,6 +609,10 @@ endif()
 ENDIF()
 
 # Build Albany Tpetra 64 branch
+
+SET(CTEST_BUILD_TARGET all)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyT64"
