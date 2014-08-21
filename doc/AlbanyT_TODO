@@ -45,18 +45,17 @@ LCM/TLPoroElasticity3D, LCM/UnSatPoroElasticity3D, LCM/MechanicsPorePressure/inp
 Comments:
 - "NOX" can be called in parameter list under "Piro" instead of "ThyraNOX" when 
 running with the AlbanyT executable (e.g., SteadyHeat2D/inputThyra.xml, TransientHeat2D/inputThyra.xml). 
-- All examples in Albany tpetra branch need to be been converted to use Belos instead of AztecOO. 
-The former will not work with the AlbanyT executable if requesting more than 1 
-sensitivity (epetraToThyra and MV dimension != 1 error).  Still to do: FELIX examples, LCM examples.
+- All examples in Albany tpetra branch have been converted to use Belos instead of AztecOO. 
+The latter will not work with the AlbanyT executable if requesting more than 1 
+sensitivity (epetraToThyra and MV dimension != 1 error).  
 
 
 TO DOs (Irina K., Andy, et al.): 
 - Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
-- Remove AztecOO and replace by Belos in tpetra branch. 
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
 - Convert / test exodiff/python tests.
 - Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion
-- Email QCAD developers (Rick, Erik).
+- Sit down with QCAD developers (Rick, Erik) to figure out what's missing in QCAD suite.
 - Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
 - Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems
 - Anasazi seg fault when running inputT.xml for NSVortexShedding2D problem. 

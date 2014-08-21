@@ -94,7 +94,7 @@
 	    <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	      <ParameterList name="Linear Solver Types">
 		<ParameterList name="AztecOO">
 		  <ParameterList name="Forward Solve">
