@@ -45,10 +45,7 @@
       <Parameter name="Method" type="string" value="RPI Unif Size"/>
       <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
-<!--
       <Parameter name="Target Element Size" type="double" value="0.001"/>
--->
-      <Parameter name="Target Element Size" type="double" value="0.02"/>
     </ParameterList>
   </ParameterList>
 
