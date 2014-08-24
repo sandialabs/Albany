@@ -261,6 +261,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Fill the mass matrix
 
 
+/*
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int rnode = 0; rnode < num_nodes; ++rnode) {
 
@@ -284,6 +285,34 @@ evaluateFields(typename Traits::EvalData workset)
 
       this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
 
+    }
+  }
+*/
+
+// lump it for debugging
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp=0; qp < num_pts; ++qp){
+
+      double diag = 0;
+      for (int rnode = 0; rnode < num_nodes; ++rnode) 
+
+        diag += this->BF(cell, rnode, qp);
+
+      for (int rnode = 0; rnode < num_nodes; ++rnode) {
+
+        GO global_row = wsElNodeID[cell][rnode];
+        Teuchos::Array<GO> cols;
+        Teuchos::Array<ST> vals;
+        GO global_col = wsElNodeID[cell][rnode];
+        cols.push_back(global_col);
+//        ST mass_value = this->wBF(cell, rnode, qp) * diag;
+        ST mass_value = 1;
+
+        vals.push_back(mass_value);
+//        this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
+        this->mass_matrix->replaceGlobalValues(global_row, cols, vals);
+//std::cout << "Row : " << global_row << " Col : " << global_col << " Val : " << mass_value << std::endl;
+      }
     }
   }
 
@@ -386,7 +415,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
   Thyra::norms_2( *b, norm_b );
   bool b_is_zero = true; 
+  *out << "Norm of the b coming in" << std::endl;
   for (int i=0; i<this->num_vecs_; ++i) {
+    *out << "b " << i+1 << " : "
+	 << std::setw(16) << std::right << norm_b[i] << std::endl;
     if(norm_b[i] > 1.0e-16) b_is_zero = false;
   }
   if(b_is_zero) return;

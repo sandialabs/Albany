@@ -60,7 +60,7 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 //Tpetra typedefs
 typedef double                                      ST;
 #ifdef ALBANY_64BIT_INT
-typedef long long                                         GO;
+typedef long                                        GO;
 #else
 typedef int                                         GO;
 #endif

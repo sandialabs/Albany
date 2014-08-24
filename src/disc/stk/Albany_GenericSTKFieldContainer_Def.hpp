@@ -127,6 +127,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
 
+#ifndef ALBANY_64BIT_INT // Epetra code in here
+
   // Fill the result vector
   // Create a multidimensional array view of the
   // solution field data for this bucket of nodes.
@@ -149,6 +151,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
       soln[getDOF(node_lid, offset + j)] = solution_array(j, i);
 
   }
+#endif
 }
 
 //Tpetra version of above
@@ -192,6 +195,8 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vect
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
 
+#ifndef ALBANY_64BIT_INT // Epetra code in here
+
   // Fill the result vector
   // Create a multidimensional array view of the
   // solution field data for this bucket of nodes.
@@ -211,6 +216,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vect
     soln[getDOF(node_lid, offset)] = solution_array(i);
 
   }
+#endif
 }
 
 template<bool Interleaved>
@@ -220,6 +226,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
     T* solution_field,
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
+
+#ifndef ALBANY_64BIT_INT // Epetra code in here
 
   // Fill the result vector
   // Create a multidimensional array view of the
@@ -243,6 +251,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
       solution_array(j, i) = soln[getDOF(node_lid, offset + j)];
 
   }
+#endif
 }
 //Tpetra version of above
 template<bool Interleaved>
@@ -288,6 +297,8 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
 
+#ifndef ALBANY_64BIT_INT // Epetra code in here
+
   // Fill the result vector
   // Create a multidimensional array view of the
   // solution field data for this bucket of nodes.
@@ -307,6 +318,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
     solution_array(i) = soln[getDOF(node_lid, offset)];
 
   }
+#endif
 }
 
 // Specialization for ScalarFieldType - Tpetra
