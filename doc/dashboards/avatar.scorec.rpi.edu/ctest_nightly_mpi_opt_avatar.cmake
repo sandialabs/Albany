@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 
-#SET(CTEST_DO_SUBMIT ON)
-#SET(CTEST_TEST_TYPE Nightly)
+SET(CTEST_DO_SUBMIT ON)
+SET(CTEST_TEST_TYPE Nightly)
 
-SET(CTEST_DO_SUBMIT OFF)
-SET(CTEST_TEST_TYPE Experimental)
+#SET(CTEST_DO_SUBMIT OFF)
+#SET(CTEST_TEST_TYPE Experimental)
 
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
@@ -281,7 +281,6 @@ SET(CONFIGURE_OPTIONS
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
-  "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON"
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
