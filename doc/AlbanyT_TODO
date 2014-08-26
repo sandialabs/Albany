@@ -29,7 +29,7 @@ LCM/MechanicsTensileTet10/NotchedTensileTet10.xml
 - The following tests that use MueLu have a seg fault.  Need to figure out what is the problem:
 FELIX/FO_Test/input_fo_confinedShelf.xml (seg fault in parallel only)
 FELIX/FO_Test/input_fo_confinedShelf_depthIntBC.xml (seg fault in parallel only)
-QCAD/Poisson/input_mosdot_3D_tet10.xml
+QCAD/Poisson/input_mosdot_3D_tet10.xml (seg fault only with MueLu, not with Ifpack2) 
 - The following examples required "aggregation: local aggregates" and "aggregation: nodes per aggregate" 
 to be implemented in the METIS/ParMETIS interface:
 LCM/MechanicsWithTemperature/ThermalExpansion.xml
@@ -41,6 +41,22 @@ Amesos2:
 Albany problems affected: LCM/ThermoPoroMechanics3D, LCM/TLPoroElasticity2D, 
 LCM/TLPoroElasticity3D, LCM/UnSatPoroElasticity3D, LCM/MechanicsPorePressure/inputOrthogonalFlow.xml
 
+QCAD: 
+The following need to be filled in for all of QCAD's capabilities to work with the AlbanyT executable.
+- QCAD::CoupledPoissonSchrodinger, QCAD::GenEigensolver and QCAD::Solver classes need to be implemented 
+to use the Thyra::ModelEvuator instead of the Epetra::ExtModelEvaluator.  Once that's done, Albany_SolverFactory.cpp 
+needs to be modified to call these.  Right now there is an error thrown if one tries to call "QCAD Multi-Physics", 
+"Eigensolve" or "QCAD Poisson-Schrodinger" with the AlbanyT executable.
+- QCAD::CoupledPSJacobian, QCAD::CoupledPSPreconditioner, QCAD::MultiSolutionObserver need to be implemented
+with Tpetra instead of Epetra objects.  It appears QCAD::CoupledPSObserver is not used (is that right?) 
+- QCAD::GreensFunctionTunneling response needs to be converted to Tpetra.
+- Irina K. converted QCAD::SaddleValueResponseFunction to Tpetra some time back.  Need to check that the conversions are up-to-date and complete.
+- There is a seg fault when running input_mosdot3D_tet10.xml with MueLu preconditioner (not Ifpack2).  Need to look into why (before 
+checking with MueLu developers, need to check if problem is in Albany or MueLu).
+- QCAD problems need to be changed to use Teuchos::Comm instead of Epetra_Comm.  This is the case actually 
+for all Albany problems...
+
+
 
 Comments:
 - "NOX" can be called in parameter list under "Piro" instead of "ThyraNOX" when 
@@ -50,7 +66,8 @@ The latter will not work with the AlbanyT executable if requesting more than 1
 sensitivity (epetraToThyra and MV dimension != 1 error).  
 
 
-TO DOs (Irina K., Andy, et al.): 
+TO DOs (Irina K., Andy, et al.):
+- All problems take in an Epetra_Comm object.  This needs to be changed to Teuchos::Comm object. 
 - Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
 - Convert / test exodiff/python tests.

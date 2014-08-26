@@ -406,6 +406,66 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
+  if (solutionMethod == "QCAD Multi-Problem") {
+#ifdef ALBANY_QCAD
+     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "QCAD Multi-Problem does not work with AlbanyT executable!  QCAD::Solver class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
+    //IK, 8/26/14: need to implement QCAD::SolverT class that returns Thyra::ModelEvaluator instead of EpetraExt one 
+    //and takes in Tpetra / Teuchos_Comm objects.
+    //return rcp(new QCAD::SolverT(appParams, solverComm, initial_guess));
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
+
+    if (solutionMethod == "QCAD Poisson-Schrodinger") {
+#ifdef ALBANY_QCAD
+     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "QCAD Poisson-Schrodinger does not work with AlbanyT executable!  QCAD::CoupledPoissonSchrodinger class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
+      //const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
+      //const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+
+      // Create and setup the Piro solver factory -- need to convert to not be based on Epetra!  
+      //Piro::Epetra::SolverFactory piroFactory;
+      // Replace above with Piro::AdaptiveSolverFactory piroFactory; ?
+      /*{
+        // Do we need: Observers for output from time-stepper ??
+         const RCP<Piro::ProviderBase<NOX::Epetra::Observer> > noxObserverProvider =
+          rcp(new QCAD::CoupledPS_NOXObserverConstructor(ps_model));
+          //  rcp(new NOXObserverConstructor(poisson_app));
+          piroFactory.setSource<NOX::Epetra::Observer>(noxObserverProvider);
+
+        // LOCA auxiliary objects -- needed?
+         }
+      return piroFactory.createSolver(piroParams, ps_model);
+      */
+
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
+
+      if (solutionMethod == "Eigensolve") {
+#ifdef ALBANY_QCAD
+     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Eigensolve does not work with AlbanyT executable!  QCAD::GenEigensolver class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
+
+      //RCP<Albany::Application> app;
+      //const RCP<Thyra::ModelEvaluator<ST> > modelT = createAlbanyAppAndModelT(app, appComm, initial_guess);
+      //albanyApp = app;
+
+      //QCAD::GenEigensolver uses a state manager as an observer (for now)
+      //RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
+
+      // Currently, QCAD eigensolver just uses LOCA's eigensolver list under Piro -- maybe give it it's own list
+      // outside of Piro?
+      //const RCP<ParameterList> eigensolveParams = rcp(&(appParams->sublist("Piro").sublist("LOCA").sublist("Stepper").sublist("Eigensolver")), false);
+      //const RCP<QCAD::GenEigensolver> es_model = rcp(new QCAD::GenEigensolver(eigensolveParams, modelT, observer, solverComm));
+      //return es_model;
+
+#else /* ALBANY_QCAD */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
+#endif /* ALBANY_QCAD */
+    }
+
+
   RCP<Albany::Application> app;
 //  RCP<Albany::ApplicationT> app;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =
