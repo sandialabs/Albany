@@ -150,11 +150,11 @@
 	      </ParameterList>
 	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
+		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="1"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
 		  <ParameterList name="Ifpack Settings">
-		    <Parameter name="fact: level-of-fill" type="int" value="2"/>
+		    <Parameter name="fact: ilut level-of-fill" type="double" value="2"/>
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="MueLu">

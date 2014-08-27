@@ -42,6 +42,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_2D_tri6T.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_2D_tri6T.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3DT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3DT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3D_tet10T.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3D_tet10T.xml COPYONLY)
 endif() 
 
 # Create tests with this name and serial executable
@@ -69,6 +71,7 @@ add_test(${testRoot}_pmoscap_Tpetra ${AlbanyT.exe} input_pmoscapT.xml)
 add_test(${testRoot}_pmoscap_polygate_Tpetra ${AlbanyT.exe} input_pmoscap_polygateT.xml)
 add_test(${testRoot}_pndiode_Tpetra ${AlbanyT.exe} input_pndiodeT.xml)
 add_test(${testRoot}_mosdot_2D_tri6_Tpetra ${AlbanyT.exe} input_mosdot_2D_tri6T.xml)
+add_test(${testRoot}_mosdot_3D_tet10_Tpetra ${AlbanyT.exe} input_mosdot_3D_tet10T.xml)
 endif()
 
 
