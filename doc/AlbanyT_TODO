@@ -55,8 +55,9 @@ with Tpetra instead of Epetra objects.  It appears QCAD::CoupledPSObserver is no
 checking with MueLu developers, need to check if problem is in Albany or MueLu).
 - QCAD problems need to be changed to use Teuchos::Comm instead of Epetra_Comm.  This is the case actually 
 for all Albany problems...
-- Do Piro::ProviderBase<NOX::Epetra::Observer>, piroFactory.setSource<NOX::Epetra::Observer> have Thyra/Tpetra analogs?  
-These may be required in Albany_SolverFactory.
+- I believe NOX::Epetra::Observer does not have a Thyra/Tpetra analog and needs to be 
+implemented in nox, for SaveEigenDataConstructor and NOXObserverConstructor functions to work 
+in Albany::SolverFactory class. 
 
 
 Comments:
