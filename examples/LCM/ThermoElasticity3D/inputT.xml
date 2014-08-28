@@ -112,15 +112,6 @@
 	      </ParameterList>
 	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
 	      <ParameterList name="Preconditioner Types">
-		<!--ParameterList name="ML">
-		  <Parameter name="Base Method Defaults" type="string" value="SA"/>
-		  <ParameterList name="ML Settings">
-		    <Parameter name="aggregation: damping factor" type="double" value="1.333"/>
-		    <Parameter name="aggregation: local aggregates" type="int" value="4"/>
-		    <Parameter name="aggregation: nodes per aggregate" type="int" value="27"/>
-		    <Parameter name="coarse: max size" type="int" value="220"/>
-		  </ParameterList>
-		</ParameterList-->
                  <ParameterList name="MueLu">
 		    <Parameter name="multigrid algorithm" type="string" value="sa"/>
                     <Parameter name="smoother: type" type="string" value="Chebyshev"/>
@@ -165,7 +156,7 @@
         <Parameter name="Test Type" type="string" value="NormF"/>
         <Parameter name="Norm Type" type="string" value="Two Norm"/>
         <Parameter name="Scale Type" type="string" value="Scaled"/>
-        <Parameter name="Tolerance" type="double" value="1.0e-7"/>
+        <Parameter name="Tolerance" type="double" value="1.0e-9"/>
       </ParameterList>
       <ParameterList name="Test 1">
         <Parameter name="Test Type" type="string" value="MaxIters"/>

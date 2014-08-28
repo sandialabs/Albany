@@ -22,6 +22,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Create the test with this name and standard executable
 IF(ALBANY_SEACAS)
   add_test(${testName}_STK ${Albany.exe} NotchedTensileTet10.xml)
+if (ALBANY_IFPACK2)
+  add_test(${testName}_STK_Tpetra ${AlbanyT.exe} NotchedTensileTet10T.xml)
+endif()
 ENDIF()
 
 #IF(ALBANY_SCOREC)

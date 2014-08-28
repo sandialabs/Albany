@@ -21,11 +21,6 @@ Ifpack2:
 
 
 MueLu:
-- For repartitioning, the coordinates need to be passed from Albany -> MueLu.  To do this, 
-a piro class called Piro_MueLuNullSpace utils needs to be written.  The following are examples that require
-repartitioning using coordinates so they will not work properly with MueLu: 
-LCM/ThermoElasticity3D/input.xml 
-LCM/MechanicsTensileTet10/NotchedTensileTet10.xml 
 - The following tests that use MueLu have a seg fault.  Need to figure out what is the problem:
 FELIX/FO_Test/input_fo_confinedShelf.xml (seg fault in parallel only)
 FELIX/FO_Test/input_fo_confinedShelf_depthIntBC.xml (seg fault in parallel only)
@@ -66,6 +61,13 @@ running with the AlbanyT executable (e.g., SteadyHeat2D/inputThyra.xml, Transien
 - All examples in Albany tpetra branch have been converted to use Belos instead of AztecOO. 
 The latter will not work with the AlbanyT executable if requesting more than 1 
 sensitivity (epetraToThyra and MV dimension != 1 error).  
+- For the following example, needed to lower nonlinear solver tolerance to get same response, due 
+to difference in solve history with MueLu compared to ML: 
+LCM/ThermoElasticity3D/inputT.xml 
+- For the following example, the response changed slightly with AlbanyT executable 
+compared to when run with Albany executable (in 6th decimal point).  Ended up rebaselining 
+example since nothing looked significantly off/different.
+LCM/MechanicsTensileTet10/NotchedTensileTet10T.xml 
 
 
 TO DOs (Irina K., Andy, et al.):
