@@ -6,10 +6,17 @@ SET(CTEST_TEST_TYPE Nightly)
 #SET(CTEST_DO_SUBMIT OFF)
 #SET(CTEST_TEST_TYPE Experimental)
 
+# What to build and test
+SET(BUILD_TRI_SCOREC TRUE)
+SET(BUILD_TRI_NEW_STK TRUE)
+SET(BUILD_ALB_BASE TRUE)
+SET(BUILD_ALB_TPETRA TRUE)
+SET(BUILD_ALB_TPETRA64 TRUE)
+
 # Begin User inputs:
 set( CTEST_SITE             "avatar.scorec.rpi.edu" ) # generally the output of hostname
-#set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
-set( CTEST_DASHBOARD_ROOT   "/lore/ghansen/nightly" ) # writable path
+set( CTEST_DASHBOARD_ROOT   "$ENV{TEST_DIRECTORY}" ) # writable path
+set( CTEST_SCRIPT_DIRECTORY   "$ENV{SCRIPT_DIRECTORY}" ) # where the scripts live
 set( CTEST_CMAKE_GENERATOR  "Unix Makefiles" ) # What is your compilation apps ?
 set( CTEST_BUILD_CONFIGURATION  Release) # What type of build do you want ?
 
@@ -36,7 +43,7 @@ configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
 SET(CTEST_NIGHTLY_START_TIME "00:00:00 UTC")
 SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
-SET (CTEST_BUILD_FLAGS -j8)
+SET (CTEST_BUILD_FLAGS "-j16")
 
 SET(CTEST_DROP_METHOD "http")
 
@@ -242,19 +249,19 @@ endif()
 ENDIF()
 
 # Configure the Trilinos/SCOREC build
+IF (BUILD_TRI_SCOREC)
 SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos)
 SET_PROPERTY (GLOBAL PROPERTY Label Trilinos)
 
 SET(CONFIGURE_OPTIONS
+  "-Wno-dev"
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
-  "-DTrilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=${CTEST_SOURCE_DIRECTORY}/publicTrilinos/sampleScripts/AlbanySettings.cmake"
   "-DCMAKE_BUILD_TYPE:STRING=NONE"
   "-DCMAKE_CXX_FLAGS:STRING=-O3 -w"
   "-DCMAKE_C_FLAGS:STRING=-O3 -w"
   "-DCMAKE_Fortran_FLAGS:STRING=-O3 -w"
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
-  "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
   "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
@@ -287,27 +294,79 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
   "-DTrilinos_ENABLE_MueLu:BOOL=ON"
   "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
-  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-  "-DTPL_ENABLE_Parasolid:BOOL=ON"
-  "-DParasolid_INCLUDE_DIRS:PATH=/usr/local/parasolid/25.1.181"
-  "-DParasolid_LIBRARY_DIRS:PATH=/usr/local/parasolid/25.1.181/shared_object"
   "-DTPL_ENABLE_SuperLU:STRING=ON"
   "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
   "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+#
+  "-DDART_TESTING_TIMEOUT:STRING=600"
+  "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+  "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
   "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+#
+  "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+  "-DTrilinos_ENABLE_Shards:BOOL=ON"
+  "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+  "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+  "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+  "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+  "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
+  "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+  "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+  "-DTrilinos_ENABLE_Belos:BOOL=ON"
+  "-DTrilinos_ENABLE_ML:BOOL=ON"
+  "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+  "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
+  "-DTrilinos_ENABLE_NOX:BOOL=ON"
+  "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
+  "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+  "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+  "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
+  "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
+  "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
+  "-DTrilinos_ENABLE_Piro:BOOL=ON"
+  "-DTrilinos_ENABLE_STKClassic:BOOL=ON"
+  "-DTrilinos_ENABLE_Teko:BOOL=ON"
+  "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_Mesquite:BOOL=OFF"
+  "-DTrilinos_ENABLE_FEI:BOOL=OFF"
+#
+  "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+  "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+  "-DTPL_ENABLE_Matio:BOOL=OFF"
+  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
+  "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
   )
 
+# Turn off developer warnings
+if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
+  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
+endif()
+
 CTEST_CONFIGURE(
-          BUILD "${CTEST_BINARY_DIRECTORY}"
+          BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
           SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos"
           OPTIONS "${CONFIGURE_OPTIONS}"
           RETURN_VALUE HAD_ERROR
 )
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Trilinos build!")
+	message(FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
 endif()
 
 IF(CTEST_DO_SUBMIT)
@@ -320,7 +379,6 @@ if(HAD_ERROR)
 endif()
 ENDIF()
 
-
 # SCOREC build
 SET_PROPERTY (GLOBAL PROPERTY SubProject SCOREC)
 SET_PROPERTY (GLOBAL PROPERTY Label SCOREC)
@@ -329,7 +387,7 @@ SET(CTEST_BUILD_TARGET "SCOREC_libs")
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}"
+          BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
           RETURN_VALUE  HAD_ERROR
           NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
 )
@@ -357,7 +415,7 @@ SET(CTEST_BUILD_TARGET install)
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}"
+          BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
           RETURN_VALUE  HAD_ERROR
           NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
           APPEND
@@ -376,24 +434,185 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
 endif()
 ENDIF()
+ENDIF()
 
-#execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" "install" 
-#  WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY} 
-#  RESULT_VARIABLE makeInstallResult 
-#  OUTPUT_VARIABLE makeInstallLog 
-#  ERROR_VARIABLE makeInstallLog
-#)
 
-#file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
-#  "${makeInstallLog}")
+# Configure the Trilinos NewSTK build
+IF (BUILD_TRI_NEW_STK)
+SET_PROPERTY (GLOBAL PROPERTY SubProject TrilinosNewSTK)
+SET_PROPERTY (GLOBAL PROPERTY Label TrilinosNewSTK)
+
+SET(CONFIGURE_OPTIONS
+  "-Wno-dev"
+  "-DCMAKE_BUILD_TYPE:STRING=NONE"
+  "-DCMAKE_CXX_FLAGS:STRING=-O3 -w"
+  "-DCMAKE_C_FLAGS:STRING=-O3 -w"
+  "-DCMAKE_Fortran_FLAGS:STRING=-O3 -w"
+  "-DTPL_ENABLE_MPI:BOOL=ON"
+  "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
+  "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASFastq:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASBlot:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASPLT:BOOL=OFF"
+  "-DTPL_ENABLE_X11:BOOL=OFF"
+  "-DTrilinos_ENABLE_STK:BOOL=ON"
+  "-DTrilinos_ENABLE_STKClassic:BOOL=OFF"
+  "-DTrilinos_ENABLE_SEACASIoss:BOOL=ON"
+  "-DTrilinos_ENABLE_SEACASExodus:BOOL=ON"
+  "-DTrilinos_ENABLE_STKUtil:BOOL=ON"
+  "-DTrilinos_ENABLE_STKTopology:BOOL=ON"
+  "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
+  "-DTrilinos_ENABLE_STKIO:BOOL=ON"
+  "-DTrilinos_ENABLE_STKSearch:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKSearchUtil:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
+  "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
+  "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
+  "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
+  "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
+  "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_ENABLE_Netcdf:STRING=ON"
+  "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+  "-DTPL_ENABLE_HDF5:STRING=ON"
+  "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_ENABLE_Zlib:STRING=ON"
+  "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTPL_ENABLE_ParMETIS:STRING=ON"
+  "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+  "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
+  "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
+  "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
+  "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
+  "-DTrilinos_ENABLE_Zoltan2:BOOL=ON"
+  "-DTrilinos_ENABLE_MueLu:BOOL=ON"
+  "-DZoltan_ENABLE_ULONG_IDS:BOOL=ON"
+  "-DTPL_ENABLE_SuperLU:STRING=ON"
+  "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
+  "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
+  "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallNewSTK"
+  "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+#
+  "-DDART_TESTING_TIMEOUT:STRING=600"
+  "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+  "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_EXPORT_MAKEFILES:BOOL=OFF"
+  "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+#
+  "-DTrilinos_ENABLE_ALL_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_SECONDARY_TESTED_CODE:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_Teuchos:BOOL=ON"
+  "-DTrilinos_ENABLE_Shards:BOOL=ON"
+  "-DTrilinos_ENABLE_Sacado:BOOL=ON"
+  "-DTrilinos_ENABLE_Epetra:BOOL=ON"
+  "-DTrilinos_ENABLE_EpetraExt:BOOL=ON"
+  "-DTrilinos_ENABLE_Ifpack:BOOL=ON"
+  "-DTrilinos_ENABLE_AztecOO:BOOL=ON"
+  "-DTrilinos_ENABLE_Amesos:BOOL=ON"
+  "-DTrilinos_ENABLE_Anasazi:BOOL=ON"
+  "-DTrilinos_ENABLE_Belos:BOOL=ON"
+  "-DTrilinos_ENABLE_ML:BOOL=ON"
+  "-DTrilinos_ENABLE_Phalanx:BOOL=ON"
+  "-DTrilinos_ENABLE_Intrepid:BOOL=ON"
+  "-DTrilinos_ENABLE_NOX:BOOL=ON"
+  "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
+  "-DTrilinos_ENABLE_Thyra:BOOL=ON"
+  "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
+  "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
+  "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
+  "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
+  "-DTrilinos_ENABLE_Isorropia:BOOL=ON"
+  "-DTrilinos_ENABLE_Piro:BOOL=ON"
+  "-DTrilinos_ENABLE_STKClassic:BOOL=ON"
+  "-DTrilinos_ENABLE_Teko:BOOL=ON"
+  "-DTrilinos_ENABLE_Zoltan:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_Mesquite:BOOL=OFF"
+  "-DTrilinos_ENABLE_FEI:BOOL=OFF"
+#
+  "-DPhalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+  "-DStratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON"
+#
+  "-DTrilinos_ENABLE_SEACAS:BOOL=ON"
+  "-DTrilinos_ENABLE_Pamgen:BOOL=ON"
+  "-DTPL_ENABLE_Matio:BOOL=OFF"
+  "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
+  "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+  )
+
+# Turn off developer warnings
+if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuildNewSTK")
+  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuildNewSTK)
+endif()
+
+CTEST_CONFIGURE(
+          BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildNewSTK"
+          SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos"
+          OPTIONS "${CONFIGURE_OPTIONS}"
+          RETURN_VALUE HAD_ERROR
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure TrilinosNewSTK build!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Configure
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit TrilinosNewSTK configure results!")
+endif()
+ENDIF()
+
+SET(CTEST_BUILD_TARGET install)
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildNewSTK"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+          APPEND
+)
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build TrilinosNewSTK!")
+endif()
+
+IF(CTEST_DO_SUBMIT)
+CTEST_SUBMIT(PARTS Build
+          RETURN_VALUE  HAD_ERROR
+            )
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit TrilinosNewSTK build results!")
+endif()
+ENDIF()
+ENDIF()
 
 # Configure the Albany build (master branch without SCOREC tools)
-
+IF (BUILD_ALB_BASE)
 SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
 SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
 
 SET(CONFIGURE_OPTIONS
-  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallNewSTK"
   "-DENABLE_LCM:BOOL=ON"
   "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
   "-DENABLE_HYDRIDE:BOOL=ON"
@@ -472,9 +691,10 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany test results!")
 endif()
 ENDIF()
+ENDIF()
 
 # Configure the Albany Tpetra branch build
-
+IF (BUILD_ALB_TPETRA)
 SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetraBranch)
 SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetraBranch)
 
@@ -558,9 +778,10 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany Tpetra branch test results!")
 endif()
 ENDIF()
+ENDIF()
 
 # Configure the Albany Tpetra branch build using GO = long long
-
+IF (BUILD_ALB_TPETRA64)
 SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetra64)
 SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetra64)
 
@@ -650,5 +871,6 @@ CTEST_SUBMIT(PARTS Test
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany Tpetra 64 branch test results!")
 endif()
+ENDIF()
 ENDIF()
 

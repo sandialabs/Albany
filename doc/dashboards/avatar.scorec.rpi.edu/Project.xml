@@ -9,4 +9,6 @@
   </SubProject>
   <SubProject name="SCOREC">
   </SubProject>
+  <SubProject name="TrilinosNewSTK">
+  </SubProject>
 </Project>
