@@ -11,11 +11,18 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
-
+if (ALBANY_IFPACK2)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+endif()
 
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCohesive.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputCohesive.xml COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputCohesiveT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputCohesiveT.xml COPYONLY)
+endif()
 
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialCohesive.xml
@@ -40,6 +47,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outCohesive.alg.gold.e
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+endif()
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -47,6 +58,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(NAME ${testName} COMMAND "python" "runtest.py")
+if (ALBANY_IFPACK2)
+  add_test(NAME ${testName}_Tpetra COMMAND "python" "runtestT.py")
+endif()
   set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
 ENDIF()
 

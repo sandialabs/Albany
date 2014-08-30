@@ -13,11 +13,18 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EPU} ${CMAKE_CURRENT_BINARY_DIR}/epu)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
-
+if (ALBANY_IFPACK2)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+endif()
 
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkin.xml
                ${CMAKE_CURRENT_BINARY_DIR}/galerkin.xml COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/galerkinT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/galerkinT.xml COPYONLY)
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.xml
                ${CMAKE_CURRENT_BINARY_DIR}/stabilized.xml COPYONLY)
 
@@ -46,6 +53,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/stabilized.gold.e
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+endif()
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

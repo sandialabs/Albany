@@ -29,6 +29,10 @@ QCAD/Poisson/input_mosdot_3D_tet10.xml (seg fault only with MueLu, not with Ifpa
 to be implemented in the METIS/ParMETIS interface:
 LCM/MechanicsWithTemperature/ThermalExpansion.xml
 LCM/MechanicsWithTemperature/MechanicsWithTemperature.xml
+- How to get ML symmetric Gauss-Seidel with MueLu?   Affects
+LCM/StabilizedTet4/galerkin.xml
+FELIX/FO_Test/input_fo_confinedShelf.xml
+FELIX/FO_Test/input_fo_confinedShelf_deptIntBC.xml
 
 
 Amesos2: 
@@ -75,7 +79,7 @@ TO DOs (Irina K., Andy, et al.):
 - Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
 - Convert / test exodiff/python tests.
-- Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion
+- Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion, LCM/StabilizedTet4
 - Sit down with QCAD developers (Rick, Erik) to figure out what's missing in QCAD suite.
 - Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
 - Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems
@@ -83,5 +87,7 @@ TO DOs (Irina K., Andy, et al.):
 - Sensitivities are different when running with Belos comapred to AztecOO for FELIX_Stokes/FO_Test/*interpSurf.xml (with Albany executable)!
 - Different responses when running with Belos than AztecOO for: LinComprNS/input2D_drivenPulse.xml, LinComprNS/input3Dunsteady.xml, 
 LinComprNS/input3DunsteadyNS.xml...
+- Check how LCM PartitionTest and Subdivision executables are created, namely whether these use Epetra and need to be Tpetra-fied.  Problems
+affected: LCM/Partition, LCM/Subdivision
 
 
