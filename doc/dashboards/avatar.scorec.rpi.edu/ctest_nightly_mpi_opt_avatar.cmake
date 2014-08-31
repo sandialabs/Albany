@@ -287,7 +287,6 @@ SET(CONFIGURE_OPTIONS
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-  "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
@@ -351,6 +350,8 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+  "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+  "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
   )
 
 # Turn off developer warnings
@@ -487,8 +488,6 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_ParMETIS:STRING=ON"
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-  "-DTrilinos_ENABLE_SCORECpumi_geom_parasolid:BOOL=ON"
   "-DTrilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON"
   "-DTrilinos_ENABLE_Ifpack2:BOOL=ON"
   "-DTrilinos_ENABLE_Amesos2:BOOL=ON"
@@ -552,6 +551,8 @@ SET(CONFIGURE_OPTIONS
   "-DTPL_ENABLE_Matio:BOOL=OFF"
   "-DTeuchos_ENABLE_COMPLEX:BOOL=OFF"
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
+  "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
+  "-DTrilinos_ENABLE_PyTrilinos:BOOL=OFF"
   )
 
 # Turn off developer warnings
