@@ -10,7 +10,6 @@
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
-//#include "Albany_ModelFactoryT.hpp"
 
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Piro_ProviderBase.hpp"
@@ -477,6 +476,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   albanyApp = app;
 
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
 
   RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
   if (Teuchos::nonnull(modelT->get_W_factory())) {
@@ -501,12 +501,13 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_64BIT_INT
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-//    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu");
+// GAH Uncomment    Piro::renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
 #else
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
-    linearSolverBuilder.setParameterList(Piro::extractStratimikosParams(piroParams));
+
+    linearSolverBuilder.setParameterList(stratList);
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);

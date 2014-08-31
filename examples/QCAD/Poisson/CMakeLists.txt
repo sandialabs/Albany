@@ -73,9 +73,6 @@ endif()
 
 if (ALBANY_MUELU_EXAMPLES)
   if (ALBANY_64BIT_INT)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_MueLu_64.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT_MueLu_64.xml COPYONLY)
-    add_test(${testName}_Tpetra ${AlbanyT.exe} inputT_MueLu_64.xml)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3D_tet10T_MueLu_64.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3D_tet10T_MueLu_64.xml COPYONLY)
     add_test(${testRoot}_mosdot_3D_tet10_Tpetra ${AlbanyT.exe} input_mosdot_3D_tet10T_MueLu_64.xml)
