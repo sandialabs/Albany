@@ -11,6 +11,11 @@ IF(NOT ALBANY_PARALLEL_ONLY)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${PartitionTest.exe} ${CMAKE_CURRENT_BINARY_DIR}/PartitionTest)
 
+if (ALBANY_IFPACK2) 
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${PartitionTestT.exe} ${CMAKE_CURRENT_BINARY_DIR}/PartitionTestT)
+endif()
+
 # Create a symlink to exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
@@ -18,6 +23,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # Copy script file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_partition.py
                ${CMAKE_CURRENT_BINARY_DIR}/run_partition.py COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_partitionT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/run_partitionT.py COPYONLY)
+endif()
 
 # Copy the input file to the test directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.e
@@ -34,6 +43,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(NAME ${testName} COMMAND "python" "run_partition.py")
+if (ALBANY_IFPACK2)
+add_test(NAME ${testName}_Tpetra COMMAND "python" "run_partitionT.py")
+endif()
 set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 
 ENDIF()

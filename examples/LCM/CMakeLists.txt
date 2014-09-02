@@ -6,7 +6,9 @@
 
 ###################
 set(PartitionTest.exe ${Albany_BINARY_DIR}/src/LCM/PartitionTest)
+set(PartitionTestT.exe ${Albany_BINARY_DIR}/src/LCM/PartitionTestT)
 set(Subdivision.exe   ${Albany_BINARY_DIR}/src/LCM/Subdivision)
+set(SubdivisionT.exe   ${Albany_BINARY_DIR}/src/LCM/SubdivisionT)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 
 IF(ALBANY_SEACAS)
