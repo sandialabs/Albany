@@ -160,6 +160,7 @@ IF ( INSTALL_ALBANY )
 ENDIF()
 
 add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
+add_executable(MaterialPointSimulatorT test/utils/MaterialPointSimulatorT.cc)
 add_executable(MeshComponents test/utils/MeshComponents.cc)
 add_executable(NodeUpdate test/utils/NodeUpdate.cc)
 add_executable(PartitionTest test/utils/PartitionTest.cc)
@@ -258,6 +259,7 @@ ENDIF(BUILD_SHARED_LIBS)
 
 #Linking tests
 target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(MaterialPointSimulatorT ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})

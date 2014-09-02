@@ -7,10 +7,18 @@
 # Create a symlink to the runtest.py script
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.py} ${CMAKE_CURRENT_BINARY_DIR}/runtest.py)
+if (ALBANY_IFPACK2) 
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${runtestT.py} ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py)
+endif()
 
 # Create a symlink to the MPS
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${MPS.exe} ${CMAKE_CURRENT_BINARY_DIR}/MPS)
+if (ALBANY_IFPACK2) 
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${MPST.exe} ${CMAKE_CURRENT_BINARY_DIR}/MPST)
+endif()
 
 # Create a symlink to exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -19,6 +27,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # Copy script file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean.py
                ${CMAKE_CURRENT_BINARY_DIR}/Neohookean.py COPYONLY)
+if (ALBANY_IFPACK2) 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NeohookeanT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/NeohookeanT.py COPYONLY)
+endif()
 
 # Copy Input files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Neohookean-uniaxial.xml
@@ -61,4 +73,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Run the "runtest.py" file in the CWD
 add_test(NAME ${testName} COMMAND "python" "Neohookean.py")
+if (ALBANY_IFPACK2) 
+add_test(NAME ${testName}_Tpetra COMMAND "python" "NeohookeanT.py")
+endif()
 set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")

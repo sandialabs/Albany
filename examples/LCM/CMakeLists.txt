@@ -10,6 +10,7 @@ set(PartitionTestT.exe ${Albany_BINARY_DIR}/src/LCM/PartitionTestT)
 set(Subdivision.exe   ${Albany_BINARY_DIR}/src/LCM/Subdivision)
 set(SubdivisionT.exe   ${Albany_BINARY_DIR}/src/LCM/SubdivisionT)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
+set(MPST.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulatorT)
 
 IF(ALBANY_SEACAS)
   add_subdirectory(CohesiveElement)
