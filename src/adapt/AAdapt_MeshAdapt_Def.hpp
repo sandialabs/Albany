@@ -125,8 +125,8 @@ AAdapt::MeshAdapt<SizeField>::adaptInPartition(
   double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
   if (loadBalancing) {
     input->shouldRunPreZoltan = true;
-    input->shouldRunMidDiffusion = true;
-    input->shouldRunPostDiffusion = true;
+    input->shouldRunMidParma = true;
+    input->shouldRunPostParma = true;
     input->maximumImbalance = lbMaxImbalance;
   }
 
