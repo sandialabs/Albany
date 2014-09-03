@@ -32,6 +32,7 @@ IF(ALBANY_SEACAS)
   add_subdirectory(MaterialPointSimulator)
   add_subdirectory(Subdivision)
   add_subdirectory(BoreDemo)
+  add_subdirectory(HMC)
 ENDIF()
 
 add_subdirectory(Catalyst)
@@ -64,10 +65,6 @@ ENDIF()
 
 IF(ALBANY_LAMENT)
   add_subdirectory(LamentStaticElasticity3D)
-ENDIF()
-
-IF(ALBANY_HMC)
-  add_subdirectory(HMC)
 ENDIF()
 
 IF(ALBANY_HYDRIDE)

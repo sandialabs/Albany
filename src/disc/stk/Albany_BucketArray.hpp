@@ -113,7 +113,7 @@ public:
   BucketArray( const field_type & f , const stk::mesh::Bucket & b )
   {
     if ( b.field_data_is_allocated(f) ) {
-      int stride[3];
+      int stride[4];
       if (f.field_array_rank() == 1) {
         stride[0] = stk::mesh::field_scalars_per_entity(f, b);
       }
@@ -127,6 +127,13 @@ public:
         stride[0] = dim0;
         stride[1] = get_size<Tag2>(b) * dim0;
         stride[2] = stk::mesh::field_scalars_per_entity(f, b);
+      }
+      else if (f.field_array_rank() == 4) {
+        int dim0 = stk::mesh::find_restriction(f, b.entity_rank(), b.supersets()).dimension();
+        stride[0] = dim0;
+        stride[1] = get_size<Tag2>(b) * dim0;
+        stride[2] = get_size<Tag3>(b) * stride[1];
+        stride[3] = stk::mesh::field_scalars_per_entity(f, b);
       }
       else {
         assert(false);
