@@ -31,7 +31,7 @@ namespace QCAD {
     SchrodingerProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		       const Teuchos::RCP<ParamLib>& paramLib,
 		       const int numDim_,
-		       const Teuchos::RCP<const Epetra_Comm>& comm_);
+                       Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
     //! Destructor
     ~SchrodingerProblem();
@@ -79,7 +79,7 @@ namespace QCAD {
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos::Comm<int> >& commT; 
     bool havePotential;
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialFieldName;

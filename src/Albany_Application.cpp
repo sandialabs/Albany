@@ -112,7 +112,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
-  Albany::ProblemFactory problemFactory(problemParams, paramLib, comm);
+  Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
   problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem

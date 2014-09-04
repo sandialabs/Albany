@@ -12,9 +12,9 @@ QCAD::PoissonProblem::
 PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		const Teuchos::RCP<ParamLib>& paramLib_,
 		const int numDim_,
-		const Teuchos::RCP<const Epetra_Comm>& comm_) :
+                Teuchos::RCP<const Teuchos::Comm<int> >& commT_):
   Albany::AbstractProblem(params_, paramLib_, 1),
-  comm(comm_),
+  commT(commT_),
   haveSource(false),
   numDim(numDim_)
 {
@@ -46,7 +46,7 @@ PoissonProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string mtrlDbFilename = "materials.xml";
   if(params->isType<std::string>("MaterialDB Filename"))
     mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
-  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   //Pull number of eigenvectors from poisson params list
   nEigenvectors = 0;

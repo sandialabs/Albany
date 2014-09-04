@@ -75,7 +75,13 @@ LCM/MechanicsTensileTet10/NotchedTensileTet10T.xml
 
 
 TO DOs (Irina K., Andy, et al.):
-- All problems take in an Epetra_Comm object.  This needs to be changed to Teuchos::Comm object. 
+- On 9/4/14, I changed all the problems to take in a Teuchos::Comm object instead of Epetra_Comm, except QCAD.  QCAD needs 
+to be converted as well.  
+- On 9/4/14, I removed evaluateResponse and evaluaterResponseDerivative from the tpetra branch of Albany. 
+- Need to remove remaining Epetra_Comm from the code (replace with Teuchos::Comm)...   
+These need to be taken out of QCAD still.  Also the function Albany_SamplingBasedScalarResponseFunction still calls evaluateResponse
+but that is in the SG section, which does not work anyway in the tpetra branch.  So code will compile if QCAD and SG are turned off 
+in the tpetra Albany branch.  
 - Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
 - Convert / test exodiff/python tests.

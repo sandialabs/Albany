@@ -21,7 +21,8 @@ setupInternalMeshStruct(
     const Teuchos::RCP<const Epetra_Comm> &epetraComm)
 {
   const Teuchos::RCP<ParamLib> paramLib(new ParamLib);
-  ProblemFactory problemFactory(problemParams, paramLib, epetraComm);
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(epetraComm);
+  ProblemFactory problemFactory(problemParams, paramLib, commT);
   const Teuchos::RCP<AbstractProblem> problem = problemFactory.create();
   problemParams->validateParameters(*problem->getValidProblemParameters(), 0);
 

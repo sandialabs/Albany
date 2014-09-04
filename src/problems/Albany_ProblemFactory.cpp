@@ -74,10 +74,10 @@
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
        const Teuchos::RCP<ParamLib>& paramLib_,
-       const Teuchos::RCP<const Epetra_Comm>& comm_) :
+       Teuchos::RCP<const Teuchos::Comm<int> >& commT_) : 
   problemParams(problemParams_),
   paramLib(paramLib_),
-  comm(comm_)
+  commT(commT_)
 {
 }
 
@@ -87,8 +87,6 @@ Albany::ProblemFactory::create()
   Teuchos::RCP<Albany::AbstractProblem> strategy;
   using Teuchos::rcp;
     
-  //IK, 9/4/14: for Tpetra branch: converting Epetra_Comm to Teuchos::Comm 
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
 
   std::string& method = problemParams->get("Name", "Heat 1D");
 
@@ -156,22 +154,22 @@ Albany::ProblemFactory::create()
 #endif
 #ifdef ALBANY_QCAD
   else if (method == "Poisson 1D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 1, commT));
   }
   else if (method == "Poisson 2D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "Poisson 3D") {
-    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new QCAD::PoissonProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "Schrodinger 1D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 1, commT));
   }
   else if (method == "Schrodinger 2D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "Schrodinger 3D") {
-    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new QCAD::SchrodingerProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "ThermoElectrostatics 1D") {
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 1));

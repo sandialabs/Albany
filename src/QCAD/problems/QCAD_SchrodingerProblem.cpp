@@ -18,9 +18,9 @@
 QCAD::SchrodingerProblem::SchrodingerProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		    const Teuchos::RCP<ParamLib>& paramLib_,
 		    const int numDim_,
-		    const Teuchos::RCP<const Epetra_Comm>& comm_) :
+                    Teuchos::RCP<const Teuchos::Comm<int> >& commT_):
   Albany::AbstractProblem(params_, paramLib_, 1),
-  comm(comm_), havePotential(false), 
+  commT(commT_), havePotential(false), 
   numDim(numDim_)
 {
   havePotential = params->isSublist("Potential");
