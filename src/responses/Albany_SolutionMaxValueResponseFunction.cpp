@@ -31,18 +31,6 @@ numResponses() const
   return 1;
 }
 
-void
-Albany::SolutionMaxValueResponseFunction::
-evaluateResponse(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 Epetra_Vector& g)
-{
-  int index;
-  computeMaxValue(x, g[0], index);
-}
 
 void
 Albany::SolutionMaxValueResponseFunction::
@@ -58,35 +46,6 @@ evaluateResponseT(const double current_time,
   computeMaxValueT(xT, gT_nonconstView[0], index);
 }
 
-void
-Albany::SolutionMaxValueResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  Teuchos::RCP<Epetra_MultiVector> dgdx;
-  if (gx != NULL && Vx != NULL)
-    dgdx = Teuchos::rcp(new Epetra_MultiVector(x.Map(), 1));
-  else
-    dgdx = Teuchos::rcp(gx,false);
-  evaluateGradient(current_time, xdot, xdotdot, x, p, deriv_p, g, dgdx.get(), NULL, NULL, gp);
-  if (gx != NULL && Vx != NULL)
-    gx->Multiply('T', 'N', alpha, *dgdx, *Vx, 0.0);
-}
 
 void
 Albany::SolutionMaxValueResponseFunction::

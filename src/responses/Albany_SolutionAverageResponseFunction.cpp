@@ -26,18 +26,6 @@ numResponses() const
 
 void
 Albany::SolutionAverageResponseFunction::
-evaluateResponse(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 Epetra_Vector& g)
-{
-  x.MeanValue(&g[0]);
-}
-
-void
-Albany::SolutionAverageResponseFunction::
 evaluateResponseT(const double current_time,
 		 const Tpetra_Vector* xdotT,
 		 const Tpetra_Vector* xdotdotT,
@@ -50,43 +38,6 @@ evaluateResponseT(const double current_time,
   gT_nonconstView[0] = mean; 
 }
 
-void
-Albany::SolutionAverageResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  // Evaluate response g
-  if (g != NULL)
-    x.MeanValue(&(*g)[0]);
-
-  // Evaluate tangent of g = dg/dx*Vx + dg/dxdot*Vxdot + dg/dp*Vp
-  // If Vx == NULL, Vx is the identity
-  if (gx != NULL) {
-    if (Vx != NULL)
-      for (int j=0; j<Vx->NumVectors(); j++)
-	(*Vx)(j)->MeanValue(&(*gx)[j][0]);
-    else
-      gx->PutScalar(1.0/x.GlobalLength());
-    gx->Scale(alpha);
-  }
-  if (gp != NULL)
-    gp->PutScalar(0.0);
-}
 
 void
 Albany::SolutionAverageResponseFunction::

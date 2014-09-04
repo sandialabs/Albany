@@ -84,51 +84,6 @@ numResponses() const
 
 void
 Albany::FieldManagerScalarResponseFunction::
-evaluateResponse(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 Epetra_Vector& g)
-{
-  visResponseGraph<PHAL::AlbanyTraits::Residual>("");
-
-  // Set data in Workset struct
-  PHAL::Workset workset;
-  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  //convert Epetra_Vector x to Tpetra_Vector xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
-  //convert Epetra_Vector *xdot to Tpetra_Vector xdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
-     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
-  }
-  //convert Epetra_Vector *xdotdot to Tpetra_Vector xdotdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
-     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
-  }
- 
-  //application->setupBasicWorksetInfo(workset, current_time, xdot, &x, p);
-  application->setupBasicWorksetInfoT(workset, current_time, xdotT, xdotdotT, xT, p);
-  workset.g = Teuchos::rcp(&g,false);
-
-  // Perform fill via field manager
-  int numWorksets = application->getNumWorksets();
-  rfm->preEvaluate<PHAL::AlbanyTraits::Residual>(workset);
-  for (int ws=0; ws < numWorksets; ws++) {
-    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(
-      workset, ws);
-    rfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
-  }
-  rfm->postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
-}
-
-void
-Albany::FieldManagerScalarResponseFunction::
 evaluateResponseT(const double current_time,
 		 const Tpetra_Vector* xdotT,
 		 const Tpetra_Vector* xdotdotT,
@@ -156,85 +111,6 @@ evaluateResponseT(const double current_time,
   rfm->postEvaluate<PHAL::AlbanyTraits::Residual>(workset);
 }
 
-void
-Albany::FieldManagerScalarResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
-  
-  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-
-  //convert Epetra_Vector x to Tpetra_Vector xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
-  //convert Epetra_Vector *xdot to Tpetra_Vector xdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
-     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
-  }
-  //convert Epetra_Vector *xdotdot to Tpetra_Vector xdotdotT
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
-     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
-  }
-  //Create Tpetra copy of Vx, called VxT
-  Teuchos::RCP<const Tpetra_MultiVector> VxT;
-  if (Vx != NULL) {
-    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT, nodeT);
-  }
-  //Create Tpetra copy of Vxdot, called VxdotT
-  Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
-  if (Vxdot != NULL) {
-    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT, nodeT);
-  }
-  //Create Tpetra copy of Vxdotdot, called VxdotdotT
-  Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
-  if (Vxdotdot != NULL) {
-    VxdotdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdotdot, commT, nodeT);
-  }
-  //Create Tpetra copy of Vp, called VpT
-  Teuchos::RCP<const Tpetra_MultiVector> VpT;
-  if (Vp != NULL) {
-    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT, nodeT);
-  }
-
-  // Set data in Workset struct
-  PHAL::Workset workset;
-  application->setupTangentWorksetInfoT(workset, current_time, sum_derivs, 
-				       xdotT, xdotdotT, xT, p, 
-				       deriv_p, VxdotT, VxdotdotT, VxT, VpT);
-  workset.g = Teuchos::rcp(g, false);
-  workset.dgdx = Teuchos::rcp(gx, false);
-  workset.dgdp = Teuchos::rcp(gp, false);
-  
-  // Perform fill via field manager
-  int numWorksets = application->getNumWorksets();
-  rfm->preEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
-  for (int ws=0; ws < numWorksets; ws++) {
-    application->loadWorksetBucketInfo<PHAL::AlbanyTraits::Tangent>(
-      workset, ws);
-    rfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
-  }
-  rfm->postEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
-}
 
 void
 Albany::FieldManagerScalarResponseFunction::

@@ -52,18 +52,6 @@ numResponses() const
     0u;
 }
 
-void
-Albany::SolutionValuesResponseFunction::
-evaluateResponse(const double /*current_time*/,
-		 const Epetra_Vector* /*xdot*/,
-		 const Epetra_Vector* /*xdot*/,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& /*p*/,
-		 Epetra_Vector& g)
-{
-  this->updateSolutionImporter();
-  Epetra::ImportWithAlternateMap(*solutionImporter_, x, g, Insert);
-}
 
 void
 Albany::SolutionValuesResponseFunction::
@@ -78,44 +66,6 @@ evaluateResponseT(const double current_time,
   std::cerr << "SolutionValuesResponseFunction::evaluateResponseT NOT IMPLEMETED\n";
 }
 
-void
-Albany::SolutionValuesResponseFunction::
-evaluateTangent(const double /*alpha*/,
-		const double beta,
-		const double omega,
-		const double /*current_time*/,
-		bool /*sum_derivs*/,
-		const Epetra_Vector* /*xdot*/,
-		const Epetra_Vector* /*xdot*/,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& /*p*/,
-		ParamVec* /*deriv_p*/,
-		const Epetra_MultiVector* /*Vxdot*/,
-		const Epetra_MultiVector* /*Vxdot*/,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* /*Vp*/,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  this->updateSolutionImporter();
-
-  if (g) {
-    Epetra::ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
-  }
-
-  if (gx) {
-    TEUCHOS_ASSERT(Vx);
-    Epetra::ImportWithAlternateMap(*solutionImporter_, *Vx, *gx, Insert);
-    if (beta != 1.0) {
-      gx->Scale(beta);
-    }
-  }
-
-  if (gp) {
-    gp->PutScalar(0.0);
-  }
-}
 
 void
 Albany::SolutionValuesResponseFunction::

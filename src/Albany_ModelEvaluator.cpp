@@ -626,7 +626,7 @@ f_out->Print(std::cout);
   else {
     if (f_out != Teuchos::null && !f_already_computed) {
       app->computeGlobalResidual(curr_time, x_dot.get(), x_dotdot.get(), *x,
-                                 sacado_param_vec, *f_out);
+                                  sacado_param_vec, *f_out);
 if(test_var != 0){
 std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
 f_out->Print(std::cout);

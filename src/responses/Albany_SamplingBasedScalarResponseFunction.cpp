@@ -73,6 +73,10 @@ evaluateSGResponse(
 	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
     }
 
+    //IK, 9/4/14: Note that evaluateReponse has been removed from the Albany Tpetra branch. 
+    //It is replaced with evaluateResponseT so the below call will not work; but it's OK 
+    //b/c SG does not work in the tpetra branch anyway.
+
     // Compute response at quadrature point
     evaluateResponse(curr_time, xdot.get(), xdotdot.get(), x, pp, g);
 
@@ -322,6 +326,9 @@ evaluateMPResponse(
       xdotdot = mp_xdotdot->getCoeffPtr(i).get();
     
     // Evaluate response function
+    //IK, 9/4/14: Note that evaluateReponse has been removed from the Albany Tpetra branch. 
+    //It is replaced with evaluateResponseT so the below call will not work; but it's OK 
+    //b/c SG does not work in the tpetra branch anyway.
     evaluateResponse(curr_time, xdot, xdotdot, mp_x[i], pp, mp_g[i]);
   }
 }
