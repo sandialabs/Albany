@@ -30,7 +30,7 @@ namespace Albany {
     CahnHillProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		const Teuchos::RCP<ParamLib>& paramLib,
 		const int numDim_,
-    const Teuchos::RCP<const Epetra_Comm>& comm_);
+                Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
     //! Destructor
     ~CahnHillProblem();
@@ -83,7 +83,8 @@ namespace Albany {
 
     bool haveNoise; // Langevin noise present
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    //Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;  
 
     Teuchos::RCP<Albany::Layouts> dl;
 

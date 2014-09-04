@@ -86,6 +86,9 @@ Albany::ProblemFactory::create()
 {
   Teuchos::RCP<Albany::AbstractProblem> strategy;
   using Teuchos::rcp;
+    
+  //IK, 9/4/14: for Tpetra branch: converting Epetra_Comm to Teuchos::Comm 
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
 
   std::string& method = problemParams->get("Name", "Heat 1D");
 
@@ -100,7 +103,7 @@ Albany::ProblemFactory::create()
   }
 #ifdef ALBANY_DEMO_PDES
   else if (method == "CahnHill 2D") {
-    strategy = rcp(new Albany::CahnHillProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::CahnHillProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "ODE") {
     strategy = rcp(new Albany::ODEProblem(problemParams, paramLib, 0));
