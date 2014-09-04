@@ -13,11 +13,9 @@ SET(SOURCES
   Albany_ObserverFactory.cpp
   Albany_RythmosObserver.cpp
   Albany_NOXObserver.cpp
-  Albany_PiroObserver.cpp
   Albany_PiroObserverT.cpp
   Albany_StateManager.cpp
   Albany_ModelFactory.cpp
-  Albany_ModelEvaluator.cpp
   Albany_ModelEvaluatorT.cpp
   Albany_SaveEigenData.cpp
   Albany_ObserverImpl.cpp
@@ -27,6 +25,14 @@ IF(ALBANY_64BIT_INT)
   SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
 ELSE()
   SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+ENDIF()
+
+
+IF(ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+    Albany_PiroObserver.cpp
+    Albany_ModelEvaluator.cpp
+  )
 ENDIF()
 
 SET(HEADERS
@@ -43,13 +49,11 @@ SET(HEADERS
   Albany_ObserverFactory.hpp
   Albany_RythmosObserver.hpp
   Albany_NOXObserver.hpp
-  Albany_PiroObserver.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
   Albany_EigendataInfoStruct.hpp
   Albany_ModelFactory.hpp
-  Albany_ModelEvaluator.hpp
   Albany_ModelEvaluatorT.hpp
   Albany_SaveEigenData.hpp
   Albany_ObserverImpl.hpp
@@ -59,6 +63,13 @@ SET(HEADERS
 #  Albany_DistributedParameterLibrary_Epetra.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
   )
+
+IF(ALBANY_EPETRA) 
+  SET(HEADERS ${HEADERS} 
+    Albany_PiroObserver.hpp
+    Albany_ModelEvaluator.hpp
+  )
+ENDIF()
 
 #problems
 SET(SOURCES ${SOURCES}
@@ -186,10 +197,8 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SaveStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_SharedParameter.cpp
-  evaluators/PHAL_ResponseFieldIntegral.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
-  evaluators/PHAL_SeparableScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
@@ -215,6 +224,14 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherScalarNodalParameter.cpp
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
+  
+IF (ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES}
+  evaluators/PHAL_ResponseFieldIntegral.cpp
+  evaluators/PHAL_SeparableScatterScalarResponse.cpp
+  )
+ENDIF() 
+
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
   evaluators/PHAL_ODEResid.cpp
@@ -281,14 +298,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_LoadStateField_Def.hpp
   evaluators/PHAL_SharedParameter.hpp
   evaluators/PHAL_SharedParameter_Def.hpp
-  evaluators/PHAL_ResponseFieldIntegral.hpp
-  evaluators/PHAL_ResponseFieldIntegral_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
-  evaluators/PHAL_SeparableScatterScalarResponse.hpp
-  evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/QCAD_ResponseFieldIntegral.hpp
@@ -336,6 +349,15 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
   )
+  
+IF (ALBANY_EPETRA) 
+  SET(HEADERS ${HEADERS}
+    evaluators/PHAL_ResponseFieldIntegral.hpp
+    evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+    evaluators/PHAL_SeparableScatterScalarResponse.hpp
+    evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+  )
+ENDIF()
 
 SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_ODEResid.hpp
@@ -600,14 +622,20 @@ endif()
 
 # Now build executables from this library, tailored main()s, and Trilinos
 
-add_executable(Albany Main_Solve.cpp)
+IF (ALBANY_EPETRA) 
+  add_executable(Albany Main_Solve.cpp)
+ENDIF() 
+
 add_executable(AlbanyT Main_SolveT.cpp)
-SET(ALBANY_EXECUTABLES Albany AlbanyT)
-if (ALBANY_SG_MP)
+SET(ALBANY_EXECUTABLES AlbanyT)
+IF (ALBANY_EPETRA) 
+  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
+ENDIF()
+if (ALBANY_SG_MP AND ALBANY_EPETRA)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
 endif()
-if (ALBANY_ASCR)
+if (ALBANY_ASCR AND ALBANY_EPETRA)
   add_executable(AlbanyAdjoint Main_Adjoint.cpp)
   add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
@@ -624,7 +652,7 @@ IF (ALBANY_DAKOTA)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
 
-IF (ALBANY_MOR)
+IF (ALBANY_MOR AND ALBANY_EPETRA)
   IF (ALBANY_RBGEN)
     add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
     SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
@@ -637,9 +665,11 @@ IF (ALBANY_MOR)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
+IF (ALBANY_EPETRA) 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
-add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+ENDIF()
+add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 set(ALL_LIBRARIES
