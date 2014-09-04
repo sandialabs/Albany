@@ -29,7 +29,7 @@ public:
   NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<ParamLib>& param_lib,
       const int num_dims,
-      const Teuchos::RCP<const Epetra_Comm>& comm_);
+      Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
   ~NonlinearPoissonProblem();
 

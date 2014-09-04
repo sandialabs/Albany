@@ -93,13 +93,13 @@ Albany::ProblemFactory::create()
   std::string& method = problemParams->get("Name", "Heat 1D");
 
   if (method == "Heat 1D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 1, commT));
   }
   else if (method == "Heat 2D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "Heat 3D") {
-    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::HeatProblem(problemParams, paramLib, 3, commT));
   }
 #ifdef ALBANY_DEMO_PDES
   else if (method == "CahnHill 2D") {
@@ -186,19 +186,19 @@ Albany::ProblemFactory::create()
 #ifdef ALBANY_LCM
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
-    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME or -DENABLE_LAMENT ****\n");
 #endif
   }
   else if (method == "Mechanics 1D") {
-    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 1, commT));
   }
   else if (method == "Mechanics 2D") {
-    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "Mechanics 3D") {
-    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "Elasticity 1D") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 1));
@@ -264,10 +264,10 @@ Albany::ProblemFactory::create()
     strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
   }
   else if (method == "Concurrent Multiscale 3D") {
-    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, comm));
+    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "Schwarz Multiscale 3D") {
-    strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, comm));
+    strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
@@ -278,36 +278,36 @@ Albany::ProblemFactory::create()
 #endif
 #ifdef ALBANY_SEE
   else if (method == "Nonlinear Poisson 1D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, commT));
   }
   else if (method == "Nonlinear Poisson 2D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "Nonlinear Poisson 3D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
   else if (method == "Hydride 2D") {
-    strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "HydMorph 2D") {
-    strategy = rcp(new Albany::HydMorphProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::HydMorphProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "MesoScaleLink 1D") {
-    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 1, comm));
+    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 1, commT));
   }
   else if (method == "MesoScaleLink 2D") {
-    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "MesoScaleLink 3D") {
-    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::MesoScaleLinkProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "LaplaceBeltrami 2D") {
-    strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 2, comm));
+    strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 2, commT));
   }
   else if (method == "LaplaceBeltrami 3D") {
-    strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::LaplaceBeltramiProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_FELIX
@@ -349,7 +349,7 @@ Albany::ProblemFactory::create()
 #endif
   else if (method == "Peridigm Code Coupling" ) {
 #ifdef ALBANY_PERIDIGM
-    strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, comm));
+    strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");
 #endif

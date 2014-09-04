@@ -30,7 +30,7 @@ namespace Albany {
     PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                     const Teuchos::RCP<ParamLib>& paramLib,
                     const int numEqm,
-                    const Teuchos::RCP<const Epetra_Comm>& comm);
+                    Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
 
     //! Destructor
     virtual ~PeridigmProblem();

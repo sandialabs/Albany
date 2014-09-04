@@ -33,7 +33,7 @@ class LaplaceBeltramiProblem : public AbstractProblem {
     LaplaceBeltramiProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                            const Teuchos::RCP<ParamLib>& paramLib,
                            const int numDim_,
-                           const Teuchos::RCP<const Epetra_Comm>& comm_);
+                           Teuchos::RCP<const Teuchos::Comm<int> >& commT_);
 
     //! Destructor
     ~LaplaceBeltramiProblem();
@@ -86,7 +86,7 @@ class LaplaceBeltramiProblem : public AbstractProblem {
 
     int numDim;
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;
 
     Teuchos::RCP<Albany::Layouts> dl;
 

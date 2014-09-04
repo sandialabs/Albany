@@ -18,12 +18,12 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              //const Teuchos::RCP<DistParamLib>& distParamLib_,
              const int numDim_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_) :
+             Teuchos::RCP<const Teuchos::Comm<int> >& commT_) : 
   Albany::AbstractProblem(params_, paramLib_/*, distParamLib_*/),
   haveSource(false),
   haveAbsorption(false),
   numDim(numDim_),
-  comm(comm_)
+  commT(commT_)
 {
   this->setNumEquations(1);
 
@@ -37,7 +37,7 @@ HeatProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
  // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   }
 

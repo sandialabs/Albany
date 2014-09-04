@@ -46,7 +46,7 @@ Albany::MechanicsProblem::
 MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                  const Teuchos::RCP<ParamLib>& param_lib,
                  const int num_dims,
-                 const Teuchos::RCP<const Epetra_Comm>& comm) :
+                 Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
   Albany::AbstractProblem(params, param_lib),
   have_source_(false),
   num_dims_(num_dims),
@@ -137,7 +137,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   if(params->isType<std::string>("MaterialDB Filename")){
     I_Do_Not_Have_A_Valid_Material_DB = false;
     std::string filename = params->get<std::string>("MaterialDB Filename");
-    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
+    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
   }
   TEUCHOS_TEST_FOR_EXCEPTION(I_Do_Not_Have_A_Valid_Material_DB,
                              std::logic_error,

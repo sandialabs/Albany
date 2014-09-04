@@ -85,9 +85,10 @@ int main(int ac, char* av[])
   //IK, 9/1/14: need to convert this to take in Teuchos comm object!
   Teuchos::RCP<Epetra_Comm> comm =
     Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db;
-  material_db = Teuchos::rcp(new QCAD::MaterialDatabase(input_file, comm));
+  material_db = Teuchos::rcp(new QCAD::MaterialDatabase(input_file, commT));
 
   // Get the name of the material model to be used (and make sure there is one)
   std::string element_block_name = "Block0";
@@ -345,7 +346,6 @@ int main(int ac, char* av[])
 
   Teuchos::ParameterList kokkosNodeParams;
   const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
   Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes, 0, commT, Tpetra::LocallyReplicated, nodeT));
   Teuchos::RCP<Tpetra_Vector> solution_vectorT = Teuchos::rcp(new Tpetra_Vector(mapT)); 
 

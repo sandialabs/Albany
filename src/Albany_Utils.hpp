@@ -28,6 +28,8 @@ namespace Albany {
   const Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
+  
+  Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc); 
 
   Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
   Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);

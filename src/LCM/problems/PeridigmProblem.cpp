@@ -11,7 +11,7 @@ Albany::PeridigmProblem::
 PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                 const Teuchos::RCP<ParamLib>& paramLib_,
                 const int numDim_,
-                const Teuchos::RCP<const Epetra_Comm>& comm) :
+                Teuchos::RCP<const Teuchos::Comm<int> >& commT):
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false), haveMatDB(false), numDim(numDim_)
 {
@@ -28,7 +28,7 @@ PeridigmProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Read the material data base file, if any
   if(params->isType<std::string>("MaterialDB Filename")){
     std::string filename = params->get<std::string>("MaterialDB Filename");
-    materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
+    materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
   }
 
   // "Sphere Volume" is a required field for peridynamic simulations that read an Exodus sphere mesh

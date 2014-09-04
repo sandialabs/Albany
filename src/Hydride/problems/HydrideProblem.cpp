@@ -17,11 +17,11 @@ Albany::HydrideProblem::
 HydrideProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_) :
+             Teuchos::RCP<const Teuchos::Comm<int> >& commT_):
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
   haveNoise(false),
-  comm(comm_)
+  commT(commT_)
 {
 
   // Compute number of equations

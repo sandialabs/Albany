@@ -38,7 +38,7 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
       const Teuchos::RCP<Teuchos::ParameterList>& params_,
       const Teuchos::RCP<ParamLib>& paramLib_,
       const int numDim_,
-      const Teuchos::RCP<const Epetra_Comm>& comm_);
+      Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
     //! Destructor
     virtual ~MesoScaleLinkProblem();
@@ -107,7 +107,7 @@ class MesoScaleLinkProblem : public Albany::AbstractProblem {
     std::string matModel;
     std::string exeName;
     Teuchos::RCP<Albany::Layouts> dl;
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos::Comm<int> > commT; 
     const Albany_MPI_Comm mpi_comm;
     Teuchos::RCP<MPI_Comm> interCommunicator;
     int numMesoPEs;

@@ -11,7 +11,7 @@ Albany::LameProblem::
 LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
             const Teuchos::RCP<ParamLib>& paramLib_,
             const int numDim_,
-            const Teuchos::RCP<const Epetra_Comm>& comm) :
+            Teuchos::RCP<const Teuchos::Comm<int> >& commT): 
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false), haveMatDB(false)
 {
@@ -24,7 +24,7 @@ LameProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if(params->isType<std::string>("MaterialDB Filename")){
         haveMatDB = true;
     mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
   }
 
   // currently only support 3D analyses

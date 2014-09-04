@@ -21,6 +21,14 @@
     return emc.Comm();
   }
 
+  Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
+    Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
+               Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
+    return *mpiComm->getRawMpiComm();
+
+  }
+
+
   Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
   }

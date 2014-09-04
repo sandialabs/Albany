@@ -83,7 +83,6 @@ namespace Albany {
 
     bool haveNoise; // Langevin noise present
 
-    //Teuchos::RCP<const Epetra_Comm> comm;
     Teuchos::RCP<const Teuchos::Comm<int> > commT;  
 
     Teuchos::RCP<Albany::Layouts> dl;

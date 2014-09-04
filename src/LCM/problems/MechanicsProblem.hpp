@@ -36,7 +36,7 @@ public:
   MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<ParamLib>& param_lib,
       const int num_dims,
-      const Teuchos::RCP<const Epetra_Comm>& comm);
+      Teuchos::RCP<const Teuchos::Comm<int> >& commT);
   ///
   /// Destructor
   ///

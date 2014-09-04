@@ -84,9 +84,11 @@ int main(int ac, char* av[])
   Teuchos::GlobalMPISession mpi_session(&ac, &av);
   Teuchos::RCP<Epetra_Comm> comm =
     Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  //IK, 9/4/14: for Tpetra branch: converting Epetra_Comm to Teuchos::Comm 
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db;
-  material_db = Teuchos::rcp(new QCAD::MaterialDatabase(input_file, comm));
+  material_db = Teuchos::rcp(new QCAD::MaterialDatabase(input_file, commT));
 
   // Get the name of the material model to be used (and make sure there is one)
   std::string element_block_name = "Block0";

@@ -25,14 +25,14 @@ Albany::MesoScaleLinkProblem::
 MesoScaleLinkProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                      const Teuchos::RCP<ParamLib>& paramLib_,
                      const int numDim_,
-                     const Teuchos::RCP<const Epetra_Comm>& comm_) :
+                     Teuchos::RCP<const Teuchos::Comm<int> >& commT_):
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false),
   numDim(numDim_),
-  comm(comm_),
-  mpi_comm(Albany::getMpiCommFromEpetraComm(*comm_)) {
+  commT(commT_),
+  mpi_comm(Albany::getMpiCommFromTeuchosComm(commT_)) {
 
-  TEUCHOS_TEST_FOR_EXCEPTION(comm->NumProc() != 1, std::logic_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(commT->getSize() != 1, std::logic_error,
                              "MesoScale bridge only supports 1 master processor currently:\n\tRun with \"mpirun -np 1 Albany\"");
 
   std::string& method = params->get("Name", "MesoScaleLink ");
