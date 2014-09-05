@@ -60,7 +60,6 @@ SET(HEADERS
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
-#  Albany_DistributedParameterLibrary_Epetra.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
   )
 

@@ -16,8 +16,6 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
-//IK, 6/27/14: changed the following to use Tpetra
-//#include "Albany_DistributedParameterLibrary_Epetra.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid_FieldContainer.hpp>
 
@@ -31,8 +29,6 @@
 #include "Teuchos_Comm.hpp"
 #include "Epetra_Import.h"
 
-//IK, 6/27/14: changed the following to use Tpetra 
-//typedef Albany::DistributedParameterLibrary<Epetra_Vector, Epetra_MultiVector> DistParamLib;
 typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector> DistParamLib;
 
 namespace PHAL {

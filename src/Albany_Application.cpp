@@ -13,10 +13,13 @@
 #include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
-#include "EpetraExt_MultiVectorOut.h"
 
+#if ALBANY_EPETRA
+#include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
 #include "EpetraExt_VectorOut.h"
+#endif
+
 #include "MatrixMarket_Tpetra.hpp"
 
 
@@ -34,8 +37,6 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 
-#include "EpetraExt_RowMatrixOut.h"
-#include "EpetraExt_MultiVectorOut.h"
 
 #ifdef ALBANY_PERIDIGM
 #include "PeridigmManager.hpp"
@@ -635,6 +636,7 @@ computeGlobalResidualImplT(
   }
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalResidual(const double current_time,
@@ -701,6 +703,7 @@ computeGlobalResidual(const double current_time,
   if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
     countRes++;  //increment residual counter
 }
+#endif
 
 void
 Albany::Application::
@@ -853,6 +856,7 @@ computeGlobalJacobianImplT(const double alpha,
   jacT->fillComplete();
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalJacobian(const double alpha,
@@ -933,6 +937,7 @@ computeGlobalJacobian(const double alpha,
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
 }
+#endif
 
 void
 Albany::Application::
@@ -956,6 +961,7 @@ computeGlobalJacobianT(const double alpha,
       Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT));
 }
 
+#if ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
@@ -973,6 +979,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
   wrappedJac = buildWrappedOperator(jac, wrappedJac);
   blockPrec->rebuildInverseOperator(wrappedJac);
 }
+#endif
 
 void
 Albany::Application::
@@ -1291,6 +1298,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalTangent(const double alpha,
@@ -1377,6 +1385,7 @@ computeGlobalTangent(const double alpha,
   }
 
 }
+#endif
 
 
 void
@@ -1663,6 +1672,7 @@ evaluateResponseTangentT(int response_index,
     alpha, beta, omega, t, sum_derivs, xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 evaluateResponseDerivative(
@@ -1687,6 +1697,7 @@ evaluateResponseDerivative(
   responses[response_index]->evaluateDerivative(
     t, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
+#endif 
 
 void
 Albany::Application::

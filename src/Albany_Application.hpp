@@ -148,12 +148,14 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
+#ifdef ALBANY_EPETRA
     void computeGlobalResidual(const double current_time,
                                const Epetra_Vector* xdot,
                                const Epetra_Vector* xdotdot,
                                const Epetra_Vector& x,
                                const Teuchos::Array<ParamVec>& p,
                                Epetra_Vector& f);
+#endif
 
      void computeGlobalResidualT(const double current_time,
                                const Tpetra_Vector* xdotT,
@@ -177,6 +179,7 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
+#ifdef ALBANY_EPETRA
     void computeGlobalJacobian(const double alpha,
                                const double beta,
                                const double omega,
@@ -187,6 +190,7 @@ namespace Albany {
                                const Teuchos::Array<ParamVec>& p,
                                Epetra_Vector* f,
                                Epetra_CrsMatrix& jac);
+#endif
 
      void computeGlobalJacobianT(const double alpha,
                                  const double beta,
@@ -218,6 +222,7 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
+#ifdef ALBANY_EPETRA
     void computeGlobalPreconditioner(const Teuchos::RCP<Epetra_CrsMatrix>& jac,
                                      const Teuchos::RCP<Epetra_Operator>& prec);
 
@@ -242,6 +247,7 @@ namespace Albany {
                               Epetra_Vector* f,
                               Epetra_MultiVector* JV,
                               Epetra_MultiVector* fp);
+#endif
 
      void computeGlobalTangentT(const double alpha,
                               const double beta,
@@ -363,6 +369,7 @@ namespace Albany {
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
+#ifdef ALBANY_EPETRA
     void evaluateResponseDerivative(
       int response_index,
       const double current_time,
@@ -376,6 +383,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+#endif
 
     void evaluateResponseDerivativeT(
       int response_index,
