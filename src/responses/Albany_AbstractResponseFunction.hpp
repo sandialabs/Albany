@@ -95,6 +95,7 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp) = 0;
 
+#ifdef ALBANY_EPETRA
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -108,6 +109,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp) = 0;
+#endif
 
    virtual void evaluateDerivativeT(
       const double current_time,

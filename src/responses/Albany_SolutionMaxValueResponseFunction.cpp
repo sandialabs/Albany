@@ -79,6 +79,7 @@ evaluateTangentT(const double alpha,
     gxT->multiply(T, N, alpha, *dgdxT, *VxT, 0.0);
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionMaxValueResponseFunction::
 evaluateGradient(const double current_time,
@@ -121,6 +122,7 @@ evaluateGradient(const double current_time,
   if (dg_dp != NULL)
     dg_dp->PutScalar(0.0);
 }
+#endif
 
 void
 Albany::SolutionMaxValueResponseFunction::

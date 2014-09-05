@@ -60,6 +60,7 @@ createGradientOpT() const
   return Teuchos::null;
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::ScalarResponseFunction::
 evaluateDerivative(
@@ -80,6 +81,7 @@ evaluateDerivative(
     dg_dx.getMultiVector().get(), dg_dxdot.getMultiVector().get(), dg_dxdotdot.getMultiVector().get(),
     dg_dp.getMultiVector().get());
 }
+#endif
 
 void
 Albany::ScalarResponseFunction::

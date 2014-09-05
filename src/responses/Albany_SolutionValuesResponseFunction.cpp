@@ -91,6 +91,7 @@ evaluateTangentT(const double alpha,
   std::cerr << "SolutionValuesResponseFunction::evaluateTangentT NOT IMPLEMETED\n";
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 evaluateGradient(const double /*current_time*/,
@@ -136,6 +137,7 @@ evaluateGradient(const double /*current_time*/,
     dg_dp->PutScalar(0.0);
   }
 }
+#endif
 
 void
 Albany::SolutionValuesResponseFunction::

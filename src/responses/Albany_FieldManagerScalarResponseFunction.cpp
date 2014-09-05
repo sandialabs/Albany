@@ -154,6 +154,7 @@ evaluateTangentT(const double alpha,
   rfm->postEvaluate<PHAL::AlbanyTraits::Tangent>(workset);
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateGradient(const double current_time,
@@ -249,6 +250,7 @@ evaluateGradient(const double current_time,
     rfm->postEvaluate<PHAL::AlbanyTraits::Jacobian>(workset);
   }  
 }
+#endif
 
 void
 Albany::FieldManagerScalarResponseFunction::

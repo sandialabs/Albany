@@ -6,6 +6,7 @@
 
 #include "Albany_DistributedResponseFunction.hpp"
 
+#ifdef ALBANY_EPETRA
 void
 Albany::DistributedResponseFunction::
 evaluateDerivative(
@@ -26,6 +27,7 @@ evaluateDerivative(
     dg_dx.getLinearOp().get(), dg_dxdot.getLinearOp().get(),
     dg_dxdotdot.getLinearOp().get(), dg_dp.getMultiVector().get());
 }
+#endif
 
 void
 Albany::DistributedResponseFunction::

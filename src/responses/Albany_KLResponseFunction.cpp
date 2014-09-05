@@ -99,6 +99,7 @@ evaluateTangentT(const double alpha,
 			    gT, gxT, gpT);
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::KLResponseFunction::
 evaluateDerivative(const double current_time,
@@ -116,6 +117,7 @@ evaluateDerivative(const double current_time,
   response->evaluateDerivative(current_time, xdot, xdotdot, x, p, deriv_p, 
 			       g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
+#endif
 
 void
 Albany::KLResponseFunction::

@@ -81,6 +81,7 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp);
 
+#ifdef ALBANY_EPETRA
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -94,6 +95,7 @@ namespace Albany {
       Epetra_Operator* dg_dxdot,
       Epetra_Operator* dg_dxdotdot,
       Epetra_MultiVector* dg_dp);
+#endif
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradientT(

@@ -117,6 +117,7 @@ evaluateTangentT(
 {
 }
 
+#ifdef ALBANY_EPETRA
 template<class Norm>
 void
 Albany::SolutionFileResponseFunction<Norm>::
@@ -187,6 +188,7 @@ evaluateGradient(const double current_time,
   if (dg_dp != NULL)
     dg_dp->PutScalar(0.0);
 }
+#endif
 
 template<class Norm>
 void

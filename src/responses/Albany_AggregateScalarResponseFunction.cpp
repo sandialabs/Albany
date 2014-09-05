@@ -179,7 +179,7 @@ evaluateTangentT(const double alpha,
   }
 }
 
-
+#ifdef ALBANY_EPETRA
 void
 Albany::AggregateScalarResponseFunction::
 evaluateGradient(const double current_time,
@@ -244,6 +244,7 @@ evaluateGradient(const double current_time,
     offset += num_responses;
   }
 }
+#endif
 
 void
 Albany::AggregateScalarResponseFunction::

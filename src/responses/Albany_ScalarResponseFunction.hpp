@@ -38,6 +38,7 @@ namespace Albany {
       return comm;
     }
 
+#ifdef ALBANY_EPETRA
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -51,6 +52,7 @@ namespace Albany {
       Epetra_MultiVector* dg_dxdot,
       Epetra_MultiVector* dg_dxdotdot,
       Epetra_MultiVector* dg_dp) = 0;
+#endif
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradientT(
@@ -131,6 +133,7 @@ namespace Albany {
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
+#ifdef ALBANY_EPETRA
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -144,6 +147,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+#endif
 
     virtual void evaluateDerivativeT(
       const double current_time,

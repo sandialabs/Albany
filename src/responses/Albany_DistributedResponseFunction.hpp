@@ -29,6 +29,7 @@ namespace Albany {
     //! Destructor
     virtual ~DistributedResponseFunction() {};
 
+#ifdef ALBANY_EPETRA
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -42,6 +43,7 @@ namespace Albany {
       Epetra_Operator* dg_dxdot,
       Epetra_Operator* dg_dxdotdot,
       Epetra_MultiVector* dg_dp) = 0;
+#endif
     
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradientT(
@@ -100,6 +102,7 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const { return false; }
 
+#ifdef ALBANY_EPETRA
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -113,6 +116,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+#endif
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivativeT(

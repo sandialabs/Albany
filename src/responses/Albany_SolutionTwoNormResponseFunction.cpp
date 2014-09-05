@@ -82,6 +82,7 @@ evaluateTangentT(const double alpha,
     gpT->putScalar(0.0);
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionTwoNormResponseFunction::
 evaluateGradient(const double current_time,
@@ -121,6 +122,7 @@ evaluateGradient(const double current_time,
   if (dg_dp != NULL)
     dg_dp->PutScalar(0.0);
 }
+#endif
 
 void
 Albany::SolutionTwoNormResponseFunction::
