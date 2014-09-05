@@ -315,6 +315,23 @@ ELSE()
   SET(ALBANY_QCAD FALSE)
 ENDIF()
 
+# Set optional build of only Albany (Epetra) executable. 
+# Be default, it will be on, so both the Albany and AlbanyT executables will 
+# be built in the Tpetra Albany branch.  The idea is ultimately you'll 
+# be able to build only the AlbanyT executable in which case Epetra will not
+# be needed at all in the Trilinos.  This will be accomplished by ifdef'ing
+# out all the Epetra stuff
+
+OPTION(ENABLE_ALBANY_EPETRA_EXE "Flag to turn on building of Albany Epetra Executable" ON)
+IF (ENABLE_ALBANY_EPETRA_EXE)
+  ADD_DEFINITIONS(-DALBANY_EPETRA)
+  MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
+  SET(ALBANY_EPETRA TRUE)
+ELSE()
+  MESSAGE("-- ALBANY_EPETRA_EXE     is NOT Enabled.")
+  SET(ALBANY_EPETRA FALSE)
+ENDIF()
+
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_FELIX "Flag to turn on FELIX Source code" OFF)
 IF (ENABLE_FELIX)
