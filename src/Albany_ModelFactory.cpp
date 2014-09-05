@@ -6,7 +6,9 @@
 #include "Albany_ModelFactory.hpp"
 
 #include "Albany_Application.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_ModelEvaluator.hpp"
+#endif
 #include "Albany_ModelEvaluatorT.hpp"
 
 #include "AAdapt_AdaptiveSolutionManager.hpp"
@@ -28,6 +30,7 @@ ModelFactory::ModelFactory(const RCP<ParameterList> &params,
   // Nothing to do
 }
 
+#ifdef ALBANY_EPETRA
 RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
   RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));
@@ -46,6 +49,7 @@ RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 
   return model;
 }
+#endif
 
 RCP<Thyra::ModelEvaluatorDefaultBase<ST> > ModelFactory::createT() const
 {

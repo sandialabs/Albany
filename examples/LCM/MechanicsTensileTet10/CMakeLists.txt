@@ -17,7 +17,9 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 IF(ALBANY_SEACAS)
-  add_test(${testName}_STK ${Albany.exe} NotchedTensileTet10.xml)
+  if (ALBANY_EPETRA) 
+    add_test(${testName}_STK ${Albany.exe} NotchedTensileTet10.xml)
+  endif()
 if (ALBANY_MUELU_EXAMPLES)
   if (ALBANY_64BIT_INT)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/NotchedTensileTet10T_MueLu_64.xml

@@ -44,11 +44,13 @@ add_executable(CylHeatProfile CylHeatProfile.C)
 #add_test(${testName} ${Albany.exe})
 #set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
 
+if (ALBANY_EPETRA) 
 add_test(NAME ${testName}
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+endif()
 
 if (ALBANY_IFPACK2)
 add_test(NAME ${testName}_Tpetra

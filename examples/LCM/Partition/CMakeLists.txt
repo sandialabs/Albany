@@ -42,10 +42,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/partition.exodiff
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(NAME ${testName} COMMAND "python" "run_partition.py")
+set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+endif()
 if (ALBANY_IFPACK2)
 add_test(NAME ${testName}_Tpetra COMMAND "python" "run_partitionT.py")
+set_tests_properties(${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 endif()
-set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 
 ENDIF()

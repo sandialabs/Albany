@@ -16,14 +16,20 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vortex.exo.4.3
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.xml COPYONLY)
 
+if (ALBANY_EPETRA) 
 add_test(${testName}_Blocked ${Albany.exe} inputBlocked.xml)
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTransientRK.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputTransientRK.xml COPYONLY)
 
+if (ALBANY_EPETRA) 
 add_test(${testName}_TransIRK ${Albany.exe} inputTransientRK.xml)
+endif()

@@ -28,7 +28,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadOut.exo.4.3
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 ###add_test(${testName} ${Albany.exe})
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+endif()
 # 3'. Create the test with this name and standard executable
 if (ALBANY_IFPACK2)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
@@ -36,8 +38,10 @@ endif ()
 
 # Refine the quads
 IF(ALBANY_STK_PERCEPT)
+if (ALBANY_EPETRA) 
 add_test(${testName}_Refine ${Albany.exe} inputRefine.xml)
 add_test(${testName}_2Refine ${Albany.exe} input2Refine.xml)
+endif()
 # Enrich and convert both still have bugs
 #add_test(${testName}_Enrich ${Albany.exe} inputEnrich.xml)
 #add_test(${testName}_Convert ${Albany.exe} inputConvert.xml)

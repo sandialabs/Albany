@@ -15,10 +15,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_ascii.xml
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_dome_restart.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_dome_restart.xml COPYONLY)
 
-
+if (ALBANY_EPETRA) 
 add_test(FELIX_FO_Dome_Ascii ${SerialAlbany.exe} input_fo_dome_ascii.xml)
-
 add_test(FELIX_FO_Dome_Restart ${SerialAlbany.exe} input_fo_dome_restart.xml)
 set_tests_properties(FELIX_FO_Dome_Restart  PROPERTIES DEPENDS FELIX_FO_Dome_Ascii)
+endif()
 
 

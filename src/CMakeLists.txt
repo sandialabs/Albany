@@ -224,13 +224,14 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherScalarNodalParameter.cpp
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
-  
-IF (ALBANY_EPETRA) 
+ 
+#IK, TO DO, 9/5/14: These should ultimately be Epetra only responses. 
+#IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES}
   evaluators/PHAL_ResponseFieldIntegral.cpp
   evaluators/PHAL_SeparableScatterScalarResponse.cpp
   )
-ENDIF() 
+#ENDIF() 
 
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp

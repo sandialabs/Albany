@@ -29,13 +29,16 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials_100.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName}_SingleMaterial_SERIAL ${SerialAlbany.exe} inputSingleMaterial.xml)
+add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbany.exe} inputMultiMat_10.xml)
+add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbany.exe} inputMultiMat_100.xml)
+endif()
+
 add_test(${testName}_SingleMaterial_SERIAL_Tpetra ${SerialAlbanyT.exe} inputSingleMaterial.xml)
 
-add_test(${testName}_MultiMaterial_10_SERIAL ${SerialAlbany.exe} inputMultiMat_10.xml)
 add_test(${testName}_MultiMaterial_10_SERIAL_Tpetra ${SerialAlbanyT.exe} inputMultiMat_10.xml)
 
-add_test(${testName}_MultiMaterial_100_SERIAL ${SerialAlbany.exe} inputMultiMat_100.xml)
 add_test(${testName}_MultiMaterial_100_SERIAL_Tpetra ${SerialAlbanyT.exe}
 inputMultiMat_100T.xml)
 

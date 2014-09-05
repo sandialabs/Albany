@@ -14,13 +14,15 @@
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_VectorBase.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "EpetraExt_ModelEvaluator.h"
+#include "Epetra_Vector.h"
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+#endif
+
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
-#include "Epetra_Vector.h"
-
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
 
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Teuchos_RCP.hpp"
@@ -49,11 +51,13 @@ namespace Albany {
     //! Destructor
     virtual ~SolverFactory();
 
+#ifdef ALBANY_EPETRA
     //! Create solver as response-only model evaluator
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
+#endif
 
    // Thyra version of above
    virtual Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createT(
@@ -61,11 +65,13 @@ namespace Albany {
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+#endif
 
     //Thyra version of above
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createAndGetAlbanyAppT(
@@ -81,10 +87,12 @@ namespace Albany {
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+#endif
 
     //Thyra version of above
     Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(

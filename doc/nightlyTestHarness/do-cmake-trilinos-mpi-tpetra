@@ -47,8 +47,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D CMAKE_Fortran_COMPILER=/usr/local/bin/mpif90 \
       -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
       -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
-      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
-      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
@@ -88,7 +88,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_RBGen:BOOL=ON \
       -D Trilinos_ENABLE_Didasko:BOOL=ON \
       -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
-      -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
       -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
       -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
 \
@@ -102,7 +101,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Piro_ENABLE_TESTS:BOOL=ON \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D TPL_ENABLE_Boost:BOOL=ON \
+      -D TPL_ENABLE_BoostLib:BOOL=ON \
 \
       -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \

@@ -14,4 +14,6 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+endif()

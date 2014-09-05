@@ -28,9 +28,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuad.exo
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName}_Tri ${Albany.exe} inputTri.xml)
 add_test(${testName}_Quad ${Albany.exe} inputQuad.xml)
 add_test(${testName}_Exo ${Albany.exe} inputExo.xml)
+endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

@@ -56,8 +56,11 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #MESSAGE(SEACAS_EXODIFF "${SEACAS_EXODIFF}")
 
 # Run the "runtest.py" file in the CWD
+if (ALBANY_EPETRA) 
 add_test(NAME ${testName} COMMAND "python" "AnisotropicDamage.py")
+set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+endif()
 if (ALBANY_IFPACK2) 
 add_test(NAME ${testName}_Tpetra COMMAND "python" "AnisotropicDamageT.py")
+set_tests_properties(${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 endif()
-set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")

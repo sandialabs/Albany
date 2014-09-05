@@ -72,14 +72,29 @@ time source $SCRIPTDIR/albany_checkout_tpetra.sh
 echo; echo "...Starting Trilinos full Build"
 time source $SCRIPTDIR/trilinos_build_tpetra.sh
 
-echo; echo "...Starting Albany Build"
+echo; echo "...Starting Albany Build (Albany and AlbanyT)"
 time source $SCRIPTDIR/albany_build_tpetra.sh
 
 #-------------------------------------------
 # Execute albany tests
 #-------------------------------------------
-echo; echo "...Starting Albany Tests"
+echo; echo "...Starting Albany Tests (Albany and AlbanyT)"
 time source $SCRIPTDIR/albany_runtest_tpetra.sh
+
+#-------------------------------------------
+# Execute scripts for building trilinos, dakota, and albany
+#-------------------------------------------
+echo; echo "...Starting Albany Build (AlbanyT only)"
+time source $SCRIPTDIR/albany_build_tpetra_albanyTonly.sh
+
+#-------------------------------------------
+# Execute albany tests
+#-------------------------------------------
+echo; echo "...Starting Albany Tests (AlbanyT only)"
+time source $SCRIPTDIR/albany_runtest_tpetra_albanyTonly.sh
+
+#-------------------------------------------
+# Execute scripts for building trilinos, dakota, and albany
 
 #-------------------------------------------
 # Execute parse output and send email scripts

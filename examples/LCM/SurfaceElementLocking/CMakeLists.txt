@@ -77,11 +77,14 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(NAME ${testName} COMMAND "python" "runtest.py")
-if (ALBANY_IFPACK2)
-  add_test(NAME ${testName}_Tpetra COMMAND "python" "runtestT.py")
-endif()
-  set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
+  if (ALBANY_EPETRA) 
+    add_test(NAME ${testName} COMMAND "python" "runtest.py")
+    set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
+  endif()
+  if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_Tpetra COMMAND "python" "runtestT.py")
+    set_tests_properties(${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
+  endif()
 ENDIF()
 
 

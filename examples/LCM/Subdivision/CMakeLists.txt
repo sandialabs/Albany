@@ -43,10 +43,13 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #MESSAGE(SEACAS_EXODIFF "${SEACAS_EXODIFF}")
 
 # Run the "runtest.py" file in the CWD
+if (ALBANY_EPETRA) 
 add_test(NAME ${testName}_one_tet COMMAND "python" "run_subdivision.py")
+set_tests_properties(${testName}_one_tet  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+endif()
 if (ALBANY_IFPACK2) 
 add_test(NAME ${testName}_one_tet_Tpetra COMMAND "python" "run_subdivisionT.py")
+set_tests_properties(${testName}_one_tet_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 endif()
-set_tests_properties(${testName}_one_tet  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 
 ENDIF()

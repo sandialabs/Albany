@@ -32,9 +32,11 @@ get_filename_component(testNamePipe ${CMAKE_CURRENT_SOURCE_DIR}_Pipe NAME)
 get_filename_component(testNameReactor ${CMAKE_CURRENT_SOURCE_DIR}_Reactor NAME)
 get_filename_component(testNameNetwork ${CMAKE_CURRENT_SOURCE_DIR}_Network NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testNamePipe} ${Albany.exe} pipe.xml)
 add_test(${testNameReactor} ${Albany.exe} reactor.xml)
 add_test(${testNameNetwork} ${AlbanyCoupled.exe} network_coupled.xml)
+endif()
 
 # 4. Repeat process for SG problems
 if(ALBANY_DAKOTA)

@@ -18,7 +18,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName}_BaseProblem ${Albany.exe} inputBase.xml)
+endif()
 add_test(${testName}_BaseProblem_Tpetra ${AlbanyT.exe} inputBaseT.xml)
 add_test(${testName}_CopyRemesh_Tpetra ${AlbanyT.exe} inputCR.xml)
 

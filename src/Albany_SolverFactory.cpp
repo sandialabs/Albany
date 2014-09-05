@@ -6,12 +6,14 @@
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_ObserverFactory.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_PiroObserver.hpp"
+#include "Piro_Epetra_SolverFactory.hpp"
+#endif
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
 
-#include "Piro_Epetra_SolverFactory.hpp"
 #include "Piro_ProviderBase.hpp"
 
 #include "Piro_SolverFactory.hpp"
@@ -193,6 +195,7 @@ Albany::SolverFactory::~SolverFactory(){
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -202,6 +205,7 @@ Albany::SolverFactory::create(
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
+#endif
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createT(
@@ -214,6 +218,7 @@ Albany::SolverFactory::createT(
   return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -393,6 +398,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     return thyraModelFactory->create(epetraSolver, Teuchos::null);
   }
 }
+#endif
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
@@ -524,10 +530,12 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
     }
+#ifdef ALBANY_EPETRA
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
     }
+#endif
   }
   else {
     Piro::SolverFactory piroFactory;
@@ -535,13 +543,16 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
     }
+#ifdef ALBANY_EPETRA
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
     }
+#endif
   }
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -562,6 +573,7 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   return modelFactory.create();
 
 }
+#endif
 
 Teuchos::RCP<Thyra::ModelEvaluator<ST> >
 Albany::SolverFactory::createAlbanyAppAndModelT(

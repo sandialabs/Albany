@@ -6,7 +6,9 @@
 #ifndef ALBANY_MODELFACTORY_HPP
 #define ALBANY_MODELFACTORY_HPP
 
+#ifdef ALBANY_EPETRA
 #include "EpetraExt_ModelEvaluator.h"
+#endif
 #include "Thyra_ModelEvaluatorDefaultBase.hpp"
 
 #include "Teuchos_RCP.hpp"
@@ -23,7 +25,9 @@ public:
   ModelFactory(const Teuchos::RCP<Teuchos::ParameterList> &params,
                const Teuchos::RCP<Application> &app);
 
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<EpetraExt::ModelEvaluator> create() const;
+#endif
   //Thyra version of above
   Teuchos::RCP<Thyra::ModelEvaluatorDefaultBase<ST> > createT() const;
 

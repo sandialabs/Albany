@@ -23,7 +23,9 @@ endif()
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName}TransientHeat2D ${Albany.exe} MechanicsTransientHeat2D.xml)
+endif()
 
 if (ALBANY_IFPACK2) 
 #  if (NOT ALBANY_64BIT_INT)
@@ -52,7 +54,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ThermalExpansionMaterials.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName}ThermalExpansion ${Albany.exe} ThermalExpansion.xml)
+endif()
 
 # Coupled Plasticity
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperature.xml
@@ -64,4 +68,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe} MechanicsWithTemperature.xml)
+endif()

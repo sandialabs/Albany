@@ -23,5 +23,7 @@ add_executable(MPALE_dummy MPALE_dummy.C)
 
 # 7. Run the Albany test
 
+if (ALBANY_EPETRA) 
 add_test(${testName}_nobridge_SERIAL ${SerialAlbany.exe} input_nobridge.xml)
+endif() 
 add_test(${testName}_nobridge_SERIAL_Tpetra ${SerialAlbanyT.exe} input_nobridgeT.xml)

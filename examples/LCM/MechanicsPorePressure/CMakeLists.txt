@@ -9,8 +9,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PoroMaterialsSimple.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Simple NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanicsSimple.xml)
-  add_test(${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputMechanicsSimpleT.xml)
+  if (ALBANY_EPETRA) 
+    add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanicsSimple.xml)
+  endif()
+  if (ALBANY_IFPACK2) 
+    add_test(${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputMechanicsSimpleT.xml)
+  endif()
 ENDIF()
 
 # 1. Copy Input file from source to binary dir
@@ -23,7 +27,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-IF(NOT ALBANY_PARALLEL_ONLY) 
+IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA) 
   add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanics.xml)
 ENDIF()
 
@@ -40,8 +44,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}Localized NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanicsLocalized.xml)
-  add_test(${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputMechanicsLocalizedT.xml)
+  if (ALBANY_EPETRA) 
+    add_test(${testName}_Serial ${SerialAlbany.exe} inputMechanicsLocalized.xml)
+  endif()
+  if (ALBANY_IFPACK2) 
+    add_test(${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputMechanicsLocalizedT.xml)
+  endif()
 ENDIF()
 
 # 1. Copy Input file from source to binary dir
@@ -57,8 +65,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}ParallelFlow NAME)
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testName}_Serial ${SerialAlbany.exe} inputParallelFlow.xml)
-  add_test(${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputParallelFlowT.xml)
+  if (ALBANY_EPETRA) 
+    add_test(${testName}_Serial ${SerialAlbany.exe} inputParallelFlow.xml)
+  endif()
+  if (ALBANY_IFPACK2) 
+    add_test(${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputParallelFlowT.xml)
+  endif()
 ENDIF()
 
 # 1. Copy Input file from source to binary dir
@@ -71,7 +83,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/surface3ElemMesh.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}OrthogonalFlow NAME)
 # 3. Create the test with this name and standard executable
-IF(NOT ALBANY_PARALLEL_ONLY)
+IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
   add_test(${testName}_Serial ${SerialAlbany.exe} inputOrthogonalFlow.xml)
 ENDIF()
 

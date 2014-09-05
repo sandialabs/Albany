@@ -13,7 +13,10 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 4. Create the test (actually the data for the test) with this name and standard executable
 
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+endif()
+
 if (ALBANY_IFPACK2)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
