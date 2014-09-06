@@ -27,11 +27,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sincoszT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sincoszT.xml COPYONLY)
 if (ALBANY_EPETRA) 
 add_test(${testName}_SinCosZ3DPeriodicXY ${Albany.exe} input_fo_sincosz.xml)
-endif()
-add_test(${testName}_SinCosZ3DPeriodicXY_Tpetra ${AlbanyT.exe}
-input_fo_sincoszT.xml)
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_SinCosZ3DPeriodicXY PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+endif()
+endif()
+
+add_test(${testName}_SinCosZ3DPeriodicXY_Tpetra ${AlbanyT.exe} input_fo_sincoszT.xml)
+if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_SinCosZ3DPeriodicXY_Tpetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()
 
@@ -42,11 +44,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_sinexp_neumannT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_sinexp_neumannT.xml COPYONLY)
 if (ALBANY_EPETRA) 
 add_test(${testName}_SinExp_Neumann ${Albany.exe} input_fo_sinexp_neumann.xml)
-endif()
-add_test(${testName}_SinExp_Neumann_Tpetra ${AlbanyT.exe}
-input_fo_sinexp_neumannT.xml)
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_SinExp_Neumann PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+endif()
+endif()
+
+add_test(${testName}_SinExp_Neumann_Tpetra ${AlbanyT.exe} input_fo_sinexp_neumannT.xml)
+if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_SinExp_Neumann_Tpetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()
 
@@ -58,10 +62,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_cosexp_basalT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_cosexp_basalT.xml COPYONLY)
 if (ALBANY_EPETRA) 
 add_test(${testName}_CosExp_Basal ${Albany.exe} input_fo_cosexp_basal.xml)
-endif()
-add_test(${testName}_CosExp_Basal_Tpetra ${AlbanyT.exe} input_fo_cosexp_basalT.xml)
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_CosExp_Basal PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
+endif()
+endif()
+
+add_test(${testName}_CosExp_Basal_Tpetra ${AlbanyT.exe} input_fo_cosexp_basalT.xml)
+if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName}_CosExp_Basal_Tpetra PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT}) 
 endif()
 

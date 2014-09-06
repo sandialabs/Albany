@@ -155,17 +155,6 @@ ELSE()
 ENDIF()
 
 
-# MESSAGE("-- Looking for Dakota (via TriKota):")
-LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
-IF (TriKota_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DHAVE_CONFIG_H -DALBANY_DAKOTA)
-  MESSAGE("-- Looking for Dakota via TriKota: Found, compiling with -DALBANY_DAKOTA")
-  SET(ALBANY_DAKOTA TRUE)
-ELSE()
-  MESSAGE("-- Looking for Dakota via TriKota: NOT found.")
-  SET(ALBANY_DAKOTA FALSE)
-ENDIF()
-
 # set optional dependency on SEACAS, for I/O via stk_io
 # MESSAGE("-- Looking for SEACAS:")
 LIST(FIND Trilinos_PACKAGE_LIST SEACASIoss SEACASIoss_List_ID)
@@ -327,9 +316,22 @@ IF (ENABLE_ALBANY_EPETRA_EXE)
   ADD_DEFINITIONS(-DALBANY_EPETRA)
   MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
   SET(ALBANY_EPETRA TRUE)
+
+  # DAKOTA uses Epetra currently
+  LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
+  IF (TriKota_List_ID GREATER -1)
+    ADD_DEFINITIONS(-DHAVE_CONFIG_H -DALBANY_DAKOTA)
+    MESSAGE("-- Looking for Dakota via TriKota: Found, compiling with -DALBANY_DAKOTA")
+    SET(ALBANY_DAKOTA TRUE)
+  ELSE()
+    MESSAGE("-- Looking for Dakota via TriKota: NOT found.")
+    SET(ALBANY_DAKOTA FALSE)
+  ENDIF()
+
 ELSE()
   MESSAGE("-- ALBANY_EPETRA_EXE     is NOT Enabled.")
   SET(ALBANY_EPETRA FALSE)
+  SET(ALBANY_DAKOTA FALSE)
 ENDIF()
 
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
