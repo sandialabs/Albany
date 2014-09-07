@@ -9,8 +9,19 @@
       <Parameter name="Number" type="int" value="0"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Number" type="int" value="2"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
+      <Parameter name="Response 1" type="string" value="Linear Adjoint Solve"/>
+      <ParameterList name="ResponseParams 1">
+        <Parameter name="Write Adjoint" type="bool" value="true"/>
+        <Parameter name="Estimate Error" type="bool" value="true"/>
+<!--
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <Parameter name="IP Field Name 0" type="string" value="wBF"/>
+        <Parameter name="IP Field Layout 0" type="string" value="Scalar"/>
+        <Parameter name="Output to File" type="bool" value="true"/>
+-->
+      </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

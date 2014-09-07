@@ -561,6 +561,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./SEE/
                      ./SEE/problems
                      ./SEE/evaluators
+                     ./SEE/responses
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators

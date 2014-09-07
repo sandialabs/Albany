@@ -25,6 +25,9 @@
 #include "IPtoNodalField.hpp"
 #include "ProjectIPtoNodalField.hpp"
 #endif
+#ifdef ALBANY_SEE
+#include "LinearAdjointSolve.hpp"
+#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -185,6 +188,21 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set<std::string>("Weighted BF Name",  "wBF");
     RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev =
       rcp(new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
+
+#ifdef ALBANY_SEE
+  else if (responseName == "Linear Adjoint Solve")
+  {
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
+    p->set<std::string>("BF Name", "BF");
+    p->set<std::string>("Weighted BF Name",  "wBF");
+    RCP<SEE::LinearAdjointSolve<EvalT,Traits> > res_ev =
+      rcp(new SEE::LinearAdjointSolve<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

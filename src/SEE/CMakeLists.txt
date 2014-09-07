@@ -20,14 +20,23 @@ file (GLOB see-evaluator-headers
   "${SEE_DIR}/evaluators/*.hpp"
 )
 
+file (GLOB see-response-sources
+  "${SEE_DIR}/responses/*.cpp"
+)
+file (GLOB see-response-headers
+  "${SEE_DIR}/responses/*.hpp"
+)
+
 set(SOURCES
   ${see-problem-sources}
   ${see-evaluator-sources}
+  ${see-response-sources}
   )
 
 set(HEADERS
   ${see-problem-headers}
   ${see-evaluator-headers}
+  ${see-response-headers}
  )
 
 set(INCLUDE_DIRS
@@ -40,11 +49,7 @@ set(INCLUDE_DIRS
   ${Albany_SOURCE_DIR}/src/adapt
   ${SEE_DIR}/problems
   ${SEE_DIR}/evaluators
-  ${SEE_DIR}/evaluators/bc
-  ${SEE_DIR}/evaluators/surface-element
-  ${SEE_DIR}/models
-  ${SEE_DIR}/utils
-  ${SEE_DIR}/utils/topology
+  ${SEE_DIR}/responses
   ${ALBANY_FMDB_INCLUDE_DIRS} 
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
