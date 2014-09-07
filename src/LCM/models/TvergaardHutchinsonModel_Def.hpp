@@ -136,9 +136,14 @@ computeState(typename Traits::EvalData workset,
 
       // define shear and normal components of jump
       // needed for interpenetration
-      ScalarT JumpNormal, JumpShear;
+      // Note: need to protect sqrt around zero when using Sacado
+      ScalarT JumpNormal, JumpShear, IntermediateValue;
       JumpNormal = jump_local(2);
-      JumpShear = sqrt(jump_local(0)*jump_local(0) + jump_local(1)*jump_local(1));
+      IntermediateValue = jump_local(0)*jump_local(0) + jump_local(1)*jump_local(1);
+      if (IntermediateValue > 0.0) 
+        JumpShear = sqrt(IntermediateValue);
+      else
+        JumpShear = 0.0;
 
       // matrix beta that controls relative effect of shear and normal opening
       Intrepid::Tensor<ScalarT> beta(3, Intrepid::ZEROS);
@@ -146,8 +151,11 @@ computeState(typename Traits::EvalData workset,
 
       // compute scalar effective jump
       ScalarT jump_eff;
-      jump_eff =
-        std::sqrt(Intrepid::dot(jump_local,Intrepid::dot(beta,jump_local)));
+      IntermediateValue = Intrepid::dot(jump_local,Intrepid::dot(beta,jump_local));
+      if (IntermediateValue > 0.0) 
+        jump_eff = sqrt(IntermediateValue);
+      else
+        jump_eff = 0.0;
 
       // traction-separation law from Tvergaard-Hutchinson 1992
       ScalarT sigma_eff;
@@ -169,7 +177,12 @@ computeState(typename Traits::EvalData workset,
 
       // norm of the local shear components of the traction
       ScalarT TractionShear;
-      TractionShear = sqrt(traction_local(0)*traction_local(0) + traction_local(1)*traction_local(1));
+      IntermediateValue = traction_local(0)*traction_local(0) + traction_local(1)*traction_local(1);
+      if (IntermediateValue > 0.0) 
+        TractionShear = sqrt(IntermediateValue);
+      else
+        TractionShear = 0.0;
+
 
       // global traction vector
       Intrepid::Vector<ScalarT> traction_global(3);

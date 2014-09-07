@@ -123,6 +123,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   typedef Intrepid::FunctionSpaceTools FST;
 
+  // Since Intrepid will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable
+  // values. Leaving this out leads to floating point exceptions !!!
+  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+    for (std::size_t qp=0; qp < numQPs; ++qp)
+      for (std::size_t i=0; i < numDims; ++i)
+        flux(cell,qp,i) = 0.0;
+
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
 
   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
@@ -155,6 +163,14 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   if (haveAbsorption) {
+
+    // Since Intrepid will later perform calculations on the entire workset size
+    // and not just the used portion, we must fill the excess with reasonable
+    // values. Leaving this out leads to floating point exceptions !!!
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        aterm(cell,qp) = 0.0;
+
     FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
     FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 
   }
