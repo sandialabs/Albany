@@ -23,7 +23,6 @@
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "Tpetra_ConfigDefs.hpp"
-#include "Petra_Converters.hpp"
 
 Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Albany::Application>& app_,

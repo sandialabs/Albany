@@ -5,7 +5,9 @@
 //*****************************************************************//
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
+#endif
 #include <algorithm>
 
 Albany::FieldManagerScalarResponseFunction::

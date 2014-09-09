@@ -95,19 +95,23 @@ namespace Albany {
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Preconditioner Operator
     Teuchos::RCP<Epetra_Operator> getPreconditioner();
 
     //! Get initial solution
     Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
+#endif
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
     //! Get Tpetra initial solution
 //    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
     //! Get initial solution dot
-    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
+#endif
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
 
     //! Get the solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
@@ -271,17 +275,6 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-    void applyGlobalDistParamDeriv(const double current_time,
-                                   const Epetra_Vector* xdot,
-                                   const Epetra_Vector* xdotdot,
-                                   const Epetra_Vector& x,
-                                   const Teuchos::Array<ParamVec>& p,
-                                   const std::string& dist_param_name,
-                                   const bool trans,
-                                   const Epetra_MultiVector& V,
-                                   Epetra_MultiVector& fpV);
-    
-    //IK, 6/27/14: Tpetra version of above function: needs to be implemented!
     void applyGlobalDistParamDerivT(const double current_time,
                                    const Tpetra_Vector* xdotT,
                                    const Tpetra_Vector* xdotdotT,

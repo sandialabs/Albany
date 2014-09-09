@@ -6,7 +6,6 @@
 
 #include "Albany_SolutionResponseFunction.hpp"
 #include "Epetra_CrsMatrix.h"
-#include "Petra_Converters.hpp"
 #include <algorithm>
 
 Albany::SolutionResponseFunction::
@@ -116,14 +115,6 @@ createGradientOpT() const
   Teuchos::RCP<Tpetra_CrsMatrix> GT =
     Teuchos::rcp(new Tpetra_CrsMatrix(gradient_graphT));
   GT->fillComplete();
-  /*Teuchos::RCP<Epetra_CrsMatrix> G =
-    Teuchos::rcp(new Epetra_CrsMatrix(Copy, *gradient_graph));
-  G->FillComplete();
-  const Epetra_Comm& comm = *application->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::RCP<Tpetra_CrsMatrix> GT = Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(*G, commT, nodeT); */
   return GT;
 }
 

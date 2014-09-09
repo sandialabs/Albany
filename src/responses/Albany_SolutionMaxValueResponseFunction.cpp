@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-#include "Petra_Converters.hpp"
 #include "Epetra_Comm.h"
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"

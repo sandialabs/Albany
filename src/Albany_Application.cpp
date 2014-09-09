@@ -381,6 +381,7 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
+#if ALBANY_EPETRA
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
@@ -416,6 +417,7 @@ getInitialSolution() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionT(), *initial_x, comm);
   return initial_x;
 }
+#endif
 
 RCP<const Tpetra_Vector>
 Albany::Application::
@@ -424,6 +426,7 @@ getInitialSolutionT() const
   return solMgrT->getInitialSolutionT();
 }
 
+#ifdef ALBANY_EPETRA
 RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
@@ -432,6 +435,7 @@ getInitialSolutionDot() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
   return initial_x_dot;
 }
+#endif
 
 RCP<const Tpetra_Vector>
 Albany::Application::
@@ -1567,45 +1571,6 @@ applyGlobalDistParamDerivImplT(const double current_time,
 
 }
     
-
-void Albany::Application::
-applyGlobalDistParamDeriv(const double current_time,
-                          const Epetra_Vector* xdot,
-                          const Epetra_Vector* xdotdot,
-                          const Epetra_Vector& x,
-                          const Teuchos::Array<ParamVec>& p,
-                          const std::string& dist_param_name,
-                          const bool trans,
-                          const Epetra_MultiVector& V,
-                          Epetra_MultiVector& fpV)
-{
-  // Scatter x and xdot to the overlapped distribution
-  solMgr->scatterX(x, xdot, xdotdot);
-  
-  // Create Tpetra copies of Epetra arguments
-  // Names of Tpetra entitied are identified by the suffix T
-  const Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
- 
- Teuchos::RCP<const Tpetra_Vector> xdotT;
-  if (xdot != NULL) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
-  }
-  
-  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
-  if (xdotdot != NULL) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
-  }
-  
-  Teuchos::RCP<const Tpetra_MultiVector> VT= Petra::EpetraMultiVector_To_TpetraMultiVector(V, commT, nodeT);
-
-  Teuchos::RCP<Tpetra_MultiVector> fpVT  = Petra::EpetraMultiVector_To_TpetraMultiVector(fpV, commT, nodeT);
- 
-  this->applyGlobalDistParamDerivImplT(current_time, xdotT, xdotdotT, xT, p, dist_param_name, trans, VT, fpVT); 
-
-  //Convert output back from Tpetra to Epetra  
-  Petra::TpetraMultiVector_To_EpetraMultiVector(fpVT, fpV, comm);
-
-}
 
 
 void Albany::Application::

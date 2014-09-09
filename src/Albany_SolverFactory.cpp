@@ -9,6 +9,7 @@
 #ifdef ALBANY_EPETRA
 #include "Albany_PiroObserver.hpp"
 #include "Piro_Epetra_SolverFactory.hpp"
+#include "Petra_Converters.hpp"
 #endif
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
@@ -55,7 +56,6 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
-#include "Petra_Converters.hpp"
 
 extern bool TpetraBuild;
 
