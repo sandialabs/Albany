@@ -18,7 +18,9 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_EigendataInfoStruct.hpp"
+#endif
 #include "Adapt_NodalDataBlock.hpp"
 #include "Adapt_NodalDataVector.hpp"
 
@@ -154,9 +156,11 @@ public:
 
   Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase(){ return stateInfo->createNodalDataBase(); }
 
+#ifdef ALBANY_EPETRA
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
   void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
+#endif
 
   //! Methods to get/set Auxilliary data vectors
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
@@ -180,7 +184,9 @@ private:
 
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<EigendataStruct> eigenData;
+#endif
   Teuchos::RCP<Epetra_MultiVector> auxData;
 
 };

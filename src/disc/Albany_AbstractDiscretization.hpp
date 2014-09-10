@@ -81,9 +81,11 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<const Tpetra_Map>
     getOverlapMapT() const = 0;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra Jacobian graph
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getJacobianGraph() const = 0;
+#endif
     //! Get Tpetra Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph>
     getJacobianGraphT() const = 0;

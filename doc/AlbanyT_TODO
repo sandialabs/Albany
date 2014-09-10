@@ -3,6 +3,14 @@ This file summarizes what is missing in Trilinos / Albany as of Aug. 2014, which
 prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 
+Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
+- QCAD
+- MOR
+- SG_MP
+- catalyst
+- cism_interface, mpas_interface
+- LCM extra executables except subdivision, partition and mps.
+
 Piro: 
 - Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  
 Without this, it is not possible to select specialized time integration schemes
@@ -93,5 +101,5 @@ in the tpetra Albany branch.
 - Sensitivities are different when running with Belos comapred to AztecOO for FELIX_Stokes/FO_Test/*interpSurf.xml (with Albany executable)!
 - Different responses when running with Belos than AztecOO for: LinComprNS/input2D_drivenPulse.xml, LinComprNS/input3Dunsteady.xml, 
 LinComprNS/input3DunsteadyNS.xml...
-
+- Look at extra LCM executables and create Tpetra version of them. 
 

@@ -11,13 +11,10 @@ SET(SOURCES
   PHAL_AlbanyTraits.cpp
   Albany_Application.cpp
   Albany_ObserverFactory.cpp
-  Albany_RythmosObserver.cpp
-  Albany_NOXObserver.cpp
   Albany_PiroObserverT.cpp
   Albany_StateManager.cpp
   Albany_ModelFactory.cpp
   Albany_ModelEvaluatorT.cpp
-  Albany_SaveEigenData.cpp
   Albany_ObserverImpl.cpp
   )
 
@@ -32,6 +29,9 @@ IF(ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     Albany_PiroObserver.cpp
     Albany_ModelEvaluator.cpp
+    Albany_RythmosObserver.cpp
+    Albany_SaveEigenData.cpp
+    Albany_NOXObserver.cpp
   )
 ENDIF()
 
@@ -47,15 +47,11 @@ SET(HEADERS
   PHAL_TypeKeyMap.hpp
   Albany_Application.hpp
   Albany_ObserverFactory.hpp
-  Albany_RythmosObserver.hpp
-  Albany_NOXObserver.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
-  Albany_EigendataInfoStruct.hpp
   Albany_ModelFactory.hpp
   Albany_ModelEvaluatorT.hpp
-  Albany_SaveEigenData.hpp
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
@@ -67,6 +63,10 @@ IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS} 
     Albany_PiroObserver.hpp
     Albany_ModelEvaluator.hpp
+    Albany_SaveEigenData.hpp
+    Albany_EigendataInfoStruct.hpp
+    Albany_RythmosObserver.hpp
+    Albany_NOXObserver.hpp
   )
 ENDIF()
 
@@ -179,7 +179,6 @@ SET(HEADERS ${HEADERS}
 #evaluators
 SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
-  evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
   evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_ScatterResidual.cpp
@@ -231,6 +230,11 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SeparableScatterScalarResponse.cpp
   )
 #ENDIF() 
+IF (ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+    evaluators/PHAL_GatherEigenvectors.cpp
+  )
+ENDIF() 
 
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -264,8 +268,6 @@ SET(PDE_SRCS ${PDE_SRCS}
 SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherSolution.hpp
   evaluators/PHAL_GatherSolution_Def.hpp
-  evaluators/PHAL_GatherEigenvectors.hpp
-  evaluators/PHAL_GatherEigenvectors_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
   evaluators/PHAL_GatherAuxData.hpp
@@ -352,6 +354,8 @@ SET(HEADERS ${HEADERS}
   
 IF (ALBANY_EPETRA) 
   SET(HEADERS ${HEADERS}
+    evaluators/PHAL_GatherEigenvectors.hpp
+    evaluators/PHAL_GatherEigenvectors_Def.hpp
     evaluators/PHAL_ResponseFieldIntegral.hpp
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp
@@ -710,7 +714,9 @@ ENDIF()
 IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  IF (ALBANY_EPETRA) 
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  ENDIF()
   IF (ENABLE_CISM_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()

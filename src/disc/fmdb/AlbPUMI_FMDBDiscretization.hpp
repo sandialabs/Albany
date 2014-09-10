@@ -180,8 +180,10 @@ template<class Output>
     getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map>
     getOverlapMap() const { return overlap_map; }
+#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getJacobianGraph() const { return graph; }
+#endif
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getOverlapJacobianGraph() const { return overlap_graph; }
     virtual Teuchos::RCP<const Epetra_Map>

@@ -805,6 +805,7 @@ Albany::StateManager::updateStates()
   }
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Albany::EigendataStruct>
 Albany::StateManager::getEigenData()
 {
@@ -816,7 +817,7 @@ Albany::StateManager::setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& 
 {
   eigenData = eigdata;
 }
-
+#endif
 
 Teuchos::RCP<Epetra_MultiVector>
 Albany::StateManager::getAuxData()

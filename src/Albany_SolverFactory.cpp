@@ -5,14 +5,14 @@
 //*****************************************************************//
 
 #include "Albany_SolverFactory.hpp"
-#include "Albany_ObserverFactory.hpp"
 #ifdef ALBANY_EPETRA
 #include "Albany_PiroObserver.hpp"
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Petra_Converters.hpp"
+#include "Albany_SaveEigenData.hpp"
+#include "Albany_ObserverFactory.hpp"
 #endif
 #include "Albany_PiroObserverT.hpp"
-#include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
 
 #include "Piro_ProviderBase.hpp"
@@ -59,6 +59,7 @@
 
 extern bool TpetraBuild;
 
+#ifdef ALBANY_EPETRA
 namespace Albany {
 
 class NOXObserverConstructor : public Piro::ProviderBase<NOX::Epetra::Observer> {
@@ -138,6 +139,7 @@ SaveEigenDataConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList>
 }
 
 } // namespace Albany
+#endif
 
 using Teuchos::RCP;
 using Teuchos::rcp;

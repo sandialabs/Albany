@@ -159,22 +159,25 @@ IF ( INSTALL_ALBANY )
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 ENDIF()
 
+#ifdef ALBANY_EPETRA
 add_executable(MaterialPointSimulator test/utils/MaterialPointSimulator.cc)
-add_executable(MaterialPointSimulatorT test/utils/MaterialPointSimulatorT.cc)
+add_executable(PartitionTest test/utils/PartitionTest.cc)
+add_executable(Subdivision test/utils/Subdivision.cc)
+add_executable(TopologyBase test/utils/TopologyBase.cc)
+add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
+add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
 add_executable(MeshComponents test/utils/MeshComponents.cc)
 add_executable(NodeUpdate test/utils/NodeUpdate.cc)
-add_executable(PartitionTest test/utils/PartitionTest.cc)
-add_executable(PartitionTestT test/utils/PartitionTestT.cc)
-add_executable(Subdivision test/utils/Subdivision.cc)
-add_executable(SubdivisionT test/utils/SubdivisionT.cc)
 add_executable(Practice test/utils/Practice.cc)
 add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cc)
 add_executable(MinSurfaceOutput test/utils/MinSurfaceOutput.cc)
 add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cc)
-add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
-add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
-add_executable(TopologyBase test/utils/TopologyBase.cc)
+#endif
+add_executable(MaterialPointSimulatorT test/utils/MaterialPointSimulatorT.cc)
+add_executable(PartitionTestT test/utils/PartitionTestT.cc)
+add_executable(SubdivisionT test/utils/SubdivisionT.cc)
 
+#ifdef ALBANY_EPETRA
 add_executable(
   utLocalNonlinearSolver
   test/unit_tests/StandardUnitTestMain.cpp
@@ -186,6 +189,7 @@ add_executable(
   test/unit_tests/StandardUnitTestMain.cpp
   test/unit_tests/utSurfaceElement.cpp
   )
+#endif
 
 IF (ALBANY_LAME OR ALBANY_LAMENT)
   IF(ALBANY_64BIT_INT)
@@ -258,14 +262,11 @@ ENDIF(BUILD_SHARED_LIBS)
 
 
 #Linking tests
+#ifdef ALBANY_EPETRA
 target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-target_link_libraries(MaterialPointSimulatorT ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-target_link_libraries(PartitionTestT ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
-target_link_libraries(SubdivisionT ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(Practice ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MinSurfaceMPS ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MinSurfaceOutput ${LCM_UT_LIBS} ${ALL_LIBRARIES})
@@ -275,3 +276,8 @@ target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(TopologyBase ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+#endif
+target_link_libraries(MaterialPointSimulatorT ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(PartitionTestT ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(SubdivisionT ${LCM_UT_LIBS} ${ALL_LIBRARIES})

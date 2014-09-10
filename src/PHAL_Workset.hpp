@@ -148,7 +148,9 @@ struct Workset {
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
   Albany::StateArray* stateArrayPtr;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
+#endif
   Teuchos::RCP<Epetra_MultiVector> auxDataPtr;
 
   bool transientTerms;

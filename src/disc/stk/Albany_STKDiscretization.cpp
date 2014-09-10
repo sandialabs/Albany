@@ -124,12 +124,14 @@ Albany::STKDiscretization::getOverlapMapT() const
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getJacobianGraph() const
 {
   Teuchos::RCP<const Epetra_CrsGraph> graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(graphT, comm);
   return graph;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::STKDiscretization::getJacobianGraphT() const

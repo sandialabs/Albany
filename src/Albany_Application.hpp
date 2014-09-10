@@ -26,7 +26,9 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
+#ifdef ALBANY_EPETRA
 #include "AAdapt_AdaptiveSolutionManager.hpp"
+#endif
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 
 #ifdef ALBANY_CUTR
@@ -89,8 +91,10 @@ namespace Albany {
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+#endif
 
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
@@ -113,8 +117,10 @@ namespace Albany {
 #endif
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get the solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
+#endif
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> getAdaptSolMgrT(){ return solMgrT;}
 
     //! Get parameter library
@@ -640,11 +646,13 @@ namespace Albany {
     //! Class to manage state variables (a.k.a. history)
     StateManager& getStateMgr() {return stateMgr; }
 
+#ifdef ALBANY_EPETRA
     //! Evaluate state field manager
     void evaluateStateFieldManager(const double current_time,
                                    const Epetra_Vector* xdot,
                                    const Epetra_Vector* xdotdot,
                                    const Epetra_Vector& x);
+#endif
 
     //! Evaluate state field manager
     void evaluateStateFieldManagerT(
@@ -663,10 +671,12 @@ namespace Albany {
         return problemParams;
     }
 
+#ifdef ALBANY_EPETRA
     //! Accessor function to Epetra_Import the solution from other PEs for output
     Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
       return solMgr->getOverlapSolution(solution);
     }
+#endif
 
     Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
       return solMgrT->getOverlapSolutionT(solutionT);
@@ -699,9 +709,11 @@ namespace Albany {
     template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
+#ifdef ALBANY_EPETRA
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             double current_time);
+#endif
 
     void loadBasicWorksetInfoT(
             PHAL::Workset& workset,
@@ -716,6 +728,7 @@ namespace Albany {
     //! Routine to load common sideset info into workset
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
+#ifdef ALBANY_EPETRA
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -723,6 +736,7 @@ namespace Albany {
       const Epetra_Vector* xdotdot,
       const Epetra_Vector* x,
       const Teuchos::Array<ParamVec>& p);
+#endif
 
     void setupBasicWorksetInfoT(
       PHAL::Workset& workset,
@@ -754,6 +768,7 @@ namespace Albany {
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
 #endif //ALBANY_SG_MP
 
+#ifdef ALBANY_EPETRA
     void setupTangentWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -767,6 +782,7 @@ namespace Albany {
       const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
+#endif
 
     void setupTangentWorksetInfoT(
       PHAL::Workset& workset,
@@ -846,8 +862,10 @@ namespace Albany {
     //! Distributed parameter library
     Teuchos::RCP<DistParamLib> distParamLib;
 
+#ifdef ALBANY_EPETRA
     //! Solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
+#endif
 
     //! Solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> solMgrT;
@@ -1020,7 +1038,9 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   loadWorksetSidesetInfo(workset, ws);
 
   workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
+#ifdef ALBANY_EPETRA
   workset.eigenDataPtr = stateMgr.getEigenData();
+#endif
   workset.auxDataPtr = stateMgr.getAuxData();
 
   PHAL::BuildSerializer<EvalT> bs(workset);

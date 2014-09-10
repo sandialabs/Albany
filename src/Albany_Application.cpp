@@ -249,6 +249,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   // Now that space is allocated in STK for state fields, initialize states
   stateMgr.setStateArrays(disc);
 
+#ifdef ALBANY_EPETRA
   if(!TpetraBuild){
     RCP<Epetra_Vector> initial_guessE;
     if (Teuchos::nonnull(initial_guess)) {
@@ -256,6 +257,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     }
     solMgr = rcp(new AAdapt::AdaptiveSolutionManager(params, disc, initial_guessE));
   }
+#endif
 
   solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guess, paramLib, stateMgr, commT));
 
@@ -313,11 +315,13 @@ Application(const RCP<const Teuchos_Comm>& comm_,
  * Initialize mesh adaptation features
  */
 
+#ifdef ALBANY_EPETRA
   if(!TpetraBuild &&  solMgr->hasAdaptation()){
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, comm);
 
   }
+#endif
 
 #ifdef ALBANY_PERIDIGM
   LCM::PeridigmManager::self().initialize(params, disc);
@@ -367,12 +371,15 @@ getMapT() const
   return disc->getMapT();
 }
 
+
+#ifdef ALBANY_EPETRA
 RCP<const Epetra_CrsGraph>
 Albany::Application::
 getJacobianGraph() const
 {
   return disc->getJacobianGraph();
 }
+#endif
 
 RCP<const Tpetra_CrsGraph>
 Albany::Application::
@@ -1518,10 +1525,10 @@ applyGlobalDistParamDerivImplT(const double current_time,
     PHAL::Workset workset;
     if (!paramLib->isParameter("Time"))
 //      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot, current_time );
-      loadBasicWorksetInfo( workset, current_time );
+      loadBasicWorksetInfoT( workset, current_time );
     else
 //      loadBasicWorksetInfo( workset, overlapped_x, overlapped_xdot,
-      loadBasicWorksetInfo( workset,
+      loadBasicWorksetInfoT( workset,
                             paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
 
     workset.distParamLib = distParamLib;
@@ -3058,6 +3065,7 @@ evaluateMPResponseDerivative(
 }
 #endif //ALBANY_SG_MP
 
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 evaluateStateFieldManager(const double current_time,
@@ -3083,6 +3091,7 @@ evaluateStateFieldManager(const double current_time,
 
   this->evaluateStateFieldManagerT(current_time, xdotT.ptr(), xdotdotT.ptr(), *xT);
 }
+#endif
 
 void
 Albany::Application::
@@ -3384,6 +3393,7 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
 
 }
 
+#ifdef ALBANY_EPETRA
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset,
        double current_time)
@@ -3396,6 +3406,7 @@ void Albany::Application::loadBasicWorksetInfo(
     if (workset.xdot != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdot != Teuchos::null) workset.accelerationTerms = true;
 }
+#endif
 
 
 void Albany::Application::loadBasicWorksetInfoT(
@@ -3435,6 +3446,7 @@ void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const i
 
 }
 
+#ifdef ALBANY_EPETRA
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -3476,6 +3488,7 @@ void Albany::Application::setupBasicWorksetInfo(
 
   workset.x_importer = importer;
 }
+#endif
 
 void Albany::Application::setupBasicWorksetInfoT(
   PHAL::Workset& workset,
@@ -3626,6 +3639,7 @@ void Albany::Application::setupBasicWorksetInfo(
 }
 #endif //ALBANY_SG_MP
 
+#ifdef ALBANY_EPETRA
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -3725,6 +3739,7 @@ void Albany::Application::setupTangentWorksetInfo(
   workset.num_cols_p = num_cols_p;
   workset.param_offset = param_offset;
 }
+#endif
 
 void Albany::Application::setupTangentWorksetInfoT(
   PHAL::Workset& workset,

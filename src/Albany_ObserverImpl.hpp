@@ -29,10 +29,12 @@ public:
 
   Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
 
+#ifdef ALBANY_EPETRA
   void observeSolution(
       double stamp,
       const Epetra_Vector &nonOverlappedSolution,
       Teuchos::Ptr<const Epetra_Vector> nonOverlappedSolutionDot);
+#endif
 
   void observeSolutionT(
       double stamp,

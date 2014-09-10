@@ -6,7 +6,9 @@
 #include "Albany_ObserverImpl.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
+#ifdef ALBANY_EPETRA
 #include "AAdapt_AdaptiveSolutionManager.hpp"
+#endif
 
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
@@ -45,6 +47,7 @@ Teuchos::RCP<const Tpetra_Map> ObserverImpl::getNonOverlappedMapT() const
   return app_->getMapT();
 }
 
+#ifdef ALBANY_EPETRA
 void ObserverImpl::observeSolution(
     double stamp,
     const Epetra_Vector &nonOverlappedSolution,
@@ -76,6 +79,7 @@ void ObserverImpl::observeSolution(
     app_->getDiscretization()->writeSolution(*overlappedSolution, stamp, /*overlapped =*/ true);
   }
 }
+#endif
 
 void ObserverImpl::observeSolutionT(
     double stamp,

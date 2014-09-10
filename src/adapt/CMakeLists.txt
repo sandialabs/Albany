@@ -13,7 +13,6 @@ SET(SOURCES
     AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemesh.cpp
     AAdapt_CopyRemeshT.cpp
-    AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
@@ -29,7 +28,6 @@ SET(HEADERS
     AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemesh.hpp
     AAdapt_CopyRemeshT.hpp
-    AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
@@ -38,6 +36,15 @@ SET(HEADERS
     AAdapt_SolutionObserver.hpp
     AAdapt_StratSolver.hpp
    )
+
+IF (ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+    AAdapt_AdaptiveSolutionManager.cpp
+   ) 
+  SET(HEADERS ${HEADERS} 
+    AAdapt_AdaptiveSolutionManager.hpp
+  )
+ENDIF()
 
 # Topology Modification & Stress Fracture depend on LCM
 # Speculative features and code, currently
