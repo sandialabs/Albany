@@ -2346,6 +2346,7 @@ Albany::STKDiscretization::meshToGraph()
       } /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
 
 //        nadj = nodalGraph.adj.size();
+      adjacency.push_back(globalrow); // Insert self-self edge.
       nodalGraph->insertGlobalIndices(globalrow, adjacency());
 
     } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
