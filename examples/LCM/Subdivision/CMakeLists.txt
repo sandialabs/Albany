@@ -10,10 +10,6 @@ IF(NOT ALBANY_PARALLEL_ONLY)
 # Create a symlink to the Subdivision executable
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${Subdivision.exe} ${CMAKE_CURRENT_BINARY_DIR}/Subdivision)
-if (ALBANY_IFPACK2) 
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${SubdivisionT.exe} ${CMAKE_CURRENT_BINARY_DIR}/SubdivisionT)
-endif()
 
 # Create a symlink to exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -22,10 +18,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # Copy script file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_subdivision.py
                ${CMAKE_CURRENT_BINARY_DIR}/run_subdivision.py COPYONLY)
-if (ALBANY_IFPACK2) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_subdivisionT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/run_subdivisionT.py COPYONLY)
-endif()
 
 # Copy the input file to the test directory
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/one_tet.g
@@ -43,13 +35,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #MESSAGE(SEACAS_EXODIFF "${SEACAS_EXODIFF}")
 
 # Run the "runtest.py" file in the CWD
-if (ALBANY_EPETRA) 
 add_test(NAME ${testName}_one_tet COMMAND "python" "run_subdivision.py")
 set_tests_properties(${testName}_one_tet  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
-endif()
-if (ALBANY_IFPACK2) 
-add_test(NAME ${testName}_one_tet_Tpetra COMMAND "python" "run_subdivisionT.py")
-set_tests_properties(${testName}_one_tet_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
-endif()
 
 ENDIF()

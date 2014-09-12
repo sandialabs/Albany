@@ -544,7 +544,7 @@ Albany::STKDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-//void Albany::STKDiscretization::outputToExodus(const Epetra_Vector& soln, const double time, const bool overlapped)
+#ifdef ALBANY_EPETRA
 void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
 
   // Put solution as Epetra_Vector into STK Mesh
@@ -592,6 +592,7 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
   outputInterval++;
 #endif
 }
+#endif
 
 //Tpetra version of writeSolution
 void Albany::STKDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped){
@@ -715,6 +716,7 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Vector>
 Albany::STKDiscretization::getSolutionField() const
 {
@@ -733,6 +735,7 @@ Albany::STKDiscretization::getSolutionField() const
   this->getSolutionField(*soln);
   return soln;
 }
+#endif
 
 Teuchos::RCP<Tpetra_Vector>
 Albany::STKDiscretization::getSolutionFieldT() const

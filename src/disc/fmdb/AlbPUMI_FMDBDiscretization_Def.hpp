@@ -381,12 +381,14 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& so
   writeAnySolution(&(data[0]),time_value,overlapped);
 }
 
+#ifdef ALBANY_EPETRA
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
   writeAnySolution(&(soln[0]),time_value,overlapped);
 }
+#endif
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
@@ -501,6 +503,7 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT() const
   return solnT;
 }
 
+#ifdef ALBANY_EPETRA
 template<class Output>
 Teuchos::RCP<Epetra_Vector>
 AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
@@ -519,6 +522,7 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
 
   return soln;
 }
+#endif
 
 template<class Output>
 int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const

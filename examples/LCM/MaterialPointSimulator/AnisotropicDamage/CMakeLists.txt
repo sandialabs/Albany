@@ -8,18 +8,10 @@
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.py} ${CMAKE_CURRENT_BINARY_DIR}/runtest.py)
 
-if (ALBANY_IFPACK2) 
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${runtestT.py} ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py)
-endif()
 
 # Create a symlink to the MPS
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${MPS.exe} ${CMAKE_CURRENT_BINARY_DIR}/MPS)
-if (ALBANY_IFPACK2) 
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-  ${MPST.exe} ${CMAKE_CURRENT_BINARY_DIR}/MPST)
-endif()
 
 # Create a symlink to exodiff
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
@@ -28,10 +20,6 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
 # Copy script file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage.py
                ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage.py COPYONLY)
-if (ALBANY_IFPACK2) 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamageT.py
-               ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamageT.py COPYONLY)
-endif()
 
 # Copy Input files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-uniaxial.xml
@@ -56,11 +44,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #MESSAGE(SEACAS_EXODIFF "${SEACAS_EXODIFF}")
 
 # Run the "runtest.py" file in the CWD
-if (ALBANY_EPETRA) 
 add_test(NAME ${testName} COMMAND "python" "AnisotropicDamage.py")
 set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
-endif()
-if (ALBANY_IFPACK2) 
-add_test(NAME ${testName}_Tpetra COMMAND "python" "AnisotropicDamageT.py")
-set_tests_properties(${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
-endif()

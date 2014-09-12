@@ -8,9 +8,6 @@
 IF(NOT ALBANY_PARALLEL_ONLY)
 
 set(runtest.py ${CMAKE_CURRENT_SOURCE_DIR}/runtest.py)
-if (ALBANY_IFPACK2) 
-set(runtestT.py ${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py)
-endif()
 
 add_subdirectory(AnisotropicHyperelasticDamage)
 add_subdirectory(AnisotropicDamage)

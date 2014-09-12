@@ -127,12 +127,16 @@ namespace Albany {
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
+#ifdef ALBANY_EPETRA
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+#endif
    
    //Tpetra version of writeSolution  
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
- 
+
+#ifdef ALBANY_EPETRA 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+#endif
     //Tpetra analog
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 

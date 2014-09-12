@@ -226,11 +226,11 @@ int main(int ac, char* av[])
   }
 
   // Need solution for output call
-  Teuchos::RCP<Epetra_Vector>
-  solution_field = stk_discretization.getSolutionField();
+  Teuchos::RCP<Tpetra_Vector>
+  solution_fieldT = stk_discretization.getSolutionFieldT();
 
   // second arg to output is (pseudo)time
-  stk_discretization.writeSolution(*solution_field, 1.0);
+  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   // Write report
   const double

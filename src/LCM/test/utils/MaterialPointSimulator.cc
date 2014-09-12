@@ -82,9 +82,9 @@ int main(int ac, char* av[])
   // A mpi object must be instantiated before using the comm to read
   // material file
   Teuchos::GlobalMPISession mpi_session(&ac, &av);
+  //IK, 9/1/14: need to convert this to take in Teuchos comm object!
   Teuchos::RCP<Epetra_Comm> comm =
     Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-  //IK, 9/4/14: for Tpetra branch: converting Epetra_Comm to Teuchos::Comm 
   Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db;
@@ -343,12 +343,16 @@ int main(int ac, char* av[])
   discretizationParameterList->set<std::string>("Method", "STK3D");
   discretizationParameterList->set<std::string>("Exodus Output File Name",
                                            output_file);
-  Epetra_Map map(workset_size*num_dims*num_nodes, 0, *comm);
-  Epetra_Vector solution_vector(map);
+
+  Teuchos::ParameterList kokkosNodeParams;
+  const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
+  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes, 0, commT, Tpetra::LocallyReplicated, nodeT));
+  Teuchos::RCP<Tpetra_Vector> solution_vectorT = Teuchos::rcp(new Tpetra_Vector(mapT)); 
 
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
 
+  //IK, 9/1/14: TO DO: remove Epetra comm!
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
       new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, comm));
   stkMeshStruct->setFieldAndBulkData(comm, discretizationParameterList,
@@ -461,7 +465,7 @@ int main(int ac, char* av[])
     stateMgr.updateStates();
 
     // output to the exodus file
-    discretization->writeSolution(solution_vector, Teuchos::as<double>(istep));
+    discretization->writeSolutionT(*solution_vectorT, Teuchos::as<double>(istep));
 
   }  // end loading steps
 

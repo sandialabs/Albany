@@ -126,8 +126,10 @@ int main(int ac, char* av[])
   //   disconnected nature of the final mesh
 
   // Create a vector to hold displacement values for nodes
-  Teuchos::RCP<const Epetra_Map> dof_map = stk_discretization.getMap();
-  Epetra_Vector displacement = Epetra_Vector(*(dof_map),true);
+  Teuchos::RCP<const Tpetra_Map> dof_mapT = stk_discretization.getMapT();
+  Teuchos::RCP<Tpetra_Vector> displacementT = Teuchos::rcp(new Tpetra_Vector(dof_mapT));
+  Teuchos::ArrayRCP<ST> displacementT_nonconstView = displacementT->get1dViewNonConst();
+
 
   // Add displacement to nodes
   stk_classic::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
@@ -161,21 +163,21 @@ int main(int ac, char* av[])
     for (int j = 0; j < relations.size(); ++j){
       stk_classic::mesh::Entity & node = *(relations[j].entity());
       int id = static_cast<int>(node.identifier());
-      displacement[id*3-3] += disp[0];
-      displacement[id*3-2] += disp[1];
-      displacement[id*3-1] += disp[2];
+      displacementT_nonconstView[id*3-3] += disp[0];
+      displacementT_nonconstView[id*3-2] += disp[1];
+      displacementT_nonconstView[id*3-1] += disp[2];
     }
   }
 
-  stk_discretization.setResidualField(displacement);
+  stk_discretization.setResidualFieldT(*displacementT);
 
-  Teuchos::RCP<Epetra_Vector>
-    solution_field = stk_discretization.getSolutionField();
+  Teuchos::RCP<Tpetra_Vector>
+    solution_fieldT = stk_discretization.getSolutionFieldT();
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
 //  stk_discretization.outputToExodus(*solution_field, 1.0);
-  stk_discretization.writeSolution(*solution_field, 1.0);
+  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   return 0;
 

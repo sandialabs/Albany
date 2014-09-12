@@ -149,8 +149,10 @@ class AbstractDiscretization {
     //! Retrieve connectivity map from elementGID to workset
     virtual WsLIDList&  getElemGIDws() = 0;
 
+#ifdef ALBANY_EPETRA
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
+#endif
     //Tpetra analog
     virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const = 0;
 
@@ -177,8 +179,10 @@ class AbstractDiscretization {
    //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
 
+#ifdef ALBANY_EPETRA
     //! Write the solution to the output file
     virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
+#endif
 
    //! Write the solution to the output file - Tpetra version
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;

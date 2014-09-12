@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "Albany_Application.hpp"
-#include "Petra_Converters.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_AdaptationFactory.hpp"
 #include "Albany_ProblemFactory.hpp"
@@ -18,6 +17,7 @@
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
 #include "EpetraExt_VectorOut.h"
+#include "Petra_Converters.hpp"
 #endif
 
 #include "MatrixMarket_Tpetra.hpp"
