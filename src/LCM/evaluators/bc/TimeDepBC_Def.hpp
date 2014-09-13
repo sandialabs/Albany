@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra except SG and MP
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -71,9 +73,6 @@ void
 TimeDepBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -113,10 +112,6 @@ void TimeDepBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -133,7 +128,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   int*    matrixIndices;
   int     numEntries;
   RealType diag=j_coeff;
-  bool fillResid = (f != Teuchos::null);
+  bool fillResid = (fT != Teuchos::null);
   Teuchos::ArrayRCP<ST> fT_nonconstView;
   if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
 
