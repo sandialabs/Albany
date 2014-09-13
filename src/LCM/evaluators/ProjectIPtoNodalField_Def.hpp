@@ -451,6 +451,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Compute A*x-b = y-b
   Thyra::update( -one, *b, y.ptr() );
+  Thyra::norms_2(*y, norm_res);
 
   // Print out the final relative residual norms.
   MT rel_res = 0.0;
