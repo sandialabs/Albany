@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: only Epetra is in SG and MP
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
@@ -91,15 +93,13 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
+  //Teuchos::RCP<Epetra_Vector> g = workset.g;
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT; //Tpetra version
   Teuchos::ArrayRCP<ST> gT_nonconstView;
   if (gT != Teuchos::null) {
     gT_nonconstView = gT->get1dViewNonConst();
   }
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    if (g != Teuchos::null) 
-      (*g)[res] = this->global_response[res];
     if (gT != Teuchos::null) 
       gT_nonconstView[res] = this->global_response[res];
   }

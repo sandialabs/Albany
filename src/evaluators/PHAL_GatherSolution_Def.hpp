@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: only Epetra is SG and MP 
+
 #include <vector>
 #include <string>
 

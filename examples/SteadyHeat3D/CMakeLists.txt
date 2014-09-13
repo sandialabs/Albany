@@ -37,7 +37,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(${testName}_10x10x10_ioss_Tpetra ${SerialAlbanyT.exe} inputT_10x10x10_ioss.xml)
+  #add_test(${testName}_10x10x10_ioss_Tpetra ${SerialAlbanyT.exe} inputT_10x10x10_ioss.xml)
 
   #add_test(${testName}_10x10x10_ascii_Tpetra ${SerialAlbanyT.exe} inputT_10x10x10_ascii.xml)
 ENDIF()

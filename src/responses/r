@@ -1,0 +1,1047 @@
+Albany_AbstractResponseFunction.hpp:#include "Epetra_Map.h"
+Albany_AbstractResponseFunction.hpp:#include "Epetra_Vector.h"
+Albany_AbstractResponseFunction.hpp:#include "Epetra_MultiVector.h"
+Albany_AbstractResponseFunction.hpp:#include "EpetraExt_ModelEvaluator.h"
+Albany_AbstractResponseFunction.hpp:#include "EpetraExt_MultiComm.h"
+Albany_AbstractResponseFunction.hpp:#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+Albany_AbstractResponseFunction.hpp:#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+Albany_AbstractResponseFunction.hpp:#include "Stokhos_ProductEpetraVector.hpp"
+Albany_AbstractResponseFunction.hpp:#include "Stokhos_ProductEpetraMultiVector.hpp"
+Albany_AbstractResponseFunction.hpp:    virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
+Albany_AbstractResponseFunction.hpp:    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
+Albany_AbstractResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_AbstractResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_AbstractResponseFunction.hpp:      Epetra_Vector* g,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dp) = 0;
+Albany_AbstractResponseFunction.hpp:      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) = 0;
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_AbstractResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly& sg_g) = 0;
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_AbstractResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_AbstractResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_AbstractResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp) = 0;
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_AbstractResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp) = 0;
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_AbstractResponseFunction.hpp:      Stokhos::ProductEpetraVector& mp_g) = 0;
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_AbstractResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_AbstractResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_AbstractResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_AbstractResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_gp) = 0;
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_AbstractResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_AbstractResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_AbstractResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp) = 0;
+Albany_AggregateScalarResponseFunction.cpp:#include "Epetra_LocalMap.h"
+Albany_AggregateScalarResponseFunction.cpp:  const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_AggregateScalarResponseFunction.cpp:    const Epetra_Comm& comm = *(responses[i]->getComm());
+Albany_AggregateScalarResponseFunction.cpp:    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+Albany_AggregateScalarResponseFunction.cpp:    const Epetra_Comm& comm = *(responses[i]->getComm());
+Albany_AggregateScalarResponseFunction.cpp:    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+Albany_AggregateScalarResponseFunction.cpp:		 const Epetra_Vector* xdot,
+Albany_AggregateScalarResponseFunction.cpp:		 const Epetra_Vector* xdotdot,
+Albany_AggregateScalarResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_AggregateScalarResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_AggregateScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dx,
+Albany_AggregateScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_AggregateScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_AggregateScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_AggregateScalarResponseFunction.cpp:    // Create Epetra_Map for response function
+Albany_AggregateScalarResponseFunction.cpp:    Epetra_LocalMap local_response_map(num_responses, 0, 
+Albany_AggregateScalarResponseFunction.cpp:    // Create Epetra_Vectors for response function
+Albany_AggregateScalarResponseFunction.cpp:    RCP<Epetra_Vector> local_g;
+Albany_AggregateScalarResponseFunction.cpp:      local_g = rcp(new Epetra_Vector(local_response_map));
+Albany_AggregateScalarResponseFunction.cpp:    RCP<Epetra_MultiVector> local_dgdx;
+Albany_AggregateScalarResponseFunction.cpp:      local_dgdx = rcp(new Epetra_MultiVector(dg_dx->Map(), num_responses));
+Albany_AggregateScalarResponseFunction.cpp:    RCP<Epetra_MultiVector> local_dgdxdot;
+Albany_AggregateScalarResponseFunction.cpp:      local_dgdxdot = rcp(new Epetra_MultiVector(dg_dxdot->Map(), num_responses));
+Albany_AggregateScalarResponseFunction.cpp:    RCP<Epetra_MultiVector> local_dgdxdotdot;
+Albany_AggregateScalarResponseFunction.cpp:      local_dgdxdotdot = rcp(new Epetra_MultiVector(dg_dxdotdot->Map(), num_responses));
+Albany_AggregateScalarResponseFunction.cpp:    RCP<Epetra_MultiVector> local_dgdp;
+Albany_AggregateScalarResponseFunction.cpp:      local_dgdp = rcp(new Epetra_MultiVector(local_response_map, 
+Albany_AggregateScalarResponseFunction.cpp:    const Epetra_Comm& comm = *(responses[i]->getComm());
+Albany_AggregateScalarResponseFunction.cpp:    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+Albany_AggregateScalarResponseFunction.cpp:    // Create Epetra_Vectors for response function
+Albany_AggregateScalarResponseFunction.hpp:      const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_AggregateScalarResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_AggregateScalarResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_AggregateScalarResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_AggregateScalarResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_AggregateScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_AggregateScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_AggregateScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_AggregateScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_DistributedResponseFunction.cpp:  const Epetra_Vector* xdot,
+Albany_DistributedResponseFunction.cpp:  const Epetra_Vector* xdotdot,
+Albany_DistributedResponseFunction.cpp:  const Epetra_Vector& x,
+Albany_DistributedResponseFunction.cpp:  Epetra_Vector* g,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dp)
+Albany_DistributedResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_DistributedResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_DistributedResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_DistributedResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
+Albany_DistributedResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_DistributedResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_DistributedResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_DistributedResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_DistributedResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
+Albany_DistributedResponseFunction.hpp:#include "Stokhos_ProductEpetraOperator.hpp"
+Albany_DistributedResponseFunction.hpp:#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
+Albany_DistributedResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_DistributedResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_DistributedResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_DistributedResponseFunction.hpp:      Epetra_Vector* g,
+Albany_DistributedResponseFunction.hpp:      Epetra_Operator* dg_dx,
+Albany_DistributedResponseFunction.hpp:      Epetra_Operator* dg_dxdot,
+Albany_DistributedResponseFunction.hpp:      Epetra_Operator* dg_dxdotdot,
+Albany_DistributedResponseFunction.hpp:      Epetra_MultiVector* dg_dp) = 0;
+Albany_DistributedResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_DistributedResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_DistributedResponseFunction.hpp:      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
+Albany_DistributedResponseFunction.hpp:      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
+Albany_DistributedResponseFunction.hpp:      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
+Albany_DistributedResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) = 0;
+Albany_DistributedResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_DistributedResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_DistributedResponseFunction.hpp:      Stokhos::ProductEpetraOperator* mp_dg_dx,
+Albany_DistributedResponseFunction.hpp:      Stokhos::ProductEpetraOperator* mp_dg_dxdot,
+Albany_DistributedResponseFunction.hpp:      Stokhos::ProductEpetraOperator* mp_dg_dxdotdot,
+Albany_DistributedResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dp) = 0;
+Albany_DistributedResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_DistributedResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_DistributedResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_DistributedResponseFunction.hpp:      Epetra_Vector* g,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+Albany_DistributedResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_DistributedResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
+Albany_DistributedResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_DistributedResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_DistributedResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_DistributedResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
+Albany_DistributedResponseFunction.hpp:    Teuchos::RCP<const Epetra_Comm> comm;
+Albany_FieldManagerScalarResponseFunction.cpp:  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
+Albany_FieldManagerScalarResponseFunction.cpp:		 const Epetra_Vector* xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:		 const Epetra_Vector* xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_FieldManagerScalarResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_FieldManagerScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dx,
+Albany_FieldManagerScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_FieldManagerScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_FieldManagerScalarResponseFunction.cpp:  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
+Albany_FieldManagerScalarResponseFunction.cpp:  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+Albany_FieldManagerScalarResponseFunction.cpp:  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+Albany_FieldManagerScalarResponseFunction.cpp:    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+Albany_FieldManagerScalarResponseFunction.cpp:    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Epetra_MultiVector(*Petra::TpetraMap_To_EpetraMap(tgt_map, comm),
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Epetra_MultiVector(workset.x_importer->TargetMap(),
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Epetra_MultiVector(workset.x_importer->TargetMap(),
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly& sg_g)
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vx,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vp,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Stokhos::EpetraMultiVectorOrthogPoly(
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector& mp_g)
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vx,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Epetra_MultiVector* Vp,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_gp)
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_FieldManagerScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+Albany_FieldManagerScalarResponseFunction.cpp:      Teuchos::rcp(new Stokhos::ProductEpetraMultiVector(
+Albany_FieldManagerScalarResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_FieldManagerScalarResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_FieldManagerScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_FieldManagerScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_FieldManagerScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_FieldManagerScalarResponseFunction.hpp:      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) {}
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly& sg_g);
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector& mp_g);
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_gp);
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_FieldManagerScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+Albany_KLResponseFunction.cpp:Teuchos::RCP<const Epetra_Map>
+Albany_KLResponseFunction.cpp:Teuchos::RCP<Epetra_Operator> 
+Albany_KLResponseFunction.cpp:		   const Epetra_Vector* xdot,
+Albany_KLResponseFunction.cpp:		   const Epetra_Vector* xdotdot,
+Albany_KLResponseFunction.cpp:		   const Epetra_Vector& x,
+Albany_KLResponseFunction.cpp:		   Epetra_Vector* g,
+Albany_KLResponseFunction.cpp:		   const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_KLResponseFunction.cpp:		   const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_KLResponseFunction.cpp:		   const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_KLResponseFunction.cpp:		   const EpetraExt::ModelEvaluator::Derivative& dg_dp)
+Albany_KLResponseFunction.cpp:  const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm)
+Albany_KLResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_KLResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_KLResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_KLResponseFunction.cpp:		   Stokhos::EpetraVectorOrthogPoly& sg_g)
+Albany_KLResponseFunction.cpp:  Teuchos::RCP<Epetra_MultiVector> evecs;
+Albany_KLResponseFunction.cpp:		  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_KLResponseFunction.cpp:		  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_KLResponseFunction.cpp:		  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vx,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vxdot,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vxdotdot,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vp,
+Albany_KLResponseFunction.cpp:		  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_KLResponseFunction.cpp:		  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_KLResponseFunction.cpp:		  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+Albany_KLResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_KLResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_KLResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_KLResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
+Albany_KLResponseFunction.cpp:		   const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_KLResponseFunction.cpp:		   const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_KLResponseFunction.cpp:		   const Stokhos::ProductEpetraVector& mp_x,
+Albany_KLResponseFunction.cpp:		   Stokhos::ProductEpetraVector& mp_g)
+Albany_KLResponseFunction.cpp:		  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_KLResponseFunction.cpp:		  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_KLResponseFunction.cpp:		  const Stokhos::ProductEpetraVector& mp_x,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vx,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vxdot,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vxdotdot,
+Albany_KLResponseFunction.cpp:		  const Epetra_MultiVector* Vp,
+Albany_KLResponseFunction.cpp:		  Stokhos::ProductEpetraVector* mp_g,
+Albany_KLResponseFunction.cpp:		  Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_KLResponseFunction.cpp:		  Stokhos::ProductEpetraMultiVector* mp_gp)
+Albany_KLResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_KLResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_KLResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_KLResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_KLResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
+Albany_KLResponseFunction.cpp:computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
+Albany_KLResponseFunction.cpp:	  Teuchos::RCP<Epetra_MultiVector>& evecs)
+Albany_KLResponseFunction.cpp:  Teuchos::RCP<const EpetraExt::BlockVector> X_ov = sg_u.getBlockVector();
+Albany_KLResponseFunction.cpp:  //Teuchos::RCP<const EpetraExt::BlockVector> cX_ov = X_ov;
+Albany_KLResponseFunction.hpp:#include "Epetra_Map.h"
+Albany_KLResponseFunction.hpp:#include "Epetra_Import.h"
+Albany_KLResponseFunction.hpp:#include "Epetra_CrsGraph.h"
+Albany_KLResponseFunction.hpp:    virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+Albany_KLResponseFunction.hpp:    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+Albany_KLResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_KLResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_KLResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_KLResponseFunction.hpp:      Epetra_Vector* g,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+Albany_KLResponseFunction.hpp:      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_KLResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly& sg_g);
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_KLResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_KLResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_KLResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_KLResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_KLResponseFunction.hpp:      Stokhos::ProductEpetraVector& mp_g);
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_KLResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_KLResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_KLResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_KLResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_gp);
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_KLResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_KLResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_KLResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
+Albany_KLResponseFunction.hpp:    bool computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
+Albany_KLResponseFunction.hpp:		   Teuchos::RCP<Epetra_MultiVector>& evecs);
+Albany_ResponseFactory.cpp:  RCP<const Epetra_Comm> comm = app->getComm();
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm_)
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly& sg_g)
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> xdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    xdot = rcp(new Epetra_Vector(*x_map));
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> xdotdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    xdotdot = rcp(new Epetra_Vector(*x_map));
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_Vector x(*x_map);
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<const Epetra_BlockMap> g_map = sg_g.coefficientMap();
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_Vector g(*g_map);
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vx,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vp,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> xdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    xdot = rcp(new Epetra_Vector(*x_map));
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> xdotdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    xdotdot = rcp(new Epetra_Vector(*x_map));
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_Vector x(*x_map);
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> g;
+Albany_SamplingBasedScalarResponseFunction.cpp:    g = rcp(new Epetra_Vector(*(sg_g->coefficientMap())));
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_MultiVector> JV;
+Albany_SamplingBasedScalarResponseFunction.cpp:    JV = rcp(new Epetra_MultiVector(*(sg_JV->coefficientMap()), 
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_MultiVector> gp;
+Albany_SamplingBasedScalarResponseFunction.cpp:    gp = rcp(new Epetra_MultiVector(*(sg_gp->coefficientMap()), 
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<const Epetra_BlockMap> x_map = sg_x.coefficientMap();
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> xdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    xdot = rcp(new Epetra_Vector(*x_map));
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> xdotdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    xdotdot = rcp(new Epetra_Vector(*x_map));
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_Vector x(*x_map);
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_Vector> g;
+Albany_SamplingBasedScalarResponseFunction.cpp:    g = rcp(new Epetra_Vector(*(sg_g->coefficientMap())));
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_MultiVector> dg_dx;
+Albany_SamplingBasedScalarResponseFunction.cpp:    dg_dx = rcp(new Epetra_MultiVector(*(sg_dg_dx->coefficientMap()), 
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_MultiVector> dg_dxdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    dg_dxdot = rcp(new Epetra_MultiVector(*(sg_dg_dxdot->coefficientMap()), 
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_MultiVector> dg_dxdotdot;
+Albany_SamplingBasedScalarResponseFunction.cpp:    dg_dxdotdot = rcp(new Epetra_MultiVector(*(sg_dg_dxdotdot->coefficientMap()), 
+Albany_SamplingBasedScalarResponseFunction.cpp:  RCP<Epetra_MultiVector> dg_dp;
+Albany_SamplingBasedScalarResponseFunction.cpp:    dg_dp = rcp(new Epetra_MultiVector(*(sg_dg_dp->coefficientMap()), 
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector& mp_g)
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_Vector* xdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_Vector* xdotdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vx,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vxdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_MultiVector* Vp,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_gp)
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_Vector* xdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_Vector* xdotdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_Vector* g = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_MultiVector* JV = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_MultiVector* gp = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_SamplingBasedScalarResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_Vector* xdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  const Epetra_Vector* xdotdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_Vector* g = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_MultiVector* dg_dx = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_MultiVector* dg_dxdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_MultiVector* dg_dxdotdot = NULL;
+Albany_SamplingBasedScalarResponseFunction.cpp:  Epetra_MultiVector* dg_dp = NULL;
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Teuchos::RCP<const Epetra_Comm>& comm) : 
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly& sg_g);
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector& mp_g);
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_gp);
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_SamplingBasedScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+Albany_ScalarResponseFunction.cpp:#include "Epetra_LocalMap.h"
+Albany_ScalarResponseFunction.cpp:Teuchos::RCP<const Epetra_Map>
+Albany_ScalarResponseFunction.cpp:  Teuchos::RCP<const Epetra_LocalMap> response_map =
+Albany_ScalarResponseFunction.cpp:    Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
+Albany_ScalarResponseFunction.cpp:  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+Albany_ScalarResponseFunction.cpp:Teuchos::RCP<Epetra_Operator>
+Albany_ScalarResponseFunction.cpp:  const Epetra_Vector* xdot,
+Albany_ScalarResponseFunction.cpp:  const Epetra_Vector* xdotdot,
+Albany_ScalarResponseFunction.cpp:  const Epetra_Vector& x,
+Albany_ScalarResponseFunction.cpp:  Epetra_Vector* g,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::Derivative& dg_dp)
+Albany_ScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_ScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_ScalarResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_ScalarResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp)
+Albany_ScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_ScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_ScalarResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_ScalarResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_ScalarResponseFunction.cpp:  const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp)
+Albany_ScalarResponseFunction.hpp:    ScalarResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm_) :
+Albany_ScalarResponseFunction.hpp:    virtual Teuchos::RCP<const Epetra_Comm> getComm() const {
+Albany_ScalarResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_ScalarResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_ScalarResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_ScalarResponseFunction.hpp:      Epetra_Vector* g,
+Albany_ScalarResponseFunction.hpp:      Epetra_MultiVector* dg_dx,
+Albany_ScalarResponseFunction.hpp:      Epetra_MultiVector* dg_dxdot,
+Albany_ScalarResponseFunction.hpp:      Epetra_MultiVector* dg_dxdotdot,
+Albany_ScalarResponseFunction.hpp:      Epetra_MultiVector* dg_dp) = 0;
+Albany_ScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_ScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_ScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_ScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_ScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_ScalarResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) = 0;
+Albany_ScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_ScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_ScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_ScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_ScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_ScalarResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dp) = 0;
+Albany_ScalarResponseFunction.hpp:    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+Albany_ScalarResponseFunction.hpp:    virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+Albany_ScalarResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_ScalarResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_ScalarResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_ScalarResponseFunction.hpp:      Epetra_Vector* g,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dx,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+Albany_ScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_ScalarResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp);
+Albany_ScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_ScalarResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_ScalarResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
+Albany_ScalarResponseFunction.hpp:      const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp);
+Albany_ScalarResponseFunction.hpp:    Teuchos::RCP<const Epetra_Comm> comm;
+Albany_SolutionAverageResponseFunction.cpp:SolutionAverageResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm) :
+Albany_SolutionAverageResponseFunction.cpp:		 const Epetra_Vector* xdot,
+Albany_SolutionAverageResponseFunction.cpp:		 const Epetra_Vector* xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_SolutionAverageResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_SolutionAverageResponseFunction.cpp:		 Epetra_MultiVector* dg_dx,
+Albany_SolutionAverageResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_SolutionAverageResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionAverageResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly& sg_g)
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vx,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vxdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vp,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraVector& mp_g)
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vx,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vxdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Epetra_MultiVector* Vp,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_gp)
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_SolutionAverageResponseFunction.cpp:  Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+Albany_SolutionAverageResponseFunction.hpp:      const Teuchos::RCP<const Epetra_Comm>& comm);
+Albany_SolutionAverageResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_SolutionAverageResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_SolutionAverageResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_SolutionAverageResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_SolutionAverageResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_SolutionAverageResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionAverageResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_SolutionAverageResponseFunction.hpp:      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) {}
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly& sg_g);
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraVector& mp_g);
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_gp);
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dx,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdot,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dxdotdot,
+Albany_SolutionAverageResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+Albany_SolutionCullingStrategy.cpp:#include "Epetra_BlockMap.h"
+Albany_SolutionCullingStrategy.cpp:#include "Epetra_GatherAllV.hpp"
+Albany_SolutionCullingStrategy.cpp:  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
+Albany_SolutionCullingStrategy.cpp:selectedGIDs(const Epetra_BlockMap &sourceMap) const
+Albany_SolutionCullingStrategy.cpp:    const int ierr = Epetra::GatherAllV(
+Albany_SolutionCullingStrategy.cpp:#include "Epetra_BlockMap.h"
+Albany_SolutionCullingStrategy.cpp:#include "Epetra_Comm.h"
+Albany_SolutionCullingStrategy.cpp:#include "Epetra_GatherAllV.hpp"
+Albany_SolutionCullingStrategy.cpp:  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
+Albany_SolutionCullingStrategy.cpp:selectedGIDs(const Epetra_BlockMap &sourceMap) const
+Albany_SolutionCullingStrategy.cpp:    const Epetra_Comm &comm = sourceMap.Comm();
+Albany_SolutionCullingStrategy.cpp:    const int ierr = Epetra::GatherAllV(
+Albany_SolutionCullingStrategy.hpp:class Epetra_BlockMap;
+Albany_SolutionCullingStrategy.hpp:  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const = 0;
+Albany_SolutionFileResponseFunction_Def.hpp:#include "Epetra_Map.h"  
+Albany_SolutionFileResponseFunction_Def.hpp:#include "EpetraExt_BlockMapIn.h"  
+Albany_SolutionFileResponseFunction_Def.hpp:#include "Epetra_SerialComm.h"  ///HAQ
+Albany_SolutionFileResponseFunction_Def.hpp:SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
+Albany_SolutionFileResponseFunction_Def.hpp://    MMFileStatus = EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
+Albany_SolutionFileResponseFunction_Def.hpp:      std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
+Albany_SolutionFileResponseFunction_Def.hpp:		 const Epetra_Vector* xdot,
+Albany_SolutionFileResponseFunction_Def.hpp:		 const Epetra_Vector* xdotdot,
+Albany_SolutionFileResponseFunction_Def.hpp:		 const Epetra_Vector& x,
+Albany_SolutionFileResponseFunction_Def.hpp:		 Epetra_Vector* g,
+Albany_SolutionFileResponseFunction_Def.hpp:		 Epetra_MultiVector* dg_dx,
+Albany_SolutionFileResponseFunction_Def.hpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_SolutionFileResponseFunction_Def.hpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionFileResponseFunction_Def.hpp:		 Epetra_MultiVector* dg_dp)
+Albany_SolutionFileResponseFunction_Def.hpp://    MMFileStatus = EpetraExt::MatrixMarketFileToVector("reference_solution.dat",x.Map(),RefSoln);
+Albany_SolutionFileResponseFunction_Def.hpp:      std::endl << "EpetraExt::MatrixMarketFileToVector, file " __FILE__
+Albany_SolutionFileResponseFunction_Def.hpp:  Epetra_Vector diff(x.Map());
+Albany_SolutionFileResponseFunction_Def.hpp:// This is "borrowed" from EpetraExt because more explicit debugging information is needed than
+Albany_SolutionFileResponseFunction_Def.hpp://  is present in the EpetraExt version. TO DO: Move this back there
+Albany_SolutionFileResponseFunction_Def.hpp:MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A) {
+Albany_SolutionFileResponseFunction_Def.hpp:  Epetra_MultiVector * A1;
+Albany_SolutionFileResponseFunction_Def.hpp:  A = dynamic_cast<Epetra_Vector *>(A1);
+Albany_SolutionFileResponseFunction_Def.hpp:MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A) {
+Albany_SolutionFileResponseFunction_Def.hpp:    A = new Epetra_Vector(map);
+Albany_SolutionFileResponseFunction_Def.hpp:    A = new Epetra_MultiVector(map, N);
+Albany_SolutionFileResponseFunction.hpp:    SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm);
+Albany_SolutionFileResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_SolutionFileResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_SolutionFileResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_SolutionFileResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_SolutionFileResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_SolutionFileResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_SolutionFileResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionFileResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_SolutionFileResponseFunction.hpp:    Epetra_Vector* RefSoln;
+Albany_SolutionFileResponseFunction.hpp:    //! Basic idea borrowed from EpetraExt - TO DO: put it back there?
+Albany_SolutionFileResponseFunction.hpp:    int MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A);
+Albany_SolutionFileResponseFunction.hpp:    int MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A);
+Albany_SolutionFileResponseFunction.hpp:	    double Norm(const Epetra_Vector& vec){ double norm; vec.Norm2(&norm); return norm * norm;}
+Albany_SolutionFileResponseFunction.hpp:	    double Norm(const Epetra_Vector& vec){ double norm; vec.NormInf(&norm); return norm;}
+Albany_SolutionMaxValueResponseFunction.cpp:#include "Epetra_Comm.h"
+Albany_SolutionMaxValueResponseFunction.cpp:SolutionMaxValueResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_SolutionMaxValueResponseFunction.cpp:		 const Epetra_Vector* xdot,
+Albany_SolutionMaxValueResponseFunction.cpp:		 const Epetra_Vector* xdotdot,
+Albany_SolutionMaxValueResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_SolutionMaxValueResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_SolutionMaxValueResponseFunction.cpp:		 Epetra_MultiVector* dg_dx,
+Albany_SolutionMaxValueResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_SolutionMaxValueResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionMaxValueResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_SolutionMaxValueResponseFunction.cpp:computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
+Albany_SolutionMaxValueResponseFunction.cpp:  double my_max = -Epetra_MaxDouble;
+Albany_SolutionMaxValueResponseFunction.cpp:  double my_max = -Epetra_MaxDouble;
+Albany_SolutionMaxValueResponseFunction.hpp:      const Teuchos::RCP<const Epetra_Comm>& comm, 
+Albany_SolutionMaxValueResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_SolutionMaxValueResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_SolutionMaxValueResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_SolutionMaxValueResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_SolutionMaxValueResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_SolutionMaxValueResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_SolutionMaxValueResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionMaxValueResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_SolutionMaxValueResponseFunction.hpp:    //IK, 4/30/2012: added Epetra_Comm member function to facilitate Tpetra conversion
+Albany_SolutionMaxValueResponseFunction.hpp:    Teuchos::RCP<const Epetra_Comm> comm_; 
+Albany_SolutionMaxValueResponseFunction.hpp:    void computeMaxValue(const Epetra_Vector& x, double& val, int& index);
+Albany_SolutionResponseFunction.cpp:#include "Epetra_CrsMatrix.h"
+Albany_SolutionResponseFunction.cpp:  Teuchos::RCP<const Epetra_Map> x_map = application->getMap();
+Albany_SolutionResponseFunction.cpp:  importer = Teuchos::rcp(new Epetra_Import(*culled_map, *x_map));
+Albany_SolutionResponseFunction.cpp:    Teuchos::rcp(new Epetra_CrsGraph(Copy, *culled_map, 1, true));
+Albany_SolutionResponseFunction.cpp:  const Epetra_Comm& comm = *application->getComm();
+Albany_SolutionResponseFunction.cpp:  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+Albany_SolutionResponseFunction.cpp:Teuchos::RCP<const Epetra_Map>
+Albany_SolutionResponseFunction.cpp:Teuchos::RCP<Epetra_Operator>
+Albany_SolutionResponseFunction.cpp:  Teuchos::RCP<Epetra_CrsMatrix> G =
+Albany_SolutionResponseFunction.cpp:    Teuchos::rcp(new Epetra_CrsMatrix(Copy, *gradient_graph));
+Albany_SolutionResponseFunction.cpp:		 const Epetra_Vector* xdot,
+Albany_SolutionResponseFunction.cpp:		 const Epetra_Vector* xdotdot,
+Albany_SolutionResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_SolutionResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_SolutionResponseFunction.cpp:		 Epetra_Operator* dg_dx,
+Albany_SolutionResponseFunction.cpp:		 Epetra_Operator* dg_dxdot,
+Albany_SolutionResponseFunction.cpp:		 Epetra_Operator* dg_dxdotdot,
+Albany_SolutionResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_SolutionResponseFunction.cpp:    Epetra_CrsMatrix *dg_dx_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dx);
+Albany_SolutionResponseFunction.cpp:    Epetra_CrsMatrix *dg_dxdot_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dxdot);
+Albany_SolutionResponseFunction.cpp:    Epetra_CrsMatrix *dg_dxdotdot_crs = dynamic_cast<Epetra_CrsMatrix*>(dg_dxdotdot);
+Albany_SolutionResponseFunction.cpp:  const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm)
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::EpetraVectorOrthogPoly& sg_g)
+Albany_SolutionResponseFunction.cpp:		  const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionResponseFunction.cpp:		  const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionResponseFunction.cpp:		  const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vx,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vxdot,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vp,
+Albany_SolutionResponseFunction.cpp:		  Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionResponseFunction.cpp:		  Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_SolutionResponseFunction.cpp:		  Stokhos::EpetraMultiVectorOrthogPoly* sg_gp)
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp)
+Albany_SolutionResponseFunction.cpp:    Teuchos::RCP<Epetra_CrsMatrix> dg_dx_crs =
+Albany_SolutionResponseFunction.cpp:      Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(sg_dg_dx->getCoeffPtr(0),
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::ProductEpetraVector& mp_g)
+Albany_SolutionResponseFunction.cpp:		  const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionResponseFunction.cpp:		  const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionResponseFunction.cpp:		  const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vx,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vxdot,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionResponseFunction.cpp:		  const Epetra_MultiVector* Vp,
+Albany_SolutionResponseFunction.cpp:		  Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionResponseFunction.cpp:		  Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_SolutionResponseFunction.cpp:		  Stokhos::ProductEpetraMultiVector* mp_gp)
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionResponseFunction.cpp:		   const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::ProductEpetraOperator* mp_dg_dx,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::ProductEpetraOperator* mp_dg_dxdot,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::ProductEpetraOperator* mp_dg_dxdotdot,
+Albany_SolutionResponseFunction.cpp:		   Stokhos::ProductEpetraMultiVector* mp_dg_dp)
+Albany_SolutionResponseFunction.cpp:      Teuchos::RCP<Epetra_CrsMatrix> dg_dx_crs =
+Albany_SolutionResponseFunction.cpp:	Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(mp_dg_dx->getCoeffPtr(i),
+Albany_SolutionResponseFunction.cpp:Teuchos::RCP<Epetra_Map>
+Albany_SolutionResponseFunction.cpp:buildCulledMap(const Epetra_Map& x_map,
+Albany_SolutionResponseFunction.cpp:  Teuchos::RCP<Epetra_Map> x_new_map =
+Albany_SolutionResponseFunction.cpp:    Teuchos::rcp( new Epetra_Map( -1, N_new, &gids_new[0], 0, x_map.Comm() ) );
+Albany_SolutionResponseFunction.cpp:cullSolution(const Epetra_MultiVector& x, Epetra_MultiVector& x_culled) const
+Albany_SolutionResponseFunction.hpp:#include "Epetra_Map.h"
+Albany_SolutionResponseFunction.hpp:#include "Epetra_Import.h"
+Albany_SolutionResponseFunction.hpp:#include "Epetra_CrsGraph.h"
+Albany_SolutionResponseFunction.hpp:    virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+Albany_SolutionResponseFunction.hpp:    virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+Albany_SolutionResponseFunction.hpp:      const Epetra_Vector* xdot,
+Albany_SolutionResponseFunction.hpp:      const Epetra_Vector* xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Epetra_Vector& x,
+Albany_SolutionResponseFunction.hpp:      Epetra_Vector* g,
+Albany_SolutionResponseFunction.hpp:      Epetra_Operator* dg_dx,
+Albany_SolutionResponseFunction.hpp:      Epetra_Operator* dg_dxdot,
+Albany_SolutionResponseFunction.hpp:      Epetra_Operator* dg_dxdotdot,
+Albany_SolutionResponseFunction.hpp:      Epetra_MultiVector* dg_dp);
+Albany_SolutionResponseFunction.hpp:      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly& sg_g);
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_gp);
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::EpetraVectorOrthogPoly& sg_x,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraVectorOrthogPoly* sg_g,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dx,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdot,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraOperatorOrthogPoly* sg_dg_dxdotdot,
+Albany_SolutionResponseFunction.hpp:      Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp);
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraVector& mp_g);
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vx,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vxdot,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vxdotdot,
+Albany_SolutionResponseFunction.hpp:      const Epetra_MultiVector* Vp,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_JV,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_gp);
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector* mp_xdotdot,
+Albany_SolutionResponseFunction.hpp:      const Stokhos::ProductEpetraVector& mp_x,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraVector* mp_g,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraOperator* mp_dg_dx,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraOperator* mp_dg_dxdot,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraOperator* mp_dg_dxdotdot,
+Albany_SolutionResponseFunction.hpp:      Stokhos::ProductEpetraMultiVector* mp_dg_dp);
+Albany_SolutionResponseFunction.hpp:    Teuchos::RCP<Epetra_Map> 
+Albany_SolutionResponseFunction.hpp:    buildCulledMap(const Epetra_Map& x_map, 
+Albany_SolutionResponseFunction.hpp:    void cullSolution(const Epetra_MultiVector& x, 
+Albany_SolutionResponseFunction.hpp:		      Epetra_MultiVector& x_culled) const;
+Albany_SolutionResponseFunction.hpp:    //! Epetra map for response
+Albany_SolutionResponseFunction.hpp:    Teuchos::RCP<const Epetra_Map> culled_map;
+Albany_SolutionResponseFunction.hpp:    Teuchos::RCP<Epetra_Import> importer; 
+Albany_SolutionResponseFunction.hpp:    Teuchos::RCP<Epetra_CrsGraph> gradient_graph;
+Albany_SolutionTwoNormResponseFunction.cpp:#include "Epetra_Comm.h"
+Albany_SolutionTwoNormResponseFunction.cpp:SolutionTwoNormResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm) :
+Albany_SolutionTwoNormResponseFunction.cpp:		 const Epetra_Vector* xdot,
+Albany_SolutionTwoNormResponseFunction.cpp:		 const Epetra_Vector* xdotdot,
+Albany_SolutionTwoNormResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_SolutionTwoNormResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_SolutionTwoNormResponseFunction.cpp:		 Epetra_MultiVector* dg_dx,
+Albany_SolutionTwoNormResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_SolutionTwoNormResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionTwoNormResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_SolutionTwoNormResponseFunction.hpp:      const Teuchos::RCP<const Epetra_Comm>& comm);
+Albany_SolutionTwoNormResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_SolutionTwoNormResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_SolutionTwoNormResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_SolutionTwoNormResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_SolutionTwoNormResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_SolutionTwoNormResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_SolutionTwoNormResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionTwoNormResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_SolutionValuesResponseFunction.cpp:#include "Epetra_ImportWithAlternateMap.hpp"
+Albany_SolutionValuesResponseFunction.cpp:#include "Epetra_Import.h"
+Albany_SolutionValuesResponseFunction.cpp:		 const Epetra_Vector* /*xdot*/,
+Albany_SolutionValuesResponseFunction.cpp:		 const Epetra_Vector* /*xdot*/,
+Albany_SolutionValuesResponseFunction.cpp:		 const Epetra_Vector& x,
+Albany_SolutionValuesResponseFunction.cpp:		 Epetra_Vector* g,
+Albany_SolutionValuesResponseFunction.cpp:		 Epetra_MultiVector* dg_dx,
+Albany_SolutionValuesResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdot,
+Albany_SolutionValuesResponseFunction.cpp:		 Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionValuesResponseFunction.cpp:		 Epetra_MultiVector* dg_dp)
+Albany_SolutionValuesResponseFunction.cpp:    Epetra::ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
+Albany_SolutionValuesResponseFunction.cpp:    const Epetra_BlockMap &replicatedMap = solutionImporter_->TargetMap();
+Albany_SolutionValuesResponseFunction.cpp:    const Epetra_BlockMap &derivMap = dg_dx->Map();
+Albany_SolutionValuesResponseFunction.cpp:  const Teuchos::RCP<const Epetra_BlockMap> solutionMap = app_->getMap();
+Albany_SolutionValuesResponseFunction.cpp:    const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
+Albany_SolutionValuesResponseFunction.cpp:    solutionImporter_ = Teuchos::rcp(new Epetra_Import(targetMap, *solutionMap));
+Albany_SolutionValuesResponseFunction.hpp:class Epetra_Import;
+Albany_SolutionValuesResponseFunction.hpp:		     const Epetra_Vector* xdot,
+Albany_SolutionValuesResponseFunction.hpp:		     const Epetra_Vector* xdotdot,
+Albany_SolutionValuesResponseFunction.hpp:		     const Epetra_Vector& x,
+Albany_SolutionValuesResponseFunction.hpp:		     Epetra_Vector* g,
+Albany_SolutionValuesResponseFunction.hpp:		     Epetra_MultiVector* dg_dx,
+Albany_SolutionValuesResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdot,
+Albany_SolutionValuesResponseFunction.hpp:		     Epetra_MultiVector* dg_dxdotdot,
+Albany_SolutionValuesResponseFunction.hpp:		     Epetra_MultiVector* dg_dp);
+Albany_SolutionValuesResponseFunction.hpp:    Teuchos::RCP<Epetra_Import> solutionImporter_;
+Epetra_GatherAllV.cpp:#include "Epetra_GatherAllV.hpp"
+Epetra_GatherAllV.cpp:#include "Epetra_ConfigDefs.h"
+Epetra_GatherAllV.cpp:#include "Epetra_Comm.h"
+Epetra_GatherAllV.cpp:#include "Epetra_MpiComm.h"
+Epetra_GatherAllV.cpp:#include "Epetra_SerialComm.h"
+Epetra_GatherAllV.cpp:int Epetra::GatherAllV(
+Epetra_GatherAllV.cpp:    const Epetra_Comm &comm,
+Epetra_GatherAllV.cpp:  if (const Epetra_MpiComm *mpiComm = dynamic_cast<const Epetra_MpiComm *>(&comm)) {
+Epetra_GatherAllV.cpp:  if (dynamic_cast<const Epetra_SerialComm *>(&comm)) {
+Epetra_GatherAllV.hpp:class Epetra_Comm;
+Epetra_GatherAllV.hpp:namespace Epetra {
+Epetra_GatherAllV.hpp:    const Epetra_Comm &comm,
+Epetra_GatherAllV.hpp:} // namespace Epetra
+Epetra_ImportWithAlternateMap.cpp:#include "Epetra_ImportWithAlternateMap.hpp"
+Epetra_ImportWithAlternateMap.cpp:#include "Epetra_Import.h"
+Epetra_ImportWithAlternateMap.cpp:#include "Epetra_MultiVector.h"
+Epetra_ImportWithAlternateMap.cpp:namespace Epetra {
+Epetra_ImportWithAlternateMap.cpp:    const Epetra_Import &importer,
+Epetra_ImportWithAlternateMap.cpp:    const Epetra_MultiVector &source,
+Epetra_ImportWithAlternateMap.cpp:    Epetra_MultiVector &target,
+Epetra_ImportWithAlternateMap.cpp:    Epetra_CombineMode mode)
+Epetra_ImportWithAlternateMap.cpp:  const Epetra_BlockMap savedMap = target.Map();
+Epetra_ImportWithAlternateMap.cpp:} // namespace Epetra
+Epetra_ImportWithAlternateMap.hpp:#include "Epetra_CombineMode.h"
+Epetra_ImportWithAlternateMap.hpp:class Epetra_Import;
+Epetra_ImportWithAlternateMap.hpp:class Epetra_MultiVector;
+Epetra_ImportWithAlternateMap.hpp:namespace Epetra {
+Epetra_ImportWithAlternateMap.hpp:    const Epetra_Import &importer,
+Epetra_ImportWithAlternateMap.hpp:    const Epetra_MultiVector &source,
+Epetra_ImportWithAlternateMap.hpp:    Epetra_MultiVector &target,
+Epetra_ImportWithAlternateMap.hpp:    Epetra_CombineMode mode);
+Epetra_ImportWithAlternateMap.hpp:} // namespace Epetra

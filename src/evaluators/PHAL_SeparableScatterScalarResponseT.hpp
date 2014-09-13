@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: DistParamDeriv not implemented.  SG and MP has Epetra.
+
 #ifndef PHAL_SEPARABLE_SCATTER_SCALAR_RESPONSET_HPP
 #define PHAL_SEPARABLE_SCATTER_SCALAR_RESPONSET_HPP
 

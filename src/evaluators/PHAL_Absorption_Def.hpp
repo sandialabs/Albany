@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra
+
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"

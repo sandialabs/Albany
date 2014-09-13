@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: only Epetra is SG and MP 
+
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
@@ -18,29 +20,31 @@ QCAD::FieldValueScatterScalarResponse<PHAL::AlbanyTraits::Jacobian, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
-  if (g != Teuchos::null)
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
+  if (gT != Teuchos::null) {
+    Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
     for (int res = 0; res < this->field_components.size(); res++) {
-      (*g)[res] = this->global_response[this->field_components[res]].val();
+      gT_nonconstView[res] = this->global_response[this->field_components[res]].val();
+  }
   }
 
-  Teuchos::RCP<Epetra_MultiVector> dgdx = workset.dgdx;
-  Teuchos::RCP<Epetra_MultiVector> dgdxdot = workset.dgdxdot;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx = workset.overlapped_dgdx;
-  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot =
-    workset.overlapped_dgdxdot;
-  Teuchos::RCP<Epetra_MultiVector> dg, overlapped_dg;
-  if (dgdx != Teuchos::null) {
-    dg = dgdx;
-    overlapped_dg = overlapped_dgdx;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxT = workset.dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT = workset.dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT = workset.overlapped_dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT =
+    workset.overlapped_dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> dgT, overlapped_dgT;
+  if (dgdxT != Teuchos::null) {
+    dgT = dgdxT;
+    overlapped_dgT = overlapped_dgdxT;
   }
   else {
-    dg = dgdxdot;
-    overlapped_dg = overlapped_dgdxdot;
+    dgT = dgdxdotT;
+    overlapped_dgT = overlapped_dgdxdotT;
   }
 
-  dg->PutScalar(0.0);
-  overlapped_dg->PutScalar(0.0);
+  dgT->putScalar(0.0);
+  overlapped_dgT->putScalar(0.0);
 
   // Extract derivatives for the cell corresponding to nodeID
   if (nodeID != Teuchos::null) {
@@ -63,14 +67,14 @@ postEvaluate(typename Traits::PostEvalData workset)
           int dof = nodeID[node_dof][eq_dof];
 
           // Set dg/dx
-          overlapped_dg->ReplaceMyValue(dof, res, val.dx(deriv));
+          overlapped_dgT->replaceLocalValue(dof, res, val.dx(deriv));
 
         } // column equations
       } // column nodes
     } // response
   } // cell belongs to this proc
 
-  dg->Export(*overlapped_dg, *workset.x_importer, Add);
+  dgT->doExport(*overlapped_dgT, *workset.x_importerT, Tpetra::ADD);
 }
 
 // **********************************************************************

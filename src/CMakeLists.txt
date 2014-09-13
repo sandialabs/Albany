@@ -182,7 +182,6 @@ SET(HEADERS ${HEADERS}
 SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
-  evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
@@ -235,6 +234,7 @@ SET(SOURCES ${SOURCES}
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
     evaluators/PHAL_GatherEigenvectors.cpp
+    evaluators/PHAL_GatherAuxData.cpp
   )
 ENDIF() 
 
@@ -272,8 +272,6 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherSolution_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
-  evaluators/PHAL_GatherAuxData.hpp
-  evaluators/PHAL_GatherAuxData_Def.hpp
   evaluators/PHAL_ScatterResidual.hpp
   evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
@@ -362,6 +360,8 @@ IF (ALBANY_EPETRA)
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp
     evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+    evaluators/PHAL_GatherAuxData.hpp
+    evaluators/PHAL_GatherAuxData_Def.hpp
   )
 ENDIF()
 

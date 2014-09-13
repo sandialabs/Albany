@@ -14,7 +14,6 @@
 #include "PHAL_Dimension.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Teuchos_Array.hpp"
 

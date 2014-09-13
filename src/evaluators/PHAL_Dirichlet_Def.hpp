@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: only Epetra is SG and MP
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -59,9 +61,6 @@ template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;

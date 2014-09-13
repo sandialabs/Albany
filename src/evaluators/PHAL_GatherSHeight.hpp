@@ -15,7 +15,6 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace PHAL {
 /** \brief Gathers surface height into the nodal fields of the field manager
