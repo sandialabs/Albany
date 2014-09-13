@@ -4,12 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: has no Epetra except Epetra_Comm.
+
 #ifndef ALBANY_ABSTRACTMESHSTRUCT_HPP
 #define ALBANY_ABSTRACTMESHSTRUCT_HPP
 
 #include "Teuchos_ParameterList.hpp"
 #include "Epetra_Comm.h"
-#include "Epetra_Map.h"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
 

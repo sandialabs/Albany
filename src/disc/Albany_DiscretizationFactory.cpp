@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: has no Epetra except Epetra_Comm.
+
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
@@ -13,11 +15,13 @@
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
+#ifdef ALBANY_EPETRA
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_CismSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #include "Albany_MpasSTKMeshStruct.hpp"
+#endif
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
@@ -93,7 +97,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
-
+#ifdef ALBANY_EPETRA
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
   }
@@ -124,6 +128,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   else if (method == "Mpas") {
     meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
   }
+#endif
   else if(method == "Cubit") {
 #ifdef ALBANY_CUTR
     AGS"need to inherit from Generic"

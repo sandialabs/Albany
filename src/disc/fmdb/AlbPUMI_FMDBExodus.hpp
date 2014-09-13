@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra except Epetra_Comm
+
 #ifndef FMDB_EXODUS_HPP
 #define FMDB_EXODUS_HPP
 

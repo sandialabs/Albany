@@ -14,7 +14,9 @@
 #include "Teuchos_Ptr.hpp"
 
 #ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
 #include "PeridigmManager.hpp"
+#endif
 #endif
 
 #include <string>
@@ -68,9 +70,11 @@ void ObserverImpl::observeSolution(
     app_->getStateMgr().updateStates();
 
 #ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
     LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
     peridigmManager.writePeridigmSubModel(stamp);
     peridigmManager.updateState();
+#endif
 #endif
   }
 

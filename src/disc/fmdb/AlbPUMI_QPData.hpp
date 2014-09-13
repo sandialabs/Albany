@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBPUMI_QPDATA_HPP
 #define ALBPUMI_QPDATA_HPP
 

@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off.
+
 #ifndef ALBANY_ABSTRACTDISCRETIZATION_HPP
 #define ALBANY_ABSTRACTDISCRETIZATION_HPP
 
@@ -14,9 +16,11 @@
 #include "Teuchos_ArrayRCP.hpp"
 #include "Albany_DataTypes.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsGraph.h"
+#endif
 
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"

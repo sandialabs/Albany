@@ -5,6 +5,8 @@
 //*****************************************************************//
 
 
+//9/12/14: no Epetra!
+
 #ifndef ALBANY_STKNODEFIELDCONTAINER_HPP
 #define ALBANY_STKNODEFIELDCONTAINER_HPP
 

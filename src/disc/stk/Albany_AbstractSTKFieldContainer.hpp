@@ -4,14 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE set to off.
 
 #ifndef ALBANY_ABSTRACTSTKFIELDCONT_HPP
 #define ALBANY_ABSTRACTSTKFIELDCONT_HPP
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
+#endif
 
 //This include is added in Tpetra branch to get all the necessary
 //Tpetra includes (e.g., Tpetra_Vector.hpp, Tpetra_Map.hpp, etc.)
@@ -98,12 +101,18 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
       return time;
     }
 
+#ifdef ALBANY_EPETRA
     virtual void fillSolnVector(Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+#endif
     virtual void fillSolnVectorT(Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
+#ifdef ALBANY_EPETRA
     virtual void saveSolnVector(const Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+#endif
     //Tpetra version of above
     virtual void saveSolnVectorT(const Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT) = 0;
+#ifdef ALBANY_EPETRA
     virtual void saveResVector(const Epetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
+#endif
     virtual void saveResVectorT(const Tpetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map) = 0;
 
     virtual void transferSolutionToCoords() = 0;

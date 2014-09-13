@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: this still has some Epetra in addition to Epetra_Comm.
+//Not compiled when ALBANY_EPETRA_EXE turned off.
+
 #include <iostream>
 
 #include "Albany_CismSTKMeshStruct.hpp"

@@ -596,7 +596,7 @@ ELSE()
 ENDIF()
 
 # PERIDIGM
-IF(ALBANY_PERIDIGM)
+IF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
   include_directories (${Peridigm_INCLUDE_DIRS})
   link_directories (${Peridigm_LIBRARY_DIRS})
 ELSE()
@@ -654,7 +654,7 @@ SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanySGCoupled
     )
 endif()
-IF (ALBANY_DAKOTA)
+IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()

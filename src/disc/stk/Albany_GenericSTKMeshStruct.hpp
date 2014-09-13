@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+
 #ifndef ALBANY_GENERICSTKMESHSTRUCT_HPP
 #define ALBANY_GENERICSTKMESHSTRUCT_HPP
 

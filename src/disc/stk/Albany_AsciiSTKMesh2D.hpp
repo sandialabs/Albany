@@ -3,6 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: has no Epetra except Epetra_Comm.
+//Not compiled when ALBANY_EPETRA_EXE turned off.
+
 #ifndef ALBANY_ASCII_STKMESH2DSTRUCT_HPP
 #define ALBANY_ASCII_STKMESH2DSTRUCT_HPP
 

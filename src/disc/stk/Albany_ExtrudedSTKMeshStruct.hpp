@@ -3,6 +3,10 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: this still has some Epetra in addition to Epetra_Comm.
+//Not compiled when ALBANY_EPETRA_EXE turned off.
+
 #ifndef ALBANY_ASCII_STKMESH3DSTRUCT_HPP
 #define ALBANY_ASCII_STKMESH3DSTRUCT_HPP
 
@@ -46,10 +50,11 @@ namespace Albany {
     inline void computeMap();
     inline int prismType(long long int const* prismVertexMpasIds, int& minIndex);
     inline void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
+#ifdef ALBANY_EPETRA
     void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm);
     void readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm);
     void readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm);
-
+#endif
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;

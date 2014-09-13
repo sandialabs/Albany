@@ -41,7 +41,9 @@
 
 
 #ifdef ALBANY_PERIDIGM
+#ifdef  ALBANY_EPETRA
 #include "PeridigmManager.hpp"
+#endif
 #endif
 
 using Teuchos::ArrayRCP;
@@ -328,7 +330,9 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 #endif
 
 #ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
   LCM::PeridigmManager::self().initialize(params, disc);
+#endif
 #endif
 }
 
@@ -597,10 +601,12 @@ computeGlobalResidualImplT(
   fT->putScalar(0.0);
 
 //TO DO, IK, 6/26/14: convert setCurrentTimeAndDisplacement to Tpetra
-#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_PERIDIGM 
+#ifdef ALBANY_EPETRA
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, x);
   peridigmManager.evaluateInternalForce();
+#endif
 #endif
 
 

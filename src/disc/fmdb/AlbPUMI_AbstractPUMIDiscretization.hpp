@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
+//IK, 9/12/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
+
 #ifndef ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
 #define ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
 

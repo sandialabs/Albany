@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+
 #include <iostream>
 
 #include "Albany_OrdinarySTKFieldContainer.hpp"
@@ -217,6 +219,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
 }
 
+#ifdef ALBANY_EPETRA
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& soln,
     stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -239,6 +242,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vecto
   }
 
 }
+#endif
 
 //Tpetra version of above
 template<bool Interleaved>
@@ -263,6 +267,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vect
   }
 }
 
+#ifdef ALBANY_EPETRA
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(const Epetra_Vector& soln,
     stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -285,6 +290,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVector(const Epetra
   }
 
 }
+#endif
 
 //Tpetra version of above
 template<bool Interleaved>
@@ -311,6 +317,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetr
 
 }
 
+#ifdef ALBANY_EPETRA
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vector& res,
     stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -333,6 +340,7 @@ void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVector(const Epetra_
   }
 
 }
+#endif
 
 template<bool Interleaved>
 void Albany::OrdinarySTKFieldContainer<Interleaved>::saveResVectorT(const Tpetra_Vector& res,

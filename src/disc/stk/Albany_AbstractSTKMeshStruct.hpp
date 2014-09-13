@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: has no Epetra except Epetra_Comm.
+
 #ifndef ALBANY_ABSTRACTSTKMESHSTRUCT_HPP
 #define ALBANY_ABSTRACTSTKMESHSTRUCT_HPP
 

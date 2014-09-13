@@ -4,8 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
+
 #include <limits>
+#ifdef ALBANY_EPETRA
 #include "Epetra_Export.h"
+#endif
 
 #include "Albany_Utils.hpp"
 #include "AlbPUMI_FMDBDiscretization.hpp"

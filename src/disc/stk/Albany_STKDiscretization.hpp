@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off, except Epetra_Comm.
+
 #ifndef ALBANY_STKDISCRETIZATION_HPP
 #define ALBANY_STKDISCRETIZATION_HPP
 
@@ -19,8 +21,10 @@
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
+#endif
 
 #include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
 

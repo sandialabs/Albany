@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_ABSTRACTPROBLEM_HPP
 #define ALBANY_ABSTRACTPROBLEM_HPP
 
@@ -12,8 +14,6 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
 
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp" // contains MeshSpecsStuct

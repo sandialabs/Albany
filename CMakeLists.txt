@@ -667,6 +667,11 @@ IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
 ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
    
+IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
+  MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
+ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
+want to useTriKota.")
+ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)

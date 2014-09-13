@@ -13,7 +13,6 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 #include "Teuchos_Array.hpp"
 
 #include "Albany_Layouts.hpp"

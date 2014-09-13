@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
+
 #ifndef ALBPUMI_FMDBDISCRETIZATION_HPP
 #define ALBPUMI_FMDBDISCRETIZATION_HPP
 
@@ -20,9 +22,10 @@
 #include "AlbPUMI_FMDBExodus.hpp"
 
 #include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
-
+#ifdef ALBANY_EPETRA
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
+#endif
 
 namespace AlbPUMI {
 

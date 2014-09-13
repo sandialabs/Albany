@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 #include "Albany_SolutionFileResponseFunction.hpp"
-//#include "EpetraExt_VectorIn.h"
 
 #include "Epetra_Map.h"  
 #include "EpetraExt_BlockMapIn.h"  

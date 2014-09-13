@@ -163,11 +163,11 @@ public:
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
   void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
-#endif
 
   //! Methods to get/set Auxilliary data vectors
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
+#endif
 
 private:
   //! Private to prohibit copying
@@ -189,8 +189,8 @@ private:
   Teuchos::RCP<StateInfoStruct> stateInfo;
 #ifdef ALBANY_EPETRA
   Teuchos::RCP<EigendataStruct> eigenData;
-#endif
   Teuchos::RCP<Epetra_MultiVector> auxData;
+#endif
 
 };
 

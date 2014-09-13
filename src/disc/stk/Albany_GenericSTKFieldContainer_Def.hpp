@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+
 #include <iostream>
 
 #include "Albany_GenericSTKFieldContainer.hpp"
@@ -118,7 +120,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
   }
 }
 
-
+#ifdef ALBANY_EPETRA
 template<bool Interleaved>
 template<class T>
 typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
@@ -153,6 +155,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
   }
 #endif
 }
+#endif
 
 //Tpetra version of above
 template<bool Interleaved>
@@ -188,7 +191,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &
 }
 
 // Specialization for ScalarFieldType
-
+#ifdef ALBANY_EPETRA
 template<bool Interleaved>
 void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& soln,
     ScalarFieldType* solution_field,
@@ -253,6 +256,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
   }
 #endif
 }
+#endif
 //Tpetra version of above
 template<bool Interleaved>
 template<class T>
@@ -290,6 +294,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
 }
 
 
+#ifdef ALBANY_EPETRA
 // Specialization for ScalarFieldType
 template<bool Interleaved>
 void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vector& soln,
@@ -320,6 +325,7 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
   }
 #endif
 }
+#endif
 
 // Specialization for ScalarFieldType - Tpetra
 template<bool Interleaved>
@@ -353,7 +359,6 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpet
   }
 }
 
-//Tpetra version of fillVectorHelper
 
 //Tpetra version of fillVectorHelper
 template<bool Interleaved>

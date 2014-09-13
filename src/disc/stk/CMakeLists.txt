@@ -15,11 +15,6 @@ SET(SOURCES
   Albany_TmplSTKMeshStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
-  Albany_AsciiSTKMeshStruct.cpp
-  Albany_CismSTKMeshStruct.cpp
-  Albany_AsciiSTKMesh2D.cpp
-  Albany_ExtrudedSTKMeshStruct.cpp
-  Albany_MpasSTKMeshStruct.cpp
   )
 SET(HEADERS 
   Albany_NodalGraphUtils.hpp
@@ -39,12 +34,24 @@ SET(HEADERS
   Albany_TmplSTKMeshStruct_Def.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
-  Albany_AsciiSTKMeshStruct.hpp
-  Albany_CismSTKMeshStruct.hpp
-  Albany_AsciiSTKMesh2D.hpp
-  Albany_ExtrudedSTKMeshStruct.hpp
-  Albany_MpasSTKMeshStruct.hpp
   )
+
+IF (ALBANY_EPETRA)
+  SET(HEADERS ${HEADERS} 
+    Albany_ExtrudedSTKMeshStruct.hpp
+    Albany_AsciiSTKMeshStruct.hpp
+    Albany_CismSTKMeshStruct.hpp
+    Albany_AsciiSTKMesh2D.hpp
+    Albany_MpasSTKMeshStruct.hpp
+  )
+  SET(SOURCES ${SOURCES} 
+    Albany_ExtrudedSTKMeshStruct.cpp
+    Albany_AsciiSTKMeshStruct.cpp
+    Albany_CismSTKMeshStruct.cpp
+    Albany_AsciiSTKMesh2D.cpp
+    Albany_MpasSTKMeshStruct.cpp
+  )
+ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src 

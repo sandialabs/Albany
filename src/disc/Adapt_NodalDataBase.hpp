@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 
+//IK, 9/12/14: no Epetra!
 #ifndef ADAPT_NODALDATABASE_HPP
 #define ADAPT_NODALDATABASE_HPP
 

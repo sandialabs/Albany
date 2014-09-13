@@ -4,9 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off, except Epetra_Comm.
 
 #include <limits>
-#include "Epetra_Export.h"
 
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
@@ -48,8 +48,9 @@ extern "C" {
 #endif
 
 #include <algorithm>
-#include "EpetraExt_MultiVectorOut.h"
 #ifdef ALBANY_EPETRA
+#include "Epetra_Export.h"
+#include "EpetraExt_MultiVectorOut.h"
 #include "Petra_Converters.hpp"
 #endif
 

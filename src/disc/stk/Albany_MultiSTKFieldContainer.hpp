@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+
 #ifndef ALBANY_MULTISTKFIELDCONT_HPP
 #define ALBANY_MULTISTKFIELDCONT_HPP
 
@@ -40,12 +42,18 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasVelocityRMSField(){ return false; }
     bool hasSphereVolumeField(){ return buildSphereVolume; }
 
+#ifdef ALBANY_EPETRA
     void fillSolnVector(Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#endif
     void fillSolnVectorT(Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+#ifdef ALBANY_EPETRA
     void saveSolnVector(const Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#endif
     //Tpetra version of above
     void saveSolnVectorT(const Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+#ifdef ALBANY_EPETRA
     void saveResVector(const Epetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#endif
     void saveResVectorT(const Tpetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
 
     void transferSolutionToCoords();

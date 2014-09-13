@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra except Epetra_Comm
+
 #include "AlbPUMI_FMDBExodus.hpp"
 
 #include <stk_mesh/fem/FEMMetaData.hpp>
