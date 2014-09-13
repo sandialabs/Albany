@@ -4,9 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off except Epetra_Comm
+
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_LocalMap.h"
+#endif
 
 using Teuchos::RCP;
 using Teuchos::rcp;

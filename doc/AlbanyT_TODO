@@ -14,6 +14,7 @@ Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF:
 - Cism, Mpas and extruded meshes.
 - Albany_Dakota (TriKota).
 - peridigm.
+- Responses: SolutionValuesResponse, Culling Strategy
 
 Piro: 
 - Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  

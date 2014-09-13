@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
+
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Epetra_Comm.h"
 #include "Teuchos_CommHelpers.hpp"

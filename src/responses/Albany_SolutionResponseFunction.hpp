@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off.
+
 #ifndef ALBANY_SOLUTION_RESPONSE_FUNCTION_HPP
 #define ALBANY_SOLUTION_RESPONSE_FUNCTION_HPP
 
@@ -13,9 +15,11 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_Array.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_CrsGraph.h"
+#endif
 
 namespace Albany {
 

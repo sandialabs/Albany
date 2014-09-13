@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/13/14: no Epetra except SG and MP and Epetra_Comm
+
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
 
 using Teuchos::RCP;

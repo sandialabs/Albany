@@ -121,16 +121,12 @@ SET(PDE_HDRS
 
 #responses
 SET(SOURCES ${SOURCES}
-  responses/Epetra_GatherAllV.cpp
-  responses/Epetra_ImportWithAlternateMap.cpp
-  responses/Albany_SolutionCullingStrategy.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
   responses/Albany_SolutionAverageResponseFunction.cpp
   responses/Albany_SolutionMaxValueResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
-  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
@@ -139,9 +135,6 @@ SET(SOURCES ${SOURCES}
   responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-  responses/Epetra_GatherAllV.hpp
-  responses/Epetra_ImportWithAlternateMap.hpp
-  responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
@@ -149,7 +142,6 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionAverageResponseFunction.hpp
   responses/Albany_SolutionMaxValueResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
-  responses/Albany_SolutionValuesResponseFunction.hpp
   responses/Albany_SolutionFileResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
@@ -157,6 +149,21 @@ SET(HEADERS ${HEADERS}
   responses/Albany_KLResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
   )
+
+#ifdef ALBANY_EPETRA
+SET(SOURCES ${SOURCES} 
+  responses/Epetra_GatherAllV.cpp
+  responses/Epetra_ImportWithAlternateMap.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
+  responses/Albany_SolutionValuesResponseFunction.cpp
+)
+SET(HEADERS ${HEADERS} 
+  responses/Epetra_GatherAllV.hpp
+  responses/Epetra_ImportWithAlternateMap.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
+  responses/Albany_SolutionValuesResponseFunction.hpp
+)
+#endif
 
 #discretization
 SET(SOURCES ${SOURCES}

@@ -4,23 +4,27 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off, except SG and MP.
+
 #ifndef ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 #define ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "EpetraExt_ModelEvaluator.h"
-#include "Stokhos_OrthogPolyBasis.hpp"
-#include "Stokhos_OrthogPolyExpansion.hpp"
-#include "Stokhos_Quadrature.hpp"
 #include "EpetraExt_MultiComm.h"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_ProductEpetraVector.hpp"
 #include "Stokhos_ProductEpetraMultiVector.hpp"
+#endif
+#include "Stokhos_OrthogPolyBasis.hpp"
+#include "Stokhos_OrthogPolyExpansion.hpp"
+#include "Stokhos_Quadrature.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
 #include "Albany_DataTypes.hpp"

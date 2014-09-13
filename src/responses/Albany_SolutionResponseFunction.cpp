@@ -5,7 +5,9 @@
 //*****************************************************************//
 
 #include "Albany_SolutionResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_CrsMatrix.h"
+#endif
 #include <algorithm>
 
 Albany::SolutionResponseFunction::

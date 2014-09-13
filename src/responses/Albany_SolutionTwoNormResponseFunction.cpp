@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra except Epetra_Comm
+
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
 #include "Epetra_Comm.h"
 

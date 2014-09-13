@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra except SG and MP and Epetra_Comm
+
 #ifndef ALBANY_SAMPLING_BASED_SCALAR_RESPONSE_FUNCTION_HPP
 #define ALBANY_SAMPLING_BASED_SCALAR_RESPONSE_FUNCTION_HPP
 

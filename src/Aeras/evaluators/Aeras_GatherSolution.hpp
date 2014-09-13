@@ -15,7 +15,6 @@
 #include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 

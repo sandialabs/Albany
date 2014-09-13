@@ -4,12 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out except if SG and MP if ALBANY_EPETRA_EXE set to off.
+
 #ifndef ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 #define ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Stokhos_ProductEpetraOperator.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
+#endif
 
 namespace Albany {
 

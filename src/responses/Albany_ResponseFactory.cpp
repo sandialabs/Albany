@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra except Epetra_Comm when ALBANY_EPETRA_EXE off.
+
 #include "Albany_ResponseFactory.hpp"
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
