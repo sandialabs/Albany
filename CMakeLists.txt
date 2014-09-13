@@ -500,12 +500,12 @@ IF (ENABLE_64BIT_INT)
   MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
   SET(ALBANY_64BIT_INT TRUE)
   # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ELSE()
   MESSAGE("-- 64 bit GO is NOT Enabled.")
   SET(ALBANY_64BIT_INT FALSE)
   # Remove the CTestCustom.cmake file in the build directory if it exists
-  EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
+  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
 # Set optional dependency on SCOREC FMDB,  optional adaptivity
