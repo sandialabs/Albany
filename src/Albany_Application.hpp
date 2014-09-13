@@ -85,8 +85,10 @@ namespace Albany {
     //! Get communicator
     Teuchos::RCP<const Epetra_Comm> getComm() const;
 
+#ifdef ALBANY_EPETRA
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+#endif
 
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;

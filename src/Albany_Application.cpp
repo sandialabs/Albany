@@ -263,8 +263,10 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 
   // Now setup response functions (see note above)
   if(!TpetraBuild){
+#ifdef ALBANY_EPETRA
     for (int i=0; i<responses.size(); i++)
       responses[i]->setup();
+#endif
   }
   else {
     for (int i=0; i<responses.size(); i++)
@@ -357,12 +359,14 @@ getComm() const
   return comm;
 }
 
+#ifdef ALBANY_EPETRA
 RCP<const Epetra_Map>
 Albany::Application::
 getMap() const
 {
   return disc->getMap();
 }
+#endif
 
 RCP<const Tpetra_Map>
 Albany::Application::

@@ -96,12 +96,14 @@ Albany::STKDiscretization::~STKDiscretization()
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getMap() const
 {
   Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
   return map;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::STKDiscretization::getMapT() const
@@ -110,12 +112,14 @@ Albany::STKDiscretization::getMapT() const
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getOverlapMap() const
 {
   Teuchos::RCP<const Epetra_Map> overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
   return overlap_map;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::STKDiscretization::getOverlapMapT() const
@@ -139,12 +143,14 @@ Albany::STKDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getOverlapJacobianGraph() const
 {
   Teuchos::RCP<const Epetra_CrsGraph> overlap_graph= Petra::TpetraCrsGraph_To_EpetraCrsGraph(overlap_graphT, comm);
   return overlap_graph;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_CrsGraph>
 Albany::STKDiscretization::getOverlapJacobianGraphT() const
@@ -153,12 +159,14 @@ Albany::STKDiscretization::getOverlapJacobianGraphT() const
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getNodeMap() const
 {
   Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   return node_map;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::STKDiscretization::getNodeMapT() const
@@ -673,6 +681,7 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 {
@@ -694,6 +703,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
   }
 #endif
 }
+#endif
 
 void
 Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
@@ -753,6 +763,7 @@ Albany::STKDiscretization::getSolutionFieldHistoryDepth() const
   return stkMeshStruct->getSolutionFieldHistoryDepth();
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistory() const
 {
@@ -823,6 +834,7 @@ Albany::STKDiscretization::getSolutionField(Epetra_Vector &result) const
   container->fillSolnVector(result, locally_owned, node_map);
 
 }
+#endif
 
 void
 Albany::STKDiscretization::getSolutionFieldT(Tpetra_Vector &resultT) const
@@ -842,6 +854,7 @@ Albany::STKDiscretization::getSolutionFieldT(Tpetra_Vector &resultT) const
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
+#ifdef ALBANY_EPETRA
 void
 Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
 {
@@ -857,6 +870,7 @@ Albany::STKDiscretization::setSolutionField(const Epetra_Vector& soln)
   container->saveSolnVector(soln, locally_owned, node_map);
 
 }
+#endif
 
 //Tpetra version of above
 void
@@ -875,6 +889,7 @@ Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 {
@@ -890,6 +905,7 @@ Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   container->saveSolnVector(soln, select_owned_or_shared, overlap_node_map);
 
 }
+#endif
 
 void
 Albany::STKDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
@@ -1937,6 +1953,7 @@ namespace {
   }
 }
 
+#ifdef ALBANY_EPETRA
 int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
 #ifdef ALBANY_SEACAS
   const long long unsigned rank = comm->MyPID();
@@ -2003,6 +2020,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
 #endif
   return netCDFOutputRequest++;
 }
+#endif
 
 void Albany::STKDiscretization::setupNetCDFOutput()
 {

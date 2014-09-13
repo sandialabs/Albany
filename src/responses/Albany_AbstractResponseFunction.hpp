@@ -39,15 +39,18 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractResponseFunction() {};
 
+#ifdef ALBANY_EPETRA
     //! Setup response function
     virtual void setup() = 0;
+#endif
 
     //! Setup response function
     virtual void setupT() = 0;
 
+#ifdef ALBANY_EPETRA
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
-    
+#endif    
 
     //! Get the map associate with this response - Tpetra version 
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
@@ -58,8 +61,10 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const = 0;
 
+#ifdef ALBANY_EPETRA
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
+#endif
     //! Create Tpetra operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const = 0;
 

@@ -470,6 +470,7 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& resi
   fmdbMeshStruct->residualInitialized = true;
 }
 
+#ifdef ALBANY_EPETRA
 template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
@@ -481,6 +482,7 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& resid
 
   fmdbMeshStruct->residualInitialized = true;
 }
+#endif
 
 template<class Output>
 Teuchos::RCP<Tpetra_Vector>

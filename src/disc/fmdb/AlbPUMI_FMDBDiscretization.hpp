@@ -176,14 +176,13 @@ template<class Output>
 
     /* DAI: old Epetra functions still used by parts of Albany/Trilinos
        Remove when we get to full Tpetra */
+#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<const Epetra_Map>
     getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map>
     getOverlapMap() const { return overlap_map; }
-#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getJacobianGraph() const { return graph; }
-#endif
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getOverlapJacobianGraph() const { return overlap_graph; }
     virtual Teuchos::RCP<const Epetra_Map>
@@ -192,18 +191,13 @@ template<class Output>
       abort();
       return Teuchos::RCP<const Epetra_Map>();
     }
-#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const;
-#endif
     virtual void setResidualField(const Epetra_Vector& residual);
-#ifdef ALBANY_EPETRA
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
-#endif
     void setSolutionField(const Epetra_Vector&) {
       fprintf(stderr,"PUMI Discretization unsupported call setSolutionField\n");
       abort();
     }
-#ifdef ALBANY_EPETRA
     void debugMeshWriteNative(const Epetra_Vector&, const char*) {
       fprintf(stderr,"PUMI Discretization unsupported call debugMeshWriteNative\n");
       abort();

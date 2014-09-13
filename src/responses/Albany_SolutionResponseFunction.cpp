@@ -29,6 +29,7 @@ SolutionResponseFunction(
   }
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionResponseFunction::
 setup()
@@ -49,6 +50,7 @@ setup()
   gradient_graph->OptimizeStorage();
 
 }
+#endif
 
 void
 Albany::SolutionResponseFunction::
@@ -84,12 +86,14 @@ Albany::SolutionResponseFunction::
 {
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::SolutionResponseFunction::
 responseMap() const
 {
   return culled_map;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::SolutionResponseFunction::
@@ -98,6 +102,7 @@ responseMapT() const
   return culled_mapT;
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Operator>
 Albany::SolutionResponseFunction::
 createGradientOp() const
@@ -107,6 +112,7 @@ createGradientOp() const
   G->FillComplete();
   return G;
 }
+#endif
 
 Teuchos::RCP<Tpetra_Operator>
 Albany::SolutionResponseFunction::

@@ -61,13 +61,17 @@ namespace Albany {
     //! Destructor
     ~STKDiscretization();
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+#endif
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+#endif
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
@@ -78,13 +82,17 @@ namespace Albany {
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+#endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+#endif
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
 
@@ -141,11 +149,13 @@ namespace Albany {
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 
     int getSolutionFieldHistoryDepth() const;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory(int maxStepCount) const;
     void getSolutionFieldHistory(Epetra_MultiVector &result) const;
 
     void setResidualField(const Epetra_Vector& residual);
+#endif
     //Tpetra analog
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -210,23 +220,29 @@ namespace Albany {
     inline GO gid(const stk_classic::mesh::Entity& node) const;
     inline GO gid(const stk_classic::mesh::Entity* node) const;
 
+#ifdef ALBANY_EPETRA
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result) const;
+#endif
     // Copy values from STK Mesh field to given Tpetra_Vector
     void getSolutionFieldT(Tpetra_Vector &resultT) const;
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
     void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
+#endif
     //Tpetra version of agove
     void setSolutionFieldT(const Tpetra_Vector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
+#ifdef ALBANY_EPETRA
     void setOvlpSolutionField(const Epetra_Vector& soln);
+#endif
     //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
 
@@ -251,7 +267,9 @@ namespace Albany {
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
+#ifdef ALBANY_EPETRA
     int processNetCDFOutputRequest(const Epetra_Vector&);
+#endif
     //! Find the local side id number within parent element
     unsigned determine_local_side_id( const stk_classic::mesh::Entity & elem , stk_classic::mesh::Entity & side );
     //! Call stk_io for creating exodus output file

@@ -11,6 +11,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::ScalarResponseFunction::
 responseMap() const
@@ -20,6 +21,7 @@ responseMap() const
     Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
   return response_map;
 }
+#endif
 
 //Tpetra version of above
 Teuchos::RCP<const Tpetra_Map>
@@ -38,6 +40,7 @@ responseMapT() const
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Operator>
 Albany::ScalarResponseFunction::
 createGradientOp() const
@@ -48,6 +51,7 @@ createGradientOp() const
     "Operator form of dg/dx is not supported for scalar responses.");
   return Teuchos::null;
 }
+#endif
 
 Teuchos::RCP<Tpetra_Operator>
 Albany::ScalarResponseFunction::

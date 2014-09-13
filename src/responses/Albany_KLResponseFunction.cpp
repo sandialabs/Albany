@@ -25,12 +25,14 @@ Albany::KLResponseFunction::
 {
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::KLResponseFunction::
 responseMap() const
 {
   return response->responseMap();
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::KLResponseFunction::
@@ -39,12 +41,14 @@ responseMapT() const
   return response->responseMapT();
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Operator> 
 Albany::KLResponseFunction::
 createGradientOp() const
 {
   return response->createGradientOp();
 }
+#endif
 
 Teuchos::RCP<Tpetra_Operator> 
 Albany::KLResponseFunction::

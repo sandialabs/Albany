@@ -81,7 +81,9 @@ public:
       const std::string &nodeSetLabel,
       const Teuchos::RCP<const Application> &app);
 
+#ifdef ALBANY_EPETRA
   virtual void setup();
+#endif
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 
@@ -105,6 +107,7 @@ NodeSetSolutionCullingStrategy(
   // setup() must be called after the discretization has been created to finish initialization
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::NodeSetSolutionCullingStrategy::
 setup()
@@ -114,6 +117,7 @@ setup()
   // Release the resource to avoid possible circular references
   app_.reset();
 }
+#endif
 
 Teuchos::Array<int>
 Albany::NodeSetSolutionCullingStrategy::

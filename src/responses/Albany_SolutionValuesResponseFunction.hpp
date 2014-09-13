@@ -35,8 +35,10 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
+#ifdef ALBANY_EPETRA
     //! Setup response function
     virtual void setup();
+#endif
 
     //! Setup response function
     virtual void setupT();
@@ -112,7 +114,9 @@ namespace Albany {
     Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
     Teuchos::RCP<Epetra_Import> solutionImporter_;
 
+#ifdef ALBANY_EPETRA
     void updateSolutionImporter();
+#endif
   };
 
 }

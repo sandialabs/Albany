@@ -29,6 +29,7 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
 {
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 setup()
@@ -36,6 +37,7 @@ setup()
   cullingStrategy_->setup();
   this->updateSolutionImporter();
 }
+#endif
 
 void
 Albany::SolutionValuesResponseFunction::
@@ -157,6 +159,7 @@ evaluateGradientT(const double current_time,
   std::cerr << "SolutionValuesResponseFunction::evaluateGradientT NOT IMPLEMETED\n";
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 updateSolutionImporter()
@@ -168,3 +171,4 @@ updateSolutionImporter()
     solutionImporter_ = Teuchos::rcp(new Epetra_Import(targetMap, *solutionMap));
   }
 }
+#endif

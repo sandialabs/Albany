@@ -25,7 +25,9 @@ public:
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
+#ifdef ALBANY_EPETRA
   Epetra_Map getNonOverlappedMap() const;
+#endif
 
   Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
 

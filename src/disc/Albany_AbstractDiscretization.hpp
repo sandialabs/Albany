@@ -67,16 +67,20 @@ class AbstractDiscretization {
     //! Destructor
     virtual ~AbstractDiscretization() {};
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra DOF map
     virtual Teuchos::RCP<const Epetra_Map>
     getMap() const = 0;
+#endif
     //! Get Tpetra DOF map
     virtual Teuchos::RCP<const Tpetra_Map>
     getMapT() const = 0;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map>
     getOverlapMap() const = 0;
+#endif
     //! Get Tpetra overlapped DOF map
     virtual Teuchos::RCP<const Tpetra_Map>
     getOverlapMapT() const = 0;
@@ -91,15 +95,19 @@ class AbstractDiscretization {
     getJacobianGraphT() const = 0;
 
     //! Get Epetra overlap Jacobian graph
+#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getOverlapJacobianGraph() const = 0;
+#endif
     //! Get Tpetra overlap Jacobian graph
     virtual Teuchos::RCP<const Tpetra_CrsGraph>
     getOverlapJacobianGraphT() const = 0;
 
     //! Get Epetra Node map
+#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<const Epetra_Map>
     getNodeMap() const = 0;
+#endif
     //! Get Tpetra Node map
     virtual Teuchos::RCP<const Tpetra_Map>
     getNodeMapT() const = 0;
@@ -171,10 +179,12 @@ class AbstractDiscretization {
     //! Get number of total DOFs per node
     virtual int getNumEq() const = 0;
 
+#ifdef ALBANY_EPETRA
     virtual void setSolutionField(const Epetra_Vector& soln){};
 
     //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
+#endif
 
    //! Set the residual field for output - Tpetra version
     virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;

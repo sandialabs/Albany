@@ -20,6 +20,7 @@ AggregateScalarResponseFunction(
 {
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::AggregateScalarResponseFunction::
 setup()
@@ -29,6 +30,7 @@ setup()
     (*it)->setup();
   }
 }
+#endif
 
 void
 Albany::AggregateScalarResponseFunction::

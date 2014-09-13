@@ -33,20 +33,26 @@ namespace Albany {
     //! Destructor
     virtual ~SolutionResponseFunction();
 
+#ifdef ALBANY_EPETRA
     //! Setup response function
     virtual void setup();
+#endif
 
     //! Setup response function
     virtual void setupT();
 
+#ifdef ALBANY_EPETRA
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+#endif
     
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     //! Create operator for gradient
+#ifdef ALBANY_EPETRA
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+#endif
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
 
     //! \name Deterministic evaluation functions

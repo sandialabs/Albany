@@ -37,10 +37,12 @@ RealType ObserverImpl::getTimeParamValueOrDefault(RealType defaultValue) const
     defaultValue;
 }
 
+#ifdef ALBANY_EPETRA
 Epetra_Map ObserverImpl::getNonOverlappedMap() const
 {
   return *app_->getMap();
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map> ObserverImpl::getNonOverlappedMapT() const
 {
