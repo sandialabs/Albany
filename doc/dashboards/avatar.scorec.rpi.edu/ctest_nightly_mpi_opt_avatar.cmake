@@ -213,8 +213,8 @@ endif()
 ENDIF()
 
 # Update Albany
-SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
-SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyMasterBranch)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanyMasterBranch)
 
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
@@ -611,8 +611,8 @@ ENDIF()
 # As folks move to github, its probably good to have a near full
 # build of the master branch
 IF (BUILD_ALB_BASE)
-SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
-SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyMasterBranch)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanyMasterBranch)
 
 SET(CONFIGURE_OPTIONS
   "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallNewSTK"
@@ -790,8 +790,8 @@ ENDIF()
 
 # Configure the Albany Tpetra branch build using GO = long long
 IF (BUILD_ALB_TPETRA64)
-SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetra64)
-SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetra64)
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetra64Branch)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetra64Branch)
 
 SET(CONFIGURE_OPTIONS
   "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
@@ -803,6 +803,7 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_SCOREC:BOOL=ON"
   "-DENABLE_SG_MP:BOOL=OFF"
   "-DENABLE_QCAD:BOOL=OFF"
+  "-DENABLE_MOR:BOOL=OFF"
   "-DENABLE_CHECK_FPE:BOOL=ON"
   )
 
@@ -822,7 +823,7 @@ CTEST_CONFIGURE(
 
 # Read the CTestCustom.cmake file to turn off ignored tests
 
-CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
+#CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Albany Tpetra 64 branch build!")

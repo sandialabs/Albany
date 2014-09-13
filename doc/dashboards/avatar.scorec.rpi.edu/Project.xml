@@ -1,14 +1,18 @@
 <Project name="Albany">
-  <SubProject name="AlbanySrc">
-  </SubProject>
-  <SubProject name="AlbanyTpetraBranch">
-  </SubProject>
-  <SubProject name="AlbanyTpetra64">
+  <SubProject name="SCOREC">
   </SubProject>
   <SubProject name="Trilinos">
+     <Dependency name="SCOREC">
   </SubProject>
   <SubProject name="TrilinosNewSTK">
   </SubProject>
-  <SubProject name="SCOREC">
+  <SubProject name="AlbanyMasterBranch">
+     <Dependency name="TrilinosNewSTK">
+  </SubProject>
+  <SubProject name="AlbanyTpetraBranch">
+     <Dependency name="Trilinos">
+  </SubProject>
+  <SubProject name="AlbanyTpetra64Branch">
+     <Dependency name="Trilinos">
   </SubProject>
 </Project>
