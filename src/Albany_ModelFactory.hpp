@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: Epetra ifdef'ed out!
+
 #ifndef ALBANY_MODELFACTORY_HPP
 #define ALBANY_MODELFACTORY_HPP
 

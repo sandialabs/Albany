@@ -9,11 +9,11 @@
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
-#include "Epetra_LocalMap.h"
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
-#if ALBANY_EPETRA
+#ifdef ALBANY_EPETRA
+#include "Epetra_LocalMap.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
 #include "EpetraExt_VectorOut.h"
@@ -33,7 +33,9 @@
 #endif
 
 #include "Teko_InverseFactoryOperator.hpp"
+#ifdef ALBANY_EPETRA
 #include "Teko_StridedEpetraOperator.hpp"
+#endif
 
 #include "Albany_ScalarResponseFunction.hpp"
 
@@ -3331,6 +3333,7 @@ void Albany::Application::postRegSetup(std::string eval)
   }
 }
 
+#ifdef ALBANY_EPETRA
 RCP<Epetra_Operator>
 Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
                                           const RCP<Epetra_Operator>& wrapInput,
@@ -3355,6 +3358,7 @@ Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
   }
   return wrappedOp;
 }
+#endif 
 
 void
 Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams){

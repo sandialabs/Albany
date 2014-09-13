@@ -10,7 +10,6 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_STKDiscretization.hpp"
-#include "Petra_Converters.hpp"
 #include "Albany_NodalGraphUtils.hpp"
 #include "Albany_STKNodeFieldContainer.hpp"
 
@@ -50,6 +49,9 @@ extern "C" {
 
 #include <algorithm>
 #include "EpetraExt_MultiVectorOut.h"
+#ifdef ALBANY_EPETRA
+#include "Petra_Converters.hpp"
+#endif
 
 const double pi = 3.1415926535897932385;
 
@@ -498,6 +500,7 @@ Albany::STKDiscretization::setupMLCoords()
     bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
     //if user wants to write the coordinates to matrix market file, write them to matrix market file
     if (writeCoordsToMMFile == true) {
+#ifdef ALBANY_EPETRA
       //IK, 10/29/13: neet to convert to tpetra!
       if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
       //Writing of coordinates to MatrixMarket file for Ray
@@ -512,6 +515,9 @@ Albany::STKDiscretization::setupMLCoords()
         Epetra_Vector zCoords(Copy, *node_map, zz);
         EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
       }
+#else
+      if (node_mapT->getComm()->getRank()==0) {std::cout << "WARNING: writing coordinates to Matrix Market file not yet supported for AlbanyT!" << std::endl;}
+#endif
     }
     rigidBodyModes->informML();
   }

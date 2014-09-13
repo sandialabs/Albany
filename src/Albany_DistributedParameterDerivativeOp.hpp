@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
 #define ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
 

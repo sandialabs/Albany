@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out!  
+//No Epetra if ALBANY_EPETRA_EXE turned off. 
+
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
 #include "Teuchos_VerboseObject.hpp"

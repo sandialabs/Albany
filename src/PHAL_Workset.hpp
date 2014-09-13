@@ -4,6 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: this still has a lot of Epetra. 
+//Still need to figure out what can be ifdef'ed out if
+//ALBANY_EPETRA_EXE is set to off.
+
 #ifndef PHAL_WORKSET_HPP
 #define PHAL_WORKSET_HPP
 

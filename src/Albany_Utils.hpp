@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: This function has Epetra! 
+
 #ifndef ALBANY_UTILS_H
 #define ALBANY_UTILS_H
 

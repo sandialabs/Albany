@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_HPP
 #define ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_HPP
 

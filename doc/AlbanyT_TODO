@@ -9,6 +9,8 @@ Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF:
 - SG_MP
 - catalyst
 - cism_interface, mpas_interface
+- writing of coordinates to matrix market file.
+- Teko stuff (uses Epetra).
 
 Piro: 
 - Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  

@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #include "PHAL_AlbanyTraits.hpp"
 
 const std::string PHX::TypeString<PHAL::AlbanyTraits::Residual>::value =

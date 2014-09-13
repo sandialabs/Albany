@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out!
+//No epetra if setting ALBANY_EPETRA_EXE off.
+
 #include "Albany_SolverFactory.hpp"
 #ifdef ALBANY_EPETRA
 #include "Albany_PiroObserver.hpp"
@@ -11,6 +14,7 @@
 #include "Petra_Converters.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ObserverFactory.hpp"
+#include "NOX_Epetra_Observer.H"
 #endif
 #include "Albany_PiroObserverT.hpp"
 #include "Albany_ModelFactory.hpp"
@@ -50,7 +54,6 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#include "NOX_Epetra_Observer.H"
 #include "Rythmos_IntegrationObserverBase.hpp"
 
 #include "Albany_Application.hpp"

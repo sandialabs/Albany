@@ -10,7 +10,6 @@ SET(SOURCES
   PHAL_Dimension.cpp
   PHAL_AlbanyTraits.cpp
   Albany_Application.cpp
-  Albany_ObserverFactory.cpp
   Albany_PiroObserverT.cpp
   Albany_StateManager.cpp
   Albany_ModelFactory.cpp
@@ -18,10 +17,13 @@ SET(SOURCES
   Albany_ObserverImpl.cpp
   )
 
-IF(ALBANY_64BIT_INT)
-  SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
-ELSE()
-  SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp) 
+  IF(ALBANY_64BIT_INT)
+    SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
+  ELSE()
+    SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+  ENDIF()
 ENDIF()
 
 
@@ -39,14 +41,12 @@ SET(HEADERS
   Albany_SolverFactory.hpp
   Albany_Utils.hpp
   Albany_DataTypes.hpp
-  Petra_Converters.hpp
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
   PHAL_AlbanyTraits.hpp
   PHAL_Workset.hpp
   PHAL_TypeKeyMap.hpp
   Albany_Application.hpp
-  Albany_ObserverFactory.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
@@ -67,6 +67,8 @@ IF(ALBANY_EPETRA)
     Albany_EigendataInfoStruct.hpp
     Albany_RythmosObserver.hpp
     Albany_NOXObserver.hpp
+    Petra_Converters.hpp
+    Albany_ObserverFactory.hpp
   )
 ENDIF()
 
@@ -430,7 +432,7 @@ IF (ALBANY_FELIX)
 ENDIF()
 
 # ASCR
-IF(ALBANY_ASCR)
+IF(ALBANY_ASCR AND ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
     Albany_Networks.cpp
     )

@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: this is Epetra (Albany) function.
+//Not compiled if ALBANY_EPETRA_EXE is off.
+
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"

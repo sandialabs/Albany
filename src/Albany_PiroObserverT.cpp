@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #include "Albany_PiroObserverT.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Teuchos_ScalarTraits.hpp"

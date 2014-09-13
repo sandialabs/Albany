@@ -14,14 +14,12 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+//IK, 9/12/14: has Epetra_Comm! No other Epetra.
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 
 Albany::ModelEvaluatorT::ModelEvaluatorT(

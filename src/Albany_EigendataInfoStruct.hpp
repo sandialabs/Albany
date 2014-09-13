@@ -1,8 +1,13 @@
 //*****************************************************************//
 //    Albany 2.0:  Copyright 2012 Sandia Corporation               //
 //    This Software is released under the BSD license detailed     //
+
+
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: right now this is Epetra (Albany) function.
+//Not compiled if ALBANY_EPETRA_EXE is off.
 
 #ifndef ALBANY_EIGENDATASTRUCT
 #define ALBANY_EIGENDATASTRUCT

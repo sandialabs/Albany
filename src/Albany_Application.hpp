@@ -16,11 +16,13 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Import.h"
 #include "Epetra_Export.h"
+#endif
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractProblem.hpp"
@@ -47,11 +49,13 @@
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_Quadrature.hpp"
+#ifdef ALBANY_EPETRA
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
 
 #include "LOCA_Epetra_Group.H"
+#endif
 
 #include "Teko_InverseLibrary.hpp"
 
@@ -694,11 +698,13 @@ namespace Albany {
     //! Private to prohibit copying
     Application& operator=(const Application&);
 
+#ifdef ALBANY_EPETRA
     //! Call to Teko to build strided block operator
     Teuchos::RCP<Epetra_Operator> buildWrappedOperator(
                            const Teuchos::RCP<Epetra_Operator>& Jac,
                            const Teuchos::RCP<Epetra_Operator>& wrapInput,
                            bool reorder=false) const;
+#endif
 
     //! Utility function to set up ShapeParameters through Sacado
     void registerShapeParameters();

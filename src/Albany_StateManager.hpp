@@ -4,13 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out!  
+//No Epetra if ALBANY_EPETRA_EXE turned off. 
+
 #ifndef ALBANY_STATEMANAGER
 #define ALBANY_STATEMANAGER
 
 #include <string>
 #include <map>
 #include <vector>
-#include "Epetra_Vector.h"
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FieldContainer.hpp"
@@ -20,6 +22,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #ifdef ALBANY_EPETRA
 #include "Albany_EigendataInfoStruct.hpp"
+#include "Epetra_Vector.h"
 #endif
 #include "Adapt_NodalDataBlock.hpp"
 #include "Adapt_NodalDataVector.hpp"
