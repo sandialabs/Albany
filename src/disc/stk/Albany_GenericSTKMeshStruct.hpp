@@ -11,7 +11,6 @@
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Comm.h"
 
 // Refinement
 #ifdef ALBANY_STK_PERCEPT
@@ -32,7 +31,7 @@ namespace Albany {
 
     public:
     virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -46,9 +45,11 @@ namespace Albany {
     Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
 #endif
 
+#ifdef ALBANY_EPETRA
     //! Re-load balance adapted mesh
     void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                              const Teuchos::RCP<const Epetra_Comm>& comm);
+                              const Teuchos::RCP<const Teuchos_Comm>& commT);
+#endif
 
     //! Re-load balance adapted mesh
     void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -69,7 +70,7 @@ namespace Albany {
                   const int numDim=-1);
 
     void SetupFieldData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -87,8 +88,10 @@ namespace Albany {
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
+#ifdef ALBANY_EPETRA
     //! Re-load balance mesh
-    void rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void rebalanceInitialMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+#endif
 
     //! Re-load balance mesh
     void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
@@ -98,7 +101,7 @@ namespace Albany {
     bool buildPerceptEMesh();
 
     //! Perform initial uniform refinement of the mesh
-    void uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);

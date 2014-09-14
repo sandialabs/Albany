@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra except Epetra_Comm.
 
 #include <iostream>
 
@@ -58,7 +57,7 @@ static void loadSets(
 
 AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
-		  const Teuchos::RCP<const Epetra_Comm>& comm) :
+		  const Teuchos::RCP<const Teuchos_Comm>& commT) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   PCU_Comm_Init();
@@ -196,7 +195,7 @@ AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
 
 void
 AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,

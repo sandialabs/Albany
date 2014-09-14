@@ -64,7 +64,6 @@ Albany::Application::
 Application(const RCP<const Teuchos_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
 	    const RCP<const Tpetra_Vector>& initial_guess) :
-  comm(Albany::createEpetraCommFromTeuchosComm(comm_)),
   commT(comm_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   physicsBasedPreconditioner(false),
@@ -75,12 +74,16 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 {
   Teuchos::ParameterList kokkosNodeParams;
   nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
+#endif
 
   // Create parameter library
   paramLib = rcp(new ParamLib);
   distParamLib = rcp(new DistParamLib);
 
 #ifdef ALBANY_DEBUG
+#ifdef ALBANY_EPETRA
   int break_set = (getenv("ALBANY_BREAK") == NULL)?0:1;
   int env_status = 0;
   int length = 1;
@@ -113,6 +116,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     sleep(3);
   }
   comm->Barrier();
+#endif
 #endif
 
   // Create problem object
@@ -189,7 +193,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 
   // Create discretization object
 
-  Albany::DiscretizationFactory discFactory(params, comm);
+  Albany::DiscretizationFactory discFactory(params, commT);
 
 #ifdef ALBANY_CUTR
   discFactory.setMeshMover(meshMover);
@@ -284,7 +288,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   dfm = problem->getDirichletFieldManager();
   nfm = problem->getNeumannFieldManager();
 
-  if (comm->MyPID()==0) {
+  if (commT->getRank()==0) {
     phxGraphVisDetail= problemParams->get("Phalanx Graph Visualization Detail", 0);
     stateGraphVisDetail= phxGraphVisDetail;
   }
@@ -324,7 +328,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 #ifdef ALBANY_EPETRA
   if(!TpetraBuild &&  solMgr->hasAdaptation()){
 
-    solMgr->buildAdaptiveProblem(paramLib, stateMgr, comm);
+    solMgr->buildAdaptiveProblem(paramLib, stateMgr, commT);
 
   }
 #endif
@@ -358,11 +362,11 @@ getProblem() const
   return problem;
 }
 
-RCP<const Epetra_Comm>
+RCP<const Teuchos_Comm>
 Albany::Application::
 getComm() const
 {
-  return comm;
+  return commT;
 }
 
 #ifdef ALBANY_EPETRA

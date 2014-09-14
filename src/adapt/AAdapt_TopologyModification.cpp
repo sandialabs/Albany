@@ -27,8 +27,8 @@ AAdapt::TopologyMod::TopologyMod(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<ParamLib> const & param_lib,
     Albany::StateManager & state_mgr,
-    Teuchos::RCP<const Epetra_Comm> const & comm) :
-  AAdapt::AbstractAdapter(params, param_lib, state_mgr, comm),
+    const Teuchos::RCP<const Teuchos_Comm> & commT) :
+  AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
   remesh_file_index_(1) {
 
   discretization_ = state_mgr_.getDiscretization();

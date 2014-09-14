@@ -249,7 +249,7 @@ AAdapt::MeshAdaptE<SizeField>::
 MeshAdaptE(const Teuchos::RCP<Teuchos::ParameterList>& params_,
            const Teuchos::RCP<ParamLib>& paramLib_,
            Albany::StateManager& StateMgr_,
-           const Teuchos::RCP<const Epetra_Comm>& comm_):
+           const Teuchos::RCP<const Teuchos_Comm>& comm_):
   AbstractAdapter(params_,paramLib_,StateMgr_,comm_),
   meshAdapt(params_,StateMgr_)
 {

@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 
-//IK, 9/13/14: All Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off except Epetra_Comm. 
 
 #include <cmath>
 
@@ -13,7 +12,6 @@
 
 #include "AAdapt_InitialCondition.hpp"
 #include "AAdapt_AnalyticFunction.hpp"
-#include "Epetra_Comm.h"
 #include "Albany_Utils.hpp"
 
 namespace AAdapt {

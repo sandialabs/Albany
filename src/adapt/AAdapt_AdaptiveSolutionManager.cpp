@@ -68,10 +68,10 @@ AAdapt::AdaptiveSolutionManager::~AdaptiveSolutionManager() {
 void
 AAdapt::AdaptiveSolutionManager::buildAdaptiveProblem(const Teuchos::RCP<ParamLib>& paramLib,
     Albany::StateManager& stateMgr,
-    const Teuchos::RCP<const Epetra_Comm>& comm) {
+    const Teuchos::RCP<const Teuchos_Comm>& commT) {
 
   RCP<AAdapt::AdaptationFactory> adaptationFactory
-    = rcp(new AAdapt::AdaptationFactory(adaptParams, paramLib, stateMgr, comm));
+    = rcp(new AAdapt::AdaptationFactory(adaptParams, paramLib, stateMgr, commT));
 
   adaptManager = adaptationFactory->createAdapter();
 

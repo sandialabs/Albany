@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: this still has some Epetra in addition to Epetra_Comm.
-//Not compiled when ALBANY_EPETRA_EXE turned off.
 
 #ifndef ALBANY_ASCII_STKMESHSTRUCT_HPP
 #define ALBANY_ASCII_STKMESHSTRUCT_HPP
@@ -23,13 +21,13 @@ namespace Albany {
 //Constructor for meshes read from ASCII file 
     AsciiSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
 
     ~AsciiSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,

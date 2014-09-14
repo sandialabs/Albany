@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra if ALBANY_EPETRA_EXE turned off except Epetra_Comm.
 
 #include "AAdapt_SPRSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
@@ -13,7 +12,7 @@
 #include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  comm(disc->getComm()),
+  commT(disc->getComm()),
   mesh(disc->getFMDBMeshStruct()->getMesh()),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),

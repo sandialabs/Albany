@@ -4,12 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra except Epetra_Comm.
 #ifndef FMDB_VTK_HPP
 #define FMDB_VTK_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Epetra_Comm.h"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
 namespace AlbPUMI {
@@ -18,7 +16,7 @@ class FMDBVtk {
 
   public:
 
-    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_);
+    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_);
 
     ~FMDBVtk();
 
@@ -38,7 +36,7 @@ class FMDBVtk {
 
 
     //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
 };
 

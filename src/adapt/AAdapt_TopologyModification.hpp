@@ -37,7 +37,7 @@ public:
       Teuchos::RCP<Teuchos::ParameterList> const & params,
       Teuchos::RCP<ParamLib> const & param_lib,
       Albany::StateManager & state_mgr,
-      Teuchos::RCP<Epetra_Comm const> const & comm);
+      const Teuchos::RCP<const Teuchos_Comm> & commT);
 
   ///
   /// Destructor

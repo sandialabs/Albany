@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #ifndef ALBPUMI_FMDBDISCRETIZATION_HPP
 #define ALBPUMI_FMDBDISCRETIZATION_HPP
@@ -14,7 +13,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Comm.h"
+#endif
 
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
@@ -36,7 +37,7 @@ template<class Output>
     //! Constructor
     FMDBDiscretization(
        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
@@ -99,7 +100,7 @@ template<class Output>
    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }
 
-    virtual Teuchos::RCP<const Epetra_Comm> getComm() const { return comm; }
+    virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return commT; }
 
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
@@ -286,8 +287,10 @@ template<class Output>
 
     //! Stk Mesh Objects
 
+#ifdef ALBANY_EPETRA
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
+#endif
 
    //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;

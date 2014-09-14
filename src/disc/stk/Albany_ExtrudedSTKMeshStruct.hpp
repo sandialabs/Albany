@@ -24,12 +24,12 @@ namespace Albany {
 
     ExtrudedSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~ExtrudedSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -51,9 +51,9 @@ namespace Albany {
     inline int prismType(long long int const* prismVertexMpasIds, int& minIndex);
     inline void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
 #ifdef ALBANY_EPETRA
-    void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm);
-    void readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm);
-    void readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm);
+    void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Teuchos_Comm>& commT);
+    void readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Teuchos_Comm>& commT);
+    void readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& commT);
 #endif
 
     Teuchos::RCP<const Teuchos::ParameterList>

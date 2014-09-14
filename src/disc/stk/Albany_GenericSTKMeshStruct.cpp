@@ -105,7 +105,7 @@ Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
 }
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
-		  const Teuchos::RCP<const Epetra_Comm>& comm,
+		  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -119,10 +119,12 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   this->nodal_data_base = sis->getNodalDataBase();
 
-  if (bulkData == NULL)
+  if (bulkData == NULL) {
 
+     const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
      bulkData = new stk_classic::mesh::BulkData(stk_classic::mesh::fem::FEMMetaData::get_meta_data(*metaData),
-                          Albany::getMpiCommFromEpetraComm(*comm), worksetSize );
+                          *mpiComm->getRawMpiComm(), worksetSize );
+  }
 
 #ifdef ALBANY_LCM
   // If adaptation in LCM, create a new part for boundary
@@ -498,7 +500,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
 }
 
 
-void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
+void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT){
 
 #ifdef ALBANY_STK_PERCEPT
 // Refine if requested
@@ -515,7 +517,7 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
     for(int pass = 0; pass < numRefinePasses; pass++){
 
-      if(comm->MyPID() == 0)
+      if(commT->getRank() == 0)
         std::cout << "Mesh refinement pass: " << pass + 1 << std::endl;
 
       refiner.doBreak();
@@ -542,37 +544,39 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Ep
 
 }
 
-
-void Albany::GenericSTKMeshStruct::rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm){
-
-
-  bool rebalance = params->get<bool>("Rebalance Mesh", false);
-  bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
-
-  if(rebalance || (useSerialMesh && comm->NumProc() > 1)){
-
-    rebalanceAdaptedMesh(params, comm);
-
-  }
-
-}
-
-void Albany::GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
+#ifdef ALBANY_EPETRA
+void Albany::GenericSTKMeshStruct::rebalanceInitialMesh(const Teuchos::RCP<const Teuchos_Comm>& commT){
 
 
   bool rebalance = params->get<bool>("Rebalance Mesh", false);
   bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
 
-  if(rebalance || (useSerialMesh && comm->getSize() > 1)){
+  if(rebalance || (useSerialMesh && commT->getSize() > 1)){
 
-    rebalanceAdaptedMeshT(params, comm);
+    rebalanceAdaptedMesh(params, commT);
+
+  }
+
+}
+#endif
+
+void Albany::GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& commT){
+
+
+  bool rebalance = params->get<bool>("Rebalance Mesh", false);
+  bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
+
+  if(rebalance || (useSerialMesh && commT->getSize() > 1)){
+
+    rebalanceAdaptedMeshT(params, commT);
 
   }
 
 }
 
+#ifdef ALBANY_EPETRA
 void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                                                        const Teuchos::RCP<const Epetra_Comm>& comm){
+                                                        const Teuchos::RCP<const Teuchos_Comm>& commT){
 
 // Zoltan is required here
 
@@ -580,7 +584,7 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     using std::cout; using std::endl;
 
-    if(comm->NumProc() <= 1)
+    if(commT->getSize() <= 1)
 
       return;
 
@@ -591,12 +595,12 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     stk_classic::mesh::Selector selector(metaData->universal_part());
     stk_classic::mesh::Selector owned_selector(metaData->locally_owned_part());
 
-    if(comm->MyPID() == 0){
+    if(commT->getRank() == 0){
 
-      std::cout << "Before rebal nelements " << comm->MyPID() << "  " <<
+      std::cout << "Before rebal nelements " << commT->getRank() << "  " <<
         stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
 
-      std::cout << "Before rebal " << comm->MyPID() << "  " <<
+      std::cout << "Before rebal " << commT->getRank() << "  " <<
         stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
     }
 
@@ -604,7 +608,7 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
     imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
       metaData->node_rank(), &selector);
 
-    if(comm->MyPID() == 0)
+    if(commT->getRank() == 0)
 
       std::cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
 
@@ -629,19 +633,21 @@ void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuch
 
     }
 
-    stk_classic::rebalance::Zoltan zoltan_partition(Albany::getMpiCommFromEpetraComm(*comm), numDim, graph_options);
+    const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
+    stk_classic::rebalance::Zoltan zoltan_partition(*mpiComm->getRawMpiComm(), numDim, graph_options);
     stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
 
 
     imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
       metaData->node_rank(), &selector);
 
-    if(comm->MyPID() == 0)
+    if(commT->getRank() == 0)
       std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
 
 #endif  //ALBANY_ZOLTAN
 
 }
+#endif
 
 void Albany::GenericSTKMeshStruct::rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                                         const Teuchos::RCP<const Teuchos::Comm<int> >& comm){

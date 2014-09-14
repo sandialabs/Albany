@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra, except Epetra_Comm.
 
 #ifndef ALBANY_TMPLSTKMESHSTRUCT_HPP
 #define ALBANY_TMPLSTKMESHSTRUCT_HPP
@@ -82,13 +81,13 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     //! Default constructor
     TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                       const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
-                      const Teuchos::RCP<const Epetra_Comm>& comm);
+                      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~TmplSTKMeshStruct() {};
 
     //! Sets mesh generation parameters
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -105,7 +104,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     private:
 
     //! Build the mesh
-    void buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
  
     //! Build a parameter list that contains valid input parameters
@@ -183,13 +182,13 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
   template<> void EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
   template<> void EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-  template<> void TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
-  template<> void TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
-  template<> void TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
-  template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+  template<> void TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  template<> void TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  template<> void TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   template<> void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,

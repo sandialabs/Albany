@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #ifndef ALBANY_SOLUTIONMAXVALUERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONMAXVALUERESPONSEFUNCTION_HPP
@@ -22,7 +21,7 @@ namespace Albany {
   
     //! Default constructor
     SolutionMaxValueResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm, 
+      const Teuchos::RCP<const Teuchos_Comm>& commT, 
       int neq = 1, int eq = 0, bool interleavedOrdering=true);
 
     //! Destructor
@@ -106,8 +105,7 @@ namespace Albany {
     //! Equation we want to get the max value from
     int eq;
 
-    //IK, 4/30/2012: added Epetra_Comm member function to facilitate Tpetra conversion
-    Teuchos::RCP<const Epetra_Comm> comm_; 
+    Teuchos::RCP<const Teuchos_Comm> commT_; 
 
     //! Flag for interleaved verus blocked unknown ordering
     bool interleavedOrdering;

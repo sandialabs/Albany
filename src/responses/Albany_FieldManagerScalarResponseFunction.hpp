@@ -4,9 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off
-//except SG and MP. 
-
 #ifndef ALBANY_FIELD_MANAGER_SCALAR_RESPONSE_FUNCTION_HPP
 #define ALBANY_FIELD_MANAGER_SCALAR_RESPONSE_FUNCTION_HPP
 

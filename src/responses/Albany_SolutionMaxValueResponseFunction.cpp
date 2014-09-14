@@ -4,18 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-#include "Epetra_Comm.h"
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
 
 Albany::SolutionMaxValueResponseFunction::
-SolutionMaxValueResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm,
+SolutionMaxValueResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT,
 				 int neq_, int eq_, bool interleavedOrdering_) :
-  SamplingBasedScalarResponseFunction(comm),
-  comm_(comm), 
+  SamplingBasedScalarResponseFunction(commT),
+  commT_(commT), 
   neq(neq_), eq(eq_), interleavedOrdering(interleavedOrdering_)
 {
 }
@@ -220,7 +218,9 @@ void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValueT(const Tpetra_Vector& xT, double& global_max, int& global_index)
 {
-  double my_max = -Epetra_MaxDouble;
+  //The following is needed b/c Epetra_MaxDouble comes from Trilinos Epetra package.
+  double Tpetra_MaxDouble = 1.0E+100; 
+  double my_max = -Tpetra_MaxDouble;
   int my_index = -1, index;
   
   Teuchos::ArrayRCP<const ST> xT_constView = xT.get1dView();

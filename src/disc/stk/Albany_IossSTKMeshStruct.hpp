@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra except Epetra_Comm
 
 #ifdef ALBANY_SEACAS
 
@@ -26,12 +25,12 @@ namespace Albany {
     IossSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~IossSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -54,7 +53,7 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
+    void readSerialMesh(const Teuchos::RCP<const Teuchos_Comm>& commT,
                         std::vector<std::string>& entity_rank_names);
 
     Teuchos::RCP<Teuchos::FancyOStream> out;

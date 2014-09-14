@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: this still has some Epetra in addition to Epetra_Comm.
 
 #ifndef ALBANY_FROMCUBIT_STKMESHSTRUCT_HPP
 #define ALBANY_FROMCUBIT_STKMESHSTRUCT_HPP

@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #include <limits>
 #ifdef ALBANY_EPETRA
@@ -33,24 +32,24 @@
 
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
-            const Teuchos::RCP<const Epetra_Comm>& comm_,
+            const Teuchos::RCP<const Teuchos_Comm>& commT_,
             const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
-  comm(comm_),
-  //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
-  commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
+  commT(commT_),
   rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
-  meshOutput(*fmdbMeshStruct_, comm_)
+  meshOutput(*fmdbMeshStruct_, commT_)
 {
   //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
   Teuchos::ParameterList kokkosNodeParams;
   nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
+#endif
   globalNumbering = 0;
   elementNumbering = 0;
 

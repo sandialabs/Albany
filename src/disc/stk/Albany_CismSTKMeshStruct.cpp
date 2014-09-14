@@ -34,7 +34,7 @@
 //Constructor for arrays passed from CISM through Albany-CISM interface
 Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& comm, 
+                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
                   const double * xyz_at_nodes_Ptr, 
                   const int * global_node_id_owned_map_Ptr, 
                   const int * global_element_id_active_owned_map_Ptr, 
@@ -52,7 +52,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   restartTime(0.0), 
   periodic(false)
 {
-  if (verbosity == 1 & comm->MyPID() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
+  if (verbosity == 1 & commT->getRank() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
   NumNodes = nNodes;  
   NumEles = nElementsActive; 
   NumBasalFaces = nCellsActive;
@@ -120,6 +120,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     }
   }
  
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  
   elem_map = Teuchos::rcp(new Epetra_Map(-1, NumEles, globalElesID, 0, *comm)); //Distribute the elements according to the global element IDs
   node_map = Teuchos::rcp(new Epetra_Map(-1, NumNodes, globalNodesID, 0, *comm)); //Distribute the nodes according to the global node IDs 
   basal_face_map = Teuchos::rcp(new Epetra_Map(-1, NumBasalFaces, basalFacesID, 0, *comm)); //Distribute the elements according to the basal face IDs
@@ -220,14 +222,14 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 
 void
 Albany::CismSTKMeshStruct::constructMesh(
-                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   metaData->commit();
 

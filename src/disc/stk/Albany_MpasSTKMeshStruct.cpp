@@ -27,7 +27,7 @@
 #include "Albany_Utils.hpp"
 
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
                                              const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles) :
   GenericSTKMeshStruct(params,Teuchos::null, 2),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -36,6 +36,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles, indexToTriangleID.size(), &indexToTriangleID[0], 0, *comm)); // Distribute the elems equally
   
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -92,7 +93,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
 //Wedge
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
                                              const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -119,6 +120,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles*numLayers, indexToPrismID.size(), &indexToPrismID[0], 0, *comm)); // Distribute the elems equally
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -192,7 +194,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
 //Tetra
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
                                              const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -222,6 +224,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   elem_map = Teuchos::rcp(new Epetra_Map(3*nGlobalTriangles*numLayers, indexToTetraID.size(), &indexToTetraID[0], 0, *comm)); // Distribute the elems equally
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -300,7 +303,7 @@ Albany::MpasSTKMeshStruct::~MpasSTKMeshStruct()
 
 void
 Albany::MpasSTKMeshStruct::constructMesh(
-                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -314,7 +317,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
-	this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
     int elemColumnShift = (Ordering == 1) ? 1 : elem_map->NumGlobalElements()/numLayers;
     int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
@@ -390,7 +393,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
      }
 
      int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
-     p_rank[0] = comm->MyPID();
+     p_rank[0] = commT->getRank();
   }
 
 
@@ -460,7 +463,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
 void
 Albany::MpasSTKMeshStruct::constructMesh(
-                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -474,7 +477,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
-	this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
     int elemColumnShift = (Ordering == 1) ? 3 : elem_map->NumGlobalElements()/numLayers;
     int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
@@ -560,7 +563,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 			 bulkData->declare_relation(elem, node, j);
 		 }
 		 int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
-		 p_rank[0] = comm->MyPID();
+		 p_rank[0] = commT->getRank();
      }
 
 
@@ -687,7 +690,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
 void
 Albany::MpasSTKMeshStruct::constructMesh(
-                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -699,7 +702,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
@@ -738,7 +741,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
      }
     
      int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
-     p_rank[0] = comm->MyPID();
+     p_rank[0] = commT->getRank();
   }
 
   for (int i=0; i<indexToEdgeID.size(); i++) {

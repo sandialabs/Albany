@@ -877,11 +877,11 @@ ConnectivityArray::ConnectivityArray(
   // Max of 10000 workset size -- automatically resized down
   disc_params->set<int>("Workset Size", 10000);
 
-  Teuchos::RCP<Epetra_Comm>
-  communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  Teuchos::RCP<Teuchos_Comm> 
+  communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory
-  disc_factory(params, communicator);
+  disc_factory(params, communicatorT);
 
   ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
   mesh_specs = disc_factory.createMeshSpecs();

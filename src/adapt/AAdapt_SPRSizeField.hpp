@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra if ALBANY_EPETRA_EXE turned off except Epetra_Comm.
 
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
@@ -43,7 +42,7 @@ class SPRSizeField : public ma::IsotropicFunction {
     Albany::WsLIDList& elemGIDws;
     Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_disc;
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
     std::string sv_name;
     double rel_err;

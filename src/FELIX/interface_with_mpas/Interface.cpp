@@ -1001,8 +1001,8 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			req.push_back("Basal Friction");
 			req.push_back("Thickness");
 			int neq=2;
-			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
-			meshStruct->constructMesh(mpiComm, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
+			meshStruct = Teuchos::rcp(new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleID, nGlobalTriangles,nLayers,Ordering));
+			meshStruct->constructMesh(mpiCommT, discParams, neq, req, sis, indexToVertexID, mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
 								verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
 								verticesOnEdge, indexToEdgeID, nGlobalEdges, indexToTriangleID, meshStruct->getMeshSpecs()[0]->worksetSize,nLayers,Ordering);
     }

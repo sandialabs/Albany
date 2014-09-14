@@ -19,8 +19,8 @@ AAdapt::STKAdapt<SizeField>::
 STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
          const Teuchos::RCP<ParamLib>& paramLib_,
          Albany::StateManager& StateMgr_,
-         const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  AAdapt::AbstractAdapter(params_, paramLib_, StateMgr_, comm_),
+         const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+  AAdapt::AbstractAdapter(params_, paramLib_, StateMgr_, commT_),
   remeshFileIndex(1) {
 
   disc = StateMgr_.getDiscretization();
@@ -214,7 +214,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   if(adapt_params_->get<bool>("Rebalance", false))
 
-    genericMeshStruct->rebalanceAdaptedMesh(adapt_params_, epetra_comm_);
+    genericMeshStruct->rebalanceAdaptedMesh(adapt_params_, commT_);
     
   stk_discretization->updateMesh();
 //  printElementData();

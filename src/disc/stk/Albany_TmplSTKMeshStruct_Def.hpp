@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra except Epetra_Comm!
 
 #include <iostream>
 #include "Albany_TmplSTKMeshStruct.hpp"
@@ -30,7 +29,7 @@ template<unsigned Dim, class traits>
 Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_,
-                  const Teuchos::RCP<const Epetra_Comm>& comm) :
+                  const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct(params, adaptParams_, traits_type::size),
   periodic_x(params->get("Periodic_x BC", false)),
   periodic_y(params->get("Periodic_y BC", false)),
@@ -98,7 +97,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     // Format and print out information about the mesh that is being generated
 
-    if (comm->MyPID()==0 && Dim > 0){ // Not reached for 0D problems
+    if (commT->getRank()==0 && Dim > 0){ // Not reached for 0D problems
 
      std::cout <<"TmplSTKMeshStruct:: Creating " << Dim << "D mesh of size ";
 
@@ -275,7 +274,6 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
   // Create just enough of the mesh to figure out number of owned elements 
   // so that the problem setup can know the worksetSize
 
-  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
   Teuchos::ParameterList kokkosNodeParams;
   const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
 
@@ -321,7 +319,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 template<unsigned Dim, class traits>
 void
 Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -361,23 +359,23 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
 
   }
 
-  SetupFieldData(comm, neq_, req, sis, worksetSize);
+  SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  buildMesh(comm);
+  buildMesh(commT);
 
   // STK
   bulkData->modification_end();
 
   // Refine the mesh before starting the simulation if indicated
-  uniformRefineMesh(comm);
+  uniformRefineMesh(commT);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceInitialMesh(comm);
+  rebalanceInitialMeshT(commT);
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();
@@ -560,7 +558,7 @@ Albany::EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
 // Specializations to build the mesh for each dimension
 template<>
 void
-Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
+Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
 
   stk_classic::mesh::PartVector nodePartVec;
@@ -586,7 +584,7 @@ Albany::TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 template<>
 void
 Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -594,14 +592,14 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
                   const unsigned int worksetSize)
 {
 
-  SetupFieldData(comm, neq_, req, sis, worksetSize);
+  SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   metaData->commit();
 
   // STK
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(comm);
+  TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(commT);
 
   // STK
   bulkData->modification_end();
@@ -610,7 +608,7 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
 
 template<>
 void
-Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
+Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
 
   stk_classic::mesh::PartVector nodePartVec;
@@ -709,7 +707,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
 template<>
 void
-Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
+Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
 
   // STK
@@ -980,7 +978,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& c
 
 template<>
 void
-Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm)
+Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
 
   stk_classic::mesh::PartVector nodePartVec;

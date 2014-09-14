@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'd out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #ifndef ALBANY_SCALAR_RESPONSE_FUNCTION_HPP
 #define ALBANY_SCALAR_RESPONSE_FUNCTION_HPP
@@ -26,8 +25,8 @@ namespace Albany {
   public:
   
     //! Default constructor
-    ScalarResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm_) :
-      comm(comm_) {};
+    ScalarResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+      commT(commT_) {};
 
     //! Destructor
     virtual ~ScalarResponseFunction() {};
@@ -36,8 +35,8 @@ namespace Albany {
     virtual unsigned int numResponses() const = 0;
 
     //! Get the comm
-    virtual Teuchos::RCP<const Epetra_Comm> getComm() const {
-      return comm;
+    virtual Teuchos::RCP<const Teuchos_Comm> getComm() const {
+      return commT;
     }
 
 #ifdef ALBANY_EPETRA
@@ -218,7 +217,7 @@ namespace Albany {
   protected:
 
     //! Comm for forming response map
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
   };
 

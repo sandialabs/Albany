@@ -4,12 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra except Epetra_Comm.
 #include "AlbPUMI_FMDBVtk.hpp"
 
 AlbPUMI::FMDBVtk::
-FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  comm(comm_),
+FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+  commT(commT_),
   doCollection(false),
   mesh(meshStruct.getMesh()),
   remeshFileIndex(1),
@@ -24,7 +23,7 @@ FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_
 
     doCollection = true;
 
-    if(comm->MyPID() == 0){ // Only PE 0 writes the collection file
+    if(commT->getRank() == 0){ // Only PE 0 writes the collection file
 
       str.replace(found, 3, "pvd");
 
@@ -44,7 +43,7 @@ FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_
 AlbPUMI::FMDBVtk::
 ~FMDBVtk() {
 
-  if(doCollection && (comm->MyPID() == 0)){ // Only PE 0 writes the collection file
+  if(doCollection && (commT->getRank() == 0)){ // Only PE 0 writes the collection file
 
     vtu_collection_file << "  </Collection>" << std::endl
                       << "</VTKFile>" << std::endl;
@@ -58,7 +57,7 @@ void
 AlbPUMI::FMDBVtk::
 writeFile(const double time_value){
   if(doCollection){
-    if(comm->MyPID() == 0){ // Only PE 0 writes the collection file
+    if(commT->getRank() == 0){ // Only PE 0 writes the collection file
       std::string vtu_filename = outputFileName;
       std::ostringstream vtu_ss;
       vtu_ss << "_" << remeshFileIndex << "_.pvtu";

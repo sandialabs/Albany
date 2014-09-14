@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'd out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -21,6 +20,7 @@ Albany::ScalarResponseFunction::
 responseMap() const
 {
   int num_responses = this->numResponses();
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   Teuchos::RCP<const Epetra_LocalMap> response_map =
     Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
   return response_map;
@@ -33,8 +33,6 @@ Albany::ScalarResponseFunction::
 responseMapT() const
 {
   int num_responses = this->numResponses();
-  //create commT object
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
   //the following is needed to create Tpetra local map...
   Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
   Teuchos::RCP<const Tpetra_Map> response_mapT =

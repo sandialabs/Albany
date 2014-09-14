@@ -107,19 +107,20 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<std::string>("Method", "STK3D");
   discretizationParameterList->set<std::string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
-  Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  Teuchos::RCP<Teuchos_Comm> 
+  commT = Albany::createTeuchosCommFromMpiComm(MPI_COMM_WORLD);
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct 
-       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, comm));
-  stkMeshStruct->setFieldAndBulkData(comm,
+       = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, commT));
+  stkMeshStruct->setFieldAndBulkData(commT,
                                      discretizationParameterList,
                                      numberOfEquations,
                                      req,
                                      stateMgr.getStateInfoStruct(),
                                      stkMeshStruct->getMeshSpecs()[0]->worksetSize);
   Teuchos::RCP<Albany::AbstractDiscretization> discretization =
-    Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, comm));
+    Teuchos::rcp(new Albany::STKDiscretization(stkMeshStruct, commT));
 
   // Associate the discretization with the StateManager
   stateMgr.setStateArrays(discretization);

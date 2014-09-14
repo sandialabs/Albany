@@ -1,0 +1,15 @@
+Albany_MpasSTKMeshStruct.cpp:                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.cpp:                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.cpp:                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.cpp:                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.cpp:                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.cpp:                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:	                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:	                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:		                                         const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:                      const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:            const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:		   const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_MpasSTKMeshStruct.hpp:		   const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany_STKDiscretization.hpp:#include "Epetra_Comm.h"
+Albany_STKDiscretization.hpp:    Teuchos::RCP<const Epetra_Comm> comm;

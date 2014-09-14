@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: has no Epetra except Epetra_Comm.
-//Not compiled when ALBANY_EPETRA_EXE turned off.
 
 #include <iostream>
 
@@ -31,14 +29,14 @@
 
 Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 		const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Epetra_Comm>& comm) :
+		const Teuchos::RCP<const Teuchos_Comm>& commT) :
 		GenericSTKMeshStruct(params, Teuchos::null, 2), out(
 				Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false), sh(0) {
 	std::string fname = params->get("Ascii Input Mesh File Name",
 			"greenland.msh");
 
 	std::string shape;
-	if (comm->MyPID() == 0) {
+	if (commT->getRank() == 0) {
 		std::ifstream ifile;
 
 		NumElemNodes = 0;
@@ -90,6 +88,7 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 		}
 	}
 
+        Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
 	comm->Broadcast(&NumElemNodes, 1, 0);
 
 	params->validateParameters(*getValidDiscretizationParameters(), 0);
@@ -148,12 +147,12 @@ Albany::AsciiSTKMesh2D::~AsciiSTKMesh2D() {
 }
 
 void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
-		const Teuchos::RCP<const Epetra_Comm>& comm,
+		const Teuchos::RCP<const Teuchos_Comm>& commT,
 		const Teuchos::RCP<Teuchos::ParameterList>& params, const unsigned int neq_,
 		const AbstractFieldContainer::FieldContainerRequirements& req,
 		const Teuchos::RCP<Albany::StateInfoStruct>& sis,
 		const unsigned int worksetSize) {
-	this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
 	metaData->commit();
 

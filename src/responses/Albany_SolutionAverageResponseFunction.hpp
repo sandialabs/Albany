@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #ifndef ALBANY_SOLUTIONAVERAGERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONAVERAGERESPONSEFUNCTION_HPP
@@ -22,7 +21,7 @@ namespace Albany {
   
     //! Default constructor
     SolutionAverageResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm);
+      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Destructor
     virtual ~SolutionAverageResponseFunction();

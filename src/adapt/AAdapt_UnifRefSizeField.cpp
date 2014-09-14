@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except Epetra_Comm
 
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
@@ -16,7 +15,7 @@
 
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   mesh(disc->getFMDBMeshStruct()->getMesh()),
-  comm(disc->getComm()) {
+  commT(disc->getComm()) {
   initialAverageEdgeLength = ma::getAverageEdgeLength(mesh);
 }
 

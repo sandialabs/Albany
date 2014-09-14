@@ -4,14 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except Epetra_Comm
 
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
-#include "Epetra_Comm.h"
 
 Albany::SolutionTwoNormResponseFunction::
-SolutionTwoNormResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm) :
-  SamplingBasedScalarResponseFunction(comm)
+SolutionTwoNormResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) :
+  SamplingBasedScalarResponseFunction(commT)
 {
 }
 

@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off except Epetra_Comm
-
 #ifndef ALBANY_AGGREGATE_SCALAR_RESPONSE_FUNCTION_HPP
 #define ALBANY_AGGREGATE_SCALAR_RESPONSE_FUNCTION_HPP
 
@@ -24,7 +22,7 @@ namespace Albany {
   
     //! Default constructor
     AggregateScalarResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm,
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
       const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses);
 
 #ifdef ALBANY_EPETRA

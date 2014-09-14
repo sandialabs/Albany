@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: has Epetra_Comm, no other Epetra
 
 #include <Teuchos_TestForException.hpp>
 
@@ -30,11 +29,11 @@ AAdapt::AdaptationFactory::
 AdaptationFactory(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params,
                   const Teuchos::RCP<ParamLib>& param_lib,
                   Albany::StateManager& state_mgr,
-                  const Teuchos::RCP<const Epetra_Comm>& comm) :
+                  const Teuchos::RCP<const Teuchos_Comm>& commT) :
   adapt_params_(adapt_params),
   param_lib_(param_lib),
   state_mgr_(state_mgr),
-  epetra_comm_(comm) {
+  commT_(commT) {
 }
 //----------------------------------------------------------------------------
 Teuchos::RCP<AAdapt::AbstractAdapter>
@@ -48,7 +47,7 @@ AAdapt::AdaptationFactory::createAdapter() {
     strategy = rcp(new AAdapt::CopyRemesh(adapt_params_,
                                           param_lib_,
                                           state_mgr_,
-                                          epetra_comm_));
+                                          commT_));
   }
 
 #if defined(ALBANY_LCM)
@@ -57,7 +56,7 @@ AAdapt::AdaptationFactory::createAdapter() {
     strategy = rcp(new AAdapt::TopologyMod(adapt_params_,
                                            param_lib_,
                                            state_mgr_,
-                                           epetra_comm_));
+                                           commT_));
   }
 
 #endif
@@ -68,7 +67,7 @@ AAdapt::AdaptationFactory::createAdapter() {
     strategy = rcp(new AAdapt::RandomFracture(adapt_params_,
                    param_lib_,
                    state_mgr_,
-                   epetra_comm_));
+                   commT_));
   }
 
 #endif

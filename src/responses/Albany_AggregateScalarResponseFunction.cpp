@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off except Epetra_Comm
 
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
@@ -17,9 +16,9 @@ using Teuchos::rcp;
 
 Albany::AggregateScalarResponseFunction::
 AggregateScalarResponseFunction(
-  const Teuchos::RCP<const Epetra_Comm>& comm,
+  const Teuchos::RCP<const Teuchos_Comm>& commT,
   const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses_) :
-  SamplingBasedScalarResponseFunction(comm),
+  SamplingBasedScalarResponseFunction(commT),
   responses(responses_)
 {
 }
@@ -75,8 +74,7 @@ evaluateResponseT(const double current_time,
 
     // Create Tpetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    const Epetra_Comm& comm = *(responses[i]->getComm());
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
     
@@ -126,8 +124,7 @@ evaluateTangentT(const double alpha,
 
     // Create Tpetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    const Epetra_Comm& comm = *(responses[i]->getComm());
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
 
@@ -205,8 +202,9 @@ evaluateGradient(const double current_time,
 
     // Create Epetra_Map for response function
     int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, 
-				       *(responses[i]->getComm()));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
+    Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+    Epetra_LocalMap local_response_map(num_responses, 0, *comm); 
 
     // Create Epetra_Vectors for response function
     RCP<Epetra_Vector> local_g;
@@ -271,8 +269,7 @@ evaluateGradientT(const double current_time,
 
     // Create Tpetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    const Epetra_Comm& comm = *(responses[i]->getComm());
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
 

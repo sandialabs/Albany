@@ -38,12 +38,12 @@
 //Constructor for meshes read from ASCII file 
 Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                                             const Teuchos::RCP<const Epetra_Comm>& comm) :
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false)
 {
-   int numProc = comm->NumProc(); //total number of processors
+   int numProc = commT->getSize(); //total number of processors
    contigIDs = params->get("Contiguous IDs", true); 
    std::cout << "Number of processors: " << numProc << std::endl; 
    //names of files giving the mesh
@@ -74,7 +74,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      if ((numProc == 1) & (contigIDs == false))
         std::cout << "1 processor run with non-contiguous IDs; bfIDs0, geIDs0, gnIDs0 files required." << std::endl;
 #endif
-     int suffix = comm->MyPID(); //current processor number 
+     int suffix = commT->getRank(); //current processor number 
      sprintf(meshfilename, "%s%i", "xyz", suffix);
      sprintf(shfilename, "%s%i", "sh", suffix);
      sprintf(confilename, "%s%i", "eles", suffix);
@@ -294,6 +294,8 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
         //*out << "i: " << i << ", beta: " << beta[i] << std::endl; 
        }
      }
+
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
  
   elem_map = Teuchos::rcp(new Epetra_Map(-1, NumEles, globalElesID, 0, *comm)); //Distribute the elements according to the global element IDs
   node_map = Teuchos::rcp(new Epetra_Map(-1, NumNodes, globalNodesID, 0, *comm)); //Distribute the nodes according to the global node IDs 
@@ -395,14 +397,14 @@ Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 
 void
 Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
-                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   metaData->commit();
 

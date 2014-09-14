@@ -16,12 +16,12 @@ AAdapt::AbstractAdapter::
 AbstractAdapter(const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const Teuchos::RCP<ParamLib>& param_lib,
                 Albany::StateManager& state_mgr,
-                const Teuchos::RCP<const Epetra_Comm>& comm) :
+                const Teuchos::RCP<const Teuchos_Comm>& commT) :
   output_stream_(Teuchos::VerboseObjectBase::getDefaultOStream()),
   adapt_params_(params),
   param_lib_(param_lib),
   state_mgr_(state_mgr),
-  epetra_comm_(comm)
+  commT_(commT)
 {}
 
 //----------------------------------------------------------------------------

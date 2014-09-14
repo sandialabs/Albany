@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off, except Epetra_Comm.
 
 #include <limits>
 
@@ -60,24 +59,25 @@ const double pi = 3.1415926535897932385;
 //#define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
-					     const Teuchos::RCP<const Epetra_Comm>& comm_,
+					     const Teuchos::RCP<const Teuchos_Comm>& commT_,
                          const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
 
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
   bulkData(*stkMeshStruct_->bulkData),
-  comm(comm_),
-  commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
+  commT(commT_),
   rigidBodyModes(rigidBodyModes_),
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-   //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
    //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
   Teuchos::ParameterList kokkosNodeParams;
   nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
+#endif
   Albany::STKDiscretization::updateMesh();
 
 }
@@ -1069,7 +1069,7 @@ void Albany::STKDiscretization::computeGraphs()
 				    cells );
 
 
-  if (comm->MyPID()==0)
+  if (commT->getRank()==0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
   GO row, col;
@@ -1647,7 +1647,7 @@ void Albany::STKDiscretization::setupExodusOutput()
     Ioss::Init::Initializer io;
     mesh_data = new stk_classic::io::MeshData();
     stk_classic::io::create_output_mesh(str,
-		  Albany::getMpiCommFromEpetraComm(*comm),
+		  Albany::getMpiCommFromTeuchosComm(commT),
 		  bulkData, *mesh_data);
 
     stk_classic::io::define_output_fields(*mesh_data, metaData);
@@ -1924,10 +1924,10 @@ namespace {
     const unsigned nlat, const double nlon,
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Albany::STKDiscretization::interp> > >::type& interpdata,
-    const Teuchos::RCP<const Epetra_Comm> comm) {
+    const Teuchos::RCP<const Teuchos_Comm> commT) {
 
     double err=0;
-    const long long unsigned rank = comm->MyPID();
+    const long long unsigned rank = commT->getRank();
     std::vector<double> lat(nlat);
     std::vector<double> lon(nlon);
 
@@ -1963,7 +1963,7 @@ namespace {
 #ifdef ALBANY_EPETRA
 int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
 #ifdef ALBANY_SEACAS
-  const long long unsigned rank = comm->MyPID();
+  const long long unsigned rank = commT->getRank();
   const unsigned nlat = stkMeshStruct->nLat;
   const unsigned nlon = stkMeshStruct->nLon;
 
@@ -2001,7 +2001,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
   comm->MaxAll(&local[0], &global[0], neq*nlat*nlon);
 
 #ifdef ALBANY_PAR_NETCDF
-  const long long unsigned np   = comm->NumProc();
+  const long long unsigned np   = commT->getSize();
   const size_t start            = static_cast<size_t>((rank*nlat)/np);
   const size_t end              = static_cast<size_t>(((rank+1)*nlat)/np);
   const size_t len              = end-start;
@@ -2031,7 +2031,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& s
 
 void Albany::STKDiscretization::setupNetCDFOutput()
 {
-  const long long unsigned rank = comm->MyPID();
+  const long long unsigned rank = commT->getRank();
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->cdfOutput) {
     outputInterval = 0;
@@ -2044,7 +2044,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
     interpolateData.resize(coords.size());
     for (int b=0; b < coords.size(); b++) interpolateData[b].resize(coords[b].size());
 
-    setup_latlon_interp(nlat, nlon, coords, interpolateData, comm);
+    setup_latlon_interp(nlat, nlon, coords, interpolateData, commT);
 
     const std::string name = stkMeshStruct->cdfOutFile;
     netCDFp=0;
@@ -2052,7 +2052,7 @@ void Albany::STKDiscretization::setupNetCDFOutput()
 
 
 #ifdef ALBANY_PAR_NETCDF
-    MPI_Comm theMPIComm = Albany::getMpiCommFromEpetraComm(*comm);
+    MPI_Comm theMPIComm = Albany::getMpiCommFromTeuchosComm(commT);
     MPI_Info info;
     MPI_Info_create(&info);
     if (const int ierr = nc_create_par (name.c_str(), NC_NETCDF4 | NC_MPIIO | NC_CLOBBER | NC_64BIT_OFFSET, theMPIComm, info, &netCDFp))

@@ -87,7 +87,7 @@ namespace Albany {
     Teuchos::RCP<Albany::AbstractProblem> getProblem() const;
 
     //! Get communicator
-    Teuchos::RCP<const Epetra_Comm> getComm() const;
+    Teuchos::RCP<const Teuchos_Comm> getComm() const;
 
 #ifdef ALBANY_EPETRA
     //! Get DOF map
@@ -848,8 +848,10 @@ namespace Albany {
 
   protected:
 
+#ifdef ALBANY_EPETRA
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
+#endif
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos_Comm> commT;

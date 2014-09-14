@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra except Epetra_Comm
 
 #ifdef ALBANY_SEACAS
 
@@ -31,7 +30,7 @@
 Albany::IossSTKMeshStruct::IossSTKMeshStruct(
                                              const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                              const Teuchos::RCP<Teuchos::ParameterList>& adaptParams_, 
-                                             const Teuchos::RCP<const Epetra_Comm>& comm) :
+                                             const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct(params, adaptParams_),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   useSerialMesh(false),
@@ -47,6 +46,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   usePamgen = (params->get("Method","Exodus") == "Pamgen");
 
   std::vector<std::string> entity_rank_names;
+  
+  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
 
   // eMesh needs "FAMILY_TREE" entity
   if(buildEMesh)
@@ -54,12 +55,12 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
 #ifdef ALBANY_ZOLTAN  // rebalance requires Zoltan
 
-  if (params->get<bool>("Use Serial Mesh", false) && comm->NumProc() > 1){ 
+  if (params->get<bool>("Use Serial Mesh", false) && commT->getSize() > 1){ 
     // We are parallel but reading a single exodus file
 
     useSerialMesh = true;
 
-    readSerialMesh(comm, entity_rank_names);
+    readSerialMesh(commT, entity_rank_names);
 
   }
   else 
@@ -71,7 +72,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       stk_classic::io::create_input_mesh("exodusII",
 //      create_input_mesh("exodusII",
                                  params->get<std::string>("Exodus Input File Name"),
-                                 Albany::getMpiCommFromEpetraComm(*comm), 
+                                 *mpiComm->getRawMpiComm(), 
                                  *metaData, *mesh_data,
                                  entity_rank_names); 
     }
@@ -82,7 +83,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       stk_classic::io::create_input_mesh("pamgen",
 //      create_input_mesh("pamgen",
                                  params->get<std::string>("Pamgen Input File Name"),
-                                 Albany::getMpiCommFromEpetraComm(*comm), 
+                                 *mpiComm->getRawMpiComm(), 
                                  *metaData, *mesh_data,
                                  entity_rank_names); 
 
@@ -207,7 +208,7 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 }
 
 void
-Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
+Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Teuchos_Comm>& commT,
                                           std::vector<std::string>& entity_rank_names){
 
 #ifdef ALBANY_ZOLTAN // rebalance needs Zoltan
@@ -218,12 +219,13 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
 
   // Read a single exodus mesh on Proc 0 then rebalance it across the machine
 
-  MPI_Comm theComm = Albany::getMpiCommFromEpetraComm(*comm);
+  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
+  MPI_Comm theComm = *mpiComm->getRawMpiComm();
 
   int process_rank[1]; // the reader process
 
   process_rank[0] = 0;
-  int my_rank = comm->MyPID();
+  int my_rank = commT->getRank();
 
   //get the group under theComm
   MPI_Comm_group(theComm, &group_world);
@@ -261,14 +263,14 @@ Albany::IossSTKMeshStruct::readSerialMesh(const Teuchos::RCP<const Epetra_Comm>&
 
 void
 Albany::IossSTKMeshStruct::setFieldAndBulkData(
-                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
                                                const unsigned int neq_,
                                                const AbstractFieldContainer::FieldContainerRequirements& req,
                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                                                const unsigned int worksetSize)
 {
-  this->SetupFieldData(comm, neq_, req, sis, worksetSize);
+  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
   *out << "IOSS-STK: number of node sets = " << nsPartVec.size() << std::endl;
   *out << "IOSS-STK: number of side sets = " << ssPartVec.size() << std::endl;
@@ -293,7 +295,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
 
     bulkData->modification_begin();
 
-    if(comm->MyPID() == 0){ // read in the mesh on PE 0
+    if(commT->getRank() == 0){ // read in the mesh on PE 0
 
       stk_classic::io::process_mesh_bulk_data(region, *bulkData);
 
@@ -400,10 +402,10 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData(
   }
 
   // Refine the mesh before starting the simulation if indicated
-  uniformRefineMesh(comm);
+  uniformRefineMesh(commT);
 
   // Rebalance the mesh before starting the simulation if indicated
-  rebalanceInitialMesh(comm);
+  rebalanceInitialMeshT(commT);
 
   // Build additional mesh connectivity needed for mesh fracture (if indicated)
   computeAddlConnectivity();

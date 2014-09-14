@@ -50,11 +50,11 @@ Topology::Topology(
   RCP<Teuchos::ParameterList>
   adapt_params = Teuchos::sublist(problem_params, "Adaptation");
 
-  RCP<Epetra_Comm>
-  communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  Teuchos::RCP<Teuchos_Comm> 
+  communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Albany::DiscretizationFactory
-  disc_factory(params, communicator);
+  disc_factory(params, communicatorT);
 
   // Needed, otherwise segfaults.
   Teuchos::ArrayRCP<RCP<Albany::MeshSpecsStruct> >
@@ -350,8 +350,8 @@ void Topology::restoreElementToNodeConnectivity()
   STKDiscretization &
   stk_discretization = static_cast<STKDiscretization &>(*discretization_);
 
-  RCP<Epetra_Comm>
-  communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+  Teuchos::RCP<Teuchos_Comm> 
+  communicatorT = Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   //stk_discretization.updateMesh(stkMeshStruct_, communicator);
   stk_discretization.updateMesh();

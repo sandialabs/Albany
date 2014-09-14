@@ -82,10 +82,8 @@ int main(int ac, char* av[])
   // A mpi object must be instantiated before using the comm to read
   // material file
   Teuchos::GlobalMPISession mpi_session(&ac, &av);
-  //IK, 9/1/14: need to convert this to take in Teuchos comm object!
-  Teuchos::RCP<Epetra_Comm> comm =
-    Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+  Teuchos::RCP<const Teuchos_Comm> commT =
+    Albany::createTeuchosCommFromMpiComm(Albany_MPI_COMM_WORLD);
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db;
   material_db = Teuchos::rcp(new QCAD::MaterialDatabase(input_file, commT));
@@ -352,15 +350,14 @@ int main(int ac, char* av[])
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
 
-  //IK, 9/1/14: TO DO: remove Epetra comm!
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
-      new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, comm));
-  stkMeshStruct->setFieldAndBulkData(comm, discretizationParameterList,
+      new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, commT));
+  stkMeshStruct->setFieldAndBulkData(commT, discretizationParameterList,
       numberOfEquations, req, stateMgr.getStateInfoStruct(),
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
-      new Albany::STKDiscretization(stkMeshStruct, comm));
+      new Albany::STKDiscretization(stkMeshStruct, commT));
 
   // Associate the discretization with the StateManager
   stateMgr.setStateArrays(discretization);

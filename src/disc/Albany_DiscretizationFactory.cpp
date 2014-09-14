@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: has no Epetra except Epetra_Comm.
 
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
@@ -35,8 +34,8 @@
 
 Albany::DiscretizationFactory::DiscretizationFactory(
   const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-  const Teuchos::RCP<const Epetra_Comm>& epetra_comm_) :
-  epetra_comm(epetra_comm_) {
+  const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+  commT(commT_) {
 
   discParams = Teuchos::sublist(topLevelParams, "Discretization", true);
 
@@ -72,24 +71,24 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   std::string& method = discParams->get("Method", "STK1D");
 
   if(method == "STK1D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, adaptParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<1>(discParams, adaptParams, commT));
   }
 
   else if(method == "STK0D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, adaptParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<0>(discParams, adaptParams, commT));
   }
 
   else if(method == "STK2D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, adaptParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<2>(discParams, adaptParams, commT));
   }
 
   else if(method == "STK3D") {
-    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptParams, commT));
   }
 
   else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
 #ifdef ALBANY_SEACAS
-    meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptParams, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
                                Teuchos::Exceptions::InvalidParameter,
@@ -99,14 +98,14 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   }
 #ifdef ALBANY_EPETRA
   else if(method == "Ascii") {
-    meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, commT));
   }
   else if(method == "Cism") {
     meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
   }
   else if(method == "Ascii2D") {
 	  Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
-      meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(discParams, epetra_comm));
+      meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(discParams, commT));
       Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
 	  Albany::AbstractFieldContainer::FieldContainerRequirements req;
 	//  req.push_back("Surface Height");
@@ -114,7 +113,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 	//  req.push_back("Basal Friction");
 	//  req.push_back("Thickness");
 	  int neq=2;
-      meshStruct2D->setFieldAndBulkData(epetra_comm, discParams, neq, req,
+      meshStruct2D->setFieldAndBulkData(commT, discParams, neq, req,
                                         sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
       Ioss::Init::Initializer io;
       	    Teuchos::RCP<stk_classic::io::MeshData> mesh_data =Teuchos::rcp(new stk_classic::io::MeshData);
@@ -123,7 +122,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
       	    stk_classic::io::process_output_request(*mesh_data, *meshStruct2D->bulkData, 0.0);
   }
   else if(method == "Extruded") {
-  	  meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, epetra_comm));
+  	  meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, commT));
   }
   else if (method == "Mpas") {
     meshStruct =  discParams->get<Teuchos::RCP<Albany::AbstractSTKMeshStruct> >("STKMeshStruct");
@@ -143,7 +142,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   else if(method == "FMDB") {
 #ifdef ALBANY_SCOREC
-    meshStruct = Teuchos::rcp(new AlbPUMI::FMDBMeshStruct(discParams, epetra_comm));
+    meshStruct = Teuchos::rcp(new AlbPUMI::FMDBMeshStruct(discParams, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "FMDB",
                                Teuchos::Exceptions::InvalidParameter,
@@ -193,7 +192,7 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
   const AbstractFieldContainer::FieldContainerRequirements& req) {
-  meshStruct->setFieldAndBulkData(epetra_comm, discParams, neq, req,
+  meshStruct->setFieldAndBulkData(commT, discParams, neq, req,
                                   sis, meshStruct->getMeshSpecs()[0]->worksetSize);
 }
 
@@ -209,7 +208,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
     case Albany::AbstractMeshStruct::STK_MS: {
       Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Albany::STKDiscretization(ms, epetra_comm, rigidBodyModes));
+      return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
     }
     break;
 
@@ -217,13 +216,13 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
 
     case Albany::AbstractMeshStruct::FMDB_VTK_MS: {
       Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-      return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBVtk>(ms, epetra_comm, rigidBodyModes));
+      return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBVtk>(ms, commT, rigidBodyModes));
     }
     break;
 
     case Albany::AbstractMeshStruct::FMDB_EXODUS_MS: {
       Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-      return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBExodus>(ms, epetra_comm, rigidBodyModes));
+      return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBExodus>(ms, commT, rigidBodyModes));
     }
     break;
 #endif

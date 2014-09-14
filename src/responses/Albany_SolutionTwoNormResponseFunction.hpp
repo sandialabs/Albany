@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except Epetra_Comm
 
 #ifndef ALBANY_SOLUTIONTWONORMRESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONTWONORMRESPONSEFUNCTION_HPP
@@ -22,7 +21,7 @@ namespace Albany {
   
     //! Default constructor
     SolutionTwoNormResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm);
+      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Destructor
     virtual ~SolutionTwoNormResponseFunction();

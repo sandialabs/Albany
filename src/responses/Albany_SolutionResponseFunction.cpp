@@ -61,8 +61,7 @@ setupT()
 
   // Build culled map and importer - Tpetra
   Teuchos::RCP<const Tpetra_Map> x_mapT = application->getMapT();
-  const Epetra_Comm& comm = *application->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = application->getComm(); 
   //Tpetra version of culled_map
   culled_mapT = buildCulledMapT(*x_mapT, keepDOF);
 

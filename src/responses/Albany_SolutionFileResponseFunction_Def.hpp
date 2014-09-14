@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #include "Albany_SolutionFileResponseFunction.hpp"
 #ifdef ALBANY_EPETRA
@@ -18,16 +17,16 @@
 #ifdef ALBANY_EPETRA
 template<class Norm>
 Albany::SolutionFileResponseFunction<Norm>::
-SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
-  : SamplingBasedScalarResponseFunction(comm),
+SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT)
+  : SamplingBasedScalarResponseFunction(commT),
     RefSoln(NULL), RefSolnT(NULL), solutionLoaded(false)
 {
 }
 #else
 template<class Norm>
 Albany::SolutionFileResponseFunction<Norm>::
-SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
-  : SamplingBasedScalarResponseFunction(comm),
+SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT)
+  : SamplingBasedScalarResponseFunction(commT),
     RefSolnT(NULL), solutionLoaded(false)
 {
 }

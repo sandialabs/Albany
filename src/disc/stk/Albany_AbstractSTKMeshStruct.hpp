@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: has no Epetra except Epetra_Comm.
 
 #ifndef ALBANY_ABSTRACTSTKMESHSTRUCT_HPP
 #define ALBANY_ABSTRACTSTKMESHSTRUCT_HPP
@@ -41,7 +40,7 @@ namespace Albany {
   public:
 
     virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, 
                   const AbstractFieldContainer::FieldContainerRequirements& req,

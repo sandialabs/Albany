@@ -5,7 +5,6 @@
 //*****************************************************************//
 
 
-//IK, 9/12/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #ifndef ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
 #define ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
@@ -37,7 +36,7 @@ namespace AlbPUMI {
     virtual void debugMeshWrite(const Epetra_Vector& sol, const char* filename) = 0;
 #endif
 
-    virtual Teuchos::RCP<const Epetra_Comm> getComm() const = 0;
+    virtual Teuchos::RCP<const Teuchos_Comm> getComm() const = 0;
 
     virtual void reNameExodusOutput(const std::string& str) = 0;
 

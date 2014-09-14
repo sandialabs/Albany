@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except Epetra_Comm
 
 #ifndef AADAPT_UNIFREFSIZEFIELD_HPP
 #define AADAPT_UNIFREFSIZEFIELD_HPP
@@ -35,7 +34,7 @@ class UnifRefSizeField : public ma::IsotropicFunction {
 
   private:
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
     double elem_size;
     double initialAverageEdgeLength;

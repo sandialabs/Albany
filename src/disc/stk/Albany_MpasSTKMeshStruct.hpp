@@ -18,22 +18,22 @@ namespace Albany {
     public:
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-	                                               const Teuchos::RCP<const Epetra_Comm>& comm,
+	                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
 	                                               const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-	                                             const Teuchos::RCP<const Epetra_Comm>& comm,
+	                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
 	                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering = 0);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		                                         const Teuchos::RCP<const Epetra_Comm>& comm,
+		                                         const Teuchos::RCP<const Teuchos_Comm>& commT,
 		                                         const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering = 0);
 
 
     ~MpasSTKMeshStruct();
 
     void setFieldAndBulkData(
-                      const Teuchos::RCP<const Epetra_Comm>& comm,
+                      const Teuchos::RCP<const Teuchos_Comm>& commT,
                       const Teuchos::RCP<Teuchos::ParameterList>& params,
                       const unsigned int neq_,
                       const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -52,7 +52,7 @@ namespace Albany {
 
 
     void constructMesh(
-            const Teuchos::RCP<const Epetra_Comm>& comm,
+            const Teuchos::RCP<const Teuchos_Comm>& commT,
             const Teuchos::RCP<Teuchos::ParameterList>& params,
             const unsigned int neq_,
             const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -64,7 +64,7 @@ namespace Albany {
             const unsigned int worksetSize);
 
     void constructMesh(
-		   const Teuchos::RCP<const Epetra_Comm>& comm,
+		   const Teuchos::RCP<const Teuchos_Comm>& commT,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const unsigned int neq_,
 		   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -79,7 +79,7 @@ namespace Albany {
 		   int numLayers, int Ordering = 0);
 
     void constructMesh(
-		   const Teuchos::RCP<const Epetra_Comm>& comm,
+		   const Teuchos::RCP<const Teuchos_Comm>& commT,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const unsigned int neq_,
 		   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,

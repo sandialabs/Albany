@@ -31,7 +31,7 @@ class CopyRemesh : public AbstractAdapter {
     CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
                const Teuchos::RCP<ParamLib>& param_lib,
                Albany::StateManager& state_mgr,
-               const Teuchos::RCP<const Epetra_Comm>& comm);
+               const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ///
     /// Destructor

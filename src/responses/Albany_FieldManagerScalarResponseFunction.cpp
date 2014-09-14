@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off
-//except SG and MP. 
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #ifdef ALBANY_EPETRA
@@ -47,7 +45,7 @@ void
 Albany::FieldManagerScalarResponseFunction::
 setup(Teuchos::ParameterList& responseParams)
 {
-  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
+  Teuchos::RCP<const Teuchos_Comm> commT = application->getComm();
 
   // Create field manager
   rfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
@@ -174,8 +172,7 @@ evaluateGradient(const double current_time,
 		 Epetra_MultiVector* dg_dp)
 {
   visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
-  Teuchos::RCP<const Epetra_Comm> comm = application->getComm();
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
+  Teuchos::RCP<const Teuchos_Comm> commT = application->getComm();
   Teuchos::ParameterList kokkosNodeParams;
   Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   //Create Tpetra copy of x, called xT
@@ -199,6 +196,7 @@ evaluateGradient(const double current_time,
   // Perform fill via field manager (dg/dx)
   int numWorksets = application->getNumWorksets();
   if (dg_dx != NULL) {
+    Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
     workset.m_coeff = 0.0;
     workset.j_coeff = 1.0;
     workset.n_coeff = 0.0;

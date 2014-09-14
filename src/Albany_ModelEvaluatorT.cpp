@@ -144,8 +144,7 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
   tpetra_param_map.resize(num_param_vecs);
   thyra_response_vec.resize(num_response_vecs);
 
-  const Teuchos::RCP<const Teuchos::Comm<int> > commT =
-    Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
    for (int l = 0; l < tpetra_param_vec.size(); ++l) {
      // Initialize Sacado parameter vector
      app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
@@ -196,8 +195,7 @@ void
 Albany::ModelEvaluatorT::allocateVectors()
     {
 
-     const Teuchos::RCP<const Teuchos::Comm<int> > commT =
-       Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+     const Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
 
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();

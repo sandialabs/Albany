@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off, except Epetra_Comm.
 
 #ifndef ALBANY_STKDISCRETIZATION_HPP
 #define ALBANY_STKDISCRETIZATION_HPP
@@ -15,13 +14,13 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-#include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 
 #ifdef ALBANY_EPETRA
+#include "Epetra_Comm.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 #endif
@@ -58,7 +57,7 @@ namespace Albany {
     //! Constructor
     STKDiscretization(
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
@@ -291,8 +290,10 @@ namespace Albany {
     stk_classic::mesh::fem::FEMMetaData& metaData;
     stk_classic::mesh::BulkData& bulkData;
 
+#ifdef ALBANY_EPETRA
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
+#endif
 
    //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;

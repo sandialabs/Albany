@@ -34,7 +34,7 @@ class AdaptiveSolutionManager : public Piro::Epetra::AdaptiveSolutionManager {
     //! Build a mesh adaptive problem
     void buildAdaptiveProblem(const Teuchos::RCP<ParamLib>& paramLib,
                               Albany::StateManager& StateMgr,
-                              const Teuchos::RCP<const Epetra_Comm>& comm);
+                              const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Apply adaptation method to mesh and problem. Returns true if adaptation is performed successfully.
     virtual bool adaptProblem();

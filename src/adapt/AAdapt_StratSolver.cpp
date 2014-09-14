@@ -20,8 +20,8 @@ AAdapt::CopyRemesh::
 CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
            const Teuchos::RCP<ParamLib>& param_lib,
            Albany::StateManager& state_mgr,
-           const Teuchos::RCP<const Epetra_Comm>& comm) :
-  AAdapt::AbstractAdapter(params, param_lib, state_mgr, comm),
+           const Teuchos::RCP<const Teuchos_Comm>& commT) :
+  AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
   remesh_file_index_(1) {
 
   discretization_ = state_mgr_.getDiscretization();

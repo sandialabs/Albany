@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: has no Epetra except Epetra_Comm.
-//Not compiled when ALBANY_EPETRA_EXE turned off.
 
 #ifndef ALBANY_ASCII_STKMESH2DSTRUCT_HPP
 #define ALBANY_ASCII_STKMESH2DSTRUCT_HPP
@@ -22,12 +20,12 @@ namespace Albany {
 
     AsciiSTKMesh2D(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~AsciiSTKMesh2D();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,

@@ -36,7 +36,7 @@ class RandomFracture : public AbstractAdapter {
     RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                    const Teuchos::RCP<ParamLib>& paramLib_,
                    Albany::StateManager& StateMgr_,
-                   const Teuchos::RCP<const Epetra_Comm>& comm_);
+                   const Teuchos::RCP<const Teuchos_Comm>& commT_);
 
     ///
     /// Destructor

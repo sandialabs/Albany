@@ -4,13 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: Epetra ifdef'ed out except Epetra_Comm when ALBANY_EPETRA_EXE is off.
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 
 Albany::SolutionAverageResponseFunction::
-SolutionAverageResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm) :
-  ScalarResponseFunction(comm)
+SolutionAverageResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT) :
+  ScalarResponseFunction(commT)
 {
 }
 

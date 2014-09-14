@@ -185,7 +185,7 @@ namespace Albany {
   protected:
 
     //! Comm for forming response map
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
   };
 
