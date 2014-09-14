@@ -214,7 +214,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   if(adapt_params_->get<bool>("Rebalance", false))
 
-    genericMeshStruct->rebalanceAdaptedMesh(adapt_params_, commT_);
+    genericMeshStruct->rebalanceAdaptedMeshT(adapt_params_, commT_);
     
   stk_discretization->updateMesh();
 //  printElementData();

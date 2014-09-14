@@ -544,21 +544,6 @@ void Albany::GenericSTKMeshStruct::uniformRefineMesh(const Teuchos::RCP<const Te
 
 }
 
-#ifdef ALBANY_EPETRA
-void Albany::GenericSTKMeshStruct::rebalanceInitialMesh(const Teuchos::RCP<const Teuchos_Comm>& commT){
-
-
-  bool rebalance = params->get<bool>("Rebalance Mesh", false);
-  bool useSerialMesh = params->get<bool>("Use Serial Mesh", false);
-
-  if(rebalance || (useSerialMesh && commT->getSize() > 1)){
-
-    rebalanceAdaptedMesh(params, commT);
-
-  }
-
-}
-#endif
 
 void Albany::GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& commT){
 
@@ -574,80 +559,6 @@ void Albany::GenericSTKMeshStruct::rebalanceInitialMeshT(const Teuchos::RCP<cons
 
 }
 
-#ifdef ALBANY_EPETRA
-void Albany::GenericSTKMeshStruct::rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                                                        const Teuchos::RCP<const Teuchos_Comm>& commT){
-
-// Zoltan is required here
-
-#ifdef ALBANY_ZOLTAN
-
-    using std::cout; using std::endl;
-
-    if(commT->getSize() <= 1)
-
-      return;
-
-    double imbalance;
-
-    AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-
-    stk_classic::mesh::Selector selector(metaData->universal_part());
-    stk_classic::mesh::Selector owned_selector(metaData->locally_owned_part());
-
-    if(commT->getRank() == 0){
-
-      std::cout << "Before rebal nelements " << commT->getRank() << "  " <<
-        stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->element_rank())) << endl;
-
-      std::cout << "Before rebal " << commT->getRank() << "  " <<
-        stk_classic::mesh::count_selected_entities(owned_selector, bulkData->buckets(metaData->node_rank())) << endl;
-    }
-
-
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
-      metaData->node_rank(), &selector);
-
-    if(commT->getRank() == 0)
-
-      std::cout << "Before rebalance: Imbalance threshold is = " << imbalance << endl;
-
-    // Use Zoltan to determine new partition. Set the desired parameters (if any) from the input file
-
-    Teuchos::ParameterList graph_options;
-
-   //graph_options.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()).set("LOAD BALANCING METHOD"      , "4");
-    //graph_options.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()).set("ZOLTAN DEBUG LEVEL"      , "10");
-
-    if(params_->isSublist("Rebalance Options")){
-
-      const Teuchos::RCP<Teuchos::ParameterList>& load_balance_method = Teuchos::sublist(params_, "Rebalance Options");
-
-    // Set the desired parameters. The options are shown in
-    // TRILINOS_ROOT/packages/stk/stk_rebalance/ZontanPartition.cpp
-
-//      load_balance_method.set("LOAD BALANCING METHOD"      , "4");
-//      load_balance_method.set("ZOLTAN DEBUG LEVEL"      , "10");
-
-      graph_options.sublist(stk_classic::rebalance::Zoltan::default_parameters_name()) = *load_balance_method;
-
-    }
-
-    const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
-    stk_classic::rebalance::Zoltan zoltan_partition(*mpiComm->getRawMpiComm(), numDim, graph_options);
-    stk_classic::rebalance::rebalance(*bulkData, owned_selector, coordinates_field, NULL, zoltan_partition);
-
-
-    imbalance = stk_classic::rebalance::check_balance(*bulkData, NULL,
-      metaData->node_rank(), &selector);
-
-    if(commT->getRank() == 0)
-      std::cout << "After rebalance: Imbalance threshold is = " << imbalance << endl;
-
-#endif  //ALBANY_ZOLTAN
-
-}
-#endif
 
 void Albany::GenericSTKMeshStruct::rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                                                         const Teuchos::RCP<const Teuchos::Comm<int> >& comm){
