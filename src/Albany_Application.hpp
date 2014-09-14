@@ -902,6 +902,7 @@ namespace Albany {
     //! Stochastic Galerkin expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
+#ifdef ALBANY_EPETRA
     //! Product multi-comm
     Teuchos::RCP<const EpetraExt::MultiComm> product_comm;
 
@@ -933,6 +934,7 @@ namespace Albany {
 
     //! Overlapped Jacobian matrixs
     Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_overlapped_jac;
+#endif
 
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
@@ -969,7 +971,9 @@ namespace Albany {
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;
     Teuchos::RCP<Teko::InverseFactory> inverseFac;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Operator> wrappedJac;
+#endif
     std::vector<int> blockDecomp;
 
     std::set<std::string> setupSet;

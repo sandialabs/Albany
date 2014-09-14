@@ -308,6 +308,7 @@ evaluateMPDerivative(
 }
 #endif //ALBANY_SG_MP
 
+#ifdef ALBANY_EPETRA
 bool
 Albany::KLResponseFunction::
 computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
@@ -337,3 +338,4 @@ computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
 
   return result;
 }
+#endif

@@ -4,9 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra except Epetra_Comm
+
 #include "AAdapt_UnifRefSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
-#include "Epetra_Import.h"
 
 #include "Albany_Utils.hpp"
 

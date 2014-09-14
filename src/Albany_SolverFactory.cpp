@@ -697,6 +697,7 @@ int Albany::SolverFactory::checkSolveTestResultsT(
   return failures;
 }
 
+#ifdef ALBANY_EPETRA
 int Albany::SolverFactory::checkSolveTestResults(
   int response_index,
   int parameter_index,
@@ -755,6 +756,7 @@ int Albany::SolverFactory::checkSolveTestResults(
 
   return failures;
 }
+#endif
 
 int Albany::SolverFactory::checkDakotaTestResults(
   int response_index,
@@ -826,6 +828,7 @@ int Albany::SolverFactory::checkAnalysisTestResults(
   return failures;
 }
 
+#ifdef ALBANY_EPETRA
 int Albany::SolverFactory::checkSGTestResults(
   int response_index,
   const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
@@ -895,6 +898,7 @@ int Albany::SolverFactory::checkSGTestResults(
 
   return failures;
 }
+#endif
 
 ParameterList* Albany::SolverFactory::getTestParameters(int response_index) const
 {

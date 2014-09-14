@@ -79,6 +79,7 @@ class MeshAdapt {
 
 };
 
+#ifdef ALBANY_EPETRA
 template <class SizeField>
 class MeshAdaptE : public AbstractAdapter {
   public:
@@ -98,6 +99,7 @@ class MeshAdaptE : public AbstractAdapter {
   private:
     MeshAdapt<SizeField> meshAdapt;
 };
+#endif
 
 template <class SizeField>
 class MeshAdaptT : public AbstractAdapterT {

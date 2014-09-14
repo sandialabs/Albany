@@ -259,10 +259,12 @@ namespace Albany {
 
   protected:
 
+#ifdef ALBANY_EPETRA
     bool computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
 		   const int NumKL,
 		   Teuchos::Array<double>& evals,
 		   Teuchos::RCP<Epetra_MultiVector>& evecs);
+#endif
 
   protected:
 

@@ -4,11 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra if ALBANY_EPETRA_EXE turned off except Epetra_Comm.
+
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
 
 #include "AlbPUMI_FMDBDiscretization.hpp"
-#include "Epetra_Vector.h"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
 

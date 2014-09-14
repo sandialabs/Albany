@@ -6,7 +6,6 @@
 
 #include "AAdapt_STKUnifSizeField.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
-#include "Epetra_Import.h"
 
 /*
  * Utility functions (from stk_adapt/regression_tests/RegressionTestLocalRefiner.cpp)

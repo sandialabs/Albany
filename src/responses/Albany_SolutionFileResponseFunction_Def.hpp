@@ -15,7 +15,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
 
-
+#ifdef ALBANY_EPETRA
 template<class Norm>
 Albany::SolutionFileResponseFunction<Norm>::
 SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
@@ -23,13 +23,24 @@ SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
     RefSoln(NULL), RefSolnT(NULL), solutionLoaded(false)
 {
 }
+#else
+template<class Norm>
+Albany::SolutionFileResponseFunction<Norm>::
+SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm)
+  : SamplingBasedScalarResponseFunction(comm),
+    RefSolnT(NULL), solutionLoaded(false)
+{
+}
+#endif
 
 template<class Norm>
 Albany::SolutionFileResponseFunction<Norm>::
 ~SolutionFileResponseFunction()
 {
   if (solutionLoaded) {
+#ifdef ALBANY_EPETRA
     delete RefSoln; 
+#endif
     delete RefSolnT; 
   }
 }
@@ -212,6 +223,7 @@ evaluateGradientT(const double current_time,
 // This is "borrowed" from EpetraExt because more explicit debugging information is needed than
 //  is present in the EpetraExt version. TO DO: Move this back there
 
+#ifdef ALBANY_EPETRA
 template<class Norm>
 int 
 Albany::SolutionFileResponseFunction<Norm>::
@@ -222,6 +234,7 @@ MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epe
   A = dynamic_cast<Epetra_Vector *>(A1);
   return(0);
 }
+#endif
 
 template<class Norm>
 int 
@@ -234,6 +247,7 @@ MatrixMarketFileToTpetraVector( const char *filename, const Tpetra_Map & mapT, T
   return(0);
 }
 
+#ifdef ALBANY_EPETRA
 template<class Norm>
 int 
 Albany::SolutionFileResponseFunction<Norm>::
@@ -392,6 +406,7 @@ MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map
   
   return(0);
 }
+#endif
 
 template<class Norm>
 int 

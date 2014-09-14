@@ -15,6 +15,7 @@ Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF:
 - Albany_Dakota (TriKota).
 - peridigm.
 - Responses: SolutionValuesResponse, Culling Strategy
+- some adaptivity stuff will not work.  Check with Glen what.
 
 Piro: 
 - Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  

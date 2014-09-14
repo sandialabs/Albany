@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: has Epetra_Comm, no other Epetra
+
 #include <Teuchos_TestForException.hpp>
 
 #include "AAdapt_AdaptationFactory.hpp"

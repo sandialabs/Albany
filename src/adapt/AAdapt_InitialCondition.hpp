@@ -9,11 +9,14 @@
 
 #include <string>
 #include "Teuchos_ParameterList.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Vector.h"
+#endif
 #include "Albany_DataTypes.hpp"
 
 namespace AAdapt {
 
+#ifdef ALBANY_EPETRA
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
@@ -21,6 +24,7 @@ void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const int neq, const int numDim,
                        Teuchos::ParameterList& icParams,
                        const bool gasRestartSolution = false);
+#endif
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,

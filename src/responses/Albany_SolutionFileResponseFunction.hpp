@@ -96,17 +96,21 @@ namespace Albany {
     //! Private to prohibit copying
     SolutionFileResponseFunction& operator=(const SolutionFileResponseFunction&);
 
+#ifdef ALBANY_EPETRA
     //! Reference Vector
     Epetra_Vector* RefSoln;
+#endif
     //! Reference Vector - Tpetra
     Tpetra_Vector* RefSolnT;
 
     bool solutionLoaded;
 
+#ifdef ALBANY_EPETRA
     //! Basic idea borrowed from EpetraExt - TO DO: put it back there?
     int MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A);
     int MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A);
-    
+#endif    
+
     int MatrixMarketFileToTpetraVector( const char *filename, const Tpetra_Map & map, Tpetra_Vector * & A);
     int MatrixMarketFileToTpetraMultiVector( const char *filename, const Tpetra_Map & map, Tpetra_MultiVector * & A);
 
@@ -115,15 +119,18 @@ namespace Albany {
 //	namespace SolutionFileResponseFunction {
 	
 	  struct NormTwo {
-	
+#ifdef ALBANY_EPETRA	
 	    double Norm(const Epetra_Vector& vec){ double norm; vec.Norm2(&norm); return norm * norm;}
+#endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.norm2(); return normT * normT;}
 	
 	  };
 	
 	  struct NormInf {
 	
+#ifdef ALBANY_EPETRA
 	    double Norm(const Epetra_Vector& vec){ double norm; vec.NormInf(&norm); return norm;}
+#endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.normInf(); return normT;}
 	
 	  };

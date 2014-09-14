@@ -138,12 +138,14 @@ namespace Albany {
     SolverFactory& operator=(const SolverFactory&);
 
   public:
-    /** \brief Function that does regression testing for problem solves. */
+#ifdef ALBANY_EPETRA 
+   /** \brief Function that does regression testing for problem solves. */
     int checkSolveTestResults(
       int response_index,
       int parameter_index,
       const Epetra_Vector* g,
       const Epetra_MultiVector* dgdp) const;
+#endif
 
     int checkSolveTestResultsT(
       int response_index,
@@ -161,12 +163,14 @@ namespace Albany {
       int response_index,
       const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const;
 
+#ifdef ALBANY_EPETRA
     /** \brief Function that does regression testing for SG runs. */
     int checkSGTestResults(
       int response_index,
       const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
       const Epetra_Vector* g_mean = NULL,
       const Epetra_Vector* g_std_dev = NULL) const;
+#endif
 
   private:
     /** \brief Testing utility that compares two numbers using two tolerances */

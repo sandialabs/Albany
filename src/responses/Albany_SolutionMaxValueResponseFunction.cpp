@@ -175,6 +175,7 @@ evaluateGradientT(const double current_time,
 
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
@@ -213,6 +214,7 @@ computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
     my_index = x.GlobalLength();
   x.Comm().MinAll(&my_index, &global_index, 1);
 }
+#endif
 
 void
 Albany::SolutionMaxValueResponseFunction::

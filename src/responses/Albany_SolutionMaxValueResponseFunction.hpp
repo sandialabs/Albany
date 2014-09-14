@@ -112,9 +112,10 @@ namespace Albany {
     //! Flag for interleaved verus blocked unknown ordering
     bool interleavedOrdering;
 
+#ifdef ALBANY_EPETRA
     //! Compute max value and index
     void computeMaxValue(const Epetra_Vector& x, double& val, int& index);
-    
+#endif
     //! Compute max value and index - Tpetra
     void computeMaxValueT(const Tpetra_Vector& xT, double& val, int& index);
 
