@@ -72,22 +72,6 @@ AAdapt::AdaptationFactory::createAdapter() {
   }
 
 #endif
-#ifdef ALBANY_SCOREC
-  else if(method == "RPI Unif Size") {
-    strategy = rcp(new AAdapt::MeshAdaptE<AAdapt::UnifSizeField>(
-          adapt_params_, param_lib_, state_mgr_, epetra_comm_));
-  }
-  else if(method == "RPI UnifRef Size") {
-    strategy = rcp(new AAdapt::MeshAdaptE<AAdapt::UnifRefSizeField>(
-          adapt_params_, param_lib_, state_mgr_, epetra_comm_));
-  }
-#ifdef SCOREC_SPR
-  else if(method == "RPI SPR Size") {
-    strategy = rcp(new AAdapt::MeshAdaptE<AAdapt::SPRSizeField>(
-          adapt_params_, param_lib_, state_mgr_, epetra_comm_));
-  }
-#endif
-#endif
 #if 0
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 

@@ -27,6 +27,10 @@
 #include <apfShape.h>
 #include <PCU.h>
 
+#if defined(ALBANY_EPETRA) && ( ! defined(ALBANY_64BIT_INT))
+#define ALBANY_SCOREC_EPETRA
+#endif
+
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Epetra_Comm>& comm_,
@@ -575,7 +579,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
     }
   mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
                                             indices, commT, nodeT);
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 #endif
 }
@@ -601,7 +605,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
                                               nodeIndices, commT, nodeT);
   overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
                                               dofIndices, commT, nodeT);
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
   overlap_map = Teuchos::rcp(new Epetra_Map(-1, dofIndices.size(),
 					    &(dofIndices[0]), 0, *comm));
 #endif
@@ -633,7 +637,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
      are coupled by element-node connectivity */
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(
                  overlap_mapT, neq*nodes_per_element));
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
   overlap_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
                                      neq*nodes_per_element, false));
@@ -649,7 +653,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
             GO col = getDOF(cellNodes[l],m);
             Teuchos::ArrayView<GO> colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
             overlap_graph->InsertGlobalIndices(row,1,&col);
 #endif
           }
@@ -658,13 +662,13 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
     }
   }
   overlap_graphT->fillComplete();
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
   overlap_graph->FillComplete();
 #endif
 
   // Create Owned graph by exporting overlap with known row map
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
   graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *map, nonzeroesPerRow(neq), false));
 #endif
 
@@ -674,7 +678,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
   graphT->fillComplete();
 
-#ifndef ALBANY_64BIT_INT
+#ifdef ALBANY_SCOREC_EPETRA
   Epetra_Export exporter(*overlap_map, *map);
   graph->Export(*overlap_graph, exporter, Insert);
   graph->FillComplete();

@@ -209,15 +209,6 @@ template<class Output>
       fprintf(stderr,"PUMI Discretization unsupported call debugMeshWrite\n");
       abort();
     }
-#endif
-
-/*
-    LO getGlobalDOF(const LO inode, const int eq) const
-    {
-      return getDOF(inode,eq);
-    }
-*/
-
     // Copy field data from Epetra_Vector to APF
     void setField(
         const char* name,
@@ -235,6 +226,7 @@ template<class Output>
         int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         Epetra_Vector& data, bool overlapped) const;
+#endif
 
   private:
 
@@ -306,20 +298,28 @@ template<class Output>
 
     //! Unknown Map
     Teuchos::RCP<const Tpetra_Map> mapT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Map> map;
+#endif
 
     //! Overlapped unknown map, and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Map> overlap_map;
+#endif
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_CrsGraph> graph;
+#endif
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
+#endif
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;

@@ -7,7 +7,9 @@
 #include "AAdapt_MeshAdapt.hpp"
 #include "AAdapt_MeshAdapt_Def.hpp"
 
+#ifdef ALBANY_EPETRA
 MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptE)
+#endif
 MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptT)
 
 static double getAveragePartDensity(apf::Mesh* m)

@@ -243,6 +243,7 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
   return validPL;
 }
 
+#ifdef ALBANY_EPETRA
 template<class SizeField>
 AAdapt::MeshAdaptE<SizeField>::
 MeshAdaptE(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -261,7 +262,6 @@ AAdapt::MeshAdaptE<SizeField>::queryAdaptationCriteria()
   return meshAdapt.queryAdaptationCriteria(this->adapt_params_,this->iter);
 }
 
-#ifdef ALBANY_EPETRA
 template<class SizeField>
 bool
 AAdapt::MeshAdaptE<SizeField>::adaptMesh(
@@ -279,7 +279,6 @@ solutionTransfer(const Epetra_Vector& oldSolution,
                  Epetra_Vector& newSolution)
 {
 }
-#endif
 
 template<class SizeField>
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -289,6 +288,7 @@ AAdapt::MeshAdaptE<SizeField>::getValidAdapterParameters() const
     this->getGenericAdapterParams("ValidMeshAdaptParams");
   return meshAdapt.getValidAdapterParameters(validPL);
 }
+#endif
 
 template<class SizeField>
 AAdapt::MeshAdaptT<SizeField>::
