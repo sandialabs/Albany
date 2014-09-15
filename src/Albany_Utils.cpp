@@ -14,6 +14,7 @@
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
+#ifdef ALBANY_EPETRA
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
@@ -23,6 +24,7 @@
     Epetra_MpiComm& emc = dynamic_cast<Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
+#endif
 
   Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
     Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
@@ -31,7 +33,7 @@
 
   }
 
-
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
   }
@@ -47,6 +49,7 @@
                Teuchos::ptr_dynamic_cast<const Epetra_MpiComm>(Teuchos::ptrFromRef(*ec));
     return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
   }
+#endif
 
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc)));
@@ -54,6 +57,7 @@
 
 #else
 
+#ifdef ALBANY_EPETRA
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
   Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
@@ -69,6 +73,7 @@
   Teuchos::RCP<const Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const RCP<const Epetra_Comm>& ec) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
+#endif
 
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());

@@ -501,6 +501,7 @@ evaluateMPGradient(const double current_time,
 }
 #endif //ALBANY_SG_MP
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Map>
 Albany::SolutionResponseFunction::
 buildCulledMap(const Epetra_Map& x_map,
@@ -532,6 +533,7 @@ buildCulledMap(const Epetra_Map& x_map,
 
   return x_new_map;
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::SolutionResponseFunction::
@@ -565,12 +567,14 @@ buildCulledMapT(const Tpetra_Map& x_mapT,
 
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionResponseFunction::
 cullSolution(const Epetra_MultiVector& x, Epetra_MultiVector& x_culled) const
 {
   x_culled.Import(x, *importer, Insert);
 }
+#endif
 
 void
 Albany::SolutionResponseFunction::

@@ -251,16 +251,20 @@ namespace Albany {
 
   protected:
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Map> 
     buildCulledMap(const Epetra_Map& x_map, 
 		   const Teuchos::Array<int>& keepDOF) const;
+#endif
     
     Teuchos::RCP<const Tpetra_Map> 
     buildCulledMapT(const Tpetra_Map& x_mapT, 
 		   const Teuchos::Array<int>& keepDOF) const;
 
+#ifdef ALBANY_EPETRA
     void cullSolution(const Epetra_MultiVector& x, 
 		      Epetra_MultiVector& x_culled) const;
+#endif
     
     //Tpetra version of above function
     void cullSolutionT(const Tpetra_MultiVector& xT, 
@@ -274,20 +278,27 @@ namespace Albany {
     //! Mask for DOFs to keep
     Teuchos::Array<int> keepDOF;
 
+#ifdef ALBANY_EPETRA
     //! Epetra map for response
     Teuchos::RCP<const Epetra_Map> culled_map;
+#endif
     
     //! Tpetra map for response
     Teuchos::RCP<const Tpetra_Map> culled_mapT;
 
+#ifdef ALBANY_EPETRA
     //! Importer mapping between full and culled solution
     Teuchos::RCP<Epetra_Import> importer; 
+#endif
+
     //! Tpetra importer mapping between full and culled solution
     Teuchos::RCP<Tpetra_Import> importerT;
 
+#ifdef ALBANY_EPETRA
     //! Graph of gradient operator
     Teuchos::RCP<Epetra_CrsGraph> gradient_graph;
-    
+#endif    
+
     //! Graph of gradient operator - Tpetra version
     Teuchos::RCP<Tpetra_CrsGraph> gradient_graphT;
 

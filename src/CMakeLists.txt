@@ -150,7 +150,7 @@ SET(HEADERS ${HEADERS}
   responses/Albany_ResponseFactory.hpp
   )
 
-#ifdef ALBANY_EPETRA
+IF (ALBANY_EPETRA)
 SET(SOURCES ${SOURCES} 
   responses/Epetra_GatherAllV.cpp
   responses/Epetra_ImportWithAlternateMap.cpp
@@ -163,7 +163,7 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_SolutionValuesResponseFunction.hpp
 )
-#endif
+ENDIF()
 
 #discretization
 SET(SOURCES ${SOURCES}
@@ -231,13 +231,11 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
  
-#IK, TO DO, 9/5/14: These should ultimately be Epetra only responses. 
-#IF (ALBANY_EPETRA) 
-  SET(SOURCES ${SOURCES}
-  evaluators/PHAL_ResponseFieldIntegral.cpp
-  evaluators/PHAL_SeparableScatterScalarResponse.cpp
-  )
-#ENDIF() 
+SET(SOURCES ${SOURCES}
+ evaluators/PHAL_ResponseFieldIntegral.cpp
+ evaluators/PHAL_SeparableScatterScalarResponse.cpp
+ )
+
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
     evaluators/PHAL_GatherEigenvectors.cpp

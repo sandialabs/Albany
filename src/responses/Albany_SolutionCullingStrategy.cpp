@@ -6,9 +6,10 @@
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_BlockMap.h"
-
 #include "Epetra_GatherAllV.hpp"
+#endif
 
 #include "Teuchos_Assert.hpp"
 
@@ -19,9 +20,9 @@ namespace Albany {
 class UniformSolutionCullingStrategy : public SolutionCullingStrategyBase {
 public:
   explicit UniformSolutionCullingStrategy(int numValues);
-
+#ifdef ALBANY_EPETRA
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
-
+#endif
 private:
   int numValues_;
 };
@@ -35,6 +36,7 @@ UniformSolutionCullingStrategy(int numValues) :
   // Nothing to do
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::Array<int>
 Albany::UniformSolutionCullingStrategy::
 selectedGIDs(const Epetra_BlockMap &sourceMap) const
@@ -56,6 +58,7 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
   }
   return result;
 }
+#endif
 
 
 #include "Albany_SolutionCullingStrategy.hpp"
@@ -63,10 +66,12 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 #include "Albany_Application.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_BlockMap.h"
 #include "Epetra_Comm.h"
 
 #include "Epetra_GatherAllV.hpp"
+#endif
 
 #include "Teuchos_Assert.hpp"
 
@@ -83,9 +88,9 @@ public:
 
 #ifdef ALBANY_EPETRA
   virtual void setup();
-#endif
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
+#endif
 
 private:
   std::string nodeSetLabel_;
@@ -117,7 +122,6 @@ setup()
   // Release the resource to avoid possible circular references
   app_.reset();
 }
-#endif
 
 Teuchos::Array<int>
 Albany::NodeSetSolutionCullingStrategy::
@@ -166,6 +170,7 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 
   return result;
 }
+#endif
 
 
 #include "Albany_Application.hpp"

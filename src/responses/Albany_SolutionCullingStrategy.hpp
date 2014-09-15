@@ -11,7 +11,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#ifdef ALBANY_EPETRA
 class Epetra_BlockMap;
+#endif
 
 namespace Albany {
 
@@ -22,7 +24,9 @@ public:
 #endif
   virtual void setupT() {}
 
+#ifdef ALBANY_EPETRA
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const = 0;
+#endif
 
   virtual ~SolutionCullingStrategyBase() {}
 };
