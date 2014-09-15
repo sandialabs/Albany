@@ -11,7 +11,6 @@
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include <stk_mesh/base/FieldData.hpp>
 #include "Piro_PerformSolve.hpp"
-#include "Thyra_EpetraThyraWrappers.hpp"
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/MeshReadWriteUtils.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
@@ -34,12 +33,11 @@
 //ICEProblem *iceProblemPtr = 0;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
-Teuchos::RCP<const Epetra_Comm> mpiComm;
 Teuchos::RCP<const Teuchos_Comm> mpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
-Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solverT;
 int Ordering =0; //ordering ==0 means that the mesh is extruded layerwise, whereas ordering==1 means that the mesh is extruded columnwise.
 MPI_Comm comm, reducedComm;
 bool isDomainEmpty = true;
@@ -87,6 +85,7 @@ exchange::exchange(int _procID, int const *  vec_first, int const *  vec_last, i
 				doubleBuffer(fieldDim*(vec_last-vec_first)){}
 
 
+#ifdef ALBANY_EPETRA
 /***********************************************************/
 // epetra <-> thyra conversion utilities
 Teuchos::RCP<const Epetra_Vector>
@@ -153,6 +152,7 @@ void epetraFromThyra(
     sensitivities.push_back(sens);
   }
 }
+#endif
 
 /***********************************************************/
 
@@ -441,7 +441,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 					paramList->sublist("Problem").set("Solution Method", "Steady");
 			}
 			Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiCommT, paramList));
-			solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
+			solverT = slvrfctry->createAndGetAlbanyAppT(app, mpiCommT, mpiCommT);
 
 
 		   Teuchos::ParameterList solveParams;
@@ -449,7 +449,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 		   Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
 		   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
-		   Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+		   Piro::PerformSolveBase(*solverT, solveParams, thyraResponses, thyraSensitivities);
 
 		   //  Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
 		   //  Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > sensitivities;
@@ -458,10 +458,11 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		   // get solution vector out
 		   //const Teuchos::RCP<const Epetra_Vector> solution = responses.back();
 
-		   const Epetra_Map& overlapMap(*app->getDiscretization()->getOverlapMap());
-		   Epetra_Import import(overlapMap, *app->getDiscretization()->getMap());
-		   Epetra_Vector solution(overlapMap);
-		   solution.Import(*app->getDiscretization()->getSolutionField(), import, Insert);
+                   Teuchos::RCP<const Tpetra_Map> overlapMapT = app->getDiscretization()->getOverlapMapT(); 
+                   Teuchos::RCP<Tpetra_Import> importT = Teuchos::rcp(new Tpetra_Import(overlapMapT, app->getDiscretization()->getMapT())); 
+                   Teuchos::RCP<Tpetra_Vector> solutionT = Teuchos::rcp(new Tpetra_Vector(overlapMapT));
+                   solutionT->doImport(*app->getDiscretization()->getSolutionFieldT(), *importT, Tpetra::INSERT);
+                   Teuchos::ArrayRCP<const ST> solutionT_constView = solutionT->get1dView(); 
 
 		   //UInt componentGlobalLength = (nLayers+1)*nGlobalVertices; //mesh3DPtr->numGlobalVertices();
 
@@ -475,16 +476,16 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 
 			   if(interleavedOrdering)
 			   {
-				   lId0= overlapMap.LID(2*gId);
+				   lId0= overlapMapT->getLocalElement(2*gId);
 				   lId1 = lId0+1;
 			   }
 			   else
 			   {
-				   lId0 = overlapMap.LID(gId);
+				   lId0 = overlapMapT->getLocalElement(gId);
 				   lId1 = lId0+numVertices3D;
 			   }
-			   velocityOnVertices[j] = solution[lId0];
-			   velocityOnVertices[j + numVertices3D] = solution[lId1];
+			   velocityOnVertices[j] = solutionT_constView[lId0];
+			   velocityOnVertices[j + numVertices3D] = solutionT_constView[lId1];
 		   }
 
 		   std::vector<int> mpasIndexToVertexID (nVertices);
@@ -918,7 +919,6 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
  //			verticesCoords[index*3 + 2] = zCell_F[iCell]/unit_length;
  //		}
 
- 		mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
  		mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
 //                std::string xmlfilename = "albany_input.xml";
 

@@ -109,7 +109,12 @@ namespace Albany {
     int NumEles; //number of elements
     bool hasRestartSol;
     double restartTime;
-    Teuchos::RCP<Epetra_Map> elem_map; //element map 
+    Teuchos::RCP<Tpetra_Map> elem_mapT; //element map
+
+    protected: 
+ 
+   //! Kokkos node
+    Teuchos::RCP<KokkosNode> nodeT;
     /*
     const std::vector<int>& indexToTriangleID;
     const std::vector<int>& verticesOnTria;

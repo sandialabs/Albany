@@ -27,12 +27,10 @@ set(CISM_INCLUDE_DIRS /home/ikalash/Desktop/interface
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
    )
+SET(SOURCESMPAS
+   interface_with_mpas/Interface.cpp
+)
   
-#ifdef ALBANY_EPETRA 
-   SET(SOURCESMPAS 
-       interface_with_mpas/Interface.cpp
-   )
-#endif
 IF(ENABLE_CISM_INTERFACE) 
    SET(SOURCESCISM 
        interface_with_cism/felix_driver.cpp
@@ -67,13 +65,12 @@ ENDIF()
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
+       interface_with_mpas/Interface.hpp
   )
  
-#ifdef ALBANY_EPETRA 
-  SET(HEADERSMPAS 
-       interface_with_mpas/Interface.hpp
-   )
-#endif
+SET(HEADERSMPAS
+   interface_with_mpas/Interface.hpp
+)
   
 IF (ENABLE_CISM_INTERFACE)
   SET(HEADERSCISM
@@ -108,12 +105,10 @@ ENDIF()
 add_library(FELIX ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set_target_properties(FELIX PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
-IF (ALBANY_EPETRA) 
 add_library(mpasInterface ${Albany_LIBRARY_TYPE} ${SOURCESMPAS} ${HEADERSMPAS})
 set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERSMPAS}")
-ENDIF()
 
-IF (INSTALL_ALBANY AND ALBANY_EPETRA)
+IF (INSTALL_ALBANY)
   install(TARGETS FELIX mpasInterface EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"

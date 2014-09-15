@@ -15,6 +15,7 @@ SET(SOURCES
   Albany_TmplSTKMeshStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
+  Albany_MpasSTKMeshStruct.cpp
   )
 SET(HEADERS 
   Albany_NodalGraphUtils.hpp
@@ -34,6 +35,7 @@ SET(HEADERS
   Albany_TmplSTKMeshStruct_Def.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
+  Albany_MpasSTKMeshStruct.hpp
   )
 
 IF (ALBANY_EPETRA)
@@ -42,14 +44,12 @@ IF (ALBANY_EPETRA)
     Albany_AsciiSTKMeshStruct.hpp
     Albany_CismSTKMeshStruct.hpp
     Albany_AsciiSTKMesh2D.hpp
-    Albany_MpasSTKMeshStruct.hpp
   )
   SET(SOURCES ${SOURCES} 
     Albany_ExtrudedSTKMeshStruct.cpp
     Albany_AsciiSTKMeshStruct.cpp
     Albany_CismSTKMeshStruct.cpp
     Albany_AsciiSTKMesh2D.cpp
-    Albany_MpasSTKMeshStruct.cpp
   )
 ENDIF()
 

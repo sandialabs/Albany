@@ -36,8 +36,11 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles, indexToTriangleID.size(), &indexToTriangleID[0], 0, *comm)); // Distribute the elems equally
+  Teuchos::ParameterList kokkosNodeParams;
+  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::ArrayView<const GO> indexToTriangleIDAV = Teuchos::arrayViewFromVector(indexToTriangleID); 
+  // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles, indexToTriangleIDAV, 0, commT, nodeT)); 
   
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -80,7 +83,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   numDim = 2;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -120,8 +123,12 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  elem_map = Teuchos::rcp(new Epetra_Map(nGlobalTriangles*numLayers, indexToPrismID.size(), &indexToPrismID[0], 0, *comm)); // Distribute the elems equally
+  Teuchos::ParameterList kokkosNodeParams;
+  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::ArrayView<const GO> indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID); 
+  
+  // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles*numLayers, indexToPrismIDAV, 0, commT, nodeT)); 
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -181,7 +188,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -224,8 +231,11 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  elem_map = Teuchos::rcp(new Epetra_Map(3*nGlobalTriangles*numLayers, indexToTetraID.size(), &indexToTetraID[0], 0, *comm)); // Distribute the elems equally
+  Teuchos::ParameterList kokkosNodeParams;
+  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::ArrayView<const GO> indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID); 
+  // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(3*nGlobalTriangles*numLayers, indexToTetraIDAV, 0, commT, nodeT)); 
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -285,7 +295,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -319,7 +329,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 {
 	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
-    int elemColumnShift = (Ordering == 1) ? 1 : elem_map->NumGlobalElements()/numLayers;
+    int elemColumnShift = (Ordering == 1) ? 1 : elem_mapT->getGlobalNumElements()/numLayers;
     int lElemColumnShift = (Ordering == 1) ? 1 : indexToTriangleID.size();
     int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
 
@@ -339,7 +349,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk_classic::mesh::PartVector nodePartVec;
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
-  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
+  std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["Bottom"];
@@ -372,7 +382,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	   sHeight[0] = 1.;
   }
 
-  for (int i=0; i<elem_map->NumMyElements(); i++) {
+  for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
 
 	 int ib = (Ordering == 0)*(i%lElemColumnShift) + (Ordering == 1)*(i/elemLayerShift);
 	 int il = (Ordering == 0)*(i/lElemColumnShift) + (Ordering == 1)*(i%elemLayerShift);
@@ -380,7 +390,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	 int shift = il*vertexColumnShift;
 
 	 singlePartVec[0] = partVec[ebNo];
-     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
+     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_mapT->getGlobalElement(i)+1, singlePartVec);
 
      for(int j=0; j<3; j++)
      {
@@ -479,7 +489,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 {
 	this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
-    int elemColumnShift = (Ordering == 1) ? 3 : elem_map->NumGlobalElements()/numLayers;
+    int elemColumnShift = (Ordering == 1) ? 3 : elem_mapT->getGlobalNumElements()/numLayers;
     int lElemColumnShift = (Ordering == 1) ? 3 : 3*indexToTriangleID.size();
     int elemLayerShift = (Ordering == 0) ? 3 : 3*numLayers;
 
@@ -499,7 +509,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk_classic::mesh::PartVector nodePartVec;
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
-  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
+  std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
   singlePartVec[0] = nsPartVec["Bottom"];
@@ -530,7 +540,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
   int tetrasLocalIdsOnPrism[3][4];
 
-  for (int i=0; i<elem_map->NumMyElements()/3; i++) {
+  for (int i=0; i<elem_mapT->getNodeNumElements()/3; i++) {
 
 	 int ib = (Ordering == 0)*(i%(lElemColumnShift/3)) + (Ordering == 1)*(i/(elemLayerShift/3));
 	 int il = (Ordering == 0)*(i/(lElemColumnShift/3)) + (Ordering == 1)*(i%(elemLayerShift/3));
@@ -556,7 +566,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
      for(int iTetra = 0; iTetra<3; iTetra++)
      {
-    	 stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(3*i+iTetra)+1, singlePartVec);
+    	 stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_mapT->getGlobalElement(3*i+iTetra)+1, singlePartVec);
 		 for(int j=0; j<4; j++)
 		 {
 			 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), tetrasLocalIdsOnPrism[iTetra][j]+1);
@@ -711,7 +721,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk_classic::mesh::PartVector nodePartVec;
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
-  std::cout << "elem_map # elments: " << elem_map->NumMyElements() << std::endl;
+  std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
 
@@ -728,11 +738,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	  coord[0] = verticesCoords[3*i];   coord[1] = verticesCoords[3*i+1]; coord[2] = verticesCoords[3*i+2];
   }
 
-  for (int i=0; i<elem_map->NumMyElements(); i++)
+  for (int i=0; i<elem_mapT->getNodeNumElements(); i++)
   {
 
      singlePartVec[0] = partVec[ebNo];
-     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_map->GID(i)+1, singlePartVec);
+     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_mapT->getGlobalElement(i)+1, singlePartVec);
 
      for(int j=0; j<3; j++)
      {
@@ -751,7 +761,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
 		 singlePartVec[0] = ssPartVec["lateralside"];
 		 stk_classic::mesh::Entity& side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
-		 stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  elem_map->GID(trianglesOnEdge[2*i])+1);
+		 stk_classic::mesh::Entity& elem  = *bulkData->get_entity(metaData->element_rank(),  elem_mapT->getGlobalElement(trianglesOnEdge[2*i])+1);
 		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*i] /*local side id*/);
 		 for(int j=0; j<2; j++)
 		 {

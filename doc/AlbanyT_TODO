@@ -4,20 +4,31 @@ prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 
 Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
-- QCAD
+- QCAD: will not work at all right now in Tpetra branch b/c I have removed some functions it needs, which are obsolete everywhere else 
+but have not yet been converted for QCAD.
 - MOR
 - SG_MP
-- catalyst
-- cism_interface, mpas_interface
+- catalyst - can't build, need ParaView source code? 
+- cism_interface
+- mpas_interface has been converted, but need to have Mauro test it.
 - writing of coordinates to matrix market file.
 - Teko stuff (uses Epetra).
-- Cism, Mpas and extruded meshes.
+- Cism and extruded meshes.
 - Albany_Dakota (TriKota).
 - peridigm.
 - Responses: SolutionValuesResponse, Culling Strategy
 - some adaptivity stuff will not work.  Check with Glen what.
 - Need to fix Aeras test cases and AlbanyAnalysisT test case which fail if ALBANY_EPETRA_EXE is off.
+- SaveEigenData and related files.
+- Albany_ObserverFactory, Albany_NOXObserver, Albany_RythmosObserver (these are based on EpetraExt; likely can be 
+converted to Thyra, like Albany_PiroObserverT).
+- What is ASCR, AlbanyCI?  I don't have these turned on in my Albany build.  ASCR needs SG_MP; AlbanyCI needs QCAD... 
+- Is SCOREC tested at RPI?  64 bit GO?  
+- Lament needs libraries... 
 
+Question: is there a way to test compilation of Albany tpetra branch with ALBANY_EPETRA_EXE turned off 
+w/o Epetra?  E.g., remove library linking from link line?  Unfortunately it's not possible to 
+turn off Epetra in Trilinos b/c some packages (e.g., Piro, Zoltan2) have dependencies on Epetra.  
 
 Piro: 
 - Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  
@@ -109,5 +120,6 @@ in the tpetra Albany branch.
 - Sensitivities are different when running with Belos comapred to AztecOO for FELIX_Stokes/FO_Test/*interpSurf.xml (with Albany executable)!
 - Different responses when running with Belos than AztecOO for: LinComprNS/input2D_drivenPulse.xml, LinComprNS/input3Dunsteady.xml, 
 LinComprNS/input3DunsteadyNS.xml...
-- Look at extra LCM executables and create Tpetra version of them. 
+- Look at extra LCM executables and create Tpetra version of them.
+- Cleanups involving TpetraBuild flag?  
 
