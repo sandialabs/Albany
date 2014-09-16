@@ -133,6 +133,8 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
+  responses/Tpetra_GatherAllV.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
   )
 SET(HEADERS ${HEADERS}
   responses/Albany_AbstractResponseFunction.hpp
@@ -148,19 +150,19 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
+  responses/Tpetra_GatherAllV.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
   )
 
 IF (ALBANY_EPETRA)
 SET(SOURCES ${SOURCES} 
   responses/Epetra_GatherAllV.cpp
   responses/Epetra_ImportWithAlternateMap.cpp
-  responses/Albany_SolutionCullingStrategy.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
 )
 SET(HEADERS ${HEADERS} 
   responses/Epetra_GatherAllV.hpp
   responses/Epetra_ImportWithAlternateMap.hpp
-  responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_SolutionValuesResponseFunction.hpp
 )
 ENDIF()

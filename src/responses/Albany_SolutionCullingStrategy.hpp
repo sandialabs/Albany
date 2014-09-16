@@ -10,10 +10,12 @@
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
+#include "Albany_DataTypes.hpp" 
 
 #ifdef ALBANY_EPETRA
 class Epetra_BlockMap;
 #endif
+
 
 namespace Albany {
 
@@ -27,6 +29,7 @@ public:
 #ifdef ALBANY_EPETRA
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const = 0;
 #endif
+  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_BlockMap> sourceMapT) const = 0;
 
   virtual ~SolutionCullingStrategyBase() {}
 };
