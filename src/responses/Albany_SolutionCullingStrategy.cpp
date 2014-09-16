@@ -10,7 +10,6 @@
 #include "Epetra_BlockMap.h"
 #include "Epetra_GatherAllV.hpp"
 #endif
-#include "Tpetra_BlockMap_decl.hpp"
 #include "Tpetra_GatherAllV.hpp" 
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_Array.hpp" 
@@ -30,7 +29,7 @@ public:
 #ifdef ALBANY_EPETRA
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_BlockMap> sourceMapT) const;
+  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
 private:
   int numValues_;
 };
@@ -46,13 +45,13 @@ UniformSolutionCullingStrategy(int numValues) :
 
 Teuchos::Array<int>
 Albany::UniformSolutionCullingStrategy::
-selectedGIDsT(Teuchos::RCP<const Tpetra_BlockMap> sourceMapT) const
+selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
-  Teuchos::Array<int> allGIDs(sourceMapT->getPointMap()->getGlobalNumElements());
+  Teuchos::Array<int> allGIDs(sourceMapT->getGlobalNumElements());
   {
     const int ierr = Tpetra::GatherAllV(
-        sourceMapT->getPointMap()->getComm(),
-        sourceMapT->getPointMap()->getNodeElementList().getRawPtr(), sourceMapT->getPointMap()->getNodeNumElements(),
+        sourceMapT->getComm(),
+        sourceMapT->getNodeElementList().getRawPtr(), sourceMapT->getNodeNumElements(),
         allGIDs.getRawPtr(), allGIDs.size());
     TEUCHOS_ASSERT(ierr == 0);
   }
@@ -101,7 +100,6 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 #include "Epetra_Comm.h"
 #include "Epetra_GatherAllV.hpp"
 #endif
-#include "Tpetra_BlockMap_decl.hpp"
 #include "Tpetra_GatherAllV.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Teuchos_Array.hpp" 
@@ -126,7 +124,7 @@ public:
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_BlockMap> sourceMapT) const;
+  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
   virtual void setupT();
 
 private:
@@ -221,7 +219,7 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 
 Teuchos::Array<int>
 Albany::NodeSetSolutionCullingStrategy::
-selectedGIDsT(Teuchos::RCP<const Tpetra_BlockMap> sourceMapT) const
+selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
   Teuchos::Array<int> result;
   {
@@ -238,14 +236,14 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_BlockMap> sourceMapT) const
           typedef NodeSetEntryList::value_type NodeEntryList;
           const NodeEntryList &sampleEntries = *jt;
           for (NodeEntryList::const_iterator kt = sampleEntries.begin(); kt != sampleEntries.end(); ++kt) {
-            mySelectedGIDs.push_back(sourceMapT->getPointMap()->getGlobalElement(*kt));
+            mySelectedGIDs.push_back(sourceMapT->getGlobalElement(*kt));
           }
         }
       }
     }
 
 
-    Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getPointMap()->getComm(); 
+    Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm(); 
     {
       double selectedGIDCount;
       {

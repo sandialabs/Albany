@@ -120,23 +120,34 @@ SET(PDE_HDRS
   )
 
 #responses
+IF (ALBANY_EPETRA)
+SET(SOURCES ${SOURCES} 
+  responses/Epetra_GatherAllV.cpp
+)
+SET(HEADERS ${HEADERS} 
+  responses/Epetra_GatherAllV.hpp
+)
+ENDIF()
 SET(SOURCES ${SOURCES}
+  responses/Tpetra_GatherAllV.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
   responses/Albany_SolutionAverageResponseFunction.cpp
   responses/Albany_SolutionMaxValueResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
+  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_SolutionResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
-  responses/Tpetra_GatherAllV.cpp
-  responses/Albany_SolutionCullingStrategy.cpp
   )
 SET(HEADERS ${HEADERS}
+  responses/Tpetra_GatherAllV.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_ScalarResponseFunction.hpp
   responses/Albany_AggregateScalarResponseFunction.hpp
@@ -144,28 +155,15 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionAverageResponseFunction.hpp
   responses/Albany_SolutionMaxValueResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
+  responses/Albany_SolutionValuesResponseFunction.hpp
   responses/Albany_SolutionFileResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_SolutionResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
-  responses/Tpetra_GatherAllV.hpp
-  responses/Albany_SolutionCullingStrategy.hpp
   )
 
-IF (ALBANY_EPETRA)
-SET(SOURCES ${SOURCES} 
-  responses/Epetra_GatherAllV.cpp
-  responses/Epetra_ImportWithAlternateMap.cpp
-  responses/Albany_SolutionValuesResponseFunction.cpp
-)
-SET(HEADERS ${HEADERS} 
-  responses/Epetra_GatherAllV.hpp
-  responses/Epetra_ImportWithAlternateMap.hpp
-  responses/Albany_SolutionValuesResponseFunction.hpp
-)
-ENDIF()
 
 #discretization
 SET(SOURCES ${SOURCES}
