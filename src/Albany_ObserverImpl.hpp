@@ -9,8 +9,10 @@
 #include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
+#endif
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Ptr.hpp"

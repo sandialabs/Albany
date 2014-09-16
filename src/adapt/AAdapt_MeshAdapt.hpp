@@ -79,28 +79,6 @@ class MeshAdapt {
 
 };
 
-#ifdef ALBANY_EPETRA
-template <class SizeField>
-class MeshAdaptE : public AbstractAdapter {
-  public:
-    MeshAdaptE(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-               const Teuchos::RCP<ParamLib>& paramLib_,
-               Albany::StateManager& StateMgr_,
-               const Teuchos::RCP<const Teuchos_Comm>& commT_);
-    virtual bool queryAdaptationCriteria();
-    virtual bool adaptMesh(
-        const Epetra_Vector& solution,
-        const Epetra_Vector& ovlp_solution);
-    virtual void solutionTransfer(
-        const Epetra_Vector& oldSolution,
-        Epetra_Vector& newSolution);
-    virtual Teuchos::RCP<const Teuchos::ParameterList>
-        getValidAdapterParameters() const;
-  private:
-    MeshAdapt<SizeField> meshAdapt;
-};
-#endif
-
 template <class SizeField>
 class MeshAdaptT : public AbstractAdapterT {
   public:

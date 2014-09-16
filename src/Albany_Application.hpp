@@ -55,9 +55,8 @@
 #include "EpetraExt_MultiComm.h"
 
 #include "LOCA_Epetra_Group.H"
-#endif
-
 #include "Teko_InverseLibrary.hpp"
+#endif
 
 #ifdef ALBANY_MOR
   #include "MOR/Albany_MORFacade.hpp"
@@ -970,10 +969,10 @@ namespace Albany {
 
     unsigned int neq;
 
+#ifdef ALBANY_EPETRA
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;
     Teuchos::RCP<Teko::InverseFactory> inverseFac;
-#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Operator> wrappedJac;
 #endif
     std::vector<int> blockDecomp;

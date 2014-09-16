@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: This function has Epetra! 
-
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include <cstdlib>
@@ -26,14 +24,6 @@
   }
 #endif
 
-  Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
-    Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
-               Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
-    return *mpiComm->getRawMpiComm();
-
-  }
-
-#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
   }
@@ -51,6 +41,15 @@
   }
 #endif
 
+#endif
+
+  Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
+    Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
+               Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
+    return *mpiComm->getRawMpiComm();
+
+  }
+
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc)));
   }
@@ -58,6 +57,7 @@
 #else
 
 #ifdef ALBANY_EPETRA
+
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
   Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(Epetra_Comm& ec) { return 1; }
@@ -75,9 +75,12 @@
   }
 #endif
 
+#endif
+
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
+
 #endif
   // End of Utils to do with Communicators
 

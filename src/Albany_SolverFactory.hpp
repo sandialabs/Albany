@@ -28,7 +28,9 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "AAdapt_AdaptiveModelFactory.hpp"
+#endif
 
 
 //! Albany driver code, problems, discretizations, and responses
@@ -81,13 +83,13 @@ namespace Albany {
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
-#ifdef ALBANY_EPETRA
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -189,7 +191,9 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory;
+#endif
   };
 
 }

@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: This function has Epetra! 
-
 #ifndef ALBANY_UTILS_H
 #define ALBANY_UTILS_H
 
@@ -13,17 +11,17 @@
   #define Albany_MPI_Comm MPI_Comm
   #define Albany_MPI_COMM_WORLD MPI_COMM_WORLD
   #define Albany_MPI_COMM_NULL MPI_COMM_NULL
-#ifdef ALBANY_EPETRA
-  #include "Epetra_MpiComm.h"
-#endif
+  #ifdef ALBANY_EPETRA
+    #include "Epetra_MpiComm.h"
+  #endif
   #include "Teuchos_DefaultMpiComm.hpp"
 #else
   #define Albany_MPI_Comm int
   #define Albany_MPI_COMM_WORLD 0  // This is compatible with Dakota
   #define Albany_MPI_COMM_NULL 99
-#ifdef ALBANY_EPETRA
-  #include "Epetra_SerialComm.h"
-#endif
+  #ifdef ALBANY_EPETRA
+    #include "Epetra_SerialComm.h"
+  #endif
   #include "Teuchos_DefaultSerialComm.hpp"
 #endif
 #include "Teuchos_RCP.hpp"
@@ -32,21 +30,19 @@
 namespace Albany {
 
 #ifdef ALBANY_EPETRA
+
   const Albany_MPI_Comm getMpiCommFromEpetraComm(const Epetra_Comm& ec);
 
   Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
-#endif  
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
+  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
+  
+#endif
 
   Albany_MPI_Comm getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc); 
 
-#ifdef ALBANY_EPETRA
-  Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
-#endif
   Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
-#ifdef ALBANY_EPETRA
-   Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
-  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
-#endif
 
   //! Utility to make a string out of a string + int: strint("dog",2) = "dog 2"
   std::string strint(const std::string s, const int i);

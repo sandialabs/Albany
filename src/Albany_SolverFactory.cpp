@@ -190,9 +190,11 @@ Albany::SolverFactory::SolverFactory(
 
 Albany::SolverFactory::~SolverFactory(){
 
+#ifdef ALBANY_EPETRA
   // Release the model to eliminate RCP circular reference
   if(Teuchos::nonnull(thyraModelFactory))
     thyraModelFactory->releaseModel();
+#endif
 
 #ifdef ALBANY_DEBUG
   *out << "Calling destructor for Albany_SolverFactory" << std::endl;

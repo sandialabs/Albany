@@ -40,7 +40,9 @@
 #include "LCM/problems/ProjectionProblem.hpp"
 #include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
 #include "LCM/problems/SchwarzMultiscaleProblem.hpp"
+#ifdef ALBANY_EPETRA
 #include "LCM/problems/PeridigmProblem.hpp"
+#endif
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
@@ -347,7 +349,9 @@ Albany::ProblemFactory::create()
 #endif
   else if (method == "Peridigm Code Coupling" ) {
 #ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
     strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
+#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");
 #endif

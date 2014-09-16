@@ -27,7 +27,9 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
+#ifdef ALBANY_EPETRA
 #include "PHAL_GatherAuxData.hpp"
+#endif
 #ifdef ALBANY_FELIX
 	#include "PHAL_GatherBasalFriction.hpp"
 	#include "PHAL_GatherThickness.hpp"

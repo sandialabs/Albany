@@ -16,7 +16,9 @@
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_SolutionResponseFunction.hpp"
+#endif
 #include "Albany_KLResponseFunction.hpp"
 #ifdef ALBANY_QCAD
 #include "QCAD_SaddleValueResponseFunction.hpp"
@@ -121,8 +123,10 @@ createResponseFunction(
   }
 
   else if (name == "Solution") {
+#ifdef ALBANY_EPETRA
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
+#endif
   }
 
   else if (name == "KL") {

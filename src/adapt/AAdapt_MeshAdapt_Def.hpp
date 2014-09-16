@@ -243,53 +243,6 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
   return validPL;
 }
 
-#ifdef ALBANY_EPETRA
-template<class SizeField>
-AAdapt::MeshAdaptE<SizeField>::
-MeshAdaptE(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-           const Teuchos::RCP<ParamLib>& paramLib_,
-           Albany::StateManager& StateMgr_,
-           const Teuchos::RCP<const Teuchos_Comm>& comm_):
-  AbstractAdapter(params_,paramLib_,StateMgr_,comm_),
-  meshAdapt(params_,StateMgr_)
-{
-}
-
-template<class SizeField>
-bool
-AAdapt::MeshAdaptE<SizeField>::queryAdaptationCriteria()
-{
-  return meshAdapt.queryAdaptationCriteria(this->adapt_params_,this->iter);
-}
-
-template<class SizeField>
-bool
-AAdapt::MeshAdaptE<SizeField>::adaptMesh(
-        const Epetra_Vector& solution,
-        const Epetra_Vector& ovlp_solution)
-{
-  return meshAdapt.adaptMesh(
-      this->adapt_params_,this->output_stream_);
-}
-
-template<class SizeField>
-void
-AAdapt::MeshAdaptE<SizeField>::
-solutionTransfer(const Epetra_Vector& oldSolution,
-                 Epetra_Vector& newSolution)
-{
-}
-
-template<class SizeField>
-Teuchos::RCP<const Teuchos::ParameterList>
-AAdapt::MeshAdaptE<SizeField>::getValidAdapterParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericAdapterParams("ValidMeshAdaptParams");
-  return meshAdapt.getValidAdapterParameters(validPL);
-}
-#endif
-
 template<class SizeField>
 AAdapt::MeshAdaptT<SizeField>::
 MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
