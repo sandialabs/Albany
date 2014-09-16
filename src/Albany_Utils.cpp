@@ -22,7 +22,6 @@
     Epetra_MpiComm& emc = dynamic_cast<Epetra_MpiComm&>(ec);
     return emc.Comm();
   }
-#endif
 
   Teuchos::RCP<Epetra_Comm> Albany::createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Epetra_MpiComm(mc));
@@ -41,7 +40,6 @@
   }
 #endif
 
-#endif
 
   Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
     Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
@@ -75,13 +73,12 @@
   }
 #endif
 
-#endif
-
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
 
 #endif
+
   // End of Utils to do with Communicators
 
   std::string Albany::strint(const std::string s, const int i) {

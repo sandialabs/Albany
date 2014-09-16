@@ -123,9 +123,11 @@ SET(PDE_HDRS
 IF (ALBANY_EPETRA)
 SET(SOURCES ${SOURCES} 
   responses/Epetra_GatherAllV.cpp
+  responses/Albany_SolutionValuesResponseFunction.cpp
 )
 SET(HEADERS ${HEADERS} 
   responses/Epetra_GatherAllV.hpp
+  responses/Albany_SolutionValuesResponseFunction.hpp
 )
 ENDIF()
 SET(SOURCES ${SOURCES}
@@ -137,7 +139,6 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionAverageResponseFunction.cpp
   responses/Albany_SolutionMaxValueResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
-  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
@@ -154,7 +155,6 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionAverageResponseFunction.hpp
   responses/Albany_SolutionMaxValueResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
-  responses/Albany_SolutionValuesResponseFunction.hpp
   responses/Albany_SolutionFileResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
