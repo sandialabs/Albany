@@ -16,7 +16,7 @@ but have not yet been converted for QCAD.
 - Cism and extruded meshes.
 - Albany_Dakota (TriKota).
 - peridigm.
-- Responses: SolutionValuesResponse, Culling Strategy
+- Responses: SolutionValuesResponse
 - some adaptivity stuff will not work.  Check with Glen what.
 - Need to fix Aeras test cases and AlbanyAnalysisT test case which fail if ALBANY_EPETRA_EXE is off.
 - SaveEigenData and related files.
