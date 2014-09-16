@@ -126,22 +126,22 @@ endif()
 
 # Get Albany
 
-#if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-##  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
-#  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
-#    clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
-#    OUTPUT_VARIABLE _out
-#    ERROR_VARIABLE _err
-#    RESULT_VARIABLE HAD_ERROR)
-#  
-#   message(STATUS "out: ${_out}")
-#   message(STATUS "err: ${_err}")
-#   message(STATUS "res: ${HAD_ERROR}")
-#   if(HAD_ERROR)
-#	message(FATAL_ERROR "Cannot clone Albany repository!")
-#   endif()
-#
-#endif()
+if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+  
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot clone Albany repository!")
+   endif()
+
+endif()
 
 # Get Tpetra branch of Albany
 
@@ -712,6 +712,7 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_SCOREC:BOOL=ON"
   "-DENABLE_SG_MP:BOOL=OFF"
   "-DENABLE_QCAD:BOOL=OFF"
+  "-DENABLE_MOR:BOOL=OFF"
   "-DENABLE_CHECK_FPE:BOOL=ON"
   )
 
@@ -790,8 +791,8 @@ ENDIF()
 
 # Configure the Albany Tpetra branch build using GO = long long
 IF (BUILD_ALB_TPETRA64)
-SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetra64Branch)
-SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetra64Branch)
+SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetra64Build)
+SET_PROPERTY (GLOBAL PROPERTY Label AlbanyTpetra64Build)
 
 SET(CONFIGURE_OPTIONS
   "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
