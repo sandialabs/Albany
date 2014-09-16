@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: this still has some Epetra in addition to Epetra_Comm.
-//Not compiled when ALBANY_EPETRA_EXE turned off.
 
 #ifndef ALBANY_CISM_STKMESHSTRUCT_HPP
 #define ALBANY_CISM_STKMESHSTRUCT_HPP
@@ -96,12 +94,16 @@ namespace Albany {
     bool have_temp; // Does temperature file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
     int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
-    Teuchos::RCP<Epetra_Map> elem_map; //element map 
-    Teuchos::RCP<Epetra_Map> node_map; //node map 
-    Teuchos::RCP<Epetra_Map> basal_face_map; //basalface map 
+    Teuchos::RCP<Tpetra_Map> elem_mapT; //element map 
+    Teuchos::RCP<Tpetra_Map> node_mapT; //node map 
+    Teuchos::RCP<Tpetra_Map> basal_face_mapT; //basalface map 
     bool hasRestartSol;
     double restartTime;
     int debug_output_verbosity; 
+    
+    protected: 
+    //Kokkos node 
+    Teuchos::RCP<KokkosNode> nodeT;
   };
 
 }

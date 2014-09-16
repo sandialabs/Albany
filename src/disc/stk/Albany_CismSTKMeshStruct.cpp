@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: this still has some Epetra in addition to Epetra_Comm.
-//Not compiled when ALBANY_EPETRA_EXE turned off.
 
 #include <iostream>
 
@@ -120,11 +118,15 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     }
   }
  
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   
-  elem_map = Teuchos::rcp(new Epetra_Map(-1, NumEles, globalElesID, 0, *comm)); //Distribute the elements according to the global element IDs
-  node_map = Teuchos::rcp(new Epetra_Map(-1, NumNodes, globalNodesID, 0, *comm)); //Distribute the nodes according to the global node IDs 
-  basal_face_map = Teuchos::rcp(new Epetra_Map(-1, NumBasalFaces, basalFacesID, 0, *comm)); //Distribute the elements according to the basal face IDs
+  Teuchos::ParameterList kokkosNodeParams;
+  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles); 
+  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes); 
+  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces); 
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT, nodeT)); //Distribute the elements according to the global element IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT, nodeT)); //Distribute the nodes according to the global node IDs 
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT, nodeT)); //Distribute the elements according to the basal face IDs
 
   
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -198,7 +200,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
   int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_map->NumMyElements());
+  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
 
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
@@ -239,8 +241,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
   if (debug_output_verbosity == 2) {
-    std::cout << "elem_map # elements: " << elem_map->NumMyElements() << std::endl; 
-    std::cout << "node_map # elements: " << node_map->NumMyElements() << std::endl; 
+    std::cout << "elem_mapT # elements: " << elem_mapT->getNodeNumElements() << std::endl; 
+    std::cout << "node_mapT # elements: " << node_mapT->getNodeNumElements() << std::endl; 
   }
   unsigned int ebNo = 0; //element block #??? 
   int sideID = 0;
@@ -260,8 +262,8 @@ Albany::CismSTKMeshStruct::constructMesh(
   if(!basal_friction_field) 
      have_beta = false;
 
-  for (int i=0; i<elem_map->NumMyElements(); i++) {
-     const unsigned int elem_GID = elem_map->GID(i);
+  for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
+     const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
      stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
@@ -289,43 +291,43 @@ Albany::CismSTKMeshStruct::constructMesh(
      unsigned int node_LID;
 
      node_GID = eles[i][0]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord = stk_classic::mesh::field_data(*coordinates_field, llnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][1]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord = stk_classic::mesh::field_data(*coordinates_field, lrnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][2]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord = stk_classic::mesh::field_data(*coordinates_field, urnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][3]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord = stk_classic::mesh::field_data(*coordinates_field, ulnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      coord = stk_classic::mesh::field_data(*coordinates_field, llnodeb);
      node_GID = eles[i][4]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][5]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord = stk_classic::mesh::field_data(*coordinates_field, lrnodeb);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      coord = stk_classic::mesh::field_data(*coordinates_field, urnodeb);
      node_GID = eles[i][6]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      coord = stk_classic::mesh::field_data(*coordinates_field, ulnodeb);
      node_GID = eles[i][7]-1;
-     node_LID = node_map->LID(node_GID);
+     node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
 #ifdef ALBANY_FELIX
@@ -333,42 +335,42 @@ Albany::CismSTKMeshStruct::constructMesh(
        double* sHeight;
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, llnode);
        node_GID = eles[i][0]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, lrnode);
        node_GID = eles[i][1]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, urnode);
        node_GID = eles[i][2]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, ulnode);
        node_GID = eles[i][3]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, llnodeb);
        node_GID = eles[i][4]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, lrnodeb);
        node_GID = eles[i][5]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, urnodeb);
        node_GID = eles[i][6]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
        sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, ulnodeb);
        node_GID = eles[i][7]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
      }
      if (have_flwa) {
@@ -387,42 +389,42 @@ Albany::CismSTKMeshStruct::constructMesh(
        double* bFriction; 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, llnode);
        node_GID = eles[i][0]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, lrnode);
        node_GID = eles[i][1]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, urnode);
        node_GID = eles[i][2]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, ulnode);
        node_GID = eles[i][3]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, llnodeb);
        node_GID = eles[i][4]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, lrnodeb);
        node_GID = eles[i][5]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, urnodeb);
        node_GID = eles[i][6]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, ulnodeb);
        node_GID = eles[i][7]-1;
-       node_LID = node_map->LID(node_GID);
+       node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID]; 
        }
 #endif
@@ -449,9 +451,9 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   if (have_bf == true) {
     if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from bf file provided..." << std::endl; 
-    for (int i=0; i<basal_face_map->NumMyElements(); i++) {
+    for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
-       sideID = basal_face_map->GID(i); 
+       sideID = basal_face_mapT->getGlobalElement(i); 
        stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
        stk_classic::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = bf[i][0];

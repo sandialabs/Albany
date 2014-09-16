@@ -9,6 +9,7 @@
 
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Teuchos_CommHelpers.hpp"
 
 #include <Shards_BasicTopologies.hpp>
 
@@ -87,9 +88,10 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 					std::endl << "Error in AsciiSTKMesh2D: Input Mesh File " << fname << " not found!"<< std::endl);
 		}
 	}
-
-        Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-	comm->Broadcast(&NumElemNodes, 1, 0);
+        double NumElemNodesD = NumElemNodes; 
+        Teuchos::broadcast<LO,ST>(*commT, 0, &NumElemNodesD);  
+        //Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+	//comm->Broadcast(&NumElemNodes, 1, 0);
 
 	params->validateParameters(*getValidDiscretizationParameters(), 0);
 
