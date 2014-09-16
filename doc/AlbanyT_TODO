@@ -9,7 +9,7 @@ but have not yet been converted for QCAD.
 - MOR
 - SG_MP
 - catalyst - can't build, need ParaView source code? 
-- cism_interface
+- cism_interface has been converted, but needs to be tested.
 - mpas_interface has been converted, but need to have Mauro test it.
 - writing of coordinates, residual, jacobian to matrix market file (available in tpetra?).
 - Teko stuff (uses Epetra).
