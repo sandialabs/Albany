@@ -122,11 +122,9 @@ SET(PDE_HDRS
 #responses
 IF (ALBANY_EPETRA)
 SET(SOURCES ${SOURCES} 
-  responses/Epetra_GatherAllV.cpp
   responses/Albany_SolutionValuesResponseFunction.cpp
 )
 SET(HEADERS ${HEADERS} 
-  responses/Epetra_GatherAllV.hpp
   responses/Albany_SolutionValuesResponseFunction.hpp
 )
 ENDIF()
@@ -145,7 +143,6 @@ SET(SOURCES ${SOURCES}
   responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-  responses/Tpetra_GatherAllV.hpp
   responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_ScalarResponseFunction.hpp
