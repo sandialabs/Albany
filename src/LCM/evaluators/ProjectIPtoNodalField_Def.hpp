@@ -204,149 +204,100 @@ ProjectIPtoNodalField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layo
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset)
+fillMassMatrixFull (const typename Traits::EvalData& workset)
 {
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-  node_data->initializeVectors(0.0);
-
-  Teuchos::RCP<Tpetra_CrsGraph> currentGraph =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
-
-//  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getOverlapMap();
-  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getLocalMap();
-
-//  if(Teuchos::is_null(this->mass_matrix) || !this->mass_matrix->getCrsGraph()->checkSizes(*currentGraph)){
-  if(Teuchos::is_null(this->mass_matrix) || !currentGraph->checkSizes(*this->mass_matrix->getCrsGraph())){
-
-     // reallocate the mass matrix
-
-     this->mass_matrix = Teuchos::rcp(new Tpetra_CrsMatrix(currentGraph));
-     this->source_load_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, true));
-     this->node_projected_ip_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, false));
-
-  }
-  else {
-
-     this->mass_matrix->resumeFill();
-
-     // Zero the solution and mass matrix in preparation for summation / solution operations
-     this->mass_matrix->setAllToScalar(0.0);
-     this->source_load_vector->putScalar(0.0);
-
-  }
-
-
-}
-
-//------------------------------------------------------------------------------
-template<typename Traits>
-void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
-{
-  // volume averaged field, store as nodal data that will be scattered
-  // and summed
-
-  // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
-
-  int num_nodes = this->num_nodes_;
-  int num_dims  = this->num_dims_;
-  int num_pts   = this->num_pts_;
-
-  // Assumes: mass_matrix is the right size and ready to fill
-
-  // Fill the mass matrix
-
-
-/*
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int rnode = 0; rnode < num_nodes; ++rnode) {
-
-      GO global_row = wsElNodeID[cell][rnode];
+  const std::size_t
+    num_nodes = this->num_nodes_,
+    num_pts   = this->num_pts_;
+  for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t rnode = 0; rnode < num_nodes; ++rnode) {
+      GO global_row = workset.wsElNodeID[cell][rnode];
       Teuchos::Array<GO> cols;
       Teuchos::Array<ST> vals;
 
-      for (int cnode = 0; cnode < num_nodes; ++cnode) {
-
-        GO global_col = wsElNodeID[cell][cnode];
+      for (std::size_t cnode = 0; cnode < num_nodes; ++cnode) {
+        const GO global_col = workset.wsElNodeID[cell][cnode];
         cols.push_back(global_col);
+
         ST mass_value = 0;
-
-        for (std::size_t qp=0; qp < num_pts; ++qp)
-
+        for (std::size_t qp = 0; qp < num_pts; ++qp)
           mass_value += this->wBF(cell, rnode, qp) * this->BF(cell, cnode, qp);
-
         vals.push_back(mass_value);
-//std::cout << "Row : " << global_row << " Col : " << global_col << " Val : " << mass_value << std::endl;
       }
-
-      this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
-
+      const LO ret =
+        this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        ret != cols.size(), std::logic_error,
+        "global_row " << global_row << " of mass_matrix is missing elements"
+        << std::endl);
     }
   }
-*/
+}
 
-// lump it for debugging
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < num_pts; ++qp){
-
+template<typename Traits>
+void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+fillMassMatrixLumped (const typename Traits::EvalData& workset)
+{
+  const std::size_t
+    num_nodes = this->num_nodes_,
+    num_pts   = this->num_pts_;
+  for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp = 0; qp < num_pts; ++qp) {
       double diag = 0;
-      for (int rnode = 0; rnode < num_nodes; ++rnode) 
-
+      for (std::size_t rnode = 0; rnode < num_nodes; ++rnode)
         diag += this->BF(cell, rnode, qp);
-
-      for (int rnode = 0; rnode < num_nodes; ++rnode) {
-
-        GO global_row = wsElNodeID[cell][rnode];
-        Teuchos::Array<GO> cols;
-        Teuchos::Array<ST> vals;
-        GO global_col = wsElNodeID[cell][rnode];
-        cols.push_back(global_col);
-//        ST mass_value = this->wBF(cell, rnode, qp) * diag;
-        ST mass_value = 1;
-
-        vals.push_back(mass_value);
-//        this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
+      for (std::size_t rnode = 0; rnode < num_nodes; ++rnode) {
+        const GO global_row = workset.wsElNodeID[cell][rnode];
+        const Teuchos::Array<GO> cols(1, workset.wsElNodeID[cell][rnode]);
+        const Teuchos::Array<ST> vals(1, this->wBF(cell, rnode, qp) * diag);
         this->mass_matrix->replaceGlobalValues(global_row, cols, vals);
-//std::cout << "Row : " << global_row << " Col : " << global_col << " Val : " << mass_value << std::endl;
       }
     }
   }
+}
 
-  // deal with each of the fields in the multivector that stores the RHS of the projection
+template<typename Traits>
+void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+fillRHS (const typename Traits::EvalData& workset)
+{
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >&  wsElNodeID = workset.wsElNodeID;
 
-//std::cout << "Number of fields : " << this->number_of_fields_ << std::endl;
+  const std::size_t
+    num_nodes = this->num_nodes_,
+    num_dims  = this->num_dims_,
+    num_pts   = this->num_pts_;
 
-  for (int field(0); field < this->number_of_fields_; ++field) {
-    int  node_var_offset;
-    int  node_var_ndofs;
+  //todo Could optimize ip_field_layouts_[field] string check by moving to field
+  // loop.
+  for (std::size_t field = 0; field < this->number_of_fields_; ++field) {
+    int node_var_offset;
+    int node_var_ndofs;
     node_data->getNDofsAndOffset(this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int node = 0; node < num_nodes; ++node) {
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t node = 0; node < num_nodes; ++node) {
         GO global_row = wsElNodeID[cell][node];
-        for (int qp = 0; qp < num_pts; ++qp) {
+        for (std::size_t qp = 0; qp < num_pts; ++qp) {
           if (this->ip_field_layouts_[field] == "Scalar" ) {
             // save the scalar component
-            this->source_load_vector->sumIntoGlobalValue(global_row, node_var_offset,
+            this->source_load_vector->sumIntoGlobalValue(
+              global_row, node_var_offset,
               this->ip_fields_[field](cell, qp) * this->wBF(cell, node, qp));
           } else if (this->ip_field_layouts_[field] == "Vector" ) {
-            for (int dim0 = 0; dim0 < num_dims; ++dim0) {
+            for (std::size_t dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
-              this->source_load_vector->sumIntoGlobalValue(global_row, node_var_offset + dim0,
+              this->source_load_vector->sumIntoGlobalValue(
+                global_row, node_var_offset + dim0,
                 this->ip_fields_[field](cell, qp, dim0) * this->wBF(cell, node, qp));
             }
           } else if (this->ip_field_layouts_[field] == "Tensor" ) {
-            for (int dim0 = 0; dim0 < num_dims; ++dim0) {
-              for (int dim1 = 0; dim1 < num_dims; ++dim1) {
+            for (std::size_t dim0 = 0; dim0 < num_dims; ++dim0) {
+              for (std::size_t dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
-                this->source_load_vector->sumIntoGlobalValue(global_row,
-                  node_var_offset + dim0*num_dims + dim1,
+                this->source_load_vector->sumIntoGlobalValue(
+                  global_row, node_var_offset + dim0*num_dims + dim1,
                   this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp));
-//std::cout << "vector row : " << global_row << " col : " << node_var_offset + dim0*num_dims + dim1 << " value : " <<
-//this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp) << std::endl;
               }
             }
           }
@@ -354,7 +305,20 @@ evaluateFields(typename Traits::EvalData workset)
       }
     } // end cell loop
   } // end field loop
+}
 
+template<typename Traits>
+void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+  // Fill the mass matrix.
+  // Assumes: mass_matrix is the right size and ready to fill.
+  //fillMassMatrixLumped(workset); //todo Include an option for this.
+  fillMassMatrixFull(workset);
+
+  // Deal with each of the fields in the multivector that stores the RHS of the
+  // projection.
+  fillRHS(workset);
 }
 //------------------------------------------------------------------------------
 
@@ -544,7 +508,9 @@ ProjectIPtoNodalFieldBase<EvalT,Traits>::setDefaultSolverParameters(const Teucho
   bool            outputMaxResOnly       = true;
   double          maxResid               = 1e-5;
 
-  belos_types.set<std::string>("Solver Type", "Block GMRES");
+  // The mass matrix is symmetric positive definite, so we can use CG rather
+  // than GMRES.
+  belos_types.set<std::string>("Solver Type", "Block CG");
 
   Teuchos::ParameterList& belosLOWSFPL_solver =
     belos_types.sublist("Solver Types");

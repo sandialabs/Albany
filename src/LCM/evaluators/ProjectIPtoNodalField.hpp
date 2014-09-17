@@ -125,6 +125,11 @@ public:
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
+
+private:
+  void fillMassMatrixLumped(const typename Traits::EvalData& workset);
+  void fillMassMatrixFull(const typename Traits::EvalData& workset);
+  void fillRHS(const typename Traits::EvalData& workset);
 };
 }
 
