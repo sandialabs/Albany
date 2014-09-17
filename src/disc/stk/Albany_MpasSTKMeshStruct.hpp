@@ -18,15 +18,15 @@ namespace Albany {
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 	                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-	                                               const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
+	                                               const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 	                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
-	                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering = 0);
+	                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering = 0);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		                                         const Teuchos::RCP<const Teuchos_Comm>& commT,
-		                                         const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering = 0);
+		                                         const std::vector<GO>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering = 0);
 
 
     ~MpasSTKMeshStruct();

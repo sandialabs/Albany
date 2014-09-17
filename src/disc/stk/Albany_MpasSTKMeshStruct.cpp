@@ -28,7 +28,7 @@
 
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles) :
+                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles) :
   GenericSTKMeshStruct(params,Teuchos::null, 2),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -97,7 +97,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 //Wedge
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
+                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -105,7 +105,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  std::vector<int> indexToPrismID(indexToTriangleID.size()*numLayers);
+  std::vector<GO> indexToPrismID(indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == 1) ? 1 : nGlobalTriangles;
@@ -202,7 +202,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 //Tetra
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
+                                             const std::vector<GO>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -210,7 +210,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  std::vector<int> indexToTetraID(3*indexToTriangleID.size()*numLayers);
+  std::vector<GO> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == 1) ? 3 : 3*nGlobalTriangles;

@@ -176,7 +176,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        }
      }
      //Create array w/ global element IDs 
-     globalElesID = new int[NumEles];
+     globalElesID = new GO[NumEles];
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumEles; i++) {
           globalElesID[i] = i; 
@@ -201,7 +201,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        }
      }
      //Create array w/ global node IDs 
-     globalNodesID = new int[NumNodes];
+     globalNodesID = new GO[NumNodes];
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumNodes; i++) { 
           globalNodesID[i] = i; 
@@ -225,7 +225,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
      }
-     basalFacesID = new int[NumBasalFaces];
+     basalFacesID = new GO[NumBasalFaces];
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumBasalFaces; i++) { 
           basalFacesID[i] = i; 

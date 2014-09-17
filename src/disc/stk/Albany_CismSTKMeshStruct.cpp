@@ -61,9 +61,9 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   eles = new int[NumEles][8]; 
   bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
   sh = new double[NumNodes]; 
-  globalNodesID = new int[NumNodes];
-  globalElesID = new int[NumEles];
-  basalFacesID = new int[NumBasalFaces];
+  globalNodesID = new GO[NumNodes];
+  globalElesID = new GO[NumEles];
+  basalFacesID = new GO[NumBasalFaces];
   flwa = new double[NumEles]; 
   beta = new double[NumNodes]; 
   //TO DO? pass in temper?  for now, flwa is passed instead of temper
