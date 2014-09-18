@@ -204,6 +204,42 @@ ProjectIPtoNodalField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layo
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+preEvaluate(typename Traits::PreEvalData workset)
+{
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+  node_data->initializeVectors(0.0);
+
+  Teuchos::RCP<Tpetra_CrsGraph> currentGraph =
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
+
+//  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getOverlapMap();
+  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getLocalMap();
+
+//  if(Teuchos::is_null(this->mass_matrix) || !this->mass_matrix->getCrsGraph()->checkSizes(*currentGraph)){
+  if(Teuchos::is_null(this->mass_matrix) || !currentGraph->checkSizes(*this->mass_matrix->getCrsGraph())){
+
+     // reallocate the mass matrix
+
+     this->mass_matrix = Teuchos::rcp(new Tpetra_CrsMatrix(currentGraph));
+     this->source_load_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, true));
+     this->node_projected_ip_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, false));
+
+  }
+  else {
+
+     this->mass_matrix->resumeFill();
+
+     // Zero the solution and mass matrix in preparation for summation / solution operations
+     this->mass_matrix->setAllToScalar(0.0);
+     this->source_load_vector->putScalar(0.0);
+
+  }
+}
+
+//------------------------------------------------------------------------------
+template<typename Traits>
+void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 fillMassMatrixFull (const typename Traits::EvalData& workset)
 {
   const std::size_t
