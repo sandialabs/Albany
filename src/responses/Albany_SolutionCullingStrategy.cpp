@@ -29,7 +29,7 @@ public:
 #ifdef ALBANY_EPETRA
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
+  virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
 private:
   int numValues_;
 };
@@ -43,11 +43,11 @@ UniformSolutionCullingStrategy(int numValues) :
   // Nothing to do
 }
 
-Teuchos::Array<int>
+Teuchos::Array<GO>
 Albany::UniformSolutionCullingStrategy::
 selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
-  Teuchos::Array<int> allGIDs(sourceMapT->getGlobalNumElements());
+  Teuchos::Array<GO> allGIDs(sourceMapT->getGlobalNumElements());
   {
     const int ierr = Tpetra::GatherAllV(
         sourceMapT->getComm(),
@@ -57,7 +57,7 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
   }
   std::sort(allGIDs.begin(), allGIDs.end());
 
-  Teuchos::Array<int> result(numValues_);
+  Teuchos::Array<GO> result(numValues_);
   const int stride = 1 + (allGIDs.size() - 1) / numValues_;
   for (int i = 0; i < numValues_; ++i) {
     result[i] = allGIDs[i * stride];
@@ -124,7 +124,7 @@ public:
 
   virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
 #endif
-  virtual Teuchos::Array<int> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
+  virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
   virtual void setupT();
 
 private:
@@ -217,13 +217,13 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 }
 #endif
 
-Teuchos::Array<int>
+Teuchos::Array<GO>
 Albany::NodeSetSolutionCullingStrategy::
 selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
-  Teuchos::Array<int> result;
+  Teuchos::Array<GO> result;
   {
-    Teuchos::Array<int> mySelectedGIDs;
+    Teuchos::Array<GO> mySelectedGIDs;
     {
       const NodeSetList &nodeSets = disc_->getNodeSets();
 

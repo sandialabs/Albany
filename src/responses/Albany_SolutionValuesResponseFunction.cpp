@@ -293,7 +293,7 @@ updateSolutionImporterT()
 {
   const Teuchos::RCP<const Tpetra_Map> solutionMapT = app_->getMapT();
   if (Teuchos::is_null(solutionImporterT_) || !solutionMapT->isSameAs(*solutionImporterT_->getSourceMap())) {
-    const Teuchos::Array<int> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
+    const Teuchos::Array<GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
     Teuchos::RCP<const Tpetra_Map> targetMapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (selectedGIDsT, solutionMapT->getComm(), solutionMapT->getNode());
     //const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
     solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(targetMapT, solutionMapT));

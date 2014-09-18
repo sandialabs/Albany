@@ -23,10 +23,11 @@
 #include <numeric>
 #include <algorithm>
 
+template <typename GO>
 int Tpetra::GatherAllV(
     const Teuchos::RCP<const Teuchos::Comm<int> >& commT,
-    const int *myVals, int myCount,
-    int *allVals, int allCount)
+    const GO *myVals, int myCount,
+    GO *allVals, int allCount)
 {
 #ifdef HAVE_TPETRA_MPI
   if(const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get())) {
@@ -45,7 +46,7 @@ int Tpetra::GatherAllV(
     TEUCHOS_ASSERT(allCount == allValCounts.back() + allValDisps.back());
 
     return MPI_Allgatherv(
-        const_cast<int *>(myVals), myCount, MPI_INT,
+        const_cast<GO *>(myVals), myCount, MPI_INT,
         allVals, allValCounts.getRawPtr(), allValDisps.getRawPtr(), MPI_INT,
         rawComm);
   } else
