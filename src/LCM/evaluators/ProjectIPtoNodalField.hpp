@@ -19,7 +19,7 @@
 namespace LCM
 {
 /// 
-/// \brief Evaltuator to compute a nodal stress field
+/// \brief Evaluator to compute a nodal stress field
 ///
 template<typename EvalT, typename Traits>
 class ProjectIPtoNodalFieldBase : 
@@ -61,8 +61,6 @@ protected:
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters() const;
 
-  void setDefaultSolverParameters(const Teuchos::RCP<Teuchos::ParameterList>& pl) const;
-
   int number_of_fields_;
 
   std::vector<std::string> ip_field_names_;
@@ -86,12 +84,12 @@ protected:
   Teuchos::RCP< PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
 
-  Teuchos::RCP<Tpetra_CrsMatrix> mass_matrix;
-  Teuchos::RCP<Tpetra_MultiVector> source_load_vector;
-  Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector;
+  Teuchos::RCP<Tpetra_CrsMatrix> mass_matrix_;
+  Teuchos::RCP<Tpetra_MultiVector> source_load_vector_;
+  Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector_;
 
-  Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory;
+  Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
 
 };
 
@@ -121,7 +119,7 @@ class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,Traits>
   : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                   const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
