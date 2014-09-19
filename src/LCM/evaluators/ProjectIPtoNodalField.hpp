@@ -16,8 +16,7 @@
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
-namespace LCM
-{
+namespace LCM {
 /// 
 /// \brief Evaluator to compute a nodal stress field
 ///
@@ -58,13 +57,17 @@ public:
   }
     
 protected:
-
-  Teuchos::RCP<const Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters() const;
-
   int number_of_fields_;
 
+  // Represent the Field Layout by an enumerated type.
+  struct EFieldLayout {
+    enum Enum { scalar, vector, tensor };
+    static Enum fromString(const std::string& user_str)
+      throw (Teuchos::Exceptions::InvalidParameterValue);
+  };
+
   std::vector<std::string> ip_field_names_;
-  std::vector<std::string> ip_field_layouts_;
+  std::vector<typename EFieldLayout::Enum> ip_field_layouts_;
   std::vector<std::string> nodal_field_names_;
 
   std::size_t num_vecs_;
@@ -84,13 +87,11 @@ protected:
   Teuchos::RCP< PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
 
-  Teuchos::RCP<Tpetra_CrsMatrix> mass_matrix_;
   Teuchos::RCP<Tpetra_MultiVector> source_load_vector_;
   Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector_;
 
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;
-
 };
 
 template<typename EvalT, typename Traits>
@@ -98,18 +99,18 @@ class ProjectIPtoNodalField
   : public ProjectIPtoNodalFieldBase<EvalT, Traits> {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                   const Teuchos::RCP<Albany::Layouts>& dl) :
-    ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl){}
-  void preEvaluate(typename Traits::PreEvalData d){}
-  void postEvaluate(typename Traits::PostEvalData d){}
-  void evaluateFields(typename Traits::EvalData d){}
+                        const Teuchos::RCP<Albany::Layouts>& dl) :
+    ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl) {}
+  void preEvaluate(typename Traits::PreEvalData d) {}
+  void postEvaluate(typename Traits::PostEvalData d) {}
+  void evaluateFields(typename Traits::EvalData d) {}
 };
 
-  // **************************************************************
-  // **************************************************************
-  // * Specializations
-  // **************************************************************
-  // **************************************************************
+// **************************************************************
+// **************************************************************
+// * Specializations
+// **************************************************************
+// **************************************************************
 
 // **************************************************************
 // Residual 
@@ -124,11 +125,22 @@ public:
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
 
+  static ProjectIPtoNodalField* create(
+    Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl);
+
 private:
-  void fillMassMatrixLumped(const typename Traits::EvalData& workset);
-  void fillMassMatrixFull(const typename Traits::EvalData& workset);
+  // Declare a class hierarchy of mass matrix types. mass_matrix_ has to be in
+  // this specialization, at least for now, because its implementation of fill()
+  // is valid only for AlbanyTraits::Residual. Later we might move it up to the
+  // nonspecialized class and create separate fill() impls for each trait.
+  class MassMatrix;
+  class FullMassMatrix;
+  class LumpedMassMatrix;
+  Teuchos::RCP<MassMatrix> mass_matrix_;
+
   void fillRHS(const typename Traits::EvalData& workset);
 };
-}
+
+} // namespace LCM
 
 #endif  // ProjectIPtoNodalField.hpp

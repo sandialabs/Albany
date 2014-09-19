@@ -45,6 +45,7 @@
         <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
         <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
         <Parameter name="Output to File" type="bool" value="true"/>
+        <Parameter name="Mass Matrix Type" type="string" value="Full"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>
