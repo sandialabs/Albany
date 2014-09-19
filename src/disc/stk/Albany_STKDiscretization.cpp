@@ -2213,41 +2213,9 @@ void Albany::STKDiscretization::meshToGraph () {
                                  bulkData.buckets( metaData.element_rank() ),
                                  buckets);
 
-  int numBuckets = buckets.size();
-  std::vector<const std::size_t *> table(numBuckets);
-  std::vector<std::size_t> nconnect(numBuckets);
-
-  for (int b = 0; b < numBuckets; ++b) {
+  for (int b = 0; b < buckets.size(); ++b) {
     stk_classic::mesh::Bucket& cells = *buckets[b];
-
     // TODO handle higher order elements
-    { // A bucket's cells all have the same type.
-      const CellTopologyData * const elem_top =
-        stk_classic::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
-      if(strcmp(elem_top->name, "Hexahedron_8") == 0) {
-        table[b] = hex_table;
-        nconnect[b] = hex_nconnect;
-      }
-      else if(strcmp(elem_top->name, "Tetrahedron_4") == 0) {
-        table[b] = tet_table;
-        nconnect[b] = tet_nconnect;
-      }
-      else if(strcmp(elem_top->name, "Triangle_3") == 0) {
-        table[b] = tri_table;
-        nconnect[b] = tri_nconnect;
-      }
-      else if(strcmp(elem_top->name, "Quadrilateral_4") == 0) {
-        table[b] = quad_table;
-        nconnect[b] = quad_nconnect;
-      }
-      else {
-        nodalGraph = Teuchos::null;
-        if(commT->getRank() == 0)
-          std::cout << "Note: element type \"" << elem_top->name << "\" not supported in nodal graph function" << std::endl
-                    << "      support for solution transfer using projection has been disabled" << std::endl;
-        return;
-      }
-    }
 
     /* Find the surrounding elements for each node owned by this processor */
     for (std::size_t ecnt = 0; ecnt < cells.size(); ecnt++) {
