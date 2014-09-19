@@ -40,29 +40,29 @@ fromString (const std::string& str)
 namespace {
 Teuchos::RCP<Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters ()
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
+  Teuchos::RCP<Teuchos::ParameterList> valid_pl =
     rcp(new Teuchos::ParameterList("Valid ProjectIPtoNodalField Params"));;
 
   // Dont validate the solver parameters used in the projection solve - let Stratimikos do it
 
-  validPL->sublist("Solver Options").disableRecursiveValidation();
+  valid_pl->sublist("Solver Options").disableRecursiveValidation();
 
-  validPL->set<std::string>("Name", "", "Name of field Evaluator");
-  validPL->set<int>("Number of Fields", 0);
+  valid_pl->set<std::string>("Name", "", "Name of field Evaluator");
+  valid_pl->set<int>("Number of Fields", 0);
 
   for (int i = 0; i < 9; ++i) {
-    validPL->set<std::string>(Albany::strint("IP Field Name", i), "",
+    valid_pl->set<std::string>(Albany::strint("IP Field Name", i), "",
                               "IP Field prefix");
-    validPL->set<std::string>(Albany::strint("IP Field Layout", i), "",
+    valid_pl->set<std::string>(Albany::strint("IP Field Layout", i), "",
                               "IP Field Layout: Scalar, Vector, or Tensor");
   }
 
-  validPL->set<bool>("Output to File", true, "Whether nodal field info should be output to a file");
-  validPL->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
+  valid_pl->set<bool>("Output to File", true, "Whether nodal field info should be output to a file");
+  valid_pl->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
 
-  validPL->set<std::string>("Mass Matrix Type", "Full", "Full or Lumped");
+  valid_pl->set<std::string>("Mass Matrix Type", "Full", "Full or Lumped");
 
-  return validPL;
+  return valid_pl;
 }
 
 void setDefaultSolverParameters (Teuchos::ParameterList& pl)
@@ -347,12 +347,14 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 ProjectIPtoNodalField (Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
 {
-  const Teuchos::ParameterList* plist =
+  Teuchos::ParameterList* pl =
     p.get<Teuchos::ParameterList*>("Parameter List");
+  if (!pl->getPtr<std::string>("Mass Matrix Type"))
+    pl->set<std::string>("Mass Matrix Type", "Full", "Full or Lumped");
 
   {
     EMassMatrixType::Enum mass_matrix_type;
-    const std::string& mmstr = plist->get<std::string>("Mass Matrix Type");
+    const std::string& mmstr = pl->get<std::string>("Mass Matrix Type");
     try {
       mass_matrix_type =
         EMassMatrixType::fromString(mmstr);
