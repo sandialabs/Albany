@@ -148,8 +148,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
         for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
           const GO global_id = bucket[i].identifier() - 1; // global node in mesh
+          const LO local_id =  overlap_node_vec->getMap()->getLocalElement(global_id);
 
-          solution_array(i) = const_overlap_node_view[global_id];
+          solution_array(i) = const_overlap_node_view[local_id];
 
         }
       }
@@ -226,8 +227,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
           for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
             const GO global_id = bucket[i].identifier() - 1; // global node in mesh
+            const LO local_id =  overlap_node_vec->getMap()->getLocalElement(global_id);
 
-            solution_array(j, i) = const_overlap_node_view[global_id];
+            solution_array(j, i) = const_overlap_node_view[local_id];
 
           }
         }
@@ -311,8 +313,8 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
             for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
               const GO global_id = bucket[i].identifier() - 1; // global node in mesh
-
-              solution_array(k, j, i) = const_overlap_node_view[global_id];
+              const LO local_id =  overlap_node_vec->getMap()->getLocalElement(global_id);
+              solution_array(k, j, i) = const_overlap_node_view[local_id];
 
             }
          }
