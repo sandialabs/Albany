@@ -95,6 +95,9 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
+
+//    Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+
   };
 
 }
@@ -260,12 +263,12 @@ Albany::LinearElasticityProblem::constructEvaluators(
   }
   
   // ATO penalization
-  if( params->isType<Teuchos::ParameterList>("Topology") )
+  if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
   {
     RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));
 
-    Teuchos::ParameterList& topoParams = params->get<Teuchos::ParameterList>("Topology");
-    p->set<Teuchos::ParameterList>("Topology",topoParams);
+    Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
+    p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
 
     p->set<std::string>("BF Name", "BF");
     p->set<std::string>("Unweighted Variable Name", stressName);

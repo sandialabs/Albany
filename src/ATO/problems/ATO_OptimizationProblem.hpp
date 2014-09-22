@@ -12,6 +12,8 @@
 
 namespace ATO {
 
+class Topology;
+
 class OptimizationProblem :
 public virtual Albany::AbstractProblem {
 
@@ -55,9 +57,7 @@ public virtual Albany::AbstractProblem {
    Teuchos::RCP<Epetra_Vector> localVec;
    Teuchos::RCP<Epetra_Export> exporter;
 
-   std::string topoName;
-   std::string topoCentering;
-
+   Teuchos::RCP<Topology> topology;
 };
 
 }

@@ -53,30 +53,26 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
     p.get< Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
 
 
-  Teuchos::ParameterList& topoParams = paramsFromProblem->get<Teuchos::ParameterList>("Topology");
-  ATO::TopoToolsFactory topoFactory;
-  topoTools = topoFactory.create(topoParams);
+  topology = paramsFromProblem->get<Teuchos::RCP<Topology> >("Topology");
 
   FName = responseParams->get<std::string>("Response Name");
   dFdpName = responseParams->get<std::string>("Response Derivative Name");
-  topoName = topoParams.get<std::string>("Topology Name");
-  topoCentering = topoParams.get<std::string>("Centering");
 
   //! Register with state manager
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   this->pStateMgr->registerStateVariable(FName, dl->workset_scalar, dl->dummy, 
                                          "all", "scalar", 0.0, false, true);
-  if( topoCentering == "Element" ){
+  if( topology->getCentering() == "Element" ){
     this->pStateMgr->registerStateVariable(dFdpName, dl->cell_scalar, dl->dummy, 
                                            "all", "scalar", 0.0, false, true);
   } else
-  if( topoCentering == "Node" ){
+  if( topology->getCentering() == "Node" ){
     this->pStateMgr->registerStateVariable(dFdpName, dl->node_scalar, dl->dummy, 
                                            "all", "scalar", 0.0, false, true);
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Unknown centering " << topoCentering << "!" << std::endl 
+      << "Error!  Unknown centering " << topology->getCentering() << "!" << std::endl 
       << "Options are (Element, Node)" << std::endl);
   }
 
@@ -130,20 +126,20 @@ evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray F = (*workset.stateArrayPtr)[FName];
   Albany::MDArray dEdp = (*workset.stateArrayPtr)[dFdpName];
-  Albany::MDArray topo = (*workset.stateArrayPtr)[topoName];
+  Albany::MDArray topo = (*workset.stateArrayPtr)[topology->getName()];
   std::vector<int> dims;
   gradX.dimensions(dims);
   int size = dims.size();
 
   double internalEnergy=0.0;
 
-  if( topoCentering == "Element" ){
+  if( topology->getCentering() == "Element" ){
   
     if( size == 3 ){
       for(int cell=0; cell<dims[0]; cell++){
         double dE = 0.0;
-        double P = topoTools->Penalize(topo(cell));
-        double dP = topoTools->dPenalize(topo(cell));
+        double P = topology->Penalize(topo(cell));
+        double dP = topology->dPenalize(topo(cell));
         for(int qp=0; qp<dims[1]; qp++)
           for(int i=0; i<dims[2]; i++)
             dE += gradX(cell,qp,i)*workConj(cell,qp,i)*qp_weights(cell,qp);
@@ -154,8 +150,8 @@ evaluateFields(typename Traits::EvalData workset)
     if( size == 4 ){
       for(int cell=0; cell<dims[0]; cell++){
         double dE = 0.0;
-        double P = topoTools->Penalize(topo(cell));
-        double dP = topoTools->dPenalize(topo(cell));
+        double P = topology->Penalize(topo(cell));
+        double dP = topology->dPenalize(topo(cell));
         for(int qp=0; qp<dims[1]; qp++)
           for(int i=0; i<dims[2]; i++)
             for(int j=0; j<dims[3]; j++)
@@ -168,7 +164,7 @@ evaluateFields(typename Traits::EvalData workset)
         "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
     }
   } else
-  if( topoCentering == "Node" ){
+  if( topology->getCentering() == "Node" ){
     int numCells = dims[0];
     int numQPs   = dims[1];
     int numDims  = dims[2];
@@ -182,8 +178,8 @@ evaluateFields(typename Traits::EvalData workset)
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
-          double P = topoTools->Penalize(topoVal);
-          double dP = topoTools->dPenalize(topoVal);
+          double P = topology->Penalize(topoVal);
+          double dP = topology->dPenalize(topoVal);
           for(int i=0; i<numDims; i++)
             dE += gradX(cell,qp,i)*workConj(cell,qp,i);
           dE *= qp_weights(cell,qp);
@@ -201,8 +197,8 @@ evaluateFields(typename Traits::EvalData workset)
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
-          double P = topoTools->Penalize(topoVal);
-          double dP = topoTools->dPenalize(topoVal);
+          double P = topology->Penalize(topoVal);
+          double dP = topology->dPenalize(topoVal);
           for(int i=0; i<numDims; i++)
             for(int j=0; j<numDims; j++)
               dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j);

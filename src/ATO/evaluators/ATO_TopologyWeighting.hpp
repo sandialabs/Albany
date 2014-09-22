@@ -53,7 +53,7 @@ private:
   // Output:
   PHX::MDField<ScalarT> weightedVar;
 
-  Teuchos::RCP<TopoTools> topoTools;
+  Teuchos::RCP<Topology> topology;
 };
 }
 

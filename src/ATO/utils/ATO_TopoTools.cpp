@@ -10,15 +10,25 @@
 namespace ATO {
 
 //**********************************************************************
-//TopoToolsFactory::TopoToolsFactory(const Teuchos::RCP<Teuchos::ParameterList>& topoParams)
-//: _topoParams(topoParams) { }
+Topology::Topology(const Teuchos::ParameterList& topoParams)
+//**********************************************************************
+{
+  centering = topoParams.get<std::string>("Centering");
+  name      = topoParams.get<std::string>("Topology Name");
+  initValue = topoParams.get<double>("Initial Value");
+
+  if( topoParams.isType<Teuchos::Array<std::string> >("Fixed Blocks") ){
+    fixedBlocks = topoParams.get<Teuchos::Array<std::string> >("Fixed Blocks");
+  }
+}
 
 
 //**********************************************************************
-Teuchos::RCP<TopoTools> TopoToolsFactory::create(const Teuchos::ParameterList& topoParams)
+Teuchos::RCP<Topology> TopologyFactory::create(const Teuchos::ParameterList& topoParams)
+//**********************************************************************
 {
   std::string pType = topoParams.get<std::string>("Penalization");
-  if( pType == "SIMP" )  return Teuchos::rcp(new TopoTools_SIMP(topoParams));
+  if( pType == "SIMP" )  return Teuchos::rcp(new Topology_SIMP(topoParams));
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -26,15 +36,17 @@ Teuchos::RCP<TopoTools> TopoToolsFactory::create(const Teuchos::ParameterList& t
 }
 
 //**********************************************************************
-TopoTools_SIMP::TopoTools_SIMP(const Teuchos::ParameterList& topoParams) 
+Topology_SIMP::Topology_SIMP(const Teuchos::ParameterList& topoParams) : Topology(topoParams) 
+//**********************************************************************
 {
   const Teuchos::ParameterList& simpParams = topoParams.get<Teuchos::ParameterList>("SIMP");
   penaltyParam = simpParams.get<double>("Penalization Parameter");
+
+  materialValue = 1.0;
+  voidValue = 0.0;
 }
 
-double TopoTools_SIMP::Penalize(double rho) { return pow(rho,penaltyParam);}
-double TopoTools_SIMP::dPenalize(double rho) { return penaltyParam*pow(rho,penaltyParam-1.0);}
-
+double Topology_SIMP::Penalize(double rho) { return pow(rho,penaltyParam);}
+double Topology_SIMP::dPenalize(double rho) { return penaltyParam*pow(rho,penaltyParam-1.0);}
 
 }
-

@@ -16,20 +16,35 @@ namespace ATO {
 
 */
 
-class TopoTools 
+class Topology 
 {
 
 public:
-  virtual ~TopoTools(){};
+  Topology(const Teuchos::ParameterList& topoParams);
+  virtual ~Topology(){};
 
   virtual double Penalize(double rho)=0;
   virtual double dPenalize(double rho)=0;
+
+  const std::string& getCentering(){return centering;}
+  const std::string& getName(){return name;}
+  const Teuchos::Array<std::string>& getFixedBlocks(){return fixedBlocks;}
+  double getInitialValue(){return initValue;}
+  double getMaterialValue(){return materialValue;}
+  double getVoidValue(){return voidValue;}
+protected:
+  std::string centering;
+  std::string name;
+  double initValue;
+  double materialValue;
+  double voidValue;
+  Teuchos::Array<std::string> fixedBlocks;
 };
 
 
-class TopoTools_SIMP : public TopoTools {
+class Topology_SIMP : public Topology {
  public:
-  TopoTools_SIMP(const Teuchos::ParameterList& topoParams);
+  Topology_SIMP(const Teuchos::ParameterList& topoParams);
   double Penalize(double rho);
   double dPenalize(double rho);
 private:
@@ -37,9 +52,9 @@ private:
 };
 
 
-class TopoToolsFactory {
+class TopologyFactory {
 public:
-  Teuchos::RCP<TopoTools> create(const Teuchos::ParameterList& topoParams);
+  Teuchos::RCP<Topology> create(const Teuchos::ParameterList& topoParams);
 };
 
 

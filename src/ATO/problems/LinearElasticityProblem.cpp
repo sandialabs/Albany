@@ -6,6 +6,7 @@
 #include "LinearElasticityProblem.hpp"
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
+#include "ATO_TopoTools.hpp"
 
 Albany::LinearElasticityProblem::
 LinearElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -18,8 +19,11 @@ LinearElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   std::string& method = params->get("Name", "Linear Elasticity ");
   *out << "Problem Name = " << method << std::endl;
 
-// the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
-//written by IK, Feb. 2012
+//  material_db_ = LCM::createMaterialDatabase(params, comm);
+
+// the following function returns the problem information required 
+// for setting the rigid body modes (RBMs) for elasticity problems
+// written by IK, Feb. 2012
 
   int numScalar = 0;
   int nullSpaceDim = 0;
@@ -44,21 +48,22 @@ buildProblem(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
   Albany::StateManager& stateMgr)
 {
-  /* Construct All Phalanx Evaluators */
-  TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
 
-  fm.resize(1);
+  int physSets = meshSpecs.size();
+  *out << "Num MeshSpecs: " << physSets << '\n';
+  fm.resize(physSets);
+  bool haveSidesets = false;
 
-  fm[0]  = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, BUILD_RESID_FM, 
-		  Teuchos::null);
+  *out << "Calling LinearElasticityProblem::buildEvaluators" << '\n';
+  for (int ps = 0; ps < physSets; ++ps) {
+    fm[ps] = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+    buildEvaluators(*fm[ps], *meshSpecs[ps], stateMgr, BUILD_RESID_FM,
+        Teuchos::null);
+    if (meshSpecs[ps]->ssNames.size() > 0) haveSidesets = true;
+  }
+  constructDirichletEvaluators(*meshSpecs[0]);
 
-  if(meshSpecs[0]->nsNames.size() > 0) // Build a nodeset evaluator if nodesets are present
-
-    constructDirichletEvaluators(*meshSpecs[0]);
-
-  if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
-
+  if( haveSidesets )
     constructNeumannEvaluators(meshSpecs[0]);
 
    setupTopOpt(meshSpecs,stateMgr);
@@ -159,9 +164,7 @@ Albany::LinearElasticityProblem::constructNeumannEvaluators(
    condNames[1] = "dudn";
    condNames[2] = "P";
 
-   nfm.resize(1); // Elasticity problem only has one element block
-
-   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+   nfm = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
                                           condNames, offsets, dl,
                                           this->params, this->paramLib);
 
@@ -177,7 +180,11 @@ Albany::LinearElasticityProblem::getValidProblemParameters() const
   validPL->set<double>("Elastic Modulus", 0.0);
   validPL->set<double>("Poissons Ratio", 0.0);
 
-  validPL->sublist("Topology", false, "");
+  Teuchos::RCP<ATO::Topology> emptyTopo;
+  emptyTopo = Teuchos::null;
+  validPL->set<Teuchos::RCP<ATO::Topology> >("Topology", emptyTopo);
+
+//  validPL->sublist("Topology", false, "");
   validPL->sublist("Objective Aggregator", false, "");
 
   return validPL;

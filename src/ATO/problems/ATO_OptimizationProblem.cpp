@@ -8,6 +8,7 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Epetra_Export.h"
 #include "Adapt_NodalDataBlock.hpp"
+#include "ATO_TopoTools.hpp"
 
 /******************************************************************************/
 ATO::OptimizationProblem::
@@ -62,7 +63,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
   int numWorksets = wsElNodeID.size();
 
 
-  if( topoCentering == "Element" ){
+  if( topology->getCentering() == "Element" ){
     int wsOffset = 0;
     for(int ws=0; ws<numWorksets; ws++){
   
@@ -100,7 +101,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
       }
     }
   } else 
-  if( topoCentering == "Node" ){
+  if( topology->getCentering() == "Node" ){
     Teuchos::RCP<const Epetra_Map> nodeMap = disc->getNodeMap();
     for(int ws=0; ws<numWorksets; ws++){
   
@@ -167,10 +168,8 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
   meshSpecs=_meshSpecs; 
   stateMgr=&_stateMgr;
 
-  Teuchos::ParameterList& topoParams = params->get<Teuchos::ParameterList>("Topology");
-  topoName = topoParams.get<std::string>("Topology Name");
-  topoCentering = topoParams.get<std::string>("Centering");
-  double initValue = topoParams.get<double>("Initial Value");
+  topology = params->get<Teuchos::RCP<Topology> >("Topology");
+  double initValue = topology->getInitialValue();
 
   Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
   std::string derName = aggParams.get<std::string>("dFdTopology Name");
@@ -214,18 +213,18 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     stateMgr->registerStateVariable(objName, dl->workset_scalar, meshSpecs[i]->ebName, 
                                    "scalar", 0.0, /*registerOldState=*/ false, true);
 
-    if( topoCentering == "Element" ){
-      stateMgr->registerStateVariable(topoName, dl->cell_scalar, meshSpecs[i]->ebName, 
+    if( topology->getCentering() == "Element" ){
+      stateMgr->registerStateVariable(topology->getName(), dl->cell_scalar, meshSpecs[i]->ebName, 
                                      "scalar", initValue, /*registerOldState=*/ false, true);
       stateMgr->registerStateVariable(derName, dl->cell_scalar, meshSpecs[i]->ebName, 
                                      "scalar", initValue, /*registerOldState=*/ false, true);
     } else
-    if( topoCentering == "Node" ){
+    if( topology->getCentering() == "Node" ){
       stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
                                      "scalar", initValue, /*registerOldState=*/ false, false);
-      stateMgr->registerStateVariable(topoName, dl->node_scalar, meshSpecs[i]->ebName, 
+      stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, meshSpecs[i]->ebName, 
                                      "scalar", initValue, /*registerOldState=*/ false, false);
-      stateMgr->registerStateVariable(topoName+"_node", dl->node_node_scalar, "all",
+      stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
                                      "scalar", initValue, /*registerOldState=*/ false, true);
     }
 
@@ -246,6 +245,20 @@ ATO::OptimizationProblem::InitTopOpt()
         coords = disc->getCoords();
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
     wsElNodeEqID = disc->getWsElNodeEqID();
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    wsElNodeID = disc->getWsElNodeID();
+
+  Teuchos::RCP<const Epetra_BlockMap>
+    overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMap();
+
+
+
+  const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
+  const Teuchos::Array<std::string>& fixedBlocks = topology->getFixedBlocks();
+
+
+  Albany::StateArrays& stateArrays = stateMgr->getStateArrays();
+  Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
 
   int numWorksets = wsElNodeEqID.size();
   Intrepid::FieldContainer<double> jacobian;
@@ -277,9 +290,30 @@ ATO::OptimizationProblem::InitTopOpt()
     Intrepid::FunctionSpaceTools::computeCellMeasure<double>
      (weighted_measure[ws], jacobian_det, refWeights[physIndex]);
 
+    // initialize topology of fixed blocks to have material
+    if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
+      double matVal = topology->getMaterialValue();
+      Albany::MDArray& wsTopo = dest[ws][topology->getName()];
+      if( topology->getCentering() == "Node" ){
+        int numCells = wsTopo.dimension(0);
+        int numNodes = wsTopo.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
+            wsTopo(cell,node) = matVal;
+          }
+      } else
+      if( topology->getCentering() == "Element" ){
+        int wsSize = wsTopo.size();
+        for(int i=0; i<wsSize; i++)
+          wsTopo(i) = matVal;
+      }
+     
+    }
 
   }
-  if( topoCentering == "Node" ){
+  if( topology->getCentering() == "Node" ){
     Teuchos::RCP<const Epetra_BlockMap>
       overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMapE();
     Teuchos::RCP<const Epetra_BlockMap>

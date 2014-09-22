@@ -48,8 +48,6 @@ namespace ATO {
 
   protected:
 
-    std::string topoName;
-    std::string topoCentering;
     std::string dFdpName;
     std::string FName;
     static const std::string className;
@@ -63,7 +61,7 @@ namespace ATO {
     Teuchos::RCP< PHX::Tag<ScalarT> > stiffness_objective_tag;
     Albany::StateManager* pStateMgr;
 
-    Teuchos::RCP<TopoTools> topoTools;
+    Teuchos::RCP<Topology> topology;
 
   };
 
@@ -71,8 +69,7 @@ template<typename EvalT, typename Traits>
 class StiffnessObjective
    : public StiffnessObjectiveBase<EvalT, Traits> {
 
-   using StiffnessObjectiveBase<EvalT,Traits>::topoName;
-   using StiffnessObjectiveBase<EvalT,Traits>::topoCentering;
+   using StiffnessObjectiveBase<EvalT,Traits>::topology;
    using StiffnessObjectiveBase<EvalT,Traits>::dFdpName;
    using StiffnessObjectiveBase<EvalT,Traits>::FName;
    using StiffnessObjectiveBase<EvalT,Traits>::className;
@@ -82,7 +79,6 @@ class StiffnessObjective
    using StiffnessObjectiveBase<EvalT,Traits>::BF;
    using StiffnessObjectiveBase<EvalT,Traits>::stiffness_objective_tag;
    using StiffnessObjectiveBase<EvalT,Traits>::pStateMgr;
-   using StiffnessObjectiveBase<EvalT,Traits>::topoTools;
 
 public:
   StiffnessObjective(Teuchos::ParameterList& p,
@@ -106,8 +102,7 @@ template<typename Traits>
 class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
    : public StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits> {
 
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topoName;
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topoCentering;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topology;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpName;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::FName;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::className;
@@ -117,7 +112,6 @@ class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::BF;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::stiffness_objective_tag;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::pStateMgr;
-   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topoTools;
 
 public:
   StiffnessObjective(Teuchos::ParameterList& p,

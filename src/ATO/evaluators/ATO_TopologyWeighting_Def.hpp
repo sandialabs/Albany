@@ -18,13 +18,10 @@ TopologyWeighting(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl) :
 BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 {
-  const Teuchos::ParameterList& topoParams = p.get<Teuchos::ParameterList>("Topology");
 
-  ATO::TopoToolsFactory topoFactory;
-  topoTools = topoFactory.create(topoParams);
-
-  topoName = topoParams.get<std::string>("Topology Name");
-  topoCentering = topoParams.get<std::string>("Centering");
+  topology = p.get<Teuchos::RCP<Topology> >("Topology");
+  topoName = topology->getName();
+  topoCentering = topology->getCentering();
 
   std::string strLayout = p.get<std::string>("Variable Layout");
  
@@ -84,7 +81,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     if( size == 3 ){
       for(int cell=0; cell<dims[0]; cell++){
-        double P = topoTools->Penalize(topo(cell));
+        double P = topology->Penalize(topo(cell));
         for(int qp=0; qp<dims[1]; qp++)
           for(int i=0; i<dims[2]; i++)
             weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
@@ -92,7 +89,7 @@ evaluateFields(typename Traits::EvalData workset)
     } else
     if( size == 4 ){
       for(int cell=0; cell<dims[0]; cell++){
-        double P = topoTools->Penalize(topo(cell));
+        double P = topology->Penalize(topo(cell));
         for(int qp=0; qp<dims[1]; qp++)
           for(int i=0; i<dims[2]; i++)
             for(int j=0; j<dims[3]; j++)
@@ -118,7 +115,7 @@ evaluateFields(typename Traits::EvalData workset)
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
-          ScalarT P = topoTools->Penalize(topoVal);
+          ScalarT P = topology->Penalize(topoVal);
           for(int i=0; i<numDims; i++)
             weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
         }
@@ -130,7 +127,7 @@ evaluateFields(typename Traits::EvalData workset)
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
-          ScalarT P = topoTools->Penalize(topoVal);
+          ScalarT P = topology->Penalize(topoVal);
           for(int i=0; i<numDims; i++)
             for(int j=0; j<numDims; j++)
               weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);
