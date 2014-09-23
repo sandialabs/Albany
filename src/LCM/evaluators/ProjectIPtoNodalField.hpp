@@ -88,7 +88,6 @@ protected:
   Albany::StateManager* p_state_mgr_;
 
   Teuchos::RCP<Tpetra_MultiVector> source_load_vector_;
-  Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector_;
 
   Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder_;
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory_;

@@ -2280,17 +2280,8 @@ void Albany::STKDiscretization::meshToGraph () {
   // end find_adjacency
   
   nodalGraph->fillComplete();
-
-  // Create Owned graph by exporting overlap with known row map
-  Teuchos::RCP<Tpetra_CrsGraph> localNodeGraph = Teuchos::rcp(new Tpetra_CrsGraph(node_mapT, 10));
-
-  // Create non-overlapped matrix using two maps and export object
-  Teuchos::RCP<Tpetra_Export> nodeExporter = Teuchos::rcp(new Tpetra_Export(overlap_node_mapT, node_mapT));
-  localNodeGraph->doExport(*nodalGraph, *nodeExporter, Tpetra::INSERT);
-  localNodeGraph->fillComplete();
-
   // Pass the graph RCP to the nodal data block
-  stkMeshStruct->nodal_data_base->updateNodalGraph(localNodeGraph);
+  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
 }
 
 void

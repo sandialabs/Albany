@@ -14,6 +14,7 @@
 #include <Thyra_TpetraLinearOp.hpp>
 #include "Thyra_LinearOpWithSolveBase.hpp"
 
+//#undef ALBANY_IFPACK2
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
@@ -43,8 +44,8 @@ Teuchos::RCP<Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters ()
   Teuchos::RCP<Teuchos::ParameterList> valid_pl =
     rcp(new Teuchos::ParameterList("Valid ProjectIPtoNodalField Params"));;
 
-  // Dont validate the solver parameters used in the projection solve - let Stratimikos do it
-
+  // Don't validate the solver parameters used in the projection solve; let
+  // Stratimikos do it.
   valid_pl->sublist("Solver Options").disableRecursiveValidation();
 
   valid_pl->set<std::string>("Name", "", "Name of field Evaluator");
@@ -94,6 +95,8 @@ void setDefaultSolverParameters (Teuchos::ParameterList& pl)
 
   Teuchos::ParameterList& ifpack_settings = ifpack_types.sublist("Ifpack2 Settings");
   ifpack_settings.set<int>("fact: iluk level-of-fill", 0);
+#else
+  pl.set<std::string>("Preconditioner Type", "None");
 #endif
 }
 
@@ -235,11 +238,9 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   output_to_exodus_ = plist->get<bool>("Output to File", true);
 
   //! number of quad points per cell and dimension
-  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
-  Teuchos::RCP<PHX::DataLayout> cell_dl = dl->cell_scalar;
-  Teuchos::RCP<PHX::DataLayout> node_dl = dl->node_qp_vector;
-  Teuchos::RCP<PHX::DataLayout> vert_vector_dl = dl->vertices_vector;
+  const Teuchos::RCP<PHX::DataLayout>& vector_dl = dl->qp_vector;
+  const Teuchos::RCP<PHX::DataLayout>& node_dl = dl->node_qp_vector;
+  const Teuchos::RCP<PHX::DataLayout>& vert_vector_dl = dl->vertices_vector;
   num_pts_ = vector_dl->dimension(1);
   num_dims_ = vector_dl->dimension(2);
   num_nodes_ = node_dl->dimension(1);
@@ -298,13 +299,14 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
 #ifdef ALBANY_IFPACK2
   {
     typedef Thyra::PreconditionerFactoryBase<ST> Base;
-    typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+    typedef Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix> Impl;
 
-    this->linearSolverBuilder_.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+    this->linearSolverBuilder_.setPreconditioningStrategyFactory(
+      Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
   }
 #endif // IFPACK2
 
-  {
+  { // Send parameters to the solver.
     Teuchos::RCP<Teuchos::ParameterList> solver_list =
       Teuchos::rcp(new Teuchos::ParameterList);
     // Use what has been provided.
@@ -352,12 +354,11 @@ ProjectIPtoNodalField (Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Lay
   if (!pl->getPtr<std::string>("Mass Matrix Type"))
     pl->set<std::string>("Mass Matrix Type", "Full", "Full or Lumped");
 
-  {
+  { // Create the mass matrix of the desired type.
     EMassMatrixType::Enum mass_matrix_type;
     const std::string& mmstr = pl->get<std::string>("Mass Matrix Type");
     try {
-      mass_matrix_type =
-        EMassMatrixType::fromString(mmstr);
+      mass_matrix_type = EMassMatrixType::fromString(mmstr);
     } catch (const Teuchos::Exceptions::InvalidParameterValue& e) {
       *Teuchos::VerboseObjectBase::getDefaultOStream()
         << "Warning: Mass Matrix Type was set to " << mmstr
@@ -377,24 +378,16 @@ preEvaluate (typename Traits::PreEvalData workset)
     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   node_data->initializeVectors(0.0);
 
-  Teuchos::RCP<Tpetra_CrsGraph> currentGraph =
+  Teuchos::RCP<Tpetra_CrsGraph> current_graph =
     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
 
-  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getLocalMap(); // node_data->getOverlapMap();
-
-  if (Teuchos::is_null(this->mass_matrix_->matrix()) ||
-      !currentGraph->checkSizes(*this->mass_matrix_->matrix()->getCrsGraph())){
-    // reallocate the mass matrix
-    this->mass_matrix_->matrix() = Teuchos::rcp(new Tpetra_CrsMatrix(currentGraph));
-    this->source_load_vector_ = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, true));
-    this->node_projected_ip_vector_ = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, false));
-  }
-  else {
-    this->mass_matrix_->matrix()->resumeFill();
-    // Zero the solution and mass matrix in preparation for summation / solution operations
-    this->mass_matrix_->matrix()->setAllToScalar(0.0);
-    this->source_load_vector_->putScalar(0.0);
-  }
+  // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
+  // a version used for linear algebra having a nonoverlapping row map, we can't
+  // just resumeFill. source_load_vector_ also alternates between overlapping
+  // and nonoverlapping maps and so must be reallocated.
+  this->mass_matrix_->matrix() = Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
+  this->source_load_vector_ = Teuchos::rcp(
+    new Tpetra_MultiVector(current_graph->getRowMap(), this->num_vecs_, true));
 }
 
 //------------------------------------------------------------------------------
@@ -479,17 +472,51 @@ postEvaluate (typename Traits::PostEvalData workset)
     out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Note: we are in postEvaluate so all PEs call this
-
-  // Get the node data vector container
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-
   this->mass_matrix_->matrix()->fillComplete();
+
+  // Right now, source_load_vector_ and mass_matrix_->matrix() have the same
+  // overlapping (row) map.
+  //   1. If we're not using a preconditioner, then we could fillComplete the
+  // mass matrix with valid 1-1 domain and range maps, export
+  // source_load_vector_ to b, where b has the mass matrix's range map, and
+  // proceed. The linear algebra using the matrix would be limited to
+  // matrix-vector products, which would use these valid range and domain maps.
+  //   2. However, we want to use Ifpack2, and Ifpack2 assumes the row map is
+  // nonoverlapping. (This assumption makes sense because of the type of
+  // operations Ifpack2 performs.) Hence I export mass matrix to a new matrix
+  // having nonoverlapping row and col maps. As in case 1, I also have to create
+  // a compatible b.
+  {
+    // Get overlapping and nonoverlapping maps.
+    const Teuchos::RCP<const Tpetra_CrsMatrix>&
+      mm_ovl = this->mass_matrix_->matrix();
+    const Teuchos::RCP<const Tpetra_Map> ovl_map = mm_ovl->getRowMap();
+    const Teuchos::RCP<const Tpetra_Map> map = Tpetra::createOneToOne(ovl_map);
+    // Export the mass matrix.
+    Teuchos::RCP<Tpetra_Export>
+      e = Teuchos::rcp(new Tpetra_Export(ovl_map, map));
+    Teuchos::RCP<Tpetra_CrsMatrix>
+      mm = rcp(new Tpetra_CrsMatrix(map, mm_ovl->getGlobalMaxNumRowEntries()));
+    mm->doExport(*mm_ovl, *e, Tpetra::ADD);
+    mm->fillComplete();
+    // We don't need the assemble form of the mass matrix any longer.
+    this->mass_matrix_->matrix() = mm;
+    // Now export source_load_vector_.
+    Teuchos::RCP<Tpetra_MultiVector> slv = rcp(
+      new Tpetra_MultiVector(mm->getRangeMap(),
+                             this->source_load_vector_->getNumVectors()));
+    slv->doExport(*this->source_load_vector_, *e, Tpetra::ADD);
+    // Don't need the assemble form of the source_load_vector_ either.
+    this->source_load_vector_ = slv;
+  }
+  // Create x in A x = b.
+  Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector = rcp(
+    new Tpetra_MultiVector(this->mass_matrix_->matrix()->getDomainMap(),
+                           this->source_load_vector_->getNumVectors()));
 
   // Do the solve
   // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
-
-  const Teuchos::RCP<Tpetra::Operator<ST, LO, GO, KokkosNode> >
+  const Teuchos::RCP<Tpetra_Operator>
     tpetra_A = this->mass_matrix_->matrix();
 
   const Teuchos::RCP<Thyra::LinearOpBase<ST> > A =
@@ -500,41 +527,36 @@ postEvaluate (typename Traits::PostEvalData workset)
   Teuchos::ArrayView<MT> norm_res = Teuchos::arrayViewFromVector(norm_res_vec);
   Teuchos::ArrayView<MT> norm_b = Teuchos::arrayViewFromVector(norm_b_vec);
 
-  // Whether the linear solver succeeded.
-  // (this will be set during the residual check at the end)
-  bool success = true;
-  const MT maxResid = 1e-5;
-
   // Create a BelosLinearOpWithSolve object from the Belos LOWS factory.
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST> >
     nsA = this->lowsFactory_->createOp();
 
   // Initialize the BelosLinearOpWithSolve object with the Thyra linear operator.
-  Thyra::initializeOp<ST>( *this->lowsFactory_, A, nsA.ptr() );
+  Thyra::initializeOp<ST>(*this->lowsFactory_, A, nsA.ptr());
 
-  this->node_projected_ip_vector_->putScalar(0.0);
+  node_projected_ip_vector->putScalar(0.0);
 
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
-    x = Thyra::createMultiVector(this->node_projected_ip_vector_);
+    x = Thyra::createMultiVector(node_projected_ip_vector);
 
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
     b = Thyra::createMultiVector(this->source_load_vector_);
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
-  Thyra::norms_2( *b, norm_b );
+  Thyra::norms_2(*b, norm_b);
   bool b_is_zero = true; 
   *out << "Norm of the b coming in" << std::endl;
   for (int i=0; i<this->num_vecs_; ++i) {
-    *out << "b " << i+1 << " : "
-	 << std::setw(16) << std::right << norm_b[i] << std::endl;
+    *out << "b " << i+1 << " : " << std::setw(16) << std::right << norm_b[i] << std::endl;
     if(norm_b[i] > 1.0e-16) b_is_zero = false;
   }
-  if(b_is_zero) return;
+  if (b_is_zero) return;
 
   // Perform solve using the linear operator to get the approximate solution of Ax=b,
   // where b is the right-hand side and x is the left-hand side.
 
-  Thyra::SolveStatus<ST> solveStatus = Thyra::solve( *nsA, Thyra::NOTRANS, *b, x.ptr() );
+  Thyra::SolveStatus<ST>
+    solveStatus = Thyra::solve(*nsA, Thyra::NOTRANS, *b, x.ptr());
 
   // Print out status of solve.
     *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
@@ -544,36 +566,43 @@ postEvaluate (typename Traits::PostEvalData workset)
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
     y = Thyra::createMembers(x->range(), x->domain());
 
-  Thyra::norms_2( *x, norm_b );
+  Thyra::norms_2(*x, norm_b);
   *out << "Norm of the x going out" << std::endl;
   for (int i=0; i<this->num_vecs_; ++i) {
     *out << "RHS " << i+1 << " : "
-	 << std::setw(16) << std::right << norm_b[i] << std::endl;
+         << std::setw(16) << std::right << norm_b[i] << std::endl;
   }
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
-  Thyra::norms_2( *b, norm_b );
+  Thyra::norms_2(*b, norm_b);
 
   // Compute y=A*x, where x is the solution from the linear solver.
   A->apply(Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0);
 
   // Compute A*x-b = y-b
-  Thyra::update( -one, *b, y.ptr() );
+  Thyra::update(-one, *b, y.ptr());
   Thyra::norms_2(*y, norm_res);
 
   // Print out the final relative residual norms.
-  MT rel_res = 0.0;
   *out << "Final relative residual norms" << std::endl;
-  for (int i=0; i<this->num_vecs_; ++i) {
-    rel_res = norm_res[i]/norm_b[i];
-    if (rel_res > maxResid)
-      success = false;
+  for (int i = 0; i < this->num_vecs_; ++i) {
+    const double rel_res = norm_res[i]/norm_b[i];
     *out << "RHS " << i+1 << " : "
-	 << std::setw(16) << std::right << rel_res << std::endl;
+         << std::setw(16) << std::right << rel_res << std::endl;
   }
 
-  // Store the overlapped vector data back in stk in the field "field_name"
-  node_data->saveNodalDataState(this->node_projected_ip_vector_);
+  { // Store the overlapped vector data back in stk in the field "field_name".
+    const Teuchos::RCP<const Tpetra_Map>
+      ovl_map = this->mass_matrix_->matrix()->getColMap(),
+      map = node_projected_ip_vector->getMap();
+    Teuchos::RCP<Tpetra_MultiVector> npiv = rcp(
+      new Tpetra_MultiVector(ovl_map,
+                             node_projected_ip_vector->getNumVectors()));
+    Teuchos::RCP<Tpetra_Import>
+      im = Teuchos::rcp(new Tpetra_Import(map, ovl_map));
+    npiv->doImport(*node_projected_ip_vector, *im, Tpetra::ADD);
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+      getNodalDataVector()->saveNodalDataState(npiv);
+  }
 }
-
 } // namespace LCM
