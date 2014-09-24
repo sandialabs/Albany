@@ -44,9 +44,6 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   outputInterval(0),
   meshOutput(*fmdbMeshStruct_, commT_)
 {
-  //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
@@ -565,8 +562,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
   Teuchos::Array<GO> indices(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; ++i)
     indices[i] = apf::getNumber(globalNumbering,ownedNodes[i]);
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                                indices, commT, nodeT);
+  node_mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
     fmdbMeshStruct->nodal_data_base->resizeLocalMap(indices, commT);
@@ -576,8 +572,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
       GO gid = apf::getNumber(globalNumbering,ownedNodes[i]);
       indices[getDOF(i,j)] = getDOF(gid,j);
     }
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                            indices, commT, nodeT);
+  mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
 #ifdef ALBANY_SCOREC_EPETRA
   map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
 #endif
@@ -600,10 +595,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
     for (int j=0; j < neq; ++j)
       dofIndices[getDOF(i,j)] = getDOF(global,j);
   }
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                              nodeIndices, commT, nodeT);
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                              dofIndices, commT, nodeT);
+  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(nodeIndices, commT);
+  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(dofIndices, commT);
 #ifdef ALBANY_SCOREC_EPETRA
   overlap_map = Teuchos::rcp(new Epetra_Map(-1, dofIndices.size(),
 					    &(dofIndices[0]), 0, *comm));

@@ -2061,11 +2061,9 @@ QCAD::Solver::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appPara
     
   //! Create solver and application objects via solver factory
   RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
   RCP<const Tpetra_Vector> initial_guessT;
   if (Teuchos::nonnull(initial_guess)) {
-    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, mpiCommT, nodeT);
+    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, mpiCommT);
   }
   ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
 

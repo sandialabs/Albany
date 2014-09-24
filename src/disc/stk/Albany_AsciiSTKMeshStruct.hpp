@@ -75,8 +75,6 @@ namespace Albany {
     Teuchos::RCP<Tpetra_Map> basal_face_mapT; //basalface map
 
     protected: 
-    //Kokkos node 
-    Teuchos::RCP<KokkosNode> nodeT;
   };
 
 }

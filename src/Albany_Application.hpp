@@ -854,7 +854,6 @@ namespace Albany {
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos_Comm> commT;
-    Teuchos::RCP<KokkosNode> nodeT;
 
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;

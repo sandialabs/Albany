@@ -79,8 +79,6 @@ class NodalDataVector {
 
     Teuchos::RCP<Tpetra_Import> importer;
 
-    Teuchos::RCP<KokkosNode> node;
-
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
     NodeFieldSizeVector& nodeVectorLayout;

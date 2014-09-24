@@ -19,10 +19,6 @@ Adapt::NodalDataVector::NodalDataVector(const Teuchos::RCP<Albany::NodeFieldCont
   mapsHaveChanged(false)
 {
 
-  //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
-  Teuchos::ParameterList kokkosNodeParams;
-  node = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-
 }
 
 void
@@ -32,8 +28,7 @@ Adapt::NodalDataVector::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeG
   overlap_node_map = Teuchos::rcp(new Tpetra_Map(overlap_nodeGIDs.size(),
                             overlap_nodeGIDs,
                             Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
-                            comm_,
-                            node));
+                            comm_));
 
   // Build the vector and accessors
   overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
@@ -49,8 +44,7 @@ Adapt::NodalDataVector::resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
   local_node_map = Teuchos::rcp(new Tpetra_Map(local_nodeGIDs.size(),
                             local_nodeGIDs,
                             Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
-                            comm_,
-                            node));
+                            comm_));
 
 
   // Build the vector and accessors

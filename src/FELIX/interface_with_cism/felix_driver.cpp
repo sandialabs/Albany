@@ -30,7 +30,6 @@
 
 Teuchos::RCP<Albany::CismSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Teuchos_Comm> mpiCommT;
-Teuchos::RCP<KokkosNode> nodeT;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
@@ -134,8 +133,6 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //MPI_COMM_size (comm, &cism_process_count); 
     //MPI_COMM_rank (comm, &my_cism_rank); 
     mpiCommT = Albany::createTeuchosCommFromMpiComm(comm); 
-    Teuchos::ParameterList kokkosNodeParams;
-    nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   
     //IK, 4/4/14: get verbosity level specified in CISM *.config file
     debug_output_verbosity = *(ftg_ptr -> getLongVar("debug_output_verbosity","options"));
@@ -252,7 +249,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //global_node_id_owned_map_Ptr is 1-based, so node_map is 1-based
     Teuchos::ArrayView<const GO> global_node_id_owned_map_AV = Teuchos::arrayView(global_node_id_owned_map_Ptr, nNodes); 
     //Distribute the elements according to the global element IDs
-    node_mapT = Teuchos::rcp(new Tpetra_Map(nNodes, global_node_id_owned_map_AV, 0, mpiCommT, nodeT)); 
+    node_mapT = Teuchos::rcp(new Tpetra_Map(nNodes, global_node_id_owned_map_AV, 0, mpiCommT)); 
 
 
 

@@ -33,19 +33,19 @@
 //#define OUTPUT_TO_SCREEN
 
 
-//Constructor for meshes read from ASCII file 
+//Constructor for meshes read from ASCII file
 Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
-                                             const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                                             const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false)
 {
    int numProc = commT->getSize(); //total number of processors
-   contigIDs = params->get("Contiguous IDs", true); 
-   std::cout << "Number of processors: " << numProc << std::endl; 
+   contigIDs = params->get("Contiguous IDs", true);
+   std::cout << "Number of processors: " << numProc << std::endl;
    //names of files giving the mesh
-   char meshfilename[100]; 
+   char meshfilename[100];
    char shfilename[100];
    char confilename[100];
    char bffilename[100];
@@ -67,12 +67,12 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
      sprintf(tempfilename, "%s", "temp");
      sprintf(betafilename, "%s", "beta");
    }
-   else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on 
+   else { //parallel run or serial run with non-contiguous global IDs - proc # is appended to file name to indicate what processor the mesh piece is on
 #ifdef OUTPUT_TO_SCREEN
      if ((numProc == 1) & (contigIDs == false))
         std::cout << "1 processor run with non-contiguous IDs; bfIDs0, geIDs0, gnIDs0 files required." << std::endl;
 #endif
-     int suffix = commT->getRank(); //current processor number 
+     int suffix = commT->getRank(); //current processor number
      sprintf(meshfilename, "%s%i", "xyz", suffix);
      sprintf(shfilename, "%s%i", "sh", suffix);
      sprintf(confilename, "%s%i", "eles", suffix);
@@ -86,74 +86,74 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
    }
 
     //read in coordinates of mesh -- right now hard coded for 3D
-    //assumes mesh file is called "xyz" and its first row is the number of nodes  
+    //assumes mesh file is called "xyz" and its first row is the number of nodes
     FILE *meshfile = fopen(meshfilename,"r");
     if (meshfile == NULL) { //check if coordinates file exists
       *out << "Error in AsciiSTKMeshStruct: coordinates file " << meshfilename <<" not found!"<< std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
           std::endl << "Error in AsciiSTKMeshStruct: coordinates file " << meshfilename << " not found!"<< std::endl);
     }
-    double temp; 
-    fseek(meshfile, 0, SEEK_SET); 
-    fscanf(meshfile, "%lf", &temp); 
-    NumNodes = int(temp); 
+    double temp;
+    fseek(meshfile, 0, SEEK_SET);
+    fscanf(meshfile, "%lf", &temp);
+    NumNodes = int(temp);
 #ifdef OUTPUT_TO_SCREEN
-    *out << "numNodes: " << NumNodes << std::endl;  
+    *out << "numNodes: " << NumNodes << std::endl;
 #endif
-    xyz = new double[NumNodes][3]; 
+    xyz = new double[NumNodes][3];
     char buffer[100];
-    fgets(buffer, 100, meshfile); 
+    fgets(buffer, 100, meshfile);
     for (int i=0; i<NumNodes; i++){
-      fgets(buffer, 100, meshfile); 
-      sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]); 
-      //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
+      fgets(buffer, 100, meshfile);
+      sscanf(buffer, "%lf %lf %lf", &xyz[i][0], &xyz[i][1], &xyz[i][2]);
+      //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
      }
-    //read in surface height data from mesh 
-    //assumes surface height file is called "sh" and its first row is the number of nodes  
+    //read in surface height data from mesh
+    //assumes surface height file is called "sh" and its first row is the number of nodes
     FILE *shfile = fopen(shfilename,"r");
     have_sh = false;
     if (shfile != NULL) have_sh = true;
     if (have_sh) {
-      fseek(shfile, 0, SEEK_SET); 
-      fscanf(shfile, "%lf", &temp); 
+      fseek(shfile, 0, SEEK_SET);
+      fscanf(shfile, "%lf", &temp);
       int NumNodesSh = int(temp);
 #ifdef OUTPUT_TO_SCREEN
       *out << "NumNodesSh: " << NumNodesSh<< std::endl;
-#endif 
-      if (NumNodesSh != NumNodes) { 
+#endif
+      if (NumNodesSh != NumNodes) {
            *out << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes <<", numNodes in sh = "<< NumNodesSh  << std::endl;
           TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
             std::endl << "Error in AsciiSTKMeshStruct: sh file must have same number nodes as xyz file!  numNodes in xyz = " << NumNodes << ", numNodes in sh = "<< NumNodesSh << std::endl);
       }
-      sh = new double[NumNodes]; 
-      fgets(buffer, 100, shfile); 
+      sh = new double[NumNodes];
+      fgets(buffer, 100, shfile);
       for (int i=0; i<NumNodes; i++){
-        fgets(buffer, 100, shfile); 
-        sscanf(buffer, "%lf", &sh[i]); 
-        //*out << "i: " << i << ", sh: " << sh[i] << std::endl; 
+        fgets(buffer, 100, shfile);
+        sscanf(buffer, "%lf", &sh[i]);
+        //*out << "i: " << i << ", sh: " << sh[i] << std::endl;
        }
      }
      //read in connectivity file -- right now hard coded for 3D hexes
-     //assumes mesh file is called "eles" and its first row is the number of elements  
-     FILE *confile = fopen(confilename,"r"); 
+     //assumes mesh file is called "eles" and its first row is the number of elements
+     FILE *confile = fopen(confilename,"r");
      if (confile == NULL) { //check if element connectivity file exists
       *out << "Error in AsciiSTKMeshStruct: element connectivity file " << confilename <<" not found!"<< std::endl;
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
           std::endl << "Error in AsciiSTKMeshStruct: element connectivity file " << confilename << " not found!"<< std::endl);
      }
-     fseek(confile, 0, SEEK_SET); 
-     fscanf(confile, "%lf", &temp); 
-     NumEles = int(temp); 
+     fseek(confile, 0, SEEK_SET);
+     fscanf(confile, "%lf", &temp);
+     NumEles = int(temp);
 #ifdef OUTPUT_TO_SCREEN
      *out << "numEles: " << NumEles << std::endl;
-#endif 
-     eles = new int[NumEles][8]; 
-     fgets(buffer, 100, confile); 
+#endif
+     eles = new int[NumEles][8];
+     fgets(buffer, 100, confile);
      for (int i=0; i<NumEles; i++){
-        fgets(buffer, 100, confile); 
+        fgets(buffer, 100, confile);
         sscanf(buffer, "%i %i %i %i %i %i %i %i", &eles[i][0], &eles[i][1], &eles[i][2], &eles[i][3], &eles[i][4], &eles[i][5], &eles[i][6], &eles[i][7]);
         //*out << "elt # " << i << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
-        //                  << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl; 
+        //                  << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
      }
     //read in basal face connectivity file from ascii file
     //assumes basal face connectivity file is called "bf" and its first row is the number of faces on basal boundary
@@ -161,29 +161,29 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
     have_bf = false;
     if (bffile != NULL) have_bf = true;
     if (have_bf) {
-      fseek(bffile, 0, SEEK_SET); 
-      fscanf(bffile, "%lf", &temp); 
-      NumBasalFaces = int(temp); 
+      fseek(bffile, 0, SEEK_SET);
+      fscanf(bffile, "%lf", &temp);
+      NumBasalFaces = int(temp);
 #ifdef OUTPUT_TO_SCREEN
-      *out << "numBasalFaces: " << NumBasalFaces << std::endl;  
+      *out << "numBasalFaces: " << NumBasalFaces << std::endl;
 #endif
-      bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
-      fgets(buffer, 100, bffile); 
+      bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+      fgets(buffer, 100, bffile);
       for (int i=0; i<NumBasalFaces; i++){
-        fgets(buffer, 100, bffile); 
-        sscanf(buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]); 
-        //*out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
+        fgets(buffer, 100, bffile);
+        sscanf(buffer, "%i %i %i %i %i", &bf[i][0], &bf[i][1], &bf[i][2], &bf[i][3], &bf[i][4]);
+        //*out << "face #:" << bf[i][0] << ", face conn:" << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl;
        }
      }
-     //Create array w/ global element IDs 
+     //Create array w/ global element IDs
      globalElesID = new GO[NumEles];
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
        for (int i=0; i<NumEles; i++) {
-          globalElesID[i] = i; 
+          globalElesID[i] = i;
           //*out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
        }
      }
-     else {//parallel run: read global element IDs from file.  
+     else {//parallel run: read global element IDs from file.
            //This file should have a header like the other files, and length NumEles.
        FILE *geIDsfile = fopen(geIDsfilename,"r");
        if (geIDsfile == NULL) { //check if global element IDs file exists
@@ -200,15 +200,15 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          //*out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
        }
      }
-     //Create array w/ global node IDs 
+     //Create array w/ global node IDs
      globalNodesID = new GO[NumNodes];
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
-       for (int i=0; i<NumNodes; i++) { 
-          globalNodesID[i] = i; 
+       for (int i=0; i<NumNodes; i++) {
+          globalNodesID[i] = i;
           //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
      }
-     else {//parallel run: read global node IDs from file.  
+     else {//parallel run: read global node IDs from file.
            //This file should have a header like the other files, and length NumNodes
        FILE *gnIDsfile = fopen(gnIDsfilename,"r");
        if (gnIDsfile == NULL) { //check if global node IDs file exists
@@ -221,18 +221,18 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        for (int i=0; i<NumNodes; i++){
          fgets(buffer, 100, gnIDsfile);
          sscanf(buffer, "%i ", &globalNodesID[i]);
-         globalNodesID[i] = globalNodesID[i]-1; //subtract 1 b/c global node IDs file assumed to be 1-based not 0-based 
+         globalNodesID[i] = globalNodesID[i]-1; //subtract 1 b/c global node IDs file assumed to be 1-based not 0-based
          //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
      }
      basalFacesID = new GO[NumBasalFaces];
      if ((numProc == 1) & (contigIDs == true)) { //serial run with contiguous global IDs: element IDs are just 0->NumEles-1
-       for (int i=0; i<NumBasalFaces; i++) { 
-          basalFacesID[i] = i; 
+       for (int i=0; i<NumBasalFaces; i++) {
+          basalFacesID[i] = i;
           //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }
      }
-     else {//parallel run: read basal face IDs from file.  
+     else {//parallel run: read basal face IDs from file.
            //This file should have a header like the other files, and length NumBasalFaces
        FILE *bfIDsfile = fopen(bfIDsfilename,"r");
        fseek(bfIDsfile, 0, SEEK_SET);
@@ -244,66 +244,63 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
          //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }
      }
-    //read in flow factor (flwa) data from mesh 
+    //read in flow factor (flwa) data from mesh
     //assumes flow factor file is called "flwa" and its first row is the number of elements in the mesh
     FILE *flwafile = fopen(flwafilename,"r");
     have_flwa = false;
     if (flwafile != NULL) have_flwa = true;
     if (have_flwa) {
-      fseek(flwafile, 0, SEEK_SET); 
-      fscanf(flwafile, "%lf", &temp); 
-      flwa = new double[NumEles]; 
-      fgets(buffer, 100, flwafile); 
+      fseek(flwafile, 0, SEEK_SET);
+      fscanf(flwafile, "%lf", &temp);
+      flwa = new double[NumEles];
+      fgets(buffer, 100, flwafile);
       for (int i=0; i<NumEles; i++){
-        fgets(buffer, 100, flwafile); 
-        sscanf(buffer, "%lf", &flwa[i]); 
-        //*out << "i: " << i << ", flwa: " << flwa[i] << std::endl; 
+        fgets(buffer, 100, flwafile);
+        sscanf(buffer, "%lf", &flwa[i]);
+        //*out << "i: " << i << ", flwa: " << flwa[i] << std::endl;
        }
      }
-    //read in temperature data from mesh 
+    //read in temperature data from mesh
     //assumes temperature file is called "temp" and its first row is the number of elements in the mesh
     FILE *tempfile = fopen(tempfilename,"r");
     have_temp = false;
     if (tempfile != NULL) have_temp = true;
     if (have_temp) {
-      fseek(tempfile, 0, SEEK_SET); 
-      fscanf(tempfile, "%lf", &temp); 
-      temper = new double[NumEles]; 
-      fgets(buffer, 100, tempfile); 
+      fseek(tempfile, 0, SEEK_SET);
+      fscanf(tempfile, "%lf", &temp);
+      temper = new double[NumEles];
+      fgets(buffer, 100, tempfile);
       for (int i=0; i<NumEles; i++){
-        fgets(buffer, 100, tempfile); 
-        sscanf(buffer, "%lf", &temper[i]); 
-        //*out << "i: " << i << ", temp: " << temper[i] << std::endl; 
+        fgets(buffer, 100, tempfile);
+        sscanf(buffer, "%lf", &temper[i]);
+        //*out << "i: " << i << ", temp: " << temper[i] << std::endl;
        }
      }
-    //read in basal friction (beta) data from mesh 
-    //assumes basal friction file is called "beta" and its first row is the number of nodes  
+    //read in basal friction (beta) data from mesh
+    //assumes basal friction file is called "beta" and its first row is the number of nodes
     FILE *betafile = fopen(betafilename,"r");
     have_beta = false;
     if (betafile != NULL) have_beta = true;
     if (have_beta) {
-      fseek(betafile, 0, SEEK_SET); 
-      fscanf(betafile, "%lf", &temp); 
-      beta = new double[NumNodes]; 
-      fgets(buffer, 100, betafile); 
+      fseek(betafile, 0, SEEK_SET);
+      fscanf(betafile, "%lf", &temp);
+      beta = new double[NumNodes];
+      fgets(buffer, 100, betafile);
       for (int i=0; i<NumNodes; i++){
-        fgets(buffer, 100, betafile); 
-        sscanf(buffer, "%lf", &beta[i]); 
-        //*out << "i: " << i << ", beta: " << beta[i] << std::endl; 
+        fgets(buffer, 100, betafile);
+        sscanf(buffer, "%lf", &beta[i]);
+        //*out << "i: " << i << ", beta: " << beta[i] << std::endl;
        }
      }
 
- 
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles); 
-  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes); 
-  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces); 
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT, nodeT)); //Distribute the elements according to the global element IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT, nodeT)); //Distribute the nodes according to the global node IDs 
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT, nodeT)); //Distribute the elements according to the basal face IDs
+  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles);
+  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes);
+  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces);
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); //Distribute the elements according to the global element IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); //Distribute the nodes according to the global node IDs
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); //Distribute the elements according to the basal face IDs
 
-  
+
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
 
@@ -388,13 +385,13 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
 
 Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 {
-  delete [] xyz; 
-  if (have_sh) delete [] sh; 
-  if (have_bf) delete [] bf; 
-  delete [] eles; 
-  delete [] globalElesID; 
+  delete [] xyz;
+  if (have_sh) delete [] sh;
+  if (have_bf) delete [] bf;
+  delete [] eles;
+  delete [] globalElesID;
   delete [] globalNodesID;
-  delete [] basalFacesID; 
+  delete [] basalFacesID;
 }
 
 void
@@ -416,10 +413,10 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
 #ifdef OUTPUT_TO_SCREEN
-  *out << "elem_map # elements: " << elem_mapT->getNodeNumElements() << std::endl; 
+  *out << "elem_map # elements: " << elem_mapT->getNodeNumElements() << std::endl;
   *out << "node_map # elements: " << node_mapT->getNodeNumElements() << std::endl;
-#endif 
-  unsigned int ebNo = 0; //element block #??? 
+#endif
+  unsigned int ebNo = 0; //element block #???
   int sideID = 0;
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
@@ -428,22 +425,22 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
   AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
 
-  if(!surfaceHeight_field) 
+  if(!surfaceHeight_field)
      have_sh = false;
-  if(!flowFactor_field) 
+  if(!flowFactor_field)
      have_flwa = false;
-  if(!temperature_field) 
+  if(!temperature_field)
      have_temp = false;
-  if(!basal_friction_field) 
+  if(!basal_friction_field)
      have_beta = false;
 
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
      const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
-     //std::cout << "elem_GID: " << elem_GID << std::endl; 
+     //std::cout << "elem_GID: " << elem_GID << std::endl;
      stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
-     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh 
+     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
      stk_classic::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), eles[i][0], nodePartVec);
      stk_classic::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), eles[i][1], nodePartVec);
      stk_classic::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), eles[i][2], nodePartVec);
@@ -460,7 +457,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      bulkData->declare_relation(elem, lrnodeb, 5);
      bulkData->declare_relation(elem, urnodeb, 6);
      bulkData->declare_relation(elem, ulnodeb, 7);
-    
+
 
      double* coord;
      int node_GID;
@@ -550,19 +547,19 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        sHeight[0] = sh[node_LID];
      }
      if (have_flwa) {
-       double *flowFactor = stk_classic::mesh::field_data(*flowFactor_field, elem); 
+       double *flowFactor = stk_classic::mesh::field_data(*flowFactor_field, elem);
        //i is elem_LID (element local ID);
-       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;  
-       flowFactor[0] = flwa[i]; 
+       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;
+       flowFactor[0] = flwa[i];
      }
      if (have_temp) {
-       double *temperature = stk_classic::mesh::field_data(*temperature_field, elem); 
+       double *temperature = stk_classic::mesh::field_data(*temperature_field, elem);
        //i is elem_LID (element local ID);
-       //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;  
-       temperature[0] = temper[i]; 
+       //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
+       temperature[0] = temper[i];
      }
      if (have_beta) {
-       double* bFriction; 
+       double* bFriction;
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, llnode);
        node_GID = eles[i][0]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
@@ -601,15 +598,15 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, ulnodeb);
        node_GID = eles[i][7]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
-       bFriction[0] = beta[node_LID]; 
+       bFriction[0] = beta[node_LID];
        }
 #endif
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
-       *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
+       *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl;
        if ( xyz[eles[i][0]][2] == 0.0) {
-          //std::cout << "sideID: " << sideID << std::endl; 
+          //std::cout << "sideID: " << sideID << std::endl;
           singlePartVec[0] = ssPartVec["Basal"];
           stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
           sideID++;
@@ -677,15 +674,15 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
      }
   }
   if (have_bf == true) {
-    *out << "Setting basal surface connectivity from bf file provided..." << std::endl;  
+    *out << "Setting basal surface connectivity from bf file provided..." << std::endl;
     for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
-       sideID = basal_face_mapT->getGlobalElement(i); 
+       sideID = basal_face_mapT->getGlobalElement(i);
        stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
        stk_classic::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
 
        const unsigned int elem_GID = bf[i][0];
-       //std::cout << "elem_GID: " << elem_GID << std::endl; 
+       //std::cout << "elem_GID: " << elem_GID << std::endl;
        stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
        stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  4 /*local side id*/);
@@ -693,7 +690,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        stk_classic::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), bf[i][2], nodePartVec);
        stk_classic::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), bf[i][3], nodePartVec);
        stk_classic::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), bf[i][4], nodePartVec);
-       
+
        bulkData->declare_relation(side, llnode, 0);
        bulkData->declare_relation(side, ulnode, 3);
        bulkData->declare_relation(side, urnode, 2);

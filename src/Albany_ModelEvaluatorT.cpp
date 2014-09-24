@@ -136,9 +136,6 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
   *out << "Number of response vectors  = " << num_response_vecs << std::endl;
 
-  Teuchos::ParameterList kokkosNodeParams;
-  const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
-
   sacado_param_vec.resize(num_param_vecs);
   tpetra_param_vec.resize(num_param_vecs);
   tpetra_param_map.resize(num_param_vecs);

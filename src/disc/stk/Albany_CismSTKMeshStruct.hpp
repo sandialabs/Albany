@@ -102,8 +102,6 @@ namespace Albany {
     int debug_output_verbosity; 
     
     protected: 
-    //Kokkos node 
-    Teuchos::RCP<KokkosNode> nodeT;
   };
 
 }

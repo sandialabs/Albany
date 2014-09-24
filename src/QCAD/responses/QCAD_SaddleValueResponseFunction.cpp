@@ -3055,18 +3055,14 @@ void QCAD::gatherVectorT(std::vector<double>& v, std::vector<double>& gv, Teucho
   double *pvec, zeroSizeDummy = 0;
   pvec = (v.size() > 0) ? &v[0] : &zeroSizeDummy;
 
-  //create KokkosNode object
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-
   Tpetra::global_size_t numGlobalElements = Teuchos::OrdinalTraits<size_t>::invalid(); 
   Tpetra::LocalGlobal lg = Tpetra::GloballyDistributed;
-  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(numGlobalElements, 0, commT, lg, nodeT));
+  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(numGlobalElements, 0, commT, lg));
   Teuchos::ArrayView<ST> pvecView = Teuchos::arrayView(pvec, v.size());  
   Teuchos::RCP<Tpetra_Vector> evT = Teuchos::rcp(new Tpetra_Vector(mapT, pvecView)); 
   int  N = mapT->getGlobalNumElements();
   lg = Tpetra::LocallyReplicated;
-  Teuchos::RCP<Tpetra_Map> lomapT = Teuchos::rcp(new Tpetra_Map(N, 0, commT, lg, nodeT)); //local map
+  Teuchos::RCP<Tpetra_Map> lomapT = Teuchos::rcp(new Tpetra_Map(N, 0, commT, lg)); //local map
 
   gv.resize(N);
   pvec = (gv.size() > 0) ? &gv[0] : &zeroSizeDummy;

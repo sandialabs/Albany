@@ -31,104 +31,101 @@
 
 //Constructor for arrays passed from CISM through Albany-CISM interface
 Albany::CismSTKMeshStruct::CismSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Teuchos_Comm>& commT, 
-                  const double * xyz_at_nodes_Ptr, 
-                  const int * global_node_id_owned_map_Ptr, 
-                  const int * global_element_id_active_owned_map_Ptr, 
-                  const int * global_element_conn_active_Ptr, 
-                  const int *global_basal_face_active_owned_map_Ptr, 
-                  const int * global_basal_face_conn_active_Ptr, 
-                  const double * beta_at_nodes_Ptr, 
-                  const double * surf_height_at_nodes_Ptr, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
+                  const double * xyz_at_nodes_Ptr,
+                  const int * global_node_id_owned_map_Ptr,
+                  const int * global_element_id_active_owned_map_Ptr,
+                  const int * global_element_conn_active_Ptr,
+                  const int *global_basal_face_active_owned_map_Ptr,
+                  const int * global_basal_face_conn_active_Ptr,
+                  const double * beta_at_nodes_Ptr,
+                  const double * surf_height_at_nodes_Ptr,
                   const double * flwa_at_active_elements_Ptr,
-                  const int nNodes, const int nElementsActive, 
-                  const int nCellsActive, const int verbosity) : 
+                  const int nNodes, const int nElementsActive,
+                  const int nCellsActive, const int verbosity) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  hasRestartSol(false), 
-  restartTime(0.0), 
+  hasRestartSol(false),
+  restartTime(0.0),
   periodic(false)
 {
-  if (verbosity == 1 & commT->getRank() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl; 
-  NumNodes = nNodes;  
-  NumEles = nElementsActive; 
+  if (verbosity == 1 & commT->getRank() == 0) std::cout <<"In Albany::CismSTKMeshStruct - double * array inputs!" << std::endl;
+  NumNodes = nNodes;
+  NumEles = nElementsActive;
   NumBasalFaces = nCellsActive;
   debug_output_verbosity = verbosity;
-  if (verbosity == 2) 
-    std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl; 
-  xyz = new double[NumNodes][3]; 
-  eles = new int[NumEles][8]; 
-  bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces) 
-  sh = new double[NumNodes]; 
+  if (verbosity == 2)
+    std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl;
+  xyz = new double[NumNodes][3];
+  eles = new int[NumEles][8];
+  bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+  sh = new double[NumNodes];
   globalNodesID = new GO[NumNodes];
   globalElesID = new GO[NumEles];
   basalFacesID = new GO[NumBasalFaces];
-  flwa = new double[NumEles]; 
-  beta = new double[NumNodes]; 
+  flwa = new double[NumEles];
+  beta = new double[NumNodes];
   //TO DO? pass in temper?  for now, flwa is passed instead of temper
-  //temper = new double[NumEles]; 
-  
+  //temper = new double[NumEles];
+
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
-  else have_sh = false;  
-  if (global_basal_face_active_owned_map_Ptr != NULL) have_bf = true; 
-  else have_bf = false; 
-  if (flwa_at_active_elements_Ptr != NULL) have_flwa = true; 
-  else have_flwa = false; 
-  if (beta_at_nodes_Ptr != NULL) have_beta = true; 
-  else have_beta = false; 
+  else have_sh = false;
+  if (global_basal_face_active_owned_map_Ptr != NULL) have_bf = true;
+  else have_bf = false;
+  if (flwa_at_active_elements_Ptr != NULL) have_flwa = true;
+  else have_flwa = false;
+  if (beta_at_nodes_Ptr != NULL) have_beta = true;
+  else have_beta = false;
 
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
 
   for (int i=0; i<NumNodes; i++){
-    globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;  
-    for (int j=0; j<3; j++) 
-      xyz[i][j] = xyz_at_nodes_Ptr[i + NumNodes*j]; 
-    //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl; 
+    globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;
+    for (int j=0; j<3; j++)
+      xyz[i][j] = xyz_at_nodes_Ptr[i + NumNodes*j];
+    //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
   }
   if (have_sh) {
-    for (int i=0; i<NumNodes; i++) 
-      sh[i] = surf_height_at_nodes_Ptr[i]; 
+    for (int i=0; i<NumNodes; i++)
+      sh[i] = surf_height_at_nodes_Ptr[i];
   }
   if (have_beta) {
     for (int i=0; i<NumNodes; i++) {
-      beta[i] = beta_at_nodes_Ptr[i]; 
-      //*out << "beta[i] " << beta[i] << std::endl; 
+      beta[i] = beta_at_nodes_Ptr[i];
+      //*out << "beta[i] " << beta[i] << std::endl;
     }
   }
- 
-  for (int i=0; i<NumEles; i++) { 
-    globalElesID[i] = global_element_id_active_owned_map_Ptr[i]-1; 
+
+  for (int i=0; i<NumEles; i++) {
+    globalElesID[i] = global_element_id_active_owned_map_Ptr[i]-1;
     for (int j = 0; j<8; j++)
       eles[i][j] = global_element_conn_active_Ptr[i + nElementsActive*j];
     //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
-    //                      << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl; 
+    //                      << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
   }
-  if (have_flwa) { 
-    for (int i=0; i<NumEles; i++)  
+  if (have_flwa) {
+    for (int i=0; i<NumEles; i++)
       flwa[i] = flwa_at_active_elements_Ptr[i];
   }
-  if (have_bf) { 
+  if (have_bf) {
     for (int i=0; i<NumBasalFaces; i++) {
-      basalFacesID[i] = global_basal_face_active_owned_map_Ptr[i]-1; 
-      for (int j=0; j<5; j++) 
-        bf[i][j] = global_basal_face_conn_active_Ptr[i + nCellsActive*j]; 
-        //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl; 
+      basalFacesID[i] = global_basal_face_active_owned_map_Ptr[i]-1;
+      for (int j=0; j<5; j++)
+        bf[i][j] = global_basal_face_conn_active_Ptr[i + nCellsActive*j];
+        //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl;
     }
   }
- 
-  
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles); 
-  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes); 
-  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces); 
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT, nodeT)); //Distribute the elements according to the global element IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT, nodeT)); //Distribute the nodes according to the global node IDs 
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT, nodeT)); //Distribute the elements according to the basal face IDs
 
-  
+  Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles);
+  Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes);
+  Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces);
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); //Distribute the elements according to the global element IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); //Distribute the nodes according to the global node IDs
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); //Distribute the elements according to the basal face IDs
+
+
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
 
@@ -213,13 +210,13 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
-  delete [] xyz; 
-  if (have_sh) delete [] sh; 
-  if (have_bf) delete [] bf; 
-  delete [] eles; 
-  delete [] globalElesID; 
+  delete [] xyz;
+  if (have_sh) delete [] sh;
+  if (have_bf) delete [] bf;
+  delete [] eles;
+  delete [] globalElesID;
   delete [] globalNodesID;
-  delete [] basalFacesID; 
+  delete [] basalFacesID;
 }
 
 void
@@ -241,10 +238,10 @@ Albany::CismSTKMeshStruct::constructMesh(
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
   if (debug_output_verbosity == 2) {
-    std::cout << "elem_mapT # elements: " << elem_mapT->getNodeNumElements() << std::endl; 
-    std::cout << "node_mapT # elements: " << node_mapT->getNodeNumElements() << std::endl; 
+    std::cout << "elem_mapT # elements: " << elem_mapT->getNodeNumElements() << std::endl;
+    std::cout << "node_mapT # elements: " << node_mapT->getNodeNumElements() << std::endl;
   }
-  unsigned int ebNo = 0; //element block #??? 
+  unsigned int ebNo = 0; //element block #???
   int sideID = 0;
 
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
@@ -253,13 +250,13 @@ Albany::CismSTKMeshStruct::constructMesh(
   AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
   AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
 
-  if(!surfaceHeight_field) 
+  if(!surfaceHeight_field)
      have_sh = false;
-  if(!flowFactor_field) 
+  if(!flowFactor_field)
      have_flwa = false;
-  if(!temperature_field) 
+  if(!temperature_field)
      have_temp = false;
-  if(!basal_friction_field) 
+  if(!basal_friction_field)
      have_beta = false;
 
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
@@ -267,7 +264,7 @@ Albany::CismSTKMeshStruct::constructMesh(
      stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
-     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh 
+     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
      stk_classic::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), eles[i][0], nodePartVec);
      stk_classic::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), eles[i][1], nodePartVec);
      stk_classic::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), eles[i][2], nodePartVec);
@@ -284,7 +281,7 @@ Albany::CismSTKMeshStruct::constructMesh(
      bulkData->declare_relation(elem, lrnodeb, 5);
      bulkData->declare_relation(elem, urnodeb, 6);
      bulkData->declare_relation(elem, ulnodeb, 7);
-    
+
 
      double* coord;
      int node_GID;
@@ -374,19 +371,19 @@ Albany::CismSTKMeshStruct::constructMesh(
        sHeight[0] = sh[node_LID];
      }
      if (have_flwa) {
-       double *flowFactor = stk_classic::mesh::field_data(*flowFactor_field, elem); 
+       double *flowFactor = stk_classic::mesh::field_data(*flowFactor_field, elem);
        //i is elem_LID (element local ID);
-       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;  
-       flowFactor[0] = flwa[i]; 
+       //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;
+       flowFactor[0] = flwa[i];
      }
      if (have_temp) {
-       double *temperature = stk_classic::mesh::field_data(*temperature_field, elem); 
+       double *temperature = stk_classic::mesh::field_data(*temperature_field, elem);
        //i is elem_LID (element local ID);
-       //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;  
-       temperature[0] = temper[i]; 
+       //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
+       temperature[0] = temper[i];
      }
      if (have_beta) {
-       double* bFriction; 
+       double* bFriction;
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, llnode);
        node_GID = eles[i][0]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
@@ -425,15 +422,15 @@ Albany::CismSTKMeshStruct::constructMesh(
        bFriction = stk_classic::mesh::field_data(*basal_friction_field, ulnodeb);
        node_GID = eles[i][7]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
-       bFriction[0] = beta[node_LID]; 
+       bFriction[0] = beta[node_LID];
        }
 #endif
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
-       if (debug_output_verbosity != 0) *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl; 
+       if (debug_output_verbosity != 0) *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl;
        if ( xyz[eles[i][0]][2] == 0.0) {
-          //std::cout << "sideID: " << sideID << std::endl; 
+          //std::cout << "sideID: " << sideID << std::endl;
           singlePartVec[0] = ssPartVec["Basal"];
           stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
           sideID++;
@@ -450,10 +447,10 @@ Albany::CismSTKMeshStruct::constructMesh(
   }
 
   if (have_bf == true) {
-    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from bf file provided..." << std::endl; 
+    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from bf file provided..." << std::endl;
     for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
-       sideID = basal_face_mapT->getGlobalElement(i); 
+       sideID = basal_face_mapT->getGlobalElement(i);
        stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
        stk_classic::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = bf[i][0];
@@ -464,7 +461,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        stk_classic::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), bf[i][2], nodePartVec);
        stk_classic::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), bf[i][3], nodePartVec);
        stk_classic::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), bf[i][4], nodePartVec);
-       
+
        bulkData->declare_relation(side, llnode, 0);
        bulkData->declare_relation(side, ulnode, 3);
        bulkData->declare_relation(side, urnode, 2);

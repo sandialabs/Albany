@@ -48,6 +48,7 @@ endif ()
 endif()
 
 # 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists
+if (ALBANY_DAKOTA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.xml COPYONLY)
@@ -76,4 +77,5 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysisT.xml AND ALBANY_IFPACK2)
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis_Tpetra NAME)
   add_test(${testName} ${AlbanyAnalysisT.exe} inputAnalysisT.xml)
+endif ()
 endif ()

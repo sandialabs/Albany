@@ -140,11 +140,9 @@ int main(int argc, char *argv[]) {
 
     // Create SG solver
     Teuchos::RCP<Albany::Application> app;
-    Teuchos::ParameterList kokkosNodeParams;
-    Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
     Teuchos::RCP<const Tpetra_Vector> initial_guessT;
     if (Teuchos::nonnull(ig)) {
-      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*ig, tapp_comm, nodeT);
+      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*ig, tapp_comm);
     }
     Teuchos::RCP<EpetraExt::ModelEvaluator> model =
       sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, initial_guessT);

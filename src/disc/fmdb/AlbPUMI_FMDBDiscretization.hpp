@@ -294,7 +294,6 @@ template<class Output>
 
    //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
-    Teuchos::RCP<KokkosNode> nodeT;
 
     //! Node map
     Teuchos::RCP<const Tpetra_Map> node_mapT;

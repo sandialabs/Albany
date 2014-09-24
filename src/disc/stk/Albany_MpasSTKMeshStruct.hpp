@@ -112,8 +112,6 @@ namespace Albany {
 
     protected:
 
-   //! Kokkos node
-    Teuchos::RCP<KokkosNode> nodeT;
     /*
     const std::vector<int>& indexToTriangleID;
     const std::vector<int>& verticesOnTria;

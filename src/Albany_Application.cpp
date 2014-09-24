@@ -72,8 +72,6 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   phxGraphVisDetail(0),
   stateGraphVisDetail(0)
 {
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
@@ -250,7 +248,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 /*
   RCP<const Tpetra_Vector> initial_guessT;
   if (Teuchos::nonnull(initial_guess)) {
-    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT, nodeT);
+    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT);
   }
 */
 
@@ -679,20 +677,20 @@ computeGlobalResidual(const double current_time,
   // Create Tpetra copies of Epetra arguments
   // Names of Tpetra entitied are identified by the suffix T
   const Teuchos::RCP<const Tpetra_Vector> xT =
-    Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+    Petra::EpetraVector_To_TpetraVectorConst(x, commT);
 
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
   }
 
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
-     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
+     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
   }
 
   const Teuchos::RCP<Tpetra_Vector> fT =
-    Petra::EpetraVector_To_TpetraVectorNonConst(f, commT, nodeT);
+    Petra::EpetraVector_To_TpetraVectorNonConst(f, commT);
 
   this->computeGlobalResidualImplT(current_time, xdotT, xdotdotT, xT, p, fT);
 
@@ -903,25 +901,25 @@ computeGlobalJacobian(const double alpha,
   // Create Tpetra copies of Epetra arguments
   // Names of Tpetra entitied are identified by the suffix T
   const Teuchos::RCP<const Tpetra_Vector> xT =
-    Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+    Petra::EpetraVector_To_TpetraVectorConst(x, commT);
 
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
    }
 
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
+    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
    }
 
   Teuchos::RCP<Tpetra_Vector> fT;
   if (f != NULL) {
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
+    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT);
   }
 
   const Teuchos::RCP<Tpetra_CrsMatrix> jacT =
-    Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT, nodeT);
+    Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(jac, commT);
 
   this->computeGlobalJacobianImplT(alpha, beta, omega, current_time, xdotT, xdotdotT, xT, p, fT, jacT);
 
@@ -1352,45 +1350,45 @@ computeGlobalTangent(const double alpha,
   // Create Tpetra copies of Epetra arguments
   // Names of Tpetra entitied are identified by the suffix T
   Teuchos::RCP<const Tpetra_Vector> xT =
-    Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+    Petra::EpetraVector_To_TpetraVectorConst(x, commT);
 
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
   }
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
+    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
   }
 
   Teuchos::RCP<const Tpetra_MultiVector> VxT;
   if (Vx != NULL) {
-    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT, nodeT);
+    VxT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vx, commT);
   }
 
   RCP<const Tpetra_MultiVector> VxdotT;
   if (Vxdot != NULL)
-    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT, nodeT);
+    VxdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdot, commT);
 
   RCP<const Tpetra_MultiVector> VxdotdotT;
   if (Vxdotdot != NULL)
-    VxdotdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdotdot, commT, nodeT);
+    VxdotdotT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vxdotdot, commT);
 
   RCP<const Tpetra_MultiVector> VpT;
   if (Vp != NULL)
-    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT, nodeT);
+    VpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*Vp, commT);
 
   Teuchos::RCP<Tpetra_Vector> fT;
   if (f != NULL)
-    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT, nodeT);
+    fT = Petra::EpetraVector_To_TpetraVectorNonConst(*f, commT);
 
   Teuchos::RCP<Tpetra_MultiVector> JVT;
   if (JV != NULL)
-    JVT = Petra::EpetraMultiVector_To_TpetraMultiVector(*JV, commT, nodeT);
+    JVT = Petra::EpetraMultiVector_To_TpetraMultiVector(*JV, commT);
 
   RCP<Tpetra_MultiVector> fpT;
   if (fp != NULL)
-    fpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*fp, commT, nodeT);
+    fpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*fp, commT);
 
   this->computeGlobalTangentImplT(
       alpha, beta, omega, current_time, sum_derivs,
@@ -3093,16 +3091,16 @@ evaluateStateFieldManager(const double current_time,
   solMgr->scatterX(x, xdot, xdotdot);
 
   //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT);
   //Create Tpetra copy of xdot, called xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+     xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
   }
   //Create Tpetra copy of xdotdot, called xdotdotT
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
-     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
+     xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
   }
 
   this->evaluateStateFieldManagerT(current_time, xdotT.ptr(), xdotdotT.ptr(), *xT);

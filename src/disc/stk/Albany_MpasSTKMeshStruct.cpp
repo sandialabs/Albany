@@ -39,11 +39,9 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   Teuchos::ArrayView<const GO> indexToTriangleIDAV = Teuchos::arrayViewFromVector(indexToTriangleID);
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles, indexToTriangleIDAV, 0, commT, nodeT));
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles, indexToTriangleIDAV, 0, commT));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -126,12 +124,10 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   Teuchos::ArrayView<const GO> indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID);
 
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles*numLayers, indexToPrismIDAV, 0, commT, nodeT));
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles*numLayers, indexToPrismIDAV, 0, commT));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -234,11 +230,9 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   Teuchos::ArrayView<const GO> indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID);
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(3*nGlobalTriangles*numLayers, indexToTetraIDAV, 0, commT, nodeT));
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(3*nGlobalTriangles*numLayers, indexToTetraIDAV, 0, commT));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 

@@ -72,9 +72,6 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-   //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
@@ -476,7 +473,7 @@ Albany::STKDiscretization::setupMLCoords()
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   rigidBodyModes->resize(numDim, numOwnedNodes);
-  
+
   //If ML preconditioner is selected
   if (rigidBodyModes->isMLUsed()) {
 
@@ -522,25 +519,25 @@ Albany::STKDiscretization::setupMLCoords()
     }
     rigidBodyModes->informML();
   }
-  
+
   //If MueLu preconditioner is selected
   if (rigidBodyModes->isMueLuUsed()) {
     std::cout << "MueLu selected!" << std::endl;
-    double *xxyyzz; //make this ST? 
+    double *xxyyzz; //make this ST?
     rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
-    
+
     for (int i=0; i < numOwnedNodes; i++)  {
       GO node_gid = gid(ownednodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
-      for (int i=0; i<numDim; i++) 
-        xxyyzz[i*numOwnedNodes + node_lid] = X[i]; 
+      for (int i=0; i<numDim; i++)
+        xxyyzz[i*numOwnedNodes + node_lid] = X[i];
     }
    Teuchos::ArrayView<ST> xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*(numDim+1));
    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, numDim+1));
-   
-   rigidBodyModes->informMueLu(xyzMV, mapT); 
+
+   rigidBodyModes->informMueLu(xyzMV, mapT);
    }
 
 
@@ -987,7 +984,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  node_mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
@@ -1002,7 +999,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 }
 
 void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
@@ -1029,7 +1026,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  overlap_mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 
   indicesT.resize(numOverlapNodes);
   for (int i=0; i < numOverlapNodes; i++)
@@ -1037,7 +1034,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
     stkMeshStruct->nodal_data_base->resizeOverlapMap(indicesT, commT);
@@ -2276,9 +2273,9 @@ void Albany::STKDiscretization::meshToGraph () {
     } /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
     nodalGraph->insertGlobalIndices(globalrow, adjacency());
   } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
-  
+
   // end find_adjacency
-  
+
   nodalGraph->fillComplete();
   // Pass the graph RCP to the nodal data block
   stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
