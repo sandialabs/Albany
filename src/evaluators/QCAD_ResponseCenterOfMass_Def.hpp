@@ -28,7 +28,7 @@ ResponseCenterOfMass(Teuchos::ParameterList& p,
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
   
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -151,10 +151,11 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    this->global_response.size(), &this->global_response[0], 
-    &this->global_response[0]);
+//Irina TOFIX
+//  Teuchos::reduceAll<int, ScalarT>(
+//    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+//    this->global_response.size(), &this->global_response[0], 
+//    &this->global_response[0]);
 
   int iNormalizer = 3;
   if( fabs(this->global_response[iNormalizer]) > 1e-9 ) {

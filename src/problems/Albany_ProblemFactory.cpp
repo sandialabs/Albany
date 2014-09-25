@@ -317,12 +317,14 @@ Albany::ProblemFactory::create()
   else if (method == "Aeras XZ Scalar Advection" ) {
     strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));
   }
+//Irina TOFIX
   else if (method == "Aeras X Scalar Advection" ) {
     strategy = rcp(new Aeras::XScalarAdvectionProblem(problemParams, paramLib, 1));
   }
-  else if (method == "Aeras XZ Hydrostatic" ) {
+//Irina TOFIX
+ /* else if (method == "Aeras XZ Hydrostatic" ) {
     strategy = rcp(new Aeras::XZHydrostaticProblem(problemParams, paramLib, 1));
-  }
+  }*/
 #endif
   else if (method == "Peridigm Code Coupling" ) {
 #ifdef ALBANY_PERIDIGM
