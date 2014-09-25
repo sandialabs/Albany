@@ -76,7 +76,7 @@ ComprNSViscosity(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(tau23);
   this->addEvaluatedField(tau33);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   qFluctGrad.fieldTag().dataLayout().dimensions(dims);
   numQPs   = dims[2];
   numDims  = dims[3];

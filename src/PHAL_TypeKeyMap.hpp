@@ -105,13 +105,14 @@ namespace PHAL {
     iterator begin() { return iterator(objects.begin()); }
 
     //! Return an iterator that points to the first object
-    const_iterator begin() const { return iterator(objects.begin()); }
+    //Irina Debug const_iterator begin() const { return iterator(objects.begin()); }
+    const_iterator begin() const { return const_iterator(objects.begin()); }
 
     //! Return an iterator that points one past the last object
     iterator end() { return iterator(objects.end()); }
 
     //! Return an iterator that points one past the last object
-    const_iterator end() const { return iterator(objects.end()); }
+    const_iterator end() const { return const_iterator(objects.end()); }
 
   private:
 

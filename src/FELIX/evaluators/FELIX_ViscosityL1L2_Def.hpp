@@ -18,6 +18,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -83,7 +84,7 @@ ViscosityL1L2(const Teuchos::ParameterList& p,
 
   numQPsZ = 100; 
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -92,7 +93,7 @@ ViscosityL1L2(const Teuchos::ParameterList& p,
   
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
 
-  this->setName("ViscosityL1L2"+ );
+  this->setName("ViscosityL1L2"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

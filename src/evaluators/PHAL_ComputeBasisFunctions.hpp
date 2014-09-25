@@ -39,6 +39,11 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
+   KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
+ 
+  typedef typename PHX::Device device_type;
+
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -53,12 +58,18 @@ private:
 
   // Temporary FieldContainers
   Intrepid::FieldContainer<RealType> val_at_cub_points;
+  Kokkos::View <RealType**, PHX::Device> val_at_cub_points_CUDA;
   Intrepid::FieldContainer<RealType> grad_at_cub_points;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
-  Intrepid::FieldContainer<MeshScalarT> jacobian;
-  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
+  Kokkos::View <RealType***, PHX::Device> grad_at_cub_points_CUDA;
 
+  Intrepid::FieldContainer<RealType> refPoints;
+  Kokkos::View <RealType**, PHX::Device> refPoints_CUDA; 
+  Intrepid::FieldContainer<RealType> refWeights;
+  Kokkos::View <RealType*, PHX::Device> refWeights_CUDA;
+//  Intrepid::FieldContainer<MeshScalarT> jacobian;
+  PHX::MDField <MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian; 
+  //Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
+  PHX::MDField <MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;

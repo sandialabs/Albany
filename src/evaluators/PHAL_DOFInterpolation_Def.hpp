@@ -26,7 +26,7 @@ DOFInterpolation(const Teuchos::ParameterList& p,
 
   this->setName("DOFInterpolation" );
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
@@ -54,10 +54,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT& vqp = val_qp(cell,qp);
-      vqp = val_node(cell, 0) * BF(cell, 0, qp);
+      //ScalarT& vqp = val_qp(cell,qp);
+      val_qp(cell,qp) = val_node(cell, 0) * BF(cell, 0, qp);
       for (std::size_t node=1; node < numNodes; ++node) {
-        vqp += val_node(cell, node) * BF(cell, node, qp);
+        val_qp(cell,qp) += val_node(cell, node) * BF(cell, node, qp);
       }
     }
   }
@@ -76,9 +76,9 @@ DOFInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFInterpolation"PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+  this->setName("DOFInterpolation Jacobian");
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
@@ -111,12 +111,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT& vqp = val_qp(cell,qp);
-      vqp = FadType(num_dof, val_node(cell, 0).val() * BF(cell, 0, qp));
-      if (num_dof) vqp.fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * BF(cell, 0, qp);
+      //ScalarT& vqp = val_qp(cell,qp);
+      val_qp(cell,qp) = FadType(num_dof, val_node(cell, 0).val() * BF(cell, 0, qp));
+      if (num_dof) (val_qp(cell,qp)).fastAccessDx(offset) = val_node(cell, 0).fastAccessDx(offset) * BF(cell, 0, qp);
       for (std::size_t node=1; node < numNodes; ++node) {
-        vqp.val() += val_node(cell, node).val() * BF(cell, node, qp);
-        if (num_dof) vqp.fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * BF(cell, node, qp);
+        (val_qp(cell,qp)).val() += val_node(cell, node).val() * BF(cell, node, qp);
+        if (num_dof) (val_qp(cell,qp)).fastAccessDx(neq*node+offset) += val_node(cell, node).fastAccessDx(neq*node+offset) * BF(cell, node, qp);
       }
     }
   }

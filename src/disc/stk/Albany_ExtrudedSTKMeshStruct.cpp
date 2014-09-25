@@ -83,6 +83,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
+//  meshStruct2D = Teuchos::rcp<int>(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
   meshStruct2D = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
   Albany::AbstractFieldContainer::FieldContainerRequirements req;

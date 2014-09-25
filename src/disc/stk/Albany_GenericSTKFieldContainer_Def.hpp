@@ -105,9 +105,11 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
       scalarValue_states.push_back(st.name);
     } // End scalar at center of element
     else if(st.entity == StateStruct::NodalData) { // Data at the node points
-
+       //Irina Debug
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer 
                = sis->getNodalDataBlock()->getNodeContainer();
+      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer 
+      //         = sis->getNodalDataBlock()->getNodeContainer();
 
         (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, dim, metaData, bulkData, st.output);
  

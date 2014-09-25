@@ -322,7 +322,9 @@ FELIX::Stokes::constructEvaluators(
     //Input
     p->set<std::string>("Velocity QP Variable Name", "Velocity");
     p->set<std::string>("Contravarient Metric Tensor Name", "Gc"); 
-    p->set<std::string>("Jacobian Det Name", "Jacobian Det"); 
+    p->set<std::string>("Jacobian Det Name", "Jacobian Det");
+    p->set<string>("Jacobian Name",          "Jacobian");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv"); 
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);

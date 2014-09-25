@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -34,13 +34,13 @@ StokesMomentumResid(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(MResidual);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];
   numDims = dims[3];
   
-  this->setName("StokesMomentumResid"+ );
+  this->setName("StokesMomentumResid"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -64,6 +64,8 @@ template<typename EvalT, typename Traits>
 void StokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+//Irina TOFIX
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {          
       for (std::size_t i=0; i<numDims; i++) {
@@ -83,7 +85,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   
  
-}
+*/}
 
 }
 

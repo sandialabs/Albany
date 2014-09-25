@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -35,7 +35,7 @@ StokesTauM(const Teuchos::ParameterList& p,
  
   this->addEvaluatedField(TauM);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -43,7 +43,7 @@ StokesTauM(const Teuchos::ParameterList& p,
   // Allocate workspace
   normGc.resize(dims[0], numQPs);
 
-  this->setName("StokesTauM"+ );
+  this->setName("StokesTauM"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

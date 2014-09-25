@@ -24,6 +24,9 @@
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_BlockMapOut.h"
 
+#include "Phalanx_config.hpp"
+#include "Phalanx.hpp"
+#include "Phalanx_KokkosUtilities.hpp"
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 
@@ -111,6 +114,8 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
 #endif
 
+   PHX::InitializeKokkosDevice();
+
 #ifdef ENABLE_CHECK_FPE
    // Catch FPEs
    _mm_setcsr(_MM_MASK_MASK &~
@@ -154,6 +159,8 @@ int main(int argc, char *argv[]) {
 
     setupTimer.~TimeMonitor();
 
+//    PHX::InitializeKokkosDevice();
+   
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
     // By default, request the sensitivities if not explicitly disabled
@@ -240,7 +247,11 @@ int main(int argc, char *argv[]) {
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
+  
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+
+   PHX::FinalizeKokkosDevice();
+ 
   return status;
 }

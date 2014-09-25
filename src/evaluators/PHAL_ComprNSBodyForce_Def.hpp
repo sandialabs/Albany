@@ -41,7 +41,7 @@ ComprNSBodyForce(const Teuchos::ParameterList& p) :
 
   Teuchos::RCP<PHX::DataLayout> gradient_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Gradient Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   gradient_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];

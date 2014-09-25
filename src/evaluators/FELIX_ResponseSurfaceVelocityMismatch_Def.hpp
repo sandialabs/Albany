@@ -55,7 +55,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   numNodes = intrepidBasis->getCardinality();
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dim;
+  std::vector<PHX::index_size_type> dim;
   dl->qp_tensor->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];
@@ -86,7 +86,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   // Pre-Calculate reference element quantitites
   cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs = dims[1];
   numDims = dims[2];
@@ -97,7 +97,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   this->addDependentField(velocityRMS_field);
   this->addDependentField(coordVec);
 
-  this->setName(fieldName + " Response Surface Velocity Mismatch" +  );
+  this->setName(fieldName + " Response Surface Velocity Mismatch" );
 
   using PHX::MDALayout;
 
@@ -282,7 +282,8 @@ template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
   // Add contributions across processors
   Teuchos::RCP<Teuchos::ValueTypeSerializer<int, ScalarT> > serializer = workset.serializerManager.template getValue<EvalT>();
-  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, this->global_response.size(), &this->global_response[0], &this->global_response[0]);
+//IrinaTOFIX
+//Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, this->global_response.size(), &this->global_response[0], &this->global_response[0]);
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;

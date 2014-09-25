@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -56,7 +57,7 @@ Viscosity(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(mu);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -65,7 +66,7 @@ Viscosity(const Teuchos::ParameterList& p,
   
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
 
-  this->setName("Viscosity"+ );
+  this->setName("Viscosity"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
