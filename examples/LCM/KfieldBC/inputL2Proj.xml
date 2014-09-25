@@ -101,6 +101,11 @@
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
+          <!-- This Tolerance, whether specified here or not, is used over those
+               provided in the AztecOO and Belos lists. -->
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
+          </ParameterList>
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
 	  <ParameterList name="Stratimikos Linear Solver">
@@ -168,6 +173,11 @@
       </ParameterList>
       <ParameterList name="Solver Options">
 	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <ParameterList name="Test 0">
+          <Parameter name="Tolerance" type="double" value="1e-8"/>
+        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>
