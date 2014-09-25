@@ -34,7 +34,7 @@ GPAMResid(const Teuchos::ParameterList& p,
 
   this->setName("GPAMResid" );
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];

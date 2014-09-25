@@ -44,7 +44,8 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   Albany::StateArray& states = *workset.stateArrayPtr;
   Albany::MDArray& stateToLoad  = states[stateName];
 
-  for (int i=0; i < data.size() ; ++i) data[i] = stateToLoad[i]; 
+ // Kokkos::deep_copy(data, stateToLoad);
+   for (int i=0; i < data.size() ; ++i) data[i] = stateToLoad[i]; 
 }
 
 // **********************************************************************

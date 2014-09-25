@@ -58,7 +58,7 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   vector_dl->dimensions(dims);
   worksetSize = dims[0];
   numNodes = dims[1];
@@ -119,8 +119,10 @@ void HeatEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-// workset.print(std::cout);
+//Irina TOFIX
+//// workset.print(std::cout);
 
+/*
   typedef Intrepid::FunctionSpaceTools FST;
 
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
@@ -160,7 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 //TResidual.print(std::cout, true);
-
+*/
 }
 
 //**********************************************************************

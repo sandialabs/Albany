@@ -304,7 +304,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   numNodes = intrepidBasis->getCardinality();
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dim;
+  std::vector<PHX::index_size_type> dim;
   dl->qp_tensor->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];
@@ -336,7 +336,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // Pre-Calculate reference element quantitites
   cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
-  this->setName(name+ );
+  this->setName(name);
 
 }
 

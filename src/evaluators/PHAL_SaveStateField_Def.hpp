@@ -52,7 +52,7 @@ SaveStateField(const Teuchos::ParameterList& p)
   this->addEvaluatedField(*savestate_operation);
 
   this->setName("Save Field " + fieldName +" to State " + stateName
-                + PHX::TypeString<PHAL::AlbanyTraits::Residual>::value);
+                + "Residual");
 }
 
 // **********************************************************************

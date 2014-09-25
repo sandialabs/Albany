@@ -375,8 +375,8 @@ evaluateFields(typename Traits::EvalData workset){
   if (m_num_dim == 2) {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
-        MeshScalarT *X = &coordVec(cell,iqp,0); 
-        m_source(cell, iqp) = 8.0*pi*pi*sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
+        //MeshScalarT *X = &coordVec(cell,iqp,0); 
+        m_source(cell, iqp) = 8.0*pi*pi*sin(2.0*pi*coordVec(cell,iqp,0))*cos(2.0*pi*coordVec(cell,iqp,1));
       }
     }
   }
@@ -1098,12 +1098,12 @@ void PointSource<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset
         const MeshScalarT  x  = coordVec(cell,iqp,i);
         coord.push_back(x);
       }
-      ScalarT &p_s = m_pressure_source(cell,iqp);
-      p_s = 0;
+      //ScalarT &p_s = m_pressure_source(cell,iqp);
+      m_pressure_source(cell,iqp) = 0;
       const RealType wavelet = m_wavelet->evaluateFields(time);
       for (std::size_t i=0; i<m_spatials.size(); ++i) {
         const MeshScalarT spatial = m_spatials[i]->evaluateFields(coord);
-        p_s += wavelet*spatial;
+        m_pressure_source(cell,iqp) += wavelet*spatial;
       }
     }
   }

@@ -43,7 +43,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     }
     else if (rank == 3) {
       matPropType = VECTOR_CONSTANT;
-      PHX::DataLayout::size_type numDims = dims[2];
+      PHX::index_size_type numDims = dims[2];
       Teuchos::Array<double> tmp = 
 	mp_list->get< Teuchos::Array<double> >("Value");
       vector_constant_value.resize(numDims);
@@ -54,18 +54,18 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 			 vector_constant_value.size() << " but expected size "
 			 << numDims);
 
-      for (PHX::DataLayout::size_type i=0; i<numDims; i++)
+      for (PHX::index_size_type i=0; i<numDims; i++)
 	vector_constant_value[i] = tmp[i];
 
       // Add property as a Sacado-ized parameter
-      for (PHX::DataLayout::size_type i=0; i<numDims; i++)
+      for (PHX::index_size_type i=0; i<numDims; i++)
 	new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
 	  Albany::strint(name_mp,i), this, paramLib);
     }
     else if (rank == 4) {
       matPropType = TENSOR_CONSTANT;
-      PHX::DataLayout::size_type numRows = dims[2];
-      PHX::DataLayout::size_type numCols = dims[3];
+      PHX::index_size_type numRows = dims[2];
+      PHX::index_size_type numCols = dims[3];
       Teuchos::TwoDArray<double> tmp = 
 	mp_list->get< Teuchos::TwoDArray<double> >("Value");
       TEUCHOS_TEST_FOR_EXCEPTION(tensor_constant_value.getNumRows() != numRows ||
@@ -78,13 +78,13 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 			 " but expected dimensions " << 
 			 numRows << "x" << numCols);
       tensor_constant_value = Teuchos::TwoDArray<ScalarT>(numRows, numCols);
-      for (PHX::DataLayout::size_type i=0; i<numRows; i++)
-	for (PHX::DataLayout::size_type j=0; j<numCols; j++)
+      for (PHX::index_size_type i=0; i<numRows; i++)
+	for (PHX::index_size_type j=0; j<numCols; j++)
 	  tensor_constant_value(i,j) = tmp(i,j);
 
       // Add property as a Sacado-ized parameter
-      for (PHX::DataLayout::size_type i=0; i<numRows; i++)
-	for (PHX::DataLayout::size_type j=0; j<numCols; j++)
+      for (PHX::index_size_type i=0; i<numRows; i++)
+	for (PHX::index_size_type j=0; j<numCols; j++)
 	  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
 	    Albany::strint(Albany::strint(name_mp,i),j), this, paramLib);
     }
@@ -109,7 +109,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       p.get<std::string>("Coordinate Vector Name"),
       coord_dl);
     this->addDependentField(coordVec);
-    std::vector<PHX::DataLayout::size_type> coord_dims;
+    std::vector<PHX::index_size_type> coord_dims;
     coord_dl->dimensions(coord_dims);
     point.resize(coord_dims[2]);
 
@@ -172,7 +172,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(matprop);
-  this->setName(name_mp+ );
+  this->setName(name_mp);
 }
 
 // **********************************************************************

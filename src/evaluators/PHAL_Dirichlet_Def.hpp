@@ -27,7 +27,7 @@ DirichletBase(Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(fieldTag);
 
-  this->setName(name+ );
+  this->setName(name );
 
   // Set up values as parameters for parameter library
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >

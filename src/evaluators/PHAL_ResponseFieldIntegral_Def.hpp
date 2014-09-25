@@ -84,7 +84,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   }
 
   // coordinate dimensions
-  std::vector<PHX::DataLayout::size_type> coord_dims;
+  std::vector<PHX::index_size_type> coord_dims;
   dl->qp_vector->dimensions(coord_dims);
   numQPs = coord_dims[1];
   numDims = coord_dims[2];
@@ -233,10 +233,11 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    this->global_response.size(), &this->global_response[0], 
-    &this->global_response[0]);
+//Irina TOFIX
+//  Teuchos::reduceAll<int, ScalarT>(
+//    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+//    this->global_response.size(), &this->global_response[0], 
+//    &this->global_response[0]);
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);

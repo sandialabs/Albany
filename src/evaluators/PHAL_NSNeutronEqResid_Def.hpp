@@ -56,7 +56,7 @@ NSNeutronEqResid(const Teuchos::ParameterList& p) :
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];

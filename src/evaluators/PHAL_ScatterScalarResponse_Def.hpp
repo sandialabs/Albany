@@ -61,8 +61,7 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   }
 
   if (stand_alone)
-    this->setName(fieldName+" Scatter Response" + 
-		   );
+    this->setName(fieldName+" Scatter Response");
 }
 
 template<typename EvalT,typename Traits>
@@ -118,15 +117,15 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
   Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    ScalarT& val = this->global_response[res];
+    //ScalarT& val = this->global_response[res];
     if (g != Teuchos::null)
-      (*g)[res] = val.val();
+      (*g)[res] = (this->global_response[res]).val();
     if (gx != Teuchos::null)
       for (int col=0; col<workset.num_cols_x; col++)
-	gx->ReplaceMyValue(res, col, val.dx(col));
+	gx->ReplaceMyValue(res, col, (this->global_response[res]).dx(col));
     if (gp != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
-	gp->ReplaceMyValue(res, col, val.dx(col+workset.param_offset));
+	gp->ReplaceMyValue(res, col, (this->global_response[res]).dx(col+workset.param_offset));
   }
 }
 
