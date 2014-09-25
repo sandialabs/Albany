@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -38,7 +38,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
    
   this->addEvaluatedField(CResidual);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];
@@ -47,7 +47,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
   // Allocate workspace
   divergence.resize(dims[0], numQPs);
 
-  this->setName("StokesContinuityResid"+ );
+  this->setName("StokesContinuityResid"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -66,13 +66,74 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(CResidual,fm);
 }
+//*********************************************************************
+template<class Scalar, class ArrayOutFields, class ArrayInData, class ArrayInFields>
+void contractDataFieldScalar(ArrayOutFields &       outputFields,
+                             const ArrayInData &    inputData,
+                             const ArrayInFields &  inputFields,
+                             const bool             sumInto) {
 
+  int numCells       = inputFields.dimension(0);
+  int numFields      = inputFields.dimension(1);
+  int numPoints      = inputFields.dimension(2);
+  int numDataPoints  = inputData.dimension(1);
+
+  if (sumInto) {
+        if (numDataPoints != 1) { // nonconstant data
+          for (int cl = 0; cl < numCells; cl++) {
+            for (int lbf = 0; lbf < numFields; lbf++) {
+              Scalar tmpVal(0);
+              for (int qp = 0; qp < numPoints; qp++) {
+                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, qp);
+              } // P-loop
+              outputFields(cl, lbf) += tmpVal;
+            } // F-loop
+          } // C-loop
+        }
+        else { // constant data
+          for (int cl = 0; cl < numCells; cl++) {
+            for (int lbf = 0; lbf < numFields; lbf++) {
+              Scalar tmpVal(0);
+              for (int qp = 0; qp < numPoints; qp++) {
+                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, 0);
+              } // P-loop
+              outputFields(cl, lbf) += tmpVal;
+            } // F-loop
+          } // C-loop
+        } // numDataPoints
+      }
+      else {
+        if (numDataPoints != 1) { // nonconstant data
+          for (int cl = 0; cl < numCells; cl++) {
+            for (int lbf = 0; lbf < numFields; lbf++) {
+              Scalar tmpVal(0);
+              for (int qp = 0; qp < numPoints; qp++) {
+                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, qp);
+              } // P-loop
+              outputFields(cl, lbf) = tmpVal;
+            } // F-loop
+          } // C-loop
+        }
+        else { // constant data
+          for (int cl = 0; cl < numCells; cl++) {
+            for (int lbf = 0; lbf < numFields; lbf++) {
+              Scalar tmpVal(0);
+              for (int qp = 0; qp < numPoints; qp++) {
+                tmpVal += inputFields(cl, lbf, qp)*inputData(cl, 0);
+              } // P-loop
+              outputFields(cl, lbf) = tmpVal;
+            } // F-loop
+          } // C-loop
+        } // numDataPoints
+      }
+
+}
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void StokesContinuityResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef Intrepid::FunctionSpaceTools FST;
+//  typedef Intrepid::FunctionSpaceTools FST;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -82,9 +143,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  
-  FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid::COMP_CPP,  
-                          false); // "false" overwrites
+ //Irina Debug 
+ // FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid::COMP_CPP,  
+ //                         false); // "false" overwrites
+
+  contractDataFieldScalar<ScalarT>(CResidual, divergence, wBF,false); // "false" overwrites
+
+
 
   if (havePSPG) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

@@ -28,9 +28,9 @@ typedef double RealType;
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
   typedef Sacado::ELRFad::SLFad<double,16> FadType;
 #else
-  typedef Sacado::ELRFad::DFad<double> FadType;
+  typedef Sacado::Fad::DFad<double> FadType;
 #endif
-typedef Sacado::ELRFad::DFad<double> TanFadType;
+typedef Sacado::Fad::DFad<double> TanFadType;
 typedef Stokhos::StandardStorage<int,double> StorageType;
 typedef Sacado::PCE::OrthogPoly<double,StorageType> SGType;
 typedef Sacado::Fad::DFad<SGType> SGFadType;

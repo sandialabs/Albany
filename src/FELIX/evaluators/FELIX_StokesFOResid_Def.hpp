@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
@@ -62,9 +62,9 @@ StokesFOResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("StokesFOResid"+ );
+  this->setName("StokesFOResid"+PHX::typeAsString<EvalT>());
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
@@ -104,6 +104,77 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   this->utils.setFieldData(Residual,fm);
 }
+//**********************************************************************
+//Kokkos functors
+
+template <typename ScalarType, class DeviceType, class MDFieldType1, class MDFieldType2, class MDFieldType3, class MDFieldType4, class MDFieldType5, class MDFieldType6 >
+class StokesFOResid_3D_FELIX  {
+ MDFieldType1 Residual_;
+ MDFieldType2 wGradBF_;
+ MDFieldType3 force_;
+ MDFieldType4 Ugrad_;
+ MDFieldType5 mu_;
+ MDFieldType6 wBF_;
+ const int numNodes_;
+ const int numQPs_;
+
+ public:
+ typedef DeviceType device_type;
+
+ StokesFOResid_3D_FELIX (MDFieldType1 &Residual,
+                         MDFieldType2 &wGradBF,
+                         MDFieldType3 &force,
+			 MDFieldType4 &Ugrad,
+			 MDFieldType5 &mu,
+			 MDFieldType6 &wBF,
+                         int numNodes,
+                         int numQPs)
+  : Residual_(Residual)
+  , wGradBF_(wGradBF)
+  , force_(force)
+  , Ugrad_(Ugrad)
+  , mu_(mu)
+  , wBF_(wBF)
+  , numNodes_(numNodes)
+  , numQPs_(numQPs){}
+
+ KOKKOS_INLINE_FUNCTION
+ void operator () (const int i) const
+ {
+  for (int node=0; node<numNodes_; ++node){
+     Residual_(i,node,0)=0.0;
+     Residual_(i,node,1)=0.0;
+  }
+  
+  for (int j=0; j<numQPs_; j++)
+  {
+   const ScalarType strs00 = 2.0*mu_(i,j)*(2.0*Ugrad_(i,j,0,0)+Ugrad_(i,j,1,1));
+   const ScalarType strs11 = 2.0*mu_(i,j)*(2.0*Ugrad_(i,j,1,1)+Ugrad_(i,j,0,0));
+   const ScalarType strs01 = mu_(i,j)*(Ugrad_(i,j,1,0)+Ugrad_(i,j,0,1));
+   const ScalarType strs02 = mu_(i,j)*Ugrad_(i,j,0,2);
+   const ScalarType strs12 = mu_(i,j)*Ugrad_(i,j,1,2);
+   for (int node=0; node<numNodes_; ++node){
+     Residual_(i,node,0) +=strs00*wGradBF_(i,node,j,0) +
+                        strs01*wGradBF_(i,node,j,1) +
+                        strs02*wGradBF_(i,node,j,2);
+     Residual_(i,node,1) +=strs01*wGradBF_(i,node,j,0) +
+                       strs11*wGradBF_(i,node,j,1) +
+                        strs12*wGradBF_(i,node,j,2);
+   }
+
+  }
+  
+  for (int qp=0; qp < numQPs_; ++qp) {
+        const ScalarType frc0 = force_(i,qp,0);
+        const ScalarType frc1 = force_(i,qp,1);
+        for (int node=0; node < numNodes_; ++node) {
+             Residual_(i,node,0) += frc0*wBF_(i,node,qp);
+             Residual_(i,node,1) += frc1*wBF_(i,node,qp);
+        }
+      }
+ }
+};
+
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -112,13 +183,26 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST; 
 
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
 
+//std::cout << Residual (30,1,1) <<std::endl;
+//  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+//    for (std::size_t node=0; node < numNodes; ++node){
+//       Residual(cell,node,0)=ScalarT(0.0);
+//       Residual(cell,node,1)=ScalarT(0.0);
+//    }
+//  
+//std::cout << Residual (30,1,1) <<std::endl;
+#ifdef NO_KOKKOS_ALBANY
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+      Residual(cell,node,0)=0.0;
+      Residual(cell,node,1)=0.0;
+      }
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        ScalarT& mu = muFELIX(cell,qp);
+        ScalarT mu = muFELIX(cell,qp);
         ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
         ScalarT strs11 = 2.0*mu*(2.0*Ugrad(cell,qp,1,1) + Ugrad(cell,qp,0,0));
         ScalarT strs01 = mu*(Ugrad(cell,qp,1,0)+ Ugrad(cell,qp,0,1));
@@ -134,8 +218,8 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       for (std::size_t qp=0; qp < numQPs; ++qp) {
-        ScalarT& frc0 = force(cell,qp,0);
-        ScalarT& frc1 = force(cell,qp,1);
+        ScalarT frc0 = force(cell,qp,0);
+        ScalarT frc1 = force(cell,qp,1);
         for (std::size_t node=0; node < numNodes; ++node) {
              Residual(cell,node,0) += frc0*wBF(cell,node,qp);
              Residual(cell,node,1) += frc1*wBF(cell,node,qp); 
@@ -178,6 +262,31 @@ evaluateFields(typename Traits::EvalData workset)
            
     } } }
    }
+#else
+  if (numDims == 3) { //3D case
+    if (eqn_type == FELIX) {
+    Kokkos::parallel_for ( workset.numCells, StokesFOResid_3D_FELIX < ScalarT, PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>, PHX::MDField<ScalarT,Cell,QuadPoint>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> > (Residual, wGradBF, force, Ugrad, muFELIX, wBF, numNodes, numQPs));
+
+// for (std::size_t cell=0; cell < workset.numCells; ++cell)  
+//      for (std::size_t node=0; node < numNodes; ++node)  
+//          for (int j=0; j<2; j++)
+// {//           std::cout <<cell << "  " << node << "  " << j<< "   "<< Residual(cell, node,j) <<"     " << muFELIX(cell, node)<< "   "<< Ugrad(cell, node,j,0) <<std::endl;
+//            std::cout <<cell << "  " << node << "  " << j<< "     " << force(cell, node,j)<< "   "<< wBF(cell, node,j)<<"   "<< wGradBF(cell, node,j,0) <<std::endl;
+//}//           std::cout <<cell << "  " << node << "  " << j<< "     " << Residual(cell, node,0)<<std::endl;
+
+  }
+    else if (eqn_type == POISSON) { 
+    }
+  }
+  else { //2D case
+   if (eqn_type == FELIX) {
+   }
+   else if (eqn_type == POISSON) {
+   }
+  }
+#endif
+
+
 }
 
 //**********************************************************************

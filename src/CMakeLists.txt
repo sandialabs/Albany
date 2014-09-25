@@ -4,6 +4,242 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+find_package(CUDA)
+
+SET (PHX_KOKKOS_DEVICE_TYPE_CUDA TRUE)
+
+
+IF(PHX_KOKKOS_DEVICE_TYPE_CUDA )
+
+  #IF( TPL_ENABLE_MPI )
+      CUDA_INCLUDE_DIRECTORIES( ${MPI_BASE_DIR}/include )
+  #ENDIF()
+
+
+  CUDA_INCLUDE_DIRECTORIES( ${CUDA_INCLUDE_DIRECTORIES} "." )
+  CUDA_INCLUDE_DIRECTORIES( ${CUDA_INCLUDE_DIRECTORIES}
+                     ${KokkosCore_INCLUDE_DIRS}
+                     ${ALBANY_FMDB_INCLUDE_DIRS}
+                      "."
+                     "/home/ipdemes/Albany_Irina/src"
+                     "/home/ipdemes/Albany_Irina/src/evaluators"
+                     "/home/ipdemes/Albany_Irina/src/problems"
+                     "/home/ipdemes/Albany_Irina/src/responses"
+                     "/home/ipdemes/Albany_Irina/src/disc/stk"
+                     "/home/ipdemes/Albany_Irina/src/adapt"
+                     "/home/ipdemes/Albany_Irina/src/disc"
+                     "/home/ipdemes/Albany_Irina/src/LCM/"
+                     "/home/ipdemes/Albany_Irina/src/LCM/evaluators"
+                     "/home/ipdemes/Albany_Irina/src/LCM/evaluators/bc"
+                     "/home/ipdemes/Albany_Irina/src/LCM/evaluators/surface-element"
+                     "/home/ipdemes/Albany_Irina/src/LCM/models"
+                     "/home/ipdemes/Albany_Irina/src/LCM/utils"
+                     "/home/ipdemes/Albany_Irina/src/LCM/utils/topology"
+                     "/home/ipdemes/Albany_Irina/src/FELIX/problems"
+                     "/home/ipdemes/Albany_Irina/src/FELIX/evaluators"
+                     "/home/ipdemes/Albany_Irina/src/Aeras/problems"
+                     "/home/ipdemes/Albany_Irina/src/Aeras/evaluators"
+                     "/home/ipdemes/Albany_Irina/src/Hydride/problems"
+                     "/home/ipdemes/Albany_Irina/src/Hydride/evaluators"
+                     "/home/ipdemes/Albany_Irina/src/QCAD"
+                     "/home/ipdemes/Albany_Irina/src/QCAD/problems"
+                     "/home/ipdemes/Albany_Irina/src/QCAD/evaluators"
+                     "/home/ipdemes/Albany_Irina/src/QCAD/responses"
+                     "/home/ipdemes/install/boost/install_1_49_0/include"
+                    )
+  CUDA_COMPILE( OBJECTS_CUDA1 Albany_Application_CU.cu )
+  CUDA_COMPILE( OBJECTS_CUDA2 Albany_StateManager_CU.cu )
+  CUDA_COMPILE( OBJECTS_CUDA3 problems/Albany_BCUtils_CU.cu)
+  CUDA_COMPILE( OBJECTS_CUDA4 problems/Albany_HeatProblem_CU.cu)
+  CUDA_COMPILE( OBJECTS_CUDA5 responses/Albany_FieldManagerScalarResponseFunction_CU.cu )
+  CUDA_COMPILE( OBHECTS_CUDA6 evaluators/PHAL_ComputeBasisFunctions_CU.cu )
+  CUDA_COMPILE( OBHECTS_CUDA7 evaluators/PHAL_DOFVecInterpolation_CU.cu)
+  CUDA_COMPILE( OBHECTS_CUDA8 evaluators/PHAL_DOFVecGradInterpolation_CU.cu)
+  CUDA_COMPILE( OBHECTS_CUDA9 evaluators/PHAL_DOFGradInterpolation_CU.cu)
+  SET(SOURCES
+  Albany_SolverFactory.cpp
+  Albany_Utils.cpp
+  PHAL_Dimension.cpp
+  PHAL_AlbanyTraits.cpp
+  ${OBJECTS_CUDA1}
+  Albany_ObserverFactory.cpp
+  Albany_RythmosObserver.cpp
+  Albany_NOXObserver.cpp
+  Albany_PiroObserver.cpp
+  ${OBJECTS_CUDA2}
+  Albany_ModelFactory.cpp
+  Albany_ModelEvaluator.cpp
+  Albany_SaveEigenData.cpp
+  Albany_ObserverImpl.cpp
+  disc/stk/Albany_IossSTKMeshStruct.cpp
+  )
+
+  SET(HEADERS
+  Albany_SolverFactory.hpp
+  Albany_Utils.hpp
+  Albany_DataTypes.hpp
+  PHAL_Dimension.hpp
+  PHAL_FactoryTraits.hpp
+  PHAL_AlbanyTraits.hpp
+  PHAL_Workset.hpp
+  PHAL_TypeKeyMap.hpp
+  Albany_Application.hpp
+  Albany_ObserverFactory.hpp
+  Albany_RythmosObserver.hpp
+  Albany_NOXObserver.hpp
+  Albany_PiroObserver.hpp
+  Albany_StateManager.hpp
+  Albany_StateInfoStruct.hpp
+  Albany_EigendataInfoStruct.hpp
+  Albany_ModelFactory.hpp
+  Albany_ModelEvaluator.hpp
+  Albany_SaveEigenData.hpp
+  Albany_ObserverImpl.hpp
+  Albany_DummyParameterAccessor.hpp
+  Albany_DistributedParameterLibrary.hpp
+  Albany_DistributedParameterDerivativeOp.hpp
+  Albany_DistributedParameterLibrary_Epetra.hpp
+  disc/stk/Albany_IossSTKMeshStruct.hpp
+  )
+
+#problems
+SET(SOURCES ${SOURCES}
+  problems/Albany_AbstractProblem.cpp
+  problems/Albany_ProblemUtils.cpp
+  problems/Albany_Layouts.cpp
+  problems/Albany_EvaluatorUtils.cpp
+  problems/Albany_ResponseUtilities.cpp
+  ${OBJECTS_CUDA3}
+  problems/Albany_ProblemFactory.cpp
+  problems/QCAD_MaterialDatabase.cpp
+  ${OBJECTS_CUDA4}
+  )
+  
+  SET(PDE_SRCS
+  problems/Albany_NavierStokes.cpp
+  problems/Albany_GPAMProblem.cpp
+  problems/Albany_LinComprNSProblem.cpp
+  problems/Albany_ComprNSProblem.cpp
+  problems/Albany_ODEProblem.cpp
+  problems/Albany_Helmholtz2DProblem.cpp
+  problems/Albany_CahnHillProblem.cpp
+  problems/Albany_PNPProblem.cpp
+  )
+SET(HEADERS ${HEADERS}
+  problems/Albany_ProblemFactory.hpp
+  problems/Albany_AbstractProblem.hpp
+  problems/Albany_ProblemUtils.hpp
+  problems/Albany_Layouts.hpp
+  problems/Albany_EvaluatorUtils.hpp
+  problems/Albany_EvaluatorUtils_Def.hpp
+  problems/Albany_ResponseUtilities.hpp
+  problems/Albany_ResponseUtilities_Def.hpp
+  problems/Albany_BCUtils.hpp
+  problems/Albany_BCUtils_Def.hpp
+  problems/QCAD_MaterialDatabase.hpp
+  problems/Albany_HeatProblem.hpp
+  )
+SET(PDE_HDRS
+  problems/Albany_NavierStokes.hpp
+  problems/Albany_GPAMProblem.hpp
+  problems/Albany_LinComprNSProblem.hpp
+  problems/Albany_ComprNSProblem.hpp
+  problems/Albany_ODEProblem.hpp
+  problems/Albany_Helmholtz2DProblem.hpp
+  problems/Albany_CahnHillProblem.hpp
+  problems/Albany_PNPProblem.hpp
+  )
+
+#responses
+SET(SOURCES ${SOURCES}
+  responses/Epetra_GatherAllV.cpp
+  responses/Epetra_ImportWithAlternateMap.cpp
+  responses/Albany_SolutionCullingStrategy.cpp
+  responses/Albany_ScalarResponseFunction.cpp
+  responses/Albany_AggregateScalarResponseFunction.cpp
+  responses/Albany_SamplingBasedScalarResponseFunction.cpp
+  responses/Albany_SolutionAverageResponseFunction.cpp
+  responses/Albany_SolutionMaxValueResponseFunction.cpp
+  responses/Albany_SolutionTwoNormResponseFunction.cpp
+  responses/Albany_SolutionValuesResponseFunction.cpp
+  responses/Albany_SolutionFileResponseFunction.cpp
+  ${OBJECTS_CUDA5} 
+  responses/Albany_DistributedResponseFunction.cpp
+  responses/Albany_SolutionResponseFunction.cpp
+  responses/Albany_KLResponseFunction.cpp
+  responses/Albany_ResponseFactory.cpp
+  )
+SET(HEADERS ${HEADERS}
+  responses/Epetra_GatherAllV.hpp
+  responses/Epetra_ImportWithAlternateMap.hpp
+  responses/Albany_SolutionCullingStrategy.hpp
+  responses/Albany_AbstractResponseFunction.hpp
+  responses/Albany_ScalarResponseFunction.hpp
+  responses/Albany_AggregateScalarResponseFunction.hpp
+  responses/Albany_SamplingBasedScalarResponseFunction.hpp
+  responses/Albany_SolutionAverageResponseFunction.hpp
+  responses/Albany_SolutionMaxValueResponseFunction.hpp
+  responses/Albany_SolutionTwoNormResponseFunction.hpp
+  responses/Albany_SolutionValuesResponseFunction.hpp
+  responses/Albany_SolutionFileResponseFunction.hpp
+  responses/Albany_FieldManagerScalarResponseFunction.hpp
+  responses/Albany_DistributedResponseFunction.hpp
+  responses/Albany_SolutionResponseFunction.hpp
+  responses/Albany_KLResponseFunction.hpp
+  responses/Albany_ResponseFactory.hpp
+  )
+
+  SET(SOURCES ${SOURCES}
+  evaluators/PHAL_GatherSolution.cpp
+  evaluators/PHAL_GatherEigenvectors.cpp
+  evaluators/PHAL_GatherCoordinateVector.cpp
+  evaluators/PHAL_GatherAuxData.cpp
+  evaluators/PHAL_ScatterResidual.cpp
+  evaluators/PHAL_Dirichlet.cpp
+  evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
+  evaluators/PHAL_Neumann.cpp
+  ${OBHECTS_CUDA6}
+  evaluators/PHAL_DOFInterpolation.cpp
+  ${OBHECTS_CUDA9}
+  ${OBHECTS_CUDA7}
+  ${OBHECTS_CUDA8}
+  evaluators/PHAL_MapToPhysicalFrame.cpp
+  evaluators/PHAL_SaveStateField.cpp
+  evaluators/PHAL_LoadStateField.cpp
+  evaluators/PHAL_SharedParameter.cpp
+  evaluators/PHAL_ResponseFieldIntegral.cpp
+  evaluators/PHAL_ScatterScalarResponse.cpp
+  evaluators/PHAL_SeparableScatterScalarResponse.cpp
+  evaluators/QCAD_ResponseFieldIntegral.cpp
+  evaluators/QCAD_ResponseFieldValue.cpp
+  evaluators/QCAD_ResponseFieldAverage.cpp
+  evaluators/QCAD_ResponseSaveField.cpp
+  evaluators/QCAD_ResponseCenterOfMass.cpp
+  evaluators/QCAD_MeshRegion.cpp
+  evaluators/QCAD_EvaluatorTools.cpp
+  evaluators/PHAL_HeatEqResid.cpp
+  evaluators/PHAL_Source.cpp
+  evaluators/PHAL_ThermalConductivity.cpp
+  evaluators/PHAL_NSMaterialProperty.cpp
+  evaluators/PHAL_Absorption.cpp
+  evaluators/PHAL_GatherSHeight.cpp
+  evaluators/PHAL_GatherTemperature.cpp
+  evaluators/PHAL_GatherBasalFriction.cpp
+  evaluators/PHAL_GatherThickness.cpp
+  evaluators/PHAL_GatherFlowFactor.cpp
+  evaluators/Adapt_ElementSizeField.cpp
+  evaluators/PHAL_SaveNodalField.cpp
+  evaluators/PHAL_GatherSurfaceVelocity.cpp
+  evaluators/PHAL_GatherVelocityRMS.cpp
+  evaluators/PHAL_GatherScalarNodalParameter.cpp
+  )
+
+
+
+ELSE()
+
+
 SET(SOURCES
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
@@ -134,23 +370,7 @@ SET(HEADERS ${HEADERS}
   responses/Albany_ResponseFactory.hpp
   )
 
-#discretization
-SET(SOURCES ${SOURCES}
-  disc/Albany_DiscretizationFactory.cpp
-  disc/Albany_AbstractMeshStruct.cpp
-  disc/Adapt_NodalDataBlock.cpp
-  )
-SET(HEADERS ${HEADERS}
-  disc/Albany_AbstractDiscretization.hpp
-  disc/Albany_AbstractMeshStruct.hpp
-  disc/Albany_AbstractFieldContainer.hpp
-  disc/Albany_AbstractNodeFieldContainer.hpp
-  disc/Albany_DiscretizationFactory.hpp
-  disc/Adapt_NodalDataBlock.hpp
-  )
-
-#evaluators
-SET(SOURCES ${SOURCES}
+  SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
@@ -195,6 +415,24 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherVelocityRMS.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
   )
+
+ENDIF()
+
+#discretization
+SET(SOURCES ${SOURCES}
+  disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_AbstractMeshStruct.cpp
+  disc/Adapt_NodalDataBlock.cpp
+  )
+SET(HEADERS ${HEADERS}
+  disc/Albany_AbstractDiscretization.hpp
+  disc/Albany_AbstractMeshStruct.hpp
+  disc/Albany_AbstractFieldContainer.hpp
+  disc/Albany_AbstractNodeFieldContainer.hpp
+  disc/Albany_DiscretizationFactory.hpp
+  disc/Adapt_NodalDataBlock.hpp
+  )
+
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
   evaluators/PHAL_ODEResid.cpp

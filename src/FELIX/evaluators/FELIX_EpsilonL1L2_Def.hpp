@@ -17,6 +17,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -44,7 +45,7 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
   this->addEvaluatedField(epsilonXY);
   this->addEvaluatedField(epsilonB);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -53,7 +54,7 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
   
   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
   
-  this->setName("EpsilonL1L2"+ );
+  this->setName("EpsilonL1L2"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

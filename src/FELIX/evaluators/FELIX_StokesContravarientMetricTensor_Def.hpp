@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -25,7 +25,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Gc);
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dim;
+  std::vector<PHX::index_size_type> dim;
   dl->qp_gradient->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];
@@ -40,7 +40,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
 
-  this->setName("StokesContravarientMetricTensor"+ );
+  this->setName("StokesContravarientMetricTensor"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

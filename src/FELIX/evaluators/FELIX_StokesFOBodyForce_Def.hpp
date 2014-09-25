@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -138,7 +139,7 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(force);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::index_size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -150,8 +151,39 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 //*out << " numDims = " << numDims << std::endl;
 //*out << " numQPs = " << numQPs << std::endl; 
 
-  this->setName("StokesFOBodyForce"+ );
+  this->setName("StokesFOBodyForce"+PHX::typeAsString<EvalT>());
 }
+//**********************************************************************
+//Kokkos functors
+template < class DeviceType, class MDFieldType1, class MDFieldType2 >
+class FOBodyForce_FO_INTERP_SURF_GRAD  {
+ MDFieldType1 surfaceGrad_;
+ MDFieldType2 force_;
+ const double rho_g_;
+ const int numQPs_;  
+
+ public:
+ typedef DeviceType device_type;
+
+ FOBodyForce_FO_INTERP_SURF_GRAD (MDFieldType1 &surfaceGrad,
+              MDFieldType2 &force,
+              double rho_g,
+              int numQPs)
+  : surfaceGrad_(surfaceGrad)
+  , force_(force)
+  , rho_g_(rho_g)
+  , numQPs_(numQPs){}
+
+ KOKKOS_INLINE_FUNCTION
+ void operator () (const int i) const
+ {
+  for (int j=0; j<numQPs_; j++)
+  {
+   force_(i, j, 0)=rho_g_*surfaceGrad_(i,j,0);
+   force_(i, j, 1)=rho_g_*surfaceGrad_(i,j,1);
+  }
+ }
+};
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -178,6 +210,7 @@ template<typename EvalT, typename Traits>
 void StokesFOBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef NO_KOKKOS_ALBANY
  if (bf_type == NONE) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
      for (std::size_t qp=0; qp < numQPs; ++qp)       
@@ -198,7 +231,8 @@ evaluateFields(typename Traits::EvalData workset)
    double r = 3*pi;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muargt = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r;  
@@ -208,9 +242,9 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT exx = 2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) + r; 
        MeshScalarT eyy = -2.0*pi*cos(x2pi + xphase)*cos(y2pi + yphase) - r; 
        MeshScalarT exy = 0.0;  
-       f[0] = 2.0*muqp*(-4.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase))  
+       force(cell,qp,0) = 2.0*muqp*(-4.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase))  
             + 2.0*0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*(2.0*exx + eyy) + dmuargtdy*exy); 
-       f[1] = 2.0*muqp*(4.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)) 
+       force(cell,qp,1) = 2.0*muqp*(4.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)) 
             + 2.0*0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*exy + dmuargtdy*(exx + 2.0*eyy));
      }
    }
@@ -218,21 +252,23 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == FO_SINEXP2D) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+      //Irina Debug
+      //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
-       f[0] = -1.0*(-4.0*muqp*exp(coordVec(cell,qp,0)) - 12.0*muqp*pi*pi*cos(x2pi)*cos(y2pi) + 4.0*muqp*pi*pi*cos(y2pi));   
-       f[1] =  -1.0*(20.0*muqp*pi*pi*sin(x2pi)*sin(y2pi)); 
+       force(cell,qp,0) = -1.0*(-4.0*muqp*exp(coordVec(cell,qp,0)) - 12.0*muqp*pi*pi*cos(x2pi)*cos(y2pi) + 4.0*muqp*pi*pi*cos(y2pi));   
+       force(cell,qp,1) =  -1.0*(20.0*muqp*pi*pi*sin(x2pi)*sin(y2pi)); 
      }
    }
  }
  else if (bf_type == POISSON) { //source term for debugging of Neumann BC
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+      //Irinad Debug
+      //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
-       f[0] = exp(x);  
+       force(cell,qp,0) = exp(x);  
      }
    }
  }
@@ -240,13 +276,14 @@ evaluateFields(typename Traits::EvalData workset)
    const double a = 1.0; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
-       f[0] = 2.0*muqp*(2.0*a*a*exp(a*x)*cos(y2pi) + 6.0*pi*pi*cos(x2pi)*cos(y2pi) - 2.0*pi*pi*exp(a*x)*cos(y2pi)); 
-       f[1] = 2.0*muqp*(-3.0*pi*a*exp(a*x)*sin(y2pi) - 10.0*pi*pi*sin(x2pi)*sin(y2pi)); 
+       force(cell,qp,0) = 2.0*muqp*(2.0*a*a*exp(a*x)*cos(y2pi) + 6.0*pi*pi*cos(x2pi)*cos(y2pi) - 2.0*pi*pi*exp(a*x)*cos(y2pi)); 
+       force(cell,qp,1) = 2.0*muqp*(-3.0*pi*a*exp(a*x)*sin(y2pi) - 10.0*pi*pi*sin(x2pi)*sin(y2pi)); 
      }
    }
  }
@@ -254,13 +291,14 @@ evaluateFields(typename Traits::EvalData workset)
    const double a = 1.0; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+      //Irina Debug
+      //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT muqp = 1.0 ; //0.5*pow(A, -1.0/n)*pow(muargt, 1.0/n - 1.0);
-       f[0] = 2.0*muqp*(-3.0*pi*a*exp(a*x)*sin(y2pi) - 10.0*pi*pi*sin(x2pi)*sin(y2pi)); 
-       f[1] = 2.0*muqp*(1.0/2.0*a*a*exp(a*x)*cos(y2pi) + 6.0*pi*pi*cos(x2pi)*cos(y2pi) - 8.0*pi*pi*exp(a*x)*cos(y2pi)); 
+       force(cell,qp,0) = 2.0*muqp*(-3.0*pi*a*exp(a*x)*sin(y2pi) - 10.0*pi*pi*sin(x2pi)*sin(y2pi)); 
+       force(cell,qp,1) = 2.0*muqp*(1.0/2.0*a*a*exp(a*x)*cos(y2pi) + 6.0*pi*pi*cos(x2pi)*cos(y2pi) - 8.0*pi*pi*exp(a*x)*cos(y2pi)); 
      }
    }
  }
@@ -268,7 +306,8 @@ evaluateFields(typename Traits::EvalData workset)
    const double a = 1.0; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {
-       ScalarT* f = &force(cell,qp,0);
+      //Irina Debug
+      //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
@@ -280,9 +319,9 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT exx = a*exp(a*x)*sin(y2pi);
        MeshScalarT eyy = -2.0*pi*exp(a*x)*sin(y2pi);
        MeshScalarT exy = 1.0/2.0*(2.0*pi+a)*exp(a*x)*cos(y2pi);
-       f[0] = 2.0*muqp*(2.0*a*a*exp(a*x)*sin(y2pi) - 3.0*pi*a*exp(a*x)*sin(y2pi) - 2.0*pi*pi*exp(a*x)*sin(y2pi))
+       force(cell,qp,0) = 2.0*muqp*(2.0*a*a*exp(a*x)*sin(y2pi) - 3.0*pi*a*exp(a*x)*sin(y2pi) - 2.0*pi*pi*exp(a*x)*sin(y2pi))
             + 2.0*0.5*pow(A, -1.0/n)*(1.0/n-1.0)*pow(muargt, 1.0/n-2.0)*(dmuargtdx*(2.0*exx + eyy) + dmuargtdy*exy);
-       f[1] = 2.0*muqp*(3.0*a*pi*exp(a*x)*cos(y2pi) + 1.0/2.0*a*a*exp(a*x)*cos(y2pi) - 8.0*pi*pi*exp(a*x)*cos(y2pi))
+       force(cell,qp,1) = 2.0*muqp*(3.0*a*pi*exp(a*x)*cos(y2pi) + 1.0/2.0*a*a*exp(a*x)*cos(y2pi) - 8.0*pi*pi*exp(a*x)*cos(y2pi))
             + 2.0*0.5*pow(A, -1.0/n)*(1.0/n-1.0)*pow(muargt, 1.0/n-2.0)*(dmuargtdx*exy + dmuargtdy*(exx + 2.0*eyy));
      }
    }
@@ -291,17 +330,20 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == FO_SINCOSZ) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       MeshScalarT& z = coordVec(cell,qp,2);
+       //Irina Debug
+       //MeshScalarT& z = coordVec(cell,qp,2);
+       MeshScalarT z = coordVec(cell,qp,2);
        MeshScalarT muqp = 1.0; //hard coded to constant for now 
        
        ScalarT t1 = z*(1.0-z)*(1.0-2.0*z); 
        ScalarT t2 = 2.0*z - 1.0; 
 
-       f[0] = 2.0*muqp*(-16.0*pi*pi*t1 + 3.0*t2)*sin(x2pi)*sin(y2pi); 
-       f[1] = 2.0*muqp*(16.0*pi*pi*t1 - 3.0*t2)*cos(x2pi)*cos(y2pi);  
+       force(cell,qp,0) = 2.0*muqp*(-16.0*pi*pi*t1 + 3.0*t2)*sin(x2pi)*sin(y2pi); 
+       force(cell,qp,1) = 2.0*muqp*(16.0*pi*pi*t1 - 3.0*t2)*cos(x2pi)*cos(y2pi);  
      }
    }
  }
@@ -309,14 +351,38 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == FO_DOME) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT y = coordVec(cell,qp,1);
-       f[0] = -rho_g*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
-       f[1] = -rho_g*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
+       force(cell,qp,0) = -rho_g*x*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
+       force(cell,qp,1) = -rho_g*y*0.7071/sqrt(450.0-x*x-y*y)/sqrt(450.0);  
      }
    }
  }
+#else
+  if (bf_type == NONE) {
+  }
+  else if (bf_type == FO_INTERP_SURF_GRAD) {
+  Kokkos::parallel_for ( workset.numCells,FOBodyForce_FO_INTERP_SURF_GRAD < PHX::Device,  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >( surfaceGrad, force, rho_g, numQPs) );
+  }
+  else if (bf_type == FO_SINCOS2D) {
+  }
+  else if (bf_type == FO_SINEXP2D) {
+  }
+  else if (bf_type == POISSON) {
+  }
+  else if (bf_type == FO_COSEXP2D) {
+  }
+  else if (bf_type == FO_COSEXP2DFLIP) {
+  }
+  else if (bf_type == FO_COSEXP2DALL) {
+  }
+  else if (bf_type == FO_SINCOSZ) {
+  }
+  else if (bf_type == FO_DOME) {
+  }
+#endif
+
 }
 
 }

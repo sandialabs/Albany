@@ -215,6 +215,9 @@ Application(const RCP<const Epetra_Comm>& comm_,
         responseID, dummy);
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
+    std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(16);
+    sfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
     sfm[ps]->postRegistrationSetup("");
   }
 
@@ -678,6 +681,7 @@ computeGlobalJacobian(const double alpha,
   if (f != NULL)
     f->Export(*overlapped_f, *exporter, Add);
 
+
   // Assemble global Jacobian
   jac.Export(*overlapped_jac, *exporter, Add);
   } // End timer
@@ -717,6 +721,7 @@ computeGlobalJacobian(const double alpha,
   //std::cout << "J " << jac << std::endl;;
 
   //Debut output
+ // writeToMatrixMarketJac=-1;
   if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
     char name[100];  //create string for file name
     if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
@@ -2790,22 +2795,38 @@ void Albany::Application::postRegSetup(std::string eval)
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
   }
   else if (eval=="Jacobian") {
-    for (int ps=0; ps < fm.size(); ps++)
-      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-    if (dfm!=Teuchos::null)
+    std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(16);
+    for (int ps=0; ps < fm.size(); ps++){
+       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+      }
+    if (dfm!=Teuchos::null){
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+    }
     if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      for (int ps=0; ps < nfm.size(); ps++){
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+      }
   }
   else if (eval=="Tangent") {
-    for (int ps=0; ps < fm.size(); ps++)
+   std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(32);
+    for (int ps=0; ps < fm.size(); ps++){
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-    if (dfm!=Teuchos::null)
+    }
+    if (dfm!=Teuchos::null){
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+      }
     if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      for (int ps=0; ps < nfm.size(); ps++){
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+      }
   }
 #ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {
