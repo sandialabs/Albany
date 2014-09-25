@@ -390,6 +390,26 @@ ELSE()
   SET(CISM_HAS_FELIX FALSE)
 ENDIF()
 
+# Set optional build of MPAS Interface for FELIX (Land Ice SciDAC project),
+# defaults to Disabled
+OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on FELIX Source code" OFF)
+IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
+  ADD_DEFINITIONS(-DMPAS_HAS_FELIX)
+  MESSAGE("-- MPAS_INTERFACE     is Enabled, compiling with -DMPAS_HAS_FELIX")
+  SET(MPAS_HAS_FELIX TRUE)
+  IF (NOT MPAS_INCLUDE_DIR)
+    MESSAGE("\nError:  MPAS_INCLUDE_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- MPAS_INCLUDE_DIR ${MPAS_INCLUDE_DIR}")
+  ENDIF()
+ELSEIF(ENABLE_MPAS_INTERFACE AND (NOT ENABLE_FELIX))
+  MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_FELIX
+to be ON\n")
+ELSE()
+  MESSAGE("-- MPAS_INTERFACE     is NOT Enabled.")
+  SET(MPAS_HAS_FELIX FALSE)
+ENDIF()
+
 # Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
 OPTION(ENABLE_AERAS "Flag to turn on Aeras Source code" OFF)
 IF (ENABLE_AERAS)
