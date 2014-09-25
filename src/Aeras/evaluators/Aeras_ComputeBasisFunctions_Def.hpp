@@ -62,10 +62,26 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   refPoints         .resize               (numQPs, basisDims);
   refWeights        .resize               (numQPs);
 
+  refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
+  val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
+  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
+
+  for (int i =0; i< numQPs; i++)
+     refWeights_CUDA(i)=refWeights(i);
+
   intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+
+  for (int i =0; i < numNodes; i++){
+    for (int j=0; j < numQPs; j++){
+      val_at_cub_points_CUDA(i,j)=val_at_cub_points(i,j);
+      for (int k=0; k < basisDims; k++)
+         grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
+    }
+  }
+   
 
   //Irina Debug:: remove strings with new Phalanx
   //this->setName("Aeras::ComputeBasisFunctions"PHX::TypeString<EvalT>::value);
@@ -517,13 +533,13 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 */
-   Kokkos::parallel_for (numelements, computeCellMeasure<MeshScalarT,  PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint>, Intrepid::FieldContainer<RealType> > (weighted_measure, refWeights, jacobian_det, numQPs));
+   Kokkos::parallel_for (numelements, computeCellMeasure<MeshScalarT,  PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint>, Kokkos::View<RealType*, PHX::Device> > (weighted_measure, refWeights_CUDA, jacobian_det, numQPs));
 
-   Kokkos::parallel_for (numelements, compute_BF< PHX::Device , PHX::MDField<RealType,Cell,Node,QuadPoint>,Intrepid::FieldContainer<RealType>  > (BF, val_at_cub_points, numNodes, numQPs));
+   Kokkos::parallel_for (numelements, compute_BF< PHX::Device , PHX::MDField<RealType,Cell,Node,QuadPoint>, Kokkos::View<RealType**, PHX::Device>  > (BF, val_at_cub_points_CUDA, numNodes, numQPs));
 
   Kokkos::parallel_for (numelements, compute_wBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>, PHX::MDField<MeshScalarT,Cell,QuadPoint>, PHX::MDField<RealType,Cell,Node,QuadPoint> > (wBF, weighted_measure, BF, numNodes, numQPs));
  
-  Kokkos::parallel_for (numelements, compute_GradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, Intrepid::FieldContainer<RealType>  > (GradBF, jacobian_inv, grad_at_cub_points, numNodes, numQPs, numDims));
+  Kokkos::parallel_for (numelements, compute_GradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, Kokkos::View<RealType***, PHX::Device>  > (GradBF, jacobian_inv, grad_at_cub_points_CUDA, numNodes, numQPs, numDims));
 
   Kokkos::parallel_for (numelements, compute_wGradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint>  > (wGradBF, GradBF, weighted_measure, numNodes, numQPs, numDims));
 

@@ -117,13 +117,13 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
     for (int qp=0; qp < numQPs; ++qp) 
        for (int vec=0; vec<numLevels; vec++)
           TempSrc(cell, qp, vec)=0.0;
-
+//Irina TOFIX
 /*  for (int t=0; t < TracerSrc.size(); ++t)
      for (int cell=0; cell < numCells; ++cell) 
         for (int qp=0; qp < numQPs; ++qp) 
            for (int level=0; level < numLevels; ++level)
               TracerSrc[tracerSrcNames[t]](cell, qp, level)=0.0;
-*/
+
   for (int cell=0; cell < numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) { 
@@ -161,7 +161,7 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
       }
     }
   }
-
+*/
 }
 
 // **********************************************************************

@@ -71,7 +71,8 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+//Irina TOFIX
+/*  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
@@ -87,6 +88,6 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-  }
+  }*/
 }
 }

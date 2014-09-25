@@ -61,12 +61,15 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       if (2==numRank) {
         for (int dim=0; dim<numDims; dim++) {
-          ScalarT& gvqp = grad_val_qp(cell,qp,dim) = 0;
+         // ScalarT& gvqp = 
+          grad_val_qp(cell,qp,dim) = 0;
           for (int node=0 ; node < numNodes; ++node) {
-            gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
+            grad_val_qp(cell,qp,dim)  += val_node(cell, node) * GradBF(cell, node, qp, dim);
           }
         }
       } else {
+//Irina TOFIX
+/*
         for (int level=0; level < numLevels; ++level) {
           for (int dim=0; dim<numDims; dim++) {
             ScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
@@ -75,7 +78,7 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
         }
-      } 
+*/      } 
     }
   }
 }
@@ -132,12 +135,15 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       if (2==numRank) {
         for (int dim=0; dim<numDims; dim++) {
-          MeshScalarT& gvqp = grad_val_qp(cell,qp,dim) = 0;
+          //MeshScalarT& gvqp = 
+          grad_val_qp(cell,qp,dim) = 0;
           for (int node=0 ; node < numNodes; ++node) {
-            gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
+            grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
           }
         }
       } else {
+//Irina TOFIX
+/*
         for (int level=0; level < numLevels; ++level) {
           for (int dim=0; dim<numDims; dim++) {
             MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
@@ -145,7 +151,7 @@ evaluateFields(typename Traits::EvalData workset)
               gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
             }
           }
-        }
+        }*/
       }
     }
   }

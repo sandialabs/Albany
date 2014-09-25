@@ -150,7 +150,8 @@ evaluateFields(typename Traits::EvalData workset)
         (this->val_dot[j])(cell,node) = (*xdot)[eqID[n]];
       }
       eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) { 
+//Irina TOFIX
+/*      for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numLevelVar; ++j, ++n) {
           (this->val    [j])(cell,node,level) = (*x)   [eqID[n]];
           (this->val_dot[j])(cell,node,level) = (*xdot)[eqID[n]];
@@ -163,7 +164,7 @@ evaluateFields(typename Traits::EvalData workset)
           (this->val_dot[j])(cell,node,level) = (*xdot)[eqID[n]];
         }
       }
-      eq += this->numTracerVar;
+*/      eq += this->numTracerVar;
     }
   }
 }
@@ -197,56 +198,60 @@ evaluateFields(typename Traits::EvalData workset)
       const int firstunk = neq * node;
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        ScalarT* valptr = &(this->val[j])(cell,node);
-        *valptr = FadType(num_dof, (*x)[eqID[n]]);
-        valptr->setUpdateValue(!workset.ignore_residual);
-        valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
+        //ScalarT* valptr = &(this->val[j])(cell,node);
+        (this->val[j])(cell,node) = FadType(num_dof, (*x)[eqID[n]]);
+        ((this->val[j])(cell,node)).setUpdateValue(!workset.ignore_residual);
+        ((this->val[j])(cell,node)).fastAccessDx(firstunk + n) = workset.j_coeff;
       }
       eq += this->numNodeVar;
+//Irina TOFIX
+/*
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
-          ScalarT* valptr = &(this->val[j])(cell,node,level);
-          *valptr = FadType(num_dof, (*x)[eqID[n]]);
-          valptr->setUpdateValue(!workset.ignore_residual);
-          valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
+          //ScalarT* valptr = &(this->val[j])(cell,node,level);
+          (this->val[j])(cell,node,level) = FadType(num_dof, (*x)[eqID[n]]);
+          ((this->val[j])(cell,node,level)).setUpdateValue(!workset.ignore_residual);
+          ((this->val[j])(cell,node,level)).fastAccessDx(firstunk + n) = workset.j_coeff;
         }
       }
       eq += this->numLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          ScalarT* valptr = &(this->val[j])(cell,node,level);
-          *valptr = FadType(num_dof, (*x)[eqID[n]]);
-          valptr->setUpdateValue(!workset.ignore_residual);
-          valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
+          //ScalarT* valptr = &(this->val[j])(cell,node,level);
+          (this->val[j])(cell,node,level) = FadType(num_dof, (*x)[eqID[n]]);
+          ((this->val[j])(cell,node,level)).setUpdateValue(!workset.ignore_residual);
+          ((this->val[j])(cell,node,level)).fastAccessDx(firstunk + n) = workset.j_coeff;
         }
       }
       eq += this->numTracerVar;
-
+*/
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          ScalarT* valptr = &(this->val_dot[j])(cell,node);
-          *valptr = FadType(num_dof, (*xdot)[eqID[n]]);
-          valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
+          //ScalarT* valptr = &(this->val_dot[j])(cell,node);
+          (this->val_dot[j])(cell,node) = FadType(num_dof, (*xdot)[eqID[n]]);
+          ((this->val_dot[j])(cell,node)).fastAccessDx(firstunk + n) = workset.m_coeff;
         }
         eq += this->numNodeVar;
-        for (int level = 0; level < this->numLevels; level++) { 
+//Irina TOFIX
+/*  
+      for (int level = 0; level < this->numLevels; level++) { 
           for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
-            ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
-            *valptr = FadType(num_dof, (*xdot)[eqID[n]]);
-            valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
+            //ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
+            (this->val_dot[j])(cell,node,level) = FadType(num_dof, (*xdot)[eqID[n]]);
+            ((this->val_dot[j])(cell,node,level)).fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
         eq += this->numLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
-            *valptr = FadType(num_dof, (*xdot)[eqID[n]]);
-            valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
+          //  ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
+            (this->val_dot[j])(cell,node,level) = FadType(num_dof, (*xdot)[eqID[n]]);
+            ((this->val_dot[j])(cell,node,level)).fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
         eq += this->numTracerVar;
-      }
+*/      }
     }
   }
 }
@@ -284,84 +289,88 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
-        valptr = &(this->val[j])(cell,node);
+        //valptr = &(this->val[j])(cell,node);
         if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          *valptr = TanFadType(num_cols_tot, (*x)[eqID[n]]);
+          (this->val[j])(cell,node) = TanFadType(num_cols_tot, (*x)[eqID[n]]);
           for (int k=0; k<workset.num_cols_x; k++)
-            valptr->fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
+            ((this->val[j])(cell,node)).fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
         }
         else
-          *valptr = TanFadType((*x)[eqID[n]]);
+          (this->val[j])(cell,node) = TanFadType((*x)[eqID[n]]);
       }
       eq += this->numNodeVar;
-      for (int level = 0; level < this->numLevels; level++) { 
+//Irina TOFIX
+/*  
+    for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
-          valptr = &(this->val[j])(cell,node,level);
+          //valptr = &(this->val[j])(cell,node,level);
           if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, (*x)[eqID[n]]);
+            (this->val[j])(cell,node,level) = TanFadType(num_cols_tot, (*x)[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
+              ((this->val[j])(cell,node,level)).fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
           }
           else
-            *valptr = TanFadType((*x)[eqID[n]]);
+            (this->val[j])(cell,node,level) = TanFadType((*x)[eqID[n]]);
         }
       }
       eq += this->numLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          valptr = &(this->val[j])(cell,node,level);
+        //  valptr = &(this->val[j])(cell,node,level);
           if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, (*x)[eqID[n]]);
+            (this->val[j])(cell,node,level) = TanFadType(num_cols_tot, (*x)[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
+              ((this->val[j])(cell,node,level)).fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
           }
           else
-            *valptr = TanFadType((*x)[eqID[n]]);
+            (this->val[j])(cell,node,level) = TanFadType((*x)[eqID[n]]);
         }
       }
       eq += this->numTracerVar;
-      if (workset.transientTerms) {
+*/      if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
-          valptr = &(this->val_dot[j])(cell,node);
+          //valptr = &(this->val_dot[j])(cell,node);
           if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
+            (this->val_dot[j])(cell,node) = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) =
+              ((this->val_dot[j])(cell,node)).fastAccessDx(k) =
                 workset.m_coeff*(*Vxdot)[k][eqID[n]];
           }
           else
-            *valptr = TanFadType((*xdot)[eqID[n]]);
+            (this->val_dot[j])(cell,node) = TanFadType((*xdot)[eqID[n]]);
         }
         eq += this->numNodeVar;
-        for (int level = 0; level < this->numLevels; level++) { 
+//Irina TOFIX
+/*  
+      for (int level = 0; level < this->numLevels; level++) { 
           for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
-            valptr = &(this->val_dot[j])(cell,node,level);
+            //valptr = &(this->val_dot[j])(cell,node,level);
             if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-              *valptr = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
+              (this->val_dot[j])(cell,node,level) = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
               for (int k=0; k<workset.num_cols_x; k++)
-                valptr->fastAccessDx(k) =
+                ((this->val_dot[j])(cell,node,level)).fastAccessDx(k) =
                   workset.m_coeff*(*Vxdot)[k][eqID[n]];
             }
             else
-              *valptr = TanFadType((*xdot)[eqID[n]]);
+              (this->val_dot[j])(cell,node,level) = TanFadType((*xdot)[eqID[n]]);
           }
         }
         eq += this->numLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            valptr = &(this->val_dot[j])(cell,node,level);
+            //valptr = &(this->val_dot[j])(cell,node,level);
             if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-              *valptr = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
+              (this->val_dot[j])(cell,node,level) = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
               for (int k=0; k<workset.num_cols_x; k++)
-                valptr->fastAccessDx(k) =
+                ((this->val_dot[j])(cell,node,level)).fastAccessDx(k) =
                   workset.m_coeff*(*Vxdot)[k][eqID[n]];
             }
             else
-              *valptr = TanFadType((*xdot)[eqID[n]]);
+              (this->val_dot[j])(cell,node,level) = TanFadType((*xdot)[eqID[n]]);
           }
         }
-        eq += this->numTracerVar;
+*/        eq += this->numTracerVar;
       }
     }
   }

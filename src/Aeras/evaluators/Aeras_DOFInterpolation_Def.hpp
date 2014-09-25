@@ -59,18 +59,20 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       if (2==numRank) {
-        ScalarT& vqp = val_qp(cell,qp) = 0;
+     //   ScalarT& vqp =
+        val_qp(cell,qp) = 0;
         for (int node=0; node < numNodes; ++node) {
-          vqp += val_node(cell, node) * BF(cell, node, qp);
+          val_qp(cell,qp) += val_node(cell, node) * BF(cell, node, qp);
         }
       } else {
-        for (int level=0; level < numLevels; ++level) {
+//Irina TOFIX
+/*        for (int level=0; level < numLevels; ++level) {
           ScalarT& vqp = val_qp(cell,qp,level) = 0;
           for (int node=0; node < numNodes; ++node) {
             vqp += val_node(cell, node, level) * BF(cell, node, qp);
           }
         }
-      } 
+*/      } 
     }
   }
 }

@@ -59,6 +59,9 @@ private:
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
 
+  Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
+  Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
+  Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;

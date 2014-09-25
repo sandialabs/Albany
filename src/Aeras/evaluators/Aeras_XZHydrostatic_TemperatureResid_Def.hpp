@@ -82,6 +82,8 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+//Irina TOFIX
+/*
   std::vector<ScalarT> vel(numLevels);
   for (int level=0; level < numLevels; ++level) {
     vel[level] = (level+1)*Re;
@@ -106,7 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-  }
+  }*/
 }
 
 //**********************************************************************

@@ -87,7 +87,9 @@ evaluateFields(typename Traits::EvalData workset)
     vel[level] = (level+1)*Re;
   }
 
-  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  for (int i=0; i < workset.numCells; ++i) 
+     for (int node=0; node < numNodes; ++node)
+          Residual(i, node)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
@@ -97,12 +99,13 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j=0; j < numDims; ++j) 
             Residual(cell,node) += vel[0] * XGrad(cell,qp,j)*wBF(cell,node,qp);
         } else {
-          for (int level=0; level < numLevels; ++level) {
+//Irina TOFIX
+/*          for (int level=0; level < numLevels; ++level) {
             Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);
             for (int j=0; j < numDims; ++j) 
               Residual(cell,node,level) += vel[level] * XGrad(cell,qp,level,j)*wBF(cell,node,qp);
           }
-        }
+*/        }
       }
     }
   }
