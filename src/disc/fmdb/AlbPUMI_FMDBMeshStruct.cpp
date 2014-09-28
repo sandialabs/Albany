@@ -158,7 +158,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  const CellTopologyData* ctd = getCellTopology(mesh);
+  const CellTopologyData* ctd = apf::getCellTopology(mesh);
   if (!params->get("Separate Evaluators by Element Block",false))
   {
     // get elements in the first element block
