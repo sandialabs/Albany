@@ -173,19 +173,17 @@ evaluateGradient(const double current_time,
 {
   visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
   Teuchos::RCP<const Teuchos_Comm> commT = application->getComm();
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   //Create Tpetra copy of x, called xT
-  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT, nodeT);
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x, commT);
   //Create Tpetra copy of xdot, called xdotT
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   if (xdot != NULL) {
-    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT, nodeT);
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
    }
   //Create Tpetra copy of xdotdot, called xdotdotT
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   if (xdotdot != NULL) {
-    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT, nodeT);
+    xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, commT);
    }
 
   // Set data in Workset struct

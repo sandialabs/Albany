@@ -342,9 +342,7 @@ int main(int ac, char* av[])
   discretizationParameterList->set<std::string>("Exodus Output File Name",
                                            output_file);
 
-  Teuchos::ParameterList kokkosNodeParams;
-  const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
-  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes, 0, commT, Tpetra::LocallyReplicated, nodeT));
+  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes, 0, commT, Tpetra::LocallyReplicated));
   Teuchos::RCP<Tpetra_Vector> solution_vectorT = Teuchos::rcp(new Tpetra_Vector(mapT)); 
 
   int numberOfEquations = 3;

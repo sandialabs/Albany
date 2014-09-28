@@ -479,12 +479,10 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   //create comm and node objects for Epetra -> Tpetra conversions
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
   Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT); 
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
   //Create Tpetra copy of x, call it xT
   Teuchos::RCP<const Tpetra_Vector> xT; 
   if (x != Teuchos::null) 
-    xT  = Petra::EpetraVector_To_TpetraVectorConst(*x, commT, nodeT); 
+    xT  = Petra::EpetraVector_To_TpetraVectorConst(*x, commT); 
 
   double alpha     = 0.0;
   double omega     = 0.0;
@@ -496,11 +494,11 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
   //Declare and create Tpetra copy of x_dot, call it x_dotT
   Teuchos::RCP<const Tpetra_Vector> x_dotT;
   if (x_dotT != Teuchos::null)  
-    x_dotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dot, commT, nodeT);
+    x_dotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dot, commT);
   //Declare and create Tpetra copy of x_dotdot, call it x_dotdotT
   Teuchos::RCP<const Tpetra_Vector> x_dotdotT;
   if (x_dotdotT != Teuchos::null)  
-    x_dotdotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dotdot, commT, nodeT);
+    x_dotdotT = Petra::EpetraVector_To_TpetraVectorConst(*x_dotdot, commT);
   
   if (x_dot != Teuchos::null || x_dotdot != Teuchos::null) {
     alpha = inArgs.get_alpha();
@@ -521,7 +519,7 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
     //create Tpetra copy of p
     Teuchos::RCP<const Tpetra_Vector> pT;
     if (p != Teuchos::null) {
-      pT = Petra::EpetraVector_To_TpetraVectorConst(*p, commT, nodeT); 
+      pT = Petra::EpetraVector_To_TpetraVectorConst(*p, commT); 
       //*(distParamLib->get(dist_param_names[i])->vector()) = *p;
       *(distParamLib->get(dist_param_names[i])->vector()) = *pT;
     }
@@ -684,10 +682,10 @@ f_out->Print(std::cout);
         }
         //create Tpetra copy of g_out, call it g_outT
         if (g_out != Teuchos::null) 
-           g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT, nodeT); 
+           g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 
         //create Tpetra copy of dgdp_out, call it dgdp_outT
         if (dgdp_out != Teuchos::null) 
-           dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT, nodeT); 
+           dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT); 
 	app->evaluateResponseTangentT(i, alpha, beta, omega, curr_time, false,
 				     x_dotT.get(), x_dotdotT.get(), *xT, 
 				     sacado_param_vec, p_vec.get(),
@@ -705,7 +703,7 @@ f_out->Print(std::cout);
 
     if (g_out != Teuchos::null && !g_computed) {
       //create Tpetra copy of g_out, call it g_outT
-      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT, nodeT); 
+      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 
       app->evaluateResponseT(i, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, sacado_param_vec, 
 			    *g_outT);
       //convert g_outT to Epetra_Vector g_out 

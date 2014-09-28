@@ -76,8 +76,6 @@ class NodalDataBlock {
     Teuchos::ArrayRCP<const ST> const_overlap_node_view;
     Teuchos::ArrayRCP<const ST> const_local_node_view;
 
-    Teuchos::RCP<KokkosNode> node;
-
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
     NodeFieldSizeVector& nodeBlockLayout;

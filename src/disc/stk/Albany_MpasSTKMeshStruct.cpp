@@ -21,14 +21,17 @@
 #include <stk_io/IossBridge.hpp>
 #include <Ioss_SubSystem.h>
 
-//#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Albany_Utils.hpp"
 
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles) :
+                                             const std::vector<GO>& indexToTriangleID,
+                                             const std::vector<int>& verticesOnTria,
+                                             int nGlobalTriangles) :
+
+
   GenericSTKMeshStruct(params,Teuchos::null, 2),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -36,12 +39,10 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::ArrayView<const GO> indexToTriangleIDAV = Teuchos::arrayViewFromVector(indexToTriangleID); 
+  Teuchos::ArrayView<const GO> indexToTriangleIDAV = Teuchos::arrayViewFromVector(indexToTriangleID);
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles, indexToTriangleIDAV, 0, commT, nodeT)); 
-  
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles, indexToTriangleIDAV, 0, commT));
+
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
 
@@ -97,7 +98,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 //Wedge
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
+                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -105,7 +106,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  std::vector<int> indexToPrismID(indexToTriangleID.size()*numLayers);
+  std::vector<GO> indexToPrismID(indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == 1) ? 1 : nGlobalTriangles;
@@ -123,12 +124,10 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::ArrayView<const GO> indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID); 
-  
+  Teuchos::ArrayView<const GO> indexToPrismIDAV = Teuchos::arrayViewFromVector(indexToPrismID);
+
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles*numLayers, indexToPrismIDAV, 0, commT, nodeT)); 
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles*numLayers, indexToPrismIDAV, 0, commT));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -202,7 +201,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 //Tetra
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
+                                             const std::vector<GO>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   periodic(false),
@@ -210,7 +209,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   hasRestartSol(false),
   restartTime(0.)
 {
-  std::vector<int> indexToTetraID(3*indexToTriangleID.size()*numLayers);
+  std::vector<GO> indexToTetraID(3*indexToTriangleID.size()*numLayers);
 
   //Int ElemColumnShift = (ordering == ColumnWise) ? 1 : indexToTriangleID.size();
   int elemColumnShift = (Ordering == 1) ? 3 : 3*nGlobalTriangles;
@@ -231,11 +230,9 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 	  }
   }
 
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-  Teuchos::ArrayView<const GO> indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID); 
+  Teuchos::ArrayView<const GO> indexToTetraIDAV = Teuchos::arrayViewFromVector(indexToTetraID);
   // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(3*nGlobalTriangles*numLayers, indexToTetraIDAV, 0, commT, nodeT)); 
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(3*nGlobalTriangles*numLayers, indexToTetraIDAV, 0, commT));
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
@@ -323,7 +320,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
                                                const std::vector<int>& verticesOnEdge,
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
-                                               const std::vector<int>& indexToTriangleID,
+                                               const std::vector<GO>& indexToTriangleID,
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
@@ -483,7 +480,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
                                                const std::vector<int>& verticesOnEdge,
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
-                                               const std::vector<int>& indexToTriangleID,
+                                               const std::vector<GO>& indexToTriangleID,
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
@@ -722,7 +719,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   stk_classic::mesh::PartVector singlePartVec(1);
   stk_classic::mesh::PartVector emptyPartVec;
   std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
-  unsigned int ebNo = 0; //element block #??? 
+  unsigned int ebNo = 0; //element block #???
   int sideID = 0;
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
@@ -749,7 +746,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
     	 stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(), indexToVertexID[verticesOnTria[3*i+j]]+1);
     	 bulkData->declare_relation(elem, node, j);
      }
-    
+
      int* p_rank = (int*)stk_classic::mesh::field_data(*proc_rank_field, elem);
      p_rank[0] = commT->getRank();
   }

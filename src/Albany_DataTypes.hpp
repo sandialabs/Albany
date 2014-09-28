@@ -65,7 +65,13 @@ typedef long                                        GO;
 typedef int                                         GO;
 #endif
 typedef int                                         LO;
-typedef KokkosClassic::SerialNode                   KokkosNode;
+
+typedef Kokkos::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
+//typedef Kokkos::SerialNode                          KokkosNode; // No threading
+//typedef Kokkos::TPINode                             KokkosNode; // custom Pthreads
+//typedef Kokkos::TBBNode                             KokkosNode; // Intel TBB
+//typedef Kokkos::ThrustNode                          KokkosNode; // C++ Cuda wtapper
+
 typedef Teuchos::Comm<int>                          Teuchos_Comm;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
 typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;

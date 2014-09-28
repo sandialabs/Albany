@@ -38,6 +38,12 @@
                Teuchos::ptr_dynamic_cast<const Epetra_MpiComm>(Teuchos::ptrFromRef(*ec));
     return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
   }
+
+  Teuchos::RCP<Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const Epetra_Comm& ec) {
+    const Epetra_MpiComm *mpiComm =
+               dynamic_cast<const Epetra_MpiComm *>(&ec);
+    return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
+  }
 #endif
 
 
@@ -143,7 +149,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names, 
+  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
         const Teuchos::RCP<const Tpetra_Vector>& vec){
 
     Teuchos::ArrayRCP<const double> vv = vec->get1dView();
@@ -157,7 +163,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names, 
+  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
         const Teuchos::RCP<const Tpetra_MultiVector>& vec){
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();

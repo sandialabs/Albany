@@ -18,15 +18,15 @@ namespace Albany {
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 	                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-	                                               const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
+	                                               const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 	                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
-	                                             const std::vector<int>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering = 0);
+	                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles, int numLayers, int Ordering = 0);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		                                         const Teuchos::RCP<const Teuchos_Comm>& commT,
-		                                         const std::vector<int>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering = 0);
+		                                         const std::vector<GO>& indexToTriangleID, int nGlobalTriangles, int numLayers, int Ordering = 0);
 
 
     ~MpasSTKMeshStruct();
@@ -73,7 +73,7 @@ namespace Albany {
 		   const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
 		   const std::vector<int>& verticesOnEdge,
 		   const std::vector<int>& indexToEdgeID, int nGlobalEdges,
-		   const std::vector<int>& indexToTriangleID,
+		   const std::vector<GO>& indexToTriangleID,
 		   const unsigned int worksetSize,
 		   int numLayers, int Ordering = 0);
 
@@ -88,7 +88,7 @@ namespace Albany {
 		   const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
 		   const std::vector<int>& verticesOnEdge,
 		   const std::vector<int>& indexToEdgeID, int nGlobalEdges,
-		   const std::vector<int>& indexToTriangleID,
+		   const std::vector<GO>& indexToTriangleID,
 		   const unsigned int worksetSize,
 		   int numLayers, int Ordering = 0);
 
@@ -110,10 +110,8 @@ namespace Albany {
     double restartTime;
     Teuchos::RCP<Tpetra_Map> elem_mapT; //element map
 
-    protected: 
- 
-   //! Kokkos node
-    Teuchos::RCP<KokkosNode> nodeT;
+    protected:
+
     /*
     const std::vector<int>& indexToTriangleID;
     const std::vector<int>& verticesOnTria;

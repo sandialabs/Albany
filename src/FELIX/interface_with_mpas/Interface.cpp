@@ -57,7 +57,8 @@ const double T0 = 273.15;
 const double minThick =1e-2; //10m
 const double minBeta =1e-5;
 void *phgGrid = 0;
-std::vector<int> edgesToReceive, fCellsToReceive, indexToTriangleID, verticesOnTria, trianglesOnEdge, trianglesPositionsOnEdge, verticesOnEdge;
+std::vector<int> edgesToReceive, fCellsToReceive, verticesOnTria, trianglesOnEdge, trianglesPositionsOnEdge, verticesOnEdge;
+std::vector<GO> indexToTriangleID;
 std::vector<int> indexToVertexID, vertexToFCell, indexToEdgeID, edgeToFEdge, mask, fVertexToTriangleID, fCellToVertex;
 std::vector<double> temperatureOnTetra, velocityOnVertices, velocityOnCells, elevationData, thicknessData, betaData, smb_F, thicknessOnCells;
 std::vector<bool> isVertexBoundary, isBoundaryEdge;

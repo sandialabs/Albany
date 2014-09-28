@@ -72,9 +72,6 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-   //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
@@ -476,7 +473,7 @@ Albany::STKDiscretization::setupMLCoords()
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
   rigidBodyModes->resize(numDim, numOwnedNodes);
-  
+
   //If ML preconditioner is selected
   if (rigidBodyModes->isMLUsed()) {
 
@@ -522,25 +519,25 @@ Albany::STKDiscretization::setupMLCoords()
     }
     rigidBodyModes->informML();
   }
-  
+
   //If MueLu preconditioner is selected
   if (rigidBodyModes->isMueLuUsed()) {
     std::cout << "MueLu selected!" << std::endl;
-    double *xxyyzz; //make this ST? 
+    double *xxyyzz; //make this ST?
     rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
-    
+
     for (int i=0; i < numOwnedNodes; i++)  {
       GO node_gid = gid(ownednodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
 
       double* X = stk_classic::mesh::field_data(*coordinates_field, *ownednodes[i]);
-      for (int i=0; i<numDim; i++) 
-        xxyyzz[i*numOwnedNodes + node_lid] = X[i]; 
+      for (int i=0; i<numDim; i++)
+        xxyyzz[i*numOwnedNodes + node_lid] = X[i];
     }
    Teuchos::ArrayView<ST> xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*(numDim+1));
    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, numDim+1));
-   
-   rigidBodyModes->informMueLu(xyzMV, mapT); 
+
+   rigidBodyModes->informMueLu(xyzMV, mapT);
    }
 
 
@@ -987,7 +984,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  node_mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
@@ -1002,7 +999,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 }
 
 void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
@@ -1029,7 +1026,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  overlap_mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 
   indicesT.resize(numOverlapNodes);
   for (int i=0; i < numOverlapNodes; i++)
@@ -1037,7 +1034,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
 
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (indicesT(), commT, nodeT);
+  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO> (indicesT(), commT);
 
   if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
     stkMeshStruct->nodal_data_base->resizeOverlapMap(indicesT, commT);
@@ -2185,21 +2182,17 @@ void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 #endif
 }
 
-void
-Albany::STKDiscretization::meshToGraph()
-{
 /*
-  Convert the stk mesh on this processor to a nodal graph
+  Convert the stk mesh on this processor to a nodal graph.
 */
-
-  // No need to construct a graph if we are not pocessing nodal data
+void Albany::STKDiscretization::meshToGraph () {
   if(Teuchos::is_null(stkMeshStruct->nodal_data_base)) return;
   if(!stkMeshStruct->nodal_data_base->isNodeDataPresent()) return;
 
-  // setup the CRS graph used for solution transfer and projection mass matrices
-  // Assume the Crs row size is 10
-
-  nodalGraph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_node_mapT, 10));
+  // Set up the CRS graph used for solution transfer and projection mass
+  // matrices. Assume the Crs row size is 27, which is the maximum number
+  // required for first-order hexahedral elements.
+  nodalGraph = Teuchos::rcp(new Tpetra_CrsGraph(overlap_node_mapT, 27));
 
   // Elements that surround a given node, in the form of Entity *'s
   std::vector<std::vector<stk_classic::mesh::Entity *> > sur_elem;
@@ -2207,195 +2200,85 @@ Albany::STKDiscretization::meshToGraph()
   // numOwnedNodes are the total # of nodes owned by this pe
   sur_elem.resize(numOverlapNodes);
 
-  std::size_t max_nsur = 0;
-
   // Get the elements owned by the current processor
   stk_classic::mesh::Selector select_owned_in_part =
     stk_classic::mesh::Selector( metaData.universal_part() ) &
     stk_classic::mesh::Selector( metaData.locally_owned_part() );
 
-  std::vector< stk_classic::mesh::Bucket * > buckets ;
-  stk_classic::mesh::get_buckets( select_owned_in_part ,
-                          bulkData.buckets( metaData.element_rank() ) ,
-                          buckets);
+  std::vector< stk_classic::mesh::Bucket * > buckets;
+  stk_classic::mesh::get_buckets(select_owned_in_part,
+                                 bulkData.buckets( metaData.element_rank() ),
+                                 buckets);
 
-  int numBuckets = buckets.size();
-  std::vector<const std::size_t *> table(numBuckets);
-  std::vector<std::size_t> nconnect(numBuckets);
-
-
-  for (int b=0; b < numBuckets; b++) {
-
+  for (int b = 0; b < buckets.size(); ++b) {
     stk_classic::mesh::Bucket& cells = *buckets[b];
-
-    const CellTopologyData * const elem_top
-             = stk_classic::mesh::fem::get_cell_topology( cells[0] ).getCellTopologyData();
-
-// TODO handle higher order elements
-
-//    if(strncmp(elem_top->name, "Hexahedron", 10) == 0){
-    if(strcmp(elem_top->name, "Hexahedron_8") == 0){
-       table[b] = hex_table;
-       nconnect[b] = hex_nconnect;
-    }
-//    else if(strncmp(elem_top->name, "Tetrahedron", 11) == 0){
-    else if(strcmp(elem_top->name, "Tetrahedron_4") == 0){
-       table[b] = tet_table;
-       nconnect[b] = tet_nconnect;
-    }
-//    else if(strncmp(elem_top->name, "Triangle", 8) == 0){
-    else if(strcmp(elem_top->name, "Triangle_3") == 0){
-       table[b] = tri_table;
-       nconnect[b] = tri_nconnect;
-    }
-//    else if(strncmp(elem_top->name, "Quadrilateral", 13) == 0){
-    else if(strcmp(elem_top->name, "Quadrilateral_4") == 0){
-       table[b] = quad_table;
-       nconnect[b] = quad_nconnect;
-    }
-    else {
-
-/*    Dont throw - print a warning and return, reset the node graph to null
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                           "Error - unknown element type : " << elem_top->name
-                           << " requested in nodal graph algorithm" << std::endl);
-*/
-       nodalGraph = Teuchos::null;
-
-       if(commT->getRank() == 0)
-
-         std::cout << "Note: element type \"" << elem_top->name << "\" not supported in nodal graph function" << std::endl <<
-                      "      support for solution transfer using projection has been disabled" << std::endl;
-       return;
-
-
-    }
+    // TODO handle higher order elements
 
     /* Find the surrounding elements for each node owned by this processor */
-    for (std::size_t ecnt=0; ecnt < cells.size(); ecnt++) {
+    for (std::size_t ecnt = 0; ecnt < cells.size(); ecnt++) {
       stk_classic::mesh::Entity& e = cells[ecnt];
       stk_classic::mesh::PairIterRelation rel = e.relations(metaData.NODE_RANK);
 
       // loop over nodes within the element
-      for (std::size_t ncnt=0; ncnt < rel.size(); ncnt++) {
+      for (std::size_t ncnt = 0; ncnt < rel.size(); ncnt++) {
         stk_classic::mesh::Entity& rowNode = * rel[ncnt].entity();
         GO nodeGID = gid(rowNode);
         int nodeLID = overlap_node_mapT->getLocalElement(nodeGID);
-
-        /*
-         * in the case of degenerate elements, where a node can be
+        /* in the case of degenerate elements, where a node can be
          * entered into the connect table twice, need to check to
          * make sure that this element is not already listed as
-         * surrounding this node
-         */
-
-        if (sur_elem[nodeLID].empty() || entity_in_list(&e, sur_elem[nodeLID]) < 0) {
-          /* Add the element to the list */
-          sur_elem[nodeLID].push_back(&e);
-        }
+         * surrounding this node */
+        if (sur_elem[nodeLID].empty() || entity_in_list(&e, sur_elem[nodeLID]) < 0)
+          sur_elem[nodeLID].push_back(&e); /* Add the element to the list */
       }
     } /* End "for(ecnt=0; ecnt < mesh->num_elems; ecnt++)" */
   } // End of loop over buckets
 
-  for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
-    if(sur_elem[ncnt].empty()) {
+  std::size_t max_nsur = 0;
+  for (std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
+    if (sur_elem[ncnt].empty()) {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "Node = " << ncnt+1 << " has no elements" << std::endl);
-    }
-    else {
+                                 "Node = " << ncnt+1 << " has no elements" << std::endl);
+    } else {
       std::size_t nsur = sur_elem[ncnt].size();
-      if (nsur > max_nsur)
-        max_nsur = nsur;
+      if (nsur > max_nsur) max_nsur = nsur;
     }
   }
 
-//end find_surrnd_elems
+  // end find_surrnd_elems
 
-// find_adjacency
+  // find_adjacency
 
-    // Note that the center node of a subgraph must be owned by this pe, but we want all nodes in the overlap
-    // graph to be covered in the nodal graph
+  // Note that the center node of a subgraph must be owned by this pe, but we
+  // want all nodes in the overlap graph to be covered in the nodal graph
 
-    /* Allocate memory necessary for the adjacency */
-//    nodalGraph.start.resize(numOverlapNodes + 1);
-//    nodalGraph.adj.clear();
+  // loop over all the nodes owned by this PE
+  for(std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
+    Teuchos::Array<GO> adjacency;
+    GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
+    // loop over the elements surrounding node ncnt
+    for(std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++) {
+      stk_classic::mesh::Entity* elem  = sur_elem[ncnt][ecnt];
+      stk_classic::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
+      std::size_t ws = elemGIDws[gid(elem)].ws;
+      // loop over the nodes in the surrounding element elem
+      for (std::size_t lnode = 0; lnode < rel.size(); lnode++) {
+        stk_classic::mesh::Entity& node_a = * rel[lnode].entity();
+        // entry is the GID of each node
+        GO entry = gid(node_a);
+        // Every node in an element adjacent to node 'globalrow' is in this
+        // graph.
+        if (in_list(entry, adjacency) < 0) adjacency.push_back(entry);
+      }
+    } /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
+    nodalGraph->insertGlobalIndices(globalrow, adjacency());
+  } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
 
-    // loop over all the nodes owned by this PE
-    for(std::size_t ncnt=0; ncnt < numOverlapNodes; ncnt++) {
+  // end find_adjacency
 
-      Teuchos::Array<GO> adjacency;
-      GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
-//std::cout << "Center node is : " << ncnt + 1 << " num elems around it : " << sur_elem[ncnt].size() << std::endl;
-        // save the starting location for the nodes surrounding ncnt
-//	nodalGraph.start[ncnt] = nadj;
-        // loop over the elements surrounding node ncnt
-      for(std::size_t ecnt=0; ecnt < sur_elem[ncnt].size(); ecnt++) {
-        stk_classic::mesh::Entity* elem   = sur_elem[ncnt][ecnt];
-
-        stk_classic::mesh::PairIterRelation rel = elem->relations(metaData.NODE_RANK);
-
-        std::size_t ws = elemGIDws[gid(elem)].ws;
-
-        // loop over the nodes in the surrounding element elem
-        for (std::size_t lnode=0; lnode < rel.size(); lnode++) {
-          stk_classic::mesh::Entity& node_a = * rel[lnode].entity();
-          // entry is the GID of each node
-          GO entry = gid(node_a);
-
-          // if "entry" is not the center node AND "entry" does not appear in the current list of nodes surrounding
-          // "ncnt", add "entry" to the adj list
-          if(globalrow == entry){ // entry - offset lnode - is where we are in the node
-                                                    // ordering within the element
-
-             for(std::size_t k = 0; k < nconnect[ws]; k++){
-
-                int local_node = table[ws][lnode * nconnect[ws] + k]; // local number of the node connected to the center "entry"
-
-                GO global_node_id = gid(*rel[local_node].entity());
-
-/*
-                  if(in_list(global_node_id,
-		       nodalGraph.adj.size()-nodalGraph.start[ncnt],
-		       &nodalGraph.adj[nodalGraph.start[ncnt]]) < 0) {
-	                     nodalGraph.adj.push_back(global_node_id);
-*/
-                if(in_list(global_node_id, adjacency) < 0) {
-                    adjacency.push_back(global_node_id);
-//std::cout << "            Added edge node : " << global_node_id + 1 << std::endl;
-                }
-             }
-             break;
-          }
-        }
-      } /* End "for(ecnt=0; ecnt < graph->nsur_elem[ncnt]; ecnt++)" */
-
-//        nadj = nodalGraph.adj.size();
-      adjacency.push_back(globalrow); // Insert self-self edge.
-      nodalGraph->insertGlobalIndices(globalrow, adjacency());
-
-    } /* End "for(ncnt=0; ncnt < mesh->num_nodes; ncnt++)" */
-
-//    nodalGraph.start[numOverlapNodes] = nadj;
-
-// end find_adjacency
-
-    nodalGraph->fillComplete();
-
-    // Create Owned graph by exporting overlap with known row map
-
-    Teuchos::RCP<Tpetra_CrsGraph> localNodeGraph = Teuchos::rcp(new Tpetra_CrsGraph(node_mapT, 10));
-
-    // Create non-overlapped matrix using two maps and export object
-    Teuchos::RCP<Tpetra_Export> nodeExporter = Teuchos::rcp(new Tpetra_Export(overlap_node_mapT, node_mapT));
-    localNodeGraph->doExport(*nodalGraph, *nodeExporter, Tpetra::INSERT);
-    localNodeGraph->fillComplete();
-
-
-    // Pass the graph RCP to the nodal data block
-//    stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
-    stkMeshStruct->nodal_data_base->updateNodalGraph(localNodeGraph);
-
+  nodalGraph->fillComplete();
+  // Pass the graph RCP to the nodal data block
+  stkMeshStruct->nodal_data_base->updateNodalGraph(nodalGraph);
 }
 
 void
