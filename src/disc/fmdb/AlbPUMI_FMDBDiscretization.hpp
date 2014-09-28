@@ -151,7 +151,9 @@ template<class Output>
     // not supported in FMDB now
     void transformMesh(){}
 
-    LO getDOF(const LO inode, const int eq) const
+    // this is called with both LO's and GO's to compute a dof number
+    // based on a node number and an equation number
+    GO getDOF(const GO inode, const int eq) const
     {
       if (interleavedOrdering) return inode*neq + eq;
       else  return inode + numOwnedNodes*eq;
