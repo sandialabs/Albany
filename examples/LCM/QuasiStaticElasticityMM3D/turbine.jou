@@ -1,0 +1,40 @@
+set node constraint on
+
+create Cylinder height 20 radius 10 
+create Cylinder height 20 radius 2 
+move Volume 1  z 20 
+create Cylinder height 5 radius 10 
+move Volume 3  z -10 
+webcut volume 2  with plane zplane offset 7 noimprint nomerge 
+webcut volume 4  with plane zplane offset -4 noimprint nomerge 
+webcut volume 1  with cone radius 7 10 location 0 0 30  location  0 0 10  
+delete volume 1
+imprint volume all 
+merge volume all 
+volume all size auto factor 4
+volume all scheme Tetmesh
+set tetmesher interior points on 
+set tetmesher optimize level 3 optimize overconstrained  off sliver  off 
+set tetmesher boundary recovery  off 
+volume all tetmesh growth_factor 1.0
+mesh volume all
+nodeset 1 surface 21  
+nodeset 2 surface 8  
+nodeset 2 name 'moving'
+nodeset 1 name 'fixed'
+set duplicate block elements off
+block 1 volume 6  
+block 1 name 'compressor'
+set duplicate block elements off
+block 2 volume 3  
+block 2 name 'turbine'
+set duplicate block elements off
+block 1 volume 2  
+set duplicate block elements off
+block 2 volume 5  
+set duplicate block elements off
+block 3 volume 4  
+block 3 name 'middle'
+set large exodus file off
+export mesh "/Users/gahanse/tmp/turbine.e" overwrite
+save as "/Users/gahanse/tmp/turbine.cub" overwrite
