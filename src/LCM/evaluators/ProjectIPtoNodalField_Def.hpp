@@ -14,7 +14,6 @@
 #include <Thyra_TpetraLinearOp.hpp>
 #include "Thyra_LinearOpWithSolveBase.hpp"
 
-//#undef ALBANY_IFPACK2
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
@@ -78,7 +77,8 @@ void setDefaultSolverParameters (Teuchos::ParameterList& pl)
   solver.set<int>("Maximum Iterations", 1000);
   //todo It's easy on the model problem to get this accuracy in ~10 CG
   // iterations, but how much accuracy do we want in practice?
-  solver.set<double>("Convergence Tolerance", 1e-12);
+  solver.set<double>("Convergence Tolerance", 1e-15);
+  //solver.set<int>("Verbosity", 127);
 
 #ifdef ALBANY_IFPACK2
   pl.set<std::string>("Preconditioner Type", "Ifpack2");
@@ -139,10 +139,13 @@ protected:
 };
 
 template<typename Traits>
-class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::FullMassMatrix
-  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix {
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                            Traits>::FullMassMatrix
+  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                                 Traits>::MassMatrix {
 public:
-  FullMassMatrix (const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+  FullMassMatrix (
+    const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
     : MassMatrix(base) {}
   virtual void fill (const typename Traits::EvalData& workset) {
     const std::size_t
@@ -161,10 +164,12 @@ public:
           ST mass_value = 0;
           for (std::size_t qp = 0; qp < num_pts; ++qp)
             mass_value +=
-              this->base_->wBF(cell, rnode, qp) * this->base_->BF(cell, cnode, qp);
+              this->base_->wBF(cell, rnode, qp) *
+              this->base_->BF (cell, cnode, qp);
           vals.push_back(mass_value);
         }
-        const LO ret = this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+        const LO
+          ret = this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
         TEUCHOS_TEST_FOR_EXCEPTION(
           ret != cols.size(), std::logic_error,
           "global_row " << global_row << " of mass matrix is missing elements"
@@ -175,10 +180,13 @@ public:
 };
 
 template<typename Traits>
-class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::LumpedMassMatrix
-  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix {
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                            Traits>::LumpedMassMatrix
+  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                                 Traits>::MassMatrix {
 public:
-  LumpedMassMatrix (const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+  LumpedMassMatrix (
+    const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
     : MassMatrix(base) {}
   virtual void fill (const typename Traits::EvalData& workset) {
     const std::size_t
@@ -203,10 +211,12 @@ public:
 };
 
 template<typename Traits>
-typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix*
+typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                               Traits>::MassMatrix*
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix::
 create (EMassMatrixType::Enum type,
-        const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base) {
+        const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+{
   switch (type) {
   case EMassMatrixType::full:
     return new FullMassMatrix(base);
@@ -222,11 +232,12 @@ template<typename EvalT, typename Traits>
 ProjectIPtoNodalFieldBase<EvalT, Traits>::
 ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl) :
-    wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
-     BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
+  wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
+  BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
 {
   this->addDependentField(wBF);
   this->addDependentField(BF);
+  this->setName("ProjectIPtoNodalField" + PHX::TypeString<EvalT>::value);
 
   //! get and validate ProjectIPtoNodalField parameter list
   Teuchos::ParameterList* plist =
@@ -250,7 +261,8 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
 
   // loop over the number of fields and register
-  // Number of Fields is read off the input file - this is the number of named fields (scalar, vector, or tensor) to transfer
+  // Number of Fields is read off the input file - this is the number of named
+  // fields (scalar, vector, or tensor) to transfer.
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
 
   // resize field vectors
@@ -334,10 +346,8 @@ postRegistrationSetup (typename Traits::SetupData d,
 {
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
-
-  for (int field(0); field < number_of_fields_; ++field) {
+  for (int field(0); field < number_of_fields_; ++field)
     this->utils.setFieldData(ip_fields_[field],fm);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -385,7 +395,8 @@ preEvaluate (typename Traits::PreEvalData workset)
   // a version used for linear algebra having a nonoverlapping row map, we can't
   // just resumeFill. source_load_vector_ also alternates between overlapping
   // and nonoverlapping maps and so must be reallocated.
-  this->mass_matrix_->matrix() = Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
+  this->mass_matrix_->matrix() =
+    Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
   this->source_load_vector_ = Teuchos::rcp(
     new Tpetra_MultiVector(current_graph->getRowMap(), this->num_vecs_, true));
 }
@@ -450,12 +461,7 @@ evaluateFields (typename Traits::EvalData workset)
 {
   // Volume averaged field. Store as nodal data that will be scattered and
   // summed.
-
-  // Assume: mass_matrix_ is the right size and ready to fill.
   this->mass_matrix_->fill(workset);
-
-  // Deal with each of the fields in the multivector that stores the RHS of the
-  // projection.
   fillRHS(workset);
 }
 
@@ -509,6 +515,7 @@ postEvaluate (typename Traits::PostEvalData workset)
     // Don't need the assemble form of the source_load_vector_ either.
     this->source_load_vector_ = slv;
   }
+
   // Create x in A x = b.
   Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector = rcp(
     new Tpetra_MultiVector(this->mass_matrix_->matrix()->getDomainMap(),
@@ -544,12 +551,15 @@ postEvaluate (typename Traits::PostEvalData workset)
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
   Thyra::norms_2(*b, norm_b);
-  bool b_is_zero = true; 
-  *out << "Norm of the b coming in" << std::endl;
-  for (int i=0; i<this->num_vecs_; ++i) {
-    *out << "b " << i+1 << " : " << std::setw(16) << std::right << norm_b[i] << std::endl;
-    if(norm_b[i] > 1.0e-16) b_is_zero = false;
-  }
+  bool b_is_zero = true;
+  for (int i = 0; i < this->num_vecs_; ++i)
+    // I'm changing this to a check for exact 0 because (i) I don't think
+    // there's any way to know how to make this a check on a relative quantity
+    // and (ii) the exact-0 case is in fact what we're currently checking for.
+    if (norm_b[i] != 0) {
+      b_is_zero = false;
+      break;
+    }
   if (b_is_zero) return;
 
   // Perform solve using the linear operator to get the approximate solution of Ax=b,
@@ -558,31 +568,19 @@ postEvaluate (typename Traits::PostEvalData workset)
   Thyra::SolveStatus<ST>
     solveStatus = Thyra::solve(*nsA, Thyra::NOTRANS, *b, x.ptr());
 
-  // Print out status of solve.
-    *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
+#ifdef ALBANY_DEBUG
+  *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
 
-  //
   // Compute residual and ST check convergence.
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
     y = Thyra::createMembers(x->range(), x->domain());
 
-  Thyra::norms_2(*x, norm_b);
-  *out << "Norm of the x going out" << std::endl;
-  for (int i=0; i<this->num_vecs_; ++i) {
-    *out << "RHS " << i+1 << " : "
-         << std::setw(16) << std::right << norm_b[i] << std::endl;
-  }
-
-  // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
-  Thyra::norms_2(*b, norm_b);
-
-  // Compute y=A*x, where x is the solution from the linear solver.
+  // Compute y = A*x, where x is the solution from the linear solver.
   A->apply(Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0);
 
-  // Compute A*x-b = y-b
+  // Compute A*x - b = y - b.
   Thyra::update(-one, *b, y.ptr());
   Thyra::norms_2(*y, norm_res);
-
   // Print out the final relative residual norms.
   *out << "Final relative residual norms" << std::endl;
   for (int i = 0; i < this->num_vecs_; ++i) {
@@ -590,8 +588,9 @@ postEvaluate (typename Traits::PostEvalData workset)
     *out << "RHS " << i+1 << " : "
          << std::setw(16) << std::right << rel_res << std::endl;
   }
+#endif
 
-  { // Store the overlapped vector data back in stk in the field "field_name".
+  { // Store the overlapped vector data back in stk.
     const Teuchos::RCP<const Tpetra_Map>
       ovl_map = this->mass_matrix_->matrix()->getColMap(),
       map = node_projected_ip_vector->getMap();
@@ -605,4 +604,5 @@ postEvaluate (typename Traits::PostEvalData workset)
       getNodalDataVector()->saveNodalDataState(npiv);
   }
 }
+
 } // namespace LCM
