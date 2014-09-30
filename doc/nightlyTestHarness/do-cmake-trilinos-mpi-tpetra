@@ -53,6 +53,16 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
 \
+      -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
+      -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
+      -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
+\
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
+\
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
