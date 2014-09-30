@@ -6,6 +6,10 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Kokkos_Cuda.hpp"
+#include "Kokkos_View.hpp"
+#include "Sacado.hpp"
+#include "Kokkos_View_Fad.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -31,7 +35,6 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   if (p.isType<bool>("Vector Field"))
           vectorField = p.get<bool>("Vector Field");
   else vectorField = false;
-
   // scalar
   if (!vectorField) {
     numFieldsBase = names.size();
@@ -56,6 +59,9 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   if (p.isType<int>("Offset of First DOF"))
     offset = p.get<int>("Offset of First DOF");
   else offset = 0;
+
+   //Irina Debug
+  // valVec_temp = Kokkos::View <double***, Kokkos::LayoutLeft, PHX::Device> ("valVec_temp", 50,8,3);
 
   this->addEvaluatedField(*scatter_operation);
 
@@ -114,7 +120,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-        (*f)[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
+       (*f)[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
     }
   } else {
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -131,7 +137,8 @@ evaluateFields(typename Traits::EvalData workset)
  //     for (std::size_t eq = 0; eq < numFields; eq++)
  //         std::cout <<(*f)[nodeID[node][this->offset + eq]]<< "    " << (this->valVec[0])(cell,node,eq)<<std::endl;
  //}
-  
+ //Irina debug
+// std::cout << "end" <<std::endl<< workset.wsElNodeEqID[30][3][3] <<"    "<< (*f)[workset.wsElNodeEqID[30][3][3]] <<std::endl; 
 }
 
 // **********************************************************************
@@ -168,6 +175,16 @@ evaluateFields(typename Traits::EvalData workset)
 //      for (std::size_t eq = 0; eq < numFields; eq++)
 //           std::cout << (this->valVec[0])(cell,node,eq)<<std::endl;
 
+// valVec_temp = Kokkos::View <ScalarT*, PHX::Device> ("valVec_temp",30);
+//  Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > valVec_temp("valVec_temp",30,1,1);
+
+ ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
+
+ for (int cell=0; cell < workset.numCells; ++cell ) 
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++)
+   for (std::size_t eq = 0; eq < numFields; eq++)
+     valVec_temp[cell][node_col][eq]=(this->valVec[0])(cell,node_col,eq);
+
   for (int cell=0; cell < workset.numCells; ++cell ) {
      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       // Local Unks: Loop over nodes in element, Loop over equations per node
@@ -178,20 +195,25 @@ evaluateFields(typename Traits::EvalData workset)
           }
        }
 
+  //Irina Debug
+  //Kokkos::deep_copy(valVec_temp, (this->valVec[0]).get_kokkos_view());
        for (std::size_t node = 0; node < this->numNodes; ++node) {
           for (std::size_t eq = 0; eq < numFields; eq++) {
             row = nodeID[node][this->offset + eq];
             if (this->vectorField){
+            
                if (loadResid) {
                    f->SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val());
                 }
                 if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
                    if (workset.is_adjoint) {
                       for (unsigned int lunk=0; lunk<nunk; lunk++)
-                          Jac->SumIntoMyValues(col[lunk], 1, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk)), &row);
+                        Jac->SumIntoMyValues(col[lunk], 1, &((valVec_temp[cell][node][eq]).fastAccessDx(lunk)), &row);
+    //                     Jac->SumIntoMyValues(col[lunk], 1, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk)), &row);
                    }
                    else{
-                      Jac->SumIntoMyValues(row, nunk, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(0)), &col[0]);
+                       Jac->SumIntoMyValues(row, nunk, &((valVec_temp[cell][node][eq]).fastAccessDx(0)), &col[0]);
+                 //     Jac->SumIntoMyValues(row, nunk, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(0)), &col[0]);
                    }
                  }
             }

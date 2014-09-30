@@ -144,7 +144,6 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ViscosityFO<EvalT, Traits>::operator () (const int i) const
 {
-
   double a = 1.0;
   //MeshScalarT T=temperature(i);
   //MeshScalarT out = (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
@@ -210,6 +209,8 @@ template<typename EvalT, typename Traits>
 void ViscosityFO<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+//std::cout << "before viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
 #ifdef NO_KOKKOS_ALBANY
 
   double a = 1.0;  
@@ -279,6 +280,8 @@ evaluateFields(typename Traits::EvalData workset)
 #else
   Kokkos::parallel_for (workset.numCells, *this);
   //std::cout <<mu(30,3)  << "   " << Ugrad(30,3,0,1) << "   " <<coordVec(30,3,0) <<std::endl;
+ //Irina Debug
+// std::cout << "after viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
 #endif
 }
 }

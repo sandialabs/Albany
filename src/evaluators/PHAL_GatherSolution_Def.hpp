@@ -164,7 +164,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
   Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
 
-//std::cout << "start" <<std::endl<< (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
+//std::cout << "start" <<std::endl<< workset.wsElNodeEqID[30][3][3] <<"    "<< (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
   if (this->vectorField) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -202,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-  //std::cout << (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
+//  std::cout << (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
 }
 
 // **********************************************************************
@@ -236,6 +236,10 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
   ScalarT* valptr;
 
+
+  //Irina Debug
+//  ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     int neq = nodeID[0].size();
@@ -251,9 +255,13 @@ evaluateFields(typename Traits::EvalData workset)
      //   valptr->setUpdateValue(!workset.ignore_residual);
      //   valptr->fastAccessDx(firstunk + eq) = workset.j_coeff;
           if (this->vectorField){
-            (this->valVec[0])(cell,node,eq)=FadType(num_dof, (*x)[eqID[this->offset + eq]]);
-            ((this->valVec[0])(cell,node,eq)).setUpdateValue(!workset.ignore_residual);
-            ((this->valVec[0])(cell,node,eq)).fastAccessDx(firstunk + eq) = workset.j_coeff;
+            //Irina Debug
+             (this->valVec[0])(cell,node,eq)=FadType(num_dof, (*x)[eqID[this->offset + eq]]);
+             ((this->valVec[0])(cell,node,eq)).setUpdateValue(!workset.ignore_residual);
+              ((this->valVec[0])(cell,node,eq)).fastAccessDx(firstunk + eq) = workset.j_coeff;
+            //valVec_temp[cell][node][eq]=FadType(num_dof, (*x)[eqID[this->offset + eq]]);
+            //(valVec_temp[cell][node][eq]).setUpdateValue(!workset.ignore_residual);
+            //(valVec_temp[cell][node][eq]).fastAccessDx(firstunk + eq) = workset.j_coeff;
           }
           else{
             (this->val[eq])(cell,node)=FadType(num_dof, (*x)[eqID[this->offset + eq]]);
@@ -295,6 +303,11 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 //  }
+//  for (int cell=0; cell < workset.numCells; ++cell )
+//   for (int node_col=0, i=0; node_col<this->numNodes; node_col++)
+//    for (std::size_t eq = 0; eq < numFields; eq++)
+//      (this->valVec[0])(cell,node_col,eq)=valVec_temp[cell][node_col][eq];
+
 }
 
 // **********************************************************************

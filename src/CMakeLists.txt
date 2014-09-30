@@ -6,7 +6,26 @@
 
 find_package(CUDA)
 
-SET (PHX_KOKKOS_DEVICE_TYPE_CUDA TRUE)
+INCLUDE(CheckCXXSourceCompiles) 
+unset(PHX_KOKKOS_DEVICE_TYPE_CUDA CACHE)
+check_cxx_source_compiles("
+#include </home/ipdemes/BuildTrilinos/install_CUDA/include/KokkosCore_config.h>
+int main ()
+{
+ #ifdef KOKKOS_HAVE_CUDA
+ return 0;
+ #else
+lkljf
+ #endif
+} 
+" PHX_KOKKOS_DEVICE_TYPE_CUDA)
+
+
+IF (NOT PHX_KOKKOS_DEVICE_TYPE_CUDA)
+MESSAGE("\nNO CUDA \n NO CUDA ")
+ENDIF()
+
+#SET (PHX_KOKKOS_DEVICE_TYPE_CUDA TRUE)
 
 
 IF(PHX_KOKKOS_DEVICE_TYPE_CUDA )

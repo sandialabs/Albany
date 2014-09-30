@@ -61,7 +61,8 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
 { 
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
-
+//Irina Debug
+//std::cout << "before gather coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
   for (std::size_t cell=0; cell < numCells; ++cell) {
     for (std::size_t node = 0; node < numVertices; ++node) {
       for (std::size_t eq=0; eq < numDim; ++eq) { 
