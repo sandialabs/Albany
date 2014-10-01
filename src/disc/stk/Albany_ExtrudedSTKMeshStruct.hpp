@@ -50,11 +50,10 @@ namespace Albany {
     inline void computeMap();
     inline int prismType(long long int const* prismVertexMpasIds, int& minIndex);
     inline void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
-#ifdef ALBANY_EPETRA
-    void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Teuchos_Comm>& commT);
-    void readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Teuchos_Comm>& commT);
-    void readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& commT);
-#endif
+
+    void read2DFileSerialT(std::string &fname, Teuchos::RCP<Tpetra_Vector> contentT, const Teuchos::RCP<const Teuchos_Comm>& commT);
+    void readFileSerialT(std::string &fname, std::vector<Tpetra_Vector>& contentVecT, const Teuchos::RCP<const Teuchos_Comm>& commT);
+    void readFileSerialT(std::string &fname, Teuchos::RCP<Tpetra_Map> map_serialT, Teuchos::RCP<const Tpetra_Map> mapT, Teuchos::RCP<Tpetra_Import> importOperatorT, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
