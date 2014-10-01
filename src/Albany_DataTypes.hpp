@@ -52,6 +52,8 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_BlockMultiVector.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
+#include "MatrixMarket_Tpetra.hpp"
+
 
 //Kokkos includes
 #include "Kokkos_SerialNode.hpp"
@@ -85,6 +87,7 @@ typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
 typedef Tpetra::BlockMultiVector<ST, LO, GO, KokkosNode> Tpetra_BlockMultiVector;
 typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
+typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix> Tpetra_MatrixMarket_Writer;
 
 
 // Include ScalarParameterLibrary to specialize its traits

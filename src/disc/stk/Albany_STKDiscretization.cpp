@@ -498,24 +498,22 @@ Albany::STKDiscretization::setupMLCoords()
     bool writeCoordsToMMFile = stkMeshStruct->writeCoordsToMMFile;
     //if user wants to write the coordinates to matrix market file, write them to matrix market file
     if (writeCoordsToMMFile == true) {
-#ifdef ALBANY_EPETRA
       //IK, 10/29/13: neet to convert to tpetra!
       if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
       //Writing of coordinates to MatrixMarket file for Ray
-      Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-      Epetra_Vector xCoords(Copy, *node_map, xx);
-      EpetraExt::MultiVectorToMatrixMarketFile("xCoords.mm", xCoords);
+      Teuchos::ArrayView<ST> xxAV = Teuchos::arrayView(xx, numOwnedNodes);
+      Teuchos::RCP<Tpetra_Vector> xCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, xxAV));
+      Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
       if (yy != NULL) {
-        Epetra_Vector yCoords(Copy, *node_map, yy);
-        EpetraExt::MultiVectorToMatrixMarketFile("yCoords.mm", yCoords);
+        Teuchos::ArrayView<ST> yyAV = Teuchos::arrayView(yy, numOwnedNodes);
+        Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));
+        Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
       }
       if (zz != NULL){
-        Epetra_Vector zCoords(Copy, *node_map, zz);
-        EpetraExt::MultiVectorToMatrixMarketFile("zCoords.mm", zCoords);
+        Teuchos::ArrayView<ST> zzAV = Teuchos::arrayView(zz, numOwnedNodes);
+        Teuchos::RCP<Tpetra_Vector> zCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, zzAV));
+        Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoordsT);
       }
-#else
-      if (node_mapT->getComm()->getRank()==0) {std::cout << "WARNING: writing coordinates to Matrix Market file not yet supported for AlbanyT!" << std::endl;}
-#endif
     }
     rigidBodyModes->informML();
   }
