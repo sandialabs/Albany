@@ -20,11 +20,6 @@
 //uncomment the following if you want to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET 
 
-#ifdef WRITE_TO_MATRIX_MARKET
-//IK, 9/16/14, TO DO: convert writing to matrix market to Tpetra
-//#include "EpetraExt_MultiVectorOut.h"
-//#include "EpetraExt_BlockMapOut.h"
-#endif 
 
 #include "Albany_Utils.hpp"
 
@@ -41,7 +36,7 @@ int nNodes2D; //number global nodes in the domain in 2D
 int nNodesProc2D; //number of nodes on each processor in 2D  
 //vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
 std::vector<int> cismToAlbanyNodeNumberMap; 
-
+bool TpetraBuild = true; 
 
 int rank, number_procs;
 long  cism_communicator; 
@@ -385,10 +380,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 #ifdef WRITE_TO_MATRIX_MARKET
     //For debug: write solution and maps to matrix market file 
-    //EpetraExt::BlockMapToMatrixMarketFile("node_map.mm", *node_map); 
-    //EpetraExt::BlockMapToMatrixMarketFile("map.mm", ownedMap); 
-    //EpetraExt::BlockMapToMatrixMarketFile("overlap_map.mm", overlapMap); 
-    //EpetraExt::MultiVectorToMatrixMarketFile("solution.mm", *app->getDiscretization()->getSolutionField());
+    Tpetra_MatrixMarket_Writer::writeMapFile("node_map.mm", *node_mapT); 
+    Tpetra_MatrixMarket_Writer::writeMapFile("map.mm", *ownedMapT); 
+    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_map.mm", *overlapMapT); 
+    Tpetra_MatrixMarket_Writer::writeDenseFile("solution.mm", app->getDiscretization()->getSolutionFieldT());
 #endif
     
     // ---------------------------------------------------------------------------------------------------
@@ -509,8 +504,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 #ifdef WRITE_TO_MATRIX_MARKET
     //For debug: write solution to matrix market file 
-    //EpetraExt::MultiVectorToMatrixMarketFile("uvel.mm", uvel); 
-    //EpetraExt::MultiVectorToMatrixMarketFile("vvel.mm", vvel);
+     Tpetra_MatrixMarket_Writer::writeDenseFile("uvel.mm", uvelT);
+     Tpetra_MatrixMarket_Writer::writeDenseFile("vvel.mm", vvelT);
 #endif
  
      //Copy uvel and vvel into uVel_ptr and vVel_ptr respectively (the arrays passed back to CISM) according to the numbering consistent w/ CISM. 
