@@ -75,10 +75,7 @@ void setDefaultSolverParameters (Teuchos::ParameterList& pl)
 
   Teuchos::ParameterList& solver = belos_types.sublist("Solver Types").sublist("Block CG");
   solver.set<int>("Maximum Iterations", 1000);
-  //todo It's easy on the model problem to get this accuracy in ~10 CG
-  // iterations, but how much accuracy do we want in practice?
-  solver.set<double>("Convergence Tolerance", 1e-15);
-  //solver.set<int>("Verbosity", 127);
+  solver.set<double>("Convergence Tolerance", 1e-12);
 
 #ifdef ALBANY_IFPACK2
   pl.set<std::string>("Preconditioner Type", "Ifpack2");

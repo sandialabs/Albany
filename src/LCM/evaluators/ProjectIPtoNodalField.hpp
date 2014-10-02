@@ -17,9 +17,20 @@
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
 
 namespace LCM {
-/// 
-/// \brief Evaluator to compute a nodal stress field
-///
+/*! 
+ * \brief Evaluator to compute a nodal stress field from integration points.
+ *
+ * This class implements the method described in Section 3.1 of
+ *     Jiao, Xiangmin, and Michael T. Heath. "Common‐refinement‐based data
+ *     transfer between non‐matching meshes in multiphysics simulations."
+ *     Int. J. for Num. Meth. in Eng. 61.14 (2004): 2402-2427.
+ * evaluateFields() assembles (i) the consistent mass matrix or, optionally, the
+ * lumped mass matrix M and (ii) the integral over each element of the projected
+ * quantity b. Then postEvaluate() solves the linear equation M x = b and
+ * reports x to STK's nodal database.
+ *   The graph describing the mass matrix's structure is created in Albany::
+ * STKDiscretization::meshToGraph().
+ */
 template<typename EvalT, typename Traits>
 class ProjectIPtoNodalFieldBase : 
     public PHX::EvaluatorWithBaseImpl<Traits>,
