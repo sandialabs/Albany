@@ -474,7 +474,6 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
            Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j+num_param_vecs,
            Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP);
     }
-    result.set_g(i, thyra_response_vec[i]);
   }
 
   return result;
@@ -606,7 +605,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
     const Teuchos::RCP<Thyra::VectorBase<ST> > g_out = outArgsT.get_g(j);
-    const Teuchos::RCP<Tpetra_Vector> gT_out =
+    Teuchos::RCP<Tpetra_Vector> gT_out =
       Teuchos::nonnull(g_out) ?
       ConverterT::getTpetraVector(g_out) :
       Teuchos::null;
@@ -616,8 +615,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
 
-    bool g_computed = false;
-
     // dg/dx, dg/dxdot
     if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
       const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
@@ -626,7 +623,8 @@ Albany::ModelEvaluatorT::evalModelImpl(
           sacado_param_vec, NULL,
           gT_out.get(), dgdxT_out,
           dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
-      g_computed = true;
+      // Set gT_out to null to indicate that g_out was evaluated.
+      gT_out = Teuchos::null;
     }
 
     // dg/dp
@@ -646,11 +644,11 @@ Albany::ModelEvaluatorT::evalModelImpl(
             sacado_param_vec, p_vec.get(),
             NULL, NULL, NULL, NULL, gT_out.get(), NULL,
             dgdpT_out.get());
-        g_computed = true;
+        gT_out = Teuchos::null;
       }
     }
 
-    if (Teuchos::nonnull(gT_out) && !g_computed) {
+    if (Teuchos::nonnull(gT_out)) {
       app->evaluateResponseT(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);

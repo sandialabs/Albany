@@ -135,6 +135,16 @@ evaluateTangentT(const double alpha,
 		Tpetra_MultiVector* gpT)
 {
   visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
+
+  if (gT) {
+    // AMB. PHAL::AlbanyTraits::Tangent and PHAL::AlbanyTraits::Jacobian
+    // evaluators are not expected to compute all PHAL::AlbanyTraits::Residual
+    // data. However, evaluateTangentT and evaluateDerivativeT are expected to
+    // compute evaluateResponseT data. This line fixes the following problem:
+    // either the Residual evaluators were never called, or they were called at
+    // every Newton iteration except at convergence.
+    this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
+  }
   
   // Set data in Workset struct
   PHAL::Workset workset;
@@ -267,6 +277,11 @@ evaluateGradientT(const double current_time,
 		 Tpetra_MultiVector* dg_dpT)
 {
   visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
+
+  if (gT) {
+    // See "AMB" above.
+    this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
+  }
 
   // Set data in Workset struct
   PHAL::Workset workset;
