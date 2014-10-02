@@ -207,13 +207,33 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     maxOwnedSides2D = std::max(maxOwnedSides2D, (long long int) edges[i]->identifier());
   numOwnedNodes2D = stk_classic::mesh::count_selected_entities(select_owned_in_part, meshStruct2D->bulkData->buckets(meshStruct2D->metaData->node_rank()));
 
-  //IK, 9/13/14: what is equivalent of MaxAll, SumAll for Teuchos_Comm? 
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  
-  comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
-  comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
-  comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
-  comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
+  //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
+  //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
+  //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
+  //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
+  //IK, 10/1/14: in order for reduceAll to work with Teuchos::Comm object we have to cast things as ints; long long ints don't work 
+  //(because Teuchos::Comm is templated on just int?).  Are long long ints really necessary?  Look into this -- ask Mauro.
+  //Are there issues for 64 bit integer build of Albany? 
+  LO maxOwnedElements2DInt = maxOwnedElements2D; 
+  GO maxGlobalElements2DInt = maxGlobalElements2D;
+  LO maxOwnedNodes2DInt = maxOwnedNodes2D; 
+  GO maxGlobalVertices2dIdInt = maxGlobalVertices2dId; 
+  LO maxOwnedSides2DInt = maxOwnedSides2D; 
+  GO maxGlobalEdges2DInt = maxGlobalEdges2D; 
+  int numOwnedNodes2DInt = numOwnedNodes2D; 
+  int numGlobalVertices2DInt = numGlobalVertices2D; 
+  //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
+  Teuchos::reduceAll<LO,GO>(*commT, Teuchos::REDUCE_MAX, maxOwnedElements2DInt, Teuchos::ptr(&maxGlobalElements2DInt));
+  //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
+  Teuchos::reduceAll<LO,GO>(*commT, Teuchos::REDUCE_MAX, maxOwnedNodes2DInt, Teuchos::ptr(&maxGlobalVertices2dIdInt));
+  //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
+  Teuchos::reduceAll<LO,GO>(*commT, Teuchos::REDUCE_MAX, maxOwnedSides2DInt, Teuchos::ptr(&maxGlobalEdges2DInt));
+  //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
+  //The following should not be int int...
+  Teuchos::reduceAll<int,int>(*commT, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2DInt, &numGlobalVertices2DInt); 
+
+
+  if (commT->getRank() == 0) std::cout << "Importing ascii files ...";
 
 
   if (commT->getRank() == 0) std::cout << "Importing ascii files ...";
@@ -713,8 +733,11 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerialT(std::string &fname, Teuchos:
       //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  comm->Broadcast(&numComponents, 1, 0);
+  //comm->Broadcast(&numComponents, 1, 0);
+  //Cast numComponents as double to do broadcast
+  //IK, 10/1/14: Need to look into...
+  double numComponentsD = numComponents; 
+  Teuchos::broadcast<LO, double>(*commT, 0, &numComponentsD); 
   zCoords.resize(numComponents);
   Teuchos::RCP<Tpetra_Vector> tempT = Teuchos::rcp(new Tpetra_Vector(map_serialT));
 
@@ -722,7 +745,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerialT(std::string &fname, Teuchos:
     for (int i = 0; i < numComponents; ++i)
       ifile >> zCoords[i];
   }
-  comm->Broadcast(&zCoords[0], numComponents, 0);
+  //comm->Broadcast(&zCoords[0], numComponents, 0);
+  //IK, 10/1/14: double should be ST? 
+  Teuchos::broadcast<LO, double>(*commT, 0, &zCoords[0]); 
 
   temperatureVecT.resize(numComponents, Tpetra_Vector(mapT));
 
