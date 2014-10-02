@@ -9,11 +9,10 @@ but have not yet been converted for QCAD.
 - MOR
 - SG_MP
 - catalyst - can't build, need ParaView source code? 
-- cism_interface has been converted, but needs to be tested.
+- cism_interface has been converted, but needs to be debugged (compiles but run-time error having to do with mesh).
 - mpas_interface has been converted, but need to have Mauro test it.
-- writing of coordinates, residual, jacobian to matrix market file (available in tpetra?).
-- Teko stuff (uses Epetra).
-- ExtrudedSTKMeshStruct.
+- Teko stuff (uses Epetra) -- do not need? 
+- ExtrudedSTKMeshStruct has been converted but I have concerns about long long int's / casting that appears there.  Also need to test.
 - Albany_Dakota (TriKota).
 - peridigm - have David Littlewood test, for now will not convert to tpetra.
 - some adaptivity stuff will not work.  Check with Glen what.
@@ -23,7 +22,13 @@ but have not yet been converted for QCAD.
 converted to Thyra, like Albany_PiroObserverT).
 - What is ASCR, AlbanyCI?  I don't have these turned on in my Albany build.  ASCR needs SG_MP; AlbanyCI needs QCAD... 
 - Is SCOREC tested at RPI?  64 bit GO?  
-- Lament needs libraries... 
+- Lament needs libraries... -- but we decided not to pursue lament (which was templated version of lame). 
+- There are inconsistencies b/w ST and double, GO and int, etc. throughout the code.  Needs to be cleaned up.
+- The following tests fail right now when 64 bit GO is turned on: 
+     84 - CohesiveElement (Failed)
+     88 - SurfaceElementLocking (Failed)
+     90 - StabilizedTet4 (Failed)
+    219 - FELIX_FO_Dome_Restart (Failed)
 
 Question: is there a way to test compilation of Albany tpetra branch with ALBANY_EPETRA_EXE turned off 
 w/o Epetra?  E.g., remove library linking from link line?  Unfortunately it's not possible to 
