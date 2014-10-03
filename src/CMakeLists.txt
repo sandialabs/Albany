@@ -138,6 +138,7 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionTwoNormResponseFunction.cpp
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
+  responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
