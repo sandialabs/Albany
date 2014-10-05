@@ -37,8 +37,6 @@ evaluateTangentT (const double alpha,
                   Tpetra_MultiVector* gxT,
                   Tpetra_MultiVector* gpT)
 {
-  visResponseGraph<PHAL::AlbanyTraits::Tangent>("_tangent");
-
   // Evaluate just the response if it is requested.
   if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
 }
@@ -56,7 +54,5 @@ evaluateGradientT (const double current_time,
                    Tpetra_MultiVector* dg_dxdotdotT,
                    Tpetra_MultiVector* dg_dpT)
 {
-  visResponseGraph<PHAL::AlbanyTraits::Jacobian>("_gradient");
-
   if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
 }
