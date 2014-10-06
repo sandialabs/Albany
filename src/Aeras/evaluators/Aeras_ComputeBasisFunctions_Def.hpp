@@ -47,7 +47,9 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   this->addEvaluatedField(wGradBF);
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dim;
+  //
+  //std::vector<PHX::DataLayout::size_type> dim;
+  std::vector<PHX::Device::size_type> dim;
   dl->node_qp_gradient->dimensions(dim);
 
   const int containerSize   = dim[0];

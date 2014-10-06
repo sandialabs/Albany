@@ -71,7 +71,7 @@ struct StateStruct {
   enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, QuadPoint};
   //typedef std::vector<int> FieldDims;
   //typedef PHX::MDField<double>::size_type size_type;
-  typedef std::vector<PHX::index_size_type> FieldDims;
+  typedef std::vector<PHX::DataLayout::size_type> FieldDims;
 
   StateStruct (const std::string& name_, MeshFieldEntity ent): 
         name(name_), responseIDtoRequire(""), output(true), 

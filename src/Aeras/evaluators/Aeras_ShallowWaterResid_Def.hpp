@@ -66,7 +66,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::Device::size_type> dims;
     wGradBF.fieldTag().dataLayout().dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];

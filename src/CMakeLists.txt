@@ -6,10 +6,14 @@
 
 find_package(CUDA)
 
-INCLUDE(CheckCXXSourceCompiles) 
+INCLUDE(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
+set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
+ 
 unset(PHX_KOKKOS_DEVICE_TYPE_CUDA CACHE)
 check_cxx_source_compiles("
-#include </home/ipdemes/BuildTrilinos/install_CUDA/include/KokkosCore_config.h>
+#include <KokkosCore_config.h>
 int main ()
 {
  #ifdef KOKKOS_HAVE_CUDA
