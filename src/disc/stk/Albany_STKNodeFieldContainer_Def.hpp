@@ -21,7 +21,7 @@
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
+Albany::buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                           stk_classic::mesh::fem::FEMMetaData* metaData, stk_classic::mesh::BulkData* bulkData,
                           const bool output){
 
@@ -47,7 +47,7 @@ Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
 template<typename DataType, unsigned ArrayDim, class traits>
 Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string& name_,
-     const std::vector<int>& dims_, stk_classic::mesh::fem::FEMMetaData* metaData_, stk_classic::mesh::BulkData* bulkData_,
+     const std::vector<PHX::DataLayout::size_type>& dims_, stk_classic::mesh::fem::FEMMetaData* metaData_, stk_classic::mesh::BulkData* bulkData_,
      const bool output) :
   name(name_),
   dims(dims_),

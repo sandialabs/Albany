@@ -32,7 +32,7 @@ ConcentrationResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(ConcentrationResidual);
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];

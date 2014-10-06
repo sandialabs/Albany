@@ -26,7 +26,8 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
 
   this->setName("DOFGradInterpolation" );
 
-  std::vector<PHX::index_size_type> dims;
+ // std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   GradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
@@ -81,7 +82,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
 
   this->setName("DOFGradInterpolation Jacobian");
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::Device::size_type> dims;
   GradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
@@ -146,7 +147,7 @@ DOFGradInterpolation_noDeriv(const Teuchos::ParameterList& p,
 
   this->setName("DOFGradInterpolation_noDeriv" );
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   GradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];

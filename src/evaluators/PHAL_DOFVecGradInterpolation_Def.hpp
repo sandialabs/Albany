@@ -26,7 +26,7 @@ namespace PHAL {
 
     this->setName("DOFVecGradInterpolation" );
 
-    std::vector<PHX::index_size_type> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];
@@ -147,7 +147,7 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
 
     this->setName("DOFVecGradInterpolation Jacobian");
 
-    std::vector<PHX::index_size_type> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
     numNodes = dims[1];
     numQPs   = dims[2];

@@ -33,7 +33,7 @@ StokesRm(const Teuchos::ParameterList& p,
   this->addDependentField(force); 
   this->addEvaluatedField(Rm);
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];

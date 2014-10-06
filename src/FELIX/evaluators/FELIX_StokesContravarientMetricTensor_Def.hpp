@@ -25,7 +25,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Gc);
 
   // Get Dimensions
-  std::vector<PHX::index_size_type> dim;
+  std::vector<PHX::DataLayout::size_type> dim;
   dl->qp_gradient->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];

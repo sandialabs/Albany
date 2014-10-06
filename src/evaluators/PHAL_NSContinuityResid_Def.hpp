@@ -48,7 +48,7 @@ NSContinuityResid(const Teuchos::ParameterList& p) :
 
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("Node QP Vector Data Layout");
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];

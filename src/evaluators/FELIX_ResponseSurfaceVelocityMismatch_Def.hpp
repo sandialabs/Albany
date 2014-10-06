@@ -55,7 +55,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   numNodes = intrepidBasis->getCardinality();
 
   // Get Dimensions
-  std::vector<PHX::index_size_type> dim;
+  std::vector<PHX::DataLayout::size_type> dim;
   dl->qp_tensor->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];
@@ -86,7 +86,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   // Pre-Calculate reference element quantitites
   cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs = dims[1];
   numDims = dims[2];

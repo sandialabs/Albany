@@ -84,7 +84,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   }
 
   // coordinate dimensions
-  std::vector<PHX::index_size_type> coord_dims;
+  std::vector<PHX::DataLayout::size_type> coord_dims;
   dl->qp_vector->dimensions(coord_dims);
   numQPs = coord_dims[1];
   numDims = coord_dims[2];

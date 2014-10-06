@@ -84,7 +84,7 @@ ViscosityL1L2(const Teuchos::ParameterList& p,
 
   numQPsZ = 100; 
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];

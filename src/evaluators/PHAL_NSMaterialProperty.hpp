@@ -54,7 +54,7 @@ private:
   PHX::MDField<ScalarT> sigma_s;
   PHX::MDField<ScalarT> mu;
   PHX::index_size_type rank;
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
 
   // material property types
   enum MAT_PROP_TYPE {

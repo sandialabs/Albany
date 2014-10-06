@@ -38,7 +38,7 @@ StokesContinuityResid(const Teuchos::ParameterList& p,
    
   this->addEvaluatedField(CResidual);
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl->node_qp_vector->dimensions(dims);
   numNodes = dims[1];
   numQPs  = dims[2];

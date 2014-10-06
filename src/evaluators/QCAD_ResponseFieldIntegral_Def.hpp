@@ -45,7 +45,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   
   //! obtain number of dimensions
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numDims = dims[2];
 

@@ -109,7 +109,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       p.get<std::string>("Coordinate Vector Name"),
       coord_dl);
     this->addDependentField(coordVec);
-    std::vector<PHX::index_size_type> coord_dims;
+    std::vector<PHX::DataLayout::size_type> coord_dims;
     coord_dl->dimensions(coord_dims);
     point.resize(coord_dims[2]);
 

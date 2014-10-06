@@ -19,7 +19,7 @@ MeshRegion(std::string coordVecName, std::string weightsName,
   weightsFieldname = weightsName;
 
   // number of quad points per cell and dimension of space
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl = dl_;
   dl->qp_vector->dimensions(dims);
   numQPs  = dims[1];

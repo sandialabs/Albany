@@ -25,7 +25,8 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolation" );
-  std::vector<PHX::index_size_type> dims;
+  //std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];
@@ -123,7 +124,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
   this->addEvaluatedField(val_qp);
 
   this->setName("DOFVecInterpolation Jacobian");
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];

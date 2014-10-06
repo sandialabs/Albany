@@ -370,7 +370,7 @@ StokesBodyForce(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(force);
 
-  std::vector<PHX::index_size_type> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];

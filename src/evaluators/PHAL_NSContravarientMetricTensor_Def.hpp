@@ -27,7 +27,7 @@ NSContravarientMetricTensor(const Teuchos::ParameterList& p) :
 
   // Get Dimensions
   Teuchos::RCP<PHX::DataLayout> vector_dl = p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-  std::vector<PHX::index_size_type> dim;
+  std::vector<PHX::DataLayout::size_type> dim;
   vector_dl->dimensions(dim);
   int containerSize = dim[0];
   numQPs = dim[1];
