@@ -69,6 +69,7 @@
 	<Parameter  name="Max Steps" type="int" value="20"/>         
 	<!-- Final value of the parameter -->
 	<Parameter  name="Max Value" type="double" value="0.1"/>
+    <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
 	<!-- Initial value of the parameter -->
 	<Parameter  name="Min Value" type="double" value="0.0"/>
         <Parameter  name="Initial Value" type="double" value="0.0"/>

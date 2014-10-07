@@ -81,7 +81,8 @@
 	<Parameter  name="Max Steps" type="int" value="4"/>
 	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-        <Parameter name="Hit Continuation Bound" type="bool" value="0"/>
+    <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
+    <Parameter name="Hit Continuation Bound" type="bool" value="0"/>
 	<!-- Compute eigenvalues of the global stiffness -->
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
 	<ParameterList name="Eigensolver">

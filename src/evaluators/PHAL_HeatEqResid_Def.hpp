@@ -67,9 +67,9 @@ HeatEqResid(const Teuchos::ParameterList& p) :
 
 
   // Allocate workspace
-  flux.resize(dims[0], numQPs, numDims);
+  flux.resize(worksetSize, numQPs, numDims);
 
-  if (haveAbsorption)  aterm.resize(dims[0], numQPs);
+  if (haveAbsorption)  aterm.resize(worksetSize, numQPs);
 
   convectionVels = Teuchos::getArrayFromStringParameter<double> (p,
                            "Convection Velocity", numDims, false);
@@ -127,24 +127,44 @@ evaluateFields(typename Traits::EvalData workset)
   // and not just the used portion, we must fill the excess with reasonable
   // values. Leaving this out leads to floating point exceptions !!!
   for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-      for (std::size_t i=0; i < numDims; ++i)
+    for (std::size_t qp=0; qp < numQPs; ++qp){
+      ThermalCond(cell,qp) = 0.0;
+      for (std::size_t i=0; i < numDims; ++i){
         flux(cell,qp,i) = 0.0;
+        TGrad(cell,qp,i) = 0.0;
+      }
+    }
 
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, TGrad);
 
   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
+
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        Source(cell,qp) = 0.0;
+
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
-  if (workset.transientTerms && enableTransient) 
+  if (workset.transientTerms && enableTransient){
+
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        Tdot(cell,qp) = 0.0;
+
     FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+
+  }
 
   if (haveConvection)  {
     Intrepid::FieldContainer<ScalarT> convection(worksetSize, numQPs);
+
+    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
+      for (std::size_t qp=0; qp < numQPs; ++qp)
+        convection(cell,qp) = 0.0;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
@@ -168,8 +188,11 @@ evaluateFields(typename Traits::EvalData workset)
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to floating point exceptions !!!
     for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
-      for (std::size_t qp=0; qp < numQPs; ++qp)
+      for (std::size_t qp=0; qp < numQPs; ++qp){
         aterm(cell,qp) = 0.0;
+        Absorption(cell,qp) = 0.0;
+        Temperature(cell,qp) = 0.0;
+      }
 
     FST::scalarMultiplyDataData<ScalarT> (aterm, Absorption, Temperature);
     FST::integrate<ScalarT>(TResidual, aterm, wBF, Intrepid::COMP_CPP, true); 

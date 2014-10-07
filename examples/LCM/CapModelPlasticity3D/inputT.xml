@@ -85,6 +85,7 @@
 	<Parameter  name="Continuation Parameter" type="string" value="DBC on NS NodeSet1 for DOF X"/>
 	<Parameter  name="Max Steps" type="int" value="80"/>
 	<Parameter  name="Max Value" type="double" value="0"/>
+    <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
 	<Parameter  name="Min Value" type="double" value="-0.04"/>
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
 	<ParameterList name="Eigensolver">
