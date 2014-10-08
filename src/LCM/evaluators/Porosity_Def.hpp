@@ -43,8 +43,7 @@ namespace LCM {
       // Default value = 0 means no pores in the material
       constant_value = porosity_list->get("Value", 0.0); 
       // Add Porosity as a Sacado-ized parameter
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>
-        ("Porosity", this, paramLib);
+      this->registerSacadoParameter("Porosity", paramLib);
     }
     else if (type == "Truncated KL Expansion") {
       is_constant = false;
@@ -62,8 +61,7 @@ namespace LCM {
       rv.resize(num_KL);
       for (int i=0; i<num_KL; i++) {
         std::string ss = Albany::strint("Porosity KL Random Variable",i);
-        new Sacado::ParameterRegistration<EvalT, SPL_Traits>
-          (ss, this, paramLib);
+        this->registerSacadoParameter(ss, paramLib);
         rv[i] = porosity_list->get(ss, 0.0);
       }
     }
@@ -96,8 +94,7 @@ namespace LCM {
       isPoroElastic = true;
       initialPorosityValue = 
         porosity_list->get("Initial Porosity Value", 0.0);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>
-        ("Initial Porosity Value", this, paramLib);
+      this->registerSacadoParameter("Initial Porosity Value", paramLib);
     }
     else if ( p.isType<std::string>("DetDefGrad Name") ) {
       hasJ = true;
@@ -108,8 +105,7 @@ namespace LCM {
       isPoroElastic = true;
       initialPorosityValue = 
         porosity_list->get("Initial Porosity Value", 0.0);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>
-        ("Initial Porosity Value", this, paramLib);
+      this->registerSacadoParameter("Initial Porosity Value", paramLib);
     }
     else {
       // porosity will not change in this case.
@@ -139,8 +135,7 @@ namespace LCM {
       // typically Kgrain >> Kskeleton
       GrainBulkModulus = 
         porosity_list->get("Grain Bulk Modulus Value", 10.0e12); 
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>
-        ("Grain Bulk Modulus Value", this, paramLib);
+      this->registerSacadoParameter("Grain Bulk Modulus Value", paramLib);
     }
 
     if ( p.isType<std::string>("QP Temperature Name") ) {

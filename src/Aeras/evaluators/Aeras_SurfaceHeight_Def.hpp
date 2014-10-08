@@ -45,7 +45,7 @@ SurfaceHeight(const Teuchos::ParameterList& p,
    hs0 = 2000.; //meters are units
 
    Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-   new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Mountain Height", this, paramLib);
+   this->registerSacadoParameter("Mountain Height", paramLib);
   }
 
   this->addEvaluatedField(hs);

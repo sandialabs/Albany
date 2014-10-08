@@ -103,8 +103,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Gravity", this, paramLib);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Omega", this, paramLib);
+  this->registerSacadoParameter("Gravity", paramLib);
+  this->registerSacadoParameter("Omega", paramLib);
 
 }
 

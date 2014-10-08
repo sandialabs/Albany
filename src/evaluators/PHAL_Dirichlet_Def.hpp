@@ -36,7 +36,7 @@ DirichletBase(Teuchos::ParameterList& p) :
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
                ("Parameter Library", Teuchos::null);
 
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits> (name, this, paramLib);
+  this->registerSacadoParameter(name, paramLib);
 }
 
 template<typename EvalT, typename Traits>
