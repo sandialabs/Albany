@@ -178,13 +178,13 @@ evaluateFields(typename Traits::EvalData workset)
 // valVec_temp = Kokkos::View <ScalarT*, PHX::Device> ("valVec_temp",30);
 //  Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > valVec_temp("valVec_temp",30,1,1);
 
- ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
+/* ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
 
  for (int cell=0; cell < workset.numCells; ++cell ) 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++)
    for (std::size_t eq = 0; eq < numFields; eq++)
      valVec_temp[cell][node_col][eq]=(this->valVec[0])(cell,node_col,eq);
-
+*/
   for (int cell=0; cell < workset.numCells; ++cell ) {
      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       // Local Unks: Loop over nodes in element, Loop over equations per node
@@ -207,13 +207,13 @@ evaluateFields(typename Traits::EvalData workset)
                 }
                 if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
                    if (workset.is_adjoint) {
-                      for (unsigned int lunk=0; lunk<nunk; lunk++)
-                        Jac->SumIntoMyValues(col[lunk], 1, &((valVec_temp[cell][node][eq]).fastAccessDx(lunk)), &row);
-    //                     Jac->SumIntoMyValues(col[lunk], 1, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk)), &row);
+                      for (unsigned int lunk=0; lunk<nunk; lunk++){
+                      //  Jac->SumIntoMyValues(col[lunk], 1, &((valVec_temp[cell][node][eq]).fastAccessDx(lunk)), &row);
+                         Jac->SumIntoMyValues(col[lunk], 1, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk)), &row);}
                    }
                    else{
-                       Jac->SumIntoMyValues(row, nunk, &((valVec_temp[cell][node][eq]).fastAccessDx(0)), &col[0]);
-                 //     Jac->SumIntoMyValues(row, nunk, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(0)), &col[0]);
+                     //  Jac->SumIntoMyValues(row, nunk, &((valVec_temp[cell][node][eq]).fastAccessDx(0)), &col[0]);
+                      Jac->SumIntoMyValues(row, nunk, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(0)), &col[0]);
                    }
                  }
             }

@@ -60,6 +60,8 @@ private:
   typedef typename PHAL::AlbanyTraits::Residual::MeshScalarT MeshScalarT;
 
   Teuchos::RCP<PHX::FieldTag> savestate_operation;
+   //Irina Debug
+  //PHX::MDField<ScalarT> field;
   PHX::MDField<ScalarT> field;
   std::string fieldName;
   std::string stateName;

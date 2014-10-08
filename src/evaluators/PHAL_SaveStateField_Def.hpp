@@ -81,6 +81,7 @@ evaluateFields(typename Traits::EvalData workset)
     sta.dimensions(dims);
     int size = dims.size();
 
+//Irina Debug
     switch (size) {
     case 1:
       sta(0) = field(0);
@@ -107,6 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
       TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>4,
                           "Unexpected Array dimensions in SaveStateField: " << size);
     }
+
 }
 
 }

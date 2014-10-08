@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "Kokkos_Core.hpp"
+//#include "Kokkos_Core.hpp"
 
 #include "PHAL_AlbanyTraits.hpp"
 
