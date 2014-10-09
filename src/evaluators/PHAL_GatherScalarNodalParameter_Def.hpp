@@ -56,8 +56,10 @@ template<typename EvalT, typename Traits>
 void GatherScalarNodalParameter<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Epetra_Vector> pvec =
+  Teuchos::RCP<const Tpetra_Vector> pvecT =
     workset.distParamLib->get(this->param_name)->vector();
+  //get const view of pvecT 
+  Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
@@ -65,7 +67,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-      (this->val)(cell,node) = (*pvec)[eqID[0]];
+      (this->val)(cell,node) = pvecT_constView[eqID[0]];
     }
   }
 }
@@ -95,16 +97,18 @@ void GatherScalarNodalParameter<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Distributed parameter vector
-  Teuchos::RCP<const Epetra_Vector> pvec =
+  Teuchos::RCP<const Tpetra_Vector> pvecT =
     workset.distParamLib->get(this->param_name)->vector();
+  //get const view of pvec
+  Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
   // Are we differentiating w.r.t. this parameter?
   bool is_active = (workset.dist_param_deriv_name == this->param_name);
 
   // If active, intialize data needed for differentiation
   if (is_active) {
-    const Epetra_MultiVector& Vp = *(workset.Vp);
-    const int num_cols = Vp.NumVectors();
+    Teuchos::RCP<const Tpetra_MultiVector> VpT = workset.VpT;
+    const int num_cols = VpT->getNumVectors();
     const int num_deriv = this->numNodes;
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
@@ -119,7 +123,7 @@ evaluateFields(typename Traits::EvalData workset)
 
         // Initialize Fad type for parameter value
         const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        ScalarT v(num_deriv, node, (*pvec)[eqID[0]]);
+        ScalarT v(num_deriv, node, pvecT_constView[eqID[0]]);
         v.setUpdateValue(!workset.ignore_residual);
         (this->val)(cell,node) = v;
 
@@ -128,8 +132,10 @@ evaluateFields(typename Traits::EvalData workset)
 
         // Store Vp entries
         local_Vp[node].resize(num_cols);
-        for (int col=0; col<num_cols; ++col)
-          local_Vp[node][col] = Vp[col][eqID[0]];
+        for (size_t col=0; col<num_cols; ++col){
+          //local_Vp[node][col] = Vp[col][eqID[0]];
+          local_Vp[node][col] = VpT->getData(col)[eqID[0]]; 
+        }
       }
     }
   }
@@ -141,7 +147,7 @@ evaluateFields(typename Traits::EvalData workset)
         workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        (this->val)(cell,node) = (*pvec)[eqID[0]];
+        (this->val)(cell,node) = pvecT_constView[eqID[0]];
       }
     }
   }

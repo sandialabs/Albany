@@ -26,10 +26,12 @@ class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer
     AbstractPUMINodeFieldContainer(){}
     virtual ~AbstractPUMINodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv,
-            int offset, int blocksize = -1) = 0;
+    virtual void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv,
+            int offset) = 0;
+    virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
+            int offset) = 0;
     virtual Albany::MDArray getMDA(const std::vector<apf::Node>& buck) = 0;
-    virtual void resize(const Teuchos::RCP<const Epetra_Map>& local_node_map) = 0;
+    virtual void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map) = 0;
 
 };
 
@@ -55,8 +57,9 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
     //! Define the field type
     typedef typename traits_type::field_type field_type;
 
-    void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv, int offset, int blocksize = -1);
-    void resize(const Teuchos::RCP<const Epetra_Map>& local_node_map);
+    void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset);
+    void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, int offset);
+    void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map);
     Albany::MDArray getMDA(const std::vector<apf::Node>& buck);
 
   protected:
@@ -68,7 +71,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
     int nfield_dofs;                    // total number of dofs in this field
     std::size_t beginning_index;        // Buffer starting location for the next array allocation
 
-    Teuchos::RCP<const Epetra_Map> local_node_map;
+    Teuchos::RCP<const Tpetra_Map> local_node_map;
 
   };
 

@@ -91,8 +91,16 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT; //Tpetra version
+  Teuchos::ArrayRCP<ST> gT_nonconstView;
+  if (gT != Teuchos::null) {
+    gT_nonconstView = gT->get1dViewNonConst();
+  }
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    (*g)[res] = this->global_response[res];
+    if (g != Teuchos::null) 
+      (*g)[res] = this->global_response[res];
+    if (gT != Teuchos::null) 
+      gT_nonconstView[res] = this->global_response[res];
   }
 }
 
@@ -113,19 +121,42 @@ void ScatterScalarResponse<PHAL::AlbanyTraits::Tangent, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Here we scatter the *global* response and tangent
-  Teuchos::RCP<Epetra_Vector> g = workset.g;
-  Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
-  Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
+  //Teuchos::RCP<Epetra_Vector> g = workset.g;
+  //Teuchos::RCP<Epetra_MultiVector> gx = workset.dgdx;
+  //Teuchos::RCP<Epetra_MultiVector> gp = workset.dgdp;
+  Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
+  Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
+
+//Irina debug
+//ScalarT& val = this->global_response[res];
+//if (gT != Teuchos::null){
+//Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
+////(*g)[res] = val.val();
+// gT_nonconstView[res] = val.val();
+// }
+// if (gxT != Teuchos::null)
+// for (int col=0; col<workset.num_cols_x; col++)
+// //gx->ReplaceMyValue(res, col, val.dx(col));
+// gxT->replaceLocalValue(res, col, val.dx(col));
+// if (gpT != Teuchos::null)
+//  for (int col=0; col<workset.num_cols_p; col++)
+//  //gp->ReplaceMyValue(res, col, val.dx(col+workset.param_offset));
+//  gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
+    
+
     //ScalarT& val = this->global_response[res];
-    if (g != Teuchos::null)
-      (*g)[res] = (this->global_response[res]).val();
-    if (gx != Teuchos::null)
+    if (gT != Teuchos::null){
+      Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
+      gT_nonconstView[res] = (this->global_response[res]).val();
+    }
+    if (gxT != Teuchos::null)
       for (int col=0; col<workset.num_cols_x; col++)
-	gx->ReplaceMyValue(res, col, (this->global_response[res]).dx(col));
-    if (gp != Teuchos::null)
+	gxT->replaceLocalValue(res, col, (this->global_response[res]).dx(col));
+    if (gpT != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
-	gp->ReplaceMyValue(res, col, (this->global_response[res]).dx(col+workset.param_offset));
+	gpT->replaceLocalValue(res, col, (this->global_response[res]).dx(col+workset.param_offset));
   }
 }
 
@@ -176,19 +207,20 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> gx_sg = workset.sg_dgdx;
   Teuchos::RCP<Stokhos::EpetraMultiVectorOrthogPoly> gp_sg = workset.sg_dgdp;
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    ScalarT& val = this->global_response[res];
+   //Irina Debug
+    //ScalarT& val = this->global_response[res];
     if (g_sg != Teuchos::null)
       for (int block=0; block<g_sg->size(); block++)
-	(*g_sg)[block][res] = val.val().coeff(block);
+	(*g_sg)[block][res] = (this->global_response[res]).val().coeff(block);
     if (gx_sg != Teuchos::null)
       for (int col=0; col<workset.num_cols_x; col++)
 	for (int block=0; block<gx_sg->size(); block++)
-	  (*gx_sg)[block].ReplaceMyValue(res, col, val.dx(col).coeff(block));
+	  (*gx_sg)[block].ReplaceMyValue(res, col, (this->global_response[res]).dx(col).coeff(block));
     if (gp_sg != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
 	for (int block=0; block<gp_sg->size(); block++)
 	  (*gp_sg)[block].ReplaceMyValue(
-	    res, col, val.dx(col+workset.param_offset).coeff(block));
+	    res, col, (this->global_response[res]).dx(col+workset.param_offset).coeff(block));
   }
 }
 
@@ -211,9 +243,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Here we scatter the *global* MP response
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    ScalarT& val = this->global_response[res];
+    //Irina Debug
+    //ScalarT& val = this->global_response[res];
     for (int block=0; block<g_mp->size(); block++)
-      (*g_mp)[block][res] = val.coeff(block);
+      (*g_mp)[block][res] = (this->global_response[res]).coeff(block);
   }
 }
 
@@ -238,19 +271,20 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> gx_mp = workset.mp_dgdx;
   Teuchos::RCP<Stokhos::ProductEpetraMultiVector> gp_mp = workset.mp_dgdp;
   for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    ScalarT& val = this->global_response[res];
+    //Iirna Debug
+   // ScalarT& val = this->global_response[res];
     if (g_mp != Teuchos::null)
       for (int block=0; block<g_mp->size(); block++)
-	(*g_mp)[block][res] = val.val().coeff(block);
+	(*g_mp)[block][res] = (this->global_response[res]).val().coeff(block);
     if (gx_mp != Teuchos::null)
       for (int col=0; col<workset.num_cols_x; col++)
 	for (int block=0; block<gx_mp->size(); block++)
-	  (*gx_mp)[block].ReplaceMyValue(res, col, val.dx(col).coeff(block));
+	  (*gx_mp)[block].ReplaceMyValue(res, col, (this->global_response[res]).dx(col).coeff(block));
     if (gp_mp != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
 	for (int block=0; block<gp_mp->size(); block++)
 	  (*gp_mp)[block].ReplaceMyValue(
-	    res, col, val.dx(col+workset.param_offset).coeff(block));
+	    res, col, (this->global_response[res]).dx(col+workset.param_offset).coeff(block));
   }
 }
 #endif //ALBANY_SG_MP

@@ -22,6 +22,9 @@
 
 #include "Albany_Networks.hpp"
 
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -62,10 +65,11 @@ int main(int argc, char *argv[]) {
     // Set up coupled model
     //***********************************************************
 
-    Albany::SolverFactory coupled_slvrfctry(xmlfilename_coupled, 
-					    Albany_MPI_COMM_WORLD);
     RCP<Epetra_Comm> coupledComm = 
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+    RCP<const Teuchos_Comm> comm =
+      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+    Albany::SolverFactory coupled_slvrfctry(xmlfilename_coupled, comm);
     Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
     Teuchos::ParameterList& coupledSystemParams = 
       coupledParams.sublist("Coupled System");
@@ -81,7 +85,7 @@ int main(int argc, char *argv[]) {
     // Set up each model
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(model_filenames[m], 
-				      Albany_MPI_COMM_WORLD);
+				      comm);
       RCP<Epetra_Comm> appComm = 
 	Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
       models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], appComm);

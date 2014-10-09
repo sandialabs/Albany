@@ -38,18 +38,6 @@ public:
   Topology(RCP<Albany::AbstractDiscretization> & discretization);
 
   ///
-  /// \brief Create mesh data structure
-  ///
-  /// \param[in] Albany discretization object
-  /// \param[in] Fracture criterion object
-  ///
-  /// Use if already have an Albany mesh object, and want to
-  /// fracture the mesh based on a criterion.
-  ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization,
-      RCP<AbstractFractureCriterion> & fracture_criterion);
-
-  ///
   /// \brief Iterates over the boundary entities of the mesh of (all entities
   /// of rank dimension-1) and checks fracture criterion.
   ///
@@ -575,6 +563,10 @@ public:
   RCP<Albany::AbstractDiscretization> &
   getDiscretization()
   {return discretization_;}
+
+  Albany::STKDiscretization *
+  getSTKDiscretization()
+  {return static_cast<Albany::STKDiscretization*>(discretization_.get());}
 
   BulkData *
   getBulkData()

@@ -45,16 +45,16 @@ int Albany_Dakota(int argc, char *argv[])
     else
       xml_filename=argv[1];
   }
-  RCP<ParameterList> appParams = 
+  RCP<ParameterList> appParams =
     Teuchos::getParametersFromXmlFile(xml_filename);
   ParameterList& dakotaParams = appParams->sublist("Piro").sublist("Dakota");
-  std::string dakota_input_file = 
+  std::string dakota_input_file =
     dakotaParams.get("Input File", "dakota.in");
-  std::string dakota_output_file = 
+  std::string dakota_output_file =
     dakotaParams.get("Output File", "dakota.out");
-  std::string dakota_restart_file = 
+  std::string dakota_restart_file =
     dakotaParams.get("Restart File", "dakota.res");
-  std::string dakota_error_file = 
+  std::string dakota_error_file =
     dakotaParams.get("Error File", "dakota.err");
 
   std::string dakotaRestartIn;
@@ -74,19 +74,20 @@ int Albany_Dakota(int argc, char *argv[])
 			 dakota_error_file,
                          dakRestartIn, dakotaRestartEvals );
 
-  
+
   // Construct a ModelEvaluator for your application with the
-  // MPI_Comm chosen by Dakota. This example ModelEvaluator 
+  // MPI_Comm chosen by Dakota. This example ModelEvaluator
   // only takes an input file name and MPI_Comm to construct,
   // and must not be constructed if Dakota assigns MPI_COMM_NULL.
 
   Albany_MPI_Comm analysis_comm = dakota.getAnalysisComm();
   if (analysis_comm == Albany_MPI_COMM_NULL)
     return 0;
-  RCP<Epetra_Comm> appComm = 
+  RCP<Epetra_Comm> appComm =
       Albany::createEpetraCommFromMpiComm(analysis_comm);
-  RCP<Albany::SolverFactory> slvrfctry = 
-    rcp(new Albany::SolverFactory(xml_filename, analysis_comm));
+  RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
+  RCP<Albany::SolverFactory> slvrfctry =
+    rcp(new Albany::SolverFactory(xml_filename, appCommT));
 
   // Construct a concrete Dakota interface with an EpetraExt::ModelEvaluator
   // trikota_interface is freed in the destructor for the Dakota interface class
@@ -94,10 +95,10 @@ int Albany_Dakota(int argc, char *argv[])
   bool use_multi_point = dakotaParams.get("Use Multi-Point", false);
   if (use_multi_point) {
     // Create MP solver
-    RCP<ParameterList> mpParams = 
+    RCP<ParameterList> mpParams =
       rcp(&(dakotaParams.sublist("Multi-Point")),false);
     ParameterList& appParams2 = slvrfctry->getParameters();
-    RCP<ParameterList> piroParams = 
+    RCP<ParameterList> piroParams =
       rcp(&(appParams2.sublist("Piro")),false);
     RCP<Piro::Epetra::StokhosMPSolver> mp_solver =
       rcp(new Piro::Epetra::StokhosMPSolver(
@@ -107,32 +108,32 @@ int Albany_Dakota(int argc, char *argv[])
 
     // Create application & model evaluator
     Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model =
       slvrfctry->createAlbanyAppAndModel(app, appComm);
 
     // Setup rest of solver
     mp_solver->setup(model);
-    
-    trikota_interface = 
-      rcp(new TriKota::MPDirectApplicInterface(dakota.getProblemDescDB(), 
-					       mp_solver, p_index, g_index), 
+
+    trikota_interface =
+      rcp(new TriKota::MPDirectApplicInterface(dakota.getProblemDescDB(),
+					       mp_solver, p_index, g_index),
 	  false);
   }
   else {
     RCP<EpetraExt::ModelEvaluator> App = slvrfctry->create(appComm, appComm);
     trikota_interface =
-      rcp(new TriKota::DirectApplicInterface(dakota.getProblemDescDB(), App, 
-					     p_index, g_index), 
+      rcp(new TriKota::DirectApplicInterface(dakota.getProblemDescDB(), App,
+					     p_index, g_index),
 	  false);
-  } 
+  }
 
   // Run the requested Dakota strategy using this interface
   dakota.run(trikota_interface.get());
 
   if (dakota.rankZero()) {
-    Dakota::RealVector finalValues = 
+    Dakota::RealVector finalValues =
       dakota.getFinalSolution().continuous_variables();
-    *out << "\nAlbany_Dakota: Final Values from Dakota = " 
+    *out << "\nAlbany_Dakota: Final Values from Dakota = "
          << std::setprecision(8) << finalValues << endl;
 
     return slvrfctry->checkDakotaTestResults(0, &finalValues);

@@ -15,6 +15,9 @@
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
 
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -64,7 +67,10 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
-    Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
+    RCP<const Teuchos_Comm> comm =
+      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+
+    Albany::SolverFactory slvrfctry(xmlfilename, comm);
     RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create(appComm, appComm);
 
@@ -146,7 +152,7 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalAdjTimer(*totalAdjTime); //start timer
     Teuchos::TimeMonitor setupAdjTimer(*setupAdjTime); //start timer
 
-    Albany::SolverFactory adjslvrfctry(xmladjfilename, Albany_MPI_COMM_WORLD);
+    Albany::SolverFactory adjslvrfctry(xmladjfilename, comm);
     RCP<Epetra_Comm> adjappComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     RCP<EpetraExt::ModelEvaluator> AdjApp = adjslvrfctry.create(adjappComm, adjappComm, xinit);
 

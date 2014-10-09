@@ -27,10 +27,17 @@ public:
 
   Epetra_Map getNonOverlappedMap() const;
 
+  Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
+
   void observeSolution(
       double stamp,
       const Epetra_Vector &nonOverlappedSolution,
       Teuchos::Ptr<const Epetra_Vector> nonOverlappedSolutionDot);
+
+  void observeSolutionT(
+      double stamp,
+      const Tpetra_Vector &nonOverlappedSolutionT,
+      Teuchos::Ptr<const Tpetra_Vector> nonOverlappedSolutionDotT);
 
 private:
   Teuchos::RCP<Application> app_;

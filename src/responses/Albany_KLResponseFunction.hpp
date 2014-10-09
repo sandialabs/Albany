@@ -41,6 +41,9 @@ namespace Albany {
 
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+    
+    //! Get the map associate with this response - Tpetra version
+    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     /*! 
      * \brief Is this response function "scalar" valued, i.e., has a replicated
@@ -50,6 +53,8 @@ namespace Albany {
 
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+    //! Create Tpetra operator for gradient (e.g., dg/dx)
+    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
 
     //! \name Deterministic evaluation functions
     //@{
@@ -63,6 +68,15 @@ namespace Albany {
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g);
 
+    //! Evaluate responses - Tpetra
+    virtual void evaluateResponseT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      Tpetra_Vector& gT);
+    
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void evaluateTangent(
       const double alpha, 
@@ -83,6 +97,26 @@ namespace Albany {
       Epetra_MultiVector* gx,
       Epetra_MultiVector* gp);
 
+    virtual void evaluateTangentT(
+      const double alpha, 
+      const double beta,
+      const double omega,
+      const double current_time,
+      bool sum_derivs,
+      const Tpetra_Vector* xdot,
+      const Tpetra_Vector* xdotdot,
+      const Tpetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Tpetra_MultiVector* Vxdot,
+      const Tpetra_MultiVector* Vxdotdot,
+      const Tpetra_MultiVector* Vx,
+      const Tpetra_MultiVector* Vp,
+      Tpetra_Vector* g,
+      Tpetra_MultiVector* gx,
+      Tpetra_MultiVector* gp);
+
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -97,6 +131,18 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
+    virtual void evaluateDerivativeT(
+      const double current_time,
+      const Tpetra_Vector* xdot,
+      const Tpetra_Vector* xdotdot,
+      const Tpetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* g,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
     //@}
 
     //! \name Stochastic Galerkin evaluation functions

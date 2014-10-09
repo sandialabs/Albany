@@ -13,8 +13,8 @@ cd $ALBDIR/build
 echo "    Starting Albany cmake" ; date
 
 if [ $MPI_BUILD ] ; then
-  cp $ALBDIR/doc/hopper-albany-cmake .
-  cp $ALBDIR/doc/hopper_modules.sh .
+  cp $ALBDIR/doc/nightlyTestHarness/hopper/hopper-albany-cmake .
+  cp $ALBDIR/doc/nightlyTestHarness/hopper/hopper_modules.sh .
   source hopper_modules.sh > $ALBOUTDIR/albany_modules.out 2>&1
   source hopper-albany-cmake > $ALBOUTDIR/albany_cmake.out 2>&1
 fi

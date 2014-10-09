@@ -45,11 +45,16 @@
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
 #endif
+
 #ifdef ALBANY_HYDRIDE
 #include "Hydride/problems/HydrideProblem.hpp"
 #include "Hydride/problems/HydMorphProblem.hpp"
 #include "Hydride/problems/MesoScaleLinkProblem.hpp"
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
+#endif
+
+#ifdef ALBANY_SEE
+#include "SEE/problems/NonlinearPoissonProblem.hpp"
 #endif
 
 #ifdef ALBANY_FELIX
@@ -63,6 +68,7 @@
 #include "Aeras/problems/Aeras_XZScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XScalarAdvectionProblem.hpp"
 #include "Aeras/problems/Aeras_XZHydrostaticProblem.hpp"
+#include "Aeras/problems/Aeras_HydrostaticProblem.hpp"
 #endif
 
 Albany::ProblemFactory::ProblemFactory(
@@ -267,6 +273,17 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
   }
 #endif
+#ifdef ALBANY_SEE
+  else if (method == "Nonlinear Poisson 1D") {
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, comm));
+  }
+  else if (method == "Nonlinear Poisson 2D") {
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 2, comm));
+  }
+  else if (method == "Nonlinear Poisson 3D") {
+    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, comm));
+  }
+#endif
 #ifdef ALBANY_HYDRIDE
   else if (method == "Hydride 2D") {
     strategy = rcp(new Albany::HydrideProblem(problemParams, paramLib, 2, comm));
@@ -322,9 +339,12 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Aeras::XScalarAdvectionProblem(problemParams, paramLib, 1));
   }
 //Irina TOFIX
- /* else if (method == "Aeras XZ Hydrostatic" ) {
+  else if (method == "Aeras XZ Hydrostatic" ) {
     strategy = rcp(new Aeras::XZHydrostaticProblem(problemParams, paramLib, 1));
-  }*/
+  }
+  else if (method == "Aeras Hydrostatic" ) {
+    strategy = rcp(new Aeras::HydrostaticProblem(problemParams, paramLib, 2));
+  }
 #endif
   else if (method == "Peridigm Code Coupling" ) {
 #ifdef ALBANY_PERIDIGM

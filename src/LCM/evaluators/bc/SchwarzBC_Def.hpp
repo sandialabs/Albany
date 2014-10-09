@@ -571,9 +571,11 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Epetra_MultiVector> fpV = dirichlet_workset.fpV;
+
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichlet_workset.fpVT;
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView; 
   bool trans = dirichlet_workset.transpose_dist_param_deriv;
-  int num_cols = fpV->NumVectors();
+  int num_cols = fpVT->getNumVectors();
 
   //
   // We're currently assuming Dirichlet BC's can't be distributed parameters.
@@ -599,7 +601,8 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans) {
-    Teuchos::RCP<Epetra_MultiVector> Vp = dirichlet_workset.Vp_bc;
+    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichlet_workset.Vp_bcT;
+    Teuchos::ArrayRCP<ST> VpT_nonconstView; 
     for (size_t inode = 0; inode < ns_nodes.size(); ++inode) {
       xlunk = ns_nodes[inode][0];
       ylunk = ns_nodes[inode][1];
@@ -609,9 +612,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       // this->computeBCs(coord, x_val, y_val, z_val);
 
       for (int col=0; col<num_cols; ++col) {
-        (*Vp)[col][xlunk] = 0.0;
-        (*Vp)[col][ylunk] = 0.0;
-        (*Vp)[col][zlunk] = 0.0;
+        //(*Vp)[col][xlunk] = 0.0;
+        //(*Vp)[col][ylunk] = 0.0;
+        //(*Vp)[col][zlunk] = 0.0;
+        VpT_nonconstView = VpT->getDataNonConst(col); 
+        VpT_nonconstView[xlunk] = 0.0; 
+        VpT_nonconstView[ylunk] = 0.0; 
+        VpT_nonconstView[zlunk] = 0.0; 
       }
     }
   }
@@ -627,9 +634,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
       // this->computeBCs(coord, x_val, y_val, z_val);
 
       for (int col=0; col<num_cols; ++col) {
-        (*fpV)[col][xlunk] = 0.0;
-        (*fpV)[col][ylunk] = 0.0;
-        (*fpV)[col][zlunk] = 0.0;
+        //(*fpV)[col][xlunk] = 0.0;
+        //(*fpV)[col][ylunk] = 0.0;
+        //(*fpV)[col][zlunk] = 0.0;
+        fpVT_nonconstView = fpVT->getDataNonConst(col); 
+        fpVT_nonconstView[xlunk] = 0.0; 
+        fpVT_nonconstView[ylunk] = 0.0; 
+        fpVT_nonconstView[zlunk] = 0.0; 
       }
     }
   }

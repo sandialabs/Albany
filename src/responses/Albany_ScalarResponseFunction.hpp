@@ -52,6 +52,22 @@ namespace Albany {
       Epetra_MultiVector* dg_dxdotdot,
       Epetra_MultiVector* dg_dp) = 0;
 
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
+    virtual void evaluateGradientT(
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      Tpetra_MultiVector* dg_dxT,
+      Tpetra_MultiVector* dg_dxdotT,
+      Tpetra_MultiVector* dg_dxdotdotT,
+      Tpetra_MultiVector* dg_dpT) = 0;
+    
+
+   //! Evaluate stochastic Galerkin derivative
 #ifdef ALBANY_SG_MP
     //! Evaluate stochastic Galerkin derivative
     virtual void evaluateSGGradient(
@@ -104,9 +120,13 @@ namespace Albany {
      * of ways if we wanted to.
      */
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+    virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
 
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+    
+    //! Get the map associate with this response
+    virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
@@ -122,6 +142,19 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
 
+    virtual void evaluateDerivativeT(
+      const double current_time,
+      const Tpetra_Vector* xdot,
+      const Tpetra_Vector* xdotdot,
+      const Tpetra_Vector& x,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* g,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
+    
 #ifdef ALBANY_SG_MP
     //! Evaluate stochastic Galerkin derivative
     virtual void evaluateSGDerivative(

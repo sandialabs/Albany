@@ -17,6 +17,7 @@
 
 #include "Teuchos_Assert.hpp"
 
+#include <iostream>
 
 Albany::SolutionValuesResponseFunction::
 SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
@@ -60,6 +61,19 @@ evaluateResponse(const double /*current_time*/,
 
 void
 Albany::SolutionValuesResponseFunction::
+evaluateResponseT(const double current_time,
+                  const Tpetra_Vector* xdotT,
+                  const Tpetra_Vector* xdotdotT,
+                  const Tpetra_Vector& xT,
+                  const Teuchos::Array<ParamVec>& p,
+                  Tpetra_Vector& gT)
+{
+  // TODO: Convert to Tpetra
+  std::cerr << "SolutionValuesResponseFunction::evaluateResponseT NOT IMPLEMETED\n";
+}
+
+void
+Albany::SolutionValuesResponseFunction::
 evaluateTangent(const double /*alpha*/,
 		const double beta,
 		const double omega,
@@ -95,6 +109,30 @@ evaluateTangent(const double /*alpha*/,
   if (gp) {
     gp->PutScalar(0.0);
   }
+}
+
+void
+Albany::SolutionValuesResponseFunction::
+evaluateTangentT(const double alpha,
+                 const double beta,
+                 const double omega,
+                 const double current_time,
+                 bool sum_derivs,
+                 const Tpetra_Vector* xdotT,
+                 const Tpetra_Vector* xdotdotT,
+                 const Tpetra_Vector& xT,
+                 const Teuchos::Array<ParamVec>& p,
+                 ParamVec* deriv_p,
+                 const Tpetra_MultiVector* VxdotT,
+                 const Tpetra_MultiVector* VxdotdotT,
+                 const Tpetra_MultiVector* VxT,
+                 const Tpetra_MultiVector* VpT,
+                 Tpetra_Vector* gT,
+                 Tpetra_MultiVector* gxT,
+                 Tpetra_MultiVector* gpT)
+{
+  // TODO: Convert to Tpetra
+  std::cerr << "SolutionValuesResponseFunction::evaluateTangentT NOT IMPLEMETED\n";
 }
 
 void
@@ -141,6 +179,24 @@ evaluateGradient(const double /*current_time*/,
   if (dg_dp) {
     dg_dp->PutScalar(0.0);
   }
+}
+
+void
+Albany::SolutionValuesResponseFunction::
+evaluateGradientT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 ParamVec* deriv_p,
+		 Tpetra_Vector* gT,
+		 Tpetra_MultiVector* dg_dxT,
+		 Tpetra_MultiVector* dg_dxdotT,
+		 Tpetra_MultiVector* dg_dxdotdotT,
+		 Tpetra_MultiVector* dg_dpT)
+{
+  // TODO: Convert to Tpetra
+  std::cerr << "SolutionValuesResponseFunction::evaluateGradientT NOT IMPLEMETED\n";
 }
 
 void

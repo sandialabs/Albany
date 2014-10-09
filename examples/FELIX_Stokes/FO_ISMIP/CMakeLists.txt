@@ -13,10 +13,16 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #  First Test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testA.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testA.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testAT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testAT.xml COPYONLY)
 add_test(${testName}_TestA ${Albany.exe} input_fo_ismip-hom_testA.xml)
+add_test(${testName}_TestA_Tpetra ${AlbanyT.exe} input_fo_ismip-hom_testAT.xml)
 
 #  Second test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testC.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testC.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_ismip-hom_testCT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_ismip-hom_testCT.xml COPYONLY)
 add_test(${testName}_TestC ${Albany.exe} input_fo_ismip-hom_testC.xml)
+add_test(${testName}_TestC_Tpetra ${AlbanyT.exe} input_fo_ismip-hom_testCT.xml)
 

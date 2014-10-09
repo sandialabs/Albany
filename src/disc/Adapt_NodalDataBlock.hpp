@@ -13,6 +13,8 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+#include "Adapt_NodalFieldUtils.hpp"
+
 namespace Adapt {
 
 /*!
@@ -23,22 +25,27 @@ class NodalDataBlock {
 
   public:
 
-    NodalDataBlock();
+    NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer,
+                    NodeFieldSizeVector& nodeBlockLayout,
+                    NodeFieldSizeMap& nodeBlockMap, LO& blocksize);
 
     //! Destructor
     virtual ~NodalDataBlock(){}
 
-    void resizeLocalMap(const std::vector<int>& local_nodeGIDs, const Epetra_Comm& comm);
+    void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    void resizeOverlapMap(const std::vector<int>& overlap_nodeGIDs, const Epetra_Comm& comm);
+    void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    Teuchos::RCP<Epetra_Vector> getOverlapNodeVec(){ return overlap_node_vec; }
-    Teuchos::RCP<Epetra_Vector> getLocalNodeVec(){ return local_node_vec; }
+    Teuchos::ArrayRCP<ST> getLocalNodeView(){ return local_node_view; }
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(){ return overlap_node_view; }
 
-    Teuchos::RCP<const Epetra_BlockMap> getOverlapMap() const { return overlap_node_map; }
-    Teuchos::RCP<const Epetra_BlockMap> getLocalMap() const { return local_node_map; }
+    Teuchos::ArrayRCP<const ST> getOverlapNodeConstView() const { return const_overlap_node_view; }
+    Teuchos::ArrayRCP<const ST> getLocalNodeConstView() const { return const_local_node_view; }
 
-    void initializeVectors(double value){overlap_node_vec->PutScalar(value); local_node_vec->PutScalar(value); }
+    Teuchos::RCP<const Tpetra_BlockMap> getOverlapMap() const { return overlap_node_map; }
+    Teuchos::RCP<const Tpetra_BlockMap> getLocalMap() const { return local_node_map; }
+
+    void initializeVectors(ST value){overlap_node_vec->putScalar(value); local_node_vec->putScalar(value); }
 
     void initializeExport();
 
@@ -46,45 +53,35 @@ class NodalDataBlock {
 
     void saveNodalDataState() const;
 
-    void saveEpetraNodalDataVector(const std::string& name, const Teuchos::RCP<const Epetra_Vector>& overlap_node_vec,
-            int offset, int blocksize) const;
-
-    int getBlocksize(){ return blocksize; }
-
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
-    void registerState(const std::string &stateName, int ndofs);
-
-    Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
-
+    LO getBlocksize(){ return blocksize; }
 
   private:
 
-    struct NodeFieldSize {
+    NodalDataBlock();
 
-       std::string name;
-       int offset;
-       int ndofs;
+    Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map;
+    Teuchos::RCP<const Tpetra_BlockMap> local_node_map;
 
-    };
+    Teuchos::RCP<Tpetra_BlockMultiVector> overlap_node_vec;
+    Teuchos::RCP<Tpetra_BlockMultiVector> local_node_vec;
 
-    typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
-    typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
+    Teuchos::RCP<Tpetra_Import> importer;
 
-    Teuchos::RCP<const Epetra_BlockMap> overlap_node_map;
-    Teuchos::RCP<const Epetra_BlockMap> local_node_map;
+    Teuchos::ArrayRCP<ST> overlap_node_view;
+    Teuchos::ArrayRCP<ST> local_node_view;
+    Teuchos::ArrayRCP<const ST> const_overlap_node_view;
+    Teuchos::ArrayRCP<const ST> const_local_node_view;
 
-    Teuchos::RCP<Epetra_Vector> overlap_node_vec;
-    Teuchos::RCP<Epetra_Vector> local_node_vec;
-
-    Teuchos::RCP<Epetra_Import> importer;
+    Teuchos::RCP<KokkosNode> node;
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
-    NodeFieldSizeVector nodeBlockLayout;
-    NodeFieldSizeMap nodeBlockMap;
+    NodeFieldSizeVector& nodeBlockLayout;
+    NodeFieldSizeMap& nodeBlockMap;
 
-    int blocksize;
+    LO& blocksize;
 
     bool mapsHaveChanged;
 

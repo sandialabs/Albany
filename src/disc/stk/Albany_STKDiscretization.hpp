@@ -17,6 +17,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
@@ -37,12 +38,15 @@
 
 namespace Albany {
 
+/*
+=======
   struct MeshGraph {
 
        std::vector<std::size_t> start;
        std::vector<std::size_t> adj;
 
   };
+*/
 
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
@@ -57,20 +61,30 @@ namespace Albany {
     //! Destructor
     ~STKDiscretization();
 
-    //! Get DOF map
+    //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+    //! Get Tpetra DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
-    //! Get overlapped DOF map
+    //! Get Epetra overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+    //! Get Tpetra overlapped DOF map
+    Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
-    //! Get Jacobian graph
+    //! Get Epetra Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+    //! Get Tpetra Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-    //! Get overlap Jacobian graph
+    //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+    //! Get Tpetra overlap Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
-    //! Get Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+    //! Get Epetra Node map
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    //! Get Tpetra Node map
+    Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -112,8 +126,13 @@ namespace Albany {
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
-
+   
+   //Tpetra version of writeSolution  
+   void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
+ 
     Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    //Tpetra analog
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
 
     int getSolutionFieldHistoryDepth() const;
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
@@ -121,6 +140,8 @@ namespace Albany {
     void getSolutionFieldHistory(Epetra_MultiVector &result) const;
 
     void setResidualField(const Epetra_Vector& residual);
+    //Tpetra analog
+    void setResidualFieldT(const Tpetra_Vector& residualT);
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct() {return stkMeshStruct;}
@@ -185,6 +206,8 @@ namespace Albany {
 
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result) const;
+    // Copy values from STK Mesh field to given Tpetra_Vector
+    void getSolutionFieldT(Tpetra_Vector &resultT) const;
 
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
     void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
@@ -192,10 +215,14 @@ namespace Albany {
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
+    //Tpetra version of agove
+    void setSolutionFieldT(const Tpetra_Vector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
     void setOvlpSolutionField(const Epetra_Vector& soln);
+    //Tpetra version of above
+    void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
@@ -239,21 +266,25 @@ namespace Albany {
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
+   //! Tpetra communicator and Kokkos node
+    Teuchos::RCP<const Teuchos::Comm<int> > commT;
+    Teuchos::RCP<KokkosNode> nodeT;
+
     //! Node map
-    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<const Tpetra_Map> node_mapT; 
 
     //! Unknown Map
-    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<const Tpetra_Map> mapT; 
 
     //! Overlapped unknown map, and node map
-    Teuchos::RCP<Epetra_Map> overlap_map;
-    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<const Tpetra_Map> overlap_mapT; 
+    Teuchos::RCP<const Tpetra_Map> overlap_node_mapT; 
 
     //! Jacobian matrix graph
-    Teuchos::RCP<Epetra_CrsGraph> graph;
+    Teuchos::RCP<Tpetra_CrsGraph> graphT; 
 
     //! Overlapped Jacobian matrix graph
-    Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
+    Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT; 
 
     //! Processor ID
     unsigned int myPID;
@@ -330,12 +361,23 @@ namespace Albany {
 
   private:
 
-    MeshGraph nodalGraph;
+//    MeshGraph nodalGraph;
+    Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
+
 
     // find the location of "value" within the first "count" locations of "vector"
     ssize_t in_list(const std::size_t value, std::size_t count, std::size_t *vector) {
 
       for(std::size_t i=0; i < count; i++) {
+        if(vector[i] == value)
+          return i;
+      }
+       return -1;
+    }
+
+    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO> &vector) {
+
+      for(std::size_t i=0; i < vector.size(); i++) {
         if(vector[i] == value)
           return i;
       }

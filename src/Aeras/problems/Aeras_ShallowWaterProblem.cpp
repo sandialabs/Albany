@@ -134,7 +134,7 @@ Aeras::ShallowWaterProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dUdx, dUdy, dUdz)
-   std::vector<std::string> condNames(1); //(dUdx, dUdy, dUdz)
+   std::vector<std::string>       condNames(1); //(dUdx, dUdy, dUdz)
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
 

@@ -54,8 +54,6 @@ private:
   const int numNodes;
   const int numDims;
   const int numQPs;
-  const int numLevels;
-  const int numRank;
 };
 
 // Exact copy as above except data type is RealType instead of ScalarT
@@ -91,8 +89,6 @@ private:
   const int numNodes;
   const int numDims;
   const int numQPs;
-  const int numLevels;
-  const int numRank;
 };
 }
 

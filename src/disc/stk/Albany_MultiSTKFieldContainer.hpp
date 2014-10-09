@@ -41,8 +41,12 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     bool hasSphereVolumeField(){ return buildSphereVolume; }
 
     void fillSolnVector(Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void fillSolnVectorT(Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
     void saveSolnVector(const Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    //Tpetra version of above
+    void saveSolnVectorT(const Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
     void saveResVector(const Epetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+    void saveResVectorT(const Tpetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
 
     void transferSolutionToCoords();
 

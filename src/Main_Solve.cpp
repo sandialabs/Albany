@@ -36,6 +36,9 @@
 #include <xmmintrin.h>
 #endif
 
+// Global variable that denotes this is not the Tpetra executable
+bool TpetraBuild = false;
+
 #include "Thyra_EpetraThyraWrappers.hpp"
 
 Teuchos::RCP<const Epetra_Vector>
@@ -151,8 +154,11 @@ int main(int argc, char *argv[]) {
     Teuchos::TimeMonitor totalTimer(*totalTime); //start timer
     Teuchos::TimeMonitor setupTimer(*setupTime); //start timer
 
-    Albany::SolverFactory slvrfctry(xmlfilename, Albany_MPI_COMM_WORLD);
-    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
+    RCP<const Teuchos_Comm> comm =
+      Tpetra::DefaultPlatform::getDefaultPlatform().getComm();
+
+    Albany::SolverFactory slvrfctry(xmlfilename, comm);
+    RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromTeuchosComm(comm);
     RCP<Albany::Application> app;
     const RCP<Thyra::ModelEvaluator<double> > solver =
       slvrfctry.createThyraSolverAndGetAlbanyApp(app, appComm, appComm);

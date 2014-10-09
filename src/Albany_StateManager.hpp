@@ -20,6 +20,7 @@
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_EigendataInfoStruct.hpp"
 #include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
 namespace Albany {
 
@@ -44,6 +45,24 @@ public:
 
   //! Method to call multiple times (before allocate) to register which states will be saved.
   void registerStateVariable(const std::string &stateName,
+			     const Teuchos::RCP<PHX::DataLayout> &dl,
+                             const std::string &ebName,
+			     const std::string &init_type="scalar",
+			     const double init_val=0.0,
+			     const bool registerOldState=false,
+			     const bool outputToExodus=true,
+			     const std::string &responseIDtoRequire="");
+
+  void registerNodalBlockStateVariable(const std::string &stateName,
+			     const Teuchos::RCP<PHX::DataLayout> &dl,
+                             const std::string &ebName,
+			     const std::string &init_type="scalar",
+			     const double init_val=0.0,
+			     const bool registerOldState=false,
+			     const bool outputToExodus=true,
+			     const std::string &responseIDtoRequire="");
+
+  void registerNodalVectorStateVariable(const std::string &stateName,
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
                              const std::string &ebName,
 			     const std::string &init_type="scalar",
@@ -82,6 +101,24 @@ public:
                         const bool registerOldState,
 			const bool outputToExodus);
 
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerNodalBlockStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
+			const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
+			const std::string &init_type,
+                        const double init_val,
+                        const bool registerOldState,
+			const bool outputToExodus);
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerNodalVectorStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
+			const Teuchos::RCP<PHX::DataLayout> &dummy,
+                        const std::string &ebName,
+			const std::string &init_type,
+                        const double init_val,
+                        const bool registerOldState,
+			const bool outputToExodus);
+
   //! Very basic
   void
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
@@ -102,20 +139,20 @@ public:
   void updateStates();
 
   //! Method to get a StateInfoStruct of info needed by STK to output States as Fields
-  Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct();
+  Teuchos::RCP<Albany::StateInfoStruct> getStateInfoStruct() const;
 
   //! Method to set discretization object
   void setStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& discObj);
 
   //! Method to get discretization object
-  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization();
+  Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
 
   //! Method to get state information for a specific workset
   Albany::StateArray& getStateArray(SAType type, int ws) const;
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->createNodalDataBlock(); }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase(){ return stateInfo->createNodalDataBase(); }
 
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();

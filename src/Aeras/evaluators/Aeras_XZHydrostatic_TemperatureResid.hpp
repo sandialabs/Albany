@@ -53,7 +53,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> temperatureSrc;
   PHX::MDField<ScalarT,Cell,QuadPoint> u;
   PHX::MDField<ScalarT,Cell,QuadPoint> omega;
-  PHX::MDField<MeshScalarT,Cell,Point,Dim> coordVec;
+  PHX::MDField<ScalarT,Cell,QuadPoint> etadotdT;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

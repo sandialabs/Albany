@@ -5,6 +5,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dudx.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_dudx.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_dudx.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_dudx.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo
                ${CMAKE_CURRENT_BINARY_DIR}/quadQuadSS.exo COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/quadQuadSS.exo.4.0
@@ -25,3 +29,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName} ${Albany.exe})
 
 add_test(${testName}_dudxdudy ${Albany.exe} input_dudx.xml)
+
+if (ALBANY_IFPACK2)
+  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+  add_test(${testName}_dudxdudy_Tpetra ${AlbanyT.exe} inputT_dudx.xml)
+endif ()

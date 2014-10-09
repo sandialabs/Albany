@@ -16,16 +16,12 @@ template<typename EvalT, typename Traits>
 DOFGradInterpolation<EvalT, Traits>::
 DOFGradInterpolation(Teuchos::ParameterList& p,
                      const Teuchos::RCP<Aeras::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), 
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",   dl->node_scalar_level)),
-  GradBF      (p.get<std::string>   ("Gradient BF Name"),                       dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), 
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout",dl->qp_gradient_level)),
+  val_node    (p.get<std::string>   ("Variable Name"),         dl->node_scalar),
+  GradBF      (p.get<std::string>   ("Gradient BF Name"),      dl->node_qp_gradient),
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"),dl->qp_gradient), 
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)),
-  numRank    (val_node.fieldTag().dataLayout().rank())
+  numQPs     (dl->node_qp_scalar          ->dimension(2))
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
@@ -35,6 +31,7 @@ DOFGradInterpolation(Teuchos::ParameterList& p,
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
     std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");
+  this->setName("Aeras::DOFGradInterpolation"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
@@ -59,26 +56,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-      if (2==numRank) {
-        for (int dim=0; dim<numDims; dim++) {
-         // ScalarT& gvqp = 
-          grad_val_qp(cell,qp,dim) = 0;
-          for (int node=0 ; node < numNodes; ++node) {
-            grad_val_qp(cell,qp,dim)  += val_node(cell, node) * GradBF(cell, node, qp, dim);
-          }
+      for (int dim=0; dim<numDims; dim++) {
+        grad_val_qp(cell,qp,dim) = 0;
+        for (int node=0 ; node < numNodes; ++node) {
+          grad_val_qp(cell,qp,dim)+= val_node(cell, node) * GradBF(cell, node, qp, dim);
         }
-      } else {
-//Irina TOFIX
-/*
-        for (int level=0; level < numLevels; ++level) {
-          for (int dim=0; dim<numDims; dim++) {
-            ScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
-            for (int node= 0 ; node < numNodes; ++node) {
-              gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
-            }
-          }
-        }
-*/      } 
+      }
     }
   }
 }
@@ -90,25 +73,18 @@ template<typename EvalT, typename Traits>
 DOFGradInterpolation_noDeriv<EvalT, Traits>::
 DOFGradInterpolation_noDeriv(Teuchos::ParameterList& p,
                              const Teuchos::RCP<Aeras::Layouts>& dl) :
-  val_node    (p.get<std::string>   ("Variable Name"), 
-               p.get<Teuchos::RCP<PHX::DataLayout> >("Nodal Variable Layout",   dl->node_scalar_level)),
-  GradBF      (p.get<std::string>   ("Gradient BF Name"), dl->node_qp_gradient),
-  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), 
-                p.get<Teuchos::RCP<PHX::DataLayout> >("Quadpoint Variable Layout",dl->qp_gradient_level)),
+  val_node    (p.get<std::string>   ("Variable Name"),          dl->node_scalar),
+  GradBF      (p.get<std::string>   ("Gradient BF Name"),       dl->node_qp_gradient),
+  grad_val_qp (p.get<std::string>   ("Gradient Variable Name"), dl->qp_gradient), 
   numNodes   (dl->node_scalar             ->dimension(1)),
   numDims    (dl->node_qp_gradient        ->dimension(3)),
-  numQPs     (dl->node_qp_scalar          ->dimension(2)),
-  numLevels  (dl->node_scalar_level       ->dimension(2)),
-  numRank    (val_node.fieldTag().dataLayout().rank())
+  numQPs     (dl->node_qp_scalar          ->dimension(2))
 {
   this->addDependentField(val_node);
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("Aeras::DOFGradInterpolation_noDeriv" );
-
-  TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
-    std::logic_error,"Aeras::DOFGradInterpolation_noDeriv supports scalar or vector only");
+  this->setName("Aeras::DOFGradInterpolation_noDeriv"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
@@ -133,25 +109,11 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
-      if (2==numRank) {
-        for (int dim=0; dim<numDims; dim++) {
-          //MeshScalarT& gvqp = 
-          grad_val_qp(cell,qp,dim) = 0;
-          for (int node=0 ; node < numNodes; ++node) {
-            grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
-          }
+      for (int dim=0; dim<numDims; dim++) {
+        grad_val_qp(cell,qp,dim) = 0;
+        for (int node=0 ; node < numNodes; ++node) {
+          grad_val_qp(cell, qp, dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
         }
-      } else {
-//Irina TOFIX
-/*
-        for (int level=0; level < numLevels; ++level) {
-          for (int dim=0; dim<numDims; dim++) {
-            MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
-            for (int node=0 ; node < numNodes; ++node) {
-              gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
-            }
-          }
-        }*/
       }
     }
   }

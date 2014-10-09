@@ -21,6 +21,7 @@
   #include "Teuchos_DefaultSerialComm.hpp"
 #endif
 #include "Teuchos_RCP.hpp"
+#include "Albany_DataTypes.hpp"
 
 namespace Albany {
 
@@ -29,7 +30,9 @@ namespace Albany {
   Albany_MPI_Comm getMpiCommFromEpetraComm(Epetra_Comm& ec);
 
   Teuchos::RCP<Epetra_Comm> createEpetraCommFromMpiComm(const Albany_MPI_Comm& mc);
-  Teuchos::RCP<Teuchos::Comm<int> > createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
+  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
+  Teuchos::RCP<Epetra_Comm> createEpetraCommFromTeuchosComm(const Teuchos::RCP<const Teuchos_Comm>& tc);
+  Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromEpetraComm(const Teuchos::RCP<const Epetra_Comm>& ec);
 
   //! Utility to make a string out of a string + int: strint("dog",2) = "dog 2"
   std::string strint(const std::string s, const int i);
@@ -45,5 +48,15 @@ namespace Albany {
 
   //! Splits a std::string on a delimiter
   void splitStringOnDelim(const std::string &s, char delim, std::vector<std::string> &elems);
+
+  //! Nicely prints out a Tpetra Vector
+  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_Vector>& vec);
+  void printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
+         const Teuchos::RCP<const Tpetra_Vector>& vec);
+
+  //! Nicely prints out a Tpetra MultiVector
+  void printTpetraVector(std::ostream &os, const Teuchos::RCP<const Tpetra_MultiVector>& vec);
+  void printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
+         const Teuchos::RCP<const Tpetra_MultiVector>& vec);
 }
 #endif //ALBANY_UTILS

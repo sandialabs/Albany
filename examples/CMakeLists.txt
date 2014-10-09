@@ -25,6 +25,7 @@ ENDIF()
 
 # Paths to the actual executables
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
+set(AlbanyTPath                         ${Albany_BINARY_DIR}/src/AlbanyT)
 set(AlbanySGPath                       ${Albany_BINARY_DIR}/src/AlbanySG)
 set(AlbanyDakotaPath                   ${Albany_BINARY_DIR}/src/AlbanyDakota)
 set(AlbanyAnalysisPath                 ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
@@ -35,18 +36,22 @@ set(AlbanySGCoupledPath                ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 
 IF (ALBANY_MPI)
   set(SerialAlbany.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyPath})
+  set(SerialAlbanyT.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyTPath})
   set(SerialAlbanySG.exe               ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanySGPath})
   set(SerialAlbanyDakota.exe           ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyDakotaPath})
   set(Albany.exe                       ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyPath})
+  set(AlbanyT.exe                       ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyTPath})
   set(AlbanyDakota.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyDakotaPath})
   set(AlbanySG.exe                     ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanySGPath})
   set(AlbanyAnalysis.exe               ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyAnalysisPath})
   set(Albany8.exe                      ${MPIEX} ${MPIPRE} ${MPINPF} 8 ${AlbanyPath})
 ELSE()
   set(SerialAlbany.exe                 ${AlbanyPath})
+  set(SerialAlbanyT.exe                 ${AlbanyTPath})
   set(SerialAlbanySG.exe               ${AlbanySGPath})
   set(SerialAlbanyDakota.exe           ${AlbanyDakotaPath})
   set(Albany.exe                       ${AlbanyPath})
+  set(AlbanyT.exe                       ${AlbanyTPath})
   set(AlbanyDakota.exe                 ${AlbanyDakotaPath})
   set(AlbanySG.exe                     ${AlbanySGPath})
   set(AlbanyAnalysis.exe               ${AlbanyAnalysisPath})
@@ -169,6 +174,12 @@ ENDIF()
 
 IF(ALBANY_MOR)
   add_subdirectory(MOR)
+ENDIF()
+
+# SEE   ##################
+
+IF(ALBANY_SEE)
+  add_subdirectory(SEE)
 ENDIF()
 
 IF(ALBANY_PERFORMANCE_TESTS)

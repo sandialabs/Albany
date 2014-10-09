@@ -273,17 +273,26 @@ SET(SOURCES
   Albany_RythmosObserver.cpp
   Albany_NOXObserver.cpp
   Albany_PiroObserver.cpp
+  Albany_PiroObserverT.cpp
   Albany_StateManager.cpp
   Albany_ModelFactory.cpp
   Albany_ModelEvaluator.cpp
+  Albany_ModelEvaluatorT.cpp
   Albany_SaveEigenData.cpp
   Albany_ObserverImpl.cpp
   )
+
+IF(ALBANY_64BIT_INT)
+  SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
+ELSE()
+  SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+ENDIF()
 
 SET(HEADERS
   Albany_SolverFactory.hpp
   Albany_Utils.hpp
   Albany_DataTypes.hpp
+  Petra_Converters.hpp
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
   PHAL_AlbanyTraits.hpp
@@ -294,17 +303,20 @@ SET(HEADERS
   Albany_RythmosObserver.hpp
   Albany_NOXObserver.hpp
   Albany_PiroObserver.hpp
+  Albany_PiroObserverT.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
   Albany_EigendataInfoStruct.hpp
   Albany_ModelFactory.hpp
   Albany_ModelEvaluator.hpp
+  Albany_ModelEvaluatorT.hpp
   Albany_SaveEigenData.hpp
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
-  Albany_DistributedParameterLibrary_Epetra.hpp
+#  Albany_DistributedParameterLibrary_Epetra.hpp
+  Albany_DistributedParameterLibrary_Tpetra.hpp
   )
 
 #problems
@@ -393,7 +405,32 @@ SET(HEADERS ${HEADERS}
   responses/Albany_ResponseFactory.hpp
   )
 
+<<<<<<< HEAD
   SET(SOURCES ${SOURCES}
+=======
+#discretization
+SET(SOURCES ${SOURCES}
+  disc/Albany_DiscretizationFactory.cpp
+  disc/Albany_AbstractMeshStruct.cpp
+  disc/Adapt_NodalDataBase.cpp
+  disc/Adapt_NodalDataBlock.cpp
+  disc/Adapt_NodalDataVector.cpp
+  )
+SET(HEADERS ${HEADERS}
+  disc/Albany_AbstractDiscretization.hpp
+  disc/Albany_AbstractMeshStruct.hpp
+  disc/Albany_AbstractFieldContainer.hpp
+  disc/Albany_AbstractNodeFieldContainer.hpp
+  disc/Albany_DiscretizationFactory.hpp
+  disc/Adapt_NodalDataBase.hpp
+  disc/Adapt_NodalDataBlock.hpp
+  disc/Adapt_NodalDataVector.hpp
+  disc/Adapt_NodalFieldUtils.hpp
+  )
+
+#evaluators
+SET(SOURCES ${SOURCES}
+>>>>>>> tpetra
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
@@ -413,11 +450,14 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_SharedParameter.cpp
   evaluators/PHAL_ResponseFieldIntegral.cpp
+  evaluators/PHAL_ResponseFieldIntegralT.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponse.cpp
+  evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
   evaluators/QCAD_ResponseFieldAverage.cpp
+  evaluators/FELIX_ResponseSurfaceVelocityMismatch.cpp
   evaluators/QCAD_ResponseSaveField.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_MeshRegion.cpp
@@ -433,10 +473,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherThickness.cpp
   evaluators/PHAL_GatherFlowFactor.cpp
   evaluators/Adapt_ElementSizeField.cpp
-  evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherSurfaceVelocity.cpp
   evaluators/PHAL_GatherVelocityRMS.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
+  evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
 
 ENDIF()
@@ -524,16 +564,22 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SharedParameter_Def.hpp
   evaluators/PHAL_ResponseFieldIntegral.hpp
   evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+  evaluators/PHAL_ResponseFieldIntegralT.hpp
+  evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponse.hpp
   evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+  evaluators/PHAL_SeparableScatterScalarResponseT.hpp
+  evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/QCAD_ResponseFieldIntegral.hpp
   evaluators/QCAD_ResponseFieldIntegral_Def.hpp
   evaluators/QCAD_ResponseFieldValue.hpp
   evaluators/QCAD_ResponseFieldValue_Def.hpp
   evaluators/QCAD_ResponseFieldAverage.hpp
   evaluators/QCAD_ResponseFieldAverage_Def.hpp
+  evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
+  evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
   evaluators/QCAD_ResponseSaveField.hpp
   evaluators/QCAD_ResponseSaveField_Def.hpp
   evaluators/QCAD_ResponseCenterOfMass.hpp
@@ -564,8 +610,6 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherFlowFactor_Def.hpp
   evaluators/Adapt_ElementSizeField.hpp
   evaluators/Adapt_ElementSizeField_Def.hpp
-  evaluators/PHAL_SaveNodalField.hpp
-  evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherSurfaceVelocity.hpp
   evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
   evaluators/PHAL_GatherVelocityRMS.hpp
@@ -773,6 +817,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
+                     ./SEE/
+                     ./SEE/problems
+                     ./SEE/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -819,25 +866,8 @@ ENDIF()
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-##  set(SCOREC_LIB FMDB SCORECModel SCORECUtil ipcomman parmetis metis)
-## parmetis and metis compiled into trilinos and contained in $Trilinos_TPL_LIBRARIES
-#  IF(DEFINED ENABLE_PARASOLID AND DEFINED ENABLE_ACIS)
-#    set(SCOREC_LIB GMIParasolid pskernel GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
-#  ELSEIF(ENABLE_PARASOLID)
-##    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-##    set(SCOREC_LIB GMIParasolid pskernel FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman FMDB)
-#  ELSEIF(ENABLE_ACIS)
-#    set(SCOREC_LIB GMIACIS hoops1700 SpaACIS Xext X11 FMDB MeshAdapt meshModel SCORECModel SCORECUtil ipcomman)
-#  ELSE()
-##    set(SCOREC_LIB FMDB MeshAdapt GMIMeshModel SCORECUtil ipcomman)
-#  ENDIF()
-#  # postpend boost libraries to support FMDB serialization calls
-##    set(SCOREC_LIB ${SCOREC_LIB} boost_wserialization boost_serialization boost_mpi)
-
   SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
-  SET(FMDB_INCLUDE_DIR "${TRILINOS_INCLUDE_DIRS}/SCOREC")
-  include_directories (${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
-
+  include_directories (${ALBANY_FMDB_INCLUDE_DIRS})
 ELSE()
   set(SCOREC_LIB )
   SET(ALBANY_FMDB_INCLUDE_DIRS )
@@ -852,7 +882,8 @@ endif()
 # Now build executables from this library, tailored main()s, and Trilinos
 
 add_executable(Albany Main_Solve.cpp)
-SET(ALBANY_EXECUTABLES Albany )
+add_executable(AlbanyT Main_SolveT.cpp)
+SET(ALBANY_EXECUTABLES Albany AlbanyT)
 if (ALBANY_SG_MP)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
@@ -940,9 +971,12 @@ ENDIF()
 
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
-
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
+ENDIF()
 
+IF (ALBANY_SEE)
+  add_subdirectory(SEE)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
 ENDIF()
 
 IF(ALBANY_CATALYST)
@@ -963,7 +997,7 @@ IF (ALBANY_LCM)
 ENDIF()
 
 # Repeat libraries twice to catch circular dependencies
-SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
+SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})
 
 FOREACH(ALB_EXEC ${ALBANY_EXECUTABLES})
   target_link_libraries(${ALB_EXEC} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})

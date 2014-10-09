@@ -24,7 +24,14 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #  First Test
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_test.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_test.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_fo_gis20km_testT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_fo_gis20km_testT.xml COPYONLY)
 add_test(${testName}_Gis20km ${Albany.exe} input_fo_gis20km_test.xml)
+if(ALBANY_IFPACK2)
+add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
+endif(ALBANY_IFPACK2)
+
+#IK, 10/29/13: Convert to tpetra!
 IF(ALBANY_STK_PERCEPT)
 add_test(${testName}_Gis20km_refine ${Albany8.exe} input_fo_gis20km_refine.xml)
 ENDIF()

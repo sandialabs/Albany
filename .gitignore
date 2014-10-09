@@ -13,8 +13,7 @@
 /RELEASE/
 /LINUX_DEBUG/
 /sandbox/
-/project/report/
-/xcode/
+/project/
 \#*\#
 .\#*
 phalanx_graph

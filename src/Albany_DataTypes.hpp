@@ -37,6 +37,49 @@ typedef Sacado::Fad::DFad<SGType> SGFadType;
 typedef Sacado::ETV::Vector<double,StorageType> MPType;
 typedef Sacado::Fad::DFad<MPType> MPFadType;
 
+//Tpetra includes
+#include "Teuchos_DefaultComm.hpp"
+#include "Teuchos_ArrayView.hpp"
+#include "Tpetra_DefaultPlatform.hpp"
+#include "Tpetra_Map.hpp"
+#include "Tpetra_BlockMap.hpp"
+#include "Tpetra_CrsGraph.hpp"
+#include "Tpetra_BlockCrsGraph.hpp"
+#include "Tpetra_CrsMatrix.hpp"
+#include "Tpetra_DistObject.hpp"
+#include "Tpetra_Operator.hpp"
+#include "Tpetra_MultiVector.hpp"
+#include "Tpetra_BlockMultiVector.hpp"
+#include "MatrixMarket_Tpetra.hpp"
+#include "Thyra_TpetraThyraWrappers.hpp"
+
+//Kokkos includes
+#include "Kokkos_SerialNode.hpp"
+
+
+//Tpetra typedefs
+typedef double                                      ST;
+#ifdef ALBANY_64BIT_INT
+typedef long long                                         GO;
+#else
+typedef int                                         GO;
+#endif
+typedef int                                         LO;
+typedef KokkosClassic::SerialNode                   KokkosNode;
+typedef Teuchos::Comm<int>                          Teuchos_Comm;
+typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
+typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;
+typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
+typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
+typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
+typedef Tpetra::BlockCrsGraph<LO, GO, KokkosNode>   Tpetra_BlockCrsGraph;
+typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
+typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
+typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
+typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
+typedef Tpetra::BlockMultiVector<ST, LO, GO, KokkosNode> Tpetra_BlockMultiVector;
+typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
+
 
 // Include ScalarParameterLibrary to specialize its traits
 #include "Sacado_ScalarParameterLibrary.hpp"

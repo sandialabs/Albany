@@ -8,6 +8,8 @@ endif()
 
 # 2. Find and run epu if parallel
 
+SET (OUTFILE_NAME hole_out${OUTFILE_SUFFIX}.exo)
+
 if(DEFINED MPIMNP AND ${MPIMNP} GREATER 1)
 
 #	find_program(SEACAS_EPU NAMES epu PATHS ENV PATH) 
@@ -16,7 +18,7 @@ if(DEFINED MPIMNP AND ${MPIMNP} GREATER 1)
 		message(FATAL_ERROR "Cannot find epu")
 	endif()
 
-	SET(EPU_COMMAND ${SEACAS_EPU} -auto hole_out.exo.${MPIMNP}.0)
+	SET(EPU_COMMAND ${SEACAS_EPU} -auto ${OUTFILE_NAME}.${MPIMNP}.0)
 
 	EXECUTE_PROCESS(COMMAND ${EPU_COMMAND}
 		RESULT_VARIABLE HAD_ERROR)
@@ -65,13 +67,13 @@ if (NOT SEACAS_EXODIFF)
   message(FATAL_ERROR "Cannot find exodiff")
 endif()
 
-SET(EXODIFF_TEST ${SEACAS_EXODIFF} -file exodiff_commands hole_out.exo reference_hole.exo)
+SET(EXODIFF_TEST ${SEACAS_EXODIFF} -file exodiff_commands ${OUTFILE_NAME} reference_hole.exo)
 
 #message(${EXODIFF_TEST})
 
 EXECUTE_PROCESS(
     COMMAND ${EXODIFF_TEST}
-    OUTPUT_FILE exodiff.out
+    OUTPUT_FILE exodiff.out${OUTFILE_SUFFIX}
     RESULT_VARIABLE HAD_ERROR)
 
 if(HAD_ERROR)

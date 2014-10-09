@@ -7,6 +7,8 @@
 # Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/2materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2hex.g
@@ -18,11 +20,16 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
   add_test(${testName}_SERIAL ${SerialAlbany.exe})
+  IF(ALBANY_IFPACK2)
+    add_test(${testName}_Tpetra_SERIAL ${SerialAlbanyT.exe} inputT.xml)
+  ENDIF()
 ENDIF()
 
 # test for 2D with blocked ordering
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlocked.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputBlocked.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputBlockedT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputBlockedT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
@@ -31,10 +38,15 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(${testName}2D_Blocked ${Albany.exe} inputBlocked.xml)
+IF(ALBANY_IFPACK2)
+  add_test(${testName}2D_Blocked_Tpetra ${AlbanyT.exe} inputBlockedT.xml)
+ENDIF()
 
 # test for 2D with J2 plasticity model
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plasticity2D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plasticity2D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plasticity2DT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plasticity2DT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputJ2Plast2DTraction.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputJ2Plast2DTraction.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/J2.xml
@@ -45,4 +57,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(${testName}2D_J2 ${Albany.exe} inputJ2Plasticity2D.xml)
+IF(ALBANY_IFPACK2)
+  add_test(${testName}2D_J2_Tpetra ${AlbanyT.exe} inputJ2Plasticity2DT.xml)
+ENDIF()
 add_test(${testName}2D_J2_Trac ${Albany.exe} inputJ2Plast2DTraction.xml)

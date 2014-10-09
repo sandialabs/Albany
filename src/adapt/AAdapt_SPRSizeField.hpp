@@ -30,6 +30,9 @@ class SPRSizeField : public ma::IsotropicFunction {
 
     void computeError();
 
+    void copyInputFields();
+    void freeInputFields();
+    void freeSizeField();
 
   private:
 
@@ -37,11 +40,14 @@ class SPRSizeField : public ma::IsotropicFunction {
     apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
+    Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_disc;
 
     Teuchos::RCP<const Epetra_Comm> comm;
 
     std::string sv_name;
     double rel_err;
+
+    apf::GlobalNumbering* global_numbering;
 
     int num_qp;
     int cub_degree;
@@ -55,4 +61,3 @@ class SPRSizeField : public ma::IsotropicFunction {
 }
 
 #endif
-

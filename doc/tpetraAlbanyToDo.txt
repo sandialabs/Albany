@@ -1,0 +1,19 @@
+
+Tpetra Albany branch to-dos: 
+
+- There is now some divergence b/w the Albany master branch and the Albany tpetra branch 
+due to the Adaptivity class.  For instance, the functions initial_x, initial_x_dot, etc. are 
+no longer a part of the Albany_Application class in the master branch; rather they are 
+members of the Adaptivity class.  The problem with moving these functions to the Adaptivity 
+class in the tpetra branch is there are some Trilinos functions called in the Adaptivity 
+class that are not implemented for Thyra (and therefore Tpetra).  These functions need to 
+be added to Trilinos, and the tpetra branch reconciled properly, removing these divergences 
+b/w the tpetra and master branches. 
+
+- saveResidualFieldT() (a tpetra version of saveResidualField()) needs to be added to 
+Albany_STKDiscretization.cpp.  This will require converting saveResVector to Tpetra (i.e., 
+need to create a Tpetra version of this function, e.g., saveResVectorT).  Then saveResidualFieldT 
+can be called in Albany_Application.cpp like saveResidualField is currently called.  This is needed 
+only for some LCM problems.   
+
+

@@ -9,8 +9,7 @@
 #define ALBANY_ABSTRACTNODEFIELDCONT_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
+#include "Albany_DataTypes.hpp"
 
 
 
@@ -28,7 +27,10 @@ class AbstractNodeFieldContainer {
     AbstractNodeFieldContainer(){}
     virtual ~AbstractNodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<const Epetra_Vector>& block_mv, int offset, int blocksize = -1) = 0;
+    // Block MV version
+    virtual void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset) = 0;
+    // MV version
+    virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, int offset) = 0;
 
 };
 

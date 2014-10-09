@@ -4,11 +4,24 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTraction.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputTraction.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTractionT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTractionT.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe})
 add_test(${testName}_Traction ${Albany.exe} inputTraction.xml)
+add_test(${testName}_Traction_Tpetra ${AlbanyT.exe} inputTractionT.xml)
+
+if (ALBANY_IFPACK2)
+# 1'. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+# 2'. Name the test with the directory name
+get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Tpetra NAME)
+# 3'. Create the test with this name and standard executable
+add_test(${testName} ${AlbanyT.exe} inputT.xml)
+endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

@@ -8,6 +8,8 @@
 #include "QCAD_CoupledPoissonSchrodinger.hpp"
 #include "Piro_Epetra_LOCASolver.hpp"
 
+#include "Petra_Converters.hpp"
+
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
         "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
@@ -2048,17 +2050,24 @@ QCAD::Solver::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appPara
   QCAD::SolverSubSolver ret; //value to return
 
   const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(comm);
+  Teuchos::RCP<const Teuchos_Comm> mpiCommT = Albany::createTeuchosCommFromMpiComm(mpiComm);
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "QCAD Solver creating solver from " << appParams->name() 
        << " parameter list" << std::endl;
  
   //! Create solver factory, which reads xml input filen
-  Albany::SolverFactory slvrfctry(appParams, mpiComm);
+  Albany::SolverFactory slvrfctry(appParams, mpiCommT);
     
   //! Create solver and application objects via solver factory
   RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
-  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guess);
+  Teuchos::ParameterList kokkosNodeParams;
+  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
+  RCP<const Tpetra_Vector> initial_guessT;
+  if (Teuchos::nonnull(initial_guess)) {
+    initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, mpiCommT, nodeT);
+  }
+  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
 
   ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
   ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);  

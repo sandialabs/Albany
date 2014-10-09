@@ -4,8 +4,8 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="XZHydrostatic Problem">
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->
-      <Parameter name="Number of Vertical Levels" type="int" value="5"/>
-      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="30"/>
+      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Cloud}"/>
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
     </ParameterList>
@@ -16,65 +16,155 @@
       <Parameter name="DBC on NS NodeSet0 for DOF Velx_2"        type="double" value="10.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Velx_3"        type="double" value="10.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Velx_4"        type="double" value="10.0"/>
-<!--
-      <Parameter name="DBC on NS NodeSet0 for DOF Velx_5"        type="double" value="10.5"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Velx_6"        type="double" value="10.6"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Velx_7"        type="double" value="10.7"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Velx_8"        type="double" value="10.8"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Velx_9"        type="double" value="10.9"/>
--->
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_5"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_6"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_7"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_8"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_9"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_10"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_11"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_12"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_13"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_14"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_15"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_16"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_17"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_18"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_19"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_20"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_21"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_22"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_23"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_24"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_25"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_26"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_27"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_28"        type="double" value="10.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Velx_29"        type="double" value="10.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Temperature_0" type="double" value="300.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Temperature_1" type="double" value="300.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Temperature_2" type="double" value="300.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Temperature_3" type="double" value="300.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Temperature_4" type="double" value="300.0"/>
-<!--
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_5" type="double" value="301.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_6" type="double" value="302.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_7" type="double" value="303.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_8" type="double" value="304.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_9" type="double" value="305.0"/>
--->
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_5" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_6" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_7" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_8" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_9" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_10" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_11" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_12" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_13" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_14" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_15" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_16" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_17" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_18" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_19" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_20" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_21" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_22" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_23" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_24" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_25" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_26" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_27" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_28" type="double" value="300.0"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Temperature_29" type="double" value="300.0"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_0" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_1" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_2" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_3" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_4" type="double" value="0.333"/>
-<!--
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_5" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_6" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_7" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_8" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Vapor_9" type="double" value="0.333"/>
--->
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_0" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_1" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_2" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_3" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_4" type="double" value="0.333"/>
-<!--
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_5" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_6" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_7" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_8" type="double" value="0.333"/>
       <Parameter name="DBC on NS NodeSet0 for DOF Rain_9" type="double" value="0.333"/>
--->
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_0" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_1" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_2" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_3" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_4" type="double" value="0.333"/>
-<!--
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_5" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_6" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_7" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_8" type="double" value="0.333"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Snow_9" type="double" value="0.333"/>
--->
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_0" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_1" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_2" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_3" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_4" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_5" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_6" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_7" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_8" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_9" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_10" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_11" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_12" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_13" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_14" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_15" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_16" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_17" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_18" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_19" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_10" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_11" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_12" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_13" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_14" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_15" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_16" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_17" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_18" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_19" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_10" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_11" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_12" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_13" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_14" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_15" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_16" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_17" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_18" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_19" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_20" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_21" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_22" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_23" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_24" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_25" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_26" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_27" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_28" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Vapor_29" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_20" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_21" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_22" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_23" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_24" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_25" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_26" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_27" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_28" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Rain_29" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_20" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_21" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_22" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_23" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_24" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_25" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_26" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_27" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_28" type="double" value="0.333"/>
+      <Parameter name="DBC on NS NodeSet0 for DOF Cloud_29" type="double" value="0.333"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
        <Parameter name="Function" type="string" value="Aeras XZ Hydrostatic"/>
-       <Parameter name="Function Data" type="Array(double)" value="{5, 3, 101325.0, 10.0, 300.0, 0.333, 0.333, 0.333}"/>
+       <Parameter name="Function Data" type="Array(double)" value="{30, 3, 101325.0, 10.0, 300.0, 0.333, 0.333, 0.333}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="1"/>
@@ -91,7 +181,7 @@
     <Parameter name="Method" type="string" value="STK1D"/>
     <Parameter name="1D Elements" type="int" value="300"/>
     <Parameter name="1D Scale" type="double" value="300.0"/>
-    <Parameter name="Workset Size" type="int" value="50"/>
+    <Parameter name="Workset Size" type="int" value="1000"/>
     <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
     <Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/>
   </ParameterList>
@@ -106,70 +196,106 @@
   </ParameterList>
   -->
   <ParameterList name="Piro">
-    <ParameterList name="Rythmos">
-      <!--Parameter name="Num Time Steps" type="int" value="2000"/-->
-      <Parameter name="Num Time Steps" type="int" value="500"/>
-      <Parameter name="Final Time" type="double" value="5000."/>
-      <Parameter name="Max State Error" type="double" value="0.05"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/>
-      <ParameterList name="Rythmos Stepper">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="low"/>
-	</ParameterList>
+    <ParameterList name="Rythmos Solver">
+
+      <Parameter name="Invert Mass Matrix" type="bool" value="true"/>
+      <Parameter name="Lump Mass Matrix" type="bool" value="true"/>
+     
+      <ParameterList name="NonLinear Solver">
+         <ParameterList name="VerboseObject">
+            <Parameter name="Verbosity Level" type="string" value="low"/>
+         </ParameterList>
       </ParameterList>
-      <ParameterList name="Rythmos Integration Control">
-      </ParameterList>
-      <ParameterList name="Rythmos Integrator">
-	<ParameterList name="VerboseObject">
-	  <Parameter name="Verbosity Level" type="string" value="none"/>
-	</ParameterList>
+      <ParameterList name="Rythmos">
+     
+         <ParameterList name="Integrator Settings">
+           <Parameter name="Final Time" type="double" value=".001"/>
+           <!-- change to 1.037e6 to get full revolution -->
+           <ParameterList name="Integrator Selection">
+             <Parameter name="Integrator Type" type="string" value="Default Integrator"/>
+             <ParameterList name="Default Integrator">
+                <ParameterList name="VerboseObject">
+                  <Parameter name="Verbosity Level" type="string" value="low"/>
+                </ParameterList>
+             </ParameterList>
+           </ParameterList>
+         </ParameterList>
+     
+         <ParameterList name="Stepper Settings">
+           <ParameterList name="Stepper Selection">
+              <Parameter name="Stepper Type" type="string" value="Explicit RK"/>
+           </ParameterList>
+     
+           <ParameterList name="Runge Kutta Butcher Tableau Selection">
+              <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="Singly Diagonal IRK 2 Stage 3rd order"/-->
+              <Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="Explicit 2 Stage 2nd order by Runge"/>
+              <!--Parameter name="Runge Kutta Butcher Tableau Type" type="string"
+                   value="IRK 1 Stage Theta Method"/-->
+           </ParameterList>
+         </ParameterList>
+
+         <ParameterList name="Integration Control Strategy Selection">
+           <Parameter name="Integration Control Strategy Type" type="string"
+                 value="Simple Integration Control Strategy"/>
+           <ParameterList name="Simple Integration Control Strategy">
+             <Parameter name="Take Variable Steps" type="bool" value="false"/>
+             <Parameter name="Fixed dt" type="double" value=".00002"/>
+             <!--Parameter name="Number of Time Steps" type="int" value="10"/-->
+             <ParameterList name="VerboseObject">
+               <Parameter name="Verbosity Level" type="string" value="low"/>
+             </ParameterList>
+           </ParameterList>
+         </ParameterList>
       </ParameterList>
       <ParameterList name="Stratimikos">
-	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
-	<ParameterList name="Linear Solver Types">
-	  <ParameterList name="Belos">
-	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
-	    <ParameterList name="Solver Types">
-	      <ParameterList name="Block GMRES">
-		<Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
-		<Parameter name="Output Frequency" type="int" value="10"/>
-		<Parameter name="Output Style" type="int" value="1"/>
-		<Parameter name="Verbosity" type="int" value="33"/>
-		<Parameter name="Maximum Iterations" type="int" value="100"/>
-		<Parameter name="Block Size" type="int" value="1"/>
-		<Parameter name="Num Blocks" type="int" value="100"/>
-		<Parameter name="Flexible Gmres" type="bool" value="0"/>
-	      </ParameterList>
-	    </ParameterList>
-	  </ParameterList>
-	</ParameterList>
-	<Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
-	<ParameterList name="Preconditioner Types">
-	  <ParameterList name="Ifpack">
-	    <Parameter name="Prec Type" type="string" value="ILU"/>
-	    <Parameter name="Overlap" type="int" value="0"/>
-	    <ParameterList name="Ifpack Settings">
-	      <Parameter name="fact: level-of-fill" type="int" value="0"/>
-	    </ParameterList>
-	  </ParameterList>
-	  <ParameterList name="ML">
-	    <Parameter name="Base Method Defaults" type="string" value="SA"/>
-	    <ParameterList name="ML Settings">
-	      <Parameter name="aggregation: type" type="string" value="Uncoupled"/>
-	      <Parameter name="coarse: max size" type="int" value="20"/>
-	      <Parameter name="coarse: pre or post" type="string" value="post"/>
-	      <Parameter name="coarse: sweeps" type="int" value="1"/>
-	      <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
-	      <Parameter name="prec type" type="string" value="MGV"/>
-	      <Parameter name="smoother: type" type="string" value="Gauss-Seidel"/>
-	      <Parameter name="smoother: damping factor" type="double" value="0.66"/>
-	      <Parameter name="smoother: pre or post" type="string" value="both"/>
-	      <Parameter name="smoother: sweeps" type="int" value="1"/>
-	      <Parameter name="ML output" type="int" value="1"/>
-	    </ParameterList>
-	  </ParameterList>
-	</ParameterList>
+        <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+        <ParameterList name="Linear Solver Types">
+          <ParameterList name="Belos">
+            <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+            <ParameterList name="Solver Types">
+              <ParameterList name="Block GMRES">
+                <Parameter name="Convergence Tolerance" type="double" value="1e-5"/>
+                <Parameter name="Output Frequency" type="int" value="10"/>
+                <Parameter name="Output Style" type="int" value="1"/>
+                <Parameter name="Verbosity" type="int" value="0"/>
+                <Parameter name="Maximum Iterations" type="int" value="100"/>
+                <Parameter name="Block Size" type="int" value="1"/>
+                <Parameter name="Num Blocks" type="int" value="100"/>
+                <Parameter name="Flexible Gmres" type="bool" value="0"/>
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
+        <Parameter name="Preconditioner Type" type="string" value="ML"/>
+        <ParameterList name="Preconditioner Types">
+          <ParameterList name="Ifpack">
+            <Parameter name="Prec Type" type="string" value="ILU"/>
+            <Parameter name="Overlap" type="int" value="1"/>
+            <ParameterList name="Ifpack Settings">
+              <Parameter name="fact: level-of-fill" type="int" value="1"/>
+            </ParameterList>
+          </ParameterList>
+          <ParameterList name="ML">
+            <Parameter name="Base Method Defaults" type="string" value="SA"/>
+            <ParameterList name="ML Settings">
+              <Parameter name="aggregation: type" type="string" value="Uncoupled"/>
+              <Parameter name="coarse: max size" type="int" value="20"/>
+              <Parameter name="coarse: pre or post" type="string" value="post"/>
+              <Parameter name="coarse: sweeps" type="int" value="1"/>
+              <Parameter name="coarse: type" type="string" value="Amesos-KLU"/>
+              <Parameter name="prec type" type="string" value="MGV"/>
+              <Parameter name="smoother: type" type="string" value="Gauss-Seidel"/>
+              <Parameter name="smoother: damping factor" type="double" value="0.66"/>
+              <Parameter name="smoother: pre or post" type="string" value="both"/>
+              <Parameter name="smoother: sweeps" type="int" value="1"/>
+              <Parameter name="ML output" type="int" value="1"/>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>
 </ParameterList>
+

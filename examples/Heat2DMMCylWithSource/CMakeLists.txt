@@ -3,6 +3,9 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+# 1'. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 # 2. Copy materials file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
@@ -37,9 +40,17 @@ add_executable(CylHeatProfile CylHeatProfile.C)
 #add_test(${testName} ${Albany.exe})
 #set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
 
+# 7'. Create the test with this name and standard executable
+#add_test(${testName} ${Albany.exe})
+#set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
+
 add_test(NAME ${testName}
      COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
      "-DAUX_PROG=${CMAKE_CURRENT_BINARY_DIR}/CylHeatProfile" -P
      ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake
      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
+if (ALBANY_IFPACK2)
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
+endif ()

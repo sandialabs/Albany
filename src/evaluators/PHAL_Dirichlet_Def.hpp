@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "Tpetra_CrsMatrix.hpp"
 
 // **********************************************************************
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -58,14 +59,22 @@ template<typename Traits>
 void Dirichlet<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
+  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-      (*f)[lunk] = ((*x)[lunk] - this->value);
+      // (*f)[lunk] = ((*x)[lunk] - this->value);
+      fT_nonconstView[lunk] = xT_constView[lunk] - this->value;
   }
 }
 
@@ -85,25 +94,40 @@ void Dirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
+
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichletWorkset.JacT;
+
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  RealType* matrixEntries;
-  int*    matrixIndices;
-  int     numEntries;
-  RealType diag=j_coeff;
-  bool fillResid = (f != Teuchos::null);
+  bool fillResid = (fT != Teuchos::null);
+  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
+
+  Teuchos::Array<LO> index(1);
+  Teuchos::Array<ST> value(1); 
+  size_t numEntriesT;  
+  value[0] = j_coeff; 
+  Teuchos::Array<ST> matrixEntriesT; 
+  Teuchos::Array<LO> matrixIndicesT; 
 
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-      jac->ExtractMyRowView(lunk, numEntries, matrixEntries, matrixIndices);
-      for (int i=0; i<numEntries; i++) matrixEntries[i]=0;
-      jac->ReplaceMyValues(lunk, 1, &diag, &lunk);
+      index[0] = lunk; 
+      numEntriesT = jacT->getNumEntriesInLocalRow(lunk);
+      matrixEntriesT.resize(numEntriesT); 
+      matrixIndicesT.resize(numEntriesT); 
 
-      if (fillResid) (*f)[lunk] = ((*x)[lunk] - this->value.val());
+      jacT->getLocalRowCopy(lunk, matrixIndicesT(), matrixEntriesT(), numEntriesT); 
+      for (int i=0; i<numEntriesT; i++) matrixEntriesT[i]=0;
+      jacT->replaceLocalValues(lunk, matrixIndicesT(), matrixEntriesT()); 
+
+      jacT->replaceLocalValues(lunk, index(), value()); 
+      
+      if (fillResid) fT_nonconstView[lunk] = xT_constView[lunk] - this->value.val();
   }
 }
 
@@ -123,11 +147,18 @@ void Dirichlet<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_MultiVector> fp = dirichletWorkset.fp;
-  Teuchos::RCP<Epetra_MultiVector> JV = dirichletWorkset.JV;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = dirichletWorkset.Vx;
+  
+  Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = dirichletWorkset.fpT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichletWorkset.JVT;
+  Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichletWorkset.VxT;
+  
+  Teuchos::ArrayRCP<const ST> VxT_constView; 
+  Teuchos::ArrayRCP<ST> fT_nonconstView;                                         
+  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();                                       
+
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
@@ -135,16 +166,26 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
     int lunk = nsNodes[inode][this->offset];
 
-    if (f != Teuchos::null)
-      (*f)[lunk] = ((*x)[lunk] - this->value.val());
-
-    if (JV != Teuchos::null)
-      for (int i=0; i<dirichletWorkset.num_cols_x; i++)
-        (*JV)[i][lunk] = j_coeff*(*Vx)[i][lunk];
-
-    if (fp != Teuchos::null)
-      for (int i=0; i<dirichletWorkset.num_cols_p; i++)
-        (*fp)[i][lunk] = -this->value.dx(dirichletWorkset.param_offset+i);
+    if (fT != Teuchos::null) { 
+      fT_nonconstView[lunk] = xT_constView[lunk] - this->value.val();
+    }
+    
+    if (JVT != Teuchos::null) {
+      Teuchos::ArrayRCP<ST> JVT_nonconstView; 
+      for (int i=0; i<dirichletWorkset.num_cols_x; i++) {
+        JVT_nonconstView = JVT->getDataNonConst(i); 
+        VxT_constView = VxT->getData(i); 
+	JVT_nonconstView[lunk] = j_coeff*VxT_constView[lunk];
+      }
+    }
+    
+    if (fpT != Teuchos::null) {
+      Teuchos::ArrayRCP<ST> fpT_nonconstView;                                         
+      for (int i=0; i<dirichletWorkset.num_cols_p; i++) {
+        fpT_nonconstView = fpT->getDataNonConst(i); 
+	fpT_nonconstView[lunk] = -this->value.dx(dirichletWorkset.param_offset+i);
+      }
+    }
   }
 }
 
@@ -164,22 +205,28 @@ void Dirichlet<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_MultiVector> fpV = dirichletWorkset.fpV;
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
+  //non-const view of fpVT
+  Teuchos::ArrayRCP<ST> fpVT_nonconstView;
   bool trans = dirichletWorkset.transpose_dist_param_deriv;
-  int num_cols = fpV->NumVectors();
+  int num_cols = fpVT->getNumVectors();
 
   const std::vector<std::vector<int> >& nsNodes =
     dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
   // For (df/dp)^T*V we zero out corresponding entries in V
   if (trans) {
-    Teuchos::RCP<Epetra_MultiVector> Vp = dirichletWorkset.Vp_bc;
-
+    Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
+    //non-const view of VpT
+    Teuchos::ArrayRCP<ST> VpT_nonconstView;
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
 
-      for (int col=0; col<num_cols; ++col)
-        (*Vp)[col][lunk] = 0.0;
+      for (int col=0; col<num_cols; ++col) {
+        //(*Vp)[col][lunk] = 0.0;
+        VpT_nonconstView = VpT->getDataNonConst(col); 
+        VpT_nonconstView[lunk] = 0.0; 
+       }
     }
   }
 
@@ -188,8 +235,11 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
     for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
 
-      for (int col=0; col<num_cols; ++col)
-        (*fpV)[col][lunk] = 0.0;
+      for (int col=0; col<num_cols; ++col) {
+        //(*fpV)[col][lunk] = 0.0;
+        fpVT_nonconstView = fpVT->getDataNonConst(col); 
+        fpVT_nonconstView[lunk] = 0.0; 
+      }
     }
   }
 }

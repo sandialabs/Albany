@@ -232,7 +232,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   //TODO: need to add meshmover initialization, as in Albany::Application constructor??
 
   //Create a dummy solverFactory for validating application parameter lists
-  Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), mcomm );
+  Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), tcomm );
   Teuchos::RCP<const Teuchos::ParameterList> validAppParams = validFactory.getValidAppParameters();
   Teuchos::RCP<const Teuchos::ParameterList> validParameterParams = validFactory.getValidParameterParameters();
   Teuchos::RCP<const Teuchos::ParameterList> validResponseParams = validFactory.getValidResponseParameters();
@@ -247,7 +247,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   poisson_appParams->validateParametersAndSetDefaults(*validAppParams,0);
   poisson_appParams->sublist("Problem").sublist("Parameters").validateParameters(*validParameterParams, 0);
   poisson_appParams->sublist("Problem").sublist("Response Functions").validateParameters(*validResponseParams, 0);
-  poissonApp = Teuchos::rcp(new Albany::Application(comm, poisson_appParams, Teuchos::null)); //validates problem params
+  poissonApp = Teuchos::rcp(new Albany::Application(tcomm, poisson_appParams, Teuchos::null)); //validates problem params
 
   // Create model evaluator
   Albany::ModelFactory poissonModelFactory(poisson_appParams, poissonApp);
@@ -262,7 +262,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   schro_appParams->validateParametersAndSetDefaults(*validAppParams,0);
   schro_appParams->sublist("Problem").sublist("Parameters").validateParameters(*validParameterParams, 0);
   schro_appParams->sublist("Problem").sublist("Response Functions").validateParameters(*validResponseParams, 0);
-  schrodingerApp = Teuchos::rcp(new Albany::Application(comm, schro_appParams, Teuchos::null)); //validates problem params
+  schrodingerApp = Teuchos::rcp(new Albany::Application(tcomm, schro_appParams, Teuchos::null)); //validates problem params
 
   // Create model evaluator
   Albany::ModelFactory schrodingerModelFactory(schro_appParams, schrodingerApp);

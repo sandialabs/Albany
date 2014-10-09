@@ -102,7 +102,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
     offset = p.get<int>("Offset of First DOF");
   else offset = 0;
 
-  this->setName("Gather Solution" );
+  this->setName("Gather Solution"+PHX::typeAsString<PHX::Device>() );
 }
 
 // **********************************************************************
@@ -160,9 +160,14 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
-  Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
+
+  //get const (read-only) view of xT and xdotT
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
 //std::cout << "start" <<std::endl<< workset.wsElNodeEqID[30][3][3] <<"    "<< (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
   if (this->vectorField) {
@@ -171,15 +176,15 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->valVec[0])(cell,node,eq) = (*x)[eqID[this->offset + eq]];
+        for (std::size_t eq = 0; eq < numFields; eq++) 
+          (this->valVec[0])(cell,node,eq) = xT_constView[eqID[this->offset + eq]];
         if (workset.transientTerms && this->enableTransient) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dot[0])(cell,node,eq) = (*xdot)[eqID[this->offset + eq]];
+          for (std::size_t eq = 0; eq < numFields; eq++) 
+            (this->valVec_dot[0])(cell,node,eq) = xdotT_constView[eqID[this->offset + eq]];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dotdot[0])(cell,node,eq) = (*xdotdot)[eqID[this->offset + eq]];
+          for (std::size_t eq = 0; eq < numFields; eq++) 
+            (this->valVec_dotdot[0])(cell,node,eq) = xdotdotT_constView[eqID[this->offset + eq]];
         }
       }
     }
@@ -189,15 +194,15 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
-        for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->val[eq])(cell,node) = (*x)[eqID[this->offset + eq]];
+        for (std::size_t eq = 0; eq < numFields; eq++) 
+          (this->val[eq])(cell,node) = xT_constView[eqID[this->offset + eq]];
         if (workset.transientTerms && this->enableTransient) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dot[eq])(cell,node) = (*xdot)[eqID[this->offset + eq]];
+          for (std::size_t eq = 0; eq < numFields; eq++) 
+            (this->val_dot[eq])(cell,node) = xdotT_constView[eqID[this->offset + eq]];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
-          for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dotdot[eq])(cell,node) = (*xdotdot)[eqID[this->offset + eq]];
+          for (std::size_t eq = 0; eq < numFields; eq++) 
+            (this->val_dotdot[eq])(cell,node) = xdotdotT_constView[eqID[this->offset + eq]];
         }
       }
     }
@@ -231,9 +236,15 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
-  Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
+
+  //get const (read-only) view of xT and xdotT
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+
   ScalarT* valptr;
 
 
@@ -249,6 +260,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int firstunk = neq * node + this->offset;
       for (std::size_t eq = 0; eq < numFields; eq++) {
+<<<<<<< HEAD
      //   if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
      //   else                   valptr = &(this->val[eq])(cell,node);
      //   *valptr = FadType(num_dof, (*x)[eqID[this->offset + eq]]);
@@ -283,10 +295,25 @@ evaluateFields(typename Traits::EvalData workset)
               (this->val_dot[eq])(cell,node)=FadType(num_dof, (*xdot)[eqID[this->offset + eq]]);
               ((this->val_dot[eq])(cell,node)).fastAccessDx(firstunk + eq) = workset.m_coeff;
            }
+=======
+        if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
+        else                   valptr = &(this->val[eq])(cell,node);
+	*valptr = FadType(num_dof, xT_constView[eqID[this->offset + eq]]);
+        valptr->setUpdateValue(!workset.ignore_residual);
+        valptr->fastAccessDx(firstunk + eq) = workset.j_coeff;
+      }
+      if (workset.transientTerms && this->enableTransient) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dot[eq])(cell,node);
+          *valptr = FadType(num_dof, xdotT_constView[eqID[this->offset + eq]]);
+          valptr->fastAccessDx(firstunk + eq) = workset.m_coeff;
+>>>>>>> tpetra
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
+<<<<<<< HEAD
          // if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
          // else                   valptr = &(this->val_dotdot[eq])(cell,node);
          // *valptr = FadType(num_dof, (*xdotdot)[eqID[this->offset + eq]]);
@@ -299,6 +326,12 @@ evaluateFields(typename Traits::EvalData workset)
              (this->val_dotdot[eq])(cell,node)=FadType(num_dof, (*xdotdot)[eqID[this->offset + eq]]);
              ((this->val_dotdot[eq])(cell,node)).fastAccessDx(firstunk + eq) = workset.n_coeff;
            }
+=======
+          if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dotdot[eq])(cell,node);
+          *valptr = FadType(num_dof, xdotdotT_constView[eqID[this->offset + eq]]);
+          valptr->fastAccessDx(firstunk + eq) = workset.n_coeff;
+>>>>>>> tpetra
         }
       }
     }
@@ -338,14 +371,19 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxT = workset.VxT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotT = workset.VxdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT = workset.VxdotdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VpT = workset.VpT;
 
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
-  Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vx = workset.Vx;
-  Teuchos::RCP<const Epetra_MultiVector> Vxdot = workset.Vxdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vxdotdot = workset.Vxdotdot;
-  Teuchos::RCP<const Epetra_MultiVector> Vp = workset.Vp;
+  //get const (read-only) view of xT and xdotT
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+
   Teuchos::RCP<ParamVec> params = workset.params;
   int num_cols_tot = workset.param_offset + workset.num_cols_p;
   ScalarT* valptr;
@@ -368,25 +406,25 @@ evaluateFields(typename Traits::EvalData workset)
         //  *valptr = TanFadType((*x)[eqID[this->offset + eq]]);
         if (this->vectorField){
            if (Vx != Teuchos::null && workset.j_coeff != 0.0){
-		(this->valVec[0])(cell,node,eq)=TanFadType(num_cols_tot, (*x)[eqID[this->offset + eq]]);
+		(this->valVec[0])(cell,node,eq)=TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
 		for (int k=0; k<workset.num_cols_x; k++)
 		   ((this->valVec[0])(cell,node,eq)).fastAccessDx(k) =
-			workset.j_coeff*(*Vx)[k][eqID[this->offset + eq]];
+			workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
            }
            else{
-            (this->valVec[0])(cell,node,eq)=TanFadType((*x)[eqID[this->offset + eq]]);
+            (this->valVec[0])(cell,node,eq)=TanFadType(xT_constView[eqID[this->offset + eq]]);
            }
 
         }
         else{
            if (Vx != Teuchos::null && workset.j_coeff != 0.0){
-              (this->val[eq])(cell,node)=TanFadType(num_cols_tot, (*x)[eqID[this->offset + eq]]);
+              (this->val[eq])(cell,node)=TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
               for (int k=0; k<workset.num_cols_x; k++)
                    ((this->val[eq])(cell,node)).fastAccessDx(k) =
-                        workset.j_coeff*(*Vx)[k][eqID[this->offset + eq]];
+                        workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
            }
            else{
-             (this->val[eq])(cell,node)=TanFadType((*x)[eqID[this->offset + eq]]);
+             (this->val[eq])(cell,node)=TanFadType(xT_constView[eqID[this->offset + eq]]);
            }
         }
       }
@@ -404,28 +442,68 @@ evaluateFields(typename Traits::EvalData workset)
       //      *valptr = TanFadType((*xdot)[eqID[this->offset + eq]]);
            if (this->vectorField){
               if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-                  (this->valVec_dot[0])(cell,node,eq)=TanFadType(num_cols_tot, (*xdot)[eqID[this->offset + eq]]);
+                  (this->valVec_dot[0])(cell,node,eq)=TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
 		  for (int k=0; k<workset.num_cols_x; k++)
 			((this->valVec_dot[0])(cell,node,eq)).fastAccessDx(k) =
-				workset.m_coeff*(*Vxdot)[k][eqID[this->offset + eq]];
+				workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
               }
               else
-                  (this->valVec_dot[0])(cell,node,eq)=TanFadType((*xdot)[eqID[this->offset + eq]]);
+                  (this->valVec_dot[0])(cell,node,eq)=TanFadType((xdotT_constView[eqID[this->offset + eq]]);
            }
            else {
               if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-		  (this->val_dot[eq])(cell,node)=TanFadType(num_cols_tot, (*xdot)[eqID[this->offset + eq]]);
+		  (this->val_dot[eq])(cell,node)=TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
 		   for (int k=0; k<workset.num_cols_x; k++)
 			((this->val_dot[eq])(cell,node)).fastAccessDx(k) =
-				workset.m_coeff*(*Vxdot)[k][eqID[this->offset + eq]];
+				workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
               }
               else
-		  (this->val_dot[eq])(cell,node)=TanFadType((*xdot)[eqID[this->offset + eq]]);
+		  (this->val_dot[eq])(cell,node)=TanFadType(xdotT_constView[eqID[this->offset + eq]]);
            }
+=======
+        if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+        else                   valptr = &(this->val[eq])(cell,node);
+	if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
+	  *valptr = TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
+	  for (int k=0; k<workset.num_cols_x; k++) 
+	    valptr->fastAccessDx(k) =
+	      workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
+	}
+	else
+	  *valptr = TanFadType(xT_constView[eqID[this->offset + eq]]);
+      }
+      if (workset.transientTerms && this->enableTransient) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dot[eq])(cell,node);
+	  if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
+	    *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
+	    for (int k=0; k<workset.num_cols_x; k++)
+	      valptr->fastAccessDx(k) =
+		workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
+	  }
+	  else
+	    *valptr = TanFadType(xdotT_constView[eqID[this->offset + eq]]);
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dotdot[eq])(cell,node);
+          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
+            *valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
+                workset.n_coeff*VxdotdotT->getData(k)[eqID[this->offset + eq]];
+          }
+          else
+            *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
+>>>>>>> tpetra
+        }
+      }
+      if (workset.accelerationTerms && this->enableAcceleration) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+<<<<<<< HEAD
        //   if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
        //   else                   valptr = &(this->val_dotdot[eq])(cell,node);
        //   if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
@@ -456,6 +534,18 @@ evaluateFields(typename Traits::EvalData workset)
                else
                    (this->val_dotdot[eq])(cell,node)=TanFadType((*xdotdot)[eqID[this->offset + eq]]);
            }
+=======
+          if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dotdot[eq])(cell,node);
+          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
+            *valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
+                workset.n_coeff*VxdotdotT->getData(k)[eqID[this->offset + eq]];
+          }
+          else
+            *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
+>>>>>>> tpetra
         }
       }
     }
@@ -491,9 +581,14 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Epetra_Vector> x = workset.x;
-  Teuchos::RCP<const Epetra_Vector> xdot = workset.xdot;
-  Teuchos::RCP<const Epetra_Vector> xdotdot = workset.xdotdot;
+  Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
+
+  //get const (read-only) view of xT and xdotT
+  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
   if (this->vectorField) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -502,14 +597,14 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->valVec[0])(cell,node,eq) = (*x)[eqID[this->offset + eq]];
+          (this->valVec[0])(cell,node,eq) = xT_constView[eqID[this->offset + eq]];
         if (workset.transientTerms && this->enableTransient) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dot[0])(cell,node,eq) = (*xdot)[eqID[this->offset + eq]];
+            (this->valVec_dot[0])(cell,node,eq) = xdotT_constView[eqID[this->offset + eq]];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->valVec_dotdot[0])(cell,node,eq) = (*xdotdot)[eqID[this->offset + eq]];
+            (this->valVec_dotdot[0])(cell,node,eq) = xdotdotT_constView[eqID[this->offset + eq]];
         }
       }
     }
@@ -520,14 +615,14 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
         for (std::size_t eq = 0; eq < numFields; eq++)
-          (this->val[eq])(cell,node) = (*x)[eqID[this->offset + eq]];
+          (this->val[eq])(cell,node) = xT_constView[eqID[this->offset + eq]];
         if (workset.transientTerms && this->enableTransient) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dot[eq])(cell,node) = (*xdot)[eqID[this->offset + eq]];
+            (this->val_dot[eq])(cell,node) = xdotT_constView[eqID[this->offset + eq]];
         }
         if (workset.accelerationTerms && this->enableAcceleration) {
           for (std::size_t eq = 0; eq < numFields; eq++)
-            (this->val_dotdot[eq])(cell,node) = (*xdotdot)[eqID[this->offset + eq]];
+            (this->val_dotdot[eq])(cell,node) = xdotdotT_constView[eqID[this->offset + eq]];
         }
       }
     }

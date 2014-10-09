@@ -178,14 +178,16 @@ Albany::CahnHillProblem::constructEvaluators(
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cellCubature));
 
   for (unsigned int i=0; i<neq; i++) {
-    fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names[i]));
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i]));
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names[i], i));
 
     fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i]));
+      (evalUtils.constructDOFInterpolationEvaluator(dof_names_dot[i], i));
+
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
+
   }
 
 

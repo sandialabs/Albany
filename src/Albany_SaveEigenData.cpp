@@ -12,6 +12,8 @@
 #include "Epetra_Vector.h"
 #include <string>
 
+using namespace std; 
+
 Albany::SaveEigenData::
 SaveEigenData(Teuchos::ParameterList& locaParams, Teuchos::RCP<NOX::Epetra::Observer> observer, Albany::StateManager* pStateMgr)
   :  nsave(0),

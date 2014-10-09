@@ -32,6 +32,9 @@ Please remove when issue is resolved
 
 #include "Albany_Networks.hpp"
 
+// Global variable that denotes this is the Tpetra executable
+bool TpetraBuild = false;
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -74,7 +77,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<Epetra_Comm> globalComm = 
       Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
     Albany::SolverFactory coupled_slvrfctry(xmlfilename_coupled, 
-					    Albany_MPI_COMM_WORLD);
+					    Albany::createTeuchosCommFromEpetraComm(globalComm));
     Teuchos::ParameterList& coupledParams = coupled_slvrfctry.getParameters();
     Teuchos::ParameterList& coupledSystemParams = 
       coupledParams.sublist("Coupled System");
@@ -96,7 +99,7 @@ int main(int argc, char *argv[]) {
     for (int m=0; m<num_models; m++) {
       Albany::SolverFactory slvrfctry(
 	model_filenames[m], 
-	Albany::getMpiCommFromEpetraComm(*app_comm));
+	Albany::createTeuchosCommFromEpetraComm(app_comm));
       models[m] = slvrfctry.createAlbanyAppAndModel(apps[m], app_comm);
       Teuchos::ParameterList& appParams = slvrfctry.getParameters();
       piroParams[m] = Teuchos::rcp(&(appParams.sublist("Piro")),false);

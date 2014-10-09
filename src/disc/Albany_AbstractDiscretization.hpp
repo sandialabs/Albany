@@ -12,6 +12,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
+#include "Albany_DataTypes.hpp"
 
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
@@ -66,25 +67,40 @@ class AbstractDiscretization {
     //! Destructor
     virtual ~AbstractDiscretization() {};
 
-    //! Get DOF map
+    //! Get Epetra DOF map
     virtual Teuchos::RCP<const Epetra_Map>
     getMap() const = 0;
+    //! Get Tpetra DOF map
+    virtual Teuchos::RCP<const Tpetra_Map>
+    getMapT() const = 0;
 
-    //! Get overlapped DOF map
+    //! Get Epetra overlapped DOF map
     virtual Teuchos::RCP<const Epetra_Map>
     getOverlapMap() const = 0;
+    //! Get Tpetra overlapped DOF map
+    virtual Teuchos::RCP<const Tpetra_Map>
+    getOverlapMapT() const = 0;
 
-    //! Get Jacobian graph
+    //! Get Epetra Jacobian graph
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getJacobianGraph() const = 0;
+    //! Get Tpetra Jacobian graph
+    virtual Teuchos::RCP<const Tpetra_CrsGraph>
+    getJacobianGraphT() const = 0;
 
-    //! Get overlap Jacobian graph
+    //! Get Epetra overlap Jacobian graph
     virtual Teuchos::RCP<const Epetra_CrsGraph>
     getOverlapJacobianGraph() const = 0;
+    //! Get Tpetra overlap Jacobian graph
+    virtual Teuchos::RCP<const Tpetra_CrsGraph>
+    getOverlapJacobianGraphT() const = 0;
 
-    //! Get Node map
+    //! Get Epetra Node map
     virtual Teuchos::RCP<const Epetra_Map>
     getNodeMap() const = 0;
+    //! Get Tpetra Node map
+    virtual Teuchos::RCP<const Tpetra_Map>
+    getNodeMapT() const = 0;
 
     //! Get Nodal block data
 //    virtual Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() = 0;
@@ -133,6 +149,8 @@ class AbstractDiscretization {
 
     //! Get solution vector from mesh database
     virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
+    //Tpetra analog
+    virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const = 0;
 
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;
@@ -154,9 +172,14 @@ class AbstractDiscretization {
     //! Set the residual field for output
     virtual void setResidualField(const Epetra_Vector& residual) = 0;
 
+   //! Set the residual field for output - Tpetra version
+    virtual void setResidualFieldT(const Tpetra_Vector& residual) = 0;
+
     //! Write the solution to the output file
     virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
 
+   //! Write the solution to the output file - Tpetra version
+    virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
 
   private:
 

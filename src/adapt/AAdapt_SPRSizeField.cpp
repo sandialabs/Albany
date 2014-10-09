@@ -8,16 +8,17 @@
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 #include "Epetra_Import.h"
 
-#include "pumi.h"
-#include "pumi_mesh.h"
-#include "apfPUMI.h"
-#include "apfSPR.h"
+#include <apfSPR.h>
+#include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   comm(disc->getComm()),
-  mesh(disc->getFMDBMeshStruct()->apfMesh),
+  mesh(disc->getFMDBMeshStruct()->getMesh()),
+  global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
-  elemGIDws(disc->getElemGIDws()) {
+  elemGIDws(disc->getElemGIDws()),
+  cub_degree(disc->getFMDBMeshStruct()->cubatureDegree),
+  pumi_disc(disc) {
 }
 
 AAdapt::SPRSizeField::
@@ -27,9 +28,9 @@ AAdapt::SPRSizeField::
 void
 AAdapt::SPRSizeField::computeError() {
 
-  if ( sv_name.length() > 0 ) 
-    computeErrorFromStateVariable(); 
-  else 
+  if ( sv_name.length() > 0 )
+    computeErrorFromStateVariable();
+  else
     computeErrorFromRecoveredGradients();
 
 }
@@ -44,7 +45,6 @@ AAdapt::SPRSizeField::setParams(double element_size, double err_bound,
   std::vector<int> dims;
   esa[0][sv_name].dimensions(dims);
   num_qp = dims[1];
-  cub_degree = getCubatureDegree(num_qp);
 
 }
 
@@ -52,26 +52,16 @@ double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
   return apf::getScalar(field,v,0);
 }
 
-int AAdapt::SPRSizeField::getCubatureDegree(int num_qp) {
-  switch(num_qp) {
-    case 1:
-      return 1;
-    case 4:
-      return 2;
-    case 5:
-      return 3;
-    default:
-      fprintf(stderr,"Invalid cubature degree");
-  }
-}
-
 void
-AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
-  apf::Numbering* en = mesh->findNumbering("apf_element_numbering");
+AAdapt::SPRSizeField::copyInputFields()
+{
+  apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
+  apf::Field* eps = apf::createField(mesh, "eps", apf::MATRIX, fs);
+  global_numbering = pumi_disc->getAPFGlobalNumbering();
   apf::MeshIterator* it = mesh->begin(mesh->getDimension());
   apf::MeshEntity* e;
   while ((e = mesh->iterate(it))) {
-    int elemID = apf::getNumber(en,e,0,0);
+    long elemID = apf::getNumber(global_numbering,apf::Node(e,0));
     int ws = elemGIDws[elemID].ws;
     int lid = elemGIDws[elemID].LID;
     for (int qp=0; qp < num_qp; qp++) {
@@ -84,6 +74,17 @@ AAdapt::SPRSizeField::getFieldFromStateVariable(apf::Field* eps) {
       apf::setMatrix(eps,e,qp,value);
     }
   }
+  mesh->end(it);
+}
+
+void AAdapt::SPRSizeField::freeSizeField()
+{
+  apf::destroyField(mesh->findField("size"));
+}
+
+void AAdapt::SPRSizeField::freeInputFields()
+{
+  apf::destroyField(mesh->findField("eps"));
 }
 
 void
@@ -96,13 +97,10 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 
 }
 
-
 void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
-  apf::Field* eps = apf::createIPField(mesh,"eps",apf::MATRIX,cub_degree);
-  getFieldFromStateVariable(eps);
+  apf::Field* eps = mesh->findField("eps");
   field = apf::getSPRSizeField(eps,rel_err);
-  apf::destroyField(eps);
 
 }

@@ -7,17 +7,31 @@
 #include "Albany_SolverFactory.hpp"
 #include "Albany_ObserverFactory.hpp"
 #include "Albany_PiroObserver.hpp"
+#include "Albany_PiroObserverT.hpp"
 #include "Albany_SaveEigenData.hpp"
 #include "Albany_ModelFactory.hpp"
+//#include "Albany_ModelFactoryT.hpp"
 
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Piro_ProviderBase.hpp"
 
+#include "Piro_SolverFactory.hpp"
+#include "Piro_AdaptiveSolverFactory.hpp"
 #include "Piro_NOXSolver.hpp"
 #include "Piro_NullSpaceUtils.hpp"
 #include "Piro_StratimikosUtils.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
+
+#ifdef ALBANY_IFPACK2
+#include "Teuchos_AbstractFactoryStd.hpp"
+#include "Thyra_Ifpack2PreconditionerFactory.hpp"
+#endif /* ALBANY_IFPACK2 */
+
+#ifdef ALBANY_MUELU
+#include <Thyra_MueLuPreconditionerFactory.hpp>
+#include "Stratimikos_MueluTpetraHelpers.hpp"
+#endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_QCAD
   #include "QCAD_Solver.hpp"
@@ -26,9 +40,9 @@
   #include "QCAD_GenEigensolver.hpp"
 #endif
 
-//#include "Thyra_EpetraModelEvaluator.hpp"
-//#include "AAdapt_AdaptiveModelFactory.hpp"
+#include "Albany_ModelEvaluatorT.hpp"
 
+#include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
 
 #include "Teuchos_XMLParameterListHelpers.hpp"
@@ -40,8 +54,9 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 
-//#include <stdexcept>
+#include "Petra_Converters.hpp"
 
+extern bool TpetraBuild;
 
 namespace Albany {
 
@@ -131,10 +146,9 @@ using Teuchos::ParameterList;
 
 Albany::SolverFactory::SolverFactory(
 			  const std::string& inputFile,
-			  const Albany_MPI_Comm& mcomm)
+			  const RCP<const Teuchos_Comm>& tcomm)
   : out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   // Set up application parameters: read and broadcast XML file, and set defaults
   //RCP<ParameterList> input_
@@ -142,7 +156,7 @@ Albany::SolverFactory::SolverFactory(
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
   //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
-  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -150,17 +164,16 @@ Albany::SolverFactory::SolverFactory(
 
   appParams->validateParametersAndSetDefaults(*getValidAppParameters(),0);
 }
-  
+
 
 Albany::SolverFactory::SolverFactory(
     		          const Teuchos::RCP<Teuchos::ParameterList>& input_appParams,
-			  const Albany_MPI_Comm& mcomm)
+			  const RCP<const Teuchos_Comm>& tcomm)
   : appParams(input_appParams), out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-  RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
   //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
-  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {  
+  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -170,7 +183,7 @@ Albany::SolverFactory::SolverFactory(
 }
 
 Albany::SolverFactory::~SolverFactory(){
-  
+
   // Release the model to eliminate RCP circular reference
   if(Teuchos::nonnull(thyraModelFactory))
     thyraModelFactory->releaseModel();
@@ -185,10 +198,21 @@ Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   Teuchos::RCP<Albany::Application> dummyAlbanyApp;
   return createAndGetAlbanyApp(dummyAlbanyApp, appComm, solverComm, initial_guess);
+}
+
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
+Albany::SolverFactory::createT(
+  const Teuchos::RCP<const Teuchos_Comm>& appComm,
+  const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+{
+  Teuchos::RCP<Albany::Application> dummyAlbanyApp;
+//  Teuchos::RCP<Albany::ApplicationT> dummyAlbanyApp;
+  return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
 Teuchos::RCP<EpetraExt::ModelEvaluator>
@@ -196,14 +220,17 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
     if (solutionMethod == "QCAD Multi-Problem") {
 #ifdef ALBANY_QCAD
-      return rcp(new QCAD::Solver(appParams, solverComm, initial_guess));
+      RCP<Epetra_Vector> initial_guessE;
+      if(Teuchos::nonnull(initial_guess))
+        Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, appComm);
+      return rcp(new QCAD::Solver(appParams, solverComm, initial_guessE));
 #else /* ALBANY_QCAD */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
@@ -211,7 +238,10 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
-      const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
+      RCP<Epetra_Vector> initial_guessE;
+      if(Teuchos::nonnull(initial_guess))
+        Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, appComm);
+      const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guessE));
       const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
       // Create and setup the Piro solver factory
@@ -238,7 +268,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       RCP<Albany::Application> app;
       const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
       albanyApp = app;
-      
+
       //QCAD::GenEigensolver uses a state manager as an observer (for now)
       RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
 
@@ -303,7 +333,7 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     Teuchos::RCP<Application>& albanyApp,
     const Teuchos::RCP<const Epetra_Comm>& appComm,
     const Teuchos::RCP<const Epetra_Comm>& solverComm,
-    const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
@@ -341,8 +371,14 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 //      const RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       thyraModelFactory = albanyApp->getAdaptSolMgr()->modelFactory();
       const RCP<Thyra::ModelEvaluator<double> > thyraModel = thyraModelFactory->create(model, lowsFactory);
-      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
-      return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+      if(TpetraBuild){
+        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+      }
+      else {
+        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+        return rcp(new Piro::NOXSolver<double>(piroParams, thyraModel, observer));
+      }
     }
   }
 
@@ -359,14 +395,99 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   }
 }
 
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
+Albany::SolverFactory::createAndGetAlbanyAppT(
+  Teuchos::RCP<Albany::Application>& albanyApp,
+//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
+  const Teuchos::RCP<const Teuchos_Comm>& appComm,
+  const Teuchos::RCP<const Teuchos_Comm>& solverComm,
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+{
+  const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+
+  RCP<Albany::Application> app;
+//  RCP<Albany::ApplicationT> app;
+  const RCP<Thyra::ModelEvaluator<ST> > modelT =
+    createAlbanyAppAndModelT(app, appComm, initial_guess);
+
+  // Pass back albany app so that interface beyond ModelEvaluator can be used.
+  // This is essentially a hack to allow additional in/out arguments beyond
+  // what ModelEvaluator specifies.
+  albanyApp = app;
+
+  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+
+  RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
+  if (Teuchos::nonnull(modelT->get_W_factory())) {
+    modelWithSolveT = modelT;
+  } else {
+    // Setup linear solver
+    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+#ifdef ALBANY_IFPACK2
+    {
+#ifdef ALBANY_64BIT_INT
+      typedef Thyra::PreconditionerFactoryBase<ST> Base;
+      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+#else
+      typedef Thyra::PreconditionerFactoryBase<double> Base;
+      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+#endif
+
+      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+    }
+#endif /* ALBANY_IFPACK2 */
+#ifdef ALBANY_MUELU
+#ifdef ALBANY_64BIT_INT
+    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
+    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+#else
+    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+#endif
+#endif /* ALBANY_MUELU */
+    linearSolverBuilder.setParameterList(Piro::extractStratimikosParams(piroParams));
+
+    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
+      createLinearSolveStrategy(linearSolverBuilder);
+
+    modelWithSolveT =
+      rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(modelT, lowsFactory));
+  }
+
+  const RCP<LOCA::Thyra::AdaptiveSolutionManager> solMgrT = app->getAdaptSolMgrT();
+
+  if(solMgrT->isAdaptive()){
+    Piro::AdaptiveSolverFactory piroFactory;
+    if(TpetraBuild){
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+    }
+    else {
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
+    }
+  }
+  else {
+    Piro::SolverFactory piroFactory;
+    if(TpetraBuild){
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    }
+    else {
+      const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
+      return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
+    }
+  }
+}
+
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
-  const Teuchos::RCP<const Epetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
 {
   // Create application
-  albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+  albanyApp = rcp(new Albany::Application(Albany::createTeuchosCommFromEpetraComm(appComm), appParams, initial_guess));
 
   // Validate Response list: may move inside individual Problem class
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
@@ -378,6 +499,123 @@ Albany::SolverFactory::createAlbanyAppAndModel(
 
   return modelFactory.create();
 
+}
+
+Teuchos::RCP<Thyra::ModelEvaluator<ST> >
+Albany::SolverFactory::createAlbanyAppAndModelT(
+  Teuchos::RCP<Albany::Application>& albanyApp,
+//  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
+  const Teuchos::RCP<const Teuchos_Comm>& appComm,
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+{
+  // Create application
+  albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+//  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams, initial_guess));
+
+  // Validate Response list: may move inside individual Problem class
+  RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
+  problemParams->sublist("Response Functions").
+    validateParameters(*getValidResponseParameters(),0);
+
+  // If not explicitly specified, determine which Piro solver to use from the problem parameters
+  const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+  if (!piroParams->getPtr<std::string>("Solver Type")) {
+    const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        solutionMethod != "Steady" &&
+        solutionMethod != "Transient",
+        std::logic_error,
+        "Solution Method must be Steady or Transient, not : " <<
+        solutionMethod <<
+        "\n");
+
+    const std::string secondOrder = problemParams->get("Second Order", "No");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        secondOrder != "No",
+        std::logic_error,
+        "Second Order is not supported" <<
+        "\n");
+
+    // Populate the Piro parameter list accordingly to inform the Piro solver factory
+    std::string piroSolverToken;
+    if (solutionMethod == "Steady") {
+      piroSolverToken = "NOX";
+    } else if (solutionMethod == "Transient") {
+      piroSolverToken = "Rythmos";
+    } else {
+      // Piro cannot handle the corresponding problem
+      piroSolverToken = "Unsupported";
+    }
+
+    piroParams->set("Solver Type", piroSolverToken);
+  }
+
+  // Create model evaluator
+  Albany::ModelFactory modelFactory(appParams, albanyApp);
+  return modelFactory.createT();
+}
+
+int Albany::SolverFactory::checkSolveTestResultsT(
+  int response_index,
+  int parameter_index,
+  const Tpetra_Vector* g,
+  const Tpetra_MultiVector* dgdp) const
+{
+  ParameterList* testParams = getTestParameters(response_index);
+
+  int failures = 0;
+  int comparisons = 0;
+  const double relTol = testParams->get<double>("Relative Tolerance");
+  const double absTol = testParams->get<double>("Absolute Tolerance");
+
+  // Get number of responses (g) to test
+  const int numResponseTests = testParams->get<int>("Number of Comparisons");
+  if (numResponseTests > 0) {
+    if (g == NULL || numResponseTests > g->getGlobalLength()) failures += 1000;
+    else { // do comparisons
+      Teuchos::Array<double> testValues =
+        testParams->get<Teuchos::Array<double> >("Test Values");
+
+      TEUCHOS_TEST_FOR_EXCEPT(numResponseTests != testValues.size());
+
+      Teuchos::ArrayRCP<const double> gv = g->get1dView();
+      for (int i=0; i<testValues.size(); i++) {
+        failures += scaledCompare(gv[i], testValues[i], relTol, absTol);
+        comparisons++;
+      }
+    }
+  }
+
+  // Repeat comparisons for sensitivities
+  Teuchos::ParameterList *sensitivityParams;
+  std::string sensitivity_sublist_name =
+    Albany::strint("Sensitivity Comparisons", parameter_index);
+  if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
+    sensitivityParams = testParams;
+  else
+    sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
+  const int numSensTests =
+    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
+  if (numSensTests > 0) {
+    if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
+    else {
+      for (int i=0; i<numSensTests; i++) {
+        Teuchos::Array<double> testSensValues =
+          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+        TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
+
+        Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
+        for (int j=0; j<dgdp->getNumVectors(); j++) {
+          failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
+          comparisons++;
+        }
+      }
+    }
+  }
+
+  storeTestResults(testParams, failures, comparisons);
+
+  return failures;
 }
 
 int Albany::SolverFactory::checkSolveTestResults(

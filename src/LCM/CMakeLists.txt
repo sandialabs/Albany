@@ -127,7 +127,7 @@ set(INCLUDE_DIRS
   ${Trilinos_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src
   ${Albany_SOURCE_DIR}/src/evaluators
-  ${Albany_SOURCE_DIR}/src/problems 
+  ${Albany_SOURCE_DIR}/src/problems
   ${Albany_SOURCE_DIR}/src/responses
   ${Albany_SOURCE_DIR}/src/disc/stk
   ${Albany_SOURCE_DIR}/src/adapt
@@ -138,7 +138,7 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
-  ${ALBANY_FMDB_INCLUDE_DIRS} 
+  ${ALBANY_FMDB_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 
@@ -185,11 +185,13 @@ add_executable(
   )
 
 IF (ALBANY_LAME OR ALBANY_LAMENT)
+  IF(ALBANY_64BIT_INT)
   add_executable(utLameStress_elastic
     ${Albany_SOURCE_DIR}/src/PHAL_Dimension.cpp
     ${Albany_SOURCE_DIR}/src/PHAL_AlbanyTraits.cpp
     ${Albany_SOURCE_DIR}/src/Albany_Utils.cpp
     ${Albany_SOURCE_DIR}/src/Albany_StateManager.cpp
+    ${Albany_SOURCE_DIR}/src/Petra_Converters_64.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKFieldContainer.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
@@ -197,7 +199,9 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBase.cpp
     ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataVector.cpp
     ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
     utils/lame/LameUtils.cpp
     evaluators/lame/LameStress.cpp
@@ -205,6 +209,32 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utLameStress_elastic.cpp
     )
+  ELSE()
+  add_executable(utLameStress_elastic
+    ${Albany_SOURCE_DIR}/src/PHAL_Dimension.cpp
+    ${Albany_SOURCE_DIR}/src/PHAL_AlbanyTraits.cpp
+    ${Albany_SOURCE_DIR}/src/Albany_Utils.cpp
+    ${Albany_SOURCE_DIR}/src/Albany_StateManager.cpp
+    ${Albany_SOURCE_DIR}/src/Petra_Converters.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKMeshStruct.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_GenericSTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
+    ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBase.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
+    ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataVector.cpp
+    ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
+    utils/lame/LameUtils.cpp
+    evaluators/lame/LameStress.cpp
+    evaluators/SetField.cpp
+    test/unit_tests/StandardUnitTestMain.cpp
+    test/unit_tests/utLameStress_elastic.cpp
+    )
+  ENDIF()
+
   target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
 ENDIF ()
 
@@ -223,7 +253,7 @@ ELSE(BUILD_SHARED_LIBS)
   ENDIF()
 ENDIF(BUILD_SHARED_LIBS)
 
-   
+
 #Linking tests
 target_link_libraries(MaterialPointSimulator ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALL_LIBRARIES})

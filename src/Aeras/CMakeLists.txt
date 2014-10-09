@@ -74,12 +74,14 @@ ELSE()
        evaluators/Aeras_ScatterResidual.cpp
        evaluators/Aeras_DOFInterpolation.cpp
        evaluators/Aeras_DOFGradInterpolation.cpp
+       evaluators/Aeras_DOFGradInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
    )
    
 ENDIF()
 
   SET(HEADERS
+       evaluators/Aeras_Eta.hpp
        evaluators/Aeras_ComputeBasisFunctions_Def.hpp
        evaluators/Aeras_ComputeBasisFunctions.hpp
        evaluators/Aeras_Atmosphere_Def.hpp

@@ -1,0 +1,10 @@
+<Project name="Albany">
+  <SubProject name="AlbanySrc">
+  </SubProject>
+  <SubProject name="AlbanyTpetraBranch">
+  </SubProject>
+  <SubProject name="Trilinos">
+  </SubProject>
+  <SubProject name="SCOREC">
+  </SubProject>
+</Project>

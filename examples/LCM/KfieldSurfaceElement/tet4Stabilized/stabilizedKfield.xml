@@ -54,9 +54,8 @@
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Cubature Degree" type="int" value="1"/>
     <Parameter name="Exodus Input File Name" type="string" value="../meshes/KfieldTetSymm.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="KfieldTetSymm.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="KfieldTetSymmStab.e"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Use Serial Mesh" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, pressure, S}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V, q, S}"/>
   </ParameterList>
@@ -71,9 +70,9 @@
       <ParameterList name="Stepper">
         <Parameter  name="Initial Value" type="double" value="0.0"/>
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter  name="Max Steps" type="int" value="10"/>         
-        <Parameter  name="Max Value" type="double" value="2.0"/>
-        <Parameter  name="Min Value" type="double" value="0"/>    
+        <Parameter  name="Max Steps" type="int" value="100"/>         
+        <Parameter  name="Max Value" type="double" value="20.0"/>
+        <Parameter  name="Min Value" type="double" value="0.0"/>    
         <Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
         <Parameter  name="Skip Parameter Derivative" type="bool" value="true"/>  
         <ParameterList name="Eigensolver">
@@ -218,9 +217,7 @@
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Number of Tests" type="int" value="4"/>
         <ParameterList name="Test 0">
-          <Parameter name="Test Type" type="string" value="NormF"/>
-          <Parameter name="Norm Type" type="string" value="Two Norm"/>
-          <Parameter name="Scale Type" type="string" value="Scaled"/>
+          <Parameter name="Test Type" type="string" value="RelativeNormF"/>
           <Parameter name="Tolerance" type="double" value="1e-10"/>
         </ParameterList>
         <ParameterList name="Test 1">
@@ -228,9 +225,17 @@
           <Parameter name="Maximum Iterations" type="int" value="15"/>
         </ParameterList>
         <ParameterList name="Test 2">
-          <Parameter name="Test Type" type="string" value="NormF"/>
-          <Parameter name="Scale Type" type="string" value="Unscaled"/>
-          <Parameter name="Tolerance" type="double" value="1e-7"/>
+         <Parameter name="Test Type" type="string" value="Combo"/>
+          <Parameter name="Combo Type" type="string" value="AND"/>
+          <Parameter name="Number of Tests" type="int" value="2"/>
+          <ParameterList name="Test 0">
+            <Parameter name="Test Type" type="string" value="NStep"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="4"/>
+          </ParameterList>
+          <ParameterList name="Test 1">
+            <Parameter name="Test Type" type="string" value="NormF"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-7"/>
+          </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
           <Parameter name="Test Type" type="string" value="FiniteValue"/>

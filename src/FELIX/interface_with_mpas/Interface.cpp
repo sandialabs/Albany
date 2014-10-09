@@ -35,6 +35,7 @@
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<const Epetra_Comm> mpiComm;
+Teuchos::RCP<const Teuchos_Comm> mpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> appParams;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
@@ -439,7 +440,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 				if(meshStruct->restartDataTime()== homotopy)
 					paramList->sublist("Problem").set("Solution Method", "Steady");
 			}
-			Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiComm, paramList));
+			Teuchos::RCP<Albany::Application> app = Teuchos::rcp(new Albany::Application(mpiCommT, paramList));
 			solver = slvrfctry->createThyraSolverAndGetAlbanyApp(app, mpiComm, mpiComm);
 
 
@@ -918,6 +919,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
  //		}
 
  		mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+ 		mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
 //                std::string xmlfilename = "albany_input.xml";
 
 // GET slvrfctry STUFF FROM 3D GRID BELOW
@@ -984,7 +986,7 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 			}
 
 
-			slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", reducedComm));
+			slvrfctry = Teuchos::rcp(new Albany::SolverFactory("albany_input.xml", mpiCommT));
 			discParams = Teuchos::sublist(Teuchos::rcp(&slvrfctry->getParameters(),false), "Discretization", true);
 			Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
 /*

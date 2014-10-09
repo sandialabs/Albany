@@ -11,8 +11,8 @@
       <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS ns_4 for DOF Y">
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.3, 0.6}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{0.0, 1.0, 2.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{0.0, 0.3, 0.6}"/>
       </ParameterList>
     </ParameterList>	
 
@@ -43,7 +43,7 @@
       <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
       <Parameter name="Target Element Size" type="double" value="0.2"/>
-      <Parameter name="Error Bound" type="double" value="0.01"/>
+      <Parameter name="Error Bound" type="double" value="0.015"/>
       <Parameter name="State Variable" type="string" value="Stress"/>
     </ParameterList>
   </ParameterList>
@@ -51,9 +51,8 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
-    <Parameter name="Call serial global partition" type="bool" value="true"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="eighth_bar_hole_mmodel.dmg"/>
-    <Parameter name="FMDB Input File Name" type="string" value="eighth_bar_hole_fmdb_14k.sms"/>
+    <Parameter name="FMDB Input File Name" type="string" value="eighth_bar_hole_4_.smb"/>
     <Parameter name="FMDB Output File Name" type="string" value="eighth_bar_hole_output.vtk"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>
@@ -74,9 +73,9 @@
         <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
         <!-- The number of steps in the problem -->
-        <Parameter  name="Max Steps" type="int" value="20"/>         
+        <Parameter  name="Max Steps" type="int" value="10"/>         
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-        <Parameter  name="Max Value" type="double" value="2.0"/>
+        <Parameter  name="Max Value" type="double" value="1.0"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter  name="Min Value" type="double" value="0"/>    
         <!-- Compute eigenvalues of the global stiffness -->
@@ -150,14 +149,14 @@
 	      </ParameterList>
 
               <!-- Preconditioner -->
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
                 
                 <!-- Ifpack -->
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>

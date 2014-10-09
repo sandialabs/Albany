@@ -56,6 +56,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras XZ Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostatic(neq, numDim, data));
 
+  else if(name == "Aeras Hydrostatic")
+    F = Teuchos::rcp(new AAdapt::AerasHydrostatic(neq, numDim, data));
+
   else if(name == "Aeras Heaviside")
     F = Teuchos::rcp(new AAdapt::AerasHeaviside(neq, numDim, data));
 
@@ -327,6 +330,50 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
   //x[2*numLevesl+1] ... x[3*numLevels] = q0
   //x[3*numLevesl+1] ... x[4*numLevels] = q1
   //x[4*numLevesl+1] ... x[5*numLevels] = q2
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  double SP0     = data[2];
+  double U0      = data[3];
+  double T0      = data[4];
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[5+nt];
+  }
+
+  int offset = 0;
+  //Surface Pressure
+  x[offset++] = SP0;
+  
+  //Velx
+  for (int i=0; i<numLevels; ++i) {
+     x[offset++] = U0;// + i;
+     x[offset++] = T0;
+  }
+
+  //Tracers
+  for (int nt=0; nt<numTracers; ++nt) {
+    for (int i=0; i<numLevels; ++i) {
+      x[offset++] = q0[nt];
+    }
+  }
+
+}
+//*****************************************************************************
+AAdapt::AerasHydrostatic::AerasHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim != 3),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasHydrostatic::compute(double* x, const double* X) {
+  //Flattened data layout
+  //x[0]                                = SP
+  //x[1]             ... x[1*numLevels] = u
+  //x[1*numLevels+1] ... x[2*numLevels] = T
+  //x[2*numLevesl+1] ... x[3*numLevels] = q0
+  //x[3*numLevesl+1] ... x[4*numLevels] = q1
+  //x[4*numLevesl+1] ... x[5*numLevels] = q2
   int numLevels  = (int) data[0];
   int numTracers = (int) data[1];
   double SP0     = data[2];
@@ -342,7 +389,7 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
   x[offset++] = SP0;
   
   //Velx
-  for (int i=0; i<numLevels; ++i) x[offset++] = U0;
+  for (int i=0; i<numLevels; ++i) x[offset++] = U0;// + i;
   for (int i=0; i<numLevels; ++i) x[offset++] = T0;
 
   //Tracers

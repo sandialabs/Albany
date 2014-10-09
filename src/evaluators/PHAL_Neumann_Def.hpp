@@ -1094,12 +1094,16 @@ Neumann(Teuchos::ParameterList& p)
 {
 }
 
+
+
 template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
+//  Teuchos::RCP<Epetra_Vector> f = workset.f;
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   ScalarT *valptr;
 
   // Fill in "neumann" array
@@ -1113,8 +1117,8 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t dim = 0; dim < this->numDOFsSet; ++dim){
 
-        valptr = &(this->neumann)(cell, node, dim);
-        (*f)[nodeID[node][this->offset[dim]]] += *valptr;
+      valptr = &(this->neumann)(cell, node, dim);
+     fT_nonconstView[nodeID[node][this->offset[dim]]] += *valptr;
 
     }
   }
@@ -1136,14 +1140,20 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> Jac = workset.Jac;
+
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
+
   ScalarT *valptr;
 
   // Fill in "neumann" array
   this->evaluateNeumannContribution(workset);
 
-  int row, lcol, col;
+  int lcol;
+  Teuchos::Array<LO> rowT(1);
+  Teuchos::Array<LO> colT(1);
+  Teuchos::Array<ST> value(1);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1153,11 +1163,13 @@ evaluateFields(typename Traits::EvalData workset)
 
         valptr = &(this->neumann)(cell, node, dim);
 
-        row = nodeID[node][this->offset[dim]];
-        int neq = nodeID[node].size();
+      rowT[0] = nodeID[node][this->offset[dim]];
 
-        if (f != Teuchos::null)
-          f->SumIntoMyValue(row, 0, valptr->val());
+      int neq = nodeID[node].size();
+
+      if (fT != Teuchos::null) {
+         fT->sumIntoLocalValue(rowT[0], valptr->val());
+      }
 
         // Check derivative array is nonzero
         if (valptr->hasFastAccess()) {
@@ -1169,20 +1181,20 @@ evaluateFields(typename Traits::EvalData workset)
             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
               lcol = neq * node_col + eq_col;
 
-              // Global column
-              col =  nodeID[node_col][eq_col];
-
-              if (workset.is_adjoint) {
-                // Sum Jacobian transposed
-                Jac->SumIntoMyValues(col, 1, &(valptr->fastAccessDx(lcol)), &row);
-              }
-              else {
-                // Sum Jacobian
-                Jac->SumIntoMyValues(row, 1, &(valptr->fastAccessDx(lcol)), &col);
-              }
-            } // column equations
-          } // column nodes
-        } // has fast access
+            // Global column
+            colT[0] =  nodeID[node_col][eq_col];
+            value[0] = valptr->fastAccessDx(lcol);   
+            if (workset.is_adjoint) {
+              // Sum Jacobian transposed
+              JacT->sumIntoLocalValues(colT[0], rowT(), value());
+            }
+            else {
+              // Sum Jacobian
+            JacT->sumIntoLocalValues(rowT[0], colT(), value());
+            }
+          } // column equations
+        } // column nodes
+      } // has fast access
     }
   }
 }
@@ -1203,22 +1215,11 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_MultiVector> JV = workset.JV;
-  Teuchos::RCP<Epetra_MultiVector> fp = workset.fp;
-  ScalarT *valptr;
-
-  const Epetra_BlockMap *row_map = NULL;
-
-  if (f != Teuchos::null)
-    row_map = &(f->Map());
-  else if (JV != Teuchos::null)
-    row_map = &(JV->Map());
-  else if (fp != Teuchos::null)
-    row_map = &(fp->Map());
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                     "One of f, JV, or fp must be non-null! " << std::endl);
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
+  
+   ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
 
@@ -1234,17 +1235,17 @@ evaluateFields(typename Traits::EvalData workset)
 
         int row = nodeID[node][this->offset[dim]];
 
-        if (f != Teuchos::null)
-          f->SumIntoMyValue(row, 0, valptr->val());
+        if (fT != Teuchos::null)
+          fT->sumIntoLocalValue(row, valptr->val());
 
-        if (JV != Teuchos::null)
+        if (JVT != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
 
-        JV->SumIntoMyValue(row, col, valptr->dx(col));
+            JVT->sumIntoLocalValue(row, col, valptr->dx(col));
 
-        if (fp != Teuchos::null)
+        if (fpT != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
-            fp->SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset));
+            fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
       }
   }
 }
@@ -1265,9 +1266,9 @@ template<typename Traits>
 void Neumann<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_MultiVector> fpV = workset.fpV;
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
-  int num_cols = workset.Vp->NumVectors();
+  int num_cols = workset.VpT->getNumVectors();
   ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
@@ -1293,7 +1294,7 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
           const int row = dist_param_index[i];
-          fpV->SumIntoMyValue(row, col, val);
+          fpVT->sumIntoLocalValue(row, col, val);
         }
       }
     }
@@ -1317,7 +1318,7 @@ evaluateFields(typename Traits::EvalData workset)
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
               val += valptr->dx(i)*local_Vp[col][i];
-            fpV->SumIntoMyValue(row, col, val);
+            fpVT->sumIntoLocalValue(row, col, val);
           }
         }
     }

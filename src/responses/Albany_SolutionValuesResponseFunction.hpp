@@ -46,6 +46,15 @@ namespace Albany {
 		     const Epetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& p,
 		     Epetra_Vector& g);
+    
+    //! Evaluate responses - Tpetra version
+    virtual void 
+    evaluateResponseT(const double current_time,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector* xdotdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& p,
+		     Tpetra_Vector& gT);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void
@@ -66,6 +75,26 @@ namespace Albany {
 		    Epetra_Vector* g,
 		    Epetra_MultiVector* gx,
 		    Epetra_MultiVector* gp);
+    
+    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp - Tpetra version
+    virtual void 
+    evaluateTangentT(const double alpha, 
+		    const double beta,
+		    const double omega,
+		    const double current_time,
+		    bool sum_derivs,
+		    const Tpetra_Vector* xdotT,
+		    const Tpetra_Vector* xdotdotT,
+		    const Tpetra_Vector& xT,
+		    const Teuchos::Array<ParamVec>& p,
+		    ParamVec* deriv_p,
+		    const Tpetra_MultiVector* VxdotT,
+		    const Tpetra_MultiVector* VxdotdotT,
+		    const Tpetra_MultiVector* VxT,
+		    const Tpetra_MultiVector* VpT,
+		    Tpetra_Vector* gT,
+		    Tpetra_MultiVector* gxT,
+		    Tpetra_MultiVector* gpT);
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void
@@ -80,6 +109,20 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dxdotdot,
 		     Epetra_MultiVector* dg_dp);
+    
+   //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra version
+    virtual void 
+    evaluateGradientT(const double current_time,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector* xdotdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& p,
+		     ParamVec* deriv_p,
+		     Tpetra_Vector* gT,
+		     Tpetra_MultiVector* dg_dxT,
+		     Tpetra_MultiVector* dg_dxdotT,
+		     Tpetra_MultiVector* dg_dxdotdotT,
+		     Tpetra_MultiVector* dg_dpT);
 
   private:
     //! Private to prohibit copying

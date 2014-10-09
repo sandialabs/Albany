@@ -5,6 +5,8 @@ IF(NOT ALBANY_PARALLEL_ONLY)
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hole.exo
@@ -39,5 +41,14 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(NAME ${testName} COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${Albany.exe}"
   -DTEST_NAME=${testName} -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -P runtest.cmake)
 set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+
+# 6i'. Run the "runtest.cmake" file in the CWD
+
+if (ALBANY_IFPACK2)
+add_test(NAME ${testName}_Tpetra COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe};inputT.xml"
+  -DTEST_NAME=${testName}_Tpetra -DMPIMNP=${MPIMNP} -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} -DOUTFILE_SUFFIX=_tpetra
+  -P runtest.cmake)
+set_tests_properties(${testName}_Tpetra PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+endif()
 
 ENDIF()

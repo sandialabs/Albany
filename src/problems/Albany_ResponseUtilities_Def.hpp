@@ -12,8 +12,8 @@
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
 #include "PHAL_ResponseFieldIntegral.hpp"
+#include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
-#include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #endif
@@ -23,6 +23,7 @@
 #endif
 #ifdef ALBANY_LCM
 #include "IPtoNodalField.hpp"
+#include "ProjectIPtoNodalField.hpp"
 #endif
 
 template<typename EvalT, typename Traits>
@@ -141,6 +142,15 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
 
+  else if (responseName == "PHAL Field IntegralT")
+  {
+    RCP<PHAL::ResponseFieldIntegralT<EvalT,Traits> > res_ev =
+      rcp(new PHAL::ResponseFieldIntegralT<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
   else if (responseName == "Element Size Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
@@ -149,16 +159,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set<std::string>("Weights Name",  "Weights");
     RCP<Adapt::ElementSizeField<EvalT,Traits> > res_ev =
       rcp(new Adapt::ElementSizeField<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
-
-  else if (responseName == "Save Nodal Fields")
-  {
-    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
-    RCP<PHAL::SaveNodalField<EvalT,Traits> > res_ev =
-      rcp(new PHAL::SaveNodalField<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -173,6 +173,18 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     //p->set<std::string>("Weights Name",  "Weights");
     RCP<LCM::IPtoNodalField<EvalT,Traits> > res_ev =
       rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+  else if (responseName == "Project IP to Nodal Field")
+  {
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
+    p->set<std::string>("BF Name", "BF");
+    p->set<std::string>("Weighted BF Name",  "wBF");
+    RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev =
+      rcp(new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

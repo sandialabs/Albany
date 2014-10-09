@@ -16,18 +16,22 @@
 
 
 # 1. Copy Input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdapt.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdapt.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAdapt.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputAdapt.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodel.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputMmodel.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastAdaptT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastAdaptT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputMmodelT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputMmodelT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-fmdb.sms
-               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-fmdb.sms COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_1.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_1.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_2.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_2.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn_4_3.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn_4_3.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-64rgn-model.dmg
                ${CMAKE_CURRENT_BINARY_DIR}/necking-64rgn-model.dmg COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/necking-gmi.sat
@@ -40,28 +44,20 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 
-IF(NOT ALBANY_PARALLEL_ONLY AND ENABLE_PARASOLID)
-  add_test(NAME ${testName}_SERIAL
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${SerialAlbany.exe}" -DTEST_ARGS=
-     "-DFILENAME=necking-64rgn_output.pvd" -P
-     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-ENDIF()
-
 IF(ENABLE_PARASOLID)
-  add_test(NAME ${testName}
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=
-     "-DFILENAME=necking-64rgn_output.pvd" -P
-     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
-
-  add_test(NAME ${testName}_ElastAdapt_Parasolid
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputElastAdapt.xml
-     "-DFILENAME=necking-64rgn_output.pvd" -P
-     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_ElastAdapt_Tpetra
+       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputElastAdaptT.xml
+       "-DFILENAME=necking-64rgn_outputT.pvd" -P
+       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  endif()
 ENDIF()
 
 IF(ENABLE_MESHMODEL)
-  add_test(NAME ${testName}_Mmodel
-     COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${Albany.exe}" -DTEST_ARGS=inputMmodel.xml
-     "-DFILENAME=necking-64rgn_output.pvd" -P
-     ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_Mmodel_Tpetra
+       COMMAND ${CMAKE_COMMAND}  "-DTEST_PROG=${AlbanyT.exe}" -DTEST_ARGS=inputMmodelT.xml
+       "-DFILENAME=necking-64rgn_outputT.pvd" -P
+       ${CMAKE_CURRENT_SOURCE_DIR}/pvdwritten.cmake)
+  endif()
 ENDIF()

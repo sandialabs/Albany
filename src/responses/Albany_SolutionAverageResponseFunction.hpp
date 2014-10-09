@@ -36,6 +36,16 @@ namespace Albany {
 		     const Epetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& p,
 		     Epetra_Vector& g);
+    
+    //! Evaluate responses - Tpetra
+    virtual void 
+    evaluateResponseT(const double current_time,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector* xdotdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& p,
+		     Tpetra_Vector& gT);
+
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
     virtual void 
@@ -57,6 +67,25 @@ namespace Albany {
 		    Epetra_MultiVector* gx,
 		    Epetra_MultiVector* gp);
 
+    virtual void 
+    evaluateTangentT(const double alpha, 
+		    const double beta,
+		    const double omega,
+		    const double current_time,
+		    bool sum_derivs,
+		    const Tpetra_Vector* xdot,
+		    const Tpetra_Vector* xdotdot,
+		    const Tpetra_Vector& x,
+		    const Teuchos::Array<ParamVec>& p,
+		    ParamVec* deriv_p,
+		    const Tpetra_MultiVector* Vxdot,
+		    const Tpetra_MultiVector* Vxdotdot,
+		    const Tpetra_MultiVector* Vx,
+		    const Tpetra_MultiVector* Vp,
+		    Tpetra_Vector* g,
+		    Tpetra_MultiVector* gx,
+		    Tpetra_MultiVector* gp);
+
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -70,6 +99,20 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dxdotdot,
 		     Epetra_MultiVector* dg_dp);
+
+    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+    virtual void 
+    evaluateGradientT(const double current_time,
+		     const Tpetra_Vector* xdotT,
+		     const Tpetra_Vector* xdotdotT,
+		     const Tpetra_Vector& xT,
+		     const Teuchos::Array<ParamVec>& p,
+		     ParamVec* deriv_p,
+		     Tpetra_Vector* gT,
+		     Tpetra_MultiVector* dg_dxT,
+		     Tpetra_MultiVector* dg_dxdotT,
+		     Tpetra_MultiVector* dg_dxdotdotT,
+		     Tpetra_MultiVector* dg_dpT);
 
     //! \name Stochastic Galerkin evaluation functions
     //@{

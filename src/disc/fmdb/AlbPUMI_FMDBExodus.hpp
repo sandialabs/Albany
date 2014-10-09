@@ -11,8 +11,6 @@
 #include "Epetra_Comm.h"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
-#include <apfPUMI.h>
-
 namespace AlbPUMI {
 
 class FMDBExodus {
@@ -31,7 +29,8 @@ class FMDBExodus {
     void debugMeshWrite(const char* filename);
 
   private:
-    apf::Mesh2* apfMesh;
+    apf::Mesh2* mesh;
+    apf::StkModels* sets_p;
     std::string outputFileName;
 };
 

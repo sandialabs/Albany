@@ -32,11 +32,25 @@ responseMap() const
   return response->responseMap();
 }
 
+Teuchos::RCP<const Tpetra_Map>
+Albany::KLResponseFunction::
+responseMapT() const
+{
+  return response->responseMapT();
+}
+
 Teuchos::RCP<Epetra_Operator> 
 Albany::KLResponseFunction::
 createGradientOp() const
 {
   return response->createGradientOp();
+}
+
+Teuchos::RCP<Tpetra_Operator> 
+Albany::KLResponseFunction::
+createGradientOpT() const
+{
+  return response->createGradientOpT(); 
 }
 
 bool
@@ -57,6 +71,19 @@ evaluateResponse(const double current_time,
 {
   response->evaluateResponse(current_time, xdot, xdotdot, x, p, g);
 }
+
+void
+Albany::KLResponseFunction::
+evaluateResponseT(const double current_time,
+		 const Tpetra_Vector* xdotT,
+		 const Tpetra_Vector* xdotdotT,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& p,
+		 Tpetra_Vector& gT)
+{
+  response->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, gT);
+} 
+
 
 void
 Albany::KLResponseFunction::
@@ -85,6 +112,31 @@ evaluateTangent(const double alpha,
 
 void
 Albany::KLResponseFunction::
+evaluateTangentT(const double alpha, 
+		const double beta,
+		const double omega,
+		const double current_time,
+		bool sum_derivs,
+		const Tpetra_Vector* xdotT,
+		const Tpetra_Vector* xdotdotT,
+		const Tpetra_Vector& xT,
+		const Teuchos::Array<ParamVec>& p,
+		ParamVec* deriv_p,
+		const Tpetra_MultiVector* VxdotT,
+		const Tpetra_MultiVector* VxdotdotT,
+		const Tpetra_MultiVector* VxT,
+		const Tpetra_MultiVector* VpT,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* gxT,
+		Tpetra_MultiVector* gpT)
+{
+  response->evaluateTangentT(alpha, beta, omega, current_time, sum_derivs, 
+			    xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT,
+			    gT, gxT, gpT);
+}
+
+void
+Albany::KLResponseFunction::
 evaluateDerivative(const double current_time,
 		   const Epetra_Vector* xdot,
 		   const Epetra_Vector* xdotdot,
@@ -99,6 +151,24 @@ evaluateDerivative(const double current_time,
 {
   response->evaluateDerivative(current_time, xdot, xdotdot, x, p, deriv_p, 
 			       g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
+}
+
+void
+Albany::KLResponseFunction::
+evaluateDerivativeT(const double current_time,
+		   const Tpetra_Vector* xdotT,
+		   const Tpetra_Vector* xdotdotT,
+		   const Tpetra_Vector& xT,
+		   const Teuchos::Array<ParamVec>& p,
+		   ParamVec* deriv_p,
+		   Tpetra_Vector* gT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
+		   const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT)
+{
+  response->evaluateDerivativeT(current_time, xdotT, xdotdotT, xT, p, deriv_p, 
+			       gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
 #ifdef ALBANY_SG_MP

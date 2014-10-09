@@ -53,8 +53,9 @@ find_program(CTEST_SVN_COMMAND NAMES svn)
 
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
-SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
+#SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
 #SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+SET(SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
 # Initial cache info
@@ -97,8 +98,13 @@ set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 # Get the SCOREC repo
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC")
-  EXECUTE_PROCESS(COMMAND "${CTEST_SVN_COMMAND}" 
-    checkout ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC
+#  EXECUTE_PROCESS(COMMAND "${CTEST_SVN_COMMAND}" 
+#    checkout ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC
+#    OUTPUT_VARIABLE _out
+#    ERROR_VARIABLE _err
+#    RESULT_VARIABLE HAD_ERROR)
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+    clone ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC
     OUTPUT_VARIABLE _out
     ERROR_VARIABLE _err
     RESULT_VARIABLE HAD_ERROR)
@@ -113,22 +119,22 @@ endif()
 
 # Get Albany
 
-if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
-#  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
-  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
-    clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
-    OUTPUT_VARIABLE _out
-    ERROR_VARIABLE _err
-    RESULT_VARIABLE HAD_ERROR)
-  
-   message(STATUS "out: ${_out}")
-   message(STATUS "err: ${_err}")
-   message(STATUS "res: ${HAD_ERROR}")
-   if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot clone Albany repository!")
-   endif()
-
-endif()
+#if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Albany")
+##  set(CTEST_CHECKOUT_COMMAND "${CTEST_GIT_COMMAND} clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany")
+#  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}" 
+#    clone ${Albany_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Albany
+#    OUTPUT_VARIABLE _out
+#    ERROR_VARIABLE _err
+#    RESULT_VARIABLE HAD_ERROR)
+#  
+#   message(STATUS "out: ${_out}")
+#   message(STATUS "err: ${_err}")
+#   message(STATUS "res: ${HAD_ERROR}")
+#   if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot clone Albany repository!")
+#   endif()
+#
+#endif()
 
 # Get Tpetra branch of Albany
 
@@ -184,7 +190,8 @@ ENDIF()
 SET_PROPERTY (GLOBAL PROPERTY SubProject SCOREC)
 SET_PROPERTY (GLOBAL PROPERTY Label SCOREC)
 
-set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
+#set(CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/publicTrilinos/SCOREC" RETURN_VALUE count)
 message("Found ${count} changed files")
 
@@ -199,22 +206,22 @@ endif()
 ENDIF()
 
 # Update Albany
-SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
-SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
-
-set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
-message("Found ${count} changed files")
-
-IF(CTEST_DO_SUBMIT)
-CTEST_SUBMIT(PARTS Update
-          RETURN_VALUE  HAD_ERROR
-            )
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot update Albany!")
-endif()
-ENDIF()
+#SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
+#SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+#
+#set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+#CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
+#message("Found ${count} changed files")
+#
+#IF(CTEST_DO_SUBMIT)
+#CTEST_SUBMIT(PARTS Update
+#          RETURN_VALUE  HAD_ERROR
+#            )
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot update Albany!")
+#endif()
+#ENDIF()
 
 # Update Albany Tpetra branch
 SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanyTpetraBranch)
@@ -375,85 +382,85 @@ file(WRITE ${CTEST_BINARY_DIRECTORY}/makeinstall.log
 
 # Configure the Albany build
 
-SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
-SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
-
-SET(CONFIGURE_OPTIONS
-  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-  "-DENABLE_LCM:BOOL=ON"
-  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
-  "-DENABLE_HYDRIDE:BOOL=ON"
-  "-DENABLE_SCOREC:BOOL=ON"
-  "-DENABLE_SG_MP:BOOL=ON"
-  )
-
-if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
-  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
-endif()
-
-CTEST_CONFIGURE(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
-          OPTIONS "${CONFIGURE_OPTIONS}"
-          RETURN_VALUE HAD_ERROR
-          APPEND
-)
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany build!")
-endif()
-
-IF(CTEST_DO_SUBMIT)
-CTEST_SUBMIT(PARTS Configure
-          RETURN_VALUE  HAD_ERROR
-            )
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot submit Albany configure results!")
-endif()
-ENDIF()
-
-# Build Albany
-
-CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-          RETURN_VALUE  HAD_ERROR
-          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-          APPEND
-)
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
-endif()
-
-IF(CTEST_DO_SUBMIT)
-CTEST_SUBMIT(PARTS Build
-          RETURN_VALUE  HAD_ERROR
-            )
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot submit Albany build results!")
-endif()
-ENDIF()
-
-# Run Albany tests
-
-CTEST_TEST(
-              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
-#              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-#              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-              #NUMBER_FAILED  TEST_NUM_FAILED
-)
-
-IF(CTEST_DO_SUBMIT)
-CTEST_SUBMIT(PARTS Test
-          RETURN_VALUE  HAD_ERROR
-            )
-
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot submit Albany test results!")
-endif()
-ENDIF()
+#SET_PROPERTY (GLOBAL PROPERTY SubProject AlbanySrc)
+#SET_PROPERTY (GLOBAL PROPERTY Label AlbanySrc)
+#
+#SET(CONFIGURE_OPTIONS
+#  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+#  "-DENABLE_LCM:BOOL=ON"
+#  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+#  "-DENABLE_HYDRIDE:BOOL=ON"
+#  "-DENABLE_SCOREC:BOOL=ON"
+#  "-DENABLE_SG_MP:BOOL=ON"
+#  )
+#
+#if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
+#  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
+#endif()
+#
+#CTEST_CONFIGURE(
+#          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+#          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+#          OPTIONS "${CONFIGURE_OPTIONS}"
+#          RETURN_VALUE HAD_ERROR
+#          APPEND
+#)
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot configure Albany build!")
+#endif()
+#
+#IF(CTEST_DO_SUBMIT)
+#CTEST_SUBMIT(PARTS Configure
+#          RETURN_VALUE  HAD_ERROR
+#            )
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot submit Albany configure results!")
+#endif()
+#ENDIF()
+#
+## Build Albany
+#
+#CTEST_BUILD(
+#          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+#          RETURN_VALUE  HAD_ERROR
+#          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+#          APPEND
+#)
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot build Albany!")
+#endif()
+#
+#IF(CTEST_DO_SUBMIT)
+#CTEST_SUBMIT(PARTS Build
+#          RETURN_VALUE  HAD_ERROR
+#            )
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot submit Albany build results!")
+#endif()
+#ENDIF()
+#
+## Run Albany tests
+#
+#CTEST_TEST(
+#              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+##              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+##              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+#              #NUMBER_FAILED  TEST_NUM_FAILED
+#)
+#
+#IF(CTEST_DO_SUBMIT)
+#CTEST_SUBMIT(PARTS Test
+#          RETURN_VALUE  HAD_ERROR
+#            )
+#
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Cannot submit Albany test results!")
+#endif()
+#ENDIF()
 
 # Configure the Albany Tpetra branch build
 

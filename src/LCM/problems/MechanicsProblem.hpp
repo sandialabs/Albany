@@ -441,6 +441,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if ( material_model_name == "Linear Elastic" ) {
     small_strain = true;
   }
+   
+  if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
+    small_strain = true;
+   }
 
   if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
     small_strain = true;
@@ -1426,7 +1430,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new LCM::SurfaceScalarGradientOperator<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-
     {
       if (have_mech_eq_) { // Surface Residual
         // SurfaceVectorResidual_Def.hpp
@@ -1602,6 +1605,34 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       ev = rcp(new LCM::MechanicsResidual<EvalT, AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
+  }
+  
+  
+  if (have_mech_eq_) {
+    // convert Cauchy stress to first Piola-Kirchhoff
+    RCP<ParameterList> p = rcp(new ParameterList("First PK Stress"));
+    //Input
+    p->set<std::string>("Stress Name", cauchy);
+    p->set<std::string>("DefGrad Name", defgrad);
+
+    // Effective stress theory for poromechanics problem
+    if (have_pore_pressure_eq_) {
+      p->set<bool>("Have Pore Pressure", true);
+      p->set<std::string>("Pore Pressure Name", porePressure);
+      p->set<std::string>("Biot Coefficient Name", biotCoeff);
+    }
+
+    if (small_strain) {
+      p->set<bool>("Small Strain", true);
+    }
+      
+    //Output
+    p->set<std::string>("First PK Stress Name", firstPK);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+
+    ev = rcp(new LCM::FirstPK<EvalT, AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
 

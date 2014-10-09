@@ -27,6 +27,7 @@
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
 #include "AAdapt_AdaptiveSolutionManager.hpp"
+#include "AAdapt_AdaptiveSolutionManagerT.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -65,10 +66,10 @@ namespace Albany {
     enum SolutionMethod {Steady, Transient, Continuation, Eigensolve};
 
     //! Constructor
-    Application(const Teuchos::RCP<const Epetra_Comm>& comm,
-                const Teuchos::RCP<Teuchos::ParameterList>& params,
-                const Teuchos::RCP<const Epetra_Vector>& initial_guess =
-                Teuchos::null);
+    Application(const Teuchos::RCP<const Teuchos_Comm>& comm,
+		const Teuchos::RCP<Teuchos::ParameterList>& params,
+		const Teuchos::RCP<const Tpetra_Vector>& initial_guess =
+		Teuchos::null);
 
     //! Destructor
     ~Application();
@@ -85,14 +86,32 @@ namespace Albany {
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
 
+    //! Get Tpetra DOF map
+    Teuchos::RCP<const Tpetra_Map> getMapT() const;
+
     //! Get Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+
+    //! Get Tpetra Jacobian graph
+    Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
     //! Get Preconditioner Operator
     Teuchos::RCP<Epetra_Operator> getPreconditioner();
 
+    //! Get initial solution
+    Teuchos::RCP<const Epetra_Vector> getInitialSolution() const;
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
+
+    //! Get Tpetra initial solution
+//    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
+
+    //! Get initial solution dot
+    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
+    Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
+
     //! Get the solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> getAdaptSolMgrT(){ return solMgrT;}
 
     //! Get parameter library
     Teuchos::RCP<ParamLib> getParamLib();
@@ -136,6 +155,24 @@ namespace Albany {
                                const Teuchos::Array<ParamVec>& p,
                                Epetra_Vector& f);
 
+     void computeGlobalResidualT(const double current_time,
+                               const Tpetra_Vector* xdotT,
+                               const Tpetra_Vector* xdotdotT,
+                               const Tpetra_Vector& xT,
+                               const Teuchos::Array<ParamVec>& p,
+                               Tpetra_Vector& fT);
+
+  private:
+
+     void computeGlobalResidualImplT(const double current_time,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                     const Teuchos::Array<ParamVec>& p,
+                                     const Teuchos::RCP<Tpetra_Vector>& fT);
+
+  public:
+
     //! Compute global Jacobian
     /*!
      * Set xdot to NULL for steady-state problems
@@ -150,6 +187,32 @@ namespace Albany {
                                const Teuchos::Array<ParamVec>& p,
                                Epetra_Vector* f,
                                Epetra_CrsMatrix& jac);
+
+     void computeGlobalJacobianT(const double alpha,
+                                 const double beta,
+			         const double omega,
+                                 const double current_time,
+                                 const Tpetra_Vector* xdotT,
+                                 const Tpetra_Vector* xdotdotT,
+                                 const Tpetra_Vector& xT,
+                                 const Teuchos::Array<ParamVec>& p,
+                                 Tpetra_Vector* fT,
+                                 Tpetra_CrsMatrix& jacT);
+
+  private:
+
+     void computeGlobalJacobianImplT(const double alpha,
+                                     const double beta,
+                                     const double omega,
+                                     const double current_time,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                                     const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                     const Teuchos::Array<ParamVec>& p,
+                                     const Teuchos::RCP<Tpetra_Vector>& fT,
+                                     const Teuchos::RCP<Tpetra_CrsMatrix>& jacT);
+
+  public:
 
     //! Compute global Preconditioner
     /*!
@@ -180,6 +243,24 @@ namespace Albany {
                               Epetra_MultiVector* JV,
                               Epetra_MultiVector* fp);
 
+     void computeGlobalTangentT(const double alpha,
+                              const double beta,
+			      const double omega,
+                              const double current_time,
+                              bool sum_derivs,
+                              const Tpetra_Vector* xdotT,
+                              const Tpetra_Vector* xdotdotT,
+                              const Tpetra_Vector& xT,
+                              const Teuchos::Array<ParamVec>& p,
+                              ParamVec* deriv_p,
+                              const Tpetra_MultiVector* VxT,
+                              const Tpetra_MultiVector* VxdotT,
+                              const Tpetra_MultiVector* VxdotdotT,
+                              const Tpetra_MultiVector* VpT,
+                              Tpetra_Vector* fT,
+                              Tpetra_MultiVector* JVT,
+                              Tpetra_MultiVector* fpT);
+
     //! Compute df/dp*V or (df/dp)^T*V for distributed parameter p
     /*!
      * Set xdot to NULL for steady-state problems
@@ -193,6 +274,53 @@ namespace Albany {
                                    const bool trans,
                                    const Epetra_MultiVector& V,
                                    Epetra_MultiVector& fpV);
+    
+    //IK, 6/27/14: Tpetra version of above function: needs to be implemented!
+    void applyGlobalDistParamDerivT(const double current_time,
+                                   const Tpetra_Vector* xdotT,
+                                   const Tpetra_Vector* xdotdotT,
+                                   const Tpetra_Vector& xT,
+                                   const Teuchos::Array<ParamVec>& p,
+                                   const std::string& dist_param_name,
+                                   const bool trans,
+                                   const Tpetra_MultiVector& VT,
+                                   Tpetra_MultiVector& fpVT);
+
+
+
+  private:
+
+     void computeGlobalTangentImplT(const double alpha,
+                                    const double beta,
+                                    const double omega,
+                                    const double current_time,
+                                    bool sum_derivs,
+                                    const Teuchos::RCP<const Tpetra_Vector>& xdotT,
+                                    const Teuchos::RCP<const Tpetra_Vector>& xdotdotT,
+                                    const Teuchos::RCP<const Tpetra_Vector>& xT,
+                                    const Teuchos::Array<ParamVec>& par,
+                                    ParamVec* deriv_par,
+                                    const Teuchos::RCP<const Tpetra_MultiVector>& VxT,
+                                    const Teuchos::RCP<const Tpetra_MultiVector>& VxdotT,
+                                    const Teuchos::RCP<const Tpetra_MultiVector>& VxdotdotT,
+                                    const Teuchos::RCP<const Tpetra_MultiVector>& VpT,
+                                    const Teuchos::RCP<Tpetra_Vector>& fT,
+                                    const Teuchos::RCP<Tpetra_MultiVector>& JVT,
+                                    const Teuchos::RCP<Tpetra_MultiVector>& fpT);
+    
+    //IK, 6/27/14: added the following function for Tpetra Albany branch
+    void applyGlobalDistParamDerivImplT(const double current_time,
+                                   const Teuchos::RCP<const Tpetra_Vector> &xdotT,
+                                   const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
+                                   const Teuchos::RCP<const Tpetra_Vector> &xT,
+                                   const Teuchos::Array<ParamVec>& p,
+                                   const std::string& dist_param_name,
+                                   const bool trans,
+                                   const Teuchos::RCP<const Tpetra_MultiVector>& VT,
+                                   const Teuchos::RCP<Tpetra_MultiVector>& fpVT);
+    
+
+  public:
 
     //! Evaluate response functions
     /*!
@@ -206,6 +334,15 @@ namespace Albany {
       const Epetra_Vector& x,
       const Teuchos::Array<ParamVec>& p,
       Epetra_Vector& g);
+
+    void evaluateResponseT(
+      int response_index,
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      Tpetra_Vector& gT);
 
     //! Evaluate tangent = alpha*dg/dx*Vx + beta*dg/dxdot*Vxdot + dg/dp*Vp
     /*!
@@ -231,6 +368,26 @@ namespace Albany {
       Epetra_MultiVector* gx,
       Epetra_MultiVector* gp);
 
+    void evaluateResponseTangentT(
+      int response_index,
+      const double alpha,
+      const double beta,
+      const double omega,
+      const double current_time,
+      bool sum_derivs,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      const Tpetra_MultiVector* VxdotT,
+      const Tpetra_MultiVector* VxdotdotT,
+      const Tpetra_MultiVector* VxT,
+      const Tpetra_MultiVector* VpT,
+      Tpetra_Vector* gT,
+      Tpetra_MultiVector* gxT,
+      Tpetra_MultiVector* gpT);
+
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
@@ -248,6 +405,20 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+
+    void evaluateResponseDerivativeT(
+      int response_index,
+      const double current_time,
+      const Tpetra_Vector* xdotT,
+      const Tpetra_Vector* xdotdotT,
+      const Tpetra_Vector& xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Tpetra_Vector* gT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
+      const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT);
 
 #ifdef ALBANY_SG_MP
     //! Compute global residual for stochastic Galerkin problem
@@ -503,9 +674,30 @@ namespace Albany {
                                    const Epetra_Vector* xdotdot,
                                    const Epetra_Vector& x);
 
+    //! Evaluate state field manager
+    void evaluateStateFieldManagerT(
+        const double current_time,
+        Teuchos::Ptr<const Tpetra_Vector> xdot,
+        Teuchos::Ptr<const Tpetra_Vector> xdotdot,
+        const Tpetra_Vector& x);
+
     //! Access to number of worksets - needed for working with StateManager
     int getNumWorksets() {
         return disc->getWsElNodeEqID().size();
+    }
+
+    //! Access to problem parameter list
+    Teuchos::RCP<Teuchos::ParameterList> getProblemPL() {
+        return problemParams;
+    }
+
+    //! Accessor function to Epetra_Import the solution from other PEs for output
+    Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
+      return solMgr->getOverlapSolution(solution);
+    }
+
+    Teuchos::RCP<Tpetra_Vector> getOverlapSolutionT(const Tpetra_Vector& solutionT) {
+      return solMgrT->getOverlapSolutionT(solutionT);
     }
 
     bool is_adjoint;
@@ -535,8 +727,11 @@ namespace Albany {
     template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
-    //! Routine to load some basic workset info needed by many Evaluation types
     void loadBasicWorksetInfo(
+            PHAL::Workset& workset,
+            double current_time);
+
+    void loadBasicWorksetInfoT(
             PHAL::Workset& workset,
             double current_time);
 
@@ -555,6 +750,14 @@ namespace Albany {
       const Epetra_Vector* xdot,
       const Epetra_Vector* xdotdot,
       const Epetra_Vector* x,
+      const Teuchos::Array<ParamVec>& p);
+
+    void setupBasicWorksetInfoT(
+      PHAL::Workset& workset,
+      double current_time,
+      Teuchos::RCP<const Tpetra_Vector> xdot,
+      Teuchos::RCP<const Tpetra_Vector> xdotdot,
+      Teuchos::RCP<const Tpetra_Vector> x,
       const Teuchos::Array<ParamVec>& p);
 
 #ifdef ALBANY_SG_MP
@@ -592,6 +795,20 @@ namespace Albany {
       const Epetra_MultiVector* Vxdotdot,
       const Epetra_MultiVector* Vx,
       const Epetra_MultiVector* Vp);
+
+    void setupTangentWorksetInfoT(
+      PHAL::Workset& workset,
+      double current_time,
+      bool sum_derivs,
+      Teuchos::RCP<const Tpetra_Vector> xdotT,
+      Teuchos::RCP<const Tpetra_Vector> xdotdotT,
+      Teuchos::RCP<const Tpetra_Vector> xT,
+      const Teuchos::Array<ParamVec>& p,
+      ParamVec* deriv_p,
+      Teuchos::RCP<const Tpetra_MultiVector> VxdotT,
+      Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT,
+      Teuchos::RCP<const Tpetra_MultiVector> VxT,
+      Teuchos::RCP<const Tpetra_MultiVector> VpT);
 
 #ifdef ALBANY_SG_MP
     void setupTangentWorksetInfo(
@@ -638,6 +855,10 @@ namespace Albany {
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
+    //! Tpetra communicator and Kokkos node
+    Teuchos::RCP<const Teuchos_Comm> commT;
+    Teuchos::RCP<KokkosNode> nodeT;
+
     //! Output stream, defaults to pronting just Proc 0
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -655,6 +876,9 @@ namespace Albany {
 
     //! Solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
+
+    //! Solution memory manager
+    Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> solMgrT;
 
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
@@ -715,6 +939,9 @@ namespace Albany {
     //! Data for Physics-Based Preconditioners
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
+
+    //! Problem parameters
+    Teuchos::RCP<Teuchos::ParameterList> problemParams;
 
     //! Type of solution method
     SolutionMethod solMethod;

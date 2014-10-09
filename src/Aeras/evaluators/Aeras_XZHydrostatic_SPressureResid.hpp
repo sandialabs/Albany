@@ -48,16 +48,11 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> sp;
-  PHX::MDField<ScalarT,Cell,QuadPoint> eta;
   PHX::MDField<ScalarT,Cell,QuadPoint> spDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradpivelx;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;
-
-  double P0;
-  double Ptop;
-  double Etatop;
 
   const int numNodes;
   const int numQPs;

@@ -69,7 +69,7 @@ namespace Albany {
     //! Create operator form of dg/dx_dot for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_dot_op(int j) const;
     Teuchos::RCP<Epetra_Operator> create_DgDx_dotdot_op(int j) const;
-
+    
     //! Create InArgs
     InArgs createInArgs() const;
 

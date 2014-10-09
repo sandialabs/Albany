@@ -18,8 +18,6 @@
 #include "LCM/evaluators/SetField.hpp"
 #include <Intrepid_MiniTensor.h>
 
-using namespace std;
-
 namespace {
 
 TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
@@ -50,7 +48,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
   // SetField evaluator, which will be used to manually assign a value to the DefGrad field
   Teuchos::ParameterList setFieldParameterList("SetField");
-  setFieldParameterList.set<string>("Evaluated Field Name", "Deformation Gradient");
+  setFieldParameterList.set<std::string>("Evaluated Field Name", "Deformation Gradient");
   setFieldParameterList.set< Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", qp_tensor);
   setFieldParameterList.set< Teuchos::ArrayRCP<PHAL::AlbanyTraits::Residual::ScalarT> >("Field Values", tensorValue);
   Teuchos::RCP<LCM::SetField<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits> > setField = 
@@ -58,11 +56,11 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
   // LameStress evaluator
   Teuchos::RCP<Teuchos::ParameterList> lameStressParameterList = Teuchos::rcp(new Teuchos::ParameterList("Stress"));
-  lameStressParameterList->set<string>("DefGrad Name", "Deformation Gradient");
-  lameStressParameterList->set<string>("Stress Name", "Stress");
+  lameStressParameterList->set<std::string>("DefGrad Name", "Deformation Gradient");
+  lameStressParameterList->set<std::string>("Stress Name", "Stress");
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout", qp_scalar);
   lameStressParameterList->set< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout", qp_tensor);
-  lameStressParameterList->set<string>("Lame Material Model", "Elastic_New");
+  lameStressParameterList->set<std::string>("Lame Material Model", "Elastic_New");
   Teuchos::ParameterList& materialModelParametersList = lameStressParameterList->sublist("Lame Material Parameters");
   materialModelParametersList.set<double>("Youngs Modulus", 1.0);
   materialModelParametersList.set<double>("Poissons Ratio", 0.25);
@@ -90,7 +88,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   stateMgr.registerStateVariable("Stress", qp_tensor, "dummy", "scalar", 0.0, true);
   stateMgr.registerStateVariable("Deformation Gradient", qp_tensor, "dummy", "identity", 1.0, true);
   // Add material-model specific state variables
-  string lameMaterialModelName = lameStressParameterList->get<string>("Lame Material Model");
+  std::string lameMaterialModelName = lameStressParameterList->get<std::string>("Lame Material Model");
   std::vector<std::string> lameMaterialModelStateVariableNames = LameUtils::getStateVariableNames(lameMaterialModelName, materialModelParametersList);
   std::vector<double> lameMaterialModelStateVariableInitialValues = LameUtils::getStateVariableInitialValues(lameMaterialModelName, materialModelParametersList);
   for(unsigned int i=0 ; i<lameMaterialModelStateVariableNames.size() ; ++i){
@@ -107,8 +105,8 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   discretizationParameterList->set<int>("1D Elements", worksetSize);
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
-  discretizationParameterList->set<string>("Method", "STK3D");
-  discretizationParameterList->set<string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
+  discretizationParameterList->set<std::string>("Method", "STK3D");
+  discretizationParameterList->set<std::string>("Exodus Output File Name", "unitTestOutput.exo"); // Is this required?
   Teuchos::RCP<Epetra_Comm> comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   int numberOfEquations = 3;
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
@@ -161,29 +159,29 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
   for(size_type cell=0; cell<worksetSize; ++cell){
     for(size_type qp=0; qp<numQPts; ++qp){
 
-      std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << endl;
+      std::cout << "Stress tensor at cell " << cell << ", quadrature point " << qp << ":" << std::endl;
       std::cout << "  " << stressField(cell, qp, 0, 0);
       std::cout << "  " << stressField(cell, qp, 0, 1);
-      std::cout << "  " << stressField(cell, qp, 0, 2) << endl;
+      std::cout << "  " << stressField(cell, qp, 0, 2) << std::endl;
       std::cout << "  " << stressField(cell, qp, 1, 0);
       std::cout << "  " << stressField(cell, qp, 1, 1);
-      std::cout << "  " << stressField(cell, qp, 1, 2) << endl;
+      std::cout << "  " << stressField(cell, qp, 1, 2) << std::endl;
       std::cout << "  " << stressField(cell, qp, 2, 0);
       std::cout << "  " << stressField(cell, qp, 2, 1);
-      std::cout << "  " << stressField(cell, qp, 2, 2) << endl;
+      std::cout << "  " << stressField(cell, qp, 2, 2) << std::endl;
 
-      std::cout << "Expected result:" << endl;
+      std::cout << "Expected result:" << std::endl;
       std::cout << "  " << expectedStress(0, 0);
       std::cout << "  " << expectedStress(0, 1);
-      std::cout << "  " << expectedStress(0, 2) << endl;
+      std::cout << "  " << expectedStress(0, 2) << std::endl;
       std::cout << "  " << expectedStress(1, 0);
       std::cout << "  " << expectedStress(1, 1);
-      std::cout << "  " << expectedStress(1, 2) << endl;
+      std::cout << "  " << expectedStress(1, 2) << std::endl;
       std::cout << "  " << expectedStress(2, 0);
       std::cout << "  " << expectedStress(2, 1);
-      std::cout << "  " << expectedStress(2, 2) << endl;
+      std::cout << "  " << expectedStress(2, 2) << std::endl;
 
-      std::cout << endl;
+      std::cout << std::endl;
 
       double tolerance = 1.0e-15;
       for(size_type i=0 ; i<numDim ; ++i){
@@ -194,7 +192,7 @@ TEUCHOS_UNIT_TEST( LameStress_elastic, Instantiation )
 
     }
   }
-  std::cout << endl;
+  std::cout << std::endl;
 
 }
 

@@ -7,9 +7,7 @@
 # SCOREC FMDB
 
 IF(ALBANY_SCOREC)
-
   add_subdirectory(fmdb)
-
 ENDIF()
 
 if(ALBANY_CATALYST)

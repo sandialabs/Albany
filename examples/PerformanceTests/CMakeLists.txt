@@ -9,10 +9,11 @@ execute_process(COMMAND hostname -s COMMAND tr -d '\n' OUTPUT_VARIABLE machineNa
 message("-- Performance Test Machine Name = " ${machineName})
 
 # Set test command that cmake will run, in subdirectories
-set(performanceTestScript  
+set(performanceTestScript
     python ${CMAKE_CURRENT_SOURCE_DIR}/perfScript.py
      -machine ${machineName}
-     -executable "${AlbanyPath}")
+     -executable "${Albany_BINARY_DIR}/src")
+#     -executable "${AlbanyPath}")
 
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat2D)

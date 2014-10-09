@@ -16,7 +16,9 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
-#include "Albany_DistributedParameterLibrary_Epetra.hpp"
+//IK, 6/27/14: changed the following to use Tpetra
+//#include "Albany_DistributedParameterLibrary_Epetra.hpp"
+#include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid_FieldContainer.hpp>
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
@@ -29,7 +31,9 @@
 #include "Teuchos_Comm.hpp"
 #include "Epetra_Import.h"
 
-typedef Albany::DistributedParameterLibrary<Epetra_Vector, Epetra_MultiVector> DistParamLib;
+//IK, 6/27/14: changed the following to use Tpetra 
+//typedef Albany::DistributedParameterLibrary<Epetra_Vector, Epetra_MultiVector> DistParamLib;
+typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector> DistParamLib;
 
 namespace PHAL {
 
@@ -49,11 +53,21 @@ struct Workset {
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
   Teuchos::RCP<const Epetra_Vector> xdotdot;
+  //Tpetra analogs of x and xdot
+  Teuchos::RCP<const Tpetra_Vector> xT;
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+  Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+  
   Teuchos::RCP<ParamVec> params;
   Teuchos::RCP<const Epetra_MultiVector> Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
   Teuchos::RCP<const Epetra_MultiVector> Vxdotdot;
   Teuchos::RCP<const Epetra_MultiVector> Vp;
+  //Tpetra analogs of Vx, Vxdot, Vxdotdot and Vp
+  Teuchos::RCP<const Tpetra_MultiVector> VxT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
+  Teuchos::RCP<const Tpetra_MultiVector> VpT;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
 
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
@@ -64,11 +78,25 @@ struct Workset {
 
   // These are residual related.
   Teuchos::RCP<Epetra_Vector> f;
+  //Tpetra analog of f
+  Teuchos::RCP<Tpetra_Vector> fT;
+ 
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
+  //Tpetra analog of Jac
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT;
+
   Teuchos::RCP<Epetra_MultiVector> JV;
   Teuchos::RCP<Epetra_MultiVector> fp;
+  //Tpetra analogs of JV and fp
+  Teuchos::RCP<Tpetra_MultiVector> JVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT;
+
   Teuchos::RCP<Epetra_MultiVector> fpV;
   Teuchos::RCP<Epetra_MultiVector> Vp_bc;
+  //Tpetra analogs of fpV and Vp_bc
+  Teuchos::RCP<Tpetra_MultiVector> fpVT;
+  Teuchos::RCP<Tpetra_MultiVector> Vp_bcT;
+
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
@@ -145,14 +173,27 @@ struct Workset {
   // New field manager response stuff
   Teuchos::RCP<const Teuchos::Comm<int> > comm;
   Teuchos::RCP<const Epetra_Import> x_importer;
+  Teuchos::RCP<const Tpetra_Import> x_importerT;
   Teuchos::RCP<Epetra_Vector> g;
+  //Tpetra analog of g
+  Teuchos::RCP<Tpetra_Vector> gT;
   Teuchos::RCP<Epetra_MultiVector> dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> dgdxdotdot;
+  //Tpetra analogs of dgdx and dgdxdot 
+  Teuchos::RCP<Tpetra_MultiVector> dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> dgdxdotdotT;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdotdot;
+  //Tpetra analogs of overlapped_dgdx and overlapped_dgdxdot
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT;
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotdotT;
   Teuchos::RCP<Epetra_MultiVector> dgdp;
+  //Tpetra analog of dgdp
+  Teuchos::RCP<Tpetra_MultiVector> dgdpT;
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;

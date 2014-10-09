@@ -95,34 +95,28 @@
                 </ParameterList>
               </ParameterList>
 <!-- Preconditioner -->
-              <Parameter name="Preconditioner Type" type="string" value="ML"/>
+              <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
               <ParameterList name="Preconditioner Types">
 <!-- Ifpack -->
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
                   <Parameter name="Overlap" type="int" value="1"/>
-                  <Parameter name="Prec Type" type="string" value="ILU"/>
-                  <ParameterList name="Ifpack Settings">
+                  <Parameter name="Prec Type" type="string" value="ILUT"/>
+                  <ParameterList name="Ifpack2 Settings">
                     <Parameter name="fact: drop tolerance" type="double" value="0"/>
                     <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
                     <Parameter name="fact: level-of-fill" type="int" value="1"/>
                   </ParameterList>
                 </ParameterList>
 <!-- ML -->
-                <ParameterList name="ML">
-                  <Parameter name="Base Method Defaults" type="string"
-                             value="none"/>
-                  <ParameterList name="ML Settings">
-                    <Parameter name="default values" type="string" value="SA"/>
-                    <Parameter name="smoother: type" type="string"
-                               value="ML symmetric Gauss-Seidel"/>
+                <ParameterList name="MueLu">
+                    <Parameter name="multigrid algorithm" type="string" value="sa"/>
                     <Parameter name="smoother: pre or post" type="string"
                                value="both"/>
                     <Parameter name="coarse: type" type="string"
                                value="Amesos-KLU"/>
-                    <Parameter name="PDE equations" type="int"
+                    <Parameter name="number of equations" type="int"
                                value="3"/>
                   </ParameterList>
-                </ParameterList>
 
               </ParameterList>
             </ParameterList>

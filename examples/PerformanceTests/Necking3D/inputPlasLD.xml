@@ -45,9 +45,8 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
-    <Parameter name="Call serial global partition" type="bool" value="true"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="eighth_bar_hole_mmodel.dmg"/>
-    <Parameter name="FMDB Input File Name" type="string" value="eighth_bar_hole_fmdb_14k.sms"/>
+    <Parameter name="FMDB Input File Name" type="string" value="eighth_bar_hole_4_.smb"/>
     <Parameter name="FMDB Output File Name" type="string" value="eighth_bar_hole_output.exo"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>

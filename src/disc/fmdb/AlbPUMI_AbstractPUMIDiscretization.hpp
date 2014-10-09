@@ -21,7 +21,9 @@ namespace AlbPUMI {
     // Retrieve mesh struct
     virtual Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() = 0;
 
-    virtual void attachQPData() = 0; 
+    virtual apf::GlobalNumbering* getAPFGlobalNumbering() = 0;
+
+    virtual void attachQPData() = 0;
     virtual void detachQPData() = 0;
 
     // After mesh modification, need to update the element connectivity and nodal coordinates

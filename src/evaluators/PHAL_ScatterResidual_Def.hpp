@@ -102,43 +102,27 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-//   for (std::size_t cell=0; cell < workset.numCells; ++cell )
-//    for (std::size_t node = 0; node < this->numNodes; ++node)
-//      for (std::size_t eq = 0; eq < numFields; eq++)
-//           std::cout << (this->valVec[0])(cell,node,eq)<<std::endl;
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
-//   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-//      const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-//      for (std::size_t node = 0; node < this->numNodes; ++node)
-//        for (std::size_t eq = 0; eq < numFields; eq++)
-//        (*f)[nodeID[node][this->offset + eq]] =0.0;
-//    }
+  //get nonconst (read and write) view of fT
+  Teuchos::ArrayRCP<ST> f_nonconstView = fT->get1dViewNonConst();
 
   if (this->vectorField) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-       (*f)[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
-    }
+          f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
+    } 
   } else {
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     for (std::size_t node = 0; node < this->numNodes; ++node)
       for (std::size_t eq = 0; eq < numFields; eq++)
-        (*f)[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
-    }
+          f_nonconstView[nodeID[node][this->offset + eq]] += (this->val[eq])(cell,node);
+    } 
   }
   
- //for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
- // const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
- //for (std::size_t node = 0; node < this->numNodes; ++node)
- //     for (std::size_t eq = 0; eq < numFields; eq++)
- //         std::cout <<(*f)[nodeID[node][this->offset + eq]]<< "    " << (this->valVec[0])(cell,node,eq)<<std::endl;
- //}
- //Irina debug
-// std::cout << "end" <<std::endl<< workset.wsElNodeEqID[30][3][3] <<"    "<< (*f)[workset.wsElNodeEqID[30][3][3]] <<std::endl; 
 }
 
 // **********************************************************************
@@ -159,86 +143,58 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> Jac = workset.Jac;
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
-  bool loadResid = (f != Teuchos::null);
-  int row;
-  std::vector<int> col;
+  ScalarT *valptr;
 
-  int neq = workset.wsElNodeEqID[0][0].size();
-  int nunk = neq*this->numNodes;
-  col.resize(nunk);
 
-//for (std::size_t cell=0; cell < workset.numCells; ++cell )
-//    for (std::size_t node = 0; node < this->numNodes; ++node)
-//      for (std::size_t eq = 0; eq < numFields; eq++)
-//           std::cout << (this->valVec[0])(cell,node,eq)<<std::endl;
+  bool loadResid = Teuchos::nonnull(fT);
+  LO rowT;
+  Teuchos::Array<LO> colT;
 
-// valVec_temp = Kokkos::View <ScalarT*, PHX::Device> ("valVec_temp",30);
-//  Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > valVec_temp("valVec_temp",30,1,1);
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    int neq = nodeID[0].size();
+    int nunk = neq*this->numNodes;
+    colT.resize(nunk);
 
-/* ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
+    // Local Unks: Loop over nodes in element, Loop over equations per node
 
- for (int cell=0; cell < workset.numCells; ++cell ) 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++)
-   for (std::size_t eq = 0; eq < numFields; eq++)
-     valVec_temp[cell][node_col][eq]=(this->valVec[0])(cell,node_col,eq);
-*/
-  for (int cell=0; cell < workset.numCells; ++cell ) {
-     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-      // Local Unks: Loop over nodes in element, Loop over equations per node
-      
-      for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
-         for (int eq_col=0; eq_col<neq; eq_col++) {
-            col[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+      }
+    }
+
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->vectorField) valptr = &((this->valVec[0])(cell,node,eq));
+          else                   valptr = &(this->val[eq])(cell,node);
+
+        rowT = nodeID[node][this->offset + eq];
+        if (loadResid) {
+          fT->sumIntoLocalValue(rowT, valptr->val());
+        }
+
+        // Check derivative array is nonzero
+        if (valptr->hasFastAccess()) {
+
+          if (workset.is_adjoint) {
+            // Sum Jacobian transposed
+            for (unsigned int lunk=0; lunk<nunk; lunk++)
+              JacT->sumIntoLocalValues(colT[lunk], Teuchos::arrayView(&rowT, 1), Teuchos::arrayView(&(valptr->fastAccessDx(lunk)), 1));
           }
-       }
-
-  //Irina Debug
-  //Kokkos::deep_copy(valVec_temp, (this->valVec[0]).get_kokkos_view());
-       for (std::size_t node = 0; node < this->numNodes; ++node) {
-          for (std::size_t eq = 0; eq < numFields; eq++) {
-            row = nodeID[node][this->offset + eq];
-            if (this->vectorField){
-            
-               if (loadResid) {
-                   f->SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val());
-                }
-                if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
-                   if (workset.is_adjoint) {
-                      for (unsigned int lunk=0; lunk<nunk; lunk++){
-                      //  Jac->SumIntoMyValues(col[lunk], 1, &((valVec_temp[cell][node][eq]).fastAccessDx(lunk)), &row);
-                         Jac->SumIntoMyValues(col[lunk], 1, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk)), &row);}
-                   }
-                   else{
-                     //  Jac->SumIntoMyValues(row, nunk, &((valVec_temp[cell][node][eq]).fastAccessDx(0)), &col[0]);
-                      Jac->SumIntoMyValues(row, nunk, &(((this->valVec[0])(cell,node,eq)).fastAccessDx(0)), &col[0]);
-                   }
-                 }
-            }
-   
-            else{ 
-               if (loadResid) {
-                   f->SumIntoMyValue(row, 0, ((this->val[eq])(cell,node)).val());
-                }
-                if (((this->val[eq])(cell,node)).hasFastAccess()) {
-                   if (workset.is_adjoint) {
-                      for (unsigned int lunk=0; lunk<nunk; lunk++)
-                          Jac->SumIntoMyValues(col[lunk], 1, &(((this->val[eq])(cell,node)).fastAccessDx(lunk)), &row);
-                   }
-                   else{
-                      Jac->SumIntoMyValues(row, nunk, &(((this->val[eq])(cell,node)).fastAccessDx(0)), &col[0]);
-                   }
-                 }
-            }
-
-          } //end qq
-       }//end node
- 
-  }//end for cell
-
-// std::cout <<Jac<<std::endl;
+          else {
+            // Sum Jacobian entries all at once
+            JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr->fastAccessDx(0)), nunk));
+          }
+        } // has fast access
+      }
+    }
+  }
+>>>>>>> tpetra
 }
 
 // **********************************************************************
@@ -259,65 +215,34 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_Vector> f = workset.f;
-  Teuchos::RCP<Epetra_MultiVector> JV = workset.JV;
-  Teuchos::RCP<Epetra_MultiVector> fp = workset.fp;
+  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+  Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
+  Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
   ScalarT *valptr;
 
-  const Epetra_BlockMap *row_map = NULL;
-  if (f != Teuchos::null)
-    row_map = &(f->Map());
-  else if (JV != Teuchos::null)
-    row_map = &(JV->Map());
-  else if (fp != Teuchos::null)
-    row_map = &(fp->Map());
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-                     "One of f, JV, or fp must be non-null! " << std::endl);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
- //         if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
- //         else                   valptr = &(this->val[eq])(cell,node);
 
- //       int row = nodeID[node][this->offset + eq];
+          if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
+          else                   valptr = &(this->val[eq])(cell,node);
 
- //       if (f != Teuchos::null)
- //         f->SumIntoMyValue(row, 0, valptr->val());
+        int row = nodeID[node][this->offset + eq];
 
- //       if (JV != Teuchos::null)
- //         for (int col=0; col<workset.num_cols_x; col++)
- //           JV->SumIntoMyValue(row, col, valptr->dx(col));
+        if (Teuchos::nonnull(fT))
+          fT->sumIntoLocalValue(row, valptr->val());
 
- //       if (fp != Teuchos::null)
- //         for (int col=0; col<workset.num_cols_p; col++)
- //           fp->SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset));
-          if (this->vectorField){
-           int row = nodeID[node][this->offset + eq];
-           if (f != Teuchos::null)
-             f->SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val());
-           if (JV != Teuchos::null)
-             for (int col=0; col<workset.num_cols_x; col++)
-                JV->SumIntoMyValue(row, col, ((this->valVec[0])(cell,node,eq)).dx(col));
-           if (fp != Teuchos::null)
-             for (int col=0; col<workset.num_cols_p; col++)
-                 fp->SumIntoMyValue(row, col, ((this->valVec[0])(cell,node,eq)).dx(col+workset.param_offset));
-        }
-        else {
-           int row = nodeID[node][this->offset + eq];
-           if (f != Teuchos::null)
-             f->SumIntoMyValue(row, 0, ((this->val[eq])(cell,node)).val());
-           if (JV != Teuchos::null)
-             for (int col=0; col<workset.num_cols_x; col++)
-                JV->SumIntoMyValue(row, col, ((this->val[eq])(cell,node)).dx(col));
-           if (fp != Teuchos::null)
-             for (int col=0; col<workset.num_cols_p; col++)
-                 fp->SumIntoMyValue(row, col, ((this->val[eq])(cell,node)).dx(col+workset.param_offset));
+	if (Teuchos::nonnull(JVT))
+	  for (int col=0; col<workset.num_cols_x; col++)
+	    JVT->sumIntoLocalValue(row, col, valptr->dx(col));
 
-         }
+	if (Teuchos::nonnull(fpT)) 
+	  for (int col=0; col<workset.num_cols_p; col++)
+	    fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
+>>>>>>> tpetra
       }
     }
   }
@@ -341,9 +266,9 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Epetra_MultiVector> fpV = workset.fpV;
+  Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
-  int num_cols = workset.Vp->NumVectors();
+  int num_cols = workset.VpT->getNumVectors();
   ScalarT *valptr;
 
   if (trans) {
@@ -370,7 +295,7 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
           const int row = dist_param_index[i];
-          fpV->SumIntoMyValue(row, col, val);
+          fpVT->sumIntoLocalValue(row, col, val);
         }
       }
     }
