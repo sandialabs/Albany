@@ -76,7 +76,7 @@
 Albany::ProblemFactory::ProblemFactory(
        const Teuchos::RCP<Teuchos::ParameterList>& problemParams_,
        const Teuchos::RCP<ParamLib>& paramLib_,
-       Teuchos::RCP<const Teuchos::Comm<int> >& commT_) : 
+       const Teuchos::RCP<const Teuchos::Comm<int> >& commT_) : 
   problemParams(problemParams_),
   paramLib(paramLib_),
   commT(commT_)

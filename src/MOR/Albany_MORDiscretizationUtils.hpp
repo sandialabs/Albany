@@ -17,7 +17,7 @@ namespace Albany {
 Teuchos::RCP<AbstractDiscretization>
 discretizationNew(
     const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
-    const Teuchos::RCP<const Epetra_Comm> &epetraComm);
+    const Teuchos::RCP<const Teuchos_Comm> &comm);
 
 class DiscretizationTransformation {
 public:
@@ -28,7 +28,7 @@ public:
 Teuchos::RCP<AbstractDiscretization>
 modifiedDiscretizationNew(
     const Teuchos::RCP<Teuchos::ParameterList> &topLevelParams,
-    const Teuchos::RCP<const Epetra_Comm> &epetraComm,
+    const Teuchos::RCP<const Teuchos_Comm> &comm,
     DiscretizationTransformation &transformation);
 
 } // namespace Albany
