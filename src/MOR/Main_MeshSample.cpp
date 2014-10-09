@@ -88,13 +88,13 @@ SampleDiscretization::operator()(Albany::DiscretizationFactory &discFactory)
 
 RCP<Albany::AbstractDiscretization> sampledDiscretizationNew(
     const RCP<Teuchos::ParameterList> &topLevelParams,
-    const RCP<const Epetra_Comm> &epetraComm,
+    const Teuchos::RCP<const Teuchos_Comm> &comm,
     const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &nodeIds,
     const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &sensorNodeIds,
     bool performReduction)
 {
   SampleDiscretization transformation(nodeIds, sensorNodeIds, performReduction);
-  return Albany::modifiedDiscretizationNew(topLevelParams, epetraComm, transformation);
+  return Albany::modifiedDiscretizationNew(topLevelParams, comm, transformation);
 }
 
 void transferSolutionHistoryImpl(
@@ -155,7 +155,6 @@ int main(int argc, char *argv[])
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
   const Albany_MPI_Comm nativeComm = Albany_MPI_COMM_WORLD;
   const RCP<const Teuchos::Comm<int> > teuchosComm = Albany::createTeuchosCommFromMpiComm(nativeComm);
-  const RCP<const Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(nativeComm);
 
   // Standard output
   const RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -189,7 +188,7 @@ int main(int argc, char *argv[])
   const RCP<const Teuchos::ParameterList> problemParamsCopy = Teuchos::rcp(new Teuchos::ParameterList(*problemParams));
 
   // Create original (full) discretization
-  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(topLevelParams, epetraComm);
+  const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(topLevelParams, teuchosComm);
 
   // Determine mesh sample
   const RCP<Teuchos::ParameterList> samplingParams = Teuchos::sublist(topLevelParams, "Mesh Sampling", sublistMustExist);
@@ -246,7 +245,7 @@ int main(int argc, char *argv[])
 
     const bool performReduction = false;
     const RCP<Albany::AbstractDiscretization> sampledDisc =
-      sampledDiscretizationNew(topLevelParams, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
+      sampledDiscretizationNew(topLevelParams, teuchosComm, sampleNodeIds, sensorNodeIds, performReduction);
 
     if (Teuchos::nonnull(basisSizeMax)) {
       transferSolutionHistory(*stkDisc, *sampledDisc, *basisSizeMax + firstVectorRank);
@@ -265,7 +264,7 @@ int main(int argc, char *argv[])
 
     const bool performReduction = true;
     const RCP<Albany::AbstractDiscretization> reducedDisc =
-      sampledDiscretizationNew(topLevelParams, epetraComm, sampleNodeIds, sensorNodeIds, performReduction);
+      sampledDiscretizationNew(topLevelParams, teuchosComm, sampleNodeIds, sensorNodeIds, performReduction);
 
     if (Teuchos::nonnull(basisSizeMax)) {
       transferSolutionHistory(*stkDisc, *reducedDisc, *basisSizeMax + firstVectorRank);

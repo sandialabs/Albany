@@ -75,7 +75,6 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv);
   const Albany_MPI_Comm nativeComm = Albany_MPI_COMM_WORLD;
   const RCP<const Teuchos::Comm<int> > teuchosComm = Albany::createTeuchosCommFromMpiComm(nativeComm);
-  const RCP<const Epetra_Comm> epetraComm = Albany::createEpetraCommFromMpiComm(nativeComm);
 
   // Standard output
   const RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -94,7 +93,7 @@ int main(int argc, char *argv[]) {
 
   // Create base discretization, used to retrieve the snapshot map and output the basis
   const Teuchos::RCP<Teuchos::ParameterList> baseTopLevelParams(new Teuchos::ParameterList(*topLevelParams));
-  const RCP<Albany::AbstractDiscretization> baseDisc = Albany::discretizationNew(baseTopLevelParams, epetraComm);
+  const RCP<Albany::AbstractDiscretization> baseDisc = Albany::discretizationNew(baseTopLevelParams, teuchosComm);
 
   const RCP<Teuchos::ParameterList> rbgenParams =
     Teuchos::sublist(topLevelParams, "Reduced Basis", /*sublistMustExist =*/ true);
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]) {
         localDiscParams.set("Exodus Input File Name", *it);
         localTopLevelParams->set("Discretization", localDiscParams);
       }
-      const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(localTopLevelParams, epetraComm);
+      const RCP<Albany::AbstractDiscretization> disc = Albany::discretizationNew(localTopLevelParams, teuchosComm);
       discretizations.push_back(Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc, /*throw_on_fail =*/ true));
     }
   }
