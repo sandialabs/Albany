@@ -58,16 +58,12 @@ template<typename Traits>
 void SchrodingerDirichlet<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
   
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
   // Grab the vector off node GIDs for this Node Set ID from the std::map
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
@@ -94,10 +90,6 @@ void SchrodingerDirichlet<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
 
-  Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  Teuchos::RCP<Epetra_CrsMatrix> jac = dirichletWorkset.Jac;
-  Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-  
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -107,7 +99,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset)
   const RealType j_coeff = dirichletWorkset.j_coeff;
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
 
-  bool fillResid = (f != Teuchos::null);
+  bool fillResid = (fT != Teuchos::null);
   Teuchos::ArrayRCP<ST> fT_nonconstView;
   if (fillResid) fT_nonconstView = fT->get1dViewNonConst();
 

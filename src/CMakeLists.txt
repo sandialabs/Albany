@@ -171,14 +171,14 @@ SET(HEADERS ${HEADERS}
 
 ENDIF()
 
-#ifdef ALBANY_EPETRA
+IF(ALBANY_EPETRA)
 SET(SOURCES ${SOURCES} 
   responses/Epetra_ImportWithAlternateMap.cpp
 )
 SET(HEADERS ${HEADERS} 
   responses/Epetra_ImportWithAlternateMap.hpp
 )
-#endif
+ENDIF()
 
 #discretization
 SET(SOURCES ${SOURCES}

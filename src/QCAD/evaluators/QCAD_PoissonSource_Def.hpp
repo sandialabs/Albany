@@ -606,6 +606,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       //! Schrodinger source for electrons
       if(quantumRegionSource == "schrodinger")
       {
+#ifdef ALBANY_EPETRA
         // retrieve Previous Poisson Potential
         ScalarT prevPhi = 0.0, approxEDensity = 0.0;
         
@@ -665,7 +666,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 	}
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-
+#endif
       }
 
       //! calculate the classical charge (RHS) for Poisson equation
@@ -726,6 +727,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       //! Schrodinger source for electrons
       if(quantumRegionSource == "schrodinger")
       {
+#ifdef ALBANY_EPETRA
         // retrieve Previous Poisson Potential
         ScalarT prevPhi = 0.0, approxEDensity = 0.0;
         
@@ -775,6 +777,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 	}
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+#endif
       }
     
       else  // use semiclassical source
@@ -1034,16 +1037,20 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
 
   //Fill additional members for quantum and coulomb sources
   if(sourceName == "schrodinger") {
+#ifdef ALBANY_EPETRA
     if(bUsePredictorCorrector) // retrieve Previous Poisson Potential
       ret.prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"]; //assumed in [myV]
 
     ret.quantum_edensity_fn = &QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger;
+#endif
   }
   else if(sourceName == "ci") {
+#ifdef ALBANY_EPETRA
     if(bUsePredictorCorrector) // retrieve Previous Poisson Potential
       ret.prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"]; //assumed in [myV]
 
     ret.quantum_edensity_fn = &QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI;
+#endif
   }
   else if(sourceName == "coulomb")  {
     //RHS == evec[i] * evec[j]
@@ -1426,6 +1433,7 @@ QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, con
 //! ----------------- Quantum electron density functions ---------------------
 
 
+#ifdef ALBANY_EPETRA
 // *****************************************************************************
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
@@ -1459,6 +1467,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe); 
   std::vector<double> eigenvals( neg_eigenvals );
   for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
+
 
   // determine deltaPhi used in computing quantum electron density
   ScalarT deltaPhi = 0.0;  // 0 by default
@@ -1728,7 +1737,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
   return eDensity; 
 }
 
-
+#endif
 
 
 

@@ -659,9 +659,9 @@ ELSE (ENABLE_DAKOTA_RESTART_EXAMPLES)
 ENDIF (ENABLE_DAKOTA_RESTART_EXAMPLES)
 
 
-IF (ENABLE_QCAD) 
-  MESSAGE(FATAL_ERROR "\nError:  ENABLE_QCAD option doesn't work right now in Tpetra branch!")
-ENDIF(ENABLE_QCAD)
+IF (ENABLE_QCAD AND ENABLE_ALBANY_EPETRA_EXE) 
+  MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
+ENDIF(ENABLE_QCAD AND ENABLE_ALBANY_EPETRA_EXE)
 
 IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")

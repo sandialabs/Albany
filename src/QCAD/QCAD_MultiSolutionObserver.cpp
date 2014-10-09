@@ -63,7 +63,8 @@ void QCAD::MultiSolution_Observer::observeSolution(const Epetra_Vector& solution
   if(eigenData != Teuchos::null) nDiscMapCopies += eigenData->eigenvalueRe->size();
 
   // Create combined vector map & full solution vector
-  Teuchos::RCP<const Epetra_Comm> comm = apps[0]->getComm();
+  Teuchos::RCP<const Teuchos_Comm> commT = apps[0]->getComm();
+  Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   Teuchos::RCP<const Epetra_Map> disc_map = apps[0]->getDiscretization()->getMap();
   Teuchos::RCP<const Epetra_Map> disc_overlap_map = apps[0]->getDiscretization()->getOverlapMap();
   Teuchos::RCP<Epetra_Map> combinedMap = QCAD::CreateCombinedMap(disc_map, nDiscMapCopies, 0, comm);
@@ -108,7 +109,7 @@ void QCAD::MultiSolution_Observer::observeSolution(const Epetra_Vector& solution
   discList.set("Interleaved Ordering", false); //combined vector is concatenated, not "interleaved"
 
     // Create discretization factory
-  Albany::DiscretizationFactory discFactory(rootParams, comm);
+  Albany::DiscretizationFactory discFactory(rootParams, commT);
 
     // Get mesh specification object: worksetSize, cell topology, etc
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs =

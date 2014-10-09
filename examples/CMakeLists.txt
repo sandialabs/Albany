@@ -157,7 +157,9 @@ ENDIF(ALBANY_LCM)
 # QCAD ##################
 
 IF(ALBANY_QCAD AND ALBANY_SEACAS)
-  add_subdirectory(QCAD)
+  IF (ALBANY_EPETRA)
+    add_subdirectory(QCAD)
+  ENDIF()
   add_subdirectory(ThermoElectrostatics2D)
 ENDIF()
 

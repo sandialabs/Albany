@@ -4,9 +4,8 @@ prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 
 Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
-- QCAD: will not work at all right now in Tpetra branch b/c I have removed some functions it needs, which are obsolete everywhere else 
-but have not yet been converted for QCAD.
-- MOR
+- QCAD will work only with Albany executable.
+- MOR -- builds, but examples fail; Andrew B. will look into.
 - SG_MP
 - catalyst - can't build, need ParaView source code? 
 - cism_interface has been converted, but needs to be debugged (compiles but run-time error having to do with mesh).
@@ -83,8 +82,6 @@ with Tpetra instead of Epetra objects.  It appears QCAD::CoupledPSObserver is no
 - Irina K. converted QCAD::SaddleValueResponseFunction to Tpetra some time back.  Need to check that the conversions are up-to-date and complete.
 - There is a seg fault when running input_mosdot3D_tet10.xml with MueLu preconditioner (not Ifpack2).  Need to look into why (before 
 checking with MueLu developers, need to check if problem is in Albany or MueLu).
-- QCAD problems need to be changed to use Teuchos::Comm instead of Epetra_Comm.  This is the case actually 
-for all Albany problems...
 - I believe NOX::Epetra::Observer does not have a Thyra/Tpetra analog and needs to be 
 implemented in nox, for SaveEigenDataConstructor and NOXObserverConstructor functions to work 
 in Albany::SolverFactory class. 
@@ -105,19 +102,12 @@ example since nothing looked significantly off/different.
 LCM/MechanicsTensileTet10/NotchedTensileTet10T.xml 
 
 
-TO DOs (Irina K., Andy, et al.):
-- On 9/4/14, I changed all the problems to take in a Teuchos::Comm object instead of Epetra_Comm, except QCAD.  QCAD needs 
-to be converted as well.  
-- On 9/4/14, I removed evaluateResponse and evaluaterResponseDerivative from the tpetra branch of Albany. 
-- Need to remove remaining Epetra_Comm from the code (replace with Teuchos::Comm)...   
-These need to be taken out of QCAD still.  Also the function Albany_SamplingBasedScalarResponseFunction still calls evaluateResponse
-but that is in the SG section, which does not work anyway in the tpetra branch.  So code will compile if QCAD and SG are turned off 
-in the tpetra Albany branch.  
+TO DOs (Irina K., Andy, Andrew Bradley, et al.):
 - Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
 - Convert / test exodiff/python tests.
 - Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion, LCM/StabilizedTet4
-- Sit down with QCAD developers (Rick, Erik) to figure out what's missing in QCAD suite.
+- Convert QCAD suite to use Thyra model evaluator instead of EpetraExt model evaluator.
 - Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
 - Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems
 - Anasazi seg fault when running inputT.xml for NSVortexShedding2D problem. 

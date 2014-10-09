@@ -11,15 +11,19 @@
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
+#ifdef ALBANY_EPETRA
 #include "PHAL_ResponseFieldIntegral.hpp"
+#endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #endif
 #ifdef ALBANY_QCAD
+#ifdef ALBANY_EPETRA
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
+#endif
 #endif
 #ifdef ALBANY_LCM
 #include "IPtoNodalField.hpp"
@@ -116,6 +120,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #ifdef ALBANY_QCAD
   else if (responseName == "Saddle Value")
   {
+#ifdef ALBANY_EPETRA
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Weights Name",   "Weights");
@@ -124,25 +129,42 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error in Albany::ResponseUtilities:  " <<
+                                  "Saddle Value Response not available if ALBANY_EPETRA_EXE is OFF " << std::endl);
+#endif
   }
 
   else if (responseName == "Region Boundary")
   {
+#ifdef ALBANY_EPETRA
     RCP<QCAD::ResponseRegionBoundary<EvalT,Traits> > res_ev =
       rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error in Albany::ResponseUtilities:  " <<
+                                  "Region Boundary Response not available if ALBANY_EPETRA_EXE is OFF " << std::endl);
+#endif
   }
 #endif
 
   else if (responseName == "PHAL Field Integral")
   {
+#ifdef ALBANY_EPETRA
     RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev =
       rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#else
+  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error in Albany::ResponseUtilities:  " <<
+                                  "PHAL Field Integral is not available if ALBANY_EPETRA_EXE is OFF; Try PHAL Field IntegralT Instead " << std::endl);
+#endif
   }
 
   else if (responseName == "PHAL Field IntegralT")

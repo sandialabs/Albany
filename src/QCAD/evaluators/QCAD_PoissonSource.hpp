@@ -13,7 +13,6 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
@@ -113,13 +112,15 @@ namespace QCAD {
 
 
     //! ----------------- Quantum electron density functions ---------------------
-    
+  
+#ifdef ALBANY_EPETRA 
     //! compute the electron density for Poisson-Schrodinger iteration
     ScalarT eDensityForPoissonSchrodinger(typename Traits::EvalData workset, std::size_t cell, 
         std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef, const double fixedOcc);
 
     ScalarT eDensityForPoissonCI(typename Traits::EvalData workset, std::size_t cell,
         std::size_t qp, const ScalarT prevPhi, const bool bUsePredCorr, const double Ef, const double fixedOcc);
+#endif
 
 
     //! ----------------- Point charge functions ---------------------

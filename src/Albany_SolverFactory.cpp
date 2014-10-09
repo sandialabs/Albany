@@ -40,10 +40,12 @@
 #endif /* ALBANY_MUELU */
 
 #ifdef ALBANY_QCAD
+#ifdef ALBANY_EPETRA
   #include "QCAD_Solver.hpp"
   #include "QCAD_CoupledPoissonSchrodinger.hpp"
   #include "QCAD_CoupledPSObserver.hpp"
   #include "QCAD_GenEigensolver.hpp"
+#endif
 #endif
 
 #include "Albany_ModelEvaluatorT.hpp"

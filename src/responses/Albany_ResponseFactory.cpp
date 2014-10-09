@@ -21,7 +21,9 @@
 #endif
 #include "Albany_KLResponseFunction.hpp"
 #ifdef ALBANY_QCAD
+#ifdef ALBANY_EPETRA
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#endif
 #endif
 
 #include "Teuchos_TestForException.hpp"
@@ -140,6 +142,7 @@ createResponseFunction(
   }
 
 #ifdef ALBANY_QCAD
+#ifdef ALBANY_EPETRA
   else if (name == "Saddle Value") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
@@ -148,6 +151,7 @@ createResponseFunction(
 	      app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
+#endif
 #endif
 
   else {

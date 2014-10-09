@@ -6,19 +6,11 @@
 # QCAD
 
 SET(SOURCES
-  QCAD_Solver.cpp
-  QCAD_CoupledPoissonSchrodinger.cpp
-  QCAD_CoupledPSJacobian.cpp
-  QCAD_CoupledPSPreconditioner.cpp
-  QCAD_CoupledPSObserver.cpp
-  QCAD_MultiSolutionObserver.cpp
-  QCAD_GenEigensolver.cpp
   evaluators/QCAD_Permittivity.cpp
   evaluators/QCAD_PoissonResid.cpp
   evaluators/QCAD_PoissonSource.cpp
   evaluators/QCAD_PoissonDirichlet.cpp
   evaluators/QCAD_PoissonNeumann.cpp
-  evaluators/QCAD_ResponseSaddleValue.cpp
   evaluators/QCAD_ResponseRegionBoundary.cpp
   evaluators/QCAD_SchrodingerPotential.cpp
   evaluators/QCAD_SchrodingerResid.cpp
@@ -26,21 +18,27 @@ SET(SOURCES
   evaluators/QCAD_StringFormulaEvaluator.cpp
   problems/QCAD_SchrodingerProblem.cpp
   problems/QCAD_PoissonProblem.cpp
-  responses/QCAD_SaddleValueResponseFunction.cpp
-  responses/QCAD_GreensFunctionTunneling.cpp
   ../problems/Albany_ThermoElectrostaticsProblem.cpp
   ../evaluators/PHAL_JouleHeating.cpp
   ../evaluators/PHAL_TEProp.cpp
   )
 
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES} 
+    QCAD_Solver.cpp
+    QCAD_CoupledPoissonSchrodinger.cpp
+    QCAD_CoupledPSJacobian.cpp
+    QCAD_CoupledPSPreconditioner.cpp
+    QCAD_CoupledPSObserver.cpp
+    QCAD_MultiSolutionObserver.cpp
+    QCAD_GenEigensolver.cpp
+    evaluators/QCAD_ResponseSaddleValue.cpp
+    responses/QCAD_SaddleValueResponseFunction.cpp
+    responses/QCAD_GreensFunctionTunneling.cpp
+  )
+ENDIF()
+
 SET(HEADERS
-  QCAD_Solver.hpp
-  QCAD_CoupledPoissonSchrodinger.hpp
-  QCAD_CoupledPSJacobian.hpp
-  QCAD_CoupledPSPreconditioner.hpp
-  QCAD_CoupledPSObserver.hpp
-  QCAD_MultiSolutionObserver.hpp
-  QCAD_GenEigensolver.hpp
   evaluators/QCAD_Permittivity.hpp
   evaluators/QCAD_Permittivity_Def.hpp
   evaluators/QCAD_PoissonResid.hpp
@@ -51,8 +49,6 @@ SET(HEADERS
   evaluators/QCAD_PoissonDirichlet_Def.hpp
   evaluators/QCAD_PoissonNeumann.hpp
   evaluators/QCAD_PoissonNeumann_Def.hpp
-  evaluators/QCAD_ResponseSaddleValue.hpp
-  evaluators/QCAD_ResponseSaddleValue_Def.hpp
   evaluators/QCAD_ResponseRegionBoundary.hpp
   evaluators/QCAD_ResponseRegionBoundary_Def.hpp
   evaluators/QCAD_SchrodingerPotential.hpp
@@ -64,14 +60,28 @@ SET(HEADERS
   evaluators/QCAD_StringFormulaEvaluator.hpp
   problems/QCAD_SchrodingerProblem.hpp
   problems/QCAD_PoissonProblem.hpp
-  responses/QCAD_SaddleValueResponseFunction.hpp
-  responses/QCAD_GreensFunctionTunneling.hpp
   ../problems/Albany_ThermoElectrostaticsProblem.hpp
   ../evaluators/PHAL_JouleHeating.hpp
   ../evaluators/PHAL_JouleHeating_Def.hpp
   ../evaluators/PHAL_TEProp.hpp
   ../evaluators/PHAL_TEProp_Def.hpp
   )
+
+IF (ALBANY_EPETRA) 
+  SET(HEADERS ${HEADERS} 
+    QCAD_Solver.hpp
+    QCAD_CoupledPoissonSchrodinger.hpp
+    QCAD_CoupledPSJacobian.hpp
+    QCAD_CoupledPSPreconditioner.hpp
+    QCAD_CoupledPSObserver.hpp
+    QCAD_MultiSolutionObserver.hpp
+    QCAD_GenEigensolver.hpp
+    evaluators/QCAD_ResponseSaddleValue.hpp
+    evaluators/QCAD_ResponseSaddleValue_Def.hpp
+    responses/QCAD_SaddleValueResponseFunction.hpp
+    responses/QCAD_GreensFunctionTunneling.hpp
+  )
+ENDIF()
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
