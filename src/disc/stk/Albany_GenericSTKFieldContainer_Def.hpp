@@ -129,8 +129,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
 
-#ifndef ALBANY_64BIT_INT // Epetra code in here
-
   // Fill the result vector
   // Create a multidimensional array view of the
   // solution field data for this bucket of nodes.
@@ -146,14 +144,17 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
     const GO node_gid = bucket[i].identifier() - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
     int node_lid = node_map->LID(node_gid);
+#endif
 
     for(std::size_t j = 0; j < num_vec_components; j++)
 
       soln[getDOF(node_lid, offset + j)] = solution_array(j, i);
 
   }
-#endif
 }
 #endif
 
@@ -198,8 +199,6 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vect
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
 
-#ifndef ALBANY_64BIT_INT // Epetra code in here
-
   // Fill the result vector
   // Create a multidimensional array view of the
   // solution field data for this bucket of nodes.
@@ -214,12 +213,15 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vect
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
     const GO node_gid = bucket[i].identifier() - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
     int node_lid = node_map->LID(node_gid);
+#endif
 
     soln[getDOF(node_lid, offset)] = solution_array(i);
 
   }
-#endif
 }
 
 template<bool Interleaved>
@@ -229,8 +231,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
     T* solution_field,
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
-
-#ifndef ALBANY_64BIT_INT // Epetra code in here
 
   // Fill the result vector
   // Create a multidimensional array view of the
@@ -247,14 +247,17 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
     const GO node_gid = bucket[i].identifier() - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
     int node_lid = node_map->LID(node_gid);
+#endif
 
     for(std::size_t j = 0; j < num_vec_components; j++)
 
       solution_array(j, i) = soln[getDOF(node_lid, offset + j)];
 
   }
-#endif
 }
 #endif
 //Tpetra version of above
@@ -302,8 +305,6 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
     const Teuchos::RCP<Epetra_Map>& node_map,
     const stk_classic::mesh::Bucket& bucket, int offset) {
 
-#ifndef ALBANY_64BIT_INT // Epetra code in here
-
   // Fill the result vector
   // Create a multidimensional array view of the
   // solution field data for this bucket of nodes.
@@ -318,12 +319,16 @@ void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetr
   for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
     const GO node_gid = bucket[i].identifier() - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
     int node_lid = node_map->LID(node_gid);
+#endif
 
     solution_array(i) = soln[getDOF(node_lid, offset)];
 
   }
-#endif
+  //#endif
 }
 #endif
 

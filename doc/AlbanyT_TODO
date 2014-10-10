@@ -5,7 +5,7 @@ prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
 - QCAD will work only with Albany executable.
-- MOR -- builds, but examples fail; Andrew B. will look into.  Only runs with Albany executable.
+- MOR will work only with Albany executable.
 - SG_MP
 - catalyst - can't build, need ParaView source code? 
 - cism_interface has been converted, but needs to be debugged (compiles but run-time error having to do with mesh).
