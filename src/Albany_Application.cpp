@@ -313,8 +313,10 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   }
 
 #ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
   if(disc->supportsMOR())
     morFacade = createMORFacade(disc, problemParams);
+#endif
 #endif
 
 /*
@@ -4137,8 +4139,10 @@ void Albany::Application::setupTangentWorksetInfo(
 #endif //ALBANY_SG_MP
 
 #ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 {
   return morFacade;
 }
+#endif
 #endif

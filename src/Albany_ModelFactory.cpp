@@ -16,7 +16,9 @@
 
 
 #ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
 #include "MOR_ReducedOrderModelFactory.hpp"
+#endif
 #endif
 
 namespace Albany {

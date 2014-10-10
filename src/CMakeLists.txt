@@ -529,7 +529,7 @@ if (ALBANY_ENABLE_CUBIT)
   MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
-if (ALBANY_MOR)
+if (ALBANY_MOR AND ALBANY_EPETRA_EXE)
   include_directories (./MOR)
 
   set (MOR_ALBANY_HEADERS

@@ -5,7 +5,7 @@ prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
 - QCAD will work only with Albany executable.
-- MOR -- builds, but examples fail; Andrew B. will look into.
+- MOR -- builds, but examples fail; Andrew B. will look into.  Only runs with Albany executable.
 - SG_MP
 - catalyst - can't build, need ParaView source code? 
 - cism_interface has been converted, but needs to be debugged (compiles but run-time error having to do with mesh).
@@ -107,6 +107,7 @@ TO DOs (Irina K., Andy, Andrew Bradley, et al.):
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
 - Convert / test exodiff/python tests.
 - Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion, LCM/StabilizedTet4
+- QCAD cleanups involving Comm objects.
 - Convert QCAD suite to use Thyra model evaluator instead of EpetraExt model evaluator.
 - Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
 - Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems

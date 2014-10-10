@@ -59,7 +59,9 @@
 #endif
 
 #ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
   #include "MOR/Albany_MORFacade.hpp"
+#endif
 #endif
 
 namespace Albany {
@@ -842,7 +844,9 @@ namespace Albany {
     void postRegSetup(std::string eval);
 
 #ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<MORFacade> getMorFacade();
+#endif
 #endif
 
   protected:
@@ -992,7 +996,9 @@ namespace Albany {
     void determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams);
 
 #ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<MORFacade> morFacade;
+#endif
 #endif
   };
 }
