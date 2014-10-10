@@ -177,7 +177,7 @@ ENDIF()
 
 # MOR   ##################
 
-IF(ALBANY_MOR AND ALBANY_EPETRA_EXE)
+IF(ALBANY_MOR AND ALBANY_EPETRA)
   add_subdirectory(MOR)
 ENDIF()
 
