@@ -212,7 +212,7 @@ Teuchos::RCP<Tpetra_MultiVector> Petra::EpetraMultiVector_To_TpetraMultiVector(c
   int numVectors = epetraMV_.NumVectors();
   ST *values;
   int Length;
-  epetraMV_.ExtractCopy(&values, &Length);
+  epetraMV_.ExtractView(&values, &Length);
   Teuchos::ArrayView<ST> valuesAV = Teuchos::arrayView(values, Length*numVectors);
   //create Tpetra_MultiVector copy of epetraMV_
   Teuchos::RCP<Tpetra_MultiVector> tpetraMV_ = Teuchos::rcp(new Tpetra_MultiVector(mapT, valuesAV, Length, numVectors));
