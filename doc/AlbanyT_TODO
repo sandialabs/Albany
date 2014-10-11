@@ -1,12 +1,12 @@
 
-This file summarizes what is missing in Trilinos / Albany as of Aug. 2014, which 
+This file summarizes what is missing in Trilinos / Albany as of Oct. 2014, which 
 prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 
 Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
 - QCAD will work only with Albany executable.
 - MOR will work only with Albany executable.
-- SG_MP
+- SG_MP will work only with Albany executable.
 - catalyst - can't build, need ParaView source code? 
 - cism_interface has been converted, but needs to be debugged (compiles but run-time error having to do with mesh).
 - mpas_interface has been converted, but need to have Mauro test it.
@@ -20,14 +20,15 @@ Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF:
 - Albany_ObserverFactory, Albany_NOXObserver, Albany_RythmosObserver (these are based on EpetraExt; likely can be 
 converted to Thyra, like Albany_PiroObserverT).
 - What is ASCR, AlbanyCI?  I don't have these turned on in my Albany build.  ASCR needs SG_MP; AlbanyCI needs QCAD... 
-- Is SCOREC tested at RPI?  64 bit GO?  
 - Lament needs libraries... -- but we decided not to pursue lament (which was templated version of lame). 
 - There are inconsistencies b/w ST and double, GO and int, etc. throughout the code.  Needs to be cleaned up.
-- The following tests fail right now when 64 bit GO is turned on: 
-     84 - CohesiveElement (Failed)
-     88 - SurfaceElementLocking (Failed)
-     90 - StabilizedTet4 (Failed)
-    219 - FELIX_FO_Dome_Restart (Failed)
+- The following tests are failing right now (10/11/14): 
+        296 - MOR_TransientHeat2D_galerkin_trunc_colloc_exo (Failed)
+        297 - MOR_TransientHeat2D_galerkin_trunc_colloc_sample_exo (Failed)
+        298 - SEE_NonlinearPoisson_Tpetra (Failed)
+Check with RPI collaborators re: SEE? 
+
+
 
 Question: is there a way to test compilation of Albany tpetra branch with ALBANY_EPETRA_EXE turned off 
 w/o Epetra?  E.g., remove library linking from link line?  Unfortunately it's not possible to 
@@ -103,11 +104,10 @@ LCM/MechanicsTensileTet10/NotchedTensileTet10T.xml
 
 
 TO DOs (Irina K., Andy, Andrew Bradley, et al.):
+- remove evaluateReponse and evaluateResponseTangent in a few places where it still exists. 
 - Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
 - Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
-- Convert / test exodiff/python tests.
 - Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion, LCM/StabilizedTet4
-- QCAD cleanups involving Comm objects.
 - Convert QCAD suite to use Thyra model evaluator instead of EpetraExt model evaluator.
 - Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
 - Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems
@@ -115,6 +115,5 @@ TO DOs (Irina K., Andy, Andrew Bradley, et al.):
 - Sensitivities are different when running with Belos comapred to AztecOO for FELIX_Stokes/FO_Test/*interpSurf.xml (with Albany executable)!
 - Different responses when running with Belos than AztecOO for: LinComprNS/input2D_drivenPulse.xml, LinComprNS/input3Dunsteady.xml, 
 LinComprNS/input3DunsteadyNS.xml...
-- Look at extra LCM executables and create Tpetra version of them.
 - Cleanups involving TpetraBuild flag?  
 
