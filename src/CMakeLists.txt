@@ -405,9 +405,6 @@ SET(HEADERS ${HEADERS}
   responses/Albany_ResponseFactory.hpp
   )
 
-<<<<<<< HEAD
-  SET(SOURCES ${SOURCES}
-=======
 #discretization
 SET(SOURCES ${SOURCES}
   disc/Albany_DiscretizationFactory.cpp
@@ -430,7 +427,6 @@ SET(HEADERS ${HEADERS}
 
 #evaluators
 SET(SOURCES ${SOURCES}
->>>>>>> tpetra
   evaluators/PHAL_GatherSolution.cpp
   evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp

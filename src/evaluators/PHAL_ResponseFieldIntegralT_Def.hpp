@@ -128,7 +128,7 @@ ResponseFieldIntegralT(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
-  this->setName(field_name+" Response Field IntegralT"+PHX::TypeString<EvalT>::value);
+  this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<PHX::Device>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -233,11 +233,13 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-  Teuchos::reduceAll(
+//Irina TOFIX
+/* 
+ Teuchos::reduceAll(
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,
     this->global_response.size(), &this->global_response[0], 
     &this->global_response[0]);
-
+*/
   // Do global scattering
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }

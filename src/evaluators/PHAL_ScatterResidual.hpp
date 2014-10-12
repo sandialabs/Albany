@@ -43,6 +43,8 @@ public:
 
   virtual void evaluateFields(typename Traits::EvalData d)=0;
 
+  Kokkos::View<int***, PHX::Device> Index;
+
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;

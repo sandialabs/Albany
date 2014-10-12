@@ -531,15 +531,15 @@ evaluateFields(typename Traits::EvalData workset)
     * final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
     */
+#ifndef NO_KOKKOS_ALBANY
 //Irina debug
 //  std::cout << "before comute basis func gather coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
-  Kokkos::deep_copy(GradBF.get_kokkos_view(),0.0);
-  
-   Kokkos::parallel_for (GradBF.dimension(0), *this);
+  Kokkos::deep_copy(GradBF.get_kokkos_view(),0.0); 
+  Kokkos::parallel_for (GradBF.dimension(0), *this);
 
 //Irina debug
   //std::cout << "after comute basis func gather coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
-
+#else
 
 /*
   Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
@@ -564,6 +564,7 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 */
+#endif
 }
 
 //**********************************************************************

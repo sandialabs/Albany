@@ -47,6 +47,8 @@ public:
   // This function requires template specialization, in derived class below
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
 
+  Kokkos::View<int***, PHX::Device> Index;
+
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -56,9 +58,9 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dotdot;
-  std::size_t numNodes;
-  std::size_t numFieldsBase; // Number of fields gathered in this call
-  std::size_t offset; // Offset of first DOF being gathered when numFields<neq
+  int numNodes;
+  int numFieldsBase; // Number of fields gathered in this call
+  int offset; // Offset of first DOF being gathered when numFields<neq
   bool vectorField;
   bool enableTransient;
   bool enableAcceleration;
@@ -86,9 +88,10 @@ public:
   // Old constructor, still needed by BCs that use PHX Factory
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
+
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  const std::size_t numFields;
+  const int numFields;
 };
 
 // **************************************************************
@@ -103,9 +106,10 @@ public:
                               const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
+  
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  const std::size_t numFields;
+  const int numFields;
 };
 
 

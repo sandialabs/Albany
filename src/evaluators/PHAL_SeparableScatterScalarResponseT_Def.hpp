@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      ScalarT& val = this->local_response(cell, res);
+      //ScalarT& val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
 	  int dof = nodeID[node_dof][eq_dof];
 
 	  // Set dg/dx
-	  dg->sumIntoLocalValue(dof, res, val.dx(deriv));
+	  dg->sumIntoLocalValue(dof, res, (this->local_response(cell, res)).dx(deriv));
 
 	} // column equations
       } // column nodes

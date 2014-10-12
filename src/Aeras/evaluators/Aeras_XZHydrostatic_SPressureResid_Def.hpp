@@ -37,7 +37,7 @@ XZHydrostatic_SPressureResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_SPressureResid" +PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_SPressureResid" +PHX::typeAsString<PHX::Device>());
 
   sp0 = 0.0;
 }

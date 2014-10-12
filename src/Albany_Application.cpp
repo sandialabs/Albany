@@ -605,6 +605,7 @@ computeGlobalResidualImplT(
       if (nfm!=Teuchos::null)
          nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
+  // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
@@ -902,12 +903,7 @@ computeGlobalJacobian(const double alpha,
   //std::cout << "f " << *f << std::endl;;
   //std::cout << "J " << jac << std::endl;;
 
-<<<<<<< HEAD
-  //Debut output
- // writeToMatrixMarketJac=-1;
-=======
  //Debut output
->>>>>>> tpetra
   if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
     char name[100];  //create string for file name
     if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises

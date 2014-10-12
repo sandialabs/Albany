@@ -305,6 +305,8 @@ namespace Albany {
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
 
+    //Albany::WorksetArray<Kokkos::View<int****, PHX::Device> >::type wsElNodeEqID_kokkos;
+
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;

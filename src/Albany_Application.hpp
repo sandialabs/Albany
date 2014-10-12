@@ -1051,6 +1051,12 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 
+ 
+//  workset.wsElNodeEqID_kokkos =
+  Kokkos:: View<int***, PHX::Device> wsElNodeEqID_kokkos ("wsElNodeEqID_kokkos",workset.numCells, wsElNodeEqID[ws][0].size(), wsElNodeEqID[ws][0][0].size());
+//   workset.wsElNodeEqID_kokkos=wsElNodeEqID_kokkos;
+ 
+
   PHAL::BuildSerializer<EvalT> bs(workset);
 }
 

@@ -72,7 +72,7 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
     this->addEvaluatedField(val_dot[eq]);
   }
 
-  this->setName("Aeras_GatherSolution" );
+  this->setName("Aeras_GatherSolution" +PHX::typeAsString<PHX::Device>());
 }
 
 
@@ -242,9 +242,9 @@ evaluateFields(typename Traits::EvalData workset)
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          ScalarT* valptr = &(this->val_dot[j])(cell,node);
-          *valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
-          valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
+          //ScalarT* valptr = &(this->val_dot[j])(cell,node);
+          (this->val_dot[j])(cell,node) = FadType(num_dof, xdotT_constView[eqID[n]]);
+          ((this->val_dot[j])(cell,node)).fastAccessDx(firstunk + n) = workset.m_coeff;
           
         }
         eq += this->numNodeVar;
@@ -322,16 +322,6 @@ evaluateFields(typename Traits::EvalData workset)
 /*  
     for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
-<<<<<<< HEAD
-          //valptr = &(this->val[j])(cell,node,level);
-          if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-            (this->val[j])(cell,node,level) = TanFadType(num_cols_tot, (*x)[eqID[n]]);
-            for (int k=0; k<workset.num_cols_x; k++)
-              ((this->val[j])(cell,node,level)).fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
-          }
-          else
-            (this->val[j])(cell,node,level) = TanFadType((*x)[eqID[n]]);
-=======
           valptr = &(this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             *valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
@@ -340,22 +330,11 @@ evaluateFields(typename Traits::EvalData workset)
           }
           else
             *valptr = TanFadType(xT_constView[eqID[n]]);
->>>>>>> tpetra
         }
       }
       eq += this->numLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-<<<<<<< HEAD
-        //  valptr = &(this->val[j])(cell,node,level);
-          if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-            (this->val[j])(cell,node,level) = TanFadType(num_cols_tot, (*x)[eqID[n]]);
-            for (int k=0; k<workset.num_cols_x; k++)
-              ((this->val[j])(cell,node,level)).fastAccessDx(k) = workset.j_coeff*(*Vx)[k][eqID[n]];
-          }
-          else
-            (this->val[j])(cell,node,level) = TanFadType((*x)[eqID[n]]);
-=======
           valptr = &(this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             *valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
@@ -364,51 +343,27 @@ evaluateFields(typename Traits::EvalData workset)
           }
           else
             *valptr = TanFadType(xT_constView[eqID[n]]);
->>>>>>> tpetra
         }
       }
       eq += this->numTracerVar;
 */      if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
-<<<<<<< HEAD
           //valptr = &(this->val_dot[j])(cell,node);
-          if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-            (this->val_dot[j])(cell,node) = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
+          if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
+            (this->val_dot[j])(cell,node) = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
               ((this->val_dot[j])(cell,node)).fastAccessDx(k) =
-                workset.m_coeff*(*Vxdot)[k][eqID[n]];
-          }
-          else
-            (this->val_dot[j])(cell,node) = TanFadType((*xdot)[eqID[n]]);
-=======
-          valptr = &(this->val_dot[j])(cell,node);
-          if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
-            for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) =
                 workset.m_coeff*VxdotT->getData(k)[eqID[n]];
           }
           else
-            *valptr = TanFadType(xdotT_constView[eqID[n]]);
->>>>>>> tpetra
+            (this->val_dot[j])(cell,node) = TanFadType(xdotT_constView[eqID[n]]);
         }
         eq += this->numNodeVar;
 //Irina TOFIX
 /*  
       for (int level = 0; level < this->numLevels; level++) { 
           for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
-<<<<<<< HEAD
-            //valptr = &(this->val_dot[j])(cell,node,level);
-            if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-              (this->val_dot[j])(cell,node,level) = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
-              for (int k=0; k<workset.num_cols_x; k++)
-                ((this->val_dot[j])(cell,node,level)).fastAccessDx(k) =
-                  workset.m_coeff*(*Vxdot)[k][eqID[n]];
-            }
-            else
-              (this->val_dot[j])(cell,node,level) = TanFadType((*xdot)[eqID[n]]);
-=======
             valptr = &(this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
               *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
@@ -418,23 +373,11 @@ evaluateFields(typename Traits::EvalData workset)
             }
             else
               *valptr = TanFadType(xdotT_constView[eqID[n]]);
->>>>>>> tpetra
           }
         }
         eq += this->numLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-<<<<<<< HEAD
-            //valptr = &(this->val_dot[j])(cell,node,level);
-            if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-              (this->val_dot[j])(cell,node,level) = TanFadType(num_cols_tot, (*xdot)[eqID[n]]);
-              for (int k=0; k<workset.num_cols_x; k++)
-                ((this->val_dot[j])(cell,node,level)).fastAccessDx(k) =
-                  workset.m_coeff*(*Vxdot)[k][eqID[n]];
-            }
-            else
-              (this->val_dot[j])(cell,node,level) = TanFadType((*xdot)[eqID[n]]);
-=======
             valptr = &(this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
               *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
@@ -444,7 +387,6 @@ evaluateFields(typename Traits::EvalData workset)
             }
             else
               *valptr = TanFadType(xdotT_constView[eqID[n]]);
->>>>>>> tpetra
           }
         }
 */        eq += this->numTracerVar;
