@@ -866,7 +866,7 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
     const std::string& condBandMin = materialDB->getElementBlockParam<std::string>(workset.EBName,"Conduction Band Minimum");
     double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
-    if ((condBandMin == "Gamma Valley") && (abs(ml-mt) > 1e-10))
+    if ((condBandMin == "Gamma Valley") && (std::abs(ml-mt) > 1e-10))
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
         << "transverse electron effective mass must be equal ! "
         << "Please check the values in materials.xml" << std::endl);
@@ -990,7 +990,7 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
     //! parameters for computing exchange-correlation potential
     double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
-    if (abs(ml-mt) > 1e-10) 
+    if (std::abs(ml-mt) > 1e-10) 
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
 	       << "transverse electron effective mass must be equal ! "
 	       << "Please check the values in materials.xml" << std::endl);

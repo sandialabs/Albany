@@ -2600,7 +2600,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<
   // distance btwn 1D, 2D or 3D points (params ordered as (x1,y1,z1,x2,y2,z2) )
   else if( fnName == "dist") { 
     if(nArgs == 2) 
-      g[offset] = abs(arg_vals[0]-arg_vals[1]);
+      g[offset] = std::abs(arg_vals[0]-arg_vals[1]);
     else if(nArgs == 4) 
       g[offset] = sqrt( pow(arg_vals[0]-arg_vals[2],2) + pow(arg_vals[1]-arg_vals[3],2));
     else if(nArgs == 6) 

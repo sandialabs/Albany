@@ -249,7 +249,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
-      TEUCHOS_TEST_FOR_EXCEPTION(abs(jacobian_det(e,q))<.1e-8,
+      TEUCHOS_TEST_FOR_EXCEPTION(std::abs(jacobian_det(e,q))<.1e-8,
                   std::logic_error,"Bad Jacobian Found.");
     }
   }
