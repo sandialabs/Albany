@@ -27,6 +27,10 @@
 #include "Albany_ThermoElectrostaticsProblem.hpp"
 #endif
 
+#ifdef ALBANY_ATO
+#include "ATO/problems/LinearElasticityProblem.hpp"
+#endif
+
 #ifdef ALBANY_LCM
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
@@ -43,6 +47,7 @@
 #ifdef ALBANY_EPETRA
 #include "LCM/problems/PeridigmProblem.hpp"
 #endif
+#include "LCM/problems/HMCProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
 #include "LCM/problems/lame/LameProblem.hpp"
 #endif
@@ -274,6 +279,26 @@ Albany::ProblemFactory::create()
   }
   else if (method == "ThermoMechanical") {
     strategy = rcp(new Albany::ThermoMechanicalProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "HMC 1D") {
+    strategy = rcp(new Albany::HMCProblem(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "HMC 2D") {
+    strategy = rcp(new Albany::HMCProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "HMC 3D") {
+    strategy = rcp(new Albany::HMCProblem(problemParams, paramLib, 3, commT));
+  }
+#endif
+#ifdef ALBANY_ATO
+  else if (method == "LinearElasticity 1D") {
+    strategy = rcp(new Albany::LinearElasticityProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "LinearElasticity 2D") {
+    strategy = rcp(new Albany::LinearElasticityProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "LinearElasticity 3D") {
+    strategy = rcp(new Albany::LinearElasticityProblem(problemParams, paramLib, 3));
   }
 #endif
 #ifdef ALBANY_SEE

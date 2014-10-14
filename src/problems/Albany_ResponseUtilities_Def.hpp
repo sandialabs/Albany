@@ -16,6 +16,7 @@
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
 #include "Adapt_ElementSizeField.hpp"
+#include "PHAL_SaveNodalField.hpp"
 #ifdef ALBANY_FELIX
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #endif
@@ -27,10 +28,16 @@
 #endif
 #ifdef ALBANY_LCM
 #include "IPtoNodalField.hpp"
-#include "ProjectIPtoNodalField.hpp"
+//#include "ProjectIPtoNodalField.hpp"
 #endif
 #ifdef ALBANY_SEE
 #include "LinearAdjointSolve.hpp"
+#endif
+#ifdef ALBANY_ATO
+#include "ATO_StiffnessObjective.hpp"
+#endif
+#ifdef ALBANY_AERAS
+#include "Aeras_ShallowWaterResponseL2Error.hpp"
 #endif
 
 template<typename EvalT, typename Traits>
@@ -175,6 +182,17 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
+  
+#ifdef ALBANY_AERAS
+  else if (responseName == "Aeras Shallow Water L2 Error")
+  {
+    RCP<Aeras::ShallowWaterResponseL2Error<EvalT,Traits> > res_ev =
+      rcp(new Aeras::ShallowWaterResponseL2Error<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+#endif
 
   else if (responseName == "Element Size Field")
   {
@@ -187,6 +205,34 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+   else if (responseName == "Save Nodal Fields")
+  {
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    RCP<PHAL::SaveNodalField<EvalT,Traits> > res_ev =
+      rcp(new PHAL::SaveNodalField<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+  }
+
+  else if (responseName == "Stiffness Objective")
+  {
+#ifdef ALBANY_ATO
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
+      rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  Response function " << responseName <<
+      " not available!" << std::endl << "Albany/ATO not enabled." <<
+      std::endl);
+#endif
   }
 
 #ifdef ALBANY_LCM
@@ -202,7 +248,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-  else if (responseName == "Project IP to Nodal Field")
+  /*IK_FIXME! else if (responseName == "Project IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
@@ -213,8 +259,9 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
+  }*/
 #endif
+
 
 #ifdef ALBANY_SEE
   else if (responseName == "Linear Adjoint Solve")

@@ -51,6 +51,8 @@ class DiscretizationFactory {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs();
 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
+
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,

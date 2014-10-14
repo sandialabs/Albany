@@ -58,7 +58,7 @@ TLElasResid(const Teuchos::ParameterList& p) :
   matModel = p.get<std::string>("Stress Name");
 
   zGrav=0.0;
-  this->registerSacadoParameter("zGrav", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("zGrav", this, paramLib);
 
 }
 

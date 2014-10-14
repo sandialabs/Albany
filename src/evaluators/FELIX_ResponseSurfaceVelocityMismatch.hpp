@@ -46,8 +46,8 @@ namespace FELIX {
     std::size_t numVecDim;
     
     PHX::MDField<ScalarT,Cell,Node,VecDim> velocity_field;
-    PHX::MDField<RealType,Cell,Node,VecDim> surfaceVelocity_field;
-    PHX::MDField<RealType,Cell,Node,VecDim> velocityRMS_field;
+    PHX::MDField<ScalarT,Cell,Node,VecDim> surfaceVelocity_field;
+    PHX::MDField<ScalarT,Cell,Node,VecDim> velocityRMS_field;
     PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
     Teuchos::RCP<shards::CellTopology> cellType;

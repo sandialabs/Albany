@@ -16,6 +16,15 @@
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "Petra_Converters.hpp"
 
+//IK, 7/15/14: adding option to write the mass matrix to matrix market file, which is needed 
+//for some applications.  Uncomment the following line to turn on.
+//#define WRITE_MASS_MATRIX_TO_MM_FILE
+
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+#include "EpetraExt_RowMatrixOut.h"
+#include "EpetraExt_BlockMapOut.h"
+#endif
+
 Albany::ModelEvaluator::ModelEvaluator(
   const Teuchos::RCP<Albany::Application>& app_,
   const Teuchos::RCP<Teuchos::ParameterList>& appParams)
@@ -533,9 +542,21 @@ Albany::ModelEvaluator::evalModel(const InArgs& inArgs,
 
   // Cast W to a CrsMatrix, throw an exception if this fails
   Teuchos::RCP<Epetra_CrsMatrix> W_out_crs;
-
-  if (W_out != Teuchos::null)
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+  //IK, 7/15/14: adding object to hold mass matrix to be written to matrix market file
+  Teuchos::RCP<Epetra_CrsMatrix> Mass;
+  //IK, 7/15/14: needed for writing mass matrix out to matrix market file
+  EpetraExt::ModelEvaluator::Evaluation<Epetra_Vector> ftmp = outArgs.get_f();
+#endif
+  
+  if (W_out != Teuchos::null) {
     W_out_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out, true);
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+    //IK, 7/15/14: adding object to hold mass matrix to be written to matrix market file
+    Mass = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out, true);
+#endif
+  }
+
 
 int test_var = 0;
 if(test_var != 0){
@@ -557,6 +578,18 @@ x->Print(std::cout);
   if (W_out != Teuchos::null) {
     app->computeGlobalJacobian(alpha, beta, omega, curr_time, x_dot.get(), x_dotdot.get(),*x,
                                sacado_param_vec, f_out.get(), *W_out_crs);
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+    //IK, 7/15/14: write mass matrix to matrix market file
+    //Warning: to read this in to MATLAB correctly, code must be run in serial.
+    //Otherwise Mass will have a distributed Map which would also need to be read in to MATLAB for proper
+    //reading in of Mass.
+    app->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time, x_dot.get(), x_dotdot.get(), *x, 
+                               sacado_param_vec, ftmp.get(), *Mass);
+    EpetraExt::RowMatrixToMatrixMarketFile("mass.mm", *Mass);
+    EpetraExt::BlockMapToMatrixMarketFile("rowmap.mm", Mass->RowMap());
+    EpetraExt::BlockMapToMatrixMarketFile("colmap.mm", Mass->ColMap());
+    Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
+#endif
     f_already_computed=true;
 if(test_var != 0){
 //std::cout << "The current rhs length is: " << f_out->MyLength() << std::endl;
@@ -644,6 +677,8 @@ f_out->Print(std::cout);
 
   // Response functions
   for (int i=0; i<outArgs.Ng(); i++) {
+    //Set curr_time to final time at which response occurs.
+    curr_time  = inArgs.get_t();
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
     //Declare Tpetra_Vector copy of g_out
     Teuchos::RCP<Tpetra_Vector> g_outT; 
@@ -701,6 +736,7 @@ f_out->Print(std::cout);
       }
     }
 
+    // Need to handle dg/dp for distributed p
     if (g_out != Teuchos::null && !g_computed) {
       //create Tpetra copy of g_out, call it g_outT
       g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 

@@ -1,0 +1,92 @@
+
+The following are broken in the temporary branch following the merge of master -> tpetra: 
+
+1.) nodalGraph doesn't have adj and start methods implemented, which were introduced into the master branch 
+for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Albany_STKDiscretization.cpp .
+
+2.) ExtrudedMeshStruct doesn't get compiled now in the Tpetra branch.  It got rewritten recently in the tpetra
+branch and I decided it's easier to re-convert the new function to Tpetra rather than merging.
+
+3.) I have removed saveFieldBlock, saveFieldVector, saveNodal*, registerNodal*, etc. classes, as these are gone from the master branch.These were used in the new evaluator ProjectIPtoNodalField.  That evaluator has been commented out for now.  Needs to be converted
+to not rely on missing classes.
+
+4.) mpas_interface code has Epetra.  Needs to be converted.  It's off right now in my build / tests.
+
+5.) Need to check that ALBANY_EPETRA_EXE OFF builds (probably it won't right now), and that the resulting library doesn't have Epetra.
+
+6.) Need to merge Andrew Bradley's recent bug fixes into the temporary branch.
+
+7.) Albany::SolverFactory create* methods have new boolean input "bool createAlbanyApp".  Need to propagate this into Tpetra versions
+of these functions.
+
+8.) Adapt_NodalDataBlock saveTepetraNodalDataVector function doesn't work right now -- see IK_FIXME.  There's a problem w/ 
+calling saveField on Tpetra_Vector instead of Tpetra_BlockMultiVector inputs.
+
+9.) I am concerned about all the BlockMaps in Albany_STKFieldContainer.  Last time I checked the details Tpetra's BlockMap 
+didn't work the same way as Epetra (it had no true concept of block map).  You can only get blockmap from Tpetra_BlockMultiVector (not Tpetra_Vector), hence the code input structure causing the problem 8.).  Something needs to be done about the 
+
+ //if(blocksize < 0)
+      //  blocksize = overlap_node_map.ElementSize();
+
+lines in saveField, which are commented out now.  
+
+Failed tests (10/13/14): 
+The following tests FAILED:
+	 26 - SGBratu1D_Tpetra (Failed) - PHAL Field IntegralT response (Irina will fix)
+	 27 - SGQuad2D_Tpetra (Failed) - PHAL Field Integral T response (Irina will fix)
+	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing)
+	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
+	 73 - GPAM_Tpetra (Failed) - PHAL Field IntegralT response (Irina will fix)
+	 90 - KfieldBC_base_Tpetra (Failed) - Failed comparison (related to IP to Nodal Field response missing?) 
+	 92 - KfieldBC_L2Proj_Tpetra (Failed) - Project IP to Nodal Field response missing (Andrew B. will fix)
+	121 - MechanicsWithTemperatureThermalExpansion (Failed) - Error 1 below
+	122 - MechanicsWithTemperature (Failed) - Error 1 below
+	171 - ThermoMechanical3D_SplitOutput (Failed)
+	173 - ThermoMechanical3D_SplitOutput_Tpetra (Failed)
+	213 - MechanicsTensileTet10_STK (Failed)
+	214 - MechanicsTensileTet10_STK_Tpetra (Failed)
+	230 - QCAD_Schrodinger_parabolic1D_SERIAL (Failed)
+	231 - QCAD_Schrodinger_parabolic1D_SERIAL_Tpetra (Failed)
+	232 - QCAD_Schrodinger_parabolic2D_SERIAL (Failed)
+	233 - QCAD_Schrodinger_parabolic1D (Failed)
+	234 - QCAD_Schrodinger_parabolic2D (Failed)
+	235 - QCAD_Schrodinger_parabolic3D (Failed)
+	236 - QCAD_Schrodinger_formula2D_qcad (Failed)
+	237 - QCAD_Schrodinger_infiniteWall1D (Failed)
+	238 - QCAD_Schrodinger_infiniteWall2D (Failed)
+	239 - QCAD_Schrodinger_finiteWall1D (Failed)
+	240 - QCAD_Schrodinger_parabolic1D_Tpetra (Failed)
+	241 - QCAD_Schrodinger_parabolic3D_Tpetra (Failed)
+	242 - QCAD_Schrodinger_finiteWall1D_Tpetra (Failed)
+	243 - QCAD_Schrodinger_infiniteWall1D_Tpetra (Failed)
+	244 - QCAD_Schrodinger_infiniteWall2D_Tpetra (Failed)
+	249 - FO_MMS_SinCosGlen (Failed)
+	250 - FO_MMS_SinCosGlen_Tpetra (Failed)
+	253 - FO_MMS_SinExp_Neumann (Failed)
+	254 - FO_MMS_SinExp_Neumann_Tpetra (Failed)
+	255 - FO_MMS_CosExp_Basal (Failed)
+	256 - FO_MMS_CosExp_Basal_Tpetra (Failed)
+	257 - FO_MMS_FO_CosExp_BasalAll (Failed)
+	258 - FO_MMS_FO_CosExp_BasalAll_Tpetra (Failed)
+	270 - FO_GIS_GisUnstructured (Failed)
+	271 - FO_GIS_GisRestartUnstructured (Failed)
+	273 - Stokes_MMS_Poly (Failed)
+	274 - Stokes_MMS_CouettePeriodicX (Failed)
+	275 - Stokes_MMS_SinSinPeriodicXY (Failed)
+	276 - Stokes_MMS_SinSinDirichlet (Failed)
+	279 - Stokes_MMS_SinCosGlen (Failed)
+	280 - Stokes_MMS_SinExpBasal (Failed)
+	287 - Aeras_TC5_Serial_Tpetra (Failed)
+	290 - Aeras_TC3_Serial (Failed)
+	291 - Aeras_TCGalewsky_Serial (Failed)
+	292 - Aeras_TC4_Serial (Failed)
+	293 - Aeras_TC7_Serial (Failed)
+	295 - Aeras_XZScalarAdvection_Tpetra (Failed)
+	301 - MOR_TransientHeat2D_galerkin_trunc_colloc_exo (Failed)
+	302 - MOR_TransientHeat2D_galerkin_trunc_colloc_sample_exo (Failed)
+	303 - SEE_NonlinearPoisson_Tpetra (Failed)
+Errors while running CTest
+
+Error 1
+ ARRAY RANGE CHECK FAILED: 0 <= 1 < 1 ; THROWN FROM FILE /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Trilinos_clean/packages/shards/src/Shards_Array.cpp AT LINE 197
+

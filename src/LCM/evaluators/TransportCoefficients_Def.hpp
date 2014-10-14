@@ -213,7 +213,7 @@ namespace LCM {
       }
     }
 
-    // trapped conecentration
+    // trapped concentration
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
           theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /

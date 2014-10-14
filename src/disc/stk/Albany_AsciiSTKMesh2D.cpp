@@ -16,7 +16,7 @@
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
-#include <stk_mesh/base/FieldData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
 #ifdef ALBANY_SEACAS
@@ -96,20 +96,20 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 	params->validateParameters(*getValidDiscretizationParameters(), 0);
 
 	std::string ebn = "Element Block 0";
-	partVec[0] = &metaData->declare_part(ebn, metaData->element_rank());
+	partVec[0] = &metaData->declare_part(ebn, stk::topology::ELEMENT_RANK);
 	ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
-	//  stk_classic::io::put_io_part_attribute(metaData->universal_part());
-	stk_classic::io::put_io_part_attribute(*partVec[0]);
+	//  stk::io::put_io_part_attribute(metaData->universal_part());
+	stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
 	std::vector < std::string > nsNames;
 	std::string nsn = "Node";
 	nsNames.push_back(nsn);
-	nsPartVec[nsn] = &metaData->declare_part(nsn, metaData->node_rank());
+	nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
 #ifdef ALBANY_SEACAS
-	stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
 
 	std::vector < std::string > ssNames;
@@ -117,16 +117,16 @@ Albany::AsciiSTKMesh2D::AsciiSTKMesh2D(
 	ssNames.push_back(ssn);
 	ssPartVec[ssn] = &metaData->declare_part(ssn, metaData->side_rank());
 #ifdef ALBANY_SEACAS
-	stk_classic::io::put_io_part_attribute(*ssPartVec[ssn]);
-	stk_classic::io::put_io_part_attribute(metaData->universal_part());
+	stk::io::put_io_part_attribute(*ssPartVec[ssn]);
+	stk::io::put_io_part_attribute(metaData->universal_part());
 #endif
 
 	if(NumElemNodes == 3)
-	  stk_classic::mesh::fem::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
+	  stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
 	else
-	  stk_classic::mesh::fem::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
+	  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*partVec[0]);
 
-	stk_classic::mesh::fem::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
+	stk::mesh::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
 	numDim = 2;
 	int cub = params->get("Cubature Degree", 3);
 	int worksetSizeMax = params->get("Workset Size", 50);
@@ -160,8 +160,8 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 
 	bulkData->modification_begin(); // Begin modifying the mesh
 
-	stk_classic::mesh::PartVector nodePartVec;
-	stk_classic::mesh::PartVector singlePartVec(1);
+	stk::mesh::PartVector nodePartVec;
+	stk::mesh::PartVector singlePartVec(1);
 	std::cout << "elem_map # elments: " << NumEles << std::endl;
 	unsigned int ebNo = 0; //element block #???
 	int sideID = 0;
@@ -174,11 +174,11 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 	singlePartVec[0] = nsPartVec["Node"];
 
 	for (int i = 0; i < NumNodes; i++) {
-		stk_classic::mesh::Entity& node = bulkData->declare_entity(metaData->node_rank(),
+		stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK,
 				i + 1, singlePartVec);
 
 		double* coord;
-		coord = stk_classic::mesh::field_data(*coordinates_field, node);
+		coord = stk::mesh::field_data(*coordinates_field, node);
 		coord[0] = xyz[i][0];
 		coord[1] = xyz[i][1];
 		coord[2] = 0.; //xyz[i][2];
@@ -187,16 +187,16 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 	for (int i = 0; i < NumEles; i++) {
 
 		singlePartVec[0] = partVec[ebNo];
-		stk_classic::mesh::Entity& elem = bulkData->declare_entity(metaData->element_rank(),
+		stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK,
 				i + 1, singlePartVec);
 
 		for (int j = 0; j < NumElemNodes; j++) {
-			stk_classic::mesh::Entity& node = *bulkData->get_entity(metaData->node_rank(),
+			stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK,
 					eles[i][j]);
 			bulkData->declare_relation(elem, node, j);
 		}
 
-		//  int* p_rank = stk_classic::mesh::field_data(*proc_rank_field, elem);
+		//  int* p_rank = stk::mesh::field_data(*proc_rank_field, elem);
 		//    p_rank[0] = comm->MyPID();
 	}
 
@@ -208,24 +208,24 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
 
 	singlePartVec[0] = ssPartVec["LateralSide"];
 	for (int i = 0; i < NumEles; i++) {
-		for (int j = 0; j < NumElemNodes; j++) {
-			std::map<std::pair<int, int>, int>::iterator it = edgeMap.find(
-					std::make_pair(eles[i][j], eles[i][(j + 1) % NumElemNodes]));
-			if (it == edgeMap.end()) it = edgeMap.find(std::make_pair(eles[i][(j + 1) % NumElemNodes], eles[i][j]));
-			if (it != edgeMap.end()) {
-				stk_classic::mesh::Entity& side = bulkData->declare_entity(
-						metaData->side_rank(), it->second, singlePartVec);
-				stk_classic::mesh::Entity& elem = *bulkData->get_entity(
-						metaData->element_rank(), i + 1);
-				bulkData->declare_relation(elem, side, j /*local side id*/);
-				stk_classic::mesh::PairIterRelation rel_elemNodes = elem.relations(metaData->node_rank());
-        for (int k = 0; k < 2; k++) {
-          stk_classic::mesh::Entity& node = *rel_elemNodes[this->meshSpecs[0]->ctd.side[j].node[k]].entity();
-          bulkData->declare_relation(side, node, k);
-        }
-				edgeMap.erase(it);
-			}
-		}
+          for (int j = 0; j < NumElemNodes; j++) {
+            std::map<std::pair<int, int>, int>::iterator it = edgeMap.find(
+              std::make_pair(eles[i][j], eles[i][(j + 1) % NumElemNodes]));
+
+            if (it == edgeMap.end()) it = edgeMap.find(std::make_pair(eles[i][(j + 1) % NumElemNodes], eles[i][j]));
+
+            if (it != edgeMap.end()) {
+              stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), it->second, singlePartVec);
+              stk::mesh::Entity elem = bulkData->get_entity(stk::topology::ELEMENT_RANK, i + 1);
+              bulkData->declare_relation(elem, side, j /*local side id*/);
+              stk::mesh::Entity const* rel_elemNodes = bulkData->begin_nodes(elem);
+              for (int k = 0; k < 2; k++) {
+                stk::mesh::Entity node = rel_elemNodes[this->meshSpecs[0]->ctd.side[j].node[k]];
+                bulkData->declare_relation(side, node, k);
+              }
+              edgeMap.erase(it);
+            }
+          }
 	}
 
 	bulkData->modification_end();

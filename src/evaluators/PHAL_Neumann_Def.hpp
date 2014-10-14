@@ -62,7 +62,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
     if(inputConditions == "scaled jump") {
       bc_type = INTJUMP;
       const_val = inputValues[0];
-      this->registerSacadoParameter(name, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
     }
     else { // inputConditions == "robin"
       bc_type = ROBIN;
@@ -72,7 +72,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < 3; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        this->registerSacadoParameter(ss.str(), paramLib);
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
       }
     }
 
@@ -136,7 +136,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < dudx.size(); i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        this->registerSacadoParameter(ss.str(), paramLib);
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
       }
   }
   else if(inputConditions == "P"){ // Pressure boundary condition for Elasticity
@@ -144,7 +144,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       // User has specified a pressure condition
       bc_type = PRESS;
       const_val = inputValues[0];
-      this->registerSacadoParameter(name, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
 
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
@@ -166,7 +166,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        this->registerSacadoParameter(ss.str(), paramLib);
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
       }
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
@@ -212,7 +212,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < 1; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        this->registerSacadoParameter(ss.str(), paramLib);
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
       }
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
@@ -232,15 +232,15 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
         for(int i = 0; i < 5; i++) {
           std::stringstream ss; ss << name << "[" << i << "]";
-          this->registerSacadoParameter(ss.str(), paramLib);
+          new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
         }
          PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
          dofVec = tmp;
 #ifdef ALBANY_FELIX
        thickness_field = PHX::MDField<ScalarT,Cell,Node>(
-                           p.get<std::string>("Thickness Field Name"), dl->node_scalar);
-       elevation_field = PHX::MDField<RealType,Cell,Node>(
+                           p.get<std::string>("thickness Field Name"), dl->node_scalar);
+       elevation_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("Elevation Field Name"), dl->node_scalar);
 
         this->addDependentField(thickness_field);
@@ -255,7 +255,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       // User has specified conditions on sideset normal
       bc_type = NORMAL;
       const_val = inputValues[0];
-      this->registerSacadoParameter(name, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
 
   }
 
@@ -498,7 +498,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 #ifdef ALBANY_FELIX
     else if(bc_type == LATERAL) {
           Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
-          Intrepid::FieldContainer<MeshScalarT> elevationOnCell(1, numNodes);
+          Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
           for (std::size_t node=0; node < numNodes; ++node)
           {
                 thicknessOnCell(0,node) = thickness_field(elem_LID,node);
@@ -841,7 +841,6 @@ calc_press(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 }
 
 
-#ifdef ALBANY_FELIX
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -984,9 +983,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
 
 
 }
-#endif
 
-#ifdef ALBANY_FELIX
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -1025,9 +1022,7 @@ calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returne
     }
   }
 }
-#endif
 
-#ifdef ALBANY_FELIX
 template<typename EvalT, typename Traits>
 void NeumannBase<EvalT, Traits>::
 calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -1083,8 +1078,6 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
       }
     }
   }
-
-#endif
 
 // **********************************************************************
 // Specialization: Residual

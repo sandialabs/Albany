@@ -18,7 +18,7 @@
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/fem/FEMMetaData.hpp>
+#include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 
 #include "Teuchos_ScalarTraits.hpp"
@@ -49,12 +49,12 @@ namespace Albany {
 
     msType meshSpecsType(){ return STK_MS; }
 
-    stk_classic::mesh::fem::FEMMetaData* metaData;
-    stk_classic::mesh::BulkData* bulkData;
+    stk::mesh::MetaData* metaData;
+    stk::mesh::BulkData* bulkData;
 
-    std::map<int, stk_classic::mesh::Part*> partVec;    //Element blocks
-    std::map<std::string, stk_classic::mesh::Part*> nsPartVec;  //Node Sets
-    std::map<std::string, stk_classic::mesh::Part*> ssPartVec;  //Side Sets
+    std::map<int, stk::mesh::Part*> partVec;    //Element blocks
+    std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
+    std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> getFieldContainer(){return fieldContainer; }
     AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField(){ return fieldContainer->getCoordinatesField(); }

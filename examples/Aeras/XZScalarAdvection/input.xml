@@ -36,15 +36,17 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{ 0.00908880569258,  0.838325340766,  8.10023015872}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.00464129223378, 0.994427180369, 11.0272324347}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.014918508627}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.0467450977247}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="200"/>
+      <Parameter name="Num Time Steps" type="int" value="5"/>
+      <!-- Originally Num Time Steps was 200; reduced it for nightly tests (IK, 10/8/14) -->
+      <!--Parameter name="Num Time Steps" type="double" value="200"/-->
       <Parameter name="Final Time" type="double" value="5000."/>
       <Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>

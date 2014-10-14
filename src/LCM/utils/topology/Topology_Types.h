@@ -13,9 +13,8 @@
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/fem/CreateAdjacentEntities.hpp>
-#include <stk_mesh/fem/FEMMetaData.hpp>
-#include <stk_mesh/fem/SkinMesh.hpp>
+#include <stk_mesh/base/CreateAdjacentEntities.hpp>
+#include <stk_mesh/base/SkinMesh.hpp>
 
 // Boost includes
 #include <boost/graph/adjacency_list.hpp>
@@ -44,29 +43,19 @@
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 
-using stk_classic::mesh::Bucket;
-using stk_classic::mesh::BulkData;
-using stk_classic::mesh::Entity;
-using stk_classic::mesh::EntityId;
-using stk_classic::mesh::EntityKey;
-using stk_classic::mesh::EntityRank;
-using stk_classic::mesh::EntityVector;
-using stk_classic::mesh::Field;
-using stk_classic::mesh::PairIterRelation;
-using stk_classic::mesh::Relation;
-using stk_classic::mesh::RelationVector;
-
-using Teuchos::RCP;
-
-using Albany::STKDiscretization;
-
 namespace LCM {
 
-typedef stk_classic::mesh::RelationIdentifier EdgeId;
+typedef stk::mesh::RelationIdentifier EdgeId;
+typedef stk::mesh::EntityVector::size_type EntityVectorIndex;
+typedef stk::mesh::RelationVector::size_type RelationVectorIndex;
+typedef std::vector<Intrepid::Vector<double> > Coordinates;
+typedef Coordinates::size_type CoordinatesIndex;
+typedef std::vector<std::vector<stk::mesh::EntityId> > Connectivity;
+typedef Connectivity::size_type ConnectivityIndex;
 
 typedef boost::vertex_name_t VertexName;
 typedef boost::edge_name_t EdgeName;
-typedef boost::property<VertexName, EntityRank> VertexProperty;
+typedef boost::property<VertexName, stk::mesh::EntityRank> VertexProperty;
 typedef boost::property<EdgeName, EdgeId> EdgeProperty;
 typedef boost::listS ListS;
 typedef boost::vecS VectorS;
@@ -87,37 +76,28 @@ typedef boost::graph_traits<Graph>::out_edge_iterator OutEdgeIterator;
 typedef boost::graph_traits<Graph>::in_edge_iterator InEdgeIterator;
 
 typedef Albany::AbstractSTKFieldContainer::IntScalarFieldType
-    IntScalarFieldType;
+IntScalarFieldType;
 
 typedef Albany::AbstractSTKFieldContainer::VectorFieldType
-    VectorFieldType;
+VectorFieldType;
 
 typedef Albany::AbstractSTKFieldContainer::TensorFieldType
-    TensorFieldType;
+TensorFieldType;
 
 // Specific to topological manipulation
-typedef std::pair<Entity*, Entity*> EntityPair;
-typedef std::map<Vertex, size_t> ComponentMap;
-typedef std::map<Entity*, Entity*> ElementNodeMap;
+typedef std::pair<stk::mesh::Entity, stk::mesh::Entity> EntityPair;
+typedef std::map<Vertex, size_t> VertexComponentMap;
+typedef std::map<stk::mesh::Entity, stk::mesh::Entity> EntityEntityMap;
 
-enum FractureState {CLOSED = 0, OPEN = 1};
+enum FractureState
+{
+  CLOSED = 0, OPEN = 1
+};
 
-enum VTKCellType {INVALID = 0, VERTEX = 1, LINE = 2, TRIANGLE = 5, QUAD = 9};
-
-static EntityRank const
-INVALID_RANK = stk_classic::mesh::fem::FEMMetaData::INVALID_RANK;
-
-static EntityRank const
-NODE_RANK = stk_classic::mesh::fem::FEMMetaData::NODE_RANK;
-
-static EntityRank const
-EDGE_RANK = stk_classic::mesh::fem::FEMMetaData::EDGE_RANK;
-
-static EntityRank const
-FACE_RANK = stk_classic::mesh::fem::FEMMetaData::FACE_RANK;
-
-static EntityRank const
-VOLUME_RANK = stk_classic::mesh::fem::FEMMetaData::VOLUME_RANK;
+enum VTKCellType
+{
+  INVALID = 0, VERTEX = 1, LINE = 2, TRIANGLE = 5, QUAD = 9
+};
 
 ///
 /// \brief Struct to store the data needed for creation or
@@ -133,9 +113,10 @@ VOLUME_RANK = stk_classic::mesh::fem::FEMMetaData::VOLUME_RANK;
 ///
 /// Used to create edges from the stk mesh object in a boost graph
 ///
-struct stkEdge {
-  EntityKey source;
-  EntityKey target;
+struct STKEdge
+{
+  stk::mesh::Entity source;
+  stk::mesh::Entity target;
   EdgeId local_id;
 };
 
@@ -144,12 +125,15 @@ struct stkEdge {
 ///
 struct EdgeLessThan
 {
-  bool operator()(stkEdge const & a, stkEdge const & b) const
+  bool operator()(STKEdge const & a, STKEdge const & b) const
   {
     if (a.source < b.source) return true;
-    if (a.source > b.source) return false;
-    // source a and b are the same - check target
-    return (a.target < b.target);
+
+    // stk::mesh::Entity does not have operator>() (!),
+    // thus check for equality next.
+    if (a.source == b.source) return (a.target < b.target);
+
+    return false;
   }
 };
 

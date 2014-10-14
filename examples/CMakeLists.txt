@@ -163,6 +163,12 @@ IF(ALBANY_QCAD AND ALBANY_SEACAS)
   add_subdirectory(ThermoElectrostatics2D)
 ENDIF()
 
+# ATO ##################
+
+IF(ALBANY_ATO)
+  add_subdirectory(ATO)
+ENDIF()
+
 # FELIX ##################
 
 IF(ALBANY_FELIX AND ALBANY_SEACAS )

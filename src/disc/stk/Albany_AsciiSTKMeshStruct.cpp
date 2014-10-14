@@ -15,7 +15,7 @@
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
-#include <stk_mesh/base/FieldData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
 #ifdef ALBANY_SEACAS
@@ -305,56 +305,56 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
 
 
   std::string ebn="Element Block 0";
-  partVec[0] = & metaData->declare_part(ebn, metaData->element_rank() );
+  partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
   ebNameToIndex[ebn] = 0;
 
 #ifdef ALBANY_SEACAS
-  stk_classic::io::put_io_part_attribute(*partVec[0]);
+  stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
 
   std::vector<std::string> nsNames;
   std::string nsn="Bottom";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="NodeSet0";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="NodeSet1";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="NodeSet2";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="NodeSet3";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="NodeSet4";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
   nsn="NodeSet5";
   nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, metaData->node_rank() );
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*nsPartVec[nsn]);
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
 
 
@@ -363,11 +363,11 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
   ssNames.push_back(ssn);
     ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
-    stk_classic::io::put_io_part_attribute(*ssPartVec[ssn]);
+    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
 #endif
 
-  stk_classic::mesh::fem::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
-  stk_classic::mesh::fem::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssn]);
+  stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
+  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssn]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -409,9 +409,9 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   bulkData->modification_begin(); // Begin modifying the mesh
 
-  stk_classic::mesh::PartVector nodePartVec;
-  stk_classic::mesh::PartVector singlePartVec(1);
-  stk_classic::mesh::PartVector emptyPartVec;
+  stk::mesh::PartVector nodePartVec;
+  stk::mesh::PartVector singlePartVec(1);
+  stk::mesh::PartVector emptyPartVec;
 #ifdef OUTPUT_TO_SCREEN
   *out << "elem_map # elements: " << elem_mapT->getNodeNumElements() << std::endl;
   *out << "node_map # elements: " << node_mapT->getNodeNumElements() << std::endl;
@@ -419,11 +419,14 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
   unsigned int ebNo = 0; //element block #???
   int sideID = 0;
 
+  typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
+  typedef AbstractSTKFieldContainer::QPScalarFieldType ElemScalarFieldType;
+
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  AbstractSTKFieldContainer::ScalarFieldType* surfaceHeight_field = fieldContainer->getSurfaceHeightField();
-  AbstractSTKFieldContainer::ScalarFieldType* flowFactor_field = fieldContainer->getFlowFactorField();
-  AbstractSTKFieldContainer::ScalarFieldType* temperature_field = fieldContainer->getTemperatureField();
-  AbstractSTKFieldContainer::ScalarFieldType* basal_friction_field = fieldContainer->getBasalFrictionField();
+  ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
+  ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
+  ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
+  ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
 
   if(!surfaceHeight_field)
      have_sh = false;
@@ -436,19 +439,19 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
      const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
-     //std::cout << "elem_GID: " << elem_GID << std::endl;
-     stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
+     //std::cout << "elem_GID: " << elem_GID << std::endl; 
+     stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
-     stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), 1+elem_id, singlePartVec);
-     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
-     stk_classic::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), eles[i][0], nodePartVec);
-     stk_classic::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), eles[i][1], nodePartVec);
-     stk_classic::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), eles[i][2], nodePartVec);
-     stk_classic::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), eles[i][3], nodePartVec);
-     stk_classic::mesh::Entity& llnodeb = bulkData->declare_entity(metaData->node_rank(), eles[i][4], nodePartVec);
-     stk_classic::mesh::Entity& lrnodeb = bulkData->declare_entity(metaData->node_rank(), eles[i][5], nodePartVec);
-     stk_classic::mesh::Entity& urnodeb = bulkData->declare_entity(metaData->node_rank(), eles[i][6], nodePartVec);
-     stk_classic::mesh::Entity& ulnodeb = bulkData->declare_entity(metaData->node_rank(), eles[i][7], nodePartVec);
+     stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
+     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh 
+     stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][0], nodePartVec);
+     stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][1], nodePartVec);
+     stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][2], nodePartVec);
+     stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][3], nodePartVec);
+     stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][4], nodePartVec);
+     stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][5], nodePartVec);
+     stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][6], nodePartVec);
+     stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][7], nodePartVec);
      bulkData->declare_relation(elem, llnode, 0);
      bulkData->declare_relation(elem, lrnode, 1);
      bulkData->declare_relation(elem, urnode, 2);
@@ -465,142 +468,140 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
      node_GID = eles[i][0]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
-     coord = stk_classic::mesh::field_data(*coordinates_field, llnode);
+     coord = stk::mesh::field_data(*coordinates_field, llnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][1]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
-     coord = stk_classic::mesh::field_data(*coordinates_field, lrnode);
+     coord = stk::mesh::field_data(*coordinates_field, lrnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][2]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
-     coord = stk_classic::mesh::field_data(*coordinates_field, urnode);
+     coord = stk::mesh::field_data(*coordinates_field, urnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][3]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
-     coord = stk_classic::mesh::field_data(*coordinates_field, ulnode);
+     coord = stk::mesh::field_data(*coordinates_field, ulnode);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
-     coord = stk_classic::mesh::field_data(*coordinates_field, llnodeb);
+     coord = stk::mesh::field_data(*coordinates_field, llnodeb);
      node_GID = eles[i][4]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      node_GID = eles[i][5]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
-     coord = stk_classic::mesh::field_data(*coordinates_field, lrnodeb);
+     coord = stk::mesh::field_data(*coordinates_field, lrnodeb);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
-     coord = stk_classic::mesh::field_data(*coordinates_field, urnodeb);
+     coord = stk::mesh::field_data(*coordinates_field, urnodeb);
      node_GID = eles[i][6]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
-     coord = stk_classic::mesh::field_data(*coordinates_field, ulnodeb);
+     coord = stk::mesh::field_data(*coordinates_field, ulnodeb);
      node_GID = eles[i][7]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
-#ifdef ALBANY_FELIX
      if (have_sh) {
        double* sHeight;
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, llnode);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, llnode);
        node_GID = eles[i][0]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, lrnode);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, lrnode);
        node_GID = eles[i][1]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, urnode);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, urnode);
        node_GID = eles[i][2]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, ulnode);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, ulnode);
        node_GID = eles[i][3]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, llnodeb);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, llnodeb);
        node_GID = eles[i][4]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, lrnodeb);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, lrnodeb);
        node_GID = eles[i][5]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, urnodeb);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, urnodeb);
        node_GID = eles[i][6]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
 
-       sHeight = stk_classic::mesh::field_data(*surfaceHeight_field, ulnodeb);
+       sHeight = stk::mesh::field_data(*surfaceHeight_field, ulnodeb);
        node_GID = eles[i][7]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
      }
      if (have_flwa) {
-       double *flowFactor = stk_classic::mesh::field_data(*flowFactor_field, elem);
+       double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem); 
        //i is elem_LID (element local ID);
        //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;
        flowFactor[0] = flwa[i];
      }
      if (have_temp) {
-       double *temperature = stk_classic::mesh::field_data(*temperature_field, elem);
+       double *temperature = stk::mesh::field_data(*temperature_field, elem); 
        //i is elem_LID (element local ID);
        //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
        temperature[0] = temper[i];
      }
      if (have_beta) {
-       double* bFriction;
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, llnode);
+       double* bFriction; 
+       bFriction = stk::mesh::field_data(*basal_friction_field, llnode);
        node_GID = eles[i][0]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, lrnode);
+       bFriction = stk::mesh::field_data(*basal_friction_field, lrnode);
        node_GID = eles[i][1]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, urnode);
+       bFriction = stk::mesh::field_data(*basal_friction_field, urnode);
        node_GID = eles[i][2]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, ulnode);
+       bFriction = stk::mesh::field_data(*basal_friction_field, ulnode);
        node_GID = eles[i][3]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, llnodeb);
+       bFriction = stk::mesh::field_data(*basal_friction_field, llnodeb);
        node_GID = eles[i][4]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, lrnodeb);
+       bFriction = stk::mesh::field_data(*basal_friction_field, lrnodeb);
        node_GID = eles[i][5]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, urnodeb);
+       bFriction = stk::mesh::field_data(*basal_friction_field, urnodeb);
        node_GID = eles[i][6]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
 
-       bFriction = stk_classic::mesh::field_data(*basal_friction_field, ulnodeb);
+       bFriction = stk::mesh::field_data(*basal_friction_field, ulnodeb);
        node_GID = eles[i][7]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID];
        }
-#endif
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
@@ -608,10 +609,10 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        if ( xyz[eles[i][0]][2] == 0.0) {
           //std::cout << "sideID: " << sideID << std::endl;
           singlePartVec[0] = ssPartVec["Basal"];
-          stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
+          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
           sideID++;
 
-         stk_classic::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+         stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
          bulkData->declare_relation(elem, side,  4 /*local side id*/);
 
          bulkData->declare_relation(side, llnode, 0);
@@ -678,19 +679,19 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
     for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
        singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_mapT->getGlobalElement(i);
-       stk_classic::mesh::EntityId side_id = (stk_classic::mesh::EntityId)(sideID);
-       stk_classic::mesh::Entity& side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
 
        const unsigned int elem_GID = bf[i][0];
-       //std::cout << "elem_GID: " << elem_GID << std::endl;
-       stk_classic::mesh::EntityId elem_id = (stk_classic::mesh::EntityId) elem_GID;
-       stk_classic::mesh::Entity& elem  = bulkData->declare_entity(metaData->element_rank(), elem_id, emptyPartVec);
+       //std::cout << "elem_GID: " << elem_GID << std::endl; 
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  4 /*local side id*/);
-       stk_classic::mesh::Entity& llnode = bulkData->declare_entity(metaData->node_rank(), bf[i][1], nodePartVec);
-       stk_classic::mesh::Entity& lrnode = bulkData->declare_entity(metaData->node_rank(), bf[i][2], nodePartVec);
-       stk_classic::mesh::Entity& urnode = bulkData->declare_entity(metaData->node_rank(), bf[i][3], nodePartVec);
-       stk_classic::mesh::Entity& ulnode = bulkData->declare_entity(metaData->node_rank(), bf[i][4], nodePartVec);
-
+       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][1], nodePartVec);
+       stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][2], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][3], nodePartVec);
+       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][4], nodePartVec);
+       
        bulkData->declare_relation(side, llnode, 0);
        bulkData->declare_relation(side, ulnode, 3);
        bulkData->declare_relation(side, urnode, 2);

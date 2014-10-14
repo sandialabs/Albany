@@ -15,10 +15,10 @@
 
 namespace AAdapt {
 
-typedef stk_classic::mesh::Entity Entity;
-typedef stk_classic::mesh::EntityRank EntityRank;
-typedef stk_classic::mesh::RelationIdentifier EdgeId;
-typedef stk_classic::mesh::EntityKey EntityKey;
+typedef stk::mesh::Entity Entity;
+typedef stk::mesh::EntityRank EntityRank;
+typedef stk::mesh::RelationIdentifier EdgeId;
+typedef stk::mesh::EntityKey EntityKey;
 
 //
 //
@@ -41,19 +41,19 @@ AAdapt::TopologyMod::TopologyMod(
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
 
-  // The entity ranks
-  node_rank_ = meta_data_->NODE_RANK;
-  edge_rank_ = meta_data_->EDGE_RANK;
-  face_rank_ = meta_data_->FACE_RANK;
-  element_rank_ = meta_data_->element_rank();
-
   num_dim_ = stk_mesh_struct_->numDim;
 
   // Save the initial output file name
   base_exo_filename_ = stk_mesh_struct_->exoOutFile;
 
   std::string const
-  stress_name = "nodal_Cauchy_Stress";
+  bulk_block_name = params->get<std::string>("Bulk Block Name");
+
+  std::string const
+  interface_block_name = params->get<std::string>("Interface Block Name");
+
+  std::string const
+  stress_name = "nodal_FirstPK";
 
   double const
   critical_traction = params->get<double>("Critical Traction");
@@ -62,15 +62,20 @@ AAdapt::TopologyMod::TopologyMod(
   beta = params->get<double>("beta");
 
   topology_ =
-    Teuchos::rcp(new LCM::Topology(discretization_));
+    Teuchos::rcp(new LCM::Topology(
+        discretization_,
+        bulk_block_name,
+        interface_block_name));
 
   fracture_criterion_ =
     Teuchos::rcp(
         new LCM::FractureCriterionTraction(
-            *topology_, stress_name, critical_traction, beta)
-  );
+            *topology_,
+            stress_name,
+            critical_traction,
+            beta));
 
-  topology_->setFractureCriterion(fracture_criterion_);
+  topology_->set_fracture_criterion(fracture_criterion_);
 }
 
 //
@@ -129,14 +134,6 @@ AAdapt::TopologyMod::adaptMesh(
   // Start the mesh update process
 
   // Modifies mesh for graph algorithm
-  // Function must be called each time before there are changes to the mesh
-
-  // Check for failure criterion
-  // std::map<EntityKey, bool> local_entity_open;
-  // std::map<EntityKey, bool> global_entity_open;
-  topology_->setEntitiesOpen();
-
-  // getGlobalOpenList(local_entity_open, global_entity_open);
 
   // begin mesh update
 
@@ -181,20 +178,27 @@ AAdapt::TopologyMod::getValidAdapterParameters() const {
 //----------------------------------------------------------------------------
 void
 AAdapt::TopologyMod::showRelations() {
-  std::vector<Entity*> element_list;
-  stk_classic::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
+  std::vector<Entity> element_list;
+  stk::mesh::get_entities(*(bulk_data_), stk::topology::ELEMENT_RANK, element_list);
 
   // Remove extra relations from element
   for(int i = 0; i < element_list.size(); ++i) {
-    Entity& element = *(element_list[i]);
-    stk_classic::mesh::PairIterRelation relations = element.relations();
-    std::cout << "Element " << element_list[i]->identifier()
-              << " relations are :" << std::endl;
+    Entity element = element_list[i];
 
-    for(int j = 0; j < relations.size(); ++j) {
-      std::cout << "entity:\t" << relations[j].entity()->identifier() << ","
-                << relations[j].entity()->entity_rank() << "\tlocal id: "
-                << relations[j].identifier() << "\n";
+    for (EntityRank rank = stk::topology::NODE_RANK; rank < meta_data_->entity_rank_count(); ++rank) {
+
+      Entity const* relations = bulk_data_->begin(element, rank);
+      stk::mesh::ConnectivityOrdinal const* ords = bulk_data_->begin_ordinals(element, rank);
+      size_t const num_relations = bulk_data_->num_connectivity(element, rank);
+
+      std::cout << "Element " << bulk_data_->identifier(element_list[i])
+                << " relations are :" << std::endl;
+
+      for(int j = 0; j < num_relations; ++j) {
+        std::cout << "entity:\t" << bulk_data_->identifier(relations[j]) << ","
+                  << bulk_data_->entity_rank(relations[j]) << "\tlocal id: "
+                  << ords[j] << "\n";
+      }
     }
   }
 }
@@ -205,7 +209,7 @@ int
 AAdapt::TopologyMod::accumulateFractured(int num_fractured) {
   int total_fractured;
 
-  stk_classic::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
+  stk::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
 
   return total_fractured;
 }
@@ -219,23 +223,23 @@ getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
                   std::map<EntityKey, bool>& global_entity_open) {
 
   // Make certain that we can send keys as MPI_UINT64_T types
-  assert(sizeof(EntityKey::raw_key_type) >= sizeof(uint64_t));
+  assert(sizeof(EntityKey::entity_key_t) >= sizeof(uint64_t));
 
   const unsigned parallel_size = bulk_data_->parallel_size();
 
   // Build local vector of keys
   std::pair<EntityKey, bool> me; // what a map<EntityKey, bool> is made of
-  std::vector<EntityKey::raw_key_type> v;     // local vector of open keys
+  std::vector<EntityKey::entity_key_t> v;     // local vector of open keys
 
   BOOST_FOREACH(me, local_entity_open) {
-    v.push_back(me.first.raw_key());
+    v.push_back(EntityKey::entity_key_t(me.first));
 
     // Debugging
     /*
-      const unsigned entity_rank = stk_classic::mesh::entity_rank( me.first);
-      const stk_classic::mesh::EntityId entity_id = stk_classic::mesh::entity_id( me.first );
+      const unsigned entity_rank = stk::mesh::entity_rank( me.first);
+      const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
       const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
-      Entity *entity = bulk_data_->get_entity(me.first);
+      Entity entity = bulk_data_->get_entity(me.first);
       std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
       <<entity->owner_rank() <<std::endl;
     */
@@ -265,32 +269,32 @@ getGlobalOpenList(std::map<EntityKey, bool>& local_entity_open,
 #ifndef MPI_UINT64_T
 #define MPI_UINT64_T MPI_UNSIGNED_LONG_LONG
 #endif
-  EntityKey::raw_key_type* result_array = new EntityKey::raw_key_type[total_number_of_open_entities];
+  EntityKey::entity_key_t* result_array = new EntityKey::entity_key_t[total_number_of_open_entities];
   MPI_Allgatherv(&v[0], num_open_on_pe, MPI_UINT64_T, result_array,
                  sizes, offsets, MPI_UINT64_T, bulk_data_->parallel());
 
   // Save the global keys
   for(int i = 0; i < total_number_of_open_entities; i++) {
 
-    EntityKey key = EntityKey(&result_array[i]);
+    EntityKey key = EntityKey(result_array[i]);
     global_entity_open[key] = true;
 
     // Debugging
     /*
-      const unsigned entity_rank = stk_classic::mesh::entity_rank( key);
-      const stk_classic::mesh::EntityId entity_id = stk_classic::mesh::entity_id( key );
+      const unsigned entity_rank = stk::mesh::entity_rank( key);
+      const stk::mesh::EntityId entity_id = stk::mesh::entity_id( key );
       const std::string & entity_rank_name = metaData->entity_rank_name( entity_rank );
-      Entity *entity = bulk_data_->get_entity(key);
+      Entity entity = bulk_data_->get_entity(key);
       if(!entity) { std::cout << "Error on this processor: Entity not addressible!!!!!!!!!!!!!" << std::endl;
 
       std::cout<<"Global proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"]" << std::endl;
-    std::vector<Entity*> element_lst;
-    stk_classic::mesh::get_entities(*(bulk_data_),elementRank,element_lst);
+    std::vector<Entity> element_lst;
+    stk::mesh::get_entities(*(bulk_data_),elementRank,element_lst);
     for (int i = 0; i < element_lst.size(); ++i){
       std::cout << element_lst[i]->identifier() << std::endl;
       }
-    std::vector<Entity*> entity_lst;
-    stk_classic::mesh::get_entities(*(bulk_data_),entity_rank,entity_lst);
+    std::vector<Entity> entity_lst;
+    stk::mesh::get_entities(*(bulk_data_),entity_rank,entity_lst);
     for (int i = 0; i < entity_lst.size(); ++i){
       std::cout << entity_lst[i]->identifier() << std::endl;
       }

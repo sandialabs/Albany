@@ -84,20 +84,20 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
     // of the state manager, as they require interprocessor synchronization
 
     if(isAnisotropic){ //An-isotropic
-      this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
+      this->pStateMgr->registerStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
-
 
     }
     else {
-      this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
+      this->pStateMgr->registerStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
+
 
     }
 
     // The value of the weights used in the projection
     // Initialize to zero - should give us nan's during the division step if something is wrong
-    this->pStateMgr->registerNodalBlockStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all",
+     this->pStateMgr->registerStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
   }
@@ -143,7 +143,7 @@ preEvaluate(typename Traits::PreEvalData workset)
   // Zero data for accumulation here
   if( this->outputNodeData ) {
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+       this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
     node_data->initializeVectors(0.0);
   }
 }
@@ -206,7 +206,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Get the node data block container
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
     Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
@@ -296,7 +296,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // Get the node data block container
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
     Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();

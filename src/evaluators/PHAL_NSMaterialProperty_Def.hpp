@@ -38,7 +38,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       scalar_constant_value = mp_list->get("Value", default_value);
 
       // Add property as a Sacado-ized parameter
-      this->registerSacadoParameter(name_mp, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name_mp, this, paramLib);
     }
     else if (rank == 3) {
       matPropType = VECTOR_CONSTANT;
@@ -58,7 +58,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 
       // Add property as a Sacado-ized parameter
       for (PHX::DataLayout::size_type i=0; i<numDims; i++)
-	this->registerSacadoParameter(Albany::strint(name_mp,i), paramLib);
+        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(Albany::strint(name_mp,i), this, paramLib);
     }
     else if (rank == 4) {
       matPropType = TENSOR_CONSTANT;
@@ -83,7 +83,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
       // Add property as a Sacado-ized parameter
       for (PHX::DataLayout::size_type i=0; i<numRows; i++)
 	for (PHX::DataLayout::size_type j=0; j<numCols; j++)
-	  this->registerSacadoParameter(Albany::strint(Albany::strint(name_mp,i),j), paramLib);
+          new Sacado::ParameterRegistration<EvalT, SPL_Traits>(Albany::strint(Albany::strint(name_mp,i),j), this, paramLib);
     }
     else
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -118,7 +118,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint(name_mp + " KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = mp_list->get(ss, 0.0);
     }
   }
@@ -132,7 +132,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     this->addDependentField(T); 
 
     // Add property as a Sacado-ized parameter
-    this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name_mp+" Reference Value", this, paramLib);
   }
   else if (type == "invSQRT Temperature Dependent") {
     matPropType = INV_SQRT_TEMP;
@@ -144,7 +144,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
     this->addDependentField(T); 
 
     // Add property as a Sacado-ized parameter
-    this->registerSacadoParameter(name_mp+" Reference Value", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name_mp+" Reference Value", this, paramLib);
   }
   else if (type == "Transport Mean Free Path") {
     matPropType = NEUTRON_DIFFUSION;

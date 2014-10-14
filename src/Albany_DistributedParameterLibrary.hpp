@@ -93,7 +93,7 @@ namespace Albany {
 
     //! Get parameter from library
     Teuchos::RCP<param_type> get(const std::string& name) const {
-      typename param_map_type::const_iterator i = param_map.find(name);
+      const_iterator i = param_map.find(name);
       TEUCHOS_TEST_FOR_EXCEPTION(
         i == param_map.end(), std::logic_error,
         "Parameter " << name << " is not in the library");

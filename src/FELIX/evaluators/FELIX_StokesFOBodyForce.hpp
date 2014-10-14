@@ -44,7 +44,7 @@ private:
   // Input:  
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> surfaceGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
   Teuchos::Array<double> gravity;
   
   // Output:

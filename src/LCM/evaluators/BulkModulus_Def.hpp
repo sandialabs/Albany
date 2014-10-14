@@ -38,7 +38,7 @@ BulkModulus(Teuchos::ParameterList& p) :
     constant_value = bmd_list->get("Value", 1.0);
 
     // Add Bulk Modulus as a Sacado-ized parameter
-    this->registerSacadoParameter("Bulk Modulus", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Bulk Modulus", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -55,7 +55,7 @@ BulkModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Bulk Modulus KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = bmd_list->get(ss, 0.0);
     }
   }
@@ -74,7 +74,7 @@ BulkModulus(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dKdT_value = bmd_list->get("dKdT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    this->registerSacadoParameter("dKdT Value", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dKdT Value", this, paramLib);
   }
   else {
     isThermoElastic=false;

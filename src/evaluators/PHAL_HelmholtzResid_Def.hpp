@@ -57,7 +57,7 @@ HelmholtzResid(const Teuchos::ParameterList& p) :
   // Add K-Squared wavelength as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library");
-  this->registerSacadoParameter("Ksqr", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Ksqr", this, paramLib);
 
 }
 

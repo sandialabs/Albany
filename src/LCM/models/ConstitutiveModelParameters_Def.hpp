@@ -202,7 +202,6 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-    // FIXME deal with Arrhenius temperature dependence, too
     if (have_temperature_) {
       if (temp_type_map_[it->first] == "Linear" ) {
         RealType dPdT = dparam_dtemp_map_[it->first];
@@ -266,7 +265,7 @@ parseParameters(const std::string &n,
   if (type == "Constant") {
     is_constant_map_.insert(std::make_pair(n, true));
     constant_value_map_.insert(std::make_pair(n, pl.get("Value", 1.0)));
-    this->registerSacadoParameter(n, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(n, this, paramLib);
     if (have_temperature_) {
       if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Linear") {
@@ -303,7 +302,7 @@ parseParameters(const std::string &n,
     rv_map_.insert(std::make_pair(n, Teuchos::Array<ScalarT>(num_KL)));
     for (int i(0); i < num_KL; ++i) {
       std::string ss = Albany::strint(n + " KL Random Variable", i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv_map_[n][i] = pl.get(ss, 0.0);
     }
   }

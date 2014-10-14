@@ -83,7 +83,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     switch (size) {
     case 1:
-      sta(0) = field(0);
+      for (int cell = 0; cell < dims[0]; ++cell)
+      sta(cell) = field(cell);
       break;
     case 2:
       for (int cell = 0; cell < dims[0]; ++cell)
@@ -103,8 +104,16 @@ evaluateFields(typename Traits::EvalData workset)
 	    for (int j = 0; j < dims[3]; ++j)
 	      sta(cell, qp, i, j) = field(cell,qp,i,j);
       break;
+    case 5:
+      for (int cell = 0; cell < dims[0]; ++cell)
+	for (int qp = 0; qp < dims[1]; ++qp)
+	  for (int i = 0; i < dims[2]; ++i)
+	    for (int j = 0; j < dims[3]; ++j)
+	      for (int k = 0; k < dims[4]; ++k)
+	      sta(cell, qp, i, j, k) = field(cell,qp,i,j,k);
+      break;
     default:
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>4,
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>5,
                           "Unexpected Array dimensions in SaveStateField: " << size);
     }
 }

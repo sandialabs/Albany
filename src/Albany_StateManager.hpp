@@ -25,7 +25,6 @@
 #include "Epetra_Vector.h"
 #endif
 #include "Adapt_NodalDataBlock.hpp"
-#include "Adapt_NodalDataVector.hpp"
 
 namespace Albany {
 
@@ -56,7 +55,8 @@ public:
 			     const double init_val=0.0,
 			     const bool registerOldState=false,
 			     const bool outputToExodus=true,
-			     const std::string &responseIDtoRequire="");
+			     const std::string &responseIDtoRequire="",
+			     StateStruct::MeshFieldEntity const * fieldEntity=0);
 
   void registerNodalBlockStateVariable(const std::string &stateName,
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
@@ -85,6 +85,14 @@ public:
                         const std::string &init_type="scalar",
                         const double init_val=0.0,
                         const bool registerOldState=false);
+
+
+  //Field entity is known. Useful for NodalDataToElemNode field. Input dl is of ElemNode type
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
+                                              const std::string& ebName,
+                                              const bool outputToExodus,
+                                              StateStruct::MeshFieldEntity const* fieldEntity);
 
   //! If field name to save/load is different from state name
   Teuchos::RCP<Teuchos::ParameterList>
@@ -157,7 +165,7 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase(){ return stateInfo->createNodalDataBase(); }
+  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->createNodalDataBlock(); }
 
 #ifdef ALBANY_EPETRA
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
@@ -168,6 +176,8 @@ public:
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
 #endif
+
+  bool areStateVarsAllocated() const {return stateVarsAreAllocated;}
 
 private:
   //! Private to prohibit copying

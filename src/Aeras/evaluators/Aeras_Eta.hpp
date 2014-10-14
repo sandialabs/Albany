@@ -16,20 +16,18 @@ public:
   typedef typename EvalT::ScalarT     ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  static const Eta<EvalT> &self(const ScalarT p0=0,
-                                const ScalarT ptop=0,
+  static const Eta<EvalT> &self(const ScalarT ptop=0,
+                                const ScalarT p0=0,
                                 const int     L=0) {
-    static const Eta swc(p0,ptop,L);
+    static const Eta swc(ptop,p0,L);
     return swc;
   }
 
-  ScalarT   eta(const int level) const { 
-    const int L = numLevels - level - 1;
+  ScalarT   eta(const double L) const { 
     const ScalarT e = Etatop + (1-Etatop)*(ScalarT(L)+.5)/numLevels; 
     return e;
   }
-  ScalarT delta(const int level) const { 
-    const int L = numLevels - level - 1;
+  ScalarT delta(const int L) const { 
     const double etap = L + .5;
     const double etam = L - .5;
     const ScalarT DeltaEta = eta(etap) - eta(etam);
@@ -39,29 +37,24 @@ public:
   ScalarT   ptop() const { return Ptop;}
   ScalarT etatop() const { return Etatop;}
 
-  ScalarT     W(const double level) const { return  (eta(level)-Etatop)/(1-Etatop); }
-  ScalarT     B(const double level) const { return   eta(level)*   W(level);        }
-  ScalarT     A(const double level) const { return   eta(level)*(1-W(level));       }
+  ScalarT     W(const int level) const { return  (eta(level)-Etatop)/(1-Etatop); }
+  ScalarT     A(const int level) const { return   eta(level)*(1-W(level));       }
+  ScalarT     B(const int level) const { return   eta(level)*   W(level);        }
 
+  ScalarT     B(const double half_step) const { return  eta(half_step)*(eta(half_step)-Etatop)/(1-Etatop);}
+
+  Eta(const ScalarT ptop, const ScalarT p0, const int L) :
+    P0(p0),
+    Ptop(ptop),
+    Etatop(ptop/p0),
+    numLevels(L) {}
+
+  ~Eta(){}
 private:
   const ScalarT P0;
   const ScalarT Ptop;
   const ScalarT Etatop;
   const int     numLevels;
-
-  Eta(const ScalarT p0, const ScalarT ptop, const int L) :
-    P0(p0),
-    Ptop(ptop),
-    Etatop(ptop/p0),
-    numLevels(L)
-  {}
-  ScalarT   eta(const double half_step) const {
-    ScalarT e;
-    if      (half_step < -.25)          e = Etatop;
-    else if (numLevels < half_step+.75) e = 1;
-    else                                e = Etatop + (1-Etatop)*(ScalarT(half_step)+.5)/numLevels;
-    return e;
-  }
 
 };
 }

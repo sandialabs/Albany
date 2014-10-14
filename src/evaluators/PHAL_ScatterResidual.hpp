@@ -49,11 +49,12 @@ protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim,Dim> > valTensor;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
 
-  bool vectorField;
+  unsigned short int tensorRank;
 };
 
 template<typename EvalT, typename Traits> class ScatterResidual;

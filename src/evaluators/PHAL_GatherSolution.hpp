@@ -61,10 +61,13 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dotdot;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dot;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dotdot;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
-  bool vectorField;
+  unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
 };

@@ -20,6 +20,8 @@
 #include "Albany_SolutionResponseFunction.hpp"
 #endif
 #include "Albany_KLResponseFunction.hpp"
+
+
 #ifdef ALBANY_QCAD
 #ifdef ALBANY_EPETRA
 #include "QCAD_SaddleValueResponseFunction.hpp"
@@ -107,20 +109,25 @@ createResponseFunction(
 	   name == "Field Value" ||
 	   name == "Field Average" ||
 	   name == "Surface Velocity Mismatch" ||
+           name == "Aeras Shallow Water L2 Error" ||
+           name == "Aeras Total Volume" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
 	   name == "Region Boundary" ||
 	   name == "Element Size Field" ||
 	   name == "IP to Nodal Field" ||
-	   name == "Project IP to Nodal Field" ||
-     name == "Linear Adjoint Solve" ||
-	   name == "PHAL Field Integral" ||
-	   name == "PHAL Field IntegralT") {
+	   name == "Save Nodal Fields" ||
+	   name == "Stiffness Objective" ||
+	   name == "PHAL Field Integral") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
+#ifdef ALBANY_LCM
+      // Skip if dealing with interface block
+      if (meshSpecs[i]->ebName == "interface") continue;
+#endif
       responses.push_back(
-	rcp(new Albany::FieldManagerScalarResponseFunction(
-	      app, prob, meshSpecs[i], stateMgr, responseParams)));
+          rcp(new Albany::FieldManagerScalarResponseFunction(
+              app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
 

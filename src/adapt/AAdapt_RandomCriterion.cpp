@@ -17,9 +17,8 @@ namespace AAdapt {
 // Default constructor
 //
 RandomCriterion::RandomCriterion(int num_dim,
-                                 stk_classic::mesh::EntityRank& element_rank,
                                  Albany::STKDiscretization& stk) :
-  AbstractFractureCriterion(num_dim, element_rank),
+  AbstractFractureCriterion(num_dim, stk::topology::ELEMENT_RANK),
   stk_(stk) {
 }
 
@@ -28,14 +27,14 @@ RandomCriterion::RandomCriterion(int num_dim,
 // Random fracture criterion function.
 //
 bool
-RandomCriterion::computeFractureCriterion(stk_classic::mesh::Entity& entity, double p) {
+RandomCriterion::computeFractureCriterion(stk::mesh::Entity entity, double p) {
 
   // Fracture only defined on the boundary of the elements
-  stk_classic::mesh::EntityRank rank = entity.entity_rank();
+  stk::mesh::EntityRank rank = entity.entity_rank();
   assert(rank == num_dim_ - 1);
 
-  stk_classic::mesh::PairIterRelation neighbor_elems =
-    entity.relations(element_rank_);
+  stk::mesh::PairIterRelation neighbor_elems =
+    entity.relations(stk::topology::ELEMENT_RANK);
 
   // Need an element on each side
   if(neighbor_elems.size() != 2)

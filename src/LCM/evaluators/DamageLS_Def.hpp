@@ -37,7 +37,7 @@ DamageLS(Teuchos::ParameterList& p) :
     constant_value = dls_list->get("Value", 1.0);
 
     // Add Damage Length Scale as a Sacado-ized parameter
-    this->registerSacadoParameter("Damage Length Scale", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Damage Length Scale", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ DamageLS(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Damage Length Scale KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = dls_list->get(ss, 0.0);
     }
   }

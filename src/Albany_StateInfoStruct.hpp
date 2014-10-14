@@ -25,7 +25,7 @@
 #include "Shards_Array.hpp"
 #include "Intrepid_Polylib.hpp"
 
-#include "Adapt_NodalDataBase.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
   //! Container for minimal mesh specification info needed to
   //  construct an Albany Problem
@@ -46,7 +46,7 @@ typedef std::vector<StateArray> StateArrayVec;
                     int cubatureDegree_, std::vector<std::string> nsNames_,
                     std::vector<std::string> ssNames_,
                     int worsetSize_, const std::string ebName_,
-                    const std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
+                    std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
                     const Intrepid::EIntrepidPLPoly cubatureRule_ = Intrepid::PL_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_),
@@ -59,8 +59,8 @@ typedef std::vector<StateArray> StateArrayVec;
     std::vector<std::string> nsNames;  //Node Sets Names
     std::vector<std::string> ssNames;  //Side Sets Names
     int worksetSize;
-    const std::string ebName;  //Element block name for the EB that this struct corresponds to
-    const std::map<std::string, int>& ebNameToIndex;
+    std::string ebName;  //Element block name for the EB that this struct corresponds to
+    std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
     const Intrepid::EIntrepidPLPoly cubatureRule;
   };
@@ -70,7 +70,7 @@ typedef std::vector<StateArray> StateArrayVec;
 
 struct StateStruct {
 
-  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, QuadPoint};
+  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, ElemData, NodalDataToElemNode, QuadPoint};
   typedef std::vector<int> FieldDims;
 
   StateStruct (const std::string& name_, MeshFieldEntity ent):
@@ -131,18 +131,18 @@ public:
    const_iterator end() const { return sis.end(); }
 
 // Create storage on access - only if used
-   Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() {return nodal_data_base; }
+   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() {return nodal_data_block; }
 
-   Teuchos::RCP<Adapt::NodalDataBase> createNodalDataBase(){
-        if(Teuchos::is_null(nodal_data_base))
-            nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
-        return nodal_data_base;
+   Teuchos::RCP<Adapt::NodalDataBlock> createNodalDataBlock(){
+        if(Teuchos::is_null(nodal_data_block))
+            nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock);
+        return nodal_data_block;
    }
 
 private:
 
    std::vector<Teuchos::RCP<StateStruct> > sis;
-   Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
+   Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
 
 };
 

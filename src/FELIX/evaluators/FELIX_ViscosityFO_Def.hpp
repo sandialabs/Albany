@@ -26,8 +26,8 @@ ViscosityFO(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
   Ugrad (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   mu    (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar), 
-  temperature(p.get<std::string> ("Temperature Name"), dl->cell_scalar2),
-  flowFactorA(p.get<std::string> ("Flow Factor Name"), dl->cell_scalar2),
+  temperature(p.get<std::string> ("temperature Name"), dl->cell_scalar2),
+  flowFactorA(p.get<std::string> ("flow_factor Name"), dl->cell_scalar2),
   homotopyParam (1.0), 
   A(1.0), 
   n(3.0),
@@ -83,12 +83,12 @@ ViscosityFO(const Teuchos::ParameterList& p,
     	*out << "Flow Rate passed in from CISM." << std::endl;
 #endif
     }
-    else if (flowRateType == "Temperature Based")
+    else if (flowRateType == "temperature Based")
     {
     	flowRate_type = TEMPERATUREBASED;
     	this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
-    	*out << "Flow Rate computed using Temperature field." << std::endl;
+    	*out << "Flow Rate computed using temperature field." << std::endl;
 #endif
     }
 #ifdef OUTPUT_TO_SCREEN
@@ -109,7 +109,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); 
   
-  this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);   
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);
 
   this->setName("ViscosityFO"+PHX::TypeString<EvalT>::value);
 }

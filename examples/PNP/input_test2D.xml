@@ -12,10 +12,10 @@
       <Parameter name="DBC on NS NodeSet0 for DOF C2" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet1 for DOF C2" type="double" value="3.0"/>
     </ParameterList>
-    <!--ParameterList name="Permittivity">
+    <ParameterList name="Permittivity">
        <Parameter name="Permittivity Type" type="string" value="Constant"/>
-       <Parameter name="Value" type="double" value="2.0"/>
-    </ParameterList-->
+       <Parameter name="Value" type="double" value="1.0"/>
+    </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="DBC on NS NodeSet0 for DOF Phi"/>

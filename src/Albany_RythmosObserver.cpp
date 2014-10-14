@@ -41,8 +41,9 @@ void Albany_RythmosObserver::observeStartTimeStep(
 
     return;
 
-std::cout << "AGS:: Hack do not observe first step" << std::endl; return;
-
+ //IK, 7/18/14: commented out the next line.  It was causing the 1st solution (initial condition) 
+ //to not be written to the Exodus file.  The hack was in place b/c of the return in the end of the line.
+//std::cout << "AGS:: Hack do not observe first step, time = "  << time << std::endl; return;
 
   // Print the initial condition
 

@@ -33,6 +33,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH="$PWD/install" \
 \
       -D Trilinos_ENABLE_Fortran:BOOL=ON \
 \
+      -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D HAVE_TEUCHOS_COMM_TIMERS=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
@@ -57,7 +58,9 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH="$PWD/install" \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Piro:BOOL=ON \
-      -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_STKIO:BOOL=ON \
+      -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
 \
       -D TPL_FIND_SHARED_LIBS:BOOL=OFF \

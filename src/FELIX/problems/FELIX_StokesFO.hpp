@@ -15,6 +15,9 @@
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
 #include "PHAL_Dimension.hpp"
+//#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "PHAL_LoadStateField.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -134,6 +137,7 @@ FELIX::StokesFO::constructEvaluators(
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
   int vecDim = neq;
+  std::string elementBlockName = meshSpecs.ebName;
   
 #ifdef OUTPUT_TO_SCREEN
   *out << "Field Dimensions: Workset=" << worksetSize 
@@ -144,12 +148,52 @@ FELIX::StokesFO::constructEvaluators(
        << ", vecDim= " << vecDim << std::endl;
 #endif
   
+   Albany::StateStruct::MeshFieldEntity entity;
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   int offset=0;
+
+   entity= Albany::StateStruct::ElemData;
 
    // Temporary variable used numerous times below
-   Teuchos::RCP<PHX::Evaluator<AlbanyTraits> > ev;
+      RCP<PHX::Evaluator<AlbanyTraits> > ev;
+   {
+     std::string stateName("temperature");
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   {
+     std::string stateName("flow_factor");
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->cell_scalar2, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   entity= Albany::StateStruct::NodalDataToElemNode;
+
+   {
+     std::string stateName("surface_height");
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   {
+     std::string stateName("basal_friction");
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   {
+     std::string stateName("thickness");
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   int offset=0;
 
    // Define Field Names
 
@@ -160,14 +204,10 @@ FELIX::StokesFO::constructEvaluators(
   //dof_names_dot[0] = dof_names[0]+"_dot";
   resid_names[0] = "Stokes Residual";
   fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
-    //(evalUtils.constructGatherSolutionEvaluator(true, dof_names, dof_names_dot, offset));
+  (evalUtils.constructGatherSolutionEvaluator_noTransient(true, dof_names, offset));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
-
-  //fm0.template registerEvaluator<EvalT>
-  //  (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
 
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
@@ -185,16 +225,7 @@ FELIX::StokesFO::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructGatherSHeightEvaluator());
-
-  fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructGatherTemperatureEvaluator());
-  
-  fm0.template registerEvaluator<EvalT>
-      (evalUtils.constructGatherFlowFactorEvaluator());
-
-  std::string sh = "Surface Height";
+  std::string sh = "surface_height";
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv(sh));
 
@@ -225,8 +256,8 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
-    p->set<std::string>("Temperature Name", "Temperature");
-    p->set<std::string>("Flow Factor Name", "Flow Factor");
+    p->set<std::string>("temperature Name", "temperature");
+    p->set<std::string>("flow_factor Name", "flow_factor");
     
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
@@ -246,7 +277,7 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
-    p->set<std::string>("Surface Height Gradient Name", "Surface Height Gradient");
+    p->set<std::string>("surface_height Gradient Name", "surface_height Gradient");
     
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
@@ -270,10 +301,20 @@ FELIX::StokesFO::constructEvaluators(
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    fm0.template registerEvaluator<EvalT>
-          (evalUtils.constructGatherSurfaceVelocityEvaluator());
-    fm0.template registerEvaluator<EvalT>
-          (evalUtils.constructGatherVelocityRMSEvaluator());
+  
+    {
+      std::string stateName("surface_velocity");
+      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
+      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    {
+      std::string stateName("surface_velocity_rms");
+      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
+      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+     }
 
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);

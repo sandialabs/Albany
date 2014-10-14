@@ -35,7 +35,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #MESSAGE(SEACAS_EXODIFF "${SEACAS_EXODIFF}")
 
 # Run the "runtest.py" file in the CWD
-add_test(NAME ${testName}_one_tet COMMAND "python" "run_subdivision.py")
-set_tests_properties(${testName}_one_tet  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
+#add_test(NAME ${testName}_one_tet COMMAND "python" "run_subdivision.py")
+#set_tests_properties(${testName}_one_tet  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF}")
 
 ENDIF()

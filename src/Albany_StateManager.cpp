@@ -73,44 +73,19 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
 }
 
 Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const Teuchos::RCP<PHX::DataLayout> &dummy,
+Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string& ebName,
-                                            const std::string &init_type,
-                                            const double init_val,
-                                            const bool registerOldState,
-                                            const bool outputToExodus)
+                                            const bool outputToExodus,
+                                            StateStruct::MeshFieldEntity const* fieldEntity)
 {
-  registerNodalBlockStateVariable(stateName, dl, ebName, init_type, init_val, registerOldState, outputToExodus, stateName);
+  registerStateVariable(stateName, dl, ebName, "", 0., false, outputToExodus, "",fieldEntity);
 
   // Create param list for SaveStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State "
-							  + stateName + " to/from field " + stateName));
+                + stateName + " to/from field " + stateName));
   p->set<const std::string>("State Name", stateName);
   p->set<const std::string>("Field Name", stateName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
-  return p;
-}
-
-Teuchos::RCP<Teuchos::ParameterList>
-Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const Teuchos::RCP<PHX::DataLayout> &dummy,
-                                            const std::string& ebName,
-                                            const std::string &init_type,
-                                            const double init_val,
-                                            const bool registerOldState,
-                                            const bool outputToExodus)
-{
-  registerNodalVectorStateVariable(stateName, dl, ebName, init_type, init_val, registerOldState, outputToExodus, stateName);
-
-  // Create param list for SaveStateField evaluator
-  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State "
-							  + stateName + " to/from field " + stateName));
-  p->set<const std::string>("State Name", stateName);
-  p->set<const std::string>("Field Name", stateName);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
-  p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dummy);
   return p;
 }
 
@@ -138,7 +113,9 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
                                             const double init_val,
                                             const bool registerOldState,
 					    const bool outputToExodus,
-					    const std::string &responseIDtoRequire)
+					    const std::string &responseIDtoRequire,
+					    StateStruct::MeshFieldEntity const* fieldEntity
+					    )
 
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
@@ -158,8 +135,11 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
   // Load into StateInfo
   StateStruct::MeshFieldEntity mfe_type;
-  if(dl->rank() == 1 && dl->size() == 1)
+  if(fieldEntity) mfe_type=*fieldEntity;
+  else if(dl->rank() == 1 && dl->size() == 1)
      mfe_type = StateStruct::WorksetValue; // One value for the whole workset (i.e., time)
+  else if (dl->rank() == 1 && dl->name(0) == "Cell")
+     mfe_type = StateStruct::ElemData;
   else if(dl->rank() >= 1 && dl->name(0) == "Node") // Nodal data
      mfe_type = StateStruct::NodalData;
   else if(dl->rank() >= 1 && dl->name(0) == "Cell"){ // Element QP or node data
@@ -180,197 +160,23 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
   dl->dimensions(stateRef.dim);
 
-  stateRef.output = outputToExodus;
-  stateRef.responseIDtoRequire = responseIDtoRequire;
 
-  // If space is needed for old state
-  if (registerOldState) {
-    stateRef.saveOldState = true;
+  if((stateRef.entity == StateStruct::NodalData)||(stateRef.entity == StateStruct::NodalDataToElemNode)){ // nodal data
 
-    std::string stateName_old = stateName + "_old";
-    (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old, mfe_type)));
-    Albany::StateStruct& pstateRef = *stateInfo->back();
-    pstateRef.initType  = init_type;
-    pstateRef.initValue = init_val;
-    pstateRef.pParentStateStruct = &stateRef;
-
-    pstateRef.output = false;
-    dl->dimensions(pstateRef.dim);
-
-  }
-
-  // insert
-  stateRef.nameMap[stateName] = ebName;
-
-}
-
-void
-Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateName,
-					    const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const std::string& ebName,
-                                            const std::string &init_type,
-                                            const double init_val,
-                                            const bool registerOldState,
-					    const bool outputToExodus,
-					    const std::string &responseIDtoRequire)
-
-{
-  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
-  using Albany::StateStruct;
-
-  if( statesToStore[ebName].find(stateName) != statesToStore[ebName].end() ) {
-    //Duplicate registration.  This will occur when a problem's
-    // constructEvaluators function (templated) registers state variables.
-
-    //Perform a check here that dl and statesToStore[stateName] are the same:
-    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know how to do this correctly (erik)
-//    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[stateName]));
-    return;  // Don't re-register the same state name
-  }
-
-  statesToStore[ebName][stateName] = dl;
-
-  // Load into StateInfo
-  StateStruct::MeshFieldEntity mfe_type;
-  if(dl->rank() == 1 && dl->size() == 1)
-     mfe_type = StateStruct::WorksetValue; // One value for the whole workset (i.e., time)
-  else if(dl->rank() >= 1 && dl->name(0) == "Node") // Nodal data
-     mfe_type = StateStruct::NodalData;
-  else if(dl->rank() >= 1 && dl->name(0) == "Cell"){ // Element QP or node data
-     if(dl->rank() > 1 && dl->name(1) == "Node") // Element node data
-        mfe_type = StateStruct::ElemNode; // One value for the whole workset (i.e., time)
-     else if(dl->rank() > 1 && dl->name(1) == "QuadPoint") // Element node data
-        mfe_type = StateStruct::QuadPoint; // One value for the whole workset (i.e., time)
-     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-       "StateManager: Element Entity type - " << dl->name(1) << " - not supported" << std::endl);
-  }
-  else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-     "StateManager: Unknown Entity type - " << dl->name(0) << " - not supported" << std::endl);
-
-  (*stateInfo).push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
-  StateStruct& stateRef = *stateInfo->back();
-  stateRef.setInitType(init_type);
-  stateRef.setInitValue(init_val);
-
-  dl->dimensions(stateRef.dim);
-
-  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
-  if ( dl->rank() == 2 ){ // node vector
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerBlockState(stateName, stateRef.dim[1]);
-  }
-  else if ( dl->rank() == 3 ){ // node tensor
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerBlockState(stateName, stateRef.dim[1]*stateRef.dim[2]);
-  }
-  else { // node scalar
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerBlockState(stateName, 1);
-  }
-
-  stateRef.output = outputToExodus;
-  stateRef.responseIDtoRequire = responseIDtoRequire;
-
-  // If space is needed for old state
-  if (registerOldState) {
-    stateRef.saveOldState = true;
-
-    std::string stateName_old = stateName + "_old";
-    (*stateInfo).push_back(Teuchos::rcp(new Albany::StateStruct(stateName_old, mfe_type)));
-    Albany::StateStruct& pstateRef = *stateInfo->back();
-    pstateRef.initType  = init_type;
-    pstateRef.initValue = init_val;
-    pstateRef.pParentStateStruct = &stateRef;
-
-    pstateRef.output = false;
-    dl->dimensions(pstateRef.dim);
-
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
+    Teuchos::RCP<Adapt::NodalDataBlock> nodalDataBlock = getNodalDataBlock();
 
     if ( dl->rank() == 2 ){ // node vector
       // register the state with the nodalDataBlock also
-      nodalDataBase->registerBlockState(stateName_old, pstateRef.dim[1]);
+      nodalDataBlock->registerState(stateName, stateRef.dim[1]);
     }
     else if ( dl->rank() == 3 ){ // node tensor
       // register the state with the nodalDataBlock also
-      nodalDataBase->registerBlockState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
+      nodalDataBlock->registerState(stateName, stateRef.dim[1]*stateRef.dim[2]);
     }
     else { // node scalar
       // register the state with the nodalDataBlock also
-      nodalDataBase->registerBlockState(stateName_old, 1);
+      nodalDataBlock->registerState(stateName, 1);
     }
-  }
-
-  // insert
-  stateRef.nameMap[stateName] = ebName;
-
-}
-
-void
-Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateName,
-					    const Teuchos::RCP<PHX::DataLayout> &dl,
-                                            const std::string& ebName,
-                                            const std::string &init_type,
-                                            const double init_val,
-                                            const bool registerOldState,
-					    const bool outputToExodus,
-					    const std::string &responseIDtoRequire)
-
-{
-  TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
-  using Albany::StateStruct;
-
-  if( statesToStore[ebName].find(stateName) != statesToStore[ebName].end() ) {
-    //Duplicate registration.  This will occur when a problem's
-    // constructEvaluators function (templated) registers state variables.
-
-    //Perform a check here that dl and statesToStore[stateName] are the same:
-    //TEUCHOS_TEST_FOR_EXCEPT(dl != statesToStore[stateName]);  //I don't know how to do this correctly (erik)
-//    TEUCHOS_TEST_FOR_EXCEPT(!(*dl == *statesToStore[stateName]));
-    return;  // Don't re-register the same state name
-  }
-
-  statesToStore[ebName][stateName] = dl;
-
-  // Load into StateInfo
-  StateStruct::MeshFieldEntity mfe_type;
-  if(dl->rank() == 1 && dl->size() == 1)
-     mfe_type = StateStruct::WorksetValue; // One value for the whole workset (i.e., time)
-  else if(dl->rank() >= 1 && dl->name(0) == "Node") // Nodal data
-     mfe_type = StateStruct::NodalData;
-  else if(dl->rank() >= 1 && dl->name(0) == "Cell"){ // Element QP or node data
-     if(dl->rank() > 1 && dl->name(1) == "Node") // Element node data
-        mfe_type = StateStruct::ElemNode; // One value for the whole workset (i.e., time)
-     else if(dl->rank() > 1 && dl->name(1) == "QuadPoint") // Element node data
-        mfe_type = StateStruct::QuadPoint; // One value for the whole workset (i.e., time)
-     else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-       "StateManager: Element Entity type - " << dl->name(1) << " - not supported" << std::endl);
-  }
-  else TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-     "StateManager: Unknown Entity type - " << dl->name(0) << " - not supported" << std::endl);
-
-  (*stateInfo).push_back(Teuchos::rcp(new StateStruct(stateName, mfe_type)));
-  StateStruct& stateRef = *stateInfo->back();
-  stateRef.setInitType(init_type);
-  stateRef.setInitValue(init_val);
-
-  dl->dimensions(stateRef.dim);
-
-
-  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
-  if ( dl->rank() == 2 ){ // node vector
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
-  }
-  else if ( dl->rank() == 3 ){ // node tensor
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]*stateRef.dim[2]);
-  }
-  else { // node scalar
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName, 1);
   }
 
   stateRef.output = outputToExodus;
@@ -390,28 +196,13 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
     pstateRef.output = false;
     dl->dimensions(pstateRef.dim);
 
-
-    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
-    if ( dl->rank() == 2 ){ // node vector
-      // register the state with the nodalDataVector also
-      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]);
-    }
-    else if ( dl->rank() == 3 ){ // node tensor
-      // register the state with the nodalDataVector also
-      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
-    }
-    else { // node scalar
-      // register the state with the nodalDataVector also
-      nodalDataBase->registerVectorState(stateName_old, 1);
-    }
-
   }
 
   // insert
   stateRef.nameMap[stateName] = ebName;
 
 }
+
 
 Teuchos::RCP<Albany::StateInfoStruct>
 Albany::StateManager::getStateInfoStruct() const
@@ -457,6 +248,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     switch((*stateInfo)[i]->entity){
 
      case Albany::StateStruct::WorksetValue :
+     case Albany::StateStruct::ElemData :
      case Albany::StateStruct::QuadPoint :
      case Albany::StateStruct::ElemNode :
 
@@ -492,7 +284,8 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
           switch (size) {
 
             case 1:
-              esa[ws][stateName](0) = init_val;
+              for (int cell = 0; cell < dims[0]; ++cell)
+                esa[ws][stateName](cell) = init_val;
               break;
 
             case 2:
@@ -516,8 +309,17 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
                      esa[ws][stateName](cell, qp, i, j) = init_val;
               break;
 
+            case 5:
+              for (int cell = 0; cell < dims[0]; ++cell)
+                for (int qp = 0; qp < dims[1]; ++qp)
+                  for (int i = 0; i < dims[2]; ++i)
+                   for (int j = 0; j < dims[3]; ++j)
+                     for (int k = 0; k < dims[4]; ++k)
+                       esa[ws][stateName](cell, qp, i, j, k) = init_val;
+              break;
+
             default:
-              TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+              TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>5, std::logic_error,
                        "Something is wrong during scalar state variable initialization: " << size);
           }
 
@@ -609,6 +411,20 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
         }
       }
      break;
+
+     case Albany::StateStruct::NodalDataToElemNode :
+
+      if(have_restart){
+          *out << " from restart file." << std::endl;
+          // If we are restarting, arrays should already be initialized from exodus file
+          continue;
+      }
+      else if(pParentStruct && pParentStruct->restartDataAvailable) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to restart a NodalDataToElemNode field from parent structure" << std::endl);
+      }
+      else if ((init_type == "scalar")||(init_type == "identity")) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to initialize a NodalDataToElemNode field. It should be initialized when building the mesh" << std::endl);
+      }
     }
   }
   *out << std::endl;
@@ -650,6 +466,7 @@ importStateData(Albany::StateArrays& states_from)
     switch((*stateInfo)[i]->entity){
 
      case Albany::StateStruct::WorksetValue :
+     case Albany::StateStruct::ElemData :
      case Albany::StateStruct::QuadPoint :
      case Albany::StateStruct::ElemNode :
 
@@ -668,7 +485,8 @@ importStateData(Albany::StateArrays& states_from)
 
         switch (size) {
         case 1:
-  	esa[ws][stateName](0) = elemStatesToCopyFrom[ws][stateName](0);
+    for (int cell = 0; cell < dims[0]; ++cell)
+  	  esa[ws][stateName](cell) = elemStatesToCopyFrom[ws][stateName](cell);
   	break;
         case 2:
   	for (int cell = 0; cell < dims[0]; ++cell)
@@ -786,7 +604,13 @@ Albany::StateManager::updateStates()
 
       switch((*stateInfo)[i]->entity){
 
+      case Albany::StateStruct::NodalDataToElemNode :
+        for (int ws = 0; ws < numNodeWorksets; ws++)
+           for (int j = 0; j < nsa[ws][stateName].size(); j++)
+             nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
+
       case Albany::StateStruct::WorksetValue :
+      case Albany::StateStruct::ElemData :
       case Albany::StateStruct::QuadPoint :
       case Albany::StateStruct::ElemNode :
 

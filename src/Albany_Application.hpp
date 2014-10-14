@@ -32,6 +32,7 @@
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 #endif
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
+#include "Albany_DiscretizationFactory.hpp"
 
 #ifdef ALBANY_CUTR
   #include "CUTR_CubitMeshMover.hpp"
@@ -78,8 +79,18 @@ namespace Albany {
 		const Teuchos::RCP<const Tpetra_Vector>& initial_guess =
 		Teuchos::null);
 
+    //! Constructor
+    Application(const Teuchos::RCP<const Epetra_Comm>& comm);
+
     //! Destructor
     ~Application();
+
+    void initialSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    void createMeshSpecs();
+    void createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
+    void buildProblem();
+    void createDiscretization();
+    void finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 
     //! Get underlying abstract discretization
     Teuchos::RCP<Albany::AbstractDiscretization> getDiscretization() const;
@@ -865,8 +876,17 @@ namespace Albany {
     //! Element discretization
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
+    //! discretization factory
+    Teuchos::RCP<Albany::DiscretizationFactory> discFactory;
+
+    //! mesh specs
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
+
     //! Problem class
     Teuchos::RCP<Albany::AbstractProblem> problem;
+
+    //! Problem Parameters
+    Teuchos::RCP<Teuchos::ParameterList> problemParams;
 
     //! Parameter library
     Teuchos::RCP<ParamLib> paramLib;
@@ -944,9 +964,6 @@ namespace Albany {
     bool physicsBasedPreconditioner;
     Teuchos::RCP<Teuchos::ParameterList> tekoParams;
 
-    //! Problem parameters
-    Teuchos::RCP<Teuchos::ParameterList> problemParams;
-
     //! Type of solution method
     SolutionMethod solMethod;
 
@@ -1014,20 +1031,6 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
         wsElNodeID = disc->getWsElNodeID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-        sHeight = disc->getSurfaceHeight();
-  const WorksetArray<Teuchos::ArrayRCP<double> >::type&
-        temperature  = disc->getTemperature();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-        basalFriction  = disc->getBasalFriction();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-        thickness = disc->getThickness();
-  const WorksetArray<Teuchos::ArrayRCP<double> >::type&
-        flowFactor  = disc->getFlowFactor();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        surfaceVelocity = disc->getSurfaceVelocity();
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-        velocityRMS = disc->getVelocityRMS();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<Teuchos::ArrayRCP<double> >::type&
         sphereVolume = disc->getSphereVolume();
@@ -1036,14 +1039,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.wsElNodeEqID = wsElNodeEqID[ws];
   workset.wsElNodeID = wsElNodeID[ws];
   workset.wsCoords = coords[ws];
-  workset.wsSHeight = sHeight[ws];
   workset.wsSphereVolume = sphereVolume[ws];
-  workset.wsTemperature = temperature[ws];
-  workset.wsBasalFriction = basalFriction[ws];
-  workset.wsThickness = thickness[ws];
-  workset.wsFlowFactor = flowFactor[ws];
-  workset.wsSurfaceVelocity = surfaceVelocity[ws];
-  workset.wsVelocityRMS = velocityRMS[ws];
   workset.EBName = wsEBNames[ws];
   workset.wsIndex = ws;
 

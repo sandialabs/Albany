@@ -66,6 +66,10 @@ IF(ALBANY_LAMENT)
   add_subdirectory(LamentStaticElasticity3D)
 ENDIF()
 
+IF(ALBANY_HMC)
+  add_subdirectory(HMC)
+ENDIF()
+
 IF(ALBANY_HYDRIDE)
   add_subdirectory(LaplaceBeltrami)
   IF(ALBANY_MPI)

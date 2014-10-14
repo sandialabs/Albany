@@ -35,7 +35,7 @@ HydrostaticProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   for (int i=0; i<numTracers; ++i) std::cout <<dof_names_tracers[i]<<"  ";
   std::cout << std::endl;
 
-  neq       = 1 + (2*numLevels) + (numTracers*numLevels);
+  neq       = 1 + (3*numLevels) + (numTracers*numLevels);
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -100,7 +100,7 @@ Aeras::HydrostaticProblem::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
-   std::vector<std::string> dirichletNames(1 + 2*numLevels + numTracers*numLevels);
+   std::vector<std::string> dirichletNames(1 + 3*numLevels + numTracers*numLevels);
 
    int dbc=0;
    std::ostringstream s;
@@ -108,14 +108,19 @@ Aeras::HydrostaticProblem::constructDirichletEvaluators(
    dirichletNames[dbc++] = s.str();
 
    for (int i=0; i<numLevels; ++i) {
-     s.str(std::string());
-     s << "Velx_"<<i;
-     dirichletNames[dbc++] = s.str();
-   }
-   for (int i=0; i<numLevels; ++i) {
-     s.str(std::string());
-     s << "Temperature_"<<i;
-     dirichletNames[dbc++] = s.str();
+     {
+       s.str(std::string());
+       s << "Velx_"<<i;
+       dirichletNames[dbc++] = s.str();
+     }{
+       s.str(std::string());
+       s << "Vely_"<<i;
+       dirichletNames[dbc++] = s.str();
+     }{
+       s.str(std::string());
+       s << "Temperature_"<<i;
+       dirichletNames[dbc++] = s.str();
+     }
    }
 
    for (int t=0; t<numTracers; ++t) {

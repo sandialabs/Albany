@@ -46,7 +46,6 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;  //vecDim works but its really Dim+1
   PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
@@ -67,7 +66,7 @@ private:
 
   bool usePrescribedVelocity;
   bool ibpGradH;
-
+                    
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Intrepid::FieldContainer<RealType>    refPoints;
@@ -76,16 +75,22 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> source;
 
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
   ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
+ 
+  double ViscCoeff; //viscosity or hv coeff
+                     
+  double AlphaAngle;
 
   std::size_t numNodes;
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
   std::size_t spatialDim;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  //og: not used
+  //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
       std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div);

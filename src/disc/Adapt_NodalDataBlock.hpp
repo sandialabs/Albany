@@ -15,8 +15,6 @@
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Adapt_NodalFieldUtils.hpp"
-
 namespace Adapt {
 
 /*!
@@ -27,9 +25,7 @@ class NodalDataBlock {
 
   public:
 
-    NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer,
-                    NodeFieldSizeVector& nodeBlockLayout,
-                    NodeFieldSizeMap& nodeBlockMap, LO& blocksize);
+    NodalDataBlock(); 
 
     //! Destructor
     virtual ~NodalDataBlock(){}
@@ -55,13 +51,30 @@ class NodalDataBlock {
 
     void saveNodalDataState() const;
 
-    void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
+    void saveTpetraNodalDataVector(const std::string& name, const Teuchos::RCP<const Tpetra_Vector>& overlap_node_vec,
+            int offset, int blocksize) const;
 
     LO getBlocksize(){ return blocksize; }
+    
+    void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
+
+    void registerState(const std::string &stateName, int ndofs);
+
+    Teuchos::RCP<Albany::NodeFieldContainer> getNodeContainer(){ return nodeContainer; }
+
 
   private:
 
-    NodalDataBlock();
+    struct NodeFieldSize {
+
+       std::string name;
+       int offset;
+       int ndofs;
+
+    };
+
+    typedef std::vector<NodeFieldSize> NodeFieldSizeVector;
+    typedef std::map<const std::string, std::size_t> NodeFieldSizeMap;
 
     Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map;
     Teuchos::RCP<const Tpetra_BlockMap> local_node_map;
@@ -78,10 +91,10 @@ class NodalDataBlock {
 
     Teuchos::RCP<Albany::NodeFieldContainer> nodeContainer;
 
-    NodeFieldSizeVector& nodeBlockLayout;
-    NodeFieldSizeMap& nodeBlockMap;
+    NodeFieldSizeVector nodeBlockLayout;
+    NodeFieldSizeMap nodeBlockMap;
 
-    LO& blocksize;
+    LO blocksize;
 
     bool mapsHaveChanged;
 

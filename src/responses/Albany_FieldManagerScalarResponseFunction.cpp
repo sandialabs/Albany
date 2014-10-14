@@ -49,6 +49,18 @@ setup(Teuchos::ParameterList& responseParams)
 
   // Create field manager
   rfm = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
+  // FIXME: The adding of the Phalanx Graph Viz parameter
+  // below causes problems if this function is called with
+  // the same responseParams more than once. This happens
+  // when the meshSpecs is but one entry in an array
+  // of meshSpecs, which happens in meshes with multiple
+  // blocks. In addition, if the building of evaluators
+  // below does not recognize the Phalanx Graph Viz parameter,
+  // then an exception will be thrown. Quick and dirty fix:
+  // Remove the option if it already exists before building
+  // the evaluators, it will be added again below anyhow.
+  responseParams.remove("Phalanx Graph Visualization Detail", false);
     
   // Create evaluators for field manager
   Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags = 

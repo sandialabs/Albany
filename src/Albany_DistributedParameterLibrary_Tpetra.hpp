@@ -58,7 +58,7 @@ namespace Albany {
     }
 
     //! Get overlap parallel map
-    virtual Teuchos::RCP<const map_type> overlap_map() {
+    virtual Teuchos::RCP<const map_type> overlap_map() const {
       return overlapped_map;
     }
 

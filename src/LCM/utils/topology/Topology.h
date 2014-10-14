@@ -8,13 +8,15 @@
 
 #include <iterator>
 
-#include <stk_mesh/base/FieldData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
 
 #include "Topology_Types.h"
-#include "Topology_FractureCriterion.h"
 #include "Topology_Utils.h"
 
 namespace LCM {
+
+// Forward declaration
+class AbstractFractureCriterion;
 
 class Topology {
 public:
@@ -32,31 +34,37 @@ public:
   /// \brief Create mesh data structure
   ///
   /// \param[in] Albany discretization object
+  /// \param[in] Name of bulk block
+  /// \param[in] Name of interface block
   ///
   /// Use if already have an Albany mesh object
   ///
-  Topology(RCP<Albany::AbstractDiscretization> & discretization);
+  Topology(
+      Teuchos::RCP<Albany::AbstractDiscretization> & abstract_disc,
+      std::string const & bulk_block_name,
+      std::string const & interface_block_name);
 
   ///
-  /// \brief Iterates over the boundary entities of the mesh of (all entities
-  /// of rank dimension-1) and checks fracture criterion.
+  /// \brief Iterates over the boundary entities of the mesh of (all
+  /// entities of rank dimension-1) and checks fracture criterion.
   ///
-  /// If fracture_criterion is met, the entity and all lower order entities
-  /// associated with it are marked as open.
+  /// If fracture_criterion is met, the entity and all lower order
+  /// entities associated with it are marked as open.
   ///
   size_t
   setEntitiesOpen();
 
   ///
-  /// \brief Output the graph associated with the mesh to graphviz .dot
-  /// file for visualization purposes.
+  /// \brief Output the graph associated with the mesh to graphviz
+  /// .dot file for visualization purposes.
   ///
   /// \param[in] output file
   ///
   /// To create final output figure, run command below from terminal:
   ///   dot -Tpng <gviz_output>.dot -o <gviz_output>.png
   ///
-  enum OutputType {
+  enum OutputType
+  {
     UNIDIRECTIONAL_UNILEVEL,
     UNIDIRECTIONAL_MULTILEVEL,
     BIDIRECTIONAL_UNILEVEL,
@@ -64,16 +72,15 @@ public:
   };
 
   void
-  outputToGraphviz(
-      std::string const & output_filename,
-      OutputType const output_type = UNIDIRECTIONAL_UNILEVEL);
+  outputToGraphviz(std::string const & output_filename);
 
   ///
   /// \brief Initializes the default stk mesh object needed by class.
   ///
-  /// Creates the full mesh representation of the mesh. Default stk mesh
-  /// object has only elements and nodes. Function will delete unneeded
-  /// relations between as described in Topology::remove_extra_relations().
+  /// Creates the full mesh representation of the mesh. Default stk
+  /// mesh object has only elements and nodes. Function will delete
+  /// unneeded relations between as described in
+  /// Topology::remove_extra_relations().
   ///
   /// \attention Function must be called before mesh modification begins.
   ///
@@ -96,25 +103,20 @@ public:
 
   ///
   /// Our canonical graph representation has edges (relations) that
-  /// connect vertices (entities) with a difference in dimension (rank)
-  /// of exactly one.
-  /// This method removes all relations that do not conform to the above,
-  /// leaving intact those needed for STK (between cells and points).
-  /// This is required for the graph fracture algorithm to work.
+  /// connect vertices (entities) with a difference in dimension
+  /// (rank) of exactly one.
+  ///
+  /// This method removes all relations that do not conform to the
+  /// above, leaving intact those needed for STK (between cells and
+  /// points).  This is required for the graph fracture algorithm to
+  /// work.
   ///
   void
   removeMultiLevelRelations();
 
   ///
-  /// \brief Returns array of pointers to Entities for the element to
-  ///        node relations
-  ///
-  std::vector<EntityVector>
-  getElementToNodeConnectivity();
-
-  ///
-  /// \brief After mesh manipulations are complete, need to recreate
-  ///        a stk mesh understood by Albany_STKDiscretization.
+  /// \brief After mesh manipulations are complete, need to recreate a
+  ///        stk mesh understood by Albany::STKDiscretization.
   ///
   /// Recreates the nodal connectivity using connectivity_.
   ///
@@ -130,14 +132,15 @@ public:
   ///
   /// \return vector of nodes for the face
   ///
-  /// Return an ordered list of nodes which describe the input face. In 2D,
-  /// the face of the element is a line segment. In 3D, the face is a surface.
-  /// Generalized for all element types valid in stk_mesh. Valid in 2D and 3D.
+  /// Return an ordered list of nodes which describe the input
+  /// face. In 2D, the face of the element is a line segment. In 3D,
+  /// the face is a surface.  Generalized for all element types valid
+  /// in stk_mesh. Valid in 2D and 3D.
   ///
   /// \attention Assumes all mesh elements are same type.
   ///
-  EntityVector
-  getBoundaryEntityNodes(Entity const & boundary_entity);
+  stk::mesh::EntityVector
+  getBoundaryEntityNodes(stk::mesh::Entity boundary_entity);
 
   std::vector<Intrepid::Vector<double> >
   getNodalCoordinates();
@@ -149,15 +152,9 @@ public:
   outputBoundary(std::string const & output_filename);
 
   ///
-  /// \brief Create boundary mesh
-  ///
-  void
-  createBoundary();
-
-  ///
   /// \brief Get a connectivity list of the boundary
   ///
-  std::vector<std::vector<EntityId> >
+  Connectivity
   getBoundary();
 
   ///
@@ -172,9 +169,10 @@ public:
   ///
   /// \attention Assumes that all elements have the same topology
   ////
-  EntityVector
+  stk::mesh::EntityVector
   createSurfaceElementConnectivity(
-      Entity const & face_top, Entity const & face_bottom);
+      stk::mesh::Entity face_top,
+      stk::mesh::Entity face_bottom);
 
   ///
   /// \brief Create vectors describing the vertices and edges of the
@@ -192,9 +190,9 @@ public:
   ///
   void
   createStar(
-      Entity & entity,
-      std::set<EntityKey> & subgraph_entities,
-      std::set<stkEdge, EdgeLessThan> & subgraph_edges);
+      stk::mesh::Entity entity,
+      std::set<stk::mesh::Entity> & subgraph_entities,
+      std::set<STKEdge, EdgeLessThan> & subgraph_edges);
 
   ///
   /// \brief Fractures all open boundary entities of the mesh.
@@ -215,7 +213,7 @@ public:
   /// \brief Adds a new entity of rank 3 to the mesh
   ///
   void
-  addElement(EntityRank entity_rank);
+  addElement(stk::mesh::EntityRank entity_rank);
 
   ///
   /// \brief creates several entities at a time. The information
@@ -229,64 +227,75 @@ public:
   /// \brief Removes an entity and all its connections
   ///
   void
-  removeEntity(Entity & entity);
+  removeEntity(stk::mesh::Entity entity);
 
   ///
   /// \brief Adds a relation between two entities
   ///
   void
-  addRelation(Entity & source_entity, Entity & target_entity,
+  addRelation(
+      stk::mesh::Entity source_entity,
+      stk::mesh::Entity target_entity,
       EdgeId local_relation_id);
 
   ///
   /// \brief Removes the relation between two entities
   ///
   void
-  removeRelation(Entity & source_entity, Entity & target_entity,
+  removeRelation(
+      stk::mesh::Entity source_entity,
+      stk::mesh::Entity target_entity,
       EdgeId local_relation_id);
 
   ///
   /// \brief Returns a vector with all the mesh entities of a
   ///        specific rank
   ///
-  EntityVector
-  getEntitiesByRank(BulkData const & mesh, EntityRank entity_rank);
+  stk::mesh::EntityVector
+  getEntitiesByRank(
+      stk::mesh::BulkData const & bulk_data,
+      stk::mesh::EntityRank entity_rank);
 
   ///
   /// \brief Number of entities of a specific rank
   ///
-  EntityVector::size_type
-  getNumberEntitiesByRank(BulkData const & mesh, EntityRank entity_rank);
+  EntityVectorIndex
+  getNumberEntitiesByRank(
+      stk::mesh::BulkData const & bulk_data,
+      stk::mesh::EntityRank entity_rank);
 
   ///
   /// \brief Gets the local relation id (0,1,2,...) between two entities
   ///
   EdgeId
-  getLocalRelationId(Entity const & source_entity,
-      Entity const & target_entity);
+  getLocalRelationId(
+      stk::mesh::Entity source_entity,
+      stk::mesh::Entity target_entity);
 
   ///
   /// \brief Returns the total number of lower rank entities
   ///        connected to a specific entity
   ///
   int
-  getNumberLowerRankEntities(Entity const & entity);
+  getNumberLowerRankEntities(stk::mesh::Entity entity);
 
   ///
   /// \brief Returns a group of entities connected directly to a
   ///        given entity. The input rank is the rank of the
   ///        returned entities.
   ///
-  EntityVector
+  stk::mesh::EntityVector
   getDirectlyConnectedEntities(
-      Entity const & entity,
-      EntityRank entity_rank);
+      stk::mesh::Entity entity,
+      stk::mesh::EntityRank entity_rank);
 
   ///
   /// \brief Checks if an entity exists inside a specific vector
   ///
   bool
-  findEntityInVector(EntityVector & entities, Entity * entity);
+  findEntityInVector(
+      stk::mesh::EntityVector & entities,
+      stk::mesh::Entity entity);
 
   ///
   /// \brief Returns a group of entities connected indirectly to a
@@ -298,67 +307,70 @@ public:
   /// the input entity
   ///
   ///
-  EntityVector
-  getBoundaryEntities(Entity const & entity, EntityRank entity_rank);
+  stk::mesh::EntityVector
+  getBoundaryEntities(
+      stk::mesh::Entity entity,
+      stk::mesh::EntityRank entity_rank);
 
   ///
   /// \brief Checks if a segment is connected to an input node.
   /// Returns "true" if the segment connects to the node.
   ///
   bool
-  segmentIsConnected(Entity const & segment, Entity * node);
+  segmentIsConnected(stk::mesh::Entity segment, stk::mesh::Entity node);
 
   ///
   /// \brief Finds the adjacent segments to a given segment. The
   ///        adjacent segments are connected to a given common
   ///        point. it returns adjacent segments
   ///
-  EntityVector
-  findAdjacentSegments(Entity const & segment, Entity * node);
+  stk::mesh::EntityVector
+  findAdjacentSegments(stk::mesh::Entity segment, stk::mesh::Entity node);
 
   ///
   /// \brief Returns all the highest dimensional topology entities
   ///        to which a given face belongs
   ///
-  EntityVector
-  findCellRelations(Entity const & face);
+  stk::mesh::EntityVector
+  findCellRelations(stk::mesh::Entity face);
 
   ///
   /// \brief Returns all the segments at the boundary of a given
   ///        element. Including those connected between the faces
   ///        barycenters and the faces boundary nodes
   ///
-  EntityVector
-  findSegmentsFromElement(Entity const & element);
+  stk::mesh::EntityVector
+  findSegmentsFromElement(stk::mesh::Entity element);
 
   ///
   /// \brief Returns true if the faces share a segment (two points)
   ///
   bool
-  facesShareTwoPoints(Entity const & face1, Entity const & face2);
+  facesShareTwoPoints(stk::mesh::Entity face1, stk::mesh::Entity face2);
 
   ///
   /// \brief returns the adjacent segments from a given face
   ///
-  EntityVector
+  stk::mesh::EntityVector
   findAdjacentSegmentsFromFace(
-      std::vector<EntityVector> const & faces_inside_element,
-      Entity const & face,
+      std::vector<stk::mesh::EntityVector> const & faces_inside_element,
+      stk::mesh::Entity face,
       int element_number);
 
   ///
   /// \brief Returns a pointer with the coordinates of a given entity
   ///
   double*
-  getPointerOfCoordinates(Entity * entity);
+  getEntityCoordinates(stk::mesh::Entity entity);
 
   ///
   /// \brief Returns a vector with the corresponding former boundary
   ///        nodes of an input entity
   ///
-  EntityVector
-  getFormerElementNodes(Entity const & element,
-      std::vector<EntityVector> const & entities);
+  stk::mesh::EntityVector
+  getFormerElementNodes(
+      stk::mesh::Entity element,
+      std::vector<stk::mesh::EntityVector> const & entities);
 
   ///
   /// \brief Generates the coordinate of a given barycenter
@@ -367,8 +379,8 @@ public:
   ///
   void
   computeBarycentricCoordinates(
-      EntityVector const & entities,
-      Entity * barycenter);
+      stk::mesh::EntityVector const & entities,
+      stk::mesh::Entity barycenter);
 
   ///
   /// \brief Barycentric subdivision
@@ -377,9 +389,9 @@ public:
   barycentricSubdivision();
 
   ///
-  /// \brief Finds the closest nodes(Entities of rank 0) to each of the three points in the input vector.
-  /// EntityVector
-  std::vector<Entity*>
+  /// \brief Finds the closest nodes(Entities of rank 0) to each of
+  /// the three points in the input vector.  stk::mesh::EntityVector
+  std::vector<stk::mesh::Entity>
   getClosestNodes(std::vector<std::vector<double> > points);
 
   ///
@@ -387,18 +399,19 @@ public:
   ///        of the three points in the input vectorThese nodes
   ///        lie over the surface of the mesh
   ///
-  std::vector<Entity*>
+  std::vector<stk::mesh::Entity>
   getClosestNodesOnSurface(std::vector<std::vector<double> > points);
 
   ///
   /// \brief calculates the distance between a node and a point
   ///
   double
-  getDistanceNodeAndPoint(Entity* node, std::vector<double> point);
+  getDistanceNodeAndPoint(stk::mesh::Entity node, std::vector<double> point);
 
   ///
-  /// \brief Returns the coordinates of the points that form a equilateral triangle.
-  ///        This triangle lies on the plane that intersects the ellipsoid.
+  /// \brief Returns the coordinates of the points that form a
+  ///        equilateral triangle.  This triangle lies on the plane
+  ///        that intersects the ellipsoid.
   ///
   std::vector<std::vector<double> >
   getCoordinatesOfTriangle(std::vector<double> const normalToPlane);
@@ -413,36 +426,38 @@ public:
   /// \brief Returns the distance between two entities of rank 0 (nodes)
   ///
   double
-  getDistanceBetweenNodes(Entity * node1, Entity * node2);
+  getDistanceBetweenNodes(stk::mesh::Entity node1, stk::mesh::Entity node2);
 
   ///
   /// \brief Returns the coordinates of the max and min of x y and z
-  ///        in the order max of, min of x, max of y, min of y, max of z, min of z
+  ///        in the order max of, min of x, max of y, min of y, max of
+  ///        z, min of z
   ///
   std::vector<double>
   getCoordinatesOfMaxAndMin();
 
   ///
-  /// \brief Returns the edges necessary to compute the shortest path on the outer surface
-  ///        of the mesh
+  /// \brief Returns the edges necessary to compute the shortest path
+  ///        on the outer surface of the mesh
   ///
-  std::vector<Entity*>
-  MeshEdgesShortestPath();
+  std::vector<stk::mesh::Entity>
+  meshEdgesShortestPath();
 
   ///
-  /// \brief Returns the shortest path over the boundary faces given three input nodes
-  ///        and the edges that belong to the outer surface
+  /// \brief Returns the shortest path over the boundary faces given
+  ///        three input nodes and the edges that belong to the outer
+  ///        surface
   ///
   std::vector<std::vector<int> >
   shortestpathOnBoundaryFaces(
-      std::vector<Entity*> const & nodes,
-		  std::vector<Entity*> const & MeshEdgesShortestPath);
+      std::vector<stk::mesh::Entity> const & nodes,
+      std::vector<stk::mesh::Entity> const & MeshEdgesShortestPath);
 
   ///
   /// \brief Returns the shortest path between three input nodes
   ///
   std::vector<std::vector<int> >
-  shortestpath(std::vector<Entity*> const & nodes);
+  shortestpath(std::vector<stk::mesh::Entity> const & nodes);
 
   ///
   /// \brief Returns the directions of all the edges of the input mesh
@@ -451,20 +466,22 @@ public:
   edgesDirections();
 
   ///
-  /// \brief Returns the directions of all the boundary edges of the input mesh
+  /// \brief Returns the directions of all the boundary edges of the
+  /// input mesh
   ///
   std::vector<std::vector<int> >
   edgesDirectionsOuterSurface();
 
-
   ///
-  /// \brief Returns the directions of all of the faces of the input mesh
+  /// \brief Returns the directions of all of the faces of the input
+  /// mesh
   ///
   std::vector<std::vector<int> >
   facesDirections();
 
   ///
-  /// \brief Returns a vector with the areas of each of the faces of the input mesh
+  /// \brief Returns a vector with the areas of each of the faces of
+  /// the input mesh
   ///
   std::vector<double>
   facesAreas();
@@ -484,34 +501,38 @@ public:
   outputForMpsFile();
 
   ///
-  /// \brief Returns the 1-D boundary required to compute the minimum surface of the
-  ///        input mesh. The input to this function is a shortest path (composed by egdes)
-  ///        between three nodes
+  /// \brief Returns the 1-D boundary required to compute the minimum
+  ///        surface of the input mesh. The input to this function is
+  ///        a shortest path (composed by egdes) between three nodes
   ///
   std::vector<std::vector<int> >
   boundaryVector(std::vector<std::vector<int> > & shortPath);
 
   ///
-  /// \brief Returns the 1-D boundary required to compute the minimum surface of the input
-  ///        mesh boundary faces. The input to this function is a shortest path
-  ///        (composed by edges) between three nodes
+  /// \brief Returns the 1-D boundary required to compute the minimum
+  ///        surface of the input mesh boundary faces. The input to
+  ///        this function is a shortest path (composed by edges)
+  ///        between three nodes
   ///
   std::vector<std::vector<int> >
   boundaryVectorOuterSurface(std::vector<std::vector<int> > & shortPath);
 
   ///
-  /// \brief Returns the corresponding entities of rank 2 that build the minimum surface.
-  ///        It takes as an input the resulting vector taken from the solution of the
-  ///        linear programming solver
+  /// \brief Returns the corresponding entities of rank 2 that build
+  ///        the minimum surface.  It takes as an input the resulting
+  ///        vector taken from the solution of the linear programming
+  ///        solver
   ///
-  std::vector<Entity*>
-  MinimumSurfaceFaces(std::vector<int> VectorFromLPSolver);
+  std::vector<stk::mesh::Entity>
+  minimumSurfaceFaces(std::vector<int> VectorFromLPSolver);
 
   ///
   /// \brief Returns the number of times an entity is repeated in a vector
   ///
   int
-  NumberOfRepetitions(std::vector<Entity*> & entities, Entity * entity);
+  numberOfRepetitions(
+      std::vector<stk::mesh::Entity> & entities,
+      stk::mesh::Entity entity);
 
   ///
   /// \brief Returns the coordinates of an input node.
@@ -520,107 +541,198 @@ public:
   std::vector<double>
   findCoordinates(unsigned int nodeIdentifier);
 
-  ///----------------------------------------------------------------------
   ///
-  /// \brief Practice creating the barycentric subdivision
+  /// Check fracture criterion
+  ///
+  bool
+  checkOpen(stk::mesh::Entity e);
+
+  ///
+  /// Initialization of the open field for fracture
   ///
   void
-  barycentricSubdivisionAlt();
-
-  ///
-  /// \brief Divide former mesh segments by half
-  ///
-  void
-  divideSegmentsHalf();
-
-  void
-  addCentroid();
-
-  void
-  connectCentroid();
-
-  void
-  addNewFaces();
-
-  void
-  connectNewFaces();
+  initializeFractureState();
 
   ///
   /// Accessors and mutators
   ///
   void
-  setSTKMeshStruct(RCP<Albany::AbstractSTKMeshStruct> const & sms)
-  {stk_mesh_struct_ = sms;}
+  set_stk_mesh_struct(Teuchos::RCP<Albany::AbstractSTKMeshStruct> const & sms)
+  {
+    stk_mesh_struct_ = sms;
+  }
 
-  RCP<Albany::AbstractSTKMeshStruct> &
-  getSTKMeshStruct()
-  {return stk_mesh_struct_;}
-
-  void
-  setDiscretization(RCP<Albany::AbstractDiscretization> const & d)
-  {discretization_ = d;}
-
-  RCP<Albany::AbstractDiscretization> &
-  getDiscretization()
-  {return discretization_;}
-
-  Albany::STKDiscretization *
-  getSTKDiscretization()
-  {return static_cast<Albany::STKDiscretization*>(discretization_.get());}
-
-  BulkData *
-  getBulkData()
-  {return stk_mesh_struct_->bulkData;}
-
-  stk_classic::mesh::fem::FEMMetaData *
-  getMetaData()
-  {return stk_mesh_struct_->metaData;}
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> &
+  get_stk_mesh_struct()
+  {
+    return stk_mesh_struct_;
+  }
 
   void
-  setCellTopology(shards::CellTopology const & ct)
-  {cell_topology_ = ct;}
+  set_discretization(Teuchos::RCP<Albany::AbstractDiscretization> const & d)
+  {
+    discretization_ = d;
+  }
 
-  shards::CellTopology &
-  getCellTopology()
-  {return cell_topology_;}
+  Teuchos::RCP<Albany::AbstractDiscretization> &
+  get_discretization()
+  {
+    return discretization_;
+  }
+
+  Albany::STKDiscretization &
+  get_stk_discretization()
+  {
+    return static_cast<Albany::STKDiscretization &>(
+        *(get_discretization().get()));
+  }
+
+  stk::mesh::BulkData &
+  get_bulk_data()
+  {
+    return *(get_stk_mesh_struct()->bulkData);
+  }
+
+  stk::mesh::MetaData &
+  get_meta_data()
+  {
+    return *(get_stk_mesh_struct()->metaData);
+  }
 
   size_t const
-  getSpaceDimension() {return static_cast<size_t>(getSTKMeshStruct()->numDim);}
-
-  EntityRank const
-  getCellRank() {return getMetaData()->element_rank();}
-
-  EntityRank const
-  getBoundaryRank()
+  get_space_dimension()
   {
-    assert(getCellRank() > 0);
-    return getCellRank() - 1;
+    return static_cast<size_t>(get_meta_data().spatial_dimension());
+  }
+
+  stk::mesh::EntityRank const
+  get_boundary_rank()
+  {
+    return get_meta_data().side_rank();
+  }
+
+  void
+  set_bulk_block_name(std::string const & bn)
+  {
+    bulk_block_name_ = bn;
+  }
+
+  void
+  set_interface_block_name(std::string const & in)
+  {
+    interface_block_name_ = in;
+  }
+
+  std::string const &
+  get_bulk_block_name()
+  {
+    return bulk_block_name_;
+  }
+
+  std::string const &
+  get_interface_block_name()
+  {
+    return interface_block_name_;
   }
 
   IntScalarFieldType &
-  getFractureState()
-  {return *(stk_mesh_struct_->getFieldContainer()->getFractureState());}
+  get_fracture_state_field(stk::mesh::EntityRank rank)
+  {
+    return
+        *(get_stk_mesh_struct()->getFieldContainer()->getFractureState(rank));
+  }
 
   void
-  setFractureCriterion(RCP<AbstractFractureCriterion> const & fc)
-  {fracture_criterion_ = fc;}
+  set_fracture_criterion(Teuchos::RCP<AbstractFractureCriterion> const & fc)
+  {
+    fracture_criterion_ = fc;
+  }
 
-  RCP<AbstractFractureCriterion> &
-  getFractureCriterion()
-  {return fracture_criterion_;}
+  Teuchos::RCP<AbstractFractureCriterion> &
+  get_fracture_criterion()
+  {
+    return fracture_criterion_;
+  }
+
+  stk::mesh::Part &
+  get_bulk_part()
+  {
+    return *(get_meta_data().get_part(get_bulk_block_name()));
+  }
+
+  stk::mesh::Part &
+  get_interface_part()
+  {
+    return *(get_meta_data().get_part(get_interface_block_name()));
+  }
+
+  shards::CellTopology const &
+  get_cell_topology()
+  {
+    return get_meta_data().get_cell_topology(get_bulk_part());
+  }
+
+  stk::mesh::Part &
+  get_local_part()
+  {
+    return get_meta_data().locally_owned_part();
+  }
+
+  stk::mesh::Selector
+  get_local_bulk_selector()
+  {
+    return stk::mesh::Selector(get_local_part() & get_bulk_part());
+  }
+
+  stk::mesh::Selector
+  get_local_interface_selector()
+  {
+    return stk::mesh::Selector(get_local_part() & get_interface_part());
+  }
 
   bool
-  isLocalEntity(Entity const & e)
-  {return getBulkData()->parallel_rank() == e.owner_rank();}
+  is_local_entity(stk::mesh::Entity e)
+  {
+    return get_bulk_data().parallel_rank()
+        == get_bulk_data().parallel_owner_rank(e);
+  }
+
+  bool
+  is_in_bulk(stk::mesh::Entity e)
+  {
+    return get_bulk_data().bucket(e).member(get_bulk_part());
+  }
+
+  bool
+  is_bulk_cell(stk::mesh::Entity e)
+  {
+    return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK)
+        && is_in_bulk(e);
+  }
+
+  bool
+  is_in_interface(stk::mesh::Entity e)
+  {
+    return get_bulk_data().bucket(e).member(get_interface_part());
+  }
+
+  bool
+  is_interface_cell(stk::mesh::Entity e)
+  {
+    return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK)
+        && is_in_interface(e);
+  }
 
   //
   // Set fracture state. Do nothing for cells (elements).
   //
   void
-  setFractureState(Entity const & e, FractureState const fs)
+  set_fracture_state(stk::mesh::Entity e, FractureState const fs)
   {
-    if (e.entity_rank() < getCellRank()) {
-      *(stk_classic::mesh::field_data(getFractureState(), e)) = static_cast<int>(fs);
+    stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
+    if (rank < stk::topology::ELEMENT_RANK) {
+      *(stk::mesh::field_data(get_fracture_state_field(rank), e)) =
+          static_cast<int>(fs);
     }
   }
 
@@ -628,23 +740,25 @@ public:
   // Get fracture state. Return CLOSED for cells (elements).
   //
   FractureState
-  getFractureState(Entity const & e)
+  get_fracture_state(stk::mesh::Entity e)
   {
-    return e.entity_rank() >= getCellRank() ?
-    CLOSED :
-    static_cast<FractureState>(*(stk_classic::mesh::field_data(getFractureState(), e)));
+    stk::mesh::EntityRank const rank = get_bulk_data().entity_rank(e);
+    return
+    rank >= stk::topology::ELEMENT_RANK ?
+        CLOSED :
+        static_cast<FractureState>(*(stk::mesh::field_data(
+            get_fracture_state_field(rank),
+            e)));
   }
 
   bool
-  isInternal(Entity const & e) {
+  is_internal(stk::mesh::Entity e)
+  {
 
-    assert(e.entity_rank() == getBoundaryRank());
-
-    PairIterRelation
-    relations = relations_one_up(e);
+    assert(get_bulk_data().entity_rank(e) == get_boundary_rank());
 
     size_t const
-    number_in_edges = std::distance(relations.begin(), relations.end());
+    number_in_edges = get_bulk_data().num_elements(e);
 
     assert(number_in_edges == 1 || number_in_edges == 2);
 
@@ -652,26 +766,28 @@ public:
   }
 
   bool
-  isOpen(Entity const & e) {
-    return getFractureState(e) == OPEN;
-  }
-
-  bool
-  isInternalAndOpen(Entity const & e) {
-    return isInternal(e) == true && isOpen(e) == true;
-  }
-
-  bool
-  checkOpen(Entity const & e)
+  is_open(stk::mesh::Entity e)
   {
-    return fracture_criterion_->check(e);
+    return get_fracture_state(e) == OPEN;
   }
 
-  ///
-  /// Initialization of the open field for fracture
-  ///
+  bool
+  is_internal_and_open(stk::mesh::Entity e)
+  {
+    return is_internal(e) == true && is_open(e) == true;
+  }
+
   void
-  initializeFractureState();
+  set_output_type(OutputType const ot)
+  {
+    output_type_ = ot;
+  }
+
+  OutputType
+  get_output_type()
+  {
+    return output_type_;
+  }
 
 private:
   ///
@@ -690,27 +806,35 @@ private:
 
   //
   //
-  RCP<Albany::AbstractDiscretization> discretization_;
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  discretization_;
 
-  RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct>
+  stk_mesh_struct_;
 
-  std::vector<EntityVector> connectivity_;
+  std::vector<stk::mesh::EntityVector>
+  connectivity_;
 
-  std::map<int, int> element_global_to_local_ids_;
+  std::set<EntityPair>
+  fractured_faces_;
 
-  std::set<EntityPair> fractured_faces_;
+  std::vector<int>
+  highest_ids_;
 
-  std::vector<int> highest_ids_;
+  std::string
+  bulk_block_name_;
 
-  /// \attention Topology of elements in mesh. Only valid if one
-  ///            element type used.  Will not give correct results
-  ///            if mesh has multiple element types.
-  shards::CellTopology cell_topology_;
+  std::string
+  interface_block_name_;
 
   /// Pointer to failure criterion object
-  RCP<AbstractFractureCriterion> fracture_criterion_;
+  Teuchos::RCP<AbstractFractureCriterion>
+  fracture_criterion_;
 
-protected:
+  OutputType
+  output_type_;
+
+private:
   ///
   /// \brief Hide default constructor for Topology
   ///

@@ -184,9 +184,7 @@ ENDIF()
 SET(SOURCES ${SOURCES}
   disc/Albany_DiscretizationFactory.cpp
   disc/Albany_AbstractMeshStruct.cpp
-  disc/Adapt_NodalDataBase.cpp
   disc/Adapt_NodalDataBlock.cpp
-  disc/Adapt_NodalDataVector.cpp
   )
 SET(HEADERS ${HEADERS}
   disc/Albany_AbstractDiscretization.hpp
@@ -194,10 +192,7 @@ SET(HEADERS ${HEADERS}
   disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
-  disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataBlock.hpp
-  disc/Adapt_NodalDataVector.hpp
-  disc/Adapt_NodalFieldUtils.hpp
   )
 
 #evaluators
@@ -214,6 +209,8 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFGradInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolation.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
+  evaluators/PHAL_DOFTensorInterpolation.cpp
+  evaluators/PHAL_DOFTensorGradInterpolation.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
   evaluators/PHAL_SaveStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
@@ -234,16 +231,9 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_Absorption.cpp
-  evaluators/PHAL_GatherSHeight.cpp
-  evaluators/PHAL_GatherTemperature.cpp
-  evaluators/PHAL_GatherBasalFriction.cpp
-  evaluators/PHAL_GatherThickness.cpp
-  evaluators/PHAL_GatherFlowFactor.cpp
   evaluators/Adapt_ElementSizeField.cpp
-  evaluators/PHAL_GatherSurfaceVelocity.cpp
-  evaluators/PHAL_GatherVelocityRMS.cpp
+  evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
-  evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
  
 SET(SOURCES ${SOURCES}
@@ -283,6 +273,7 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_NSBodyForce.cpp
   evaluators/PHAL_NSPermeabilityTerm.cpp
   evaluators/PHAL_NSForchheimerTerm.cpp
+  evaluators/PHAL_Permittivity.cpp
   evaluators/PNP_PotentialResid.cpp
   evaluators/PNP_ConcentrationResid.cpp
   )
@@ -312,6 +303,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFVecInterpolation_Def.hpp
   evaluators/PHAL_DOFVecGradInterpolation.hpp
   evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
+  evaluators/PHAL_DOFTensorInterpolation.hpp
+  evaluators/PHAL_DOFTensorInterpolation_Def.hpp
+  evaluators/PHAL_DOFTensorGradInterpolation.hpp
+  evaluators/PHAL_DOFTensorGradInterpolation_Def.hpp
   evaluators/PHAL_MapToPhysicalFrame.hpp
   evaluators/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/PHAL_SaveStateField.hpp
@@ -352,22 +347,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_NSMaterialProperty_Def.hpp
   evaluators/PHAL_Absorption.hpp
   evaluators/PHAL_Absorption_Def.hpp
-  evaluators/PHAL_GatherSHeight.hpp
-  evaluators/PHAL_GatherSHeight_Def.hpp
-  evaluators/PHAL_GatherTemperature.hpp
-  evaluators/PHAL_GatherTemperature_Def.hpp
-  evaluators/PHAL_GatherBasalFriction.hpp
-  evaluators/PHAL_GatherBasalFriction_Def.hpp
-  evaluators/PHAL_GatherThickness.hpp
-  evaluators/PHAL_GatherThickness_Def.hpp
-  evaluators/PHAL_GatherFlowFactor.hpp
-  evaluators/PHAL_GatherFlowFactor_Def.hpp
   evaluators/Adapt_ElementSizeField.hpp
   evaluators/Adapt_ElementSizeField_Def.hpp
-  evaluators/PHAL_GatherSurfaceVelocity.hpp
-  evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
-  evaluators/PHAL_GatherVelocityRMS.hpp
-  evaluators/PHAL_GatherVelocityRMS_Def.hpp
+  evaluators/PHAL_SaveNodalField.hpp
+  evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
   )
@@ -448,6 +431,17 @@ IF (ALBANY_FELIX)
   SET(HEADERS ${HEADERS}
     evaluators/FELIX_ResponseSurfaceVelocityMismatch.hpp
     evaluators/FELIX_ResponseSurfaceVelocityMismatch_Def.hpp
+  )
+ENDIF()
+
+# AERAS
+IF (ALBANY_AERAS)
+  SET(SOURCES ${SOURCES}
+    evaluators/Aeras_ShallowWaterResponseL2Error.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    evaluators/Aeras_ShallowWaterResponseL2Error.hpp
+    evaluators/Aeras_ShallowWaterResponseL2Error_Def.hpp
   )
 ENDIF()
 
@@ -592,10 +586,23 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./QCAD/problems
                      ./QCAD/evaluators
                      ./QCAD/responses
+                     ./ATO
+                     ./ATO/problems
+                     ./ATO/evaluators
+                     ./ATO/utils
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
   ${FMDB_LIBRARY_DIR})
+
+IF ( NLOPT )
+  include_directories (${NLOPT_INCLUDE_DIR})
+  link_directories (${NLOPT_LIBRARY_DIR})
+  set(NLOPT_LIB nlopt)
+ELSE()
+  set(NLOPT_LIB )
+ENDIF()
+
 
 # LAME
 IF(ALBANY_LAME)
@@ -704,6 +711,7 @@ set(ALL_LIBRARIES
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
+  ${NLOPT_LIB}
   ${LAMENT_LIB}
   ${Peridigm_LIBRARIES}
   ${SCOREC_LIB}
@@ -736,7 +744,11 @@ ENDIF()
 IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  
+  IF (ENABLE_MPAS_INTERFACE)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  ENDIF()
+  
   IF (ENABLE_CISM_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()
@@ -761,6 +773,12 @@ IF(ALBANY_CATALYST)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
 endif()
 
+IF (ALBANY_ATO)
+  SET(ALBANY_LCM ON)
+  add_subdirectory(ATO)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
+ENDIF()
+
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
 
@@ -771,8 +789,12 @@ IF (ALBANY_LCM)
   ELSE()
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
   ENDIF()
-
 ENDIF()
+
+# Can remove this once rebalance is in Trilnos again
+IF(ALBANY_STK_REBALANCE)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTKRebalance)
+endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})

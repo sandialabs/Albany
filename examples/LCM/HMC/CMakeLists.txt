@@ -1,0 +1,2 @@
+add_subdirectory(Static/StaticHMC_2DQuad)
+add_subdirectory(Transient/TransientHMC_2DQuad)

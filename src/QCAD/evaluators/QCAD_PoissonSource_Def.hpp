@@ -136,7 +136,9 @@ PoissonSource(Teuchos::ParameterList& p,
   // Add factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-  this->registerSacadoParameter("Poisson Source Factor", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+      "Poisson Source Factor", this, paramLib);
+
 
   // Add parameters from material database as Sacado params
   std::vector<std::string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
@@ -146,13 +148,13 @@ PoissonSource(Teuchos::ParameterList& p,
   for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
       materialParams[*s] = psList->get<double>(*s);
-      this->registerSacadoParameter(*s, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
     }
   }
   for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
       materialParams[*s] = psList->get<double>(*s);
-      this->registerSacadoParameter(*s, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
     }
   }
 
@@ -162,7 +164,7 @@ PoissonSource(Teuchos::ParameterList& p,
     std::string subListName = Albany::strint("Mesh Region",i);
     if( psList->isSublist(subListName) ) {
       std::string factorName = Albany::strint("Mesh Region Factor",i);
-      this->registerSacadoParameter(factorName, paramLib);      
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(factorName, this, paramLib);
 
       // Validate sublist
       Teuchos::RCP<const Teuchos::ParameterList> regionreflist = 
@@ -215,12 +217,12 @@ PoissonSource(Teuchos::ParameterList& p,
 
 
   if(quantumRegionSource == "schrodinger") {
-    this->registerSacadoParameter("Previous Quantum Density Mixing Factor", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Previous Quantum Density Mixing Factor", this, paramLib);
   }
   else if(quantumRegionSource == "coulomb") {
     //Add Sacado parameters to set indices of eigenvectors to be multipled together
-    this->registerSacadoParameter("Source Eigenvector 1", paramLib);
-    this->registerSacadoParameter("Source Eigenvector 2", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 1", this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 2", this, paramLib);
   }
 
   this->addDependentField(potential);

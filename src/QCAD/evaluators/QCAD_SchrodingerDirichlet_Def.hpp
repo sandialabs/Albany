@@ -33,7 +33,7 @@ SchrodingerDirichletBase(Teuchos::ParameterList& p) :
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
                ("Parameter Library", Teuchos::null);
 
-  this->registerSacadoParameter(name, paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
 }
 
 template<typename EvalT, typename Traits>

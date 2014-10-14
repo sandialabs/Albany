@@ -66,16 +66,16 @@ evaluateTangentT(const double alpha,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT;
-  if (gxT != NULL && VxT != NULL)
-    dgdxT = Teuchos::rcp(new Tpetra_MultiVector(xT.getMap(), 1));
-  else
-    dgdxT = Teuchos::rcp(gxT,false);
-  evaluateGradientT(current_time, xdotT, xdotdotT, xT, p, deriv_p, gT, dgdxT.get(), NULL, NULL, gpT);
-  Teuchos::ETransp T = Teuchos::TRANS; 
-  Teuchos::ETransp N = Teuchos::NO_TRANS; 
-  if (gxT != NULL && VxT != NULL)
+
+  if (gxT != NULL || gpT != NULL)
+    evaluateGradientT(current_time, xdotT, xdotdotT, xT, p, deriv_p, gT, gxT, NULL, NULL, gpT);
+
+  if (gxT != NULL && VxT != NULL) {
+    Teuchos::RCP<Tpetra_MultiVector> dgdxT = Teuchos::rcp(new Tpetra_MultiVector(*gxT)); //is this needed? 
+    Teuchos::ETransp T = Teuchos::TRANS; 
+    Teuchos::ETransp N = Teuchos::NO_TRANS; 
     gxT->multiply(T, N, alpha, *dgdxT, *VxT, 0.0);
+  }
 }
 
 #ifdef ALBANY_EPETRA
@@ -103,12 +103,9 @@ evaluateGradient(const double current_time,
 
   // Evaluate dg/dx
   if (dg_dx != NULL) {
-    int im = -1;
-    for (int i=0; i<x.Map().NumMyElements(); i++) {
-       if (x[i] == mxv) { (*dg_dx)[0][i] = 1.0; im = i; }
-       else             (*dg_dx)[0][i] = 0.0;
-    }
-
+    dg_dx->PutScalar(0.0);
+    int lid = x.Map().LID(global_index);
+    if(lid >= 0) (*dg_dx)[0][lid] = 1.0;
   }
 
   // Evaluate dg/dxdot
@@ -186,16 +183,6 @@ computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
   for (int node=0; node<num_my_nodes; node++) {
     if (interleavedOrdering)  index = node*neq+eq;
     else                      index = node + eq*num_my_nodes;
-    if (x[index] > my_max) {
-      my_max = x[index];
-      my_index = index;
-    }
-  }
-
-  // Check remainder (AGS: NOT SURE HOW THIS CODE GETS CALLED?)
-  if (num_my_nodes*neq+eq < x.MyLength()) {
-    if (interleavedOrdering)  index = num_my_nodes*neq+eq;
-    else                      index = num_my_nodes + eq*num_my_nodes;
     if (x[index] > my_max) {
       my_max = x[index];
       my_index = index;

@@ -21,10 +21,6 @@
 
 #include "LCMPartition.h"
 
-using Intrepid::Index;
-using Intrepid::Vector;
-using Teuchos::ArrayRCP;
-
 namespace LCM {
 
 //
@@ -50,7 +46,7 @@ void PrintPartitionInfo(
     ZOLTAN_ID_PTR &export_global_ids,
     ZOLTAN_ID_PTR &export_local_ids,
     int * &export_procs,
-    int * &export_to_part )
+    int * &export_to_part)
 {
 
   output_stream << "Changes           : " << changes << '\n';
@@ -106,42 +102,43 @@ void PrintPartitionInfo(
 // 1) Find the bounding box of the indexed points.
 // 2) Compute the vector sum of the indexed points.
 //
-boost::tuple< Vector<double>, Vector<double>, Vector<double> >
+boost::tuple<Intrepid::Vector<double>, Intrepid::Vector<double>,
+    Intrepid::Vector<double> >
 bounds_and_sum_subset(
-    std::vector< Vector<double> > const & points,
-    std::set<Index> const & indices)
+    std::vector<Intrepid::Vector<double> > const & points,
+    std::set<Intrepid::Index> const & indices)
 {
   assert(points.size() > 0);
   assert(indices.size() > 0);
 
-  Index const
+  Intrepid::Index const
   first = *indices.begin();
 
-  Vector<double>
+  Intrepid::Vector<double>
   sum = points[first];
 
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner = sum;
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner = sum;
 
-  Index const
+  Intrepid::Index const
   N = sum.get_dimension();
 
-  for (std::set<Index>::const_iterator it = ++indices.begin();
+  for (std::set<Intrepid::Index>::const_iterator it = ++indices.begin();
       it != indices.end();
       ++it) {
 
-    Index const
+    Intrepid::Index const
     index = *it;
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     p = points[index];
 
     sum += p;
 
-    for (Index i = 0; i < N; ++i) {
+    for (Intrepid::Index i = 0; i < N; ++i) {
       lower_corner(i) = std::min(lower_corner(i), p(i));
       upper_corner(i) = std::max(upper_corner(i), p(i));
     }
@@ -156,32 +153,32 @@ bounds_and_sum_subset(
 // Return the index of the center closest to the point among the
 // indexed centers.
 //
-Index
+Intrepid::Index
 closest_subset(
-    Vector<double> const & point,
-    std::vector< ClusterCenter > const & centers,
-    std::set<Index> const & indices)
+    Intrepid::Vector<double> const & point,
+    std::vector<ClusterCenter> const & centers,
+    std::set<Intrepid::Index> const & indices)
 {
   assert(centers.size() > 0);
   assert(indices.size() > 0);
 
-  Index const
+  Intrepid::Index const
   first = *indices.begin();
 
   double
   minimum = norm_square(centers[first].position - point);
 
-  Index
+  Intrepid::Index
   index_minimum = first;
 
-  for (std::set<Index>::const_iterator it = ++indices.begin();
+  for (std::set<Intrepid::Index>::const_iterator it = ++indices.begin();
       it != indices.end();
       ++it) {
 
-    Index const
+    Intrepid::Index const
     index = *it;
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     p = centers[index].position;
 
     double const
@@ -203,10 +200,10 @@ closest_subset(
 // 2) Divide the bounding box along its largest dimension, using median.
 // 3) Assign points to one side or the other, and return index sets.
 //
-std::pair< std::set<Index>, std::set<Index> >
+std::pair<std::set<Intrepid::Index>, std::set<Intrepid::Index> >
 split_box(
-    std::vector< Vector<double> > const & points,
-    std::set<Index> const & indices)
+    std::vector<Intrepid::Vector<double> > const & points,
+    std::set<Intrepid::Index> const & indices)
 {
   assert(points.size() > 0);
   assert(indices.size() > 0);
@@ -214,29 +211,29 @@ split_box(
   //
   // Compute bounding box
   //
-  Index const
+  Intrepid::Index const
   first = *indices.begin();
 
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner = points[first];
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner = lower_corner;
 
-  Index const
+  Intrepid::Index const
   N = lower_corner.get_dimension();
 
-  for (std::set<Index>::const_iterator it = ++indices.begin();
+  for (std::set<Intrepid::Index>::const_iterator it = ++indices.begin();
       it != indices.end();
       ++it) {
 
-    Index const
+    Intrepid::Index const
     index = *it;
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     p = points[index];
 
-    for (Index i = 0; i < N; ++i) {
+    for (Intrepid::Index i = 0; i < N; ++i) {
       lower_corner(i) = std::min(lower_corner(i), p(i));
       upper_corner(i) = std::max(upper_corner(i), p(i));
     }
@@ -246,7 +243,7 @@ split_box(
   //
   // Find largest dimension
   //
-  Vector<double> const
+  Intrepid::Vector<double> const
   span = upper_corner - lower_corner;
 
   assert(norm_square(span) > 0.0);
@@ -254,10 +251,10 @@ split_box(
   double
   maximum_span = span(0);
 
-  Index
+  Intrepid::Index
   largest_dimension = 0;
 
-  for (Index i = 1; i < N; ++i) {
+  for (Intrepid::Index i = 1; i < N; ++i) {
 
     double const
     s = span(i);
@@ -275,14 +272,14 @@ split_box(
   std::vector<double>
   coordinates;
 
-  for (std::set<Index>::const_iterator it = indices.begin();
+  for (std::set<Intrepid::Index>::const_iterator it = indices.begin();
       it != indices.end();
       ++it) {
 
-    Index const
+    Intrepid::Index const
     index = *it;
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     p = points[index];
 
     coordinates.push_back(p(largest_dimension));
@@ -303,7 +300,7 @@ split_box(
   bool const
   box_unchanged =
       split_coordinate == lower_corner(largest_dimension) ||
-      split_coordinate == upper_corner(largest_dimension);
+          split_coordinate == upper_corner(largest_dimension);
 
   if (box_unchanged == true) {
 
@@ -317,25 +314,25 @@ split_box(
   //
   // Assign points to lower or upper half.
   //
-  std::set<Index>
+  std::set<Intrepid::Index>
   indices_lower;
 
-  std::set<Index>
+  std::set<Intrepid::Index>
   indices_upper;
 
-  Vector<double>
+  Intrepid::Vector<double>
   split_limit = upper_corner;
 
   split_limit(largest_dimension) = split_coordinate;
 
-  for (std::set<Index>::const_iterator it = indices.begin();
+  for (std::set<Intrepid::Index>::const_iterator it = indices.begin();
       it != indices.end();
       ++it) {
 
-    Index const
+    Intrepid::Index const
     index = *it;
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     p = points[index];
 
     if (in_box(p, lower_corner, split_limit) == true) {
@@ -358,19 +355,19 @@ split_box(
 //
 template<typename Node>
 boost::shared_ptr<Node>
-BuildKDTree(std::vector< Vector<double> > const & points)
+BuildKDTree(std::vector<Intrepid::Vector<double> > const & points)
 {
 
   //
   // Initially all points are in the index set.
   //
-  Index const
+  Intrepid::Index const
   number_points = points.size();
 
-  std::set<Index>
+  std::set<Intrepid::Index>
   points_indices;
 
-  for (Index i = 0; i < number_points; ++i) {
+  for (Intrepid::Index i = 0; i < number_points; ++i) {
     points_indices.insert(i);
   }
 
@@ -396,10 +393,10 @@ boost::shared_ptr<Node>
 CreateKDTreeNode(
     std::string const & name,
     boost::shared_ptr<Node> parent,
-    std::vector< Vector<double> > const & points,
-    std::set<Index> const & points_indices)
+    std::vector<Intrepid::Vector<double> > const & points,
+    std::set<Intrepid::Index> const & points_indices)
 {
-  if (name.length() >=64) {
+  if (name.length() >= 64) {
     std::cout << "Name is too long: " << name << '\n';
   }
 
@@ -413,7 +410,7 @@ CreateKDTreeNode(
 
   node->parent = parent;
 
-  Index const
+  Intrepid::Index const
   count = points_indices.size();
 
   node->count = count;
@@ -427,45 +424,45 @@ CreateKDTreeNode(
 
     // Leaf node
   case 1:
-  {
-    Vector<double> const &
-    p = points[*points_indices.begin()];
-    node->lower_corner = p;
-    node->upper_corner = p;
-    node->weighted_centroid = p;
-  }
-  break;
+    {
+      Intrepid::Vector<double> const &
+      p = points[*points_indices.begin()];
+      node->lower_corner = p;
+      node->upper_corner = p;
+      node->weighted_centroid = p;
+    }
+    break;
 
   default:
-  {
-    boost::tie(
-        node->lower_corner,
-        node->upper_corner,
-        node->weighted_centroid) =
-            bounds_and_sum_subset(points, points_indices);
+    {
+      boost::tie(
+          node->lower_corner,
+          node->upper_corner,
+          node->weighted_centroid) =
+          bounds_and_sum_subset(points, points_indices);
 
-    std::set<Index>
-    indices_left;
+      std::set<Intrepid::Index>
+      indices_left;
 
-    std::set<Index>
-    indices_right;
+      std::set<Intrepid::Index>
+      indices_right;
 
-    boost::tie(indices_left, indices_right) =
-        split_box(points, points_indices);
+      boost::tie(indices_left, indices_right) =
+          split_box(points, points_indices);
 
-    std::string
-    name_left = name + "0";
+      std::string
+      name_left = name + "0";
 
-    std::string
-    name_right = name + "1";
+      std::string
+      name_right = name + "1";
 
-    node->left =
-        CreateKDTreeNode(name_left, node, points, indices_left);
+      node->left =
+          CreateKDTreeNode(name_left, node, points, indices_left);
 
-    node->right =
-        CreateKDTreeNode(name_right, node, points, indices_right);
-  }
-  break;
+      node->right =
+          CreateKDTreeNode(name_right, node, points, indices_right);
+    }
+    break;
 
   }
 
@@ -477,23 +474,23 @@ CreateKDTreeNode(
 //
 template<typename Node>
 KDTree<Node>::KDTree(
-    std::vector<Vector<double> > const & points,
-    Index const number_centers)
-    {
+    std::vector<Intrepid::Vector<double> > const & points,
+    Intrepid::Index const number_centers)
+{
   root_ = BuildKDTree<Node>(points);
 
   // Set candidate centers to all
-  std::set<Index>
+  std::set<Intrepid::Index>
   candidate_centers;
 
-  for (Index i = 0; i < number_centers; ++i) {
+  for (Intrepid::Index i = 0; i < number_centers; ++i) {
     candidate_centers.insert(i);
   }
 
   root_->candidate_centers = candidate_centers;
 
   return;
-    }
+}
 
 //
 // Visit Tree nodes recursively and
@@ -538,7 +535,7 @@ OutputVisitor<Node>::operator()(Node const & node) const
   std::cout << "Lower corner: " << node->lower_corner << '\n';
   std::cout << "Upper corner: " << node->upper_corner << '\n';
 
-  Vector<double>
+  Intrepid::Vector<double>
   centroid = node->weighted_centroid / node->count;
 
   std::cout << "Centroid    : " << centroid << '\n';
@@ -571,7 +568,7 @@ OutputVisitor<Node>::post_stop(Node const & node) const
 //
 template<typename Node, typename Center>
 FilterVisitor<Node, Center>::FilterVisitor(
-    std::vector<Vector<double> > & p,
+    std::vector<Intrepid::Vector<double> > & p,
     std::vector<Center> & c) :
     points(p),
     centers(c)
@@ -581,16 +578,16 @@ FilterVisitor<Node, Center>::FilterVisitor(
 namespace {
 
 template<typename Center, typename Iterator>
-Index
+Intrepid::Index
 closest_center_from_subset(
-    Vector<double> const & point,
+    Intrepid::Vector<double> const & point,
     std::vector<Center> const & centers,
     Iterator begin,
     Iterator end)
 {
   assert(std::distance(begin, end) > 0);
 
-  Index
+  Intrepid::Index
   closest_index = *begin;
 
   double
@@ -598,7 +595,7 @@ closest_center_from_subset(
 
   for (Iterator it = ++begin; it != end; ++it) {
 
-    Index const
+    Intrepid::Index const
     i = *it;
 
     double const
@@ -625,33 +622,33 @@ closest_center_from_subset(
 // where the closest center to the midcell lies as well.
 //
 template<typename Center>
-std::pair<Index, std::set<Index> >
+std::pair<Intrepid::Index, std::set<Intrepid::Index> >
 box_proximity_to_centers(
-    Vector<double> const & lower_corner,
-    Vector<double> const & upper_corner,
+    Intrepid::Vector<double> const & lower_corner,
+    Intrepid::Vector<double> const & upper_corner,
     std::vector<Center> const & centers,
-    std::set<Index> const & index_subset)
+    std::set<Intrepid::Index> const & index_subset)
 {
   assert(centers.size() > 0);
   assert(index_subset.size() > 0);
 
-  Vector<double> const
+  Intrepid::Vector<double> const
   midcell = 0.5 * (lower_corner + upper_corner);
 
   // Determine the closest point to box center only among those
   // listed in the index subset.
-  Index
+  Intrepid::Index
   index_closest = *index_subset.begin();
 
   double
   minimum = norm_square(midcell - centers[index_closest].position);
 
-  for (std::set<Index>::const_iterator
-      index_iterator = ++index_subset.begin();
+  for (std::set<Intrepid::Index>::const_iterator
+  index_iterator = ++index_subset.begin();
       index_iterator != index_subset.end();
       ++index_iterator) {
 
-    Index const
+    Intrepid::Index const
     i = *index_iterator;
 
     double const
@@ -664,18 +661,19 @@ box_proximity_to_centers(
 
   }
 
-  Vector<double> const &
+  Intrepid::Vector<double> const &
   closest_to_midcell = centers[index_closest].position;
 
-  std::set<Index>
+  std::set<Intrepid::Index>
   indices_candidates;
 
   // Determine where the box lies
-  for (std::set<Index>::const_iterator index_iterator = index_subset.begin();
+  for (std::set<Intrepid::Index>::const_iterator
+      index_iterator = index_subset.begin();
       index_iterator != index_subset.end();
       ++index_iterator) {
 
-    Index const
+    Intrepid::Index const
     i = *index_iterator;
 
     if (i == index_closest) {
@@ -683,19 +681,19 @@ box_proximity_to_centers(
       continue;
     }
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     p = centers[i].position;
 
-    Vector<double> const
+    Intrepid::Vector<double> const
     u = p - closest_to_midcell;
 
-    Index const
+    Intrepid::Index const
     N = u.get_dimension();
 
-    Vector<double>
+    Intrepid::Vector<double>
     v(N);
 
-    for (Index j = 0; j < N; ++j) {
+    for (Intrepid::Index j = 0; j < N; ++j) {
 
       v(j) = u(j) >= 0.0 ? upper_corner(j) : lower_corner(j);
 
@@ -718,7 +716,7 @@ box_proximity_to_centers(
 template<typename Node, typename Center>
 void
 FilterVisitor<Node, Center>::operator()(Node const & node) const
-{
+    {
   bool const
   node_is_empty = node->count == 0;
 
@@ -732,14 +730,14 @@ FilterVisitor<Node, Center>::operator()(Node const & node) const
   if (node_is_leaf == true) {
 
     // Get point
-    Index const
+    Intrepid::Index const
     point_index = *(node->cell_points.begin());
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     point = points[point_index];
 
     // Find closest center to it
-    Index
+    Intrepid::Index
     index_closest =
         closest_center_from_subset(
             point,
@@ -759,10 +757,10 @@ FilterVisitor<Node, Center>::operator()(Node const & node) const
   } else { // node_is_leaf == false
 
     // Get midpoint of cell
-    Index
+    Intrepid::Index
     index_closest_midcell = 0;
 
-    std::set<Index>
+    std::set<Intrepid::Index>
     candidate_indices;
 
     boost::tie(index_closest_midcell, candidate_indices) =
@@ -831,13 +829,13 @@ FilterVisitor<Node, Center>::post_stop(Node const & node) const
 // Default constructor for Connectivity Array
 //
 ConnectivityArray::ConnectivityArray() :
-        type_(Intrepid::ELEMENT::UNKNOWN),
-        dimension_(0),
-        discretization_ptr_(Teuchos::null),
-        tolerance_(0.0),
-        requested_cell_size_(0.0),
-        maximum_iterations_(0),
-        initializer_scheme_(PARTITION::HYPERGRAPH)
+    type_(Intrepid::ELEMENT::UNKNOWN),
+    dimension_(0),
+    discretization_ptr_(Teuchos::null),
+    tolerance_(0.0),
+    requested_cell_size_(0.0),
+    maximum_iterations_(0),
+    initializer_scheme_(PARTITION::HYPERGRAPH)
 {
   return;
 }
@@ -850,13 +848,13 @@ ConnectivityArray::ConnectivityArray() :
 ConnectivityArray::ConnectivityArray(
     std::string const & input_file,
     std::string const & output_file) :
-          type_(Intrepid::ELEMENT::UNKNOWN),
-          dimension_(0),
-          discretization_ptr_(Teuchos::null),
-          tolerance_(0.0),
-          requested_cell_size_(0.0),
-          maximum_iterations_(0),
-          initializer_scheme_(PARTITION::HYPERGRAPH)
+    type_(Intrepid::ELEMENT::UNKNOWN),
+    dimension_(0),
+    discretization_ptr_(Teuchos::null),
+    tolerance_(0.0),
+    requested_cell_size_(0.0),
+    maximum_iterations_(0),
+    initializer_scheme_(PARTITION::HYPERGRAPH)
 {
 
   using Albany::StateStruct;
@@ -883,7 +881,7 @@ ConnectivityArray::ConnectivityArray(
   Albany::DiscretizationFactory
   disc_factory(params, communicatorT);
 
-  ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
   mesh_specs = disc_factory.createMeshSpecs();
 
   int
@@ -897,7 +895,8 @@ ConnectivityArray::ConnectivityArray(
 
   StateStruct::FieldDims dims;
   // State has 1 quad point (i.e. element variable)
-  dims.push_back(workset_size); dims.push_back(1);
+  dims.push_back(workset_size);
+  dims.push_back(1);
 
   state_info->push_back(Teuchos::rcp(
       new StateStruct("Partition", StateStruct::QuadPoint, dims, "scalar")));
@@ -911,10 +910,13 @@ ConnectivityArray::ConnectivityArray(
   dimension_ = mesh_specs[0]->numDim;
 
   // Dimensioned: Workset, Cell, Local Node
-  Albany::WorksetArray<ArrayRCP<ArrayRCP<ArrayRCP<int> > > >::type const &
+  Albany::WorksetArray<
+      Teuchos::ArrayRCP<
+      Teuchos::ArrayRCP<
+      Teuchos::ArrayRCP<int> > > >::type const &
   element_connectivity = discretization_ptr_->getWsElNodeEqID();
 
-  ArrayRCP<double>
+  Teuchos::ArrayRCP<double>
   coordinates = discretization_ptr_->getCoordinates();
 
   // For higher-order elements, mid-nodes are ignored and only
@@ -923,7 +925,7 @@ ConnectivityArray::ConnectivityArray(
   const CellTopologyData
   cell_topology = mesh_specs[0]->ctd;
 
-  Index const
+  Intrepid::Index const
   dimension = cell_topology.dimension;
 
   assert(dimension == dimension_);
@@ -934,7 +936,7 @@ ConnectivityArray::ConnectivityArray(
   type_ = Intrepid::find_type(dimension, vertices_per_element);
 
   // Assume all the elements have the same number of nodes and eqs
-  ArrayRCP<int>::size_type
+  Teuchos::ArrayRCP<int>::size_type
   nodes_per_element = element_connectivity[0][0].size();
 
   // Do some logic so we can get from unknown ID to node ID
@@ -948,20 +950,19 @@ ConnectivityArray::ConnectivityArray(
     }
   }
 
-
   // Build coordinate array.
   // Assume that local numbering of nodes is contiguous.
-  ArrayRCP<double>::size_type
+  Teuchos::ArrayRCP<double>::size_type
   number_nodes = coordinates.size() / dimension;
 
-  for (ArrayRCP<double>::size_type
-      node = 0;
+  for (Teuchos::ArrayRCP<double>::size_type
+  node = 0;
       node < number_nodes;
       ++node) {
 
-    Vector<double> point(0.0, 0.0, 0.0);
+    Intrepid::Vector<double> point(0.0, 0.0, 0.0);
 
-    for (Index j = 0; j < dimension; ++j) {
+    for (Intrepid::Index j = 0; j < dimension; ++j) {
       point(j) = coordinates[node * dimension + j];
     }
 
@@ -971,24 +972,24 @@ ConnectivityArray::ConnectivityArray(
   // Build connectivity array.
   // Assume that local numbering of elements is contiguous.
   // Ignore extra nodes in higher-order elements
-  ArrayRCP<ArrayRCP<int> >::size_type
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
   element_number = 0;
 
-  ArrayRCP<ArrayRCP<ArrayRCP<int> > >::size_type
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::size_type
   workset = 0;
 
   for (workset = 0; workset < element_connectivity.size(); ++workset) {
 
-    for (ArrayRCP<ArrayRCP<int> >::size_type
-        cell = 0;
+    for (Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >::size_type
+    cell = 0;
         cell < element_connectivity[workset].size();
         ++cell, ++element_number) {
 
       IDList
       nodes_element(nodes_per_element);
 
-      for (ArrayRCP<int>::size_type
-          node = 0;
+      for (Teuchos::ArrayRCP<int>::size_type
+      node = 0;
           node < vertices_per_element;
           ++node) {
 
@@ -1007,11 +1008,10 @@ ConnectivityArray::ConnectivityArray(
   return;
 }
 
-
 //
 // \return Number of nodes on the array
 //
-Index
+Intrepid::Index
 ConnectivityArray::GetNumberNodes() const
 {
   return nodes_.size();
@@ -1020,7 +1020,7 @@ ConnectivityArray::GetNumberNodes() const
 //
 // \return Number of elements in the array
 //
-Index
+Intrepid::Index
 ConnectivityArray::GetNumberElements() const
 {
   return connectivity_.size();
@@ -1029,7 +1029,7 @@ ConnectivityArray::GetNumberElements() const
 //
 // \return Space dimension
 //
-Index
+Intrepid::Index
 ConnectivityArray::GetDimension() const
 {
   return dimension_;
@@ -1056,7 +1056,7 @@ ConnectivityArray::GetCellSize() const
 //
 // \return maximum iterations for K-means
 //
-Index
+Intrepid::Index
 ConnectivityArray::GetMaximumIterations() const
 {
   return maximum_iterations_;
@@ -1084,7 +1084,7 @@ ConnectivityArray::SetCellSize(double requested_cell_size)
 // \param maximum itearions for K-means
 //
 void
-ConnectivityArray::SetMaximumIterations(Index maximum_iterarions)
+ConnectivityArray::SetMaximumIterations(Intrepid::Index maximum_iterarions)
 {
   maximum_iterations_ = maximum_iterarions;
 }
@@ -1148,10 +1148,10 @@ ConnectivityArray::GetDiscretization()
 // \return Number of nodes that define element topology
 // (assume same type for all elements)
 //
-Index
+Intrepid::Index
 ConnectivityArray::GetNodesPerElement() const
 {
-  Index
+  Intrepid::Index
   nodes_per_element;
 
   switch (GetType()) {
@@ -1187,7 +1187,6 @@ ConnectivityArray::GetNodesPerElement() const
   return nodes_per_element;
 }
 
-
 //
 // \return Volume for each element
 //
@@ -1196,7 +1195,7 @@ ConnectivityArray::GetVolumes() const
 {
   ScalarMap volumes;
   for (AdjacencyMap::const_iterator
-      elements_iter = connectivity_.begin();
+  elements_iter = connectivity_.begin();
       elements_iter != connectivity_.end();
       ++elements_iter) {
 
@@ -1206,11 +1205,11 @@ ConnectivityArray::GetVolumes() const
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector< Vector<double> >
+    std::vector<Intrepid::Vector<double> >
     points;
 
     for (IDList::size_type
-        i = 0;
+    i = 0;
         i < node_list.size();
         ++i) {
 
@@ -1273,7 +1272,7 @@ ConnectivityArray::GetVolume() const
   volumes = GetVolumes();
 
   for (ScalarMap::const_iterator
-      volumes_iter = volumes.begin();
+  volumes_iter = volumes.begin();
       volumes_iter != volumes.end();
       ++volumes_iter) {
 
@@ -1342,7 +1341,7 @@ ConnectivityArray::GetPartitionVolumes() const
 //
 // \return Partition centroids
 //
-std::vector< Vector<double> >
+std::vector<Intrepid::Vector<double> >
 ConnectivityArray::GetPartitionCentroids() const
 {
   std::map<int, int>
@@ -1354,19 +1353,19 @@ ConnectivityArray::GetPartitionCentroids() const
   ScalarMap
   partition_volumes = GetPartitionVolumes();
 
-  Index const
+  Intrepid::Index const
   number_partitions = partition_volumes.size();
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   partition_centroids(number_partitions);
 
-  for (Index i = 0; i < number_partitions; ++i) {
+  for (Intrepid::Index i = 0; i < number_partitions; ++i) {
     partition_centroids[i].set_dimension(GetDimension());
     partition_centroids[i].clear();
   }
 
   // Determine number of nodes that define element topology
-  Index const
+  Intrepid::Index const
   nodes_per_element = GetNodesPerElement();
 
   for (std::map<int, int>::const_iterator partitions_iterator =
@@ -1392,7 +1391,7 @@ ConnectivityArray::GetPartitionCentroids() const
     IDList const &
     node_list = (*elements_iterator).second;
 
-    std::vector< Vector<double> >
+    std::vector<Intrepid::Vector<double> >
     element_nodes;
 
     for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
@@ -1406,7 +1405,7 @@ ConnectivityArray::GetPartitionCentroids() const
 
     }
 
-    Vector<double> const
+    Intrepid::Vector<double> const
     element_centroid = centroid(element_nodes);
 
     ScalarMap::const_iterator
@@ -1425,7 +1424,7 @@ ConnectivityArray::GetPartitionCentroids() const
 
   }
 
-  for (Index i = 0; i < number_partitions; ++i) {
+  for (Intrepid::Index i = 0; i < number_partitions; ++i) {
     partition_centroids[i] = partition_centroids[i] / partition_volumes[i];
   }
 
@@ -1442,7 +1441,7 @@ ConnectivityArray::GetCentroids() const
   centroids;
 
   for (AdjacencyMap::const_iterator
-      elements_iter = connectivity_.begin();
+  elements_iter = connectivity_.begin();
       elements_iter != connectivity_.end();
       ++elements_iter) {
 
@@ -1453,12 +1452,12 @@ ConnectivityArray::GetCentroids() const
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector< Vector<double> >
+    std::vector<Intrepid::Vector<double> >
     points;
 
     // Collect element nodes
     for (IDList::size_type
-        i = 0;
+    i = 0;
         i < node_list.size();
         ++i) {
 
@@ -1470,14 +1469,14 @@ ConnectivityArray::GetCentroids() const
 
       assert(nodes_iter != nodes_.end());
 
-      Vector<double> const
+      Intrepid::Vector<double> const
       point = (*nodes_iter).second;
 
       points.push_back(point);
 
     }
 
-    Vector<double> const
+    Intrepid::Vector<double> const
     centroid = Intrepid::centroid(points);
 
     centroids.insert(std::make_pair(element, centroid));
@@ -1491,29 +1490,29 @@ ConnectivityArray::GetCentroids() const
 ///
 /// \return Bounding box for all nodes
 ///
-std::pair<Vector<double>, Vector<double> >
+std::pair<Intrepid::Vector<double>, Intrepid::Vector<double> >
 ConnectivityArray::BoundingBox() const
 {
   PointMap::const_iterator
   it = nodes_.begin();
 
-  Vector<double>
+  Intrepid::Vector<double>
   min = (*it).second;
 
-  Vector<double>
+  Intrepid::Vector<double>
   max = min;
 
-  Index const
+  Intrepid::Index const
   N = min.get_dimension();
 
   ++it;
 
   for (; it != nodes_.end(); ++it) {
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     node = (*it).second;
 
-    for (Index i = 0; i < N; ++i) {
+    for (Intrepid::Index i = 0; i < N; ++i) {
       min(i) = std::min(min(i), node(i));
       max(i) = std::max(max(i), node(i));
     }
@@ -1525,10 +1524,10 @@ ConnectivityArray::BoundingBox() const
 
 namespace {
 
-boost::tuple<Index, double, double>
+boost::tuple<Intrepid::Index, double, double>
 parametric_limits(Intrepid::ELEMENT::Type const element_type)
 {
-  Index
+  Intrepid::Index
   parametric_dimension = 3;
 
   double
@@ -1584,7 +1583,7 @@ parametric_limits(Intrepid::ELEMENT::Type const element_type)
 // of points being inside or outside the domain.
 // \return points inside the domain.
 //
-std::vector< Vector<double> >
+std::vector<Intrepid::Vector<double> >
 ConnectivityArray::CreateGrid()
 {
   std::cout << '\n';
@@ -1593,24 +1592,24 @@ ConnectivityArray::CreateGrid()
   //
   // First determine the maximum dimension of the bounding box.
   //
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner;
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
 
-  Vector<double> const
+  Intrepid::Vector<double> const
   bounding_box_span = upper_corner - lower_corner;
 
-  Index const
+  Intrepid::Index const
   dimension = lower_corner.get_dimension();
 
   double
   maximum_dimension = 0.0;
 
-  for (Index i = 0; i < dimension; ++i) {
+  for (Intrepid::Index i = 0; i < dimension; ++i) {
     maximum_dimension = std::max(maximum_dimension, bounding_box_span(i));
   }
 
@@ -1620,14 +1619,14 @@ ConnectivityArray::CreateGrid()
   //
   // Determine number of cells for each dimension.
   //
-  Vector<Index>
+  Intrepid::Vector<Intrepid::Index>
   cells_per_dimension(dimension);
 
   cell_size_.set_dimension(dimension);
 
-  for (Index i = 0; i < dimension; ++i) {
+  for (Intrepid::Index i = 0; i < dimension; ++i) {
 
-    Index const
+    Intrepid::Index const
     number_cells = std::ceil((bounding_box_span(i)) / delta);
 
     cells_per_dimension(i) = number_cells;
@@ -1641,25 +1640,25 @@ ConnectivityArray::CreateGrid()
   // This is specific to 3D.
   //
   cells_.resize(cells_per_dimension(0));
-  for (Index i = 0; i < cells_per_dimension(0); ++i) {
+  for (Intrepid::Index i = 0; i < cells_per_dimension(0); ++i) {
     cells_[i].resize(cells_per_dimension(1));
-    for (Index j = 0; j < cells_per_dimension(1); ++j) {
+    for (Intrepid::Index j = 0; j < cells_per_dimension(1); ++j) {
       cells_[i][j].resize(cells_per_dimension(2));
-      for (Index k = 0; k < cells_per_dimension(2); ++k) {
+      for (Intrepid::Index k = 0; k < cells_per_dimension(2); ++k) {
         cells_[i][j][k] = false;
       }
     }
   }
 
   // Iterate through elements to set array.
-  Index const
+  Intrepid::Index const
   nodes_per_element = GetNodesPerElement();
 
-  Index const
+  Intrepid::Index const
   number_of_elements = connectivity_.size();
 
   for (AdjacencyMap::const_iterator
-      elements_iter = connectivity_.begin();
+  elements_iter = connectivity_.begin();
       elements_iter != connectivity_.end();
       ++elements_iter) {
 
@@ -1674,7 +1673,7 @@ ConnectivityArray::CreateGrid()
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector< Vector<double> >
+    std::vector<Intrepid::Vector<double> >
     element_nodes;
 
     for (IDList::size_type i = 0;
@@ -1690,25 +1689,25 @@ ConnectivityArray::CreateGrid()
 
     }
 
-    Vector<double>
+    Intrepid::Vector<double>
     min;
 
-    Vector<double>
+    Intrepid::Vector<double>
     max;
 
     boost::tie(min, max) =
         Intrepid::bounding_box<double>(element_nodes.begin(),
             element_nodes.end());
 
-    Vector<double> const
+    Intrepid::Vector<double> const
     element_span = max - min;
 
-    Vector<Index>
+    Intrepid::Vector<Intrepid::Index>
     divisions(dimension);
 
     // Determine number of divisions on each dimension.
     // One division if voxel is large.
-    for (Index i = 0; i < dimension; ++i) {
+    for (Intrepid::Index i = 0; i < dimension; ++i) {
       divisions(i) =
           cell_size_(i) > element_span(i) ?
               1 :
@@ -1721,7 +1720,7 @@ ConnectivityArray::CreateGrid()
     Intrepid::ELEMENT::Type
     element_type = GetType();
 
-    Index
+    Intrepid::Index
     parametric_dimension = 3;
 
     double
@@ -1733,33 +1732,33 @@ ConnectivityArray::CreateGrid()
     boost::tie(parametric_dimension, parametric_size, lower_limit) =
         parametric_limits(element_type);
 
-    Vector<double>
+    Intrepid::Vector<double>
     origin(parametric_dimension);
 
-    for (Index i = 0; i < dimension; ++i) {
+    for (Intrepid::Index i = 0; i < dimension; ++i) {
       origin(i) = lower_limit;
     }
 
-    Vector<double>
+    Intrepid::Vector<double>
     xi(parametric_dimension);
 
-    for (Index i = 0; i <= divisions(0); ++i) {
+    for (Intrepid::Index i = 0; i <= divisions(0); ++i) {
       xi(0) = origin(0) + double(i) / divisions(0) * parametric_size;
-      for (Index j = 0; j <= divisions(1); ++j) {
+      for (Intrepid::Index j = 0; j <= divisions(1); ++j) {
         xi(1) = origin(1) + double(j) / divisions(1) * parametric_size;
-        for (Index k = 0; k <= divisions(2); ++k) {
+        for (Intrepid::Index k = 0; k <= divisions(2); ++k) {
           xi(2) = origin(2) + double(k) / divisions(2) * parametric_size;
-          Vector<double>
+          Intrepid::Vector<double>
           p = interpolate_element(element_type, xi, element_nodes);
-          for (Index l = 0; l < dimension; ++l) {
+          for (Intrepid::Index l = 0; l < dimension; ++l) {
             p(l) = std::max(p(l), lower_corner(l));
             p(l) = std::min(p(l), upper_corner(l));
           }
 
-          Vector<int>
+          Intrepid::Vector<int>
           index = PointToIndex(p);
 
-          for (Index l = 0; l < dimension; ++l) {
+          for (Intrepid::Index l = 0; l < dimension; ++l) {
             assert(index(l) >= 0);
             assert(index(l) <= int(cells_per_dimension(l)));
 
@@ -1777,20 +1776,20 @@ ConnectivityArray::CreateGrid()
   std::cout << connectivity_.size() << " elements processed." << '\n';
 
   // Create points and output voxelization for debugging
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   domain_points;
 
   std::ofstream ofs("cells.csv");
   ofs << "X, Y, Z, I" << '\n';
-  Vector<double> p(dimension);
+  Intrepid::Vector<double> p(dimension);
 
-  for (Index i = 0; i < cells_per_dimension(0); ++i) {
+  for (Intrepid::Index i = 0; i < cells_per_dimension(0); ++i) {
     p(0) = (i + 0.5) * bounding_box_span(0) / cells_per_dimension(0) +
         lower_corner(0);
-    for (Index j = 0; j < cells_per_dimension(1); ++j) {
+    for (Intrepid::Index j = 0; j < cells_per_dimension(1); ++j) {
       p(1) = (j + 0.5) * bounding_box_span(1) / cells_per_dimension(1) +
           lower_corner(1);
-      for (Index k = 0; k < cells_per_dimension(2); ++k) {
+      for (Intrepid::Index k = 0; k < cells_per_dimension(2); ++k) {
         p(2) = (k + 0.5) * bounding_box_span(2) / cells_per_dimension(2) +
             lower_corner(2);
 
@@ -1803,13 +1802,13 @@ ConnectivityArray::CreateGrid()
     }
   }
 
-  Index const
+  Intrepid::Index const
   number_generated_points =
       cells_per_dimension(0) *
-      cells_per_dimension(1) *
-      cells_per_dimension(2);
+          cells_per_dimension(1) *
+          cells_per_dimension(2);
 
-  Index const
+  Intrepid::Index const
   number_points_in_domain = domain_points.size();
 
   double const
@@ -1831,9 +1830,9 @@ ConnectivityArray::CreateGrid()
 //
 // Convert point to index into voxel array
 //
-Vector<int>
-ConnectivityArray::PointToIndex(Vector<double> const & point) const
-{
+Intrepid::Vector<int>
+ConnectivityArray::PointToIndex(Intrepid::Vector<double> const & point) const
+    {
   int const
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
@@ -1843,7 +1842,7 @@ ConnectivityArray::PointToIndex(Vector<double> const & point) const
   int const
   k = (point(2) - lower_corner_(2)) / cell_size_(2);
 
-  return Vector<int>(i, j, k);
+  return Intrepid::Vector<int>(i, j, k);
 }
 
 //
@@ -1851,8 +1850,8 @@ ConnectivityArray::PointToIndex(Vector<double> const & point) const
 // 3D only for now.
 //
 bool
-ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
-{
+ConnectivityArray::IsInsideMesh(Intrepid::Vector<double> const & point) const
+    {
   int
   i = (point(0) - lower_corner_(0)) / cell_size_(0);
 
@@ -1861,7 +1860,6 @@ ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
 
   int
   k = (point(2) - lower_corner_(2)) / cell_size_(2);
-
 
   int const
   x_size = cells_.size();
@@ -1871,7 +1869,6 @@ ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
 
   int const
   z_size = cells_[0][0].size();
-
 
   if (i < 0 || i > x_size) {
     return false;
@@ -1884,7 +1881,6 @@ ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
   if (k < 0 || k > z_size) {
     return false;
   }
-
 
   if (i == x_size) --i;
   if (j == y_size) --j;
@@ -1900,8 +1896,9 @@ ConnectivityArray::IsInsideMesh(Vector<double> const & point) const
 // be used on a faster method.
 //
 bool
-ConnectivityArray::IsInsideMeshByElement(Vector<double> const & point) const
-{
+ConnectivityArray::IsInsideMeshByElement(
+    Intrepid::Vector<double> const & point) const
+    {
 
   // Check bounding box first
   if (in_box(point, lower_corner_, upper_corner_) == false) {
@@ -1910,18 +1907,18 @@ ConnectivityArray::IsInsideMeshByElement(Vector<double> const & point) const
 
   // Now check element by element
   for (AdjacencyMap::const_iterator
-      elements_iter = connectivity_.begin();
+  elements_iter = connectivity_.begin();
       elements_iter != connectivity_.end();
       ++elements_iter) {
 
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector< Vector<double> >
+    std::vector<Intrepid::Vector<double> >
     node;
 
     for (IDList::size_type
-        i = 0;
+    i = 0;
         i < node_list.size();
         ++i) {
 
@@ -1966,15 +1963,15 @@ ConnectivityArray::IsInsideMeshByElement(Vector<double> const & point) const
 // \return Number of partitions defined as total volume
 // of the array divided by the cube of the length scale
 //
-Index
+Intrepid::Index
 ConnectivityArray::GetNumberPartitions(double const length_scale) const
-{
+    {
   double const
   ball_volume = length_scale * length_scale * length_scale;
 
-  Index const
+  Intrepid::Index const
   number_partitions =
-      static_cast<Index>(round(GetVolume() / ball_volume));
+      static_cast<Intrepid::Index>(round(GetVolume() / ball_volume));
 
   return number_partitions;
 }
@@ -2036,7 +2033,8 @@ shuffled_sequence(int number_elements)
 // the same color in output.
 //
 std::map<int, int>
-RenumberPartitions(std::map<int, int> const & old_partitions) {
+RenumberPartitions(std::map<int, int> const & old_partitions)
+{
 
   std::set<int>
   partitions_set;
@@ -2110,14 +2108,14 @@ ConnectivityArray::CheckNullVolume() const
   ScalarMap const
   partition_volumes = GetPartitionVolumes();
 
-  std::vector<Index>
+  std::vector<Intrepid::Index>
   zero_volume;
 
   for (ScalarMap::const_iterator it = partition_volumes.begin();
       it != partition_volumes.end();
       ++it) {
 
-    Index const
+    Intrepid::Index const
     partition = (*it).first;
 
     double const
@@ -2129,7 +2127,7 @@ ConnectivityArray::CheckNullVolume() const
 
   }
 
-  Index const
+  Intrepid::Index const
   number_null_partitions = zero_volume.size();
 
   if (number_null_partitions > 0) {
@@ -2138,7 +2136,7 @@ ConnectivityArray::CheckNullVolume() const
     std::cerr << "Length scale may be too small:";
     std::cerr << '\n';
 
-    for (Index i = 0; i < number_null_partitions; ++i) {
+    for (Intrepid::Index i = 0; i < number_null_partitions; ++i) {
       std::cerr << " " << zero_volume[i];
     }
 
@@ -2215,9 +2213,9 @@ ConnectivityArray::Partition(
 //
 std::map<int, int>
 ConnectivityArray::PartitionByCenters(
-    std::vector< Vector<double> > const & centers)
+    std::vector<Intrepid::Vector<double> > const & centers)
 {
-  Index const
+  Intrepid::Index const
   number_partitions = centers.size();
 
   // Partition map.
@@ -2225,22 +2223,23 @@ ConnectivityArray::PartitionByCenters(
   partitions;
 
   // Keep track of which partitions have been assigned elements.
-  std::set<Index>
+  std::set<Intrepid::Index>
   unassigned_partitions;
 
-  for (Index partition = 0; partition < number_partitions; ++partition) {
+  for (Intrepid::Index partition = 0; partition < number_partitions;
+      ++partition) {
     unassigned_partitions.insert(partition);
   }
 
   // Determine number of nodes that define element topology
-  Index const
+  Intrepid::Index const
   nodes_per_element = GetNodesPerElement();
 
   std::ofstream centroids_ofs("centroids.csv");
 
   centroids_ofs << "X,Y,Z" << '\n';
   for (AdjacencyMap::const_iterator
-      elements_iter = connectivity_.begin();
+  elements_iter = connectivity_.begin();
       elements_iter != connectivity_.end();
       ++elements_iter) {
 
@@ -2250,7 +2249,7 @@ ConnectivityArray::PartitionByCenters(
     IDList const &
     node_list = (*elements_iter).second;
 
-    std::vector< Vector<double> >
+    std::vector<Intrepid::Vector<double> >
     element_nodes;
 
     for (IDList::size_type i = 0; i < nodes_per_element; ++i) {
@@ -2264,17 +2263,17 @@ ConnectivityArray::PartitionByCenters(
 
     }
 
-    Vector<double> const
+    Intrepid::Vector<double> const
     element_centroid = centroid(element_nodes);
 
     centroids_ofs << element_centroid << '\n';
 
-    Index const
+    Intrepid::Index const
     partition = closest_point(element_centroid, centers);
 
     partitions[element] = partition;
 
-    std::set<Index>::const_iterator
+    std::set<Intrepid::Index>::const_iterator
     it = unassigned_partitions.find(partition);
 
     if (it != unassigned_partitions.end()) {
@@ -2287,7 +2286,8 @@ ConnectivityArray::PartitionByCenters(
     std::cout << "WARNING: The following partitions were not" << '\n';
     std::cout << "assigned any elements (mesh too coarse?):" << '\n';
 
-    for (std::set<Index>::const_iterator it = unassigned_partitions.begin();
+    for (std::set<Intrepid::Index>::const_iterator it = unassigned_partitions
+        .begin();
         it != unassigned_partitions.end();
         ++it) {
       std::cout << (*it) << '\n';
@@ -2297,7 +2297,7 @@ ConnectivityArray::PartitionByCenters(
 
   std::ofstream generators_ofs("centers.csv");
   generators_ofs << "X,Y,Z" << '\n';
-  for (Index i = 0; i < centers.size(); ++i) {
+  for (Intrepid::Index i = 0; i < centers.size(); ++i) {
     generators_ofs << centers[i] << '\n';
   }
 
@@ -2414,7 +2414,7 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
   // Fill up with results from Zoltan, which returns partitions for all
   // elements that belong to a partition > 0
   for (ScalarMap::const_iterator
-      weights_iter = vertex_weights.begin();
+  weights_iter = vertex_weights.begin();
       weights_iter != vertex_weights.end();
       ++weights_iter) {
     int const vertex = (*weights_iter).first;
@@ -2434,13 +2434,13 @@ ConnectivityArray::PartitionHyperGraph(double const length_scale)
       &import_global_ids,
       &import_local_ids,
       &import_procs,
-      &import_to_part );
+      &import_to_part);
 
   zoltan.LB_Free_Part(
       &export_global_ids,
       &export_local_ids,
       &export_procs,
-      &export_to_part );
+      &export_to_part);
 
   return partitions;
 
@@ -2538,7 +2538,7 @@ ConnectivityArray::PartitionGeometric(double const length_scale)
 
   // Initialize with zeros the partition map for all elements.
   for (ScalarMap::const_iterator
-      volumes_iter = element_volumes.begin();
+  volumes_iter = element_volumes.begin();
       volumes_iter != element_volumes.end();
       ++volumes_iter) {
     int const element = (*volumes_iter).first;
@@ -2579,16 +2579,16 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
   // Compute partition centroids and use those as initial centers
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   centers = GetPartitionCentroids();
 
-  Index const
+  Intrepid::Index const
   number_partitions = centers.size();
 
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner;
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2596,7 +2596,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   domain_points = CreateGrid();
 
   //
@@ -2604,10 +2604,10 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   //
   std::cout << "Main K-means Iteration." << '\n';
 
-  Index const
+  Intrepid::Index const
   max_iterations = GetMaximumIterations();
 
-  Index
+  Intrepid::Index
   number_iterations = 0;
 
   double const
@@ -2622,11 +2622,11 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
   std::vector<double>
   steps(number_partitions);
 
-  for (Index i = 0; i < number_partitions; ++i) {
+  for (Intrepid::Index i = 0; i < number_partitions; ++i) {
     steps[i] = diagonal_distance;
   }
 
-  Index const
+  Intrepid::Index const
   number_points = domain_points.size();
 
   while (step_norm >= tolerance && number_iterations < max_iterations) {
@@ -2635,19 +2635,19 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
     std::vector<double>
     point_to_generator(number_points);
 
-    for (Index i = 0; i < domain_points.size(); ++i) {
+    for (Intrepid::Index i = 0; i < domain_points.size(); ++i) {
       point_to_generator[i] = closest_point(domain_points[i], centers);
     }
 
     // Determine cluster of points for each generator
-    std::vector<std::vector<Vector<double> > >
+    std::vector<std::vector<Intrepid::Vector<double> > >
     clusters;
 
     clusters.resize(number_partitions);
 
-    for (Index p = 0; p < point_to_generator.size(); ++p) {
+    for (Intrepid::Index p = 0; p < point_to_generator.size(); ++p) {
 
-      Index const
+      Intrepid::Index const
       c = point_to_generator[p];
 
       clusters[c].push_back(domain_points[p]);
@@ -2656,7 +2656,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
 
     // Compute centroids of each cluster and set generators to
     // these centroids.
-    for (Index i = 0; i < clusters.size(); ++i) {
+    for (Intrepid::Index i = 0; i < clusters.size(); ++i) {
 
       // If center is empty then generator does not move.
       if (clusters[i].size() == 0) {
@@ -2666,11 +2666,11 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
         continue;
       }
 
-      Vector<double> const
+      Intrepid::Vector<double> const
       cluster_centroid = centroid(clusters[i]);
 
       // Update the generator
-      Vector<double> const
+      Intrepid::Vector<double> const
       old_generator = centers[i];
 
       centers[i] = cluster_centroid;
@@ -2678,7 +2678,7 @@ ConnectivityArray::PartitionKMeans(double const length_scale)
       steps[i] = norm(centers[i] - old_generator);
     }
 
-    step_norm = norm(Vector<double>(number_partitions, &steps[0]));
+    step_norm = norm(Intrepid::Vector<double>(number_partitions, &steps[0]));
 
     std::cout << "Iteration: " << number_iterations;
     std::cout << ". Step: " << step_norm << ". Tol: " << tolerance;
@@ -2718,10 +2718,10 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   // Compute partition centroids and use those as initial centers
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   center_positions = GetPartitionCentroids();
 
-  Index const
+  Intrepid::Index const
   number_partitions = center_positions.size();
 
   // Initialize centers
@@ -2730,15 +2730,15 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   std::vector<ClusterCenter>
   centers(number_partitions);
 
-  for (Index i = 0; i < number_partitions; ++i) {
+  for (Intrepid::Index i = 0; i < number_partitions; ++i) {
     centers[i].position = center_positions[i];
     centers[i].weighted_centroid = 0.0 * center_positions[i];
   }
 
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner;
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2746,7 +2746,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   lower_corner_ = lower_corner;
   upper_corner_ = upper_corner;
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   domain_points = CreateGrid();
 
   //
@@ -2763,10 +2763,10 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   //
   // K-means iteration
   //
-  Index const
+  Intrepid::Index const
   max_iterations = GetMaximumIterations();
 
-  Index
+  Intrepid::Index
   number_iterations = 0;
 
   double const
@@ -2781,14 +2781,14 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
   std::vector<double>
   steps(number_partitions);
 
-  for (Index i = 0; i < number_partitions; ++i) {
+  for (Intrepid::Index i = 0; i < number_partitions; ++i) {
     steps[i] = diagonal_distance;
   }
 
   while (step_norm >= tolerance && number_iterations < max_iterations) {
 
     // Initialize centers
-    for (Index i = 0; i < number_partitions; ++i) {
+    for (Intrepid::Index i = 0; i < number_partitions; ++i) {
       ClusterCenter &
       center = centers[i];
 
@@ -2799,7 +2799,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
     TraverseTree(kdtree, filter_visitor);
 
     // Update centers
-    for (Index i = 0; i < centers.size(); ++i) {
+    for (Intrepid::Index i = 0; i < centers.size(); ++i) {
 
       ClusterCenter &
       center = centers[i];
@@ -2812,7 +2812,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
         continue;
       }
 
-      Vector<double> const
+      Intrepid::Vector<double> const
       new_position = center.weighted_centroid / center.count;
 
       steps[i] = norm(new_position - center.position);
@@ -2821,7 +2821,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
     }
 
-    step_norm = norm(Vector<double>(number_partitions, &steps[0]));
+    step_norm = norm(Intrepid::Vector<double>(number_partitions, &steps[0]));
 
     std::cout << "Iteration: " << number_iterations;
     std::cout << ". Step: " << step_norm << ". Tol: " << tolerance;
@@ -2831,7 +2831,7 @@ ConnectivityArray::PartitionKDTree(double const length_scale)
 
   }
 
-  for (Index i = 0; i < number_partitions; i++) {
+  for (Intrepid::Index i = 0; i < number_partitions; i++) {
     center_positions[i] = centers[i].position;
   }
 
@@ -2855,10 +2855,10 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   int const
   number_partitions = GetNumberPartitions(length_scale);
 
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner;
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2878,10 +2878,10 @@ ConnectivityArray::PartitionSequential(double const length_scale)
 
   // Compute partition centroids and use those as initial centers
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   centers = GetPartitionCentroids();
 
-  std::vector<Index>
+  std::vector<Intrepid::Index>
   weights(number_partitions);
 
   for (int i = 0; i < number_partitions; ++i) {
@@ -2889,13 +2889,13 @@ ConnectivityArray::PartitionSequential(double const length_scale)
   }
 
   // K-means sequential iteration
-  Index const
+  Intrepid::Index const
   number_random_points = GetMaximumIterations() * number_partitions;
 
-  Index const
+  Intrepid::Index const
   max_iterations = number_random_points;
 
-  Index
+  Intrepid::Index
   number_iterations = 0;
 
   double const
@@ -2922,7 +2922,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
     bool
     is_point_in_domain = false;
 
-    Vector<double>
+    Intrepid::Vector<double>
     random_point(lower_corner.get_dimension());
 
     while (is_point_in_domain == false) {
@@ -2931,11 +2931,11 @@ ConnectivityArray::PartitionSequential(double const length_scale)
     }
 
     // Determine index to closest generator
-    Index const
+    Intrepid::Index const
     i = closest_point(random_point, centers);
 
     // Update the generator and the weight
-    Vector<double> const
+    Intrepid::Vector<double> const
     old_generator = centers[i];
 
     centers[i] =
@@ -2944,7 +2944,7 @@ ConnectivityArray::PartitionSequential(double const length_scale)
     weights[i] += 1;
 
     steps[i] = norm(centers[i] - old_generator);
-    step_norm = norm(Vector<double>(number_partitions, &steps[0]));
+    step_norm = norm(Intrepid::Vector<double>(number_partitions, &steps[0]));
 
     if (number_iterations % 10000 == 0) {
       std::cout << "Random point: " << number_iterations;
@@ -2980,10 +2980,10 @@ ConnectivityArray::PartitionRandom(double const length_scale)
   int const
   number_partitions = GetNumberPartitions(length_scale);
 
-  Vector<double>
+  Intrepid::Vector<double>
   lower_corner;
 
-  Vector<double>
+  Intrepid::Vector<double>
   upper_corner;
 
   boost::tie(lower_corner, upper_corner) = BoundingBox();
@@ -2997,12 +2997,12 @@ ConnectivityArray::PartitionRandom(double const length_scale)
   int
   number_generators = 0;
 
-  std::vector< Vector<double> >
+  std::vector<Intrepid::Vector<double> >
   centers;
 
   while (number_generators < number_partitions) {
 
-    Vector<double>
+    Intrepid::Vector<double>
     p = random_in_box(lower_corner, upper_corner);
 
     if (IsInsideMesh(p) == true) {
@@ -3097,7 +3097,7 @@ ConnectivityArray::GetObjectList(
   weight_ptr = obj_wgts;
 
   for (ScalarMap::const_iterator
-      volumes_iter = element_volumes.begin();
+  volumes_iter = element_volumes.begin();
       volumes_iter != element_volumes.end();
       ++volumes_iter) {
 
@@ -3181,14 +3181,14 @@ ConnectivityArray::GetGeometry(
   index_geom_vec = 0;
 
   for (PointMap::const_iterator
-      centroids_iter = centroids.begin();
+  centroids_iter = centroids.begin();
       centroids_iter != centroids.end();
       ++centroids_iter) {
 
-    Vector<double> const
+    Intrepid::Vector<double> const
     centroid = (*centroids_iter).second;
 
-    for (Index i = 0; i < 3; ++i) {
+    for (Intrepid::Index i = 0; i < 3; ++i) {
 
       geom_vec[index_geom_vec] = centroid(i);
       ++index_geom_vec;
@@ -3221,7 +3221,7 @@ operator<<(
   dimension = connectivity_array.GetDimension();
 
   for (PointMap::const_iterator
-      nodes_iter = nodes.begin();
+  nodes_iter = nodes.begin();
       nodes_iter != nodes.end();
       ++nodes_iter) {
 
@@ -3230,7 +3230,7 @@ operator<<(
 
     output_stream << std::setw(12) << node;
 
-    Vector<double> const &
+    Intrepid::Vector<double> const &
     point = (*nodes_iter).second;
 
     for (int j = 0; j < dimension; ++j) {
@@ -3252,7 +3252,7 @@ operator<<(
   connectivity = connectivity_array.GetConnectivity();
 
   for (AdjacencyMap::const_iterator
-      connectivity_iter = connectivity.begin();
+  connectivity_iter = connectivity.begin();
       connectivity_iter != connectivity.end();
       ++connectivity_iter) {
 
@@ -3288,7 +3288,8 @@ operator<<(
 //
 // Default constructor for dual graph
 //
-DualGraph::DualGraph() : number_edges_(0)
+DualGraph::DualGraph() :
+    number_edges_(0)
 {
   return;
 }
@@ -3300,7 +3301,7 @@ DualGraph::DualGraph() : number_edges_(0)
 DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 {
 
-  const std::vector< std::vector<int> >
+  const std::vector<std::vector<int> >
   face_connectivity = GetFaceConnectivity(connectivity_array.GetType());
 
   const AdjacencyMap
@@ -3319,7 +3320,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 
   // Go element by element
   for (AdjacencyMap::const_iterator
-      connectivity_iter = connectivity.begin();
+  connectivity_iter = connectivity.begin();
       connectivity_iter != connectivity.end();
       ++connectivity_iter) {
 
@@ -3334,8 +3335,8 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
     graph_[element].clear();
 
     // Determine the (generalized) faces for each element
-    for (std::vector< std::vector<int> >::size_type
-        i = 0;
+    for (std::vector<std::vector<int> >::size_type
+    i = 0;
         i < face_connectivity.size();
         ++i) {
 
@@ -3343,7 +3344,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
       face_nodes;
 
       for (std::vector<int>::size_type
-          j = 0;
+      j = 0;
           j < face_connectivity[i].size();
           ++j) {
         face_nodes.insert(element_nodes[face_connectivity[i][j]]);
@@ -3380,7 +3381,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
   internal_faces;
 
   for (AdjacencyMap::const_iterator
-      face_element_iter = faceID_element_map.begin();
+  face_element_iter = faceID_element_map.begin();
       face_element_iter != faceID_element_map.end();
       ++face_element_iter) {
 
@@ -3411,7 +3412,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
 
   // Build dual graph
   for (IDList::size_type
-      i = 0;
+  i = 0;
       i < internal_faces.size();
       ++i) {
 
@@ -3424,7 +3425,7 @@ DualGraph::DualGraph(ConnectivityArray const & connectivity_array)
     assert(elements_face.size() == 2);
 
     for (IDList::size_type
-        j = 0;
+    j = 0;
         j < elements_face.size();
         ++j) {
 
@@ -3517,7 +3518,7 @@ DualGraph::GetVertexWeights() const
 //
 int
 DualGraph::GetConnectedComponents(std::vector<int> & components) const
-{
+    {
   // Create boost graph from edge list
   typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
   UndirectedGraph;
@@ -3680,11 +3681,11 @@ DualGraph::Print() const
 //
 //
 //
-std::vector< std::vector<int> >
+std::vector<std::vector<int> >
 DualGraph::GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const
-{
+    {
 
-  std::vector< std::vector<int> >
+  std::vector<std::vector<int> >
   face_connectivity;
 
   // Ugly initialization, but cannot rely on compilers
@@ -3735,7 +3736,7 @@ DualGraph::GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const
   }
 
   // Just for abbreviation
-  std::vector< std::vector<int> > &
+  std::vector<std::vector<int> > &
   f = face_connectivity;
 
   switch (type) {
@@ -3746,32 +3747,65 @@ DualGraph::GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const
     break;
 
   case Intrepid::ELEMENT::TRIANGULAR:
-    f[0][0] = 0; f[0][1] = 1;
-    f[1][0] = 1; f[1][1] = 2;
-    f[2][0] = 2; f[2][1] = 0;
+    f[0][0] = 0;
+    f[0][1] = 1;
+    f[1][0] = 1;
+    f[1][1] = 2;
+    f[2][0] = 2;
+    f[2][1] = 0;
     break;
 
   case Intrepid::ELEMENT::QUADRILATERAL:
-    f[0][0] = 0; f[0][1] = 1;
-    f[1][0] = 1; f[1][1] = 2;
-    f[2][0] = 2; f[2][1] = 3;
-    f[3][0] = 3; f[3][1] = 0;
+    f[0][0] = 0;
+    f[0][1] = 1;
+    f[1][0] = 1;
+    f[1][1] = 2;
+    f[2][0] = 2;
+    f[2][1] = 3;
+    f[3][0] = 3;
+    f[3][1] = 0;
     break;
 
   case Intrepid::ELEMENT::TETRAHEDRAL:
-    f[0][0] = 0; f[0][1] = 1; f[0][2] = 2;
-    f[1][0] = 0; f[1][1] = 3; f[1][2] = 1;
-    f[2][0] = 1; f[2][1] = 3; f[2][2] = 2;
-    f[3][0] = 2; f[3][1] = 3; f[3][2] = 0;
+    f[0][0] = 0;
+    f[0][1] = 1;
+    f[0][2] = 2;
+    f[1][0] = 0;
+    f[1][1] = 3;
+    f[1][2] = 1;
+    f[2][0] = 1;
+    f[2][1] = 3;
+    f[2][2] = 2;
+    f[3][0] = 2;
+    f[3][1] = 3;
+    f[3][2] = 0;
     break;
 
   case Intrepid::ELEMENT::HEXAHEDRAL:
-    f[0][0] = 0; f[0][1] = 1; f[0][2] = 2; f[0][3] = 3;
-    f[1][0] = 0; f[1][1] = 4; f[1][2] = 5; f[1][3] = 1;
-    f[2][0] = 1; f[2][1] = 5; f[2][2] = 6; f[2][3] = 2;
-    f[3][0] = 2; f[3][1] = 6; f[3][2] = 7; f[3][3] = 3;
-    f[4][0] = 3; f[4][1] = 7; f[4][2] = 4; f[4][3] = 0;
-    f[5][0] = 4; f[5][1] = 7; f[5][2] = 6; f[5][3] = 5;
+    f[0][0] = 0;
+    f[0][1] = 1;
+    f[0][2] = 2;
+    f[0][3] = 3;
+    f[1][0] = 0;
+    f[1][1] = 4;
+    f[1][2] = 5;
+    f[1][3] = 1;
+    f[2][0] = 1;
+    f[2][1] = 5;
+    f[2][2] = 6;
+    f[2][3] = 2;
+    f[3][0] = 2;
+    f[3][1] = 6;
+    f[3][2] = 7;
+    f[3][3] = 3;
+    f[4][0] = 3;
+    f[4][1] = 7;
+    f[4][2] = 4;
+    f[4][3] = 0;
+    f[5][0] = 4;
+    f[5][1] = 7;
+    f[5][2] = 6;
+    f[5][3] = 5;
     break;
 
   default:
@@ -3788,8 +3822,8 @@ DualGraph::GetFaceConnectivity(Intrepid::ELEMENT::Type const type) const
 // Default constructor for Zoltan hyperedge graph (or hypergraph)
 //
 ZoltanHyperGraph::ZoltanHyperGraph() :
-          number_vertices_(0),
-          number_hyperedges_(0)
+    number_vertices_(0),
+    number_hyperedges_(0)
 {
   return;
 }
@@ -3852,7 +3886,7 @@ ZoltanHyperGraph::GetVertexWeights() const
 }
 
 //
-// Vector with edge IDs
+// Intrepid::Vector with edge IDs
 //
 std::vector<ZOLTAN_ID_TYPE>
 ZoltanHyperGraph::GetEdgeIDs() const
@@ -3862,16 +3896,15 @@ ZoltanHyperGraph::GetEdgeIDs() const
   edges;
 
   for (AdjacencyMap::const_iterator
-      graph_iter = graph_.begin();
+  graph_iter = graph_.begin();
       graph_iter != graph_.end();
       ++graph_iter) {
 
     IDList
     hyperedges = (*graph_iter).second;
 
-
     for (IDList::const_iterator
-        hyperedges_iter = hyperedges.begin();
+    hyperedges_iter = hyperedges.begin();
         hyperedges_iter != hyperedges.end();
         ++hyperedges_iter) {
 
@@ -3885,7 +3918,7 @@ ZoltanHyperGraph::GetEdgeIDs() const
 }
 
 //
-// Vector with edge pointers
+// Intrepid::Vector with edge pointers
 //
 std::vector<int>
 ZoltanHyperGraph::GetEdgePointers() const
@@ -3898,7 +3931,7 @@ ZoltanHyperGraph::GetEdgePointers() const
   pointer = 0;
 
   for (AdjacencyMap::const_iterator
-      graph_iter = graph_.begin();
+  graph_iter = graph_.begin();
       graph_iter != graph_.end();
       ++graph_iter) {
 
@@ -3907,9 +3940,8 @@ ZoltanHyperGraph::GetEdgePointers() const
     IDList
     hyperedges = (*graph_iter).second;
 
-
     for (IDList::const_iterator
-        hyperedges_iter = hyperedges.begin();
+    hyperedges_iter = hyperedges.begin();
         hyperedges_iter != hyperedges.end();
         ++hyperedges_iter) {
 
@@ -3933,7 +3965,7 @@ ZoltanHyperGraph::GetVertexIDs() const
   vertices;
 
   for (AdjacencyMap::const_iterator
-      graph_iter = graph_.begin();
+  graph_iter = graph_.begin();
       graph_iter != graph_.end();
       ++graph_iter) {
 
@@ -3996,7 +4028,7 @@ ZoltanHyperGraph::GetObjectList(
   weight_ptr = obj_wgts;
 
   for (ScalarMap::const_iterator
-      weights_iter = vertex_weights.begin();
+  weights_iter = vertex_weights.begin();
       weights_iter != vertex_weights.end();
       ++weights_iter) {
 
@@ -4085,7 +4117,7 @@ ZoltanHyperGraph::GetHyperGraph(
   edge_pointers = zoltan_hypergraph.GetEdgePointers();
 
   for (std::vector<ZOLTAN_ID_TYPE>::size_type
-      i = 0;
+  i = 0;
       i < vertex_IDs.size();
       ++i) {
 
@@ -4094,7 +4126,7 @@ ZoltanHyperGraph::GetHyperGraph(
   }
 
   for (std::vector<ZOLTAN_ID_TYPE>::size_type
-      i = 0;
+  i = 0;
       i < edge_IDs.size();
       ++i) {
 
@@ -4103,7 +4135,7 @@ ZoltanHyperGraph::GetHyperGraph(
   }
 
   for (std::vector<int>::size_type
-      i = 0;
+  i = 0;
       i < edge_pointers.size();
       ++i) {
 
@@ -4199,7 +4231,7 @@ operator<<(
   vertex_weights = zoltan_hypergraph.GetVertexWeights();
 
   for (AdjacencyMap::const_iterator
-      graph_iter = graph.begin();
+  graph_iter = graph.begin();
       graph_iter != graph.end();
       ++graph_iter) {
 
@@ -4219,7 +4251,7 @@ operator<<(
     hyperedges = (*graph_iter).second;
 
     for (IDList::const_iterator
-        hyperedges_iter = hyperedges.begin();
+    hyperedges_iter = hyperedges.begin();
         hyperedges_iter != hyperedges.end();
         ++hyperedges_iter) {
 

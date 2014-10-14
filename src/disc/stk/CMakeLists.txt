@@ -15,11 +15,10 @@ SET(SOURCES
   Albany_TmplSTKMeshStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
-  Albany_MpasSTKMeshStruct.cpp
   Albany_AsciiSTKMesh2D.cpp
   Albany_AsciiSTKMeshStruct.cpp
   Albany_CismSTKMeshStruct.cpp
-  Albany_ExtrudedSTKMeshStruct.cpp
+  #Albany_ExtrudedSTKMeshStruct.cpp
   )
 SET(HEADERS 
   Albany_NodalGraphUtils.hpp
@@ -39,11 +38,10 @@ SET(HEADERS
   Albany_TmplSTKMeshStruct_Def.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
-  Albany_MpasSTKMeshStruct.hpp
   Albany_AsciiSTKMesh2D.hpp
   Albany_AsciiSTKMeshStruct.hpp
   Albany_CismSTKMeshStruct.hpp
-  Albany_ExtrudedSTKMeshStruct.hpp
+  #Albany_ExtrudedSTKMeshStruct.hpp
   )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
@@ -59,4 +57,9 @@ IF (INSTALL_ALBANY)
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+ENDIF()
+
+# Can remove following once stk_rebalance is in trilinos again
+IF (ALBANY_STK_REBALANCE)
+  add_subdirectory(percept)
 ENDIF()

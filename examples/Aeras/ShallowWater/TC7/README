@@ -1,0 +1,15 @@
+A quick explanation on how to run TC7:
+
+
+Initial conditiond and data after 1 day are presented in REF0007.cdf file. There, fields are given as their spectral transform coefficients, instead of velocities, vorticity and divergence is used.
+
+To create initial conditions, one should have an *exo file with grid AND variables 'vals_node_var1', etc. in afile. The easiest way to create such a file is to run one of other test cases (TC2, TC3,...) with a needed grid file and wait till the first time step is written to an *exo file (that is, do not use NetCDF output and interpolation, we need exodus grid structure and  variables on a navite grid).
+
+Once the file above is created, rename it to have extension *.nc (ncl won't open *.g). Then one should run 'tc7_write_IC' to have TC7 initial data interpolated and recorded. Change the extension of the file back to *g. After that, the test is ready to run.
+
+OG
+ 
+
+
+
+

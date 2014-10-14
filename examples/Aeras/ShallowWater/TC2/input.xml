@@ -4,6 +4,7 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
+      <Parameter name="SourceType" type="string" value="None"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
@@ -14,10 +15,15 @@
     </ParameterList>
     
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="3"/>
+      <Parameter name="Number" type="int" value="4"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Solution Max Value"/>
       <Parameter name="Response 2" type="string" value="Solution Two Norm"/>
+      <Parameter name="Response 3" type="string" value="Aeras Shallow Water L2 Error"/>
+        <ParameterList name="ResponseParams 3">
+          <Parameter name="Reference Solution Name" type="string" value="TC2"/>
+          <Parameter name="Reference Solution Data" type="double" value="2.94e04"/>
+        </ParameterList>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -34,8 +40,8 @@
     <Parameter name="Exodus Write Interval" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{798.384766656, 2999.34951171, 118962.513658}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="6"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{798.369327462, 2998.16908254, 118958.023247, 183.960114083, 14068421.0768, 1.30761023627e-05}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -55,7 +61,9 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="86400"/>
+           <Parameter name="Final Time" type="double" value="864"/>
+           <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
+           <!--Parameter name="Final Time" type="double" value="86400"/-->
            <!-- change to 12*24*3600 to get full 12 days -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>

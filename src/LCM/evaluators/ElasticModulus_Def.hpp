@@ -37,7 +37,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get<double>("Value");
 
     // Add Elastic Modulus as a Sacado-ized parameter
-    this->registerSacadoParameter("Elastic Modulus", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Elastic Modulus", this, paramLib);
   }
 //  else if (type == 'Variable') {
 //	  is_constant = true; // this means no stochastic nature
@@ -64,7 +64,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Elastic Modulus KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -86,7 +86,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dEdT_value = elmd_list->get("dEdT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    this->registerSacadoParameter("dEdT Value", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dEdT Value", this, paramLib);
   }
   else {
     isThermoElastic=false;

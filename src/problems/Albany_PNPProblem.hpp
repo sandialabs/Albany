@@ -98,6 +98,7 @@ namespace Albany {
 
 #include "PNP_PotentialResid.hpp"
 #include "PNP_ConcentrationResid.hpp"
+#include "PHAL_Permittivity.hpp"
 #include "PHAL_Neumann.hpp"
 
 template <typename EvalT>
@@ -203,8 +204,25 @@ Albany::PNPProblem::constructEvaluators(
    fm0.template registerEvaluator<EvalT>
      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
 
-  { // COncentration Resid
-    RCP<ParameterList> p = rcp(new ParameterList("COncentration Resid"));
+  { // Permittivity
+    RCP<ParameterList> p = rcp(new ParameterList);
+
+    p->set<string>("QP Variable Name", "Permittivity");
+    p->set<string>("QP Coordinate Vector Name", "Coord Vec");
+    p->set< RCP<DataLayout> >("Node Data Layout", dl->node_scalar);
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
+    p->set< RCP<DataLayout> >("QP Vector Data Layout", dl->qp_vector);
+
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Permittivity");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+    
+    ev = rcp(new PHAL::Permittivity<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  { // Concentration Resid
+    RCP<ParameterList> p = rcp(new ParameterList("Concentration Resid"));
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
@@ -227,6 +245,8 @@ Albany::PNPProblem::constructEvaluators(
 
     //Input
     p->set<string>("Weighted BF Name", "wBF");
+    p->set<string>("Permittivity Name", "Permittivity");
+    p->set< RCP<DataLayout> >("QP Scalar Data Layout", dl->qp_scalar);
     p->set<string>("Weighted Gradient BF Name", "wGrad BF");
     // Variable names hardwired to Concentration and Potential in evaluators
 

@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
@@ -42,17 +43,16 @@ private:
   // Input:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint>     XDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> UTracerGrad;
-  PHX::MDField<ScalarT,Cell,Node> TracerSrc;
-  PHX::MDField<ScalarT,Cell,Node> etadotdTracer;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerSrc;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> UTracerDiv;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdTracer;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Residual;
+  PHX::MDField<ScalarT,Cell,Node,Level>          Residual;
 
   const int numNodes   ;
   const int numQPs     ;
-  const int numDims    ;
   const int numLevels  ;
 };
 }

@@ -46,7 +46,7 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 
   // register the nodal weights
   this->addDependentField(weights_);
-  this->p_state_mgr_->registerNodalBlockStateVariable(nodal_weights_name_,
+  this->p_state_mgr_->registerStateVariable(nodal_weights_name_,
                                             dl->node_node_scalar,
                                             dl->dummy, "all",
                                             "scalar", 0.0, false,
@@ -81,20 +81,20 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 
     this->addDependentField(ip_fields_[field]);
 
-    if (ip_field_layouts_[field] == "Scalar" ) {
-      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
+     if (ip_field_layouts_[field] == "Scalar" ) {
+      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
                                                 dl->node_node_scalar,
                                                 dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     } else if (ip_field_layouts_[field] == "Vector" ) {
-      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
                                                 dl->node_node_vector,
                                                 dl->dummy, "all",
                                                 "scalar", 0.0, false,
                                                 output_to_exodus_);
     } else if (ip_field_layouts_[field] == "Tensor" ) {
-      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
+      this->p_state_mgr_->registerStateVariable(nodal_field_names_[field],
                                                 dl->node_node_tensor,
                                                 dl->dummy, "all",
                                                 "scalar", 0.0, false,
@@ -138,7 +138,7 @@ void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
   node_data->initializeVectors(0.0);
 }
 
@@ -152,7 +152,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Get the node data block container
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
@@ -223,7 +223,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Get the node data block container
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();

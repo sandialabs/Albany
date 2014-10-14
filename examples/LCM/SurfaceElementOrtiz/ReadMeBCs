@@ -1,0 +1,12 @@
+Node sets for the 1 element cohesive surface element
+
+NS 1 -> plane for x dof with normal in -E_{1}
+NS 2 -> plane for z dof with normal in E_{3}
+NS 3 -> plane for x dof with normal in E_{1}
+NS 4 -> plane for z dof with normal in -E_{3}
+NS 5 -> plane for y dof with normal in -E_{2}
+NS 6 -> plane for y dof with normal in E_{2}
+NS 7 -> corner for x,z dof with location  -0.5, 0.5
+NS 8 -> corner for x,z dof with location   0.5, 0.5 
+NS 9 -> corner for x,z dof with location   0.5,-0.5
+NS 10 -> corner for x,z dof with location -0.5,-0.5 

@@ -45,7 +45,9 @@ Permittivity(Teuchos::ParameterList& p,
     // Add Permittivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    this->registerSacadoParameter("Permittivity", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                "Permittivity", this, paramLib);
+
   }
   
   // Permittivity (relative) has temperature dependence
@@ -60,8 +62,11 @@ Permittivity(Teuchos::ParameterList& p,
     // Add Permittivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    this->registerSacadoParameter("Permittivity", paramLib);
-    this->registerSacadoParameter("Permittivity Factor", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                "Permittivity", this, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
+                                "Permittivity Factor", this, paramLib);
+
   }
 
   else if (typ == "Block Dependent") 

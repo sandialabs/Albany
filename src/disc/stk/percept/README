@@ -1,0 +1,24 @@
+
+This directory and subdirectories includes the stk_rebalance capability
+out of percept. Here are modifications I made:
+
+1. Change CMakeLists files to build as part of Albany instead of Trilinos
+
+2. For my convenience, I merged stk_rebalance_utils into stk_rebalance dirs
+
+3. stk_rebalance had a single dependence on Percept: class MyPairIterRelation 
+   So, I stripped the contents of PerceptMesh.hpp down to just this class
+   and put it in a new header  Percept_MyPairIterRelation.hpp
+   My new version of PerceptMesh.hpp simply includes this file.
+
+   In  Percept_MyPairIterRelation.hpp, 
+   I had to comment out the constructor that had PerceptMesh in the
+   argument list: this was not defined with my stripped-down version and
+   only the contructor taking BulkData is used in stk_rebalance.
+
+4. To get stk_rebalance to compile, without  stk::mesh::Cartesian Not Found
+   error, I needed to add  #include <stk_mesh/base/CoordinateSystems.hpp>
+   in Partition.hpp
+
+5. In RebalanceUtils.cpp: needed to add #include <stk_meh/base/MetaData.hpp>
+

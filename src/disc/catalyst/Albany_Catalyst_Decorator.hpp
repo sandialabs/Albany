@@ -50,10 +50,6 @@ public:
   //! Retrieve coodinate vector (num_used_nodes * 3)
   Teuchos::ArrayRCP<double>& getCoordinates() const;
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const;
-  const WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
-  const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
 
   //! Print the coordinates for debugging
   void printCoords() const;

@@ -38,7 +38,7 @@ EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0);
 
     // Add effective thermal conductivity as a Sacado-ized parameter
-    this->registerSacadoParameter("Effective Thermal COnductivity", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Effective Thermal Conductivity", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -55,7 +55,7 @@ EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Effective Thermal Conductivity KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = elmd_list->get(ss, 1.0);
     }
   }
@@ -92,9 +92,9 @@ EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
   }
 
   condKs = elmd_list->get("Solid Thermal Conducutivity Value", 1.0);
-  this->registerSacadoParameter("Solid Thermal Conductivity Value", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Solid Thermal Conductivity Value", this, paramLib);
   condKf = elmd_list->get("Fluid Thermal Conductivity Value", 100.0);
-  this->registerSacadoParameter("Fluid Thermal Conductivity Value", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Fluid Thermal Conductivity Value", this, paramLib);
 
   this->addEvaluatedField(effectiveK);
   this->setName("Effective Thermal Conductivity"+PHX::TypeString<EvalT>::value);

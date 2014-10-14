@@ -55,7 +55,7 @@ XScalarAdvectionResid(Teuchos::ParameterList& p,
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  this->registerSacadoParameter("Reynolds Number", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
      std::logic_error,"Aeras::XScalarAdvectionResid supports scalar or vector only");

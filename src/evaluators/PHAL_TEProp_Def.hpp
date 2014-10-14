@@ -58,7 +58,7 @@ TEProp(Teuchos::ParameterList& p) :
   for (int i=0; i<mats; i++) {
       std::stringstream ss;
       ss << "Electrical Conductivity of Material " << i;
-      this->registerSacadoParameter(ss.str(), paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
   }
 
 

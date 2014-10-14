@@ -38,7 +38,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
     constant_value = satmod_list->get("Value", 0.0);
 
     // Add Saturation Modulus as a Sacado-ized parameter
-    this->registerSacadoParameter("Saturation Modulus", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Saturation Modulus", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -55,7 +55,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Saturation Modulus KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = satmod_list->get(ss, 0.0);
     }
   }
@@ -76,7 +76,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dSdT_value = satmod_list->get("dSdT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    this->registerSacadoParameter("dSdT Value", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dSdT Value", this, paramLib);
   }
   else {
     isThermoElastic=false;

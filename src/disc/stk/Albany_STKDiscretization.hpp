@@ -35,7 +35,7 @@
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldTraits.hpp>
 #ifdef ALBANY_SEACAS
-  #include <stk_io/MeshReadWriteUtils.hpp>
+  #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
 
@@ -118,13 +118,6 @@ namespace Albany {
     Teuchos::ArrayRCP<double>& getCoordinates() const;
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
 
     //! Print the coordinates for debugging
@@ -176,7 +169,7 @@ namespace Albany {
     double restartDataTime() const {return stkMeshStruct->restartDataTime();}
 
     //! After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh();
+    void updateMesh(bool shouldTransferIPData = false);
 
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh();
@@ -208,9 +201,9 @@ namespace Albany {
       std::pair<unsigned, unsigned> latitude_longitude;
     };
 
-    const stk_classic::mesh::fem::FEMMetaData& getSTKMetaData(){ return metaData; }
+    const stk::mesh::MetaData& getSTKMetaData(){ return metaData; }
 
-    const stk_classic::mesh::BulkData& getSTKBulkData(){ return bulkData; }
+    const stk::mesh::BulkData& getSTKBulkData(){ return bulkData; }
 
   private:
 
@@ -220,8 +213,7 @@ namespace Albany {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
-    inline GO gid(const stk_classic::mesh::Entity& node) const;
-    inline GO gid(const stk_classic::mesh::Entity* node) const;
+    inline GO gid(const stk::mesh::Entity node) const;
 
 #ifdef ALBANY_EPETRA
     // Copy values from STK Mesh field to given Epetra_Vector
@@ -273,8 +265,10 @@ namespace Albany {
 #ifdef ALBANY_EPETRA
     int processNetCDFOutputRequest(const Epetra_Vector&);
 #endif
+    int processNetCDFOutputRequestT(const Tpetra_Vector&);
+
     //! Find the local side id number within parent element
-    unsigned determine_local_side_id( const stk_classic::mesh::Entity & elem , stk_classic::mesh::Entity & side );
+    unsigned determine_local_side_id( const stk::mesh::Entity elem , stk::mesh::Entity side );
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -287,8 +281,8 @@ namespace Albany {
 
 
     //! Stk Mesh Objects
-    stk_classic::mesh::fem::FEMMetaData& metaData;
-    stk_classic::mesh::BulkData& bulkData;
+    stk::mesh::MetaData& metaData;
+    stk::mesh::BulkData& bulkData;
 
 #ifdef ALBANY_EPETRA
     //! Epetra communicator
@@ -340,13 +334,6 @@ namespace Albany {
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type sHeight;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
@@ -354,13 +341,14 @@ namespace Albany {
 
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
+    std::vector<std::vector<std::vector<double> > > nodesOnElemStateVec;
 
     //! list of all owned nodes, saved for setting solution
-    std::vector< stk_classic::mesh::Entity * > ownednodes ;
-    std::vector< stk_classic::mesh::Entity * > cells ;
+    std::vector< stk::mesh::Entity > ownednodes ;
+    std::vector< stk::mesh::Entity > cells ;
 
     //! list of all overlap nodes, saved for getting coordinates for mesh motion
-    std::vector< stk_classic::mesh::Entity * > overlapnodes ;
+    std::vector< stk::mesh::Entity > overlapnodes ;
 
     //! Number of elements on this processor
     int numOwnedNodes;
@@ -382,9 +370,11 @@ namespace Albany {
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
-    stk_classic::io::MeshData* mesh_data;
+    stk::io::StkMeshIoBroker* mesh_data;
 
     int outputInterval;
+
+    size_t outputFileIdx;
 #endif
     bool interleavedOrdering;
 
@@ -423,11 +413,11 @@ namespace Albany {
       return -1;
     }
 
-    ssize_t entity_in_list(const stk_classic::mesh::Entity *value, std::vector<stk_classic::mesh::Entity *> vector) {
+    ssize_t entity_in_list(stk::mesh::Entity value, std::vector<stk::mesh::Entity> const& arg_vector) {
 
-      std::size_t count = vector.size();
+      std::size_t count = arg_vector.size();
       for(std::size_t i=0; i < count; i++) {
-        if(vector[i]->identifier() == value->identifier())
+        if(bulkData.identifier(arg_vector[i]) == bulkData.identifier(value))
           return i;
       }
       return -1;

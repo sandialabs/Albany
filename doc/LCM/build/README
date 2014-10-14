@@ -1,0 +1,56 @@
+Simple build scripts for Trilinos and Albany.
+
+They have been tested only on Fedora 20, where there is no need to
+install libraries separately. The system libraries in the distribution
+suffice for building and running.
+
+* Single package version: build.sh
+
+Four parameters are passed to the script:
+
+package [trilinos|albany]
+toolchain [gcc|clang]
+build type [debug|release]
+number of processors (default is 1)
+
+The build.sh script, together with the env-single.sh script and
+*-config.sh templates must reside above the Trilinos and Albany
+directories (top-level directory).
+
+Creating symlinks to build.sh and using them to run it will change its
+behavior:
+
+- clean.sh will delete all traces of the corresponding build and will
+create a new configuration script based on the corresponding template.
+
+- config.sh will attempt to reconfigure the build.
+
+- build.sh (original name) will build using cmake.
+
+- test.sh will run the cmake tests.
+
+- mail.sh will mail the results of the ctest to the email address
+configured in env-single.sh.
+
+- symlinks with combinations of the above (e.g. clean-config-build.sh)
+  will perform the specified actions in sequence. See build.sh for
+  valid sequences.
+
+Build directories are created within the top-level directory and named
+according to the parameters given to the build.sh script, e.g.:
+
+albany-build-gcc-release
+
+In addition, for Trilinos an install directory similarly named is
+created at the top-level directory.
+
+It is recommended that at least the *-config.sh be made read and
+execute only, as erroneous modifications to the build.sh script may
+result in their being overwritten.
+
+* All packages version: build-all.sh
+
+Performs all the above in all the packages specified in the file
+env-all.sh.
+
+Trilinos testing is skipped.

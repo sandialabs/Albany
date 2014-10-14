@@ -37,7 +37,7 @@ Absorption(Teuchos::ParameterList& p) :
     // Add absorption as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-      this->registerSacadoParameter("Absorption", paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Absorption", this, paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -58,7 +58,7 @@ Absorption(Teuchos::ParameterList& p) :
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Absorption KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = cond_list->get(ss, 0.0);
     }
   }

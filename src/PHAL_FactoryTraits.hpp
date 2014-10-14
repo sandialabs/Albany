@@ -30,11 +30,7 @@
 #ifdef ALBANY_EPETRA
 #include "PHAL_GatherAuxData.hpp"
 #endif
-#ifdef ALBANY_FELIX
-	#include "PHAL_GatherBasalFriction.hpp"
-	#include "PHAL_GatherThickness.hpp"
-	#include "PHAL_GatherSHeight.hpp"
-#endif
+#include "PHAL_LoadStateField.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 
 
@@ -98,44 +94,30 @@ namespace PHAL {
 
     static const int id_neumann                   =  0;
     static const int id_neumann_aggregator        =  1;
-    static const int id_qcad_poisson_neumann      =  2;
-    static const int id_gather_coord_vector       =  3;
-    static const int id_gather_solution           =  4;
-    static const int id_timedep_bc                =  5; // Only for LCM probs
-    static const int id_gather_basalFriction      =  6; // Only for FELIX probs
-    static const int id_gather_thickness     	    =  7; // Only for FELIX probs
-    static const int id_gather_surfaceHeight      =  8; // Only for FELIX probs
+    static const int id_gather_coord_vector       =  2;
+    static const int id_gather_solution           =  3;
+    static const int id_load_stateField           =  4;
+    static const int id_qcad_poisson_neumann      =  5; // Only for QCAD probs
+    static const int id_timedep_bc                =  6; // Only for LCM probs
 
-#ifdef ALBANY_FELIX
-    typedef boost::mpl::vector9<
-#else
+
 #ifdef ALBANY_LCM
+    typedef boost::mpl::vector7<
+#else
     typedef boost::mpl::vector6<
-#else
-    typedef boost::mpl::vector5<
 #endif
-#endif
-
-	     PHAL::Neumann<_,Traits>,                     //  0
-	     PHAL::NeumannAggregator<_,Traits>,           //  1
+	     PHAL::Neumann<_,Traits>,                   //  0
+	     PHAL::NeumannAggregator<_,Traits>,         //  1
+       PHAL::GatherCoordinateVector<_,Traits>,    //  2
+       PHAL::GatherSolution<_,Traits>,            //  3
+       PHAL::LoadStateField<_,Traits>,            //  4
 #ifdef ALBANY_QCAD
-	     QCAD::PoissonNeumann<_,Traits>,              //  2
+       QCAD::PoissonNeumann<_,Traits>             //  5
 #else
-	     PHAL::Neumann<_,Traits>,                     //  2 dummy
+       PHAL::Neumann<_,Traits>                    //  5 dummy
 #endif
-         PHAL::GatherCoordinateVector<_,Traits>,      //  3
-         PHAL::GatherSolution<_,Traits>               //  4
 #ifdef ALBANY_LCM
-         , LCM::TimeTracBC<_, Traits>                 //  5
-#else
-#ifdef ALBANY_FELIX
-         , PHAL::Neumann<_,Traits> 					  //  5 dummy
-#endif
-#endif
-#ifdef ALBANY_FELIX
-    	, PHAL::GatherBasalFriction<_,Traits>         //  6
-		, PHAL::GatherThickness<_,Traits>             //  7
-        , PHAL::GatherSHeight<_,Traits>               //  8
+       , LCM::TimeTracBC<_, Traits>               //  6
 #endif
 	  > EvaluatorTypes;
 };

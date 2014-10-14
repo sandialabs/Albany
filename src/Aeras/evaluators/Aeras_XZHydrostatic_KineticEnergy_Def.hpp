@@ -20,10 +20,9 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_KineticEnergy<EvalT, Traits>::
 XZHydrostatic_KineticEnergy(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  u  (p.get<std::string> ("Velx"), dl->node_scalar_level),
+  u  (p.get<std::string> ("Velx"),           dl->node_vector_level),
   ke (p.get<std::string> ("Kinetic Energy"), dl->node_scalar_level),
   numNodes ( dl->node_scalar             ->dimension(1)),
-  numQPs   ( dl->node_qp_scalar          ->dimension(2)),
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
@@ -52,13 +51,12 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_KineticEnergy<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
-        ke(cell,node,level) = 0.5*u(cell,node,level)*u(cell,node,level);
-      }
-    }
-  }
+  for (int i=0; i < ke.size(); ++i) ke(i)=0.0;
+  for (int cell=0; cell < workset.numCells; ++cell) 
+    for (int node=0; node < numNodes; ++node) 
+      for (int level=0; level < numLevels; ++level) 
+        for (int dim=0; dim < numDims; ++dim) 
+          ke(cell,node,level) += 0.5*u(cell,node,level,dim)*u(cell,node,level,dim);
 }
 
 //**********************************************************************

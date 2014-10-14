@@ -37,8 +37,8 @@ offset(p.get<int>("Equation Offset")),
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
     ("Parameter Library", Teuchos::null);
 
-  this->registerSacadoParameter(KI_name, paramLib);
-  this->registerSacadoParameter(KII_name, paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(KI_name, this, paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(KII_name, this, paramLib);
 
   timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
   KIValues = p.get<Teuchos::Array<RealType> >("KI Values").toVector();

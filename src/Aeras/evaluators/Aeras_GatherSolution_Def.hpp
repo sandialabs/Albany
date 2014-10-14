@@ -20,20 +20,24 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Aeras::Layouts>& dl): 
 worksetSize(dl->node_scalar             ->dimension(0)),
 numNodes   (dl->node_scalar             ->dimension(1)),
+numDims    (dl->node_qp_gradient        ->dimension(3)),
 numLevels  (dl->node_scalar_level       ->dimension(2)), 
-numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
+numFields  (0), numNodeVar(0), numVectorLevelVar(0), numScalarLevelVar(0), numTracerVar(0)
 {
-  const Teuchos::ArrayRCP<std::string> node_names       = p.get< Teuchos::ArrayRCP<std::string> >("Node Names");
-  const Teuchos::ArrayRCP<std::string> level_names      = p.get< Teuchos::ArrayRCP<std::string> >("Level Names");
-  const Teuchos::ArrayRCP<std::string> tracer_names     = p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names");
-  const Teuchos::ArrayRCP<std::string> node_names_dot   = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names");
-  const Teuchos::ArrayRCP<std::string> level_names_dot  = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Level Names");
-  const Teuchos::ArrayRCP<std::string> tracer_names_dot = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names");
+  const Teuchos::ArrayRCP<std::string> node_names              = p.get< Teuchos::ArrayRCP<std::string> >("Node Names");
+  const Teuchos::ArrayRCP<std::string> vector_level_names      = p.get< Teuchos::ArrayRCP<std::string> >("Vector Level Names");
+  const Teuchos::ArrayRCP<std::string> scalar_level_names      = p.get< Teuchos::ArrayRCP<std::string> >("Scalar Level Names");
+  const Teuchos::ArrayRCP<std::string> tracer_names            = p.get< Teuchos::ArrayRCP<std::string> >("Tracer Names");
+  const Teuchos::ArrayRCP<std::string> node_names_dot          = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Node Names");
+  const Teuchos::ArrayRCP<std::string> vector_level_names_dot  = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Vector Level Names");
+  const Teuchos::ArrayRCP<std::string> scalar_level_names_dot  = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Scalar Level Names");
+  const Teuchos::ArrayRCP<std::string> tracer_names_dot        = p.get< Teuchos::ArrayRCP<std::string> >("Time Dependent Tracer Names");
 
-  numNodeVar   = node_names  .size();
-  numLevelVar  = level_names .size();
-  numTracerVar = tracer_names.size();
-  numFields = numNodeVar +  numLevelVar + numTracerVar;
+  numNodeVar         = node_names         .size();
+  numVectorLevelVar  = vector_level_names .size();
+  numScalarLevelVar  = scalar_level_names .size();
+  numTracerVar       = tracer_names       .size();
+  numFields          = numNodeVar +  numVectorLevelVar + numScalarLevelVar + numTracerVar;
 
   val.resize(numFields);
   val_dot.resize(numFields);
@@ -44,9 +48,12 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
     val[eq] = f;
     this->addEvaluatedField(val[eq]);
   }   
-  for (int i = 0; i < numLevelVar; ++i,++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(level_names[i],dl->node_scalar_level);
-    val[eq] = f;
+  for (int i = 0; i < numVectorLevelVar; ++i,++eq) {
+    PHX::MDField<ScalarT,Cell,Node> f(vector_level_names[i],dl->node_vector_level); val[eq] = f;
+    this->addEvaluatedField(val[eq]);
+  }   
+  for (int i = 0; i < numScalarLevelVar; ++i,++eq) {
+    PHX::MDField<ScalarT,Cell,Node> f(scalar_level_names[i],dl->node_scalar_level); val[eq] = f;
     this->addEvaluatedField(val[eq]);
   }   
   for (int i = 0; i < numTracerVar; ++i,++eq) {
@@ -61,9 +68,12 @@ numFields  (0), numNodeVar(0), numLevelVar(0), numTracerVar(0)
     val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
   }   
-  for (int i = 0; i < numLevelVar; ++i, ++eq) {
-    PHX::MDField<ScalarT,Cell,Node> f(level_names_dot[i],dl->node_scalar_level);
-    val_dot[eq] = f;
+  for (int i = 0; i < numVectorLevelVar; ++i, ++eq) {
+    PHX::MDField<ScalarT,Cell,Node> f(vector_level_names_dot[i],dl->node_vector_level); val_dot[eq] = f;
+    this->addEvaluatedField(val_dot[eq]);
+  }   
+  for (int i = 0; i < numScalarLevelVar; ++i, ++eq) {
+    PHX::MDField<ScalarT,Cell,Node> f(scalar_level_names_dot[i],dl->node_scalar_level); val_dot[eq] = f;
     this->addEvaluatedField(val_dot[eq]);
   }   
   for (int i = 0; i < numTracerVar; ++i, ++eq) {
@@ -156,12 +166,19 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
-        for (int j = eq; j < eq+this->numLevelVar; ++j, ++n) {
-          (this->val    [j])(cell,node,level) = xT_constView[eqID[n]];
+        for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
+          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+            (this->val    [j])(cell,node,level,dim) = xT_constView   [eqID[n]];
+            (this->val_dot[j])(cell,node,level,dim) = xdotT_constView[eqID[n]];
+          }
+        }
+        for (int j = eq+this->numVectorLevelVar; 
+                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
+          (this->val    [j])(cell,node,level) = xT_constView   [eqID[n]];
           (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
         }
       }
-      eq += this->numLevelVar;
+      eq += this->numScalarLevelVar + this->numVectorLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           (this->val    [j])(cell,node,level) = xT_constView[eqID[n]];
@@ -215,14 +232,23 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
-        for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
+        for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
+          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+            ScalarT* valptr = &(this->val[j])(cell,node,level,dim);
+            *valptr = FadType(num_dof, xT_constView[eqID[n]]);
+            valptr->setUpdateValue(!workset.ignore_residual);
+            valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
+          } 
+        }
+        for (int j = eq+this->numVectorLevelVar; 
+                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
           ScalarT* valptr = &(this->val[j])(cell,node,level);
           *valptr = FadType(num_dof, xT_constView[eqID[n]]);
           valptr->setUpdateValue(!workset.ignore_residual);
           valptr->fastAccessDx(firstunk + n) = workset.j_coeff;
         }
       }
-      eq += this->numLevelVar;
+      eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           ScalarT* valptr = &(this->val[j])(cell,node,level);
@@ -242,13 +268,21 @@ evaluateFields(typename Traits::EvalData workset)
         }
         eq += this->numNodeVar;
         for (int level = 0; level < this->numLevels; level++) { 
-          for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
+          for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
+            for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+              ScalarT* valptr = &(this->val_dot[j])(cell,node,level,dim);
+              *valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
+              valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
+            }
+          }
+          for (int j = eq+this->numVectorLevelVar; 
+                   j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
             ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
             *valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
             valptr->fastAccessDx(firstunk + n) = workset.m_coeff;
           }
         }
-        eq += this->numLevelVar;
+        eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
             ScalarT* valptr = &(this->val_dot[j])(cell,node,level);
@@ -310,7 +344,20 @@ evaluateFields(typename Traits::EvalData workset)
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) { 
-        for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
+        for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
+          for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+            valptr = &(this->val[j])(cell,node,level,dim);
+            if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
+              *valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
+              for (int k=0; k<workset.num_cols_x; k++)
+                valptr->fastAccessDx(k) = workset.j_coeff*VxT->getData(k)[eqID[n]];
+            }
+            else
+              *valptr = TanFadType(xT_constView[eqID[n]]);
+          }
+        }
+        for (int j = eq+this->numVectorLevelVar; 
+                 j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++, ++n) {
           valptr = &(this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             *valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
@@ -321,7 +368,7 @@ evaluateFields(typename Traits::EvalData workset)
             *valptr = TanFadType(xT_constView[eqID[n]]);
         }
       }
-      eq += this->numLevelVar;
+      eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
           valptr = &(this->val[j])(cell,node,level);
@@ -350,7 +397,21 @@ evaluateFields(typename Traits::EvalData workset)
         }
         eq += this->numNodeVar;
         for (int level = 0; level < this->numLevels; level++) { 
-          for (int j = eq; j < eq+this->numLevelVar; j++, ++n) {
+          for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
+            for (int dim = 0; dim < this->numDims; ++dim, ++n) {
+              valptr = &(this->val_dot[j])(cell,node,level,dim);
+              if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
+                *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
+                for (int k=0; k<workset.num_cols_x; k++)
+                  valptr->fastAccessDx(k) =
+                    workset.m_coeff*VxdotT->getData(k)[eqID[n]];
+              }
+              else
+                *valptr = TanFadType(xdotT_constView[eqID[n]]);
+            } 
+          }     
+          for (int j = eq+this->numVectorLevelVar; 
+                   j < eq+this->numScalarLevelVar+this->numScalarLevelVar; j++,++n) {
             valptr = &(this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
               *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
@@ -362,7 +423,7 @@ evaluateFields(typename Traits::EvalData workset)
               *valptr = TanFadType(xdotT_constView[eqID[n]]);
           }
         }
-        eq += this->numLevelVar;
+        eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
             valptr = &(this->val_dot[j])(cell,node,level);

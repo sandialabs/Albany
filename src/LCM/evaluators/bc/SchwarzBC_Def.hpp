@@ -6,12 +6,15 @@
 
 //IK, 9/13/14: no Epetra except SG and MP
 
-#include "AAdapt_STKAdapt.hpp"
+//#include "AAdapt_STKAdapt.hpp"
+#include "Albany_STKDiscretization.hpp"
+#include "Albany_GenericSTKMeshStruct.hpp"
 #include "Intrepid_MiniTensor.h"
-#include "PerceptMesh.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
+
+//define DEBUG_LCM_SCHWARZ
 
 //
 // Genereric Template Code for Constructor and PostRegistrationSetup
@@ -69,8 +72,21 @@ computeBCs(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
   mesh_specs = gms.getMeshSpecs();
 
+  // Get cell topology of the block to which this node set
+  // is coupled.
+  std::map<std::string, int> const &
+  block_name_2_index = gms.ebNameToIndex;
+
+  std::map<std::string, int>::const_iterator
+  it = block_name_2_index.find(coupled_block);
+
+  assert(it != block_name_2_index.end());
+
+  int const
+  index_block = it->second;
+
   CellTopologyData const
-  cell_topology_data = mesh_specs[0]->ctd;
+  cell_topology_data = mesh_specs[index_block]->ctd;
 
   shards::CellTopology
   cell_topology(&cell_topology_data);
@@ -106,7 +122,7 @@ computeBCs(
   }
 
   double const
-  tolerance = 1.0e-4;
+  tolerance = 5.0e-2;
 
   double * const
   coord = ns_coord[ns_node];
@@ -118,7 +134,7 @@ computeBCs(
 
   point.fill(coord);
 
-  // Determine the element that cointains this point.
+  // Determine the element that contains this point.
   bool
   found = false;
 
@@ -271,15 +287,23 @@ computeBCs(
   Intrepid::Vector<double>
   value(dimension, Intrepid::ZEROS);
 
+#if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "Coupling to block: " << coupled_block << '\n';
+#endif // DEBUG_LCM_SCHWARZ
 
   for (size_t i = 0; i < vertex_count; ++i) {
     value += basis_values(i, 0) * element_solution[i];
+
+#if defined(DEBUG_LCM_SCHWARZ)
     std::cout << std::scientific << std::setprecision(16);
     std::cout << basis_values(i, 0) << "    " << element_solution[i] << '\n';
+#endif // DEBUG_LCM_SCHWARZ
+
   }
 
+#if defined(DEBUG_LCM_SCHWARZ)
   std::cout << " ==> " << value << '\n';
+#endif // DEBUG_LCM_SCHWARZ
 
   x_val = value(0);
   y_val = value(1);
@@ -317,11 +341,13 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
 
+#if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "\n*** RESIDUAL ***\n";
-  std::cout << "\n*** X BEFORE ***\n";
+  std::cout << "\n*** X BEFORE COMPUTE BC ***\n";
   xT->print(std::cout);
-  std::cout << "\n*** F BEFORE ***\n";
+  std::cout << "\n*** F BEFORE COMPUTE BC ***\n";
   fT->print(std::cout);
+#endif // DEBUG_LCM_SCHWARZ
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   disc = dirichlet_workset.disc;
@@ -337,13 +363,15 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_dof =  dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::cout << '\n';
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << "CONSTRAINED DOFS:\n";
   for (size_t i = 0; i < ns_dof.size(); ++i) {
     for (size_t j = 0; j < ns_dof[i].size(); ++j) {
       std::cout << ' ' << ns_dof[i][j];
     }
     std::cout << '\n';
   }
+#endif // DEBUG_LCM_SCHWARZ
 
   size_t const
   ns_number_nodes = ns_dof.size();
@@ -370,10 +398,12 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   } // node in node set loop
 
-  std::cout << "\n*** X AFTER ***\n";
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << "\n*** X AFTER COMPUTE BC ***\n";
   xT->print(std::cout);
-  std::cout << "\n*** F AFTER ***\n";
+  std::cout << "\n*** F AFTER COMPUTE BC ***\n";
   fT->print(std::cout);
+#endif // DEBUG_LCM_SCHWARZ
 
   return;
 }
@@ -395,7 +425,9 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
+#if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "\n*** JACOBIAN ***\n";
+#endif // DEBUG_LCM_SCHWARZ
 
   Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView;
@@ -502,7 +534,9 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
+#if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "\n*** TANGENT ***\n";
+#endif // DEBUG_LCM_SCHWARZ
 
   Teuchos::RCP<Tpetra_Vector>  fT = dirichlet_workset.fT;
 

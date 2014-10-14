@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras {
 /** \brief Geopotential (phi) for XZHydrostatic atmospheric model
@@ -38,10 +39,16 @@ public:
 
 private:
   // Input
-  PHX::MDField<ScalarT,Cell,Node> density;
-  PHX::MDField<ScalarT,Cell,Node> Pi;
+                     
+  //why not Eta??? it is in XZHydrostaticProblem
+                     
+  PHX::MDField<ScalarT,Cell,Node,Level> density;
+  PHX::MDField<ScalarT,Cell,Node,Level> Pi;
+                     
+  PHX::MDField<ScalarT,Cell,Node> PhiSurf;
+                     
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Phi;
+  PHX::MDField<ScalarT,Cell,Node,Level> Phi;
 
   const int numNodes;
   const int numLevels;

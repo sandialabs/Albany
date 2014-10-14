@@ -13,8 +13,8 @@
 
 // Start of STK stuff
 #include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/base/FieldData.hpp>
-#include <stk_mesh/fem/FEMMetaData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
+#include <stk_mesh/base/MetaData.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/type_traits/is_same.hpp>
@@ -29,8 +29,7 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
   public:
 
     GenericSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                             stk_classic::mesh::fem::FEMMetaData* metaData_,
-                             stk_classic::mesh::BulkData* bulkData_,
+                             stk::mesh::MetaData* metaData_,
                              const int neq_,
                              const int numDim_);
 
@@ -54,12 +53,12 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
     fillVectorHelper(Epetra_Vector& soln,
                      T* solution_field,
                      const Teuchos::RCP<Epetra_Map>& node_map,
-                     const stk_classic::mesh::Bucket& bucket, int offset);
+                     const stk::mesh::Bucket& bucket, int offset);
 
     void fillVectorHelper(Epetra_Vector& soln,
                           ScalarFieldType* solution_field,
                           const Teuchos::RCP<Epetra_Map>& node_map,
-                          const stk_classic::mesh::Bucket& bucket, int offset);
+                          const stk::mesh::Bucket& bucket, int offset);
 #endif
 
     // Use boost to provide explicit specialization - Tpetra version
@@ -68,12 +67,12 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
     fillVectorHelperT(Tpetra_Vector& solnT,
                       T* solution_field,
                       const Teuchos::RCP<const Tpetra_Map>& node_mapT,
-                      const stk_classic::mesh::Bucket& bucket, int offset);
+                      const stk::mesh::Bucket& bucket, int offset);
 
     void fillVectorHelperT(Tpetra_Vector& solnT,
                            ScalarFieldType* solution_field,
                            const Teuchos::RCP<const Tpetra_Map>& node_mapT,
-                           const stk_classic::mesh::Bucket& bucket, int offset);
+                           const stk::mesh::Bucket& bucket, int offset);
 
 #ifdef ALBANY_EPETRA
     // Use boost to provide explicit specialization
@@ -82,12 +81,12 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
     saveVectorHelper(const Epetra_Vector& soln,
                      T* solution_field,
                      const Teuchos::RCP<Epetra_Map>& node_map,
-                     const stk_classic::mesh::Bucket& bucket, int offset);
+                     const stk::mesh::Bucket& bucket, int offset);
 
     void saveVectorHelper(const Epetra_Vector& soln,
                           ScalarFieldType* solution_field,
                           const Teuchos::RCP<Epetra_Map>& node_map,
-                          const stk_classic::mesh::Bucket& bucket, int offset);
+                          const stk::mesh::Bucket& bucket, int offset);
 #endif
     // Use boost to provide explicit specialization - Tpetra
     template<class T>
@@ -95,12 +94,12 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
     saveVectorHelperT(const Tpetra_Vector& solnT,
                      T* solution_field,
                      const Teuchos::RCP<const Tpetra_Map>& node_mapT,
-                     const stk_classic::mesh::Bucket& bucket, int offset);
+                     const stk::mesh::Bucket& bucket, int offset);
 
     void saveVectorHelperT(const Tpetra_Vector& solnT,
                           ScalarFieldType* solution_field,
                           const Teuchos::RCP<const Tpetra_Map>& node_mapT,
-                          const stk_classic::mesh::Bucket& bucket, int offset);
+                          const stk::mesh::Bucket& bucket, int offset);
 
     // Convenience function to copy one field's contents to another
     template<class T>
@@ -110,8 +109,7 @@ class GenericSTKFieldContainer : public AbstractSTKFieldContainer {
     // Specialization for ScalarFieldType
     void copySTKField(const ScalarFieldType* source, ScalarFieldType* target);
 
-    stk_classic::mesh::fem::FEMMetaData* metaData;
-    stk_classic::mesh::BulkData* bulkData;
+    stk::mesh::MetaData* metaData;
     Teuchos::RCP<Teuchos::ParameterList> params;
 
     int numNodes; // used to implement getDOF function when ! interleaved
@@ -140,7 +138,7 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
              const Epetra_Vector &soln, \
              arg_type *solution_field, \
              const Teuchos::RCP<Epetra_Map>& node_map, \
-             const stk_classic::mesh::Bucket & bucket, int offset);
+             const stk::mesh::Bucket & bucket, int offset);
 #endif
 //Tpetra version of above
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_SVHT(class_name, value, arg_type) \
@@ -148,14 +146,14 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
              const Tpetra_Vector &solnT, \
              arg_type *solution_field, \
              const Teuchos::RCP<const Tpetra_Map>& node_mapT, \
-             const stk_classic::mesh::Bucket & bucket, int offset);
+             const stk::mesh::Bucket & bucket, int offset);
 #ifdef ALBANY_EPETRA
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVH(class_name, value, arg_type) \
   template void class_name<value>::fillVectorHelper( \
           Epetra_Vector &soln,  \
           arg_type *solution_field, \
           const Teuchos::RCP<Epetra_Map>& node_map,  \
-          const stk_classic::mesh::Bucket & bucket, int offset);
+          const stk::mesh::Bucket & bucket, int offset);
 #endif
 //Tpetra version of above
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_FVHT(class_name, value, arg_type) \
@@ -163,7 +161,7 @@ template<> inline int GenericSTKFieldContainer<true>::getDOF(const int inode, co
           Tpetra_Vector &solnT,  \
           arg_type *solution_field, \
           const Teuchos::RCP<const Tpetra_Map>& node_mapT,  \
-          const stk_classic::mesh::Bucket & bucket, int offset);
+          const stk::mesh::Bucket & bucket, int offset);
 #define STKFIELDCONTAINER_INSTANTIATE_TEMPLATE_FUNCTION_CSTKF(class_name, value, arg_type) \
   template void class_name<value>::copySTKField( \
           const arg_type *source_field, \

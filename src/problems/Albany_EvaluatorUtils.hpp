@@ -46,6 +46,17 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names,
        Teuchos::ArrayRCP<std::string> dof_names_dot,
        int offsetToFirstDOF=0);
+    
+    //! Function to create parameter list for construction of GatherSolution
+    //! evaluator with standard Field names.
+    //! Tensor rank of solution variable is 0, 1, or 2
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructGatherSolutionEvaluator(
+       int tensorRank,
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot,
+       int offsetToFirstDOF=0);
+
 
     //! Function to create parameter list for construction of GatherSolution
     //! evaluator with acceleration terms
@@ -57,10 +68,30 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> dof_names_dotdot,
        int offsetToFirstDOF=0);
 
+    //! Function to create parameter list for construction of GatherSolution
+    //! evaluator with acceleration terms.
+    //! Tensor rank of solution variable is 0, 1, or 2
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructGatherSolutionEvaluator_withAcceleration(
+       int tensorRank,
+       Teuchos::ArrayRCP<std::string> dof_names,
+       Teuchos::ArrayRCP<std::string> dof_names_dot, // can be Teuchos::null
+       Teuchos::ArrayRCP<std::string> dof_names_dotdot,
+       int offsetToFirstDOF=0);
+
+
     //! Same as above, but no ability to gather time dependent x_dot field
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructGatherSolutionEvaluator_noTransient(
        bool isVectorField,
+       Teuchos::ArrayRCP<std::string> dof_names,
+       int offsetToFirstDOF=0);
+
+    //! Same as above, but no ability to gather time dependent x_dot field
+    //! Tensor rank of solution variable is 0, 1, or 2
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructGatherSolutionEvaluator_noTransient(
+       int tensorRank,
        Teuchos::ArrayRCP<std::string> dof_names,
        int offsetToFirstDOF=0);
 
@@ -69,6 +100,15 @@ namespace Albany {
     Teuchos::RCP< PHX::Evaluator<Traits> > 
     constructScatterResidualEvaluator(
        bool isVectorField,
+       Teuchos::ArrayRCP<std::string> resid_names,
+       int offsetToFirstDOF=0, std::string scatterName="Scatter");
+
+    //! Function to create parameter list for construction of ScatterResidual
+    //! evaluator with standard Field names
+    //! Tensor rank of solution variable is 0, 1, or 2
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructScatterResidualEvaluator(
+       int tensorRank,
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter");
 
@@ -101,35 +141,19 @@ namespace Albany {
     constructDOFVecGradInterpolationEvaluator(
        std::string& dof_names, int offsetToFirstDOF=0);
 
+    //! Interpolation functions for Tensor quantities
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructDOFTensorInterpolationEvaluator(
+       std::string& dof_names, int offsetToFirstDOF=0);
+    //! Same as above, for Interpolating the Gradient for Tensor quantities
+    Teuchos::RCP< PHX::Evaluator<Traits> > 
+    constructDOFTensorGradInterpolationEvaluator(
+       std::string& dof_names, int offsetToFirstDOF=0);
+
     //! Function to create parameter list for construction of GatherCoordinateVector
     //! evaluator with standard Field names
     Teuchos::RCP< PHX::Evaluator<Traits> > 
-    constructGatherCoordinateVectorEvaluator();
-
-    //! Function to create parameter list for construction of GatherSHeight
-    //! evaluator with standard Field names
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructGatherSHeightEvaluator();
-
-    //! Function to create parameter list for construction of GatherTemperature
-    //! evaluator with standard Field names
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructGatherTemperatureEvaluator();
-    
-    //! Function to create parameter list for construction of GatherFlowFactor
-    //! evaluator with standard Field names
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructGatherFlowFactorEvaluator();
-
-    //! Function to create parameter list for construction of GatherSurfaceVelocity
-    //! evaluator with standard Field names
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructGatherSurfaceVelocityEvaluator();
-
-    //! Function to create parameter list for construction of GatherVelocityRMS
-    //! evaluator with standard Field names
-    Teuchos::RCP< PHX::Evaluator<Traits> >
-    constructGatherVelocityRMSEvaluator();
+    constructGatherCoordinateVectorEvaluator(std::string strCurrentDisp="");
 
     //! Function to create parameter list for construction of MapToPhysicalFrame
     //! evaluator with standard Field names

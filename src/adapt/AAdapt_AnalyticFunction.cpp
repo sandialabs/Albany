@@ -56,6 +56,18 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Aeras XZ Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasXZHydrostatic(neq, numDim, data));
 
+  else if(name == "Aeras XZ Hydrostatic Gaussian Ball")
+    F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticGaussianBall(neq, numDim, data));
+
+  else if(name == "Aeras XZ Hydrostatic Gaussian Ball In Shear")
+    F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticGaussianBallInShear(neq, numDim, data));
+
+  else if(name == "Aeras XZ Hydrostatic Gaussian Velocity Bubble")
+    F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticGaussianVelocityBubble(neq, numDim, data));
+
+  else if(name == "Aeras XZ Hydrostatic Cloud")
+    F = Teuchos::rcp(new AAdapt::AerasXZHydrostaticCloud(neq, numDim, data));
+
   else if(name == "Aeras Hydrostatic")
     F = Teuchos::rcp(new AAdapt::AerasHydrostatic(neq, numDim, data));
 
@@ -76,7 +88,16 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
   else if(name == "Aeras TC5Init")
     F = Teuchos::rcp(new AAdapt::AerasTC5Init(neq, numDim, data));
-
+    
+  else if(name == "Aeras TC3Init")
+    F = Teuchos::rcp(new AAdapt::AerasTC3Init(neq, numDim, data));
+    
+  else if(name == "Aeras TCGalewskyInit")
+      F = Teuchos::rcp(new AAdapt::AerasTCGalewskyInit(neq, numDim, data));
+ 
+  else if(name == "Aeras TC4Init")
+    F = Teuchos::rcp(new AAdapt::AerasTC4Init(neq, numDim, data));
+  
   else
     TEUCHOS_TEST_FOR_EXCEPTION(name != "Valid Initial Condition Function",
         std::logic_error,
@@ -323,18 +344,11 @@ AAdapt::AerasXZHydrostatic::AerasXZHydrostatic(int neq_, int numDim_, Teuchos::A
                              << " " << numDim << std::endl);
 }
 void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
-  //Flattened data layout
-  //x[0]                                = SP
-  //x[1]             ... x[1*numLevels] = u
-  //x[1*numLevels+1] ... x[2*numLevels] = T
-  //x[2*numLevesl+1] ... x[3*numLevels] = q0
-  //x[3*numLevesl+1] ... x[4*numLevels] = q1
-  //x[4*numLevesl+1] ... x[5*numLevels] = q2
   const int numLevels  = (int) data[0];
   const int numTracers = (int) data[1];
-  double SP0     = data[2];
-  double U0      = data[3];
-  double T0      = data[4];
+  const double SP0     = data[2];
+  const double U0      = data[3];
+  const double T0      = data[4];
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
     q0[nt] = data[5+nt];
@@ -346,18 +360,306 @@ void AAdapt::AerasXZHydrostatic::compute(double* x, const double* X) {
   
   //Velx
   for (int i=0; i<numLevels; ++i) {
-     x[offset++] = U0;// + i;
+     x[offset++] = U0;
      x[offset++] = T0;
   }
 
   //Tracers
-  for (int nt=0; nt<numTracers; ++nt) {
-    for (int i=0; i<numLevels; ++i) {
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
       x[offset++] = q0[nt];
     }
   }
 
 }
+
+//*****************************************************************************
+AAdapt::AerasXZHydrostaticGaussianBall::AerasXZHydrostaticGaussianBall(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Ball Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXZHydrostaticGaussianBall::compute(double* x, const double* X) {
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double SP0     =       data[2];
+  const double U0      =       data[3];
+  const double T0      =       data[4];
+  const double amp     =       data[5];
+  const double x0      =       data[6];
+  const double z0      =       data[7];
+  const double sig_x   =       data[8];
+  const double sig_z   =       data[9];
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[10+nt];
+  }
+
+  int offset = 0;
+  //Surface Pressure
+  x[offset++] = SP0;
+  
+  //Velx
+  for (int i=0; i<numLevels; ++i) {
+     x[offset++] = U0;
+     x[offset++] = T0;
+  }
+
+  //Tracers
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      x[offset++] = q0[nt] + amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) )  ;
+    }
+  }
+
+}
+
+//*****************************************************************************
+AAdapt::AerasXZHydrostaticGaussianBallInShear::AerasXZHydrostaticGaussianBallInShear(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Ball Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXZHydrostaticGaussianBallInShear::compute(double* x, const double* X) {
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double SP0     =       data[2];
+  const double U0      =       data[3];
+  const double deltaU  =       data[4];
+  const double T0      =       data[5];
+  const double amp     =       data[6];
+  const double x0      =       data[7];
+  const double z0      =       data[8];
+  const double sig_x   =       data[9];
+  const double sig_z   =       data[10];
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[11+nt];
+  }
+
+  int offset = 0;
+  //Surface Pressure
+  x[offset++] = SP0;
+  
+  //Velx
+  for (int i=0; i<numLevels; ++i) {
+     x[offset++] = U0 + i/deltaU;
+     x[offset++] = T0;
+  }
+
+  //Tracers
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      x[offset++] = q0[nt] + amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) )  ;
+    }
+  }
+
+}
+
+#include "Aeras_Eta.hpp"
+struct DoubleType   { typedef double  ScalarT; typedef double MeshScalarT; };
+
+//*****************************************************************************
+AAdapt::AerasXZHydrostaticGaussianVelocityBubble::AerasXZHydrostaticGaussianVelocityBubble(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Gaussian Ball Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXZHydrostaticGaussianVelocityBubble::compute(double* x, const double* X) {
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double P0      =       data[2];
+  const double U0      =       data[3];
+  const double T0      =       data[4];
+  const double amp     =       data[5];
+  const double x0      =       data[6];
+  const double z0      =       data[7];
+  const double sig_x   =       data[8];
+  const double sig_z   =       data[9];
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[10+nt];
+  }
+
+  const double Ptop = 101.325;
+  const double Ps   = P0;
+  const double Ttop = 235;
+  const double Ts   = T0;
+  const double DT   = 4.8e5;
+  const double R    = 287;
+  const double g    = 9.80616;
+  const double Gamma= 0.005;  
+  const double Dtop = 0.00385;
+  const double Dbot = 1.225;
+  const double EtaT = 0.2;
+  const int    N    = numLevels-1;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+  const Aeras::Eta<DoubleType> ET(Ttop,T0,numLevels);
+
+
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Temperature(numLevels);
+  std::vector<double> Pi(numLevels);
+  std::vector<double> D(numLevels);
+  for (int i=0; i<numLevels; ++i) Pressure[i]    = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+
+  for (int i=0; i<numLevels; ++i) {
+    const double Eta =  EP.eta(i);
+    Temperature[i] =  T0 * std::pow(Eta,R*Gamma/g);
+    if (Eta < EtaT)Temperature[i] += DT*std::pow(EtaT-Eta, 5);
+  }
+  
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<N ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i   ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) /EP.delta(i);
+  }
+  for (int i=0; i<numLevels; ++i) {
+    D[i] = Pressure[i]/(R*Temperature[i]);
+  }
+
+  int offset = 0;
+  //Surface Pressure
+  x[offset++] = P0;
+  
+  //Velx
+  for (int i=0; i<numLevels; ++i) {
+    x[offset++] = U0 + amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) )  ;
+    x[offset++] = Temperature[i];
+  }
+
+  //Tracers
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      x[offset++] = q0[nt];
+    }
+  }
+
+}
+
+//*****************************************************************************
+AAdapt::AerasXZHydrostaticCloud::AerasXZHydrostaticCloud(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((numDim > 1),
+                             std::logic_error,
+                             "Error! Invalid call of Aeras XZ Hydrostatic Cloud Model " << neq
+                             << " " << numDim << std::endl);
+}
+void AAdapt::AerasXZHydrostaticCloud::compute(double* x, const double* X) {
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double SP0     =       data[2];
+  const double U0      =       data[3];
+  //const double T0      =       data[4];
+  std::vector<double> q0(numTracers);
+  for (int nt = 0; nt<numTracers; ++nt) {
+    q0[nt] = data[4+nt];
+  }
+
+  const double Ptop = 101.325;
+  const double P0   = 101325;
+  const double Ps   = 101325;
+  const double Ttop = 235;
+  const double T0   = 288;
+  const double Ts   = T0;
+  const double DT   = 4.8e5;
+  const double R    = 287;
+  const double g    = 9.80616;
+  const double Gamma= 0.005;  
+  const double Dtop = 0.00385;
+  const double Dbot = 1.225;
+  const double EtaT = 0.2;
+  const int    N    = numLevels-1;
+
+  const Aeras::Eta<DoubleType> &EP = Aeras::Eta<DoubleType>::self(Ptop,P0,numLevels);
+
+  std::vector<double> Pressure(numLevels);
+  std::vector<double> Pi(numLevels);
+  std::vector<double> Temperature(numLevels);
+  std::vector<double> D(numLevels);
+  std::vector<double> qvs(numLevels);
+  std::vector<double> qv(numLevels);
+  std::vector<double> qc(numLevels);
+  std::vector<double> qr(numLevels);
+
+  for (int i=0; i<numLevels; ++i) Pressure[i] = EP.A(i)*EP.p0() + EP.B(i)*Ps;
+  
+  for (int i=0; i<numLevels; ++i) {
+    const double Eta =  EP.eta(i);
+    Temperature[i] =  T0 * std::pow(Eta,R*Gamma/g);
+    if (Eta < EtaT)Temperature[i] += DT*std::pow(EtaT-Eta, 5);
+  }
+
+  for (int i=0; i<numLevels; ++i) {
+    const double pp   = i<numLevels-1 ? 0.5*(Pressure[i] + Pressure[i+1]) : Ps;
+    const double pm   = i             ? 0.5*(Pressure[i] + Pressure[i-1]) : EP.ptop();
+    Pi[i] = (pp - pm) / EP.delta(i);
+  }
+
+  for (int i=0; i<numLevels; ++i) {
+    D[i] = Pressure[i]/(R*Temperature[i]);
+  }
+
+  //Compute saturation mixture ratio qvs
+  double eps = 0.622;
+  for (int i=0; i<numLevels; ++i) {
+    double TC = Temperature[i] - 273.13;
+    double Pmb = Pressure[i] / 100.0;                          // (1bar/100000Pa)*(1000mbar/1bar)
+    qvs[i] = eps * 6.112 * exp( (17.67*TC)/(TC+243.5) ) / Pmb;
+  }
+
+  //Initialize qv, qc, qr
+  for (int i=0; i<numLevels; ++i) {
+    qv[i] = 0.1*qvs[i];
+    qc[i] = q0[1];
+    qr[i] = q0[2];
+  } 
+
+  static bool first_time=true;
+  if (first_time) {
+    for (int i=0; i<numLevels; ++i) std::cout<<__FILE__
+    <<" Pressure["<<i<<"]="<<Pressure[i]
+    <<" Temperature["<<i<<"]="<<Temperature[i]
+    <<" Density["<<i<<"]="<<D[i]
+    <<" qvs["<<i<<"]="<<qvs[i]
+    <<" Pi["<<i<<"]="<<Pi[i]<<std::endl;
+  }
+  first_time = false;
+
+  int offset = 0;
+  //Surface Pressure
+  x[offset++] = SP0;
+  
+  for (int i=0; i<numLevels; ++i) {
+    //Velx
+    x[offset++] = U0;
+    //Temperature
+    x[offset++] = Temperature[i];
+  }
+
+  //Vapor
+  for (int i=0; i<numLevels; ++i) {
+    x[offset++] = Pi[i]*qv[i];
+  }
+
+  //cloud water
+  for (int i=0; i<numLevels; ++i) {
+    x[offset++] = Pi[i]*qc[i];
+  }
+
+  //rain
+  for (int i=0; i<numLevels; ++i) {
+    x[offset++] = Pi[i]*qr[i];
+  }
+}
+
 //*****************************************************************************
 AAdapt::AerasHydrostatic::AerasHydrostatic(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
@@ -366,39 +668,67 @@ AAdapt::AerasHydrostatic::AerasHydrostatic(int neq_, int numDim_, Teuchos::Array
                              "Error! Invalid call of Aeras XZ Hydrostatic Model " << neq
                              << " " << numDim << std::endl);
 }
-void AAdapt::AerasHydrostatic::compute(double* x, const double* X) {
-  //Flattened data layout
-  //x[0]                                = SP
-  //x[1]             ... x[1*numLevels] = u
-  //x[1*numLevels+1] ... x[2*numLevels] = T
-  //x[2*numLevesl+1] ... x[3*numLevels] = q0
-  //x[3*numLevesl+1] ... x[4*numLevels] = q1
-  //x[4*numLevesl+1] ... x[5*numLevels] = q2
-  int numLevels  = (int) data[0];
-  int numTracers = (int) data[1];
-  double SP0     = data[2];
-  double U0      = data[3];
-  double T0      = data[4];
+void AAdapt::AerasHydrostatic::compute(double* solution, const double* X) {
+
+  const int numLevels  = (int) data[0];
+  const int numTracers = (int) data[1];
+  const double SP0     =       data[2];
+  const double U0      =       data[3];
+  const double U1      =       data[4];
+  const double T0      =       data[5];
+
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
-    q0[nt] = data[5+nt];
+    q0[nt] = data[6 + nt];
   }
+
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+
+
+  const double myPi  = pi;
+  const double alpha = myPi/4;
+  const double cosAlpha = std::cos(alpha);
+  const double sinAlpha = std::sin(alpha);
+
+  const double theta  = std::asin(z);
+  double lambda = std::atan2(y,x);
+
+  static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+  if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*myPi;
+
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
+
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
+  const double u =  U1*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+  const double v = -U1*(sinLambda*sinAlpha);
+
 
   int offset = 0;
   //Surface Pressure
-  x[offset++] = SP0;
+  solution[offset++] = SP0;
   
-  //Velx
-  for (int i=0; i<numLevels; ++i) x[offset++] = U0;// + i;
-  for (int i=0; i<numLevels; ++i) x[offset++] = T0;
-
-  //Tracers
-  for (int nt=0; nt<numTracers; ++nt) {
-    for (int i=0; i<numLevels; ++i) {
-      x[offset++] = q0[nt];
-    }
+  for (int i=0; i<numLevels; ++i) {
+    //Velx
+    solution[offset++] = u; // U0*(1-z*z);
+    solution[offset++] = v; // U1*(1-x*x);
+    //Temperature
+    solution[offset++] = T0;
   }
 
+
+  //Tracers
+  for (int i=0; i<numLevels; ++i) {
+    for (int nt=0; nt<numTracers; ++nt) {
+      const double w = nt%3 ? ((nt%3 == 1) ? y : z) : x;
+      solution[offset++] = w*q0[nt];
+    }
+  }
 }
 //*****************************************************************************
 AAdapt::AerasHeaviside::AerasHeaviside(int neq_, int numDim_, Teuchos::Array<double> data_)
@@ -472,6 +802,7 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   solution[2] = v;
 }
 //*****************************************************************************
+//TC2
 //IK, 2/5/14: added to data array h0*g, which corresponds to data[2] 
 AAdapt::AerasZonalFlow::AerasZonalFlow(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
@@ -492,8 +823,8 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   const double u0 = 2.*myPi*a/(12*24*3600.);  // magnitude of wind
   const double h0g = data[0];
 
-  const double alpha = 0; /* must match value in ShallowWaterResidDef
-                             don't know how to get data from input into this class and that one. */
+    const double alpha = 0.0;//1.047; /* must match value in ShallowWaterResidDef
+                             //don't know how to get data from input into this class and that one. */
 
   const double cosAlpha = std::cos(alpha);
   const double sinAlpha = std::sin(alpha);
@@ -529,6 +860,10 @@ void AAdapt::AerasZonalFlow::compute(double* solution, const double* X) {
   solution[2] = v;
 }
 
+
+
+//**********************************************************
+//TC5
 AAdapt::AerasTC5Init::AerasTC5Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=0) ,
@@ -598,6 +933,407 @@ void AAdapt::AerasTC5Init::compute(double* solution, const double* X) {
 }
 
 //*****************************************************************************
+//TC Galewsky
+
+AAdapt::AerasTCGalewskyInit::AerasTCGalewskyInit(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+: spatialDim(spatialDim_), neq(neq_), data(data_) {
+    TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=0) ,
+                               std::logic_error,
+                               "Error! Invalid call of Aeras TCGalewskyInit with " << neq
+                               << " " << spatialDim <<  " "<< data.size()<< std::endl);
+    myPi = Aeras::ShallowWaterConstants::self().pi;
+    gravity = Aeras::ShallowWaterConstants::self().gravity;
+    earthRadius = Aeras::ShallowWaterConstants::self().earthRadius;
+    Omega = 2.0*myPi/(24.*3600.);
+    
+    phi0 = myPi/7.;
+    phi1 = myPi/2. - phi0;
+    en = exp(-4./(phi1-phi0)/(phi1-phi0));
+    phi2 = myPi/4.;
+  
+    umax = 80.;
+    h0 = 10158.2951; //note that this const was grabbed from homme
+    //because otherwise global integration is needed
+  
+    al = 1./3.;
+    beta = 1./15.;
+    hhat = 120.;
+  
+}
+
+double AAdapt::AerasTCGalewskyInit::ucomponent(const double lat){
+    
+    if( (lat <= phi0) || (lat >=phi1)){
+        return 0.0;
+    }else{
+        return umax/en*exp(1./((lat - phi0)*(lat - phi1)));
+    }
+}
+
+double AAdapt::AerasTCGalewskyInit::hperturb(const double lon, const double lat){
+    
+    double lon2=lon;
+    if (lon2 >= myPi){
+        lon2=lon - 2.*myPi;
+    }
+    return (hhat*cos(lat)*exp(-lon2*lon2/al/al)*exp( -((phi2-lat)/beta)*((phi2-lat)/beta) ));
+
+}
+
+void AAdapt::AerasTCGalewskyInit::compute(double* solution, const double* X) {
+  
+    const double a = earthRadius;
+    
+    const double x = X[0];  //assume that the mesh has unit radius
+    const double y = X[1];
+    const double z = X[2];
+    
+    //begin note 1
+    const double theta  = std::asin(z); // this is a repeated code
+            // should be in SW class again?
+    
+    double lambda = std::atan2(y,x);
+    
+    static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+    if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
+    else if (lambda < 0) lambda += 2*myPi;
+    //end note 1
+    
+    double h = h0;
+  
+    //integrating height numerically
+    const int integration_steps = 1000;//make this a const in class
+    const double deltat = (theta+myPi/2.0)/integration_steps;
+    for(int i=0; i<integration_steps; i++){
+        
+        double midpoint1 = -myPi/2.0 + (i-1)*deltat;
+        double midpoint2 = -myPi/2.0 + i*deltat;
+        
+        double loc_u = ucomponent(midpoint1);
+        
+        h -= a/gravity*deltat*(2.*Omega*sin(midpoint1)+loc_u*tan(midpoint1)/a)*loc_u/2.;
+        
+        loc_u = ucomponent(midpoint2);
+        
+        h -= a/gravity*deltat*(2.*Omega*sin(midpoint2)+loc_u*tan(midpoint2)/a)*loc_u/2.;
+        
+    }
+    
+    //now add the perturbation
+    
+    h += hperturb(lambda, theta);
+    
+    double u, v;
+
+    u = ucomponent(theta);
+    v = 0.0;
+    
+    solution[0] = h;
+    solution[1] = u;
+    solution[2] = v;
+
+}
+
+
+//*****************************************************************************
+//TC4
+
+
+AAdapt::AerasTC4Init::AerasTC4Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+: spatialDim(spatialDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=0) ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras TC4Init with " << neq
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+  myPi = Aeras::ShallowWaterConstants::self().pi;
+  earthRadius = Aeras::ShallowWaterConstants::self().earthRadius;
+  gravity = Aeras::ShallowWaterConstants::self().gravity;
+  
+  Omega = 2.0*myPi/(24.*3600.); //this should be sitting in SW class
+  
+  rlon0 = 0.;
+  rlat0 = myPi/4.;
+  npwr = 14.;
+  
+  su0 = 20.;
+  phi0 = 1.0e5;
+
+}
+
+void AAdapt::AerasTC4Init::compute(double* solution, const double* X) {
+  
+  //like SW constants
+  double a = earthRadius;
+  
+  const double x = X[0];  //assume that the mesh has unit radius
+  const double y = X[1];
+  const double z = X[2];
+  
+  //begin note 1
+  const double theta  = std::asin(z); // this is a repeated code
+  // should be in SW class again?
+  
+  double lambda = std::atan2(y,x);
+  
+  static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+  if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*myPi;
+  //end note 1
+  //end of repeated code
+  
+  
+  double tol = 1.e-10;
+  
+  alfa = -0.03*(phi0/(2.*Omega*sin(myPi/4.)));
+  sigma = (2.*a/1.0e6)*(2.*a/1.0e6);
+  
+  
+  double ai = 1./a;
+  double a2i = ai*ai;
+  
+  double snj = sin(theta);
+  double csj = cos(theta)*cos(theta);
+  double srcsj = cos(theta);
+  double tmpry = tan(theta);
+  double tmpry2 = tmpry*tmpry;
+  double den = 1./cos(theta);
+  double aacsji = 1./(a*a*csj);
+  double corr = 2.*Omega*snj;
+  
+  
+  double ucon = bubfnc(theta);
+  double bigubr = ucon*srcsj; ///
+  double dbub = dbubf(theta); ///
+  
+  double c = sin(rlat0)*snj + cos(rlat0)*srcsj*cos(lambda - rlon0);
+  
+  //if-statements about ~fabs(c+1) is due to singularities ~1/(c+1)
+  //in derivatives. However, they are overtaken by the presence of
+  //multipliers ~exp(-1/(c+1)).
+  double psib = 0.;
+  if(fabs(c+1.)>tol)
+     psib = alfa*exp(-sigma*((1.-c)/(1.+c)));
+  
+  double dcdm = sin(rlat0)-cos(lambda-rlon0)*cos(rlat0)*tmpry;
+  double dcdl = -cos(rlat0)*srcsj*sin(lambda-rlon0);
+  double d2cdm = -cos(rlat0)*cos(lambda-rlon0)*(1.+tmpry2)/srcsj;
+  double d2cdl = -cos(rlat0)*srcsj*cos(lambda-rlon0);
+  
+  double tmp1 = 0.;
+  if(fabs(c+1.)>tol)
+    tmp1 = 2.*sigma*psib/((1.+c)*(1.+c));
+  double tmp2 = 0.;
+  if(fabs(c+1.)>tol)
+    tmp2 = (sigma - (1.0+c))/((1.+c)*(1.+c));
+  double dkdm = tmp1*dcdm;
+  double dkdl = tmp1*dcdl;
+  
+  double d2kdm  = tmp1*(d2cdm + 2.0*(dcdm*dcdm)*tmp2);
+  double d2kdl  = tmp1*(d2cdl + 2.0*(dcdl*dcdl)*tmp2);
+  
+  double u, v, h;
+  
+  u = bigubr*den - srcsj*ai*dkdm;
+  v = (dkdl*ai)*den;
+  h = phicon(theta)+corr*psib/gravity;
+  
+  solution[0] = h;
+  solution[1] = u;
+  solution[2] = v;
+  
+}
+
+
+double AAdapt::AerasTC4Init::dbubf(const double lat){
+  double rmu = sin(lat);
+  double coslat = cos(lat);
+  return 2.*su0*std::pow(2.*rmu*coslat,npwr-1.)
+           *(npwr-(2.*npwr+1)*rmu*rmu);
+}
+
+double AAdapt::AerasTC4Init::bubfnc(const double lat){
+  return su0*std::pow((2.*sin(lat)*cos(lat)), npwr);
+}
+
+double AAdapt::AerasTC4Init::phicon(const double lat){
+  
+  double a = earthRadius;
+  
+  const int integration_steps = 1000;
+  
+  double h = 0.;
+  
+  const double deltat = (lat+myPi/2.0)/integration_steps;
+  for(int i=0; i<integration_steps; i++){
+    
+    double midpoint1 = -myPi/2.0 + (i-1)*deltat;
+    double midpoint2 = -myPi/2.0 + i*deltat;
+    
+    double loc_u = bubfnc(midpoint1);
+    
+    h -= a*deltat*(2*Omega*sin(midpoint1)+loc_u*tan(midpoint1)/a)*loc_u/2.;
+    
+    loc_u = bubfnc(midpoint2);
+    
+    h -= a*deltat*(2*Omega*sin(midpoint2)+loc_u*tan(midpoint2)/a)*loc_u/2.;
+    
+  }
+
+  h = (phi0 + h)/gravity;
+  
+  return h;
+  
+}
+
+
+//*****************************************************************************
+//almost identical to TC2, AerasZonalFlow
+
+AAdapt::AerasTC3Init::AerasTC3Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+: spatialDim(spatialDim_), neq(neq_), data(data_) {
+    TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
+                               std::logic_error,
+                               "Error! Invalid call of Aeras TC3Init with " << neq
+                               << " " << spatialDim <<  " "<< data.size()<< std::endl);
+    myPi = Aeras::ShallowWaterConstants::self().pi;
+
+    earthRadius = Aeras::ShallowWaterConstants::self().earthRadius;
+    
+    testDuration = 12*24*3600.;
+    
+    u0 = 2.*myPi*earthRadius/testDuration;  // magnitude of wind
+    
+    Omega = 2.0*myPi/(24.*3600.);
+  
+    gravity = Aeras::ShallowWaterConstants::self().gravity;
+  
+    h0g = 2.94e04;
+  
+    xe = 0.3;
+  
+    thetae = myPi/2.0;
+  
+    thetab = -myPi/6.0;
+}
+
+double AAdapt::AerasTC3Init::ucomponent(const double lon){
+  
+    double xx = xe*(lon - thetab)/(thetae-thetab);
+    
+    double res = u0*exp(4.0/xe)*bx(xx)*bx(xe-xx);
+    
+    return res;
+}
+
+double AAdapt::AerasTC3Init::bx(const double x){
+    double res;
+    (x > 0) ? (res = exp(-1./x)): (res = 0.);
+    return res;
+}
+
+void AAdapt::AerasTC3Init::rotate(const double lon, const double lat,
+                                  const double alpha, double& rotlon, double& rotlat){
+
+    if(alpha == 0.0){
+        rotlon = lon;
+        rotlat = lat;
+    }else{
+        double test = sin(lat)*cos(alpha) - cos(lat)*cos(lon)*sin(alpha);
+        
+        if(test > 1.0){
+            rotlat = myPi/2.;
+        }else{
+            if (test < -1.0) {
+                rotlat = -myPi/2.;
+            }else{
+                rotlat = asin(test);
+            }
+        }
+      
+        test = cos(rotlat);
+        if (test == 0.0) {
+            rotlon = 0.0;
+        }else{
+            test = sin(lon)*cos(lat)/test;
+            if (test > 1.0) {
+                rotlon = myPi/2.;
+            }else{
+                if (test < -1.0) {
+                    rotlon = -myPi/2.0;
+                }else{
+                    rotlon = asin(test);
+                }
+            }
+        }
+        
+        test = cos(alpha)*cos(lon)*cos(lat) + sin(alpha)*sin(lat);
+        if (test < 0.0) {
+            rotlon = myPi - rotlon;
+        }
+    }
+
+}
+
+
+void AAdapt::AerasTC3Init::compute(double* solution, const double* X) {
+  
+    const double a = earthRadius;
+
+    const double alpha = data[0];//1.047; /* must match value in ShallowWaterResidDef
+                             //don't know how to get data from input into this class and that one. */
+  
+    const double x = X[0];  //assume that the mesh has unit radius
+    const double y = X[1];
+    const double z = X[2];
+  
+    //repeated code
+    const double theta  = std::asin(z);
+    
+    double lambda = std::atan2(y,x);
+    
+    static const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+    if (std::abs(std::abs(theta)-myPi/2) < DIST_THRESHOLD) lambda = 0;
+    else if (lambda < 0) lambda += 2*myPi;
+    //end of repeated code
+  
+    double h = h0g/gravity;
+    
+    double rotlambda, rottheta;
+    
+    rotate(lambda, theta, alpha, rotlambda, rottheta);
+    
+    //integrating height numerically
+    const int integration_steps = 1000;
+    const double deltat = (rottheta+myPi/2.0)/integration_steps;
+    for(int i=0; i<integration_steps; i++){
+        double midpoint1 = -myPi/2.0 + (i-1)*deltat;
+        double midpoint2 = -myPi/2.0 + i*deltat;
+        double loc_u = ucomponent(midpoint1);
+        h -= a/gravity*deltat*(2*Omega*sin(midpoint1)+loc_u*tan(midpoint1)/a)*loc_u/2.;
+        loc_u = ucomponent(midpoint2);
+        h -= a/gravity*deltat*(2*Omega*sin(midpoint2)+loc_u*tan(midpoint2)/a)*loc_u/2.;
+    }
+    
+    double u, v;
+    
+    if (alpha == 0.0) {
+        u = ucomponent(theta);
+        v = 0.0;
+    }else{
+        u = ucomponent(rottheta)*(cos(alpha)*sin(rotlambda)*sin(lambda)
+                                +cos(lambda)*cos(rotlambda));
+        v = ucomponent(rottheta)*(cos(alpha)*cos(lambda)*sin(rotlambda)*sin(theta)
+                                -cos(rotlambda)*sin(lambda)*sin(theta)
+                                -sin(alpha)*sin(rotlambda)*cos(theta));
+    }
+    
+    solution[0] = h;
+    solution[1] = u;
+    solution[2] = v;
+}
+
+//*****************************************************************************
+
 AAdapt::AerasPlanarCosineBell::AerasPlanarCosineBell(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || numDim!=2 || data.size()!=3)  ,
@@ -630,6 +1366,7 @@ void AAdapt::AerasPlanarCosineBell::compute(double* solution, const double* X) {
 
 }
 //*****************************************************************************
+//TC6
 AAdapt::AerasRossbyHaurwitzWave::AerasRossbyHaurwitzWave(int neq_, int spatialDim_, Teuchos::Array<double> data_)
   : spatialDim(spatialDim_), neq(neq_), data(data_) {
   TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,

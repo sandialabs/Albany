@@ -40,7 +40,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     C(i,i,i,i) = c11_;
     for (int j = i+1; j < num_dims_; ++j) {
       C(i,i,j,j) = C(j,j,i,i) = c12_;
-      C(i,j,i,j) = C(j,i,j,i) = c44_;
+      C(i,j,i,j) = C(j,i,j,i) = C(i,j,j,i) = C(j,i,i,j) = c44_;
     }
   }
 // NOTE check if basis is given else default

@@ -11,12 +11,14 @@
 #include "Albany_Utils.hpp"
 
 //Radom field types
+/*
 enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
 const int num_sg_rf = 3;
 const SG_RF sg_rf_values[] = {CONSTANT, UNIFORM, LOGNORMAL};
 const char *sg_rf_names[] = {"Constant", "Uniform", "Log-Normal"};
 
 SG_RF randField = CONSTANT;
+*/
 
 namespace PHAL {
 
@@ -26,6 +28,8 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   thermalCond(p.get<std::string>("QP Variable Name"),
               p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout"))
 {
+
+  randField = CONSTANT;
 
   Teuchos::ParameterList* cond_list =
     p.get<Teuchos::ParameterList*>("Parameter List");
@@ -121,7 +125,7 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
     Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
 
-    this->registerSacadoParameter("Thermal Conductivity", paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Thermal Conductivity", this, paramLib);
 
 } // init_constant
 
@@ -156,7 +160,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Thermal Conductivity KL Random Variable",i);
-      this->registerSacadoParameter(ss, paramLib);
+      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
       rv[i] = sublist.get(ss, 0.0);
     }
 

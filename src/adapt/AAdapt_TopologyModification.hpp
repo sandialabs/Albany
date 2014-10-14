@@ -104,13 +104,13 @@ private:
   /// Parallel all-gatherv function. Communicates local open list to
   /// all processors to form global open list.
   void getGlobalOpenList(
-      std::map<stk_classic::mesh::EntityKey, bool> & local_entity_open,
-      std::map<stk_classic::mesh::EntityKey, bool> & global_entity_open);
+      std::map<stk::mesh::EntityKey, bool> & local_entity_open,
+      std::map<stk::mesh::EntityKey, bool> & global_entity_open);
 
   ///
   /// stk_mesh Bulk Data
   ///
-  stk_classic::mesh::BulkData *
+  stk::mesh::BulkData *
   bulk_data_;
 
   Teuchos::RCP<Albany::AbstractSTKMeshStruct>
@@ -122,20 +122,8 @@ private:
   Albany::STKDiscretization *
   stk_discretization_;
 
-  stk_classic::mesh::fem::FEMMetaData *
+  stk::mesh::MetaData *
   meta_data_;
-
-  stk_classic::mesh::EntityRank
-  node_rank_;
-
-  stk_classic::mesh::EntityRank
-  edge_rank_;
-
-  stk_classic::mesh::EntityRank
-  face_rank_;
-
-  stk_classic::mesh::EntityRank
-  element_rank_;
 
   Teuchos::RCP<LCM::AbstractFractureCriterion>
   fracture_criterion_;
@@ -144,17 +132,17 @@ private:
   topology_;
 
   //! Edges to fracture the mesh on
-  std::vector<stk_classic::mesh::Entity *>
+  std::vector<stk::mesh::Entity>
   fractured_faces_;
 
   //! Data structures used to transfer solution between meshes
   //! Element to node connectivity for old mesh
 
-  std::vector<std::vector<stk_classic::mesh::Entity *> >
+  std::vector<std::vector<stk::mesh::Entity> >
   old_elem_to_node_;
 
   //! Element to node connectivity for new mesh
-  std::vector<std::vector<stk_classic::mesh::Entity *> >
+  std::vector<std::vector<stk::mesh::Entity> >
   new_elem_to_node_;
 
   int

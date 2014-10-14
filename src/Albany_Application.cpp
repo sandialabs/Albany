@@ -68,13 +68,32 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0)
-{
+  stateGraphVisDetail(0) {
+  initialSetUp(params);
+  createMeshSpecs();
+  buildProblem();
+  createDiscretization();
+  finalSetUp(params,initial_guess);
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
+}
 
-  // Create parameter library
+
+Albany::Application::
+Application(const RCP<const Epetra_Comm>& comm_) :
+    comm(comm_),
+    out(Teuchos::VerboseObjectBase::getDefaultOStream()),
+    physicsBasedPreconditioner(false),
+    shapeParamsHaveBeenReset(false),
+    morphFromInit(true), perturbBetaForDirichlets(0.0),
+    phxGraphVisDetail(0),
+    stateGraphVisDetail(0) {
+};
+
+
+void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params) {
+  // Create parameter libraries
   paramLib = rcp(new ParamLib);
   distParamLib = rcp(new DistParamLib);
 
@@ -188,17 +207,26 @@ Application(const RCP<const Teuchos_Comm>& comm_,
      countRes = 0; //initiate counter that counts instances of Jacobian matrix to 0
 
   // Create discretization object
-
-  Albany::DiscretizationFactory discFactory(params, commT);
+  discFactory = rcp(new Albany::DiscretizationFactory(params, commT));
 
 #ifdef ALBANY_CUTR
-  discFactory.setMeshMover(meshMover);
+  discFactory->setMeshMover(meshMover);
 #endif
 
-  // Get mesh specification object: worksetSize, cell topology, etc
-  ArrayRCP<RCP<Albany::MeshSpecsStruct> > meshSpecs =
-    discFactory.createMeshSpecs();
+ }
 
+void Albany::Application::createMeshSpecs() {
+  // Get mesh specification object: worksetSize, cell topology, etc
+  meshSpecs = discFactory->createMeshSpecs();
+}
+
+void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh) {
+  // Get mesh specification object: worksetSize, cell topology, etc
+  meshSpecs = discFactory->createMeshSpecs(mesh);
+}
+
+
+void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
   // Construct responses
@@ -237,11 +265,21 @@ Application(const RCP<const Teuchos_Comm>& comm_,
     sfm[ps]->postRegistrationSetup("");
   }
 
-  // Create the full mesh
   neq = problem->numEquations();
-  disc = discFactory.createDiscretization(neq, stateMgr.getStateInfoStruct(),
+
+}
+
+void Albany::Application::createDiscretization() {
+  // Create the full mesh
+  disc = discFactory->createDiscretization(neq, stateMgr.getStateInfoStruct(),
                                           problem->getFieldRequirements(),
                                           problem->getNullSpace());
+}
+
+void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess) {
+
+
 
 /*
   RCP<const Tpetra_Vector> initial_guessT;
@@ -250,8 +288,10 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   }
 */
 
-  // Now that space is allocated in STK for state fields, initialize states
-  stateMgr.setStateArrays(disc);
+  // Now that space is allocated in STK for state fields, initialize states.
+  // If the states have been already allocated, skip this.
+  if(!stateMgr.areStateVarsAllocated())
+    stateMgr.setStateArrays(disc);
 
 #ifdef ALBANY_EPETRA
   if(!TpetraBuild){
@@ -564,8 +604,6 @@ computeGlobalResidualImplT(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -800,8 +838,6 @@ computeGlobalJacobianImplT(const double alpha,
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -1095,8 +1131,6 @@ computeGlobalTangentImplT(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //       sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -1522,8 +1556,6 @@ applyGlobalDistParamDerivImplT(const double current_time,
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -1790,8 +1822,6 @@ computeGlobalSGResidual(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -1939,8 +1969,6 @@ computeGlobalSGJacobian(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -2130,8 +2158,6 @@ computeGlobalSGTangent(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -2469,8 +2495,6 @@ computeGlobalMPResidual(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -2623,8 +2647,6 @@ computeGlobalMPJacobian(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -2813,8 +2835,6 @@ computeGlobalMPTangent(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //      sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -3181,8 +3201,6 @@ evaluateStateFieldManagerT(
         wsElNodeEqID = disc->getWsElNodeEqID();
   const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  //const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-  //     sHeight = disc->getSurfaceHeight();
   const WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
@@ -3385,7 +3403,7 @@ void Albany::Application::postRegSetup(std::string eval)
         std::stringstream pg; pg << "phalanx_graph_" << ps;
         fm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
       }
-      phxGraphVisDetail = -1;
+//      phxGraphVisDetail = -1;
     }
     else if (eval=="Jacobian") {
       *out << "Phalanx writing graphviz file for graph of Jacobian fill (detail ="
@@ -3443,9 +3461,10 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
     TEUCHOS_TEST_FOR_EXCEPTION(
         secondOrder != "No" &&
         secondOrder != "Velocity Verlet" &&
+        secondOrder != "Newmark" &&
         secondOrder != "Trapezoid Rule",
         std::logic_error,
-        "Invalid value for Second Order: (No, Velocity Verlet, Trapezoid Rule): " <<
+        "Invalid value for Second Order: (No, Velocity Verlet, Newmark, Trapezoid Rule): " <<
         secondOrder <<
         "\n");
 

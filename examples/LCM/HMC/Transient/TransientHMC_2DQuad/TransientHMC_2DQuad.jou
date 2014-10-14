@@ -1,0 +1,17 @@
+## /home/jrobbin/bin/Cubit/14.1/bin/cubitx
+## Cubit Version 14.1
+## Cubit Build 392480
+## Revised 2014-05-24 12:27:22 -0600 (Sat, 24 May 2014)
+## Running 06/27/2014 11:15:34 AM
+## Command Options:
+## -warning = On
+## -information = On
+create brick x 0.02 y 0.2 z 0.03
+body all size 0.001
+mesh surface 1
+nodeset 1 curve 4
+sideset 1 curve 2
+block 1 surface 1
+block 1 element type QUAD4
+export mesh "DynamicHMC_2DQuad.gen" dimension 2 overwrite
+exit

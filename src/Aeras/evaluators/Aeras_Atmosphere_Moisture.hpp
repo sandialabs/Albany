@@ -13,6 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 #include "Teuchos_ParameterList.hpp"
 
@@ -47,23 +48,26 @@ public:
   
   void evaluateFields(typename Traits::EvalData d);
   
-void kessler(int Km, double dt_in,
-             std::vector<double> & rho, 
-             std::vector<double> & p, 
-             std::vector<double> & exner, 
-             std::vector<double> & dz8w,
+private:
+void kessler(const int Km, const double dt_in,
+             const std::vector<double> & rho, 
+             const std::vector<double> & p, 
+             const std::vector<double> & exner, 
+             const std::vector<double> & dz8w,
              std::vector<double> & t,  
              std::vector<double> & qv, 
              std::vector<double> & qc, 
              std::vector<double> & qr,
              double &rainnc,  double &rainncv,
-             std::vector<double> &z);
+             const std::vector<double> &z);
 
-private:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Velx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,VecDim> Velx;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Temp;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> GeoPotential;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Pressure;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Pi;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> PiDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> TempSrc;
 
   std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > TracerIn;
@@ -74,6 +78,8 @@ private:
   const Teuchos::ArrayRCP<std::string> tracerSrcNames;
   std::map<std::string, std::string>   namesToSrc;
  
+  bool compute_cloud_physics;
+
   const int numQPs;
   const int numDims;
   const int numLevels;

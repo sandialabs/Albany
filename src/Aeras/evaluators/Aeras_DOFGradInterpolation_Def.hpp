@@ -103,16 +103,12 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int dim=0; dim<numDims; dim++) {
-        MeshScalarT& gvqp = grad_val_qp(cell,qp,dim) = 0;
-        for (int node=0 ; node < numNodes; ++node) {
-          gvqp += val_node(cell, node) * GradBF(cell, node, qp, dim);
-        }
-      }
-    }
-  }
+  for (std::size_t i=0; i < grad_val_qp.size(); ++i) grad_val_qp(i)=0.0;
+  for (int cell=0; cell < workset.numCells; ++cell) 
+    for (int qp=0; qp < numQPs; ++qp) 
+      for (int dim=0; dim<numDims; dim++) 
+        for (int node=0 ; node < numNodes; ++node) 
+          grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
 }
 
 //**********************************************************************

@@ -1,0 +1,30 @@
+<ParameterList>
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="Block_1">
+      <Parameter name="material" type="string" value="Microstructured Material" />
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+    <ParameterList name="Microstructured Material">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Linear HMC"/>
+      </ParameterList>
+      <Parameter name="C11" type="double" value="1e10"/>
+      <Parameter name="C33" type="double" value="1e10"/>
+      <Parameter name="C12" type="double" value="6e9"/>
+      <Parameter name="C23" type="double" value="6e9"/>
+      <Parameter name="C44" type="double" value="4e9"/>
+      <Parameter name="C66" type="double" value="4e9"/>
+      <Parameter name="Additional Scales" type="int" value="2"/>
+      <ParameterList name="Microscale 1">
+        <Parameter name="Length Scale" type="double" value="1e-4"/>
+        <Parameter name="Beta Constant" type="double" value="0.3"/>
+      </ParameterList>
+      <ParameterList name="Microscale 2">
+        <Parameter name="Length Scale" type="double" value="1e-2"/>
+        <Parameter name="Beta Constant" type="double" value="0.1"/>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

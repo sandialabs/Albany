@@ -91,12 +91,13 @@ int main(int ac, char* av[])
   // Get the name of the material model to be used (and make sure there is one)
   std::string element_block_name = "Block0";
   std::string material_model_name;
-  material_model_name = material_db->getElementBlockSublist(element_block_name,
+  material_model_name = material_db->getElementBlockSublist(
+      element_block_name,
       "Material Model").get<std::string>("Model Name");
-  TEUCHOS_TEST_FOR_EXCEPTION(material_model_name.length()==0,
-                             std::logic_error,
-                             "A material model must be defined for block: "
-                             +element_block_name);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      material_model_name.length() == 0,
+      std::logic_error,
+      "A material model must be defined for block: " + element_block_name);
 
   //
   // Preloading stage setup
@@ -109,17 +110,18 @@ int main(int ac, char* av[])
   const int num_dims = 3;
   const int num_vertices = 8;
   const int num_nodes = 8;
-  const Teuchos::RCP<Albany::Layouts> dl =
-    Teuchos::rcp(new Albany::Layouts(workset_size,
-                                     num_vertices,
-                                     num_nodes,
-                                     num_pts,
-                                     num_dims));
+  const Teuchos::RCP<Albany::Layouts> dl = Teuchos::rcp(
+      new Albany::Layouts(
+          workset_size,
+          num_vertices,
+          num_nodes,
+          num_pts,
+          num_dims));
 
   // create field name strings
   LCM::FieldNameMap field_name_map(false);
   Teuchos::RCP<std::map<std::string, std::string> > fnm =
-    field_name_map.getMap();
+      field_name_map.getMap();
 
   //---------------------------------------------------------------------------
   // Deformation gradient
@@ -136,11 +138,12 @@ int main(int ac, char* av[])
   // to the def_grad field
   Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
   setDefGradP.set<std::string>("Evaluated Field Name", "F");
-  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >
-    ("Evaluated Field Data Layout", dl->qp_tensor);
+  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >(
+      "Evaluated Field Data Layout",
+      dl->qp_tensor);
   setDefGradP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", def_grad);
-  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDefGrad =
-    Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDefGradP));
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDefGrad = Teuchos::rcp(
+      new LCM::SetField<Residual, Traits>(setDefGradP));
 
   //---------------------------------------------------------------------------
   // Det(deformation gradient)
@@ -151,7 +154,8 @@ int main(int ac, char* av[])
   Teuchos::ParameterList setDetDefGradP("SetFieldDetDefGrad");
   setDetDefGradP.set<std::string>("Evaluated Field Name", "J");
   setDetDefGradP.set<Teuchos::RCP<PHX::DataLayout> >(
-      "Evaluated Field Data Layout", dl->qp_scalar);
+      "Evaluated Field Data Layout",
+      dl->qp_scalar);
   setDetDefGradP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", detdefgrad);
   Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDetDefGrad =
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
@@ -175,41 +179,58 @@ int main(int ac, char* av[])
   Albany::StateManager stateMgr;
 
   // extract the Material ParameterList for use below
-  std::string matName =
-    material_db->getElementBlockParam<std::string>(element_block_name,"material");
-  Teuchos::ParameterList& paramList =
-    material_db->getElementBlockSublist(element_block_name,matName);
-  Teuchos::ParameterList& mpsParams =
-    paramList.sublist("Material Point Simulator");
+  std::string matName = material_db->getElementBlockParam<std::string>(
+      element_block_name,
+      "material");
+  Teuchos::ParameterList& paramList = material_db->getElementBlockSublist(
+      element_block_name,
+      matName);
+  Teuchos::ParameterList& mpsParams = paramList.sublist(
+      "Material Point Simulator");
 
   // Get loading parameters from .xml file
-  std::string load_case = mpsParams.get<std::string>("Loading Case Name","uniaxial");
-  int number_steps = mpsParams.get<int>("Number of Steps",10);
-  double step_size = mpsParams.get<double>("Step Size",1.0e-2);
+  std::string load_case = mpsParams.get<std::string>(
+      "Loading Case Name",
+      "uniaxial");
+  int number_steps = mpsParams.get<int>("Number of Steps", 10);
+  double step_size = mpsParams.get<double>("Step Size", 1.0e-2);
 
+  // determine if temperature is being used
+  bool have_temperature = mpsParams.get<bool>("Use Temperature", false);
+  std::cout << "have_temp: " << have_temperature << std::endl;
   //---------------------------------------------------------------------------
   // Temperature (optional)
-  if (mpsParams.get<bool>("Use Temperature", false)) {
+  if (have_temperature) {
     Teuchos::ArrayRCP<ScalarT> temperature(1);
-    temperature[0] = mpsParams.get<double>("Temperature",1.0);
+    temperature[0] = mpsParams.get<double>("Temperature", 1.0);
     // SetField evaluator, which will be used to manually assign a value
     // to the detdefgrad field
     Teuchos::ParameterList setTempP("SetFieldTemperature");
     setTempP.set<std::string>("Evaluated Field Name", "Temperature");
     setTempP.set<Teuchos::RCP<PHX::DataLayout> >(
-       "Evaluated Field Data Layout", dl->qp_scalar);
+        "Evaluated Field Data Layout",
+        dl->qp_scalar);
     setTempP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", temperature);
     Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldTemperature =
-      Teuchos::rcp(new LCM::SetField<Residual, Traits>(setTempP));
+        Teuchos::rcp(new LCM::SetField<Residual, Traits>(setTempP));
+    fieldManager.registerEvaluator<Residual>(setFieldTemperature);
+    stateFieldManager.registerEvaluator<Residual>(setFieldTemperature);
   }
 
   //---------------------------------------------------------------------------
   // Constitutive Model Parameters
   Teuchos::ParameterList cmpPL;
-  paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map", fnm);
+  paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >(
+      "Name Map",
+      fnm);
   cmpPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+  if (have_temperature) {
+    cmpPL.set<std::string>("Temperature Name", "Temperature");
+    paramList.set<bool>("Have Temperature", true);
+  }
   Teuchos::RCP<LCM::ConstitutiveModelParameters<Residual, Traits> > CMP =
-    Teuchos::rcp(new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL,dl));
+      Teuchos::rcp(
+          new LCM::ConstitutiveModelParameters<Residual, Traits>(cmpPL, dl));
   fieldManager.registerEvaluator<Residual>(CMP);
   stateFieldManager.registerEvaluator<Residual>(CMP);
 
@@ -217,15 +238,18 @@ int main(int ac, char* av[])
   // Constitutive Model Interface Evaluator
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
+  if (have_temperature) {
+    cmiPL.set<std::string>("Temperature Name", "Temperature");
+  }
   Teuchos::RCP<LCM::ConstitutiveModelInterface<Residual, Traits> > CMI =
-    Teuchos::rcp(new LCM::ConstitutiveModelInterface<Residual, Traits>(cmiPL,dl));
+      Teuchos::rcp(
+          new LCM::ConstitutiveModelInterface<Residual, Traits>(cmiPL, dl));
   fieldManager.registerEvaluator<Residual>(CMI);
   stateFieldManager.registerEvaluator<Residual>(CMI);
 
   // Set the evaluated fields as required
-  for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it =
-         CMI->evaluatedFields().begin();
-       it != CMI->evaluatedFields().end(); ++it) {
+  for (std::vector<Teuchos::RCP<PHX::FieldTag> >::const_iterator it = CMI
+      ->evaluatedFields().begin(); it != CMI->evaluatedFields().end(); ++it) {
     fieldManager.requireField<Residual>(**it);
   }
 
@@ -234,15 +258,16 @@ int main(int ac, char* av[])
   Teuchos::RCP<PHX::Evaluator<Traits> > ev;
   for (int sv(0); sv < CMI->getNumStateVars(); ++sv) {
     CMI->fillStateVariableStruct(sv);
-    p = stateMgr.registerStateVariable(CMI->getName(),
-                                       CMI->getLayout(),
-                                       dl->dummy,
-                                       element_block_name,
-                                       CMI->getInitType(),
-                                       CMI->getInitValue(),
-                                       CMI->getStateFlag(),
-                                       CMI->getOutputFlag());
-    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
+    p = stateMgr.registerStateVariable(
+        CMI->getName(),
+        CMI->getLayout(),
+        dl->dummy,
+        element_block_name,
+        CMI->getInitType(),
+        CMI->getInitValue(),
+        CMI->getStateFlag(),
+        CMI->getOutputFlag());
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
   }
@@ -260,49 +285,52 @@ int main(int ac, char* av[])
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
-    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC =
-      Teuchos::rcp(new LCM::BifurcationCheck<Residual, Traits>(bcPL,dl));
+    Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = Teuchos::rcp(
+        new LCM::BifurcationCheck<Residual, Traits>(bcPL, dl));
     fieldManager.registerEvaluator<Residual>(BC);
     stateFieldManager.registerEvaluator<Residual>(BC);
 
     // register the ellipticity flag
-    p = stateMgr.registerStateVariable("Ellipticity_Flag",
-                                       dl->qp_scalar,
-                                       dl->dummy,
-                                       element_block_name,
-                                       "scalar",
-                                       0.0,
-                                       false,
-                                       true);
-    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
+    p = stateMgr.registerStateVariable(
+        "Ellipticity_Flag",
+        dl->qp_scalar,
+        dl->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        false,
+        true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
 
     // register the direction
-    p = stateMgr.registerStateVariable("Direction",
-                                       dl->qp_vector,
-                                       dl->dummy,
-                                       element_block_name,
-                                       "scalar",
-                                       0.0,
-                                       false,
-                                       true);
-    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
+    p = stateMgr.registerStateVariable(
+        "Direction",
+        dl->qp_vector,
+        dl->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        false,
+        true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
   }
 
   //---------------------------------------------------------------------------
   // register deformation gradient
-  p = stateMgr.registerStateVariable("F",
-                                     dl->qp_tensor,
-                                     dl->dummy,
-                                     element_block_name,
-                                     "identity",
-                                     1.0,
-                                     false,
-                                     true);
-  ev = Teuchos::rcp(new PHAL::SaveStateField<Residual,Traits>(*p));
+  p = stateMgr.registerStateVariable(
+      "F",
+      dl->qp_tensor,
+      dl->dummy,
+      element_block_name,
+      "identity",
+      1.0,
+      false,
+      true);
+  ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
   fieldManager.registerEvaluator<Residual>(ev);
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
@@ -311,16 +339,18 @@ int main(int ac, char* av[])
   fieldManager.postRegistrationSetup(setupData);
 
   // set the required fields for the state manager
-  Teuchos::RCP<PHX::DataLayout> dummy =
-    Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
-  std::vector<std::string> responseIDs =
-    stateMgr.getResidResponseIDsToRequire(element_block_name);
+  Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
+      new PHX::MDALayout<Dummy>(0));
+  std::vector<std::string> responseIDs = stateMgr.getResidResponseIDsToRequire(
+      element_block_name);
   std::vector<std::string>::const_iterator it;
   for (it = responseIDs.begin(); it != responseIDs.end(); it++) {
     const std::string& responseID = *it;
-    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT>
-      res_response_tag(responseID, dummy);
-    stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
+    PHX::Tag<PHAL::AlbanyTraits::Residual::ScalarT> res_response_tag(
+        responseID,
+        dummy);
+    stateFieldManager.requireField<PHAL::AlbanyTraits::Residual>(
+        res_response_tag);
   }
   stateFieldManager.postRegistrationSetup("");
 
@@ -329,8 +359,9 @@ int main(int ac, char* av[])
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
   // grab the output file name
-  std::string output_file =
-    mpsParams.get<std::string>("Output File Name","output.exo");
+  std::string output_file = mpsParams.get<std::string>(
+      "Output File Name",
+      "output.exo");
 
   // Create discretization, as required by the StateManager
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
@@ -339,9 +370,9 @@ int main(int ac, char* av[])
   discretizationParameterList->set<int>("2D Elements", 1);
   discretizationParameterList->set<int>("3D Elements", 1);
   discretizationParameterList->set<std::string>("Method", "STK3D");
-  discretizationParameterList->set<std::string>("Exodus Output File Name",
-                                           output_file);
-
+  discretizationParameterList->set<std::string>(
+      "Exodus Output File Name",
+      output_file);
   Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes, 0, commT, Tpetra::LocallyReplicated));
   Teuchos::RCP<Tpetra_Vector> solution_vectorT = Teuchos::rcp(new Tpetra_Vector(mapT)); 
 
@@ -349,9 +380,16 @@ int main(int ac, char* av[])
   Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
 
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
-      new Albany::TmplSTKMeshStruct<3>(discretizationParameterList, Teuchos::null, commT));
-  stkMeshStruct->setFieldAndBulkData(commT, discretizationParameterList,
-      numberOfEquations, req, stateMgr.getStateInfoStruct(),
+      new Albany::TmplSTKMeshStruct<3>(
+          discretizationParameterList,
+          Teuchos::null,
+          commT));
+  stkMeshStruct->setFieldAndBulkData(
+      commT,
+      discretizationParameterList,
+      numberOfEquations,
+      req,
+      stateMgr.getStateInfoStruct(),
       stkMeshStruct->getMeshSpecs()[0]->worksetSize);
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
@@ -363,13 +401,17 @@ int main(int ac, char* av[])
   // Create a workset
   PHAL::Workset workset;
   workset.numCells = workset_size;
-  workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, 0);
+  workset.stateArrayPtr = &stateMgr.getStateArray(
+      Albany::StateManager::ELEM,
+      0);
 
   // create MDFields
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stressField("Cauchy_Stress",dl->qp_tensor);
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stressField(
+      "Cauchy_Stress",
+      dl->qp_tensor);
 
   // construct the final deformation gradient based on the loading case
-  std::vector<ScalarT> F_vector(9,0.0);
+  std::vector<ScalarT> F_vector(9, 0.0);
   if (load_case == "uniaxial") {
     F_vector[0] = 1.0 + number_steps * step_size;
     F_vector[4] = 1.0;
@@ -384,20 +426,21 @@ int main(int ac, char* av[])
     F_vector[4] = 1.0 + number_steps * step_size;
     F_vector[8] = 1.0 + number_steps * step_size;
   } else if (load_case == "general") {
-    F_vector = mpsParams.get<Teuchos::Array<double> >("Deformation Gradient Components").toVector();
+    F_vector = mpsParams.get<Teuchos::Array<double> >(
+        "Deformation Gradient Components").toVector();
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(true,
-                               std::runtime_error,
-                               "Impropoer Loading Case in Material Point Simulator block");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+        true,
+        std::runtime_error,
+        "Impropoer Loading Case in Material Point Simulator block");
   }
-    
 
   Intrepid::Tensor<ScalarT> F_tensor(3, &F_vector[0]);
   Intrepid::Tensor<ScalarT> log_F_tensor = Intrepid::log(F_tensor);
 
   std::cout << "F\n" << F_tensor << std::endl;
   std::cout << "log F\n" << log_F_tensor << std::endl;
-  
+
   //
   // Setup loading scenario and instantiate evaluatFields
   //
@@ -413,9 +456,9 @@ int main(int ac, char* av[])
     std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
     std::cout << "current F\n" << current_F << std::endl;
 
-    for (int i=0; i<3; ++i) {
-      for (int j=0; j<3; ++j) {
-        def_grad[3*i + j] = current_F(i,j);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        def_grad[3 * i + j] = current_F(i, j);
       }
     }
 
@@ -428,14 +471,15 @@ int main(int ac, char* av[])
     fieldManager.evaluateFields<Residual>(workset);
     fieldManager.postEvaluate<Residual>(workset);
 
-    stateFieldManager.getFieldData<ScalarT,Residual,Cell,QuadPoint,Dim,Dim>(stressField);
+    stateFieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint, Dim, Dim>(
+        stressField);
 
     // Check the computed stresses
 
     for (size_type cell = 0; cell < workset_size; ++cell) {
       for (size_type qp = 0; qp < num_pts; ++qp) {
         std::cout << "in MPS Stress tensor at cell " << cell
-                  << ", quadrature point " << qp << ":" << std::endl;
+            << ", quadrature point " << qp << ":" << std::endl;
         std::cout << "  " << stressField(cell, qp, 0, 0);
         std::cout << "  " << stressField(cell, qp, 0, 1);
         std::cout << "  " << stressField(cell, qp, 0, 2) << std::endl;

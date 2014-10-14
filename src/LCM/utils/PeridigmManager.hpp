@@ -34,7 +34,7 @@ public:
   };
 
   struct PartialStressElement {
-    stk_classic::mesh::Entity* albanyElement;
+    stk::mesh::Entity albanyElement;
     CellTopologyData cellTopologyData;
     std::vector<int> peridigmGlobalIds;
     std::vector<RealType> albanyNodeInitialPositions;

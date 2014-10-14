@@ -26,6 +26,8 @@
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
+//
+//#define ENABLE_CHECK_FPE
 
 #ifdef ENABLE_CHECK_FPE
 #include <math.h>
@@ -141,6 +143,7 @@ int main(int argc, char *argv[]) {
     xmlfilename = "input.xml";
 
   try {
+
     RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
 

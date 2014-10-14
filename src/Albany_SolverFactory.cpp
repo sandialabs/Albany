@@ -49,6 +49,12 @@
 #endif
 
 #include "Albany_ModelEvaluatorT.hpp"
+#ifdef ALBANY_ATO
+  #include "ATO_Solver.hpp"
+#endif
+
+//#include "Thyra_EpetraModelEvaluator.hpp"
+//#include "AAdapt_AdaptiveModelFactory.hpp"
 
 #include "Thyra_DefaultModelEvaluatorWithSolveFactory.hpp"
 #include "Thyra_DetachedVectorView.hpp"
@@ -163,8 +169,11 @@ Albany::SolverFactory::SolverFactory(
   appParams = Teuchos::createParameterList("Albany Parameters");
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, appParams.ptr(), *tcomm);
 
-  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
-  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {
+  // do not set default solver parameters for QCAD::Solver or ATO::Solver problems, 
+  // ... as they handle this themselves
+  std::string solution_method = appParams->sublist("Problem").get("Solution Method", "Steady");
+  if (solution_method != "QCAD Multi-Problem" &&
+      solution_method != "ATO Problem" ) {  
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -180,8 +189,11 @@ Albany::SolverFactory::SolverFactory(
   : appParams(input_appParams), out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
 
-  //do not set default solver parameters for QCAD::Solver problems, as it handles this itself
-  if (appParams->sublist("Problem").get("Solution Method", "Steady") != "QCAD Multi-Problem") {
+  // do not set default solver parameters for QCAD::Solver or ATO::Solver problems, 
+  // ... as they handle this themselves
+  std::string solution_method = appParams->sublist("Problem").get("Solution Method", "Steady");
+  if (solution_method != "QCAD Multi-Problem" &&
+      solution_method != "ATO Problem" ) {  
     RCP<ParameterList> defaultSolverParams = rcp(new ParameterList());
     setSolverParamDefaults(defaultSolverParams.get(), tcomm->getRank());
     appParams->setParametersNotAlreadySet(*defaultSolverParams);
@@ -233,7 +245,8 @@ Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
   const Teuchos::RCP<const Epetra_Comm>& appComm,
   const Teuchos::RCP<const Epetra_Comm>& solverComm,
-  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
+  bool createAlbanyApp)
 {
     const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
     const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -279,9 +292,16 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #ifdef ALBANY_QCAD
 
       RCP<Albany::Application> app;
-      const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
-      albanyApp = app;
+      Teuchos::RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
+      if(createAlbanyApp) {
+        app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+        albanyApp = app;
+      }
+      else app = albanyApp;
 
+      const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
+
+      
       //QCAD::GenEigensolver uses a state manager as an observer (for now)
       RCP<Albany::StateManager> observer = rcp( &(app->getStateMgr()), false);
 
@@ -296,14 +316,30 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 #endif /* ALBANY_QCAD */
     }
 
+
+    if (solutionMethod == "ATO Problem") {
+#ifdef ALBANY_ATO
+      return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
+#else /* ALBANY_ATO */
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
+#endif /* ALBANY_ATO */
+    }
+
     // Solver uses a single app, create it here along with observer
     RCP<Albany::Application> app;
-    const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
+    Teuchos::RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
 
-    //Pass back albany app so that interface beyond ModelEvaluator can be used.
-    // This is essentially a hack to allow additional in/out arguments beyond
-    //  what ModelEvaluator specifies.
-    albanyApp = app;
+    if(createAlbanyApp) {
+      app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+
+      //Pass back albany app so that interface beyond ModelEvaluator can be used.
+      // This is essentially a hack to allow additional in/out arguments beyond
+      //  what ModelEvaluator specifies.
+      albanyApp = app;
+    }
+    else app = albanyApp;
+
+    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
 
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
@@ -346,7 +382,8 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     Teuchos::RCP<Application>& albanyApp,
     const Teuchos::RCP<const Epetra_Comm>& appComm,
     const Teuchos::RCP<const Epetra_Comm>& solverComm,
-    const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
+    bool createAlbanyApp)
 {
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::Ptr<const std::string> solverToken(piroParams->getPtr<std::string>("Solver Type"));
@@ -354,18 +391,30 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
 
+
   if (Teuchos::nonnull(solverToken) && *solverToken == "ThyraNOX") {
     piroParams->set("Solver Type", "NOX");
 
     RCP<Albany::Application> app;
 
-    // Creates the Albany::ModelEvaluator
-    const RCP<EpetraExt::ModelEvaluator> model = createAlbanyAppAndModel(app, appComm, initial_guess);
 
-    // Pass back albany app so that interface beyond ModelEvaluator can be used.
-    // This is essentially a hack to allow additional in/out arguments beyond
-    // what ModelEvaluator specifies.
-    albanyApp = app;
+    //WARINING: if createAlbanyApp==true, then albanyApp will be constructed twice, here and below, when calling
+    //    createAndGetAlbanyApp. Why? (Mauro)
+    Teuchos::RCP<const Teuchos_Comm> appCommT = Albany::createTeuchosCommFromEpetraComm(appComm);
+    if(createAlbanyApp) {
+      app = rcp(new Albany::Application(appCommT, appParams, initial_guess));
+
+      // Pass back albany app so that interface beyond ModelEvaluator can be used.
+      // This is essentially a hack to allow additional in/out arguments beyond
+      // what ModelEvaluator specifies.
+      albanyApp = app;
+    }
+    else app = albanyApp;
+
+    // Creates the Albany::ModelEvaluator
+    const RCP<EpetraExt::ModelEvaluator> model = createModel(app, appComm);
+
+
 
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
     linearSolverBuilder.setParameterList(Piro::extractStratimikosParams(piroParams));
@@ -373,8 +422,10 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
     const RCP<Thyra::LinearOpWithSolveFactoryBase<double> > lowsFactory =
       createLinearSolveStrategy(linearSolverBuilder);
 
-    if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
-       // These QCAD solvers do not contain a primary Albany::Application instance and so albanyApp is null.
+    if ( solutionMethod == "QCAD Multi-Problem" || 
+         solutionMethod == "QCAD Poisson-Schrodinger" ||
+         solutionMethod == "ATO Problem" ) {
+       // These QCAD and ATO solvers do not contain a primary Albany::Application instance and so albanyApp is null.
        // For now, do not resize the response vectors. FIXME sort out this issue.
        const RCP<Thyra::ModelEvaluator<double> > thyraModel = Thyra::epetraModelEvaluator(model, lowsFactory);
        const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
@@ -396,9 +447,11 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   }
 
   const Teuchos::RCP<EpetraExt::ModelEvaluator> epetraSolver =
-    this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess);
+    this->createAndGetAlbanyApp(albanyApp, appComm, solverComm, initial_guess, createAlbanyApp);
 
-  if (solutionMethod == "QCAD Multi-Problem" || solutionMethod == "QCAD Poisson-Schrodinger") {
+  if ( solutionMethod == "QCAD Multi-Problem" ||
+       solutionMethod == "QCAD Poisson-Schrodinger" ||
+       solutionMethod == "ATO Problem" ) {
     return Thyra::epetraModelEvaluator(epetraSolver, Teuchos::null);
   }
   else {
@@ -571,6 +624,15 @@ Albany::SolverFactory::createAlbanyAppAndModel(
   // Create application
   albanyApp = rcp(new Albany::Application(Albany::createTeuchosCommFromEpetraComm(appComm), appParams, initial_guess));
 
+  return createModel(albanyApp,appComm);
+}
+
+
+Teuchos::RCP<EpetraExt::ModelEvaluator>
+Albany::SolverFactory::createModel(
+  const Teuchos::RCP<Albany::Application>& albanyApp,
+  const Teuchos::RCP<const Epetra_Comm>& appComm)
+{
   // Validate Response list: may move inside individual Problem class
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   problemParams->sublist("Response Functions").

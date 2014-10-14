@@ -26,7 +26,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   temperatureGrad (p.get<std::string> ("Gradient QP Temperature"),        dl->qp_gradient_level),
   temperatureDot  (p.get<std::string> ("QP Time Derivative Temperature"), dl->qp_scalar_level),
   temperatureSrc  (p.get<std::string> ("Temperature Source"),             dl->qp_scalar_level),
-  u               (p.get<std::string> ("QP Velx"),                        dl->qp_scalar_level),
+  velx            (p.get<std::string> ("QP Velx"),                        dl->qp_vector_level),
   omega           (p.get<std::string> ("Omega"),                          dl->qp_scalar_level),
   etadotdT        (p.get<std::string> ("EtaDotdT"),                       dl->qp_scalar_level),
   Residual        (p.get<std::string> ("Residual Name"),                  dl->node_scalar_level),
@@ -35,7 +35,10 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   numDims  ( dl->node_qp_gradient        ->dimension(3)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
-  Teuchos::ParameterList* xsa_params = p.get<Teuchos::ParameterList*>("XZHydrostatic Problem");
+  Teuchos::ParameterList* xsa_params =
+    p.isParameter("XZHydrostatic Problem") ? 
+      p.get<Teuchos::ParameterList*>("XZHydrostatic Problem"):
+      p.get<Teuchos::ParameterList*>("Hydrostatic Problem");
   Re = xsa_params->get<double>("Reynolds Number", 1.0); //Default: Re=1
   std::cout << "XZHydrostatic_TemperatureResid: Re= " << Re << std::endl;
 
@@ -43,7 +46,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
   this->addDependentField(temperatureGrad);
   this->addDependentField(temperatureDot);
   this->addDependentField(temperatureSrc);
-  this->addDependentField(u);
+  this->addDependentField(velx);
   this->addDependentField(omega);
   this->addDependentField(etadotdT);
   this->addDependentField(wBF);
@@ -55,7 +58,7 @@ XZHydrostatic_TemperatureResid(const Teuchos::ParameterList& p,
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  this->registerSacadoParameter("Reynolds Number", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
 }
 
 //**********************************************************************
@@ -64,17 +67,17 @@ void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(temperature,fm);
+  this->utils.setFieldData(temperature,    fm);
   this->utils.setFieldData(temperatureGrad,fm);
-  this->utils.setFieldData(temperatureDot,fm);
-  this->utils.setFieldData(temperatureSrc,fm);
-  this->utils.setFieldData(u,fm);
-  this->utils.setFieldData(omega,fm);
-  this->utils.setFieldData(etadotdT,fm);
-  this->utils.setFieldData(wBF,fm);
-  this->utils.setFieldData(wGradBF,fm);
+  this->utils.setFieldData(temperatureDot, fm);
+  this->utils.setFieldData(temperatureSrc, fm);
+  this->utils.setFieldData(velx,           fm);
+  this->utils.setFieldData(omega,          fm);
+  this->utils.setFieldData(etadotdT,       fm);
+  this->utils.setFieldData(wBF,            fm);
+  this->utils.setFieldData(wGradBF,        fm);
 
-  this->utils.setFieldData(Residual,fm);
+  this->utils.setFieldData(Residual,       fm);
 }
 
 //**********************************************************************
@@ -82,26 +85,18 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_TemperatureResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::vector<ScalarT> vel(numLevels);
-  for (int level=0; level < numLevels; ++level) {
-    vel[level] = (level+1)*Re;
-  }
-
   for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {
       for (int level=0; level < numLevels; ++level) {
         for (int qp=0; qp < numQPs; ++qp) {
-          Residual(cell,node,level) += temperatureSrc(cell,qp,level)*wBF(cell,node,qp);
-          // Advection Term
-          for (int j=0; j < numDims; ++j) {
-              //Residual(cell,node,level) += vel[level]*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
-              Residual(cell,node,level) += u(cell,qp,level)*temperatureGrad(cell,qp,level,j)*wBF(cell,node,qp);
-          }
-          Residual(cell,node,level) += (-omega(cell,qp,level) + etadotdT(cell,qp,level) )*wBF(cell,node,qp);
-          // Transient Term
-          Residual(cell,node,level) += temperatureDot(cell,qp,level)*wBF(cell,node,qp);
+          for (int dim=0; dim < numDims; ++dim) 
+            Residual(cell,node,level) += velx(cell,qp,level,dim)*temperatureGrad(cell,qp,level,dim)*wBF(cell,node,qp);
+          Residual(cell,node,level)   += temperatureSrc(cell,qp,level)                             *wBF(cell,node,qp);
+          Residual(cell,node,level)   -= omega(cell,qp,level)                                      *wBF(cell,node,qp);
+          Residual(cell,node,level)   += etadotdT(cell,qp,level)                                   *wBF(cell,node,qp);
+          Residual(cell,node,level)   += temperatureDot(cell,qp,level)                             *wBF(cell,node,qp);
         }
       }
     }

@@ -93,7 +93,7 @@ class RandomFracture : public AbstractAdapter {
     /// Method to ...
     ///
     void showRelations();
-    void showRelations(int level, const stk_classic::mesh::Entity& ent);
+    void showRelations(int level, const stk::mesh::Entity ent);
 
     ///
     /// Parallel all-reduce function. Returns the argument in serial,
@@ -103,20 +103,20 @@ class RandomFracture : public AbstractAdapter {
 
     /// Parallel all-gatherv function. Communicates local open list to
     /// all processors to form global open list.
-    void getGlobalOpenList(std::map<stk_classic::mesh::EntityKey, bool>& local_entity_open,
-                           std::map<stk_classic::mesh::EntityKey, bool>& global_entity_open);
+    void getGlobalOpenList(std::map<stk::mesh::EntityKey, bool>& local_entity_open,
+                           std::map<stk::mesh::EntityKey, bool>& global_entity_open);
 
     // Build topology object from ../LCM/utils/topology.h
 
     ///
     /// STK mesh Bulk Data
     ///
-    stk_classic::mesh::BulkData* bulk_data_;
+    stk::mesh::BulkData* bulk_data_;
 
     ///
     /// STK mesh Bulk Data
     ///
-    stk_classic::mesh::fem::FEMMetaData* meta_data_;
+    stk::mesh::MetaData* meta_data_;
 
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stk_mesh_struct_;
 
@@ -124,24 +124,24 @@ class RandomFracture : public AbstractAdapter {
 
     Albany::STKDiscretization* stk_discretization_;
 
-    stk_classic::mesh::EntityRank node_rank_;
-    stk_classic::mesh::EntityRank edge_rank_;
-    stk_classic::mesh::EntityRank face_rank_;
-    stk_classic::mesh::EntityRank element_rank_;
+    stk::mesh::EntityRank node_rank_;
+    stk::mesh::EntityRank edge_rank_;
+    stk::mesh::EntityRank face_rank_;
+    stk::mesh::EntityRank element_rank_;
 
     Teuchos::RCP<LCM::AbstractFractureCriterion> fracture_criterion_;
     Teuchos::RCP<LCM::Topology> topology_;
 
     //! Edges to fracture the mesh on
-    std::vector<stk_classic::mesh::Entity*> fractured_faces_;
+    std::vector<stk::mesh::Entity> fractured_faces_;
 
     //! Data structures used to transfer solution between meshes
     //! Element to node connectivity for old mesh
 
-    std::vector<std::vector<stk_classic::mesh::Entity*> > old_elem_to_node_;
+    std::vector<std::vector<stk::mesh::Entity> > old_elem_to_node_;
 
     //! Element to node connectivity for new mesh
-    std::vector<std::vector<stk_classic::mesh::Entity*> > new_elem_to_node_;
+    std::vector<std::vector<stk::mesh::Entity> > new_elem_to_node_;
 
     int num_dim_;
     int remesh_file_index_;

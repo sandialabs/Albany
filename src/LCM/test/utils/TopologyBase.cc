@@ -8,6 +8,7 @@
 // Test of topology manipulation.
 //
 #include "topology/Topology.h"
+#include "topology/Topology_FractureCriterion.h"
 #include "topology/Topology_Utils.h"
 
 int main(int ac, char* av[])
@@ -36,6 +37,68 @@ int main(int ac, char* av[])
       "Output File Name"
   );
 
+  int const
+  num_criteria = 3;
+
+  LCM::fracture::Criterion const
+  criteria_values[] = {
+      LCM::fracture::ONE,
+      LCM::fracture::RANDOM,
+      LCM::fracture::TRACTION};
+
+  char const *
+  criteria_names[] = {
+      "one",
+      "random",
+      "traction"};
+
+  LCM::fracture::Criterion
+  fracture_criterion = LCM::fracture::RANDOM;
+
+  command_line_processor.setOption(
+      "fracture-criterion",
+      &fracture_criterion,
+      num_criteria,
+      criteria_values,
+      criteria_names,
+      "Fracture Criterion");
+
+  double
+  probability = 1.0;
+
+  command_line_processor.setOption(
+      "probability",
+      &probability,
+      "Probability");
+
+  int const
+  num_styles = 4;
+
+  LCM::Topology::OutputType const
+  style_values[] = {
+      LCM::Topology::UNIDIRECTIONAL_UNILEVEL,
+      LCM::Topology::UNIDIRECTIONAL_MULTILEVEL,
+      LCM::Topology::BIDIRECTIONAL_UNILEVEL,
+      LCM::Topology::BIDIRECTIONAL_MULTILEVEL};
+
+  char const *
+  style_names[] = {
+      "UU",
+      "UM",
+      "BU",
+      "BM"};
+
+  LCM::Topology::OutputType
+  plot_style = LCM::Topology::UNIDIRECTIONAL_UNILEVEL;
+
+  command_line_processor.setOption(
+      "plot-style",
+      &plot_style,
+      num_styles,
+      style_values,
+      style_names,
+      "Plot Style");
+
   // Throw a warning and not error for unrecognized options
   command_line_processor.recogniseAllOptions(true);
 
@@ -58,24 +121,55 @@ int main(int ac, char* av[])
   // Read the mesh
   //
   Teuchos::GlobalMPISession
-  mpiSession(&ac,&av);
+  mpiSession(&ac, &av);
 
   LCM::Topology
   topology(input_file, output_file);
+
+  Teuchos::RCP<LCM::AbstractFractureCriterion>
+  abstract_fracture_criterion;
+
+  switch (fracture_criterion) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Unknown or unsupported fracture criterion: ";
+    std::cerr << fracture_criterion;
+    std::cerr << '\n';
+    exit(1);
+    break;
+
+  case LCM::fracture::ONE:
+    abstract_fracture_criterion =
+        Teuchos::rcp(new LCM::FractureCriterionOnce(
+                  topology,
+                  probability));
+    break;
+
+  case LCM::fracture::RANDOM:
+    abstract_fracture_criterion =
+        Teuchos::rcp(new LCM::FractureCriterionRandom(
+                  topology,
+                  probability));
+    break;
+
+  }
+
+  topology.set_fracture_criterion(abstract_fracture_criterion);
 
   //topology.createBoundary();
   //topology.outputBoundary();
 
   topology.setEntitiesOpen();
 
-#if defined(LCM_GRAPHVIZ)
+  topology.set_output_type(plot_style);
+
+#if defined(DEBUG_LCM_TOPOLOGY)
   std::string
   gviz_filename = LCM::parallelize_string("before") + ".dot";
 
-  LCM::Topology::OutputType const
-  type = LCM::Topology::UNIDIRECTIONAL_UNILEVEL;
-
-  topology.outputToGraphviz(gviz_filename, type);
+  topology.outputToGraphviz(gviz_filename);
 #endif
   std::string
   boundary_filename = LCM::parallelize_string("before") + ".vtk";
@@ -84,15 +178,15 @@ int main(int ac, char* av[])
 
   topology.splitOpenFaces();
 
-#if defined(LCM_GRAPHVIZ)
+#if defined(DEBUG_LCM_TOPOLOGY)
   gviz_filename = LCM::parallelize_string("after") + ".dot";
-  topology.outputToGraphviz(gviz_filename, type);
+  topology.outputToGraphviz(gviz_filename);
 #endif
   boundary_filename = LCM::parallelize_string("after") + ".vtk";
   topology.outputBoundary(boundary_filename);
 
   Teuchos::RCP<Albany::AbstractDiscretization>
-  discretization_ptr = topology.getDiscretization();
+  discretization_ptr = topology.get_discretization();
 
   Albany::STKDiscretization &
   stk_discretization =

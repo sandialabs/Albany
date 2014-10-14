@@ -11,15 +11,15 @@
 
 #include <boost/foreach.hpp>
 
-using stk_classic::mesh::EntityKey;
-using stk_classic::mesh::Entity;
+using stk::mesh::EntityKey;
+using stk::mesh::Entity;
 
 namespace AAdapt {
 
-typedef stk_classic::mesh::Entity Entity;
-typedef stk_classic::mesh::EntityRank EntityRank;
-typedef stk_classic::mesh::RelationIdentifier EdgeId;
-typedef stk_classic::mesh::EntityKey EntityKey;
+typedef stk::mesh::Entity Entity;
+typedef stk::mesh::EntityRank EntityRank;
+typedef stk::mesh::RelationIdentifier EdgeId;
+typedef stk::mesh::EntityKey EntityKey;
 
 //----------------------------------------------------------------------------
 AAdapt::RandomFracture::
@@ -42,12 +42,6 @@ RandomFracture(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
-
-  // The entity ranks
-  node_rank_ = meta_data_->NODE_RANK;
-  edge_rank_ = meta_data_->EDGE_RANK;
-  face_rank_ = meta_data_->FACE_RANK;
-  element_rank_ = meta_data_->element_rank();
 
   fracture_criterion_ =
     Teuchos::rcp(new AAdapt::RandomCriterion(num_dim_,
@@ -78,13 +72,13 @@ AAdapt::RandomFracture::queryAdaptationCriteria() {
 
     // Get a vector containing the face set of the mesh where
     // fractures can occur
-    std::vector<stk_classic::mesh::Entity*> face_list;
+    std::vector<stk::mesh::Entity> face_list;
 
     // get all the faces owned by this processor
-    stk_classic::mesh::Selector select_owned = meta_data_->locally_owned_part();
+    stk::mesh::Selector select_owned = meta_data_->locally_owned_part();
 
     // get all the faces owned by this processor
-    stk_classic::mesh::get_selected_entities(select_owned,
+    stk::mesh::get_selected_entities(select_owned,
                                      bulk_data_->buckets(num_dim_ - 1) ,
                                      face_list);
 
@@ -98,7 +92,7 @@ AAdapt::RandomFracture::queryAdaptationCriteria() {
     // Iterate over the boundary entities
     for(int i(0); i < face_list.size(); ++i) {
 
-      stk_classic::mesh::Entity& face = *(face_list[i]);
+      stk::mesh::Entity face = face_list[i];
 
       if(fracture_criterion_->
           computeFractureCriterion(face, fracture_probability_)) {
@@ -221,13 +215,13 @@ AAdapt::RandomFracture::getValidAdapterParameters() const {
 void
 AAdapt::RandomFracture::
 showTopLevelRelations() {
-  std::vector<Entity*> element_list;
-  stk_classic::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
+  std::vector<Entity> element_list;
+  stk::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
 
   // Remove extra relations from element
   for(int i = 0; i < element_list.size(); ++i) {
-    Entity& element = *(element_list[i]);
-    stk_classic::mesh::PairIterRelation relations = element.relations();
+    Entity element = *(element_list[i]);
+    stk::mesh::PairIterRelation relations = element.relations();
     std::cout << "Entitiy " << element.identifier() << " relations are :" << std::endl;
 
     for(int j = 0; j < relations.size(); ++j) {
@@ -241,20 +235,20 @@ showTopLevelRelations() {
 //----------------------------------------------------------------------------
 void
 AAdapt::RandomFracture::showRelations() {
-  std::vector<Entity*> element_list;
-  stk_classic::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
+  std::vector<Entity> element_list;
+  stk::mesh::get_entities(*(bulk_data_), element_rank_, element_list);
 
   // Remove extra relations from element
   for(int i = 0; i < element_list.size(); ++i) {
-    Entity& element = *(element_list[i]);
+    Entity element = *(element_list[i]);
     showRelations(0, element);
   }
 }
 
 //----------------------------------------------------------------------------
 void
-AAdapt::RandomFracture::showRelations(int level, const Entity& entity) {
-  stk_classic::mesh::PairIterRelation relations = entity.relations();
+AAdapt::RandomFracture::showRelations(int level, Entity entity) {
+  stk::mesh::PairIterRelation relations = entity.relations();
 
   for(int i = 0; i < level; i++) {
     std::cout << "     ";
@@ -286,7 +280,7 @@ int
 AAdapt::RandomFracture::accumulateFractured(int num_fractured) {
   int total_fractured;
 
-  stk_classic::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
+  stk::all_reduce_sum(bulk_data_->parallel(), &num_fractured, &total_fractured, 1);
 
   return total_fractured;
 }
@@ -310,10 +304,10 @@ AAdapt::RandomFracture::getGlobalOpenList(std::map<EntityKey, bool>& local_entit
 
     // Debugging
     /*
-      const unsigned entity_rank = stk_classic::mesh::entity_rank( me.first);
-      const stk_classic::mesh::EntityId entity_id = stk_classic::mesh::entity_id( me.first );
+      const unsigned entity_rank = stk::mesh::entity_rank( me.first);
+      const stk::mesh::EntityId entity_id = stk::mesh::entity_id( me.first );
       const std::string & entity_rank_name = meta_data_->entity_rank_name( entity_rank );
-      Entity *entity = bulk_data_->get_entity(me.first);
+      Entity entity = bulk_data_->get_entity(me.first);
       std::cout<<"Single proc fracture list contains "<<" "<<entity_rank_name<<" ["<<entity_id<<"] Proc:"
       <<entity->owner_rank() <<std::endl;
     */
@@ -350,10 +344,10 @@ AAdapt::RandomFracture::getGlobalOpenList(std::map<EntityKey, bool>& local_entit
     global_entity_open[key] = true;
 
     // Debugging
-    const unsigned entity_rank = stk_classic::mesh::entity_rank(key);
-    const stk_classic::mesh::EntityId entity_id = stk_classic::mesh::entity_id(key);
+    const unsigned entity_rank = stk::mesh::entity_rank(key);
+    const stk::mesh::EntityId entity_id = stk::mesh::entity_id(key);
     const std::string& entity_rank_name = meta_data_->entity_rank_name(entity_rank);
-    Entity* entity = bulk_data_->get_entity(key);
+    Entity entity = bulk_data_->get_entity(key);
     std::cout << "Global proc fracture list contains " << " " << entity_rank_name << " [" << entity_id << "] Proc:"
               << entity->owner_rank() << std::endl;
   }

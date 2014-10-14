@@ -47,8 +47,8 @@
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
     <Parameter  name="Test Values" type="Array(double)" value="{99.4040977567, 99.4040977567, 0.0}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.00131848940307}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-0.00131848940307}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.00065928}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-0.00065928}"/>
     <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0.0}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
@@ -120,7 +120,7 @@
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		    </ParameterList>
 		    <Parameter name="Max Iterations" type="int" value="200"/>
-		    <Parameter name="Tolerance" type="double" value="1e-6"/>
+		    <Parameter name="Tolerance" type="double" value="1e-8"/>
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="Belos">

@@ -385,6 +385,28 @@ FELIX::Stokes::constructEvaluators(
   }
 
 
+  Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+  //basal friction
+  {
+    std::string elementBlockName = meshSpecs.ebName;
+    std::string stateName("basal_friction");
+    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+
+    ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  //surface_height
+  {
+    std::string elementBlockName = meshSpecs.ebName;
+    std::string stateName("surface_height");
+    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+
+    ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
     if (haveFlowEq) {

@@ -1,42 +1,35 @@
 
+#Instructions to build CISM-Albany on Hopper: 
+#1.) Build Trilinos. 
+#2.) Build and install Albany with cism interface enabled. 
+#3.) source hopper_modules.sh 
+#4.) Edit hopper-gnu-cmake (this file) to put the path to your Trilinos and Albany install. 
+#5.) ./hopper-gnu-cmake
+#4.) make -j 8 
+
+
 
 # remove old build data:
-rm -rf ./CMakeCache.txt
+rm -f ./CMakeCache.txt
 rm -rf ./CMakeFiles
-
-# run a script that creates some CISM source files:
-#pushd .
-#cd ..
-#../cmake-scripts/autogenerate-script
-#popd
 
 echo
 echo "Doing CMake Configuration step"
 
 
 cmake \
-  -D CISM_USE_TRILINOS:BOOL=ON \
-  -D CISM_COUPLED:BOOL=OFF \
   -D CISM_MPI_MODE:BOOL=ON \
   -D CISM_SERIAL_MODE:BOOL=OFF \
-  -D CISM_BUILD_SIMPLE_GLIDE:BOOL=ON \
-  -D CISM_BUILD_SIMPLE_BISICLES:BOOL=OFF \
-  -D CISM_BUILD_SIMPLE_FELIX:BOOL=OFF \
-  -D CISM_BUILD_EXTRA_EXECUTABLES:BOOL=OFF \
+  -D CISM_BUILD_CISM_DRIVER:BOOL=ON \
   -D CISM_USE_GPTL_INSTRUMENTATION:BOOL=OFF \
-  -D CISM_USE_CISM_FRONT_END:BOOL=OFF \
   -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-  -D ALBANY_FELIX_DYCORE:BOOL=ON \
-  -D GLIMMER_ALBANY_DIR=$ALBINSTALLDIR \
 \
-  -D GLIMMER_TRILINOS_DIR=$TRILINSTALLDIR \
-  -D GLIMMER_NETCDF_DIR="${NETCDF_DIR}" \
-  -D CMAKE_SHARED_LIBRARY_LINK_DYNAMIC_C_FLAGS=""\
-  -D CMAKE_SHARED_MODULE_LIBRARY_LINK_DYNAMIC_C_FLAGS=""\
-  -D CMAKE_EXE_LINK_DYNAMIC_C_FLAGS=""\
+  -D CISM_USE_TRILINOS:BOOL=ON \
+  -D CISM_TRILINOS_DIR=$TRILINSTALLDIR \
+  -D ALBANY_FELIX_DYCORE:BOOL=ON \
+  -D CISM_ALBANY_DIR=$ALBINSTALLDIR \
+  -D CISM_NETCDF_DIR="${NETCDF_DIR}" \
   -D CMAKE_INSTALL_PREFIX:PATH=$PWD/install \
-  -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
-  -D CMAKE_VERBOSE_CONFIGURE:BOOL=ON \
 \
   -D CMAKE_CXX_COMPILER=CC \
   -D CMAKE_C_COMPILER=cc \
@@ -44,7 +37,7 @@ cmake \
 \
   -D CMAKE_CXX_FLAGS:STRING="-O2 -static" \
   -D BUILD_SHARED_LIBS:BOOL=OFF \
-  -D GLIMMER_Fortran_FLAGS="-ffree-line-length-none" \
+  -D CISM_Fortran_FLAGS="-ffree-line-length-none" \
   -D CISM_GNU:BOOL=ON \
   ../..
 # Note: last argument above  "../.."  is path to top seacism directory

@@ -21,16 +21,17 @@ XZHydrostatic_PiVel<EvalT, Traits>::
 XZHydrostatic_PiVel(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
   pi         (p.get<std::string> ("Pi"),          dl->node_scalar_level),
-  velx       (p.get<std::string> ("Velx"),        dl->node_scalar_level),
-  dvelx      (p.get<std::string> ("PiVelx"),      dl->node_scalar_level),
+  velx       (p.get<std::string> ("Velx"),        dl->node_vector_level),
+  pivelx     (p.get<std::string> ("PiVelx"),      dl->node_vector_level),
 
+  numDims    (dl->node_qp_gradient        ->dimension(3)),
   numNodes   (dl->node_scalar             ->dimension(1)),
   numLevels  (dl->node_scalar_level       ->dimension(2))
 {
   this->addDependentField(pi);
   this->addDependentField(velx);
 
-  this->addEvaluatedField(dvelx);
+  this->addEvaluatedField(pivelx);
   this->setName("Aeras::XZHydrostatic_PiVel"+PHX::TypeString<EvalT>::value);
 }
 
@@ -42,7 +43,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(pi     , fm);
   this->utils.setFieldData(velx   , fm);
-  this->utils.setFieldData(dvelx  , fm);
+  this->utils.setFieldData(pivelx , fm);
 }
 
 //**********************************************************************
@@ -50,12 +51,10 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_PiVel<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
-        dvelx(cell,node,level) = pi(cell,node,level)*velx(cell,node,level);
-      }
-    }
-  }
+  for (int cell=0; cell < workset.numCells; ++cell) 
+    for (int node=0; node < numNodes; ++node) 
+      for (int level=0; level < numLevels; ++level) 
+        for (int dim=0; dim < numDims; ++dim) 
+          pivelx(cell,node,level,dim) = pi(cell,node,level)*velx(cell,node,level,dim);
 }
 }

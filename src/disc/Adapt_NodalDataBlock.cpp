@@ -9,17 +9,13 @@
 #include "Adapt_NodalDataBlock.hpp"
 #include "Tpetra_Import_decl.hpp"
 
-Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
-                                      NodeFieldSizeVector& nodeBlockLayout_,
-                                      NodeFieldSizeMap& nodeBlockMap_, LO& blocksize_) :
-  nodeContainer(nodeContainer_),
-  nodeBlockLayout(nodeBlockLayout_),
-  nodeBlockMap(nodeBlockMap_),
-  blocksize(blocksize_),
+Adapt::NodalDataBlock::NodalDataBlock() :
+  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
+  blocksize(0),
   mapsHaveChanged(false)
 {
-
 }
+
 
 void
 Adapt::NodalDataBlock::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
@@ -100,6 +96,31 @@ Adapt::NodalDataBlock::exportAddNodalDataBlock(){
 }
 
 void
+Adapt::NodalDataBlock::registerState(const std::string &stateName, int ndofs){
+
+   // save the nodal data field names and lengths in order of allocation which implies access order
+   NodeFieldSizeMap::const_iterator it;
+   it = nodeBlockMap.find(stateName);
+
+   TEUCHOS_TEST_FOR_EXCEPTION((it != nodeBlockMap.end()), std::logic_error,
+           std::endl << "Error: found duplicate entry " << stateName << " in NodalDataBlock" << std::endl);
+
+   NodeFieldSize size;
+   size.name = stateName;
+   size.offset = blocksize;
+   size.ndofs = ndofs;
+
+   nodeBlockMap[stateName] = nodeBlockLayout.size();
+   nodeBlockLayout.push_back(size);
+
+   blocksize += ndofs;
+
+}
+
+
+
+
+void
 Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const {
 
    NodeFieldSizeMap::const_iterator it;
@@ -123,10 +144,28 @@ Adapt::NodalDataBlock::saveNodalDataState() const {
 
       // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
 
-      (*nodeContainer)[i->name]->saveFieldBlock(overlap_node_vec, i->offset);
+      (*nodeContainer)[i->name]->saveField(overlap_node_vec, i->offset);
 
    }
 
+}
+
+
+void
+Adapt::NodalDataBlock::saveTpetraNodalDataVector(const std::string& name,
+                 const Teuchos::RCP<const Tpetra_Vector>& overlap_node_vec,
+                 int offset, int blocksize) const {
+
+   Albany::NodeFieldContainer::const_iterator it;
+   it = nodeContainer->find(name);
+
+   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeContainer->end()), std::logic_error,
+           std::endl << "Error: Cannot locate nodal field " << name << " in NodalDataBlock" << std::endl);
+
+   // Store the overlapped vector data back in stk
+   
+   //IK_FIXME! (*nodeContainer)[name]->saveField(overlap_node_vec, offset, blocksize);
+   
 }
 
 

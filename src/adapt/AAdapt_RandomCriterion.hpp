@@ -28,7 +28,6 @@ class RandomCriterion: public LCM::AbstractFractureCriterion {
     /// \brief Default constructor for the criterion object
     ///
     RandomCriterion(int num_dim,
-                    stk_classic::mesh::EntityRank& element_rank,
                     Albany::STKDiscretization& stk);
 
 
@@ -47,7 +46,7 @@ class RandomCriterion: public LCM::AbstractFractureCriterion {
     /// = 2.
     ///
     bool
-    computeFractureCriterion(stk_classic::mesh::Entity& entity, double p);
+    computeFractureCriterion(stk::mesh::Entity entity, double p);
 
   private:
 

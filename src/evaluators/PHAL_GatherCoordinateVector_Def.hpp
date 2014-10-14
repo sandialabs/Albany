@@ -22,6 +22,12 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
   if (p.isType<bool>("Periodic BC")) periodic = p.get<bool>("Periodic BC");
   else periodic = false;
 
+  if (p.isType<std::string>("Current Displacement Vector Name")){
+    std::string strDispVec = p.get<std::string>("Current Displacement Vector Name");
+    dispVecName = Teuchos::rcp( new std::string(strDispVec) );
+  }
+    
+
   this->addEvaluatedField(coordVec);
   this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
 }
@@ -62,21 +68,50 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
-  for (std::size_t cell=0; cell < numCells; ++cell) {
-    for (std::size_t node = 0; node < numVertices; ++node) {
-      for (std::size_t eq=0; eq < numDim; ++eq) { 
-        coordVec(cell,node,eq) = wsCoords[cell][node][eq]; 
+  if( dispVecName.is_null() ){
+    for (std::size_t cell=0; cell < numCells; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) { 
+          coordVec(cell,node,eq) = wsCoords[cell][node][eq]; 
+        }
       }
     }
-  }
 
-  // Since Intrepid will later perform calculations on the entire workset size
-  // and not just the used portion, we must fill the excess with reasonable 
-  // values. Leaving this out leads to calculations on singular elements.
-  for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
-    for (std::size_t node = 0; node < numVertices; ++node) {
-      for (std::size_t eq=0; eq < numDim; ++eq) { 
-        coordVec(cell,node,eq) = coordVec(0,node,eq); 
+    // Since Intrepid will later perform calculations on the entire workset size
+    // and not just the used portion, we must fill the excess with reasonable 
+    // values. Leaving this out leads to calculations on singular elements.
+    for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) { 
+          coordVec(cell,node,eq) = coordVec(0,node,eq); 
+        }
+      }
+    }
+  } else {
+    Albany::StateArray::const_iterator it;
+    it = workset.stateArrayPtr->find(*dispVecName);
+
+    TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
+           std::endl << "Error: cannot locate " << *dispVecName << " in PHAL_GatherCoordinateVector_Def" << std::endl);
+
+    Albany::MDArray dVec = it->second;
+
+    for (std::size_t cell=0; cell < numCells; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) { 
+          coordVec(cell,node,eq) = wsCoords[cell][node][eq] + dVec(cell,node,eq);
+        }
+      }
+    }
+
+    // Since Intrepid will later perform calculations on the entire workset size
+    // and not just the used portion, we must fill the excess with reasonable 
+    // values. Leaving this out leads to calculations on singular elements.
+    for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) { 
+          coordVec(cell,node,eq) = coordVec(0,node,eq) + dVec(cell,node,eq);
+        }
       }
     }
   }

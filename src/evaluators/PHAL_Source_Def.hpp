@@ -79,7 +79,7 @@ Constant(Teuchos::ParameterList& p) {
   // Add the factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
-  this->registerSacadoParameter("Constant Source Value", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Constant Source Value", this, paramLib);
 }
 
 template<typename EvalT,typename Traits>
@@ -204,7 +204,7 @@ Table(Teuchos::ParameterList& p) {
   // Add the factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
-  this->registerSacadoParameter("Table Source Value", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Table Source Value", this, paramLib);
 }
 
 template<typename EvalT,typename Traits>
@@ -322,7 +322,7 @@ Trigonometric(Teuchos::ParameterList& p) {
   // Add the factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
-  this->registerSacadoParameter("Trigonometric Source Value", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Trigonometric Source Value", this, paramLib);
 }
 
 template<typename EvalT,typename Traits>
@@ -436,7 +436,7 @@ Quadratic(Teuchos::ParameterList& p) {
   // Add the factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib> > ("Parameter Library", Teuchos::null);
-  this->registerSacadoParameter("Quadratic Nonlinear Factor", paramLib);
+  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Quadratic Nonlinear Factor", this, paramLib);
 }
 
 template<typename EvalT,typename Traits>
@@ -552,7 +552,7 @@ TruncatedKL(Teuchos::ParameterList& p) {
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
   for (int i=0; i<num_KL; i++) {
     std::string ss = Albany::strint(param_name_base,i);
-    this->registerSacadoParameter(ss, paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
     m_rv[i] = paramList.get(ss, 0.0);
   }
 }
@@ -735,7 +735,7 @@ MVQuadratic<EvalT,Traits>::MVQuadratic(Teuchos::ParameterList& p) {
     m_factor[i] = paramList.get(Albany::strint("Nonlinear Factor",i), 0.0);
 
     // Add the factor as a Sacado-ized parameter
-    this->registerSacadoParameter(Albany::strint("Multivariate Quadratic Nonlinear Factor",i), paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(Albany::strint("Multivariate Quadratic Nonlinear Factor",i), this, paramLib);
   }
 }
 
@@ -830,7 +830,7 @@ MVExponential<EvalT,Traits>::MVExponential(Teuchos::ParameterList& p) {
     m_factor[i] = paramList.get(Albany::strint("Nonlinear Factor",i), 0.0);
 
     // Add the factor as a Sacado-ized parameter
-    this->registerSacadoParameter(Albany::strint("Multivariate Exponential Nonlinear Factor",i), paramLib);
+    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(Albany::strint("Multivariate Exponential Nonlinear Factor",i), this, paramLib);
   }
 }
 
