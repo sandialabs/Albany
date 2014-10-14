@@ -286,9 +286,12 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
 #
   "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DTPL_ENABLE_BoostLib:BOOL=ON"
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
   "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
 #
@@ -313,6 +316,9 @@ SET(CONFIGURE_OPTIONS
   "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
   "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
+#
+  "-DTPL_BLAS_LIBRARIES:STRING='-L/usr/local/intel/11.1/069/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
+  "-DTPL_LAPACK_LIBRARIES:STRING='-L/usr/local/intel/11.1/069/mkl/lib/em64t -lmkl_lapack95_lp64'"
 #
   "-DDART_TESTING_TIMEOUT:STRING=600"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
@@ -343,7 +349,7 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
   "-DTrilinos_ENABLE_Thyra:BOOL=ON"
   "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
+  "-DTrilinos_ENABLE_MOOCHO:BOOL=OFF"
   "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
   "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
   "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
@@ -460,6 +466,10 @@ SET(CONFIGURE_OPTIONS
   "-DCMAKE_CXX_FLAGS:STRING=-O3 -w"
   "-DCMAKE_C_FLAGS:STRING=-O3 -w"
   "-DCMAKE_Fortran_FLAGS:STRING=-O3 -w"
+#
+  "-DTPL_BLAS_LIBRARIES:STRING='-L/usr/local/intel/11.1/069/mkl/lib/em64t -lmkl_intel_lp64 -lmkl_blas95_lp64 -lmkl_core -lmkl_sequential'"
+  "-DTPL_LAPACK_LIBRARIES:STRING='-L/usr/local/intel/11.1/069/mkl/lib/em64t -lmkl_lapack95_lp64'"
+#
   "-DTPL_ENABLE_MPI:BOOL=ON"
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}"
   "-DSEACAS_ENABLE_SEACASSVDI:BOOL=OFF"
@@ -475,6 +485,7 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKTopology:BOOL=ON"
   "-DTrilinos_ENABLE_STKMesh:BOOL=ON"
   "-DTrilinos_ENABLE_STKIO:BOOL=ON"
+  "-DTrilinos_ENABLE_STKExp:BOOL=OFF"
   "-DTrilinos_ENABLE_STKSearch:BOOL=OFF"
   "-DTrilinos_ENABLE_STKSearchUtil:BOOL=OFF"
   "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
@@ -482,10 +493,18 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
   "-DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF"
   "-DTrilinos_VERBOSE_CONFIGURE:BOOL=OFF"
+#
+  "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DTPL_ENABLE_BoostLib:BOOL=ON"
+  "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
+#
   "-DBoost_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
+  "-DBoostLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DBoost_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+  "-DBoostLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
+#
   "-DTPL_ENABLE_Netcdf:STRING=ON"
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
@@ -513,6 +532,7 @@ SET(CONFIGURE_OPTIONS
 #
   "-DDART_TESTING_TIMEOUT:STRING=600"
   "-DTPL_ENABLE_Boost:BOOL=ON"
+  "-DTPL_ENABLE_BoostLib:BOOL=ON"
   "-DTPL_ENABLE_BoostAlbLib:BOOL=ON"
   "-DTrilinos_ENABLE_ThreadPool:BOOL=ON"
 #
@@ -540,7 +560,7 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_Stratimikos:BOOL=ON"
   "-DTrilinos_ENABLE_Thyra:BOOL=ON"
   "-DTrilinos_ENABLE_Rythmos:BOOL=ON"
-  "-DTrilinos_ENABLE_MOOCHO:BOOL=ON"
+  "-DTrilinos_ENABLE_MOOCHO:BOOL=OFF"
   "-DTrilinos_ENABLE_OptiPack:BOOL=ON"
   "-DTrilinos_ENABLE_GlobiPack:BOOL=ON"
   "-DTrilinos_ENABLE_Stokhos:BOOL=ON"
