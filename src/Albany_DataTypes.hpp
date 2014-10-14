@@ -50,12 +50,13 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_Operator.hpp"
 #include "Tpetra_MultiVector.hpp"
 #include "Tpetra_BlockMultiVector.hpp"
+#include "Tpetra_KokkosRefactor_CrsMatrix_def.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
 
 //Kokkos includes
 #include "Kokkos_SerialNode.hpp"
-
+#include "Phalanx_KokkosDeviceTypes.hpp"
 
 //Tpetra typedefs
 typedef double                                      ST;
@@ -65,7 +66,8 @@ typedef long long                                         GO;
 typedef int                                         GO;
 #endif
 typedef int                                         LO;
-typedef KokkosClassic::SerialNode                   KokkosNode;
+//typedef KokkosClassic::SerialNode                   KokkosNode;
+typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> KokkosNode;
 typedef Teuchos::Comm<int>                          Teuchos_Comm;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
 typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;
@@ -74,6 +76,7 @@ typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
 typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
 typedef Tpetra::BlockCrsGraph<LO, GO, KokkosNode>   Tpetra_BlockCrsGraph;
 typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
+typedef Tpetra_CrsMatrix::k_local_matrix_type  Tpetra_LocalMatrixType ;
 typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
 typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;

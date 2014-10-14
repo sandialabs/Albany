@@ -166,12 +166,15 @@ evaluateFields(typename Traits::EvalData workset)
   }
 #else
 
- for  (std::size_t cell=0; cell < workset.numCells; ++cell )
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t eq = 0; eq < numFields; eq++)
-              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
+// for  (std::size_t cell=0; cell < workset.numCells; ++cell )
+//    for (std::size_t node = 0; node < this->numNodes; ++node)
+//      for (std::size_t eq = 0; eq < numFields; eq++)
+//           std::cout <<this->offset<< "     " << workset.wsElNodeEqID[cell][node][this->offset+eq] << "    " << workset.wsElNodeEqID_kokkos(cell,node,eq) <<std::endl;
+//              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
 
- Kokkos::parallel_for(workset.numCells, ScatterToVector_resid< PHX::MDField<ScalarT,Cell,Node,Dim> , Teuchos::ArrayRCP<ST>, Kokkos::View<int***, PHX::Device> >(f_nonconstView, this->valVec[0], this->Index, this->numNodes, numFields) );
+  //std::cout << workset.wsElNodeEqID[10][2][2] << "    " << workset.wsElNodeEqID_kokkos(10,2,2) <<std::endl;
+
+ Kokkos::parallel_for(workset.numCells, ScatterToVector_resid< PHX::MDField<ScalarT,Cell,Node,Dim> , Teuchos::ArrayRCP<ST>, Kokkos::View<int***, PHX::Device> >(f_nonconstView, this->valVec[0], workset.wsElNodeEqID_kokkos, this->numNodes, numFields) );
 #endif  
 }
 
@@ -188,7 +191,7 @@ ScatterResidual(const Teuchos::ParameterList& p,
 {
 }
 // **********************************************************************
-template < class TpetraType1, class TpetraType2, class MdFieldType, class IndexType >
+template < class FadType1, class TpetraType1, class TpetraType2, class MdFieldType, class IndexType >
 class ScatterToVector_jacob {
 
  TpetraType1 Jac_;
@@ -218,12 +221,14 @@ class ScatterToVector_jacob {
  KOKKOS_INLINE_FUNCTION
  void operator () (const int i) const
   {
-    int neq=numFields_;
+    int neq=2;
     int nunk=neq*numNodes_;
     int colT[nunk];
+    const int ncol = 0; //FIXME
+    //SparseRowView<CrsMatrix> row_view
 
     for (int node = 0; node < numNodes_; ++node) {
-      for (int dim = 0; dim < numFields_; dim++){
+      for (int dim = 0; dim < neq; dim++){
         colT[neq * node + dim] = wsElNodeEqID_(i,node,dim);
       }
     }
@@ -231,9 +236,11 @@ class ScatterToVector_jacob {
     for (int node = 0; node < numNodes_; ++node) {
       for (int dim = 0; dim < numFields_; dim++){
          int row=wsElNodeEqID_(i,node,dim);
+          Kokkos::SparseRowView<TpetraType1> row_view = Jac_.row(row);
           f_->sumIntoLocalValue(row, (valVec_(i,node,dim)).val());
-          FadType fad = valVec_(i,node,dim);
- //TOFIX!!!!         Jac_->sumIntoLocalValues(row, colT, Teuchos::arrayView(&((valVec_(i,node,dim)).fastAccessDx(0)), nunk));
+          //FadType1 fad = valVec_(i,node,dim);
+          //Jac_.sumIntoValues (row, colT, nunk,  const_cast<double*>((valVec_(i,node, dim)).dx()), true);
+         // Jac_->sumIntoLocalValues(row, colT, Teuchos::arrayView(&((valVec_(i,node,dim)).fastAccessDx(0)), nunk));
       }
      }
    }
@@ -246,8 +253,10 @@ evaluateFields(typename Traits::EvalData workset)
 {
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
-
-
+  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType2 ;
+  LocalMatrixType2 jacobian=JacT->getLocalMatrix();
+  //const unsigned nrow = jacobian.numRows();
+ // std::cout<< JacT;
   bool loadResid = Teuchos::nonnull(fT);
   LO rowT;
   Teuchos::Array<LO> colT;
@@ -257,7 +266,7 @@ evaluateFields(typename Traits::EvalData workset)
     int neq = nodeID[0].size();
     int nunk = neq*this->numNodes;
     colT.resize(nunk);
-
+//std::cout << neq << "   " << nunk <<"   " <<  this->numNodes << "    " <<std::endl;
     // Local Unks: Loop over nodes in element, Loop over equations per node
 
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -307,14 +316,30 @@ evaluateFields(typename Traits::EvalData workset)
     }
    }
 
-#else
-for  (std::size_t cell=0; cell < workset.numCells; ++cell )
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t eq = 0; eq < numFields; eq++)
-              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
+ #else
+//for  (std::size_t cell=0; cell < workset.numCells; ++cell )
+//    for (std::size_t node = 0; node < this->numNodes; ++node)
+//      for (std::size_t eq = 0; eq < numFields; eq++)
+//              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
 
- Kokkos::parallel_for(workset.numCells, ScatterToVector_jacob< Teuchos::RCP<Tpetra_CrsMatrix> , Teuchos::RCP<Tpetra_Vector>, PHX::MDField<ScalarT,Cell,Node,Dim>, Kokkos::View<int***, PHX::Device> >(JacT, fT, this->valVec[0], this->Index, this->numNodes, numFields) );
+//const unsigned nrow = jacobian.numRows();
+//        std::cout << "JacobianGraph[ "
+//                  << jacobian.numRows() << " x " << jacobian.numCols()
+//                  << " ] {" << std::endl ;
+
+/*        for ( unsigned irow = 0 ; irow < nrow ; ++irow ) {
+          std::cout << "  row[" << irow << "]{" ;
+          const unsigned entry_end = jacobian.graph.row_map(irow+1);
+          for ( unsigned entry = jacobian.graph.row_map(irow) ; entry < entry_end ; ++entry ) {
+            std::cout << " " << jacobian.graph.entries(entry);
+          }
+          std::cout << " }" << std::endl ;
+        }
+        std::cout << "}" << std::endl ;
+*/
+ Kokkos::parallel_for(workset.numCells, ScatterToVector_jacob< ScalarT, Tpetra_LocalMatrixType, Teuchos::RCP<Tpetra_Vector> , PHX::MDField<ScalarT,Cell,Node,Dim>, Kokkos::View<int***, PHX::Device> >(jacobian, fT, this->valVec[0], workset.wsElNodeEqID_kokkos, this->numNodes, numFields) );
 #endif
+
 
 
 //Initial Tpetra code

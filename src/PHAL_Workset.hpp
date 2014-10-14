@@ -137,7 +137,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > dist_param_index;
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
-  Kokkos::View<int****, PHX::Device> wsElNodeEqID_kokkos;
+  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;

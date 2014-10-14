@@ -248,12 +248,15 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-  for  (std::size_t cell=0; cell < workset.numCells; ++cell )
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t eq = 0; eq < numFields; eq++)
-              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
-
- Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, this->Index, this->offset, this->numNodes, numFields) );
+//  for  (std::size_t cell=0; cell < workset.numCells; ++cell )
+//    for (std::size_t node = 0; node < this->numNodes; ++node)
+//      for (std::size_t eq = 0; eq < numFields; eq++){
+                 //workset.wsElNodeEqID_kokkos(cell,node,eq)=workset.wsElNodeEqID[cell][node][this->offset + eq];
+//                 std::cout <<this->offset<< "     " << workset.wsElNodeEqID[cell][node][this->offset+eq] << "    " << workset.wsElNodeEqID_kokkos(cell,node,eq) <<std::endl;
+//       }
+//              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
+ // std::cout << workset.wsElNodeEqID[10][2][2] << "    " << workset.wsElNodeEqID_kokkos(10,2,2) <<std::endl;
+ Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields) );
 #endif
 //  std::cout << (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
 }
@@ -348,12 +351,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   //Irina Debug
 //  ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
- for  (std::size_t cell=0; cell < workset.numCells; ++cell )
-    for (std::size_t node = 0; node < this->numNodes; ++node)
-      for (std::size_t eq = 0; eq < numFields; eq++)
-              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
+// for  (std::size_t cell=0; cell < workset.numCells; ++cell )
+//    for (std::size_t node = 0; node < this->numNodes; ++node)
+//      for (std::size_t eq = 0; eq < numFields; eq++)
+//              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
 
-    Kokkos::parallel_for(workset.numCells, GatherSolution_jacob < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, this->Index, this->offset, this->numNodes, numFields, workset.ignore_residual, workset.j_coeff) );
+    Kokkos::parallel_for(workset.numCells, GatherSolution_jacob < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields, workset.ignore_residual, workset.j_coeff) );
 
 
 /*
