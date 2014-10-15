@@ -8,14 +8,16 @@
 
 #ifdef ALBANY_EPETRA
 #include "Epetra_BlockMap.h"
+#include "Epetra_GatherAllV.hpp"
 #endif
-#include <Teuchos_Comm.hpp>
+#include "Tpetra_GatherAllV.hpp" 
 #include "Teuchos_CommHelpers.hpp"
-#include "Teuchos_Array.hpp"
+#include "Teuchos_Array.hpp" 
 #include "Tpetra_DistObject.hpp"
 #include "Albany_Utils.hpp"
 
 #include "Teuchos_Assert.hpp"
+
 
 #include <algorithm>
 
@@ -47,9 +49,11 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 {
   Teuchos::Array<GO> allGIDs(sourceMapT->getGlobalNumElements());
   {
-    Teuchos::gatherAll<int, GO>(*sourceMapT->getComm(), sourceMapT->getNodeNumElements(),
-        sourceMapT->getNodeElementList().getRawPtr(),
-        allGIDs.size(), allGIDs.getRawPtr());
+    const int ierr = Tpetra::GatherAllV(
+        sourceMapT->getComm(),
+        sourceMapT->getNodeElementList().getRawPtr(), sourceMapT->getNodeNumElements(),
+        allGIDs.getRawPtr(), allGIDs.size());
+    TEUCHOS_ASSERT(ierr == 0);
   }
   std::sort(allGIDs.begin(), allGIDs.end());
 
@@ -68,10 +72,11 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 {
   Teuchos::Array<int> allGIDs(sourceMap.NumGlobalElements());
   {
-    Teuchos::RCP<const Teuchos_Comm> tapp_comm = Albany::createTeuchosCommFromEpetraComm(sourceMap.Comm());
-    Teuchos::gatherAll<int, int>(*tapp_comm, sourceMap.NumMyElements(),
-        sourceMap.MyGlobalElements(),
-        allGIDs.size(), allGIDs.getRawPtr());
+    const int ierr = Epetra::GatherAllV(
+        sourceMap.Comm(),
+        sourceMap.MyGlobalElements(), sourceMap.NumMyElements(),
+        allGIDs.getRawPtr(), allGIDs.size());
+    TEUCHOS_ASSERT(ierr == 0);
   }
   std::sort(allGIDs.begin(), allGIDs.end());
 
@@ -93,9 +98,11 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
 #ifdef ALBANY_EPETRA
 #include "Epetra_BlockMap.h"
 #include "Epetra_Comm.h"
+#include "Epetra_GatherAllV.hpp"
 #endif
+#include "Tpetra_GatherAllV.hpp"
 #include "Teuchos_CommHelpers.hpp"
-#include "Teuchos_Array.hpp"
+#include "Teuchos_Array.hpp" 
 #include "Tpetra_DistObject.hpp"
 #include "Albany_Utils.hpp"
 
@@ -187,19 +194,21 @@ selectedGIDs(const Epetra_BlockMap &sourceMap) const
     }
 
     const Epetra_Comm &comm = sourceMap.Comm();
-    Teuchos::RCP<const Teuchos_Comm> tapp_comm = Albany::createTeuchosCommFromEpetraComm(sourceMap.Comm());
 
     {
       int selectedGIDCount;
       {
         int mySelectedGIDCount = mySelectedGIDs.size();
-        Teuchos::reduceAll<int, int>(*tapp_comm, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount);
+        comm.SumAll(&mySelectedGIDCount, &selectedGIDCount, 1);
       }
       result.resize(selectedGIDCount);
     }
 
-    Teuchos::gatherAll<int, int>(*tapp_comm, mySelectedGIDs.size(), mySelectedGIDs.getRawPtr(),
-        result.size(), result.getRawPtr());
+    const int ierr = Epetra::GatherAllV(
+        comm,
+        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
+        result.getRawPtr(), result.size());
+    TEUCHOS_ASSERT(ierr == 0);
   }
 
   std::sort(result.begin(), result.end());
@@ -234,19 +243,21 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
     }
 
 
-    Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm();
+    Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm(); 
     {
-      double selectedGIDCount;
+      GO selectedGIDCount;
       {
-        double mySelectedGIDCount = mySelectedGIDs.size();
-        Teuchos::reduceAll<LO, ST>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount);
+        GO mySelectedGIDCount = mySelectedGIDs.size();
+        Teuchos::reduceAll<LO, GO>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount); 
       }
       result.resize(selectedGIDCount);
     }
 
-    Teuchos::gatherAll<int, GO>(*commT, mySelectedGIDs.size(), mySelectedGIDs.getRawPtr(),
-        result.size(), result.getRawPtr());
-
+    const int ierr = Tpetra::GatherAllV(
+        commT,
+        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
+        result.getRawPtr(), result.size());
+    TEUCHOS_ASSERT(ierr == 0);
   }
 
   std::sort(result.begin(), result.end());
@@ -259,7 +270,7 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
 
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
-#include "Teuchos_Array.hpp"
+#include "Teuchos_Array.hpp" 
 #include "Tpetra_DistObject.hpp"
 #include "Albany_Utils.hpp"
 

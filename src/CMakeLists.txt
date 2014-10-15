@@ -142,6 +142,7 @@ SET(SOURCES ${SOURCES}
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
+  responses/Epetra_GatherAllV.cpp
   )
 SET(HEADERS ${HEADERS}
   responses/Albany_SolutionCullingStrategy.hpp

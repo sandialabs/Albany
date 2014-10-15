@@ -296,7 +296,7 @@ updateSolutionImporterT()
     const Teuchos::Array<GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
     Teuchos::RCP<const Tpetra_Map> targetMapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (selectedGIDsT, solutionMapT->getComm(), solutionMapT->getNode());
     //const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
-    solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(targetMapT, solutionMapT));
+    solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(solutionMapT, targetMapT));
   }
 }
 #ifdef ALBANY_EPETRA
@@ -333,19 +333,9 @@ ImportWithAlternateMapT(
     Tpetra::CombineMode modeT)
 {
   Teuchos::RCP<const Tpetra_Map> savedMapT = targetT->getMap();
-  int ierr; 
-  {
-    targetT->replaceMap(importerT->getTargetMap());
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  {
-    targetT->doImport(sourceT, *importerT, modeT);
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  {
-    targetT->replaceMap(savedMapT);
-    TEUCHOS_ASSERT(ierr == 0);
-  }
+  targetT->replaceMap(importerT->getTargetMap());
+  targetT->doImport(sourceT, *importerT, modeT);
+  targetT->replaceMap(savedMapT);
 }
 
 void
@@ -357,18 +347,8 @@ ImportWithAlternateMapT(
     Tpetra::CombineMode modeT)
 {
   Teuchos::RCP<const Tpetra_Map> savedMapT = targetT.getMap();
-  int ierr; 
-  {
-    targetT.replaceMap(importerT->getTargetMap());
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  {
-    targetT.doImport(sourceT, *importerT, modeT);
-    TEUCHOS_ASSERT(ierr == 0);
-  }
-  {
-    targetT.replaceMap(savedMapT);
-    TEUCHOS_ASSERT(ierr == 0);
-  }
+  targetT.replaceMap(importerT->getTargetMap());
+  targetT.doImport(sourceT, *importerT, modeT);
+  targetT.replaceMap(savedMapT);
 }
 
