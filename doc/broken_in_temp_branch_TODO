@@ -41,52 +41,70 @@ The following tests FAILED:
 	 92 - KfieldBC_L2Proj_Tpetra (Failed) - Project IP to Nodal Field response missing (Andrew B. will fix)
 	121 - MechanicsWithTemperatureThermalExpansion (Failed) - Error 1 below
 	122 - MechanicsWithTemperature (Failed) - Error 1 below
-	171 - ThermoMechanical3D_SplitOutput (Failed)
-	173 - ThermoMechanical3D_SplitOutput_Tpetra (Failed)
-	213 - MechanicsTensileTet10_STK (Failed)
-	214 - MechanicsTensileTet10_STK_Tpetra (Failed)
-	230 - QCAD_Schrodinger_parabolic1D_SERIAL (Failed)
-	231 - QCAD_Schrodinger_parabolic1D_SERIAL_Tpetra (Failed)
-	232 - QCAD_Schrodinger_parabolic2D_SERIAL (Failed)
-	233 - QCAD_Schrodinger_parabolic1D (Failed)
-	234 - QCAD_Schrodinger_parabolic2D (Failed)
-	235 - QCAD_Schrodinger_parabolic3D (Failed)
-	236 - QCAD_Schrodinger_formula2D_qcad (Failed)
-	237 - QCAD_Schrodinger_infiniteWall1D (Failed)
-	238 - QCAD_Schrodinger_infiniteWall2D (Failed)
-	239 - QCAD_Schrodinger_finiteWall1D (Failed)
-	240 - QCAD_Schrodinger_parabolic1D_Tpetra (Failed)
-	241 - QCAD_Schrodinger_parabolic3D_Tpetra (Failed)
-	242 - QCAD_Schrodinger_finiteWall1D_Tpetra (Failed)
-	243 - QCAD_Schrodinger_infiniteWall1D_Tpetra (Failed)
-	244 - QCAD_Schrodinger_infiniteWall2D_Tpetra (Failed)
-	249 - FO_MMS_SinCosGlen (Failed)
-	250 - FO_MMS_SinCosGlen_Tpetra (Failed)
-	253 - FO_MMS_SinExp_Neumann (Failed)
-	254 - FO_MMS_SinExp_Neumann_Tpetra (Failed)
-	255 - FO_MMS_CosExp_Basal (Failed)
-	256 - FO_MMS_CosExp_Basal_Tpetra (Failed)
-	257 - FO_MMS_FO_CosExp_BasalAll (Failed)
-	258 - FO_MMS_FO_CosExp_BasalAll_Tpetra (Failed)
-	270 - FO_GIS_GisUnstructured (Failed)
-	271 - FO_GIS_GisRestartUnstructured (Failed)
-	273 - Stokes_MMS_Poly (Failed)
-	274 - Stokes_MMS_CouettePeriodicX (Failed)
-	275 - Stokes_MMS_SinSinPeriodicXY (Failed)
-	276 - Stokes_MMS_SinSinDirichlet (Failed)
-	279 - Stokes_MMS_SinCosGlen (Failed)
-	280 - Stokes_MMS_SinExpBasal (Failed)
-	287 - Aeras_TC5_Serial_Tpetra (Failed)
-	290 - Aeras_TC3_Serial (Failed)
-	291 - Aeras_TCGalewsky_Serial (Failed)
-	292 - Aeras_TC4_Serial (Failed)
-	293 - Aeras_TC7_Serial (Failed)
-	295 - Aeras_XZScalarAdvection_Tpetra (Failed)
-	301 - MOR_TransientHeat2D_galerkin_trunc_colloc_exo (Failed)
-	302 - MOR_TransientHeat2D_galerkin_trunc_colloc_sample_exo (Failed)
-	303 - SEE_NonlinearPoisson_Tpetra (Failed)
+	171 - ThermoMechanical3D_SplitOutput (Failed) - Error 1 below
+	173 - ThermoMechanical3D_SplitOutput_Tpetra (Failed) - Error 1 below
+	213 - MechanicsTensileTet10_STK (Failed) - Error 2 below
+	214 - MechanicsTensileTet10_STK_Tpetra (Failed) - Error 2 below
+	230 - QCAD_Schrodinger_parabolic1D_SERIAL (Failed) - seg fault
+	231 - QCAD_Schrodinger_parabolic1D_SERIAL_Tpetra (Failed) - seg fault
+	232 - QCAD_Schrodinger_parabolic2D_SERIAL (Failed) - seg fault
+	233 - QCAD_Schrodinger_parabolic1D (Failed) - seg fault
+	234 - QCAD_Schrodinger_parabolic2D (Failed) - seg fault
+	235 - QCAD_Schrodinger_parabolic3D (Failed) - seg fault
+	236 - QCAD_Schrodinger_formula2D_qcad (Failed) - seg fault
+	237 - QCAD_Schrodinger_infiniteWall1D (Failed) - seg fault
+	238 - QCAD_Schrodinger_infiniteWall2D (Failed) - seg fault
+	239 - QCAD_Schrodinger_finiteWall1D (Failed) - seg fault
+	240 - QCAD_Schrodinger_parabolic1D_Tpetra (Failed) - seg fault
+	241 - QCAD_Schrodinger_parabolic3D_Tpetra (Failed) - seg fault
+	242 - QCAD_Schrodinger_finiteWall1D_Tpetra (Failed) - seg fault
+	243 - QCAD_Schrodinger_infiniteWall1D_Tpetra (Failed) - seg fault
+	244 - QCAD_Schrodinger_infiniteWall2D_Tpetra (Failed) - seg fault
+	249 - FO_MMS_SinCosGlen (Failed) - Error 3 below
+	250 - FO_MMS_SinCosGlen_Tpetra (Failed) - Error 3 below 
+	253 - FO_MMS_SinExp_Neumann (Failed) - Error 3 below
+	254 - FO_MMS_SinExp_Neumann_Tpetra (Failed) - Error 3 below
+	255 - FO_MMS_CosExp_Basal (Failed) - Error 3 below
+	256 - FO_MMS_CosExp_Basal_Tpetra (Failed) - Error 3 below
+	257 - FO_MMS_FO_CosExp_BasalAll (Failed) - Error 3 below
+	258 - FO_MMS_FO_CosExp_BasalAll_Tpetra (Failed) - Error 3 below
+	270 - FO_GIS_GisUnstructured (Failed) - Uses ExtrudedSTKMesh (Irina will fix)
+	271 - FO_GIS_GisRestartUnstructured (Failed) - Uses ExtrudedSTKMesh (Irina will fix)
+	273 - Stokes_MMS_Poly (Failed) - Error 3 below
+	274 - Stokes_MMS_CouettePeriodicX (Failed) - Error 3 below
+	275 - Stokes_MMS_SinSinPeriodicXY (Failed) - Error 3 below
+	276 - Stokes_MMS_SinSinDirichlet (Failed) - Error 3 below
+	279 - Stokes_MMS_SinCosGlen (Failed) - Error 3 below
+	280 - Stokes_MMS_SinExpBasal (Failed) - Error 3 below
+	287 - Aeras_TC5_Serial_Tpetra (Failed) - Error 4 below; probably something didn't get merged.  Irina will look at.
+	290 - Aeras_TC3_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
+	291 - Aeras_TCGalewsky_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
+	292 - Aeras_TC4_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
+	293 - Aeras_TC7_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
+	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
+	301 - MOR_TransientHeat2D_galerkin_trunc_colloc_exo (Failed) - need to merge Andrew's fixes for this (?)
+	302 - MOR_TransientHeat2D_galerkin_trunc_colloc_sample_exo (Failed) - need to merge Andrew's fixes for this (?) 
+	303 - SEE_NonlinearPoisson_Tpetra (Failed) - need to remove this example which fails b/c SCOREC doesn't exist in my build
 Errors while running CTest
 
 Error 1
  ARRAY RANGE CHECK FAILED: 0 <= 1 < 1 ; THROWN FROM FILE /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Trilinos_clean/packages/shards/src/Shards_Array.cpp AT LINE 197
+
+Error 2
+ /home/ikalash/Trilinos_Albany/Albany_clean/src/disc/stk/Albany_STKDiscretization.cpp:2215:
+  Throw number = 1
+  Throw test that evaluated to true: true
+  Error - unknown element type : TETRAHEDRON_10 requested in nodal graph algorithm
+
+Error 3
+ /home/ikalash/Trilinos_Albany/Albany_clean/src/disc/stk/Albany_STKDiscretization.cpp:2215:
+ Throw number = 1
+ Throw test that evaluated to true: true
+ Error - unknown element type : QUADRILATERAL_4_2D requested in nodal graph algorithm
+
+Error 4
+ /home/ikalash/Trilinos_Albany/Albany_clean/src/Aeras/evaluators/Aeras_ShallowWaterSource_Def.hpp:44:
+ Throw number = 1
+ Throw test that evaluated to true: invalidString
+ Unknown shallow water source string of TC2 encountered. 
 
