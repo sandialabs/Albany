@@ -2,16 +2,14 @@
 The following are broken in the temporary branch following the merge of master -> tpetra: 
 
 1.) nodalGraph doesn't have adj and start methods implemented, which were introduced into the master branch 
-for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Albany_STKDiscretization.cpp .
+for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Albany_STKDiscretization.cpp . (Glen and Andrew B.'s work; Andrew will handle.)
 
 3.) I have removed saveFieldBlock, saveFieldVector, saveNodal*, registerNodal*, etc. classes, as these are gone from the master branch.These were used in the new evaluator ProjectIPtoNodalField.  That evaluator has been commented out for now.  Needs to be converted
-to not rely on missing classes.
+to not rely on missing classes. (Andrew B. and Glen's code; Andrew will bring up to date.)
 
 4.) mpas_interface code has Epetra.  Needs to be converted.  It's off right now in my build / tests.
 
 5.) Need to check that ALBANY_EPETRA_EXE OFF builds (probably it won't right now), and that the resulting library doesn't have Epetra.
-
-6.) Need to merge Andrew Bradley's recent bug fixes into the temporary branch.
 
 7.) Albany::SolverFactory create* methods have new boolean input "bool createAlbanyApp".  Need to propagate this into Tpetra versions
 of these functions.
@@ -25,7 +23,7 @@ didn't work the same way as Epetra (it had no true concept of block map).  You c
  //if(blocksize < 0)
       //  blocksize = overlap_node_map.ElementSize();
 
-lines in saveField, which are commented out now.  
+lines in saveField, which are commented out now.  (Andrew B. probably.)
 
 Failed tests (10/13/14): 
 The following tests FAILED:
@@ -71,10 +69,6 @@ The following tests FAILED:
 	276 - Stokes_MMS_SinSinDirichlet (Failed) - Error 3 below
 	279 - Stokes_MMS_SinCosGlen (Failed) - Error 3 below
 	280 - Stokes_MMS_SinExpBasal (Failed) - Error 3 below
-	290 - Aeras_TC3_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
-	291 - Aeras_TCGalewsky_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
-	292 - Aeras_TC4_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
-	293 - Aeras_TC7_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
 	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
 Errors while running CTest
 
@@ -101,3 +95,20 @@ Error 4
   Throw number = 1
   Throw test that evaluated to true: numNodes != content->getLocalLength()
   Error in ExtrudedSTKMeshStruct: Number of nodes in file ../AsciiMeshes/GisUnstructFiles/surface_height.ascii (2087) is different from the number expected (0)
+
+When
+    -D ENABLE_CHECK_FPE:BOOL=ON,
+these additional tests fail with FPE:
+	124 - MechanicsRigidBody_Tpetra (Failed)
+	184 - LaplaceBeltrami:2DTri_Cgrid_TPS_Tpetra (Failed)
+	185 - LaplaceBeltrami:2DTri_Cgrid_LB_Tpetra (Failed)
+	187 - LaplaceBeltrami:2DTri6_Cgrid_TPS_Tpetra (Failed)
+	188 - LaplaceBeltrami:2DTri6_Cgrid_LB_Tpetra (Failed)
+	190 - LaplaceBeltrami:2DQuad_arc_TPS_Tpetra (Failed)
+	191 - LaplaceBeltrami:2DQuad_arc_LB_Tpetra (Failed)
+	193 - LaplaceBeltrami:2DQuad_chev_TPS_Tpetra (Failed)
+	214 - QCAD_Poisson_mosdot_3D_Tpetra (Failed)
+	216 - QCAD_Poisson_pmoscap_polygate_Tpetra (Failed)
+	217 - QCAD_Poisson_pndiode_Tpetra (Failed)
+	218 - QCAD_Poisson_mosdot_2D_tri6_Tpetra (Failed)
+Andrew B. will fix.
