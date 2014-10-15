@@ -32,11 +32,9 @@ lines in saveField, which are commented out now.
 
 Failed tests (10/13/14): 
 The following tests FAILED:
-	 26 - SGBratu1D_Tpetra (Failed) - PHAL Field IntegralT response (Irina will fix)
-	 27 - SGQuad2D_Tpetra (Failed) - PHAL Field Integral T response (Irina will fix)
 	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing)
 	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
-	 73 - GPAM_Tpetra (Failed) - PHAL Field IntegralT response (Irina will fix)
+	 73 - GPAM_Tpetra (Failed) - Failed comparison 
 	 90 - KfieldBC_base_Tpetra (Failed) - Failed comparison (related to IP to Nodal Field response missing?) 
 	 92 - KfieldBC_L2Proj_Tpetra (Failed) - Project IP to Nodal Field response missing (Andrew B. will fix)
 	121 - MechanicsWithTemperatureThermalExpansion (Failed) - Error 1 below
@@ -76,15 +74,11 @@ The following tests FAILED:
 	276 - Stokes_MMS_SinSinDirichlet (Failed) - Error 3 below
 	279 - Stokes_MMS_SinCosGlen (Failed) - Error 3 below
 	280 - Stokes_MMS_SinExpBasal (Failed) - Error 3 below
-	287 - Aeras_TC5_Serial_Tpetra (Failed) - Error 4 below; probably something didn't get merged.  Irina will look at.
 	290 - Aeras_TC3_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
 	291 - Aeras_TCGalewsky_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
 	292 - Aeras_TC4_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
 	293 - Aeras_TC7_Serial (Failed) - seg fault in new STK I/O that got merged in from Master branch (Andrew B./Jim Foucar will debug)
 	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
-	301 - MOR_TransientHeat2D_galerkin_trunc_colloc_exo (Failed) - need to merge Andrew's fixes for this (?)
-	302 - MOR_TransientHeat2D_galerkin_trunc_colloc_sample_exo (Failed) - need to merge Andrew's fixes for this (?) 
-	303 - SEE_NonlinearPoisson_Tpetra (Failed) - need to remove this example which fails b/c SCOREC doesn't exist in my build
 Errors while running CTest
 
 Error 1
@@ -102,9 +96,4 @@ Error 3
  Throw test that evaluated to true: true
  Error - unknown element type : QUADRILATERAL_4_2D requested in nodal graph algorithm
 
-Error 4
- /home/ikalash/Trilinos_Albany/Albany_clean/src/Aeras/evaluators/Aeras_ShallowWaterSource_Def.hpp:44:
- Throw number = 1
- Throw test that evaluated to true: invalidString
- Unknown shallow water source string of TC2 encountered. 
 

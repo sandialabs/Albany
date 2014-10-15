@@ -119,7 +119,8 @@ createResponseFunction(
 	   name == "IP to Nodal Field" ||
 	   name == "Save Nodal Fields" ||
 	   name == "Stiffness Objective" ||
-	   name == "PHAL Field Integral") {
+           name == "PHAL Field Integral" ||
+           name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
 #ifdef ALBANY_LCM
