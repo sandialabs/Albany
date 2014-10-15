@@ -239,7 +239,7 @@ class ScatterToVector_jacob {
           Kokkos::SparseRowView<TpetraType1> row_view = Jac_.row(row);
           f_->sumIntoLocalValue(row, (valVec_(i,node,dim)).val());
           //FadType1 fad = valVec_(i,node,dim);
-          //Jac_.sumIntoValues (row, colT, nunk,  const_cast<double*>((valVec_(i,node, dim)).dx()), true);
+          Jac_.sumIntoValues (row, colT, nunk,  const_cast<double*>((valVec_(i,node, dim)).dx()), true);
          // Jac_->sumIntoLocalValues(row, colT, Teuchos::arrayView(&((valVec_(i,node,dim)).fastAccessDx(0)), nunk));
       }
      }
@@ -254,6 +254,8 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
   typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType2 ;
+  if (!JacT->isFillComplete())
+      JacT->fillComplete();
   LocalMatrixType2 jacobian=JacT->getLocalMatrix();
   //const unsigned nrow = jacobian.numRows();
  // std::cout<< JacT;
@@ -340,7 +342,7 @@ evaluateFields(typename Traits::EvalData workset)
  Kokkos::parallel_for(workset.numCells, ScatterToVector_jacob< ScalarT, Tpetra_LocalMatrixType, Teuchos::RCP<Tpetra_Vector> , PHX::MDField<ScalarT,Cell,Node,Dim>, Kokkos::View<int***, PHX::Device> >(jacobian, fT, this->valVec[0], workset.wsElNodeEqID_kokkos, this->numNodes, numFields) );
 #endif
 
-
+JacT->resumeFill();
 
 //Initial Tpetra code
 /*
