@@ -116,7 +116,6 @@ createResponseFunction(
 	   name == "Save Field" ||
 	   name == "Region Boundary" ||
 	   name == "Element Size Field" ||
-	   name == "IP to Nodal Field" ||
 	   name == "Save Nodal Fields" ||
 	   name == "Stiffness Objective" ||
            name == "PHAL Field Integral" ||
