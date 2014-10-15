@@ -18,7 +18,7 @@ SET(SOURCES
   Albany_AsciiSTKMesh2D.cpp
   Albany_AsciiSTKMeshStruct.cpp
   Albany_CismSTKMeshStruct.cpp
-  #Albany_ExtrudedSTKMeshStruct.cpp
+  Albany_ExtrudedSTKMeshStruct.cpp
   )
 SET(HEADERS 
   Albany_NodalGraphUtils.hpp
@@ -41,7 +41,7 @@ SET(HEADERS
   Albany_AsciiSTKMesh2D.hpp
   Albany_AsciiSTKMeshStruct.hpp
   Albany_CismSTKMeshStruct.hpp
-  #Albany_ExtrudedSTKMeshStruct.hpp
+  Albany_ExtrudedSTKMeshStruct.hpp
   )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

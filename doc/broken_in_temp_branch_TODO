@@ -66,8 +66,8 @@ The following tests FAILED:
 	256 - FO_MMS_CosExp_Basal_Tpetra (Failed) - Error 3 below
 	257 - FO_MMS_FO_CosExp_BasalAll (Failed) - Error 3 below
 	258 - FO_MMS_FO_CosExp_BasalAll_Tpetra (Failed) - Error 3 below
-	270 - FO_GIS_GisUnstructured (Failed) - Uses ExtrudedSTKMesh (Irina will fix)
-	271 - FO_GIS_GisRestartUnstructured (Failed) - Uses ExtrudedSTKMesh (Irina will fix)
+	270 - FO_GIS_GisUnstructured (Failed) - Error 4 below (need to talk to Mauro)
+	271 - FO_GIS_GisRestartUnstructured (Failed) - Error 4 below (need to talk to Mauro)
 	273 - Stokes_MMS_Poly (Failed) - Error 3 below
 	274 - Stokes_MMS_CouettePeriodicX (Failed) - Error 3 below
 	275 - Stokes_MMS_SinSinPeriodicXY (Failed) - Error 3 below
@@ -96,4 +96,11 @@ Error 3
  Throw test that evaluated to true: true
  Error - unknown element type : QUADRILATERAL_4_2D requested in nodal graph algorithm
 
-
+Error 4
+ Throw test that evaluated to true: *getMap() != *importer.getTargetMap()
+  doImport: The target DistObject's Map is not identical to the Import's target Map.
+  p=0: *** Caught standard std::exception of type 'Teuchos::Exceptions::InvalidParameterValue' :
+  /home/ikalash/Trilinos_Albany/Albany/src/disc/stk/Albany_ExtrudedSTKMeshStruct.cpp:685:
+  Throw number = 1
+  Throw test that evaluated to true: numNodes != content->getLocalLength()
+  Error in ExtrudedSTKMeshStruct: Number of nodes in file ../AsciiMeshes/GisUnstructFiles/surface_height.ascii (2087) is different from the number expected (0)

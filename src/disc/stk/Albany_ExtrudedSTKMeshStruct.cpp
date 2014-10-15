@@ -18,7 +18,6 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
-#include <Epetra_Import.h>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -31,7 +30,7 @@
 
 //TODO: Generalize the importer so that it can extrude quad meshes
 
-Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Epetra_Comm>& comm) :
+Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Teuchos_Comm>& comm) :
     GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false) {
   params->validateParameters(*getValidDiscretizationParameters(), 0);
 
@@ -154,7 +153,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct() {
 }
 
-void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const Epetra_Comm>& comm, const Teuchos::RCP<Teuchos::ParameterList>& params, const unsigned int neq_, const AbstractFieldContainer::FieldContainerRequirements& req, const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm, const Teuchos::RCP<Teuchos::ParameterList>& params, const unsigned int neq_, const AbstractFieldContainer::FieldContainerRequirements& req, const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const unsigned int worksetSize) {
 
   int numLayers = params->get("NumLayers", 10);
@@ -207,13 +206,32 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     maxOwnedSides2D = std::max(maxOwnedSides2D, (long long int) bulkData2D.identifier(edges2D[i]));
   numOwnedNodes2D = stk::mesh::count_selected_entities(select_owned_in_part, bulkData2D.buckets(stk::topology::NODE_RANK));
 
-  comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
-  comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
-  comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
-  comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
+  //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
+  //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
+  //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
+  //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
+  //IK, 10/1/14: in order for reduceAll to work with Teuchos::Comm object we have to cast things as ints; long long ints don't work 
+  //(because Teuchos::Comm is templated on just int?).  Are long long ints really necessary?  Look into this -- ask Mauro.
+  //Are there issues for 64 bit integer build of Albany? 
+   LO maxOwnedElements2DInt = maxOwnedElements2D;
+  GO maxGlobalElements2DInt = maxGlobalElements2D;
+  LO maxOwnedNodes2DInt = maxOwnedNodes2D;
+  GO maxGlobalVertices2dIdInt = maxGlobalVertices2dId;
+  LO maxOwnedSides2DInt = maxOwnedSides2D;
+  GO maxGlobalEdges2DInt = maxGlobalEdges2D;
+  int numOwnedNodes2DInt = numOwnedNodes2D;
+  int numGlobalVertices2DInt = numGlobalVertices2D;
+  //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
+  Teuchos::reduceAll<LO,GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedElements2DInt, Teuchos::ptr(&maxGlobalElements2DInt));
+  //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
+  Teuchos::reduceAll<LO,GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedNodes2DInt, Teuchos::ptr(&maxGlobalVertices2dIdInt));
+  //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
+  Teuchos::reduceAll<LO,GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedSides2DInt, Teuchos::ptr(&maxGlobalEdges2DInt));
+  //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
+  //The following should not be int int...
+  Teuchos::reduceAll<int,int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2DInt, &numGlobalVertices2DInt);
 
-
-  if (comm->MyPID() == 0) std::cout << "Importing ascii files ...";
+  if (comm->getRank() == 0) std::cout << "Importing ascii files ...";
 
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalEdges2D << std::endl;
 
@@ -221,28 +239,31 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   for (int i = 0; i < nodes2D.size(); ++i)
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
 
-  const Epetra_Map nodes_map(-1, indices.size(), &indices[0], 0, *comm);
-  int numMyElements = (comm->MyPID() == 0) ? numGlobalVertices2D : 0;
-  const Epetra_Map serial_nodes_map(-1, numMyElements, 0, *comm);
-  Epetra_Import importOperator(nodes_map, serial_nodes_map);
+  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayViewFromVector(indices);
+  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMap<LO, GO> (indicesAV, comm);
+  int numMyElements = (comm->getRank() == 0) ? numGlobalVertices2D : 0;
+  Teuchos::RCP<Tpetra_Map> serial_nodes_map = Teuchos::rcp(new Tpetra_Map(numMyElements, 0, comm, Tpetra::GloballyDistributed));
+  Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(nodes_map, serial_nodes_map));
 
-  Epetra_Vector temp(serial_nodes_map);
-  Teuchos::RCP<Epetra_Vector> sHeightVec;
-  Teuchos::RCP<Epetra_Vector> thickVec;
-  Teuchos::RCP<Epetra_Vector> bFrictionVec;
-  Teuchos::RCP<std::vector<Epetra_Vector> > temperatureVecInterp;
-  Teuchos::RCP<std::vector<Epetra_Vector> > sVelocityVec;
-  Teuchos::RCP<std::vector<Epetra_Vector> > velocityRMSVec;
+  Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(serial_nodes_map));
+  Teuchos::RCP<Tpetra_Vector> sHeightVec;
+  Teuchos::RCP<Tpetra_Vector> thickVec;
+  Teuchos::RCP<Tpetra_Vector> bFrictionVec;
+  Teuchos::RCP<std::vector<Tpetra_Vector> > temperatureVecInterp;
+  Teuchos::RCP<std::vector<Tpetra_Vector> > sVelocityVec;
+  Teuchos::RCP<std::vector<Tpetra_Vector> > velocityRMSVec;
+
 
 
   bool hasSurface_height =  std::find(req.begin(), req.end(), "surface_height") != req.end();
 
   {
-    sHeightVec = Teuchos::rcp(new Epetra_Vector(nodes_map));
+    sHeightVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
     std::string fname = params->get<std::string>("Surface Height File Name", "surface_height.ascii");
     read2DFileSerial(fname, temp, comm);
-    sHeightVec->Import(temp, importOperator, Insert);
+    sHeightVec->doImport(*temp, *importOperator, Tpetra::INSERT);
   }
+  Teuchos::ArrayRCP<const ST> sHeightVec_constView = sHeightVec->get1dView();
 
 
   bool hasThickness =  std::find(req.begin(), req.end(), "thickness") != req.end();
@@ -250,23 +271,25 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   {
     std::string fname = params->get<std::string>("Thickness File Name", "thickness.ascii");
     read2DFileSerial(fname, temp, comm);
-    thickVec = Teuchos::rcp(new Epetra_Vector(nodes_map));
-    thickVec->Import(temp, importOperator, Insert);
+    thickVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
+    thickVec->doImport(*temp, *importOperator, Tpetra::INSERT);
   }
+  Teuchos::ArrayRCP<const ST> thickVec_constView = thickVec->get1dView();
 
 
   bool hasBasal_friction = std::find(req.begin(), req.end(), "basal_friction") != req.end();
   if(hasBasal_friction) {
     std::string fname = params->get<std::string>("Basal Friction File Name", "basal_friction.ascii");
     read2DFileSerial(fname, temp, comm);
-    bFrictionVec = Teuchos::rcp(new Epetra_Vector(nodes_map));
-    bFrictionVec->Import(temp, importOperator, Insert);
+    bFrictionVec = Teuchos::rcp(new Tpetra_Vector(nodes_map));
+    bFrictionVec->doImport(*temp, *importOperator, Tpetra::INSERT);
   }
+  Teuchos::ArrayRCP<const ST> bFrictionVec_constView = bFrictionVec->get1dView();
 
   bool hasTemperature = std::find(req.begin(), req.end(), "temperature") != req.end();
   if(hasTemperature) {
-    std::vector<Epetra_Vector> temperatureVec;
-    temperatureVecInterp = Teuchos::rcp(new std::vector<Epetra_Vector>(numLayers + 1, Epetra_Vector(nodes_map)));
+    std::vector<Tpetra_Vector> temperatureVec;
+    temperatureVecInterp = Teuchos::rcp(new std::vector<Tpetra_Vector>(numLayers + 1, Tpetra_Vector(nodes_map)));
     std::string fname = params->get<std::string>("Temperature File Name", "temperature.ascii");
     readFileSerial(fname, serial_nodes_map, nodes_map, importOperator, temperatureVec, temperatureNormalizedZ, comm);
 
@@ -295,33 +318,36 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
         il1 = k;
         h0 = (temperatureNormalizedZ[il1] - levelsNormalizedThickness[il]) / (temperatureNormalizedZ[il1] - temperatureNormalizedZ[il0]);
       }
+      Teuchos::ArrayRCP<ST> temperatureVecInterp_nonConstView = (*temperatureVecInterp)[il].get1dViewNonConst();
+      Teuchos::ArrayRCP<const ST> temperatureVec_constView_il0 = temperatureVec[il0].get1dView();
+      Teuchos::ArrayRCP<const ST> temperatureVec_constView_il1 = temperatureVec[il1].get1dView();
 
-      for (int i = 0; i < nodes_map.NumMyElements(); i++)
-        (*temperatureVecInterp)[il][i] = h0 * temperatureVec[il0][i] + (1.0 - h0) * temperatureVec[il1][i];
+      for (int i = 0; i < nodes_map->getNodeNumElements(); i++)
+        temperatureVecInterp_nonConstView[i] = h0 * temperatureVec_constView_il0[i] + (1.0 - h0) * temperatureVec_constView_il1[i];
     }
   }
 
-  std::vector<Epetra_Vector> tempSV(neq_, Epetra_Vector(serial_nodes_map));
+  std::vector<Tpetra_Vector> tempSV(neq_, Tpetra_Vector(serial_nodes_map));
 
   bool hasSurfaceVelocity = std::find(req.begin(), req.end(), "surface_velocity") != req.end();
   if(hasSurfaceVelocity) {
     std::string fname = params->get<std::string>("Surface Velocity File Name", "surface_velocity.ascii");
     readFileSerial(fname, tempSV, comm);
-    sVelocityVec = Teuchos::rcp(new std::vector<Epetra_Vector> (neq_, Epetra_Vector(nodes_map)));
+    sVelocityVec = Teuchos::rcp(new std::vector<Tpetra_Vector> (neq_, Tpetra_Vector(nodes_map)));
     for (int i = 0; i < tempSV.size(); i++)
-      (*sVelocityVec)[i].Import(tempSV[i], importOperator, Insert);
+      (*sVelocityVec)[i].doImport(tempSV[i], *importOperator, Tpetra::INSERT);
   }
 
   bool hasSurfaceVelocityRMS = std::find(req.begin(), req.end(), "surface_velocity_rms") != req.end();
   if(hasSurfaceVelocityRMS) {
     std::string fname = params->get<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii");
     readFileSerial(fname, tempSV, comm);
-    velocityRMSVec = Teuchos::rcp(new std::vector<Epetra_Vector> (neq_, Epetra_Vector(nodes_map)));
+    velocityRMSVec = Teuchos::rcp(new std::vector<Tpetra_Vector> (neq_, Tpetra_Vector(nodes_map)));
     for (int i = 0; i < tempSV.size(); i++)
-      (*velocityRMSVec)[i].Import(tempSV[i], importOperator, Insert);
+      (*velocityRMSVec)[i].doImport(tempSV[i], *importOperator, Tpetra::INSERT);
   }
 
-  if (comm->MyPID() == 0) std::cout << " done." << std::endl;
+  if (comm->getRank() == 0) std::cout << " done." << std::endl;
 
   long long int elemColumnShift = (Ordering == 1) ? 1 : maxGlobalElements2D;
   int lElemColumnShift = (Ordering == 1) ? 1 : cells2D.size();
@@ -380,34 +406,39 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     coord[0] = coord2d[0];
     coord[1] = coord2d[1];
 
-    int lid = nodes_map.LID((long long int)(node2dId));
-    coord[2] = (*sHeightVec)[lid] - (*thickVec)[lid] * (1. - levelsNormalizedThickness[il]);
+    int lid = nodes_map->getLocalElement((long long int)(node2dId));
+    coord[2] = sHeightVec_constView[lid] - thickVec_constView[lid] * (1. - levelsNormalizedThickness[il]);
 
     if(hasSurface_height && surface_height_field) {
       double* sHeight = stk::mesh::field_data(*surface_height_field, node);
-      sHeight[0] = (*sHeightVec)[lid];
+      sHeight[0] = sHeightVec_constView[lid];
     }
 
     if(hasThickness && thickness_field) {
       double* thick = stk::mesh::field_data(*thickness_field, node);
-      thick[0] = (*thickVec)[lid];
+      thick[0] = thickVec_constView[lid];
     }
 
     if(surface_velocity_field) {
       double* sVelocity = stk::mesh::field_data(*surface_velocity_field, node);
-      sVelocity[0] = (*sVelocityVec)[0][lid];
-      sVelocity[1] = (*sVelocityVec)[1][lid];
+      Teuchos::ArrayRCP<const ST> sVelocityVec_constView_0 = (*sVelocityVec)[0].get1dView();
+      Teuchos::ArrayRCP<const ST> sVelocityVec_constView_1 = (*sVelocityVec)[1].get1dView();
+      sVelocity[0] = sVelocityVec_constView_0[lid];
+      sVelocity[1] = sVelocityVec_constView_1[lid];
     }
 
     if(surface_velocity_RMS_field) {
       double* velocityRMS = stk::mesh::field_data(*surface_velocity_RMS_field, node);
-      velocityRMS[0] = (*velocityRMSVec)[0][lid];
-      velocityRMS[1] = (*velocityRMSVec)[1][lid];
+      Teuchos::ArrayRCP<const ST> velocityRMSVec_constView_0 = (*velocityRMSVec)[0].get1dView();
+      Teuchos::ArrayRCP<const ST> velocityRMSVec_constView_1 = (*velocityRMSVec)[1].get1dView();
+      velocityRMS[0] = velocityRMSVec_constView_0[lid];
+      velocityRMS[1] = velocityRMSVec_constView_1[lid];
+
     }
 
     if(hasBasal_friction && basal_friction_field) {
       double* bFriction = stk::mesh::field_data(*basal_friction_field, node);
-      bFriction[0] = (*bFrictionVec)[lid];
+      bFriction[0] = bFrictionVec_constView[lid];
     }
   }
 
@@ -426,16 +457,18 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
     stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[ib]);
     double tempOnPrism = 0; //Set temperature constant on each prism/Hexa
+    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_il = (*temperatureVecInterp)[il].get1dView();
+    Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_ilplus1 = (*temperatureVecInterp)[il + 1].get1dView();
     for (int j = 0; j < NumBaseElemeNodes; j++) {
       stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
-      int node2dLId = nodes_map.LID((long long int)(node2dId));
+      int node2dLId = nodes_map->getLocalElement((long long int)(node2dId));
       stk::mesh::EntityId mpasLowerId = vertexLayerShift * node2dId;
       stk::mesh::EntityId lowerId = shift + vertexLayerShift * node2dId;
       prismMpasIds[j] = mpasLowerId;
       prismGlobalIds[j] = lowerId;
       prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
       if(hasTemperature)
-        tempOnPrism += 1. / NumBaseElemeNodes / 2. * ((*temperatureVecInterp)[il][node2dLId] + (*temperatureVecInterp)[il + 1][node2dLId]);
+        tempOnPrism += 1. / NumBaseElemeNodes / 2. * temperatureVecInterp_constView_il[node2dLId] + temperatureVecInterp_constView_ilplus1[node2dLId];
     }
 
     switch (ElemShape) {
@@ -450,7 +483,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
           bulkData->declare_relation(elem, node, j);
         }
         int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-        p_rank[0] = comm->MyPID();
+        p_rank[0] = comm->getRank();
         if(hasTemperature && temperature_field) {
           double* temperature = stk::mesh::field_data(*temperature_field, elem);
           temperature[0] = tempOnPrism;
@@ -467,7 +500,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
         bulkData->declare_relation(elem, node, j);
       }
       int* p_rank = (int*) stk::mesh::field_data(*proc_rank_field, elem);
-      p_rank[0] = comm->MyPID();
+      p_rank[0] = comm->getRank();
       if(hasTemperature && temperature_field) {
         double* temperature = stk::mesh::field_data(*temperature_field, elem);
         temperature[0] = tempOnPrism;
@@ -640,17 +673,18 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   return validPL;
 }
 
-void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm) {
+void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm) {
   long long int numNodes;
-  if (comm->MyPID() == 0) {
+  Teuchos::ArrayRCP<ST> content_nonConstView = content->get1dViewNonConst();
+  if (comm->getRank() == 0) {
     std::ifstream ifile;
     ifile.open(fname.c_str());
     if (ifile.is_open()) {
       ifile >> numNodes;
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != content.MyLength(), Teuchos::Exceptions::InvalidParameterValue, std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << content.MyLength() << ")" << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != content->getLocalLength(), Teuchos::Exceptions::InvalidParameterValue, std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << content->getLocalLength() << ")" << std::endl);
 
       for (long long int i = 0; i < numNodes; i++)
-        ifile >> content[i];
+        ifile >> content_nonConstView[i];
       ifile.close();
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open the file " << fname << std::endl;
@@ -658,20 +692,22 @@ void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Epetra_
   }
 }
 
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm) {
+void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vector<Tpetra_Vector>& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm) {
   long long int numNodes, numComponents;
-  if (comm->MyPID() == 0) {
+  if (comm->getRank() == 0) {
     std::ifstream ifile;
     ifile.open(fname.c_str());
     if (ifile.is_open()) {
       ifile >> numNodes >> numComponents;
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != contentVec[0].MyLength(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << contentVec[0].MyLength() << ")" << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != contentVec[0].getLocalLength(), Teuchos::Exceptions::InvalidParameterValue,
+          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << contentVec[0].getLocalLength() << ")" << std::endl);
       TEUCHOS_TEST_FOR_EXCEPTION(numComponents != contentVec.size(), Teuchos::Exceptions::InvalidParameterValue,
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.size() << ")" << std::endl);
-      for (int il = 0; il < numComponents; ++il)
+      for (int il = 0; il < numComponents; ++il) {
+        Teuchos::ArrayRCP<ST> contentVec_nonConstView = contentVec[il].get1dViewNonConst();
         for (long long int i = 0; i < numNodes; i++)
-          ifile >> contentVec[il][i];
+          ifile >> contentVec_nonConstView[i];
+      }
       ifile.close();
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
@@ -681,45 +717,52 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
   }
 }
 
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm) {
+void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
   long long int numNodes;
   int numComponents;
   std::ifstream ifile;
-  if (comm->MyPID() == 0) {
+  if (comm->getRank() == 0) {
     ifile.open(fname.c_str());
     if (ifile.is_open()) {
       ifile >> numNodes >> numComponents;
 
     //  std::cout << "numNodes >> numComponents: " << numNodes << " " << numComponents << std::endl;
 
-      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != map_serial.NumMyElements(), Teuchos::Exceptions::InvalidParameterValue,
-          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial.NumMyElements() << ")" << std::endl);
+      TEUCHOS_TEST_FOR_EXCEPTION(numNodes != map_serial->getNodeNumElements(), Teuchos::Exceptions::InvalidParameterValue,
+          std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial->getNodeNumElements() << ")" << std::endl);
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
       //	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
       //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
-  comm->Broadcast(&numComponents, 1, 0);
+  //comm->Broadcast(&numComponents, 1, 0);
+  //Cast numComponents as double to do broadcast
+  //IK, 10/1/14: Need to look into...
+  double numComponentsD = numComponents;
+  Teuchos::broadcast<LO, double>(*comm, 0, &numComponentsD);
   zCoords.resize(numComponents);
-  Epetra_Vector tempT(map_serial);
+  Teuchos::RCP<Tpetra_Vector> tempT = Teuchos::rcp(new Tpetra_Vector(map_serial));
 
-  if (comm->MyPID() == 0) {
+  if (comm->getRank() == 0) {
     for (int i = 0; i < numComponents; ++i)
       ifile >> zCoords[i];
   }
-  comm->Broadcast(&zCoords[0], numComponents, 0);
+  //comm->Broadcast(&zCoords[0], numComponents, 0);
+  //IK, 10/1/14: double should be ST? 
+  Teuchos::broadcast<LO, double>(*comm, 0, &zCoords[0]);
+  
+  temperatureVec.resize(numComponents, Tpetra_Vector(map));
 
-  temperatureVec.resize(numComponents, Epetra_Vector(map));
-
+  Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT->get1dViewNonConst();
   for (int il = 0; il < numComponents; ++il) {
-    if (comm->MyPID() == 0)
+    if (comm->getRank() == 0)
       for (long long int i = 0; i < numNodes; i++)
-        ifile >> tempT[i];
-    temperatureVec[il].Import(tempT, importOperator, Insert);
+        ifile >> tempT_nonConstView[i];
+    temperatureVec[il].doImport(*tempT, *importOperator, Tpetra::INSERT);
   }
 
-  if (comm->MyPID() == 0)
+  if (comm->getRank() == 0)
     ifile.close();
 
 }
