@@ -37,7 +37,7 @@ BiotModulus(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0);
 
     // Add Biot Modulus as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Biot Modulus", this, paramLib);
+    this->registerSacadoParameter("Biot Modulus", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ BiotModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Biot Modulus KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -72,9 +72,9 @@ BiotModulus(Teuchos::ParameterList& p) :
      this->addDependentField(porosity);
      isPoroElastic = true;
      FluidBulkModulus = elmd_list->get("Fluid Bulk Modulus Value", 10.0e9);
-     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Skeleton Bulk Modulus Parameter Value", this, paramLib);
+     this->registerSacadoParameter("Skeleton Bulk Modulus Parameter Value", paramLib);
      GrainBulkModulus = elmd_list->get("Grain Bulk Modulus Value", 10.0e12); // typically Kgrain >> Kskeleton
-     new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Grain Bulk Modulus Value", this, paramLib);
+     this->registerSacadoParameter("Grain Bulk Modulus Value", paramLib);
    }
    else {
      isPoroElastic=false;

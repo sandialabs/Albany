@@ -62,7 +62,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
     if(inputConditions == "scaled jump") {
       bc_type = INTJUMP;
       const_val = inputValues[0];
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
+      this->registerSacadoParameter(name, paramLib);
     }
     else { // inputConditions == "robin"
       bc_type = ROBIN;
@@ -72,7 +72,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < 3; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
+        this->registerSacadoParameter(ss.str(), paramLib);
       }
     }
 
@@ -136,7 +136,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < dudx.size(); i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
+        this->registerSacadoParameter(ss.str(), paramLib);
       }
   }
   else if(inputConditions == "P"){ // Pressure boundary condition for Elasticity
@@ -144,7 +144,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       // User has specified a pressure condition
       bc_type = PRESS;
       const_val = inputValues[0];
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
+      this->registerSacadoParameter(name, paramLib);
 
   }
   else if(inputConditions == "basal"){ // Basal boundary condition for FELIX
@@ -166,7 +166,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
+        this->registerSacadoParameter(ss.str(), paramLib);
       }
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
@@ -212,7 +212,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       for(int i = 0; i < 1; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
-        new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
+        this->registerSacadoParameter(ss.str(), paramLib);
       }
        PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
@@ -232,7 +232,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
         for(int i = 0; i < 5; i++) {
           std::stringstream ss; ss << name << "[" << i << "]";
-          new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss.str(), this, paramLib);
+          this->registerSacadoParameter(ss.str(), paramLib);
         }
          PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
@@ -255,7 +255,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
       // User has specified conditions on sideset normal
       bc_type = NORMAL;
       const_val = inputValues[0];
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(name, this, paramLib);
+      this->registerSacadoParameter(name, paramLib);
 
   }
 

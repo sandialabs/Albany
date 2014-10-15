@@ -37,7 +37,7 @@ ShearModulus(Teuchos::ParameterList& p) :
     constant_value = shmd_list->get("Value", 1.0);
 
     // Add Shear Modulus as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Shear Modulus", this, paramLib);
+    this->registerSacadoParameter("Shear Modulus", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ ShearModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Shear Modulus KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = shmd_list->get(ss, 0.0);
     }
   }
@@ -73,7 +73,7 @@ ShearModulus(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dmudT_value = shmd_list->get("dmudT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dmudT Value", this, paramLib);
+    this->registerSacadoParameter("dmudT Value", paramLib);
   }
   else {
     isThermoElastic=false;

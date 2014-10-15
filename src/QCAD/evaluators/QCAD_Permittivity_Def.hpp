@@ -45,8 +45,7 @@ Permittivity(Teuchos::ParameterList& p,
     // Add Permittivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "Permittivity", this, paramLib);
+    this->registerSacadoParameter("Permittivity", paramLib);
 
   }
   
@@ -62,10 +61,8 @@ Permittivity(Teuchos::ParameterList& p,
     // Add Permittivity as a Sacado-ized parameter
     Teuchos::RCP<ParamLib> paramLib = 
       	p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "Permittivity", this, paramLib);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "Permittivity Factor", this, paramLib);
+    this->registerSacadoParameter("Permittivity", paramLib);
+    this->registerSacadoParameter("Permittivity Factor", paramLib);
 
   }
 

@@ -37,7 +37,7 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0e-5); // default value=1, identical to Terzaghi stress
 
     // Add Van Genuchten Permeability as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Van Genuchten Permeability", this, paramLib);
+    this->registerSacadoParameter("Van Genuchten Permeability", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Van Genuchten Permeability KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -91,7 +91,7 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
          this->addDependentField(porePressure);
 
          waterUnitWeight = elmd_list->get("Water Unit Weight Value", 9810.0); // typically Kgrain >> Kskeleton
-         new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Water Unit Weight Value", this, paramLib);
+         this->registerSacadoParameter("Water Unit Weight Value", paramLib);
   }
 
 

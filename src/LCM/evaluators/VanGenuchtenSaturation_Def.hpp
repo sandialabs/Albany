@@ -37,7 +37,7 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0); // default value=1, identical to Terzaghi stress
 
     // Add Van Genuchten Saturation as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Van Genuchten Saturation", this, paramLib);
+    this->registerSacadoParameter("Van Genuchten Saturation", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Van Genuchten Saturation KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -94,7 +94,7 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
          // bulk modulus of solid skeleton.
 
          waterUnitWeight = elmd_list->get("Water Unit Weight Value", 9810.0);
-         new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Water Unit Weight Value", this, paramLib);
+         this->registerSacadoParameter("Water Unit Weight Value", paramLib);
   }
 
   this->addEvaluatedField(vgSaturation);

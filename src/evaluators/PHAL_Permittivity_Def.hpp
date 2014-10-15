@@ -125,8 +125,7 @@ init_constant(ScalarT value, Teuchos::ParameterList& p){
     Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
 
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      "Permittivity", this, paramLib);
+    this->registerSacadoParameter("Permittivity", paramLib);
 
 } // init_constant
 
@@ -161,7 +160,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Permittivity KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = sublist.get(ss, 0.0);
     }
 

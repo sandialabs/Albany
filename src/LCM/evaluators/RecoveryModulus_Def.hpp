@@ -37,7 +37,7 @@ RecoveryModulus(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0);
 
     // Add Recovery Modulus as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Recovery Modulus", this, paramLib);
+    this->registerSacadoParameter("Recovery Modulus", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ RecoveryModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Recovery Modulus KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -76,8 +76,8 @@ RecoveryModulus(Teuchos::ParameterList& p) :
     c1 = elmd_list->get("c1 Value", 0.0);
     c2 = elmd_list->get("c2 Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("c1 Value", this, paramLib);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("c2 Value", this, paramLib);
+    this->registerSacadoParameter("c1 Value", paramLib);
+    this->registerSacadoParameter("c2 Value", paramLib);
   }
   else {
     isThermoElastic=false;

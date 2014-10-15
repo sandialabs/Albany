@@ -292,9 +292,11 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
     ip_fields_[field] = PHX::MDField<ScalarT>(ip_field_names_[field], qp_layout);
     // Incoming integration point field to transfer.
     this->addDependentField(ip_fields_[field]);
+#if 0 //amb
     this->p_state_mgr_->registerNodalVectorStateVariable(
       nodal_field_names_[field], node_node_layout, dl->dummy, "all", "scalar",
       0.0, false, output_to_exodus_);
+#endif
   }
 
   // Count the total number of vectors in the multivector

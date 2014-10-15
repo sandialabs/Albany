@@ -52,7 +52,7 @@ XZHydrostaticResid(const Teuchos::ParameterList& p,
 
   // Register Reynolds number as Sacado-ized Parameter
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Reynolds Number", this, paramLib);
+  this->registerSacadoParameter("Reynolds Number", paramLib);
 }
 
 //**********************************************************************

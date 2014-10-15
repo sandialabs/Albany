@@ -38,7 +38,7 @@ YieldStrength(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0);
 
     // Add Yield Strength as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Yield Strength", this, paramLib);
+    this->registerSacadoParameter("Yield Strength", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -55,7 +55,7 @@ YieldStrength(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Yield Strength KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -77,7 +77,7 @@ YieldStrength(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dYdT_value = elmd_list->get("dYdT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dYdT Value", this, paramLib);
+    this->registerSacadoParameter("dYdT Value", paramLib);
   }
   else {
     isThermoElastic=false;
@@ -101,7 +101,7 @@ YieldStrength(Teuchos::ParameterList& p) :
 
       isDiffuseDeformation = true;
       zeta = elmd_list->get("zeta Value", 1.0);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>("zeta Value", this, paramLib);
+      this->registerSacadoParameter("zeta Value", paramLib);
     }
     else {
      isDiffuseDeformation=false;

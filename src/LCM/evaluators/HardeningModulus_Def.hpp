@@ -37,7 +37,7 @@ HardeningModulus(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0);
 
     // Add Hardening Modulus as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Hardening Modulus", this, paramLib);
+    this->registerSacadoParameter("Hardening Modulus", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -54,7 +54,7 @@ HardeningModulus(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Hardening Modulus KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = elmd_list->get(ss, 0.0);
     }
   }
@@ -75,7 +75,7 @@ HardeningModulus(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dHdT_value = elmd_list->get("dHdT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("dHdT Value", this, paramLib);
+    this->registerSacadoParameter("dHdT Value", paramLib);
   }
   else {
     isThermoElastic=false;
