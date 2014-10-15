@@ -16,6 +16,7 @@
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
 #ifdef ALBANY_EPETRA
 #include "Albany_SolutionResponseFunction.hpp"
 #endif
@@ -127,6 +128,20 @@ createResponseFunction(
 #endif
       responses.push_back(
           rcp(new Albany::FieldManagerScalarResponseFunction(
+              app, prob, meshSpecs[i], stateMgr, responseParams)));
+    }
+  }
+
+  else if (name == "IP to Nodal Field" ||
+           name == "Project IP to Nodal Field") {
+    responseParams.set("Name", name);
+    for (int i=0; i<meshSpecs.size(); i++) {
+#ifdef ALBANY_LCM
+      // Skip if dealing with interface block
+      if (meshSpecs[i]->ebName == "interface") continue;
+#endif
+      responses.push_back(
+        rcp(new Albany::FieldManagerResidualOnlyResponseFunction(
               app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
