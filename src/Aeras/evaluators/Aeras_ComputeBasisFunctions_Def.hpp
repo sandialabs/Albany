@@ -65,7 +65,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   // Allocate Temporary FieldContainers
   val_at_cub_points .resize     (numNodes, numQPs);
   grad_at_cub_points.resize     (numNodes, numQPs, basisDims);
-  D2_at_cub_points  .resize     (numNodes, numQPs, basisDims*basisDims/2);
+  D2_at_cub_points  .resize     (numNodes, numQPs, Intrepid::getDkCardinality(Intrepid::OPERATOR_D2, basisDims));
   refPoints         .resize               (numQPs, basisDims);
   refWeights        .resize               (numQPs);
 

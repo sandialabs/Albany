@@ -370,7 +370,7 @@ namespace Albany {
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
-    stk::io::StkMeshIoBroker* mesh_data;
+    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
     int outputInterval;
 

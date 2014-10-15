@@ -80,14 +80,11 @@ Albany::STKDiscretization::STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMes
 Albany::STKDiscretization::~STKDiscretization()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput || stkMeshStruct->cdfOutput) delete mesh_data;
-
   if (stkMeshStruct->cdfOutput)
       if (netCDFp)
     if (const int ierr = nc_close (netCDFp))
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
         "close returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-
 #endif
 
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
@@ -530,10 +527,8 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 
    container->transferSolutionToCoords();
 
-   if (mesh_data != NULL) {
-
+   if (!mesh_data.is_null()) {
      // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
-     delete mesh_data;
      setupExodusOutput();
    }
   }
@@ -579,12 +574,9 @@ void Albany::STKDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const
 
    container->transferSolutionToCoords();
 
-   if (mesh_data != NULL) {
-
+   if (!mesh_data.is_null()) {
      // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
-     delete mesh_data;
      setupExodusOutput();
-
    }
   }
 
@@ -1606,7 +1598,7 @@ void Albany::STKDiscretization::setupExodusOutput()
 
     Ioss::Init::Initializer io;
     
-    mesh_data = new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(commT));
+    mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(commT)));
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
@@ -2138,16 +2130,14 @@ void Albany::STKDiscretization::setupNetCDFOutput()
 void Albany::STKDiscretization::reNameExodusOutput(std::string& filename)
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput && mesh_data != NULL) {
+  if (stkMeshStruct->exoOutput && !mesh_data.is_null()) {
+    // Delete the mesh data object and recreate it
+    mesh_data = Teuchos::null;
 
-   // Delete the mesh data object and recreate it
-   delete mesh_data;
+    stkMeshStruct->exoOutFile = filename;
 
-   stkMeshStruct->exoOutFile = filename;
-
-   // reset reference value for monotonic time function call as we are writing to a new file
-   previous_time_label = -1.0e32;
-
+    // reset reference value for monotonic time function call as we are writing to a new file
+    previous_time_label = -1.0e32;
   }
 #else
   if (stkMeshStruct->exoOutput)
