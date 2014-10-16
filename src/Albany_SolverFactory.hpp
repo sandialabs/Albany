@@ -105,9 +105,11 @@ namespace Albany {
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<EpetraExt::ModelEvaluator> createModel(
       const Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm);
+#endif
 
     Teuchos::ParameterList& getAnalysisParameters() const
       { return appParams->sublist("Piro").sublist("Analysis"); }

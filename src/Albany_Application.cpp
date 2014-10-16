@@ -81,14 +81,17 @@ Application(const RCP<const Teuchos_Comm>& comm_,
 
 
 Albany::Application::
-Application(const RCP<const Epetra_Comm>& comm_) :
-    comm(comm_),
+Application(const RCP<const Teuchos_Comm>& comm_) :
+    commT(comm_),
     out(Teuchos::VerboseObjectBase::getDefaultOStream()),
     physicsBasedPreconditioner(false),
     shapeParamsHaveBeenReset(false),
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
     stateGraphVisDetail(0) {
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
+#endif
 };
 
 

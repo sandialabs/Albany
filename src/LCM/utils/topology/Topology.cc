@@ -74,9 +74,6 @@ Topology::Topology(
 
   set_interface_block_name(interface_block_name);
 
-  Teuchos::RCP<Epetra_Comm>
-  communicator = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-
   Albany::DiscretizationFactory
   disc_factory(params, communicatorT);
 

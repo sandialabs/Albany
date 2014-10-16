@@ -80,7 +80,7 @@ namespace Albany {
 		Teuchos::null);
 
     //! Constructor
-    Application(const Teuchos::RCP<const Epetra_Comm>& comm);
+    Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     //! Destructor
     ~Application();
