@@ -22,14 +22,23 @@ Please remove when issue is resolved
 #include "Adapt_NodalDataBlock.hpp"
 #include "Petra_Converters.hpp"
 
-//#define ATO_FILTER_ON
-#undef ATO_FILTER_ON
+#define ATO_FILTER_ON
+//#undef ATO_FILTER_ON
+
 // TEV: Following is for debugging filter operator.
 #ifdef ATO_FILTER_ON
 #include "EpetraExt_RowMatrixOut.h"
 #endif //ATO_FILTER_ON
 
-#include "ATO_TopoTools.hpp"
+// To Do:
+// 1.  The topology variable has to be defined on the overlap map for computing
+//     volume correctly.  Currently it's defined on the local map.
+
+MPI_Datatype MPI_GlobalPoint;
+
+bool ATO::operator< (ATO::GlobalPoint const & a, ATO::GlobalPoint const & b){return a.gid < b.gid;}
+ATO::GlobalPoint::GlobalPoint(){coords[0]=0.0; coords[1]=0.0; coords[2]=0.0;}
+
 
 /******************************************************************************/
 ATO::Solver::
@@ -67,6 +76,24 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Teuchos::ParameterList& topoParams = problemParams.get<Teuchos::ParameterList>("Topology");
   ATO::TopologyFactory topoFactory;
   _topology = topoFactory.create(topoParams);
+
+  // Parse filter
+  if( problemParams.isType<Teuchos::ParameterList>("Spatial Filter")){
+    Teuchos::ParameterList& filterParams = problemParams.get<Teuchos::ParameterList>("Spatial Filter");
+    _filterRadius = filterParams.get<double>("Filter Radius",0.0);
+  } else
+    _filterRadius = 0.0;
+
+  
+  _filterTopology = topoParams.get<bool>("Apply Spatial Filter", false);
+  TEUCHOS_TEST_FOR_EXCEPTION( _filterTopology && _filterRadius == 0.0,
+      Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error!  Requested spatial filtering, but filter not defined." << std::endl);
+
+  _filterDerivative = aggregatorParams.get<bool>("Apply Spatial Filter", false);
+  TEUCHOS_TEST_FOR_EXCEPTION( _filterDerivative && _filterRadius == 0.0,
+      Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error!  Requested spatial filtering, but filter not defined." << std::endl);
 
   // Get and set the default Piro parameters from a file, if given
   std::string piroFilename  = problemParams.get<std::string>("Piro Defaults Filename", "");
@@ -127,12 +154,38 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
 //  if( _topoCentering == "Node" ){
   if( _topology->getCentering() == "Node" ){
+    Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
+    Albany::StateManager& stateMgr = app->getStateMgr();
+
+    // construct epetra maps for node ids. 
+    Teuchos::RCP<const Epetra_Comm> comm = _subProblems[0].app->getComm();
+    Teuchos::RCP<const Epetra_BlockMap>
+      local_node_blockmap   = stateMgr.getNodalDataBlock()->getLocalMap();
+    int num_global_elements = local_node_blockmap->NumGlobalElements();
+    int num_my_elements     = local_node_blockmap->NumMyElements();
+    int *global_node_ids    = new int[num_my_elements]; 
+    local_node_blockmap->MyGlobalElements(global_node_ids);
+    localNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
+    delete [] global_node_ids;
+
+    Teuchos::RCP<const Epetra_BlockMap>
+      overlap_node_blockmap = stateMgr.getNodalDataBlock()->getOverlapMap();
+    num_global_elements = overlap_node_blockmap->NumGlobalElements();
+    num_my_elements     = overlap_node_blockmap->NumMyElements();
+    global_node_ids     = new int[num_my_elements]; 
+    overlap_node_blockmap->MyGlobalElements(global_node_ids);
+    overlapNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
+    delete [] global_node_ids;
+
+    if(_topology->OutputFilteredTopology() ){
+      filteredOTopoVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+      filteredTopoVec  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+    } else {
+      filteredOTopoVec = Teuchos::null;
+      filteredTopoVec = Teuchos::null;
+    }
+
     // create overlap topo vector for output purposes
-    Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
-    Teuchos::RCP<const Epetra_BlockMap> 
-      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMapE();
-    Teuchos::RCP<const Epetra_BlockMap> 
-      localNodeMap = stateMgr.getNodalDataBlock()->getLocalMapE();
     overlapTopoVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
     overlapdfdpVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
     dfdpVec  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
@@ -145,6 +198,22 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     // create exporter (for integration type operations):
                                               //* source *//   //* target *//
     exporter = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
+
+#ifdef ATO_FILTER_ON
+    // this should go somewhere else.  for now ...
+    GlobalPoint gp;
+    int blockcounts[3] = {1,3,1};
+    MPI_Datatype oldtypes[3] = {MPI_INT, MPI_DOUBLE, MPI_UB};
+    MPI_Aint offsets[3] = {(MPI_Aint)&(gp.gid)    - (MPI_Aint)&gp, 
+                           (MPI_Aint)&(gp.coords) - (MPI_Aint)&gp, 
+                           sizeof(GlobalPoint)};
+    MPI_Type_struct(3,blockcounts,offsets,oldtypes,&MPI_GlobalPoint);
+    MPI_Type_commit(&MPI_GlobalPoint);
+
+    // initialize/build the filter operator. this is built once.
+    buildFilterOperator(_subProblems[0].app);
+#endif //ATO_FILTER_ON
+
   }
 
 
@@ -247,7 +316,9 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
     Teuchos::RCP<const Epetra_BlockMap> 
-      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMapE();
+      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMap();
+    Teuchos::RCP<const Epetra_BlockMap> 
+      localNodeMap = stateMgr.getNodalDataBlock()->getLocalMap();
 
     // communicate boundary info
     int numLocalNodes = topoVec->MyLength();
@@ -261,22 +332,43 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            ltopo[lid] = p[lid];
+            int lid = localNodeMap->LID(gid);
+            if(lid != -1) ltopo[lid] = p[lid];
           }
       } else {
         double matVal = _topology->getMaterialValue();
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            ltopo[lid] = matVal;
+            int lid = localNodeMap->LID(gid);
+            if(lid != -1) ltopo[lid] = matVal;
           }
       }
     }
 
-    overlapTopoVec->Import(*topoVec, *importer, Insert);
+    // save topology to nodal data for output sake
+    Teuchos::RCP<Albany::NodeFieldContainer> 
+      nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
 
+
+    // apply filter if requested
+    if( filterOperator != Teuchos::null ){
+
+      if(_topology->ApplySpatialFilter()){
+        Epetra_Vector filtered_topoVec(*topoVec);
+        filterOperator->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
+        *topoVec = filtered_topoVec;
+      } else
+      if(_topology->OutputFilteredTopology() ){
+        filterOperator->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
+        filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
+        std::string nodal_topoName = _topology->getName()+"_node_filtered";
+        (*nodeContainer)[nodal_topoName]->saveField(filteredOTopoVec,/*offset=*/0);
+      }
+    
+    }
+
+    overlapTopoVec->Import(*topoVec, *importer, Insert);
 
     double* otopo; overlapTopoVec->ExtractView(&otopo);
     for(int ws=0; ws<numWorksets; ws++){
@@ -291,10 +383,6 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
           wsTopo(cell,node) = otopo[lid];
         }
     }
-
-    // save topology to nodal data for output sake
-    Teuchos::RCP<Albany::NodeFieldContainer> 
-      nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
 
     std::string nodal_topoName = _topology->getName()+"_node";
     (*nodeContainer)[nodal_topoName]->saveField(overlapTopoVec,/*offset=*/0);
@@ -361,17 +449,25 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
           odfdp[lid] += dfdpSrc(cell,node);
         }
     }
-    // if no smoother is being used, values will not yet be consistent
-    // accross processors, so communicate boundary info:
-    bool smoother = false;
-    if( !smoother ){
-      dfdpVec->Export(*overlapdfdpVec, *exporter, Add);
+    dfdpVec->Export(*overlapdfdpVec, *exporter, Add);
 
-      int numLocalNodes = dfdpVec->MyLength();
-      double* lvec; dfdpVec->ExtractView(&lvec);
+    int numLocalNodes = dfdpVec->MyLength();
+    double* lvec; dfdpVec->ExtractView(&lvec);
+
+
+
+    // apply filter if requested
+    if(filterOperator != Teuchos::null && _filterDerivative){
+      Epetra_Vector filtered_dfdpVec(*dfdpVec);
+      filterOperator->Multiply(/*UseTranspose=*/false, *dfdpVec, filtered_dfdpVec);
+      filtered_dfdpVec.ExtractView(&lvec);
       std::memcpy((void*)dfdp, (void*)lvec, numLocalNodes*sizeof(double));
-
+    } else {
+      std::memcpy((void*)dfdp, (void*)lvec, numLocalNodes*sizeof(double));
     }
+
+    
+
   }
 }
 /******************************************************************************/
@@ -388,6 +484,52 @@ void
 ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
 /******************************************************************************/
 {
+  if( _topology->getCentering() == "Node" ){
+    // communicate boundary topo data
+    Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
+    Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+    Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+    int numWorksets = dest.size();
+  
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+      wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
+    Teuchos::RCP<const Epetra_BlockMap> 
+      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMap();
+    Teuchos::RCP<const Epetra_BlockMap> 
+      localNodeMap = stateMgr.getNodalDataBlock()->getLocalMap();
+
+    int numLocalNodes = topoVec->MyLength();
+    double* ltopo; topoVec->ExtractView(&ltopo);
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+      int numCells = wsTopo.dimension(0);
+      int numNodes = wsTopo.dimension(1);
+      for(int cell=0; cell<numCells; cell++)
+        for(int node=0; node<numNodes; node++){
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = localNodeMap->LID(gid);
+          if(lid != -1) ltopo[lid] = p[lid];
+        }
+      }
+  
+      overlapTopoVec->Import(*topoVec, *importer, Insert);
+  
+      double* otopo; overlapTopoVec->ExtractView(&otopo);
+      for(int ws=0; ws<numWorksets; ws++){
+        Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+        int numCells = wsTopo.dimension(0);
+        int numNodes = wsTopo.dimension(1);
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
+            wsTopo(cell,node) = otopo[lid];
+          }
+      }
+  
+    return _atoProblem->ComputeVolume(otopo, v, dvdp);
+  }
+
   return _atoProblem->ComputeVolume(p, v, dvdp);
 }
 
@@ -607,8 +749,11 @@ ATO::Solver::getValidProblemParameters() const
   // Specify optimizer
   validPL->sublist("Topological Optimization", false, "");
 
-  // Specify responses
+  // Specify topology
   validPL->sublist("Topology", false, "");
+
+  // Specify responses
+  validPL->sublist("Spatial Filter", false, "");
 
   // Physics solver options
   validPL->set<std::string>(
@@ -687,7 +832,8 @@ Teuchos::RCP<const Epetra_Map> ATO::Solver::get_g_map(int j) const
                      j << std::endl);
   //TEV: Hardwired for now
   int _num_responses = 0;
-  if      (j <  _num_responses) return _epetra_response_map;  //no index because num_g == 1 so j must be zero
+  //no index because num_g == 1 so j must be zero
+  if      (j <  _num_responses) return _epetra_response_map; 
   else if (j == _num_responses) return _epetra_x_map;
   return Teuchos::null;
 }
@@ -707,7 +853,8 @@ ATO::Solver::CreateSubSolverData(const ATO::SolverSubSolver& sub) const
   ret.pLength = std::vector<int>(ret.Np);
   for(int i=0; i<ret.Np; i++) {
     Teuchos::RCP<const Epetra_Vector> solver_p = sub.params_in->get_p(i);
-    if(solver_p != Teuchos::null) ret.pLength[i] = solver_p->MyLength();  //uses local length (need to modify to work with distributed params)
+    //uses local length (need to modify to work with distributed params)
+    if(solver_p != Teuchos::null) ret.pLength[i] = solver_p->MyLength();
     else ret.pLength[i] = 0;
   }
 
@@ -715,13 +862,15 @@ ATO::Solver::CreateSubSolverData(const ATO::SolverSubSolver& sub) const
   ret.gLength = std::vector<int>(ret.Ng);
   for(int i=0; i<ret.Ng; i++) {
     Teuchos::RCP<const Epetra_Vector> solver_g = sub.responses_out->get_g(i);
-    if(solver_g != Teuchos::null) ret.gLength[i] = solver_g->MyLength(); //uses local length (need to modify to work with distributed responses)
+    //uses local length (need to modify to work with distributed responses)
+    if(solver_g != Teuchos::null) ret.gLength[i] = solver_g->MyLength();
     else ret.gLength[i] = 0;
   }
 
   if(ret.Np > 0) {
     Teuchos::RCP<const Epetra_Vector> p_init =
-      sub.model->get_p_init(0); //only first p vector used - in the future could make ret.p_init an array of Np vectors
+      //only first p vector used - in the future could make ret.p_init an array of Np vectors
+      sub.model->get_p_init(0);
     if(p_init != Teuchos::null) ret.p_init = Teuchos::rcp(new const Epetra_Vector(*p_init)); //copy
     else ret.p_init = Teuchos::null;
   }
@@ -736,32 +885,23 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
 /******************************************************************************/
 {
 
+  if(_filterRadius == 0.0) return;
+
+
 
   if(_topoCentering == "Node") {
 
     Teuchos::RCP<Adapt::NodalDataBlock> node_data = app->getStateMgr().getNodalDataBlock();
 
-    // create exporter
-    Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(app->getComm());
-    Teuchos::RCP<const Epetra_BlockMap>  local_node_blockmap   = node_data->getLocalMapE();
-    Teuchos::RCP<const Epetra_BlockMap>  overlap_node_blockmap = node_data->getOverlapMapE();
-  
-    // construct simple maps for node ids. 
-    int num_global_elements = local_node_blockmap->NumGlobalElements();
-    int num_my_elements     = local_node_blockmap->NumMyElements();
-    int *global_node_ids    = new int[num_my_elements]; 
-    local_node_blockmap->MyGlobalElements(global_node_ids);
-    Epetra_Map local_node_map(num_global_elements,num_my_elements,global_node_ids,0,*comm);
-    delete [] global_node_ids;
-  
-    num_global_elements = overlap_node_blockmap->NumGlobalElements();
-    num_my_elements     = overlap_node_blockmap->NumMyElements();
-    global_node_ids    = new int[num_my_elements]; 
-    overlap_node_blockmap->MyGlobalElements(global_node_ids);
-    Epetra_Map overlap_node_map(num_global_elements,num_my_elements,global_node_ids,0,*comm);
-    delete [] global_node_ids;
-  
-    Epetra_Export exporter = Epetra_Export(overlap_node_map, local_node_map);
+    // construct epetra map for node ids. 
+//    Teuchos::RCP<const Epetra_Comm> comm = app->getComm();
+//    Teuchos::RCP<const Epetra_BlockMap> local_node_blockmap = node_data->getLocalMap();
+//    int num_global_elements = local_node_blockmap->NumGlobalElements();
+//    int num_my_elements     = local_node_blockmap->NumMyElements();
+//    int *global_node_ids    = new int[num_my_elements]; 
+//    local_node_blockmap->MyGlobalElements(global_node_ids);
+//    Epetra_Map localNodeMap(num_global_elements,num_my_elements,global_node_ids,0,*comm);
+//    delete [] global_node_ids;
   
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
@@ -769,24 +909,24 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
       coords = app->getDiscretization()->getCoords();
   
-    std::map< int, std::set<int> > neighbors;
+    std::map< GlobalPoint, std::set<GlobalPoint> > neighbors;
   
-    double filter_radius_sqrd = _topoFilterRadius*_topoFilterRadius;
+    double filter_radius_sqrd = _filterRadius*_filterRadius;
     // awful n^2 search... all against all
     size_t dimension   = app->getDiscretization()->getNumDim();
-    double *home_coord = new double[dimension];
     size_t num_worksets = coords.size();
+    GlobalPoint homeNode;
     for (size_t home_ws=0; home_ws<num_worksets; home_ws++) {
       int home_num_cells = coords[home_ws].size();
       for (int home_cell=0; home_cell<home_num_cells; home_cell++) {
         size_t num_nodes = coords[home_ws][home_cell].size();
         for (int home_node=0; home_node<num_nodes; home_node++) {
-          int home_node_gid = wsElNodeID[home_ws][home_cell][home_node];
-          if(neighbors.find(home_node_gid)==neighbors.end()) {  // if this node was already accessed just skip
+          homeNode.gid = wsElNodeID[home_ws][home_cell][home_node];
+          if(neighbors.find(homeNode)==neighbors.end()) {  // if this node was already accessed just skip
             for (int dim=0; dim<dimension; dim++)  {
-              home_coord[dim] = coords[home_ws][home_cell][home_node][dim];
+              homeNode.coords[dim] = coords[home_ws][home_cell][home_node][dim];
             }
-            std::set<int> my_neighbors;
+            std::set<GlobalPoint> my_neighbors;
             for (size_t trial_ws=0; trial_ws<num_worksets; trial_ws++) {
               int trial_num_cells = coords[trial_ws].size();
               for (int trial_cell=0; trial_cell<trial_num_cells; trial_cell++) {
@@ -795,50 +935,68 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
                   double tmp;
                   double delta_norm_sqr = 0.;
                   for (int dim=0; dim<dimension; dim++)  { //individual coordinates
-                    tmp = home_coord[dim]-coords[trial_ws][trial_cell][trial_node][dim];
+                    tmp = homeNode.coords[dim]-coords[trial_ws][trial_cell][trial_node][dim];
                     delta_norm_sqr += tmp*tmp;
                   }
                   if(delta_norm_sqr<=filter_radius_sqrd) {
-                    int trial_node_gid = wsElNodeID[trial_ws][trial_cell][trial_node];
-                    my_neighbors.insert(trial_node_gid);
+                    GlobalPoint newIntx;
+                    newIntx.gid = wsElNodeID[trial_ws][trial_cell][trial_node];
+                    for (int dim=0; dim<dimension; dim++) 
+                      newIntx.coords[dim] = coords[trial_ws][trial_cell][trial_node][dim];
+                    my_neighbors.insert(newIntx);
                   }
                 }
               }
             }
-            neighbors.insert( std::pair<int,std::set<int> >(home_node_gid,my_neighbors) );
+            neighbors.insert( std::pair<GlobalPoint,std::set<GlobalPoint> >(homeNode,my_neighbors) );
           }
         }
       }
     }
-    delete [] home_coord;
+
+    // communicate neighbor data
+    importNeighbors(neighbors);
+
+    
+    // for each interior node, search boundary nodes for additional interactions off processor.
+    
   
     // now build filter operator
     int numnonzeros = 0;
-    filterOperator = Teuchos::rcp(new Epetra_CrsMatrix(Copy,overlap_node_map,numnonzeros));
-    for (std::map<int,std::set<int> >::iterator it=neighbors.begin(); it!=neighbors.end(); ++it) { 
-      int home_node_gid = it->first;
-      std::set<int> connected_nodes = it->second;
-      for (std::set<int>::iterator set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
-         double value = 1.;
-         int neighbor_node_gid = *set_it;
-         filterOperator->InsertGlobalValues(home_node_gid,1,&value,&neighbor_node_gid);
+    filterOperator = Teuchos::rcp(new Epetra_CrsMatrix(Copy,*localNodeMap,numnonzeros));
+    for (std::map<GlobalPoint,std::set<GlobalPoint> >::iterator 
+        it=neighbors.begin(); it!=neighbors.end(); ++it) { 
+      GlobalPoint homeNode = it->first;
+      int home_node_gid = homeNode.gid;
+      std::set<GlobalPoint> connected_nodes = it->second;
+      for (std::set<GlobalPoint>::iterator 
+           set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
+         int neighbor_node_gid = set_it->gid;
+         const double* coords = &(set_it->coords[0]);
+         double distance = 0.0;
+         for (int dim=0; dim<dimension; dim++) 
+           distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
+         distance = (distance > 0.0) ? sqrt(distance) : 0.0;
+         double weight = _filterRadius - distance;
+         filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
       }
     }
   
     filterOperator->FillComplete();
 
+    // scale filter operator so rows sum to one.
+    Epetra_Vector rowSums(*localNodeMap);
+    filterOperator->InvRowSums(rowSums);
+    filterOperator->RightScale(rowSums);
+
 // TEV: this is debugging code for examining filteroperator. Should be commented/ifdef'd out for
 // ... final production code.
-#ifdef ATO_FILTER_ON
-    EpetraExt::RowMatrixToMatlabFile("ato_filter_operator.m",*filterOperator);
-#endif //ATO_FILTER_ON
-    
-  /*
-    int num_remote_lids = overlap_exporter.NumRemoteIDs();
-    int *remote_lids = new int[num_remote_lids];
-    remote_lids = overlap_exporter.RemoteLIDs();
-    delete [] remote_lids;
-  */
+//#ifdef ATO_FILTER_ON
+//    std::stringstream outname;
+//    outname << "filter_operator_proc_" << _solverComm->MyPID() << ".m";
+//    EpetraExt::RowMatrixToMatlabFile(outname.str().c_str(),*filterOperator);
+//#endif //ATO_FILTER_ON
+
   } else {
     // Element centered filter
   }
@@ -847,7 +1005,231 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
 
 }
 
+/******************************************************************************/
+void 
+ATO::Solver::importNeighbors( 
+  std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >& neighbors)
+/******************************************************************************/
+{
+  // get from the exporter the node global ids and the associated processor ids
+  std::map<int, std::set<int> > boundaryNodesByProc;
+
+  const int* exportLIDs = exporter->ExportLIDs();
+  const int* exportPIDs = exporter->ExportPIDs();
+  int numExportIDs = exporter->NumExportIDs();
+
+  const Epetra_BlockMap& expNodeMap = exporter->SourceMap();
+
+  std::map<int, std::set<int> >::iterator procIter;
+  for(int i=0; i<numExportIDs; i++){
+    procIter = boundaryNodesByProc.find(exportPIDs[i]);
+    int exportGID = expNodeMap.GID(exportLIDs[i]);
+    if( procIter == boundaryNodesByProc.end() ){
+      std::set<int> newSet;
+      newSet.insert(exportGID);
+      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDs[i],newSet) );
+    } else {
+      procIter->second.insert(exportGID);
+    }
+  }
+
+  const Epetra_BlockMap& impNodeMap = importer->SourceMap();
+
+  exportLIDs = importer->ExportLIDs();
+  exportPIDs = importer->ExportPIDs();
+  numExportIDs = importer->NumExportIDs();
+
+  for(int i=0; i<numExportIDs; i++){
+    procIter = boundaryNodesByProc.find(exportPIDs[i]);
+    int exportGID = impNodeMap.GID(exportLIDs[i]);
+    if( procIter == boundaryNodesByProc.end() ){
+      std::set<int> newSet;
+      newSet.insert(exportGID);
+      boundaryNodesByProc.insert( std::pair<int,std::set<int> >(exportPIDs[i],newSet) );
+    } else {
+      procIter->second.insert(exportGID);
+    }
+  }
+
+  int newPoints = 1;
+  
+  while(newPoints > 0){
+    newPoints = 0;
+
+    int numNeighborProcs = boundaryNodesByProc.size();
+    std::vector<std::vector<int> > numNeighbors_send(numNeighborProcs);
+    std::vector<std::vector<int> > numNeighbors_recv(numNeighborProcs);
+    
+ 
+    // determine number of neighborhood nodes to be communicated
+    int index = 0;
+    std::map<int, std::set<int> >::iterator boundaryNodesIter;
+    for( boundaryNodesIter=boundaryNodesByProc.begin(); 
+         boundaryNodesIter!=boundaryNodesByProc.end(); 
+         boundaryNodesIter++){
+   
+      int send_to = boundaryNodesIter->first;
+      int recv_from = send_to;
+  
+      std::set<int>& boundaryNodes = boundaryNodesIter->second; 
+      int numNodes = boundaryNodes.size();
+  
+      numNeighbors_send[index].resize(numNodes);
+      numNeighbors_recv[index].resize(numNodes);
+  
+      ATO::GlobalPoint sendPoint;
+      std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >::iterator sendPointIter;
+      int localIndex = 0;
+      std::set<int>::iterator boundaryNodeGID;
+      for(boundaryNodeGID=boundaryNodes.begin(); 
+          boundaryNodeGID!=boundaryNodes.end();
+          boundaryNodeGID++){
+        sendPoint.gid = *boundaryNodeGID;
+        sendPointIter = neighbors.find(sendPoint);
+        TEUCHOS_TEST_FOR_EXCEPT( sendPointIter == neighbors.end() );
+        std::set<ATO::GlobalPoint>& sendPointSet = sendPointIter->second;
+        numNeighbors_send[index][localIndex] = sendPointSet.size();
+        localIndex++;
+      }
+  
+      MPI_Status status;
+      MPI_Sendrecv(&(numNeighbors_send[index][0]), numNodes, MPI_INT, send_to, 0,
+                   &(numNeighbors_recv[index][0]), numNodes, MPI_INT, recv_from, 0,
+                   MPI_COMM_WORLD, &status);
+      index++;
+    }
+  
+    // new neighbors can't be immediately added to the neighbor map or they'll be
+    // found and added to the list that's communicated to other procs.  This causes
+    // problems because the message length has already been communicated.  
+    std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> > newNeighbors;
+  
+    // communicate neighborhood nodes
+    index = 0;
+    for( boundaryNodesIter=boundaryNodesByProc.begin(); 
+         boundaryNodesIter!=boundaryNodesByProc.end(); 
+         boundaryNodesIter++){
+   
+      // determine total message size
+      int totalNumEntries_send = 0;
+      int totalNumEntries_recv = 0;
+      std::vector<int>& send = numNeighbors_send[index];
+      std::vector<int>& recv = numNeighbors_recv[index];
+      int totalNumNodes = send.size();
+      for(int i=0; i<totalNumNodes; i++){
+        totalNumEntries_send += send[i];
+        totalNumEntries_recv += recv[i];
+      }
+  
+      int send_to = boundaryNodesIter->first;
+      int recv_from = send_to;
+  
+      ATO::GlobalPoint* GlobalPoints_send = new ATO::GlobalPoint[totalNumEntries_send];
+      ATO::GlobalPoint* GlobalPoints_recv = new ATO::GlobalPoint[totalNumEntries_recv];
+      
+      // copy into contiguous memory
+      std::set<int>& boundaryNodes = boundaryNodesIter->second;
+      ATO::GlobalPoint sendPoint;
+      std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >::iterator sendPointIter;
+      std::set<int>::iterator boundaryNodeGID;
+      int numNodes = boundaryNodes.size();
+      int offset = 0;
+      for(boundaryNodeGID=boundaryNodes.begin(); 
+          boundaryNodeGID!=boundaryNodes.end();
+          boundaryNodeGID++){
+        // get neighbors for boundary node i
+        sendPoint.gid = *boundaryNodeGID;
+        sendPointIter = neighbors.find(sendPoint);
+        TEUCHOS_TEST_FOR_EXCEPT( sendPointIter == neighbors.end() );
+        std::set<ATO::GlobalPoint>& sendPointSet = sendPointIter->second;
+        // copy neighbors into contiguous memory
+        for(std::set<ATO::GlobalPoint>::iterator igp=sendPointSet.begin(); 
+            igp!=sendPointSet.end(); igp++){
+          GlobalPoints_send[offset] = *igp;
+          offset++;
+        }
+      }
+  
+      MPI_Status status;
+      MPI_Sendrecv(GlobalPoints_send, totalNumEntries_send, MPI_GlobalPoint, send_to, 0,
+                   GlobalPoints_recv, totalNumEntries_recv, MPI_GlobalPoint, recv_from, 0,
+                   MPI_COMM_WORLD, &status);
+  
+      // copy out of contiguous memory
+      ATO::GlobalPoint recvPoint;
+      std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >::iterator recvPointIter;
+      offset = 0;
+      int localIndex=0;
+      for(boundaryNodeGID=boundaryNodes.begin(); 
+          boundaryNodeGID!=boundaryNodes.end();
+          boundaryNodeGID++){
+        recvPoint.gid = *boundaryNodeGID;
+        recvPointIter = newNeighbors.find(recvPoint);
+        if( recvPointIter == newNeighbors.end() ){ // not found, add.
+          std::set<ATO::GlobalPoint> newPointSet;
+          int nrecv = recv[localIndex];
+          for(int j=0; j<nrecv; j++){
+            newPointSet.insert(GlobalPoints_recv[offset]);
+            offset++;
+          }
+          newNeighbors.insert( std::pair<ATO::GlobalPoint,std::set<ATO::GlobalPoint> >(recvPoint,newPointSet) );
+        } else {
+          int nrecv = recv[localIndex];
+          for(int j=0; j<nrecv; j++){
+            recvPointIter->second.insert(GlobalPoints_recv[offset]);
+            offset++;
+          }
+        }
+        localIndex++;
+      }
+   
+      delete [] GlobalPoints_send;
+      delete [] GlobalPoints_recv;
+      
+      index++;
+    }
+  
+    // add newNeighbors map to neighbors map
+    std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >::iterator new_nbr;
+    std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >::iterator nbr;
+    std::set< ATO::GlobalPoint >::iterator newPoint;
+    // loop on total neighbor list
+    for(nbr=neighbors.begin(); nbr!=neighbors.end(); nbr++){
+  
+      std::set<ATO::GlobalPoint>& pointSet = nbr->second;
+      int pointSetSize = pointSet.size();
+  
+      ATO::GlobalPoint home_point = nbr->first;
+      double* home_coords = &(home_point.coords[0]);
+      std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >::iterator nbrs;
+      std::set< ATO::GlobalPoint >::iterator remote_point;
+      for(nbrs=newNeighbors.begin(); nbrs!=newNeighbors.end(); nbrs++){
+        std::set<ATO::GlobalPoint>& remote_points = nbrs->second;
+        for(remote_point=remote_points.begin(); 
+            remote_point!=remote_points.end();
+            remote_point++){
+          const double* remote_coords = &(remote_point->coords[0]);
+          double distance = 0.0;
+          for(int i=0; i<3; i++)
+            distance += (remote_coords[i]-home_coords[i])*(remote_coords[i]-home_coords[i]);
+          distance = (distance > 0.0) ? sqrt(distance) : 0.0;
+          if( distance < _filterRadius )
+            pointSet.insert(*remote_point);
+        }
+      }
+      // see if any new points where found off processor.  
+      newPoints += (pointSet.size() - pointSetSize);
+    }
+    int globalNewPoints=0;
+    _solverComm->SumAll(&newPoints, &globalNewPoints, 1);
+    newPoints = globalNewPoints;
+  }
+}
+  
+  
 #ifdef ATO_FILTER_ON
 #undef ATO_FILTER_ON
 #endif //ATO_FILTER_ON
-
+  
+  
+  

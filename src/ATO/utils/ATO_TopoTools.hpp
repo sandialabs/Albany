@@ -28,17 +28,27 @@ public:
 
   const std::string& getCentering(){return centering;}
   const std::string& getName(){return name;}
+  const std::string& getOutputNames(){return name;}
   const Teuchos::Array<std::string>& getFixedBlocks(){return fixedBlocks;}
   double getInitialValue(){return initValue;}
   double getMaterialValue(){return materialValue;}
   double getVoidValue(){return voidValue;}
+  bool OutputFilteredTopology(){return outputFilteredTopology;}
+  bool ApplySpatialFilter(){return applySpatialFilter;}
 protected:
   std::string centering;
+  // this should be a vector of strings at some point since, in the
+  // general case, the topology may be defined by multiple fields.
   std::string name;
+
+  std::vector<std::string> outputNames;
   double initValue;
   double materialValue;
   double voidValue;
   Teuchos::Array<std::string> fixedBlocks;
+
+  bool outputFilteredTopology;
+  bool applySpatialFilter;
 };
 
 

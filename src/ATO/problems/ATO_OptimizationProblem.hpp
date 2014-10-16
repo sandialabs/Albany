@@ -58,6 +58,7 @@ public virtual Albany::AbstractProblem {
    Teuchos::RCP<Epetra_Export> exporter;
 
    Teuchos::RCP<Topology> topology;
+
 };
 
 }

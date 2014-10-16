@@ -20,6 +20,15 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
   if( topoParams.isType<Teuchos::Array<std::string> >("Fixed Blocks") ){
     fixedBlocks = topoParams.get<Teuchos::Array<std::string> >("Fixed Blocks");
   }
+
+  
+  if( topoParams.isType<bool>("Output Filtered Topology") )
+    outputFilteredTopology = topoParams.get<bool>("Output Filtered Topology");
+  else outputFilteredTopology = true;
+
+  if( topoParams.isType<bool>("Apply Spatial Filter") )
+    applySpatialFilter = topoParams.get<bool>("Apply Spatial Filter");
+  else applySpatialFilter = false;
 }
 
 

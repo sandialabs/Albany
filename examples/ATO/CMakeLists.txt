@@ -7,3 +7,4 @@
 add_subdirectory(Mitchell_2D)
 add_subdirectory(Mitchell_3D)
 add_subdirectory(MultiLoadSet)
+add_subdirectory(Filtered_2D)

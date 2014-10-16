@@ -30,6 +30,13 @@ namespace ATO {
   class OptimizationProblem;
   class Topology;
 
+  typedef struct GlobalPoint{ 
+    GlobalPoint();
+    int    gid; 
+    double coords[3]; 
+  } GlobalPoint;
+  bool operator< (GlobalPoint const & a, GlobalPoint const & b);
+
   class OptInterface {
   public:
     virtual void ComputeObjective(const double* p, double& f, double* dfdp=NULL)=0;
@@ -84,8 +91,11 @@ namespace ATO {
     Teuchos::RCP<Aggregator> _aggregator;
     Teuchos::RCP<Optimizer> _optimizer;
     Teuchos::RCP<Topology> _topology;
-//    std::string _topoName;
-//    std::string _topoCentering;
+
+    double  _filterRadius; // not sure if this is the best place but for now...
+    bool _filterDerivative;
+    bool _filterTopology;
+    bool _postFilterTopology;
 
     std::vector<Teuchos::RCP<Teuchos::ParameterList> > _subProblemAppParams;
     std::vector<SolverSubSolver> _subProblems;
@@ -93,6 +103,12 @@ namespace ATO {
 
     Teuchos::RCP<const Epetra_Comm> _solverComm;
     Teuchos::RCP<Teuchos::ParameterList> _mainAppParams;
+
+    Teuchos::RCP<Epetra_Map> overlapNodeMap;
+    Teuchos::RCP<Epetra_Map> localNodeMap;
+
+    Teuchos::RCP<Epetra_Vector> filteredOTopoVec;
+    Teuchos::RCP<Epetra_Vector> filteredTopoVec;
 
     Teuchos::RCP<Epetra_Vector> overlapTopoVec;
     Teuchos::RCP<Epetra_Vector> topoVec;
@@ -110,6 +126,7 @@ namespace ATO {
     void copyObjectiveFromStateMgr( double& f, double* dfdp );
     void zeroSet();
     void buildFilterOperator(const Teuchos::RCP<Albany::Application> app);
+    void importNeighbors(std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors);
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
     Teuchos::RCP<Teuchos::ParameterList> 
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;
