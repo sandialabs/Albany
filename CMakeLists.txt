@@ -269,6 +269,9 @@ ENDIF()
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)
+  MESSAGE(FATAL_ERROR "\nError:  ATO will not build right now in Tpetra Albany
+branch!  Need to convert ATO suite to use Tpetra branch objects, which
+requires resolving BlockMap Issue.")
   ADD_DEFINITIONS(-DALBANY_ATO)
   MESSAGE("-- ATO       is Enabled, compiling with -DALBANY_ATO")
   SET(ALBANY_ATO TRUE)

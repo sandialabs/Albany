@@ -20,6 +20,10 @@ didn't work the same way as Epetra (it had no true concept of block map).  You c
 
 lines in saveField, which are commented out now.  (Andrew B. probably.)
 
+10.) ATO suite needs to be converted to Tpetra. Irina has put in for now a an error in CMakeLists.txt if ATO is requested
+as it will not build in the Tpetra branch (even with Albany executable).  The code needs to be converted to use the Tpetra 
+objects.  To do this, 8.) and 9.) need to be resolved, as ATO makes heavy use of BlockMap.
+
 Failed tests (10/13/14): 
 The following tests FAILED:
 	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing)
