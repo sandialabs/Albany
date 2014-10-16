@@ -30,10 +30,10 @@ Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
 Teuchos::RCP<Teuchos::ParameterList> paramList;
-Teuchos::RCP<const Teuchos_Comm> mpiCommT;
+Teuchos::RCP<const Teuchos_Comm> mpiComm;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
-Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solverT;
+Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 bool keptMesh =false;
 
 typedef struct TET_ {
@@ -671,8 +671,9 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
 
 
-  solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm,
-      mpiComm, Teuchos::null, false);
+  //solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm,
+  //    mpiComm, Teuchos::null, false);
+  solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiComm, mpiComm); 
 
   Teuchos::ParameterList solveParams;
   solveParams.set("Compute Sensitivities", false);
@@ -682,12 +683,12 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
       Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
-  const Epetra_Map& overlapMap(
-      *albanyApp->getDiscretization()->getOverlapMap());
-  Epetra_Import import(overlapMap, *albanyApp->getDiscretization()->getMap());
-  Epetra_Vector solution(overlapMap);
-  solution.Import(*albanyApp->getDiscretization()->getSolutionField(), import,
-      Insert);
+  Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
+  Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(overlapMap, albanyApp->getDiscretization()->getMapT()));
+  Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
+  solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
+  Teuchos::ArrayRCP<const ST> solution_constView = solution->get1dView();
+
 
   for (UInt j = 0; j < numVertices3D; ++j) {
     int ib = (ordering == 0) * (j % lVertexColumnShift)
@@ -699,14 +700,14 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     int lId0, lId1;
 
     if (interleavedOrdering) {
-      lId0 = overlapMap.LID(2 * gId);
+      lId0 = overlapMap->getLocalElement(2 * gId);
       lId1 = lId0 + 1;
     } else {
-      lId0 = overlapMap.LID(gId);
+      lId0 = overlapMap->getLocalElement(gId);
       lId1 = lId0 + numVertices3D;
     }
-    velocityOnVertices[j] = solution[lId0];
-    velocityOnVertices[j + numVertices3D] = solution[lId1];
+    velocityOnVertices[j] = solution_constView[lId0];
+    velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
   }
 
   keptMesh = true;
@@ -736,7 +737,7 @@ void velocity_solver_finalize() {
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   keptMesh = false;
-  mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+  mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
 
@@ -756,7 +757,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& indexToTriangleID) {
 
   slvrfctry = Teuchos::rcp(
-      new Albany::SolverFactory("albany_input.xml", reducedComm));
+      new Albany::SolverFactory("albany_input.xml", mpiComm));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 

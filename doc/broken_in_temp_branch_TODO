@@ -7,9 +7,7 @@ for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Alban
 3.) I have removed saveFieldBlock, saveFieldVector, saveNodal*, registerNodal*, etc. classes, as these are gone from the master branch.These were used in the new evaluator ProjectIPtoNodalField.  That evaluator has been commented out for now.  Needs to be converted
 to not rely on missing classes. (Andrew B. and Glen's code; Andrew will bring up to date.)
 
-4.) mpas_interface code has Epetra.  Needs to be converted.  It's off right now in my build / tests.
-
-5.) Need to check that ALBANY_EPETRA_EXE OFF builds (probably it won't right now), and that the resulting library doesn't have Epetra.
+4.) Have Mauro test mpas_interface.
 
 7.) Albany::SolverFactory create* methods have new boolean input "bool createAlbanyApp".  Need to propagate this into Tpetra versions
 of these functions.
