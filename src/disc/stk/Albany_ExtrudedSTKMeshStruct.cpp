@@ -230,20 +230,28 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
   //The following should not be int int...
   Teuchos::reduceAll<int,int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2DInt, &numGlobalVertices2DInt);
+  maxOwnedElements2D = maxOwnedElements2DInt; 
+  maxGlobalElements2D = maxGlobalElements2DInt; 
+  maxOwnedNodes2D = maxOwnedNodes2DInt; 
+  maxGlobalVertices2dId = maxGlobalVertices2dIdInt; 
+  maxOwnedSides2D = maxOwnedSides2DInt; 
+  maxGlobalEdges2D = maxGlobalEdges2DInt; 
+  numOwnedNodes2D = numOwnedNodes2DInt; 
+  numGlobalVertices2D = numGlobalVertices2DInt; 
 
   if (comm->getRank() == 0) std::cout << "Importing ascii files ...";
 
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalEdges2D << std::endl;
 
-  std::vector<GO> indices(nodes2D.size()), serialIndices;
+  Teuchos::Array<GO> indices(nodes2D.size());
+  std::vector<GO> serialIndices;
   for (int i = 0; i < nodes2D.size(); ++i)
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
-
-  Teuchos::ArrayView<GO> indicesAV = Teuchos::arrayViewFromVector(indices);
-  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMap<LO, GO> (indicesAV, comm);
+  
+  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMap<LO, GO> (indices(), comm);
   int numMyElements = (comm->getRank() == 0) ? numGlobalVertices2D : 0;
-  Teuchos::RCP<Tpetra_Map> serial_nodes_map = Teuchos::rcp(new Tpetra_Map(numMyElements, 0, comm, Tpetra::GloballyDistributed));
-  Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(nodes_map, serial_nodes_map));
+  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm); 
+  Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
 
   Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(serial_nodes_map));
   Teuchos::RCP<Tpetra_Vector> sHeightVec;
@@ -717,7 +725,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
   }
 }
 
-void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
+void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
   long long int numNodes;
   int numComponents;
   std::ifstream ifile;

@@ -48,7 +48,7 @@ namespace Albany {
     inline void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
     void read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm);
     void readFileSerial(std::string &fname, std::vector<Tpetra_Vector>& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm);
-    void readFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm);
+    void readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm);
 
 
     Teuchos::RCP<const Teuchos::ParameterList>
