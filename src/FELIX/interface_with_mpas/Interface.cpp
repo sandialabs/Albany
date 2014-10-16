@@ -754,7 +754,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<int>& trianglesPositionsOnEdge,
     const std::vector<int>& verticesOnEdge,
     const std::vector<int>& indexToEdgeID,
-    const std::vector<int>& indexToTriangleID) {
+    const std::vector<GO>& indexToTriangleID) {
 
   slvrfctry = Teuchos::rcp(
       new Albany::SolverFactory("albany_input.xml", mpiComm));

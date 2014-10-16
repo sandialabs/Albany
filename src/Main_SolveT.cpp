@@ -34,6 +34,8 @@
 
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = true;
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
+
 
 void tpetraFromThyra(
   const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > &thyraResponses,
@@ -287,7 +289,8 @@ int main(int argc, char *argv[]) {
 
       //create serial map that puts the whole solution on processor 0
       int numMyElements = (xfinal->getMap()->getComm()->getRank() == 0) ? app->getDiscretization()->getMapT()->getGlobalNumElements() : 0;
-      Teuchos::RCP<Tpetra_Map> serial_map =  Teuchos::rcp(new Tpetra_Map(numMyElements, 0, xfinal->getMap()->getComm(), Tpetra::GloballyDistributed)); 
+
+     Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
  
       //create importer from parallel map to serial map and populate serial solution xfinal_serial
       Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_map, app->getDiscretization()->getMapT())); 

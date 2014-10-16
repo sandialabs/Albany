@@ -2,17 +2,17 @@
 The following are broken in the temporary branch following the merge of master -> tpetra: 
 
 1.) nodalGraph doesn't have adj and start methods implemented, which were introduced into the master branch 
-for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Albany_STKDiscretization.cpp . (Glen and Andrew B.'s work; Andrew will handle.)
+for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Albany_STKDiscretization.cpp . (Glen and Andrew B.'s work; Andrew will handle.) --> Andrew B.
 
-3.) I have removed saveFieldBlock, saveFieldVector, saveNodal*, registerNodal*, etc. classes, as these are gone from the master branch.These were used in the new evaluator ProjectIPtoNodalField.  That evaluator has been commented out for now.  Needs to be converted
-to not rely on missing classes. (Andrew B. and Glen's code; Andrew will bring up to date.)
+3.) Irina has removed saveFieldBlock, saveFieldVector, saveNodal*, registerNodal*, etc. classes, as these are gone from the master branch.These were used in the new evaluator ProjectIPtoNodalField.  That evaluator has been commented out for now.  Needs to be converted
+to not rely on missing classes. (Andrew B. and Glen's code; Andrew will bring up to date.) --> Andrew B.
 
-4.) Have Mauro test mpas_interface.
+4.) Have Mauro test mpas_interface.  There are some bugs still in ExtrudedSTKMesh struct causing unstructured FO_GIS examples to fail. Probably the same issue will be encountered through the mpas_interface.  --> Irina & Mauro 
 
 8.) Adapt_NodalDataBlock saveTepetraNodalDataVector function doesn't work right now -- see IK_FIXME.  There's a problem w/ 
 calling saveField on Tpetra_Vector instead of Tpetra_BlockMultiVector inputs.
 
-9.) I am concerned about all the BlockMaps in Albany_STKFieldContainer.  Last time I checked the details Tpetra's BlockMap 
+9.) Irina is concerned about all the BlockMaps in Albany_STKFieldContainer.  Last time I checked the details Tpetra's BlockMap 
 didn't work the same way as Epetra (it had no true concept of block map).  You can only get blockmap from Tpetra_BlockMultiVector (not Tpetra_Vector), hence the code input structure causing the problem 8.).  Something needs to be done about the 
 
  //if(blocksize < 0)
@@ -23,6 +23,10 @@ lines in saveField, which are commented out now.  (Andrew B. probably.)
 10.) ATO suite needs to be converted to Tpetra. Irina has put in for now a an error in CMakeLists.txt if ATO is requested
 as it will not build in the Tpetra branch (even with Albany executable).  The code needs to be converted to use the Tpetra 
 objects.  To do this, 8.) and 9.) need to be resolved, as ATO makes heavy use of BlockMap.
+
+11.) It appears code (temporary_tpetra_newSTK branch) doesn't build with ENABLE_SG_MP turned ON.  This should work with Epetra.  Need to figure out what is wrong 
+and fix.
+
 
 Failed tests (10/13/14): 
 The following tests FAILED:
