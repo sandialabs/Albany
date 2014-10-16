@@ -27,9 +27,9 @@
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 //
-//#define ENABLE_CHECK_FPE
+//#define ALBANY_CHECK_FPE
 
-#ifdef ENABLE_CHECK_FPE
+#ifdef ALBANY_CHECK_FPE
 #include <math.h>
 //#include <Accelerate/Accelerate.h>
 #include <xmmintrin.h>
@@ -116,10 +116,11 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
 #endif
 
-#ifdef ENABLE_CHECK_FPE
-   // Catch FPEs
-   _mm_setcsr(_MM_MASK_MASK &~
-		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+#ifdef ALBANY_CHECK_FPE
+   // Catch FPEs. Follow Main_SolveT.cpp's approach to checking for floating
+   // point exceptions.
+   //_mm_setcsr(_MM_MASK_MASK &~ (_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+   _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 #endif
 
   using Teuchos::RCP;
