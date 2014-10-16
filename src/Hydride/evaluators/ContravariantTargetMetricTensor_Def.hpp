@@ -63,6 +63,13 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Need to be ScalarT!
   Intrepid::CellTools<ScalarT>::setJacobian(jacobian, refPoints, solnVec, *cellType);
+  // Since Intrepid will perform calculations on the entire workset size and not
+  // just the used portion, we must fill the excess with reasonable values.
+  // Leaving this out leads to a floating point exception.
+  for (std::size_t cell = workset.numCells; cell < jacobian.dimension(0); ++cell)
+    for (std::size_t qp = 0; qp < numQPs; ++qp)
+      for (std::size_t i = 0; i < numDims; ++i)
+        jacobian(cell, qp, i, i) = 1.0;
   Intrepid::CellTools<ScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
