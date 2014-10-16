@@ -359,7 +359,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     albanyApp->createDiscretization();
     albanyApp->finalSetUp(parameterList);
 
-    solverT = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT);
+    solverT = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", true);

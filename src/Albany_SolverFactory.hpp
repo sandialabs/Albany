@@ -82,7 +82,8 @@ namespace Albany {
 //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);  
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null, 
+      bool createAlbanyApp = true);  
 
 #ifdef ALBANY_EPETRA
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(

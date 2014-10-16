@@ -319,7 +319,11 @@ Albany::SolverFactory::createAndGetAlbanyApp(
 
     if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
-      return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
+//IK, 10/16/14: need to convert ATO::Solver to Tpetra
+      RCP<Epetra_Vector> initial_guessE;
+      if(Teuchos::nonnull(initial_guess))
+        Petra::TpetraVector_To_EpetraVector(initial_guess, *initial_guessE, appComm);
+      return rcp(new ATO::Solver(appParams, solverComm, initial_guessE));
 #else /* ALBANY_ATO */
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
 #endif /* ALBANY_ATO */
@@ -468,7 +472,8 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
   const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess, 
+  bool createAlbanyApp)
 {
   const RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
   const std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -532,16 +537,29 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_QCAD */
     }
 
+//IK, 10/16/14: ATO::Solver needs to be converted to Tpetra? 
+// if (solutionMethod == "ATO Problem") {
+//#ifdef ALBANY_ATO
+//      return rcp(new ATO::Solver(appParams, solverComm, initial_guess));
+//#else /* ALBANY_ATO */
+//      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
+//#endif /* ALBANY_ATO */
+//    }
+
+
 
   RCP<Albany::Application> app;
-//  RCP<Albany::ApplicationT> app;
-  const RCP<Thyra::ModelEvaluator<ST> > modelT =
+  if (createAlbanyApp) {
+    app = rcp(new Albany::Application(appComm, appParams, initial_guess)); 
+     //Pass back albany app so that interface beyond ModelEvaluator can be used.
+     // This is essentially a hack to allow additional in/out arguments beyond
+     //  what ModelEvaluator specifies.
+     albanyApp = app;
+   }
+  
+   const RCP<Thyra::ModelEvaluator<ST> > modelT =
     createAlbanyAppAndModelT(app, appComm, initial_guess);
 
-  // Pass back albany app so that interface beyond ModelEvaluator can be used.
-  // This is essentially a hack to allow additional in/out arguments beyond
-  // what ModelEvaluator specifies.
-  albanyApp = app;
 
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);

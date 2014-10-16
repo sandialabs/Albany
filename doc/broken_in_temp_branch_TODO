@@ -9,9 +9,6 @@ to not rely on missing classes. (Andrew B. and Glen's code; Andrew will bring up
 
 4.) Have Mauro test mpas_interface.
 
-7.) Albany::SolverFactory create* methods have new boolean input "bool createAlbanyApp".  Need to propagate this into Tpetra versions
-of these functions.
-
 8.) Adapt_NodalDataBlock saveTepetraNodalDataVector function doesn't work right now -- see IK_FIXME.  There's a problem w/ 
 calling saveField on Tpetra_Vector instead of Tpetra_BlockMultiVector inputs.
 

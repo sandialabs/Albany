@@ -673,7 +673,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   //solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm,
   //    mpiComm, Teuchos::null, false);
-  solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiComm, mpiComm); 
+  solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiComm, mpiComm, Teuchos::null, false); 
 
   Teuchos::ParameterList solveParams;
   solveParams.set("Compute Sensitivities", false);
