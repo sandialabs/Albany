@@ -79,7 +79,7 @@ namespace QCAD {
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
-    Teuchos::RCP<const Teuchos::Comm<int> >& commT; 
+    Teuchos::RCP<const Teuchos::Comm<int> > commT; 
     bool havePotential;
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialFieldName;

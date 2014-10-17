@@ -22,21 +22,6 @@ The following tests FAILED:
 	173 - ThermoMechanical3D_SplitOutput_Tpetra (Failed) - Error 1 below
 	213 - MechanicsTensileTet10_STK (Failed) - Error 2 below
 	214 - MechanicsTensileTet10_STK_Tpetra (Failed) - Error 2 below
-	230 - QCAD_Schrodinger_parabolic1D_SERIAL (Failed) - seg fault
-	231 - QCAD_Schrodinger_parabolic1D_SERIAL_Tpetra (Failed) - seg fault
-	232 - QCAD_Schrodinger_parabolic2D_SERIAL (Failed) - seg fault
-	233 - QCAD_Schrodinger_parabolic1D (Failed) - seg fault
-	234 - QCAD_Schrodinger_parabolic2D (Failed) - seg fault
-	235 - QCAD_Schrodinger_parabolic3D (Failed) - seg fault
-	236 - QCAD_Schrodinger_formula2D_qcad (Failed) - seg fault
-	237 - QCAD_Schrodinger_infiniteWall1D (Failed) - seg fault
-	238 - QCAD_Schrodinger_infiniteWall2D (Failed) - seg fault
-	239 - QCAD_Schrodinger_finiteWall1D (Failed) - seg fault
-	240 - QCAD_Schrodinger_parabolic1D_Tpetra (Failed) - seg fault
-	241 - QCAD_Schrodinger_parabolic3D_Tpetra (Failed) - seg fault
-	242 - QCAD_Schrodinger_finiteWall1D_Tpetra (Failed) - seg fault
-	243 - QCAD_Schrodinger_infiniteWall1D_Tpetra (Failed) - seg fault
-	244 - QCAD_Schrodinger_infiniteWall2D_Tpetra (Failed) - seg fault
 	270 - FO_GIS_GisUnstructured (Failed) - Error 4 below (need to talk to Mauro)
 	271 - FO_GIS_GisRestartUnstructured (Failed) - Error 4 below (need to talk to Mauro)
 	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
