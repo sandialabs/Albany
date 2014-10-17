@@ -84,12 +84,12 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
     // of the state manager, as they require interprocessor synchronization
 
     if(isAnisotropic){ //An-isotropic
-      this->pStateMgr->registerStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
+      this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
     }
     else {
-      this->pStateMgr->registerStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
+      this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
 
@@ -97,7 +97,7 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
 
     // The value of the weights used in the projection
     // Initialize to zero - should give us nan's during the division step if something is wrong
-     this->pStateMgr->registerStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all",
+    this->pStateMgr->registerNodalBlockStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
   }
@@ -143,7 +143,7 @@ preEvaluate(typename Traits::PreEvalData workset)
   // Zero data for accumulation here
   if( this->outputNodeData ) {
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
     node_data->initializeVectors(0.0);
   }
 }

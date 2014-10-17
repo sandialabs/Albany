@@ -57,7 +57,6 @@ class NodalDataBase {
     LO getVecsize(){ return vectorsize; }
 
     Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){
-
       TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(nodal_data_block), std::logic_error,
          "Nodal Data Base: Error - nodal_data_block has not been allocated!" << std::endl);
 

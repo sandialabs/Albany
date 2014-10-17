@@ -37,22 +37,8 @@ The following tests FAILED:
 	242 - QCAD_Schrodinger_finiteWall1D_Tpetra (Failed) - seg fault
 	243 - QCAD_Schrodinger_infiniteWall1D_Tpetra (Failed) - seg fault
 	244 - QCAD_Schrodinger_infiniteWall2D_Tpetra (Failed) - seg fault
-	249 - FO_MMS_SinCosGlen (Failed) - Error 3 below
-	250 - FO_MMS_SinCosGlen_Tpetra (Failed) - Error 3 below 
-	253 - FO_MMS_SinExp_Neumann (Failed) - Error 3 below
-	254 - FO_MMS_SinExp_Neumann_Tpetra (Failed) - Error 3 below
-	255 - FO_MMS_CosExp_Basal (Failed) - Error 3 below
-	256 - FO_MMS_CosExp_Basal_Tpetra (Failed) - Error 3 below
-	257 - FO_MMS_FO_CosExp_BasalAll (Failed) - Error 3 below
-	258 - FO_MMS_FO_CosExp_BasalAll_Tpetra (Failed) - Error 3 below
 	270 - FO_GIS_GisUnstructured (Failed) - Error 4 below (need to talk to Mauro)
 	271 - FO_GIS_GisRestartUnstructured (Failed) - Error 4 below (need to talk to Mauro)
-	273 - Stokes_MMS_Poly (Failed) - Error 3 below
-	274 - Stokes_MMS_CouettePeriodicX (Failed) - Error 3 below
-	275 - Stokes_MMS_SinSinPeriodicXY (Failed) - Error 3 below
-	276 - Stokes_MMS_SinSinDirichlet (Failed) - Error 3 below
-	279 - Stokes_MMS_SinCosGlen (Failed) - Error 3 below
-	280 - Stokes_MMS_SinExpBasal (Failed) - Error 3 below
 	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
 Errors while running CTest
 
@@ -64,12 +50,6 @@ Error 2
   Throw number = 1
   Throw test that evaluated to true: true
   Error - unknown element type : TETRAHEDRON_10 requested in nodal graph algorithm
-
-Error 3
- /home/ikalash/Trilinos_Albany/Albany_clean/src/disc/stk/Albany_STKDiscretization.cpp:2215:
- Throw number = 1
- Throw test that evaluated to true: true
- Error - unknown element type : QUADRILATERAL_4_2D requested in nodal graph algorithm
 
 Error 4
  Throw test that evaluated to true: *getMap() != *importer.getTargetMap()
