@@ -104,7 +104,8 @@ namespace Albany {
       Teuchos::RCP<Application>& albanyApp,
 //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
+      const bool createAlbanyApp = true);
 
 #ifdef ALBANY_EPETRA
     Teuchos::RCP<EpetraExt::ModelEvaluator> createModel(

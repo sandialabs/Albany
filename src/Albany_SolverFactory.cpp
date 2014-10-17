@@ -547,19 +547,13 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //    }
 
 
-
   RCP<Albany::Application> app;
-  if (createAlbanyApp) {
-    app = rcp(new Albany::Application(appComm, appParams, initial_guess)); 
-     //Pass back albany app so that interface beyond ModelEvaluator can be used.
-     // This is essentially a hack to allow additional in/out arguments beyond
-     //  what ModelEvaluator specifies.
-     albanyApp = app;
-   }
-  
-   const RCP<Thyra::ModelEvaluator<ST> > modelT =
-    createAlbanyAppAndModelT(app, appComm, initial_guess);
-
+  const RCP<Thyra::ModelEvaluator<ST> > modelT =
+    createAlbanyAppAndModelT(app, appComm, initial_guess, createAlbanyApp);
+  // Pass back albany app so that interface beyond ModelEvaluator can be used.
+  // This is essentially a hack to allow additional in/out arguments beyond what
+  // ModelEvaluator specifies.
+  albanyApp = app;
 
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
@@ -669,11 +663,14 @@ Albany::SolverFactory::createAlbanyAppAndModelT(
   Teuchos::RCP<Albany::Application>& albanyApp,
 //  Teuchos::RCP<Albany::ApplicationT>& albanyApp,
   const Teuchos::RCP<const Teuchos_Comm>& appComm,
-  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+  const Teuchos::RCP<const Tpetra_Vector>& initial_guess,
+  const bool createAlbanyApp)
 {
-  // Create application
-  albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
-//  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams, initial_guess));
+  if (createAlbanyApp) {
+    // Create application
+    albanyApp = rcp(new Albany::Application(appComm, appParams, initial_guess));
+    //  albanyApp = rcp(new Albany::ApplicationT(appComm, appParams, initial_guess));
+  }
 
   // Validate Response list: may move inside individual Problem class
   RCP<ParameterList> problemParams = Teuchos::sublist(appParams, "Problem");
