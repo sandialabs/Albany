@@ -9,6 +9,7 @@
 
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_DistributedParameterDerivativeOp.hpp"
+#include "Albany_DistributedParameterResponseDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
@@ -258,25 +259,49 @@ Albany::ModelEvaluator::create_WPrec() const
 }
 
 Teuchos::RCP<Epetra_Operator>
-Albany::ModelEvaluator::create_DfDp_op(int j) const
+Albany::ModelEvaluator::create_DfDp_op(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
-    j >= num_param_vecs+num_dist_param_vecs || j < num_param_vecs,
+    l >= num_param_vecs+num_dist_param_vecs || l < num_param_vecs,
     Teuchos::Exceptions::InvalidParameter,
     std::endl <<
     "Error!  Albany::ModelEvaluator::create_DfDp_op():  " <<
-    "Invalid parameter index j = " << j << std::endl);
+    "Invalid parameter index l = " << l << std::endl);
 
+  //dp-todo Wondering whether this needs to be functional in order for the dp
+  // stuff I'm merging to work. If so, I might bring back an Epetra version of
+  // DistributedParameterDerivativeOp.
 //IK, 6/27/14: commented out for now for code to compile...
 //DistributedParameterDerivativeOp is a Tpetra_Operator now.... 
 //I think distributed responses will work only once we switch to Albany_ModelEvaluatorT in Tpetra branch.  
 
 //return Teuchos::rcp(new DistributedParameterDerivativeOp(
-//                      app, dist_param_names[j-num_param_vecs]));
+//                      app, dist_param_names[l-num_param_vecs]));
   TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
   	       		"Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  << 
                         "Distributed parameters won't work yet in Tpetra branch."<<
 			std::endl);
+}
+
+Teuchos::RCP<Epetra_Operator>
+Albany::ModelEvaluator::create_DgDp_op(int j, int l) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= app->getNumResponses() || j < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::create_DgDp_op():  " <<
+    "Invalid response index j = " << j << std::endl);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_param_vecs+num_dist_param_vecs || l < num_param_vecs,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::create_DfDp_op():  " <<
+    "Invalid parameter index l = " << l << std::endl);
+
+  return Teuchos::rcp(new DistributedParameterResponseDerivativeOp(
+                        app, dist_param_names[l-num_param_vecs],j));
 }
 
 Teuchos::RCP<Epetra_Operator>
@@ -393,9 +418,10 @@ Albany::ModelEvaluator::createOutArgs() const
                           DerivativeSupport(DERIV_LINEAR_OP));
     }
 
-    for (int j=0; j<num_param_vecs; j++)
+    for (int j=0; j<num_param_vecs; j++) {
       outArgs.setSupports(OUT_ARG_DgDp, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
+    }
     if (app->getResponse(i)->isScalarResponse()) {
       for (int j=0; j<num_dist_param_vecs; j++)
         outArgs.setSupports(OUT_ARG_DgDp, i, j+num_param_vecs,
@@ -737,6 +763,14 @@ f_out->Print(std::cout);
     }
 
     // Need to handle dg/dp for distributed p
+    for(int j=0; j<num_dist_param_vecs; j++) {
+      Derivative dgdp_out = outArgs.get_DgDp(i,j+num_param_vecs);
+      if (!dgdp_out.isEmpty()) {
+        dgdp_out.getMultiVector()->PutScalar(0.);
+        app->evaluateResponseDistParamDeriv(i, curr_time, x_dot.get(), x_dotdot.get(), *x, sacado_param_vec, dist_param_names[j], dgdp_out.getMultiVector().get());
+      }
+    }
+    
     if (g_out != Teuchos::null && !g_computed) {
       //create Tpetra copy of g_out, call it g_outT
       g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 

@@ -66,6 +66,9 @@ namespace Albany {
     //! Create operator form of df/dp for distributed parameters
     Teuchos::RCP<Epetra_Operator> create_DfDp_op(int j) const;
 
+    //! Create operator form of df/dp for distributed parameters
+     Teuchos::RCP<Epetra_Operator> create_DgDp_op(int j, int l) const;
+
     //! Create operator form of dg/dx for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_op(int j) const;
 
