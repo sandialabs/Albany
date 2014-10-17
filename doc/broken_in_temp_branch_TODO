@@ -103,15 +103,8 @@ When
     -D ENABLE_CHECK_FPE:BOOL=ON,
 these additional tests fail with FPE:
 	124 - MechanicsRigidBody_Tpetra (Failed)
-	184 - LaplaceBeltrami:2DTri_Cgrid_TPS_Tpetra (Failed)
-	185 - LaplaceBeltrami:2DTri_Cgrid_LB_Tpetra (Failed)
-	187 - LaplaceBeltrami:2DTri6_Cgrid_TPS_Tpetra (Failed)
-	188 - LaplaceBeltrami:2DTri6_Cgrid_LB_Tpetra (Failed)
-	190 - LaplaceBeltrami:2DQuad_arc_TPS_Tpetra (Failed)
-	191 - LaplaceBeltrami:2DQuad_arc_LB_Tpetra (Failed)
-	193 - LaplaceBeltrami:2DQuad_chev_TPS_Tpetra (Failed)
 	214 - QCAD_Poisson_mosdot_3D_Tpetra (Failed)
 	216 - QCAD_Poisson_pmoscap_polygate_Tpetra (Failed)
 	217 - QCAD_Poisson_pndiode_Tpetra (Failed)
 	218 - QCAD_Poisson_mosdot_2D_tri6_Tpetra (Failed)
-Andrew B. will fix.
+Andrew B. will fix. (Fixed the LaplaceBeltrami ones so far.)
