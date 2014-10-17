@@ -305,14 +305,11 @@ evaluateFields(typename Traits::EvalData workset)
     numDim = this->valTensor[0].dimension(2);
 
   if (trans) {
-
+    const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-      const Teuchos::ArrayRCP<int>& dist_param_index =
-        workset.dist_param_index[cell];
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >& local_Vp =
         workset.local_Vp[cell];
-      const int num_deriv = local_Vp.size();
-
+      const int num_deriv = local_Vp.size()/numFields;
       for (int i=0; i<num_deriv; i++) {
         for (int col=0; col<num_cols; col++) {
           double val = 0.0;
@@ -324,11 +321,12 @@ evaluateFields(typename Traits::EvalData workset)
               else
               if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
-              val += valptr->dx(i)*local_Vp[col][i];
+              val += valptr->dx(i)*local_Vp[node*numFields+eq][col];
             }
           }
-          const int row = dist_param_index[i];
-          fpVT->sumIntoLocalValue(row, col, val);
+          const LO row = wsElDofs((int)cell,i,0);
+          if(row >=0)
+            fpVT->sumIntoLocalValue(row, col, val);
         }
       }
     }
@@ -356,7 +354,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
-              val += valptr->dx(i)*local_Vp[col][i];
+              val += valptr->dx(i)*local_Vp[i][col];
             fpVT->sumIntoLocalValue(row, col, val);
           }
         }

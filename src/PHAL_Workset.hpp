@@ -154,7 +154,6 @@ struct Workset {
   std::string dist_param_deriv_name;
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > dist_param_index; //dp-todo remove
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
