@@ -35,7 +35,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
 
-typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector> DistParamLib;
+typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
 
 namespace PHAL {
 
