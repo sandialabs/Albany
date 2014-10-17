@@ -118,9 +118,10 @@ Teuchos::RCP<Teuchos::ParameterList>
 Albany::StateManager::registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string& ebName,
                                             const bool outputToExodus,
-                                            StateStruct::MeshFieldEntity const* fieldEntity)
+                                            StateStruct::MeshFieldEntity const* fieldEntity,
+                                            const std::string& meshPartName)
 {
-  registerStateVariable(stateName, dl, ebName, "", 0., false, outputToExodus, "",fieldEntity);
+  registerStateVariable(stateName, dl, ebName, "", 0., false, outputToExodus, "",fieldEntity, meshPartName);
 
   // Create param list for SaveStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State "
@@ -155,7 +156,8 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
                                             const bool registerOldState,
 					    const bool outputToExodus,
 					    const std::string &responseIDtoRequire,
-					    StateStruct::MeshFieldEntity const* fieldEntity)
+					    StateStruct::MeshFieldEntity const* fieldEntity,
+					    const std::string& meshPartName)
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   using Albany::StateStruct;
@@ -196,6 +198,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
   StateStruct& stateRef = *stateInfo->back();
   stateRef.setInitType(init_type);
   stateRef.setInitValue(init_val);
+  stateRef.setMeshPart(meshPartName);
 
   dl->dimensions(stateRef.dim);
 
@@ -704,6 +707,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
      break;
 
      case Albany::StateStruct::NodalDataToElemNode :
+     case Albany::StateStruct::NodalDistParameter :
 
       if(have_restart){
           *out << " from restart file." << std::endl;
@@ -711,10 +715,10 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
           continue;
       }
       else if(pParentStruct && pParentStruct->restartDataAvailable) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to restart a NodalDataToElemNode field from parent structure" << std::endl);
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to restart a NodalDataToElemNode field or a NodalDistParameter field from parent structure" << std::endl);
       }
       else if ((init_type == "scalar")||(init_type == "identity")) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to initialize a NodalDataToElemNode field. It should be initialized when building the mesh" << std::endl);
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: At the moment it is not possible to initialize a NodalDataToElemNode field or a NodalDistParameter field. It should be initialized when building the mesh" << std::endl);
       }
     }
   }

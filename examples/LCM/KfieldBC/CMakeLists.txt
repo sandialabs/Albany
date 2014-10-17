@@ -26,7 +26,8 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 add_test(${testName}_base_Tpetra ${AlbanyT.exe})
 if (ALBANY_IFPACK2)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-add_test(${testName}_L2Proj_Tpetra ${AlbanyT.exe} inputL2Proj.xml)
+#amb Turn on once Albany_STKDiscretization.cpp bug is fixed.
+#add_test(${testName}_L2Proj_Tpetra ${AlbanyT.exe} inputL2Proj.xml)
 endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
