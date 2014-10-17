@@ -84,7 +84,10 @@ template<typename EvalT,typename Traits>
 typename Viscosity<EvalT,Traits>::ScalarT& 
 Viscosity<EvalT,Traits>::getValue(const std::string &n)
 {
-  return homotopyParam;
+  if(n=="Glen's Law Homotopy Parameter")
+    return homotopyParam;
+  else
+    return dummyParam;
 }
 
 //**********************************************************************
