@@ -292,16 +292,13 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
     ip_fields_[field] = PHX::MDField<ScalarT>(ip_field_names_[field], qp_layout);
     // Incoming integration point field to transfer.
     this->addDependentField(ip_fields_[field]);
-#if 0 //amb
     this->p_state_mgr_->registerNodalVectorStateVariable(
       nodal_field_names_[field], node_node_layout, dl->dummy, "all", "scalar",
       0.0, false, output_to_exodus_);
-#endif
   }
 
-  // Count the total number of vectors in the multivector
-  // IK, 10/13/14: need to re-implement the following line given that getNodalDataBase is gone now!
-  //num_vecs_ = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize();
+  // Count the total number of vectors in the multivector.
+  num_vecs_ = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize();
 
   // Create field tag
   field_tag_ =
@@ -384,13 +381,12 @@ template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate (typename Traits::PreEvalData workset)
 {
-  // IK, 10/13/14: need to re-implement this given that getNodalDataBase is gone!
-  /*Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   node_data->initializeVectors(0.0);
 
-  Teuchos::RCP<Tpetra_CrsGraph> current_graph =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
+  Teuchos::RCP<Tpetra_CrsGraph> current_graph = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
 
   // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
   // a version used for linear algebra having a nonoverlapping row map, we can't
@@ -400,7 +396,6 @@ preEvaluate (typename Traits::PreEvalData workset)
     Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
   this->source_load_vector_ = Teuchos::rcp(
     new Tpetra_MultiVector(current_graph->getRowMap(), this->num_vecs_, true));
-  */
 }
 
 //------------------------------------------------------------------------------
@@ -408,8 +403,7 @@ template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 fillRHS (const typename Traits::EvalData& workset)
 {
-  // IK, 10/13/14: need to re-implement this given that getNodalDataBase is gone!
-  /*Teuchos::RCP<Adapt::NodalDataVector> node_data =
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >&  wsElNodeID = workset.wsElNodeID;
 
@@ -456,7 +450,6 @@ fillRHS (const typename Traits::EvalData& workset)
       }
     } // end cell loop
   } // end field loop
-  */
 }
 
 template<typename Traits>
@@ -604,9 +597,8 @@ postEvaluate (typename Traits::PostEvalData workset)
     Teuchos::RCP<Tpetra_Import>
       im = Teuchos::rcp(new Tpetra_Import(map, ovl_map));
     npiv->doImport(*node_projected_ip_vector, *im, Tpetra::ADD);
-  // IK, 10/13/14: need to re-implement this given that getNodalDataBase is gone!
-   // this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
-   //   getNodalDataVector()->saveNodalDataState(npiv);
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+      getNodalDataVector()->saveNodalDataState(npiv);
   }
 }
 

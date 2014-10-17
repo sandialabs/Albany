@@ -28,7 +28,7 @@
 #endif
 #ifdef ALBANY_LCM
 #include "IPtoNodalField.hpp"
-//#include "ProjectIPtoNodalField.hpp"
+#include "ProjectIPtoNodalField.hpp"
 #endif
 #ifdef ALBANY_SEE
 #include "LinearAdjointSolve.hpp"
@@ -248,7 +248,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-  /*IK_FIXME! else if (responseName == "Project IP to Nodal Field")
+  else if (responseName == "Project IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
@@ -259,7 +259,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }*/
+  }
 #endif
 
 

@@ -1,24 +1,7 @@
 
 The following are broken in the temporary branch following the merge of master -> tpetra: 
 
-1.) nodalGraph doesn't have adj and start methods implemented, which were introduced into the master branch 
-for MeshGraph struct object.  Need to fix.  Please search for IK_FIXME! in Albany_STKDiscretization.cpp . (Glen and Andrew B.'s work; Andrew will handle.) --> Andrew B.
-
-3.) Irina has removed saveFieldBlock, saveFieldVector, saveNodal*, registerNodal*, etc. classes, as these are gone from the master branch.These were used in the new evaluator ProjectIPtoNodalField.  That evaluator has been commented out for now.  Needs to be converted
-to not rely on missing classes. (Andrew B. and Glen's code; Andrew will bring up to date.) --> Andrew B.
-
 4.) Have Mauro test mpas_interface.  There are some bugs still in ExtrudedSTKMesh struct causing unstructured FO_GIS examples to fail. Probably the same issue will be encountered through the mpas_interface.  --> Irina & Mauro 
-
-8.) Adapt_NodalDataBlock saveTepetraNodalDataVector function doesn't work right now -- see IK_FIXME.  There's a problem w/ 
-calling saveField on Tpetra_Vector instead of Tpetra_BlockMultiVector inputs.
-
-9.) Irina is concerned about all the BlockMaps in Albany_STKFieldContainer.  Last time I checked the details Tpetra's BlockMap 
-didn't work the same way as Epetra (it had no true concept of block map).  You can only get blockmap from Tpetra_BlockMultiVector (not Tpetra_Vector), hence the code input structure causing the problem 8.).  Something needs to be done about the 
-
- //if(blocksize < 0)
-      //  blocksize = overlap_node_map.ElementSize();
-
-lines in saveField, which are commented out now.  (Andrew B. probably.)
 
 10.) ATO suite needs to be converted to Tpetra. Irina has put in for now a an error in CMakeLists.txt if ATO is requested
 as it will not build in the Tpetra branch (even with Albany executable).  The code needs to be converted to use the Tpetra 
@@ -33,8 +16,6 @@ The following tests FAILED:
 	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing)
 	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
 	 73 - GPAM_Tpetra (Failed) - Failed comparison 
-	 90 - KfieldBC_base_Tpetra (Failed) - Failed comparison (related to IP to Nodal Field response missing?) 
-	 92 - KfieldBC_L2Proj_Tpetra (Failed) - Project IP to Nodal Field response missing (Andrew B. will fix)
 	121 - MechanicsWithTemperatureThermalExpansion (Failed) - Error 1 below
 	122 - MechanicsWithTemperature (Failed) - Error 1 below
 	171 - ThermoMechanical3D_SplitOutput (Failed) - Error 1 below
@@ -98,13 +79,3 @@ Error 4
   Throw number = 1
   Throw test that evaluated to true: numNodes != content->getLocalLength()
   Error in ExtrudedSTKMeshStruct: Number of nodes in file ../AsciiMeshes/GisUnstructFiles/surface_height.ascii (2087) is different from the number expected (0)
-
-When
-    -D ENABLE_CHECK_FPE:BOOL=ON,
-these additional tests fail with FPE:
-	124 - MechanicsRigidBody_Tpetra (Failed)
-	214 - QCAD_Poisson_mosdot_3D_Tpetra (Failed)
-	216 - QCAD_Poisson_pmoscap_polygate_Tpetra (Failed)
-	217 - QCAD_Poisson_pndiode_Tpetra (Failed)
-	218 - QCAD_Poisson_mosdot_2D_tri6_Tpetra (Failed)
-Andrew B. will fix. (Fixed the LaplaceBeltrami ones so far.)
