@@ -163,6 +163,23 @@ evaluateGradientT(const double current_time,
     dg_dpT->putScalar(0.0);
 }
 
+#ifdef ALBANY_EPETRA
+void
+Albany::SolutionAverageResponseFunction::
+evaluateDistParamDeriv(
+         const double current_time,
+         const Epetra_Vector* xdot,
+         const Epetra_Vector* xdotdot,
+         const Epetra_Vector& x,
+         const Teuchos::Array<ParamVec>& param_array,
+         const std::string& dist_param_name,
+         Epetra_MultiVector* dg_dp) {
+  // Evaluate response derivative dg_dp
+  if (dg_dp != NULL)
+    dg_dp->PutScalar(0.0);
+}
+#endif
+
 #ifdef ALBANY_SG_MP
 void
 Albany::SolutionAverageResponseFunction::

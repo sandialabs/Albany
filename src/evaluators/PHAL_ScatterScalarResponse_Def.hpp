@@ -41,8 +41,9 @@ setup(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl)
   PHX::Tag<ScalarT> global_response_tag =
     p.get<PHX::Tag<ScalarT> >("Global Response Field Tag");
   global_response = PHX::MDField<ScalarT>(global_response_tag);
-  std::cout << "global_response layout = " << std::endl;
+  std::cout << "global_response layout = ";
   global_response_tag.dataLayout().print(std::cout);
+  std::cout << std::endl;
   if (stand_alone)
     this->addDependentField(global_response);
   else

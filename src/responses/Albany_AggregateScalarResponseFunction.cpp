@@ -334,3 +334,40 @@ evaluateGradientT(const double current_time,
     offset += num_responses;
   }
 }
+
+#ifdef ALBANY_EPETRA
+void
+Albany::AggregateScalarResponseFunction::
+evaluateDistParamDeriv(
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Epetra_MultiVector* dg_dp) {
+  unsigned int offset = 0;
+  for (unsigned int i=0; i<responses.size(); i++) {
+
+    // Create Epetra_Map for response function
+    int num_responses = responses[i]->numResponses();
+
+    // Create Epetra_MultiVectors for response derivative function
+    RCP<Epetra_MultiVector> aggregated_dgdp;
+    if (dg_dp != NULL)
+      aggregated_dgdp = rcp(new Epetra_MultiVector(dg_dp->Map(),num_responses));
+
+    // Evaluate response function
+    responses[i]->evaluateDistParamDeriv(current_time, xdot, xdotdot, x, param_array, dist_param_name,
+           aggregated_dgdp.get());
+
+    // Copy results into combined result
+    if (dg_dp != NULL)
+      for (unsigned int j=0; j<num_responses; j++)
+        *(*dg_dp)(offset+j) = *(*aggregated_dgdp)(j);
+
+    // Increment offset in combined result
+    offset += num_responses;
+  }
+}
+#endif

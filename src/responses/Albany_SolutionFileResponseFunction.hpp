@@ -87,6 +87,19 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
+#ifdef ALBANY_EPETRA
+    //! Evaluate distributed parameter derivative dg/dp
+    virtual void
+    evaluateDistParamDeriv(
+        const double current_time,
+        const Epetra_Vector* xdot,
+        const Epetra_Vector* xdotdot,
+        const Epetra_Vector& x,
+        const Teuchos::Array<ParamVec>& param_array,
+        const std::string& dist_param_name,
+        Epetra_MultiVector* dg_dp);
+#endif
+
   private:
 
     //! Private to prohibit copying

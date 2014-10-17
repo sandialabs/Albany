@@ -133,6 +133,17 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) = 0;
     
+#ifdef ALBANY_EPETRA
+    //! Evaluate distributed parameter derivative dg/dp
+    virtual void evaluateDistParamDeriv(
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Epetra_MultiVector*  dg_dp) = 0;
+#endif
     //@}
 
     //! \name Stochastic Galerkin evaluation functions

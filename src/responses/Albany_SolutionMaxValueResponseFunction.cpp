@@ -171,6 +171,25 @@ evaluateGradientT(const double current_time,
 }
 
 #ifdef ALBANY_EPETRA
+//! Evaluate distributed parameter derivative dg/dp
+void
+Albany::SolutionMaxValueResponseFunction::
+evaluateDistParamDeriv(
+    const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    Epetra_MultiVector* dg_dp)
+{
+  if (dg_dp) {
+      dg_dp->PutScalar(0.0);
+  }
+}
+#endif
+
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)

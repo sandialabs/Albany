@@ -386,6 +386,48 @@ evaluateGradientT(const double current_time,
   }  
 }
 
+#ifdef ALBANY_EPETRA
+void
+Albany::FieldManagerScalarResponseFunction::
+evaluateDistParamDeriv(
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Epetra_MultiVector* dg_dp)
+{
+  // Set data in Workset struct
+  PHAL::Workset workset;
+  application->setupBasicWorksetInfo(workset, current_time, xdot, xdotdot, &x, param_array);
+
+  // Perform fill via field manager (dg/dx)
+  int numWorksets = application->getNumWorksets();
+
+  if(dg_dp != NULL) {
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.dgdp = Teuchos::rcp(dg_dp, false);
+    { // workset.overlapped_dgdp = Teuchos::rcp(new Epetra_MultiVector(*workset.distParamLib->get(dist_param_name)->overlap_map(), dg_dp->NumVectors()));
+      Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT = Teuchos::rcp(
+        new Tpetra_MultiVector(
+          workset.distParamLib->get(dist_param_name)->overlap_map(),
+          dg_dp->NumVectors()));
+      const Teuchos::RCP<const Epetra_Comm>
+        comm = createEpetraCommFromTeuchosComm(application->getComm());   
+      Petra::TpetraMultiVector_To_EpetraMultiVector(
+        overlapped_dgdpT, *workset.overlapped_dgdp, comm);
+    }
+    rfm->preEvaluate<PHAL::AlbanyTraits::DistParamDeriv>(workset);
+    for (int ws=0; ws < numWorksets; ws++) {
+      application->loadWorksetBucketInfo<PHAL::AlbanyTraits::DistParamDeriv>(workset, ws);
+      rfm->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
+    }
+    rfm->postEvaluate<PHAL::AlbanyTraits::DistParamDeriv>(workset);
+  }
+}
+#endif
+
 #ifdef ALBANY_SG_MP
 void
 Albany::FieldManagerScalarResponseFunction::
