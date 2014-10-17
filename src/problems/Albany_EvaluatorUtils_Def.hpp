@@ -9,6 +9,7 @@
 #include "Intrepid_HGRAD_LINE_Cn_FEM.hpp"
 
 #include "PHAL_GatherSolution.hpp"
+#include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_ScatterResidual.hpp"
 #include "PHAL_MapToPhysicalFrame.hpp"
@@ -202,6 +203,22 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructGatherSolutionEvaluator_noTransie
     p->set<bool>("Disable Transient", true);
 
     return rcp(new PHAL::GatherSolution<EvalT,Traits>(*p,dl));
+}
+
+template<typename EvalT, typename Traits>
+Teuchos::RCP< PHX::Evaluator<Traits> >
+Albany::EvaluatorUtils<EvalT,Traits>::constructGatherScalarNodalParameter(
+       const std::string& dof_name)
+{
+    using Teuchos::RCP;
+    using Teuchos::rcp;
+    using Teuchos::ParameterList;
+    using std::string;
+
+    RCP<ParameterList> p = rcp(new ParameterList("Gather Parameter"));
+    p->set<string>("Parameter Name", dof_name);
+
+    return rcp(new PHAL::GatherScalarNodalParameter<EvalT,Traits>(*p,dl));
 }
 
 template<typename EvalT, typename Traits>

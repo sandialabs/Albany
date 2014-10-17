@@ -54,7 +54,7 @@ namespace Albany {
     virtual void set_workset_elem_dofs(const Teuchos::RCP<const std::vector<id_array_type> >& ws_elem_dofs_) = 0;
 
     //! Return constant workset_elem_dofs. For each workset, workset_elem_dofs maps (elem, node, nComp) into local id
-    virtual const std::vector<id_array_type>  &  workset_elem_dofs() const = 0;
+    virtual const std::vector<id_array_type>& workset_elem_dofs() const = 0;
 
     //! Get parallel map
     virtual Teuchos::RCP<const map_type> map() const = 0;

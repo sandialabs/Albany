@@ -103,6 +103,11 @@ namespace Albany {
        Teuchos::ArrayRCP<std::string> resid_names,
        int offsetToFirstDOF=0, std::string scatterName="Scatter");
 
+    //! Function to create parameter list for construction of GatherScalarNodalParameter
+    Teuchos::RCP< PHX::Evaluator<Traits> >
+    constructGatherScalarNodalParameter(
+        const std::string& dof_name);
+
     //! Function to create parameter list for construction of ScatterResidual
     //! evaluator with standard Field names
     //! Tensor rank of solution variable is 0, 1, or 2

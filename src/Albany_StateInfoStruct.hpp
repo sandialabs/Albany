@@ -33,7 +33,7 @@
 namespace Albany {
 
 typedef shards::Array<double, shards::NaturalOrder> MDArray;
-typedef shards::Array<int, shards::NaturalOrder> IDArray;
+typedef shards::Array<LO, shards::NaturalOrder> IDArray;
 typedef std::map< std::string, MDArray > StateArray;
 typedef std::vector<StateArray> StateArrayVec;
 
