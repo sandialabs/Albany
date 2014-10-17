@@ -80,7 +80,7 @@ class AbstractDiscretization {
     //! Get Tpetra DOF map
     virtual Teuchos::RCP<const Tpetra_Map> getMapT() const = 0;
     //! Get Tpetra DOF map
-    //amb virtual Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const = 0;
+    //dp-convert virtual Teuchos::RCP<const Tpetra_Map> getMapT(const std::string& field_name) const = 0;
 
 #ifdef ALBANY_EPETRA
     //! Get Epetra overlapped DOF map
@@ -119,7 +119,7 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
 #endif
     //! Get overlapped Node map
-    //amb virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
+    //dp-convert virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
 
     //! Get Node set lists (typdef in Albany_Discretization.hpp)
     virtual const NodeSetList& getNodeSets() const = 0;
@@ -136,8 +136,10 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       getWsElNodeID() const = 0;
 
+#ifdef ALBANY_EPETRA
     //! Get IDArray for (Ws, Local Node, nComps) -> NodeLID, works for both scalar and vector fields
     virtual const std::vector<IDArray>& getElNodeID(const std::string& field_name) const = 0;
+#endif
 
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
@@ -157,10 +159,10 @@ class AbstractDiscretization {
     virtual const Albany::StateInfoStruct& getNodalParameterSIS() const = 0;
 
     //! Retrieve Vector (length num worksets) of element block names
-    virtual const WorksetArray<std::string>::type&  getWsEBNames() const = 0;
+    virtual const WorksetArray<std::string>::type& getWsEBNames() const = 0;
 
     //! Retrieve Vector (length num worksets) of Physics Index
-    virtual const WorksetArray<int>::type&  getWsPhysIndex() const = 0;
+    virtual const WorksetArray<int>::type& getWsPhysIndex() const = 0;
 
     //! Retrieve connectivity map from elementGID to workset
     virtual WsLIDList&  getElemGIDws() = 0;
@@ -175,7 +177,7 @@ class AbstractDiscretization {
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const = 0;
 #endif
-    //amb virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
+    //dp-convert virtual void getFieldT(Tpetra_Vector &field_vector, const std::string& field_name) const = 0;
 
     //! Flag if solution has a restart values -- used in Init Cond
     virtual bool hasRestartSolution() const = 0;

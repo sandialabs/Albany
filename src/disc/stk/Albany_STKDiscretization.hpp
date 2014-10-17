@@ -123,12 +123,11 @@ namespace Albany {
 #ifdef ALBANY_EPETRA
     //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    //! Get overlapped Node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 #endif
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
-
-    //! Get overlapped Node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
@@ -146,9 +145,11 @@ namespace Albany {
     //! Get map from (Ws, Local Node) -> NodeLID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
+#ifdef ALBANY_EPETRA
     //! Get IDArray for (Ws, Local Node, nComps) -> NodeLID, works for both scalar and vector fields
     const std::vector<IDArray>& getElNodeID(const std::string& field_name) const
         {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeID;}
+#endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     Teuchos::ArrayRCP<double>& getCoordinates() const;

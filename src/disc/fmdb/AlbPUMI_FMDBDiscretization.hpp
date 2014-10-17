@@ -108,7 +108,7 @@ template<class Output>
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
-    const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
+    const Albany::WorksetArray<std::string>::type& getWsEBNames() const;
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
@@ -240,11 +240,6 @@ template<class Output>
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "AlbPUMI:FMDBDiscretization: getElNodeID(field_name) not implemented yet");
     }
-    //! Get nodal parameters state info struct
-    virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getNodalParameterSIS() not implemented yet");
-    }
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -256,6 +251,11 @@ template<class Output>
           "AlbPUMI:FMDBDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
     }
 #endif
+    //! Get nodal parameters state info struct
+    virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getNodalParameterSIS() not implemented yet");
+    }
 
   private:
 

@@ -36,12 +36,10 @@ namespace Albany {
     //! Constructor
     TpetraDistributedParameter(
       const std::string& param_name_,
-      const int num_per_cell_,
       const Teuchos::RCP<Tpetra_Vector>& vec_,
       const Teuchos::RCP<const Tpetra_Map>& owned_map_,
       const Teuchos::RCP<const Tpetra_Map>& overlapped_map_) :
       param_name(param_name_),
-      num_per_cell(num_per_cell_),
       vec(vec_),
       owned_map(owned_map_),
       overlapped_map(overlapped_map_) {
@@ -103,18 +101,10 @@ namespace Albany {
       overlapped_vec->doImport(*vec, *importer, Tpetra::INSERT);
     }
 
-    //! Get number of parameter entries per cell
-    virtual int num_entries_per_cell() const {
-      return num_per_cell;
-    }
-
   protected:
 
     //! Name of parameter
     std::string param_name;
-
-    //! Number of entries per cell
-    int num_per_cell;
 
     //! Tpetra_Vector storing distributed parameter
     Teuchos::RCP<Tpetra_Vector> vec;

@@ -36,6 +36,7 @@
 #include "Teuchos_Comm.hpp"
 
 typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
+typedef Albany::DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParam;
 
 namespace PHAL {
 
@@ -48,6 +49,7 @@ struct Workset {
 
   unsigned int numCells;
   unsigned int wsIndex;
+  unsigned int numEqs;
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
@@ -152,7 +154,7 @@ struct Workset {
   std::string dist_param_deriv_name;
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > dist_param_index;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > dist_param_index; //dp-todo remove
 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
@@ -214,10 +216,12 @@ struct Workset {
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotdotT;
 #ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_MultiVector> dgdp;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp;
 #endif
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
-#ifdef ALBANY_EPETRA
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
+#ifdef ALBANY_SG_MP
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
@@ -322,6 +326,23 @@ struct Workset {
         setValue<PHAL::AlbanyTraits::Tangent>(serializer);
     }
   };
+
+  template <> struct BuildSerializer<PHAL::AlbanyTraits::DistParamDeriv> {
+     BuildSerializer(Workset& workset) {
+       const Albany::IDArray& wsElNode =
+           workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[0];
+       int num_dof = wsElNode.dimension(1)*wsElNode.dimension(2);
+       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
+         real_serializer =
+         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
+       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
+         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(
+                        real_serializer, num_dof));
+       workset.serializerManager.
+         setValue<PHAL::AlbanyTraits::DistParamDeriv>(serializer);
+     }
+  };
+
 #ifdef ALBANY_SG_MP
   template <> struct BuildSerializer<PHAL::AlbanyTraits::SGResidual> {
     BuildSerializer(Workset& workset) {

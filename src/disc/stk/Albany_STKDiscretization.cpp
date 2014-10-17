@@ -1102,7 +1102,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
     ( stk::mesh::Selector( metaData.locally_owned_part() )
       | stk::mesh::Selector( metaData.globally_shared_part() ) );
 
-  //  overlapnodes used for overlap map -- stored for changing coords
+  // overlapnodes used for overlap map; stored for changing coords
   stk::mesh::get_selected_entities( select_overlap_in_part ,
 				    bulkData.buckets( stk::topology::NODE_RANK ) ,
 				    overlapnodes );
@@ -1264,12 +1264,14 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef stk::mesh::Cartesian ElemTag;
   typedef stk::mesh::Cartesian CompTag;
 
+#ifdef ALBANY_EPETRA
   NodalDOFsStructContainer::MapOfDOFsStructs::iterator it;
   NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
   for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
     it->second.wsElNodeID.resize(numBuckets);
     it->second.wsElNodeID_rawVec.resize(numBuckets);
   }
+#endif // ALBANY_EPETRA
   
   for (int b=0; b < numBuckets; b++) {
 
@@ -1350,8 +1352,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       sphereVolume[b].resize(buck.size());
 #endif
 
-    // i is the element index within bucket b
-
+#ifdef ALBANY_EPETRA
     stk::mesh::Entity element = buck[0];
     int nodes_per_element = bulkData.num_nodes(element);
     for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
@@ -1359,7 +1360,9 @@ void Albany::STKDiscretization::computeWorksetInfo()
       it->second.wsElNodeID_rawVec[b].resize(buck.size()*nodes_per_element*nComp);
       it->second.wsElNodeID[b].assign<ElemTag, NodeTag, CompTag>(it->second.wsElNodeID_rawVec[b].data(),(int)buck.size(),nodes_per_element,nComp);
     }
+#endif // ALBANY_EPETRA
 
+    // i is the element index within bucket b
     for (std::size_t i=0; i < buck.size(); i++) {
 
       // Traverse all the elements in this bucket
@@ -1378,6 +1381,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
  
+#ifdef ALBANY_EPETRA
       for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
         IDArray& wsElNodeID_array = it->second.wsElNodeID[b];
         int nComp = it->first.second;
@@ -1391,6 +1395,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
             }
           }
       }
+#endif
 
 #ifdef ALBANY_LCM
       if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1)
@@ -1398,6 +1403,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
 
       // loop over local nodes
+#ifdef ALBANY_EPETRA
       IDArray& node_array = mapOfDOFsStructs[make_pair(std::string(""),1)].wsElNodeID[b];
       IDArray& sol_array = mapOfDOFsStructs[make_pair(std::string(""),neq)].wsElNodeID[b];
       for (int j=0; j < nodes_per_element; j++) {
@@ -1415,6 +1421,23 @@ void Albany::STKDiscretization::computeWorksetInfo()
         for (int eq=0; eq < neq; eq++)
           wsElNodeEqID[b][i][j][eq] = sol_array((int)i,j,eq);
       }
+#else
+      for (int j=0; j < nodes_per_element; j++) {
+        stk::mesh::Entity rowNode = node_rels[j];
+        GO node_gid = gid(rowNode);
+        int node_lid = overlap_node_mapT->getLocalElement(node_gid);
+
+        TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
+			   "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
+        coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
+
+        wsElNodeEqID[b][i][j].resize(neq);
+        wsElNodeID[b][i][j] = node_gid;
+
+        for (std::size_t eq=0; eq < neq; eq++)
+          wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
+      }
+#endif
     }
   }
 
@@ -2450,7 +2473,7 @@ Albany::STKDiscretization::printVertexConnectivity(){
 void
 Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
-
+#ifdef ALBANY_EPETRA
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
   nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
@@ -2467,12 +2490,15 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     }
 
   computeNodalEpetraMaps(false);
+#endif // ALBANY_EPETRA
 
   computeOwnedNodesAndUnknowns();
 
   setupMLCoords();
 
+#ifdef ALBANY_EPETRA
   computeNodalEpetraMaps(true);
+#endif // ALBANY_EPETRA
 
   computeOverlapNodesAndUnknowns();
 
