@@ -63,6 +63,7 @@ struct NeumannTraits {
   enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
   enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
   enum { typeSF = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_load_stateField };
+  enum { typeSNP = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_GatherScalarNodalParameter };
 
   static const std::string bcParamsPl;
 
