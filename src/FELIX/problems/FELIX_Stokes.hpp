@@ -385,16 +385,16 @@ FELIX::Stokes::constructEvaluators(
   }
 
 
-  Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+  Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+
   //basal friction
   {
     std::string elementBlockName = meshSpecs.ebName;
     std::string stateName("basal_friction");
-    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
-
-    ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
+    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity, "");
   }
+
+  entity= Albany::StateStruct::NodalDataToElemNode;
 
   //surface_height
   {

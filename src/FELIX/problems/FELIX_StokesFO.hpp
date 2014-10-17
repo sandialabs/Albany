@@ -150,6 +150,8 @@ FELIX::StokesFO::constructEvaluators(
   
    Albany::StateStruct::MeshFieldEntity entity;
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
+   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   int offset=0;
 
    entity= Albany::StateStruct::ElemData;
 
@@ -179,21 +181,21 @@ FELIX::StokesFO::constructEvaluators(
    }
 
    {
-     std::string stateName("basal_friction");
-     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
-     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
-   }
-
-   {
      std::string stateName("thickness");
      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
-   int offset=0;
+   entity= Albany::StateStruct::NodalDistParameter;
+
+   {
+     std::string stateName("basal_friction");
+     const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity, meshPart);
+    }
+
+
 
    // Define Field Names
 
@@ -294,6 +296,7 @@ FELIX::StokesFO::constructEvaluators(
   { // response
     RCP<const Albany::MeshSpecsStruct> meshSpecsPtr = Teuchos::rcpFromRef(meshSpecs);
     paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
+    paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
