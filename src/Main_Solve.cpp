@@ -189,10 +189,21 @@ int main(int argc, char *argv[]) {
     *out << "Finished eval of first model: Params, Responses "
       << std::setprecision(12) << std::endl;
 
+    Teuchos::ParameterList& parameterParams = slvrfctry.getParameters().sublist("Problem").sublist("Parameters");
+    int num_param_vecs = (parameterParams.isType<int>("Number")) ?
+        int(parameterParams.get("Number", 0) > 0) :
+        parameterParams.get("Number of Parameter Vectors", 0);
+
     const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
+    double norm2;
     for (int i=0; i<num_p; i++) {
       const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(appComm, nominal.get_p(i));
-      p_init->Print(*out << "\nParameter vector " << i << ":\n");
+      if(i < num_param_vecs)
+        p_init->Print(*out << "\nParameter vector " << i << ":\n");
+      else { //distributed parameters, we print only 2-norm
+        p_init->Norm2(&norm2);
+        *out << "\nDistributed Parameter " << i << ":  " << norm2 << " (two-norm)\n" << std::endl;
+      }
     }
 
     for (int i=0; i<num_g-1; i++) {
@@ -212,8 +223,21 @@ int main(int argc, char *argv[]) {
           for (int j=0; j<num_p; j++) {
             const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
             if (Teuchos::nonnull(dgdp)) {
-              dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
+              if(j < num_param_vecs)
+                dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "): \n");
+              else {
+              //  RCP<Albany::ScalarResponseFunction> response = rcp_dynamic_cast<Albany::ScalarResponseFunction>(app->getResponse(i));
+               // int numResponses = response->numResponses();
+                *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
+                *out << "    ";
+                for(int ir=0; ir<dgdp->NumVectors(); ++ir) {
+                  (*dgdp)(ir)->Norm2(&norm2);
+                  *out << "    " << norm2;
+                }
+                *out << "\n" << std::endl;
+              }
             }
+
             status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
           }
         }
