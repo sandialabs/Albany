@@ -59,7 +59,6 @@ template<class Output>
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
 
-
     //! Process coords for ML
     void setupMLCoords();
 
@@ -74,7 +73,8 @@ template<class Output>
     Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+    getWsElNodeEqID() const;
 
     //! Get map from (Ws, El, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
@@ -183,16 +183,12 @@ template<class Output>
     /* DAI: old Epetra functions still used by parts of Albany/Trilinos
        Remove when we get to full Tpetra */
 #ifdef ALBANY_EPETRA
-    virtual Teuchos::RCP<const Epetra_Map>
-    getMap() const { return map; }
-    virtual Teuchos::RCP<const Epetra_Map>
-    getOverlapMap() const { return overlap_map; }
-    virtual Teuchos::RCP<const Epetra_CrsGraph>
-    getJacobianGraph() const { return graph; }
-    virtual Teuchos::RCP<const Epetra_CrsGraph>
-    getOverlapJacobianGraph() const { return overlap_graph; }
-    virtual Teuchos::RCP<const Epetra_Map>
-    getNodeMap() const {
+    virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
+    virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
+    virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+    virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const { return graph; }
+    virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const { return overlap_graph; }
+    virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const {
       fprintf(stderr,"PUMI Discretization unsupported call getNodeMap\n");
       abort();
       return Teuchos::RCP<const Epetra_Map>();
@@ -229,6 +225,36 @@ template<class Output>
         int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         Epetra_Vector& data, bool overlapped) const;
+    //! Get field DOF map
+    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getMap(field_name) not implemented yet");
+    }
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getOverlapMap(field_name) not implemented yet");
+    }
+    //! Get IDArray for (Ws, Local Node, nComps) -> NodeLID, works for both scalar and vector fields
+    const std::vector<Albany::IDArray>& getElNodeID(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getElNodeID(field_name) not implemented yet");
+    }
+    //! Get nodal parameters state info struct
+    virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getNodalParameterSIS() not implemented yet");
+    }
+    //! Get field vector from mesh database
+    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getField(field_vector, field_name) not implemented yet");
+    }
+    //! Set the field vector into mesh database
+    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
+    }
 #endif
 
   private:

@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra!
-
 #include "Adapt_NodalDataBlock.hpp"
 #include "Tpetra_Import_decl.hpp"
 #include "Teuchos_CommHelpers.hpp"
@@ -19,13 +17,12 @@ Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContai
   blocksize(blocksize_),
   mapsHaveChanged(false)
 {
-
 }
 
 namespace {
 inline Teuchos::Array<GO>::size_type
-get_number_global_elements (const Teuchos::Comm<int>& comm,
-                            const Teuchos::Array<GO>& nodes) {
+get_number_global_elements (const Teuchos_Comm& comm,
+                            const Teuchos::ArrayView<const GO>& nodes) {
   Teuchos::Array<GO>::size_type num_global_elem, n = nodes.size();
   Teuchos::reduceAll<int, Teuchos::Array<GO>::size_type>(
     comm, Teuchos::REDUCE_SUM, 1, &n, &num_global_elem);
@@ -35,8 +32,8 @@ get_number_global_elements (const Teuchos::Comm<int>& comm,
 
 void
 Adapt::NodalDataBlock::
-resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
-                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
+resizeOverlapMap(const Teuchos::ArrayView<const GO>& overlap_nodeGIDs,
+                 const Teuchos::RCP<const Teuchos_Comm>& comm_)
 {
   std::vector<GO> block_pt(overlap_nodeGIDs.size());
   std::vector<LO> block_sizes(overlap_nodeGIDs.size());
@@ -65,7 +62,7 @@ resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
 
 void
 Adapt::NodalDataBlock::
-resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
+resizeLocalMap(const Teuchos::ArrayView<const GO>& local_nodeGIDs,
                const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
 {
   std::vector<GO> block_pt(local_nodeGIDs.size());
@@ -96,52 +93,42 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
 }
 
 void
-Adapt::NodalDataBlock::initializeExport(){
-
- if(mapsHaveChanged){
-
-   importer = Teuchos::rcp(new Tpetra_Import(local_node_map->getPointMap(), overlap_node_map->getPointMap()));
+Adapt::NodalDataBlock::initializeExport() {
+  if(mapsHaveChanged) {
+   importer = Teuchos::rcp(new Tpetra_Import(local_node_map->getPointMap(),
+                                             overlap_node_map->getPointMap()));
    mapsHaveChanged = false;
-
  }
-
 }
 
 void
-Adapt::NodalDataBlock::exportAddNodalDataBlock(){
-
+Adapt::NodalDataBlock::exportAddNodalDataBlock() {
  overlap_node_vec->doImport(*local_node_vec, *importer, Tpetra::ADD);
-
 }
 
 void
-Adapt::NodalDataBlock::registerState(const std::string &stateName, int ndofs){
+Adapt::NodalDataBlock::registerState(const std::string &stateName, int ndofs) {
+  // save the nodal data field names and lengths in order of allocation which implies access order
+  NodeFieldSizeMap::const_iterator it;
+  it = nodeBlockMap.find(stateName);
 
-   // save the nodal data field names and lengths in order of allocation which implies access order
-   NodeFieldSizeMap::const_iterator it;
-   it = nodeBlockMap.find(stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    (it != nodeBlockMap.end()), std::logic_error,
+    std::endl << "Error: found duplicate entry " << stateName << " in NodalDataBlock" << std::endl);
 
-   TEUCHOS_TEST_FOR_EXCEPTION((it != nodeBlockMap.end()), std::logic_error,
-           std::endl << "Error: found duplicate entry " << stateName << " in NodalDataBlock" << std::endl);
+  NodeFieldSize size;
+  size.name = stateName;
+  size.offset = blocksize;
+  size.ndofs = ndofs;
 
-   NodeFieldSize size;
-   size.name = stateName;
-   size.offset = blocksize;
-   size.ndofs = ndofs;
+  nodeBlockMap[stateName] = nodeBlockLayout.size();
+  nodeBlockLayout.push_back(size);
 
-   nodeBlockMap[stateName] = nodeBlockLayout.size();
-   nodeBlockLayout.push_back(size);
-
-   blocksize += ndofs;
-
+  blocksize += ndofs;
 }
-
-
-
 
 void
 Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const {
-
    NodeFieldSizeMap::const_iterator it;
    it = nodeBlockMap.find(stateName);
 
@@ -152,7 +139,6 @@ Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offs
 
    offset = nodeBlockLayout[value].offset;
    ndofs = nodeBlockLayout[value].ndofs;
-
 }
 
 void
@@ -164,11 +150,12 @@ Adapt::NodalDataBlock::saveNodalDataState() const {
   }
 }
 
-
 void
-Adapt::NodalDataBlock::saveTpetraNodalDataVector(const std::string& name,
-                                                 const Teuchos::RCP<const Tpetra_Vector>& overlap_node_vec,
-                                                 int offset) const {
+Adapt::NodalDataBlock::
+saveTpetraNodalDataVector(const std::string& name,
+                          const Teuchos::RCP<const Tpetra_Vector>& overlap_node_vec,
+                          int offset) const
+{
   Albany::NodeFieldContainer::const_iterator it;
   it = nodeContainer->find(name);
 

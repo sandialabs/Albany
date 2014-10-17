@@ -9,7 +9,7 @@
 #ifndef ALBANY_STATEINFOSTRUCT
 #define ALBANY_STATEINFOSTRUCT
 
-// THis file containts two structs that are containers for the
+// This file containts two structs that are containers for the
 // Albany::Problem to interface to STK::Mesh.
 // (1) The MeshSpecsStruct holds information that is loaded mostly
 //     from STK::metaData, which is needed to create an Albany::Problem.
@@ -33,6 +33,7 @@
 namespace Albany {
 
 typedef shards::Array<double, shards::NaturalOrder> MDArray;
+typedef shards::Array<int, shards::NaturalOrder> IDArray;
 typedef std::map< std::string, MDArray > StateArray;
 typedef std::vector<StateArray> StateArrayVec;
 
@@ -70,25 +71,29 @@ typedef std::vector<StateArray> StateArrayVec;
 
 struct StateStruct {
 
-  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, ElemData, NodalDataToElemNode, QuadPoint};
+  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, ElemData, NodalDataToElemNode, NodalDistParameter, QuadPoint};
   typedef std::vector<int> FieldDims;
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent):
-        name(name_), responseIDtoRequire(""), output(true),
-	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
-  {};
+  StateStruct (const std::string& name_, MeshFieldEntity ent): 
+        name(name_), responseIDtoRequire(""), output(true), 
+	restartDataAvailable(false), saveOldState(false), meshPart(""),
+        pParentStateStruct(NULL), entity(ent)
+  {}
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent, const FieldDims& dims, const std::string& type):
-        name(name_), responseIDtoRequire(""), output(true), dim(dims), initType(type),
-	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
-  {};
+  StateStruct (const std::string& name_, MeshFieldEntity ent,
+               const FieldDims& dims, const std::string& type,
+               const std::string& meshPart_=""):
+        name(name_), responseIDtoRequire(""), output(true), dim(dims),
+        initType(type), restartDataAvailable(false), saveOldState(false),
+        meshPart(meshPart_), pParentStateStruct(NULL), entity(ent)
+  {}
 
   void setInitType(const std::string& type) { initType = type; }
   void setInitValue(const double val) { initValue = val; }
   void setFieldDims(const FieldDims& dims) { dim = dims; }
+  void setMeshPart(const std::string& meshPart_) {meshPart = meshPart_;}
 
-  void print(){
-
+  void print() {
     std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
     std::cout << "Dimensions : " << std::endl;
     for(unsigned int i = 0; i < dim.size(); i++)
@@ -109,6 +114,7 @@ struct StateStruct {
   bool output;
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
+  std::string meshPart;
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 
   StateStruct ();

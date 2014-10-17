@@ -36,6 +36,12 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 #endif
     void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
 #ifdef ALBANY_EPETRA
+    void fillVector(Epetra_Vector& field_vector, const std::string& field_name, stk::mesh::Selector& field_selection,
+                    const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
+
+    void saveVector(const Epetra_Vector& field_vector, const std::string& field_name, stk::mesh::Selector& field_selection,
+                        const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
+
     void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
 #endif
     //Tpetra version of above

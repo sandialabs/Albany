@@ -11,6 +11,7 @@
 #endif
 
 #include "Albany_Utils.hpp"
+#include "Petra_Converters.hpp"
 #include "AlbPUMI_FMDBDiscretization.hpp"
 #include <string>
 #include <iostream>
@@ -116,6 +117,15 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapMapT() const
 {
   return overlap_mapT;
 }
+
+#ifdef ALBANY_EPETRA
+template<class Output>
+Teuchos::RCP<const Epetra_Map>
+AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
+{
+  return Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
+}
+#endif
 
 template<class Output>
 Teuchos::RCP<const Tpetra_CrsGraph>

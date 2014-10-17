@@ -737,7 +737,6 @@ ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
 want to useTriKota.")
 ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 
-#todo Make this a fatal configuration error?
 IF (ALBANY_SEE AND (NOT ALBANY_SCOREC))
   MESSAGE("-- WARNING: SEE              is Enabled but SCOREC is not; SEE tests will fail.")
 ENDIF(ALBANY_SEE AND (NOT ALBANY_SCOREC))

@@ -44,6 +44,8 @@ SET(HEADERS
   Albany_ExtrudedSTKMeshStruct.hpp
   )
 
+#amb not yet  Albany_NodalDOFManager.hpp
+
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src 
   )

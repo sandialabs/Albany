@@ -133,13 +133,20 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
       scalarValue_states.push_back(st.name);
     } // End scalar at center of element
-    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode)) { // Data at the node points
+    else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter)) { // Data at the node points
 
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
 
         if(st.entity == StateStruct::NodalDataToElemNode) {
           nodal_sis.push_back((*sis)[i]);
+          StateStruct::FieldDims nodalFieldDim;
+          //convert ElemNode dims to NodalData dims.
+          nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
+          (*nodeContainer)[st.name] = Albany::buildSTKNodeField(st.name, nodalFieldDim, metaData, st.output);
+        }
+        else if(st.entity == StateStruct::NodalDistParameter) {
+          nodal_parameter_sis.push_back((*sis)[i]);
           StateStruct::FieldDims nodalFieldDim;
           //convert ElemNode dims to NodalData dims.
           nodalFieldDim.insert(nodalFieldDim.begin(), dim.begin()+1,dim.end());
@@ -193,7 +200,56 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& s
 
   }
 }
+
+template<bool Interleaved>
+template<class T>
+typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
+Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(
+        const Epetra_Vector& field_vector, T* field, const Teuchos::RCP<Epetra_Map>& node_map,
+        const stk::mesh::Bucket& bucket, const NodalDOFManager& nodalDofManager, int offset) {
+
+  BucketArray<T> field_array(*field, bucket);
+  const int num_nodes_in_bucket = field_array.dimension(1);
+
+  stk::mesh::BulkData& mesh = field->get_mesh();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    //      const unsigned node_gid = bucket[i].identifier();
+    const int node_gid = mesh.identifier(bucket[i]) - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
+    int node_lid = node_map->LID(node_gid);
 #endif
+
+    if(node_lid>=0)
+      for(std::size_t j = 0; j < (std::size_t)nodalDofManager.numComponents(); j++)
+        field_array(j,i) = field_vector[nodalDofManager.getLocalDOF(node_lid,offset+j)];
+  }
+}
+
+template<bool Interleaved>
+void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(
+        const Epetra_Vector& field_vector, ScalarFieldType* field, const Teuchos::RCP<Epetra_Map>& field_node_map,
+        const stk::mesh::Bucket& bucket, const NodalDOFManager& nodalDofManager, int offset) {
+
+  BucketArray<ScalarFieldType> field_array(*field, bucket);
+  const int num_nodes_in_bucket = field_array.dimension(0);
+
+  stk::mesh::BulkData& mesh = field->get_mesh();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    //      const unsigned node_gid = bucket[i].identifier();
+    const int node_gid = mesh.identifier(bucket[i]) - 1;
+    int node_lid = field_node_map->LID(node_gid);
+
+    if(node_lid>=0)
+      field_array(i)=field_vector[nodalDofManager.getLocalDOF(node_lid,offset)];
+  }
+}
+#endif // ALBANY_EPETRA
 
 //Tpetra version of above
 template<bool Interleaved>
@@ -229,8 +285,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &
     }
 }
 
-// Specialization for ScalarFieldType
 #ifdef ALBANY_EPETRA
+// Specialization for ScalarFieldType
 template<bool Interleaved>
 void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& soln,
     ScalarFieldType* solution_field,
@@ -266,6 +322,61 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vect
 template<bool Interleaved>
 template<class T>
 typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
+Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(
+        Epetra_Vector& field_vector, T* field, const Teuchos::RCP<Epetra_Map>& node_map,
+        const stk::mesh::Bucket& bucket, const NodalDOFManager& nodalDofManager, int offset) {
+
+  BucketArray<T> field_array(*field, bucket);
+  const int num_nodes_in_bucket = field_array.dimension(1);
+
+  stk::mesh::BulkData& mesh = field->get_mesh();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    //      const unsigned node_gid = bucket[i].identifier();
+    const int node_gid = mesh.identifier(bucket[i]) - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
+    int node_lid = node_map->LID(node_gid);
+#endif
+
+    if(node_lid>=0)
+      for(std::size_t j = 0; j < (std::size_t)nodalDofManager.numComponents(); j++)
+        field_vector[nodalDofManager.getLocalDOF(node_lid,offset+j)] = field_array(j,i);
+  }
+
+}
+
+template<bool Interleaved>
+void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(
+        Epetra_Vector& field_vector, ScalarFieldType* field, const Teuchos::RCP<Epetra_Map>& node_map,
+        const stk::mesh::Bucket& bucket, const NodalDOFManager& nodalDofManager, int offset) {
+
+  BucketArray<ScalarFieldType> field_array(*field, bucket);
+  const int num_nodes_in_bucket = field_array.dimension(0);
+
+  stk::mesh::BulkData& mesh = field->get_mesh();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    //      const unsigned node_gid = bucket[i].identifier();
+    const int node_gid = mesh.identifier(bucket[i]) - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
+    int node_lid = node_map->LID(node_gid);
+#endif
+
+    if(node_lid>=0)
+      field_vector[nodalDofManager.getLocalDOF(node_lid,offset)] = field_array(i);
+  }
+}
+
+
+template<bool Interleaved>
+template<class T>
+typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
 Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vector& soln,
     T* solution_field,
     const Teuchos::RCP<Epetra_Map>& node_map,
@@ -294,12 +405,44 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vec
 #endif
 
     for(std::size_t j = 0; j < num_vec_components; j++)
-
       solution_array(j, i) = soln[getDOF(node_lid, offset + j)];
 
   }
 }
+
+// Specialization for ScalarFieldType
+template<bool Interleaved>
+void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vector& soln,
+    ScalarFieldType* solution_field,
+    const Teuchos::RCP<Epetra_Map>& node_map,
+    const stk::mesh::Bucket& bucket, int offset) {
+
+  // Fill the result vector
+  // Create a multidimensional array view of the
+  // solution field data for this bucket of nodes.
+  // The array is two dimensional ( Cartesian X NumberNodes )
+  // and indexed by ( 0..2 , 0..NumberNodes-1 )
+
+  BucketArray<ScalarFieldType> solution_array(*solution_field, bucket);
+
+  const int num_nodes_in_bucket = solution_array.dimension(0);
+
+  stk::mesh::BulkData& mesh = solution_field->get_mesh();
+
+  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+    const GO node_gid = mesh.identifier(bucket[i]) - 1;
+#ifdef ALBANY_64BIT_INT
+    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
+#else
+    int node_lid = node_map->LID(node_gid);
 #endif
+
+    solution_array(i) = soln[getDOF(node_lid, offset)];
+
+  }
+}
+#endif // ALBANY_EPETRA
 //Tpetra version of above
 template<bool Interleaved>
 template<class T>
@@ -336,43 +479,6 @@ Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelperT(const Tpetra_Ve
 
   }
 }
-
-
-#ifdef ALBANY_EPETRA
-// Specialization for ScalarFieldType
-template<bool Interleaved>
-void Albany::GenericSTKFieldContainer<Interleaved>::saveVectorHelper(const Epetra_Vector& soln,
-    ScalarFieldType* solution_field,
-    const Teuchos::RCP<Epetra_Map>& node_map,
-    const stk::mesh::Bucket& bucket, int offset) {
-
-  // Fill the result vector
-  // Create a multidimensional array view of the
-  // solution field data for this bucket of nodes.
-  // The array is two dimensional ( Cartesian X NumberNodes )
-  // and indexed by ( 0..2 , 0..NumberNodes-1 )
-
-  BucketArray<ScalarFieldType> solution_array(*solution_field, bucket);
-
-  const int num_nodes_in_bucket = solution_array.dimension(0);
-
-  stk::mesh::BulkData& mesh = solution_field->get_mesh();
-
-  for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
-
-    const GO node_gid = mesh.identifier(bucket[i]) - 1;
-#ifdef ALBANY_64BIT_INT
-    int node_lid = node_map->LID(static_cast<long long int>(node_gid));
-#else
-    int node_lid = node_map->LID(node_gid);
-#endif
-
-    solution_array(i) = soln[getDOF(node_lid, offset)];
-
-  }
-  //#endif
-}
-#endif
 
 // Specialization for ScalarFieldType - Tpetra
 template<bool Interleaved>
