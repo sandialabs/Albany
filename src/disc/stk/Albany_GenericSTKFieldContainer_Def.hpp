@@ -136,7 +136,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode)) { // Data at the node points
 
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
-               = sis->getNodalDataBlock()->getNodeContainer();
+               = sis->getNodalDataBase()->getNodeContainer();
 
         if(st.entity == StateStruct::NodalDataToElemNode) {
           nodal_sis.push_back((*sis)[i]);

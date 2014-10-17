@@ -8,7 +8,7 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataBase.hpp"
 
 template<typename T>
 T Sqr(T num)
@@ -143,7 +143,7 @@ preEvaluate(typename Traits::PreEvalData workset)
   // Zero data for accumulation here
   if( this->outputNodeData ) {
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-       this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
     node_data->initializeVectors(0.0);
   }
 }
@@ -206,7 +206,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Get the node data block container
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
     Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
@@ -296,7 +296,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // Get the node data block container
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
     Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();

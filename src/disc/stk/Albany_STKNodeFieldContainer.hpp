@@ -34,8 +34,10 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
     AbstractSTKNodeFieldContainer(){}
     virtual ~AbstractSTKNodeFieldContainer(){}
 
-    virtual void saveField(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv,
-            int offset, int blocksize = -1) = 0;
+    virtual void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, 
+            int offset) = 0;
+    virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, 
+            int offset) = 0;
     virtual Albany::MDArray getMDA(const stk::mesh::Bucket& buck) = 0;
 
 };
@@ -69,7 +71,8 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     virtual ~STKNodeField(){}
 
-    void saveField(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset, int blocksize = -1);
+    void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset);
+    void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, int offset);
 
     Albany::MDArray getMDA(const stk::mesh::Bucket& buck);
 
@@ -102,32 +105,50 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<const Tpetra_BlockMultiVector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, int offset, int blocksize){
-
+                              field_type *fld, int offset)
+    {
       const Teuchos::RCP<const Tpetra_BlockMap>& overlap_node_map = overlap_node_vec->getBlockMap();
-      //IK, 10/13/14: had to comment the following since Tpetra doesn't really have blockmap like epetra... 
-      //Is this a problem? 
-      //if(blocksize < 0)
-      //  blocksize = overlap_node_map.ElementSize();
       Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->get1dView();
 
-      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
-
+      for (stk::mesh::BucketVector::const_iterator it = all_elements.begin();
+           it != all_elements.end(); ++it) {
         const stk::mesh::Bucket& bucket = **it;
-        stk::mesh::BulkData const& bulkData = bucket.mesh();
+        const stk::mesh::BulkData& bulkData = bucket.mesh();
 
         BucketArray<field_type> solution_array(*fld, bucket);
 
         const int num_nodes_in_bucket = solution_array.dimension(0);
 
-        for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
-
-          const GO node_gid = bulkData.identifier(bucket[i]) - 1;
-          LO local_node = overlap_node_map->getLocalBlockID(node_gid);
-          LO block_start = local_node * blocksize;
+        for (std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+          const GO global_block_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
+          LO local_block_id = overlap_node_map->getLocalBlockID(global_block_id);
+          LO block_start = overlap_node_map->getFirstLocalPointInLocalBlock(local_block_id);
 
           solution_array(i) = const_overlap_node_view[block_start + offset];
+        }
+      }
+    }
 
+    static void saveFieldData(const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+                              const stk::mesh::BucketVector& all_elements,
+                              field_type *fld, int offset){
+
+      Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->getVector(offset)->get1dView();
+
+      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+        const stk::mesh::Bucket& bucket = **it;
+        const stk::mesh::BulkData& bulkData = bucket.mesh();
+
+        BucketArray<field_type> solution_array(*fld, bucket);
+
+        const int num_nodes_in_bucket = solution_array.dimension(0);
+
+        for (std::size_t i = 0; i < num_nodes_in_bucket; i++) {
+          const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
+          const LO local_id =  overlap_node_vec->getMap()->getLocalElement(global_id);
+
+          solution_array(i) = const_overlap_node_view[local_id];
         }
       }
     }
@@ -153,12 +174,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<const Tpetra_BlockMultiVector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, int offset, int blocksize){
+                              field_type *fld, int offset){
 
       const Teuchos::RCP<const Tpetra_BlockMap>& overlap_node_map = overlap_node_vec->getBlockMap();
-      //IK, 10/13/14: Tpetra doesn't have same blockmap concept as Epetra...
-      //if(blocksize < 0)
-      //  blocksize = overlap_node_map.ElementSize();
       Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->get1dView();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
@@ -173,19 +191,46 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
         for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-          const GO node_gid = bulkData.identifier(bucket[i]) - 1;
-          LO local_node = overlap_node_map->getLocalBlockID(node_gid);
-          LO block_start = local_node * blocksize;
+          const GO global_block_id = bulkData.identifier(bucket[i]) - 1;
+          LO local_block_id = overlap_node_map->getLocalBlockID(global_block_id);
+          LO block_start = overlap_node_map->getFirstLocalPointInLocalBlock(local_block_id);
 
-          for(std::size_t j = 0; j < num_vec_components; j++){
-
+          for(std::size_t j = 0; j < num_vec_components; j++)
             solution_array(j, i) = const_overlap_node_view[block_start + offset + j];
+        }
+      }
+    }
+
+    static void saveFieldData(const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+                              const stk::mesh::BucketVector& all_elements,
+                              field_type *fld, int offset){
+
+      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+        const stk::mesh::Bucket& bucket = **it;
+
+        BucketArray<field_type> solution_array(*fld, bucket);
+        stk::mesh::BulkData const& bulkData = bucket.mesh();
+
+        const int num_vec_components = solution_array.dimension(0);
+        const int num_nodes_in_bucket = solution_array.dimension(1);
+
+        for(std::size_t j = 0; j < num_vec_components; j++){
+
+          Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->getVector(offset + j)->get1dView();
+
+          for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+            const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
+            const LO local_id =  overlap_node_vec->getMap()->getLocalElement(global_id);
+
+            solution_array(j, i) = const_overlap_node_view[local_id];
 
           }
         }
       }
     }
-
+    
   };
 
   // Node Tensor
@@ -207,12 +252,9 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     static void saveFieldData(const Teuchos::RCP<const Tpetra_BlockMultiVector>& overlap_node_vec,
                               const stk::mesh::BucketVector& all_elements,
-                              field_type *fld, int offset, int blocksize){
+                              field_type *fld, int offset){
 
       const Teuchos::RCP<const Tpetra_BlockMap>& overlap_node_map = overlap_node_vec->getBlockMap();
-      //IK, 10/13/14: Tpetra doesn't have same concept of block_map as epetra....
-      //if(blocksize < 0)
-      //  blocksize = overlap_node_map.ElementSize();
       Teuchos::ArrayRCP<const ST> const_overlap_node_view = overlap_node_vec->get1dView();
 
       for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
@@ -228,16 +270,48 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
         for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
 
-          const GO node_gid = bulkData.identifier(bucket[i]) - 1;
-          LO local_node = overlap_node_map->getLocalBlockID(node_gid);
-          LO block_start = local_node * blocksize;
+          const GO global_block_id = bulkData.identifier(bucket[i]) - 1;
+          LO local_block_id = overlap_node_map->getLocalBlockID(global_block_id);
+          LO block_start = overlap_node_map->getFirstLocalPointInLocalBlock(local_block_id);
 
           for(std::size_t j = 0; j < num_j_components; j++)
             for(std::size_t k = 0; k < num_i_components; k++)
-
               solution_array(k, j, i) = const_overlap_node_view[block_start + offset + j*num_i_components + k];
-
         }
+      }
+    }
+
+    static void saveFieldData(const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+                              const stk::mesh::BucketVector& all_elements,
+                              field_type *fld, int offset){
+
+
+      for(stk::mesh::BucketVector::const_iterator it = all_elements.begin() ; it != all_elements.end() ; ++it) {
+
+        const stk::mesh::Bucket& bucket = **it;
+        stk::mesh::BulkData const& bulkData = bucket.mesh();
+
+        BucketArray<field_type> solution_array(*fld, bucket);
+
+        const int num_i_components = solution_array.dimension(0);
+        const int num_j_components = solution_array.dimension(1);
+        const int num_nodes_in_bucket = solution_array.dimension(2);
+
+
+        for(std::size_t j = 0; j < num_j_components; j++)
+          for(std::size_t k = 0; k < num_i_components; k++){
+
+            Teuchos::ArrayRCP<const ST> const_overlap_node_view = 
+                     overlap_node_vec->getVector(offset + j*num_i_components + k)->get1dView();
+
+            for(std::size_t i = 0; i < num_nodes_in_bucket; i++)  {
+
+              const GO global_id = bulkData.identifier(bucket[i]) - 1; // global node in mesh
+              const LO local_id =  overlap_node_vec->getMap()->getLocalElement(global_id);
+              solution_array(k, j, i) = const_overlap_node_view[local_id];
+
+            }
+         }
       }
     }
 

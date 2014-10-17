@@ -41,16 +41,6 @@
 
 namespace Albany {
 
-/*
-=======
-  struct MeshGraph {
-
-       std::vector<std::size_t> start;
-       std::vector<std::size_t> adj;
-
-  };
-*/
-
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
 
@@ -380,7 +370,6 @@ namespace Albany {
 
   private:
 
-//    MeshGraph nodalGraph;
     Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
 
 
@@ -394,32 +383,25 @@ namespace Albany {
        return -1;
     }
 
-    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO> &vector) {
-
-      for(std::size_t i=0; i < vector.size(); i++) {
-        if(vector[i] == value)
+    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO>& vector) {
+      for (std::size_t i=0; i < vector.size(); i++)
+        if (vector[i] == value)
           return i;
-      }
-       return -1;
-    }
-
-    ssize_t in_list(const std::size_t value, std::vector<std::size_t> vector) {
-
-      std::size_t count = vector.size();
-      for(std::size_t i=0; i < count; i++) {
-        if(vector[i] == value)
-          return i;
-      }
       return -1;
     }
 
-    ssize_t entity_in_list(stk::mesh::Entity value, std::vector<stk::mesh::Entity> const& arg_vector) {
-
-      std::size_t count = arg_vector.size();
-      for(std::size_t i=0; i < count; i++) {
-        if(bulkData.identifier(arg_vector[i]) == bulkData.identifier(value))
+    ssize_t in_list(const std::size_t value, const std::vector<std::size_t>& vector) {
+      for (std::size_t i=0; i < vector.size(); i++)
+        if (vector[i] == value)
           return i;
-      }
+      return -1;
+    }
+
+    ssize_t entity_in_list(const stk::mesh::Entity& value,
+                           const std::vector<stk::mesh::Entity>& vec) {
+      for (std::size_t i = 0; i < vec.size(); i++)
+        if (bulkData.identifier(vec[i]) == bulkData.identifier(value))
+          return i;
       return -1;
     }
 

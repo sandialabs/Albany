@@ -9,13 +9,17 @@
 #include "Adapt_NodalDataBlock.hpp"
 #include "Tpetra_Import_decl.hpp"
 
-Adapt::NodalDataBlock::NodalDataBlock() :
-  nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
-  blocksize(0),
+Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
+                                      NodeFieldSizeVector& nodeBlockLayout_,
+                                      NodeFieldSizeMap& nodeBlockMap_, LO& blocksize_) :
+  nodeContainer(nodeContainer_),
+  nodeBlockLayout(nodeBlockLayout_),
+  nodeBlockMap(nodeBlockMap_),
+  blocksize(blocksize_),
   mapsHaveChanged(false)
 {
-}
 
+}
 
 void
 Adapt::NodalDataBlock::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
@@ -138,34 +142,26 @@ Adapt::NodalDataBlock::getNDofsAndOffset(const std::string &stateName, int& offs
 
 void
 Adapt::NodalDataBlock::saveNodalDataState() const {
-
-   // save the nodal data arrays back to stk
-   for(NodeFieldSizeVector::const_iterator i = nodeBlockLayout.begin(); i != nodeBlockLayout.end(); ++i){
-
-      // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
-
-      (*nodeContainer)[i->name]->saveField(overlap_node_vec, i->offset);
-
-   }
-
+  // save the nodal data arrays back to stk
+  for (NodeFieldSizeVector::const_iterator i = nodeBlockLayout.begin(); i != nodeBlockLayout.end(); ++i) {
+    // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
+    (*nodeContainer)[i->name]->saveFieldBlock(overlap_node_vec, i->offset);
+  }
 }
 
 
 void
 Adapt::NodalDataBlock::saveTpetraNodalDataVector(const std::string& name,
-                 const Teuchos::RCP<const Tpetra_Vector>& overlap_node_vec,
-                 int offset, int blocksize) const {
+                                                 const Teuchos::RCP<const Tpetra_Vector>& overlap_node_vec,
+                                                 int offset) const {
+  Albany::NodeFieldContainer::const_iterator it;
+  it = nodeContainer->find(name);
 
-   Albany::NodeFieldContainer::const_iterator it;
-   it = nodeContainer->find(name);
+  TEUCHOS_TEST_FOR_EXCEPTION((it == nodeContainer->end()), std::logic_error,
+                             std::endl << "Error: Cannot locate nodal field " << name << " in NodalDataBlock" << std::endl);
 
-   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeContainer->end()), std::logic_error,
-           std::endl << "Error: Cannot locate nodal field " << name << " in NodalDataBlock" << std::endl);
-
-   // Store the overlapped vector data back in stk
-   
-   //IK_FIXME! (*nodeContainer)[name]->saveField(overlap_node_vec, offset, blocksize);
-   
+  // Store the overlapped vector data back in stk
+  (*nodeContainer)[name]->saveFieldVector(overlap_node_vec, offset);
 }
 
 

@@ -68,21 +68,34 @@ Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string
 }
 
 template<typename DataType, unsigned ArrayDim, class traits>
-void
-Albany::STKNodeField<DataType, ArrayDim, traits>::saveField(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv,
-        int offset, int blocksize){
-
+void 
+Albany::STKNodeField<DataType, ArrayDim, traits>::
+saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset)
+{
  // Iterate over the processor-visible nodes
- stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
- 
+ const stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
+
  // Iterate over the overlap nodes by getting node buckets and iterating over each bucket.
  stk::mesh::BulkData& mesh = node_field->get_mesh();
- stk::mesh::BucketVector const& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, select_owned_or_shared);
- 
- traits_type::saveFieldData(block_mv, all_elements, node_field, offset, blocksize);
- 
+ const stk::mesh::BucketVector& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, select_owned_or_shared);
+
+ traits_type::saveFieldData(block_mv, all_elements, node_field, offset);
 }
 
+template<typename DataType, unsigned ArrayDim, class traits>
+void 
+Albany::STKNodeField<DataType, ArrayDim, traits>::
+saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, int offset)
+{
+ // Iterate over the processor-visible nodes
+ const stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
+
+ // Iterate over the overlap nodes by getting node buckets and iterating over each bucket.
+ stk::mesh::BulkData& mesh = node_field->get_mesh();
+ const stk::mesh::BucketVector& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, select_owned_or_shared);
+
+ traits_type::saveFieldData(mv, all_elements, node_field, offset);
+}
 
 template<typename DataType, unsigned ArrayDim, class traits>
 Albany::MDArray

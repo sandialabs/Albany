@@ -17,7 +17,7 @@
 #include "Albany_ProblemUtils.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataBase.hpp"
 
 
 namespace Albany {
@@ -87,7 +87,7 @@ struct AbstractMeshStruct {
 
     virtual msType meshSpecsType() = 0;
 
-    Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+    Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 
 };
 }

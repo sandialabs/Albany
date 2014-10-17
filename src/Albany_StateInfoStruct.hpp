@@ -25,7 +25,7 @@
 #include "Shards_Array.hpp"
 #include "Intrepid_Polylib.hpp"
 
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataBase.hpp"
 
   //! Container for minimal mesh specification info needed to
   //  construct an Albany Problem
@@ -130,19 +130,18 @@ public:
    const_iterator begin() const { return sis.begin(); }
    const_iterator end() const { return sis.end(); }
 
-// Create storage on access - only if used
-   Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() {return nodal_data_block; }
-
-   Teuchos::RCP<Adapt::NodalDataBlock> createNodalDataBlock(){
-        if(Teuchos::is_null(nodal_data_block))
-            nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock);
-        return nodal_data_block;
-   }
+  // Create storage on access - only if used
+  Teuchos::RCP<Adapt::NodalDataBase> createNodalDataBase() {
+    if (Teuchos::is_null(nodal_data_base))
+      nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
+    return nodal_data_base;
+  }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return nodal_data_base; }
 
 private:
 
    std::vector<Teuchos::RCP<StateStruct> > sis;
-   Teuchos::RCP<Adapt::NodalDataBlock> nodal_data_block;
+   Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 
 };
 

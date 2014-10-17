@@ -24,7 +24,7 @@
 #include "Albany_EigendataInfoStruct.hpp"
 #include "Epetra_Vector.h"
 #endif
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataBase.hpp"
 
 namespace Albany {
 
@@ -165,7 +165,7 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){ return stateInfo->createNodalDataBlock(); }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return stateInfo->createNodalDataBase(); }
 
 #ifdef ALBANY_EPETRA
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data

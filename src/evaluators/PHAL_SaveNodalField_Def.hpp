@@ -130,19 +130,20 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Note: we are in postEvaluate so all PEs call this
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data = this->pStateMgr->getStateInfoStruct()->getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataBlock> node_data =
+    this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
 
   if(this->xName.length() > 0)
 
-    node_data->saveTpetraNodalDataVector(this->xName, xT, 0, 3);
+    node_data->saveTpetraNodalDataVector(this->xName, xT, 0);
 
   if(this->xdotName.length() > 0)
 
-    node_data->saveTpetraNodalDataVector(this->xdotName, xdotT, 0, 3);
+    node_data->saveTpetraNodalDataVector(this->xdotName, xdotT, 0);
 
   if(this->xdotdotName.length() > 0)
 
-    node_data->saveTpetraNodalDataVector(this->xdotdotName, xdotdotT, 0, 3);
+    node_data->saveTpetraNodalDataVector(this->xdotdotName, xdotdotT, 0);
 
 }
 
