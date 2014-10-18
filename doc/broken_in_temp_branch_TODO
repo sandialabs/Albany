@@ -13,28 +13,15 @@ and fix.
 
 Failed tests (10/13/14): 
 The following tests FAILED:
-	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing)
+	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing; fails in branch master too)
 	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
 	 73 - GPAM_Tpetra (Failed) - Failed comparison 
-	121 - MechanicsWithTemperatureThermalExpansion (Failed) - Error 1 below
-	122 - MechanicsWithTemperature (Failed) - Error 1 below
-	171 - ThermoMechanical3D_SplitOutput (Failed) - Error 1 below
-	173 - ThermoMechanical3D_SplitOutput_Tpetra (Failed) - Error 1 below
-	213 - MechanicsTensileTet10_STK (Failed) - Error 2 below
-	214 - MechanicsTensileTet10_STK_Tpetra (Failed) - Error 2 below
 	270 - FO_GIS_GisUnstructured (Failed) - Error 4 below (need to talk to Mauro)
-	271 - FO_GIS_GisRestartUnstructured (Failed) - Error 4 below (need to talk to Mauro)
+	271 - FO_GIS_GisRestartUnstructured (Failed) - Error 4 below (need to talk to Mauro; fails in branch master too)
 	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
+              Aeras_TC2_Serial - See Error 5 below
+
 Errors while running CTest
-
-Error 1
- ARRAY RANGE CHECK FAILED: 0 <= 1 < 1 ; THROWN FROM FILE /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Trilinos_clean/packages/shards/src/Shards_Array.cpp AT LINE 197
-
-Error 2
- /home/ikalash/Trilinos_Albany/Albany_clean/src/disc/stk/Albany_STKDiscretization.cpp:2215:
-  Throw number = 1
-  Throw test that evaluated to true: true
-  Error - unknown element type : TETRAHEDRON_10 requested in nodal graph algorithm
 
 Error 4
  Throw test that evaluated to true: *getMap() != *importer.getTargetMap()
@@ -44,3 +31,11 @@ Error 4
   Throw number = 1
   Throw test that evaluated to true: numNodes != content->getLocalLength()
   Error in ExtrudedSTKMeshStruct: Number of nodes in file ../AsciiMeshes/GisUnstructFiles/surface_height.ascii (2087) is different from the number expected (0)
+
+Error 5
+  Some of the Aeras tests seem to fail depending on workset size. Andrew
+B. thinks it might have to do with how
+    Aeras_ShallowWaterResponseL2Error_Def.hpp
+calculates the L^2 error. There may be two += that should actually be =. Right
+now, it seems only Aeras_TC2_Serial is failing among the Aeras sets that use
+that response function.

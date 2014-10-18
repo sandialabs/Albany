@@ -414,16 +414,15 @@ void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vec
              const Teuchos::RCP<const Tpetra_Map>& node_mapT,
              const stk::mesh::Bucket & bucket, int offset){
 
-    // Fill the result vector
-    // Create a multidimensional array view of the
-    // solution field data for this bucket of nodes.
-    // The array is two dimensional ( Cartesian X NumberNodes )
-    // and indexed by ( 0..2 , 0..NumberNodes-1 )
+  // Fill the result vector
+  // Create a multidimensional array view of the
+  // solution field data for this bucket of nodes.
+  // The array is two dimensional ( Cartesian X NumberNodes )
+  // and indexed by ( 0..2 , 0..NumberNodes-1 )
 
-    BucketArray<ScalarFieldType> solution_array(*solution_field, bucket);
+  BucketArray<ScalarFieldType> solution_array(*solution_field, bucket);
 
-   const int num_vec_components = solution_array.dimension(0);
-   const int num_nodes_in_bucket = solution_array.dimension(1);
+   const int num_nodes_in_bucket = solution_array.dimension(0);
 
    stk::mesh::BulkData& mesh = solution_field->get_mesh();
 
