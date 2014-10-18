@@ -304,7 +304,9 @@ FELIX::StokesFO::constructEvaluators(
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-  
+    
+    entity= Albany::StateStruct::NodalDataToElemNode;
+ 
     {
       std::string stateName("surface_velocity");
       RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);
