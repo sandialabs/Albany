@@ -1008,9 +1008,9 @@ void Albany::STKDiscretization::computeNodalEpetraMaps (bool overlapped)
     const std::string& part = it->first.first;
     int nComp = it->first.second;
     if(part.size())  {
-      std::map<std::string, stk::mesh::Part*>::const_iterator it = stkMeshStruct->nsPartVec.find(part);
-      if(it != stkMeshStruct->nsPartVec.end())
-        selector &= *(it->second);
+      std::map<std::string, stk::mesh::Part*>::const_iterator it3 = stkMeshStruct->nsPartVec.find(part);
+      if(it3 != stkMeshStruct->nsPartVec.end())
+        selector &= *(it3->second);
       else { //throw error
         std::ostringstream msg;
         msg << "Albany::STKDiscretization::computeNodalEpetraMaps(overlapped==" << overlapped <<
