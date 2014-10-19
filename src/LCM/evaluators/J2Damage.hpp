@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #ifndef J2DAMAGE_HPP
-#define J2SDAMAGE_HPP
+#define J2DAMAGE_HPP
 
 #include <Intrepid_MiniTensor.h>
 #include "Phalanx_ConfigDefs.hpp"

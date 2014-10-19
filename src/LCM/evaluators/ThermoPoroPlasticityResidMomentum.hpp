@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef THERMOPOROPLASTICITYRESIDMOMRNTUM_HPP
+#ifndef THERMOPOROPLASTICITYRESIDMOMENTUM_HPP
 #define THERMOPOROPLASTICITYRESIDMOMENTUM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"

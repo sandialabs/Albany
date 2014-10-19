@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef POROELASTICITYRESIDMOMRNTUM_HPP
+#ifndef POROELASTICITYRESIDMOMENTUM_HPP
 #define POROELASTICITYRESIDMOMENTUM_HPP
 
 #include "Phalanx_ConfigDefs.hpp"

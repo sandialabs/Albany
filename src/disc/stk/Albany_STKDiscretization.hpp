@@ -349,7 +349,7 @@ namespace Albany {
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     int netCDFp;
-    int netCDFOutputRequest;
+    size_t netCDFOutputRequest;
     std::vector<int> varSolns;
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp> > >::type interpolateData;
 
