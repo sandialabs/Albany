@@ -118,6 +118,7 @@ createResponseFunction(
 	   name == "Element Size Field" ||
 	   name == "Save Nodal Fields" ||
 	   name == "Stiffness Objective" ||
+           name == "Linear Adjoint Solve" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
