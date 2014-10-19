@@ -249,7 +249,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     std::vector<int>& dim = st.dim;
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
-               = sis->getNodalDataBlock()->getNodeContainer();
+               = sis->getNodalDataBase()->getNodeContainer();
         (*nodeContainer)[st.name] = AlbPUMI::buildPUMINodeField(st.name, dim, st.output);
     }
     else if (dim.size() == 2) {

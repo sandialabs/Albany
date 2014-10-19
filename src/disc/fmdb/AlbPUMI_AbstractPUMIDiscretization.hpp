@@ -29,7 +29,7 @@ namespace AlbPUMI {
     virtual void detachQPData() = 0;
 
     // After mesh modification, need to update the element connectivity and nodal coordinates
-    virtual void updateMesh(bool shouldTransferIPData = false) = 0;
+    virtual void updateMesh(bool shouldTransferIPData) = 0;
 
 #ifdef ALBANY_EPETRA
     virtual void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename) = 0;

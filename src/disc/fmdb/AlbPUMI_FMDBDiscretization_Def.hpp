@@ -169,6 +169,56 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
   return coordinates;
 }
 
+// FELIX uninitialized variables (FIXME)
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
+{
+  return sHeight;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+AlbPUMI::FMDBDiscretization<Output>::getTemperature() const
+{
+  return temperature;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getBasalFriction() const
+{
+  return basalFriction;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getThickness() const
+{
+  return thickness;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
+AlbPUMI::FMDBDiscretization<Output>::getFlowFactor() const
+{
+  return flowFactor;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getSurfaceVelocity() const
+{
+  return surfaceVelocity;
+}
+
+template<class Output>
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+AlbPUMI::FMDBDiscretization<Output>::getVelocityRMS() const
+{
+  return velocityRMS;
+}
+
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
@@ -711,6 +761,14 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
+  sHeight.resize(numBuckets);
+  temperature.resize(numBuckets);
+  basalFriction.resize(numBuckets);
+  thickness.resize(numBuckets);
+  surfaceVelocity.resize(numBuckets);
+  velocityRMS.resize(numBuckets);
+  flowFactor.resize(numBuckets);
+  sphereVolume.resize(numBuckets);
 
   // Clear map if remeshing
   if(!elemGIDws.empty()) elemGIDws.clear();

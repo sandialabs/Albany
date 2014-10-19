@@ -17,7 +17,7 @@ class FMDBExodus {
 
   public:
 
-    FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_);
+    FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
     ~FMDBExodus();
 
@@ -30,6 +30,7 @@ class FMDBExodus {
     apf::Mesh2* mesh;
     apf::StkModels* sets_p;
     std::string outputFileName;
+    Teuchos::RCP<const Teuchos_Comm> comm;
 };
 
 }
