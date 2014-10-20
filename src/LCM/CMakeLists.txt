@@ -189,6 +189,7 @@ add_executable(BoundarySurfaceOutput test/utils/BoundarySurfaceOutput.cc)
 add_executable(Test1_Subdivision test/utils/Test1_Subdivision.cc)
 add_executable(Test2_Subdivision test/utils/Test2_Subdivision.cc)
 add_executable(TopologyBase test/utils/TopologyBase.cc)
+add_executable(Practice test/utils/Practice.cc)
 
 add_executable(
   utLocalNonlinearSolver
@@ -335,3 +336,4 @@ target_link_libraries(Test2_Subdivision ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(TopologyBase ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALL_LIBRARIES})
 target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALL_LIBRARIES})
+target_link_libraries(Practice ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})

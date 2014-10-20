@@ -50,6 +50,7 @@
        evaluators/Aeras_ShallowWaterSource.cpp
        responses/Aeras_TotalVolume.cpp
        responses/Aeras_LayeredResponseUtilities.cpp
+       Aeras/evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
 
    )
    
@@ -135,7 +136,8 @@
        responses/Aeras_TotalVolume_Def.hpp
        responses/Aeras_LayeredResponseUtilities.hpp
        responses/Aeras_LayeredResponseUtilities_Def.hpp
-       
+       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.hpp
+       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx_Def.hpp       
        
   )
   

@@ -283,6 +283,13 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Permittivity.cpp
   evaluators/PNP_PotentialResid.cpp
   evaluators/PNP_ConcentrationResid.cpp
+  src/evaluators/PHAL_GatherBasalFriction.cpp
+  src/evaluators/PHAL_GatherFlowFactor.cpp
+  src/evaluators/PHAL_GatherSHeight.cpp
+  src/evaluators/PHAL_GatherSurfaceVelocity.cpp
+  src/evaluators/PHAL_GatherTemperature.cpp
+  src/evaluators/PHAL_GatherThickness.cpp
+  src/evaluators/PHAL_GatherVelocityRMS.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -360,6 +367,20 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
+  src/evaluators/PHAL_GatherVelocityRMS.hpp
+  src/evaluators/PHAL_GatherVelocityRMS_Def.hpp 
+  src/evaluators/PHAL_GatherThickness.hpp
+  src/evaluators/PHAL_GatherThickness_Def.hpp
+  src/evaluators/PHAL_GatherTemperature.hpp
+  src/evaluators/PHAL_GatherTemperature_Def.hpp
+  src/evaluators/PHAL_GatherSurfaceVelocity.hpp
+  src/evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
+  src/evaluators/PHAL_GatherSHeight.hpp
+  src/evaluators/PHAL_GatherSHeight_Def.hpp
+  src/evaluators/PHAL_GatherFlowFactor.hpp
+  src/evaluators/PHAL_GatherFlowFactor_Def.hpp
+  src/evaluators/PHAL_GatherBasalFriction.hpp
+  src/evaluators/PHAL_GatherBasalFriction_Def.hpp
   )
   
 IF (ALBANY_EPETRA) 
