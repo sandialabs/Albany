@@ -28,7 +28,7 @@ class FMDBExodus {
 
   private:
     apf::Mesh2* mesh;
-    apf::StkModels* sets_p;
+    apf::StkModels& sets_p;
     std::string outputFileName;
     Teuchos::RCP<const Teuchos_Comm> comm;
 };

@@ -23,11 +23,11 @@
 AlbPUMI::FMDBExodus::
 FMDBExodus(FMDBMeshStruct& meshStruct,
            const Teuchos::RCP<const Teuchos_Comm>& comm_)
-  : comm(comm_)
+  : mesh(meshStruct.getMesh()),
+    sets_p(meshStruct.getSets()),
+    outputFileName(meshStruct.outputFileName),
+    comm(comm_)
 {
-  mesh = meshStruct.getMesh();
-  sets_p = &(meshStruct.getSets());
-  outputFileName = meshStruct.outputFileName;
 }
 
 AlbPUMI::FMDBExodus::
@@ -53,8 +53,11 @@ void define_output_fields(stk::io::StkMeshIoBroker& mesh_data,
 #endif
 }
 
-//todo This method needs to be exercised to see if the conversion from
-// stk_classic to stk is correct.
+//todo This method is failing with
+//     SCOREC/stk/apfSTK.cc:162: apf::Node apf::lookup(long int, apf::GlobalMap&): Assertion `map.count(id)' failed.
+// This error does not occur in the stk_classic version, so either (i) the
+// following code is an incorrect translation to the new stk, or something in
+// spf*STK.h/cc needs to change.
 void
 AlbPUMI::FMDBExodus::
 write(const char* filename, const double time_val)
@@ -62,17 +65,16 @@ write(const char* filename, const double time_val)
 #ifdef ALBANY_SEACAS
   apf::GlobalNumbering* n[4];
   apf::makeStkNumberings(mesh, n);
+  apf::StkModels& models = sets_p;
 
-  apf::StkModels& models = *sets_p;
-  stk::mesh::MetaData meta;
+  stk::mesh::MetaData meta(mesh->getDimension());
   apf::copyMeshToMeta(mesh, models, &meta);
   apf::copyFieldsToMeta(mesh, &meta);
   meta.commit();
 
-  stk::mesh::BulkData bulk(meta,
-                           Albany::getMpiCommFromTeuchosComm(comm));
+  stk::mesh::BulkData bulk(meta, Albany::getMpiCommFromTeuchosComm(comm));
   apf::copyMeshToBulk(n, models, &meta, &bulk);
-  apf::copyFieldsToBulk(n, &meta, &bulk);
+  apf::copyFieldsToBulk(n, &meta, &bulk); // <-- assert occurs in this call.
 
   Ioss::Init::Initializer();
   stk::io::StkMeshIoBroker mesh_data(Albany::getMpiCommFromTeuchosComm(comm));
@@ -81,7 +83,6 @@ write(const char* filename, const double time_val)
   std::size_t output_file_idx =
     mesh_data.create_output_mesh(filename, stk::io::WRITE_RESULTS);
   define_output_fields(mesh_data, output_file_idx);
-  //todo possibly: Use monotonicTimeLabel(time_val).
   mesh_data.process_output_request(output_file_idx, time_val);
 
   apf::freeStkNumberings(mesh, n);
