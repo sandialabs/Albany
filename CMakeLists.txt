@@ -481,6 +481,17 @@ ELSE()
   SET(ALBANY_SEE FALSE)
 ENDIF()
 
+# Set optional dependency on AMP, defaults to Disabled
+OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
+IF (ENABLE_AMP)
+  ADD_DEFINITIONS(-DALBANY_AMP)
+  MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
+  SET(ALBANY_AMP TRUE)
+ELSE()
+  MESSAGE("-- AMP       is NOT Enabled.")
+  SET(ALBANY_AMP FALSE)
+ENDIF()
+
 # Set optional build of MOR (Model Order Reduction) defaults to ON
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" ON)
 IF (ENABLE_MOR)

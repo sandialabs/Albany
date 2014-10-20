@@ -64,6 +64,10 @@
 #include "SEE/problems/NonlinearPoissonProblem.hpp"
 #endif
 
+#ifdef ALBANY_AMP
+#include "AMP/problems/PhaseProblem.hpp"
+#endif
+
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
@@ -310,6 +314,17 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Nonlinear Poisson 3D") {
     strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, commT));
+  }
+#endif
+#ifdef ALBANY_AMP
+  else if (method == "Phase 1D") {
+    strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 1, commT));
+  }
+  else if (method == "Phase 2D") {
+    strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 2, commT));
+  }
+  else if (method == "Phase 3D") {
+    strategy = rcp(new Albany::PhaseProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_HYDRIDE
