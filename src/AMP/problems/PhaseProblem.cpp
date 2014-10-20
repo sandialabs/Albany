@@ -21,9 +21,11 @@ PhaseProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, param_lib),
   num_dims_(num_dims)
 {
-  
-  this->setNumEquations(1);
+  // Read the "MaterialDB Filename" parameter from the input deck and create the MaterialDatabase
+  std::string filename = params->get<std::string>("MaterialDB Filename");
+  material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
 
+  this->setNumEquations(1);
 }
 
 Albany::PhaseProblem::
