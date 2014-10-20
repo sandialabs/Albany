@@ -116,7 +116,7 @@ public:
     return get_topology().get_interface_part();
   }
 
-  shards::CellTopology const &
+  shards::CellTopology
   get_cell_topology()
   {
     return get_topology().get_cell_topology();

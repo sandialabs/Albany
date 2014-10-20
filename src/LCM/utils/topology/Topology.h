@@ -666,7 +666,7 @@ public:
     return *(get_meta_data().get_part(get_interface_block_name()));
   }
 
-  shards::CellTopology const &
+  shards::CellTopology
   get_cell_topology()
   {
     return get_meta_data().get_cell_topology(get_bulk_part());
