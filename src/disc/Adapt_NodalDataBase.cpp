@@ -20,7 +20,7 @@ Adapt::NodalDataBase::NodalDataBase() :
 
 }
 
-/*
+//amb For now, keep the Tpetra_BlockMap version available.
 void
 Adapt::NodalDataBase::registerBlockState(const std::string &stateName, int ndofs){
 
@@ -43,7 +43,6 @@ Adapt::NodalDataBase::registerBlockState(const std::string &stateName, int ndofs
    blocksize += ndofs;
 
 }
-*/
 
 void
 Adapt::NodalDataBase::registerVectorState(const std::string &stateName, int ndofs){

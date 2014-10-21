@@ -307,9 +307,9 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
 
   dl->dimensions(stateRef.dim);
 
-/*
-  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
+  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
+  //amb For now, keep the Tpetra_BlockMap version available.
   if ( dl->rank() == 2 ){ // node vector
     // register the state with the nodalDataBlock also
     nodalDataBase->registerBlockState(stateName, stateRef.dim[1]);
@@ -322,9 +322,7 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
     // register the state with the nodalDataBlock also
     nodalDataBase->registerBlockState(stateName, 1);
   }
-*/
-  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
+  /*
   if ( dl->rank() == 2 ){ // node vector
     // register the state with the nodalDataBlock also
     nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
@@ -337,6 +335,7 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
     // register the state with the nodalDataBlock also
     nodalDataBase->registerVectorState(stateName, 1);
   }
+  */
 
   stateRef.output = outputToExodus;
   stateRef.responseIDtoRequire = responseIDtoRequire;
@@ -355,9 +354,8 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
     pstateRef.output = false;
     dl->dimensions(pstateRef.dim);
 
-/*
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
+    //amb For now, keep the Tpetra_BlockMap version available.
     if ( dl->rank() == 2 ){ // node vector
       // register the state with the nodalDataBlock also
       nodalDataBase->registerBlockState(stateName_old, pstateRef.dim[1]);
@@ -370,21 +368,20 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
       // register the state with the nodalDataBlock also
       nodalDataBase->registerBlockState(stateName_old, 1);
     }
-*/
-  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
-
-  if ( dl->rank() == 2 ){ // node vector
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]);
-  }
-  else if ( dl->rank() == 3 ){ // node tensor
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
-  }
-  else { // node scalar
-    // register the state with the nodalDataBlock also
-    nodalDataBase->registerVectorState(stateName_old, 1);
-  }
+    /*
+    if ( dl->rank() == 2 ){ // node vector
+      // register the state with the nodalDataBlock also
+      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]);
+    }
+    else if ( dl->rank() == 3 ){ // node tensor
+      // register the state with the nodalDataBlock also
+      nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
+    }
+    else { // node scalar
+      // register the state with the nodalDataBlock also
+      nodalDataBase->registerVectorState(stateName_old, 1);
+    }
+    */
   }
 
   // insert

@@ -52,7 +52,8 @@ class NodalDataBase {
                               return false;
                             }
 
-//    void registerBlockState(const std::string &stateName, int ndofs);
+    //amb For now, keep the Tpetra_BlockMap version available.
+    void registerBlockState(const std::string &stateName, int ndofs);
     void registerVectorState(const std::string &stateName, int ndofs);
 
     LO getBlocksize(){ return blocksize; }
