@@ -8,6 +8,9 @@
 
 #include "Adapt_NodalDataBase.hpp"
 
+#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
+
 Adapt::NodalDataBase::NodalDataBase() :
   nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
   initialized(false),
@@ -17,6 +20,7 @@ Adapt::NodalDataBase::NodalDataBase() :
 
 }
 
+/*
 void
 Adapt::NodalDataBase::registerBlockState(const std::string &stateName, int ndofs){
 
@@ -39,6 +43,7 @@ Adapt::NodalDataBase::registerBlockState(const std::string &stateName, int ndofs
    blocksize += ndofs;
 
 }
+*/
 
 void
 Adapt::NodalDataBase::registerVectorState(const std::string &stateName, int ndofs){

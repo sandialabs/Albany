@@ -22,6 +22,13 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+#ifdef ALBANY_64BIT_INT
+// long int == 64bit
+#  define ST_LLI "%li"
+#else
+#  define ST_LLI "%i"
+#endif
+
 
 //#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -195,7 +202,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        fgets(buffer, 100, geIDsfile);
        for (int i=0; i<NumEles; i++){
          fgets(buffer, 100, geIDsfile);
-         sscanf(buffer, "%i ", &globalElesID[i]);
+         sscanf(buffer, "" ST_LLI" ", &globalElesID[i]);
          globalElesID[i] = globalElesID[i]-1; //subtract 1 b/c global element IDs file assumed to be 1-based not 0-based
          //*out << "local element ID #:" << i << ", global element ID #:" << globalElesID[i] << std::endl;
        }
@@ -220,7 +227,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        fgets(buffer, 100, gnIDsfile);
        for (int i=0; i<NumNodes; i++){
          fgets(buffer, 100, gnIDsfile);
-         sscanf(buffer, "%i ", &globalNodesID[i]);
+         sscanf(buffer, "" ST_LLI" ", &globalNodesID[i]);
          globalNodesID[i] = globalNodesID[i]-1; //subtract 1 b/c global node IDs file assumed to be 1-based not 0-based
          //*out << "local node ID #:" << i << ", global node ID #:" << globalNodesID[i] << std::endl;
        }
@@ -239,7 +246,7 @@ Albany::AsciiSTKMeshStruct::AsciiSTKMeshStruct(
        fgets(buffer, 100, bfIDsfile);
        for (int i=0; i<NumBasalFaces; i++){
          fgets(buffer, 100, bfIDsfile);
-         sscanf(buffer, "%i ", &basalFacesID[i]);
+         sscanf(buffer, "" ST_LLI" ", &basalFacesID[i]);
          basalFacesID[i] = basalFacesID[i]-1; //subtract 1 b/c basal face IDs file assumed to be 1-based not 0-based
          //*out << "local face ID #:" << i << ", global face ID #:" << basalFacesID[i] << std::endl;
        }

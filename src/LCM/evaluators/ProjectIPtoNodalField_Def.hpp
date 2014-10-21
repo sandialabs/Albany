@@ -14,6 +14,8 @@
 #include <Thyra_TpetraLinearOp.hpp>
 #include "Thyra_LinearOpWithSolveBase.hpp"
 
+#include "Adapt_NodalDataVector.hpp"
+
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
@@ -121,6 +123,8 @@ public:
   MassMatrix (
     const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
     : base_(base) {}
+
+  virtual ~MassMatrix(){}
 
   virtual void fill(const typename Traits::EvalData& workset) = 0;
 

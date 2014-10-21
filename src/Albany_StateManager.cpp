@@ -146,7 +146,6 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
 }
 
-
 void
 Albany::StateManager::registerStateVariable(const std::string &stateName,
 					    const Teuchos::RCP<PHX::DataLayout> &dl,
@@ -202,6 +201,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
   if((stateRef.entity == StateStruct::NodalData)||(stateRef.entity == StateStruct::NodalDataToElemNode)){ // nodal data
 
+/*
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
     if ( dl->rank() == 2 ){ // node vector
@@ -215,6 +215,21 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
     else { // node scalar
       // register the state with the nodalDataBlock also
       nodalDataBase->registerBlockState(stateName, 1);
+    }
+*/
+    Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
+
+    if ( dl->rank() == 2 ){ // node vector
+      // register the state with the nodalDataBlock also
+      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
+    }
+    else if ( dl->rank() == 3 ){ // node tensor
+      // register the state with the nodalDataBlock also
+      nodalDataBase->registerVectorState(stateName, stateRef.dim[1]*stateRef.dim[2]);
+    }
+    else { // node scalar
+      // register the state with the nodalDataBlock also
+      nodalDataBase->registerVectorState(stateName, 1);
     }
   }
 
@@ -292,6 +307,7 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
 
   dl->dimensions(stateRef.dim);
 
+/*
   Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
   if ( dl->rank() == 2 ){ // node vector
@@ -305,6 +321,21 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
   else { // node scalar
     // register the state with the nodalDataBlock also
     nodalDataBase->registerBlockState(stateName, 1);
+  }
+*/
+  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
+
+  if ( dl->rank() == 2 ){ // node vector
+    // register the state with the nodalDataBlock also
+    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]);
+  }
+  else if ( dl->rank() == 3 ){ // node tensor
+    // register the state with the nodalDataBlock also
+    nodalDataBase->registerVectorState(stateName, stateRef.dim[1]*stateRef.dim[2]);
+  }
+  else { // node scalar
+    // register the state with the nodalDataBlock also
+    nodalDataBase->registerVectorState(stateName, 1);
   }
 
   stateRef.output = outputToExodus;
@@ -324,6 +355,7 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
     pstateRef.output = false;
     dl->dimensions(pstateRef.dim);
 
+/*
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
     if ( dl->rank() == 2 ){ // node vector
@@ -338,6 +370,21 @@ Albany::StateManager::registerNodalBlockStateVariable(const std::string &stateNa
       // register the state with the nodalDataBlock also
       nodalDataBase->registerBlockState(stateName_old, 1);
     }
+*/
+  Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
+
+  if ( dl->rank() == 2 ){ // node vector
+    // register the state with the nodalDataBlock also
+    nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]);
+  }
+  else if ( dl->rank() == 3 ){ // node tensor
+    // register the state with the nodalDataBlock also
+    nodalDataBase->registerVectorState(stateName_old, pstateRef.dim[1]*pstateRef.dim[2]);
+  }
+  else { // node scalar
+    // register the state with the nodalDataBlock also
+    nodalDataBase->registerVectorState(stateName_old, 1);
+  }
   }
 
   // insert
@@ -798,6 +845,9 @@ importStateData(Albany::StateArrays& states_from)
         }
       }
      break;
+        default:
+  	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+  				   "Unknown state variable entity encountered " << (*stateInfo)[i]->entity);
     }
   }
 

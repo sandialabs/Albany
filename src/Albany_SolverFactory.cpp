@@ -624,6 +624,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     }
 #endif
   }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        "Reached end of createAndGetAlbanyAppT()" << "\n");
+  return Teuchos::null;
 }
 
 #ifdef ALBANY_EPETRA

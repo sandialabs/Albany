@@ -9,16 +9,18 @@
 #ifndef ADAPT_NODALDATABASE_HPP
 #define ADAPT_NODALDATABASE_HPP
 
+
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Albany_AbstractNodeFieldContainer.hpp"
 #include "Phalanx_DataLayout.hpp"
 
 #include "Adapt_NodalFieldUtils.hpp"
-#include "Adapt_NodalDataBlock.hpp"
-#include "Adapt_NodalDataVector.hpp"
 
 namespace Adapt {
+
+class NodalDataVector;
+class NodalDataBlock;
 
 /*!
  * \brief This is a container class that deals with managing data values at the nodes of a mesh.
@@ -50,7 +52,7 @@ class NodalDataBase {
                               return false;
                             }
 
-    void registerBlockState(const std::string &stateName, int ndofs);
+//    void registerBlockState(const std::string &stateName, int ndofs);
     void registerVectorState(const std::string &stateName, int ndofs);
 
     LO getBlocksize(){ return blocksize; }

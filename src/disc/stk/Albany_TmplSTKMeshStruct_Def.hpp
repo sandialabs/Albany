@@ -21,6 +21,13 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+#ifdef ALBANY_64BIT_INT
+// long int == 64bit
+#  define ST_LLU "%ld"
+#else
+#  define ST_LLU "%d"
+#endif
+
 // Test 64 bit Tpetra address space
 const GO StartIndex = 0;
 //const GO StartIndex = 2147483647L; // 2^31 - 1
@@ -509,13 +516,8 @@ Albany::EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
       "begins at (0, 0) ends at (100, 100) length (1.0, 1.0) named Block0");
 
     // Parse it
-#ifdef ALBANY_64BIT_INT
-    sscanf(&blkinfo[0], "begins at (%lld,%lld) ends at (%lld,%lld) length (%lf,%lf) named %s",
+    sscanf(&blkinfo[0], "begins at (" ST_LLU"," ST_LLU") ends at (" ST_LLU"," ST_LLU") length (%lf,%lf) named %s",
       &min[0], &min[1], &max[0], &max[1], &blLength[0], &blLength[1], buf);
-#else
-    sscanf(&blkinfo[0], "begins at (%d,%d) ends at (%d,%d) length (%lf,%lf) named %s",
-      &min[0], &min[1], &max[0], &max[1], &blLength[0], &blLength[1], buf);
-#endif
 
     name = buf;
 
@@ -540,13 +542,8 @@ Albany::EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::Paramete
       "begins at (0, 0, 0) ends at (100, 100, 100) length (1.0, 1.0, 1.0) named Block0");
 
     // Parse it
-#ifdef ALBANY_64BIT_INT
-    sscanf(&blkinfo[0], "begins at (%lld,%lld,%lld) ends at (%lld,%lld,%lld) length (%lf,%lf,%lf) named %s",
+    sscanf(&blkinfo[0], "begins at (" ST_LLU"," ST_LLU"," ST_LLU") ends at (" ST_LLU"," ST_LLU"," ST_LLU") length (%lf,%lf,%lf) named %s",
       &min[0], &min[1], &min[2], &max[0], &max[1], &max[2], &blLength[0], &blLength[1], &blLength[2], buf);
-#else
-    sscanf(&blkinfo[0], "begins at (%d,%d,%d) ends at (%d,%d,%d) length (%lf,%lf,%lf) named %s",
-      &min[0], &min[1], &min[2], &max[0], &max[1], &max[2], &blLength[0], &blLength[1], &blLength[2], buf);
-#endif
 
     name = buf;
 

@@ -8,7 +8,7 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Adapt_NodalDataBase.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
 template<typename T>
 T Sqr(T num)

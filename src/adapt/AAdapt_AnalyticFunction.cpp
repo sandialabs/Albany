@@ -130,7 +130,7 @@ long AAdapt::seedgen(int worksetID) {
 
   // Use worksetID to give more randomness between calls
 
-  seed = abs(((s * 181) * ((pid - 83) * 359) * worksetID) % 104729);
+  seed = std::abs(((s * 181) * ((pid - 83) * 359) * worksetID) % 104729);
   return seed;
 }
 
@@ -1439,4 +1439,7 @@ void AAdapt::AerasRossbyHaurwitzWave::compute(double* solution, const double* X)
   solution[0] = h;
   solution[1] = u;
   solution[2] = v;
+
+  return;
+
 }

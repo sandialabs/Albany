@@ -218,7 +218,6 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
     	${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
     	utils/lame/LameUtils.cpp
     	evaluators/lame/LameStress.cpp
@@ -239,7 +238,6 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
@@ -263,7 +261,6 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
@@ -284,7 +281,6 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
-    	  ${Albany_SOURCE_DIR}/src/disc/Adapt_NodalDataBlock.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
     	  utils/lame/LameUtils.cpp
     	  evaluators/lame/LameStress.cpp
@@ -296,9 +292,9 @@ IF (ALBANY_LAME OR ALBANY_LAMENT)
   ENDIF()
 
   IF(ALBANY_STK_REBALANCE)
-    target_link_libraries(utLameStress_elastic albanySTKRebalance ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanySTKRebalance albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ELSE ()
-    target_link_libraries(utLameStress_elastic ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
+    target_link_libraries(utLameStress_elastic albanyLib ${LAME_LIB} ${LAMENT_LIB} ${ALB_TRILINOS_LIBS} ${Trilinos_EXTRA_LD_FLAGS})
   ENDIF ()
 ENDIF ()
 

@@ -1923,6 +1923,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& 
 #ifdef ALBANY_SEACAS
 //IK, 10/13/14: need to implement!
 #endif
+  return 0;
 }
 #ifdef ALBANY_EPETRA
 int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
