@@ -45,19 +45,19 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
 #endif
 
   std::vector<std::string> nsNames;
-  std::string nsn = "Lateral";
+  std::string nsn = "lateral";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn = "Internal";
+  nsn = "internal";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
 #ifdef ALBANY_SEACAS
   stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn = "Bottom";
+  nsn = "bottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = &metaData->declare_part(nsn, stk::topology::NODE_RANK);
 #ifdef ALBANY_SEACAS
@@ -383,7 +383,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   stk::mesh::PartVector emptyPartVec;
   unsigned int ebNo = 0; //element block #???
 
-  singlePartVec[0] = nsPartVec["Bottom"];
+  singlePartVec[0] = nsPartVec["bottom"];
 
   typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
