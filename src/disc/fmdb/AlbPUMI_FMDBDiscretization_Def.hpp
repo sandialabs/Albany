@@ -1217,37 +1217,12 @@ void
 AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
   computeOwnedNodesAndUnknowns();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
-#endif
-
   computeOverlapNodesAndUnknowns();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
-#endif
-
   computeGraphs();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
-#endif
-
   getCoordinates(); //fill the coordinates array
-
   computeWorksetInfo();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
-#endif
-
   computeNodeSets();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
-#endif
-
   computeSideSets();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
-#endif
-
   // transfer of internal variables
   if (shouldTransferIPData)
     copyQPStatesFromAPF();
