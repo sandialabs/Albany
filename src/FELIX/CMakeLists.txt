@@ -24,11 +24,11 @@
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
-       interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
    )
 
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS 
+       interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
        interface_with_mpas/Interface.cpp
    )
 ENDIF()   
