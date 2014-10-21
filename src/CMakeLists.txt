@@ -283,13 +283,6 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Permittivity.cpp
   evaluators/PNP_PotentialResid.cpp
   evaluators/PNP_ConcentrationResid.cpp
-  evaluators/PHAL_GatherBasalFriction.cpp
-  evaluators/PHAL_GatherFlowFactor.cpp
-  evaluators/PHAL_GatherSHeight.cpp
-  evaluators/PHAL_GatherSurfaceVelocity.cpp
-  evaluators/PHAL_GatherTemperature.cpp
-  evaluators/PHAL_GatherThickness.cpp
-  evaluators/PHAL_GatherVelocityRMS.cpp
   )
 
 SET(HEADERS ${HEADERS}
@@ -367,20 +360,6 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
-  evaluators/PHAL_GatherVelocityRMS.hpp
-  evaluators/PHAL_GatherVelocityRMS_Def.hpp 
-  evaluators/PHAL_GatherThickness.hpp
-  evaluators/PHAL_GatherThickness_Def.hpp
-  evaluators/PHAL_GatherTemperature.hpp
-  evaluators/PHAL_GatherTemperature_Def.hpp
-  evaluators/PHAL_GatherSurfaceVelocity.hpp
-  evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
-  evaluators/PHAL_GatherSHeight.hpp
-  evaluators/PHAL_GatherSHeight_Def.hpp
-  evaluators/PHAL_GatherFlowFactor.hpp
-  evaluators/PHAL_GatherFlowFactor_Def.hpp
-  evaluators/PHAL_GatherBasalFriction.hpp
-  evaluators/PHAL_GatherBasalFriction_Def.hpp
   )
   
 IF (ALBANY_EPETRA) 

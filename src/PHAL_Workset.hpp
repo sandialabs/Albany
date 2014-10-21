@@ -157,14 +157,7 @@ struct Workset {
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
-  Teuchos::ArrayRCP<double>  wsTemperature;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsBasalFriction;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsThickness;
-  Teuchos::ArrayRCP<double>  wsFlowFactor;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsSurfaceVelocity;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsVelocityRMS;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
