@@ -553,6 +553,31 @@ public:
   void
   initializeFractureState();
 
+  ///----------------------------------------------------------------------
+  ///
+  /// \brief Practice creating the barycentric subdivision
+  ///
+  void
+  barycentricSubdivisionAlt();
+
+  ///
+  /// \brief Divide former mesh segments by half
+  ///
+  void
+  divideSegmentsHalf();
+
+  void
+  addCentroid();
+
+  void
+  connectCentroid();
+
+  void
+  addNewFaces();
+
+  void
+  connectNewFaces();
+
   ///
   /// Accessors and mutators
   ///

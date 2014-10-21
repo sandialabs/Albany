@@ -48,9 +48,9 @@
        evaluators/Aeras_DOFDInterpolationLevels.cpp
        evaluators/Aeras_Atmosphere_Moisture.cpp
        evaluators/Aeras_ShallowWaterSource.cpp
+       evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
        responses/Aeras_TotalVolume.cpp
        responses/Aeras_LayeredResponseUtilities.cpp
-       Aeras/evaluators/Aeras_XZHydrostatic_DensityWeightedVelx.cpp
 
    )
    
