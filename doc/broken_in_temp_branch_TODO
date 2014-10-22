@@ -16,21 +16,10 @@ The following tests FAILED:
 	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing; fails in branch master too)
 	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
 	 73 - GPAM_Tpetra (Failed) - Failed comparison 
-	270 - FO_GIS_GisUnstructured (Failed) - Error 4 below (need to talk to Mauro)
-	271 - FO_GIS_GisRestartUnstructured (Failed) - Error 4 below (need to talk to Mauro; fails in branch master too)
 	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
               Aeras_TC2_Serial - See Error 5 below
 
 Errors while running CTest
-
-Error 4
- Throw test that evaluated to true: *getMap() != *importer.getTargetMap()
-  doImport: The target DistObject's Map is not identical to the Import's target Map.
-  p=0: *** Caught standard std::exception of type 'Teuchos::Exceptions::InvalidParameterValue' :
-  /home/ikalash/Trilinos_Albany/Albany/src/disc/stk/Albany_ExtrudedSTKMeshStruct.cpp:685:
-  Throw number = 1
-  Throw test that evaluated to true: numNodes != content->getLocalLength()
-  Error in ExtrudedSTKMeshStruct: Number of nodes in file ../AsciiMeshes/GisUnstructFiles/surface_height.ascii (2087) is different from the number expected (0)
 
 Error 5
   Some of the Aeras tests seem to fail depending on workset size. Andrew

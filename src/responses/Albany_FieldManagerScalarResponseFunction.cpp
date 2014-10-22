@@ -201,6 +201,49 @@ evaluateGradient(const double current_time,
   // Set data in Workset struct
   PHAL::Workset workset;
   application->setupBasicWorksetInfoT(workset, current_time, xdotT, xdotdotT, xT, p);
+
+  { //amb All the evaluator-based response functions that are called from here
+    // use the T versions of the workset fields. So set those here, call
+    // evaluateGradientT, copy to Epetra, and then return.
+    //   If this is not done, there is a seg fault on dgT in
+    //     SeparableScatterScalarResponse<PHAL::AlbanyTraits::
+    //       Jacobian, Traits>::evaluateFields
+    // because it is expecting Tpetra input rather than Epetra.
+    //   Once it is confirmed this works, we can remove the remainder of this
+    // method's impl.
+    Teuchos::RCP<Tpetra_Vector> gT = g ?
+      Petra::EpetraVector_To_TpetraVectorNonConst(*g, commT) :
+      Teuchos::null;
+    Teuchos::RCP<Tpetra_MultiVector> dg_dxT = dg_dx ?
+      Petra::EpetraMultiVector_To_TpetraMultiVector(*dg_dx, commT):
+      Teuchos::null;
+    Teuchos::RCP<Tpetra_MultiVector> dg_dxdotT = dg_dxdot ?
+      Petra::EpetraMultiVector_To_TpetraMultiVector(*dg_dxdot, commT):
+      Teuchos::null;
+    Teuchos::RCP<Tpetra_MultiVector> dg_dxdotdotT = dg_dxdotdot ?
+      Petra::EpetraMultiVector_To_TpetraMultiVector(*dg_dxdotdot, commT):
+      Teuchos::null;
+    Teuchos::RCP<Tpetra_MultiVector> dg_dpT = dg_dp ?
+      Petra::EpetraMultiVector_To_TpetraMultiVector(*dg_dp, commT):
+      Teuchos::null;
+    evaluateGradientT(current_time, xdotT.get(), xdotdotT.get(), *xT,
+                      p, deriv_p, gT.get(), dg_dxT.get(), dg_dxdotT.get(),
+                      dg_dxdotdotT.get(), dg_dpT.get());
+    const Teuchos::RCP<const Epetra_Comm>
+      comm = createEpetraCommFromTeuchosComm(commT);
+    if (g)
+      Petra::TpetraVector_To_EpetraVector(gT, *g, comm);
+    if (dg_dx)
+      Petra::TpetraMultiVector_To_EpetraMultiVector(dg_dxT, *dg_dx, comm);
+    if (dg_dxdot)
+      Petra::TpetraMultiVector_To_EpetraMultiVector(dg_dxdotT, *dg_dxdot, comm);
+    if (dg_dxdotdot)
+      Petra::TpetraMultiVector_To_EpetraMultiVector(
+        dg_dxdotdotT, *dg_dxdotdot, comm);
+    if (dg_dp)
+      Petra::TpetraMultiVector_To_EpetraMultiVector(dg_dpT, *dg_dp, comm);
+    return; }
+
   workset.g = Teuchos::rcp(g, false);
   
   // Perform fill via field manager (dg/dx)

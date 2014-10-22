@@ -116,7 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
           int dof = nodeID[node_dof][eq_dof];
 
           // Set dg/dx
-          dgT->replaceLocalValue(dof, res, val.dx(deriv));
+          dgT->sumIntoLocalValue(dof, res, val.dx(deriv));
 
         } // column equations
       } // column nodes

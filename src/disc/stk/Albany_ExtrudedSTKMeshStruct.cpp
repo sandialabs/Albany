@@ -747,11 +747,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
       //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
-  //comm->Broadcast(&numComponents, 1, 0);
-  //Cast numComponents as double to do broadcast
-  //IK, 10/1/14: Need to look into...
-  double numComponentsD = numComponents;
-  Teuchos::broadcast<LO, double>(*comm, 0, &numComponentsD);
+  // The first int is for Comm<int>; the second is the type of numComponents.
+  Teuchos::broadcast<int, int>(*comm, 0, &numComponents);
   zCoords.resize(numComponents);
   Teuchos::RCP<Tpetra_Vector> tempT = Teuchos::rcp(new Tpetra_Vector(map_serial));
 
@@ -761,7 +758,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
   }
   //comm->Broadcast(&zCoords[0], numComponents, 0);
   //IK, 10/1/14: double should be ST? 
-  Teuchos::broadcast<LO, double>(*comm, 0, &zCoords[0]);
+  Teuchos::broadcast<int, double>(*comm, 0, &zCoords[0]);
   
   temperatureVec.resize(numComponents, Tpetra_Vector(map));
 
