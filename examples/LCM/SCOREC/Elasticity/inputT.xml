@@ -32,22 +32,19 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="Call serial global partition" type="bool" value="true"/>
-    <Parameter name="FMDB Input File Name" type="string" value="unitCubeFMDB.sms"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="unitCube.xmt_txt"/>
-    <Parameter name="FMDB Output File Name" type="string" value="unitCubeTractionOut.vtk"/>
+    <Parameter name="FMDB Input File Name" type="string" value="../meshes/cube/cube.smb"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/cube/cube.dmg"/>
+    <Parameter name="FMDB Output File Name" type="string" value="unitCubeTractionOutT.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95, eb_1}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x3:{85, 83, 43, ns_1, ns_2, ns_3}"/>
     <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x1:{81, ss_1}"/>
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0833333333333}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
+    <Parameter name="Number of Comparisons" type="int" value="1"/>
+    <Parameter name="Test Values" type="Array(double)" value="{0.0833333333333}"/>
+    <Parameter name="Relative Tolerance" type="double" value="1.0e-7"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.333333333332, 0.333333333332, 0.333333333332, 0.0833333333333}"/>
-    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
+    <Parameter name="Sensitivity Test Values 0" type="Array(double)" value="{0.333333333332, 0.333333333332, 0.333333333332, 0.0833333333333}"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
@@ -102,11 +99,11 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
-                <ParameterList name="ML">
+                <ParameterList name="MueLu">
                   <Parameter name="Base Method Defaults" type="string" value="none"/>
-                  <ParameterList name="ML Settings">
+                  <ParameterList name="MueLu Settings">
                     <Parameter name="default values" type="string" value="SA"/>
                     <Parameter name="smoother: type" type="string" value="Chebyshev"/>
                     <Parameter name="smoother: pre or post" type="string" value="both"/>
@@ -120,10 +117,10 @@
                     <!--Parameter name="ML output" type="int" value="10"/-->
                   </ParameterList>
                 </ParameterList>
-		<ParameterList name="Ifpack">
+		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
