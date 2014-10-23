@@ -10,6 +10,15 @@ objects.  To do this, 8.) and 9.) need to be resolved, as ATO makes heavy use of
 11.) It appears code (temporary_tpetra_newSTK branch) doesn't build with ENABLE_SG_MP turned ON.  This should work with Epetra.  Need to figure out what is wrong 
 and fix.
 
+12.) Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests.
+
+13.) See if ASCR compiles (note that this requires SG_MP to be turned on) in temporary_tpetra_newSTK branch.  
+Check if tests pass.  Not necessary to fix these yet, need to just let Eric Phipps know the status (10/23/14).
+
+14.) Have Erik Nielsen/Rick Muller (QCAD guys) check ALBANY_CI with temporary_tpetra_newSTK branch of Albany.  Also 
+have them run some "real" QCAD tests to check that everything still works (right now with Albany executable only).  Irina 
+will do this.
+
 
 Failed tests (10/13/14): 
 The following tests FAILED:
