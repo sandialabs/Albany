@@ -25,6 +25,7 @@ NETCDF=/home/ikalash/Install/netcdf-4.2
 HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
 BOOSTDIR=/home/ikalash/Install/boost_1_53_0
 SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
+PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
