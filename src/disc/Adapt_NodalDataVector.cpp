@@ -27,8 +27,8 @@ inline Teuchos::Array<GO>::size_type
 get_number_global_elements (const Teuchos::Comm<int>& comm,
                             const Teuchos::Array<GO>& nodes) {
   Teuchos::Array<GO>::size_type num_global_elem, n = nodes.size();
-  Teuchos::reduceAll<int, GO>(comm, Teuchos::REDUCE_SUM, 1, &n,
-                              &num_global_elem);
+  Teuchos::reduceAll<int, Teuchos::Array<GO>::size_type>(
+    comm, Teuchos::REDUCE_SUM, 1, &n, &num_global_elem);
   return num_global_elem;
 }
 }
