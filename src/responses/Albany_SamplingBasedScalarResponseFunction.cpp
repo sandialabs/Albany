@@ -6,9 +6,69 @@
 
 
 #include "Albany_SamplingBasedScalarResponseFunction.hpp"
+#include "Petra_Converters.hpp"
 
 using Teuchos::RCP;
 using Teuchos::rcp;
+
+namespace {
+class SGConverter : public Petra::Converter {
+public:
+  SGConverter (Albany::AbstractResponseFunction* arf,
+               const Teuchos::RCP<const Teuchos_Comm>& commT)
+    : arf_(arf),
+      Petra::Converter(commT)
+  {}
+
+  void evaluateResponse (
+    const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& p,
+    Epetra_Vector& g)
+  {
+    RCP<Tpetra_Vector> gT = e2t(g);
+    arf_->evaluateResponseT(
+      current_time, e2t(xdot).get(), e2t(xdotdot).get(), *e2t(x), p, *gT);
+    t2e(gT, g);
+  }
+
+  void evaluateTangent (
+    const double alpha,
+    const double beta,
+    const double omega,
+    const double current_time,
+    bool sum_derivs,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& p,
+    ParamVec* deriv_p,
+    const Epetra_MultiVector* Vxdot,
+    const Epetra_MultiVector* Vxdotdot,
+    const Epetra_MultiVector* Vx,
+    const Epetra_MultiVector* Vp,
+    Epetra_Vector* g,
+    Epetra_MultiVector* gx,
+    Epetra_MultiVector* gp)
+  {
+    RCP<Tpetra_Vector> gT = e2t(g);
+    RCP<Tpetra_MultiVector> gxT = e2t(gx), gpT = e2t(gp);
+    arf_->evaluateTangentT(
+      alpha, beta, omega, current_time, sum_derivs, e2t(xdot).get(),
+      e2t(xdotdot).get(), *e2t(x), p, deriv_p, e2t(Vxdot).get(),
+      e2t(Vxdotdot).get(), e2t(Vx).get(), e2t(Vp).get(), gT.get(), gxT.get(),
+      gpT.get());
+    t2e(gT, g);
+    t2e(gxT, gx);
+    t2e(gpT, gp);
+  }
+
+private:
+  Albany::AbstractResponseFunction* arf_;
+};
+}
 
 #ifdef ALBANY_SG_MP
 void
@@ -59,6 +119,7 @@ evaluateSGResponse(
 
   // Compute sg_g via quadrature
   sg_g.init(0.0);
+  SGConverter c(this, commT);
   for (int qp=0; qp<nqp; qp++) {
 
     // Evaluate sg_x, sg_xdot at quadrature point
@@ -75,12 +136,8 @@ evaluateSGResponse(
 	pp[ii][j].baseValue = sg_p_vals[ii][j].evaluate(points[qp], vals[qp]);
     }
 
-    //IK, 9/4/14: Note that evaluateReponse has been removed from the Albany Tpetra branch. 
-    //It is replaced with evaluateResponseT so the below call will not work; but it's OK 
-    //b/c SG does not work in the tpetra branch anyway.
-
     // Compute response at quadrature point
-    evaluateResponse(curr_time, xdot.get(), xdotdot.get(), x, pp, g);
+    c.evaluateResponse(curr_time, xdot.get(), xdotdot.get(), x, pp, g);
 
     // Add result into integral
     sg_g.sumIntoAllTerms(weights[qp], vals[qp], norms, g);
@@ -150,6 +207,7 @@ evaluateSGTangent(
   int nqp = points.size();
 
   // Compute sg_g via quadrature
+  SGConverter c(this, commT);
   for (int qp=0; qp<nqp; qp++) {
 
     // Evaluate sg_x, sg_xdot at quadrature point
@@ -173,10 +231,10 @@ evaluateSGTangent(
     }
 
     // Compute response at quadrature point
-    evaluateTangent(alpha, beta, omega, current_time, sum_derivs, 
-		    xdot.get(), xdotdot.get(), x, pp, deriv_p, Vx, Vxdot, Vxdotdot, Vp,
-		    g.get(), JV.get(), gp.get());
-
+    c.evaluateTangent(alpha, beta, omega, current_time, sum_derivs, 
+                      xdot.get(), xdotdot.get(), x, pp, deriv_p, Vxdot, Vxdotdot, Vx, Vp,
+                      g.get(), JV.get(), gp.get());
+    
     // Add result into integral
     if (sg_g != NULL)
       sg_g->sumIntoAllTerms(weights[qp], vals[qp], norms, *g);
@@ -314,6 +372,7 @@ evaluateMPResponse(
   const Epetra_Vector* xdot = NULL;
   const Epetra_Vector* xdotdot = NULL;
 
+  SGConverter c(this, commT);
   for (int i=0; i<mp_x.size(); i++) {
 
     for (int k=0; k<mp_p_index.size(); k++) {
@@ -328,10 +387,7 @@ evaluateMPResponse(
       xdotdot = mp_xdotdot->getCoeffPtr(i).get();
     
     // Evaluate response function
-    //IK, 9/4/14: Note that evaluateReponse has been removed from the Albany Tpetra branch. 
-    //It is replaced with evaluateResponseT so the below call will not work; but it's OK 
-    //b/c SG does not work in the tpetra branch anyway.
-    evaluateResponse(curr_time, xdot, xdotdot, mp_x[i], pp, mp_g[i]);
+    c.evaluateResponse(curr_time, xdot, xdotdot, mp_x[i], pp, mp_g[i]);
   }
 }
 
@@ -364,6 +420,7 @@ evaluateMPTangent(
   Epetra_Vector* g = NULL;
   Epetra_MultiVector* JV = NULL;
   Epetra_MultiVector* gp = NULL;
+  SGConverter c(this, commT);
   for (int i=0; i<mp_x.size(); i++) {
 
     for (int k=0; k<mp_p_index.size(); k++) {
@@ -390,9 +447,9 @@ evaluateMPTangent(
       gp = mp_gp->getCoeffPtr(i).get();
     
     // Evaluate response function
-    evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-		    xdot, xdotdot, mp_x[i], pp, deriv_p, Vx, Vxdot, Vxdotdot, Vp,
-		    g, JV, gp);
+    c.evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
+                      xdot, xdotdot, mp_x[i], pp, deriv_p, Vxdot, Vxdotdot, Vx, Vp,
+                      g, JV, gp);
   }
 }
 

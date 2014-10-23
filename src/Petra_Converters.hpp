@@ -98,5 +98,59 @@ Teuchos::RCP<Tpetra_CrsMatrix> EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatr
                                                                Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP< KokkosNode > &node = KokkosClassic::Details::getNode< KokkosNode >());
 
+// Convenience class for conversions. One use case is to inherit from this class
+// and implement situation-specific conversion functionality using concise
+// wrapper methods.
+class Converter {
+protected:
+public:
+  Converter(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  virtual ~Converter () {}
+
+  Teuchos::RCP<const Tpetra_Vector> e2t (const Epetra_Vector* ev) {
+    return ev ?
+      EpetraVector_To_TpetraVectorConst(*ev, commT_)
+      : Teuchos::null;
+  }
+  Teuchos::RCP<Tpetra_Vector> e2t (Epetra_Vector* ev) {
+    return ev ?
+      EpetraVector_To_TpetraVectorNonConst(*ev, commT_)
+      : Teuchos::null;
+  }
+  Teuchos::RCP<Tpetra_Vector> e2t (const Epetra_Vector& ev) {
+    return EpetraVector_To_TpetraVectorNonConst(ev, commT_);
+  }
+  Teuchos::RCP<Tpetra_Vector> e2t (Epetra_Vector& ev) {
+    return EpetraVector_To_TpetraVectorNonConst(ev, commT_);
+  }
+  Teuchos::RCP<Tpetra_MultiVector> e2t (const Epetra_MultiVector* ev) {
+    return ev ?
+      EpetraMultiVector_To_TpetraMultiVector(*ev, commT_)
+      : Teuchos::null;
+  }
+  Teuchos::RCP<Tpetra_MultiVector> e2t (const Epetra_MultiVector& ev) {
+    return EpetraMultiVector_To_TpetraMultiVector(ev, commT_);
+  }
+
+  void t2e (const Teuchos::RCP<const Tpetra_Vector>& tv, Epetra_Vector& ev) {
+    TpetraVector_To_EpetraVector(tv, ev, commE_);
+  }
+  void t2e (const Teuchos::RCP<const Tpetra_Vector>& tv, Epetra_Vector* ev) {
+    if (ev) TpetraVector_To_EpetraVector(tv, *ev, commE_);
+  }
+  void t2e (const Teuchos::RCP<const Tpetra_MultiVector>& tv,
+            Epetra_MultiVector& ev) {
+    TpetraMultiVector_To_EpetraMultiVector(tv, ev, commE_);
+  }
+  void t2e (const Teuchos::RCP<const Tpetra_MultiVector>& tv,
+            Epetra_MultiVector* ev) {
+    if (ev) TpetraMultiVector_To_EpetraMultiVector(tv, *ev, commE_);
+  }
+
+  Teuchos::RCP<const Teuchos_Comm> commT_;
+  Teuchos::RCP<const Epetra_Comm> commE_;
+};
+
 }
+
 #endif //PETRA_CONVERTERS

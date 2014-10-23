@@ -288,4 +288,9 @@ Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_
 
 }
 
+#include "Albany_Utils.hpp"
 
+Petra::Converter::Converter (const Teuchos::RCP<const Teuchos_Comm>& commT)
+  : commT_(commT),
+    commE_(Albany::createEpetraCommFromTeuchosComm(commT))
+{}

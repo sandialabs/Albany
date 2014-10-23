@@ -120,7 +120,10 @@ GatherSolution(const Teuchos::ParameterList& p,
                const Teuchos::RCP<Aeras::Layouts>& dl) :
   GatherSolutionBase<EvalT, Traits>(p,dl)
 {
-    throw "Aeras::GatherSolution not implemented for all tempate specializations";
+  //amb I'm commenting this out. If we throw here, we'll throw when SG_MP is
+  // compiled even if it's not used. It's sufficient to throw in evaluateFields
+  // to guard against actually using SG_MP.
+  //throw "Aeras::GatherSolution not implemented for all tempate specializations";
 }
 
 template<typename EvalT, typename Traits>

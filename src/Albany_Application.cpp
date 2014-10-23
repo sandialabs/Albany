@@ -69,14 +69,14 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
   stateGraphVisDetail(0) {
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
+#endif
   initialSetUp(params);
   createMeshSpecs();
   buildProblem();
   createDiscretization();
   finalSetUp(params,initial_guess);
-#ifdef ALBANY_EPETRA
-  comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
-#endif
 }
 
 
