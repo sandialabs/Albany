@@ -21,10 +21,12 @@ SCRIPTDIR=/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/
 NIGHTLYDIR=$SCRIPTDIR/Results
 
 #set this correctly
-NETCDF=/home/ikalash/Install/netcdf-4.2
+NETCDF=/home/ikalash/Install/netcdf-4.2-hack
 HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
 BOOSTDIR=/home/ikalash/Install/boost_1_53_0
 SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
+LAMEINCLUDEDIR=/home/ikalash/Install//lame-4.24.1/lame/include
+LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
 PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash

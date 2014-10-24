@@ -37,5 +37,12 @@ mkdir $TRILOUTDIR
 # checkout Trilinos
 #-------------------------------------------
 
+#checks out master
 git clone software.sandia.gov:/space/git/Trilinos > $TRILOUTDIR/trilinos_checkout.out 2>&1
 
+cd $TRILDIR
+echo; echo "   Starting SCOREC checkout..."
+git clone git@github.com:SCOREC/core.git SCOREC > $TRILOUTDIR/scorec_checkout.out 2>&1
+cd $TRILDIR/SCOREC
+git checkout -b new_stk origin/new_stk
+echo; echo "   ...finished SCOREC checkout."

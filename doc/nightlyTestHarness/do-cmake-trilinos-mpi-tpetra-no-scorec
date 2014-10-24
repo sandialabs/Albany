@@ -104,16 +104,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_DEBUG:BOOL=OFF \
       -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
       -D Trilinos_ENABLE_SECONDARY_STABLE_CODE:BOOL=ON \
-      -D Trilinos_ENABLE_SCOREC:BOOL=ON \
-      -D Trilinos_EXTRA_REPOSITORIES:STRING=SCOREC \
-      -D SCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON \
-      -D Trilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=$TRILDIR/sampleScripts/AlbanySettings.cmake \
       -D TPL_ENABLE_BoostLib:BOOL=ON \
       -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
-      -D TPL_ENABLE_X11:BOOL=OFF \
-      -D TPL_ENABLE_ParMETIS:STRING=ON \
-      -D ParMETIS_INCLUDE_DIRS:PATH=$PARMETISDIR/include \
-      -D ParMETIS_LIBRARY_DIRS:PATH=$PARMETISDIR/lib \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON\
@@ -139,15 +131,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_ENABLE_HDF5:BOOL=ON \
       -D TPL_ENABLE_SuperLU:BOOL=ON \
-      -D TPL_ENABLE_yaml-cpp:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
       -D Netcdf_LIBRARY_DIRS:PATH=$NETCDF/lib \
       -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
       -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
       -D SuperLU_INCLUDE_DIRS:PATH=$SUPERLUDIR/SRC \
       -D TPL_SuperLU_LIBRARIES:PATH=$SUPERLUDIR/lib/libsuperlu_4.3.a \
-      -D yaml-cpp_INCLUDE_DIRS:PATH="/home/ikalash/Install/yaml-cpp/include" \
-      -D yaml-cpp_LIBRARY_DIRS:PATH="/home/ikalash/Install/yaml-cpp" \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
 \
