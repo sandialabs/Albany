@@ -9,13 +9,13 @@ objects.  To do this, 8.) and 9.) need to be resolved, as ATO makes heavy use of
 
 12.) Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests --> Andrew B.
 
-13.) See if ASCR compiles (note that this requires SG_MP to be turned on) in temporary_tpetra_newSTK branch.  
-Check if tests pass.  Not necessary to fix these yet, need to just let Eric Phipps know the status (10/23/14) --> Andrew B.
-
 14.) Have Erik Nielsen/Rick Muller (QCAD guys) check ALBANY_CI with temporary_tpetra_newSTK branch of Albany.  Also 
 have them run some "real" QCAD tests to check that everything still works (right now with Albany executable only). --> Irina, Erik, Rick.
 
-15.) Fix up cism_interface, the compilation of which got broken in temporary_tpetra_newSTK branch (10/23/14) --> Irina K. 
+15.) Need to test again cism_interface in temporary_tpetra_newSTK branch --> Irina
+
+16.) Merge master --> temporary_tpetra_newSTK branch thereby getting Mauro's distributed parameters in there --> Andrew.
+
 
 Failed tests (10/24/14): 
 The following tests FAILED:
