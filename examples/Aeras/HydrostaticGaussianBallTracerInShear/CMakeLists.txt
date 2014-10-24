@@ -14,7 +14,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_10_quad9.g.4.3
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(Aeras_${testName} ${Albany.exe})
+endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)
@@ -29,7 +31,7 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)
 endif ()
 
 # 5. Repeat process for Dakota problems if "dakota.in" exists
-if (ALBANY_DAKOTA)
+if (ALBANY_DAKOTA AND ALBANY_EPETRA)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/dakota.in
                  ${CMAKE_CURRENT_BINARY_DIR}/dakota.in COPYONLY)
@@ -45,6 +47,8 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/dakota.in)
 endif()
 
 # 6. Repeat process for Analysis problems if "inputAnalysis.xml" exists
+
+if (ALBANY_EPETRA) 
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml
                  ${CMAKE_CURRENT_BINARY_DIR}/inputAnalysis.xml COPYONLY)
@@ -62,3 +66,4 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
   add_test(Aeras_${testName} ${AlbanyAnalysis.exe})
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
+endif()
