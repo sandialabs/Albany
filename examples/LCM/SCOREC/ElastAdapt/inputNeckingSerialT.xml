@@ -1,13 +1,9 @@
 <ParameterList>
   <ParameterList name="Problem">
     <!-- Declare your Physics (What you intend to model)! -->
-    <Parameter name="Name" type="string" value="Mechanics 3D"/>
+    <Parameter name="Name" type="string" value="Elasticity 3D"/>
     <!-- Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Continuation"/>
-    <!-- Have Phalanx output a graph of the used evaluators -->
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">      
@@ -23,6 +19,15 @@
       </ParameterList>
     </ParameterList>	
 
+    <ParameterList name="Elastic Modulus">
+      <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="100.0"/>
+    </ParameterList>
+    <ParameterList name="Poissons Ratio">
+      <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+      <Parameter name="Value" type="double" value="0.29"/>
+    </ParameterList>
+
     <!-- PARAMETER -->
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="1"/>
@@ -34,21 +39,22 @@
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
+
+    <!-- Adapt mesh using meshAdapt -->
+    <ParameterList name="Adaptation">
+      <Parameter name="Method" type="string" value="RPI Unif Size"/>
+      <Parameter name="Remesh Step Number" type="Array(int)" value="{5}"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="10"/>
+      <Parameter name="Target Element Size" type="double" value="0.001"/>
+    </ParameterList>
   </ParameterList>
 
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
-<!--
-    <Parameter name="ACIS Model Input File Name" type="string" value="necking-gmi.sat"/>
--->
-    <Parameter name="Call serial global partition" type="bool" value="true"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
-    <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
-    <!-- Refine mesh at input -->
-    <Parameter name="Resize Input Mesh Element Size" type="double" value="0.001"/>
-    <Parameter name="Max Number of Resize Iterations" type="int" value="10"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/necking/necking.dmg"/>
+    <Parameter name="FMDB Input File Name" type="string" value="../meshes/necking/necking-serial.smb"/>
+    <Parameter name="FMDB Output File Name" type="string" value="necking_serial_outputT.vtk"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
     <!-- Associate Parasolid face number with node set name -->    
@@ -67,7 +73,7 @@
         <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
         <!-- The number of steps in the problem -->
-        <Parameter  name="Max Steps" type="int" value="5"/>         
+        <Parameter  name="Max Steps" type="int" value="10"/>         
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter  name="Max Value" type="double" value="2.0"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
@@ -103,7 +109,7 @@
 	    </ParameterList>
             <!-- Set the linear solver -->
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 
               <!-- define the linear solvers -->
 	      <ParameterList name="Linear Solver Types">
@@ -128,15 +134,16 @@
                 <!-- Belos -->
 		<ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="none"/>
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                    <Parameter name="Output File" type="string" value="BelosSolver.out"/>
                   </ParameterList>
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
 		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-		      <Parameter name="Output Frequency" type="int" value="0"/>
-		      <Parameter name="Output Style" type="int" value="0"/>
-		      <Parameter name="Verbosity" type="int" value="0"/>
+		      <Parameter name="Output Frequency" type="int" value="1"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
 		      <Parameter name="Maximum Iterations" type="int" value="200"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
 		      <Parameter name="Num Blocks" type="int" value="200"/>
@@ -147,14 +154,14 @@
 	      </ParameterList>
 
               <!-- Preconditioner -->
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
                 
                 <!-- Ifpack -->
-                <ParameterList name="Ifpack">
+                <ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>

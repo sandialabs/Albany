@@ -8,3 +8,4 @@
 
 add_subdirectory(cube)
 add_subdirectory(bar)
+add_subdirectory(necking)

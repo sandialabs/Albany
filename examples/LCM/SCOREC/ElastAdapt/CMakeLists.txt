@@ -8,6 +8,10 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSprT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSprT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingSerialT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingSerialT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
@@ -19,5 +23,7 @@ set(testName "SCOREC_${testRoot}")
 IF(ENABLE_MESHMODEL)
   IF(ALBANY_IFPACK2)
     add_test(NAME ${testName}_SPR_Tpetra COMMAND ${AlbanyT.exe} inputSprT.xml)
+    add_test(NAME ${testName}_Necking_SERIAL_Tpetra COMMAND ${SerialAlbanyT.exe} inputNeckingSerialT.xml)
+    add_test(NAME ${testName}_Necking_Tpetra COMMAND ${AlbanyT.exe} inputNeckingT.xml)
   ENDIF()
 ENDIF()

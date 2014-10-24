@@ -14,6 +14,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVtxDBCT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputVtxDBCT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputRenameT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputRenameT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
 # 2. Name the test with the directory name, prepended by SCOREC_
 get_filename_component(testRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -22,21 +26,10 @@ set(testName "SCOREC_${testRoot}")
 # 3. Create the test with this name and standard executable
 IF(ENABLE_MESHMODEL)
   IF(ALBANY_IFPACK2)
-    add_test(
-      NAME ${testName}_Traction_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${AlbanyT.exe} inputT.xml)
-    add_test(
-      NAME ${testName}_EdgeDBC_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${AlbanyT.exe} inputEdgeDBCT.xml)
-    add_test(
-      NAME ${testName}_VtxDBC_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${AlbanyT.exe} inputVtxDBCT.xml)
-    add_test(
-      NAME ${testName}_Rename_Tpetra
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${AlbanyT.exe} inputRenameT.xml)
+    add_test(NAME ${testName}_Traction_Tpetra COMMAND ${AlbanyT.exe} inputT.xml)
+    add_test(NAME ${testName}_EdgeDBC_Tpetra COMMAND ${AlbanyT.exe} inputEdgeDBCT.xml)
+    add_test(NAME ${testName}_VtxDBC_Tpetra COMMAND ${AlbanyT.exe} inputVtxDBCT.xml)
+    add_test(NAME ${testName}_Rename_Tpetra COMMAND ${AlbanyT.exe} inputRenameT.xml)
+    add_test(NAME ${testName}_Necking_Tpetra COMMAND ${AlbanyT.exe} inputNeckingT.xml)
   ENDIF()
 ENDIF()
