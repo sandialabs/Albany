@@ -14,6 +14,8 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Epetra_Map.h"  //Needed for serial, somehow
+#include "Petra_Converters.hpp"
+#include "Albany_Utils.hpp"
 
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = false;
@@ -154,7 +156,13 @@ int main(int argc, char *argv[]) {
 
     Albany::SolverFactory adjslvrfctry(xmladjfilename, comm);
     RCP<Epetra_Comm> adjappComm = Albany::createEpetraCommFromMpiComm(Albany_MPI_COMM_WORLD);
-    RCP<EpetraExt::ModelEvaluator> AdjApp = adjslvrfctry.create(adjappComm, adjappComm, xinit);
+    RCP<EpetraExt::ModelEvaluator> AdjApp; {
+      Teuchos::RCP<const Teuchos_Comm>
+        commT = Albany::createTeuchosCommFromEpetraComm(adjappComm);
+      AdjApp = adjslvrfctry.create(
+        adjappComm, adjappComm,
+        Petra::EpetraVector_To_TpetraVectorConst(*xinit, commT));
+    }
 
     EpetraExt::ModelEvaluator::InArgs adj_params_in = AdjApp->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs adj_responses_out = AdjApp->createOutArgs();
