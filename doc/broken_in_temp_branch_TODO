@@ -1,13 +1,13 @@
 
 The following are broken in the temporary branch following the merge of master -> tpetra: 
 
-4.) Have Mauro test mpas_interface.  --> Irina & Mauro 
+4.) Have Mauro test mpas_interface.  Resolve issues stemming from long long casting as ints.  --> Irina & Mauro 
 
 10.) ATO suite needs to be converted to Tpetra. Irina has put in for now a an error in CMakeLists.txt if ATO is requested
 as it will not build in the Tpetra branch (even with Albany executable).  The code needs to be converted to use the Tpetra 
-objects.  To do this, 8.) and 9.) need to be resolved, as ATO makes heavy use of BlockMap.
+objects.  To do this, 8.) and 9.) need to be resolved, as ATO makes heavy use of BlockMap --> Andrew B.
 
-12.) Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests.
+12.) Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests --> Andrew B.
 
 13.) See if ASCR compiles (note that this requires SG_MP to be turned on) in temporary_tpetra_newSTK branch.  
 Check if tests pass.  Not necessary to fix these yet, need to just let Eric Phipps know the status (10/23/14) --> Andrew B.
@@ -22,9 +22,7 @@ Failed tests (10/13/14):
 The following tests FAILED:
 	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing; fails in branch master too)
 	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
-	 73 - GPAM_Tpetra (Failed) - Failed comparison 
-	295 - Aeras_XZScalarAdvection_Tpetra (Failed) - failed test (need to rebaseline b/c it wasn't baselined correctly?  - Irina)
-              Aeras_TC2_Serial - See Error 5 below
+        295 - Aeras_TC2_Serial - See Error 5 below
 
 Errors while running CTest
 

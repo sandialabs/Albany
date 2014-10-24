@@ -36,12 +36,12 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.00908880569258, 0.838325340766, 8.10023015872}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.00464129223378, 0.994427180369, 11.0272324347}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
-    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="1"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.014918508627}"/>
-  </ParameterList>
+    <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.0467450977247}"/>
+ </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
@@ -55,7 +55,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="200"/>
+        <Parameter name="Number of Time Steps" type="int" value="5"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">
