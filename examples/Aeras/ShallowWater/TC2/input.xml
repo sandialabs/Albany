@@ -38,11 +38,12 @@
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Exodus Write Interval" type="int" value="5"/>
+    <!--Parameter name="Workset Size" type="int" value="500"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="6"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{798.369327462, 2998.16908254, 118958.023247, 183.960114083, 14068421.0768, 1.30761023627e-05}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{798.369327462, 2998.16908254, 118958.023247, 2.41983072594, 178368.205521,  1.35664913983e-05}"/>   
+  <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>

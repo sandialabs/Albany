@@ -317,11 +317,11 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t dim=0; dim < vecDim; ++dim) {
            //L^2 error squared w.r.t. flow_state_field_ref -- first component of global_response
-            err_sq += err_qp(cell,qp,dim)*err_qp(cell,qp,dim);
+            err_sq = err_qp(cell,qp,dim)*err_qp(cell,qp,dim);
            this->local_response(cell,0) += err_sq;
            this->global_response(0) += err_sq;
            //L^2 norm squared of flow_state_field_ref, the exact solution  -- second component of global_response
-            norm_ref_sq += flow_state_field_ref_qp(cell,qp,dim)*flow_state_field_ref_qp(cell,qp,dim);
+            norm_ref_sq = flow_state_field_ref_qp(cell,qp,dim)*flow_state_field_ref_qp(cell,qp,dim);
            this->local_response(cell,1) += norm_ref_sq;
            this->global_response(1) += norm_ref_sq;
         }
