@@ -5,7 +5,8 @@ prevents running the AlbanyT executable in the Albany Tpetra branch.
 General TO DOs: 
 - Turn on SCOREC in nightly tests (Irina)
 - Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests (Andrew B.?) 
-
+- Turn on DAKOTA in nightly tests (Irina).
+- Shorten Aeras tests run with AlbanyT executable, make consistent w/ Albany tests. 
 
 Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
 - QCAD will work only with Albany executable.

@@ -28,6 +28,7 @@ SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
 LAMEINCLUDEDIR=/home/ikalash/Install//lame-4.24.1/lame/include
 LAMELIBDIR=/home/ikalash/Install/lame-4.24.1/lame/build_mockba
 PARMETISDIR=/home/ikalash/Install/parmetis-4.0.3
+CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
