@@ -127,11 +127,11 @@ SET(SOURCES ${SOURCES}
 )
 SET(HEADERS ${HEADERS} 
   responses/Albany_SolutionValuesResponseFunction.hpp
+  responses/Epetra_GatherAllV.hpp
 )
 ENDIF()
 SET(SOURCES ${SOURCES}
   responses/Albany_SolutionCullingStrategy.cpp
-  responses/Epetra_GatherAllV.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
   responses/Albany_SamplingBasedScalarResponseFunction.cpp
