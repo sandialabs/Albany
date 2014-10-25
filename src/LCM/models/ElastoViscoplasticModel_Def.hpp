@@ -130,7 +130,7 @@ computeState(typename Traits::EvalData workset,
   std::string J_string = (*field_name_map_)["J"];
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> def_grad_field = *dep_fields[F_string];
   PHX::MDField<ScalarT> J = *dep_fields[J_string];
   PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
   PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
@@ -142,32 +142,33 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
-  PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
-  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
-  PHX::MDField<ScalarT> ess = *eval_fields[ess_string];
-  PHX::MDField<ScalarT> kappa = *eval_fields[kappa_string];
-  PHX::MDField<ScalarT> source;
+  PHX::MDField<ScalarT> stress_field = *eval_fields[cauchy_string];
+  PHX::MDField<ScalarT> Fp_field = *eval_fields[Fp_string];
+  PHX::MDField<ScalarT> eqps_field = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> eps_ss_field = *eval_fields[ess_string];
+  PHX::MDField<ScalarT> kappa_field = *eval_fields[kappa_string];
+  PHX::MDField<ScalarT> source_field;
   if (have_temperature_) {
-    source = *eval_fields[source_string];
+    source_field = *eval_fields[source_string];
   }
 
   // get State Variables
-  Albany::MDArray Fpold    = (*workset.stateArrayPtr)[Fp_string + "_old"];
-  Albany::MDArray eqpsold  = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  Albany::MDArray essold   = (*workset.stateArrayPtr)[ess_string + "_old"];
-  Albany::MDArray kappaold = (*workset.stateArrayPtr)[kappa_string + "_old"];
+  Albany::MDArray Fp_field_old     = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  Albany::MDArray eqps_field_old   = (*workset.stateArrayPtr)[eqps_string + "_old"];
+  Albany::MDArray eps_ss_field_old = (*workset.stateArrayPtr)[ess_string + "_old"];
+  Albany::MDArray kappa_field_old  = (*workset.stateArrayPtr)[kappa_string + "_old"];
 
-  ScalarT smag2, smag, p, dgam;
-  ScalarT sq23(std::sqrt(2. / 3.));
+  // define constants
+  RealType sq23(std::sqrt(2. / 3.));
+  RealType sq32(std::sqrt(3. / 2.));
 
-  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
-      num_dims_);
-  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_), expA(num_dims_), Fpnew(
-      num_dims_);
+  // pre-define some tensors that will be re-used below
+  Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_);
+  Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
+  Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_);
+  Intrepid::Tensor<ScalarT> expA(num_dims_), Fpnew(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fpinv(num_dims_);
-  Intrepid::Tensor<ScalarT> tau(num_dims_), M(num_dims_);
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
@@ -179,12 +180,20 @@ computeState(typename Traits::EvalData workset,
       ScalarT Y = yield_strength(cell, pt);
       ScalarT Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
+      // assign local state variables
+      //
+      //ScalarT kappa = kappa_field(cell,pt);
+      ScalarT kappa_old = kappa_field_old(cell,pt);
+      ScalarT eps_ss = eps_ss_field(cell,pt);
+      ScalarT eps_ss_old = eps_ss_field_old(cell,pt);
+      ScalarT eqps_old = eqps_field_old(cell,pt);
+
       // fill local tensors
-      F.fill(&def_grad(cell, pt, 0, 0));
-      //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
+      //
+      F.fill(&def_grad_field(cell, pt, 0, 0));
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+          Fpn(i, j) = ScalarT(Fp_field_old(cell, pt, i, j));
         }
       }
 
@@ -193,41 +202,124 @@ computeState(typename Traits::EvalData workset,
       //
       Cpinv = Intrepid::inverse(Fpn) * Intrepid::transpose(Intrepid::inverse(Fpn));
       be = Jm23 * F * Cpinv * Intrepid::transpose(F);
-      //ScalarT Je = std::sqrt( Intrepid::det(be));
       s = mu * Intrepid::dev(be);
+      ScalarT smag = Intrepid::norm(s);
       ScalarT mubar = Intrepid::trace(be) * mu / (num_dims_);
       
       // check yield condition
-      ScalarT smag = Intrepid::norm(s);
-      ScalarT Phi = smag - sq23 * (Y + kappaold(cell,pt) );
+      //
+      ScalarT Phi = sq32 * smag - ( Y + kappa_old );
 
-      if (Phi > 10*std::numeric_limits<RealType>::epsilon()) {
+      if (Phi > std::numeric_limits<RealType>::epsilon()) {
+
         // return mapping algorithm
+        //
         bool converged = false;
-        int count = 0;
-        dgam = 0.0;
+        int iter = 0;
+        RealType max_norm = std::numeric_limits<RealType>::min();
 
+        // flow rule temperature dependent parameters
+        //
+        ScalarT f = flow_coeff(cell,pt);
+        ScalarT n = flow_exp(cell,pt);
+
+        // This solver deals with Sacado type info
+        //
         LocalNonlinearSolver<EvalT, Traits> solver;
 
-        std::vector<ScalarT> F(1);
-        std::vector<ScalarT> dFdX(1);
-        std::vector<ScalarT> X(1);
+        // create some vectors to store solver data
+        //
+        std::vector<ScalarT> R(2);
+        std::vector<ScalarT> dRdX(4);
+        std::vector<ScalarT> X(2);
 
-        F[0] = Phi;
+        // initial guess
         X[0] = 0.0;
-        dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
-        while (!converged && count <= 30)
-        {
-          count++;
-          solver.solve(dFdX, X, F);
-          TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
-              std::endl <<
-              "Error in return mapping, count = " <<
-                                     count <<
-                                     std::endl);
+        X[1] = eps_ss_old;
+
+        while (!converged) {
+
+          // set up data types
+          //
+          std::vector<Fad> XFad(2);
+          std::vector<Fad> RFad(2);
+          std::vector<ScalarT> Xval(2);
+          for (std::size_t i = 0; i < 2; ++i) {
+            Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
+            XFad[i] = Fad(2, i, Xval[i]);
+          }
+
+          // get solution vars
+          //
+          Fad dgamF = XFad[0];
+          Fad eps_ssF = XFad[1];
+
+          // FIXME this seems to be necessary to get PhiF to compile below
+          // need to look into this more, it appears to be a conflict
+          // between the Intrepid::norm and FadType operations
+          //
+          Fad smagF = smag;
+
+          // compute yield function
+          //
+          Fad eqps_rateF = 0.0;
+          if (delta_time(0) > 0) eqps_rateF = sq23 * dgamF / delta_time(0);
+          Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
+          Fad kappaF = 2.0 * mu * eps_ssF;
+          Fad PhiF = sq32 * smagF - ( Y + kappaF ) * rate_termF;
+
+          // compute the hardening residual
+          //
+          Fad eps_resF = eps_ssF - eps_ss_old - (H - Rd*eps_ssF) * dgamF;
+
+          // for convenience put the residuals into a container
+          //
+          RFad[0] = PhiF;
+          RFad[1] = eps_resF;
+
+          // extract the values of the residuals
+          //
+          for (int i = 0; i < 2; ++i)
+            R[i] = RFad[i].val();
+
+          // extract the sensitivities of the residuals
+          //
+          for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+              dRdX[i + 2 * j] = RFad[i].dx(j);
+
+          // this call invokes the solver and updates the solution in X
+          //
+          solver.solve(dRdX, X, R);
+
+          // compute the norm of the residual
+          //
+          RealType R0 = Sacado::ScalarValue<ScalarT>::eval(R[0]); 
+          RealType R1 = Sacado::ScalarValue<ScalarT>::eval(R[1]);
+          RealType norm_res = std::sqrt(R0*R0 + R1*R1);
+          max_norm = std::max(norm_res, max_norm);
+            
+          // check against too many inerations
+          //
+          TEUCHOS_TEST_FOR_EXCEPTION(iter == 30, std::runtime_error,
+                                     std::endl <<
+                                     "Error in ElastoViscoplastic return mapping\n" <<
+                                     "iter count = " << iter << "\n" << std::endl);
+
+          // check for a sufficiently small residual
+          //
+          if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
+            converged = true;
+
+          // increment the iteratio counter
+          //
+          iter++;
         }
-        solver.computeFadInfo(dFdX, X, F);
-        dgam = X[0];
+
+        solver.computeFadInfo(dRdX, X, R);
+        ScalarT dgam = X[0];
+        ScalarT eps_ss = X[1];
+        ScalarT kappa = 2.0 * mu * eps_ss;
 
         // plastic direction
         N = (1 / smag) * s;
@@ -235,42 +327,51 @@ computeState(typename Traits::EvalData workset,
         // update s
         s -= 2 * mubar * dgam * N;
 
-        // update eqps
-        //eqps(cell, pt) = alpha;
+        // update state variables
+        eps_ss_field(cell, pt) = eps_ss;
+        eqps_field(cell,pt) = eqps_old + sq23 * dgam;
+        kappa_field(cell,pt) = kappa;
 
         // mechanical source
+        // FIXME this is not correct, just a placeholder
+        //
         if (have_temperature_ && delta_time(0) > 0) {
-          source(cell, pt) = (sq23 * dgam / delta_time(0)
-            * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
+          source_field(cell, pt) = (sq23 * dgam / delta_time(0))
+            * (Y + kappa) / (density_ * heat_capacity_);
         }
 
         // exponential map to get Fpnew
+        //
         A = dgam * N;
         expA = Intrepid::exp(A);
         Fpnew = expA * Fpn;
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
-            Fp(cell, pt, i, j) = Fpnew(i, j);
+            Fp_field(cell, pt, i, j) = Fpnew(i, j);
           }
         }
       } else {
-        eqps(cell, pt) = eqpsold(cell, pt);
-        if (have_temperature_) source(cell, pt) = 0.0;
+        // we are not yielding, variables do not evolve
+        //
+        eps_ss_field(cell, pt) = eps_ss_old;
+        eqps_field(cell,pt) = eqps_old;
+        kappa_field(cell,pt) = kappa_old;
+        if (have_temperature_) source_field(cell, pt) = 0.0;
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
-            Fp(cell, pt, i, j) = Fpn(i, j);
+            Fp_field(cell, pt, i, j) = Fpn(i, j);
           }
         }
       }
 
       // compute pressure
-      p = 0.5 * bulk * (J(cell, pt) - 1. / (J(cell, pt)));
+      ScalarT p = 0.5 * bulk * (J(cell, pt) - 1. / (J(cell, pt)));
 
       // compute stress
       sigma = p * I + s / J(cell, pt);
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
-          stress(cell, pt, i, j) = sigma(i, j);
+          stress_field(cell, pt, i, j) = sigma(i, j);
         }
       }
     }
@@ -279,14 +380,14 @@ computeState(typename Traits::EvalData workset,
   if (have_temperature_) {
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        F.fill(&def_grad(cell,pt,0,0));
+        F.fill(&def_grad_field(cell,pt,0,0));
         ScalarT J = Intrepid::det(F);
-        sigma.fill(&stress(cell,pt,0,0));
+        sigma.fill(&stress_field(cell,pt,0,0));
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
         for (std::size_t i = 0; i < num_dims_; ++i) {
           for (std::size_t j = 0; j < num_dims_; ++j) {
-            stress(cell, pt, i, j) = sigma(i, j);
+            stress_field(cell, pt, i, j) = sigma(i, j);
           }
         }
       }
