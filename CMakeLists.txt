@@ -374,6 +374,11 @@ ENDIF()
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
+  IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE)
+     MESSAGE("-- WARNING: cism_driver will not link properly when built if
+Albany was built with LCM, LAME or HYDRIDE.  Turn these off to build
+cism_driver.")
+  ENDIF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE)
   ADD_DEFINITIONS(-DCISM_HAS_FELIX)
   MESSAGE("-- CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
   SET(CISM_HAS_FELIX TRUE)
