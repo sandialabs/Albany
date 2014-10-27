@@ -140,7 +140,7 @@
 		            </ParameterList>
 	            </ParameterList>
 
-	            <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
+	            <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
 	      
               <ParameterList name="Preconditioner Types">
                 
@@ -154,7 +154,7 @@
 		              </ParameterList>
 		            </ParameterList>
 
-                <ParameterList name="MueLu">
+                <ParameterList name="MueLu-Tpetra">
 		              <Parameter name="multigrid algorithm" type="string" value="sa"/>
                     <Parameter name="cycle type" type="string" value="V"/>
                     <Parameter name="max levels" type="int" value="4"/>

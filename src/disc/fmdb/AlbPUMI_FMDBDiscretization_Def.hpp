@@ -274,38 +274,74 @@ AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
 
   if(rigidBodyModes.is_null()) return;
 
-  if(!rigidBodyModes->isMLUsed()) return;
+  if(!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
 
   // get mesh dimension and part handle
   int mesh_dim = getNumDim();
 
   rigidBodyModes->resize(mesh_dim, numOwnedNodes);
 
-  double *xx;
-  double *yy;
-  double *zz;
-
-  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
-
-  apf::Vector3 node_coords;
-
   apf::Mesh* m = fmdbMeshStruct->getMesh();
-  apf::MeshIterator* it = m->begin(mesh_dim);
-  apf::MeshEntity* v;
 
-  /* DAI: this function also has to change for high-order fields */
-  int i = 0;
-  while ((v = m->iterate(it))) {
-    m->getPoint(v, 0, node_coords);
-    for (int j = 0; j < mesh_dim; ++j) {
-      xx[i]=node_coords[j];
-      ++i;
+  //If ML preconditioner is selected
+  if (rigidBodyModes->isMLUsed()) {
+
+    double *xx;
+    double *yy;
+    double *zz;
+  
+    rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
+  
+    apf::Vector3 node_coords;
+  
+    apf::MeshIterator* it = m->begin(mesh_dim);
+    apf::MeshEntity* v;
+  
+    /* DAI: this function also has to change for high-order fields */
+    int i = 0;
+    while ((v = m->iterate(it))) {
+      m->getPoint(v, 0, node_coords);
+      for (int j = 0; j < mesh_dim; ++j) {
+        xx[i]=node_coords[j];
+        ++i;
+      }
     }
+  
+    m->end(it);
+  
+    rigidBodyModes->informML();
+
   }
 
-  m->end(it);
+  //If MueLu preconditioner is selected
+  if (rigidBodyModes->isMueLuUsed()) {
 
-  rigidBodyModes->informML();
+    std::cout << "MueLu selected in FMDB!" << std::endl;
+    double *xxyyzz; //make this ST?
+    rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
+
+    apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
+    double lcoords[3];
+
+    for (size_t i = 0; i < nodes.getSize(); ++i){
+
+      apf::Node node = nodes[i];
+      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
+
+      GO node_gid = apf::getNumber(globalNumbering, node);
+      int node_lid = node_mapT->getLocalElement(node_gid);
+      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+      for(size_t j = 0; j < mesh_dim; ++i)
+            xxyyzz[j*numOwnedNodes + node_lid] = lcoords[j];
+
+    }
+  
+    Teuchos::ArrayView<ST> xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*(mesh_dim+1));
+    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim+1));
+
+    rigidBodyModes->informMueLu(xyzMV, mapT);
+
+  }
 
 }
 
@@ -1250,6 +1286,7 @@ void
 AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
   computeOwnedNodesAndUnknowns();
+  setupMLCoords();
   computeOverlapNodesAndUnknowns();
   computeGraphs();
   getCoordinates(); //fill the coordinates array
