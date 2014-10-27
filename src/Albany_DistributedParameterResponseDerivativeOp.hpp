@@ -14,6 +14,10 @@
 
 #include "Albany_Application.hpp"
 
+// For conversion.
+#include "Albany_Utils.hpp"
+#include "Petra_Converters.hpp"
+
 namespace Albany {
 
   //! Epetra_Operator implementing the action of dg/dp (transpose)
@@ -110,7 +114,9 @@ namespace Albany {
      * with this operator.
      */
     virtual const Epetra_Comm& Comm() const {
-      return app->getDistParamLib()->get(param_name)->map()->Comm();
+      comm_e = createEpetraCommFromTeuchosComm(
+        app->getDistParamLib()->get(param_name)->map()->getComm());
+      return *comm_e;
     }
 
     /*!
@@ -118,9 +124,12 @@ namespace Albany {
      * this operator.
      */
     virtual const Epetra_Map& OperatorDomainMap() const {
-      if (use_transpose)
-        return *(app->getResponse(response_index)->responseMap());
-      return *(app->getDistParamLib()->get(param_name)->map());
+      const Teuchos::RCP<const Tpetra_Map>& map = use_transpose ?
+        app->getResponse(response_index)->responseMapT() :
+        app->getDistParamLib()->get(param_name)->map();
+      Comm();
+      domain_map = Petra::TpetraMap_To_EpetraMap(map, comm_e);
+      return *domain_map;
     }
 
     /*!
@@ -128,9 +137,12 @@ namespace Albany {
      * this operator.
      */
     virtual const Epetra_Map& OperatorRangeMap() const {
-      if (use_transpose)
-        return *(app->getDistParamLib()->get(param_name)->map());
-      return *(app->getResponse(response_index)->responseMap());
+      const Teuchos::RCP<const Tpetra_Map>& map = use_transpose ?
+        app->getDistParamLib()->get(param_name)->map() :
+        app->getResponse(response_index)->responseMapT();
+      Comm();
+      range_map = Petra::TpetraMap_To_EpetraMap(map, comm_e);
+      return *range_map;
     }
 
     //@}
@@ -168,6 +180,11 @@ namespace Albany {
     Teuchos::RCP<Teuchos::Array<ParamVec> > scalar_params;
 
     //@}
+
+    // For conversion. Since the methods return const&, the data cannot be
+    // temporaries.
+    mutable Teuchos::RCP<Epetra_Comm> comm_e;
+    mutable Teuchos::RCP<Epetra_Map> domain_map, range_map;
 
   }; // class DistributedParameterResponseDerivativeOp
 

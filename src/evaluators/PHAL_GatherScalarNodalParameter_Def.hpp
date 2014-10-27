@@ -58,8 +58,19 @@ template<typename EvalT, typename Traits>
 void GatherScalarNodalParameter<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<const Tpetra_Vector> pvecT =
-    workset.distParamLib->get(this->param_name)->overlapped_vector();
+  Teuchos::RCP<const Tpetra_Vector> pvecT;
+  try {
+    pvecT = workset.distParamLib->get(this->param_name)->overlapped_vector();
+  } catch (const std::logic_error& e) {
+    const std::string evalt = PHX::TypeString<EvalT>::value;
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "PHAL::GatherScalarNodalParameter<"
+      << evalt.substr(1, evalt.size() - 2)
+      << ", Traits>::evaluateFields: parameter " << this->param_name
+      << " is not in workset.distParamLib. If this is a Tpetra-only build"
+      << " we currently expect this result; sorry.");
+  }
   Teuchos::ArrayRCP<const ST> pvecT_constView = pvecT->get1dView();
 
   const Albany::IDArray& wsElDofs = workset.distParamLib->get(this->param_name)->workset_elem_dofs()[workset.wsIndex];
