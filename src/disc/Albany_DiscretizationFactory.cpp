@@ -15,8 +15,8 @@
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
 #ifdef ALBANY_EPETRA
-#include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_CismSTKMeshStruct.hpp"
+#include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
 #endif
@@ -277,7 +277,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
-                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit, FMDB, Cism, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit, FMDB, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
   }
 
 #ifdef ALBANY_LCM

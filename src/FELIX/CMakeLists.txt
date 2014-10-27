@@ -33,7 +33,7 @@ IF(ENABLE_MPAS_INTERFACE)
    )
 ENDIF()   
    
-IF(ENABLE_CISM_INTERFACE) 
+IF(ENABLE_CISM_INTERFACE AND ALBANY_EPETRA) 
    SET(SOURCESCISM 
        interface_with_cism/felix_driver.cpp
    )
@@ -76,7 +76,7 @@ IF(ENABLE_MPAS_INTERFACE)
   )
 ENDIF()
   
-IF (ENABLE_CISM_INTERFACE)
+IF (ENABLE_CISM_INTERFACE AND ALBANY_EPETRA)
   SET(HEADERSCISM
        interface_with_cism/felix_driver.H
    )
