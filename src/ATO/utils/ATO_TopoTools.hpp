@@ -33,8 +33,8 @@ public:
   double getInitialValue(){return initValue;}
   double getMaterialValue(){return materialValue;}
   double getVoidValue(){return voidValue;}
-  bool OutputFilteredTopology(){return outputFilteredTopology;}
-  bool ApplySpatialFilter(){return applySpatialFilter;}
+  int TopologyOutputFilter(){return topologyOutputFilter;}
+  int SpatialFilterIndex(){return spatialFilterIndex;}
 protected:
   std::string centering;
   // this should be a vector of strings at some point since, in the
@@ -47,14 +47,23 @@ protected:
   double voidValue;
   Teuchos::Array<std::string> fixedBlocks;
 
-  bool outputFilteredTopology;
-  bool applySpatialFilter;
+  int topologyOutputFilter;
+  int spatialFilterIndex;
 };
 
 
 class Topology_SIMP : public Topology {
  public:
   Topology_SIMP(const Teuchos::ParameterList& topoParams);
+  double Penalize(double rho);
+  double dPenalize(double rho);
+private:
+  double penaltyParam;
+};
+
+class Topology_RAMP : public Topology {
+ public:
+  Topology_RAMP(const Teuchos::ParameterList& topoParams);
   double Penalize(double rho);
   double dPenalize(double rho);
 private:

@@ -225,7 +225,7 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
                                      "scalar", initValue, /*registerOldState=*/ false, false);
       stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
                                      "scalar", initValue, /*registerOldState=*/ false, true);
-      if( topology->OutputFilteredTopology() )
+      if( topology->TopologyOutputFilter() >= 0 )
         stateMgr->registerStateVariable(topology->getName()+"_node_filtered", dl->node_node_scalar, "all",
                                        "scalar", initValue, /*registerOldState=*/ false, true);
     }
@@ -273,7 +273,7 @@ ATO::OptimizationProblem::InitTopOpt()
     int physIndex = wsPhysIndex[ws];
     int numCells  = wsElNodeEqID[ws].size();
     int numNodes  = wsElNodeEqID[ws][0].size();
-    int numDims   = wsElNodeEqID[ws][0][0].size();
+    int numDims   = cubatures[physIndex]->getDimension();
     int numQPs    = cubatures[physIndex]->getNumPoints();
 
     coordCon.resize(numCells, numNodes, numDims);

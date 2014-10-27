@@ -29,6 +29,7 @@
 
 #ifdef ALBANY_ATO
 #include "ATO/problems/LinearElasticityProblem.hpp"
+#include "ATO/problems/PoissonsEquation.hpp"
 #endif
 
 #ifdef ALBANY_LCM
@@ -303,6 +304,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinearElasticity 3D") {
     strategy = rcp(new Albany::LinearElasticityProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "Poissons Equation 1D") {
+    strategy = rcp(new Albany::PoissonsEquationProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "Poissons Equation 2D") {
+    strategy = rcp(new Albany::PoissonsEquationProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "Poissons Equation 3D") {
+    strategy = rcp(new Albany::PoissonsEquationProblem(problemParams, paramLib, 3));
   }
 #endif
 #ifdef ALBANY_SEE

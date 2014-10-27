@@ -37,6 +37,29 @@ namespace ATO {
   } GlobalPoint;
   bool operator< (GlobalPoint const & a, GlobalPoint const & b);
 
+  // eventually make this a base class and derive from it to make
+  // various kernels.  Also add a factory.
+  class SpatialFilter{
+    public:
+      SpatialFilter(Teuchos::ParameterList& params);
+      void buildOperator(
+             Teuchos::RCP<Albany::Application> app,
+             Teuchos::RCP<Topology>            topology,
+             Teuchos::RCP<Epetra_Map>          overlapNodeMap,
+             Teuchos::RCP<Epetra_Map>          localNodeMap,
+             Teuchos::RCP<Epetra_Import>       importer,
+             Teuchos::RCP<Epetra_Export>       exporter);
+      Teuchos::RCP<Epetra_CrsMatrix> FilterOperator(){return filterOperator;}
+    protected:
+      void importNeighbors(
+             std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors,
+             Teuchos::RCP<Epetra_Import>       importer,
+             Teuchos::RCP<Epetra_Export>       exporter);
+
+      Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
+      double filterRadius;
+  };
+
   class OptInterface {
   public:
     virtual void ComputeObjective(const double* p, double& f, double* dfdp=NULL)=0;
@@ -92,10 +115,10 @@ namespace ATO {
     Teuchos::RCP<Optimizer> _optimizer;
     Teuchos::RCP<Topology> _topology;
 
-    double  _filterRadius; // not sure if this is the best place but for now...
-    bool _filterDerivative;
-    bool _filterTopology;
-    bool _postFilterTopology;
+    std::vector<Teuchos::RCP<SpatialFilter> > filters;
+    Teuchos::RCP<SpatialFilter> _derivativeFilter;
+    Teuchos::RCP<SpatialFilter> _topologyFilter;
+    Teuchos::RCP<SpatialFilter> _postTopologyFilter;
 
     std::vector<Teuchos::RCP<Teuchos::ParameterList> > _subProblemAppParams;
     std::vector<SolverSubSolver> _subProblems;
@@ -119,14 +142,11 @@ namespace ATO {
     Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Epetra_Export> exporter;
 
-    Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
 
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
     void copyObjectiveFromStateMgr( double& f, double* dfdp );
     void zeroSet();
-    void buildFilterOperator(const Teuchos::RCP<Albany::Application> app);
-    void importNeighbors(std::map< GlobalPoint, std::set<GlobalPoint> >& neighbors);
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
     Teuchos::RCP<Teuchos::ParameterList> 
       createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appParams, int physIndex) const;

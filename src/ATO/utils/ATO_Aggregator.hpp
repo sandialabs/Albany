@@ -39,6 +39,7 @@ public:
   virtual std::string getOutputDerivativeName(){return outputDerivativeName;}
 
   void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
+  void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
 
   typedef struct {
     std::string name;
@@ -58,7 +59,18 @@ protected:
   std::vector<SubVariable> derivatives;
 
   Teuchos::RCP<Albany::Application> outApp;
+  Teuchos::RCP<const Epetra_Comm> comm;
 
+};
+
+class Aggregator_Scaled : public Aggregator {
+ public:
+  Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams);
+  virtual void Evaluate();
+ private:
+  Teuchos::Array<double> weights;
+
+  bool shiftToZero;
 };
 
 

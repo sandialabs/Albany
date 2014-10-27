@@ -45,7 +45,7 @@ ATO::Solver::
 Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Epetra_Comm>& comm,
        const Teuchos::RCP<const Epetra_Vector>& initial_guess)
-: _solverComm(comm), _mainAppParams(appParams), filterOperator(Teuchos::null)
+: _solverComm(comm), _mainAppParams(appParams)
 /******************************************************************************/
 {
   zeroSet();
@@ -77,23 +77,42 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   ATO::TopologyFactory topoFactory;
   _topology = topoFactory.create(topoParams);
 
-  // Parse filter
-  if( problemParams.isType<Teuchos::ParameterList>("Spatial Filter")){
-    Teuchos::ParameterList& filterParams = problemParams.get<Teuchos::ParameterList>("Spatial Filter");
-    _filterRadius = filterParams.get<double>("Filter Radius",0.0);
-  } else
-    _filterRadius = 0.0;
-
+  // Parse filters
+  if( problemParams.isType<Teuchos::ParameterList>("Spatial Filters")){
+    Teuchos::ParameterList& filtersParams = problemParams.get<Teuchos::ParameterList>("Spatial Filters");
+    int nFilters = filtersParams.get<int>("Number of Filters");
+    for(int ifltr=0; ifltr<nFilters; ifltr++){
+      std::stringstream filterStream;
+      filterStream << "Filter " << ifltr;
+      Teuchos::ParameterList& filterParams = filtersParams.get<Teuchos::ParameterList>(filterStream.str());
+      Teuchos::RCP<ATO::SpatialFilter> newFilter = Teuchos::rcp( new ATO::SpatialFilter(filterParams) );
+      filters.push_back(newFilter);
+    }
+  }
   
-  _filterTopology = topoParams.get<bool>("Apply Spatial Filter", false);
-  TEUCHOS_TEST_FOR_EXCEPTION( _filterTopology && _filterRadius == 0.0,
+  int topologyFilterIndex = _topology->SpatialFilterIndex();
+  if( topologyFilterIndex >= 0 ){
+    TEUCHOS_TEST_FOR_EXCEPTION( topologyFilterIndex >= filters.size(),
       Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Requested spatial filtering, but filter not defined." << std::endl);
+      << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
+    _topologyFilter = filters[topologyFilterIndex];
+  }
 
-  _filterDerivative = aggregatorParams.get<bool>("Apply Spatial Filter", false);
-  TEUCHOS_TEST_FOR_EXCEPTION( _filterDerivative && _filterRadius == 0.0,
+  int topologyOutputFilter = _topology->TopologyOutputFilter();
+  if( topologyOutputFilter >= 0 ){
+    TEUCHOS_TEST_FOR_EXCEPTION( topologyOutputFilter >= filters.size(),
       Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Requested spatial filtering, but filter not defined." << std::endl);
+      << "Error!  Spatial filter " << topologyFilterIndex << "requested but not defined." << std::endl);
+    _postTopologyFilter = filters[topologyOutputFilter];
+  }
+
+  int derivativeFilterIndex = aggregatorParams.get<int>("Spatial Filter", -1);
+  if( derivativeFilterIndex >= 0 ){
+    TEUCHOS_TEST_FOR_EXCEPTION( derivativeFilterIndex >= filters.size(),
+      Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error!  Spatial filter " << derivativeFilterIndex << "requested but not defined." << std::endl);
+    _derivativeFilter = filters[derivativeFilterIndex];
+  }
 
   // Get and set the default Piro parameters from a file, if given
   std::string piroFilename  = problemParams.get<std::string>("Piro Defaults Filename", "");
@@ -134,6 +153,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
  
   // pass subProblems to the aggregator
   _aggregator->SetInputVariables(_subProblems);
+  _aggregator->SetCommunicator(comm);
   
 
 
@@ -177,7 +197,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     overlapNodeMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
     delete [] global_node_ids;
 
-    if(_topology->OutputFilteredTopology() ){
+    if(_postTopologyFilter != Teuchos::null ){
       filteredOTopoVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
       filteredTopoVec  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
     } else {
@@ -210,8 +230,14 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     MPI_Type_struct(3,blockcounts,offsets,oldtypes,&MPI_GlobalPoint);
     MPI_Type_commit(&MPI_GlobalPoint);
 
-    // initialize/build the filter operator. this is built once.
-    buildFilterOperator(_subProblems[0].app);
+    // initialize/build the filter operators. these are built once.
+    int nFilters = filters.size();
+    for(int ifltr=0; ifltr<nFilters; ifltr++){
+      filters[ifltr]->buildOperator(
+        _subProblems[0].app, _topology, 
+        overlapNodeMap, localNodeMap,
+        importer, exporter); 
+    }
 #endif //ATO_FILTER_ON
 
   }
@@ -233,6 +259,10 @@ ATO::Solver::zeroSet()
   // set parameters and responses
   _num_parameters = 0; //TEV: assume no parameters or responses for now...
   _num_responses  = 0; //TEV: assume no parameters or responses for now...
+
+  _derivativeFilter   = Teuchos::null;
+  _topologyFilter     = Teuchos::null;
+  _postTopologyFilter = Teuchos::null;
 }
 
   
@@ -282,6 +312,9 @@ ATO::Solver::ComputeObjective(const double* p, double& f, double* dfdp)
   // copy objective (f) and first derivative wrt the topology (dfdp) out 
   // of stateManager
   copyObjectiveFromStateMgr( f, dfdp );
+
+  if(_solverComm->MyPID() == 0){
+  }
   
 }
 
@@ -352,20 +385,16 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
 
 
     // apply filter if requested
-    if( filterOperator != Teuchos::null ){
-
-      if(_topology->ApplySpatialFilter()){
-        Epetra_Vector filtered_topoVec(*topoVec);
-        filterOperator->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
-        *topoVec = filtered_topoVec;
-      } else
-      if(_topology->OutputFilteredTopology() ){
-        filterOperator->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
-        filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
-        std::string nodal_topoName = _topology->getName()+"_node_filtered";
-        (*nodeContainer)[nodal_topoName]->saveField(filteredOTopoVec,/*offset=*/0);
-      }
-    
+    if(_topologyFilter != Teuchos::null){
+      Epetra_Vector filtered_topoVec(*topoVec);
+      _topologyFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
+      *topoVec = filtered_topoVec;
+    } else
+    if(_postTopologyFilter != Teuchos::null){
+      _postTopologyFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
+      filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
+      std::string nodal_topoName = _topology->getName()+"_node_filtered";
+      (*nodeContainer)[nodal_topoName]->saveField(filteredOTopoVec,/*offset=*/0);
     }
 
     overlapTopoVec->Import(*topoVec, *importer, Insert);
@@ -457,9 +486,9 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
 
 
     // apply filter if requested
-    if(filterOperator != Teuchos::null && _filterDerivative){
+    if(_derivativeFilter != Teuchos::null){
       Epetra_Vector filtered_dfdpVec(*dfdpVec);
-      filterOperator->Multiply(/*UseTranspose=*/false, *dfdpVec, filtered_dfdpVec);
+      _derivativeFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *dfdpVec, filtered_dfdpVec);
       filtered_dfdpVec.ExtractView(&lvec);
       std::memcpy((void*)dfdp, (void*)lvec, numLocalNodes*sizeof(double));
     } else {
@@ -670,10 +699,6 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
   physics_probParams.setParameters(physics_subList);
 
   // Add topology information
-//  Teuchos::ParameterList& topoParams = 
-//    appParams->sublist("Problem").get<Teuchos::ParameterList>("Topology");
-//  physics_probParams.set<Teuchos::ParameterList>("Topology",topoParams);
-
   physics_probParams.set<Teuchos::RCP<Topology> >("Topology",_topology);
 
 
@@ -686,6 +711,13 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
   Teuchos::ParameterList& discList = appParams->sublist("Discretization");
   Teuchos::ParameterList& physics_discList = physics_appParams->sublist("Discretization", false);
   physics_discList.setParameters(discList);
+  // find the output file name and append "Physics_n_" to it. This only checks for exodus output.
+  if( physics_discList.isType<std::string>("Exodus Output File Name") ){
+    std::stringstream newname;
+    newname << "physics_" << physIndex << "_" 
+            << physics_discList.get<std::string>("Exodus Output File Name");
+    physics_discList.set("Exodus Output File Name",newname.str());
+  }
 
   if( _topology->getFixedBlocks().size() > 0 )
     physics_discList.set("Separate Evaluators by Element Block", true);
@@ -753,7 +785,7 @@ ATO::Solver::getValidProblemParameters() const
   validPL->sublist("Topology", false, "");
 
   // Specify responses
-  validPL->sublist("Spatial Filter", false, "");
+  validPL->sublist("Spatial Filters", false, "");
 
   // Physics solver options
   validPL->set<std::string>(
@@ -881,29 +913,21 @@ ATO::Solver::CreateSubSolverData(const ATO::SolverSubSolver& sub) const
 
 /******************************************************************************/
 void
-ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
+ATO::SpatialFilter::buildOperator(
+             Teuchos::RCP<Albany::Application> app,
+             Teuchos::RCP<Topology>            topology,
+             Teuchos::RCP<Epetra_Map>          overlapNodeMap,
+             Teuchos::RCP<Epetra_Map>          localNodeMap,
+             Teuchos::RCP<Epetra_Import>       importer,
+             Teuchos::RCP<Epetra_Export>       exporter)
 /******************************************************************************/
 {
 
-  if(_filterRadius == 0.0) return;
-
-
-
-  if(_topoCentering == "Node") {
+  if( topology->getCentering() == "Node" ){
 
     Teuchos::RCP<Adapt::NodalDataBlock> node_data = app->getStateMgr().getNodalDataBlock();
 
-    // construct epetra map for node ids. 
-//    Teuchos::RCP<const Epetra_Comm> comm = app->getComm();
-//    Teuchos::RCP<const Epetra_BlockMap> local_node_blockmap = node_data->getLocalMap();
-//    int num_global_elements = local_node_blockmap->NumGlobalElements();
-//    int num_my_elements     = local_node_blockmap->NumMyElements();
-//    int *global_node_ids    = new int[num_my_elements]; 
-//    local_node_blockmap->MyGlobalElements(global_node_ids);
-//    Epetra_Map localNodeMap(num_global_elements,num_my_elements,global_node_ids,0,*comm);
-//    delete [] global_node_ids;
-  
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
   
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
@@ -911,7 +935,7 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
   
     std::map< GlobalPoint, std::set<GlobalPoint> > neighbors;
   
-    double filter_radius_sqrd = _filterRadius*_filterRadius;
+    double filter_radius_sqrd = filterRadius*filterRadius;
     // awful n^2 search... all against all
     size_t dimension   = app->getDiscretization()->getNumDim();
     size_t num_worksets = coords.size();
@@ -955,7 +979,7 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
     }
 
     // communicate neighbor data
-    importNeighbors(neighbors);
+    importNeighbors(neighbors,importer,exporter);
 
     
     // for each interior node, search boundary nodes for additional interactions off processor.
@@ -977,7 +1001,7 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
          for (int dim=0; dim<dimension; dim++) 
            distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
          distance = (distance > 0.0) ? sqrt(distance) : 0.0;
-         double weight = _filterRadius - distance;
+         double weight = filterRadius - distance;
          filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
       }
     }
@@ -989,14 +1013,6 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
     filterOperator->InvRowSums(rowSums);
     filterOperator->RightScale(rowSums);
 
-// TEV: this is debugging code for examining filteroperator. Should be commented/ifdef'd out for
-// ... final production code.
-//#ifdef ATO_FILTER_ON
-//    std::stringstream outname;
-//    outname << "filter_operator_proc_" << _solverComm->MyPID() << ".m";
-//    EpetraExt::RowMatrixToMatlabFile(outname.str().c_str(),*filterOperator);
-//#endif //ATO_FILTER_ON
-
   } else {
     // Element centered filter
   }
@@ -1004,11 +1020,19 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
   return;
 
 }
+/******************************************************************************/
+ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
+/******************************************************************************/
+{
+  filterRadius = params.get<double>("Filter Radius");
+}
 
 /******************************************************************************/
 void 
-ATO::Solver::importNeighbors( 
-  std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >& neighbors)
+ATO::SpatialFilter::importNeighbors( 
+  std::map< ATO::GlobalPoint, std::set<ATO::GlobalPoint> >& neighbors,
+  Teuchos::RCP<Epetra_Import> importer,
+  Teuchos::RCP<Epetra_Export> exporter)
 /******************************************************************************/
 {
   // get from the exporter the node global ids and the associated processor ids
@@ -1213,7 +1237,7 @@ ATO::Solver::importNeighbors(
           for(int i=0; i<3; i++)
             distance += (remote_coords[i]-home_coords[i])*(remote_coords[i]-home_coords[i]);
           distance = (distance > 0.0) ? sqrt(distance) : 0.0;
-          if( distance < _filterRadius )
+          if( distance < filterRadius )
             pointSet.insert(*remote_point);
         }
       }
@@ -1221,7 +1245,7 @@ ATO::Solver::importNeighbors(
       newPoints += (pointSet.size() - pointSetSize);
     }
     int globalNewPoints=0;
-    _solverComm->SumAll(&newPoints, &globalNewPoints, 1);
+    impNodeMap.Comm().SumAll(&newPoints, &globalNewPoints, 1);
     newPoints = globalNewPoints;
   }
 }

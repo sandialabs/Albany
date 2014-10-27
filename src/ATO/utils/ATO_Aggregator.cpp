@@ -25,10 +25,13 @@ AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams)
   if( weightingType == "Uniform"  )  
     return Teuchos::rcp(new Aggregator_Uniform(aggregatorParams));
   else
+  if( weightingType == "Scaled"  )  
+    return Teuchos::rcp(new Aggregator_Scaled(aggregatorParams));
+  else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Weighting type " << weightingType << " Unknown!" << std::endl 
-      << "Valid weighting types are (Uniform, Weighted)" << std::endl);
+      << "Valid weighting types are (Uniform, Scaled)" << std::endl);
 }
 
 //**********************************************************************
@@ -55,6 +58,8 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
   
   outputObjectiveName = aggregatorParams.get<std::string>("Objective Name");
   outputDerivativeName = aggregatorParams.get<std::string>("dFdTopology Name");
+
+  comm = Teuchos::null;
 }
 
 //**********************************************************************
@@ -112,11 +117,37 @@ Aggregator(aggregatorParams)
 //**********************************************************************
 { 
 }
+
+//**********************************************************************
+Aggregator_Scaled::Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams) :
+Aggregator(aggregatorParams)
+//**********************************************************************
+{ 
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    !aggregatorParams.isType<Teuchos::Array<double> >("Weights"),
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Scaled aggregator requires weights.  None given." << std::endl );
+
+  weights = aggregatorParams.get<Teuchos::Array<double> >("Weights");
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    weights.size() != aggregatedObjectivesNames.size(),
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Scaled aggregator requires weights.  None given." << std::endl );
+
+  if(aggregatorParams.isType<bool>("Shift to Scaled"))
+    shiftToZero = aggregatorParams.get<bool>("Shift to Scaled");
+  else 
+    shiftToZero = false;
+  
+}
+
 //**********************************************************************
 void
 Aggregator_Uniform::Evaluate()
 //**********************************************************************
 {
+
   Albany::StateArrays& stateArrays = outApp->getStateMgr().getStateArrays();
   Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
   int numWorksets = dest.size();
@@ -153,14 +184,127 @@ Aggregator_Uniform::Evaluate()
           derDest(i,j) += weight*derSrc(i,j);
     }
     Albany::MDArray& objSrc = src[0][objName];
+
+
+    if( comm != Teuchos::null ){
+      double globalVal, val = objSrc(0);
+      comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
+      if( comm->MyPID()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Aggregator: " << objName << " = " << globalVal << std::endl;
+        std::cout << "************************************************************************" << std::endl;
+      }
+    }
+
     Albany::MDArray& objDest = dest[0][outputObjectiveName];
     objDest(0) += weight*objSrc(0);
     // reset sources to zero.  this shouldn't be done here.
     objSrc(0)=0.0;
   }
 
+  if( comm != Teuchos::null ){
+    double globalVal, val = objDest(0);
+    comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
+    if( comm->MyPID()==0 ){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Aggregator: " << outputObjectiveName << " = " << globalVal << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
 }
 
+
+//**********************************************************************
+void
+Aggregator_Scaled::Evaluate()
+//**********************************************************************
+{
+
+  Albany::StateArrays& stateArrays = outApp->getStateMgr().getStateArrays();
+  Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+  int numWorksets = dest.size();
+  
+  int numVariables = derivatives.size();
+
+  // zero out the destination variable
+  for(int ws=0; ws<numWorksets; ws++){
+    Albany::MDArray& derDest = dest[ws][outputDerivativeName];
+    int dim0 = derDest.dimension(0);
+    int dim1 = derDest.dimension(1);
+    for(int i=0; i<dim0; i++)
+      for(int j=0; j<dim1; j++)
+        derDest(i,j)=0.0;
+  }
+  Albany::MDArray& objDest = dest[0][outputObjectiveName];
+  objDest(0)=0.0;
+
+  // dest = (Var1 + Var2 + ...) / nvars
+  for(int sv=0; sv<numVariables; sv++){
+    Albany::StateArrays& inStateArrays = derivatives[sv].app->getStateMgr().getStateArrays();
+    Albany::StateArrayVec& src = inStateArrays.elemStateArrays;
+    std::string derName = derivatives[sv].name;
+    std::string objName = objectives[sv].name;
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::MDArray& derSrc = src[ws][derName];
+      Albany::MDArray& derDest = dest[ws][outputDerivativeName];
+      int dim0 = derSrc.dimension(0);
+      int dim1 = derSrc.dimension(1);
+      for(int i=0; i<dim0; i++)
+        for(int j=0; j<dim1; j++)
+          derDest(i,j) += weights[sv]*derSrc(i,j);
+    }
+    Albany::MDArray& objSrc = src[0][objName];
+
+
+    if( comm != Teuchos::null ){
+      double globalVal, val = objSrc(0);
+      comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
+      if( comm->MyPID()==0 ){
+        std::cout << "************************************************************************" << std::endl;
+        std::cout << "  Aggregator: " << objName << " = " << globalVal << std::endl;
+        std::cout << "************************************************************************" << std::endl;
+      }
+    }
+
+    Albany::MDArray& objDest = dest[0][outputObjectiveName];
+    objDest(0) += weights[sv]*objSrc(0);
+    // reset sources to zero.  this shouldn't be done here.
+    objSrc(0)=0.0;
+  }
+
+  if( comm != Teuchos::null ){
+    double globalVal, val = objDest(0);
+    comm->SumAll(&val, &globalVal, /*numvals=*/ 1);
+    if( comm->MyPID()==0 ){
+      std::cout << "************************************************************************" << std::endl;
+      std::cout << "  Aggregator: " << outputObjectiveName << " = " << globalVal << std::endl;
+      std::cout << "************************************************************************" << std::endl;
+    }
+  }
+
+  if(shiftToZero){
+    double maxValue = 0.0;
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::MDArray& derDest = dest[ws][outputDerivativeName];
+      int dim0 = derDest.dimension(0);
+      int dim1 = derDest.dimension(1);
+      for(int i=0; i<dim0; i++)
+        for(int j=0; j<dim1; j++)
+          if(derDest(i,j) > maxValue)
+            maxValue = derDest(i,j);
+    }
+    if(maxValue > 0.0){
+      for(int ws=0; ws<numWorksets; ws++){
+        Albany::MDArray& derDest = dest[ws][outputDerivativeName];
+        int dim0 = derDest.dimension(0);
+        int dim1 = derDest.dimension(1);
+        for(int i=0; i<dim0; i++)
+          for(int j=0; j<dim1; j++)
+            derDest(i,j) -= maxValue;
+      }
+    }
+  }
+}
 
 
 //**********************************************************************
