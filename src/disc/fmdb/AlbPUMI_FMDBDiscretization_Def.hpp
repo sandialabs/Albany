@@ -70,6 +70,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
   globalNumbering = 0;
   elementNumbering = 0;
 
+  // Initialize the mesh and all data structures
   bool shouldTransferIPData = false;
   AlbPUMI::FMDBDiscretization<Output>::updateMesh(shouldTransferIPData);
 
@@ -1286,6 +1287,9 @@ template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
+  // This function is called both to initialize the mesh at the beginning of the simulation
+  // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
+
   computeOwnedNodesAndUnknowns();
   computeOverlapNodesAndUnknowns();
   setupMLCoords();
