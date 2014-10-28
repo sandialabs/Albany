@@ -137,8 +137,8 @@ class AbstractDiscretization {
       getWsElNodeID() const = 0;
 
 #ifdef ALBANY_EPETRA
-    //! Get IDArray for (Ws, Local Node, nComps) -> NodeLID, works for both scalar and vector fields
-    virtual const std::vector<IDArray>& getElNodeID(const std::string& field_name) const = 0;
+    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
+    virtual const std::vector<IDArray>& getElNodeEqID(const std::string& field_name) const = 0;
 #endif
 
     //! Retrieve coodinate ptr_field (ws, el, node)

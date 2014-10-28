@@ -42,6 +42,8 @@
 namespace Albany {
 
 #ifdef ALBANY_EPETRA
+  typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
+
   struct DOFsStruct {
     Teuchos::RCP<Epetra_Map> node_map;
     Teuchos::RCP<Epetra_Map> overlap_node_map;
@@ -49,8 +51,10 @@ namespace Albany {
     Teuchos::RCP<Epetra_Map> overlap_map;
     NodalDOFManager dofManager;
     NodalDOFManager overlap_dofManager;
-    std::vector<std::vector<int> > wsElNodeID_rawVec;
-    std::vector<IDArray> wsElNodeID;
+    std::vector< std::vector<LO> > wsElNodeEqID_rawVec;
+    std::vector<IDArray> wsElNodeEqID;
+    std::vector< std::vector<GO> > wsElNodeID_rawVec;
+    std::vector<GIDArray> wsElNodeID;
   };
 
   struct NodalDOFsStructContainer {
@@ -146,9 +150,9 @@ namespace Albany {
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
 #ifdef ALBANY_EPETRA
-    //! Get IDArray for (Ws, Local Node, nComps) -> NodeLID, works for both scalar and vector fields
-    const std::vector<IDArray>& getElNodeID(const std::string& field_name) const
-        {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeID;}
+    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
+    const std::vector<IDArray>& getElNodeEqID(const std::string& field_name) const
+        {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
 #endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
