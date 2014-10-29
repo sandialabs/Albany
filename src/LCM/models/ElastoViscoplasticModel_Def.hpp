@@ -24,8 +24,8 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string ess_string = (*field_name_map_)["ess"];
-  std::string kappa_string = (*field_name_map_)["iso_Hardening"];
+  std::string eps_ss_string = (*field_name_map_)["eps_ss"];
+  std::string kappa_string = (*field_name_map_)["isotropic_hardening"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -51,6 +51,8 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(eps_ss_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(kappa_string, dl->qp_scalar));
   if (have_temperature_) {
     this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   }
@@ -84,14 +86,14 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output eqps", false));
   //
-  // ess
+  // epsilon_ss, statisically stored dislocations
   this->num_state_variables_++;
-  this->state_var_names_.push_back(ess_string);
+  this->state_var_names_.push_back(eps_ss_string);
   this->state_var_layouts_.push_back(dl->qp_scalar);
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output ess", false));
+  this->state_var_output_flags_.push_back(p->get<bool>("Output eps_ss", false));
   //
   // kappa - isotropic hardening
   this->num_state_variables_++;
@@ -123,8 +125,8 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string ess_string = (*field_name_map_)["ess"];
-  std::string kappa_string = (*field_name_map_)["iso_Hardening"];
+  std::string eps_ss_string = (*field_name_map_)["eps_ss"];
+  std::string kappa_string = (*field_name_map_)["isotropic_hardening"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -145,7 +147,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> stress_field = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> Fp_field = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps_field = *eval_fields[eqps_string];
-  PHX::MDField<ScalarT> eps_ss_field = *eval_fields[ess_string];
+  PHX::MDField<ScalarT> eps_ss_field = *eval_fields[eps_ss_string];
   PHX::MDField<ScalarT> kappa_field = *eval_fields[kappa_string];
   PHX::MDField<ScalarT> source_field;
   if (have_temperature_) {
@@ -155,7 +157,7 @@ computeState(typename Traits::EvalData workset,
   // get State Variables
   Albany::MDArray Fp_field_old     = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqps_field_old   = (*workset.stateArrayPtr)[eqps_string + "_old"];
-  Albany::MDArray eps_ss_field_old = (*workset.stateArrayPtr)[ess_string + "_old"];
+  Albany::MDArray eps_ss_field_old = (*workset.stateArrayPtr)[eps_ss_string + "_old"];
   Albany::MDArray kappa_field_old  = (*workset.stateArrayPtr)[kappa_string + "_old"];
 
   // define constants
@@ -175,8 +177,6 @@ computeState(typename Traits::EvalData workset,
       ScalarT bulk = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-      ScalarT H = hardening_modulus(cell, pt);
-      ScalarT Rd = recovery_modulus(cell, pt);
       ScalarT Y = yield_strength(cell, pt);
       ScalarT Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
@@ -210,6 +210,9 @@ computeState(typename Traits::EvalData workset,
       //
       ScalarT Phi = sq32 * smag - ( Y + kappa_old );
 
+      std::cout << "======== Phi: " << Phi << std::endl;
+      std::cout << "======== eps: " << std::numeric_limits<RealType>::epsilon() << std::endl;
+
       if (Phi > std::numeric_limits<RealType>::epsilon()) {
 
         // return mapping algorithm
@@ -217,6 +220,11 @@ computeState(typename Traits::EvalData workset,
         bool converged = false;
         int iter = 0;
         RealType max_norm = std::numeric_limits<RealType>::min();
+
+        // hardening and recovery parameters
+        //
+        ScalarT H = hardening_modulus(cell, pt);
+        ScalarT Rd = recovery_modulus(cell, pt);
 
         // flow rule temperature dependent parameters
         //
@@ -265,8 +273,8 @@ computeState(typename Traits::EvalData workset,
           Fad eqps_rateF = 0.0;
           if (delta_time(0) > 0) eqps_rateF = sq23 * dgamF / delta_time(0);
           Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
-          Fad kappaF = 2.0 * mu * eps_ssF;
-          Fad PhiF = sq32 * smagF - ( Y + kappaF ) * rate_termF;
+          Fad kappaF = 2.0 * mubar * eps_ssF;
+          Fad PhiF = sq32 * (smagF - 2.0 * mubar * dgamF) - ( Y + kappaF ) * rate_termF;
 
           // compute the hardening residual
           //
@@ -308,6 +316,7 @@ computeState(typename Traits::EvalData workset,
 
           // check for a sufficiently small residual
           //
+          std::cout << "======== norm_res : " << norm_res << std::endl;
           if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
             converged = true;
 
@@ -319,7 +328,11 @@ computeState(typename Traits::EvalData workset,
         solver.computeFadInfo(dRdX, X, R);
         ScalarT dgam = X[0];
         ScalarT eps_ss = X[1];
-        ScalarT kappa = 2.0 * mu * eps_ss;
+        ScalarT kappa = 2.0 * mubar * eps_ss;
+
+        std::cout << "======== dgam : " << dgam << std::endl;
+        std::cout << "======== e_ss : " << eps_ss << std::endl;
+        std::cout << "======== kapp : " << kappa << std::endl;
 
         // plastic direction
         N = (1 / smag) * s;

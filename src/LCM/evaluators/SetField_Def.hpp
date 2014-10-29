@@ -40,11 +40,16 @@ evaluateFields(typename Traits::EvalData workset)
 {
   unsigned int numDimensions = evaluatedFieldDimensions.size();
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions < 2, "SetField::evaluateFields(), unsupported field type.");  
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions < 1, "SetField::evaluateFields(), unsupported field type.");  
   int dim1 = evaluatedFieldDimensions[0];
-  int dim2 = evaluatedFieldDimensions[1];
 
-  if(numDimensions == 2){
+  if(numDimensions == 1){
+    for (int i=0; i<dim1; ++i) {
+      evaluatedField(i) = fieldValues[i];
+    }
+  }
+  else if(numDimensions == 2){
+    int dim2 = evaluatedFieldDimensions[1];
     TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2, "SetField::evaluateFields(), inconsistent data sizes.");
     for(int i=0 ; i<dim1 ; ++i){
       for(int j=0 ; j<dim2 ; ++j){
@@ -53,6 +58,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if(numDimensions == 3){
+    int dim2 = evaluatedFieldDimensions[1];
     int dim3 = evaluatedFieldDimensions[2];
     TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2*dim3, "SetField::evaluateFields(), inconsistent data sizes.");
     for(int i=0 ; i<dim1 ; ++i){
@@ -64,6 +70,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   else if(numDimensions == 4){
+    int dim2 = evaluatedFieldDimensions[1];
     int dim3 = evaluatedFieldDimensions[2];
     int dim4 = evaluatedFieldDimensions[3];
     TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2*dim3*dim4, "SetField::evaluateFields(), inconsistent data sizes.");
