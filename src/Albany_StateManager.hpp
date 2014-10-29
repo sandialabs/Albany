@@ -168,6 +168,10 @@ public:
   Albany::StateArrays& getStateArrays() const;
 
   Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return stateInfo->createNodalDataBase(); }
+#ifdef ALBANY_ATO
+  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock()
+  { return stateInfo->createNodalDataBase()->getNodalDataBlock(); }
+#endif
 
 #ifdef ALBANY_EPETRA
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data

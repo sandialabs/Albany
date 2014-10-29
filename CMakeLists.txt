@@ -270,9 +270,6 @@ ENDIF()
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)
-  MESSAGE(FATAL_ERROR "\nError:  ATO will not build right now in Tpetra Albany
-branch!  Need to convert ATO suite to use Tpetra branch objects, which
-requires resolving BlockMap Issue.")
   ADD_DEFINITIONS(-DALBANY_ATO)
   MESSAGE("-- ATO       is Enabled, compiling with -DALBANY_ATO")
   SET(ALBANY_ATO TRUE)
@@ -735,6 +732,10 @@ ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
 IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
 ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
+
+IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+  MESSAGE("-- WARNING: ATO                is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
+ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
    
 IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
   MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with

@@ -19,7 +19,8 @@ Please remove when issue is resolved
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
-
+#include "Adapt_NodalDataBlock.hpp"
+#include "Petra_Converters.hpp"
 
 //#define ATO_FILTER_ON
 #undef ATO_FILTER_ON
@@ -132,9 +133,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     // create overlap topo vector for output purposes
     Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
     Teuchos::RCP<const Epetra_BlockMap> 
-      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMap();
+      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMapE();
     Teuchos::RCP<const Epetra_BlockMap> 
-      localNodeMap = stateMgr.getNodalDataBlock()->getLocalMap();
+      localNodeMap = stateMgr.getNodalDataBlock()->getLocalMapE();
     overlapTopoVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
     overlapdfdpVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
     dfdpVec  = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
@@ -247,10 +248,10 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     overlapTopoVec->Import(*topoVec, *importer, Insert);
     double* otopo; overlapTopoVec->ExtractView(&otopo);
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
     Teuchos::RCP<const Epetra_BlockMap> 
-      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMap();
+      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMapE();
 
 
     for(int ws=0; ws<numWorksets; ws++){
@@ -270,7 +271,14 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
 
     std::string nodal_topoName = _topoName+"_node";
-    (*nodeContainer)[nodal_topoName]->saveField(overlapTopoVec,/*offset=*/0);
+    {
+      const Teuchos::RCP<const Teuchos_Comm>
+        commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
+      const Teuchos::RCP<const Tpetra_Vector>
+        overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
+          *overlapTopoVec, commT);
+      (*nodeContainer)[nodal_topoName]->saveFieldVector(overlapTopoVecT,/*offset=*/0);
+    }
 
   }
 }
@@ -306,11 +314,11 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
   if( _topoCentering == "Node" ){
 
     Teuchos::RCP<Albany::AbstractDiscretization> disc = stateMgr.getDiscretization();
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = disc->getWsElNodeID();
 
     Teuchos::RCP<const Epetra_BlockMap> 
-      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMap();
+      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMapE();
 
     dfdpVec->PutScalar(0.0);
     overlapdfdpVec->PutScalar(0.0);
@@ -407,18 +415,23 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
 
   ATO::SolverSubSolver ret; //value to return
 
-  const Albany_MPI_Comm mpiComm = Albany::getMpiCommFromEpetraComm(comm);
-
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "ATO Solver creating solver from " << appParams->name()
        << " parameter list" << std::endl;
 
-  //! Create solver factory, which reads xml input filen
-  Albany::SolverFactory slvrfctry(appParams, mpiComm);
-
   //! Create solver and application objects via solver factory
-  RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
-  ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guess);
+  {
+    RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+    const RCP<const Epetra_Comm> appComm = Teuchos::rcpFromRef(comm);
+
+    //! Create solver factory, which reads xml input filen
+    Albany::SolverFactory slvrfctry(appParams, commT);
+
+    RCP<const Tpetra_Vector> initial_guessT = Teuchos::null;
+    if (!initial_guess.is_null())
+      initial_guessT = Petra::EpetraVector_To_TpetraVectorConst(*initial_guess, commT);
+    ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
+  }
 
 
   ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
@@ -707,9 +720,9 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
     Teuchos::RCP<Adapt::NodalDataBlock> node_data = app->getStateMgr().getNodalDataBlock();
 
     // create exporter
-    Teuchos::RCP<const Epetra_Comm> comm             = app->getComm();
-    Teuchos::RCP<const Epetra_BlockMap>  local_node_blockmap   = node_data->getLocalMap();
-    Teuchos::RCP<const Epetra_BlockMap>  overlap_node_blockmap = node_data->getOverlapMap();
+    Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(app->getComm());
+    Teuchos::RCP<const Epetra_BlockMap>  local_node_blockmap   = node_data->getLocalMapE();
+    Teuchos::RCP<const Epetra_BlockMap>  overlap_node_blockmap = node_data->getOverlapMapE();
   
     // construct simple maps for node ids. 
     int num_global_elements = local_node_blockmap->NumGlobalElements();
@@ -728,7 +741,7 @@ ATO::Solver::buildFilterOperator(const Teuchos::RCP<Albany::Application> app)
   
     Epetra_Export exporter = Epetra_Export(overlap_node_map, local_node_map);
   
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
   
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&

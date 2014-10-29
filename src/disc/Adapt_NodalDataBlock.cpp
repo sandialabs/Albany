@@ -8,6 +8,25 @@
 #include "Tpetra_Import_decl.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
+#ifdef ALBANY_ATO
+#include <vector>
+#include "Albany_Utils.hpp"
+namespace {
+template<typename T> const int*
+convert(const Teuchos::ArrayView<const T>& av, std::vector<int>& v);
+template<> const int*
+convert<long> (const Teuchos::ArrayView<const long>& av, std::vector<int>& v) {
+  v.resize(av.size());
+  for (std::size_t i = 0; i < av.size(); ++i) v[i] = static_cast<int>(av[i]);
+  return &v[0];
+}
+template<> const int*
+convert<int> (const Teuchos::ArrayView<const int>& av, std::vector<int>& v) {
+  return &av[0];
+}
+}
+#endif
+
 Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
                                       NodeFieldSizeVector& nodeBlockLayout_,
                                       NodeFieldSizeMap& nodeBlockMap_, LO& blocksize_) :
@@ -58,6 +77,18 @@ resizeOverlapMap(const Teuchos::ArrayView<const GO>& overlap_nodeGIDs,
   const_overlap_node_view = overlap_node_vec->get1dView();
 
   mapsHaveChanged = true;
+
+#ifdef ALBANY_ATO
+  {
+    Teuchos::RCP<Epetra_Comm>
+      commE = Albany::createEpetraCommFromTeuchosComm(comm_);
+    std::vector<int> buf;
+    const int* gids = convert(overlap_nodeGIDs, buf);
+    overlap_node_mapE = Teuchos::rcp(
+      new Epetra_BlockMap(-1, overlap_nodeGIDs.size(), gids, blocksize, 0,
+                          *commE));
+  }
+#endif
 }
 
 void
@@ -90,6 +121,18 @@ resizeLocalMap(const Teuchos::ArrayView<const GO>& local_nodeGIDs,
   const_local_node_view = local_node_vec->get1dView();
 
   mapsHaveChanged = true;
+
+#ifdef ALBANY_ATO
+  {
+    Teuchos::RCP<Epetra_Comm>
+      commE = Albany::createEpetraCommFromTeuchosComm(comm_);
+    std::vector<int> buf;
+    const int* gids = convert(local_nodeGIDs, buf);
+    local_node_mapE = Teuchos::rcp(
+      new Epetra_BlockMap(-1, local_nodeGIDs.size(), gids, blocksize, 0,
+                          *commE));
+  }
+#endif
 }
 
 void

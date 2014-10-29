@@ -191,7 +191,7 @@ void Petra::TpetraMultiVector_To_EpetraMultiVector(const Teuchos::RCP<const Tpet
 
 //EpetraVector_To_TpetraVectorConst: copies Epetra_Vector to const Tpetra_Vector
 Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const Epetra_Vector& epetraVector_,
-                                                               Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
+                                                               const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP<KokkosNode>& nodeT_)
 {
   std::size_t numElements = epetraVector_.Map().NumMyElements();
@@ -209,7 +209,7 @@ Teuchos::RCP<const Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorConst(const
 
 //EpetraMultiVector_To_TpetraMultiVector: copies Epetra_MultiVector to non-const Tpetra_MultiVector
 Teuchos::RCP<Tpetra_MultiVector> Petra::EpetraMultiVector_To_TpetraMultiVector(const Epetra_MultiVector& epetraMV_,
-                                                               Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
+                                                               const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP<KokkosNode>& nodeT_)
 {
   //get map from epetraMV_ and convert to Tpetra::Map
@@ -233,7 +233,7 @@ Teuchos::RCP<Tpetra_MultiVector> Petra::EpetraMultiVector_To_TpetraMultiVector(c
 
 //EpetraVector_To_TpetraVectorNonConst: copies Epetra_Vector to non-const Tpetra_Vector
 Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Epetra_Vector& epetraVector_,
-                                                               Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
+                                                               const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP<KokkosNode>& nodeT_)
 {
   std::size_t numElements = epetraVector_.Map().NumMyElements();
@@ -251,7 +251,7 @@ Teuchos::RCP<Tpetra_Vector> Petra::EpetraVector_To_TpetraVectorNonConst(const Ep
 
 //EpetraCrsMatrix_To_TpetraCrsMatrix: copies Epetra_CrsMatrix to its analogous Tpetra_CrsMatrix
 Teuchos::RCP<Tpetra_CrsMatrix> Petra::EpetraCrsMatrix_To_TpetraCrsMatrix(Epetra_CrsMatrix& epetraCrsMatrix_,
-                                                               Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
+                                                               const Teuchos::RCP<const Teuchos::Comm<int> >& commT_,
                                                                const Teuchos::RCP<KokkosNode>& nodeT_)
 {
     //get row map of Epetra::CrsMatrix & convert to Tpetra::Map
