@@ -209,6 +209,8 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     Teuchos::RCP<Albany::Layouts> dl = 
       Teuchos::rcp( new Albany::Layouts(wsSize, numVerts, numNodes, numQPs, numDims));
 
+    //tpetra-conversion If registerOldState is ever made true, the code will
+    // likely break.
     stateMgr->registerStateVariable(objName, dl->workset_scalar, meshSpecs[i]->ebName, 
                                    "scalar", 0.0, /*registerOldState=*/ false, true);
 

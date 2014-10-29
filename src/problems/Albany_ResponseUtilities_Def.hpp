@@ -34,9 +34,7 @@
 #include "LinearAdjointSolve.hpp"
 #endif
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
 #include "ATO_StiffnessObjective.hpp"
-#endif
 #endif
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"

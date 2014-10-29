@@ -191,14 +191,12 @@ Albany::ElasticityProblem::getValidProblemParameters() const
   validPL->set<bool>("Compute Error", false, "");
 
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
   // Add additional parameters now for Topological Optimization.
   // ... these in an evaluator rather that in getValidProblemParameters()
   // ... as (apparently) they arn't parsable but used later
   validPL->set<bool>("avgJ", false, "");
   validPL->set<bool>("volavgJ", false, "");
   validPL->set<bool>("weighted_Volume_Averaged_J", false, "");
-#endif
 #endif //ALBANY_ATO
 
   if (matModel == "CapExplicit"|| matModel == "CapImplicit")

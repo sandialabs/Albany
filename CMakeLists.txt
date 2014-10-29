@@ -252,6 +252,35 @@ ELSE()
   SET(ALBANY_MUELU_EXAMPLES FALSE)
 ENDIF()
 
+# Set optional build of only Albany (Epetra) executable. 
+# Be default, it will be on, so both the Albany and AlbanyT executables will 
+# be built in the Tpetra Albany branch.  The idea is ultimately you'll 
+# be able to build only the AlbanyT executable in which case Epetra will not
+# be needed at all in the Trilinos.  This will be accomplished by ifdef'ing
+# out all the Epetra stuff
+
+OPTION(ENABLE_ALBANY_EPETRA_EXE "Flag to turn on building of Albany Epetra Executable" ON)
+IF (ENABLE_ALBANY_EPETRA_EXE)
+  ADD_DEFINITIONS(-DALBANY_EPETRA)
+  MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
+  SET(ALBANY_EPETRA TRUE)
+
+  # DAKOTA uses Epetra currently
+  LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
+  IF (TriKota_List_ID GREATER -1)
+    ADD_DEFINITIONS(-DHAVE_CONFIG_H -DALBANY_DAKOTA)
+    MESSAGE("-- Looking for Dakota via TriKota: Found, compiling with -DALBANY_DAKOTA")
+    SET(ALBANY_DAKOTA TRUE)
+  ELSE()
+    MESSAGE("-- Looking for Dakota via TriKota: NOT found.")
+    SET(ALBANY_DAKOTA FALSE)
+  ENDIF()
+
+ELSE()
+  MESSAGE("-- ALBANY_EPETRA_EXE     is NOT Enabled.")
+  SET(ALBANY_EPETRA FALSE)
+  SET(ALBANY_DAKOTA FALSE)
+ENDIF()
 
 # Check for optional physics sets in Albany
 MESSAGE("\nChecking which Albany physics sets are enabled:")
@@ -270,14 +299,20 @@ ENDIF()
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)
-  ADD_DEFINITIONS(-DALBANY_ATO)
-  MESSAGE("-- ATO       is Enabled, compiling with -DALBANY_ATO")
-  SET(ALBANY_ATO TRUE)
-  IF (NOT ENABLE_LCM)
-    SET(ENABLE_LCM TRUE)
-    ADD_DEFINITIONS(-DALBANY_LCM)
-    MESSAGE("-- ATO  requires LCM...  compiling with -DALBANY_LCM")
-    SET(ALBANY_LCM TRUE)
+  IF (NOT ENABLE_ALBANY_EPETRA_EXE)
+    #todo Make a fatal error?
+    MESSAGE("-- WARNING:  ATO was set to be Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.  For now, turning off ATO.")
+    SET(ALBANY_ATO FALSE)
+  ELSE()
+    ADD_DEFINITIONS(-DALBANY_ATO)
+    MESSAGE("-- ATO       is Enabled, compiling with -DALBANY_ATO")
+    SET(ALBANY_ATO TRUE)
+    IF (NOT ENABLE_LCM)
+      SET(ENABLE_LCM TRUE)
+      ADD_DEFINITIONS(-DALBANY_LCM)
+      MESSAGE("-- ATO  requires LCM...  compiling with -DALBANY_LCM")
+      SET(ALBANY_LCM TRUE)
+    ENDIF()
   ENDIF()
 ELSE()
   MESSAGE("-- ATO       is NOT Enabled.")
@@ -323,36 +358,6 @@ IF (ENABLE_QCAD)
 ELSE()
   MESSAGE("-- QCAD      is NOT Enabled.")
   SET(ALBANY_QCAD FALSE)
-ENDIF()
-
-# Set optional build of only Albany (Epetra) executable. 
-# Be default, it will be on, so both the Albany and AlbanyT executables will 
-# be built in the Tpetra Albany branch.  The idea is ultimately you'll 
-# be able to build only the AlbanyT executable in which case Epetra will not
-# be needed at all in the Trilinos.  This will be accomplished by ifdef'ing
-# out all the Epetra stuff
-
-OPTION(ENABLE_ALBANY_EPETRA_EXE "Flag to turn on building of Albany Epetra Executable" ON)
-IF (ENABLE_ALBANY_EPETRA_EXE)
-  ADD_DEFINITIONS(-DALBANY_EPETRA)
-  MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
-  SET(ALBANY_EPETRA TRUE)
-
-  # DAKOTA uses Epetra currently
-  LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
-  IF (TriKota_List_ID GREATER -1)
-    ADD_DEFINITIONS(-DHAVE_CONFIG_H -DALBANY_DAKOTA)
-    MESSAGE("-- Looking for Dakota via TriKota: Found, compiling with -DALBANY_DAKOTA")
-    SET(ALBANY_DAKOTA TRUE)
-  ELSE()
-    MESSAGE("-- Looking for Dakota via TriKota: NOT found.")
-    SET(ALBANY_DAKOTA FALSE)
-  ENDIF()
-
-ELSE()
-  MESSAGE("-- ALBANY_EPETRA_EXE     is NOT Enabled.")
-  SET(ALBANY_EPETRA FALSE)
-  SET(ALBANY_DAKOTA FALSE)
 ENDIF()
 
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
@@ -733,6 +738,7 @@ IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
   MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
 ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
 
+# Repeat this warning.
 IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: ATO                is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
