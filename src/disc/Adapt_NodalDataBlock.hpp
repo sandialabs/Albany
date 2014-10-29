@@ -13,7 +13,9 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Adapt_NodalFieldUtils.hpp"
 #ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
 #include "Epetra_BlockMap.h"
+#endif
 #endif
 
 namespace Adapt {
@@ -51,8 +53,10 @@ class NodalDataBlock {
     Teuchos::RCP<const Tpetra_BlockMap> getOverlapMap() const { return overlap_node_map; }
     Teuchos::RCP<const Tpetra_BlockMap> getLocalMap() const { return local_node_map; }
 #ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<const Epetra_BlockMap> getOverlapMapE() const { return overlap_node_mapE; }
     Teuchos::RCP<const Epetra_BlockMap> getLocalMapE() const { return local_node_mapE; }
+#endif
 #endif
 
     void initializeVectors(ST value) {
@@ -86,8 +90,10 @@ class NodalDataBlock {
     Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map;
     Teuchos::RCP<const Tpetra_BlockMap> local_node_map;
 #ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<const Epetra_BlockMap> overlap_node_mapE;
     Teuchos::RCP<const Epetra_BlockMap> local_node_mapE;
+#endif
 #endif
 
     Teuchos::RCP<Tpetra_BlockMultiVector> overlap_node_vec;
