@@ -384,20 +384,28 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
     discParams->set("STKMeshStruct",stkMeshStruct);
  
+    if (mpiComm->MyPID() == 0) std::cout << "first time step: " << first_time_step << std::endl; 
     //Turn off homotopy if we're not in the first time-step. 
     //NOTE - IMPORTANT: Glen's Law Homotopy parameter should be set to 1.0 in the parameter list for this logic to work!!! 
     if (!first_time_step)
     {
+       if (mpiComm->MyPID() ==0) std::cout << "In not first time step loop" << std::endl; 
        meshStruct->setRestartDataTime(parameterList->sublist("Problem").get("Homotopy Restart Step", 1.));
        double homotopy = parameterList->sublist("Problem").sublist("FELIX Viscosity").get("Glen's Law Homotopy Parameter", 1.0);
-       if(meshStruct->restartDataTime()== homotopy)
+       if (mpiComm->MyPID() ==0) {
+         std::cout << "homotopy: " << homotopy << std::endl; 
+         std::cout << "meshStruct->restartDataTime(): " << meshStruct->restartDataTime() << std::endl; 
+       }
+       if(meshStruct->restartDataTime()== homotopy) {
          parameterList->sublist("Problem").set("Solution Method", "Steady");
+         parameterList->sublist("Piro").set("Solver Type", "NOX");
+       }
     }
 
     albanyApp->createDiscretization();
     albanyApp->finalSetUp(parameterList);
 
-    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
+   // solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", true);
