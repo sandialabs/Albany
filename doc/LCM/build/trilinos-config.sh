@@ -63,6 +63,8 @@ cmake \
  -D Trilinos_ENABLE_STKSearch:BOOL=OFF \
  -D Trilinos_ENABLE_STKSearchUtil:BOOL=OFF \
  -D Trilinos_ENABLE_STKTransfer:BOOL=ON \
+ -D Trilinos_ENABLE_STKDoc_tests:BOOL=OFF \
+ -D Trilinos_ENABLE_STKUnit_tests:BOOL=OFF \
  -D Trilinos_ENABLE_Teko:BOOL=ON \
  -D Trilinos_ENABLE_ThreadPool:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan:BOOL=ON \
