@@ -195,6 +195,10 @@ int main(int ac, char* av[])
   int number_steps = mpsParams.get<int>("Number of Steps", 10);
   double step_size = mpsParams.get<double>("Step Size", 1.0e-2);
 
+  std::cout << "Loading parameters:" <<
+    "\n  number of steps: " << number_steps <<
+    "\n  step_size      : " << step_size << std::endl;
+
   // determine if temperature is being used
   bool have_temperature = mpsParams.get<bool>("Use Temperature", false);
   std::cout << "have_temp: " << have_temperature << std::endl;
@@ -218,7 +222,24 @@ int main(int ac, char* av[])
   }
 
   //---------------------------------------------------------------------------
-  // Constitutive Model Parameters
+  // Time step
+  Teuchos::ArrayRCP<ScalarT> delta_time(1);
+  delta_time[0] = step_size;;
+  // SetField evaluator, which will be used to manually assign a value
+  // to the detdefgrad field
+  Teuchos::ParameterList setDTP("SetFieldTimeStep");
+  setDTP.set<std::string>("Evaluated Field Name", "Delta Time");
+  setDTP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
+                                             dl->workset_scalar);
+  setDTP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", delta_time);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDT =
+    Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDTP));
+  fieldManager.registerEvaluator<Residual>(setFieldDT);
+  stateFieldManager.registerEvaluator<Residual>(setFieldDT);
+
+  //---------------------------------------------------------------------------
+  std::cout << "// Constitutive Model Parameters"
+            << std::endl;
   Teuchos::ParameterList cmpPL;
   paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >(
       "Name Map",
@@ -235,7 +256,8 @@ int main(int ac, char* av[])
   stateFieldManager.registerEvaluator<Residual>(CMP);
 
   //---------------------------------------------------------------------------
-  // Constitutive Model Interface Evaluator
+  std::cout << "// Constitutive Model Interface Evaluator"
+            << std::endl;
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   if (have_temperature) {
@@ -273,7 +295,8 @@ int main(int ac, char* av[])
   }
 
   //---------------------------------------------------------------------------
-  // Bifurcation Check Evaluator
+  std::cout << "// Bifurcation Check Evaluator"
+            << std::endl;
 
   // check if the material wants the tangent to be checked
   bool check_stability;
@@ -320,7 +343,8 @@ int main(int ac, char* av[])
   }
 
   //---------------------------------------------------------------------------
-  // register deformation gradient
+  std::cout << "// register deformation gradient"
+            << std::endl;
   p = stateMgr.registerStateVariable(
       "F",
       dl->qp_tensor,
@@ -334,11 +358,13 @@ int main(int ac, char* av[])
   fieldManager.registerEvaluator<Residual>(ev);
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
-
+  //
   Traits::SetupData setupData = "Test String";
+  std::cout << "Calling postRegistrationSetup" << std::endl;
   fieldManager.postRegistrationSetup(setupData);
 
-  // set the required fields for the state manager
+  std::cout << "// set the required fields for the state manager"
+            << std::endl;
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
       new PHX::MDALayout<Dummy>(0));
   std::vector<std::string> responseIDs = stateMgr.getResidResponseIDsToRequire(

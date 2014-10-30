@@ -15,5 +15,3 @@ The following tests FAILED:
 
 15.) There's an output error when trying to write an .exo file with the solution in CISM-Albany + new STK.  Ultimately would 
 be worthwhile to debug.  
-
-12.) Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests --> Andrew B.

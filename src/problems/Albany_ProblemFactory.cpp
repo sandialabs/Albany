@@ -28,9 +28,7 @@
 #endif
 
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
 #include "ATO/problems/LinearElasticityProblem.hpp"
-#endif
 #endif
 
 #ifdef ALBANY_LCM
@@ -297,7 +295,6 @@ Albany::ProblemFactory::create()
   }
 #endif
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
   else if (method == "LinearElasticity 1D") {
     strategy = rcp(new Albany::LinearElasticityProblem(problemParams, paramLib, 1));
   }
@@ -307,7 +304,6 @@ Albany::ProblemFactory::create()
   else if (method == "LinearElasticity 3D") {
     strategy = rcp(new Albany::LinearElasticityProblem(problemParams, paramLib, 3));
   }
-#endif
 #endif
 #ifdef ALBANY_SEE
   else if (method == "Nonlinear Poisson 1D") {
