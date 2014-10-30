@@ -47,10 +47,9 @@ class NodalDataBase {
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    bool isNodeDataPresent(){ if(Teuchos::nonnull(nodal_data_block)) return true;
-                              if(Teuchos::nonnull(nodal_data_vector)) return true;
-                              return false;
-                            }
+    bool isNodeDataPresent() {
+      return Teuchos::nonnull(nodal_data_block) || Teuchos::nonnull(nodal_data_vector);
+    }
 
     //amb For now, keep the Tpetra_BlockMap version available.
     void registerBlockState(const std::string &stateName, int ndofs);
@@ -59,23 +58,17 @@ class NodalDataBase {
     LO getBlocksize(){ return blocksize; }
     LO getVecsize(){ return vectorsize; }
 
-    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock(){
+    Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock() {
       TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(nodal_data_block), std::logic_error,
          "Nodal Data Base: Error - nodal_data_block has not been allocated!" << std::endl);
-
       return nodal_data_block;
-
     }
 
-    Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector(){
-
+    Teuchos::RCP<Adapt::NodalDataVector> getNodalDataVector() {
       TEUCHOS_TEST_FOR_EXCEPTION(Teuchos::is_null(nodal_data_vector), std::logic_error,
          "Nodal Data Base: Error - nodal_data_vector has not been allocated!" << std::endl);
-
       return nodal_data_vector;
-
     }
-
 
   private:
 

@@ -82,7 +82,6 @@ IF(ALBANY_SEACAS OR ALBANY_SCOREC)
 ENDIF()
 
 IF(ALBANY_SCOREC)
-  add_subdirectory(ElastMeshAdapt3D)
   add_subdirectory(SCOREC)
 ENDIF()
 

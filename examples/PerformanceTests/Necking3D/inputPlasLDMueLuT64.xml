@@ -4,20 +4,15 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <!-- Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Continuation"/>
-    <!-- Have Phalanx output a graph of the used evaluators -->
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
     <!-- XML filename with material definitions -->
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
 
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">      
-      <Parameter name="DBC on NS ns_bottom for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_right_bottom for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_right_top for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_left_bottom for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS ns_left_top for DOF X" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS ns_top for DOF Y">
-        <Parameter name="Number of points" type="int" value="2"/>
+      <Parameter name="DBC on NS ns_1 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_2 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_3 for DOF Z" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS ns_4 for DOF Y">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
         <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.5, 1.0}"/>
       </ParameterList>
@@ -34,26 +29,31 @@
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
+
+    <!-- Adapt mesh using meshAdapt -->
+    <ParameterList name="Adaptation">
+      <Parameter name="Method" type="string" value="RPI SPR Size"/>
+      <Parameter name="Remesh Strategy" type="string" value="Continuous"/>
+      <Parameter name="Max Number of Mesh Adapt Iterations" type="int" value="1"/>
+      <Parameter name="Target Element Size" type="double" value="0.4"/>
+      <Parameter name="Error Bound" type="double" value="0.05"/>
+      <Parameter name="State Variable" type="string" value="Cauchy_Stress"/>
+      <Parameter name="Print Relaxation Solution" type="bool" value="true"/>
+    </ParameterList>
   </ParameterList>
 
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="FMDB"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
-<!--
-    <Parameter name="ACIS Model Input File Name" type="string" value="necking-gmi.sat"/>
--->
-    <Parameter name="Call serial global partition" type="bool" value="true"/>
-    <Parameter name="Parasolid Model Input File Name" type="string" value="NeckingModel_EnglishUnits.xmt_txt"/>
-    <Parameter name="FMDB Input File Name" type="string" value="necking-64rgn-fmdb.sms"/>
-    <Parameter name="FMDB Output File Name" type="string" value="necking-64rgn_output.vtk"/>
-    <!-- Refine mesh at input -->
-    <Parameter name="Resize Input Mesh Element Size" type="double" value="0.001"/>
-    <Parameter name="Max Number of Resize Iterations" type="int" value="10"/>
+    <Parameter name="Mesh Model Input File Name" type="string" value="eighth_bar_hole_mmodel.dmg"/>
+    <Parameter name="FMDB Input File Name" type="string" value="eighth_bar_hole_4_.smb"/>
+    <Parameter name="FMDB Output File Name" type="string" value="eighth_bar_hole_output.exo"/>
     <!-- Associate Parasolid region number with element block name -->
-    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
+    <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{115, eb_1}"/>
     <!-- Associate Parasolid face number with node set name -->    
-    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x6:{ 324, 19, 334, 64, 339, 66, ns_bottom, ns_top, ns_left_bottom, ns_left_top, ns_right_bottom, ns_right_top}"/>
+    <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{97, 101, 51, 95, ns_1, ns_2, ns_3, ns_4}"/>
   </ParameterList>
+
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
@@ -67,7 +67,7 @@
         <!-- Repeat the boundary condition (just one) that is to be loaded -->
         <Parameter  name="Continuation Parameter" type="string" value="Time"/>
         <!-- The number of steps in the problem -->
-        <Parameter  name="Max Steps" type="int" value="5"/>         
+        <Parameter  name="Max Steps" type="int" value="500"/>         
         <!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
         <Parameter  name="Max Value" type="double" value="2.0"/>
         <!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
@@ -83,13 +83,13 @@
       </ParameterList>
       <ParameterList name="Step Size">
         <!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-        <Parameter name="Method" type="string" value="Adaptive"/>      
-        <Parameter name="Initial Step Size" type="double" value="2.0e-3"/>
-        <Parameter name="Max Step Size" type="double" value="0.1"/> 
-        <Parameter name="Min Step Size" type="double" value="1.0e-6"/> 
+       <Parameter name="Method" type="string" value="Adaptive"/>
+        <Parameter name="Initial Step Size" type="double" value="5.0e-4"/>
+        <Parameter name="Max Step Size" type="double" value="0.1"/>
+        <Parameter name="Min Step Size" type="double" value="1.0e-6"/>
         <Parameter name="Failed Step Reduction Factor" type="double" value="0.2"/>
         <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
-        <Parameter name="Aggressiveness" type="double" value="0.5"/>
+        <Parameter name="Aggressiveness" type="double" value="0.2"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="NOX">
@@ -103,7 +103,7 @@
 	    </ParameterList>
             <!-- Set the linear solver -->
 	    <ParameterList name="Stratimikos">
-	      <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+	      <Parameter name="Linear Solver Type" type="string" value="Belos"/>
 
               <!-- define the linear solvers -->
 	      <ParameterList name="Linear Solver Types">
@@ -128,15 +128,16 @@
                 <!-- Belos -->
 		<ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
-                    <Parameter name="Verbosity Level" type="string" value="none"/>
+                    <Parameter name="Verbosity Level" type="string" value="medium"/>
+                    <Parameter name="Output File" type="string" value="BelosSolver.out"/>
                   </ParameterList>
 		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
 		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-		      <Parameter name="Output Frequency" type="int" value="0"/>
-		      <Parameter name="Output Style" type="int" value="0"/>
-		      <Parameter name="Verbosity" type="int" value="0"/>
+		      <Parameter name="Output Frequency" type="int" value="1"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
 		      <Parameter name="Maximum Iterations" type="int" value="200"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
 		      <Parameter name="Num Blocks" type="int" value="200"/>
@@ -147,7 +148,7 @@
 	      </ParameterList>
 
               <!-- Preconditioner -->
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
 	      <ParameterList name="Preconditioner Types">
                 
                 <!-- Ifpack -->
@@ -162,6 +163,21 @@
 		</ParameterList>
 
                 <!-- ML -->
+       <ParameterList name="MueLu-Tpetra">
+         <Parameter name="multigrid algorithm" type="string" value="sa"/>
+         <Parameter name="cycle type" type="string" value="V"/>
+         <Parameter name="max levels" type="int" value="4"/>
+         <Parameter name="repartition: enable" type="bool" value="true"/>
+         <Parameter name="repartition: min rows per proc" type="int" value="1000"/>
+         <Parameter name="smoother: type" type="string" value="CHEBYSHEV"/>
+         <ParameterList name="smoother: params">
+           <Parameter name="chebyshev: degree" type="int" value="3"/>
+           <Parameter name="chebyshev: ratio eigenvalue" type="double" value="30"/>
+         </ParameterList>
+         <Parameter name="smoother: pre or post" type="string" value="both"/>
+         <Parameter name="coarse: max size" type="int" value="1500"/>
+         <Parameter name="number of equations" type="int" value="3"/>
+       </ParameterList>
 
 	      </ParameterList>
 	    </ParameterList>

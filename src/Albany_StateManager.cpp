@@ -204,7 +204,6 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
   if((stateRef.entity == StateStruct::NodalData)||(stateRef.entity == StateStruct::NodalDataToElemNode)){ // nodal data
 
-/*
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
     if ( dl->rank() == 2 ){ // node vector
@@ -219,7 +218,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
       // register the state with the nodalDataBlock also
       nodalDataBase->registerBlockState(stateName, 1);
     }
-*/
+/*
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 
     if ( dl->rank() == 2 ){ // node vector
@@ -234,6 +233,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
       // register the state with the nodalDataBlock also
       nodalDataBase->registerVectorState(stateName, 1);
     }
+*/
   }
 
   stateRef.output = outputToExodus;

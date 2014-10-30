@@ -34,7 +34,9 @@
 #include "LinearAdjointSolve.hpp"
 #endif
 #ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
 #include "ATO_StiffnessObjective.hpp"
+#endif
 #endif
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
@@ -220,12 +222,14 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Stiffness Objective")
   {
 #ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter,

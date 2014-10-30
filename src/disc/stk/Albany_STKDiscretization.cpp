@@ -433,7 +433,7 @@ Albany::STKDiscretization::setupMLCoords()
 
   if(rigidBodyModes.is_null()) return;
 
-  if(!rigidBodyModes->isMLUsed() & !rigidBodyModes->isMueLuUsed()) return;
+  if(!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
 
   // Function to return x,y,z at owned nodes as double*, specifically for ML
   int numDim = stkMeshStruct->numDim;
