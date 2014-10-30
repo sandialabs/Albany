@@ -14,7 +14,6 @@
 #include <Ionit_Initializer.h>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
-#include "Albany_Utils.hpp"
 
 //uncomment the following if you want to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET 
@@ -34,15 +33,12 @@ Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
 //IK, 11/14/13: what is reducedComm for? 
 MPI_Comm comm, reducedComm;
-bool interleavedOrdering;
-//Right now (10/27/14), felix_driver uses Epetra
-//TO DO: make it possible to have felix_driver use Tpetra
-bool TpetraBuild = false;  
+bool interleavedOrdering; 
 int nNodes2D; //number global nodes in the domain in 2D 
 int nNodesProc2D; //number of nodes on each processor in 2D  
 //vector used to renumber nodes on each processor from the Albany convention (horizontal levels first) to the CISM convention (vertical layers first)
 std::vector<int> cismToAlbanyNodeNumberMap; 
-
+bool TpetraBuild = false; 
 
 int rank, number_procs;
 long  cism_communicator; 
@@ -381,21 +377,13 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     if (debug_output_verbosity != 0 & mpiComm->MyPID() == 0) std::cout << "In felix_driver_run: starting the solve... " << std::endl;
     //Need to set HasRestart solution such that uvel_Ptr and vvel_Ptr (u and v from Glimmer/CISM) are always set as initial condition?  
     meshStruct->setHasRestartSolution(!first_time_step);
-    Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct = meshStruct;
-    discParams->set("STKMeshStruct",stkMeshStruct);
  
-    if (mpiComm->MyPID() == 0) std::cout << "first time step: " << first_time_step << std::endl; 
     //Turn off homotopy if we're not in the first time-step. 
     //NOTE - IMPORTANT: Glen's Law Homotopy parameter should be set to 1.0 in the parameter list for this logic to work!!! 
     if (!first_time_step)
     {
-       if (mpiComm->MyPID() ==0) std::cout << "In not first time step loop" << std::endl; 
        meshStruct->setRestartDataTime(parameterList->sublist("Problem").get("Homotopy Restart Step", 1.));
        double homotopy = parameterList->sublist("Problem").sublist("FELIX Viscosity").get("Glen's Law Homotopy Parameter", 1.0);
-       if (mpiComm->MyPID() ==0) {
-         std::cout << "homotopy: " << homotopy << std::endl; 
-         std::cout << "meshStruct->restartDataTime(): " << meshStruct->restartDataTime() << std::endl; 
-       }
        if(meshStruct->restartDataTime()== homotopy) {
          parameterList->sublist("Problem").set("Solution Method", "Steady");
          parameterList->sublist("Piro").set("Solver Type", "NOX");
@@ -405,7 +393,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     albanyApp->createDiscretization();
     albanyApp->finalSetUp(parameterList);
 
-   // solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
+    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", true);
