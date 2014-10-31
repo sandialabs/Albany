@@ -249,6 +249,21 @@ computeState(typename Traits::EvalData workset,
         X[0] = 0.0;
         X[1] = eps_ss_old;
 
+        // create a copy of be as a Fad
+        Intrepid::Tensor<Fad> beF(num_dims_);
+        for (std::size_t i = 0; i < num_dims_; ++i) {
+          for (std::size_t j = 0; j < num_dims_; ++j) {
+            beF(i, j) = be(i, j);
+          }
+        }
+        Fad two_mubarF = 2.0 * Intrepid::trace(beF) * mu / (num_dims_);
+        //Fad sq32F = std::sqrt(3.0/2.0);
+        // FIXME this seems to be necessary to get PhiF to compile below
+        // need to look into this more, it appears to be a conflict
+        // between the Intrepid::norm and FadType operations
+        //
+        Fad smagF = smag;
+
         while (!converged) {
 
           // set up data types
@@ -266,19 +281,13 @@ computeState(typename Traits::EvalData workset,
           Fad dgamF = XFad[0];
           Fad eps_ssF = XFad[1];
 
-          // FIXME this seems to be necessary to get PhiF to compile below
-          // need to look into this more, it appears to be a conflict
-          // between the Intrepid::norm and FadType operations
-          //
-          Fad smagF = smag;
-
           // compute yield function
           //
           Fad eqps_rateF = 0.0;
           if (delta_time(0) > 0) eqps_rateF = sq23 * dgamF / delta_time(0);
           Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
-          Fad kappaF = 2.0 * mubar * eps_ssF;
-          Fad PhiF = sq32 * (smagF - 2.0 * mubar * dgamF) - ( Y + kappaF ) * rate_termF;
+          Fad kappaF = two_mubarF * eps_ssF;
+          Fad PhiF = sq32 * (smagF - two_mubarF * dgamF) - ( Y + kappaF ) * rate_termF;
 
           // compute the hardening residual
           //
