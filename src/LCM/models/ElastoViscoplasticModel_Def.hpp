@@ -122,10 +122,6 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
-#ifdef ALBANY_SG_MP
-  //amb-remove Currently does not compile when ALBANY_SG_MP is enabled.
-#pragma message(__FILE__": computeState is temporarily disabled when ALBANY_SG_MP is on.")
-#else
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
@@ -419,7 +415,6 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
-#endif
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
