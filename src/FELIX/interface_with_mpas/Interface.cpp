@@ -656,8 +656,10 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     double homotopy =
         paramList->sublist("Problem").sublist("FELIX Viscosity").get(
             "Glen's Law Homotopy Parameter", 1.0);
-    if (meshStruct->restartDataTime() == homotopy)
+    if (meshStruct->restartDataTime() == homotopy) {
       paramList->sublist("Problem").set("Solution Method", "Steady");
+      paramList->sublist("Piro").set("Solver Type", "NOX");
+    }
   }
 
 
@@ -684,7 +686,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
   Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
-  Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(overlapMap, albanyApp->getDiscretization()->getMapT()));
+  Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
   Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
   solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
   Teuchos::ArrayRCP<const ST> solution_constView = solution->get1dView();

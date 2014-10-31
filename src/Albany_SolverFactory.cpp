@@ -547,7 +547,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //    }
 
 
-  RCP<Albany::Application> app;
+  RCP<Albany::Application> app = albanyApp;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =
     createAlbanyAppAndModelT(app, appComm, initial_guess, createAlbanyApp);
   // Pass back albany app so that interface beyond ModelEvaluator can be used.
