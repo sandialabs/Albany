@@ -18,7 +18,7 @@
       <Parameter name="Spatial Filter" type="int" value="0" />
     </ParameterList>
 
-    <ParameterList name="Spatial Filter">
+    <ParameterList name="Spatial Filters">
       <Parameter name="Number of Filters" type="int" value="1" />
       <ParameterList name="Filter 0">
         <Parameter name="Filter Radius" type="double" value="0.1" />
