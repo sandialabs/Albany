@@ -36,6 +36,7 @@ ENDIF()
 IF(ENABLE_CISM_INTERFACE AND ALBANY_EPETRA) 
    SET(SOURCESCISM 
        interface_with_cism/felix_driver.cpp
+       interface_with_cism/Albany_CismSTKMeshStruct.cpp
    )
 ENDIF()
 
@@ -79,6 +80,7 @@ ENDIF()
 IF (ENABLE_CISM_INTERFACE AND ALBANY_EPETRA)
   SET(HEADERSCISM
        interface_with_cism/felix_driver.H
+       interface_with_cism/Albany_CismSTKMeshStruct.hpp
    )
 ENDIF()
 
