@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Solution Method" type="string" value="ATO Problem" />
-    <Parameter name="Number of Subproblems" type="int" value="1" />
+    <Parameter name="Number of Subproblems" type="int" value="2" />
     <Parameter name="Verbose Output" type="bool" value="1" />
 
 
@@ -12,16 +12,20 @@
     <ParameterList name="Objective Aggregator">
       <Parameter name="Objective Name" type="string" value="F" />
       <Parameter name="dFdTopology Name" type="string" value="dFdRho" />
-      <Parameter name="Objectives" type="Array(string)" value="{R0}"/>
-      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho}"/>
-      <Parameter name="Weighting" type="string" value="Uniform"/>
+      <Parameter name="Objectives" type="Array(string)" value="{R0, R1}"/>
+      <Parameter name="Objective Derivatives" type="Array(string)" value="{dR0dRho, dR1dRho}"/>
+      <Parameter name="Weighting" type="string" value="Scaled"/>
+      <Parameter name="Weights" type="Array(double)" value="{0.1,0.9}"/>
       <Parameter name="Spatial Filter" type="int" value="0" />
     </ParameterList>
 
-    <ParameterList name="Spatial Filter">
-      <Parameter name="Number of Filters" type="int" value="1" />
+    <ParameterList name="Spatial Filters">
+      <Parameter name="Number of Filters" type="int" value="2" />
       <ParameterList name="Filter 0">
-        <Parameter name="Filter Radius" type="double" value="0.1" />
+        <Parameter name="Filter Radius" type="double" value="0.075" />
+      </ParameterList>
+      <ParameterList name="Filter 1">
+        <Parameter name="Filter Radius" type="double" value="0.05" />
       </ParameterList>
     </ParameterList>
 
@@ -29,7 +33,7 @@
       <Parameter name="Package" type="string" value="OC" />
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
       <Parameter name="Move Limiter" type="double" value="0.2" />
-      <Parameter name="Optimization Maximum Iterations" type="int" value="10" />
+      <Parameter name="Optimization Maximum Iterations" type="int" value="100" />
       <Parameter name="Optimization Convergence Tolerance" type="double" value="1e-3" />
       <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
       <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
@@ -49,27 +53,63 @@
       -->
       <Parameter name="Centering" type="string" value="Node" />
       <Parameter name="Topology Name" type="string" value="Rho" />
-      <Parameter name="Penalization" type="string" value="SIMP" />
+      <Parameter name="Penalization" type="string" value="RAMP" />
       <Parameter name="Update Algorithm" type="string" value="OC" />
       <Parameter name="Initial Value" type="double" value="0.5" />
-      <ParameterList name="SIMP">
+      <ParameterList name="RAMP">
         <Parameter name="Penalization Parameter" type="double" value="3.0" />
       </ParameterList>
-      <Parameter name="Topology Output Filter" type="int" value="0" />
+      <Parameter name="Spatial Filter" type="int" value="1" />
     </ParameterList>
 
     <ParameterList name="Physics Problem 0">    
-      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+      <Parameter name="Name" type="string" value="Poissons Equation 2D" />
       <!--
       <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
       -->
   
       <ParameterList name="Dirichlet BCs">
+        <Parameter name="DBC on NS nodelist_1 for DOF P" type="double" value="0.0"/>
+      </ParameterList> <!-- end Dirichlet BCs -->
+      <ParameterList name="Neumann BCs">
+        <Parameter name="NBC on SS surface_1 for DOF P set (dudx, dudy)" type="Array(double)" value="{5e4,0.0}"/>
+      </ParameterList>
+
+
+      <Parameter name="Isotropic Modulus" type="double" value="1e9"/>
+
+      <!--
+          This response provides an objective function and the derivative of the 
+          objective function wrt the topology defined above.  The variable is added
+          to the state manager, and can be accessed by the objective aggregator above.
+          You can define as many of these as you like.
+      -->
+      <ParameterList name="Response Functions">
+        <Parameter name="Number" type="int" value="1"/>
+        <Parameter name="Response 0" type="string" value="Stiffness Objective" />
+        <ParameterList name="ResponseParams 0">
+          <Parameter name="Gradient Field Name" type="string" value="Phi Gradient" />
+          <Parameter name="Gradient Field Layout" type="string" value="QP Vector" />
+          <Parameter name="Work Conjugate Name" type="string" value="kinVar" />
+          <Parameter name="Work Conjugate Layout" type="string" value="QP Vector" />
+          <Parameter name="Response Name" type="string" value="R0" />
+          <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Physics Problem 1">
+      <Parameter name="Name" type="string" value="LinearElasticity 2D" />
+      <!--
+      <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+      -->
+
+      <ParameterList name="Dirichlet BCs">
         <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
         <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
       </ParameterList> <!-- end Dirichlet BCs -->
       <ParameterList name="Neumann BCs">
-        <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{4.5}"/>
+        <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{5e4}"/>
       </ParameterList>
 
 
@@ -90,13 +130,14 @@
           <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
           <Parameter name="Work Conjugate Name" type="string" value="Stress" />
           <Parameter name="Work Conjugate Layout" type="string" value="QP Tensor" />
-          <Parameter name="Response Name" type="string" value="R0" />
-          <Parameter name="Response Derivative Name" type="string" value="dR0dRho" />
+          <Parameter name="Response Name" type="string" value="R1" />
+          <Parameter name="Response Derivative Name" type="string" value="dR1dRho" />
         </ParameterList>
       </ParameterList>
     </ParameterList>
 
-  </ParameterList> <!-- end of Problem -->
+  </ParameterList> <!-- end of optimization problem definition -->
+
 
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Ioss"/>
@@ -142,13 +183,14 @@
             <ParameterList name="NOX Stratimikos Options">
 	    </ParameterList>
             <ParameterList name="Stratimikos">
-              <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+              <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
               <ParameterList name="Linear Solver Types">
                 <ParameterList name="AztecOO">
                   <ParameterList name="Forward Solve">
                     <ParameterList name="AztecOO Settings">
                       <Parameter name="Aztec Solver" type="string" value="GMRES"/>
                       <Parameter name="Convergence Test" type="string" value="r0"/>
+                      <Parameter name="Output Frequency" type="int" value="2"/>
                       <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
                       <Parameter name="Output Frequency" type="int" value="10"/>
                     </ParameterList>
@@ -163,7 +205,7 @@
                       <Parameter name="Convergence Tolerance" type="double" value="1e-12"/>
                       <Parameter name="Output Frequency" type="int" value="2"/>
                       <Parameter name="Output Style" type="int" value="1"/>
-                      <Parameter name="Verbosity" type="int" value="0"/>
+                      <Parameter name="Verbosity" type="int" value="1"/>
                       <Parameter name="Maximum Iterations" type="int" value="200"/>
                       <Parameter name="Block Size" type="int" value="1"/>
                       <Parameter name="Num Blocks" type="int" value="200"/>
@@ -172,7 +214,10 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
+              <!--
               <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              -->
+              <Parameter name="Preconditioner Type" type="string" value="ML"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack">
                   <Parameter name="Overlap" type="int" value="2"/>
