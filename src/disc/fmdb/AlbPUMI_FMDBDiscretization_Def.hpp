@@ -199,6 +199,16 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
   return coordinates;
 }
 
+template<class Output>
+void
+AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
+    Teuchos::ArrayRCP<double>& c)
+{
+  apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
+  for (size_t i=0; i < nodes.getSize(); ++i)
+    apf::setComponents(f,nodes[i].entity,nodes[i].node,&(c[3*i]));
+}
+
 // FELIX uninitialized variables (FIXME)
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
