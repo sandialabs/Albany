@@ -132,7 +132,7 @@ class AbstractDiscretization {
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
       getWsElNodeEqID() const = 0;
 
-    //! Get map from (Ws, El, Local Node) -> unkLID
+    //! Get map from (Ws, El, Local Node) -> unkGID
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       getWsElNodeID() const = 0;
 
