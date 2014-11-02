@@ -355,17 +355,17 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ) {
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
-            int lid = wsElNodeID[ws][cell][node];
-            int gid = localNodeMap->GID(lid);
-            if(gid != -1) ltopo[lid] = p[lid];
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = localNodeMap->LID(gid);
+            if(lid != -1) ltopo[lid] = p[lid];
           }
       } else {
         double matVal = _topology->getMaterialValue();
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
-            int lid = wsElNodeID[ws][cell][node];
-            int gid = localNodeMap->GID(lid);
-            if(gid != -1) ltopo[lid] = matVal;
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = localNodeMap->LID(gid);
+            if(lid != -1) ltopo[lid] = matVal;
           }
       }
     }
@@ -398,7 +398,8 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ) continue;
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
-          int lid = wsElNodeID[ws][cell][node];
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = overlapNodeMap->LID(gid);
           wsTopo(cell,node) = otopo[lid];
         }
     }
@@ -449,9 +450,6 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = disc->getWsElNodeID();
 
-    Teuchos::RCP<const Epetra_BlockMap> 
-      overlapNodeMap = stateMgr.getNodalDataBlock()->getOverlapMapE();
-
     dfdpVec->PutScalar(0.0);
     overlapdfdpVec->PutScalar(0.0);
     double* odfdp; overlapdfdpVec->ExtractView(&odfdp);
@@ -463,7 +461,8 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
       int numNodes = dfdpSrc.dimension(1);
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
-          int lid = wsElNodeID[ws][cell][node];
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = overlapNodeMap->LID(gid);
           odfdp[lid] += dfdpSrc(cell,node);
         }
     }
@@ -520,9 +519,9 @@ ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
       int numNodes = wsTopo.dimension(1);
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
-          int lid = wsElNodeID[ws][cell][node];
-          int gid = localNodeMap->GID(lid);
-          if(gid != -1) ltopo[lid] = p[lid];
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = localNodeMap->LID(gid);
+          if(lid != -1) ltopo[lid] = p[lid];
         }
       }
   
@@ -535,7 +534,8 @@ ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
         int numNodes = wsTopo.dimension(1);
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
-            int lid = wsElNodeID[ws][cell][node];
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
             wsTopo(cell,node) = otopo[lid];
           }
       }
@@ -929,8 +929,7 @@ ATO::SpatialFilter::buildOperator(
       for (int home_cell=0; home_cell<home_num_cells; home_cell++) {
         size_t num_nodes = coords[home_ws][home_cell].size();
         for (int home_node=0; home_node<num_nodes; home_node++) {
-          int lid = wsElNodeID[home_ws][home_cell][home_node];
-          homeNode.gid = overlapNodeMap->GID(lid);
+          homeNode.gid = wsElNodeID[home_ws][home_cell][home_node];
           if(neighbors.find(homeNode)==neighbors.end()) {  // if this node was already accessed just skip
             for (int dim=0; dim<dimension; dim++)  {
               homeNode.coords[dim] = coords[home_ws][home_cell][home_node][dim];
@@ -949,8 +948,7 @@ ATO::SpatialFilter::buildOperator(
                   }
                   if(delta_norm_sqr<=filter_radius_sqrd) {
                     GlobalPoint newIntx;
-                    int lid = wsElNodeID[home_ws][home_cell][home_node];
-                    newIntx.gid = overlapNodeMap->GID(lid);
+                    newIntx.gid = wsElNodeID[trial_ws][trial_cell][trial_node];
                     for (int dim=0; dim<dimension; dim++) 
                       newIntx.coords[dim] = coords[trial_ws][trial_cell][trial_node][dim];
                     my_neighbors.insert(newIntx);

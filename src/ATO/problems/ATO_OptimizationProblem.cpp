@@ -115,7 +115,8 @@ ComputeVolume(const double* p, double& v, double* dvdp)
         double elVol = 0.0;
         for(int node=0; node<numNodes; node++)
           for(int qp=0; qp<numQPs; qp++){
-            int lid = wsElNodeID[ws][cell][node];
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
             elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
           }
         localv += elVol;
@@ -138,7 +139,8 @@ ComputeVolume(const double* p, double& v, double* dvdp)
         for(int cell=0; cell<numCells; cell++){
           for(int node=0; node<numNodes; node++){
             double elVol = 0.0;
-            int lid = wsElNodeID[ws][cell][node];
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
             for(int qp=0; qp<numQPs; qp++){
               elVol += basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
             }
