@@ -17,6 +17,8 @@
 #include <Ionit_Initializer.h>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 
+//#define MPAS_USE_EPETRA
+
 // ===================================================
 //! Namespaces
 // ===================================================
@@ -30,79 +32,23 @@ Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct2D;
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
 Teuchos::RCP<Teuchos::ParameterList> paramList;
-Teuchos::RCP<const Teuchos_Comm> mpiComm;
+Teuchos::RCP<const Teuchos_Comm> mpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
-Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
+#ifdef MPAS_USE_EPETRA
+  Teuchos::RCP<const Epetra_Comm> mpiComm;
+  Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
+#else
+  Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
+#endif
 bool keptMesh =false;
+bool TpetraBuild = false;
 
 typedef struct TET_ {
   int verts[4];
   int neighbours[4];
   char bound_type[4];
 } TET;
-
-
-#ifdef ALBANY_EPETRA
-
-/***********************************************************/
-// epetra <-> thyra conversion utilities
-Teuchos::RCP<const Epetra_Vector> epetraVectorFromThyra(
-    const Teuchos::RCP<const Epetra_Comm> &comm,
-    const Teuchos::RCP<const Thyra::VectorBase<double> > &thyra) {
-  Teuchos::RCP<const Epetra_Vector> result;
-  if (Teuchos::nonnull(thyra)) {
-    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(
-        *thyra->space(), comm);
-    result = Thyra::get_Epetra_Vector(*epetra_map, thyra);
-  }
-  return result;
-}
-
-Teuchos::RCP<const Epetra_MultiVector> epetraMultiVectorFromThyra(
-    const Teuchos::RCP<const Epetra_Comm> &comm,
-    const Teuchos::RCP<const Thyra::MultiVectorBase<double> > &thyra) {
-  Teuchos::RCP<const Epetra_MultiVector> result;
-  if (Teuchos::nonnull(thyra)) {
-    const Teuchos::RCP<const Epetra_Map> epetra_map = Thyra::get_Epetra_Map(
-        *thyra->range(), comm);
-    result = Thyra::get_Epetra_MultiVector(*epetra_map, thyra);
-  }
-  return result;
-}
-
-void epetraFromThyra(const Teuchos::RCP<const Epetra_Comm> &comm,
-    const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > &thyraResponses,
-    const Teuchos::Array<
-        Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > &thyraSensitivities,
-    Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > &responses,
-    Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > > &sensitivities) {
-  responses.clear();
-  responses.reserve(thyraResponses.size());
-  typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > ThyraResponseArray;
-  for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
-      it_end = thyraResponses.end(), it = it_begin; it != it_end; ++it) {
-    responses.push_back(epetraVectorFromThyra(comm, *it));
-  }
-
-  sensitivities.clear();
-  sensitivities.reserve(thyraSensitivities.size());
-  typedef Teuchos::Array<
-      Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > ThyraSensitivityArray;
-  for (ThyraSensitivityArray::const_iterator it_begin =
-      thyraSensitivities.begin(), it_end = thyraSensitivities.end(), it =
-      it_begin; it != it_end; ++it) {
-    ThyraSensitivityArray::const_reference sens_thyra = *it;
-    Teuchos::Array<Teuchos::RCP<const Epetra_MultiVector> > sens;
-    sens.reserve(sens_thyra.size());
-    for (ThyraSensitivityArray::value_type::const_iterator jt =
-        sens_thyra.begin(), jt_end = sens_thyra.end(); jt != jt_end; ++jt) {
-      sens.push_back(epetraMultiVectorFromThyra(comm, *jt));
-    }
-    sensitivities.push_back(sens);
-  }
-}
-#endif
 
 /***********************************************************/
 
@@ -666,16 +612,16 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
   if(!keptMesh) {
     albanyApp->createDiscretization();
-    albanyApp->finalSetUp(paramList);
+    albanyApp->finalSetUp(paramList); //, albanyApp->getDiscretization()->getSolutionFieldT());
   }
   else
     albanyApp->getDiscretization()->updateMesh();
 
-
-
-  //solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm,
-  //    mpiComm, Teuchos::null, false);
-  solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiComm, mpiComm, Teuchos::null, false); 
+#ifdef MPAS_USE_EPETRA
+  solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
+#else
+   solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
+#endif
 
   Teuchos::ParameterList solveParams;
   solveParams.set("Compute Sensitivities", false);
@@ -685,11 +631,20 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
       Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
+#ifdef MPAS_USE_EPETRA
+  const Epetra_Map& overlapMap(
+      *albanyApp->getDiscretization()->getOverlapMap());
+  Epetra_Import import(overlapMap, *albanyApp->getDiscretization()->getMap());
+  Epetra_Vector solution(overlapMap);
+  solution.Import(*albanyApp->getDiscretization()->getSolutionField(), import,
+      Insert);
+#else
   Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
   Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
   Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
   solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
   Teuchos::ArrayRCP<const ST> solution_constView = solution->get1dView();
+#endif
 
 
   for (UInt j = 0; j < numVertices3D; ++j) {
@@ -701,6 +656,17 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
     int lId0, lId1;
 
+#ifdef MPAS_USE_EPETRA
+    if (interleavedOrdering) {
+      lId0 = overlapMap.LID(2 * gId);
+      lId1 = lId0 + 1;
+    } else {
+      lId0 = overlapMap.LID(gId);
+      lId1 = lId0 + numVertices3D;
+    }
+    velocityOnVertices[j] = solution[lId0];
+    velocityOnVertices[j + numVertices3D] = solution[lId1];
+#else
     if (interleavedOrdering) {
       lId0 = overlapMap->getLocalElement(2 * gId);
       lId1 = lId0 + 1;
@@ -710,6 +676,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
+#endif
   }
 
   keptMesh = true;
@@ -739,7 +706,10 @@ void velocity_solver_finalize() {
 
 void velocity_solver_compute_2d_grid(MPI_Comm reducedComm) {
   keptMesh = false;
-  mpiComm = Albany::createTeuchosCommFromMpiComm(reducedComm);
+#ifdef MPAS_USE_EPETRA
+  mpiComm = Albany::createEpetraCommFromMpiComm(reducedComm);
+#endif
+  mpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
 }
 
 
@@ -759,24 +729,24 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
     const std::vector<GO>& indexToTriangleID) {
 
   slvrfctry = Teuchos::rcp(
-      new Albany::SolverFactory("albany_input.xml", mpiComm));
+      new Albany::SolverFactory("albany_input.xml", mpiCommT));
   paramList = Teuchos::rcp(&slvrfctry->getParameters(), false);
   discParams = Teuchos::sublist(paramList, "Discretization", true);
 
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  albanyApp = Teuchos::rcp(new Albany::Application(mpiComm));
+  albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
   albanyApp->initialSetUp(paramList);
 
   int neq = 2;
 
   meshStruct = Teuchos::rcp(
-      new Albany::MpasSTKMeshStruct(discParams, mpiComm, indexToTriangleID,
+      new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleID,
           nGlobalTriangles, nLayers, Ordering));
   albanyApp->createMeshSpecs(meshStruct);
 
   albanyApp->buildProblem();
 
-  meshStruct->constructMesh(mpiComm, discParams, neq, req,
+  meshStruct->constructMesh(mpiCommT, discParams, neq, req,
       albanyApp->getStateMgr().getStateInfoStruct(), indexToVertexID,
       mpasIndexToVertexID, verticesCoords, isVertexBoundary, nGlobalVertices,
       verticesOnTria, isBoundaryEdge, trianglesOnEdge, trianglesPositionsOnEdge,
