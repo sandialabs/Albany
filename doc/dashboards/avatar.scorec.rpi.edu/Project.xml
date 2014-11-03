@@ -3,12 +3,12 @@
   </SubProject>
   <SubProject name="Trilinos">
   </SubProject>
-  <SubProject name="TrilinosNewSTK">
+  <SubProject name="TrilinosClang++11">
   </SubProject>
-  <SubProject name="AlbanyMasterBranch">
+  <SubProject name="Albany32Bit">
   </SubProject>
-  <SubProject name="AlbanyTpetraBranch">
+  <SubProject name="Albany64Bit">
   </SubProject>
-  <SubProject name="AlbanyTpetra64Build">
+  <SubProject name="Albany64BitClang++11">
   </SubProject>
 </Project>
