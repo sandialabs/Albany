@@ -12,8 +12,8 @@
 NIGHTLYDIR=$WORKSPACE
 
 #set this correctly
-BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.49.0
-NETCDFDIR=/usr/bin64
+BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.55.0
+NETCDFDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/pnetcdf_4.3.2
 HDF5DIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/phdf5-1.8.12
 #set this correctly, to software.sandia.gov user name
 SSGUSER=$(whoami)
