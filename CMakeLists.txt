@@ -46,6 +46,11 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
+LIST(FIND Trilinos_PACKAGE_LIST STKClassic STKClassic_List_ID)
+IF (STKClassic_List_ID GREATER -1)
+  MESSAGE(FATAL_ERROR "STKClassic is no longer used and conflicts with STKIo and STKMesh.")
+ENDIF()
+
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET (INSTALL_ALBANY FALSE)
