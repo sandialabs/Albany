@@ -3430,7 +3430,8 @@ void Albany::Application::postRegSetup(std::string eval)
     if (dfm!=Teuchos::null)
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
     if (nfm!=Teuchos::null)
-        nfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+      for (int ps=0; ps < nfm.size(); ps++)
+        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
   }
 #ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {

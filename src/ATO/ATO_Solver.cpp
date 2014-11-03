@@ -6,6 +6,7 @@
 
 #include "ATO_Solver.hpp"
 #include "ATO_OptimizationProblem.hpp"
+#include "ATO_TopoTools.hpp"
 
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
@@ -168,15 +169,14 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   TEUCHOS_TEST_FOR_EXCEPT( sub_x_map == Teuchos::null );
   _epetra_x_map = Teuchos::rcp(new Epetra_Map( *sub_x_map ));
 
-//  if( _topoCentering == "Node" ){
   if( _topology->getCentering() == "Node" ){
     Teuchos::RCP<Albany::Application> app = _subProblems[0].app;
     Albany::StateManager& stateMgr = app->getStateMgr();
 
     // construct epetra maps for node ids. 
-    Teuchos::RCP<const Epetra_Comm> comm = _subProblems[0].app->getComm();
+    Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(_subProblems[0].app->getComm());
     Teuchos::RCP<const Epetra_BlockMap>
-      local_node_blockmap   = stateMgr.getNodalDataBlock()->getLocalMap();
+      local_node_blockmap   = stateMgr.getNodalDataBlock()->getLocalMapE();
     int num_global_elements = local_node_blockmap->NumGlobalElements();
     int num_my_elements     = local_node_blockmap->NumMyElements();
     int *global_node_ids    = new int[num_my_elements]; 
@@ -185,7 +185,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     delete [] global_node_ids;
 
     Teuchos::RCP<const Epetra_BlockMap>
-      overlap_node_blockmap = stateMgr.getNodalDataBlock()->getOverlapMap();
+      overlap_node_blockmap = stateMgr.getNodalDataBlock()->getOverlapMapE();
     num_global_elements = overlap_node_blockmap->NumGlobalElements();
     num_my_elements     = overlap_node_blockmap->NumMyElements();
     global_node_ids     = new int[num_my_elements]; 
@@ -374,6 +374,8 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     Teuchos::RCP<Albany::NodeFieldContainer> 
       nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
 
+    const Teuchos::RCP<const Teuchos_Comm>
+      commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
 
     // apply filter if requested
     if(_topologyFilter != Teuchos::null){
@@ -385,7 +387,10 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       _postTopologyFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
       filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
       std::string nodal_topoName = _topology->getName()+"_node_filtered";
-      (*nodeContainer)[nodal_topoName]->saveField(filteredOTopoVec,/*offset=*/0);
+      const Teuchos::RCP<const Tpetra_Vector>
+        filteredOTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
+          *filteredOTopoVec, commT);      
+      (*nodeContainer)[nodal_topoName]->saveFieldVector(filteredOTopoVecT,/*offset=*/0);
     }
 
     overlapTopoVec->Import(*topoVec, *importer, Insert);
@@ -405,7 +410,10 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     }
 
     std::string nodal_topoName = _topology->getName()+"_node";
-    (*nodeContainer)[nodal_topoName]->saveField(overlapTopoVec,/*offset=*/0);
+    const Teuchos::RCP<const Tpetra_Vector>
+      overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
+        *overlapTopoVec, commT);
+    (*nodeContainer)[nodal_topoName]->saveFieldVector(overlapTopoVecT,/*offset=*/0);
 
   }
 }
@@ -508,7 +516,7 @@ ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
     Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
     int numWorksets = dest.size();
   
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
     int numLocalNodes = topoVec->MyLength();
@@ -911,7 +919,7 @@ ATO::SpatialFilter::buildOperator(
 
     Teuchos::RCP<Adapt::NodalDataBlock> node_data = app->getStateMgr().getNodalDataBlock();
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
   
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&

@@ -5,16 +5,20 @@
 //*****************************************************************//
 
 #include "ATO_Optimizer.hpp"
-#include "ATO_DOTk_Optimizer.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "ATO_Solver.hpp"
+
 #ifdef ATO_USES_NLOPT
 #include <nlopt.h>
 #endif //ATO_USES_NLOPT
+
+#ifdef ATO_USES_DOTK
+#include "ATO_DOTk_Optimizer.hpp"
+#endif //ATO_USES_DOTK
+
 #include <algorithm>
 
 namespace ATO {
-
 
 /**********************************************************************/
 Teuchos::RCP<Optimizer> 
@@ -23,16 +27,33 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 {
   std::string optPackage = optimizerParams.get<std::string>("Package");
 
-  if( optPackage == "OC"    )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
+  if( optPackage == "OC"  )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
+
+#ifdef ATO_USES_NLOPT
   else
-  if( optPackage == "NLopt" )  return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
+  if( optPackage == "NLopt"  )  return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
+#endif //ATO_USES_NLOPT
+
+#ifdef ATO_USES_DOTK
   else
   if( optPackage == "DOTk"  )  return Teuchos::rcp(new Optimizer_DOTk(optimizerParams));
+#endif //ATO_USES_DOTK
   else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Optimization package: " << optPackage << " Unknown!" << std::endl 
-      << "Valid options are (OC, NLopt, DOTk)" << std::endl);
+      << "Valid options are\n"
+      << "/t OC ... optimiality criterion\n"
+
+#ifdef ATO_USES_NLOPT
+      << "/t NLopt ... NLOPT library\n" 
+#endif //ATO_USES_NLOPT
+
+#ifdef ATO_USES_DOTK
+      << "/t DOTk ... Design Optimization Toolkit library\n" 
+#endif //ATO_USES_DOTK
+      << std::endl);
+
 }
 
 /**********************************************************************/

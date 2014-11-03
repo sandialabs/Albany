@@ -126,9 +126,10 @@ Albany::PoissonsEquationProblem::constructNeumannEvaluators(
 
    condNames[1] = "dudn";
 
-   nfm = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
+   nfm.resize(1);
+   nfm[0] = neuUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
+                                           condNames, offsets, dl,
+                                           this->params, this->paramLib);
 
 }
 

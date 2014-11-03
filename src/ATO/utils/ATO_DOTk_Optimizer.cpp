@@ -4,7 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#ifdef ATO_USES_DOTK
 #include "ATO_DOTk_Optimizer.hpp"
+#endif
 #include "Teuchos_TestForException.hpp"
 #include "ATO_Solver.hpp"
 

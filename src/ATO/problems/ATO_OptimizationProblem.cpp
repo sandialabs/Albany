@@ -103,7 +103,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
   } else 
   if( topology->getCentering() == "Node" ){
     Teuchos::RCP<const Epetra_BlockMap>
-      overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMap();
+      overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMapE();
     for(int ws=0; ws<numWorksets; ws++){
   
       int physIndex = wsPhysIndex[ws];
@@ -245,14 +245,10 @@ ATO::OptimizationProblem::InitTopOpt()
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
         coords = disc->getCoords();
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
     wsElNodeEqID = disc->getWsElNodeEqID();
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
-
-  Teuchos::RCP<const Epetra_BlockMap>
-    overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMap();
-
 
 
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
