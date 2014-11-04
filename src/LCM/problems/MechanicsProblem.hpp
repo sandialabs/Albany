@@ -1123,7 +1123,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         dl_->dummy,
         eb_name,
         "scalar",
-        5.6e-4, // JTO: What sort of Magic is 38.7 !?!
+        5.6e-7, // JTO: What sort of Magic is 38.7 !?!
         true,
         output_flag);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));

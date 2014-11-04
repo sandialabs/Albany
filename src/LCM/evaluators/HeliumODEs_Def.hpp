@@ -96,6 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
    ScalarT n1_old, nb_old, sb_old, n1, nb, sb;
    ScalarT n1_exp, nb_exp, sb_exp;
    ScalarT d, g_old, g;
+   ScalarT atomic_omega;
  // Declaring tangent, residual, norms, and increment for N-R
    Intrepid::Tensor<ScalarT> tangent(3);
    Intrepid::Vector<ScalarT> residual(3);
@@ -133,6 +134,9 @@ evaluateFields(typename Traits::EvalData workset)
   //   he_radius_ - radius of He atom
   //   eta_ - atoms per cluster (not variable)
   
+  // convert molar volume to atomic volume through avogadros_num_
+  atomic_omega = omega_/avogadros_num_;
+
   // time step
   dt = delta_time_(0);
  
@@ -177,7 +181,7 @@ evaluateFields(typename Traits::EvalData workset)
 							  4.0*pi*d*n1_exp*pow(3.0/4.0/pi,onethrd)*pow(sb_exp,onethrd)*
 							  pow(nb_exp,twothrd));
 					  nb = nb_exp + dt_explicit*(16.0*pi*he_radius_*d*n1_exp*n1_exp);
-					  sb = sb_exp + omega_/eta_*dt_explicit*(32.*pi*he_radius_*d*n1_exp*n1_exp +
+					  sb = sb_exp + atomic_omega/eta_*dt_explicit*(32.*pi*he_radius_*d*n1_exp*n1_exp +
 							  4.0*pi*d*n1_exp*pow(3.0/4.0/pi,onethrd)*pow(sb_exp,onethrd)*
 							  pow(nb_exp,twothrd));
 					  n1_exp = n1;
@@ -190,7 +194,7 @@ evaluateFields(typename Traits::EvalData workset)
 			  residual(0) = n1 - n1_old - dt*(g - 32.*pi*he_radius_*d*n1*n1 -
 					  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
 			  residual(1) = nb - nb_old - dt*(16.0*pi*he_radius_*d*n1*n1);
-			  residual(2) = sb - sb_old - omega_/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
+			  residual(2) = sb - sb_old - atomic_omega/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
 					  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
 		      norm_residual = Intrepid::norm(residual);
 		      norm_residual_goal = tolerance*norm_residual;
@@ -208,12 +212,12 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  tangent(1,0) = -32.0*dt*d*n1*pi*he_radius_;
 		    	  tangent(1,1) = 1.0;
 		    	  tangent(1,2) = 0.0;
-		    	  tangent(2,0) = -2.0*dt*d*omega_*(32*n1*pi*he_radius_ + pow(6.0,onethrd)*
-		    			  pow(nb,twothrd)*pow(pi,onethrd)*pow(sb,onethrd))/eta_;
-		    	  tangent(2,1) = -4.0*pow(2.0,onethrd)*pow(2,onethrd)*dt*d*n1*omega_*
+		    	  tangent(2,0) = -2.0*dt*d*atomic_omega*(32*n1*pi*he_radius_ + pow(6.0,onethrd)*
+		    			  pow(nb,twothrd)*pow(pi,twothrd)*pow(sb,onethrd))/eta_;
+		    	  tangent(2,1) = -4.0*pow(2.0,onethrd)*pow(2,onethrd)*dt*d*n1*atomic_omega*
 		    			  pow(pi,twothrd)*pow(sb,onethrd)/pow(3,twothrd)/eta_/pow(nb,onethrd);
 		    	  tangent(2,2) = 1.0 - 2.0*pow(2.0,onethrd)*dt*d*n1*pow(nb,twothrd)*
-		    			  omega_*pow(pi/3.0,twothrd)/eta_/pow(sb,twothrd);
+		    			  atomic_omega*pow(pi/3.0,twothrd)/eta_/pow(sb,twothrd);
 		    	  
 		    	  // find increment
 		    	  increment = -Intrepid::inverse(tangent)*residual;
@@ -227,7 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  residual(0) = n1 - n1_old - dt*(g - 32.*pi*he_radius_*d*n1*n1 -
 		    			  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
 		    	  residual(1) = nb - nb_old - dt*(16.0*pi*he_radius_*d*n1*n1);
-		    	  residual(2) = sb - sb_old - omega_/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
+		    	  residual(2) = sb - sb_old - atomic_omega/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
 		    			  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
 		    	  norm_residual = Intrepid::norm(residual);
 		      } 
