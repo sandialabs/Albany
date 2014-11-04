@@ -15,13 +15,15 @@
 
 rm -f CMakeCache.txt
 
-
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
       -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
       -D Netcdf_INCLUDE_DIRS:FILEPATH="${NETCDF_DIR}/include" \
       -D BoostLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
       -D BoostLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
+      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}"/include \
+      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}"/lib \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -29,26 +31,40 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
 \
       -D Trilinos_ENABLE_Fortran:BOOL=ON \
 \
+      -D TPL_ENABLE_SuperLU:BOOL=ON \
+      -D SuperLU_INCLUDE_DIRS:PATH=$SUPERLUDIR/SRC \
+      -D TPL_SuperLU_LIBRARIES:PATH=$SUPERLUDIR/lib/libsuperlu_4.3.a \
+\
       -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D HAVE_TEUCHOS_COMM_TIMERS=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
       -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+      -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
       -D Trilinos_ENABLE_AztecOO:BOOL=ON \
       -D Trilinos_ENABLE_Amesos:BOOL=ON \
+      -D Trilinos_ENABLE_Amesos2:BOOL=ON \
       -D Trilinos_ENABLE_Anasazi:BOOL=ON \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
+      -D Trilinos_ENABLE_MueLu:BOOL=ON \
       -D Trilinos_ENABLE_NOX:BOOL=ON \
       -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
       -D Trilinos_ENABLE_Thyra:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+      -D Trilinos_ENABLE_TrilinosCouplings:BOOL=ON \
       -D Trilinos_ENABLE_Rythmos:BOOL=ON \
-      -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
       -D Trilinos_ENABLE_OptiPack:BOOL=ON \
       -D Trilinos_ENABLE_GlobiPack:BOOL=ON \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
@@ -74,6 +90,10 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
 \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
+      -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
+      -D Zoltan_ENABLE_ULONG_IDS:BOOL=ON \
+      -D ZOLTAN_BUILD_ZFDRIVE:BOOL=OFF \
+      -D Zoltan2_ENABLE_Experimental:BOOL=ON\
       -D Trilinos_ENABLE_FEI:BOOL=OFF\
 \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
