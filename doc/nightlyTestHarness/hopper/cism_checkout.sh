@@ -15,7 +15,7 @@
 # setup and housekeeping
 #-------------------------------------------
 
-if [ -a $NIGHTLYDIR/felix_interface ]; then \rm -rf $NIGHTLYDIR/felix_interface
+if [ -a $NIGHTLYDIR/cism-piscees ]; then \rm -rf $NIGHTLYDIR/cism_piscees
 fi
 
 if [ -a $CISMOUTDIR ]; then \rm -rf $CISMOUTDIR
@@ -28,8 +28,11 @@ mkdir $CISMOUTDIR
 # git clone Albany
 #-------------------------------------------
 
-echo "     Checking out CISM felix_interface branch "
-module load subversion
-svn checkout http://oceans11.lanl.gov/svn/PISCEES/branches/felix_interface > $CISMOUTDIR/cism_checkout.out 2>&1
-echo "     Finished checkout out CISM felix_interface branch "
+echo "     Checking out CISM "
+git clone git@github.com:ACME-Climate/cism-piscees.git > $CISMOUTDIR/cism_checkout.out 2>&1
+echo "     Finished checkout out CISM "
+
+echo "Switching CISM to branch ", $CISM_BRANCH
+cd cism-piscees
+git checkout $CISM_BRANCH
 

@@ -69,7 +69,7 @@ fi
 #echo; echo "...Starting Trilinos full Build"
 #time source $SCRIPTDIR/trilinos_build.sh
 
-echo; echo "...Starting CISM felix_interface branch VOTD Checkout"
+echo; echo "...Starting CISM VOTD Checkout"
 time source $SCRIPTDIR/cism_checkout.sh
 
 echo; echo "...Starting Albany Build with CISM enabled"
@@ -91,3 +91,5 @@ time source $SCRIPTDIR/cism_build.sh
 echo; echo "...Sending out email with results"
 source $SCRIPTDIR/send_email_cism.sh
 echo; echo "...Email sent!"
+
+cp $CISMDIR/builds/hopper-gnu-felix/cism_driver/cism_driver /project/projectdirs/piscees/nightlyTests/Executables/cism_driver
