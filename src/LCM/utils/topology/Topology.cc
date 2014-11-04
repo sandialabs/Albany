@@ -388,17 +388,23 @@ Topology::getBoundaryEntityNodes(stk::mesh::Entity boundary_entity)
 
   assert(boundary_rank == stk::topology::ELEMENT_RANK - 1);
 
-  stk::mesh::EntityVector
-  nodes;
-
   stk::mesh::Entity const *
   relations = get_bulk_data().begin_elements(boundary_entity);
 
-  stk::mesh::ConnectivityOrdinal const *
-  ords = get_bulk_data().begin_element_ordinals(boundary_entity);
-
   stk::mesh::Entity
   first_cell = relations[0];
+
+  size_t const
+  num_cell_nodes = get_bulk_data().num_nodes(first_cell);
+
+  stk::mesh::Entity const *
+  node_relations = get_bulk_data().begin_nodes(first_cell);
+
+  stk::mesh::ConnectivityOrdinal const *
+  node_ords = get_bulk_data().begin_node_ordinals(first_cell);
+
+  stk::mesh::ConnectivityOrdinal const *
+  ords = get_bulk_data().begin_element_ordinals(boundary_entity);
 
   EdgeId const
   face_order = ords[0];
@@ -409,23 +415,18 @@ Topology::getBoundaryEntityNodes(stk::mesh::Entity boundary_entity)
   RelationVectorIndex const
   number_face_nodes = cell_topology.getNodeCount(boundary_rank, face_order);
 
+  stk::mesh::EntityVector
+  nodes;
+
   for (RelationVectorIndex i = 0; i < number_face_nodes; ++i) {
+
     EdgeId const
     cell_order = cell_topology.getNodeMap(boundary_rank, face_order, i);
 
     // Brute force approach. Maybe there is a better way to do this?
-    stk::mesh::Entity const *
-    node_relations = get_bulk_data().begin_nodes(first_cell);
-
-    size_t const
-    num_nodes = get_bulk_data().num_nodes(first_cell);
-
-    stk::mesh::ConnectivityOrdinal const *
-    node_ords = get_bulk_data().begin_node_ordinals(first_cell);
-
-    for (size_t i = 0; i < num_nodes; ++i) {
-      if (node_ords[i] == cell_order) {
-        nodes.push_back(node_relations[i]);
+    for (size_t j = 0; j < num_cell_nodes; ++j) {
+      if (node_ords[j] == cell_order) {
+        nodes.push_back(node_relations[j]);
       }
     }
   }
