@@ -88,9 +88,7 @@ cmake \
 #   -D SuperLU_LIBRARY_DIRS:STRING="${SUPERLUDIR}/lib" \
 # or (2) KLU2:
 #   -D Amesos2_ENABLE_KLU2:BOOL=ON \
-# You can also include both and choose which one to use at run-time. Right now
-# (4 Nov 2014), KLU2 may not work, as it is in development; this should change
-# in about a week.
+# You can also include both and choose which one to use at run-time.
 
 # For ctests, include this additional SEACAS flag to build the install/bin utils
 # exodiff, algebra, and epu, as well as others:
