@@ -4,7 +4,6 @@ prevents running the AlbanyT executable in the Albany Tpetra branch.
 
 General TO DOs: 
 - Turn on SCOREC in nightly tests (Irina)
-- Get Albany_FMDBExodus.cpp working. Right now it fails to write an exo file. Comments in that file indicate the issue. All tests produce vtk, rather than exo, files, so this issue is not covered by tests (Andrew B.?) 
 - Turn on DAKOTA in nightly tests (Irina).
 - Shorten Aeras tests run with AlbanyT executable, make consistent w/ Albany tests. 
 
@@ -24,7 +23,6 @@ Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF:
 - SaveEigenData and related files.
 - Albany_ObserverFactory, Albany_NOXObserver, Albany_RythmosObserver (these are based on EpetraExt; likely can be 
 converted to Thyra, like Albany_PiroObserverT).
-- What is ASCR, AlbanyCI?  I don't have these turned on in my Albany build.  ASCR needs SG_MP; AlbanyCI needs QCAD... 
 - Lament needs libraries... -- but we decided not to pursue lament (which was templated version of lame). 
 - There are inconsistencies b/w ST and double, GO and int, etc. throughout the code.  Needs to be cleaned up.
 
@@ -47,7 +45,7 @@ Albany problems affected: LCM/Dynamics
 
 
 Ifpack2: 
-- It appears ILU is not available in Ifpack2, just ILUT.
+- It appears ILU is not available in Ifpack2, just ILUT. (RILUK?)
 
 
 MueLu:

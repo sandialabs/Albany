@@ -1,5 +1,5 @@
 # Instructional Trilinos configuration script for Tpetra-enabled Albany.
-
+build
 # Modify these paths for your system.
 TRILINSTALLDIR=../install
 BOOSTDIR=/usr/local
@@ -94,4 +94,11 @@ cmake \
 # install/bin utils exodiff, algebra, and epu, as well as others:
 # -D Trilinos_ENABLE_SEACAS:BOOL=ON \
 # -D TPL_ENABLE_Matio:BOOL=OFF \
-# -DTPL_ENABLE_X11=OFF \
+# -DTPL_ENABLE_X11:BOOL=OFF \
+
+# Use these lines to make a debug build.
+#   -D CMAKE_BUILD_TYPE:STRING=DEBUG \
+#   -D CMAKE_CXX_FLAGS:STRING="-ggdb" \
+# I strongly recommend doing only *shared library* debug builds, as the lib and
+# exe files for a static debug build can be huge.
+#   -D BUILD_SHARED_LIBS:BOOL=ON \
