@@ -29,7 +29,7 @@ FirstPK(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(first_pk_stress_);
 
-  this->setName("FirstPK" + PHX::TypeString<EvalT>::value);
+  this->setName("FirstPK" + PHX::typeAsString<PHX::Device>());
 
   // logic to modify stress in the presence of a pore pressure
   if (have_pore_pressure_) {

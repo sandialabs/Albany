@@ -42,7 +42,7 @@ namespace LCM {
     this->addEvaluatedField(defGrad);
     this->addEvaluatedField(J);
 
-    this->setName("Surface Vector Gradient"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Vector Gradient"+PHX::typeAsString<PHX::Device>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

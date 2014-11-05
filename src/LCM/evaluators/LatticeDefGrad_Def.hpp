@@ -65,7 +65,7 @@ namespace LCM {
     this->addEvaluatedField(JH);
 
 
-    this->setName("Lattice Deformation Gradient"+PHX::TypeString<EvalT>::value);
+    this->setName("Lattice Deformation Gradient"+PHX::typeAsString<PHX::Device>());
 
   }
 

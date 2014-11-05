@@ -138,7 +138,7 @@ namespace LCM {
       }
     }
 
-    this->setName("UnSatPoroElasticityResidMass"+PHX::TypeString<EvalT>::value);
+    this->setName("UnSatPoroElasticityResidMass"+PHX::typeAsString<PHX::Device>());
 
   }
 

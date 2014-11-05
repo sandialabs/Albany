@@ -190,7 +190,7 @@ namespace LCM {
       }
     }
 
-    this->setName("ThermoPoroPlasticityResidEnergy"+PHX::TypeString<EvalT>::value);
+    this->setName("ThermoPoroPlasticityResidEnergy"+PHX::typeAsString<PHX::Device>());
 
   }
 

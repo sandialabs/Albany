@@ -32,7 +32,7 @@ namespace LCM {
 
     this->addEvaluatedField(scalarGrad);
 
-    this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Gradient"+PHX::typeAsString<PHX::Device>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

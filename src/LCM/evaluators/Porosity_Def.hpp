@@ -171,7 +171,7 @@ namespace LCM {
 
 
     this->addEvaluatedField(porosity);
-    this->setName("Porosity"+PHX::TypeString<EvalT>::value);
+    this->setName("Porosity"+PHX::typeAsString<PHX::Device>());
   }
 
   //----------------------------------------------------------------------------

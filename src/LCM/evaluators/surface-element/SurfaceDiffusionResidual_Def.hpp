@@ -34,7 +34,7 @@ namespace LCM {
 
     this->addEvaluatedField(scalarResidual);
 
-    this->setName("Surface Scalar Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Residual"+PHX::typeAsString<PHX::Device>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

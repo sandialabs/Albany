@@ -100,7 +100,7 @@ EquivalentInclusionConductivity(Teuchos::ParameterList& p) :
                           "Fluid Thermal Conductivity Value", this, paramLib);
 
   this->addEvaluatedField(effectiveK);
-  this->setName("Effective Thermal Conductivity"+PHX::TypeString<EvalT>::value);
+  this->setName("Effective Thermal Conductivity"+PHX::typeAsString<PHX::Device>());
 }
 
 // **********************************************************************

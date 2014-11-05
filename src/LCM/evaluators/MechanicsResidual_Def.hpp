@@ -42,7 +42,7 @@ MechanicsResidual(Teuchos::ParameterList& p,
     this->addDependentField(acceleration_);
   }
 
-  this->setName("MechanicsResidual" + PHX::TypeString<EvalT>::value);
+  this->setName("MechanicsResidual" + PHX::typeAsString<PHX::Device>());
 
   if (have_body_force_) {
     // grab the pore pressure

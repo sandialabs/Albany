@@ -42,7 +42,7 @@ StabilizedPressureResidual(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(residual_);
 
-  this->setName("StabilizedPressureResidual" + PHX::TypeString<EvalT>::value);
+  this->setName("StabilizedPressureResidual" + PHX::typeAsString<PHX::Device>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);

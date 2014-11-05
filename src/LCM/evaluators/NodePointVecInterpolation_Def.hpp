@@ -27,7 +27,7 @@ NodePointVecInterpolation(
   this->addDependentField(basis_fn_);
   this->addEvaluatedField(point_value_);
 
-  this->setName("NodePointVecInterpolation" + PHX::TypeString<EvalT>::value);
+  this->setName("NodePointVecInterpolation" + PHX::typeAsString<PHX::Device>());
 
   std::vector<PHX::DataLayout::size_type>
   dimensions;

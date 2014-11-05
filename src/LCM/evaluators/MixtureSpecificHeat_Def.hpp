@@ -39,7 +39,7 @@ MixtureSpecificHeat(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(mixtureSpecificHeat);
 
-  this->setName("Mixture Specific Heat"+PHX::TypeString<EvalT>::value);
+  this->setName("Mixture Specific Heat"+PHX::typeAsString<PHX::Device>());
 
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");

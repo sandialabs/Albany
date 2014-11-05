@@ -83,7 +83,7 @@ FaceAverage(const Teuchos::ParameterList& p) :
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
 
 
-    this->setName("FaceAverage"+PHX::TypeString<EvalT>::value);
+    this->setName("FaceAverage"+PHX::typeAsString<PHX::Device>());
 
 }
 

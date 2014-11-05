@@ -152,7 +152,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     this->addEvaluatedField(it->second);
   }
   this->setName(
-      "Constitutive Model Parameters" + PHX::TypeString<EvalT>::value);
+      "Constitutive Model Parameters" + PHX::typeAsString<PHX::Device>());
 }
 
 //------------------------------------------------------------------------------

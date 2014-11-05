@@ -38,7 +38,7 @@ TLElasResid(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(Residual);
 
-  this->setName("TLElasResid"+PHX::TypeString<EvalT>::value);
+  this->setName("TLElasResid"+PHX::typeAsString<PHX::Device>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

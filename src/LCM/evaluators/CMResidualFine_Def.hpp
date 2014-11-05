@@ -36,7 +36,7 @@ CMResidualFine(Teuchos::ParameterList & p,
 
   this->addEvaluatedField(residual_);
 
-  this->setName("CMResidualFine" + PHX::TypeString<EvalT>::value);
+  this->setName("CMResidualFine" + PHX::typeAsString<PHX::Device>());
 
   std::vector<PHX::DataLayout::size_type>
   dims;

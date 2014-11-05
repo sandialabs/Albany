@@ -7,7 +7,7 @@
 #if !defined(LCM_CM_Residual_Fine_hpp)
 #define LCM_CM_Residual_Fine_hpp
 
-#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_config.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_MDField.hpp>

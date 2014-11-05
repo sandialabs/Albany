@@ -23,7 +23,7 @@ namespace LCM {
     
     this->addEvaluatedField(strain);
     
-    this->setName("Strain"+PHX::TypeString<EvalT>::value);
+    this->setName("Strain"+PHX::typeAsString<PHX::Device>());
     
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);

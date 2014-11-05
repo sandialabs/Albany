@@ -38,7 +38,7 @@ PisdWdF(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(P);
 
-  this->setName("P by AD of dWdF"+PHX::TypeString<EvalT>::value);
+  this->setName("P by AD of dWdF"+PHX::typeAsString<PHX::Device>());
 }
 
 //**********************************************************************

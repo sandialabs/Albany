@@ -49,7 +49,7 @@ DefGrad(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(defgrad);
   this->addEvaluatedField(J);
 
-  this->setName("DefGrad"+PHX::TypeString<EvalT>::value);
+  this->setName("DefGrad"+PHX::typeAsString<PHX::Device>());
 
 }
 

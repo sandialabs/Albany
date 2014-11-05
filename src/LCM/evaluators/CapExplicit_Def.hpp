@@ -76,7 +76,7 @@ namespace LCM
     //this->addEvaluatedField(hardeningModulus);
     this->addEvaluatedField(volPlasticStrain);
 
-    this->setName("Stress" + PHX::TypeString<EvalT>::value);
+    this->setName("Stress" + PHX::typeAsString<PHX::Device>());
 
     // initialize tensor
     I = Intrepid::eye<ScalarT>(numDims);

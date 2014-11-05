@@ -37,7 +37,7 @@ PeridigmPartialStressBase(const Teuchos::ParameterList& p) :
   // Output
   this->addEvaluatedField(stress);
 
-  this->setName("PeridigmPartialStress"+PHX::TypeString<EvalT>::value);
+  this->setName("PeridigmPartialStress"+PHX::typeAsString<PHX::Device>());
 }
 
 //**********************************************************************

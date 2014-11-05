@@ -27,7 +27,7 @@ namespace LCM {
 
     this->addEvaluatedField(force);
 
-    this->setName("Surface Cohesive Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Cohesive Residual"+PHX::typeAsString<PHX::Device>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

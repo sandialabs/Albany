@@ -114,7 +114,7 @@ StabParameter(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(stabParameter);
-  this->setName("Stabilization Parameter"+PHX::TypeString<EvalT>::value);
+  this->setName("Stabilization Parameter"+PHX::typeAsString<PHX::Device>());
 }
 
 // **********************************************************************

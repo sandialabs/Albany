@@ -81,7 +81,7 @@ namespace LCM {
     FpinvT.resize(worksetSize, numQPs, numDims, numDims);
     Cpinv.resize(worksetSize, numQPs, numDims, numDims);
 
-    this->setName("Stress" + PHX::TypeString<EvalT>::value);
+    this->setName("Stress" + PHX::typeAsString<PHX::Device>());
 
   }
 

@@ -38,7 +38,7 @@ TotalStress(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("TotalStress"+PHX::TypeString<EvalT>::value);
+  this->setName("TotalStress"+PHX::typeAsString<PHX::Device>());
 
 }
 

@@ -51,7 +51,7 @@ namespace LCM {
 
     this->addEvaluatedField(poroMassResidual);
 
-    this->setName("Surface TL Poro Mass Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface TL Poro Mass Residual"+PHX::typeAsString<PHX::Device>());
 
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;

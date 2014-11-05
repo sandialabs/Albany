@@ -20,7 +20,7 @@ namespace LCM {
   {
     this->addDependentField(scalar_grad_);
     this->addEvaluatedField(unit_grad_);
-    this->setName("Unit Gradient QP Variable"+PHX::TypeString<EvalT>::value);
+    this->setName("Unit Gradient QP Variable"+PHX::typeAsString<PHX::Device>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_vector->dimensions(dims);
@@ -48,7 +48,7 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        grad.fill( &scalar_grad_(cell,pt,0) );
+        grad.fill( scalar_grad_, cell,pt );
         scalar_mag = Intrepid::norm(grad);
         if (scalar_mag > 0) {
           unit = grad / scalar_mag;

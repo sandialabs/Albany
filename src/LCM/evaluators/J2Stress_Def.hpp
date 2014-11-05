@@ -77,7 +77,7 @@ J2Stress(const Teuchos::ParameterList& p) :
   tmp.resize(numDims, numDims);
   tmp2.resize(numDims, numDims);
 
-  this->setName("J2 Stress"+PHX::TypeString<EvalT>::value);
+  this->setName("J2 Stress"+PHX::typeAsString<PHX::Device>());
 
 }
 

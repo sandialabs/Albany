@@ -84,7 +84,7 @@ KCPermeability(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(kcPermeability);
-  this->setName("Kozeny-Carman Permeability"+PHX::TypeString<EvalT>::value);
+  this->setName("Kozeny-Carman Permeability"+PHX::typeAsString<PHX::Device>());
 }
 
 // **********************************************************************

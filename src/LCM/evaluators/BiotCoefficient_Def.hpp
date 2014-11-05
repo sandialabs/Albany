@@ -90,7 +90,7 @@ BiotCoefficient(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(biotCoefficient);
-  this->setName("Biot Coefficient"+PHX::TypeString<EvalT>::value);
+  this->setName("Biot Coefficient"+PHX::typeAsString<PHX::Device>());
 }
 
 // **********************************************************************

@@ -55,7 +55,7 @@ namespace LCM {
       this->addEvaluatedField(vel_grad_);
     }
 
-    this->setName("Kinematics"+PHX::TypeString<EvalT>::value);
+    this->setName("Kinematics"+PHX::typeAsString<PHX::Device>());
 
   }
 

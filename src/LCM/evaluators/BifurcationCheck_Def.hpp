@@ -32,7 +32,7 @@ namespace LCM {
     this->addEvaluatedField(ellipticity_flag_);
     this->addEvaluatedField(direction_);
 
-    this->setName("BifurcationCheck"+PHX::TypeString<EvalT>::value);
+    this->setName("BifurcationCheck"+PHX::typeAsString<PHX::Device>());
   }
 
   //----------------------------------------------------------------------------

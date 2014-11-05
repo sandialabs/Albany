@@ -34,7 +34,7 @@ namespace LCM {
     this->addEvaluatedField(grad_val_qp);
 
 
-    this->setName("Surface Scalar Gradient Operator"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Gradient Operator"+PHX::typeAsString<PHX::Device>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_qp_gradient->dimensions(dims);

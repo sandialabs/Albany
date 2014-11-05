@@ -63,7 +63,7 @@ namespace LCM {
     this->addEvaluatedField(transport_residual_);
   //  this->addEvaluatedField(transport_);
 
-    this->setName("Transport Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Transport Residual"+PHX::typeAsString<PHX::Device>());
 
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;

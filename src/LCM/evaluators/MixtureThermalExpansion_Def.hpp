@@ -36,7 +36,7 @@ MixtureThermalExpansion(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(mixtureThermalExpansion);
 
-  this->setName("Mixture Thermal Expansion"+PHX::TypeString<EvalT>::value);
+  this->setName("Mixture Thermal Expansion"+PHX::typeAsString<PHX::Device>());
 
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");

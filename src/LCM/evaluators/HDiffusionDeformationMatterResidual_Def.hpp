@@ -117,7 +117,7 @@ namespace LCM {
     CinvTgrad_old.resize(worksetSize, numQPs, numDims);
     CinvTaugrad.resize(worksetSize, numQPs, numDims);
 
-    this->setName("HDiffusionDeformationMatterResidual"+PHX::TypeString<EvalT>::value);
+    this->setName("HDiffusionDeformationMatterResidual"+PHX::typeAsString<PHX::Device>());
 
   }
 

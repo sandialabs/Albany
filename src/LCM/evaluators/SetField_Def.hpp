@@ -23,7 +23,7 @@ SetField(const Teuchos::ParameterList& p) :
 
   // Register the field to be set as an evaluated field
   this->addEvaluatedField(evaluatedField);
-  this->setName("SetField" + PHX::TypeString<EvalT>::value);
+  this->setName("SetField" + PHX::typeAsString<PHX::Device>());
 }
 
 template<typename EvalT, typename Traits>

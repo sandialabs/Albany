@@ -35,7 +35,7 @@ namespace LCM {
 
     this->addEvaluatedField(force);
 
-    this->setName("Surface Vector Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Vector Residual"+PHX::typeAsString<PHX::Device>());
 
     // if enabled grab the cohesive tractions
     if (use_cohesive_traction_) {

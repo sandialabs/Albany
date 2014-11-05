@@ -7,7 +7,7 @@
 #ifndef MIXTURE_THERMAL_EXPANSION_HPP
 #define MIXTURE_THERMAL_EXPANSION_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -46,7 +46,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> alphaPoreFluid;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> mixtureThermalExpansion;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mixtureThermalExpansion;
 
   unsigned int numQPs;
 //  unsigned int numDims;
