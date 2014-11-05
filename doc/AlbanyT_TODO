@@ -12,8 +12,9 @@ Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF:
 - QCAD will work only with Albany executable.
 - MOR will work only with Albany executable.
 - SG_MP will work only with Albany executable.
+- ATO will work only with Albany executable. 
+- CISM-Albany will work only with non-templated software stack -- need to put in CISM_HAS_EPETRA option like for MPAS-Albany (Irina). 
 - catalyst - can't build, need ParaView source code? 
-- mpas_interface has been converted, but need to have Mauro test it.
 - Teko stuff (uses Epetra) -- do not need? 
 - ExtrudedSTKMeshStruct has been converted but I have concerns about long long int's / casting that appears there.  Also need to test.
 - Albany_Dakota (TriKota).
@@ -26,7 +27,6 @@ converted to Thyra, like Albany_PiroObserverT).
 - What is ASCR, AlbanyCI?  I don't have these turned on in my Albany build.  ASCR needs SG_MP; AlbanyCI needs QCAD... 
 - Lament needs libraries... -- but we decided not to pursue lament (which was templated version of lame). 
 - There are inconsistencies b/w ST and double, GO and int, etc. throughout the code.  Needs to be cleaned up.
-- Convert ATO to build in Tpetra Albany branch (first with epetra code & Albany executable; then with AlbanyT executable).
 
 
 Question: is there a way to test compilation of Albany tpetra branch with ALBANY_EPETRA_EXE turned off 
