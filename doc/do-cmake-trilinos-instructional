@@ -90,6 +90,8 @@ cmake \
 #   -D Amesos2_ENABLE_KLU2:BOOL=ON \
 # You can also include both and choose which one to use at run-time.
 
-# For ctests, include this additional SEACAS flag to build the install/bin utils
-# exodiff, algebra, and epu, as well as others:
+# For ctests, include these additional SEACAS-related flags to build the
+# install/bin utils exodiff, algebra, and epu, as well as others:
 # -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+# -D TPL_ENABLE_Matio:BOOL=OFF \
+# -DTPL_ENABLE_X11=OFF \
