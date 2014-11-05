@@ -393,7 +393,7 @@ available\n")
      MESSAGE("-- WARNING: cism_driver will not link properly when built if
 Albany was built with LCM, LAME, HYDRIDE or ENABLE_DEMO_PDES.  Turn these off to build
 cism_driver.")
-  ENDIF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE)
+  ENDIF ()
   ADD_DEFINITIONS(-DCISM_HAS_FELIX)
   MESSAGE("-- CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
   SET(CISM_HAS_FELIX TRUE)
