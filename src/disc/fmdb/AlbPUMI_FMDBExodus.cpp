@@ -53,11 +53,6 @@ void define_output_fields(stk::io::StkMeshIoBroker& mesh_data,
 #endif
 }
 
-//todo This method is failing with
-//     SCOREC/stk/apfSTK.cc:162: apf::Node apf::lookup(long int, apf::GlobalMap&): Assertion `map.count(id)' failed.
-// This error does not occur in the stk_classic version, so either (i) the
-// following code is an incorrect translation to the new stk, or something in
-// spf*STK.h/cc needs to change.
 void
 AlbPUMI::FMDBExodus::
 write(const char* filename, const double time_val)
@@ -74,7 +69,7 @@ write(const char* filename, const double time_val)
 
   stk::mesh::BulkData bulk(meta, Albany::getMpiCommFromTeuchosComm(comm));
   apf::copyMeshToBulk(n, models, &meta, &bulk);
-  apf::copyFieldsToBulk(n, &meta, &bulk); // <-- assert occurs in this call.
+  apf::copyFieldsToBulk(n, &meta, &bulk);
 
   Ioss::Init::Initializer();
   stk::io::StkMeshIoBroker mesh_data(Albany::getMpiCommFromTeuchosComm(comm));
