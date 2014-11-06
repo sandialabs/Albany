@@ -194,7 +194,7 @@ namespace LCM {
 
   		  Intrepid::Tensor<ScalarT> F(numDims, &DefGrad(cell, qp, 0, 0));
   		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
-  		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
+  		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverseTemp(C_tensor_);
 
   	      Intrepid::Vector<ScalarT> C_grad_(numDims, &CLGrad(cell, qp, 0));
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
@@ -204,8 +204,8 @@ namespace LCM {
         }
       }
     }
-
-    FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
+//Irina TOFIX intrepid 
+//    FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {

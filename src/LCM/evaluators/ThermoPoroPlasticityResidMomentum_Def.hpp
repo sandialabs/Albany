@@ -119,8 +119,9 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-   RST::inverse(F_inv, defgrad);
-   RST::transpose(F_invT, F_inv);
+   //Irina TOFIX intrepid
+   RST::inverseTemp(F_inv, defgrad);
+   //RST::transpose(F_invT, F_inv);
    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
    FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
 
@@ -141,6 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
                 		                   * wGradBF(cell, node, qp, dim);
     } } } } }
 
+//Irina comment: everything below was commented out
  /*
   if (workset.transientTerms && enableTransient)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

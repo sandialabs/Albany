@@ -110,21 +110,26 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dt = deltaTime(0);
 
   // compute the 'material' flux
-  FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
-  Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
-  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
+// Irina TOFIX intrepid
+// FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
+  Intrepid::RealSpaceTools<ScalarT>::inverseTemp(Cinv, C);
+//  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    //IrinaTOFIX intrepid
+    //FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
   for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
-  FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   //IrinaTOFIX intrepid
+   //FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
+
+//Irina comment: code below was commented out
   //if (workset.transientTerms && enableTransient)
   //  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   //
@@ -136,8 +141,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell)
     for (std::size_t qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
-
-  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  //Irina TOFIX intrepid
+ // FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (print)
   {

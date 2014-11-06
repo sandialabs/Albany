@@ -241,12 +241,14 @@ namespace LCM {
     ScalarT dt = deltaTime(0);
 
     if (haveMechanics) {
-      RST::inverse(F_inv, defgrad);
-      RST::transpose(F_invT, F_inv);
+      //Irina TOFIX intrepid
+      RST::inverseTemp(F_inv, defgrad);
+      //RST::transpose(F_invT, F_inv);
       FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
       FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+//Irina TOFIX intrepid
+      //FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+      //FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
     } else {
       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = kc p_i
     }
@@ -258,7 +260,8 @@ namespace LCM {
         }
       }
     }
-    FST::integrate<ScalarT>(TResidual, fluxdt,
+//Irina TOFIX intrepid
+    //FST::integrate<ScalarT>(TResidual, fluxdt,
                             wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
     //---------------------------------------------------------------------------//

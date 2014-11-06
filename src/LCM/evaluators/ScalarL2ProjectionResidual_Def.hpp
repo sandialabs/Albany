@@ -92,8 +92,9 @@ evaluateFields(typename Traits::EvalData workset)
   {
 	  for (std::size_t qp=0; qp < numQPs; ++qp)
 	  {
-		  Intrepid::Tensor<ScalarT> F(numDims, &DefGrad(cell, qp, 0, 0));
-		  J = Intrepid::det(F);
+		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp, -1);
+		  //Irina TOFIX intrepid
+		  //J = Intrepid::det(F);
 		  tauH(cell,qp) = 0.0;
 		  for (std::size_t i=0; i<numDims; i++){
 			  tauH(cell,qp) += J*Pstress(cell, qp, i,i)/numDims;

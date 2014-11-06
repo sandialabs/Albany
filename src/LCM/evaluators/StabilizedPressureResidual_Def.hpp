@@ -125,9 +125,10 @@ evaluateFields(typename Traits::EvalData workset)
       // stabilization term
       ScalarT stab_term = 0.5 * alpha_;
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        F.fill( &def_grad_(cell,pt,0,0) );
-        ScalarT J = Intrepid::det(F);
-        Cinv = Intrepid::inverse( Intrepid::transpose(F) * F );
+        F.fill( def_grad_,cell,pt,-1);
+        //irina TOFIX intrepid
+        //ScalarT J = Intrepid::det(F);
+        //Cinv = Intrepid::inverseTemp( Intrepid::transpose(F) * F );
         ScalarT stab_param = stab_term * h_(cell,pt) * h_(cell,pt) / 
           shear_modulus_(cell,pt);
         for (std::size_t node = 0; node < num_nodes_; ++node) {

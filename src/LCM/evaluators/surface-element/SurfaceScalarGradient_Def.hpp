@@ -103,7 +103,7 @@ namespace LCM {
 
         // This map the position vector from parent to current configuration in R^3
         gBasis = Intrepid::transpose(gBasis);
-       invRefDualBasis = Intrepid::inverse(gBasis);
+       invRefDualBasis = Intrepid::inverseTemp(gBasis);
 
         Intrepid::Vector<MeshScalarT> invG_0(3, &invRefDualBasis(0, 0));
         Intrepid::Vector<MeshScalarT> invG_1(3, &invRefDualBasis(1, 0));

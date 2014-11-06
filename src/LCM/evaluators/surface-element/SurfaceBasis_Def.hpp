@@ -284,10 +284,10 @@ namespace LCM {
         Intrepid::Tensor<MeshScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
         Intrepid::Tensor<MeshScalarT> dPhi(3, &basis(cell, pt, 0, 0));
         Intrepid::Vector<MeshScalarT> G_2(3, &basis(cell, pt, 2, 0));
-
-        MeshScalarT j0 = Intrepid::det(dPhi);
-        MeshScalarT jacobian = j0 *
-          std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
+        //Irina TOFIX intrepid    
+       // MeshScalarT j0 = Intrepid::det(dPhi);
+       // MeshScalarT jacobian = j0 *
+       //   std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }
     }

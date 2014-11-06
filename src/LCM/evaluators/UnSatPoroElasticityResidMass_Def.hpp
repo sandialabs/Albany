@@ -291,7 +291,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
-  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+//Irina TOFIX intrepid
+//FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
 

@@ -195,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
                                     oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      Intrepid::Tensor<ScalarT> Finc = Fnew * Intrepid::inverse(Fold);
+      Intrepid::Tensor<ScalarT> Finc = Fnew * Intrepid::inverseTemp(Fold);
 
       
       // DEBUGGING //

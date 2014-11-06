@@ -161,18 +161,18 @@ namespace LCM {
                 - 3 * thermalExpansionCoeff * deltaTemp * (1 + 1 / (J * J)));
 
         // compute trial intermediate configuration
-        Fpinv = Intrepid::inverse(Fpold);
-        Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-        be = F * Cpinv * Intrepid::transpose(F);
+     //Irina intrepid TOFIX
+        Fpinv = Intrepid::inverseTemp(Fpold);
+      //  Cpinv = Fpinv * Intrepid::transpose(Fpinv);
+      //  be = F * Cpinv * Intrepid::transpose(F);
 
         // compute the trial deviatoric stress
-        mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
-        s = mu * Intrepid::dev(be);
+      //Irina Intrepid TOFIX
+       // mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
+      //  s = mu * Intrepid::dev(be);
 
-        // check for yielding
-        //smag = 0.0;
-        //if ( norm(s) > 1.e-15 )
-        smag = Intrepid::norm(s);
+        //Irina Intrepidd TOFIX
+        // smag = Intrepid::norm(s);
         f = smag
             - sq23
                 * (Y + H * eqpsold(cell, qp)
@@ -227,7 +227,8 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-          expA = Intrepid::exp<ScalarT>(A);
+         //Irina TOFIX intrepid
+         //expA = Intrepid::exp<ScalarT>(A);
 
           // set plastic work
           if (dt > 0.0) mechSource(cell, qp) = sq23 * dgam / dt
@@ -259,8 +260,9 @@ namespace LCM {
         }
 
         // update be
-        be = ScalarT(1 / mu) * s +
-            ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
+      //Irina TOFIX intrepid
+      //be = ScalarT(1 / mu) * s +
+      //      ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
 
         if (print) {
           std::cout << "    sig : ";
@@ -278,6 +280,7 @@ namespace LCM {
           std::cout << "    work: " << mechSource(cell, qp) << std::endl;
           std::cout << "    dgam: " << dgam << std::endl;
           std::cout << "    smag: " << smag << std::endl;
+       //Irina TOFIX intrepid
           std::cout << "    n(s): " << Intrepid::norm(s) << std::endl;
           std::cout << "    temp: " << temperature(cell, qp) << std::endl;
           std::cout << "    Dtem: " << deltaTemp << std::endl;

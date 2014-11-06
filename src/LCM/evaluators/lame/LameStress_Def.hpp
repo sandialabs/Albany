@@ -383,7 +383,7 @@ void LameStressBase<EvalT, Traits>::
                                  oldDefGrad(cell,qp,2,0), oldDefGrad(cell,qp,2,1), oldDefGrad(cell,qp,2,2) );
 
       // incremental deformation gradient
-      Intrepid::Tensor<RealType> Finc = Fnew * Intrepid::inverse(Fold);
+      Intrepid::Tensor<RealType> Finc = Fnew * Intrepid::inverseTemp(Fold);
 
       // left stretch V, and rotation R, from left polar decomposition of new deformation gradient
       Intrepid::Tensor<RealType> V(3), R(3);

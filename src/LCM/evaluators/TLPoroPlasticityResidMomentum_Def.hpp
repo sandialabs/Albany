@@ -97,8 +97,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
-
- // RST::inverse(F_inv, defgrad);
+ //Irina comments:: was commented out
+  RST::inverseTemp(F_inv, defgrad);
  // RST::transpose(F_invT, F_inv);
  // FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
  // FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);

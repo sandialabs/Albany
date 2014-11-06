@@ -105,8 +105,8 @@ namespace LCM {
         defGrad(cell, pt, 2, 0) = F(2, 0);
         defGrad(cell, pt, 2, 1) = F(2, 1);
         defGrad(cell, pt, 2, 2) = F(2, 2);
-
-        J(cell,pt) = Intrepid::det(F);
+        //Irina TOFIX intrepid
+        //J(cell,pt) = Intrepid::det(F);
       }
     }
 

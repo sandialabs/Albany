@@ -106,7 +106,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
         F.fill(&def_grad_(cell, pt, 0, 0));
-        tensor = Intrepid::inverse(Intrepid::transpose(F) * F);
+        tensor = Intrepid::inverseTemp(Intrepid::transpose(F) * F);
         thermal_transient_coeff_(cell, pt) = transient_coeff_;
         diffusivity = thermal_cond_(cell, pt) / (density_ * heat_capacity_)
             * tensor;
