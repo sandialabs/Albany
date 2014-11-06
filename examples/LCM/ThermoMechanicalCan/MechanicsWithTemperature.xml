@@ -16,9 +16,11 @@
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
+    </ParameterList>
+    <ParameterList name="Neumann BCs">
+      <ParameterList name="Time Dependent NBC on SS surface_1 for DOF all set P">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
-        <Parameter name="BC Values" type="Array(double)"   value="{ 0.0, 0.1 }"/>
+        <Parameter name="BC Values" type="TwoDArray(double)"   value="2x1:{ 0.0, 0.1 }"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Initial Condition">
@@ -36,7 +38,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="mech90-mesh4-base3-SI.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mech90-mesh2-base3-SI.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
