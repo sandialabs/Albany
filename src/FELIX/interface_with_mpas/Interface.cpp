@@ -38,11 +38,12 @@ Teuchos::RCP<Albany::SolverFactory> slvrfctry;
 #ifdef MPAS_USE_EPETRA
   Teuchos::RCP<const Epetra_Comm> mpiComm;
   Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
+  bool TpetraBuild = false;
 #else
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
+  bool TpetraBuild = true;
 #endif
 bool keptMesh =false;
-bool TpetraBuild = false;
 
 typedef struct TET_ {
   int verts[4];
