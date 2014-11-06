@@ -301,6 +301,22 @@ ELSE()
   SET(ALBANY_DEMO_PDES FALSE)
 ENDIF()
 
+# set optional dependency on LCM, defaults to Disabled
+OPTION(ENABLE_LCM "Flag to turn on LCM Mechanics source code" OFF)
+OPTION(ENABLE_LCM_TEST_EXES "Flag to turn on LCM Mechanics test executables" ON)
+SET(LCM_TEST_EXES FALSE)
+IF (ENABLE_LCM)
+  ADD_DEFINITIONS(-DALBANY_LCM)
+  MESSAGE("-- LCM       is Enabled, compiling with -DALBANY_LCM")
+  SET(ALBANY_LCM TRUE)
+  IF (ENABLE_LCM_TEST_EXES)
+    SET(LCM_TEST_EXES TRUE)
+  ENDIF()
+ELSE()
+  MESSAGE("-- LCM       is NOT Enabled.")
+  SET(ALBANY_LCM FALSE)
+ENDIF()
+
 # set optional dependency on ATO, defaults to Disabled
 OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
 IF (ENABLE_ATO)
@@ -325,18 +341,6 @@ IF (ENABLE_ATO)
 ELSE()
   MESSAGE("-- ATO       is NOT Enabled.")
   SET(ALBANY_ATO FALSE)
-ENDIF()
-
-
-# set optional dependency on LCM, defaults to Disabled
-OPTION(ENABLE_LCM "Flag to turn on LCM Mechanics source code" OFF)
-IF (ENABLE_LCM)
-  ADD_DEFINITIONS(-DALBANY_LCM)
-  MESSAGE("-- LCM       is Enabled, compiling with -DALBANY_LCM")
-  SET(ALBANY_LCM TRUE)
-ELSE()
-  MESSAGE("-- LCM       is NOT Enabled.")
-  SET(ALBANY_LCM FALSE)
 ENDIF()
 
 # set optional dependency on Peridigm peridynamics code, defaults to Disabled

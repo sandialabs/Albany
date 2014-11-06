@@ -15,6 +15,8 @@
 
 #include <LCMPartition.h>
 
+bool TpetraBuild = false;
+
 int main(int ac, char* av[])
 {
   //

@@ -37,6 +37,8 @@
 #include "ConstitutiveModelParameters.hpp"
 #include "BifurcationCheck.hpp"
 
+bool TpetraBuild = false;
+
 int main(int ac, char* av[])
 {
 

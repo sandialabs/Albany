@@ -1,5 +1,5 @@
 # Instructional Trilinos configuration script for Tpetra-enabled Albany.
-build
+
 # Modify these paths for your system.
 TRILINSTALLDIR=../install
 BOOSTDIR=/usr/local

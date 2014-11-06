@@ -10,6 +10,8 @@
 #include "topology/Topology.h"
 #include "topology/Topology_Utils.h"
 
+bool TpetraBuild = false;
+
 int main(int ac, char* av[])
 {
 

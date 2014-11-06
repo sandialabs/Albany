@@ -19,6 +19,8 @@ typedef stk::mesh::Entity Entity;
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 
+bool TpetraBuild = false;
+
 int main(int ac, char* av[])
 {
 
