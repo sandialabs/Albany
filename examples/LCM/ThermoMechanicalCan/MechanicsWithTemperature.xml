@@ -13,17 +13,13 @@
     </ParameterList-->
 
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS NodeSet0 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet0 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF Z" type="double" value="0.0"/>
-      <ParameterList name="Time Dependent DBC on NS NodeSet1 for DOF X">
+      <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
         <Parameter name="BC Values" type="Array(double)"   value="{ 0.0, 0.1 }"/>
       </ParameterList>
-      <Parameter name="DBC on NS NodeSet2 for DOF Y" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet5 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
@@ -39,10 +35,8 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="3"/>
-    <Parameter name="2D Elements" type="int" value="3"/>
-    <Parameter name="3D Elements" type="int" value="3"/>
-    <Parameter name="Method" type="string" value="STK3D"/>
+    <Parameter name="Method" type="string" value="Exodus"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mech90-mesh4-base3-SI.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
