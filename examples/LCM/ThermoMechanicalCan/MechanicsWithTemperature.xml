@@ -19,8 +19,8 @@
     </ParameterList>
     <ParameterList name="Neumann BCs">
       <ParameterList name="Time Dependent NBC on SS surface_1 for DOF all set P">
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.01 }"/>
-        <Parameter name="BC Values" type="TwoDArray(double)"   value="2x1:{ 0.0, 0.1 }"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 985.2, 3600 }"/>
+        <Parameter name="BC Values" type="TwoDArray(double)"   value="3x1:{ 0.0, 7152483.32, 26135749.04 }"/>
       </ParameterList>
     </ParameterList>
     <ParameterList name="Initial Condition">
@@ -51,8 +51,8 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Num Time Steps" type="int" value="100"/>
-      <Parameter name="Final Time" type="double" value="1.0"/>
+      <Parameter name="Num Time Steps" type="int" value="3600"/>
+      <Parameter name="Final Time" type="double" value="3600"/>
       <Parameter name="Max State Error" type="double" value="1e-4"/>
       <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">
@@ -82,9 +82,9 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="200"/>         
+	<Parameter  name="Max Steps" type="int" value="3600"/>         
 	<!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-	<Parameter  name="Max Value" type="double" value="0.01"/>
+	<Parameter  name="Max Value" type="double" value="3600"/>
 	<!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -97,7 +97,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="0.001"/> 
+	<Parameter  name="Initial Step Size" type="double" value="1.000"/> 
 	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
@@ -121,7 +121,7 @@
 		      <Parameter name="Size of Krylov Subspace" type="int" value="200"/>
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		    </ParameterList>
-		    <Parameter name="Max Iterations" type="int" value="200"/>
+		    <Parameter name="Max Iterations" type="int" value="3600"/>
 		    <Parameter name="Tolerance" type="double" value="1e-9"/>
 		  </ParameterList>
 		</ParameterList>
