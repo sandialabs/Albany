@@ -46,6 +46,6 @@ DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set
 TRILINOS_BRANCH=master
-ALBANY_BRANCH=temporary_tpetra_newSTK
+ALBANY_BRANCH=master
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib/

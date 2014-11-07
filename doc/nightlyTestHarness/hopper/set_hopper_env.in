@@ -33,6 +33,6 @@ CISMOUTDIR=$NIGHTLYDIR/Cism_out
 
 # Must be set
 TRILINOS_BRANCH=master
-ALBANY_BRANCH=temporary_tpetra_newSTK
+ALBANY_BRANCH=master
 CISM_BRANCH=felix_interface
 
