@@ -148,7 +148,7 @@ private:
   class LumpedMassMatrix;
   Teuchos::RCP<MassMatrix> mass_matrix_;
 
-  void fillRHS(const typename Traits::EvalData& workset);
+  void fillRHS(const typename Traits::EvalData workset);
 };
 
 } // namespace LCM

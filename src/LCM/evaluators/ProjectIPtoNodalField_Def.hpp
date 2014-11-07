@@ -126,7 +126,7 @@ public:
 
   virtual ~MassMatrix(){}
 
-  virtual void fill(const typename Traits::EvalData& workset) = 0;
+  virtual void fill(const typename Traits::EvalData workset) = 0;
 
   Teuchos::RCP<Tpetra_CrsMatrix>& matrix () { return matrix_; }
 
@@ -148,7 +148,7 @@ public:
   FullMassMatrix (
     const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
     : MassMatrix(base) {}
-  virtual void fill (const typename Traits::EvalData& workset) {
+  virtual void fill (const typename Traits::EvalData workset) {
     const std::size_t
       num_nodes = this->base_->num_nodes_,
       num_pts   = this->base_->num_pts_;
@@ -189,7 +189,7 @@ public:
   LumpedMassMatrix (
     const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
     : MassMatrix(base) {}
-  virtual void fill (const typename Traits::EvalData& workset) {
+  virtual void fill (const typename Traits::EvalData workset) {
     const std::size_t
       num_nodes = this->base_->num_nodes_,
       num_pts   = this->base_->num_pts_;
@@ -405,7 +405,7 @@ preEvaluate (typename Traits::PreEvalData workset)
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-fillRHS (const typename Traits::EvalData& workset)
+fillRHS (const typename Traits::EvalData workset)
 {
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
