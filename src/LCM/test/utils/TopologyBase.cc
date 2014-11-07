@@ -158,19 +158,20 @@ int main(int ac, char* av[])
 
   }
 
-  topology.set_fracture_criterion(abstract_fracture_criterion);
+#if defined(DEBUG_LCM_TOPOLOGY)
+  std::string
+  gviz_filename = LCM::parallelize_string("initial") + ".dot";
+  topology.outputToGraphviz(gviz_filename);
+#endif
 
-  //topology.createBoundary();
-  //topology.outputBoundary();
+  topology.set_fracture_criterion(abstract_fracture_criterion);
 
   topology.setEntitiesOpen();
 
   topology.set_output_type(plot_style);
 
 #if defined(DEBUG_LCM_TOPOLOGY)
-  std::string
   gviz_filename = LCM::parallelize_string("before") + ".dot";
-
   topology.outputToGraphviz(gviz_filename);
 #endif
   std::string
