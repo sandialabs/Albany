@@ -73,9 +73,11 @@ double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
 double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
 long nCellsActive;
 long debug_output_verbosity;
+long use_glissade_surf_height_grad;
 int nNodes, nElementsActive; 
 int nElementsActivePrevious = 0;  
 double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr;
+double* dsurf_height_at_nodes_dx_Ptr, *dsurf_height_at_nodes_dy_Ptr; 
 double *flwa_at_active_elements_Ptr; 
 int * global_node_id_owned_map_Ptr; 
 int * global_element_conn_active_Ptr; 
@@ -231,6 +233,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
   
     //IK, 4/4/14: get verbosity level specified in CISM *.config file
     debug_output_verbosity = *(ftg_ptr -> getLongVar("debug_output_verbosity","options"));
+    use_glissade_surf_height_grad = *(ftg_ptr -> getLongVar("use_glissade_surf_height_grad","options"));
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver..." << std::endl;
 
 
@@ -296,6 +299,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() << ", nCellsActive = " << nCellsActive <<  std::endl;
     xyz_at_nodes_Ptr = ftg_ptr -> getDoubleVar("xyz_at_nodes","connectivity"); 
     surf_height_at_nodes_Ptr = ftg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
+    dsurf_height_at_nodes_dx_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dx","connectivity"); 
+    dsurf_height_at_nodes_dy_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dy","connectivity"); 
     beta_at_nodes_Ptr = ftg_ptr -> getDoubleVar("beta_at_nodes","connectivity");
     flwa_at_active_elements_Ptr = ftg_ptr -> getDoubleVar("flwa_at_active_elements","connectivity"); 
     global_node_id_owned_map_Ptr = ftg_ptr -> getInt4Var("global_node_id_owned_map","connectivity");  
@@ -318,14 +323,17 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
     int neq = 2; //number of equations - 2 for FO Stokes
     //IK, 11/14/13, debug output: check that pointers that are passed from CISM are not null 
-    //std::cout << "DEBUG: xyz_at_nodes_Ptr:" << xyz_at_nodes_Ptr << std::endl; 
-    //std::cout << "DEBUG: surf_height_at_nodes_Ptr:" << surf_height_at_nodes_Ptr << std::endl; 
-    //std::cout << "DEBUG: beta_at_nodes_Ptr:" << beta_at_nodes_Ptr << std::endl; 
-    //std::cout << "DEBUG: flwa_at_active_elements_Ptr:" << flwa_at_active_elements_Ptr << std::endl; 
-    //std::cout << "DEBUG: global_node_id_owned_map_Ptr:" << global_node_id_owned_map_Ptr << std::endl; 
-    //std::cout << "DEBUG: global_element_conn_active_Ptr:" << global_element_conn_active_Ptr << std::endl; 
-    //std::cout << "DEBUG: global_basal_face_conn_active_Ptr:" << global_basal_face_conn_active_Ptr << std::endl; 
-    //std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr:" << global_basal_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: xyz_at_nodes_Ptr: " << xyz_at_nodes_Ptr << std::endl; 
+    //std::cout << "DEBUG: surf_height_at_nodes_Ptr: " << surf_height_at_nodes_Ptr << std::endl; 
+    //std::cout << "DEBUG: dsurf_height_at_nodes_dx_Ptr: " << dsurf_height_at_nodes_dx_Ptr << std::endl; 
+    //std::cout << "DEBUG: dsurf_height_at_nodes_dy_Ptr: " << dsurf_height_at_nodes_dy_Ptr << std::endl; 
+    //std::cout << "DEBUG: use_glissade_surf_height_grad: " << use_glissade_surf_height_grad << std::endl; 
+    //std::cout << "DEBUG: beta_at_nodes_Ptr: " << beta_at_nodes_Ptr << std::endl; 
+    //std::cout << "DEBUG: flwa_at_active_elements_Ptr: " << flwa_at_active_elements_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_node_id_owned_map_Ptr: " << global_node_id_owned_map_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_element_conn_active_Ptr: " << global_element_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_basal_face_conn_active_Ptr: " << global_basal_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr: " << global_basal_face_id_active_owned_map_Ptr << std::endl;
 
     nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh (on each processor) 
     nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
