@@ -31,6 +31,8 @@ namespace Albany {
                   const int * global_basal_face_conn_active_Ptr, 
                   const double * beta_at_nodes_Ptr, 
                   const double * surf_height_at_nodes_Ptr, 
+                  const double * dsurf_height_at_nodes_dx_Ptr, 
+                  const double * dsurf_height_at_nodes_dy_Ptr, 
                   const double * flwa_at_active_elements_Ptr,
                   const int nNodes, const int nElementsActive, 
                   const int nCellsActive, const int verbosity); 
@@ -80,7 +82,8 @@ namespace Albany {
     int NumEles; //number of elements
     int NumBasalFaces; //number of faces on basal boundary
     double (*xyz)[3]; //hard-coded for 3D for now 
-    double* sh;
+    double* sh; //surface height
+    double (*shGrad)[2]; //surface height gradient (ds/dx, ds/dy)
     double* beta;
     GO* globalElesID; //int array to define element map 
     GO* globalNodesID; //int array to define node map 
@@ -89,6 +92,7 @@ namespace Albany {
     double *flwa; //double array that gives value of flow factor  
     double *temper; //double array that gives value of flow factor  
     bool have_sh; // Does surface height data exist?
+    bool have_shGrad; // Does surface height gradient data exist?
     bool have_bf; // Does basal face connectivity file exist?
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_temp; // Does temperature file exist?

@@ -41,6 +41,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const int * global_basal_face_conn_active_Ptr,
                   const double * beta_at_nodes_Ptr,
                   const double * surf_height_at_nodes_Ptr,
+                  const double * dsurf_height_at_nodes_dx_Ptr,
+                  const double * dsurf_height_at_nodes_dy_Ptr,
                   const double * flwa_at_active_elements_Ptr,
                   const int nNodes, const int nElementsActive,
                   const int nCellsActive, const int verbosity) :
@@ -72,6 +74,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
   else have_sh = false;
+  if (dsurf_height_at_nodes_dx_Ptr != NULL && dsurf_height_at_nodes_dy_Ptr != NULL) have_shGrad = true;
+  else have_shGrad = false;
   if (global_basal_face_active_owned_map_Ptr != NULL) have_bf = true;
   else have_bf = false;
   if (flwa_at_active_elements_Ptr != NULL) have_flwa = true;

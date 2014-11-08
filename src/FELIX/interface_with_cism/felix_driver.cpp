@@ -341,9 +341,14 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 
     albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
     albanyApp->initialSetUp(parameterList);
-    meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, mpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr, global_element_id_active_owned_map_Ptr, 
-                                                           global_element_conn_active_Ptr, global_basal_face_id_active_owned_map_Ptr, global_basal_face_conn_active_Ptr, 
-                                                           beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, flwa_at_active_elements_Ptr, nNodes, nElementsActive, nCellsActive, 
+    meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, mpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr, 
+                                                           global_element_id_active_owned_map_Ptr, 
+                                                           global_element_conn_active_Ptr, global_basal_face_id_active_owned_map_Ptr, 
+                                                           global_basal_face_conn_active_Ptr, 
+                                                           beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, 
+                                                           dsurf_height_at_nodes_dx_Ptr, dsurf_height_at_nodes_dy_Ptr,
+                                                           flwa_at_active_elements_Ptr, 
+                                                           nNodes, nElementsActive, nCellsActive, 
                                                            debug_output_verbosity));
 
     albanyApp->createMeshSpecs(meshStruct);
