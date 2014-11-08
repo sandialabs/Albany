@@ -84,7 +84,7 @@ namespace LCM {
     // Compute DefGrad tensor from displacement gradient
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        gradu.fill( &grad_u_(cell,pt,0,0) );
+        gradu.fill( grad_u_,cell,pt,-1 );
         F = I + gradu;
         //Irina TOFIX intrepid
         //j_(cell,pt) = Intrepid::det(F);
@@ -110,7 +110,7 @@ namespace LCM {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
           weighted_jbar = 
             std::exp( (1-alpha_) * jbar + alpha_ * std::log( j_(cell,pt) ) );
-          F.fill( &def_grad_(cell,pt,0,0) );
+          F.fill( def_grad_,cell,pt,-1 );
           F = F*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
           j_(cell,pt) = weighted_jbar;
           for (std::size_t i(0); i < num_dims_; ++i) {
@@ -125,7 +125,7 @@ namespace LCM {
     if (needs_strain_) {
       for (std::size_t cell(0); cell < workset.numCells; ++cell) {
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
-          gradu.fill( &grad_u_(cell,pt,0,0) );
+          gradu.fill( grad_u_,cell,pt,-1 );
           strain = 0.5 * (gradu + Intrepid::transpose(gradu));
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {

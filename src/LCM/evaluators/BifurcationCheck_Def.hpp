@@ -58,7 +58,7 @@ namespace LCM {
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
 
-        tangent.fill( &tangent_(cell,pt,0,0,0,0) );
+        tangent.fill( tangent_,cell,pt,-1,-1,-1) );
         ellipticity_flag_(cell,pt) = 0;
 
         // Intrepid::check_ellipticity(tan);

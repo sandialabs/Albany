@@ -60,7 +60,7 @@ computeState(typename Traits::EvalData workset,
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      F.fill(&defGrad(cell, pt, 0, 0));
+      F.fill(defGrad,cell, pt, -1);
       C = transpose(F) * F;
       S = 2.0 * (c1_ + c2_ * Intrepid::I1(C)) * I - 2.0 * c2_ * C
           + (2.0 * c_ * J(cell, pt) * (J(cell, pt) - 1.0) - d)

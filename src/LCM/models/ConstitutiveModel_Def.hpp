@@ -65,7 +65,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     volume = pbar = 0.0;
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      sig.fill(&stress(cell,pt,0,0));
+      sig.fill(stress,cell,pt,-1);
       pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
       volume += weights_(cell,pt);
     }
@@ -73,7 +73,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
     pbar /= volume;
 
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      sig.fill(&stress(cell,pt,0,0));
+      sig.fill(stress,cell,pt,-1);
       p = (1./num_dims_) * Intrepid::trace(sig);
       sig += (pbar - p)*I;
 

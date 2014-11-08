@@ -83,8 +83,8 @@ evaluateFields(typename Traits::EvalData workset)
         residual_(cell, node) = 0.0;
       }
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        p_grad.fill( &pressure_grad_(cell,pt,0) );
-        sigma.fill( &stress_(cell,pt,0,0) );
+        p_grad.fill( pressure_grad_,cell,pt );
+        sigma.fill( stress_,cell,pt,-1);
         ScalarT dUdJ = (1.0/3.0) * Intrepid::trace(sigma);
         for (std::size_t node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,pt) *
@@ -113,8 +113,8 @@ evaluateFields(typename Traits::EvalData workset)
         residual_(cell, node) = 0.0;
       }
       for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-        p_grad.fill( &pressure_grad_(cell,pt,0) );
-        sigma.fill( &stress_(cell,pt,0,0) );
+        p_grad.fill( pressure_grad_,cell,pt );
+        sigma.fill( stress_,cell,pt,-1 );
         ScalarT dUdJ = (1.0/3.0) * Intrepid::trace(sigma);
         for (std::size_t node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,pt) *

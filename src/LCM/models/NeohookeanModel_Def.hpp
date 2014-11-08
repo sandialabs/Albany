@@ -86,7 +86,7 @@ computeState(typename Traits::EvalData workset,
       Jm53 = std::pow(J(cell, pt), -5. / 3.);
       Jm23 = Jm53 * J(cell, pt);
 
-      F.fill(&def_grad(cell, pt, 0, 0));
+      F.fill(def_grad,cell, pt, -1);
       b = F * transpose(F);
       mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid::trace(b);
 
@@ -136,9 +136,9 @@ computeState(typename Traits::EvalData workset,
   if (have_temperature_) {
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        F.fill(&def_grad(cell,pt,0,0));
+        F.fill(def_grad,cell,pt,-1);
         ScalarT J = Intrepid::det(F);
-        sigma.fill(&stress(cell,pt,0,0));
+        sigma.fill(stress,cell,pt,-1);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
 

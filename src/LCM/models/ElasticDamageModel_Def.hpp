@@ -123,7 +123,7 @@ computeState(typename Traits::EvalData workset,
           / (1.0 - 2.0 * poissons_ratio(cell, pt));
 
       // small strain tensor
-      epsilon.fill(&strain(cell, pt, 0, 0));
+      epsilon.fill(strain,cell, pt, -1);
 
       // undamaged elasticity tensor
       Ce = lame * id3 + 2.0 * mu * id4;

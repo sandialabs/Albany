@@ -152,7 +152,7 @@ computeState(typename Traits::EvalData workset,
       Y = yield_strength(cell, pt);
 
       // fill local tensors
-      F.fill(&def_grad(cell, pt, 0, 0));
+      F.fill(def_grad,cell, pt, -1);
       //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {

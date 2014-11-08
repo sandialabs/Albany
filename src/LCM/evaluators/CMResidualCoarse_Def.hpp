@@ -89,8 +89,8 @@ evaluateFields(typename Traits::EvalData workset)
        }
      }
      for (size_t pt = 0; pt < num_pts_; ++pt) {
-       F.fill(&def_grad_(cell, pt, 0, 0));
-       sig.fill(&stress_(cell, pt, 0, 0));
+       F.fill(def_grad_,cell, pt, -1 );
+       sig.fill(stress_,cell, pt, -1);
 
        // map Cauchy stress to 1st PK
        P = Intrepid::piola(F, sig);

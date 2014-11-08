@@ -246,7 +246,7 @@ namespace LCM {
 
     for (std::size_t cell(0); cell < workset.numCells; ++cell) {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
-    	  Fmech.fill( &F_(cell,pt,0,0) );
+    	  Fmech.fill( F_,cell,pt,-1 );
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {
               F_mech_(cell,pt,i,j) = Fmech(i,j);

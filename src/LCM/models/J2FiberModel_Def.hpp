@@ -252,7 +252,7 @@ computeState(typename Traits::EvalData workset,
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
       // fill local tensors
-      F.fill(&def_grad(cell, pt, 0, 0));
+      F.fill(def_grad,cell, pt, -1);
       //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
