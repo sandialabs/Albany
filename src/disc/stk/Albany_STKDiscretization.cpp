@@ -52,6 +52,8 @@ extern "C" {
 
 const double pi = 3.1415926535897932385;
 
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
+
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
@@ -467,19 +469,44 @@ Albany::STKDiscretization::setupMLCoords()
     if (writeCoordsToMMFile == true) {
       //IK, 10/29/13: neet to convert to tpetra!
       if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
-      //Writing of coordinates to MatrixMarket file for Ray
+      int numMyElements = (node_mapT->getComm()->getRank() == 0) ? node_mapT->getGlobalNumElements() : 0;
+      Teuchos::RCP<Tpetra_Import> importOperatorT;
+      Teuchos::RCP<Tpetra_Map> serial_mapT;
       Teuchos::ArrayView<ST> xxAV = Teuchos::arrayView(xx, numOwnedNodes);
       Teuchos::RCP<Tpetra_Vector> xCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, xxAV));
-      Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
+      //Writing of coordinates to MatrixMarket file for Ray
+      if (node_mapT->getComm()->getSize() > 1) {
+        serial_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, numMyElements, 0, node_mapT->getComm()));
+        //create importer from parallel map to serial map and populate serial solution xfinal_serial
+        importOperatorT = Teuchos::rcp(new Tpetra_Import(node_mapT, serial_mapT));
+        //Writing of coordinates to MatrixMarket file for Ray
+        Teuchos::RCP<Tpetra_Vector> xCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
+        xCoords_serialT->doImport(*xCoordsT, *importOperatorT, Tpetra::INSERT);
+        Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoords_serialT);
+      }
+      else
+        Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
       if (yy != NULL) {
         Teuchos::ArrayView<ST> yyAV = Teuchos::arrayView(yy, numOwnedNodes);
-        Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));
-        Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
+        Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));  
+        if (node_mapT->getComm()->getSize() > 1) {
+          Teuchos::RCP<Tpetra_Vector> yCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
+          yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
+          Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoords_serialT);
+        }
+        else 
+          Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
       }
       if (zz != NULL){
         Teuchos::ArrayView<ST> zzAV = Teuchos::arrayView(zz, numOwnedNodes);
         Teuchos::RCP<Tpetra_Vector> zCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, zzAV));
-        Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoordsT);
+        if (node_mapT->getComm()->getSize() > 1) {
+          Teuchos::RCP<Tpetra_Vector> zCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
+          zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
+          Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoords_serialT);
+        }
+        else 
+          Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoordsT);
       }
     }
     rigidBodyModes->informML();
