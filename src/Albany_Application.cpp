@@ -623,6 +623,28 @@ init_sg(const RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
 }
 #endif //ALBANY_SG_MP
 
+namespace {
+//amb-nfm I think right now there is some confusion about nfm. Long ago, nfm was
+// like dfm, just a single field manager. Then it became an array like fm. At
+// that time, it may have been true that nfm was indexed just like fm, using
+// wsPhysIndex. However, it is clear at present (7 Nov 2014) that nfm is
+// definitely not indexed like fm. As an example, compare nfm in
+// Albany::MechanicsProblem::constructNeumannEvaluators and fm in
+// Albany::MechanicsProblem::buildProblem. For now, I'm going to keep nfm as an
+// array, but this this new function is a wrapper around the unclear intended
+// behavior.
+inline Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> >&
+deref_nfm (
+  Teuchos::ArrayRCP<Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > >& nfm,
+  const Albany::WorksetArray<int>::type& wsPhysIndex, int ws)
+{
+  return
+    nfm.size() == 1 ?     // Currently, all problems seem to have one nfm ...
+    nfm[0] :              // ... hence this is the intended behavior ...
+    nfm[wsPhysIndex[ws]]; // ... and this is not, but may one day be again.
+}
+} // namespace
+
 void
 Albany::Application::
 computeGlobalResidualImplT(
@@ -711,7 +733,7 @@ computeGlobalResidualImplT(
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
       if (nfm!=Teuchos::null)
-         nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+         deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
   }
 
@@ -944,7 +966,7 @@ computeGlobalJacobianImplT(const double alpha,
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
       if (Teuchos::nonnull(nfm))
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
     }
   }
 
@@ -1411,7 +1433,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
     }
   }
 
@@ -1711,7 +1733,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::DistParamDeriv>(workset);
     }
   }
 
@@ -2001,7 +2023,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
     }
   }
 
@@ -2176,7 +2198,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
     }
   }
 
@@ -2440,7 +2462,7 @@ computeGlobalSGTangent(
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
     }
   }
 
@@ -2685,7 +2707,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
     }
   }
 
@@ -2854,7 +2876,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
     }
   }
 
@@ -3124,7 +3146,7 @@ computeGlobalMPTangent(
       // FillType template argument used to specialize Sacado
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
       if (nfm!=Teuchos::null)
-        nfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
+        deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
     }
   }
 
