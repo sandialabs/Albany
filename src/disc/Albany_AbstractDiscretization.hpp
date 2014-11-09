@@ -121,7 +121,7 @@ class AbstractDiscretization {
     //! Get overlapped Node map
     //dp-convert virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
 
-    //! Get Node set lists (typdef in Albany_Discretization.hpp)
+    //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
 
@@ -142,9 +142,13 @@ class AbstractDiscretization {
 #endif
 
     //! Retrieve coodinate ptr_field (ws, el, node)
-    virtual Teuchos::ArrayRCP<double>&  getCoordinates() const = 0;
-    virtual void setCoordinates(Teuchos::ArrayRCP<double>& c) const {}
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
+
+    //! Get coordinates (overlap map)
+    virtual const Teuchos::ArrayRCP<double>& getCoordinates() const = 0;
+    //! Set coordinates (overlap map)
+    virtual void setCoordinates(const Teuchos::ArrayRCP<const double>& c) = 0;
+
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const = 0;
 
     //! Print the coords for mesh debugging
@@ -170,9 +174,9 @@ class AbstractDiscretization {
 
 #ifdef ALBANY_EPETRA
     //! Get solution vector from mesh database
-    virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const = 0;
+    virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const = 0;
 #endif
-    virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const = 0;
+    virtual Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const = 0;
 
 #ifdef ALBANY_EPETRA
     //! Get field vector from mesh database

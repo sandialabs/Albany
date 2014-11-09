@@ -189,7 +189,7 @@ AlbPUMI::FMDBDiscretization<Output>::printCoords() const
 }
 
 template<class Output>
-Teuchos::ArrayRCP<double>&
+const Teuchos::ArrayRCP<double>&
 AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 {
   coordinates.resize(3 * numOverlapNodes);
@@ -202,7 +202,7 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
-    Teuchos::ArrayRCP<double>& c)
+    const Teuchos::ArrayRCP<const double>& c)
 {
   apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
   for (size_t i=0; i < nodes.getSize(); ++i)
@@ -474,8 +474,8 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
       const ST* soln, const double time_value,
-      const bool overlapped){
-
+      const bool overlapped)
+{
   if (solNames.size() == 0)
     this->setField("solution",soln,overlapped);
   else
@@ -484,7 +484,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
   fmdbMeshStruct->solutionInitialized = true;
 
   // Skip this write unless the proper interval has been reached
-  if(outputInterval++ % fmdbMeshStruct->outputInterval)
+  if (outputInterval++ % fmdbMeshStruct->outputInterval)
     return;
 
   outputInterval = 0;
@@ -498,7 +498,8 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
   if (mapT->getComm()->getRank()==0) {
     *out << "AlbPUMI::FMDBDiscretization::writeSolution: writing time " << time_value;
     if (time_label != time_value) *out << " with label " << time_label;
-    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
+    *out << " to index " << out_step << " in file "
+         << fmdbMeshStruct->outputFileName << std::endl;
   }
 
   apf::Field* f;
@@ -508,7 +509,6 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
   copyQPStatesToAPF(f,fs);
   meshOutput.writeFile(time_label);
   removeQPStatesFromAPF();
-
 }
 
 template<class Output>
@@ -567,18 +567,19 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& resid
 
 template<class Output>
 Teuchos::RCP<Tpetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT() const
+AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
+  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(
+    new Tpetra_Vector(overlapped ? overlap_mapT : mapT));
   {
     Teuchos::ArrayRCP<ST> data = solnT->get1dViewNonConst();
 
     if (fmdbMeshStruct->solutionInitialized) {
       if (solNames.size() == 0)
-        this->getField("solution",&(data[0]),/*overlapped=*/false);
+        this->getField("solution",&(data[0]),overlapped);
       else
-        this->getSplitFields(solNames,solIndex,&(data[0]),/*overlapped=*/false);
+        this->getSplitFields(solNames,solIndex,&(data[0]),overlapped);
     }
     else if ( ! PCU_Comm_Self())
       *out <<__func__<<": uninit field" << std::endl;
@@ -589,16 +590,17 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT() const
 #ifdef ALBANY_EPETRA
 template<class Output>
 Teuchos::RCP<Epetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
+AlbPUMI::FMDBDiscretization<Output>::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
+  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(
+    new Epetra_Vector(overlapped ? *overlap_map : *map));
 
   if (fmdbMeshStruct->solutionInitialized) {
     if (solNames.size() == 0)
-      this->getField("solution",&((*soln)[0]),/*overlapped=*/false);
+      this->getField("solution",&((*soln)[0]),overlapped);
     else
-      this->getSplitFields(solNames,solIndex,&((*soln)[0]),/*overlapped=*/false);
+      this->getSplitFields(solNames,solIndex,&((*soln)[0]),overlapped);
   }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
@@ -892,9 +894,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       // loop over local nodes
 
       for (int j=0; j < nodes_per_element; j++) {
-
-        GO node_gid = nodeIDs[j];
-        int node_lid = overlap_node_mapT->getLocalElement(node_gid);
+        const GO node_gid = nodeIDs[j];
+        const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "FMDB_Disc: node_lid out of range " << node_lid << std::endl);
@@ -905,7 +906,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
         for (std::size_t eq=0; eq < neq; eq++)
           wsElNodeEqID[b][i][j][eq] = getDOF(node_lid,eq);
-
       }
     }
   }

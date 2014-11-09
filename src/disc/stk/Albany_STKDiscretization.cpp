@@ -229,7 +229,7 @@ std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j 
 }
 
 
-Teuchos::ArrayRCP<double>&
+const Teuchos::ArrayRCP<double>&
 Albany::STKDiscretization::getCoordinates() const
 {
   // Coordinates are computed here, and not precomputed,
@@ -248,6 +248,14 @@ Albany::STKDiscretization::getCoordinates() const
   }
 
   return coordinates;
+}
+
+void Albany::STKDiscretization::
+setCoordinates(const Teuchos::ArrayRCP<const double>& c)
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    true, std::logic_error,
+    "STKDiscretization::setCoordinates is not implemented.");
 }
 
 //The function transformMesh() maps a unit cube domain by applying the transformation
@@ -727,7 +735,7 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 
 #ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Vector>
-Albany::STKDiscretization::getSolutionField() const
+Albany::STKDiscretization::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::ArrayView<const GO> indicesAV = mapT->getNodeElementList();
@@ -741,17 +749,17 @@ Albany::STKDiscretization::getSolutionField() const
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
 #endif
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
-  this->getSolutionField(*soln);
+  this->getSolutionField(*soln, overlapped);
   return soln;
 }
 #endif
 
 Teuchos::RCP<Tpetra_Vector>
-Albany::STKDiscretization::getSolutionFieldT() const
+Albany::STKDiscretization::getSolutionFieldT(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
-  this->getSolutionFieldT(*solnT);
+  this->getSolutionFieldT(*solnT, overlapped);
   return solnT;
 }
 
@@ -821,8 +829,9 @@ Albany::STKDiscretization::getSolutionFieldHistoryImpl(Epetra_MultiVector &resul
 }
 
 void
-Albany::STKDiscretization::getSolutionField(Epetra_Vector &result) const
+Albany::STKDiscretization::getSolutionField(Epetra_Vector &result, const bool overlapped) const
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
@@ -831,13 +840,11 @@ Albany::STKDiscretization::getSolutionField(Epetra_Vector &result) const
 
   Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->fillSolnVector(result, locally_owned, node_map);
-
 }
 
 void
 Albany::STKDiscretization::getField(Epetra_Vector &result, const std::string& name) const
 {
-
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
@@ -856,15 +863,16 @@ Albany::STKDiscretization::getField(Epetra_Vector &result, const std::string& na
 #endif // ALBANY_EPETRA
 
 void
-Albany::STKDiscretization::getSolutionFieldT(Tpetra_Vector &resultT) const
+Albany::STKDiscretization::getSolutionFieldT(Tpetra_Vector &resultT, const bool overlapped) const
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
+
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
   container->fillSolnVectorT(resultT, locally_owned, node_mapT);
-
 }
 
 /*****************************************************************/

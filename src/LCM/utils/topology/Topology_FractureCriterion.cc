@@ -151,7 +151,7 @@ FractureCriterionTraction::computeNormals()
   std::vector<Intrepid::Vector<double> >
   coordinates(number_nodes);
 
-  Teuchos::ArrayRCP<double> &
+  const Teuchos::ArrayRCP<double> &
   node_coordinates = get_stk_discretization().getCoordinates();
 
   for (EntityVectorIndex i = 0; i < number_nodes; ++i) {

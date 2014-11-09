@@ -60,7 +60,7 @@ computeBCs(
       *(stk_discretization->getSTKMeshStruct())
   );
 
-  Teuchos::ArrayRCP<double> &
+  const Teuchos::ArrayRCP<double> &
   coordinates = stk_discretization->getCoordinates();
 
   std::string const

@@ -80,8 +80,8 @@ template<class Output>
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
-    Teuchos::ArrayRCP<double>& getCoordinates() const;
-    void setCoordinates(Teuchos::ArrayRCP<double>& c);
+    const Teuchos::ArrayRCP<double>& getCoordinates() const;
+    void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
@@ -116,7 +116,7 @@ template<class Output>
     void writeAnySolution(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
-    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -194,7 +194,7 @@ template<class Output>
       abort();
       return Teuchos::RCP<const Epetra_Map>();
     }
-    virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
     virtual void setResidualField(const Epetra_Vector& residual);
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
     void setSolutionField(const Epetra_Vector&) {

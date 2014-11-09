@@ -156,7 +156,8 @@ namespace Albany {
 #endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
-    Teuchos::ArrayRCP<double>& getCoordinates() const;
+    const Teuchos::ArrayRCP<double>& getCoordinates() const;
+    void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
@@ -185,10 +186,10 @@ namespace Albany {
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
 
 #ifdef ALBANY_EPETRA 
-    Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    Teuchos::RCP<Epetra_Vector> getSolutionField(const bool overlapped=false) const;
 #endif
     //Tpetra analog
-    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
 #ifdef ALBANY_EPETRA
@@ -263,10 +264,10 @@ namespace Albany {
 
 #ifdef ALBANY_EPETRA
     // Copy values from STK Mesh field to given Epetra_Vector
-    void getSolutionField(Epetra_Vector &result) const;
+    void getSolutionField(Epetra_Vector &result, bool overlapped=false) const;
 #endif
     // Copy values from STK Mesh field to given Tpetra_Vector
-    void getSolutionFieldT(Tpetra_Vector &resultT) const;
+    void getSolutionFieldT(Tpetra_Vector &resultT, bool overlapped=false) const;
 
 #ifdef ALBANY_EPETRA
     //! Copy field from STK Mesh field to given Epetra_Vector
