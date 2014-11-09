@@ -209,56 +209,6 @@ AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
     apf::setComponents(f,nodes[i].entity,nodes[i].node,&(c[3*i]));
 }
 
-// FELIX uninitialized variables (FIXME)
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
-{
-  return sHeight;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
-AlbPUMI::FMDBDiscretization<Output>::getTemperature() const
-{
-  return temperature;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getBasalFriction() const
-{
-  return basalFriction;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getThickness() const
-{
-  return thickness;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
-AlbPUMI::FMDBDiscretization<Output>::getFlowFactor() const
-{
-  return flowFactor;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getSurfaceVelocity() const
-{
-  return surfaceVelocity;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getVelocityRMS() const
-{
-  return velocityRMS;
-}
-
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
