@@ -21,6 +21,6 @@ fi
 
 echo "    Finished Albany cmake, starting make" ; date
 
-/usr/bin/make -j 4 Albany > $ALBOUTDIR/albany_make.out 2>&1
+/usr/bin/make -j 4 Albany AlbanyT > $ALBOUTDIR/albany_make.out 2>&1
 
 echo "    Finished Albany make" ; date
