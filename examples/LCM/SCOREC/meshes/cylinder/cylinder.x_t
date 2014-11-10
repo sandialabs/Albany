@@ -1,0 +1,44 @@
+**ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz**************************
+**PARASOLID !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~0123456789**************************
+**PART1;
+MC=SUSE Linux-64;
+MC_MODEL=genuineintel family 6 model 13 stepping 7, intel(r) core(tm) i7-3820 cpu @ 3.60ghz;
+MC_ID=balderdash;
+OS=linux;
+OS_RELEASE=2.6.32-5-amd64 #1 smp sat jul 12 16:47:57 utc 2014;
+FRU=mdc_ugii_v7.0_djl_can_vrh;
+APPL=unigraphics;
+SITE=unknown;
+USER=granzb;
+FORMAT=text;
+GUISE=transmit;
+KEY=cylinder;
+FILE=/users/granzb/cylinder.x_t;
+DATE=10-nov-2014;
+**PART2;
+SCH=SCH_2400143_20000;
+USFLD_SIZE=0;
+**PART3;
+**END_OF_HEADER*****************************************************************
+T51 : TRANSMIT FILE created by modeller version 240014323 SCH_2400143_20000_1300
+6186 0 12 27 CCCCCCCCCCCCCCCCCCCCCCCA16 index_map_offset0 0 1 dA9 index_map82 0
+ A17 node_id_index_map82 0 A20 schema_embedding_map82 0 Z1 47 2 3 0 0 0 0 1e3 1e
+-8 0 0 0 1 0 1 1 4 5 6 0 7 8 0 0 0 0 0 81 255 1 2 44 9 1 10 0 0 0 11 70 11 CI9 l
+ist_type0 0 1 uI10 notransmit0 0 1 lCCCDCCDI12 finger_index0 0 1 dI12 finger_blo
+ck1012 0 CZ3 0 4 T1 0 0 3 20 1 12 12 13 255 4 30 0 1 0 13 0 0 14 0 51 255 5 29 0
+ 13 15 0 0 -0 0 2 0 0 -1 1 -1 0 0 31 255 6 24 0 16 17 0 0 +0 0 0 0 0 1 1 0 0 1 1
+9 255 7 1 0 1 14 0 18 V16 255 8 2 0 ?19 0 16 17 0 0 1 17 255 19 0 20 19 19 0 21
+ 8 0 0 +16 16 21 0 ?22 8 0 6 0 0 1 31 17 4 0 8 0 6 0 +0 0 2 0 0 1 1 0 0 1 17 22
+ 0 23 22 22 0 24 16 0 0 +15 255 23 27 0 22 13 0 17 24 0 25 24 24 0 22 16 0 0 -15
+ 25 20 0 24 26 0 14 255 26 17 27 ?0 28 25 4 15 -0 0 0 28 18 81 1 27 47 29 26 0 0
+ 30 0 31 14 28 6 30 ?26 13 20 4 32 +0 0 26 13 18 50 255 15 23 0 26 32 5 0 +0 0 0
+ 0 0 1 1 0 0 13 18 3 0 0 0 0 0 0 7 13 14 13 26 33 ?28 0 34 4 5 -0 0 28 0 18 81 1
+ 33 45 29 13 0 0 0 30 35 15 34 25 0 21 13 23 17 21 0 34 21 21 0 19 8 0 0 -80 255
+ 1 29 0 36 8001 0 0 0 0 3 5 0 0 0 FFFFTFTFFFFFFF2 81 1 30 46 29 28 0 0 33 27 37
+ 83 255 3 35 .5960784 .6666667 .6862745 83 3 37 .5960784 .6666667 .6862745 79 25
+5 15 36 SDL/TYSA_COLOUR50 32 7 0 28 0 15 0 +0 0 2 0 0 1 1 0 0 15 20 5 0 19 28 0
+ 83 3 31 .5960784 .6666667 .6862745 19 14 31 0 1 0 7 4 S74 4 CI16 index_map_offs
+et0 0 1 dCCZ20 12 3 0 0 10 2 27 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 81 2 10 43 38
+ 1 0 2 0 0 39 40 80 2 38 41 42 8004 0 0 0 0 3 5 0 0 0 FFTFFFFFFFFFFF2 3 83 1 39
+ 7830.64 84 255 8 40 Kg/Cu M 79 16 42 SDL/TYSA_DENSITY80 1 9 43 44 9000 0 0 0 0
+ 3 5 0 0 0 FFTFFFFFFFFFFF1 82 255 1 11 9 79 7 44 body_id1 0 

@@ -1,0 +1,46 @@
+**ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz**************************
+**PARASOLID !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~0123456789**************************
+**PART1;
+MC=unknown;
+MC_MODEL=unknown;
+MC_ID=unknown;
+OS=unknown;
+OS_RELEASE=unknown;
+FRU=sdl_parasolid_customer_support;
+APPL=parasolid_acceptance_tests;
+SITE=unknown;
+USER=unknown;
+FORMAT=text;
+GUISE=transmit;
+KEY=/lore/granzb/albany/examples/LCM/SCOREC/meshes/cylinder/cylinder_nat.x_t;
+FILE=/lore/granzb/albany/examples/LCM/SCOREC/meshes/cylinder/cylinder_nat.x_t;
+DATE=unknown;
+**PART2;
+SCH=SCH_2600217_25001;
+USFLD_SIZE=1;
+**PART3;
+**END_OF_HEADER*****************************************************************
+T51 : TRANSMIT FILE created by modeller version 260021723 SCH_2600217_25001_1300
+6189 1 12 29 CCCCCCCCCCCCCDI5 owner1040 0 CCCCCCCCCA16 index_map_offset0 0 1 dA9
+ index_map82 0 A17 node_id_index_map82 0 A20 schema_embedding_map82 0 A5 child12
+ 0 A14 lowest_node_id0 0 1 dZ1 47 2 3 0 0 0 0 1e3 1e-8 0 0 0 1 0 1 1 4 5 6 0 7 8
+ 0 0 0 0 0 0 0 0 81 255 1 2 44 9 1 10 0 0 0 11 0 70 11 CI9 list_type0 0 1 uI10 n
+otransmit0 0 1 lCCCDCCDI12 finger_index0 0 1 dI12 finger_block1012 0 CZ3 0 4 T1
+ 0 0 3 20 1 12 12 0 13 255 4 30 0 1 0 13 0 0 14 0 0 51 255 5 29 0 13 15 0 0 -0 0
+ 2 0 0 -1 1 -1 0 0 0 31 255 6 24 0 16 17 0 0 +0 0 0 0 0 1 1 0 0 1 0 19 8 CCCCCCC
+A5 owner12 0 Z7 1 0 1 14 0 18 V0 0 16 255 8 2 0 ?19 0 16 17 0 0 1 0 17 255 19 0
+ 20 19 19 0 21 8 0 0 +0 16 16 21 0 ?22 8 0 6 0 0 1 0 31 17 4 0 8 0 6 0 +0 0 2 0
+ 0 1 1 0 0 1 0 17 22 0 23 22 22 0 24 16 0 0 +0 15 255 23 27 0 22 13 0 0 17 24 0
+ 25 24 24 0 22 16 0 0 -0 15 25 20 0 24 26 0 0 14 255 26 17 27 ?0 28 25 4 15 -0 0
+ 0 28 18 0 81 1 27 47 29 26 0 0 30 0 31 0 14 28 6 30 ?26 13 20 4 32 +0 0 26 13 1
+8 0 50 255 15 23 0 26 32 5 0 +0 0 0 0 0 1 1 0 0 0 13 18 3 0 0 0 0 0 0 7 13 0 14
+ 13 26 33 ?28 0 34 4 5 -0 0 28 0 18 0 81 1 33 45 29 13 0 0 0 30 35 0 15 34 25 0
+ 21 13 23 0 17 21 0 34 21 21 0 19 8 0 0 -0 80 255 1 29 0 36 8001 0 0 0 0 3 5 0 0
+ 0 FFFFTFTFFFFFFF2 0 81 1 30 46 29 28 0 0 33 27 37 0 83 255 3 35 .5960784 .66666
+67 .6862745 0 83 3 37 .5960784 .6666667 .6862745 0 79 255 15 36 SDL/TYSA_COLOUR0
+ 50 32 7 0 28 0 15 0 +0 0 2 0 0 1 1 0 0 0 15 20 5 0 19 28 0 0 83 3 31 .5960784 .
+6666667 .6862745 0 19 14 31 0 1 0 7 4 S0 0 74 4 CI16 index_map_offset0 0 1 dCCZ2
+0 12 3 0 0 10 2 27 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 81 2 10 43 38 1 0 2 0 0 3
+9 40 0 80 2 38 41 42 8004 0 0 0 0 3 5 0 0 0 FFTFFFFFFFFFFF2 3 0 83 1 39 7830.64
+ 0 84 255 8 40 Kg/Cu M 0 79 16 42 SDL/TYSA_DENSITY0 80 1 9 43 44 9000 0 0 0 0 3
+ 5 0 0 0 FFTFFFFFFFFFFF1 0 82 255 1 11 9 0 79 7 44 body_id0 1 0 
