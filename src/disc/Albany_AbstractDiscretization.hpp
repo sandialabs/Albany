@@ -146,8 +146,10 @@ class AbstractDiscretization {
 
     //! Get coordinates (overlap map)
     virtual const Teuchos::ArrayRCP<double>& getCoordinates() const = 0;
-    //! Set coordinates (overlap map)
+    //! Set coordinates (overlap map) for mesh adaptation
     virtual void setCoordinates(const Teuchos::ArrayRCP<const double>& c) = 0;
+    //! Set the solution field (overlap map) to 0 for mesh adaptation
+    virtual void zeroSolutionField() = 0;
 
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const = 0;
 

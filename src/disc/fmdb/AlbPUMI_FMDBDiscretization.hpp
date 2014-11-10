@@ -69,7 +69,7 @@ template<class Output>
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
-   //! Get connectivity map from elementGID to workset
+    //! Get connectivity map from elementGID to workset
     Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
@@ -79,9 +79,13 @@ template<class Output>
     //! Get map from (Ws, El, Local Node) -> NodeGID
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
-    //! Retrieve coodinate vector (num_used_nodes * 3)
+    //! Get coordinate vector (overlap map, interleaved)
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
+    //! Set coordinate vector (overlap map, interleaved)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+    //! Zero the solution field, which is probably displacement if this method
+    //! is being called
+    void zeroSolutionField();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 

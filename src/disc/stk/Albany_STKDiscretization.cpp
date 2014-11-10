@@ -250,12 +250,20 @@ Albany::STKDiscretization::getCoordinates() const
   return coordinates;
 }
 
+// These methods were added to support mesh adaptation, which is currently
+// limited to FMDBDiscretization.
 void Albany::STKDiscretization::
 setCoordinates(const Teuchos::ArrayRCP<const double>& c)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(
     true, std::logic_error,
     "STKDiscretization::setCoordinates is not implemented.");
+}
+void Albany::STKDiscretization::zeroSolutionField()
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    true, std::logic_error,
+    "STKDiscretization::zeroSolutionField is not implemented.");
 }
 
 //The function transformMesh() maps a unit cube domain by applying the transformation

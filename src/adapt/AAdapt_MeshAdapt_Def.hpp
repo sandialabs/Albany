@@ -10,6 +10,10 @@
 #include <PCU.h>
 #include <parma.h>
 
+//amb
+#include <Teuchos_DefaultComm.hpp>
+#include <Teuchos_CommHelpers.hpp>
+
 template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
@@ -60,11 +64,50 @@ AAdapt::MeshAdapt<SizeField>::queryAdaptationCriteria(
 }
 
 namespace {
-// Set coordinates = coordinates + solution (displacements).
+typedef double ExtremumFn (const double, const double);
+inline double mymin (const double a, const double b) { return std::min(a, b); }
+inline double mymax (const double a, const double b) { return std::max(a, b); }
+
+template<ExtremumFn extremum_fn>
+void dispExtremum (
+  const Teuchos::ArrayRCP<const double>& x, const int dim,
+  const std::string& extremum_str, const Teuchos::EReductionType rt)
+{
+  double my_vals[3], global_vals[3];
+  const std::size_t nx = x.size() / dim;
+  for (std::size_t j = 0; j < dim; ++j) my_vals[j] = x[j];
+  const double* px = &x[dim];
+  for (std::size_t i = 1; i < nx; ++i) {
+    for (std::size_t j = 0; j < dim; ++j)
+      my_vals[j] = extremum_fn(my_vals[j], px[j]);
+    px += dim;
+  }
+  const Teuchos::RCP<const Teuchos::Comm<int> >
+    comm = Teuchos::DefaultComm<int>::getComm();
+  Teuchos::reduceAll(*comm, rt, dim, my_vals, global_vals);
+  if (comm->getRank() == 0) {
+    std::cout << "amb: " << extremum_str << " ";
+    for (std::size_t j = 0; j < dim; ++j) std::cout << " " << global_vals[j];
+    std::cout << std::endl;
+  }
+}
+
+void anlzCoords (
+  const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
+{
+  const Teuchos::ArrayRCP<const double>& coords = pumi_disc->getCoordinates();
+  if (coords.size() == 0) return;
+  const int dim = pumi_disc->getNumDim();
+  dispExtremum<mymin>(coords, dim, "min", Teuchos::REDUCE_MIN);
+  dispExtremum<mymax>(coords, dim, "max", Teuchos::REDUCE_MAX);
+}
+
+// Set coordinates = coordinates + solution (displacements). This routine is
+// called after the current solution's file has been written. Hence it is safe
+// to mess with coordinates and the solution.
 void updateCoordinates (
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
 {
-  std::cout << "amb: AAdapt_MeshAdapt_Def.hpp: updateCoordinates\n";
   //amb-todo Don't do work in apf::getComponents more than once/updateMesh.
   const Teuchos::ArrayRCP<const double>& coords = pumi_disc->getCoordinates();
   const int dim = pumi_disc->getNumDim();
@@ -76,15 +119,11 @@ void updateCoordinates (
   // AlbPUMI::FMDBDiscretization uses interleaved DOF and coordinates, so we can
   // sum coords and soln_data straightforwardly.
   const Teuchos::ArrayRCP<double> x(coords.size());
-  bool all_0 = true;
-  for (std::size_t i = 0; i < coords.size(); ++i) {
+  for (std::size_t i = 0; i < coords.size(); ++i)
     x[i] = coords[i] + soln_data[i];
-    if (soln_data[i] != 0) all_0 = false;
-  }
-  if (all_0) std::cout << "amb: all 0\n";
 
   pumi_disc->setCoordinates(x);
-  std::cout << "amb: AAdapt_MeshAdapt_Def.hpp: updateCoordinates done\n";
+  pumi_disc->zeroSolutionField();
 }
 } // namespace
 
@@ -99,6 +138,9 @@ AAdapt::MeshAdapt<SizeField>::beforeAdapt(
     std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   }
+
+  if (adapt_params_->get<bool>("Reference Configuration: Renew", false))
+    updateCoordinates(pumi_discretization);
 
   // Create a remeshed output file naming convention by adding the
   // remesh_file_index_ ahead of the period
@@ -129,9 +171,6 @@ AAdapt::MeshAdapt<SizeField>::beforeAdapt(
 		     adapt_params_->get<std::string>("State Variable", ""));
 
   szField->copyInputFields();
-
-  if (adapt_params_->get<bool>("Reference Configuration: Renew", false))
-    updateCoordinates(pumi_discretization);
 }
 
 template<class SizeField>
@@ -197,6 +236,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
     const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
     Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
 {
+  anlzCoords(pumi_discretization);
   beforeAdapt(adapt_params_, output_stream_);
 
   AdaptCallbackOf<AAdapt::MeshAdapt<SizeField> > callback;
@@ -206,6 +246,7 @@ AAdapt::MeshAdapt<SizeField>::adaptMesh(
   adaptShrunken(mesh, minPartDensity, callback);
   afterAdapt(adapt_params_);
 
+  anlzCoords(pumi_discretization);
   return true;
 }
 
