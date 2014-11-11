@@ -209,37 +209,14 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   numOwnedNodes2D = stk::mesh::count_selected_entities(select_owned_in_part, bulkData2D.buckets(stk::topology::NODE_RANK));
 
   //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
+  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_MAX, maxOwnedElements2D, Teuchos::ptr(&maxGlobalElements2D));
   //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
+  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_MAX, maxOwnedNodes2D, Teuchos::ptr(&maxGlobalVertices2dId));
   //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
-  //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
-  //IK, 10/1/14: in order for reduceAll to work with Teuchos::Comm object we have to cast things as ints; long long ints don't work 
-  //(because Teuchos::Comm is templated on just int?).  Are long long ints really necessary?  Look into this -- ask Mauro.
-  //Are there issues for 64 bit integer build of Albany? 
-   LO maxOwnedElements2DInt = maxOwnedElements2D;
-  GO maxGlobalElements2DInt = maxGlobalElements2D;
-  LO maxOwnedNodes2DInt = maxOwnedNodes2D;
-  GO maxGlobalVertices2dIdInt = maxGlobalVertices2dId;
-  LO maxOwnedSides2DInt = maxOwnedSides2D;
-  GO maxGlobalEdges2DInt = maxGlobalEdges2D;
-  int numOwnedNodes2DInt = numOwnedNodes2D;
-  int numGlobalVertices2DInt = numGlobalVertices2D;
-  //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
-  Teuchos::reduceAll<LO,GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedElements2DInt, Teuchos::ptr(&maxGlobalElements2DInt));
-  //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
-  Teuchos::reduceAll<LO,GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedNodes2DInt, Teuchos::ptr(&maxGlobalVertices2dIdInt));
-  //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
-  Teuchos::reduceAll<LO,GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedSides2DInt, Teuchos::ptr(&maxGlobalEdges2DInt));
+  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_MAX, maxOwnedSides2D, Teuchos::ptr(&maxGlobalEdges2D));
   //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
   //The following should not be int int...
-  Teuchos::reduceAll<int,int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2DInt, &numGlobalVertices2DInt);
-  maxOwnedElements2D = maxOwnedElements2DInt; 
-  maxGlobalElements2D = maxGlobalElements2DInt; 
-  maxOwnedNodes2D = maxOwnedNodes2DInt; 
-  maxGlobalVertices2dId = maxGlobalVertices2dIdInt; 
-  maxOwnedSides2D = maxOwnedSides2DInt; 
-  maxGlobalEdges2D = maxGlobalEdges2DInt; 
-  numOwnedNodes2D = numOwnedNodes2DInt; 
-  numGlobalVertices2D = numGlobalVertices2DInt; 
+  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2D, &numGlobalVertices2D);
 
   if (comm->getRank() == 0) std::cout << "Importing ascii files ...";
 

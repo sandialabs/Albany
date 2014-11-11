@@ -1,6 +1,5 @@
 => Temporary branch remaining items:
 
-4.) Are there issues stemming from long long int casting in mpas_interface?  --> Irina & Mauro 
 
 14.) Have Erik Nielsen/Rick Muller (QCAD guys) check ALBANY_CI with temporary_tpetra_newSTK branch of Albany.  Also 
 have them run some "real" QCAD tests to check that everything still works (right now with Albany executable only). --> Irina, Erik, Rick.

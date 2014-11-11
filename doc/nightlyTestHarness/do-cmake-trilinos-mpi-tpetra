@@ -66,6 +66,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
 \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+      -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \

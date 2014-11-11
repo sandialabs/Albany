@@ -17,7 +17,9 @@
 #ifdef ALBANY_EPETRA
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
+#ifdef ALBANY_FELIX
 #include "Albany_ExtrudedSTKMeshStruct.hpp"
+#endif
 #endif
 #ifdef ALBANY_CUTR
 #include "Albany_FromCubitSTKMeshStruct.hpp"
@@ -242,9 +244,11 @@ Albany::DiscretizationFactory::createMeshSpecs() {
       size_t idx = mesh_data->create_output_mesh("IceSheet.exo", stk::io::WRITE_RESULTS);
       mesh_data->process_output_request(idx, 0.0);
   }
+#ifdef ALBANY_FELIX
   else if(method == "Extruded") {
   	  meshStruct = Teuchos::rcp(new Albany::ExtrudedSTKMeshStruct(discParams, commT));
   }
+#endif
 #endif
   else if(method == "Cubit") {
 #ifdef ALBANY_CUTR

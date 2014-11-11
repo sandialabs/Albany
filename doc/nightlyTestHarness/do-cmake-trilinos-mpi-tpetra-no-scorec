@@ -84,6 +84,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_AztecOO:BOOL=ON \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
       -D Teuchos_ENABLE_COMPLEX:BOOL=OFF \
+      -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
       -D Trilinos_ENABLE_Didasko:BOOL=ON \
       -D Trilinos_ENABLE_Epetra:BOOL=ON \
       -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
