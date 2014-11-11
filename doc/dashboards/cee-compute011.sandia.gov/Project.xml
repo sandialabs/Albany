@@ -1,0 +1,14 @@
+<Project name="Albany">
+  <SubProject name="SCOREC">
+  </SubProject>
+  <SubProject name="Trilinos">
+  </SubProject>
+  <SubProject name="TrilinosClang++11">
+  </SubProject>
+  <SubProject name="Albany32Bit">
+  </SubProject>
+  <SubProject name="Albany64Bit">
+  </SubProject>
+  <SubProject name="Albany64BitClang++11">
+  </SubProject>
+</Project>

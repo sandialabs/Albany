@@ -12,6 +12,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingSerialT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingSerialT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTwistT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputTwistT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
