@@ -134,6 +134,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         //p->set< RCP< vector<RealType> > >("BC Values", b_ptr);
         //p->set< vector<RealType> >("BC Values", BCValues);
         p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
+        p->set< bool >("Mesh Deforms", sub_list.get< bool >("Mesh Deforms", false));
         p->set< RCP<DataLayout> >("Data Layout", dummy);
         p->set< std::string > ("Dirichlet Name", ss);
         p->set< RealType >("Dirichlet Value", 0.0);
