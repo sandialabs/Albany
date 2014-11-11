@@ -92,14 +92,23 @@ void dispExtremum (
   }
 }
 
+// For analysis.
 void anlzCoords (
   const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
 {
+  // x = coords + displacement.
+  const int dim = pumi_disc->getNumDim();
   const Teuchos::ArrayRCP<const double>& coords = pumi_disc->getCoordinates();
   if (coords.size() == 0) return;
-  const int dim = pumi_disc->getNumDim();
-  dispExtremum<mymin>(coords, dim, "min", Teuchos::REDUCE_MIN);
-  dispExtremum<mymax>(coords, dim, "max", Teuchos::REDUCE_MAX);
+  const Teuchos::RCP<const Tpetra_Vector>
+    soln = pumi_disc->getSolutionFieldT(true);
+  const Teuchos::ArrayRCP<const ST> soln_data = soln->get1dView();
+  const Teuchos::ArrayRCP<double> x(coords.size());
+  for (std::size_t i = 0; i < coords.size(); ++i)
+    x[i] = coords[i] + soln_data[i];
+  // Display min and max extent in each axis-aligned dimension.
+  dispExtremum<mymin>(x, dim, "min", Teuchos::REDUCE_MIN);
+  dispExtremum<mymax>(x, dim, "max", Teuchos::REDUCE_MAX);
 }
 
 // Set coordinates = coordinates + solution (displacements). This routine is
@@ -139,7 +148,7 @@ AAdapt::MeshAdapt<SizeField>::beforeAdapt(
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   }
 
-  if (adapt_params_->get<bool>("Reference Configuration: Renew", false))
+  if (adapt_params_->get<bool>("Reference Configuration: Update", false))
     updateCoordinates(pumi_discretization);
 
   // Create a remeshed output file naming convention by adding the
@@ -306,7 +315,7 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
   // Reference configuration options.
-  validPL->set<bool>("Reference Configuration: Renew", false, "Send coordinates + solution to SCOREC.");
+  validPL->set<bool>("Reference Configuration: Update", false, "Send coordinates + solution to SCOREC.");
 
   return validPL;
 }
