@@ -55,6 +55,16 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     this->addDependentField(surfaceGrad);
      bf_type = FO_INTERP_SURF_GRAD;
   }
+  else if (type == "FO Surface Grad Provided") {
+    *out << "Surface Grad Provided Source!" << std::endl;
+    dsurface_height_dx = PHX::MDField<ScalarT,Cell,Node>(
+             p.get<std::string>("dsurface_height_dx Name"), dl->node_scalar);
+    dsurface_height_dy = PHX::MDField<ScalarT,Cell,Node>(
+             p.get<std::string>("dsurface_height_dy Name"), dl->node_scalar);
+    this->addDependentField(dsurface_height_dx);
+    this->addDependentField(dsurface_height_dy);
+    bf_type = FO_SURF_GRAD_PROVIDED;
+  }
   else if (type == "FOSinCos2D") {
     bf_type = FO_SINCOS2D;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -169,6 +179,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
   else if (bf_type == FO_INTERP_SURF_GRAD)
 	  this->utils.setFieldData(surfaceGrad,fm);
+  else if (bf_type == FO_SURF_GRAD_PROVIDED) {
+	  this->utils.setFieldData(dsurface_height_dx,fm);
+	  this->utils.setFieldData(dsurface_height_dy,fm);
+  }
 
   this->utils.setFieldData(force,fm); 
 }
