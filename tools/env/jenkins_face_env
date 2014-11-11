@@ -40,3 +40,6 @@ TRILINOS_BRANCH=master
 ALBANY_BRANCH=master
 
 export PATH=$ALBDIR/tools/build_scripts:$ALBDIR/tools/test_scripts:$ALBDIR/tools/checkout_scripts:$PATH
+
+# Pick up newer cmake
+export PATH=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/cmake-3.0.2/bin:$PATH
