@@ -268,8 +268,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-//Irina TOFIX intrepid
-//  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
+  FST::integrateTemp<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
 
   // Heat Convection Term
   FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);

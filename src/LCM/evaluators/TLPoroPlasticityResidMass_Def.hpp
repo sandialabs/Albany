@@ -260,8 +260,7 @@ namespace LCM {
         }
       }
     }
-//Irina TOFIX intrepid
-    //FST::integrate<ScalarT>(TResidual, fluxdt,
+    FST::integrateTemp<ScalarT>(TResidual, fluxdt,
                             wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
     //---------------------------------------------------------------------------//

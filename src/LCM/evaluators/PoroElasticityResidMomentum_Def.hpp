@@ -100,7 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 //Irina comment : was commented out 
-//  FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//  FST::integrateTemp<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
 }
 

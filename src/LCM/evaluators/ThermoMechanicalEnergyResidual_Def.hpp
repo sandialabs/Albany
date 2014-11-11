@@ -116,22 +116,20 @@ evaluateFields(typename Traits::EvalData workset)
 //  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
-//  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+  FST::integrateTemp<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
     for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-    //IrinaTOFIX intrepid
-    //FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    FST::integrateTemp<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
   for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
-   //IrinaTOFIX intrepid
-   //FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   FST::integrateTemp<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
 //Irina comment: code below was commented out
   //if (workset.transientTerms && enableTransient)
-  //  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  //  FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   //
   // compute factor
   ScalarT fac(0.0);
@@ -141,8 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell)
     for (int qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
-  //Irina TOFIX intrepid
- // FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (print)
   {

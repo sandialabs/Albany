@@ -266,8 +266,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-//Irina TOFIX intrepid
-//FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+FST::integrateTemp<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
   for (int cell=0; cell < workset.numCells; ++cell) {

@@ -287,8 +287,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
   }
 
-//Irina TOFIX intrepid
-//  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+  FST::integrateTemp<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   //---------------------------------------------------------------------------//
   // Stabilization Term (only 2D and 3D problem need stabilizer)
