@@ -89,12 +89,12 @@ evaluateFields(typename Traits::EvalData workset)
   // using AD gives us P directly, we don't need to transform it
   if (matModel == "Neohookean AD")
   {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-	for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
-	for (std::size_t qp=0; qp < numQPs; ++qp) {
-	  for (std::size_t i=0; i<numDims; i++) {
-	    for (std::size_t j=0; j<numDims; j++) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+	for (int dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+	for (int qp=0; qp < numQPs; ++qp) {
+	  for (int i=0; i<numDims; i++) {
+	    for (int j=0; j<numDims; j++) {
 	      Residual(cell,node,i) += stress(cell, qp, i, j) * wGradBF(cell, node, qp, j);
 	    } 
 	  } 
@@ -109,12 +109,12 @@ evaluateFields(typename Traits::EvalData workset)
     //RST::transpose(F_invT, F_inv);
     FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
     FST::tensorMultiplyDataDataTemp<ScalarT>(P, stress, JF_invT);
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-	for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
-	for (std::size_t qp=0; qp < numQPs; ++qp) {
-	  for (std::size_t i=0; i<numDims; i++) {
-	    for (std::size_t j=0; j<numDims; j++) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+	for (int dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+	for (int qp=0; qp < numQPs; ++qp) {
+	  for (int i=0; i<numDims; i++) {
+	    for (int j=0; j<numDims; j++) {
               Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
 	    } 
 	  } 
@@ -123,9 +123,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 /** // Gravity term used for load stepping 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int qp=0; qp < numQPs; ++qp) {
          Residual(cell,node,2) +=  zGrav * wBF(cell, node, qp);
       } 
     } 

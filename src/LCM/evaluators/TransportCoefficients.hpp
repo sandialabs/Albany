@@ -120,17 +120,17 @@ namespace LCM {
     ///
     /// Number of integration points
     ///
-    std::size_t num_pts_;
+    int num_pts_;
 
     ///
     /// Number of dimension
     ///
-    std::size_t num_dims_;
+    int num_dims_;
 
     ///
     /// Number of cell
     ///
-    std::size_t  worksetSize;
+    int  worksetSize;
 
     ///
     /// flag to compute the weighted average of J

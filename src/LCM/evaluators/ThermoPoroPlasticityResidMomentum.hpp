@@ -58,9 +58,9 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> ExResidual;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numNodes;
+  int numQPs;
+  int numDims;
   bool enableTransient;
   ScalarT dTemp;
 

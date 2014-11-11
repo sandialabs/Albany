@@ -78,15 +78,15 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::Tensor<ScalarT> sigma(num_dims_);
   // small strain version needs no pull back
   if (small_strain_) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int node = 0; node < num_nodes_; ++node) {
         residual_(cell, node) = 0.0;
       }
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         p_grad.fill( pressure_grad_,cell,pt );
         sigma.fill( stress_,cell,pt,-1);
         ScalarT dUdJ = (1.0/3.0) * Intrepid::trace(sigma);
-        for (std::size_t node = 0; node < num_nodes_; ++node) {
+        for (int node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,pt) *
             (dUdJ - pressure_(cell,pt)) / bulk_modulus_(cell,pt);
         }
@@ -94,10 +94,10 @@ evaluateFields(typename Traits::EvalData workset)
 
       // stabilization term
       ScalarT stab_term = 0.5 * alpha_ * h_(cell) * h_(cell);
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         ScalarT stab_param = stab_term / shear_modulus_(cell,pt);
-        for (std::size_t node = 0; node < num_nodes_; ++node) {
-          for (std::size_t i = 0; i < num_dims_; ++i) {
+        for (int node = 0; node < num_nodes_; ++node) {
+          for (int i = 0; i < num_dims_; ++i) {
             residual_(cell,node) -= stab_param * 
               w_grad_bf_(cell,node,pt,i) * pressure_grad_(cell,pt,i);
           }
@@ -108,15 +108,15 @@ evaluateFields(typename Traits::EvalData workset)
     Intrepid::Tensor<ScalarT> F(num_dims_);
     Intrepid::Tensor<ScalarT> Cinv(num_dims_);
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int node = 0; node < num_nodes_; ++node) {
         residual_(cell, node) = 0.0;
       }
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         p_grad.fill( pressure_grad_,cell,pt );
         sigma.fill( stress_,cell,pt,-1 );
         ScalarT dUdJ = (1.0/3.0) * Intrepid::trace(sigma);
-        for (std::size_t node = 0; node < num_nodes_; ++node) {
+        for (int node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,pt) *
             (dUdJ - pressure_(cell,pt)) / bulk_modulus_(cell,pt);
         }
@@ -124,16 +124,16 @@ evaluateFields(typename Traits::EvalData workset)
 
       // stabilization term
       ScalarT stab_term = 0.5 * alpha_;
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill( def_grad_,cell,pt,-1);
         //irina TOFIX intrepid
         //ScalarT J = Intrepid::det(F);
         //Cinv = Intrepid::inverseTemp( Intrepid::transpose(F) * F );
         ScalarT stab_param = stab_term * h_(cell,pt) * h_(cell,pt) / 
           shear_modulus_(cell,pt);
-        for (std::size_t node = 0; node < num_nodes_; ++node) {
-          for (std::size_t i = 0; i < num_dims_; ++i) {
-            for (std::size_t j = 0; j < num_dims_; ++j) {
+        for (int node = 0; node < num_nodes_; ++node) {
+          for (int i = 0; i < num_dims_; ++i) {
+            for (int j = 0; j < num_dims_; ++j) {
               residual_(cell,node) -= stab_param * J * Cinv(i,j) * 
                 pressure_grad_(cell,pt,i) * w_grad_bf_(cell,node,pt,j);
             }

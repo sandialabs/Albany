@@ -109,8 +109,8 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> jump_normal = *eval_fields["Normal_Jump"];
   PHX::MDField<ScalarT> jump_shear = *eval_fields["Shear_Jump"];
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       
       //current basis vector
       Intrepid::Vector<ScalarT> g_0(3, &basis(cell, pt, 0, 0));

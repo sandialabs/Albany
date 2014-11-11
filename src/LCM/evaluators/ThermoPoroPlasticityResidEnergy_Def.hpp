@@ -261,9 +261,9 @@ evaluateFields(typename Traits::EvalData workset)
 
 //   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim <numDims; ++dim){
+   for (int cell=0; cell < workset.numCells; ++cell){
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim <numDims; ++dim){
     		  fluxdt(cell, qp, dim) = flux(cell,qp,dim)*dt; // should replace the number with dt
     	  }
       }
@@ -279,11 +279,11 @@ evaluateFields(typename Traits::EvalData workset)
 //  FST::tensorMultiplyDataData<ScalarT> (fluxdt, F_invT, flux); // flux_i = k I_ij p_j
 
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
 
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
-		  		 for (std::size_t dim=0; dim <numDims; ++dim){
+	  for (int node=0; node < numNodes; ++node) {
+		  	  for (int qp=0; qp < numQPs; ++qp) {
+		  		 for (int dim=0; dim <numDims; ++dim){
 		  			TResidual(cell,node) -=  dt*gammaFluid(cell,qp)*
 		  					                                  porosity(cell,qp)*
 		  					                                   fluxdt(cell,qp,dim)*
@@ -297,11 +297,11 @@ evaluateFields(typename Traits::EvalData workset)
 //  std::cout << TResidual(1,1) << endl;
 
   // Pore-fluid diffusion coupling.
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
 
-	  for (std::size_t node=0; node < numNodes; ++node) {
+	  for (int node=0; node < numNodes; ++node) {
 		//  TResidual(cell,node)=0.0;
-		  	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+		  	  for (int qp=0; qp < numQPs; ++qp) {
 
 
 			      dJ = std::log(J(cell,qp)/Jold(cell,qp));
@@ -333,12 +333,12 @@ evaluateFields(typename Traits::EvalData workset)
 
 // Penalty Term
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+  for (int cell=0; cell < workset.numCells; ++cell){
 
    porePbar = 0.0;
    Tempbar = 0.0;
    vol = 0.0;
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
+   for (int qp=0; qp < numQPs; ++qp) {
 
 	porePbar += weights(cell,qp)*(
 			 (porePressure(cell,qp)-porePressureold(cell, qp) ));
@@ -350,16 +350,16 @@ evaluateFields(typename Traits::EvalData workset)
    porePbar /= vol;
    Tempbar /= vol;
 
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
+   for (int qp=0; qp < numQPs; ++qp) {
       pterm(cell,qp) = porePbar;
       tterm(cell,qp) = Tempbar;
 
    }
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+	  for (int node=0; node < numNodes; ++node) {
+		  for (int qp=0; qp < numQPs; ++qp) {
 
 				shearModulus = young_modulus_(cell,qp)*0.5/(1.0+ poissons_ratio_(cell,qp));
 				bulkModulus =  young_modulus_(cell,qp)/3.0/(1.0- 2.0*poissons_ratio_(cell,qp));

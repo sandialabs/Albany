@@ -66,12 +66,12 @@ namespace LCM {
     ///
     /// Number of integration points
     ///
-    std::size_t numQPs;
+    int numQPs;
 
     ///
     /// Number of problem dimensions
     ///
-    std::size_t numDims;
+    int numDims;
 
     ///
     /// Container for coordinates

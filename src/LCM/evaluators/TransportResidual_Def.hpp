@@ -143,8 +143,8 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     // zero out residual
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int node = 0; node < num_nodes_; ++node) {
         residual_(cell,node) = 0.0;
       }
     }
@@ -156,10 +156,10 @@ namespace LCM {
       //Albany::MDArray scalar_old = (*workset.stateArrayPtr)[scalar_name_];
       // compute scalar rate
       //ScalarT scalar_dot(0.0);
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
           //scalar_dot = ( scalar_(cell,pt) - scalar_old(cell,pt) ) / dt;
-          for (std::size_t node = 0; node < num_nodes_; ++node) {
+          for (int node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) += transient_coeff_(cell,pt)
               * w_bf_(cell,node,pt) * scalar_dot_(cell,pt);
           }
@@ -169,11 +169,11 @@ namespace LCM {
 
     // diffusive term
     if ( have_diffusion_ ) {
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          for (std::size_t node = 0; node < num_nodes_; ++node) {
-            for (std::size_t i = 0; i < num_dims_; ++i) {
-              for (std::size_t j = 0; j < num_dims_; ++j) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int node = 0; node < num_nodes_; ++node) {
+            for (int i = 0; i < num_dims_; ++i) {
+              for (int j = 0; j < num_dims_; ++j) {
                 residual_(cell,node) += w_grad_bf_(cell,node,pt,i) *
                   diffusivity_(cell,pt,i,j) * scalar_grad_(cell,pt,j);
               }
@@ -185,9 +185,9 @@ namespace LCM {
 
     // source term
     if ( have_source_ ) {
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          for (std::size_t node = 0; node < num_nodes_; ++node) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt);
           }
         }
@@ -196,10 +196,10 @@ namespace LCM {
 
     // convection term
     if ( have_convection_ ) {
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          for (std::size_t node = 0; node < num_nodes_; ++node) {
-            for (std::size_t dim = 0; dim < num_dims_; ++dim) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int node = 0; node < num_nodes_; ++node) {
+            for (int dim = 0; dim < num_dims_; ++dim) {
               residual_(cell,node) += w_bf_(cell,node,pt) *
                 convection_vector_(cell,pt,dim) * scalar_grad_(cell,pt,dim);
             }

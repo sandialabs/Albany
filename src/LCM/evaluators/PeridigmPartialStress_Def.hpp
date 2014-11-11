@@ -79,9 +79,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   RealType detJ, defGradTranspose[3][3], piolaStress[3][3], cauchyStress[3][3];
 
-  for(std::size_t cell=0; cell < workset.numCells; ++cell){
+  for(int cell=0; cell < workset.numCells; ++cell){
     peridigmManager.getPartialStress(blockName, worksetIndex, cell, partialStressValues);
-    for (std::size_t qp=0; qp < this->numQPs; ++qp) {
+    for (int qp=0; qp < this->numQPs; ++qp) {
 
       this->stress(cell,qp,0,0) = partialStressValues[qp][0];
       this->stress(cell,qp,1,1) = partialStressValues[qp][4];
@@ -137,9 +137,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-//   for(std::size_t cell=0; cell < workset.numCells; ++cell){
+//   for(int cell=0; cell < workset.numCells; ++cell){
 //     peridigmManager.getPartialStress(blockName, worksetIndex, cell, partialStressValues);
-//     for (std::size_t qp=0; qp < this->numQPs; ++qp) {
+//     for (int qp=0; qp < this->numQPs; ++qp) {
 //       this->stress(cell,qp,0,0) = 0.0;
 //       this->stress(cell,qp,1,1) = 0.0;
 //       this->stress(cell,qp,2,2) = 0.0;

@@ -74,13 +74,13 @@ evaluateFields(typename Traits::EvalData workset)
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
   // Compute DefGrad tensor from displacement gradient
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  for (int cell=0; cell < workset.numCells; ++cell)
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
+    for (int qp=0; qp < numQPs; ++qp)
     {
-      for (std::size_t i=0; i < numDims; ++i)
+      for (int i=0; i < numDims; ++i)
       {
-        for (std::size_t j=0; j < numDims; ++j)
+        for (int j=0; j < numDims; ++j)
 	{
           defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
         }
@@ -91,9 +91,9 @@ evaluateFields(typename Traits::EvalData workset)
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
-  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell) 
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-      for (std::size_t i=0; i < numDims; ++i)
+  for (int cell=workset.numCells; cell < worksetSize; ++cell) 
+    for (int qp=0; qp < numQPs; ++qp) 
+      for (int i=0; i < numDims; ++i)
 	defgrad(cell,qp,i,i) = 1.0;
 
   Intrepid::RealSpaceTools<ScalarT>::detTemp(J, defgrad);
@@ -101,11 +101,11 @@ evaluateFields(typename Traits::EvalData workset)
   if (weightedAverage)
   {
     ScalarT Jbar, wJbar, vol;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    for (int cell=0; cell < workset.numCells; ++cell)
     {
       Jbar = 0.0;
       vol = 0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp)
+      for (int qp=0; qp < numQPs; ++qp)
       {
   	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
   	vol  += weights(cell,qp);
@@ -113,11 +113,11 @@ evaluateFields(typename Traits::EvalData workset)
       Jbar /= vol;
 
       // Jbar = std::exp(Jbar);
-      for (std::size_t qp=0; qp < numQPs; ++qp)
+      for (int qp=0; qp < numQPs; ++qp)
       {
-  	for (std::size_t i=0; i < numDims; ++i)
+  	for (int i=0; i < numDims; ++i)
   	{
-  	  for (std::size_t j=0; j < numDims; ++j)
+  	  for (int j=0; j < numDims; ++j)
   	  {
   	    wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
   	    defgrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );

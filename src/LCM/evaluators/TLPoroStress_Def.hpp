@@ -84,8 +84,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (numDims == 1) {
     Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
         	  totstress(cell, qp) = stress(cell, qp) - biotCoefficient(cell,qp)*porePressure(cell,qp);
           }
     }
@@ -104,10 +104,10 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Compute Stress
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim<numDims; ++ dim) {
-    		  for (std::size_t j=0; j<numDims; ++ j) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim<numDims; ++ dim) {
+    		  for (int j=0; j<numDims; ++ j) {
 	         totstress(cell,qp,dim,j) -= JBpF_invT(cell,qp, dim,j);
     		  }
     	  }

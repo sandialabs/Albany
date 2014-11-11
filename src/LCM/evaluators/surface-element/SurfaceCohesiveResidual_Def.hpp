@@ -72,15 +72,15 @@ namespace LCM {
   {
     Intrepid::Vector<ScalarT> f_plus(0, 0, 0);
 
-	for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-	  for (std::size_t node(0); node < numPlaneNodes; ++node) {
+	for (int cell(0); cell < workset.numCells; ++cell) {
+	  for (int node(0); node < numPlaneNodes; ++node) {
 
              int topNode = node + numPlaneNodes;
 
 	     // initialize force vector
     	     f_plus.clear();
 
-	     for (std::size_t pt(0); pt < numQPs; ++pt) {
+	     for (int pt(0); pt < numQPs; ++pt) {
 
 	        // refValues(numPlaneNodes, numQPs) = shape function
 	        // refArea(numCells, numQPs) = |Jacobian|*weight

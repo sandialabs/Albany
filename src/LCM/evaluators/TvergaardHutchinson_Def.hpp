@@ -59,8 +59,8 @@ namespace LCM{
   evaluateFields(typename Traits::EvalData workset)
   {
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < numQPs; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < numQPs; ++pt) {
 
         //current basis vector
         Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));

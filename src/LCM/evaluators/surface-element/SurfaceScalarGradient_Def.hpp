@@ -86,8 +86,8 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     ScalarT midPlaneAvg;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < numQPs; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < numQPs; ++pt) {
 
         Intrepid::Vector<MeshScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
         Intrepid::Vector<MeshScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));

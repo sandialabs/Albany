@@ -70,10 +70,10 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain_;
 
     //! number of integration points
-    std::size_t num_pts_;
+    int num_pts_;
 
     //! number of spatial dimensions
-    std::size_t num_dims_;
+    int num_dims_;
 
     //! flag to compute the weighted average of J
     bool weighted_average_;

@@ -105,7 +105,7 @@ namespace LCM {
   template<typename EvalT, typename Traits>
   void SurfaceBasis<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
   {
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
       // for the reference geometry
       // compute the mid-plane coordinates
       computeReferenceMidplaneCoords(referenceCoords, refMidplaneCoords);
@@ -168,16 +168,16 @@ namespace LCM {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // get the midplane coordinates
       std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(numPlaneNodes);
-      for (std::size_t node(0); node < numPlaneNodes; ++node)
+      for (int node(0); node < numPlaneNodes; ++node)
         midplaneNodes[node] = Intrepid::Vector<MeshScalarT>(3, &midplaneCoords(cell, node, 0));
 
       Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
-      for (std::size_t pt(0); pt < numQPs; ++pt) {
+      for (int pt(0); pt < numQPs; ++pt) {
         g_0.clear();
         g_1.clear();
         g_2.clear();
-        for (std::size_t node(0); node < numPlaneNodes; ++node) {
+        for (int node(0); node < numPlaneNodes; ++node) {
           g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
           g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
         }
@@ -204,16 +204,16 @@ namespace LCM {
     for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
       // get the midplane coordinates
       std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
-      for (std::size_t node(0); node < numPlaneNodes; ++node)
+      for (int node(0); node < numPlaneNodes; ++node)
         midplaneNodes[node] = Intrepid::Vector<ScalarT>(3, &midplaneCoords(cell, node, 0));
 
       Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
-      for (std::size_t pt(0); pt < numQPs; ++pt) {
+      for (int pt(0); pt < numQPs; ++pt) {
         g_0.clear();
         g_1.clear();
         g_2.clear();
-        for (std::size_t node(0); node < numPlaneNodes; ++node) {
+        for (int node(0); node < numPlaneNodes; ++node) {
           g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
           g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
         }
@@ -239,13 +239,13 @@ namespace LCM {
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis)
   {
-    std::size_t worksetSize = midplaneCoords.dimension(0);
+    int worksetSize = midplaneCoords.dimension(0);
 
     Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(0, 0, 0),
         g1(0, 0, 0), g2(0, 0, 0);
 
-    for (std::size_t cell(0); cell < worksetSize; ++cell) {
-      for (std::size_t pt(0); pt < numQPs; ++pt) {
+    for (int cell(0); cell < worksetSize; ++cell) {
+      for (int pt(0); pt < numQPs; ++pt) {
         g_0 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 0, 0));
         g_1 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 1, 0));
         g_2 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 2, 0));
@@ -277,10 +277,10 @@ namespace LCM {
       const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint> area)
   {
-    const std::size_t worksetSize = basis.dimension(0);
+    const int worksetSize = basis.dimension(0);
 
-    for (std::size_t cell(0); cell < worksetSize; ++cell) {
-      for (std::size_t pt(0); pt < numQPs; ++pt) {
+    for (int cell(0); cell < worksetSize; ++cell) {
+      for (int pt(0); pt < numQPs; ++pt) {
         Intrepid::Tensor<MeshScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
         Intrepid::Tensor<MeshScalarT> dPhi(3, &basis(cell, pt, 0, 0));
         Intrepid::Vector<MeshScalarT> G_2(3, &basis(cell, pt, 2, 0));

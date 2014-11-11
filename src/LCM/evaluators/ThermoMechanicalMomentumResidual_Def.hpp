@@ -88,16 +88,16 @@ evaluateFields(typename Traits::EvalData workset)
   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
    //Irina TOFIX intrepid
   //FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+  for (int cell=0; cell < workset.numCells; ++cell) 
   {
-    for (std::size_t node=0; node < numNodes; ++node) 
+    for (int node=0; node < numNodes; ++node) 
     {
-      for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (int dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+      for (int qp=0; qp < numQPs; ++qp) 
       {
-	for (std::size_t i=0; i<numDims; i++) 
+	for (int i=0; i<numDims; i++) 
 	{
-	  for (std::size_t j=0; j<numDims; j++) 
+	  for (int j=0; j<numDims; j++) 
 	  {
 	    Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
 	  } 

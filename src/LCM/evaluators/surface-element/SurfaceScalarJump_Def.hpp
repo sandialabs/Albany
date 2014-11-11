@@ -177,11 +177,11 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
   {
     ScalarT scalarA(0.0), scalarB(0.0);
     /*
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < numQPs; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < numQPs; ++pt) {
         scalarA = 0.0;
         scalarB = 0.0;
-        for (std::size_t node=0; node < numPlaneNodes; ++node) {
+        for (int node=0; node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           	  scalarA += refValues(node, pt) * scalar(cell, node);
           	  scalarB += refValues(node, pt) * scalar(cell, topNode);
@@ -192,11 +192,11 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
     }
     */
     if (havePorePressure) {
-    	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    		for (std::size_t pt=0; pt < numQPs; ++pt) {
+    	for (int cell=0; cell < workset.numCells; ++cell) {
+    		for (int pt=0; pt < numQPs; ++pt) {
     			scalarA = 0.0;
     			scalarB = 0.0;
-    			for (std::size_t node=0; node < numPlaneNodes; ++node) {
+    			for (int node=0; node < numPlaneNodes; ++node) {
     				int topNode = node + numPlaneNodes;
     					scalarA += refValues(node, pt) * nodalPorePressure(cell, node);
     					scalarB += refValues(node, pt) * nodalPorePressure(cell, topNode);
@@ -207,11 +207,11 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
     	}
     }
     if (haveTemperature) {
-    	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    		for (std::size_t pt=0; pt < numQPs; ++pt) {
+    	for (int cell=0; cell < workset.numCells; ++cell) {
+    		for (int pt=0; pt < numQPs; ++pt) {
     			scalarA = 0.0;
     			scalarB = 0.0;
-    			for (std::size_t node=0; node < numPlaneNodes; ++node) {
+    			for (int node=0; node < numPlaneNodes; ++node) {
     				int topNode = node + numPlaneNodes;
     					scalarA += refValues(node, pt) * nodalTemperature(cell, node);
     					scalarB += refValues(node, pt) * nodalTemperature(cell, topNode);
@@ -223,11 +223,11 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
     }
 
     if (haveTransport) {
-    	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    		for (std::size_t pt=0; pt < numQPs; ++pt) {
+    	for (int cell=0; cell < workset.numCells; ++cell) {
+    		for (int pt=0; pt < numQPs; ++pt) {
     			scalarA = 0.0;
     			scalarB = 0.0;
-    			for (std::size_t node=0; node < numPlaneNodes; ++node) {
+    			for (int node=0; node < numPlaneNodes; ++node) {
     				int topNode = node + numPlaneNodes;
     					scalarA += refValues(node, pt) * nodalTransport(cell, node);
     					scalarB += refValues(node, pt) * nodalTransport(cell, topNode);
@@ -239,11 +239,11 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
     }
 
     if (haveHydroStress) {
-    	for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    		for (std::size_t pt=0; pt < numQPs; ++pt) {
+    	for (int cell=0; cell < workset.numCells; ++cell) {
+    		for (int pt=0; pt < numQPs; ++pt) {
     			scalarA = 0.0;
     			scalarB = 0.0;
-    			for (std::size_t node=0; node < numPlaneNodes; ++node) {
+    			for (int node=0; node < numPlaneNodes; ++node) {
     				int topNode = node + numPlaneNodes;
     					scalarA += refValues(node, pt) * nodalHydroStress(cell, node);
     					scalarB += refValues(node, pt) * nodalHydroStress(cell, topNode);

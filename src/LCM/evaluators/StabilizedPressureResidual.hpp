@@ -107,17 +107,17 @@ private:
   ///
   /// Number of element nodes
   ///
-  std::size_t num_nodes_;
+  int num_nodes_;
 
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// Number of spatial dimensions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Small strain flag

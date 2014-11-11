@@ -86,10 +86,10 @@ evaluateFields(typename Traits::EvalData workset)
   for (int i=0; i < G.size() ; i++) G[i] = 0.0;
 
   // construct the node --> point operator
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  for (int cell=0; cell < workset.numCells; ++cell)
   {
-    for (std::size_t node=0; node < numNodes; ++node) 
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
+    for (int node=0; node < numNodes; ++node) 
+      for (int qp=0; qp < numQPs; ++qp) 
 	A(qp,node) = BF(cell,node,qp);
     
     X = 0.0;
@@ -104,17 +104,17 @@ evaluateFields(typename Traits::EvalData workset)
 
     // compute nodal Fp
     nodalFp.initialize(0.0);
-    for (std::size_t node=0; node < numNodes; ++node) 
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
-	for (std::size_t i=0; i < numDims; ++i) 
-	  for (std::size_t j=0; j < numDims; ++j) 
+    for (int node=0; node < numNodes; ++node) 
+      for (int qp=0; qp < numQPs; ++qp) 
+	for (int i=0; i < numDims; ++i) 
+	  for (int j=0; j < numDims; ++j) 
 	    nodalFp(node,i,j) += X(node,qp) * Fp(cell,qp,i,j);
 
     // compute the curl using nodalFp
     curlFp.initialize(0.0);
-    for (std::size_t node=0; node < numNodes; ++node) 
+    for (int node=0; node < numNodes; ++node) 
     {
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (int qp=0; qp < numQPs; ++qp) 
       {
 	curlFp(qp,0,0) += nodalFp(node,0,2) * GradBF(cell,node,qp,1) - nodalFp(node,0,1) * GradBF(cell,node,qp,2);
 	curlFp(qp,0,1) += nodalFp(node,1,2) * GradBF(cell,node,qp,1) - nodalFp(node,1,1) * GradBF(cell,node,qp,2);
@@ -130,10 +130,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
 
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
-      for (std::size_t i=0; i < numDims; ++i) 
-	for (std::size_t j=0; j < numDims; ++j) 
-	  for (std::size_t k=0; k < numDims; ++k) 
+    for (int qp=0; qp < numQPs; ++qp) 
+      for (int i=0; i < numDims; ++i) 
+	for (int j=0; j < numDims; ++j) 
+	  for (int k=0; k < numDims; ++k) 
 	    G(cell,qp,i,j) += Fp(cell,qp,i,k) * curlFp(qp,k,j);
   }
 }

@@ -59,8 +59,8 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> S(num_dims_), E(num_dims_);
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       lambda = (elastic_modulus(cell, pt) * poissons_ratio(cell, pt))
           / (1. + poissons_ratio(cell, pt))
           / (1 - 2 * poissons_ratio(cell, pt));
@@ -70,8 +70,8 @@ computeState(typename Traits::EvalData workset,
       E = 0.5 * ( C - I );
       S = lambda * Intrepid::trace(E) * I + 2.0 * mu * E;
       sigma = (1.0 / Intrepid::det(F) ) * F * S * Intrepid::transpose(F);
-      for (std::size_t i = 0; i < num_dims_; ++i) {
-        for (std::size_t j = 0; j < num_dims_; ++j) {
+      for (int i = 0; i < num_dims_; ++i) {
+        for (int j = 0; j < num_dims_; ++j) {
           stress(cell, pt, i, j) = sigma(i, j);
         }
       }

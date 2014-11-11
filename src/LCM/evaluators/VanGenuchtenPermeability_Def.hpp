@@ -118,28 +118,28 @@ template<typename EvalT, typename Traits>
 void VanGenuchtenPermeability<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::size_t numCells = workset.numCells;
+  int numCells = workset.numCells;
 
   if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	  vgPermeability(cell,qp) = constant_value;
       }
     }
   }
   else {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	Teuchos::Array<MeshScalarT> point(numDims);
-	for (std::size_t i=0; i<numDims; i++)
+	for (int i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
 		  vgPermeability(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }
     }
   }
   if (isPoroElastic) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	  // van Genuchten permeability equation
     	  vgPermeability(cell,qp) = constant_value*porosity(cell,qp)*porosity(cell,qp)*porosity(cell,qp)/
     			                    (  1.0-porosity(cell,qp)*porosity(cell,qp) )/

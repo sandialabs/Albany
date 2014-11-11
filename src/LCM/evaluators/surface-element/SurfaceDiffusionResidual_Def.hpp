@@ -79,10 +79,10 @@ namespace LCM {
   void SurfaceDiffusionResidual<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int node(0); node < numPlaneNodes; ++node) {
     	  scalarResidual(cell, node) = 0;
-    	  for (std::size_t pt=0; pt < numQPs; ++pt) {
+    	  for (int pt=0; pt < numQPs; ++pt) {
     		  scalarResidual(cell, node) += refValues(node, pt)*scalarJump(cell,pt)*thickness*refArea(cell,pt);
     	  }
       }

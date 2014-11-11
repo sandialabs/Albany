@@ -148,12 +148,12 @@ protected:
   ///
   /// Number of dimensions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// flag for integration point locations

@@ -148,8 +148,8 @@ namespace LCM
         (*workset.stateArrayPtr)[volPlasticStrainName];
 
     ScalarT lame, mu, bulkModulus;
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < numQPs; ++qp) {
         // local parameters
         lame = elasticModulus(cell, qp) * poissonsRatio(cell, qp)
             / (1.0 + poissonsRatio(cell, qp))
@@ -167,8 +167,8 @@ namespace LCM
 
         // trial state
         Intrepid::Tensor<ScalarT> depsilon(3);
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
             strainN(i, j) = strainold(cell, qp, i, j);
             sigmaN(i,j) = stressold(cell,qp,i,j);
@@ -413,8 +413,8 @@ namespace LCM
         } // end of plastic correction
 
         // update
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = sigmaVal(i, j);
             backStress(cell, qp, i, j) = alphaVal(i, j);
           }
@@ -448,7 +448,8 @@ namespace LCM
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
     //Irina TOFIX intrepid
-    //ScalarT J3 = Intrepid::det(s);
+    
+    ScalarT J3 = Intrepid::det(s);
 
     ScalarT Gamma = 1.0;
     if (psi != 0 && J2 != 0)
@@ -486,7 +487,7 @@ namespace LCM
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
     //Irina TOFIX intrepid
-    //ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid::det(s);
 
     //dI1dsigma = I;
     //dJ2dsigma = s;

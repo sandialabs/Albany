@@ -131,11 +131,11 @@ namespace LCM {
     Albany::MDArray Fpold_array = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < numQPs; ++qp) {
         // Fill in tensors from MDArray data
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             Fpold(i, j) = Fpold_array(cell, qp, i, j);
             F(i, j) = F_array(cell, qp, i, j);
           }
@@ -234,10 +234,10 @@ namespace LCM {
           if (dt > 0.0) mechSource(cell, qp) = sq23 * dgam / dt
               * (Y + G + temperature(cell, qp) * 1.0);
 
-          for (std::size_t i = 0; i < numDims; ++i) {
-            for (std::size_t j = 0; j < numDims; ++j) {
+          for (int i = 0; i < numDims; ++i) {
+            for (int j = 0; j < numDims; ++j) {
               Fp(cell, qp, i, j) = 0.0;
-              for (std::size_t p = 0; p < numDims; ++p) {
+              for (int p = 0; p < numDims; ++p) {
                 Fp(cell, qp, i, j) += expA(i, p) * Fpold(p, j);
               }
             }
@@ -246,14 +246,14 @@ namespace LCM {
           // set state variables to old values
           //dp(cell, qp) = 0.0;
           eqps(cell, qp) = eqpsold(cell, qp);
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
+          for (int i = 0; i < numDims; ++i)
+            for (int j = 0; j < numDims; ++j)
               Fp(cell, qp, i, j) = Fpold_array(cell, qp, i, j);
         }
 
         // compute stress
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = s(i, j) / J;
           }
           stress(cell, qp, i, i) += pressure;

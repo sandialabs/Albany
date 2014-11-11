@@ -185,16 +185,16 @@ evaluateFields(typename Traits::EvalData workset)
       ++it) {
     ScalarT constant_value = constant_value_map_[it->first];
     if (is_constant_map_[it->first]) {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
           it->second(cell, pt) = constant_value;
         }
       }
     } else {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
           Teuchos::Array<MeshScalarT> point(num_dims_);
-          for (std::size_t i(0); i < num_dims_; ++i)
+          for (int i(0); i < num_dims_; ++i)
             point[i] = Sacado::ScalarValue<MeshScalarT>::eval(
                 coord_vec_(cell, pt, i));
           it->second(cell, pt) =
@@ -207,16 +207,16 @@ evaluateFields(typename Traits::EvalData workset)
       if (temp_type_map_[it->first] == "Linear" ) {
         RealType dPdT = dparam_dtemp_map_[it->first];
         RealType ref_temp = ref_temp_map_[it->first];
-        for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-          for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        for (int cell(0); cell < workset.numCells; ++cell) {
+          for (int pt(0); pt < num_pts_; ++pt) {
             it->second(cell, pt) += dPdT * (temperature_(cell, pt) - ref_temp);
           }
         }
       } else if (temp_type_map_[it->first] == "Arrhenius") {
         RealType pre_exp_ = pre_exp_map_[it->first];
         RealType exp_param_ = exp_param_map_[it->first];
-        for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-          for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        for (int cell(0); cell < workset.numCells; ++cell) {
+          for (int pt(0); pt < num_pts_; ++pt) {
             it->second(cell, pt) = pre_exp_ 
               * std::exp( -exp_param_ / temperature_(cell, pt) );
           }

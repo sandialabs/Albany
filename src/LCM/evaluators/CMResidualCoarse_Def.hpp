@@ -10,7 +10,7 @@
 #include <Sacado_ParameterRegistration.hpp>
 
 using std::string;
-using std::size_t;
+using int;
 
 namespace LCM
 {

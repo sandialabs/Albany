@@ -125,7 +125,7 @@ namespace LCM {
     ///
     /// Data structure dimensions
     ///
-    std::size_t num_nodes_, num_pts_, num_dims_;
+    int num_nodes_, num_pts_, num_dims_;
 
     ///
     /// Scalar name

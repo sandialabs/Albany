@@ -472,8 +472,8 @@ void LameStressBase<EvalT, Traits>::
   double* stressNewPtr = matp->stress_new;
 
   // Post-process data from Lame call
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
       // Copy the new stress into the stress field
       stressFieldRef(cell,qp,0,0) = stressNewPtr[0];
@@ -492,8 +492,8 @@ void LameStressBase<EvalT, Traits>::
 
   // !!!!! When should this be done???
   double* stateNewPtr = matp->state_new;
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
       // copy state_new data from the LAME data structure to the corresponding state variable field
       for(int iVar=0 ; iVar<numStateVariables ; iVar++, stateNewPtr++)
         this->lameMaterialModelStateVariableFields[iVar](cell,qp) = *stateNewPtr;

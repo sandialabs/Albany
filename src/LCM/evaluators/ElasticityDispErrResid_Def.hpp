@@ -57,13 +57,13 @@ template<typename EvalT, typename Traits>
 void ElasticityDispErrResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      for (std::size_t dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t i=0; i<numDims; i++) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int i=0; i<numDims; i++) {
           ExResidual(cell,node,i) += DispResid(cell,node,i);
-          for (std::size_t dim=0; dim<numDims; dim++) {
+          for (int dim=0; dim<numDims; dim++) {
             ExResidual(cell,node,i) += ErrorStress(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
     } } } } }
 }

@@ -74,11 +74,11 @@ namespace LCM {
   {
     Intrepid::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < numQPs; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < numQPs; ++pt) {
         vecA.clear();
         vecB.clear();
-        for (std::size_t node = 0; node < numPlaneNodes; ++node) {
+        for (int node = 0; node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           vecA += Intrepid::Vector<ScalarT>(
               refValues(node, pt) * vector(cell, node, 0),

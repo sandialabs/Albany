@@ -94,11 +94,11 @@ namespace LCM {
     TEUCHOS_TEST_FOR_EXCEPTION(fractureLimit<=0.0, std::logic_error,
         "Fracture Limit Must Be > 0");
 
-    for (std::size_t cell = 0; cell < worksetSize; ++cell) {
-      for (std::size_t face = 0; face < numFaces; ++face) {
+    for (int cell = 0; cell < worksetSize; ++cell) {
+      for (int face = 0; face < numFaces; ++face) {
         ScalarT max_comp = 0.0;
         criteriaMet(cell, face) = 0;
-        for (std::size_t comp = 0; comp < numComp; ++comp) {
+        for (int comp = 0; comp < numComp; ++comp) {
           max_comp = std::max(faceAve(cell, face, comp), max_comp);
         }
         if (max_comp > fractureLimit) {
@@ -130,11 +130,11 @@ namespace LCM {
     Intrepid::Vector<ScalarT> traction(3);
     Intrepid::Tensor<ScalarT> stress(3);
 
-    for (std::size_t cell = 0; cell < worksetSize; ++cell) {
+    for (int cell = 0; cell < worksetSize; ++cell) {
       //hack to force evaluation
       temp(cell) = 0.0;
 
-      for (std::size_t face = 0; face < numFaces; ++face) {
+      for (int face = 0; face < numFaces; ++face) {
         criteriaMet(cell, face) = 0;
 
         // Get the face normal
@@ -144,7 +144,7 @@ namespace LCM {
         int n2 = sides[face].node[2];
 
         // Then create a vector of the nodal points of each
-        for (std::size_t i = 0; i < numDims; ++i) {
+        for (int i = 0; i < numDims; ++i) {
           p0(i) = coord(cell, n0, i);
           p1(i) = coord(cell, n1, i);
           p2(i) = coord(cell, n2, i);
@@ -153,7 +153,7 @@ namespace LCM {
         normal = Intrepid::normal(p0, p1, p2);
 
         // fill the stress tensor
-        for (std::size_t i = 0; i < numComp; ++i) {
+        for (int i = 0; i < numComp; ++i) {
           stress(i / numDims, i % numDims) = faceAve(cell, face, i);
         }
 

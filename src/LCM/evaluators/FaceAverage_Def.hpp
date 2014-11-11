@@ -108,29 +108,29 @@ evaluateFields(typename Traits::EvalData workset)
 
     // test output of the side ordering
     /*
-    for (std::size_t i=0; i < cellType->getSideCount(); ++i){
+    for (int i=0; i < cellType->getSideCount(); ++i){
       cout << "Side " << i << ":" << std::endl;
-      for (std::size_t j=0; j < 4; ++j){
+      for (int j=0; j < 4; ++j){
          cout << sides[i].node[j] << ",";
       }
       cout << std::endl;
     }
     */
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    for (int cell=0; cell < workset.numCells; ++cell)
     {
-      for (std::size_t face=0; face<numFaces; ++face)
+      for (int face=0; face<numFaces; ++face)
       {
-        for (std::size_t comp=0; comp<numComp; ++comp)
+        for (int comp=0; comp<numComp; ++comp)
         {
           faceAve(cell,face,comp) = 0.0;
           double area = 0.0;
 
-          for (std::size_t qp=0; qp<numQPs; ++qp)
+          for (int qp=0; qp<numQPs; ++qp)
           {
             area += refWeights(qp);
 
-            for (std::size_t np=0; np<numFaceNodes; ++np)
+            for (int np=0; np<numFaceNodes; ++np)
             {
               // map from the local face node numbering to the local
               // element node numbering

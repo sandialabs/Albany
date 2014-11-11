@@ -85,16 +85,16 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dt = delta_time_(0);
   if (dt == 0.0) dt = 1.e-15;
   Albany::MDArray damage_old = (*workset.stateArrayPtr)[damage_name_];
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
       damage_dot_(cell,pt) =
         (damage_(cell,pt) - damage_old(cell,pt)) / dt;
     }
   }
 
   if (have_mech_) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill(def_grad_,cell, pt, -1);
         tensor = Intrepid::inverseTemp(Intrepid::transpose(F) * F);
         damage_transient_coeff_(cell, pt) = transient_coeff_;
@@ -107,8 +107,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         damage_transient_coeff_(cell, pt) = transient_coeff_;
         diffusivity = diffusivity_coeff_ * I;
         for (int i = 0; i < num_dims_; ++i) {

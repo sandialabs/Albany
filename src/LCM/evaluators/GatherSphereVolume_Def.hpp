@@ -56,14 +56,14 @@ void GatherSphereVolume<EvalT, Traits>::evaluateFields(typename Traits::EvalData
 
   TEUCHOS_TEST_FOR_EXCEPTION(wsSphereVolume.is_null(), std::logic_error, "\n****Error:  Sphere Volume field not found in GatherSphereVolume evaluator!\n");
 
-  for (std::size_t cell=0; cell < numCells; ++cell) {
+  for (int cell=0; cell < numCells; ++cell) {
     sphereVolume(cell) = wsSphereVolume[cell];
   }
 
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
-  for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
+  for (int cell=numCells; cell < worksetSize; ++cell) {
     sphereVolume(cell) = sphereVolume(0);
   }
 }

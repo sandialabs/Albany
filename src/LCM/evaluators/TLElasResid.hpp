@@ -51,9 +51,9 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> Residual;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numNodes;
+  int numQPs;
+  int numDims;
 
   // Material Name
   std::string matModel;

@@ -274,7 +274,7 @@ evaluateFields(typename Traits::EvalData workset)
         cols.push_back(global_col);
         ST mass_value = 0;
 
-        for (std::size_t qp=0; qp < num_pts; ++qp)
+        for (int qp=0; qp < num_pts; ++qp)
 
           mass_value += this->wBF(cell, rnode, qp) * this->BF(cell, cnode, qp);
 

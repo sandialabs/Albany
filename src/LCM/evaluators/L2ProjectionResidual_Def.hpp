@@ -73,20 +73,20 @@ template<typename EvalT, typename Traits>
 void L2ProjectionResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  for (int cell=0; cell < workset.numCells; ++cell)
   {
-    for (std::size_t node=0; node < numNodes; ++node)
+    for (int node=0; node < numNodes; ++node)
     {
       /*TResidual(cell,node)=0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp)
+      for (int qp=0; qp < numQPs; ++qp)
       {
         TResidual(cell,node) += ( projectedField(cell,qp)-
         Pfield(cell, qp))*wBF(cell,node,qp);
       }*/
-      for (std::size_t k=0; k<numDims*numDims; ++k){
+      for (int k=0; k<numDims*numDims; ++k){
         TResidual(cell,node,k)=0.0;
 
-        for (std::size_t qp=0; qp < numQPs; ++qp){
+        for (int qp=0; qp < numQPs; ++qp){
           // need to transform tensor valued Pfield to a vector for projectedField and TResidual
           TResidual(cell,node,k) += (projectedField(cell,qp,k) -
           Pfield(cell,qp,k/numDims,k%numDims))*wBF(cell,node,qp);

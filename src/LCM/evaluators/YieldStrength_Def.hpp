@@ -140,28 +140,28 @@ evaluateFields(typename Traits::EvalData workset)
   if (print)
     std::cout << " *** YieldStrength *** " << std::endl;
 
-  std::size_t numCells = workset.numCells;
+  int numCells = workset.numCells;
 
   if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	yieldStrength(cell,qp) = constant_value;
       }
     }
   }
   else {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	Teuchos::Array<MeshScalarT> point(numDims);
-	for (std::size_t i=0; i<numDims; i++)
+	for (int i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
 	yieldStrength(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }
     }
   }
   if (isThermoElastic) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	yieldStrength(cell,qp) -= dYdT_value * (Temperature(cell,qp) - refTemp);
 
         if (print)
@@ -178,8 +178,8 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  Albany::MDArray CLold   = (*workset.stateArrayPtr)[CLname];
 
-      for (std::size_t cell=0; cell < numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int cell=0; cell < numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
  //       	yieldStrength(cell,qp) = constant_value*( 1.0 + (zeta-1.0)*CL(cell,qp)   );
         	yieldStrength(cell,qp) -= constant_value*(zeta-1.0)*(CL(cell,qp) -CLold(cell,qp)  );
 

@@ -65,31 +65,31 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<EnergyFadType> F(1,numDims,numDims);
 
   // Allocate F ( = defgrad of derivative types) and seed with identity derivs
-  for (std::size_t i=0; i < numDims; ++i) 
+  for (int i=0; i < numDims; ++i) 
   {
-    for (std::size_t j=0; j < numDims; ++j) 
+    for (int j=0; j < numDims; ++j) 
     {
       F(0,i,j) = EnergyFadType(numDims*numDims, 0.0); // 0.0 will be overwriten below
       F(0,i,j).fastAccessDx(i*numDims + j) = 1.0;
     }
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
       kappa = elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
       mu    = elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
 
       // Fill F with defgrad for value. Derivs already seeded with identity.
-      for (std::size_t i=0; i < numDims; ++i) 
-        for (std::size_t j=0; j < numDims; ++j) 
+      for (int i=0; i < numDims; ++i) 
+        for (int j=0; j < numDims; ++j) 
            F(0,i,j).val() = defgrad(cell, qp, i, j);
 
       // Call energy funtional (can make a library of these)
       EnergyFadType W = computeEnergy(kappa, mu, F);
 
       // Extract stress from derivs of energy
-      for (std::size_t i=0; i < numDims; ++i) 
-        for (std::size_t j=0; j < numDims; ++j) 
+      for (int i=0; i < numDims; ++i) 
+        for (int j=0; j < numDims; ++j) 
            P(cell, qp, i, j) = W.fastAccessDx(i*numDims + j);
       
     }
@@ -109,8 +109,8 @@ PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid::Fie
   EnergyFadType Jm23  = std::pow(J, -2./3.);
   EnergyFadType trace = 0.0;
 
-  for (std::size_t i=0; i < numDims; ++i) 
-    for (std::size_t j=0; j < numDims; ++j) 
+  for (int i=0; i < numDims; ++i) 
+    for (int j=0; j < numDims; ++j) 
       trace += F(0,i,j) * F(0,i,j);
       
   EnergyFadType kappa_div_2 = EnergyFadType(0.5 * kappa);

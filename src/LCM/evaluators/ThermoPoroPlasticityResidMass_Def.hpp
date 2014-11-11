@@ -242,9 +242,9 @@ evaluateFields(typename Traits::EvalData workset)
 //Irina comment: was commented out  
    /*
    // gravity or other potential term
-     for (std::size_t cell=0; cell < workset.numCells; ++cell){
-         for (std::size_t qp=0; qp < numQPs; ++qp) {
-        	 for (std::size_t dim=0; dim <numDims; ++dim){
+     for (int cell=0; cell < workset.numCells; ++cell){
+         for (int qp=0; qp < numQPs; ++qp) {
+        	 for (int dim=0; dim <numDims; ++dim){
         	  fgravity(cell,qp, dim) = TGrad(cell,qp,dim);
          }
         fgravity(cell, qp, 1) -=  9.81*densityPoreFluid(cell, qp)*
@@ -259,9 +259,9 @@ evaluateFields(typename Traits::EvalData workset)
 //Irina TOFIX intrepid
 //  FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim < numDims; ++dim){
+   for (int cell=0; cell < workset.numCells; ++cell){
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim < numDims; ++dim){
     		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt;
     	  }
       }
@@ -270,10 +270,10 @@ evaluateFields(typename Traits::EvalData workset)
 //FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t node=0; node < numNodes; ++node) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+	  for (int node=0; node < numNodes; ++node) {
 	//	  TResidual(cell,node)=0.0;
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+		  for (int qp=0; qp < numQPs; ++qp) {
 
 		    	  dJ = std::log(J(cell,qp)/Jold(cell,qp));
 			  	  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
@@ -300,12 +300,12 @@ evaluateFields(typename Traits::EvalData workset)
   // Projection-based Stabilization
 
 // Penalty Term
-  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+  for (int cell=0; cell < workset.numCells; ++cell){
 
     porePbar = 0.0;
     Tempbar = 0.0;
     vol = 0.0;
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
 	  porePbar += weights(cell,qp)*(porePressure(cell,qp)-porePressureold(cell, qp));
 	  Tempbar += weights(cell,qp)*(Temp(cell,qp)-Tempold(cell,qp));
@@ -315,14 +315,14 @@ evaluateFields(typename Traits::EvalData workset)
      porePbar /= vol;
      Tempbar /= vol;
 
-     for (std::size_t qp=0; qp < numQPs; ++qp) {
+     for (int qp=0; qp < numQPs; ++qp) {
        pterm(cell,qp) = porePbar;
        Tterm(cell,qp) = Tempbar;
    }
   }
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+	  for (int node=0; node < numNodes; ++node) {
+		  for (int qp=0; qp < numQPs; ++qp) {
 
 			  dTemperature = Temp(cell,qp)-Tempold(cell,qp);
 			  dporePressure = porePressure(cell,qp)-porePressureold(cell, qp);

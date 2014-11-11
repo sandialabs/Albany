@@ -94,12 +94,11 @@ evaluateFields(typename Traits::EvalData workset)
   if (have_stab_pressure_) {
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
-        //Irina TOFIX doesn't work fill fnction for some reason (need to debug)
-        //sig.fill(stress_,cell, pt, -1);
+        sig.fill(stress_,cell, pt, -1);
         sig += stab_pressure_(cell,pt)*I - (1.0/3.0)*Intrepid::trace(sig)*I;
 
-        for (std::size_t i = 0; i < num_dims_; i++) {
-          for (std::size_t j = 0; j < num_dims_; j++) {
+        for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
             stress_(cell, pt, i, j) = sig(i, j);
           }
         }
@@ -115,8 +114,8 @@ evaluateFields(typename Traits::EvalData workset)
         sig.fill(stress_,cell, pt, -1);
         sig -= biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I;
 
-        for (std::size_t i = 0; i < num_dims_; i++) {
-          for (std::size_t j = 0; j < num_dims_; j++) {
+        for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
             stress_(cell, pt, i, j) = sig(i, j);
           }
         }
@@ -126,11 +125,11 @@ evaluateFields(typename Traits::EvalData workset)
 
   // for small deformation, trivially copy Cauchy stress into first PK
   if (small_strain_) { 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         sig.fill(stress_,cell,pt,-1);
-        for (std::size_t dim0 = 0; dim0 < num_dims_; ++dim0) {
-          for (std::size_t dim1 = 0; dim1 < num_dims_; ++dim1) {
+        for (int dim0 = 0; dim0 < num_dims_; ++dim0) {
+          for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
             first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);
           }
         }
@@ -138,8 +137,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   } else {
     // for large deformation, map Cauchy stress to 1st PK stress
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill(def_grad_,cell, pt, -1);
         sig.fill(stress_,cell, pt, -1);
 
@@ -147,8 +146,8 @@ evaluateFields(typename Traits::EvalData workset)
         // map Cauchy stress to 1st PK
         P = Intrepid::piola(F, sig);
 
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          for (std::size_t j = 0; j < num_dims_; ++j) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
             first_pk_stress_(cell,pt,i,j) = P(i, j);
           }
         }

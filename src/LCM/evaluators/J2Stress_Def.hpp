@@ -133,9 +133,9 @@ evaluateFields(typename Traits::EvalData workset)
  // RST::transpose(FpinvT, Fpinv);
   //FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  for (int cell=0; cell < workset.numCells; ++cell)
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp)
+    for (int qp=0; qp < numQPs; ++qp)
     {
 
 	  if(print) std::cout << "defgrad tensor at cell " << cell
@@ -170,13 +170,13 @@ evaluateFields(typename Traits::EvalData workset)
 
       be.initialize(0.0);
       // Compute Trial State
-      for (std::size_t i=0; i < numDims; ++i)
+      for (int i=0; i < numDims; ++i)
       {
-	for (std::size_t j=0; j < numDims; ++j)
+	for (int j=0; j < numDims; ++j)
 	{
-	  for (std::size_t p=0; p < numDims; ++p)
+	  for (int p=0; p < numDims; ++p)
 	  {
-	    for (std::size_t q=0; q < numDims; ++q)
+	    for (int q=0; q < numDims; ++q)
 	    {
 	      be(i,j) += Jm23 * defgrad(cell,qp,i,p)
 	      	  * Cpinv(cell,qp,p,q) * defgrad(cell,qp,j,q);
@@ -186,13 +186,13 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       trace = 0.0;
-      for (std::size_t i=0; i < numDims; ++i)
+      for (int i=0; i < numDims; ++i)
 	trace += be(i,i);
       trace /= numDims;
       mubar = trace*mu;
-      for (std::size_t i=0; i < numDims; ++i)
+      for (int i=0; i < numDims; ++i)
       {
-	for (std::size_t j=0; j < numDims; ++j)
+	for (int j=0; j < numDims; ++j)
 	{
 	  s(i,j) = mu * be(i,j);
 	}
@@ -202,8 +202,8 @@ evaluateFields(typename Traits::EvalData workset)
       // check for yielding
       // smag = s.norm();
       smag2 = 0.0; smag = 0.0;
-      for (std::size_t i=0; i < numDims; ++i)
-	for (std::size_t j=0; j < numDims; ++j)
+      for (int i=0; i < numDims; ++i)
+	for (int j=0; j < numDims; ++j)
 	  smag2 += s(i,j) * s(i,j);
 
       if ( Sacado::ScalarValue<ScalarT>::eval(smag2) > 0.0 )
@@ -289,12 +289,12 @@ evaluateFields(typename Traits::EvalData workset)
         dgam = X[0];
 
         // plastic direction
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
+        for (int i=0; i < numDims; ++i)
+          for (int j=0; j < numDims; ++j)
             N(i,j) = (1/smag) * s(i,j);
 
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
+        for (int i=0; i < numDims; ++i)
+          for (int j=0; j < numDims; ++j)
             s(i,j) -= 2. * mubar * dgam * N(i,j);
 
         // update eqps
@@ -302,24 +302,24 @@ evaluateFields(typename Traits::EvalData workset)
         eqps(cell,qp) = alpha2;
 
         // exponential map to get Fp
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
+        for (int i=0; i < numDims; ++i)
+          for (int j=0; j < numDims; ++j)
             A(i,j) = dgam * N(i,j);
 
         exponential_map(expA, A);
 
         // std::cout << "expA: \n";
-        // for (std::size_t i=0; i < numDims; ++i)
-        //   for (std::size_t j=0; j < numDims; ++j)
+        // for (int i=0; i < numDims; ++i)
+        //   for (int j=0; j < numDims; ++j)
         //    std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
         // std::cout << std::endl;
 
-        for (std::size_t i=0; i < numDims; ++i)
+        for (int i=0; i < numDims; ++i)
         {
-          for (std::size_t j=0; j < numDims; ++j)
+          for (int j=0; j < numDims; ++j)
           {
             Fp(cell,qp,i,j) = 0.0;
-            for (std::size_t p=0; p < numDims; ++p)
+            for (int p=0; p < numDims; ++p)
             {
               Fp(cell,qp,i,j) += expA(i,p) * Fpold(cell,qp,p,j);
             }
@@ -330,8 +330,8 @@ evaluateFields(typename Traits::EvalData workset)
       {
         // set state variables to old values
         eqps(cell, qp) = eqpsold(cell,qp);
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
+        for (int i=0; i < numDims; ++i)
+          for (int j=0; j < numDims; ++j)
             Fp(cell,qp,i,j) = Fpold(cell,qp,i,j);
       }
 
@@ -342,9 +342,9 @@ evaluateFields(typename Traits::EvalData workset)
       p = 0.5 * kappa * ( J(cell,qp) - 1 / ( J(cell,qp) ) );
 
       // compute stress
-      for (std::size_t i=0; i < numDims; ++i)
+      for (int i=0; i < numDims; ++i)
       {
-        for (std::size_t j=0; j < numDims; ++j)
+        for (int j=0; j < numDims; ++j)
         {
           stress(cell,qp,i,j) = s(i,j) / J(cell,qp);
         }
@@ -382,9 +382,9 @@ evaluateFields(typename Traits::EvalData workset)
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable
   // values. Leaving this out leads to inversion of 0 tensors.
-  for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
-    for (std::size_t qp=0; qp < numQPs; ++qp)
-      for (std::size_t i=0; i < numDims; ++i)
+  for (int cell=workset.numCells; cell < worksetSize; ++cell)
+    for (int qp=0; qp < numQPs; ++qp)
+      for (int i=0; i < numDims; ++i)
           Fp(cell,qp,i,i) = 1.0;
 
 
@@ -403,7 +403,7 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
   bool converged = false;
   ScalarT norm0 = norm(A);
 
-  for (std::size_t i=0; i < numDims; ++i)
+  for (int i=0; i < numDims; ++i)
   {
     tmp(i,i) = 1.0;
   }
@@ -412,20 +412,20 @@ J2Stress<EvalT, Traits>::exponential_map(Intrepid::FieldContainer<ScalarT> & exp
   while (!converged)
   {
     // expA += tmp
-    for (std::size_t i=0; i < numDims; ++i)
-      for (std::size_t j=0; j < numDims; ++j)
+    for (int i=0; i < numDims; ++i)
+      for (int j=0; j < numDims; ++j)
         expA(i,j) += tmp(i,j);
 
     tmp2.initialize(0.0);
-    for (std::size_t i=0; i < numDims; ++i)
-      for (std::size_t j=0; j < numDims; ++j)
-        for (std::size_t p=0; p < numDims; ++p)
+    for (int i=0; i < numDims; ++i)
+      for (int j=0; j < numDims; ++j)
+        for (int p=0; p < numDims; ++p)
           tmp2(i,j) += A(i,p) * tmp(p,j);
 
     // tmp = tmp2
     k = k + 1.0;
-    for (std::size_t i=0; i < numDims; ++i)
-      for (std::size_t j=0; j < numDims; ++j)
+    for (int i=0; i < numDims; ++i)
+      for (int j=0; j < numDims; ++j)
         tmp(i,j) = (1/k) * tmp2(i,j);
 
     if (norm(tmp)/norm0 < 1.E-14 ) converged = true;
@@ -445,10 +445,10 @@ J2Stress<EvalT, Traits>::norm(Intrepid::FieldContainer<ScalarT> A)
 {
   ScalarT max(0.0), colsum;
 
-  for (std::size_t i(0); i < numDims; ++i)
+  for (int i(0); i < numDims; ++i)
   {
     colsum = 0.0;
-    for (std::size_t j(0); j < numDims; ++j)
+    for (int j(0); j < numDims; ++j)
       colsum += std::abs(A(i,j));
     max = (colsum > max) ? colsum : max;
   }

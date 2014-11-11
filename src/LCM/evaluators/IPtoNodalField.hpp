@@ -67,10 +67,10 @@ protected:
 
   std::string nodal_weights_name_;
     
-  std::size_t num_pts_;
-  std::size_t num_dims_;
-  std::size_t num_nodes_;
-  std::size_t num_vertices_;
+  int num_pts_;
+  int num_dims_;
+  int num_nodes_;
+  int num_vertices_;
     
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
   std::vector<PHX::MDField<ScalarT> > ip_fields_;

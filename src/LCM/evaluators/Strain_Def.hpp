@@ -47,10 +47,10 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     // Compute Strain tensor from displacement gradient
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-        for (std::size_t i=0; i < numDims; ++i) {
-          for (std::size_t j=0; j < numDims; ++j) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+        for (int i=0; i < numDims; ++i) {
+          for (int j=0; j < numDims; ++j) {
             strain(cell,qp,i,j) = 0.5*(GradU(cell,qp,i,j) + GradU(cell,qp,j,i));
           }
         }

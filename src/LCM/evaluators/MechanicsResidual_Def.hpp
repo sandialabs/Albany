@@ -91,16 +91,16 @@ evaluateFields(typename Traits::EvalData workset)
   // Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
   // for large deformation, map Cauchy stress to 1st PK stress
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t node = 0; node < num_nodes_; ++node) {
-      for (std::size_t dim = 0; dim < num_dims_; ++dim) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int node = 0; node < num_nodes_; ++node) {
+      for (int dim = 0; dim < num_dims_; ++dim) {
         residual_(cell, node, dim) = 0.0;
       }
     }
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          for (std::size_t j = 0; j < num_dims_; ++j) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
             residual_(cell, node, i) +=
               stress_(cell, pt, i, j) * w_grad_bf_(cell, node, pt, j);
           }
@@ -111,10 +111,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   // optional body force
   if (have_body_force_) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
-          for (std::size_t dim = 0; dim < num_dims_; ++dim) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int dim = 0; dim < num_dims_; ++dim) {
             residual_(cell, node, dim) +=
                 w_bf_(cell, node, pt) * body_force_(cell, pt, dim);
           }
@@ -125,10 +125,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   // dynamic term
   if (workset.transientTerms && enable_dynamics_) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < num_nodes_; ++node) {
-        for (std::size_t pt=0; pt < num_pts_; ++pt) {
-          for (std::size_t dim=0; dim < num_dims_; ++dim) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < num_nodes_; ++node) {
+        for (int pt=0; pt < num_pts_; ++pt) {
+          for (int dim=0; dim < num_dims_; ++dim) {
             residual_(cell,node,dim) += density_ *
               acceleration_(cell,pt,dim) * w_bf_(cell,node,pt);
           }

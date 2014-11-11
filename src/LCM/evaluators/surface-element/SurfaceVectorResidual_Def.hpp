@@ -105,8 +105,8 @@ namespace LCM {
     // 2nd-order identity tensor
     const Intrepid::Tensor<MeshScalarT> I = Intrepid::identity<MeshScalarT>(3);
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int node(0); node < numPlaneNodes; ++node) {
 
         force(cell, node, 0) = 0.0;
         force(cell, node, 1) = 0.0;
@@ -116,7 +116,7 @@ namespace LCM {
         force(cell, topNode, 1) = 0.0;
         force(cell, topNode, 2) = 0.0;
 
-        for (std::size_t pt(0); pt < numQPs; ++pt) {
+        for (int pt(0); pt < numQPs; ++pt) {
           // deformed bases
           Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
           Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));

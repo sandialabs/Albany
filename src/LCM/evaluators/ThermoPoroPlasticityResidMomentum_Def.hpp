@@ -125,17 +125,17 @@ evaluateFields(typename Traits::EvalData workset)
    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
    FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-              for (std::size_t dim=0; dim<numDims; dim++)  {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+              for (int dim=0; dim<numDims; dim++)  {
             	  ExResidual(cell,node,dim)=0.0;
               }
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
+          for (int qp=0; qp < numQPs; ++qp) {
 
         	dTemp = Temp(cell,qp) - TempRef(cell,qp);
 
-            for (std::size_t i=0; i<numDims; i++) {
-              for (std::size_t dim=0; dim<numDims; dim++) {
+            for (int i=0; i<numDims; i++) {
+              for (int dim=0; dim<numDims; dim++) {
                 ExResidual(cell,node,i) += (TotalStress(cell, qp, i, dim)
                 		                   - Bulk(cell,qp)*thermoEPS(cell, qp, i, dim)
                 		                   *dTemp)
@@ -145,10 +145,10 @@ evaluateFields(typename Traits::EvalData workset)
 //Irina comment: everything below was commented out
  /*
   if (workset.transientTerms && enableTransient)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            for (std::size_t i=0; i<numDims; i++) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+          for (int qp=0; qp < numQPs; ++qp) {
+            for (int i=0; i<numDims; i++) {
                 ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
     } } } }
 */

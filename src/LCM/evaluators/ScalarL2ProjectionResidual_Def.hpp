@@ -88,31 +88,31 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT J(1);
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  for (int cell=0; cell < workset.numCells; ++cell)
   {
-	  for (std::size_t qp=0; qp < numQPs; ++qp)
+	  for (int qp=0; qp < numQPs; ++qp)
 	  {
 		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp, -1);
 		  //Irina TOFIX intrepid
 		  //J = Intrepid::det(F);
 		  tauH(cell,qp) = 0.0;
-		  for (std::size_t i=0; i<numDims; i++){
+		  for (int i=0; i<numDims; i++){
 			  tauH(cell,qp) += J*Pstress(cell, qp, i,i)/numDims;
 		  }
 	  }
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
+  for (int cell=0; cell < workset.numCells; ++cell)
   {
-	  for (std::size_t node=0; node < numNodes; ++node)
+	  for (int node=0; node < numNodes; ++node)
 	  {
 		  TResidual(cell,node)=0.0;
 	  }
   }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+	  for (int node=0; node < numNodes; ++node) {
+		  for (int qp=0; qp < numQPs; ++qp) {
 				  	  TResidual(cell,node) += ( projectedStress(cell,qp)-
 	                		          tauH(cell, qp))*wBF(cell,node,qp);
 		  }

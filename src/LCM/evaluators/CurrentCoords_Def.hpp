@@ -50,9 +50,9 @@ template<typename EvalT, typename Traits>
 void CurrentCoords<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    for (std::size_t node=0; node < numNodes; ++node)
-      for (std::size_t dim=0; dim < numDims; ++dim)
+  for (int cell=0; cell < workset.numCells; ++cell)
+    for (int node=0; node < numNodes; ++node)
+      for (int dim=0; dim < numDims; ++dim)
         currentCoords(cell,node,dim) = refCoords(cell,node,dim) + displacement(cell,node,dim);
 }
 

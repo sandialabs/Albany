@@ -138,8 +138,8 @@ evaluateFields(typename Traits::EvalData workset)
   if (dt > 0.0)
     fac = ( density * Cv ) / dt;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    for (std::size_t qp=0; qp < numQPs; ++qp)
+  for (int cell=0; cell < workset.numCells; ++cell)
+    for (int qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
   //Irina TOFIX intrepid
  // FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into

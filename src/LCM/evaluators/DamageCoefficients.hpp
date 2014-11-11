@@ -81,12 +81,12 @@ private:
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// Number of spatial dimesions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Damage Constants

@@ -47,7 +47,7 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
   this->addEvaluatedField(temperature_dot_);
 
   this->setName(
-      "ThermoMechanical Coefficients" + PHX::TypeString < EvalT > ::value);
+      "ThermoMechanical Coefficients" + PHX::typeAsString<PHX::Device>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);
@@ -95,16 +95,16 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT dt = delta_time_(0);
   if (dt == 0.0) dt = 1.e-15;
   Albany::MDArray temperature_old = (*workset.stateArrayPtr)[temperature_name_];
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
       temperature_dot_(cell,pt) =
         (temperature_(cell,pt) - temperature_old(cell,pt)) / dt;
     }
   }
 
   if (have_mech_) {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         F.fill(def_grad_,cell, pt, -1);
         tensor = Intrepid::inverseTemp(Intrepid::transpose(F) * F);
         thermal_transient_coeff_(cell, pt) = transient_coeff_;
@@ -118,8 +118,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   } else {
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
         thermal_transient_coeff_(cell, pt) = transient_coeff_;
         diffusivity = thermal_cond_(cell, pt) / (density_ * heat_capacity_) * I;
         for (int i = 0; i < num_dims_; ++i) {

@@ -76,8 +76,8 @@ namespace LCM {
   void SurfaceVectorGradient<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < numQPs; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < numQPs; ++pt) {
         Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
         Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
         Intrepid::Vector<ScalarT> g_2(3, &currentBasis(cell, pt, 2, 0));
@@ -113,11 +113,11 @@ namespace LCM {
     if (weightedAverage)
     {
       ScalarT Jbar, wJbar, vol;
-      for (std::size_t cell=0; cell < workset.numCells; ++cell)
+      for (int cell=0; cell < workset.numCells; ++cell)
       {
         Jbar = 0.0;
         vol = 0.0;
-        for (std::size_t qp=0; qp < numQPs; ++qp)
+        for (int qp=0; qp < numQPs; ++qp)
         {
           Jbar += weights(cell,qp) * std::log( J(cell,qp) );
           vol  += weights(cell,qp);
@@ -125,11 +125,11 @@ namespace LCM {
         Jbar /= vol;
 
         // Jbar = std::exp(Jbar);
-        for (std::size_t qp=0; qp < numQPs; ++qp)
+        for (int qp=0; qp < numQPs; ++qp)
         {
-          for (std::size_t i=0; i < numDims; ++i)
+          for (int i=0; i < numDims; ++i)
           {
-            for (std::size_t j=0; j < numDims; ++j)
+            for (int j=0; j < numDims; ++j)
             {
               wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
               defGrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );

@@ -55,13 +55,13 @@ private:
   PHX::MDField<ScalarT, Cell, Point, VecDim>
   point_value_;
 
-  std::size_t
+  int
   number_nodes_;
 
-  std::size_t
+  int
   number_points_;
 
-  std::size_t
+  int
   dimension_;
 };
 
@@ -102,16 +102,16 @@ private:
   PHX::MDField<ScalarT, Cell, Point, VecDim>
   point_value_;
 
-  std::size_t
+  int
   number_nodes_;
 
-  std::size_t
+  int
   number_points_;
 
-  std::size_t
+  int
   dimension_;
 
-  std::size_t
+  int
   offset_;
 };
 

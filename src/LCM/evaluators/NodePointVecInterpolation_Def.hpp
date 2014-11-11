@@ -60,13 +60,13 @@ template<typename EvalT, typename Traits>
 void NodePointVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t i = 0; i < dimension_; i++) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int i = 0; i < dimension_; i++) {
       // Zero out for node==0; then += for node = 1 to number_nodes_
       ScalarT &
       vpt = point_value_(cell, i);
       vpt = nodal_value_(cell, 0, i) * basis_fn_(cell, 0);
-      for (std::size_t node = 1; node < number_nodes_; ++node) {
+      for (int node = 1; node < number_nodes_; ++node) {
         vpt += nodal_value_(cell, node, i) * basis_fn_(cell, node);
       }
     }
@@ -133,8 +133,8 @@ evaluateFields(typename Traits::EvalData workset)
   int const
   neq = num_dof / number_nodes_;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t i = 0; i < dimension_; i++) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int i = 0; i < dimension_; i++) {
       // Zero out for node==0; then += for node = 1 to number_nodes_
       ScalarT &
       vpt = point_value_(cell, i);
@@ -148,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
           nodal_value_(cell, 0, i).fastAccessDx(offset_ + i) *
           basis_fn_(cell, 0);
 
-      for (std::size_t node = 1; node < number_nodes_; ++node) {
+      for (int node = 1; node < number_nodes_; ++node) {
 
         vpt.val() +=
             nodal_value_(cell, node, i).val() * basis_fn_(cell, node);

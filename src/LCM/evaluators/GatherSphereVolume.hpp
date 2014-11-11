@@ -44,8 +44,8 @@ private:
 
   PHX::MDField<RealType,Cell,Vertex> sphereVolume;
  
-  std::size_t worksetSize;
-  std::size_t numVertices;
+  int worksetSize;
+  int numVertices;
 };
 }
 

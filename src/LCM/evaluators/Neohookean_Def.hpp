@@ -71,8 +71,8 @@ namespace LCM {
     ScalarT mu;
     ScalarT Jm53;
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
         kappa = 
           elasticModulus(cell,qp) / ( 3. * ( 1. - 2. * poissonsRatio(cell,qp) ) );
         mu = 
@@ -84,8 +84,8 @@ namespace LCM {
         sigma = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
           + mu * Jm53 * Intrepid::dev(b);
 
-        for (std::size_t i=0; i < numDims; ++i)
-          for (std::size_t j=0; j < numDims; ++j)
+        for (int i=0; i < numDims; ++i)
+          for (int j=0; j < numDims; ++j)
             stress(cell,qp,i,j) = sigma(i,j);
       }
     }

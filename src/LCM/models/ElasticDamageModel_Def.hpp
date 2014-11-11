@@ -113,8 +113,8 @@ computeState(typename Traits::EvalData workset,
   id4 = 0.5 * (Intrepid::identity_1<ScalarT>(num_dims_)
       + Intrepid::identity_2<ScalarT>(num_dims_));
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
       // local parameters
       mu = elastic_modulus(cell, pt)
           / (2.0 * (1.0 + poissons_ratio(cell, pt)));
@@ -152,18 +152,18 @@ computeState(typename Traits::EvalData workset,
           - damage_deriv * Intrepid::tensor(sigma, sigma);
 
       // total Cauchy stress
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) =
               (1.0 - damage(cell, pt)) * sigma(i, j);
         }
       }
 
       // total tangent
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
-          for (std::size_t k(0); k < num_dims_; ++k) {
-            for (std::size_t l(0); l < num_dims_; ++l) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
+          for (int k(0); k < num_dims_; ++k) {
+            for (int l(0); l < num_dims_; ++l) {
 
               tangent(cell, pt, i, j, k, l) = Ce(i, j, k, l);
 

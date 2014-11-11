@@ -45,8 +45,8 @@ public:
 
 private:
 
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numQPs;
+  int numDims;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> satExp;
 

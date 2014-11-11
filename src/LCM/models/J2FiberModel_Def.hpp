@@ -241,8 +241,8 @@ computeState(typename Traits::EvalData workset,
 
   volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
       // local parameters
       kappa = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
@@ -253,9 +253,9 @@ computeState(typename Traits::EvalData workset,
 
       // fill local tensors
       F.fill(def_grad,cell, pt, -1);
-      //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           Fpn(i, j) = static_cast<ScalarT>(Fp_old(cell, pt, i, j));
         }
       }
@@ -325,15 +325,15 @@ computeState(typename Traits::EvalData workset,
         expA = Intrepid::exp(dgam * N);
         Fpnew = expA * Fpn;
 
-        for (std::size_t i(0); i < num_dims_; ++i)
-          for (std::size_t j(0); j < num_dims_; ++j)
+        for (int i(0); i < num_dims_; ++i)
+          for (int j(0); j < num_dims_; ++j)
             Fp(cell, pt, i, j) = Fpnew(i, j);
 
       } else {
         // elasticity, set state variables to old values
         eqps(cell, pt) = eqps_old(cell, pt);
-        for (std::size_t i(0); i < num_dims_; ++i)
-          for (std::size_t j(0); j < num_dims_; ++j)
+        for (int i(0); i < num_dims_; ++i)
+          for (int j(0); j < num_dims_; ++j)
             Fp(cell, pt, i, j) = Fpn(i, j);
 
       }  // end of return mapping
@@ -375,7 +375,7 @@ computeState(typename Traits::EvalData workset,
         M2(1) = M1(0);
         M2(2) = M1(2);
       } else {
-        for (std::size_t i = 0; i < num_dims_; ++i) {
+        for (int i = 0; i < num_dims_; ++i) {
           M1(i) = direction_f1_[i];
           M2(i) = direction_f2_[i];
         }
@@ -422,8 +422,8 @@ computeState(typename Traits::EvalData workset,
           max_damage_f1_ * (1 - std::exp(-alpha_f2 / saturation_f2_));
 
       // total Cauchy stress (M, Fibers)
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) =
               volume_fraction_m_ * (1 - damage_m(cell, pt)) * sigma_m(i, j)
                   + volume_fraction_f1_ * (1 - damage_f1(cell, pt))
