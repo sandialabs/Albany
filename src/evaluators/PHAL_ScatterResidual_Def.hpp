@@ -8,7 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 //#include "Kokkos_Cuda.hpp"
 #include "Kokkos_View.hpp"
-#include "Sacado.hpp"
+#include "Sacado_Kokkos.hpp"
 #include "Kokkos_View_Fad.hpp"
 
 // **********************************************************************

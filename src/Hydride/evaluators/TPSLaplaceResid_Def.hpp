@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
-#include "Sacado.hpp"
+#include "Sacado_Kokkos.hpp"
 #include "Sacado_Traits.hpp"
 
 namespace PHAL {

@@ -8,7 +8,7 @@
 #include <Intrepid_MiniTensor.h>
 
 #include "Intrepid_FieldContainer.hpp"
-#include "Sacado.hpp"
+#include "Sacado_Kokkos.hpp"
 #include "Intrepid_MiniTensor.h"
 #include "Teuchos_UnitTestHarness.hpp"
 

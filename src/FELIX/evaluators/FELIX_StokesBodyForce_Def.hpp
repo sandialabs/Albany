@@ -7,7 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
-#include "Sacado.hpp"
+#include "Sacado_Kokkos.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
