@@ -45,7 +45,7 @@ struct Workset {
   typedef AlbanyTraits::EvalTypes ET;
 
   Workset() :
-    transientTerms(false), accelerationTerms(false), ignore_residual(false) {}
+    transientTerms(false), accelerationTerms(false), ignore_residual(false), current_time(0) {}
 
   unsigned int numCells;
   unsigned int wsIndex;
@@ -138,6 +138,7 @@ struct Workset {
 
   // Current Time as defined by Rythmos
   double current_time;
+  //amb Nowhere set. We should either set it or remove it.
   double previous_time;
 
   // flag indicating whether to sum tangent derivatives, i.e.,

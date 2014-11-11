@@ -112,6 +112,7 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
   unsigned int numCells = workset.numCells;
   //Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
+  //amb workset.previous_time is never set. We need to do something about that.
   const double dt_in = workset.current_time - workset.previous_time;
   double rainnc, rainncv;
   //const double zbot = 25.0;
