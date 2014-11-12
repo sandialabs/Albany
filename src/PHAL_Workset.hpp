@@ -45,7 +45,7 @@ struct Workset {
   typedef AlbanyTraits::EvalTypes ET;
 
   Workset() :
-    transientTerms(false), accelerationTerms(false), ignore_residual(false), current_time(0) {}
+    transientTerms(false), accelerationTerms(false), ignore_residual(false) {}
 
   unsigned int numCells;
   unsigned int wsIndex;

@@ -98,10 +98,9 @@ evaluateFields(typename Traits::EvalData workset)
   if (!this->mdm.is_null()) {
     // If the mesh is deforming according to the previous step's displacements,
     // then we need to correct the imposed BC for the deformation. Subtract off
-    // the amounty by which the mesh has moved so far.
+    // the amount by which the mesh has moved so far.
     this->mdm->tellCurrentTime(workset.current_time);
     this->value -= this->computeVal(this->mdm->getPreviousTime());
-    std::cout << "amb: value " << this->value << std::endl;
   }
   PHAL::Dirichlet<EvalT, Traits>::evaluateFields(workset);
 }
