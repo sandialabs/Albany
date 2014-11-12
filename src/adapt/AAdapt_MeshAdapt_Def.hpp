@@ -148,8 +148,10 @@ AAdapt::MeshAdapt<SizeField>::beforeAdapt(
     std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
   }
 
-  if (adapt_params_->get<bool>("Reference Configuration: Update", false))
+  if (adapt_params_->get<bool>("Reference Configuration: Update", false)) {
     updateCoordinates(pumi_discretization);
+    mesh->verify();
+  }
 
   // Create a remeshed output file naming convention by adding the
   // remesh_file_index_ ahead of the period
