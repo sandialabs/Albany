@@ -44,6 +44,7 @@ private:
   // Input:  
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
   PHX::MDField<ScalarT,Cell,Node> dsurface_height_dx;
   PHX::MDField<ScalarT,Cell,Node> dsurface_height_dy;
@@ -60,6 +61,7 @@ private:
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
+  std::size_t numNodes;
 
   //Glen's law parameters
   double n; 
