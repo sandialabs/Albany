@@ -40,14 +40,13 @@ RhoCp(Teuchos::ParameterList& p,
   Teuchos::RCP<const Teuchos::ParameterList> reflist =
     this->getValidRhoCpParameters();
 
-// Check the parameters contained in the input file. Do not check the defaults
-// set programmatically
-cond_list->validateParameters(*reflist, 0,
+  cond_list->validateParameters(*reflist, 0,
   Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
 
   std::string typ = cond_list->get("Thermal Conductivity Type", "Constant");
+
   ScalarT value = cond_list->get("Value", 1.0);
-  //init_constant(value, p);
+  init_constant(value,p);
 
   this->setName("RhoCp"+PHX::TypeString<EvalT>::value);
 }
@@ -56,8 +55,8 @@ cond_list->validateParameters(*reflist, 0,
 template<typename EvalT, typename Traits>
 void RhoCp<EvalT, Traits>::
 init_constant(ScalarT value, Teuchos::ParameterList& p){
-constant_value = value;
-} //init_constant
+  constant_value_ = value;
+}
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -82,7 +81,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
       MeshScalarT* X = &coord_(cell,qp,0);
-      rho_cp_(cell,qp) = constant_value;
+      rho_cp_(cell,qp) = constant_value_;
     }
   }
 
@@ -95,14 +94,14 @@ RhoCp<EvalT, Traits>::
 getValidRhoCpParameters() const
 {
  
-Teuchos::RCP<Teuchos::ParameterList> valid_pl =
-  rcp(new Teuchos::ParameterList("Valid Rho Cp Params"));;
- 
-valid_pl->set<std::string>("Rho Cp Type", "Constant",
-   "Constant rho cp across the element block");
-valid_pl->set<double>("Value", 1.0, "Constant rho cp value");
- 
-return valid_pl;
+  Teuchos::RCP<Teuchos::ParameterList> valid_pl =
+    rcp(new Teuchos::ParameterList("Valid Rho Cp Params"));;
+
+  valid_pl->set<std::string>("Rho Cp Type", "Constant",
+      "Constant rho cp across the element block");
+  valid_pl->set<double>("Value", 1.0, "Constant rho cp value");
+
+  return valid_pl;
 
 }
 //**********************************************************************

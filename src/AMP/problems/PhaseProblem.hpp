@@ -33,10 +33,6 @@ public:
 	       const int num_dims,
  	       Teuchos::RCP<const Teuchos::Comm<int> >& commT);
 
-// 	       Teuchos::RCP<const Teuchos::Comm<int> >& commT);
-//	       const Teuchos::RCP<const Epetra_Comm>& comm_); // DJL changed the agrument from Epetra_Comm to Teuchos::Comm 
-                                                              // to match changes made to other Problem classes
-
   ~PhaseProblem();
 
   virtual 
@@ -87,7 +83,6 @@ protected:
   int num_dims_;
 
   Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
- 
 
   Teuchos::RCP<Albany::Layouts> dl_;
 
