@@ -209,7 +209,7 @@ computeState(typename Traits::EvalData workset,
           dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
 
           res = std::abs(F[0]);
-          if (res < 1.e-11 || res / f < 1.E-11)
+          if (res < 1.e-11 || res / Y < 1.E-11)
             converged = true;
 
           TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
