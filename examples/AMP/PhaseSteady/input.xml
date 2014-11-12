@@ -27,6 +27,7 @@
     <Parameter name="FMDB Output File Name" type="string" value="out.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{95,899, Upper_Region,Lower_Region}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{893,1, Bottom_Surface,Top_Surface}"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
 
   <ParameterList name="Regression Results">
