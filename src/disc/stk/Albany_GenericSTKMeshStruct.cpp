@@ -73,8 +73,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
       uniformRefinementInitialized(false)
 //      , out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
-
-  metaData = new stk::mesh::MetaData();
+  metaData = Teuchos::rcp(new stk::mesh::MetaData());
 
   buildEMesh = buildPerceptEMesh();
 
@@ -94,15 +93,9 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 
   // This is typical, can be resized for multiple material problems
   meshSpecs.resize(1);
-
-  bulkData = NULL;
 }
 
-Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct()
-{
-  delete bulkData;
-  delete metaData;
-}
+Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
 		  const Teuchos::RCP<const Teuchos_Comm>& commT,
@@ -119,16 +112,16 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
 
   this->nodal_data_base = sis->getNodalDataBase();
 
-  if (bulkData == NULL) {
-
+  if (bulkData.is_null()) {
      const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* > (commT.get());
-     bulkData = new stk::mesh::BulkData(*metaData,
-                                        *mpiComm->getRawMpiComm(),
-                                        //worksetSize, // capability currently removed from STK_Mesh
-                                        false, // add_fmwk_data
-                                        NULL, // ConnectivityMap
-                                        NULL, // FieldDataManager
-                                        worksetSize);
+     bulkData = Teuchos::rcp(
+       new stk::mesh::BulkData(*metaData,
+                               *mpiComm->getRawMpiComm(),
+                               //worksetSize, // capability currently removed from STK_Mesh
+                               false, // add_fmwk_data
+                               NULL, // ConnectivityMap
+                               NULL, // FieldDataManager
+                               worksetSize));
   }
 
   // Build the container for the STK fields

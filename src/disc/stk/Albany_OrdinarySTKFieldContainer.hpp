@@ -18,7 +18,7 @@ class OrdinarySTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
   public:
 
     OrdinarySTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                              stk::mesh::MetaData* metaData_,
+                              const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                               const int neq_,
                               const AbstractFieldContainer::FieldContainerRequirements& req,
                               const int numDim_,

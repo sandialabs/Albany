@@ -110,7 +110,7 @@ private:
   ///
   /// stk_mesh Bulk Data
   ///
-  stk::mesh::BulkData *
+  Teuchos::RCP<stk::mesh::BulkData>
   bulk_data_;
 
   Teuchos::RCP<Albany::AbstractSTKMeshStruct>
@@ -122,7 +122,7 @@ private:
   Albany::STKDiscretization *
   stk_discretization_;
 
-  stk::mesh::MetaData *
+  Teuchos::RCP<stk::mesh::MetaData>
   meta_data_;
 
   Teuchos::RCP<LCM::AbstractFractureCriterion>

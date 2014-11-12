@@ -24,10 +24,10 @@
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
 Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
-                          stk::mesh::MetaData* metaData,
-                          const bool output){
-
-  switch(dim.size()){
+                          const Teuchos::RCP<stk::mesh::MetaData>& metaData,
+                          const bool output)
+{
+  switch(dim.size()) {
 
   case 1: // scalar
     return Teuchos::rcp(new STKNodeField<double, 1>(name, dim, metaData, output));
@@ -48,15 +48,17 @@ Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
 
 template<typename DataType, unsigned ArrayDim, class traits>
-Albany::STKNodeField<DataType, ArrayDim, traits>::STKNodeField(const std::string& name_,
-     const std::vector<int>& dims_, stk::mesh::MetaData* metaData_,
-     const bool output) :
+Albany::STKNodeField<DataType, ArrayDim, traits>::
+STKNodeField(const std::string& name_,
+             const std::vector<int>& dims_,
+             const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
+             const bool output) :
   name(name_),
   dims(dims_),
   metaData(metaData_)
 {
-
-  node_field = traits_type::createField(name, dims, metaData_);
+  //amb-leak Look into this later.
+  node_field = traits_type::createField(name, dims, metaData_.get());
 
 #ifdef ALBANY_SEACAS
 

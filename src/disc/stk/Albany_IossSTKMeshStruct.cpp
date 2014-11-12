@@ -90,10 +90,10 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     // create the new communicator - it just contains processor zero
     MPI_Comm_create(*theComm->getRawMpiComm(), peZero, &peZeroComm);
 
-    mesh_data = new stk::io::StkMeshIoBroker(peZeroComm);
+    mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(peZeroComm));
   }
   else {
-    mesh_data = new stk::io::StkMeshIoBroker(*theComm->getRawMpiComm());
+    mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(*theComm->getRawMpiComm()));
   }
 
   // Create input mesh 
@@ -119,8 +119,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   mesh_data->add_mesh_database(file_name, mesh_type, stk::io::READ_MESH);
   mesh_data->create_input_mesh();
 
-  delete metaData;
-  metaData = &mesh_data->meta_data();
+  metaData = Teuchos::rcpFromRef(mesh_data->meta_data());
 
   // End of creating input mesh
 
@@ -236,9 +235,21 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
 
 Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 {
-  metaData = NULL; // prevent deletion
-  bulkData = NULL; // prevent deletion
-  delete mesh_data;
+  // Explicitly delete these in exactly this order. There are three
+  // reasons. First, StkMeshIoBroker does not have a MetaData getter that
+  // returns a Teuchos::RCP. Second, bulkData is constructed with a raw ref to
+  // metaData. Third, bulkData uses metaData in its destructor.
+  //   If these are not set to null in the following order, mesh_data will be
+  // deleted here, and then later bulkData and metaData will be deleted in
+  // AbstractMeshStruct. But mesh_data's destructor will invalidate metaData,
+  // and so there is then a memory problem when bulkData is deleted.
+  //   I recommend that the following methods be added to STK:
+  //     Teuchos::RCP<stk::mesh::MetaData> meta_data();
+  //     BulkData(const Teuchos::RCP<mesh_meta_data>, ...);
+  // Until then, Albany needs to be careful with these three objects.
+  bulkData = Teuchos::null;
+  metaData = Teuchos::null;
+  mesh_data = Teuchos::null;
 }
 
 void

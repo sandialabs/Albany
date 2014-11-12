@@ -21,7 +21,7 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
   public:
 
     MultiSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                           stk::mesh::MetaData* metaData_,
+                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                            const int neq_,
                            const AbstractFieldContainer::FieldContainerRequirements& req,
                            const int numDim_,

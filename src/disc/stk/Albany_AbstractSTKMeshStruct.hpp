@@ -35,7 +35,7 @@ namespace Albany {
 
   struct AbstractSTKMeshStruct : public AbstractMeshStruct {
 
-  virtual ~AbstractSTKMeshStruct(){}
+    virtual ~AbstractSTKMeshStruct() {}
 
   public:
 
@@ -49,8 +49,8 @@ namespace Albany {
 
     msType meshSpecsType(){ return STK_MS; }
 
-    stk::mesh::MetaData* metaData;
-    stk::mesh::BulkData* bulkData;
+    Teuchos::RCP<stk::mesh::MetaData> metaData;
+    Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
     std::map<int, stk::mesh::Part*> partVec;    //Element blocks
     std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
