@@ -118,8 +118,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // If active, intialize data needed for differentiation
   if (is_active) {
-    Teuchos::RCP<const Tpetra_MultiVector> VpT = workset.VpT;
-    const int num_cols = VpT->getNumVectors();
     const int num_deriv = this->numNodes;
     const int num_nodes_res = this->numNodes;
     bool trans = workset.transpose_dist_param_deriv;
