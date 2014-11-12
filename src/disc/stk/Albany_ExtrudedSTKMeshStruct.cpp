@@ -28,8 +28,6 @@
 
 #include "Albany_Utils.hpp"
 
-//TODO: Generalize the importer so that it can extrude quad meshes
-
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Teuchos_Comm>& comm) :
@@ -160,10 +158,10 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   int numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
-  long long int maxGlobalElements2D = 0;
-  long long int maxGlobalVertices2dId = 0;
-  long long int numGlobalVertices2D = 0;
-  long long int maxGlobalEdges2D = 0;
+  GO maxGlobalElements2D = 0;
+  GO maxGlobalVertices2dId = 0;
+  GO numGlobalVertices2D = 0;
+  GO maxGlobalEdges2D = 0;
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
@@ -199,24 +197,27 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   std::vector<stk::mesh::Entity> edges2D;
   stk::mesh::get_selected_entities(select_edges, bulkData2D.buckets(metaData2D.side_rank()), edges2D);
 
-  long long int maxOwnedElements2D(0), maxOwnedNodes2D(0), maxOwnedSides2D(0), numOwnedNodes2D(0);
+  GO maxOwnedElements2D(0), maxOwnedNodes2D(0), maxOwnedSides2D(0), numOwnedNodes2D(0);
   for (int i = 0; i < cells2D.size(); i++)
-    maxOwnedElements2D = std::max(maxOwnedElements2D, (long long int) bulkData2D.identifier(cells2D[i]));
+    maxOwnedElements2D = std::max(maxOwnedElements2D, (GO) bulkData2D.identifier(cells2D[i]));
   for (int i = 0; i < nodes2D.size(); i++)
-    maxOwnedNodes2D = std::max(maxOwnedNodes2D, (long long int) bulkData2D.identifier(nodes2D[i]));
+    maxOwnedNodes2D = std::max(maxOwnedNodes2D, (GO) bulkData2D.identifier(nodes2D[i]));
   for (int i = 0; i < edges2D.size(); i++)
-    maxOwnedSides2D = std::max(maxOwnedSides2D, (long long int) bulkData2D.identifier(edges2D[i]));
+    maxOwnedSides2D = std::max(maxOwnedSides2D, (GO) bulkData2D.identifier(edges2D[i]));
   numOwnedNodes2D = stk::mesh::count_selected_entities(select_owned_in_part, bulkData2D.buckets(stk::topology::NODE_RANK));
 
+
+  //WARNING Currently GO == long int. For gcc compiler, long == long long, however this might not be true with other compilers.
+
   //comm->MaxAll(&maxOwnedElements2D, &maxGlobalElements2D, 1);
-  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_MAX, maxOwnedElements2D, Teuchos::ptr(&maxGlobalElements2D));
+  Teuchos::reduceAll<int, GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedElements2D, Teuchos::ptr(&maxGlobalElements2D));
   //comm->MaxAll(&maxOwnedNodes2D, &maxGlobalVertices2dId, 1);
-  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_MAX, maxOwnedNodes2D, Teuchos::ptr(&maxGlobalVertices2dId));
+  Teuchos::reduceAll<int, GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedNodes2D, Teuchos::ptr(&maxGlobalVertices2dId));
   //comm->MaxAll(&maxOwnedSides2D, &maxGlobalEdges2D, 1);
-  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_MAX, maxOwnedSides2D, Teuchos::ptr(&maxGlobalEdges2D));
+  Teuchos::reduceAll<int, GO>(*comm, Teuchos::REDUCE_MAX, maxOwnedSides2D, Teuchos::ptr(&maxGlobalEdges2D));
   //comm->SumAll(&numOwnedNodes2D, &numGlobalVertices2D, 1);
   //The following should not be int int...
-  Teuchos::reduceAll<int, long long int>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2D, &numGlobalVertices2D);
+  Teuchos::reduceAll<int, GO>(*comm, Teuchos::REDUCE_SUM, 1, &numOwnedNodes2D, &numGlobalVertices2D);
 
   if (comm->getRank() == 0) std::cout << "Importing ascii files ...";
 
@@ -337,15 +338,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
 
   if (comm->getRank() == 0) std::cout << " done." << std::endl;
 
-  long long int elemColumnShift = (Ordering == 1) ? 1 : maxGlobalElements2D;
+  GO elemColumnShift = (Ordering == 1) ? 1 : maxGlobalElements2D;
   int lElemColumnShift = (Ordering == 1) ? 1 : cells2D.size();
   int elemLayerShift = (Ordering == 0) ? 1 : numLayers;
 
-  long long int vertexColumnShift = (Ordering == 1) ? 1 : maxGlobalVertices2dId;
+  GO vertexColumnShift = (Ordering == 1) ? 1 : maxGlobalVertices2dId;
   int lVertexColumnShift = (Ordering == 1) ? 1 : nodes2D.size();
   int vertexLayerShift = (Ordering == 0) ? 1 : numLayers + 1;
 
-  long long int edgeColumnShift = (Ordering == 1) ? 1 : maxGlobalEdges2D;
+  GO edgeColumnShift = (Ordering == 1) ? 1 : maxGlobalEdges2D;
   int lEdgeColumnShift = (Ordering == 1) ? 1 : edges2D.size();
   int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
 
@@ -376,7 +377,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
   ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
 
-  std::vector<long long int> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
+  std::vector<GO> prismMpasIds(NumBaseElemeNodes), prismGlobalIds(2 * NumBaseElemeNodes);
 
   for (int i = 0; i < (numLayers + 1) * nodes2D.size(); i++) {
     int ib = (Ordering == 0) * (i % lVertexColumnShift) + (Ordering == 1) * (i / vertexLayerShift);
@@ -394,7 +395,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     coord[0] = coord2d[0];
     coord[1] = coord2d[1];
 
-    int lid = nodes_map->getLocalElement((long long int)(node2dId));
+    int lid = nodes_map->getLocalElement((GO)(node2dId));
     coord[2] = sHeightVec_constView[lid] - thickVec_constView[lid] * (1. - levelsNormalizedThickness[il]);
 
     if(hasSurface_height && surface_height_field) {
@@ -430,7 +431,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     }
   }
 
-  long long int tetrasLocalIdsOnPrism[3][4];
+  GO tetrasLocalIdsOnPrism[3][4];
 
   for (int i = 0; i < cells2D.size() * numLayers; i++) {
 
@@ -449,7 +450,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     Teuchos::ArrayRCP<const ST> temperatureVecInterp_constView_ilplus1 = (*temperatureVecInterp)[il + 1].get1dView();
     for (int j = 0; j < NumBaseElemeNodes; j++) {
       stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]) - 1;
-      int node2dLId = nodes_map->getLocalElement((long long int)(node2dId));
+      int node2dLId = nodes_map->getLocalElement((GO)node2dId);
       stk::mesh::EntityId mpasLowerId = vertexLayerShift * node2dId;
       stk::mesh::EntityId lowerId = shift + vertexLayerShift * node2dId;
       prismMpasIds[j] = mpasLowerId;
@@ -606,7 +607,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   singlePartVec[0] = ssPartVec["basalside"];
 
 
-  long long int edgeOffset = maxGlobalEdges2D * numLayers;
+  GO edgeOffset = maxGlobalEdges2D * numLayers;
   if(ElemShape == Tetrahedron) edgeOffset *= 2;
 
   for (int i = 0; i < cells2D.size(); i++) {
@@ -662,7 +663,7 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
 }
 
 void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  long long int numNodes;
+  GO numNodes;
   Teuchos::ArrayRCP<ST> content_nonConstView = content->get1dViewNonConst();
   if (comm->getRank() == 0) {
     std::ifstream ifile;
@@ -671,7 +672,7 @@ void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Teuchos
       ifile >> numNodes;
       TEUCHOS_TEST_FOR_EXCEPTION(numNodes != content->getLocalLength(), Teuchos::Exceptions::InvalidParameterValue, std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << content->getLocalLength() << ")" << std::endl);
 
-      for (long long int i = 0; i < numNodes; i++)
+      for (GO i = 0; i < numNodes; i++)
         ifile >> content_nonConstView[i];
       ifile.close();
     } else {
@@ -681,7 +682,7 @@ void Albany::ExtrudedSTKMeshStruct::read2DFileSerial(std::string &fname, Teuchos
 }
 
 void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vector<Tpetra_Vector>& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  long long int numNodes, numComponents;
+  GO numNodes, numComponents;
   if (comm->getRank() == 0) {
     std::ifstream ifile;
     ifile.open(fname.c_str());
@@ -693,7 +694,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of components in file " << fname << " (" << numComponents << ") is different from the number expected (" << contentVec.size() << ")" << std::endl);
       for (int il = 0; il < numComponents; ++il) {
         Teuchos::ArrayRCP<ST> contentVec_nonConstView = contentVec[il].get1dViewNonConst();
-        for (long long int i = 0; i < numNodes; i++)
+        for (GO i = 0; i < numNodes; i++)
           ifile >> contentVec_nonConstView[i];
       }
       ifile.close();
@@ -706,7 +707,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
 }
 
 void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
-  long long int numNodes;
+  GO numNodes;
   int numComponents;
   std::ifstream ifile;
   if (comm->getRank() == 0) {
@@ -742,12 +743,13 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
   Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT->get1dViewNonConst();
   for (int il = 0; il < numComponents; ++il) {
     if (comm->getRank() == 0)
-      for (long long int i = 0; i < numNodes; i++)
+      for (GO i = 0; i < numNodes; i++)
         ifile >> tempT_nonConstView[i];
     temperatureVec[il].doImport(*tempT, *importOperator, Tpetra::INSERT);
   }
 
   if (comm->getRank() == 0)
     ifile.close();
+
 
 }
