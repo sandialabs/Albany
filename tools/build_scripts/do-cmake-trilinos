@@ -65,8 +65,9 @@ cmake \
         -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
         -D HDF5_LIBRARY_DIRS:PATH="$HDF5DIR/lib" \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF \
-      -D Trilinos_ENABLE_Tpetra:BOOL=OFF \
-      -D Trilinos_ENABLE_Kokkos:BOOL=OFF \
+      -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+      -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D Trilinos_ENABLE_TESTS:BOOL=OFF \
       -D Piro_ENABLE_TESTS:BOOL=ON \

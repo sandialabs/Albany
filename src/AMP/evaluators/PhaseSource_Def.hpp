@@ -34,21 +34,19 @@ PhaseSource(Teuchos::ParameterList& p,
   workset_size_ = dims[0];
   num_qps_      = dims[1];
 
- Teuchos::ParameterList* cond_list =
-   p.get<Teuchos::ParameterList*>("Parameter List");
-     
- Teuchos::RCP<const Teuchos::ParameterList> reflist =
-   this->getValidPhaseSourceParameters();
+  Teuchos::ParameterList* cond_list =
+    p.get<Teuchos::ParameterList*>("Parameter List");
 
-// Check the parameters contained in the input file. Do not check the defaults
-// set programmatically
-cond_list->validateParameters(*reflist, 0,
-  Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
+  Teuchos::RCP<const Teuchos::ParameterList> reflist =
+    this->getValidPhaseSourceParameters();
 
-  std::string typ = cond_list->get("Phase Source Type", "Constant");
-  
+  cond_list->validateParameters(*reflist, 0,
+      Teuchos::VALIDATE_USED_ENABLED, Teuchos::VALIDATE_DEFAULTS_DISABLED);
+
+  std::string type = cond_list->get("Phase Source Type", "Constant");
+
   ScalarT value = cond_list->get("Value", 1.0);
-  //init_constant(value, p);
+  init_constant(value,p);
 
   this->setName("PhaseSource"+PHX::TypeString<EvalT>::value);
 }
@@ -57,8 +55,8 @@ cond_list->validateParameters(*reflist, 0,
 template<typename EvalT, typename Traits>
 void PhaseSource<EvalT, Traits>::
 init_constant(ScalarT value, Teuchos::ParameterList& p){
-constant_value = value;
-} //init_constant
+  constant_value_ = value;
+}
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -75,7 +73,6 @@ template<typename EvalT, typename Traits>
 void PhaseSource<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
   // current time
   const RealType time = workset.current_time;
 
@@ -83,7 +80,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
       MeshScalarT* X = &coord_(cell,qp,0);
-      source_(cell,qp) = constant_value;
+      source_(cell,qp) = constant_value_;
     }
   }
 
@@ -95,7 +92,6 @@ Teuchos::RCP<const Teuchos::ParameterList>
 PhaseSource<EvalT, Traits>::
 getValidPhaseSourceParameters() const
 {
- 
   Teuchos::RCP<Teuchos::ParameterList> valid_pl =
     rcp(new Teuchos::ParameterList("Valid Phase Source Params"));;
   

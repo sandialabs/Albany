@@ -181,6 +181,20 @@ FELIX::StokesFO::constructEvaluators(
    }
 
    {
+     std::string stateName("dsurface_height_dx"); //ds/dx which can be passed from CISM
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   {
+     std::string stateName("dsurface_height_dy"); //ds/dy which can be passed from CISM
+     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+
+   {
      std::string stateName("thickness");
      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
      ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
@@ -231,6 +245,14 @@ FELIX::StokesFO::constructEvaluators(
   fm0.template registerEvaluator<EvalT>
     (evalUtils.constructDOFGradInterpolationEvaluator_noDeriv(sh));
 
+  std::string dsh_dx = "dsurface_height_dx";
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(dsh_dx));
+  
+  std::string dsh_dy = "dsurface_height_dy";
+  fm0.template registerEvaluator<EvalT>
+    (evalUtils.constructDOFInterpolationEvaluator(dsh_dy));
+
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
    
@@ -279,7 +301,10 @@ FELIX::StokesFO::constructEvaluators(
     //Input
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+    p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("surface_height Gradient Name", "surface_height Gradient");
+    p->set<std::string>("dsurface_height_dx Name", "dsurface_height_dx");
+    p->set<std::string>("dsurface_height_dy Name", "dsurface_height_dy");
     
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);

@@ -202,7 +202,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
   dl->dimensions(stateRef.dim);
 
-  if((stateRef.entity == StateStruct::NodalData)||(stateRef.entity == StateStruct::NodalDataToElemNode)){ // nodal data
+  if((stateRef.entity == StateStruct::NodalData)||(stateRef.entity == StateStruct::NodalDataToElemNode) || (stateRef.entity == Albany::StateStruct::NodalDistParameter)){ // nodal data
 
     Teuchos::RCP<Adapt::NodalDataBase> nodalDataBase = getNodalDataBase();
 

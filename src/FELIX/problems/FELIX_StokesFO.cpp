@@ -29,6 +29,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Need to allocate a fields in mesh database
   this->requirements.push_back("surface_height");
+  this->requirements.push_back("dsurface_height_dx"); //ds/dx which can be passed from CISM 
+  this->requirements.push_back("dsurface_height_dy"); //ds/dy which can be passed from CISM 
   this->requirements.push_back("temperature");
   this->requirements.push_back("basal_friction");
   this->requirements.push_back("thickness");

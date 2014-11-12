@@ -44,20 +44,24 @@ private:
   // Input:  
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
+  PHX::MDField<ScalarT,Cell,Node> dsurface_height_dx;
+  PHX::MDField<ScalarT,Cell,Node> dsurface_height_dy;
   Teuchos::Array<double> gravity;
   
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
    //Radom field types
-  enum BFTYPE {NONE, FO_INTERP_SURF_GRAD, POISSON, FO_SINCOS2D, FO_COSEXP2D, FO_COSEXP2DFLIP, FO_COSEXP2DALL,
+  enum BFTYPE {NONE, FO_INTERP_SURF_GRAD, FO_SURF_GRAD_PROVIDED, POISSON, FO_SINCOS2D, FO_COSEXP2D, FO_COSEXP2DFLIP, FO_COSEXP2DALL,
 	  FO_SINCOSZ, FO_SINEXP2D, FO_DOME};
   BFTYPE bf_type;
 
   std::size_t numQPs;
   std::size_t numDims;
   std::size_t vecDim;
+  std::size_t numNodes;
 
   //Glen's law parameters
   double n; 
