@@ -36,6 +36,22 @@ template<bool Interleaved>
 Albany::GenericSTKFieldContainer<Interleaved>::~GenericSTKFieldContainer() {
 }
 
+namespace {
+//amb 13 Nov 2014. After new STK was integrated, fields with output set to false
+// were nonetheless being written to Exodus output files. As a possibly
+// temporary but also possibly permanent fix, set the role of such fields to
+// INFORMATION rather than TRANSIENT. The enum RoleType is defined in
+// seacas/libraries/ioss/src/Ioss_Field.h. Grepping around there suggests that
+// fields having the role INFORMATION are not written to file: first,
+// INFORMATION is never actually used; second, I/O behavior is based on chained
+// 'else if's with no trailing 'else'; hence, any role type not explicitly
+// handled is not acted on.
+//   It appears that the output boolean is used only in this file in the context
+// of role type, so for now I'm applying this fix only to this file.
+inline Ioss::Field::RoleType role_type(const bool output) {
+  return output ? Ioss::Field::TRANSIENT : Ioss::Field::INFORMATION;
+}
+}
 
 template<bool Interleaved>
 void
@@ -63,9 +79,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
       //Debug
       //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
       //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
-
 #ifdef ALBANY_SEACAS
-        if(st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
+      stk::io::set_field_role(*qpscalar_states.back(), role_type(st.output));
 #endif
 
     } else if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode){
@@ -78,9 +93,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
         //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
         //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
 #ifdef ALBANY_SEACAS
-
-          if(st.output) stk::io::set_field_role(*qpscalar_states.back(), Ioss::Field::TRANSIENT);
-
+          stk::io::set_field_role(*qpscalar_states.back(), role_type(st.output));
 #endif
         }
         else if(dim.size() == 3){ // Vector at QPs
@@ -92,9 +105,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
           //      cout << "Allocating qpv field name " << qpvector_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ")" <<endl;
 #ifdef ALBANY_SEACAS
-
-          if(st.output) stk::io::set_field_role(*qpvector_states.back(), Ioss::Field::TRANSIENT);
-
+          stk::io::set_field_role(*qpvector_states.back(), role_type(st.output));
 #endif
         }
         else if(dim.size() == 4){ // Tensor at QPs
@@ -106,9 +117,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
           //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ")" <<endl;
 #ifdef ALBANY_SEACAS
-
-          if(st.output) stk::io::set_field_role(*qptensor_states.back(), Ioss::Field::TRANSIENT);
-
+          stk::io::set_field_role(*qptensor_states.back(), role_type(st.output));
 #endif
         }
         else if(dim.size() == 5){ // Tensor3 at QPs
@@ -120,9 +129,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
           //      cout << "Allocating qpt field name " << qptensor_states.back()->name() <<
           //            " size: (" << dim[0] << ", " << dim[1] << ", " << dim[2] << ", " << dim[3] << ", " << dim[4] << ")" <<endl;
 #ifdef ALBANY_SEACAS
-
-          if(st.output) stk::io::set_field_role(*qptensor3_states.back(), Ioss::Field::TRANSIENT);
-
+          stk::io::set_field_role(*qptensor3_states.back(), role_type(st.output));
 #endif
         }
         // Something other than a scalar, vector, tensor, or tensor3 at the QPs is an error
