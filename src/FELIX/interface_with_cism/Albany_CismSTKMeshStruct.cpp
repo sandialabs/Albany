@@ -95,6 +95,12 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     for (int i=0; i<NumNodes; i++)
       sh[i] = surf_height_at_nodes_Ptr[i];
   }
+  if (have_shGrad) {
+    for (int i=0; i<NumNodes; i++){
+      shGrad[i][0] = dsurf_height_at_nodes_dx_Ptr[i];
+      shGrad[i][1] = dsurf_height_at_nodes_dy_Ptr[i];
+    }
+  }
   if (have_beta) {
     for (int i=0; i<NumNodes; i++) {
       beta[i] = beta_at_nodes_Ptr[i];
@@ -216,6 +222,7 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
   delete [] xyz;
   if (have_sh) delete [] sh;
+  if (have_shGrad) delete [] shGrad;
   if (have_bf) delete [] bf;
   delete [] eles;
   delete [] globalElesID;
@@ -254,12 +261,16 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
+  ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "dsurface_height_dx");
+  ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "dsurface_height_dy");
   ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
   ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
 
   if(!surfaceHeight_field)
      have_sh = false;
+  if(!dsurfaceHeight_dx_field || !dsurfaceHeight_dy_field)
+     have_shGrad = false;
   if(!flowFactor_field)
      have_flwa = false;
   if(!temperature_field)
@@ -377,6 +388,67 @@ Albany::CismSTKMeshStruct::constructMesh(
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
      }
+
+     if (have_shGrad) {
+       double* dsHeight_dx; 
+       double* dsHeight_dy;
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, llnode);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, llnode);
+       node_GID = eles[i][0]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, lrnode);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, lrnode);
+       node_GID = eles[i][1]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, urnode);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, urnode);
+       node_GID = eles[i][2]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, ulnode);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, ulnode);
+       node_GID = eles[i][3]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, llnodeb);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, llnodeb);
+       node_GID = eles[i][4]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, lrnodeb);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, lrnodeb);
+       node_GID = eles[i][5]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, urnodeb);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, urnodeb);
+       node_GID = eles[i][6]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+
+       dsHeight_dx = stk::mesh::field_data(*dsurfaceHeight_dx_field, ulnodeb);
+       dsHeight_dy = stk::mesh::field_data(*dsurfaceHeight_dy_field, ulnodeb);
+       node_GID = eles[i][7]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dsHeight_dx[0] = shGrad[node_LID][0];
+       dsHeight_dy[0] = shGrad[node_LID][1];
+     }
+
      if (have_flwa) {
        double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem); 
        //i is elem_LID (element local ID);
