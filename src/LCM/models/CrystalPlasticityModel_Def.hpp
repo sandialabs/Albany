@@ -9,7 +9,7 @@
 #include "Albany_Utils.hpp"
 
 //#define  PRINT_DEBUG
-#define  PRINT_OUTPUT
+//#define  PRINT_OUTPUT
 //#define  DECOUPLE
 #include <typeinfo>
 #include <Sacado_Traits.hpp>
