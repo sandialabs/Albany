@@ -38,7 +38,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="mech90-mesh2-base3-SI.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="mech90-very_coarse-base3-SI.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
@@ -151,10 +151,6 @@
                     <Parameter name="default values" type="string" value="SA"/>
                     <Parameter name="prec type" type="string" value="full-MGV"/>
                     <Parameter name="max levels" type="int" value="5"/>
-                    <Parameter name="smoother: type" type="string" value="Chebyshev"/>
-                    <Parameter name="smoother: sweeps" type="int" value="3"/>
-                    <Parameter name="smoother: Chebyshev alpha" type="double" value="5"/>
-                    <Parameter name="smoother: pre or post" type="string" value="both"/>
                     <Parameter name="coarse: type" type="string" value="Amesos-Superludist"/>
                     <Parameter name="PDE equations" type="int" value="3"/>
                   </ParameterList>
