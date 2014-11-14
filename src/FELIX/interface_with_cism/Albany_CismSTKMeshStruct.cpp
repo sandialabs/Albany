@@ -63,6 +63,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   eles = new int[NumEles][8];
   bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
   sh = new double[NumNodes];
+  shGrad = new double[NumNodes][2];
   globalNodesID = new GO[NumNodes];
   globalElesID = new GO[NumEles];
   basalFacesID = new GO[NumBasalFaces];
