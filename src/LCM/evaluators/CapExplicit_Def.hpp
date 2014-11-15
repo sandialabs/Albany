@@ -556,7 +556,7 @@ namespace LCM
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
     //Irina TOFIX intrepid
-    //ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid::det(s);
 
     //dJ2dsigma = s;
     //dJ3dsigma(3);

@@ -93,9 +93,9 @@ namespace LCM {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid::Tensor<MeshScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
 
-        Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
 
         gBasis = Intrepid::transpose(gBasis);
 

@@ -63,12 +63,14 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int i = 0; i < dimension_; i++) {
       // Zero out for node==0; then += for node = 1 to number_nodes_
-      ScalarT &
-      vpt = point_value_(cell, i);
-      vpt = nodal_value_(cell, 0, i) * basis_fn_(cell, 0);
+      //ScalarT &
+      //vpt = point_value_(cell, i);
+     for (int j=0; j<point_value_.dimension(2);j++){
+      point_value_(cell, i,j) = nodal_value_(cell, 0, i) * basis_fn_(cell, 0,i);
       for (int node = 1; node < number_nodes_; ++node) {
-        vpt += nodal_value_(cell, node, i) * basis_fn_(cell, node);
+        point_value_(cell, i, j) += nodal_value_(cell, node, i) * basis_fn_(cell, node,i);
       }
+     }
     }
   }
 }
@@ -91,7 +93,7 @@ NodePointVecInterpolation(
 
   this->setName(
     "NodePointVecInterpolation" +
-    PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value
+    PHX::typeAsString<PHX::Device>()
   );
 
   std::vector<PHX::DataLayout::size_type>
@@ -136,28 +138,30 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int i = 0; i < dimension_; i++) {
       // Zero out for node==0; then += for node = 1 to number_nodes_
-      ScalarT &
-      vpt = point_value_(cell, i);
-
-      vpt = FadType(
+     // ScalarT &
+     // vpt = point_value_(cell, i);
+//Irina TOFIX dimensions
+/*
+      point_value_(cell, i) = FadType(
           num_dof,
           nodal_value_(cell, 0, i).val() * basis_fn_(cell, 0)
       );
 
-      vpt.fastAccessDx(offset_ + i) =
+      (point_value_(cell, i)).fastAccessDx(offset_ + i) =
           nodal_value_(cell, 0, i).fastAccessDx(offset_ + i) *
           basis_fn_(cell, 0);
 
       for (int node = 1; node < number_nodes_; ++node) {
 
-        vpt.val() +=
+        (point_value_(cell, i)).val() +=
             nodal_value_(cell, node, i).val() * basis_fn_(cell, node);
 
-        vpt.fastAccessDx(neq * node + offset_ + i) +=
+        (point_value_(cell, i)).fastAccessDx(neq * node + offset_ + i) +=
             nodal_value_(cell, node, i).fastAccessDx(neq * node + offset_ + i)
             *
             basis_fn_(cell, node);
       }
+*/
     }
   }
 }

@@ -83,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
   if (numDims == 1) {
-    Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
+     //Irina TOFIX Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
         	  totstress(cell, qp) = stress(cell, qp) - biotCoefficient(cell,qp)*porePressure(cell,qp);
@@ -96,9 +96,9 @@ evaluateFields(typename Traits::EvalData workset)
 	  //Irina TOFIX intrepid
 	  RST::inverseTemp(F_inv, defGrad);
 	  //RST::transpose(F_invT, F_inv);
-	  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-	  FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
-	  FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
+	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
+	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
 //Irina TOFIX intrepid
 //	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
 

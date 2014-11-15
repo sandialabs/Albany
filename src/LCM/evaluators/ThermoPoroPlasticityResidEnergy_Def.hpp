@@ -254,8 +254,8 @@ evaluateFields(typename Traits::EvalData workset)
    //Irina TOFIX intrepid
    RST::inverseTemp(F_inv, defgrad);
    //RST::transpose(F_invT, F_inv);
-   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-   FST::scalarMultiplyDataData<ScalarT>(KJF_invT, ThermalCond, JF_invT);
+    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(KJF_invT, ThermalCond, JF_invT);
 //Irina TOFIX intrepid
 //   FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
@@ -268,10 +268,10 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
-  FST::integrateTemp<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
+   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "true" sums into
 
   // Heat Convection Term
-  FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
 //Irina TOFIX intrepid
 //  FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 //  FST::tensorMultiplyDataData<ScalarT> (flux, Kref, PGrad); // flux_i = k I_ij p_j

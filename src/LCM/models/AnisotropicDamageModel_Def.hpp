@@ -206,7 +206,7 @@ computeState(typename Traits::EvalData workset,
           / (1.0 + poissons_ratio(cell, pt))
           / (1.0 - 2.0 * poissons_ratio(cell, pt));
 
-      F.fill(def_grad,cell, pt, -1);
+      F.fill(def_grad,cell, pt,0,0);
       // Right Cauchy-Green Tensor C = F^{T} * F
 
       C = Intrepid::transpose(F) * F;

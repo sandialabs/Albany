@@ -65,7 +65,7 @@ computeState(typename Traits::EvalData workset,
           / (1. + poissons_ratio(cell, pt))
           / (1 - 2 * poissons_ratio(cell, pt));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
-      F.fill(def_grad,cell, pt, -1);
+      F.fill(def_grad,cell, pt,0,0);
       C = F * transpose(F);
       E = 0.5 * ( C - I );
       S = lambda * Intrepid::trace(E) * I + 2.0 * mu * E;

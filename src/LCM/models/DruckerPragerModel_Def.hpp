@@ -159,7 +159,7 @@ computeState(typename Traits::EvalData workset,
         }
       }
              
-      epsilon.fill( strain,cell,pt,-1 );
+      epsilon.fill( strain,cell,pt,0,0 );
       depsilon = epsilon - epsilonN;                                 
         
       alphaN = frictionold(cell,pt);

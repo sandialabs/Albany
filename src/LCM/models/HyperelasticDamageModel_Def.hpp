@@ -102,7 +102,7 @@ computeState(typename Traits::EvalData workset,
       Jm53 = std::pow(J(cell, pt), -5. / 3.);
       Jm23 = Jm53 * J(cell, pt);
 
-      F.fill(def_grad,cell, pt, -1);
+      F.fill(def_grad,cell, pt,0,0);
       b = F * transpose(F);
       mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid::trace(b);
       sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I

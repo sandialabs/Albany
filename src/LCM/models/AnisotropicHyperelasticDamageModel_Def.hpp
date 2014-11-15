@@ -198,7 +198,7 @@ computeState(typename Traits::EvalData workset,
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       Jm53 = std::pow(J(cell, pt), -5. / 3.);
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
-      F.fill(def_grad,cell, pt, -1);
+      F.fill(def_grad,cell, pt,0,0);
 
       // compute deviatoric stress
       b = F * Intrepid::transpose(F);

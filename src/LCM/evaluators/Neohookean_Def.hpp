@@ -79,7 +79,7 @@ namespace LCM {
           elasticModulus(cell,qp) / ( 2. * ( 1. + poissonsRatio(cell,qp) ) );
         Jm53 = std::pow(J(cell,qp), -5./3.);
 
-        F.fill(defGrad,cell,qp);
+        F.fill(defGrad,cell,qp,0,0);
         b = F*transpose(F);
         sigma = 0.5 * kappa * ( J(cell,qp) - 1. / J(cell,qp) ) * I
           + mu * Jm53 * Intrepid::dev(b);

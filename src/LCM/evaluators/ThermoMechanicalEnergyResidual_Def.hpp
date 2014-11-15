@@ -107,29 +107,30 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray Temperature_old = (*workset.stateArrayPtr)[tempName];
 
   // time step
-  ScalarT dt = deltaTime(0);
+  //Irina TOFIX dimensions ScalarT dt = deltaTime(0);
+  ScalarT dt = deltaTime(0,0);
 
   // compute the 'material' flux
 // Irina TOFIX intrepid
 // FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
   Intrepid::RealSpaceTools<ScalarT>::inverseTemp(Cinv, C);
 //  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
-  FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
+   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
-  FST::integrateTemp<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
-    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-    FST::integrateTemp<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    //Irina TOFIX operator[] for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
+     //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
-  for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
-   FST::integrateTemp<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+ //Irina TOFIX operator[] for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
+    //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
 //Irina comment: code below was commented out
   //if (workset.transientTerms && enableTransient)
-  //  FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  //   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   //
   // compute factor
   ScalarT fac(0.0);
@@ -139,7 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell)
     for (int qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
-  FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (print)
   {

@@ -199,7 +199,7 @@ computeState(typename Traits::EvalData workset,
 //    std::cout << ">>> cell " << cell << " point " << pt << " <<<\n";
 #endif
       // fill local tensors
-      F.fill(def_grad,cell, pt, -1);
+      F.fill(def_grad,cell, pt,0,0);
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
           Fp(i, j) = ScalarT(previous_plastic_deformation(cell, pt, i, j));

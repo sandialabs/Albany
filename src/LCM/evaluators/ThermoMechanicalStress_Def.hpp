@@ -162,7 +162,7 @@ namespace LCM {
 
         // compute trial intermediate configuration
      //Irina intrepid TOFIX
-        Fpinv = Intrepid::inverseTemp(Fpold);
+        Fpinv = Intrepid::inverse(Fpold);
       //  Cpinv = Fpinv * Intrepid::transpose(Fpinv);
       //  be = F * Cpinv * Intrepid::transpose(F);
 

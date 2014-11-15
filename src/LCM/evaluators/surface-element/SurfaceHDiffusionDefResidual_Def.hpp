@@ -193,10 +193,10 @@ namespace LCM {
      for (int cell=0; cell < workset.numCells; ++cell) {
        for (int pt=0; pt < numQPs; ++pt) {
 
-    	  Intrepid::Tensor<ScalarT> F(numDims, &defGrad(cell, pt, 0, 0));
+    	  Intrepid::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
     	  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
     	  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
-    	  Intrepid::Vector<ScalarT> C_grad_(numDims, &scalarGrad(cell, pt, 0));
+    	  Intrepid::Vector<ScalarT> C_grad_(numDims, scalarGrad,cell, pt,0);
     	  Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
          for (int j=0; j<numDims; j++){

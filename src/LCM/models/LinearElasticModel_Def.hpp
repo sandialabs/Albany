@@ -62,7 +62,7 @@ computeState(typename Traits::EvalData workset,
         / ( ( 1 + poissons_ratio(cell,pt) ) * ( 1 - 2 * poissons_ratio(cell,pt) ) );
       mu = elastic_modulus(cell,pt) / ( 2 * ( 1 + poissons_ratio(cell,pt) ) );
 
-      eps.fill( strain,cell,pt,-1 );
+      eps.fill( strain,cell,pt,0,0);
       
       sigma = 2.0 * mu * eps + lambda * Intrepid::trace(eps) * I;
 
@@ -78,7 +78,7 @@ computeState(typename Traits::EvalData workset,
   if (have_temperature_) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        sigma.fill(stress,cell,pt,-1);
+        sigma.fill(stress,cell,pt,0,0);
         sigma -= expansion_coeff_ 
           * (temperature_(cell,pt) - ref_temperature_) * I;
 

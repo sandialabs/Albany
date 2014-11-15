@@ -77,14 +77,16 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::Vector<ScalarT> p_grad(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_);
   // small strain version needs no pull back
+//Irina TOFIX dimensions
+/*
   if (small_strain_) {
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
         residual_(cell, node) = 0.0;
       }
       for (int pt = 0; pt < num_pts_; ++pt) {
-        p_grad.fill( pressure_grad_,cell,pt );
-        sigma.fill( stress_,cell,pt,-1);
+        p_grad.fill( pressure_grad_,cell,pt,0 );
+        sigma.fill( stress_,cell,pt,0,0);
         ScalarT dUdJ = (1.0/3.0) * Intrepid::trace(sigma);
         for (int node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,pt) *
@@ -113,8 +115,8 @@ evaluateFields(typename Traits::EvalData workset)
         residual_(cell, node) = 0.0;
       }
       for (int pt = 0; pt < num_pts_; ++pt) {
-        p_grad.fill( pressure_grad_,cell,pt );
-        sigma.fill( stress_,cell,pt,-1 );
+        p_grad.fill( pressure_grad_,cell,pt,0 );
+        sigma.fill( stress_,cell,pt,0,0);
         ScalarT dUdJ = (1.0/3.0) * Intrepid::trace(sigma);
         for (int node = 0; node < num_nodes_; ++node) {
           residual_(cell, node) += w_bf_(cell,pt) *
@@ -125,10 +127,9 @@ evaluateFields(typename Traits::EvalData workset)
       // stabilization term
       ScalarT stab_term = 0.5 * alpha_;
       for (int pt = 0; pt < num_pts_; ++pt) {
-        F.fill( def_grad_,cell,pt,-1);
-        //irina TOFIX intrepid
-        //ScalarT J = Intrepid::det(F);
-        //Cinv = Intrepid::inverseTemp( Intrepid::transpose(F) * F );
+        F.fill( def_grad_,cell,pt,0,0);
+        ScalarT J = Intrepid::det(F);
+        Cinv = Intrepid::inverse( Intrepid::transpose(F) * F );
         ScalarT stab_param = stab_term * h_(cell,pt) * h_(cell,pt) / 
           shear_modulus_(cell,pt);
         for (int node = 0; node < num_nodes_; ++node) {
@@ -142,6 +143,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 //------------------------------------------------------------------------------
 }

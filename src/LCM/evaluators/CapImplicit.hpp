@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
 
-#include "Sacado.hpp"
+#include "Sacado_Kokkos.hpp"
 
 namespace LCM {
   /** \brief CapImplicit stress response

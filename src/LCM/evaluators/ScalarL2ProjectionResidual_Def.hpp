@@ -92,7 +92,7 @@ evaluateFields(typename Traits::EvalData workset)
   {
 	  for (int qp=0; qp < numQPs; ++qp)
 	  {
-		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp, -1);
+		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
 		  //Irina TOFIX intrepid
 		  //J = Intrepid::det(F);
 		  tauH(cell,qp) = 0.0;

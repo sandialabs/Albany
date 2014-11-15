@@ -48,7 +48,7 @@ namespace LCM {
 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        grad.fill( scalar_grad_, cell,pt );
+        grad.fill( scalar_grad_, cell,pt,0 );
         scalar_mag = Intrepid::norm(grad);
         if (scalar_mag > 0) {
           unit = grad / scalar_mag;

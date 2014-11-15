@@ -177,7 +177,7 @@ computeState(typename Traits::EvalData workset,
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
       // fill local tensors
-      F.fill(def_grad, cell, pt, -1);
+      F.fill(def_grad, cell, pt,0,0);
       //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
@@ -293,9 +293,9 @@ computeState(typename Traits::EvalData workset,
   if (have_temperature_) {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-        F.fill(def_grad,cell,pt,-1);
+        F.fill(def_grad,cell,pt,0,0);
         ScalarT J = Intrepid::det(F);
-        sigma.fill(stress,cell,pt,-1);
+        sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
         for (int i = 0; i < num_dims_; ++i) {

@@ -65,7 +65,7 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      F.fill(defGrad,cell, pt, -1);
+      F.fill(defGrad,cell, pt,0,0);
       B = F * Intrepid::transpose(F);
 
       ScalarT pressure = kappa * (J(cell, pt) - 1.0);

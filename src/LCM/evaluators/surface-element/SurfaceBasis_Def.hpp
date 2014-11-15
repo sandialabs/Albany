@@ -169,7 +169,7 @@ namespace LCM {
       // get the midplane coordinates
       std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(numPlaneNodes);
       for (int node(0); node < numPlaneNodes; ++node)
-        midplaneNodes[node] = Intrepid::Vector<MeshScalarT>(3, &midplaneCoords(cell, node, 0));
+        midplaneNodes[node] = Intrepid::Vector<MeshScalarT>(3, midplaneCoords,cell, node, 0);
 
       Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
@@ -205,7 +205,7 @@ namespace LCM {
       // get the midplane coordinates
       std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
       for (int node(0); node < numPlaneNodes; ++node)
-        midplaneNodes[node] = Intrepid::Vector<ScalarT>(3, &midplaneCoords(cell, node, 0));
+        midplaneNodes[node] = Intrepid::Vector<ScalarT>(3, midplaneCoords,cell, node, 0);
 
       Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
       //compute the base vectors
@@ -246,9 +246,9 @@ namespace LCM {
 
     for (int cell(0); cell < worksetSize; ++cell) {
       for (int pt(0); pt < numQPs; ++pt) {
-        g_0 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 0, 0));
-        g_1 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 1, 0));
-        g_2 = Intrepid::Vector<MeshScalarT>(3, &basis(cell, pt, 2, 0));
+        g_0 = Intrepid::Vector<MeshScalarT>(3, basis,cell, pt, 0, 0);
+        g_1 = Intrepid::Vector<MeshScalarT>(3, basis,cell, pt, 1, 0);
+        g_2 = Intrepid::Vector<MeshScalarT>(3, basis,cell, pt, 2, 0);
 
         normal(cell, pt, 0) = g_2(0);
         normal(cell, pt, 1) = g_2(1);
@@ -281,12 +281,11 @@ namespace LCM {
 
     for (int cell(0); cell < worksetSize; ++cell) {
       for (int pt(0); pt < numQPs; ++pt) {
-        Intrepid::Tensor<MeshScalarT> dPhiInv(3, &dualBasis(cell, pt, 0, 0));
-        Intrepid::Tensor<MeshScalarT> dPhi(3, &basis(cell, pt, 0, 0));
-        Intrepid::Vector<MeshScalarT> G_2(3, &basis(cell, pt, 2, 0));
-        //Irina TOFIX intrepid    
-       // MeshScalarT j0 = Intrepid::det(dPhi);
-       // MeshScalarT jacobian = j0 *
+        Intrepid::Tensor<MeshScalarT> dPhiInv(3, dualBasis,cell, pt, 0, 0);
+        Intrepid::Tensor<MeshScalarT> dPhi(3, basis,cell, pt, 0, 0);
+        Intrepid::Vector<MeshScalarT> G_2(3, basis,cell, pt, 2, 0);
+        MeshScalarT j0 = Intrepid::det(dPhi);
+       //Irina TOFIX intrepid MeshScalarT jacobian = j0 *
        //   std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
         area(cell, pt) = jacobian * refWeights(pt);
       }

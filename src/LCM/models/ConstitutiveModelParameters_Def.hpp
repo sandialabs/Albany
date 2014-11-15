@@ -268,7 +268,7 @@ parseParameters(const std::string &n,
         (std::make_pair(n,
           pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
         ref_temp_map_.insert
-        (std::make_pair(n, pl.get<RealType>("Reference Temperature", -1)));
+        (std::make_pair(n, pl.get<RealType>("Reference Temperature",0,0)));
       } else if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Arrhenius") {
         temp_type_map_.insert(std::make_pair(n,"Arrhenius"));

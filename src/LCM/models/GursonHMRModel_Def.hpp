@@ -189,7 +189,7 @@ computeState(typename Traits::EvalData workset,
       Rd = recovery_modulus(cell, pt);
 
       // fill local tensors
-      F.fill(def_grad,cell, pt, -1);
+      F.fill(def_grad,cell, pt,0,0);
       //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {

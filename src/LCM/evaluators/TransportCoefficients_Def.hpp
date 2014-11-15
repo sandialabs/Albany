@@ -246,7 +246,7 @@ namespace LCM {
 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
-    	  Fmech.fill<PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> >( F_,cell,pt,-1 );
+    	  Fmech.fill( F_,cell,pt,0,0);
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
               F_mech_(cell,pt,i,j) = Fmech(i,j);

@@ -393,8 +393,7 @@ namespace LCM
 
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
-    //ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid::det(s);
 
     ScalarT Gamma = 1.0;
     if (psi != 0 && J2 != 0)
@@ -432,8 +431,7 @@ namespace LCM
 
     DFadType J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
-    //DFadType J3 = Intrepid::det(s);
+    DFadType J3 = Intrepid::det(s);
 
     DFadType Gamma = 1.0;
     if (psi != 0 && J2 != 0)
@@ -471,8 +469,7 @@ namespace LCM
 
     D2FadType J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
-    //    //D2FadType J3 = Intrepid::det(s);
+        D2FadType J3 = Intrepid::det(s);
 
     D2FadType Gamma = 1.0;
     if (psi != 0 && J2 != 0)

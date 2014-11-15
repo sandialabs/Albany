@@ -95,8 +95,8 @@ evaluateFields(typename Traits::EvalData workset)
   if (have_mech_) {
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
-        F.fill(def_grad_,cell, pt, -1);
-        tensor = Intrepid::inverseTemp(Intrepid::transpose(F) * F);
+        F.fill(def_grad_,cell, pt,0,0);
+        tensor = Intrepid::inverse(Intrepid::transpose(F) * F);
         damage_transient_coeff_(cell, pt) = transient_coeff_;
         diffusivity = diffusivity_coeff_ * tensor;
         for (int i = 0; i < num_dims_; ++i) {
