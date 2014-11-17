@@ -9,6 +9,49 @@ from subprocess import Popen, PIPE
 
 VERBOSE = False
 
+"""
+TODO:
+ - How to allow user overrides?
+ - work from either jenkins or cmd line
+ - allow multiple build types, IE: aeras + lcm
+"""
+
+ALBANY_BUILD_TYPES = \
+{
+    "basic"     : [
+    ],
+    "piro"      : [
+        ("ALBANY_NEEDS_DAKOTA",  "ON")
+    ]
+    "lcm"       : [
+        ("ALBANY_LCM", "ON")
+    ],
+    "muelu_su"  : [
+        ("ALBANY_NEEDS_MUELU",   "ON"),
+        ("ALBANY_NEEDS_SUPERLU", "ON")
+    ],
+    "muelu_klu" : [
+        ("ALBANY_NEEDS_MUELU",   "ON"),
+        ("TRILINOS_ENABLE_KLU2", "ON")
+    ],
+
+}
+
+ALBANY_BUILD_MODES = \
+{
+    "release" : [
+        ("ALBANY_BUILD_MODE",   "RELEASE"),
+        ("TRILINOS_BUILD_MODE", "RELEASE")
+    ],
+    "debug"   : [
+        ("ALBANY_BUILD_MODE",   "DEBUG"),
+        ("TRILINOS_BUILD_MODE", "DEBUG"),
+        ("BUILD_SHARED_LIBS",   "ON"),
+        ("ALBANY_CXX_FLAGS",    "-ggdb"),
+        ("TRILINOS_CXX_FLAGS",  "-ggdb")
+    ]
+}
+
 ###############################################################################
 def expect(condition, error_msg):
 ###############################################################################
@@ -19,22 +62,27 @@ def expect(condition, error_msg):
 def parse_command_line(args, description):
 ###############################################################################
     parser = argparse.ArgumentParser(
-usage="""\n%s <ENV FILE> [<OPTIONS>]
+usage="""\n%s [-b <BUILD_TYPE>] [-m <BUILD_MODE>] [<OPTIONS>]
 OR
 %s --help
 OR
 %s --test
 
 \033[1mEXAMPLE:\033[0m
-  %s jenkins_face_env
+  %s -b lcm --debug
 """ % ((os.path.basename(args[0]), ) * 4),
 
 description=description,
 
 formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
+    # Variables: Albany build type
+    # Release or debug
+    parser.add_argument("-b", "--build-type", action="store", choices=(ALBANY_BUILD_TYPES.keys()),
+                        dest="build_type", default="basic", help="Choose build type") # TODO: Improve help
 
-    parser.add_argument("env_file", help="File that contains env settings")
+    parser.add_argument("-m", "--build-mode", action="store", choices=("debug", "release"),
+                        dest="build_mode", default="release", help="Choose build mode")
 
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
                         help="Print shell commands as they are executed")
@@ -47,39 +95,37 @@ formatter_class=argparse.ArgumentDefaultsHelpFormatter
     global VERBOSE
     VERBOSE = args.verbose
 
-    return args.env_file
+    return args.build_type, args.build_mode
 
 ###############################################################################
 def run_cmd(command):
 ###############################################################################
-    """
-    Run a command, returning exit code and output
-
-    >>> run_cmd('cd /usr && pwd')
-    (0, '/usr', '')
-    >>> run_cmd('cd .')
-    (0, '', '')
-    >>> run_cmd('/bin/ls CHOKE')[0]
-    2
-    """
     if (VERBOSE):
         print command
 
-    proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-    output, errput = proc.communicate()
+    proc = Popen(command, shell=True)
+    proc.communicate()
     status = proc.wait()
-    return status, output.strip(), errput.strip()
+    expect(status == 0, "Test failed")
 
 ###############################################################################
-def run_cmd_no_fail(command, custom_error=None):
+def set_env_for_build(build_key, env_map):
 ###############################################################################
-    status, output, errput = run_cmd(command)
-    if (status != 0):
-        custom_error_str = ""
-        if (custom_error is not None):
-            custom_error_str = custom_error + "\n\n"
-        raise SystemExit("%sCommand: '%s' FAILED\n\nWith error: '%s'" % (custom_error_str, command, errput))
-    return output
+    env_settings = env_map[build_key]
+
+    for env_var, env_setting in env_settings:
+        os.environ[env_var] = env_setting
+
+###############################################################################
+def perform_test(build_type, build_mode):
+###############################################################################
+    set_env_for_build(build_type, ALBANY_BUILD_TYPES)
+    set_env_for_build(build_mode, ALBANY_BUILD_MODES)
+
+    exe_dir = os.path.dirname(__file__)
+    test_script = os.path.join(exe_dir, "test_scripts", "test_engine")
+
+    run_cmd(test_script)
 
 ###############################################################################
 def _main_func(description):
@@ -88,10 +134,9 @@ def _main_func(description):
         doctest.testmod()
         return
 
-    env_file = parse_command_line(sys.argv, description)
+    build_type, build_mode = parse_command_line(sys.argv, description)
 
-    # TODO: Complete prototype
-    print "Not implemented"
+    perform_test(build_type, build_mode)
 
 ###############################################################################
 

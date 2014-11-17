@@ -15,8 +15,10 @@ source ${WORKSPACE}/Albany/tools/env/jenkins_face_env
 #
 # Do Dakota checkout
 #
-
-source $(which dakota_checkout)
+if [ $ALBANY_NEEDS_DAKOTA = "ON" ]
+then
+    source $(which dakota_checkout)
+fi
 
 #
 # Do Trilinos build
