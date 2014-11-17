@@ -262,8 +262,8 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
-  ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "dsurface_height_dx");
-  ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "dsurface_height_dy");
+  ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "xgrad_surface_height");
+  ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "ygrad_surface_height");
   ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
   ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");

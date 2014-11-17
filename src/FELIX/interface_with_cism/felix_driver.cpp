@@ -6,6 +6,8 @@
 //it will be the tpetra version.
 //#define CISM_USE_EPETRA
 
+#define CISM_HAS_FELIX
+
 #include <iostream>
 #include <fstream>
 #include "felix_driver.H"
@@ -338,6 +340,14 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh (on each processor) 
     nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
     
+    //IK, 11/17/14: if ds/dx, ds/dy are passed from CISM, use these in body force; 
+    //otherwise calculate ds/dx from s by interpolation within Albany 
+    if (dsurf_height_at_nodes_dx_Ptr != 0 && dsurf_height_at_nodes_dy_Ptr != 0) {
+      parameterList->sublist("Problem").sublist("Body Force").set("Type", "FO Surface Grad Provided"); 
+    }
+    else {
+      parameterList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD"); 
+    }
 
     albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
     albanyApp->initialSetUp(parameterList);
@@ -472,7 +482,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver_run: starting the solve... " << std::endl;
     //Need to set HasRestart solution such that uvel_Ptr and vvel_Ptr (u and v from Glimmer/CISM) are always set as initial condition?  
     meshStruct->setHasRestartSolution(!first_time_step);
- 
+
+
     //Turn off homotopy if we're not in the first time-step. 
     //NOTE - IMPORTANT: Glen's Law Homotopy parameter should be set to 1.0 in the parameter list for this logic to work!!! 
     if (!first_time_step)

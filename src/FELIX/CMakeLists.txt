@@ -37,6 +37,7 @@ IF(ENABLE_CISM_INTERFACE)
    SET(SOURCESCISM 
        interface_with_cism/Albany_CismSTKMeshStruct.cpp
        interface_with_cism/felix_driver.cpp
+       evaluators/FELIX_CismSurfaceGradFO.cpp
    )
 ENDIF()
 
@@ -80,6 +81,8 @@ ENDIF()
 IF (ENABLE_CISM_INTERFACE)
   SET(HEADERSCISM
        interface_with_cism/felix_driver.H
+       evaluators/FELIX_CismSurfaceGradFO_Def.hpp
+       evaluators/FELIX_CismSurfaceGradFO.hpp
    )
 ENDIF()
 

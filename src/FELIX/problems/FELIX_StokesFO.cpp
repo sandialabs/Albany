@@ -29,8 +29,10 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   // Need to allocate a fields in mesh database
   this->requirements.push_back("surface_height");
-  this->requirements.push_back("dsurface_height_dx"); //ds/dx which can be passed from CISM 
-  this->requirements.push_back("dsurface_height_dy"); //ds/dy which can be passed from CISM 
+#ifdef CISM_HAS_FELIX
+  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM 
+  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM 
+#endif
   this->requirements.push_back("temperature");
   this->requirements.push_back("basal_friction");
   this->requirements.push_back("thickness");
@@ -179,6 +181,7 @@ FELIX::StokesFO::getValidProblemParameters() const
     this->getGenericProblemParams("ValidStokesFOProblemParams");
 
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   return validPL;

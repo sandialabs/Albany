@@ -4,13 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_STOKESFOBODYFORCE_HPP
-#define FELIX_STOKESFOBODYFORCE_HPP
+#ifndef FELIX_CISMSURFACEGRADFO_HPP
+#define FELIX_CISMSURFACEGRADFO_HPP
 
 #include "Phalanx_ConfigDefs.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#include "Sacado_ParameterAccessor.hpp" 
 #include "Albany_Layouts.hpp"
 
 namespace FELIX {
@@ -21,51 +22,45 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesFOBodyForce : public PHX::EvaluatorWithBaseImpl<Traits>,
-		    public PHX::EvaluatorDerived<EvalT, Traits> {
+class CismSurfaceGradFO : public PHX::EvaluatorWithBaseImpl<Traits>,
+		    public PHX::EvaluatorDerived<EvalT, Traits>,
+		    public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
 
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  StokesFOBodyForce(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+  CismSurfaceGradFO(const Teuchos::ParameterList& p,
+              const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
+  
+  ScalarT& getValue(const std::string &n); 
 
 private:
  
   typedef typename EvalT::MeshScalarT MeshScalarT;
-
-  // Input:  
-  PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
-  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
-  PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
-  Teuchos::Array<double> gravity;
   
+  ScalarT dummyParam;
+
+  // Input:
+  //! Values at nodes
+  PHX::MDField<ScalarT,Cell,Node> dsdx_node;
+  PHX::MDField<ScalarT,Cell,Node> dsdy_node;
+  //! Basis Functions
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradS_qp;
 
-   //Radom field types
-  enum BFTYPE {NONE, FO_INTERP_SURF_GRAD, FO_SURF_GRAD_PROVIDED, POISSON, FO_SINCOS2D, FO_COSEXP2D, FO_COSEXP2DFLIP, FO_COSEXP2DALL,
-	  FO_SINCOSZ, FO_SINEXP2D, FO_DOME};
-  BFTYPE bf_type;
-
-  std::size_t numQPs;
-  std::size_t numDims;
-  std::size_t vecDim;
-  std::size_t numNodes;
-
-  //Glen's law parameters
-  double n; 
-  double A;
-  //ISMIP-HOM parameter
-  double alpha; 
+  unsigned int numQPs, numDims, numNodes;
+  
+ 
 };
+
 }
 
 #endif

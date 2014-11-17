@@ -55,19 +55,17 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     this->addDependentField(surfaceGrad);
      bf_type = FO_INTERP_SURF_GRAD;
   }
+#ifdef CISM_HAS_FELIX
   else if (type == "FO Surface Grad Provided") {
+#ifdef OUTPUT_TO_SCREEN
     *out << "Surface Grad Provided Source!" << std::endl;
-    dsurface_height_dx = PHX::MDField<ScalarT,Cell,Node>(
-             p.get<std::string>("dsurface_height_dx Name"), dl->node_scalar);
-    dsurface_height_dy = PHX::MDField<ScalarT,Cell,Node>(
-             p.get<std::string>("dsurface_height_dy Name"), dl->node_scalar);
-    wBF = PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>(
-          p.get<std::string> ("Weighted BF Name"), dl->node_qp_scalar); 
-    this->addDependentField(dsurface_height_dx);
-    this->addDependentField(dsurface_height_dy);
-    this->addDependentField(wBF);
+#endif
+    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+             p.get<std::string>("FELIX Surface Gradient QP Variable Name"), dl->qp_gradient);
+    this->addDependentField(surfaceGrad);
     bf_type = FO_SURF_GRAD_PROVIDED;
   }
+#endif
   else if (type == "FOSinCos2D") {
     bf_type = FO_SINCOS2D;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -184,12 +182,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   else if (bf_type == FO_DOME) {
     this->utils.setFieldData(coordVec,fm);
   }
-  else if (bf_type == FO_INTERP_SURF_GRAD)
+  else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
 	  this->utils.setFieldData(surfaceGrad,fm);
-  else if (bf_type == FO_SURF_GRAD_PROVIDED) {
-	  this->utils.setFieldData(dsurface_height_dx,fm);
-	  this->utils.setFieldData(dsurface_height_dy,fm);
-	  this->utils.setFieldData(wBF,fm);
   }
 
   this->utils.setFieldData(force,fm); 
@@ -207,29 +201,13 @@ evaluateFields(typename Traits::EvalData workset)
   	 force(cell,qp,i) = 0.0;
  }
  //source using the gradient of the interpolated surface height
- else if (bf_type == FO_INTERP_SURF_GRAD) {
+ else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {
        force(cell,qp,0) = rho_g*surfaceGrad(cell,qp,0);
        force(cell,qp,1) = rho_g*surfaceGrad(cell,qp,1);
      }
    }
- }
- else if (bf_type == FO_SURF_GRAD_PROVIDED) {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT dsdx_qp;
-      ScalarT dsdy_qp;
-      dsdx_qp = dsurface_height_dx(cell, 0) * wBF(cell, 0, qp);
-      dsdy_qp = dsurface_height_dy(cell, 0) * wBF(cell, 0, qp);
-      for (std::size_t node=1; node < numNodes; ++node) {
-        dsdx_qp += dsurface_height_dx(cell, node) * wBF(cell, node, qp);
-        dsdy_qp += dsurface_height_dy(cell, node) * wBF(cell, node, qp);
-      }
-      force(cell,qp,0) = rho_g*dsdx_qp; 
-      force(cell,qp,1) = rho_g*dsdy_qp; 
-    }
-  }
  }
  else if (bf_type == FO_SINCOS2D) {
    double xphase=0.0, yphase=0.0;
