@@ -105,9 +105,9 @@ namespace LCM {
         gBasis = Intrepid::transpose(gBasis);
        invRefDualBasis = Intrepid::inverse(gBasis);
 
-        Intrepid::Vector<MeshScalarT> invG_0(3, invRefDualBasis, 0, 0);
-        Intrepid::Vector<MeshScalarT> invG_1(3, invRefDualBasis, 1, 0);
-        Intrepid::Vector<MeshScalarT> invG_2(3, invRefDualBasis, 2, 0);
+        Intrepid::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
+        Intrepid::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));
+        Intrepid::Vector<MeshScalarT> invG_2(3, &invRefDualBasis( 2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {

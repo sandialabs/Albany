@@ -170,7 +170,8 @@ namespace LCM {
     ScalarT temp(0.0);
     ScalarT transientTerm(0.0);
     ScalarT stabilizationTerm(0.0);
-
+//Irina TOFIX dimensions  refArea should be 3d
+/*
     // compute artifical diffusivity
 
      // for 1D this is identical to lumped mass as shown in Prevost's paper.
@@ -219,9 +220,8 @@ namespace LCM {
             for (int node(0); node < numPlaneNodes; ++node) {
               int topNode = node + numPlaneNodes;
               for (int pt=0; pt < numQPs; ++pt) {
-                   for (int dim=0; dim <numDims; ++dim){
 
-                       transport_residual_(cell, node) +=  flux(cell, pt, dim)*dt*
+                      transport_residual_(cell, node) +=  flux(cell, pt, dim)*dt*
                         	                                                       surface_Grad_BF(cell, node, pt, dim)*
                         	                                                       refArea(cell,pt);
 
@@ -245,11 +245,11 @@ namespace LCM {
             temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt);
 
           // Local rate of change volumetric constraint term
-            transientTerm = refValues(node,pt)*
+             transientTerm = refValues(node,pt)*
                                           ( eff_diff_(cell,pt)*
                                           (transport_(cell, pt)-transportold(cell, pt) ))*
                                           refArea(cell,pt)*temp;
-
+               
         	transport_residual_(cell, node) +=  transientTerm;
 
         	transport_residual_(cell, topNode) += transientTerm;
@@ -321,7 +321,7 @@ namespace LCM {
         }
       }
     }
-
+*/
 
   }
   //**********************************************************************  

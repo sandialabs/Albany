@@ -281,7 +281,7 @@ computeState(typename Traits::EvalData workset,
       for (int pt(0); pt < num_pts_; ++pt) {
         F.fill(def_grad,cell,pt,0,0);
         ScalarT J = Intrepid::det(F);
-        sigma.fill(stress(cell,pt,0,0);
+        sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
         for (int i = 0; i < num_dims_; ++i) {

@@ -182,7 +182,8 @@ namespace LCM {
         poroMassResidual(cell, node)  = 0.0;
       }
     }
-
+//Irina TOFIX dimensiona refArea should be 3D
+/* 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
@@ -228,6 +229,7 @@ namespace LCM {
         }
       }
     }
+*/
   }
   //**********************************************************************  
 }

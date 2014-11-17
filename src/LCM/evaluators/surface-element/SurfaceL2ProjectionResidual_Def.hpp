@@ -119,8 +119,10 @@ namespace LCM {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
-        	 for (int pt=0; pt < numQPs; ++pt) {
+//Irina TOFIX dimentions
+ /*       	 for (int pt=0; pt < numQPs; ++pt) {
         		 tau = 0.0;
+ 
                  for (int dim=0; dim <numDims; ++dim){
                 	 tau += detF_(cell,pt)*Cauchy_stress_(cell, pt, dim, dim)/numDims;
                  }
@@ -131,7 +133,7 @@ namespace LCM {
 
         	 }
         	 projection_residual_(cell, topNode) =  projection_residual_(cell, node);
-
+*/
       }
     }
 

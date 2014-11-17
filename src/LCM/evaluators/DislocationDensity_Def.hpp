@@ -83,8 +83,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (int i = 0; i < numNodes; ++i)
     B(i,i) = 1.0;
 
-  for (int i=0; i < G.size() ; i++) G[i] = 0.0;
-
+  //for (int i=0; i < G.size() ; i++) G[i] = 0.0;
+  G.deep_copy(0.0);
   // construct the node --> point operator
   for (int cell=0; cell < workset.numCells; ++cell)
   {

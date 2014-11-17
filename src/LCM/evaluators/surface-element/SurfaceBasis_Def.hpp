@@ -287,7 +287,7 @@ namespace LCM {
         MeshScalarT j0 = Intrepid::det(dPhi);
        //Irina TOFIX intrepid MeshScalarT jacobian = j0 *
        //   std::sqrt( Intrepid::dot(Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv), G_2));
-        area(cell, pt) = jacobian * refWeights(pt);
+        //area(cell, pt) = jacobian * refWeights(pt);
       }
     }
 

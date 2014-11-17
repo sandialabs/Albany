@@ -88,9 +88,10 @@ evaluateFields(typename Traits::EvalData workset)
       EnergyFadType W = computeEnergy(kappa, mu, F);
 
       // Extract stress from derivs of energy
-      for (int i=0; i < numDims; ++i) 
-        for (int j=0; j < numDims; ++j) 
-           P(cell, qp, i, j) = W.fastAccessDx(i*numDims + j);
+      //IRINA TOFIX dimensions
+      //for (int i=0; i < numDims; ++i) 
+      //  for (int j=0; j < numDims; ++j) 
+      //      P(cell, qp, i, j) = W.fastAccessDx(i*numDims + j);
       
     }
   }

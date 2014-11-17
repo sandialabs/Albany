@@ -86,7 +86,11 @@ evaluateFields(typename Traits::EvalData workset)
      //Irina TOFIX Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
-        	  totstress(cell, qp) = stress(cell, qp) - biotCoefficient(cell,qp)*porePressure(cell,qp);
+              for (int dim=0; dim<numDims; ++ dim) {
+                  for (int j=0; j<numDims; ++ j) {
+        	    totstress(cell, qp, dim, j) = stress(cell, qp) - biotCoefficient(cell,qp)*porePressure(cell,qp);
+                 }
+              }
           }
     }
   }
