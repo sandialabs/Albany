@@ -51,7 +51,7 @@
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="5"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>    
@@ -107,7 +107,7 @@
       </ParameterList>
       <ParameterList name="Step Size">
 	<!-- Control the actual parameter incrementation, here it is the displacement increment on the BC -->
-	<Parameter  name="Initial Step Size" type="double" value="100.00"/> 
+	<Parameter  name="Initial Step Size" type="double" value="10.00"/> 
 	<Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
