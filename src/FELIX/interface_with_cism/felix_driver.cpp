@@ -6,7 +6,7 @@
 //it will be the tpetra version.
 //#define CISM_USE_EPETRA
 
-#define CISM_HAS_FELIX
+//#define CISM_HAS_FELIX
 
 #include <iostream>
 #include <fstream>
