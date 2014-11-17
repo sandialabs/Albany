@@ -130,8 +130,7 @@ public:
 
   Teuchos::RCP<Tpetra_CrsMatrix>& matrix () { return matrix_; }
 
-  static
-  ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix*
+  static MassMatrix*
   create(EMassMatrixType::Enum type,
          const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base);
 protected:

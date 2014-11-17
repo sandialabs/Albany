@@ -4,7 +4,7 @@
 #
 # Run at midnight every day
 #
-# 00 00 * * * /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011/nightly_cron_script.sh
+# 00 00 * * * /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/nightly_cron_script.sh
 
 module purge
 module load sierra-devel
@@ -17,6 +17,6 @@ cd /projects/AppComp/nightly/cee-compute011
 now=$(date +"%m_%d_%Y-%H_%M")
 LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
 
-eval "env  TEST_DIRECTORY=/projects/AppComp/nightly/cee-compute011 SCRIPT_DIRECTORY=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011 ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011/ctest_nightly.cmake" >> $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=/projects/AppComp/nightly/cee-compute011 SCRIPT_DIRECTORY=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov ctest -VV -S /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/ctest_nightly.cmake" >> $LOG_FILE 2>&1
 
 
