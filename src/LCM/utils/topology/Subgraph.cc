@@ -966,6 +966,7 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
     entity_id = get_bulk_data().identifier(entity);
 
     gviz_out << dot_entity(
+        get_space_dimension(),
         get_topology().get_parallel_rank(),
         entity,
         entity_id,

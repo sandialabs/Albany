@@ -1297,6 +1297,7 @@ Topology::outputToGraphviz(std::string const & output_filename)
       source_id = get_bulk_data().identifier(source_entity);
 
       gviz_out << dot_entity(
+          get_space_dimension(),
           get_parallel_rank(),
           source_entity,
           source_id,
