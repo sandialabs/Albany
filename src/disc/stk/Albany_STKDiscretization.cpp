@@ -542,13 +542,11 @@ Albany::STKDiscretization::setupMLCoords()
       for (int i=0; i<numDim; i++)
         xxyyzz[i*numOwnedNodes + node_lid] = X[i];
     }
-   Teuchos::ArrayView<ST> xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*(numDim+1));
-   Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, numDim+1));
+    Teuchos::ArrayView<ST> xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*numDim);
+    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, numDim));
 
-   rigidBodyModes->informMueLu(xyzMV, mapT);
-   }
-
-
+    rigidBodyModes->informMueLu(xyzMV, mapT);
+  }
 }
 
 
