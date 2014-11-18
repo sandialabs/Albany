@@ -715,11 +715,16 @@ public:
     return stk::mesh::Selector(get_local_part() & get_interface_part());
   }
 
+  int
+  parallel_rank()
+  {
+    return get_bulk_data().parallel_rank();
+  }
+
   bool
   is_local_entity(stk::mesh::Entity e)
   {
-    return get_bulk_data().parallel_rank()
-        == get_bulk_data().parallel_owner_rank(e);
+    return parallel_rank() == get_bulk_data().parallel_owner_rank(e);
   }
 
   bool
