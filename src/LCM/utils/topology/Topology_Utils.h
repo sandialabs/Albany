@@ -103,6 +103,7 @@ dot_footer();
 ///
 std::string
 dot_entity(
+    int const parallel_rank,
     stk::mesh::Entity const entity,
     stk::mesh::EntityId const id,
     stk::mesh::EntityRank const rank,

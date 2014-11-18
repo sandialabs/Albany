@@ -965,7 +965,12 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
     stk::mesh::EntityId const
     entity_id = get_bulk_data().identifier(entity);
 
-    gviz_out << dot_entity(entity, entity_id, rank, fracture_state);
+    gviz_out << dot_entity(
+        get_topology().get_parallel_rank(),
+        entity,
+        entity_id,
+        rank,
+        fracture_state);
 
     // write the edges in the subgraph
     OutEdgeIterator

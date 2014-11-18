@@ -716,7 +716,7 @@ public:
   }
 
   int
-  parallel_rank()
+  get_parallel_rank()
   {
     return get_bulk_data().parallel_rank();
   }
@@ -724,7 +724,7 @@ public:
   bool
   is_local_entity(stk::mesh::Entity e)
   {
-    return parallel_rank() == get_bulk_data().parallel_owner_rank(e);
+    return get_parallel_rank() == get_bulk_data().parallel_owner_rank(e);
   }
 
   bool

@@ -1296,7 +1296,12 @@ Topology::outputToGraphviz(std::string const & output_filename)
       stk::mesh::EntityId const
       source_id = get_bulk_data().identifier(source_entity);
 
-      gviz_out << dot_entity(source_entity, source_id, rank, fracture_state);
+      gviz_out << dot_entity(
+          get_parallel_rank(),
+          source_entity,
+          source_id,
+          rank,
+          fracture_state);
 
       for (stk::mesh::EntityRank target_rank = stk::topology::NODE_RANK;
           target_rank < get_meta_data().entity_rank_count();

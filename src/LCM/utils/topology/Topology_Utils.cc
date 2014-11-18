@@ -369,6 +369,7 @@ dot_footer()
 //
 std::string
 dot_entity(
+    int const parallel_rank,
     stk::mesh::Entity const entity,
     stk::mesh::EntityId const id,
     stk::mesh::EntityRank const rank,
@@ -377,15 +378,26 @@ dot_entity(
   std::ostringstream
   oss;
 
+  // The entity id has now some very high number.
+  // Change it to something reasonable for debugging purposes.
+  // See formula for creating high id in CreateFaces.cpp
+  stk::mesh::EntityId const
+  start_id =
+      (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) +
+      256 * parallel_rank;
+
+  stk::mesh::EntityId const
+  true_id = id - start_id;
+
   oss << "  \"";
   oss << entity_label(rank);
   oss << "_";
-  oss << id;
+  oss << true_id;
   oss << "\"";
   oss << " [label=";
   oss << "<";
   oss << "<font color=\"black\">";
-  oss << id;
+  oss << true_id;
   oss << "</font>";
   oss << " ";
   oss << "<font color=\"white\">";
