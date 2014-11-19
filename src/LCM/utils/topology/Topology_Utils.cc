@@ -236,11 +236,17 @@ entity_label(stk::mesh::EntityRank const rank)
 std::string
 entity_string(stk::mesh::BulkData & bulk_data, stk::mesh::Entity entity)
 {
+  stk::mesh::EntityRank const
+  rank = bulk_data.entity_rank(entity);
+
+  stk::mesh::EntityId const
+  id = bulk_data.identifier(entity);
+
   std::ostringstream
   oss;
 
-  oss << entity_label(bulk_data.entity_rank(entity)) << '-';
-  oss << bulk_data.identifier(entity);
+  oss << entity_label(rank) << '-';
+  oss << id;
 
   return oss.str();
 }
@@ -365,60 +371,6 @@ dot_footer()
 }
 
 //
-// The entity id has now some very high number.
-// Change it to something reasonable for debugging purposes.
-// See formula for creating high id in CreateFaces.cpp
-//
-stk::mesh::EntityId
-compute_true_id(
-    size_t const space_dimension,
-    int const parallel_rank,
-    stk::mesh::EntityRank const rank,
-    stk::mesh::EntityId const id)
-{
-  bool
-  adjust = false;
-
-  switch (space_dimension) {
-
-  default:
-    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-    std::cerr << '\n';
-    std::cerr << "Invalid space dimension in graph output: ";
-    std::cerr << space_dimension;
-    std::cerr << '\n';
-    exit(1);
-    break;
-
-  case 2:
-    if (rank == stk::topology::EDGE_RANK) {
-      adjust = true;
-    }
-    break;
-
-  case 3:
-    if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
-      adjust = true;
-    }
-    break;
-  }
-
-  stk::mesh::EntityId true_id = id;
-
-  if (adjust == true) {
-    stk::mesh::EntityId const
-    start_id =
-        (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) +
-        256 * parallel_rank;
-
-    stk::mesh::EntityId const
-    true_id = id - start_id;
-  }
-
-  return true_id;
-}
-
-//
 // Auxiliary for graphviz output
 //
 std::string
@@ -433,18 +385,15 @@ dot_entity(
   std::ostringstream
   oss;
 
-  stk::mesh::EntityId const
-  true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
-
   oss << "  \"";
   oss << entity_label(rank);
   oss << "_";
-  oss << true_id;
+  oss << id;
   oss << "\"";
   oss << " [label=";
   oss << "<";
   oss << "<font color=\"black\">";
-  oss << true_id;
+  oss << id;
   oss << "</font>";
   oss << " ";
   oss << "<font color=\"white\">";

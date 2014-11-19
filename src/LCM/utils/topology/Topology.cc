@@ -137,6 +137,86 @@ Topology(
   return;
 }
 
+namespace {
+
+//
+// The entity id has now some very high number.
+// Change it to something reasonable for debugging purposes.
+// See formula for creating high id in CreateFaces.cpp
+//
+stk::mesh::EntityId
+compute_true_id(
+    size_t const space_dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const id)
+{
+  bool
+  adjust = false;
+
+  switch (space_dimension) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Invalid space dimension in graph output: ";
+    std::cerr << space_dimension;
+    std::cerr << '\n';
+    exit(1);
+    break;
+
+  case 2:
+    if (rank == stk::topology::EDGE_RANK) {
+      adjust = true;
+    }
+    break;
+
+  case 3:
+    if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
+      adjust = true;
+    }
+    break;
+  }
+
+  stk::mesh::EntityId
+  true_id = id;
+
+  if (adjust == true) {
+    stk::mesh::EntityId const
+    start_id =
+        (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) +
+        256 * parallel_rank - 1;
+
+    true_id = id - start_id;
+  }
+
+  return true_id;
+}
+
+} // anonymous namespace
+
+stk::mesh::EntityId const
+Topology::get_entity_id(stk::mesh::Entity const entity)
+{
+  size_t const
+  space_dimension =
+      static_cast<size_t>(get_meta_data().spatial_dimension());
+
+  int const
+  parallel_rank = get_bulk_data().parallel_rank();
+
+  stk::mesh::EntityRank const
+  rank = get_bulk_data().entity_rank(entity);
+
+  stk::mesh::EntityId const
+  id = get_bulk_data().identifier(entity);
+
+  stk::mesh::EntityId const
+  true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
+
+  return true_id;
+}
+
 //
 // Check fracture criterion
 //

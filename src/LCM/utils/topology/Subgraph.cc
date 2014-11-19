@@ -134,6 +134,12 @@ Subgraph::get_meta_data()
   return get_topology().get_meta_data();
 }
 
+stk::mesh::EntityId const
+Subgraph::get_entity_id(stk::mesh::Entity const entity)
+{
+  return get_topology().get_entity_id(entity);
+}
+
 stk::mesh::EntityRank const
 Subgraph::get_boundary_rank()
 {

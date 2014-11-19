@@ -581,6 +581,9 @@ public:
   ///
   /// Accessors and mutators
   ///
+  stk::mesh::EntityId const
+  get_entity_id(stk::mesh::Entity const entity);
+
   void
   set_stk_mesh_struct(Teuchos::RCP<Albany::AbstractSTKMeshStruct> const & sms)
   {

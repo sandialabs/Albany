@@ -271,6 +271,9 @@ public:
   stk::mesh::MetaData &
   get_meta_data();
 
+  stk::mesh::EntityId const
+  get_entity_id(stk::mesh::Entity const entity);
+
   stk::mesh::EntityRank const
   get_boundary_rank();
 
