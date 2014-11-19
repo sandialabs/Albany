@@ -137,6 +137,9 @@ struct EdgeLessThan
   }
 };
 
+// Forward declarations
+class Topology;
+
 } // namespace LCM
 
 #endif // LCM_Topology_Types_h

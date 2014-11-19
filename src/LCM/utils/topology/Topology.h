@@ -536,7 +536,7 @@ public:
 
   ///
   /// \brief Returns the coordinates of an input node.
-  ///        The input is the identifier of a node
+  ///        The input is the id of a node
   ///
   std::vector<double>
   findCoordinates(unsigned int nodeIdentifier);
@@ -581,6 +581,12 @@ public:
   ///
   /// Accessors and mutators
   ///
+  Topology &
+  get_topology()
+  {
+    return *this;
+  }
+
   stk::mesh::EntityId const
   get_entity_id(stk::mesh::Entity const entity);
 

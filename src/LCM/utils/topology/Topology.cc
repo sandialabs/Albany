@@ -954,8 +954,9 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name =
-          "graph-pre-segment-" + entity_string(bulk_data, point) + ".dot";
+      file_name = "graph-pre-segment-" + entity_string(get_topology(), point) +
+        ".dot";
+
       outputToGraphviz(file_name);
     }
 #endif // DEBUG_LCM_TOPOLOGY
@@ -995,8 +996,9 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name =
-            "graph-pre-clone-" + entity_string(bulk_data, segment) + ".dot";
+        file_name = "graph-pre-clone-" +
+        entity_string(get_topology(), segment) + ".dot";
+
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
       }
@@ -1064,8 +1066,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name =
-            "graph-pre-split-" + entity_string(bulk_data, segment) + ".dot";
+        file_name = "graph-pre-split-" +
+          entity_string(get_topology(), segment) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1080,8 +1082,9 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name =
-            "graph-post-split-" + entity_string(bulk_data, segment) + ".dot";
+        file_name = "graph-post-split-" +
+          entity_string(get_topology(), segment) + ".dot";
+
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
       }
@@ -1121,8 +1124,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name =
-          "graph-pre-split-" + entity_string(bulk_data, point) + ".dot";
+      file_name = "graph-pre-split-" + entity_string(get_topology(), point) +
+        ".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1138,8 +1141,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name =
-          "graph-post-split-" + entity_string(bulk_data, point) + ".dot";
+      file_name = "graph-post-split-" + entity_string(get_topology(), point) +
+        ".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);

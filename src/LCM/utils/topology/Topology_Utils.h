@@ -22,7 +22,7 @@ namespace LCM {
 ///
 void
 display_connectivity(
-    stk::mesh::BulkData & bulk_data,
+    Topology & topology,
     stk::mesh::EntityRank cell_rank);
 
 ///
@@ -32,7 +32,9 @@ display_connectivity(
 /// \param[in] entity
 ///
 void
-display_relation(stk::mesh::BulkData& bulk_data, stk::mesh::Entity entity);
+display_relation(
+    Topology & topology,
+    stk::mesh::Entity entity);
 
 ///
 /// \brief Output relations of a given rank associated with entity
@@ -42,7 +44,7 @@ display_relation(stk::mesh::BulkData& bulk_data, stk::mesh::Entity entity);
 ///
 void
 display_relation(
-    stk::mesh::BulkData & bulk_data,
+    Topology & topology,
     stk::mesh::Entity entity,
     stk::mesh::EntityRank const rank);
 
@@ -75,7 +77,9 @@ entity_label(stk::mesh::EntityRank const rank);
 /// Auxiliary for graphviz output
 ///
 std::string
-entity_string(stk::mesh::BulkData & bulk_data, stk::mesh::Entity entity);
+entity_string(
+    Topology & topology,
+    stk::mesh::Entity entity);
 
 ///
 /// Auxiliary for graphviz output

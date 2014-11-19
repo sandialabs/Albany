@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "Topology_Utils.h"
+#include "Topology.h"
 
 namespace LCM {
 
@@ -17,9 +18,12 @@ namespace LCM {
 //
 void
 display_connectivity(
-    stk::mesh::BulkData & bulk_data,
+    Topology & topology,
     stk::mesh::EntityRank cell_rank)
 {
+  stk::mesh::BulkData &
+  bulk_data = topology.get_bulk_data();
+
   // Create a list of element entities
   stk::mesh::EntityVector
   elements;
@@ -37,7 +41,7 @@ display_connectivity(
     stk::mesh::Entity const* relations = bulk_data.begin_nodes(elements[i]);
 
     stk::mesh::EntityId const
-    element_id = bulk_data.identifier(elements[i]);
+    element_id = topology.get_entity_id(elements[i]);
 
     std::cout << std::setw(16) << element_id << ":";
 
@@ -50,7 +54,7 @@ display_connectivity(
       node = relations[j];
 
       stk::mesh::EntityId const
-      node_id = bulk_data.identifier(node);
+      node_id = topology.get_entity_id(node);
 
       std::cout << std::setw(16) << node_id;
     }
@@ -68,10 +72,15 @@ display_connectivity(
 // \param[in] entity
 //
 void
-display_relation(stk::mesh::BulkData& bulk_data, stk::mesh::Entity entity)
+display_relation(
+    Topology & topology,
+    stk::mesh::Entity entity)
 {
-  std::cout << "Relations for entity (identifier,rank): ";
-  std::cout << bulk_data.identifier(entity) << ",";
+  stk::mesh::BulkData &
+  bulk_data = topology.get_bulk_data();
+
+  std::cout << "Relations for entity (entity_id,rank): ";
+  std::cout << topology.get_entity_id(entity) << ",";
   std::cout << bulk_data.entity_rank(entity);
   std::cout << '\n';
 
@@ -87,7 +96,7 @@ display_relation(stk::mesh::BulkData& bulk_data, stk::mesh::Entity entity)
     size_t num_rels = bulk_data.num_connectivity(entity, rank);
     for (size_t i = 0; i < num_rels; ++i) {
       std::cout << "entity:\t";
-      std::cout << bulk_data.identifier(relations[i]) << ",";
+      std::cout << topology.get_entity_id(relations[i]) << ",";
       std::cout << bulk_data.entity_rank(relations[i]);
       std::cout << "\tlocal id: ";
       std::cout << ords[i];
@@ -105,14 +114,17 @@ display_relation(stk::mesh::BulkData& bulk_data, stk::mesh::Entity entity)
 //
 void
 display_relation(
-    stk::mesh::BulkData & bulk_data,
+    Topology & topology,
     stk::mesh::Entity entity,
     stk::mesh::EntityRank const rank)
 {
+  stk::mesh::BulkData &
+  bulk_data = topology.get_bulk_data();
+
   std::cout << "Relations of rank ";
   std::cout << rank;
-  std::cout << " for entity (identifier,rank): ";
-  std::cout << bulk_data.identifier(entity) << ",";
+  std::cout << " for entity (entity_id,rank): ";
+  std::cout << topology.get_entity_id(entity) << ",";
   std::cout << bulk_data.entity_rank(entity);
   std::cout << '\n';
 
@@ -127,7 +139,7 @@ display_relation(
 
   for (size_t i = 0; i < num_rels; ++i) {
     std::cout << "entity:\t";
-    std::cout << bulk_data.identifier(relations[i]) << ",";
+    std::cout << topology.get_entity_id(relations[i]) << ",";
     std::cout << bulk_data.entity_rank(relations[i]);
     std::cout << "\tlocal id: ";
     std::cout << ords[i];
@@ -234,13 +246,18 @@ entity_label(stk::mesh::EntityRank const rank)
 // Auxiliary for graphviz output
 //
 std::string
-entity_string(stk::mesh::BulkData & bulk_data, stk::mesh::Entity entity)
+entity_string(
+    Topology & topology,
+    stk::mesh::Entity entity)
 {
+  stk::mesh::BulkData &
+  bulk_data = topology.get_bulk_data();
+
   stk::mesh::EntityRank const
   rank = bulk_data.entity_rank(entity);
 
   stk::mesh::EntityId const
-  id = bulk_data.identifier(entity);
+  id = topology.get_entity_id(entity);
 
   std::ostringstream
   oss;

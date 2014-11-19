@@ -527,7 +527,7 @@ Subgraph::testArticulationPoint(
     bulk_data = get_bulk_data();
 
     std::string
-    file_name = "undirected-" + entity_string(bulk_data, entity) + ".dot";
+    file_name = "undirected-" + entity_string(get_topology(), entity) + ".dot";
 
     writeGraphviz(file_name, graph);
   }

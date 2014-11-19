@@ -599,8 +599,8 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
     Weight weight(
         getDistanceBetweenNodes(EdgeBoundaryNodes[0], EdgeBoundaryNodes[1]));
     boost::add_edge(
-        get_bulk_data().identifier(EdgeBoundaryNodes[0]) - 1,
-        get_bulk_data().identifier(EdgeBoundaryNodes[1]) - 1,
+        get_entity_id(EdgeBoundaryNodes[0]) - 1,
+        get_entity_id(EdgeBoundaryNodes[1]) - 1,
         weight,
         g);
   }
@@ -622,8 +622,8 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
   // Compute the  shortest path between nodes[0] and nodes[1]
 
   //Source from where the distance and path are calculated
-  Vertex sourceVertex_0 = get_bulk_data().identifier(nodes[1]) - 1;
-  Vertex goalVertex_0 = get_bulk_data().identifier(nodes[0]) - 1;
+  Vertex sourceVertex_0 = get_entity_id(nodes[1]) - 1;
+  Vertex goalVertex_0 = get_entity_id(nodes[0]) - 1;
   boost::dijkstra_shortest_paths(
       g,
       sourceVertex_0,
@@ -655,8 +655,8 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
 
   //Compute the  shortest path between nodes[1] and nodes[2]
   //Source from where the distance and path are calculated
-  Vertex sourceVertex_1 = get_bulk_data().identifier(nodes[2]) - 1;
-  Vertex goalVertex_1 = get_bulk_data().identifier(nodes[1]) - 1;
+  Vertex sourceVertex_1 = get_entity_id(nodes[2]) - 1;
+  Vertex goalVertex_1 = get_entity_id(nodes[1]) - 1;
   boost::dijkstra_shortest_paths(
       g,
       sourceVertex_1,
@@ -686,8 +686,8 @@ std::vector<std::vector<int> > Topology::shortestpathOnBoundaryFaces(
 
   //Compute the  shortest path between nodes[2] and nodes[0]
   //Source from where the distance and path are calculated
-  Vertex sourceVertex_2 = get_bulk_data().identifier(nodes[0]) - 1;
-  Vertex goalVertex_2 = get_bulk_data().identifier(nodes[2]) - 1;
+  Vertex sourceVertex_2 = get_entity_id(nodes[0]) - 1;
+  Vertex goalVertex_2 = get_entity_id(nodes[2]) - 1;
   boost::dijkstra_shortest_paths(
       g,
       sourceVertex_2,
@@ -803,8 +803,8 @@ std::vector<std::vector<int> > Topology::shortestpath(
     Weight weight(
         getDistanceBetweenNodes(EdgeBoundaryNodes[0], EdgeBoundaryNodes[1]));
     boost::add_edge(
-        get_bulk_data().identifier(EdgeBoundaryNodes[0]) - 1,
-        get_bulk_data().identifier(EdgeBoundaryNodes[1]) - 1,
+        get_entity_id(EdgeBoundaryNodes[0]) - 1,
+        get_entity_id(EdgeBoundaryNodes[1]) - 1,
         weight,
         g); //
   }
@@ -826,8 +826,8 @@ std::vector<std::vector<int> > Topology::shortestpath(
   // Compute the  shortest path between nodes[0] and nodes[1]
 
   //Source from where the distance and path are calculated
-  Vertex sourceVertex_0 = get_bulk_data().identifier(nodes[1]) - 1;
-  Vertex goalVertex_0 = get_bulk_data().identifier(nodes[0]) - 1;
+  Vertex sourceVertex_0 = get_entity_id(nodes[1]) - 1;
+  Vertex goalVertex_0 = get_entity_id(nodes[0]) - 1;
   boost::dijkstra_shortest_paths(
       g,
       sourceVertex_0,
@@ -859,8 +859,8 @@ std::vector<std::vector<int> > Topology::shortestpath(
 
   //Compute the  shortest path between nodes[1] and nodes[2]
   //Source from where the distance and path are calculated
-  Vertex sourceVertex_1 = get_bulk_data().identifier(nodes[2]) - 1;
-  Vertex goalVertex_1 = get_bulk_data().identifier(nodes[1]) - 1;
+  Vertex sourceVertex_1 = get_entity_id(nodes[2]) - 1;
+  Vertex goalVertex_1 = get_entity_id(nodes[1]) - 1;
   boost::dijkstra_shortest_paths(
       g,
       sourceVertex_1,
@@ -890,8 +890,8 @@ std::vector<std::vector<int> > Topology::shortestpath(
 
   //Compute the  shortest path between nodes[2] and nodes[0]
   //Source from where the distance and path are calculated
-  Vertex sourceVertex_2 = get_bulk_data().identifier(nodes[0]) - 1;
-  Vertex goalVertex_2 = get_bulk_data().identifier(nodes[2]) - 1;
+  Vertex sourceVertex_2 = get_entity_id(nodes[0]) - 1;
+  Vertex goalVertex_2 = get_entity_id(nodes[2]) - 1;
   boost::dijkstra_shortest_paths(
       g,
       sourceVertex_2,
@@ -965,8 +965,8 @@ std::vector<std::vector<int> > Topology::edgesDirections()
     std::vector<stk::mesh::Entity> connectedNodes =
         getDirectlyConnectedEntities(mapIter->first, stk::topology::NODE_RANK);
     std::vector<int> tempInt;
-    tempInt.push_back(get_bulk_data().identifier(connectedNodes[0]));
-    tempInt.push_back(get_bulk_data().identifier(connectedNodes[1]));
+    tempInt.push_back(get_entity_id(connectedNodes[0]));
+    tempInt.push_back(get_entity_id(connectedNodes[1]));
     edgesDirec[index] = tempInt;
   }
 
@@ -1039,8 +1039,8 @@ std::vector<std::vector<int> > Topology::edgesDirectionsOuterSurface()
     std::vector<stk::mesh::Entity> connectedNodes =
         getDirectlyConnectedEntities(mapIter->first, stk::topology::NODE_RANK);
     std::vector<int> tempInt;
-    tempInt.push_back(get_bulk_data().identifier(connectedNodes[0]));
-    tempInt.push_back(get_bulk_data().identifier(connectedNodes[1]));
+    tempInt.push_back(get_entity_id(connectedNodes[0]));
+    tempInt.push_back(get_entity_id(connectedNodes[1]));
     edgesDirec[index] = tempInt;
   }
 
@@ -1082,10 +1082,10 @@ std::vector<std::vector<int> > Topology::facesDirections()
         mapIter->first,
         stk::topology::NODE_RANK);
     std::vector<int> temp;
-    temp.push_back(get_bulk_data().identifier(edgeBoundaryNodes[0]));
-    temp.push_back(get_bulk_data().identifier(edgeBoundaryNodes[1]));
-    temp.push_back(get_bulk_data().identifier(edgeBoundaryNodes[2]));
-    temp.push_back(get_bulk_data().identifier(edgeBoundaryNodes[0]));
+    temp.push_back(get_entity_id(edgeBoundaryNodes[0]));
+    temp.push_back(get_entity_id(edgeBoundaryNodes[1]));
+    temp.push_back(get_entity_id(edgeBoundaryNodes[2]));
+    temp.push_back(get_entity_id(edgeBoundaryNodes[0]));
     facesDirec[index] = temp;
   }
 
@@ -1461,7 +1461,7 @@ std::vector<double> Topology::findCoordinates(unsigned int nodeIdentifier)
   std::vector<double> coordinates_;
   for (Ientities_D0 = MeshNodes.begin(); Ientities_D0 != MeshNodes.end();
       Ientities_D0++) {
-    if (get_bulk_data().identifier(*Ientities_D0) == nodeIdentifier) {
+    if (get_entity_id(*Ientities_D0) == nodeIdentifier) {
 
       double * coordinate = getEntityCoordinates(*Ientities_D0);
       double x = coordinate[0];
