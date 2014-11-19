@@ -209,7 +209,7 @@ Topology::get_entity_id(stk::mesh::Entity const entity)
   rank = get_bulk_data().entity_rank(entity);
 
   stk::mesh::EntityId const
-  id = get_bulk_data().identifier(entity);
+  id = get_entity_id(entity);
 
   stk::mesh::EntityId const
   true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
@@ -764,7 +764,7 @@ Topology::getBoundary()
           std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
           std::cerr << '\n';
           std::cerr << "Cannot be connected to two surface elements: ";
-          std::cerr << "Face: " << get_bulk_data().identifier(face);
+          std::cerr << "Face: " << get_entity_id(face);
           std::cerr << '\n';
           exit(1);
         }
@@ -785,7 +785,7 @@ Topology::getBoundary()
     node_ids(number_nodes);
 
     for (EntityVectorIndex i = 0; i < number_nodes; ++i) {
-      node_ids[i] = get_bulk_data().identifier(nodes[i]);
+      node_ids[i] = get_entity_id(nodes[i]);
     }
 
     connectivity.push_back(node_ids);
@@ -1374,7 +1374,7 @@ Topology::outputToGraphviz(std::string const & output_filename)
       fracture_state = get_fracture_state(source_entity);
 
       stk::mesh::EntityId const
-      source_id = get_bulk_data().identifier(source_entity);
+      source_id = get_entity_id(source_entity);
 
       gviz_out << dot_entity(
           get_space_dimension(),
@@ -1475,9 +1475,9 @@ Topology::outputToGraphviz(std::string const & output_filename)
     target = entity_pair.second;
 
     gviz_out << dot_relation(
-        get_bulk_data().identifier(source),
+        get_entity_id(source),
         get_bulk_data().entity_rank(source),
-        get_bulk_data().identifier(target),
+        get_entity_id(target),
         get_bulk_data().entity_rank(target),
         relation_local_id[i]
         );

@@ -969,7 +969,7 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
     fracture_state = get_fracture_state(entity);
 
     stk::mesh::EntityId const
-    entity_id = get_bulk_data().identifier(entity);
+    entity_id = get_entity_id(entity);
 
     gviz_out << dot_entity(
         get_space_dimension(),
@@ -1009,9 +1009,9 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
       edge_id = getEdgeId(out_edge);
 
       gviz_out << dot_relation(
-          get_bulk_data().identifier(global_source),
+          get_entity_id(global_source),
           get_bulk_data().entity_rank(global_source),
-          get_bulk_data().identifier(global_target),
+          get_entity_id(global_target),
           get_bulk_data().entity_rank(global_target),
           edge_id);
 
