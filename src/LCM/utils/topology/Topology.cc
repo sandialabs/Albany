@@ -151,8 +151,15 @@ compute_true_id(
     stk::mesh::EntityRank const rank,
     stk::mesh::EntityId const id)
 {
+  stk::mesh::EntityId const
+  start_id = 256 * parallel_rank +
+    (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) - 1;
+
+  bool const
+  is_high_id = id >= start_id;
+
   bool
-  adjust = false;
+  is_face_or_edge = false;
 
   switch (space_dimension) {
 
@@ -167,13 +174,13 @@ compute_true_id(
 
   case 2:
     if (rank == stk::topology::EDGE_RANK) {
-      adjust = true;
+      is_face_or_edge = true;
     }
     break;
 
   case 3:
     if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
-      adjust = true;
+      is_face_or_edge = true;
     }
     break;
   }
@@ -181,12 +188,7 @@ compute_true_id(
   stk::mesh::EntityId
   true_id = id;
 
-  if (adjust == true) {
-    stk::mesh::EntityId const
-    start_id =
-        (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) +
-        256 * parallel_rank - 1;
-
+  if (is_face_or_edge == true && is_high_id == true) {
     true_id = id - start_id;
   }
 
@@ -209,7 +211,7 @@ Topology::get_entity_id(stk::mesh::Entity const entity)
   rank = get_bulk_data().entity_rank(entity);
 
   stk::mesh::EntityId const
-  id = get_entity_id(entity);
+  id = get_bulk_data().identifier(entity);
 
   stk::mesh::EntityId const
   true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
