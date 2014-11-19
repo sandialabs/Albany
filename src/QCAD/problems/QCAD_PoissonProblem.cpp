@@ -338,7 +338,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
 	 
          if (BCparams.isParameter(ss)) {
 	   
-//           std::cout << "Constructing NBC: " << ss << std::endl;
+           //std::cout << "Constructing NBC: " << ss << std::endl;
 	   
            TEUCHOS_TEST_FOR_EXCEPTION(BCparams.isType<string>(ss), std::logic_error,
 				      "NBC array information in XML file must be of type Array(double)\n");
@@ -365,6 +365,7 @@ QCAD::PoissonProblem::constructNeumannEvaluators(const Teuchos::RCP<Albany::Mesh
            p->set< RCP<Albany::MeshSpecsStruct> >         ("Mesh Specs Struct", meshSpecs);
 	   
            p->set<string>                         ("Coordinate Vector Name", "Coord Vec");
+	   p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0)); //if set to zero, the cubature degree of the side will be set to that of the element
 
            if(condNames[k] == "robin") {
              p->set<string>  ("DOF Name", dof_names[j]);
