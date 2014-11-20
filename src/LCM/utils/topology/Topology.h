@@ -824,21 +824,22 @@ public:
   /// \brief Number of entities of a specific rank
   ///
   EntityVectorIndex
-  get_num_entities(stk::mesh::EntityRank entity_rank);
-
-  ///
-  /// \brief Assigns ids to new entities
-  ///
-  void
-  set_highest_ids();
+  get_num_entities(stk::mesh::EntityRank const entity_rank);
 
   stk::mesh::EntityId
-  get_highest_id(stk::mesh::EntityRank rank);
+  get_highest_id(stk::mesh::EntityRank const rank);
 
   void
-  increase_highest_id(stk::mesh::EntityRank rank)
+  increase_highest_id(stk::mesh::EntityRank const rank)
   {
     ++highest_ids_[rank];
+  }
+
+  stk::topology
+  get_rank_topology(stk::mesh::EntityRank const rank)
+  {
+    assert(rank < topologies_.size());
+    return topologies_[rank];
   }
 
 private:
@@ -849,6 +850,12 @@ private:
   ///
   void
   createDiscretization();
+
+  void
+  initializeHighestIds();
+
+  void
+  initializeTopologies();
 
   //
   //
@@ -863,6 +870,9 @@ private:
 
   std::set<EntityPair>
   fractured_faces_;
+
+  std::vector<stk::topology>
+  topologies_;
 
   std::vector<stk::mesh::EntityId>
   highest_ids_;

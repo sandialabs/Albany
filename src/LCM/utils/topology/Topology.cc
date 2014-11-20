@@ -280,7 +280,9 @@ void Topology::graphInitialization()
 
   get_bulk_data().modification_end();
 
-  set_highest_ids();
+  initializeTopologies();
+
+  initializeHighestIds();
 
   return;
 }
@@ -1502,10 +1504,35 @@ Topology::outputToGraphviz(std::string const & output_filename)
 }
 
 //
+//
+//
+void
+Topology::initializeTopologies()
+{
+  size_t const
+  dimension = get_space_dimension();
+
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+        rank <= stk::topology::ELEMENT_RANK; ++rank) {
+
+    if (rank > dimension) break;
+
+    std::vector<stk::mesh::Bucket*>
+    buckets = get_bulk_data().buckets(rank);
+
+    stk::mesh::Bucket const &
+    bucket = *(buckets[0]);
+
+    topologies_[rank] = bucket.topology();
+  }
+  return;
+}
+
+//
 // \brief This returns the number of entities of a given rank
 //
 EntityVectorIndex
-Topology::get_num_entities(stk::mesh::EntityRank entity_rank)
+Topology::get_num_entities(stk::mesh::EntityRank const entity_rank)
 {
   std::vector<stk::mesh::Bucket*>
   buckets = get_bulk_data().buckets(entity_rank);
@@ -1525,7 +1552,7 @@ Topology::get_num_entities(stk::mesh::EntityRank entity_rank)
 // Used to assign unique ids to newly created entities
 //
 void
-Topology::set_highest_ids()
+Topology::initializeHighestIds()
 {
   highest_ids_.resize(stk::topology::ELEMENT_RANK + 1);
 
@@ -1541,7 +1568,7 @@ Topology::set_highest_ids()
 //
 //
 stk::mesh::EntityId
-Topology::get_highest_id(stk::mesh::EntityRank rank)
+Topology::get_highest_id(stk::mesh::EntityRank const rank)
 {
   return highest_ids_[rank];
 }
