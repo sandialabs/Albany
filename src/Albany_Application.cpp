@@ -1775,25 +1775,6 @@ applyGlobalDistParamDerivImplT(const double current_time,
 
 }
     
-
-
-void Albany::Application::
-applyGlobalDistParamDerivT(const double current_time,
-                          const Tpetra_Vector* xdotT,
-                          const Tpetra_Vector* xdotdotT,
-                          const Tpetra_Vector& xT,
-                          const Teuchos::Array<ParamVec>& p,
-                          const std::string& dist_param_name,
-                          const bool trans,
-                          const Tpetra_MultiVector& VT,
-                          Tpetra_MultiVector& fpVT)
-{
-  this->applyGlobalDistParamDerivImplT(current_time, Teuchos::rcp(xdotT,false), Teuchos::rcp(xdotdotT,false), 
-                                       Teuchos::rcpFromRef(xT), p, dist_param_name, trans, Teuchos::rcpFromRef(VT), 
-                                       Teuchos::rcpFromRef(fpVT)); 
-}
-
-
 void
 Albany::Application::
 evaluateResponseT(int response_index,
@@ -3634,6 +3615,7 @@ void Albany::Application::loadBasicWorksetInfoT(
        PHAL::Workset& workset,
        double current_time)
 {
+    workset.numEqs = neq;
     workset.xT        = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
@@ -3733,6 +3715,9 @@ void Albany::Application::setupBasicWorksetInfoT(
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+
+  //Scatter distributed parameters
+  distParamLib->scatter();
 
   // Set parameters
   for (int i=0; i<p.size(); i++)
