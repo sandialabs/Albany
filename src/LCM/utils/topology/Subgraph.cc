@@ -216,21 +216,51 @@ Subgraph::vertexFromEntity(stk::mesh::Entity entity)
 Vertex
 Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
 {
-  // Insert the vertex into the stk mesh
-  // First have to request a new entity of rank N
-  // number of entity ranks: 1 + number of dimensions
-  std::vector<size_t>
-  requests(get_space_dimension() + 1, 0);
+  stk::topology
+  vertex_topology = stk::topology::INVALID_TOPOLOGY;
 
-  requests[vertex_rank] = 1;
+  switch (vertex_rank) {
 
-  stk::mesh::EntityVector
-  new_entities;
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Invalid entity rank in adding vettex to graph: ";
+    std::cerr << vertex_rank;
+    std::cerr << '\n';
+    exit(1);
+    break;
 
-  get_bulk_data().generate_new_entities(requests, new_entities);
+  case stk::topology::NODE_RANK:
+    vertex_topology = stk::topology::NODE;
+    break;
+
+  case stk::topology::EDGE_RANK:
+    vertex_topology = stk::topology().edge_topology();
+    break;
+
+  case stk::topology::FACE_RANK:
+    vertex_topology = stk::topology().face_topology();
+    break;
+  }
+
+  shards::CellTopology
+  cell_topology = stk::mesh::get_cell_topology(vertex_topology);
+
+  stk::mesh::Part &
+  vertex_part = get_meta_data().get_cell_topology_root_part(cell_topology);
+
+  stk::mesh::PartVector
+  add_parts;
+
+  add_parts.push_back(& vertex_part);
+
+  get_topology().increase_highest_id(vertex_rank);
+
+  stk::mesh::EntityId
+  new_id = get_topology().get_highest_id(vertex_rank);
 
   stk::mesh::Entity
-  entity = new_entities[0];
+  entity = get_bulk_data().declare_entity(vertex_rank, new_id, add_parts);
 
   // Add the vertex to the subgraph
   Vertex

@@ -44,7 +44,7 @@ namespace Albany {
       owned_map(owned_map_),
       overlapped_map(overlapped_map_) {
       importer = Teuchos::rcp(new Tpetra_Import(owned_map, overlapped_map));
-      exporter = Teuchos::rcp(new Tpetra_Export(owned_map, overlapped_map));
+      exporter = Teuchos::rcp(new Tpetra_Export(overlapped_map, owned_map));
       overlapped_vec = Teuchos::rcp(new Tpetra_Vector(overlapped_map, false));
     }
 

@@ -55,7 +55,7 @@ SET(HEADERS
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
-  Albany_DistributedParameterDerivativeOp.hpp
+  Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
   )
 
@@ -63,6 +63,7 @@ IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS} 
     Albany_PiroObserver.hpp
     Albany_ModelEvaluator.hpp
+    Albany_DistributedParameterDerivativeOp.hpp
     Albany_SaveEigenData.hpp
     Albany_EigendataInfoStruct.hpp
     Albany_RythmosObserver.hpp

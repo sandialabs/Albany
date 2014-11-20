@@ -233,7 +233,7 @@ Albany::ModelEvaluator::get_p_init(int l) const
   Teuchos::RCP<Epetra_Vector> epetra_param_vec_to_return; 
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
   Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
-  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector(), *epetra_param_vec_to_return, 
+  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->vector(), epetra_param_vec_to_return,
                                       comm); 
   return epetra_param_vec_to_return; 
   //return distParamLib->get(dist_param_names[l-num_param_vecs])->vector();
@@ -275,10 +275,10 @@ Albany::ModelEvaluator::create_DfDp_op(int l) const
 //DistributedParameterDerivativeOp is a Tpetra_Operator now.... 
 //I think distributed responses will work only once we switch to Albany_ModelEvaluatorT in Tpetra branch.  
 
-//return Teuchos::rcp(new DistributedParameterDerivativeOp(
-//                      app, dist_param_names[l-num_param_vecs]));
+return Teuchos::rcp(new DistributedParameterDerivativeOp(
+                      app, dist_param_names[l-num_param_vecs]));
   TEUCHOS_TEST_FOR_EXCEPTION( true, std::logic_error,
-  	       		"Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  << 
+  	       		"Albany::ModelEvaluator::create_DfDp_op is not implemented for Tpetra_Operator!"  <<
                         "Distributed parameters won't work yet in Tpetra branch."<<
 			std::endl);
 }

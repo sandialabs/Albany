@@ -17,7 +17,7 @@
 //IK, 9/12/14: has Epetra_Comm! No other Epetra.
 
 #include "Albany_ModelEvaluatorT.hpp"
-#include "Albany_DistributedParameterDerivativeOp.hpp"
+#include "Albany_DistributedParameterDerivativeOpT.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
@@ -333,7 +333,7 @@ Albany::ModelEvaluatorT::create_DfDp_op_impl(int j) const
     "Error!  Albany::ModelEvaluatorT::create_DfDp_op_impl():  " <<
     "Invalid parameter index j = " << j << std::endl);
 
-  const Teuchos::RCP<Tpetra_Operator> DfDp = Teuchos::rcp(new DistributedParameterDerivativeOp(
+  const Teuchos::RCP<Tpetra_Operator> DfDp = Teuchos::rcp(new DistributedParameterDerivativeOpT(
                       app, dist_param_names[j-num_param_vecs]));
 
   return Thyra::createLinearOp(DfDp); 
