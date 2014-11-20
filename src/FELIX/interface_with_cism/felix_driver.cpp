@@ -67,7 +67,7 @@ int * dimInfoGeom;
 long ewlb, ewub, nslb, nsub;
 long ewn, nsn, upn, nhalo; 
 long global_ewn, global_nsn; 
-double * gravity_ptr, * rho_ice_ptr, * rho_seawater_ptr; //IK, 3/18/14: why are these pointers?  wouldn't they just be doubles? 
+double gravity, rho_ice, rho_seawater; //IK, 3/18/14: why are these pointers?  wouldn't they just be doubles? 
 double final_time; //final time, added 10/30/14, IK 
 double seconds_per_year, vel_scaling_param; 
 double * thicknessDataPtr, *topographyDataPtr;
@@ -295,9 +295,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
  
     seconds_per_year = *(ftg_ptr -> getDoubleVar("seconds_per_year","constants"));
     vel_scaling_param = *(ftg_ptr -> getDoubleVar("vel_scaling_param","constants"));
-    gravity_ptr = ftg_ptr -> getDoubleVar("gravity","constants");
-    rho_ice_ptr = ftg_ptr -> getDoubleVar("rho_ice","constants");
-    rho_seawater_ptr = ftg_ptr -> getDoubleVar("rho_seawater","constants");
+    gravity = *(ftg_ptr -> getDoubleVar("gravity","constants"));
+    rho_ice = *(ftg_ptr -> getDoubleVar("rho_ice","constants"));
+    rho_seawater = *(ftg_ptr -> getDoubleVar("rho_seawater","constants"));
+    //std::cout << "g, rho, rho_w: " << gravity << ", " << rho_ice << ", " << rho_seawater << std::endl; 
     final_time = *(ftg_ptr -> getDoubleVar("tend","numerics"));
     thicknessDataPtr = ftg_ptr -> getDoubleVar("thck","geometry");
     topographyDataPtr = ftg_ptr -> getDoubleVar("topg","geometry");
