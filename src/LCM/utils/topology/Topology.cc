@@ -137,6 +137,88 @@ Topology(
   return;
 }
 
+namespace {
+
+//
+// The entity id has now some very high number.
+// Change it to something reasonable for debugging purposes.
+// See formula for creating high id in CreateFaces.cpp
+//
+stk::mesh::EntityId
+compute_true_id(
+    size_t const space_dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const id)
+{
+  stk::mesh::EntityId const
+  start_id = 256 * parallel_rank +
+    (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) - 1;
+
+  bool const
+  is_high_id = id >= start_id;
+
+  bool
+  is_face_or_edge = false;
+
+  switch (space_dimension) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Invalid space dimension in graph output: ";
+    std::cerr << space_dimension;
+    std::cerr << '\n';
+    exit(1);
+    break;
+
+  case 2:
+    if (rank == stk::topology::EDGE_RANK) {
+      is_face_or_edge = true;
+    }
+    break;
+
+  case 3:
+    if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
+      is_face_or_edge = true;
+    }
+    break;
+  }
+
+  stk::mesh::EntityId
+  true_id = id;
+
+  if (is_face_or_edge == true && is_high_id == true) {
+    true_id = id - start_id;
+  }
+
+  return true_id;
+}
+
+} // anonymous namespace
+
+stk::mesh::EntityId const
+Topology::get_entity_id(stk::mesh::Entity const entity)
+{
+  size_t const
+  space_dimension =
+      static_cast<size_t>(get_meta_data().spatial_dimension());
+
+  int const
+  parallel_rank = get_bulk_data().parallel_rank();
+
+  stk::mesh::EntityRank const
+  rank = get_bulk_data().entity_rank(entity);
+
+  stk::mesh::EntityId const
+  id = get_bulk_data().identifier(entity);
+
+  stk::mesh::EntityId const
+  true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
+
+  return true_id;
+}
+
 //
 // Check fracture criterion
 //
@@ -684,7 +766,7 @@ Topology::getBoundary()
           std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
           std::cerr << '\n';
           std::cerr << "Cannot be connected to two surface elements: ";
-          std::cerr << "Face: " << get_bulk_data().identifier(face);
+          std::cerr << "Face: " << get_entity_id(face);
           std::cerr << '\n';
           exit(1);
         }
@@ -705,7 +787,7 @@ Topology::getBoundary()
     node_ids(number_nodes);
 
     for (EntityVectorIndex i = 0; i < number_nodes; ++i) {
-      node_ids[i] = get_bulk_data().identifier(nodes[i]);
+      node_ids[i] = get_entity_id(nodes[i]);
     }
 
     connectivity.push_back(node_ids);
@@ -874,8 +956,9 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name =
-          "graph-pre-segment-" + entity_string(bulk_data, point) + ".dot";
+      file_name = "graph-pre-segment-" + entity_string(get_topology(), point) +
+        ".dot";
+
       outputToGraphviz(file_name);
     }
 #endif // DEBUG_LCM_TOPOLOGY
@@ -915,8 +998,9 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name =
-            "graph-pre-clone-" + entity_string(bulk_data, segment) + ".dot";
+        file_name = "graph-pre-clone-" +
+        entity_string(get_topology(), segment) + ".dot";
+
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
       }
@@ -984,8 +1068,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name =
-            "graph-pre-split-" + entity_string(bulk_data, segment) + ".dot";
+        file_name = "graph-pre-split-" +
+          entity_string(get_topology(), segment) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1000,8 +1084,9 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name =
-            "graph-post-split-" + entity_string(bulk_data, segment) + ".dot";
+        file_name = "graph-post-split-" +
+          entity_string(get_topology(), segment) + ".dot";
+
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
       }
@@ -1041,8 +1126,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name =
-          "graph-pre-split-" + entity_string(bulk_data, point) + ".dot";
+      file_name = "graph-pre-split-" + entity_string(get_topology(), point) +
+        ".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1058,8 +1143,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name =
-          "graph-post-split-" + entity_string(bulk_data, point) + ".dot";
+      file_name = "graph-post-split-" + entity_string(get_topology(), point) +
+        ".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1294,9 +1379,15 @@ Topology::outputToGraphviz(std::string const & output_filename)
       fracture_state = get_fracture_state(source_entity);
 
       stk::mesh::EntityId const
-      source_id = get_bulk_data().identifier(source_entity);
+      source_id = get_entity_id(source_entity);
 
-      gviz_out << dot_entity(source_entity, source_id, rank, fracture_state);
+      gviz_out << dot_entity(
+          get_space_dimension(),
+          get_parallel_rank(),
+          source_entity,
+          source_id,
+          rank,
+          fracture_state);
 
       for (stk::mesh::EntityRank target_rank = stk::topology::NODE_RANK;
           target_rank < get_meta_data().entity_rank_count();
@@ -1389,9 +1480,9 @@ Topology::outputToGraphviz(std::string const & output_filename)
     target = entity_pair.second;
 
     gviz_out << dot_relation(
-        get_bulk_data().identifier(source),
+        get_entity_id(source),
         get_bulk_data().entity_rank(source),
-        get_bulk_data().identifier(target),
+        get_entity_id(target),
         get_bulk_data().entity_rank(target),
         relation_local_id[i]
         );

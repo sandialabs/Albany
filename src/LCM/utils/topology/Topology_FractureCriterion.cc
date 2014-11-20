@@ -102,7 +102,7 @@ FractureCriterionTraction::check(
   stress = stress / static_cast<double>(number_nodes);
 
   Intrepid::Index const
-  face_index = bulk_data.identifier(interface) - 1;
+  face_index = get_topology().get_entity_id(interface) - 1;
 
   Intrepid::Vector<double> const &
   normal = normals_[face_index];
@@ -203,7 +203,7 @@ FractureCriterionTraction::computeNormals()
     case 2:
       {
         int const
-        gid0 = get_bulk_data().identifier(nodes[0]) - 1;
+        gid0 = get_topology().get_entity_id(nodes[0]) - 1;
 
         Intrepid::Index const
         lid0 = get_stk_discretization().getNodeMapT()->getLocalElement(gid0);
@@ -211,7 +211,7 @@ FractureCriterionTraction::computeNormals()
         assert(lid0 < number_nodes);
 
         int const
-        gid1 = get_bulk_data().identifier(nodes[1]) - 1;
+        gid1 = get_topology().get_entity_id(nodes[1]) - 1;
 
         Intrepid::Index const
         lid1 = get_stk_discretization().getNodeMapT()->getLocalElement(gid1);
@@ -231,7 +231,7 @@ FractureCriterionTraction::computeNormals()
     case 3:
       {
         int const
-        gid0 = get_bulk_data().identifier(nodes[0]) - 1;
+        gid0 = get_topology().get_entity_id(nodes[0]) - 1;
 
         Intrepid::Index const
         lid0 = get_stk_discretization().getNodeMapT()->getLocalElement(gid0);
@@ -239,7 +239,7 @@ FractureCriterionTraction::computeNormals()
         assert(lid0 < number_nodes);
 
         int const
-        gid1 = get_bulk_data().identifier(nodes[1]) - 1;
+        gid1 = get_topology().get_entity_id(nodes[1]) - 1;
 
         Intrepid::Index const
         lid1 = get_stk_discretization().getNodeMapT()->getLocalElement(gid1);
@@ -247,7 +247,7 @@ FractureCriterionTraction::computeNormals()
         assert(lid1 < number_nodes);
 
         int const
-        gid2 = get_bulk_data().identifier(nodes[2]) - 1;
+        gid2 = get_topology().get_entity_id(nodes[2]) - 1;
 
         Intrepid::Index const
         lid2 = get_stk_discretization().getNodeMapT()->getLocalElement(gid2);

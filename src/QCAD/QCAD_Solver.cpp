@@ -495,12 +495,17 @@ QCAD::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>&
       std::string dbcName = schro_dbcList.name(it);
       std::size_t k = dbcName.find("psi");
       if( k != std::string::npos ) {
-	dbcName.replace(k, 3 /* len("psi") */, "Phi");  // replace Phi -> psi
+	dbcName.replace(k, 3 /* len("psi") */, "Phi");  // replace psi -> Phi
 	poisson_dbcList.set( dbcName, schro_dbcList.entry(it).getValue(dummy) ); //copy all schrodinger DBCs
       }
     }
   }
 
+  // Neumann BC sublist processing
+  if(poisson_subList.isSublist("Neumann BCs")) {
+    Teuchos::ParameterList& poisson_dbcList = poisson_probParams.sublist("Neumann BCs", false);
+    poisson_dbcList.setParameters(poisson_subList.sublist("Neumann BCs"));
+  }
 
 
   // Parameters sublist processing
@@ -796,7 +801,16 @@ QCAD::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterLi
 	}
       }
     }
+
+    if(schro_subList.isSublist("Neumann BCs")) {
+      Teuchos::ParameterList& schro_dbcList = schro_probParams.sublist("Neumann BCs", false);
+      schro_dbcList.setParameters(schro_subList.sublist("Neumann BCs"));
+    }
+    // It's unclear to Erik whether there's an appropriate way to associate Poisson
+    //   Neumann conditions with conditions for psi
+
   }
+
 
   // Parameters sublist processing -- ensure "Schrodinger Potential Scaling Factor" 
   //   appears in list, since this is needed by LOCA continuation analysis
@@ -949,6 +963,11 @@ QCAD::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Para
     tmp.setParameters(poisson_subList.sublist("Dirichlet BCs"));
   }
 
+  if(poisson_subList.isSublist("Neumann BCs")) {
+    Teuchos::ParameterList& tmp = ps_poissonParams.sublist("Neumann BCs", false);
+    tmp.setParameters(poisson_subList.sublist("Neumann BCs"));
+  }
+
   if(poisson_subList.isSublist("Parameters")) {
     Teuchos::ParameterList& tmp = ps_poissonParams.sublist("Parameters", false);
     tmp.setParameters(poisson_subList.sublist("Parameters"));
@@ -963,10 +982,15 @@ QCAD::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Para
   // Schrodinger Problem sublist processing
   Teuchos::ParameterList& ps_schroParams = ps_probParams.sublist("Schrodinger Problem",false);
 
-  // copy Parameters, Dirichlet BCs, and Responses sublists from schro_subList if they're present
+  // copy Parameters, Dirichlet & Neumann BCs, and Responses sublists from schro_subList if they're present
   if(schro_subList.isSublist("Dirichlet BCs")) {
     Teuchos::ParameterList& tmp = ps_schroParams.sublist("Dirichlet BCs", false);
     tmp.setParameters(schro_subList.sublist("Dirichlet BCs"));
+  }
+
+  if(schro_subList.isSublist("Neumann BCs")) {
+    Teuchos::ParameterList& tmp = ps_schroParams.sublist("Neumann BCs", false);
+    tmp.setParameters(schro_subList.sublist("Neumann BCs"));
   }
 
   if(schro_subList.isSublist("Parameters")) {

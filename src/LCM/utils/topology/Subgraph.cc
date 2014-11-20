@@ -134,6 +134,12 @@ Subgraph::get_meta_data()
   return get_topology().get_meta_data();
 }
 
+stk::mesh::EntityId const
+Subgraph::get_entity_id(stk::mesh::Entity const entity)
+{
+  return get_topology().get_entity_id(entity);
+}
+
 stk::mesh::EntityRank const
 Subgraph::get_boundary_rank()
 {
@@ -521,7 +527,7 @@ Subgraph::testArticulationPoint(
     bulk_data = get_bulk_data();
 
     std::string
-    file_name = "undirected-" + entity_string(bulk_data, entity) + ".dot";
+    file_name = "undirected-" + entity_string(get_topology(), entity) + ".dot";
 
     writeGraphviz(file_name, graph);
   }
@@ -963,9 +969,15 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
     fracture_state = get_fracture_state(entity);
 
     stk::mesh::EntityId const
-    entity_id = get_bulk_data().identifier(entity);
+    entity_id = get_entity_id(entity);
 
-    gviz_out << dot_entity(entity, entity_id, rank, fracture_state);
+    gviz_out << dot_entity(
+        get_space_dimension(),
+        get_topology().get_parallel_rank(),
+        entity,
+        entity_id,
+        rank,
+        fracture_state);
 
     // write the edges in the subgraph
     OutEdgeIterator
@@ -997,9 +1009,9 @@ Subgraph::outputToGraphviz(std::string const & output_filename)
       edge_id = getEdgeId(out_edge);
 
       gviz_out << dot_relation(
-          get_bulk_data().identifier(global_source),
+          get_entity_id(global_source),
           get_bulk_data().entity_rank(global_source),
-          get_bulk_data().identifier(global_target),
+          get_entity_id(global_target),
           get_bulk_data().entity_rank(global_target),
           edge_id);
 

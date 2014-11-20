@@ -57,7 +57,7 @@ Adapt::NodalDataBase::registerVectorState(const std::string &stateName, int ndof
 
    NodeFieldSize size;
    size.name = stateName;
-   size.offset = blocksize;
+   size.offset = vectorsize;
    size.ndofs = ndofs;
 
    nodeVectorMap[stateName] = nodeVectorLayout.size();

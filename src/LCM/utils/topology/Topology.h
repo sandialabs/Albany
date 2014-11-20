@@ -536,7 +536,7 @@ public:
 
   ///
   /// \brief Returns the coordinates of an input node.
-  ///        The input is the identifier of a node
+  ///        The input is the id of a node
   ///
   std::vector<double>
   findCoordinates(unsigned int nodeIdentifier);
@@ -581,6 +581,15 @@ public:
   ///
   /// Accessors and mutators
   ///
+  Topology &
+  get_topology()
+  {
+    return *this;
+  }
+
+  stk::mesh::EntityId const
+  get_entity_id(stk::mesh::Entity const entity);
+
   void
   set_stk_mesh_struct(Teuchos::RCP<Albany::AbstractSTKMeshStruct> const & sms)
   {
@@ -715,11 +724,16 @@ public:
     return stk::mesh::Selector(get_local_part() & get_interface_part());
   }
 
+  int
+  get_parallel_rank()
+  {
+    return get_bulk_data().parallel_rank();
+  }
+
   bool
   is_local_entity(stk::mesh::Entity e)
   {
-    return get_bulk_data().parallel_rank()
-        == get_bulk_data().parallel_owner_rank(e);
+    return get_parallel_rank() == get_bulk_data().parallel_owner_rank(e);
   }
 
   bool

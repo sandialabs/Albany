@@ -234,15 +234,12 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
     double *xx, *yy, *zz;
     rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
   
-    apf::MeshIterator* it = m->begin(mesh_dim);
-    apf::MeshEntity* v;
-    int i = 0;
-    while ((v = m->iterate(it))) {
+    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
       apf::Node node = nodes[i];
       if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
 
-      GO node_gid = apf::getNumber(globalNumbering, node);
-      LO node_lid = node_mapT->getLocalElement(node_gid);
+      const GO node_gid = apf::getNumber(globalNumbering, node);
+      const LO node_lid = node_mapT->getLocalElement(node_gid);
       double lcoords[3];
       apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
       if (mesh_dim > 0) {
@@ -253,9 +250,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
             zz[node_lid] = lcoords[2];
         }
       }
-      ++i;
     }  
-    m->end(it);
   
     rigidBodyModes->informML();
   }
@@ -269,8 +264,8 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
       apf::Node node = nodes[i];
       if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
 
-      GO node_gid = apf::getNumber(globalNumbering, node);
-      int node_lid = node_mapT->getLocalElement(node_gid);
+      const GO node_gid = apf::getNumber(globalNumbering, node);
+      const LO node_lid = node_mapT->getLocalElement(node_gid);
       double lcoords[3];
       apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
       for (std::size_t j = 0; j < mesh_dim; ++j)
@@ -278,9 +273,9 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
     }
   
     Teuchos::ArrayView<ST>
-      xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*(mesh_dim+1));
+      xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*mesh_dim);
     Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(
-      new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim+1));
+      new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim));
 
     rigidBodyModes->informMueLu(xyzMV, mapT);
   }

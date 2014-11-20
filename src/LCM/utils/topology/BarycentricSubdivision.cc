@@ -162,7 +162,7 @@ Topology::getLocalRelationId(const stk::mesh::Entity source_entity,
   found = false;
 
   stk::mesh::EntityId const
-  target_entity_identifier = get_bulk_data().identifier(target_entity);
+  target_entity_identifier = get_entity_id(target_entity);
 
   stk::mesh::EntityRank const
   target_entity_entity_rank = get_bulk_data().entity_rank(target_entity);
@@ -519,7 +519,7 @@ std::vector<stk::mesh::Entity> Topology::getFormerElementNodes(
   std::vector<stk::mesh::Entity> vector_nodes_;
   std::vector<stk::mesh::Entity> boundary_nodes;
   std::vector<stk::mesh::Entity>::iterator iterator_nodes;
-  vector_nodes_ = entities[get_bulk_data().identifier(element)];
+  vector_nodes_ = entities[get_entity_id(element)];
 
   for (iterator_nodes = vector_nodes_.begin();
       iterator_nodes != vector_nodes_.end(); ++iterator_nodes) {

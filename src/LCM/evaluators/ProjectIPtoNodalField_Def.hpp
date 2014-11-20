@@ -592,7 +592,8 @@ postEvaluate (typename Traits::PostEvalData workset)
 
   { // Store the overlapped vector data back in stk.
     const Teuchos::RCP<const Tpetra_Map>
-      ovl_map = this->mass_matrix_->matrix()->getColMap(),
+      ovl_map = (this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+                 getNodalDataVector()->getOverlapMap()),
       map = node_projected_ip_vector->getMap();
     Teuchos::RCP<Tpetra_MultiVector> npiv = rcp(
       new Tpetra_MultiVector(ovl_map,
