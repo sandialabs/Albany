@@ -83,6 +83,9 @@ namespace FELIX {
 
   protected:
     int numDim;
+    double gravity;  //gravity
+    double rho;  //ice density
+    double rho_w;  //water density
     Teuchos::RCP<Albany::Layouts> dl;
 
   };
@@ -326,7 +329,9 @@ FELIX::StokesFO::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
       
-
+    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters"); 
+    p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
+    
     //Output
     p->set<std::string>("Body Force Name", "Body Force");
 
