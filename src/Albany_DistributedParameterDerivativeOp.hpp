@@ -4,13 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra!
-
 #ifndef ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
 #define ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
 
-#include "Albany_DataTypes.hpp"
-#include "PHAL_AlbanyTraits.hpp" 
+#include "Epetra_Operator.h"
+#include "Petra_Converters.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_TestForException.hpp"
@@ -19,14 +17,14 @@
 
 namespace Albany {
 
-  //! Tpetra_Operator implementing the action of df/dp (transpose)
+  //! Epetra_Operator implementing the action of df/dp (transpose)
   /*!
-   * This class implements the Tpetra_Operator interface for
+   * This class implements the Epetra_Operator interface for
    * op(df/dp)*v where op() is the identity or tranpose, f is the Albany
    * residual vector, p is a distributed parameter vector, and v is a given
    * vector.
    */
-  class DistributedParameterDerivativeOp : public Tpetra_Operator {
+  class DistributedParameterDerivativeOp : public Epetra_Operator {
   public:
 
     // Constructor
@@ -35,42 +33,46 @@ namespace Albany {
       const std::string& param_name_) :
       app(app_),
       param_name(param_name_),
-      use_transpose(false) {}
+      use_transpose(false) {
+      comm = Teuchos::rcpFromRef(app->getMap()->Comm());
+      map = Petra::TpetraMap_To_EpetraMap(app->getDistParamLib()->get(param_name)->map(), comm);
+    }
 
     //! Destructor
     virtual ~DistributedParameterDerivativeOp() {}
 
-    //! Set values needed for apply()
+    //! Set values needed for Apply()
     void set(const double time_,
-             const Teuchos::RCP<const Tpetra_Vector>& xdot_,
-             const Teuchos::RCP<const Tpetra_Vector>& xdotdot_,
-             const Teuchos::RCP<const Tpetra_Vector>& x_,
+             const Teuchos::RCP<const Tpetra_Vector>& xdotT_,
+             const Teuchos::RCP<const Tpetra_Vector>& xdotdotT_,
+             const Teuchos::RCP<const Tpetra_Vector>& xT_,
              const Teuchos::RCP<Teuchos::Array<ParamVec> >& scalar_params_) {
       time = time_;
-      xdot = xdot_;
-      xdotdot = xdotdot_;
-      x = x_;
+      xdotT = xdotT_;
+      xdotdotT = xdotdotT_;
+      xT = xT_;
       scalar_params = scalar_params_;
     }
 
-    //! @name Tpetra_Operator methods
+    //! @name Epetra_Operator methods
     //@{
 
     //! If set true, transpose of this operator will be applied.
     virtual int SetUseTranspose(bool UseTranspose) {
       use_transpose = UseTranspose;
-      return 0;
     }
 
     /*!
-     * \brief Returns the result of a Tpetra_Operator applied to a
-     * Tpetra_MultiVector X in Y.
+     * \brief Returns the result of a Epetra_Operator applied to a
+     * Epetra_MultiVector X in Y.
      */
-    virtual void apply(const Tpetra_MultiVector& X,
-                      Tpetra_MultiVector& Y,  Teuchos::ETransp  mode = Teuchos::NO_TRANS, 
-                      ST alpha = Teuchos::ScalarTraits<ST>::one(), 
-                      ST beta = Teuchos::ScalarTraits<ST>::one() ) const {
-      app->applyGlobalDistParamDerivT(time,
+    virtual int Apply(const Epetra_MultiVector& X,
+                      Epetra_MultiVector& Y) const {
+
+
+
+
+/*      app->applyGlobalDistParamDeriv(time,
                                      xdot.get(),
                                      xdotdot.get(),
                                      *x,
@@ -78,39 +80,79 @@ namespace Albany {
                                      param_name,
                                      use_transpose,
                                      X,
-                                     Y);
+                                     Y);*/
+      Teuchos::RCP<const Tpetra_MultiVector> XT = Petra::EpetraMultiVector_To_TpetraMultiVector(X, app->getComm());
+
+      const Teuchos::RCP<Tpetra_MultiVector> YT = Petra::EpetraMultiVector_To_TpetraMultiVector(Y, app->getComm());
+
+      app->applyGlobalDistParamDerivImplT(time, xdotT, xdotdotT, xT, *scalar_params, param_name, use_transpose, XT, YT);
+
+      Petra::TpetraMultiVector_To_EpetraMultiVector(YT, Y, comm);
     }
 
+    /*!
+     * \brief Returns the result of a Epetra_Operator inverse applied to
+     * an Epetra_MultiVector X in Y.
+     */
+    virtual int ApplyInverse(const Epetra_MultiVector& X,
+                             Epetra_MultiVector& Y) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true, std::logic_error,
+        "Albany::DistributedParameterDerivativeOp does not support " <<
+        "Epetra_Operator::ApplyInverse()!");
+    }
+
+    //! Returns the infinity norm of the global matrix.
+    virtual double NormInf() const {
+      return 0.0;
+    }
 
     //! Returns a character string describing the operator
     virtual const char * Label() const {
       return "DistributedParameterDerivativeOp";
     }
 
-     virtual bool hasTransposeApply() const {
-       return use_transpose; 
-     }
-
-    /*!
-     * \brief Returns the Tpetra_Map object associated with the domain of
-     * this operator.
-     */
-    //virtual const Tpetra_Map& OperatorDomainMap() const {
-    virtual Teuchos::RCP<const Tpetra_Map> getDomainMap() const {
-      if (use_transpose)
-        return app->getMapT();
-      return app->getDistParamLib()->get(param_name)->map();
+    //! Returns the current UseTranspose setting.
+    virtual bool UseTranspose() const {
+      return use_transpose;
     }
 
     /*!
-     * \brief Returns the Tpetra_Map object associated with the range of
+     * \brief Returns true if the \e this object can provide an approximate
+     * Inf-norm, false otherwise.
+     */
+    virtual bool HasNormInf() const {
+      return false;
+    }
+
+    /*!
+     * \brief Returns a pointer to the Epetra_Comm communicator associated
+     * with this operator.
+     */
+    virtual const Epetra_Comm& Comm() const {
+      return app->getMap()->Comm();
+    }
+
+    /*!
+     * \brief Returns the Epetra_Map object associated with the domain of
      * this operator.
      */
-    //virtual const Tpetra_Map& OperatorRangeMap() const {
-    virtual Teuchos::RCP<const Tpetra_Map> getRangeMap() const {
+    virtual const Epetra_Map& OperatorDomainMap() const {
       if (use_transpose)
-        return app->getDistParamLib()->get(param_name)->map();
-      return app->getMapT();
+        return *(app->getMap());
+
+      return *map;
+    }
+
+    /*!
+     * \brief Returns the Epetra_Map object associated with the range of
+     * this operator.
+     */
+    virtual const Epetra_Map& OperatorRangeMap() const {
+      if (use_transpose)
+        return *map;
+
+      return *(app->getMap());
     }
 
     //@}
@@ -119,6 +161,8 @@ namespace Albany {
 
     //! Albany applications
     Teuchos::RCP<Application> app;
+    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<const Epetra_Comm> comm;
 
     //! Name of distributed parameter we are differentiating w.r.t.
     std::string param_name;
@@ -126,20 +170,20 @@ namespace Albany {
     //! Whether to apply transpose
     bool use_transpose;
 
-    //! @name Data needed for apply()
+    //! @name Data needed for Apply()
     //@{
 
     //! Current time
     double time;
 
     //! Velocity vector
-    Teuchos::RCP<const Tpetra_Vector> xdot;
+    Teuchos::RCP<const Tpetra_Vector> xdotT;
 
     //! Acceleration vector
-    Teuchos::RCP<const Tpetra_Vector> xdotdot;
+    Teuchos::RCP<const Tpetra_Vector> xdotdotT;
 
     //! Solution vector
-    Teuchos::RCP<const Tpetra_Vector> x;
+    Teuchos::RCP<const Tpetra_Vector> xT;
 
     //! Scalar parameters
     Teuchos::RCP<Teuchos::Array<ParamVec> > scalar_params;
