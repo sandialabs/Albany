@@ -74,6 +74,7 @@ double * thicknessDataPtr, *topographyDataPtr;
 double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
 double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
 long nCellsActive;
+long nWestFacesActive, nEastFacesActive, nSouthFacesActive, nNorthFacesActive; 
 long debug_output_verbosity;
 long use_glissade_surf_height_grad;
 int nNodes, nElementsActive; 
@@ -86,6 +87,14 @@ int * global_element_conn_active_Ptr;
 int * global_element_id_active_owned_map_Ptr; 
 int * global_basal_face_conn_active_Ptr; 
 int * global_basal_face_id_active_owned_map_Ptr; 
+int * global_west_face_conn_active_Ptr; 
+int * global_west_face_id_active_owned_map_Ptr; 
+int * global_east_face_conn_active_Ptr; 
+int * global_east_face_id_active_owned_map_Ptr; 
+int * global_south_face_conn_active_Ptr; 
+int * global_south_face_id_active_owned_map_Ptr; 
+int * global_north_face_conn_active_Ptr; 
+int * global_north_face_id_active_owned_map_Ptr; 
 double *uVel_ptr; 
 double *vVel_ptr; 
 bool first_time_step = true;
@@ -236,7 +245,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //IK, 4/4/14: get verbosity level specified in CISM *.config file
     debug_output_verbosity = *(ftg_ptr -> getLongVar("debug_output_verbosity","options"));
     use_glissade_surf_height_grad = *(ftg_ptr -> getLongVar("use_glissade_surf_height_grad","options"));
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver..." << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver..." << std::endl;
 
 
     // ---------------------------------------------
@@ -244,11 +254,13 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //IK, 11/14/13: these things may not be needed in Albany/FELIX...  for now they are passed anyway.
     // ---------------------------------------------
     
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "Getting geometry info from CISM..." << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "Getting geometry info from CISM..." << std::endl;
     dimInfo = ftg_ptr -> getLongVar("dimInfo","geometry");
     dew = *(ftg_ptr -> getDoubleVar("dew","numerics"));
     dns = *(ftg_ptr -> getDoubleVar("dns","numerics"));
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver: dew, dns = " << dew << "  " << dns << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver: dew, dns = " << dew << "  " << dns << std::endl;
     dimInfoGeom = new int[dimInfo[0]+1];    
     for (int i=0;i<=dimInfo[0];i++) dimInfoGeom[i] = dimInfo[i];   
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
@@ -258,7 +270,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     }
     global_ewn = dimInfoGeom[2]; 
     global_nsn = dimInfoGeom[3]; 
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver: global_ewn = " << global_ewn << ", global_nsn = " << global_nsn << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
+       std::cout << "In felix_driver: global_ewn = " << global_ewn 
+                 << ", global_nsn = " << global_nsn << std::endl;
+    }
     ewlb = *(ftg_ptr -> getLongVar("ewlb","geometry"));
     ewub = *(ftg_ptr -> getLongVar("ewub","geometry"));
     nslb = *(ftg_ptr -> getLongVar("nslb","geometry"));
@@ -267,9 +282,11 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     ewn = *(ftg_ptr -> getLongVar("ewn","geometry"));
     nsn = *(ftg_ptr -> getLongVar("nsn","geometry"));
     upn = *(ftg_ptr -> getLongVar("upn","geometry"));
-    if (debug_output_verbosity == 2) 
-      std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() << ", ewn = " << ewn << ", nsn = " << nsn << ", upn = " << upn << ", nhalo = " << nhalo << std::endl;
-
+    if (debug_output_verbosity == 2) { 
+      std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() 
+                << ", ewn = " << ewn << ", nsn = " << nsn << ", upn = " 
+                << upn << ", nhalo = " << nhalo << std::endl;
+    }
 
     // ---------------------------------------------
     // get constants from CISM
@@ -294,11 +311,22 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // get connectivity arrays from CISM 
     // IK, 11/14/13: these things may not be needed in Albany/FELIX...  for now they are passed anyway.
     // ---------------------------------------------
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl;
     //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/FELIX    
     nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
-    if (debug_output_verbosity == 2)  
-      std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() << ", nCellsActive = " << nCellsActive <<  std::endl;
+    nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
+    nEastFacesActive = *(ftg_ptr -> getLongVar("nEastFacesActive","connectivity"));
+    nSouthFacesActive = *(ftg_ptr -> getLongVar("nSouthFacesActive","connectivity"));
+    nNorthFacesActive = *(ftg_ptr -> getLongVar("nNorthFacesActive","connectivity"));
+    if (debug_output_verbosity == 2) {  
+      std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() 
+                << ", nCellsActive = " << nCellsActive 
+                << ", nWestFacesActive = " << nWestFacesActive 
+                << ", nEastFacesActive = " << nEastFacesActive 
+                << ", nSouthFacesActive = " << nSouthFacesActive 
+                << ", nNorthFacesActive = " << nNorthFacesActive <<std::endl;  
+    }
     xyz_at_nodes_Ptr = ftg_ptr -> getDoubleVar("xyz_at_nodes","connectivity"); 
     surf_height_at_nodes_Ptr = ftg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
     dsurf_height_at_nodes_dx_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dx","connectivity"); 
@@ -310,15 +338,22 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_element_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_element_id_active_owned_map","connectivity");  
     global_basal_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_basal_face_conn_active","connectivity");  
     global_basal_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_basal_face_id_active_owned_map","connectivity");  
-
-    
+    global_west_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_west_face_conn_active","connectivity");  
+    global_west_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_west_face_id_active_owned_map","connectivity");  
+    global_east_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_east_face_conn_active","connectivity");  
+    global_east_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_east_face_id_active_owned_map","connectivity");  
+    global_south_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_south_face_conn_active","connectivity");  
+    global_south_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_south_face_id_active_owned_map","connectivity");  
+    global_north_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_north_face_conn_active","connectivity");  
+    global_north_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_north_face_id_active_owned_map","connectivity");  
 
 
     // ---------------------------------------------
     // create Albany mesh  
     // ---------------------------------------------
     // Read input file, the name of which is provided in the Glimmer/CISM .config file.
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver: creating Albany mesh struct..." << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver: creating Albany mesh struct..." << std::endl;
     slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, mpiCommT));
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
@@ -336,6 +371,14 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //std::cout << "DEBUG: global_element_conn_active_Ptr: " << global_element_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_basal_face_conn_active_Ptr: " << global_basal_face_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr: " << global_basal_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: global_west_face_conn_active_Ptr: " << global_west_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_west_face_id_active_owned_map_Ptr: " << global_west_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: global_east_face_conn_active_Ptr: " << global_east_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_east_face_id_active_owned_map_Ptr: " << global_east_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: global_south_face_conn_active_Ptr: " << global_south_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_south_face_id_active_owned_map_Ptr: " << global_south_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: global_north_face_conn_active_Ptr: " << global_north_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_north_face_id_active_owned_map_Ptr: " << global_north_face_id_active_owned_map_Ptr << std::endl;
 
     nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh (on each processor) 
     nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
@@ -353,12 +396,23 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     albanyApp->initialSetUp(parameterList);
     meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, mpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr, 
                                                            global_element_id_active_owned_map_Ptr, 
-                                                           global_element_conn_active_Ptr, global_basal_face_id_active_owned_map_Ptr, 
-                                                           global_basal_face_conn_active_Ptr, 
+                                                           global_element_conn_active_Ptr, 
+                                                           global_basal_face_id_active_owned_map_Ptr, 
+                                                           global_basal_face_conn_active_Ptr,
+                                                           global_west_face_id_active_owned_map_Ptr, 
+                                                           global_west_face_conn_active_Ptr,
+                                                           global_east_face_id_active_owned_map_Ptr, 
+                                                           global_east_face_conn_active_Ptr,
+                                                           global_south_face_id_active_owned_map_Ptr, 
+                                                           global_south_face_conn_active_Ptr,
+                                                           global_north_face_id_active_owned_map_Ptr, 
+                                                           global_north_face_conn_active_Ptr,
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, 
                                                            dsurf_height_at_nodes_dx_Ptr, dsurf_height_at_nodes_dy_Ptr,
                                                            flwa_at_active_elements_Ptr, 
                                                            nNodes, nElementsActive, nCellsActive, 
+                                                           nWestFacesActive, nEastFacesActive,
+                                                           nSouthFacesActive, nNorthFacesActive,
                                                            debug_output_verbosity));
 
     albanyApp->createMeshSpecs(meshStruct);
@@ -389,7 +443,10 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //IK, 12/9/13: how come FancyOStream prints an all processors??    
     Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr << "   " << time_inc_yr << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
+      std::cout << "In felix_driver_run, cur_time, time_inc = " << cur_time_yr 
+                << "   " << time_inc_yr << std::endl;
+    }
     
     // ---------------------------------------------
     // get u and v velocity solution from Glimmer-CISM 
@@ -397,7 +454,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // IK, 3/14/14: moved this step to felix_driver_run from felix_driver init, since we still want to grab and u and v velocities for CISM if the mesh hasn't changed, 
     // in which case only felix_driver_run will be called, not felix_driver_init.   
     // ---------------------------------------------
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver_run: grabbing pointers to u and v velocities in CISM..." << std::endl; 
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver_run: grabbing pointers to u and v velocities in CISM..." << std::endl; 
     uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity"); 
     vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity"); 
 
@@ -406,7 +464,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // IK, 3/14/14: moved this from felix_driver_init to felix_driver_run.  
     // ---------------------------------------------
     
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl;
     //Check what kind of ordering you have in the solution & create solutionField object.
     interleavedOrdering = meshStruct->getInterleavedOrdering();
     Albany::AbstractSTKFieldContainer::VectorFieldType* solutionField;
@@ -479,7 +538,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // Solve 
     // ---------------------------------------------------------------------------------------------------
 
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver_run: starting the solve... " << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver_run: starting the solve... " << std::endl;
     //Need to set HasRestart solution such that uvel_Ptr and vvel_Ptr (u and v from Glimmer/CISM) are always set as initial condition?  
     meshStruct->setHasRestartSolution(!first_time_step);
 
@@ -559,7 +619,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // IK, 12/9/13: how come this is turned off in mpas branch? 
     // ---------------------------------------------------------------------------------------------------
  
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "Computing responses and sensitivities..." << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "Computing responses and sensitivities..." << std::endl;
     int status=0; // 0 = pass, failures are incremented
 #ifdef CISM_USE_EPETRA
     Teuchos::Array<Teuchos::RCP<const Epetra_Vector> > responses;
@@ -665,7 +726,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //std::cout << "node_map # my elements: " << node_map->NumMyElements() << std::endl; 
     //std::cout << "node_map: " << *node_map << std::endl; 
 
-    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "In felix_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver_run: copying Albany solution to uvel and vvel to send back to CISM... " << std::endl;
 #ifdef CISM_USE_EPETRA 
     //Epetra_Vectors to hold uvel and vvel to be passed to Glimmer/CISM
     Epetra_Vector uvel(*node_map, true); 

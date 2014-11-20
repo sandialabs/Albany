@@ -37,15 +37,26 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const int * global_node_id_owned_map_Ptr,
                   const int * global_element_id_active_owned_map_Ptr,
                   const int * global_element_conn_active_Ptr,
-                  const int *global_basal_face_active_owned_map_Ptr,
+                  const int * global_basal_face_active_owned_map_Ptr,
                   const int * global_basal_face_conn_active_Ptr,
+                  const int * global_west_face_active_owned_map_Ptr,
+                  const int * global_west_face_conn_active_Ptr,
+                  const int * global_east_face_active_owned_map_Ptr,
+                  const int * global_east_face_conn_active_Ptr,
+                  const int * global_south_face_active_owned_map_Ptr,
+                  const int * global_south_face_conn_active_Ptr,
+                  const int * global_north_face_active_owned_map_Ptr,
+                  const int * global_north_face_conn_active_Ptr,
                   const double * beta_at_nodes_Ptr,
                   const double * surf_height_at_nodes_Ptr,
                   const double * dsurf_height_at_nodes_dx_Ptr,
                   const double * dsurf_height_at_nodes_dy_Ptr,
                   const double * flwa_at_active_elements_Ptr,
                   const int nNodes, const int nElementsActive,
-                  const int nCellsActive, const int verbosity) :
+                  const int nCellsActive, const int nWestFacesActive, 
+                  const int nEastFacesActive, const int nSouthFacesActive, 
+                  const int nNorthFacesActive, 
+                  const int verbosity) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   hasRestartSol(false),
@@ -56,17 +67,30 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   NumNodes = nNodes;
   NumEles = nElementsActive;
   NumBasalFaces = nCellsActive;
+  NumWestFaces = nWestFacesActive; 
+  NumEastFaces = nEastFacesActive; 
+  NumSouthFaces = nSouthFacesActive; 
+  NumNorthFaces = nNorthFacesActive; 
   debug_output_verbosity = verbosity;
   if (verbosity == 2)
     std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl;
   xyz = new double[NumNodes][3];
   eles = new int[NumEles][8];
-  bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+  //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+  bf = new int[NumBasalFaces][5]; 
+  wf = new int[NumWestFaces][5]; 
+  ef = new int[NumEastFaces][5]; 
+  sf = new int[NumSouthFaces][5]; 
+  nf = new int[NumNorthFaces][5]; 
   sh = new double[NumNodes];
   shGrad = new double[NumNodes][2];
   globalNodesID = new GO[NumNodes];
   globalElesID = new GO[NumEles];
   basalFacesID = new GO[NumBasalFaces];
+  westFacesID = new GO[NumWestFaces]; 
+  eastFacesID = new GO[NumEastFaces]; 
+  southFacesID = new GO[NumSouthFaces]; 
+  northFacesID = new GO[NumNorthFaces]; 
   flwa = new double[NumEles];
   beta = new double[NumNodes];
   //TO DO? pass in temper?  for now, flwa is passed instead of temper
@@ -83,14 +107,22 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   else have_flwa = false;
   if (beta_at_nodes_Ptr != NULL) have_beta = true;
   else have_beta = false;
-
+  if (global_west_face_active_owned_map_Ptr != NULL) have_wf = true; 
+  else have_wf = false; 
+  if (global_east_face_active_owned_map_Ptr != NULL) have_ef = true;
+  else have_ef = false;
+  if (global_south_face_active_owned_map_Ptr != NULL) have_sf = true;
+  else have_sf = false;
+  if (global_north_face_active_owned_map_Ptr != NULL) have_nf = true;
+  else have_nf = false;
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
 
   for (int i=0; i<NumNodes; i++){
     globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;
     for (int j=0; j<3; j++)
       xyz[i][j] = xyz_at_nodes_Ptr[i + NumNodes*j];
-    //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
+    //*out << "i: " << i << ", x: " << xyz[i][0] 
+         //<< ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
   }
   if (have_sh) {
     for (int i=0; i<NumNodes; i++)
@@ -113,8 +145,10 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     globalElesID[i] = global_element_id_active_owned_map_Ptr[i]-1;
     for (int j = 0; j<8; j++)
       eles[i][j] = global_element_conn_active_Ptr[i + nElementsActive*j];
-    //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
-    //                      << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
+    //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] 
+    //     << " " << eles[i][1] << " " << eles[i][2] << " " 
+    //     << eles[i][3] << " " << eles[i][4] << " "
+    //     << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
   }
   if (have_flwa) {
     for (int i=0; i<NumEles; i++)
@@ -128,13 +162,54 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
         //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl;
     }
   }
+  if (have_wf) {
+    for (int i=0; i<NumWestFaces; i++) {
+       westFacesID[i] = global_west_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         wf[i][j] = global_west_face_conn_active_Ptr[i + NumWestFaces*j]; 
+    }
+  }
+  if (have_ef) {
+    for (int i=0; i<NumEastFaces; i++) {
+       eastFacesID[i] = global_east_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         ef[i][j] = global_east_face_conn_active_Ptr[i + NumEastFaces*j]; 
+    }
+  }
+  if (have_sf) {
+    for (int i=0; i<NumSouthFaces; i++) {
+       southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j]; 
+    }
+  }
+  if (have_nf) {
+    for (int i=0; i<NumNorthFaces; i++) {
+       northFacesID[i] = global_north_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         nf[i][j] = global_north_face_conn_active_Ptr[i + NumNorthFaces*j]; 
+    }
+  }
+
 
   Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles);
   Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes);
   Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces);
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); //Distribute the elements according to the global element IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); //Distribute the nodes according to the global node IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); //Distribute the elements according to the basal face IDs
+  Teuchos::ArrayView<const GO> westFacesIDAV = Teuchos::arrayView(westFacesID, NumWestFaces);
+  Teuchos::ArrayView<const GO> eastFacesIDAV = Teuchos::arrayView(eastFacesID, NumEastFaces);
+  Teuchos::ArrayView<const GO> southFacesIDAV = Teuchos::arrayView(southFacesID, NumSouthFaces);
+  Teuchos::ArrayView<const GO> northFacesIDAV = Teuchos::arrayView(northFacesID, NumNorthFaces);
+  //Distribute the elements according to the global element IDs
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); 
+  //Distribute the nodes according to the global node IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); 
+  //Distribute the elements according to the basal face IDs
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); 
+  //Distribute the elements according to the lateral face IDs
+  west_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
+  east_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
+  south_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
+  north_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
 
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -225,10 +300,18 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
   if (have_sh) delete [] sh;
   if (have_shGrad) delete [] shGrad;
   if (have_bf) delete [] bf;
+  if (have_wf) delete [] wf;
+  if (have_ef) delete [] ef;
+  if (have_sf) delete [] sf;
+  if (have_nf) delete [] nf;
   delete [] eles;
   delete [] globalElesID;
   delete [] globalNodesID;
   delete [] basalFacesID;
+  delete [] westFacesID;
+  delete [] eastFacesID;
+  delete [] southFacesID;
+  delete [] northFacesID;
 }
 
 void
@@ -548,6 +631,97 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, lrnode, 1);
     }
   }
+
+  if (have_wf == true) {
+    for (int i=0; i<west_face_mapT->getNodeNumElements(); i++) {
+       singlePartVec[0] = ssPartVec["Lateral"];
+       sideID = west_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = wf[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  3 /*local side id*/);
+
+       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][1], nodePartVec);
+       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][2], nodePartVec);
+       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][3], nodePartVec);
+       stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, llnode, 0);
+       bulkData->declare_relation(side, llnodeb, 2);
+       bulkData->declare_relation(side, ulnodeb, 3);
+       bulkData->declare_relation(side, ulnode, 1);
+
+    }
+  }
+  if (have_ef == true) {
+    for (int i=0; i<east_face_mapT->getNodeNumElements(); i++) {
+       singlePartVec[0] = ssPartVec["Lateral"];
+       sideID = east_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = ef[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  1 /*local side id*/);
+
+       stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][1], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][2], nodePartVec);
+       stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][3], nodePartVec);
+       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, lrnode, 0);
+       bulkData->declare_relation(side, urnode, 1);
+       bulkData->declare_relation(side, urnodeb, 3);
+       bulkData->declare_relation(side, lrnodeb, 2);
+    }
+  }
+  if (have_sf == true) {
+    for (int i=0; i<south_face_mapT->getNodeNumElements(); i++) {
+       singlePartVec[0] = ssPartVec["Lateral"];
+       sideID = south_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = sf[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  0 /*local side id*/);
+
+       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][1], nodePartVec);
+       stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][2], nodePartVec);
+       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][3], nodePartVec);
+       stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, llnode, 0);
+       bulkData->declare_relation(side, lrnode, 1);
+       bulkData->declare_relation(side, lrnodeb, 3);
+       bulkData->declare_relation(side, llnodeb, 2);
+    }
+  }
+  if (have_nf == true) {
+    for (int i=0; i<north_face_mapT->getNodeNumElements(); i++) {
+       singlePartVec[0] = ssPartVec["Lateral"];
+       sideID = north_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = nf[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  2 /*local side id*/);
+
+       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][1], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][2], nodePartVec);
+       stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][3], nodePartVec);
+       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, urnode, 0);
+       bulkData->declare_relation(side, ulnode, 1);
+       bulkData->declare_relation(side, ulnodeb, 3);
+       bulkData->declare_relation(side, urnodeb, 2);
+    }
+  }
+
   bulkData->modification_end();
 }
 
