@@ -257,14 +257,6 @@ public:
       stk::mesh::EntityRank entity_rank);
 
   ///
-  /// \brief Number of entities of a specific rank
-  ///
-  EntityVectorIndex
-  getNumberEntitiesByRank(
-      stk::mesh::BulkData const & bulk_data,
-      stk::mesh::EntityRank entity_rank);
-
-  ///
   /// \brief Gets the local relation id (0,1,2,...) between two entities
   ///
   EdgeId
@@ -828,6 +820,27 @@ public:
     return output_type_;
   }
 
+  ///
+  /// \brief Number of entities of a specific rank
+  ///
+  EntityVectorIndex
+  get_num_entities(stk::mesh::EntityRank entity_rank);
+
+  ///
+  /// \brief Assigns ids to new entities
+  ///
+  void
+  set_highest_ids();
+
+  stk::mesh::EntityId
+  get_highest_id(stk::mesh::EntityRank rank);
+
+  void
+  increase_highest_id(stk::mesh::EntityRank rank)
+  {
+    ++highest_ids_[rank];
+  }
+
 private:
   ///
   /// \brief Create Albany discretization
@@ -836,12 +849,6 @@ private:
   ///
   void
   createDiscretization();
-
-  ///
-  /// \brief Assigns Ids to new nodes (not comptabile with STK)
-  /// FIXME check this method
-  void
-  setHighestIds();
 
   //
   //
@@ -857,7 +864,7 @@ private:
   std::set<EntityPair>
   fractured_faces_;
 
-  std::vector<int>
+  std::vector<stk::mesh::EntityId>
   highest_ids_;
 
   std::string

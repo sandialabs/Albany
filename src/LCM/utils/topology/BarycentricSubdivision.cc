@@ -15,31 +15,6 @@
 
 namespace LCM {
 
-//
-// \brief Determine highest id number for each entity rank.
-// Used to assign unique ids to newly created entities
-//
-void
-Topology::setHighestIds()
-{
-  // Get space dimension by querying the STK discretization.
-  Albany::STKDiscretization &
-  stk_discretization =
-      static_cast<Albany::STKDiscretization &>(*discretization_);
-
-  const unsigned int number_dimensions =
-      stk_discretization.getSTKMeshStruct()->numDim;
-
-  highest_ids_.resize(number_dimensions);
-
-  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
-      rank < number_dimensions; ++rank) {
-    highest_ids_[rank] = getNumberEntitiesByRank(get_bulk_data(), rank);
-  }
-
-  return;
-}
-
 //----------------------------------------------------------------------------
 //
 // \brief Adds a new entity of rank 3 to the mesh
@@ -580,7 +555,7 @@ Topology::computeBarycentricCoordinates(
 void Topology::barycentricSubdivision()
 {
   // Use to assign unique ids
-  setHighestIds();
+  set_highest_ids();
 
   // Begin mesh update
   get_bulk_data().modification_begin();

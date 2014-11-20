@@ -280,6 +280,8 @@ void Topology::graphInitialization()
 
   get_bulk_data().modification_end();
 
+  set_highest_ids();
+
   return;
 }
 
@@ -1188,8 +1190,10 @@ Topology::splitOpenFaces()
 
   interface_parts.push_back(&interface_part);
 
+  increase_highest_id(interface_rank);
+
   stk::mesh::EntityId
-  new_id = getNumberEntitiesByRank(bulk_data, interface_rank) + 1;
+  new_id = get_highest_id(interface_rank);
 
   // Create the interface connectivity
   for (std::set<EntityPair>::iterator i =
@@ -1501,12 +1505,10 @@ Topology::outputToGraphviz(std::string const & output_filename)
 // \brief This returns the number of entities of a given rank
 //
 EntityVectorIndex
-Topology::getNumberEntitiesByRank(
-    stk::mesh::BulkData const & bulk_data,
-    stk::mesh::EntityRank entity_rank)
+Topology::get_num_entities(stk::mesh::EntityRank entity_rank)
 {
   std::vector<stk::mesh::Bucket*>
-  buckets = bulk_data.buckets(entity_rank);
+  buckets = get_bulk_data().buckets(entity_rank);
 
   EntityVectorIndex
   number_entities = 0;
@@ -1516,6 +1518,32 @@ Topology::getNumberEntitiesByRank(
   }
 
   return number_entities;
+}
+
+//
+// \brief Determine highest id number for each entity rank.
+// Used to assign unique ids to newly created entities
+//
+void
+Topology::set_highest_ids()
+{
+  highest_ids_.resize(stk::topology::ELEMENT_RANK + 1);
+
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+      rank <= stk::topology::ELEMENT_RANK; ++rank) {
+    highest_ids_[rank] = get_num_entities(rank);
+  }
+
+  return;
+}
+
+//
+//
+//
+stk::mesh::EntityId
+Topology::get_highest_id(stk::mesh::EntityRank rank)
+{
+  return highest_ids_[rank];
 }
 
 } // namespace LCM
