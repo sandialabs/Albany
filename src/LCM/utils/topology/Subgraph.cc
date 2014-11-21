@@ -216,20 +216,6 @@ Subgraph::vertexFromEntity(stk::mesh::Entity entity)
 Vertex
 Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
 {
-  stk::topology
-  vertex_topology = get_topology().get_rank_topology(vertex_rank);
-
-  shards::CellTopology
-  cell_topology = stk::mesh::get_cell_topology(vertex_topology);
-
-  stk::mesh::Part &
-  vertex_part = get_meta_data().get_cell_topology_root_part(cell_topology);
-
-  stk::mesh::PartVector
-  add_parts;
-
-  add_parts.push_back(& vertex_part);
-
   get_topology().increase_highest_id(vertex_rank);
 
   stk::mesh::EntityId
@@ -243,6 +229,9 @@ Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
 
   stk::mesh::EntityId
   high_id = high_id_from_low_id(dimension, parallel_rank, vertex_rank, low_id);
+
+  stk::mesh::PartVector
+  add_parts;
 
   stk::mesh::Entity
   entity = get_bulk_data().declare_entity(vertex_rank, high_id, add_parts);
@@ -636,6 +625,27 @@ Subgraph::cloneBoundaryVertex(Vertex boundary_vertex)
 
   // Add edge to new vertex
   addEdge(edge_id, source, vertex_clone);
+
+  // Assign topology here, otherwise STK complains when we add and
+  // remove edges from entities that their count is not correct.
+  stk::mesh::Entity
+  entity_clone = entityFromVertex(vertex_clone);
+
+  stk::topology
+  boundary_topology = get_topology().get_rank_topology(boundary_rank);
+
+  shards::CellTopology
+  boundary_ct = stk::mesh::get_cell_topology(boundary_topology);
+
+  stk::mesh::Part &
+  boundary_part = get_meta_data().get_cell_topology_root_part(boundary_ct);
+
+  stk::mesh::PartVector
+  add_parts;
+
+  add_parts.push_back(& boundary_part);
+
+  get_bulk_data().change_entity_parts(entity_clone, add_parts);
 
   return vertex_clone;
 }
