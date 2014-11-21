@@ -137,72 +137,14 @@ Topology(
   return;
 }
 
-namespace {
-
 //
-// The entity id has now some very high number.
-// Change it to something reasonable for debugging purposes.
-// See formula for creating high id in CreateFaces.cpp
 //
-stk::mesh::EntityId
-compute_true_id(
-    size_t const space_dimension,
-    int const parallel_rank,
-    stk::mesh::EntityRank const rank,
-    stk::mesh::EntityId const id)
-{
-  stk::mesh::EntityId const
-  start_id = 256 * parallel_rank +
-    (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) - 1;
-
-  bool const
-  is_high_id = id >= start_id;
-
-  bool
-  is_face_or_edge = false;
-
-  switch (space_dimension) {
-
-  default:
-    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-    std::cerr << '\n';
-    std::cerr << "Invalid space dimension in graph output: ";
-    std::cerr << space_dimension;
-    std::cerr << '\n';
-    exit(1);
-    break;
-
-  case 2:
-    if (rank == stk::topology::EDGE_RANK) {
-      is_face_or_edge = true;
-    }
-    break;
-
-  case 3:
-    if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
-      is_face_or_edge = true;
-    }
-    break;
-  }
-
-  stk::mesh::EntityId
-  true_id = id;
-
-  if (is_face_or_edge == true && is_high_id == true) {
-    true_id = id - start_id;
-  }
-
-  return true_id;
-}
-
-} // anonymous namespace
-
+//
 stk::mesh::EntityId const
 Topology::get_entity_id(stk::mesh::Entity const entity)
 {
   size_t const
-  space_dimension =
-      static_cast<size_t>(get_meta_data().spatial_dimension());
+  space_dimension = get_space_dimension();
 
   int const
   parallel_rank = get_bulk_data().parallel_rank();
@@ -211,12 +153,12 @@ Topology::get_entity_id(stk::mesh::Entity const entity)
   rank = get_bulk_data().entity_rank(entity);
 
   stk::mesh::EntityId const
-  id = get_bulk_data().identifier(entity);
+  high_id = get_bulk_data().identifier(entity);
 
   stk::mesh::EntityId const
-  true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
+  low_id = low_id_from_high_id(space_dimension, parallel_rank, rank, high_id);
 
-  return true_id;
+  return low_id;
 }
 
 //
@@ -1523,7 +1465,7 @@ Topology::initializeTopologies()
     stk::mesh::Bucket const &
     bucket = *(buckets[0]);
 
-    topologies_[rank] = bucket.topology();
+    topologies_.push_back(bucket.topology());
   }
   return;
 }
@@ -1554,11 +1496,15 @@ Topology::get_num_entities(stk::mesh::EntityRank const entity_rank)
 void
 Topology::initializeHighestIds()
 {
-  highest_ids_.resize(stk::topology::ELEMENT_RANK + 1);
+  size_t const
+  dimension = get_space_dimension();
 
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
       rank <= stk::topology::ELEMENT_RANK; ++rank) {
-    highest_ids_[rank] = get_num_entities(rank);
+
+    if (rank > dimension) break;
+
+    highest_ids_.push_back(get_num_entities(rank));
   }
 
   return;
