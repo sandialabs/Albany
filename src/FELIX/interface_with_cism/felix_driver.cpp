@@ -383,7 +383,21 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 
     nNodes = (ewn-2*nhalo+1)*(nsn-2*nhalo+1)*upn; //number of nodes in mesh (on each processor) 
     nElementsActive = nCellsActive*(upn-1); //number of 3D active elements in mesh  
-    
+   
+    //IK, 11/20/14: added this here: BCs are set in this file rather than in input.xml file to prevent confusion 
+    //to the reader.  Basically the BCs should be passed from CISM.
+    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
+    //Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_water));
+    parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Basal for DOF all set basal_scalar_field", *inputArrayBasal);  
+    // parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Lateral for DOF all set lateral", *inputArrayLateral);  
+
+ 
+   //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
+   //in the PHAL_Neumann and FELIX_StokesFOBodyForce evaluators.  
+    parameterList->sublist("Problem").sublist("Physical Parameters").set("Gravity", gravity);
+    parameterList->sublist("Problem").sublist("Physical Parameters").set("Ice Density", rho_ice);
+    parameterList->sublist("Problem").sublist("Physical Parameters").set("Water Density", rho_seawater);
+ 
     //IK, 11/17/14: if ds/dx, ds/dy are passed from CISM, use these in body force; 
     //otherwise calculate ds/dx from s by interpolation within Albany 
     if (dsurf_height_at_nodes_dx_Ptr != 0 && dsurf_height_at_nodes_dy_Ptr != 0) {
