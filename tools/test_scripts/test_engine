@@ -10,12 +10,10 @@ set -e
 
 ${WORKSPACE}/Albany/tools/test_scripts/jenkins_test_preamble
 
-source ${WORKSPACE}/Albany/tools/env/jenkins_face_env
-
 #
 # Do Dakota checkout
 #
-if [ $ALBANY_NEEDS_DAKOTA = "ON" ]
+if [ {$ALBANY_NEEDS_DAKOTA:-OFF} = "ON" ]
 then
     source $(which dakota_checkout)
 fi

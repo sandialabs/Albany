@@ -9,14 +9,14 @@
 #-------------------------------------------
 
 # Set these to whatever you like
-NIGHTLYDIR=$WORKSPACE
+export NIGHTLYDIR=$WORKSPACE
 
 #set this correctly
-BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.55.0
-NETCDFDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/pnetcdf_4.3.2
-HDF5DIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/phdf5-1.8.12
+export BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.55.0
+export NETCDFDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/pnetcdf_4.3.2
+export HDF5DIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/phdf5-1.8.12
 #set this correctly, to software.sandia.gov user name
-SSGUSER=$(whoami)
+export SSGUSER=$(whoami)
 module load openmpi-x86_64
 
 # set to OFF to skip Dakota build
@@ -24,20 +24,20 @@ module load openmpi-x86_64
 #DAKOTABOOL="ON"
 
 # Don't change these
-TRILDIR=$NIGHTLYDIR/Trilinos
-TRILBUILDDIR=$NIGHTLYDIR/Trilinos/build
-TRILINSTALLDIR=$NIGHTLYDIR/Trilinos/build/install
-ALBDIR=$NIGHTLYDIR/Albany
-TRIKOTADIR=$TRILDIR/packages/TriKota
+export TRILDIR=$NIGHTLYDIR/Trilinos
+export TRILBUILDDIR=$NIGHTLYDIR/Trilinos/build
+export TRILINSTALLDIR=$NIGHTLYDIR/Trilinos/build/install
+export ALBDIR=$NIGHTLYDIR/Albany
+export TRIKOTADIR=$TRILDIR/packages/TriKota
 
 # Set these to whatever you like
-TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
-ALBOUTDIR=$NIGHTLYDIR/Albany_out
-DAKOUTDIR=$NIGHTLYDIR/Dakota_out
+export TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
+export ALBOUTDIR=$NIGHTLYDIR/Albany_out
+export DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set: master is typical
-TRILINOS_BRANCH=master
-ALBANY_BRANCH=master
+export TRILINOS_BRANCH=master
+export ALBANY_BRANCH=master
 
 export PATH=$ALBDIR/tools/build_scripts:$ALBDIR/tools/test_scripts:$ALBDIR/tools/checkout_scripts:$PATH
 

@@ -22,7 +22,7 @@ ALBANY_BUILD_TYPES = \
     ],
     "piro"      : [
         ("ALBANY_NEEDS_DAKOTA",  "ON")
-    ]
+    ],
     "lcm"       : [
         ("ALBANY_LCM", "ON")
     ],
@@ -86,9 +86,6 @@ formatter_class=argparse.ArgumentDefaultsHelpFormatter
 
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
                         help="Print shell commands as they are executed")
-
-    if (len(args) == 1):
-        args.append("--help")
 
     args = parser.parse_args(args[1:])
 
