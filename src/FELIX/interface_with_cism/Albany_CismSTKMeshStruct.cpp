@@ -72,8 +72,11 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   NumSouthFaces = nSouthFacesActive; 
   NumNorthFaces = nNorthFacesActive; 
   debug_output_verbosity = verbosity;
-  if (verbosity == 2)
+  if (verbosity == 2) {
     std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl;
+    std::cout <<"NumWestFaces = " << NumWestFaces << ", NumEastFaces = "<< NumEastFaces 
+              << ", NumSouthFaces = " << NumSouthFaces << ", NumNorthFaces = " << NumNorthFaces <<  std::endl;
+  }
   xyz = new double[NumNodes][3];
   eles = new int[NumEles][8];
   //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
@@ -107,13 +110,13 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   else have_flwa = false;
   if (beta_at_nodes_Ptr != NULL) have_beta = true;
   else have_beta = false;
-  if (global_west_face_active_owned_map_Ptr != NULL) have_wf = true; 
+  if (global_west_face_active_owned_map_Ptr != NULL && NumWestFaces > 0) have_wf = true; 
   else have_wf = false; 
-  if (global_east_face_active_owned_map_Ptr != NULL) have_ef = true;
+  if (global_east_face_active_owned_map_Ptr != NULL && NumEastFaces > 0) have_ef = true;
   else have_ef = false;
-  if (global_south_face_active_owned_map_Ptr != NULL) have_sf = true;
+  if (global_south_face_active_owned_map_Ptr != NULL && NumSouthFaces > 0) have_sf = true;
   else have_sf = false;
-  if (global_north_face_active_owned_map_Ptr != NULL) have_nf = true;
+  if (global_north_face_active_owned_map_Ptr != NULL && NumNorthFaces > 0) have_nf = true;
   else have_nf = false;
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
 
@@ -270,15 +273,21 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 
   std::vector<std::string> ssNames;
-  std::string ssn="Basal";
-  ssNames.push_back(ssn);
-    ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
-#endif
+  std::string ssnBasal="Basal";
+  std::string ssnLateral="Lateral";
 
+  ssNames.push_back(ssnBasal);
+  ssNames.push_back(ssnLateral);
+
+  ssPartVec[ssnBasal] = & metaData->declare_part(ssnBasal, metaData->side_rank() );
+  ssPartVec[ssnLateral] = & metaData->declare_part(ssnLateral, metaData->side_rank() );
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*ssPartVec[ssnBasal]);
+  stk::io::put_io_part_attribute(*ssPartVec[ssnLateral]);
+#endif
   stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
-  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssn]);
+  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnBasal]);
+  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLateral]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -609,9 +618,9 @@ Albany::CismSTKMeshStruct::constructMesh(
   }
 
   if (have_bf == true) {
-    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from bf file provided..." << std::endl;
+    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Basal"];
     for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
-       singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -630,11 +639,13 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, urnode, 2);
        bulkData->declare_relation(side, lrnode, 1);
     }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
 
   if (have_wf == true) {
+    if (debug_output_verbosity != 0) *out << "Setting west lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
     for (int i=0; i<west_face_mapT->getNodeNumElements(); i++) {
-       singlePartVec[0] = ssPartVec["Lateral"];
        sideID = west_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -654,10 +665,12 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, ulnode, 1);
 
     }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
   if (have_ef == true) {
+    if (debug_output_verbosity != 0) *out << "Setting east lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
     for (int i=0; i<east_face_mapT->getNodeNumElements(); i++) {
-       singlePartVec[0] = ssPartVec["Lateral"];
        sideID = east_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -676,10 +689,12 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, urnodeb, 3);
        bulkData->declare_relation(side, lrnodeb, 2);
     }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
   if (have_sf == true) {
+    if (debug_output_verbosity != 0) *out << "Setting south lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
     for (int i=0; i<south_face_mapT->getNodeNumElements(); i++) {
-       singlePartVec[0] = ssPartVec["Lateral"];
        sideID = south_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -698,10 +713,12 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, lrnodeb, 3);
        bulkData->declare_relation(side, llnodeb, 2);
     }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
   if (have_nf == true) {
+    if (debug_output_verbosity != 0) *out << "Setting north lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
     for (int i=0; i<north_face_mapT->getNodeNumElements(); i++) {
-       singlePartVec[0] = ssPartVec["Lateral"];
        sideID = north_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -720,6 +737,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, ulnodeb, 3);
        bulkData->declare_relation(side, urnodeb, 2);
     }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
 
   bulkData->modification_end();
