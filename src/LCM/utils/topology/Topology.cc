@@ -1471,6 +1471,34 @@ Topology::initializeTopologies()
 }
 
 //
+// Place the entity in the root part that has the stk::topology
+// associated with the given rank.
+//
+void
+Topology::AssignTopology(
+    stk::mesh::EntityRank const rank,
+    stk::mesh::Entity const entity)
+{
+  stk::topology
+  stk_topology = get_topology().get_rank_topology(rank);
+
+  shards::CellTopology
+  cell_topology = stk::mesh::get_cell_topology(stk_topology);
+
+  stk::mesh::Part &
+  part = get_meta_data().get_cell_topology_root_part(cell_topology);
+
+  stk::mesh::PartVector
+  add_parts;
+
+  add_parts.push_back(&part);
+
+  get_bulk_data().change_entity_parts(entity, add_parts);
+
+  return;
+}
+
+//
 // \brief This returns the number of entities of a given rank
 //
 EntityVectorIndex

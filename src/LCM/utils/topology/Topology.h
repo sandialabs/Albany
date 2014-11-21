@@ -571,6 +571,15 @@ public:
   connectNewFaces();
 
   ///
+  /// \brief Place the entity in the root part that has the stk::topology
+  /// associated with the given rank.
+  ///
+  void
+  AssignTopology(
+      stk::mesh::EntityRank const rank,
+      stk::mesh::Entity const entity);
+
+  ///
   /// Accessors and mutators
   ///
   Topology &

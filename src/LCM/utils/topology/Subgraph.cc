@@ -631,21 +631,7 @@ Subgraph::cloneBoundaryVertex(Vertex boundary_vertex)
   stk::mesh::Entity
   entity_clone = entityFromVertex(vertex_clone);
 
-  stk::topology
-  boundary_topology = get_topology().get_rank_topology(boundary_rank);
-
-  shards::CellTopology
-  boundary_ct = stk::mesh::get_cell_topology(boundary_topology);
-
-  stk::mesh::Part &
-  boundary_part = get_meta_data().get_cell_topology_root_part(boundary_ct);
-
-  stk::mesh::PartVector
-  add_parts;
-
-  add_parts.push_back(& boundary_part);
-
-  get_bulk_data().change_entity_parts(entity_clone, add_parts);
+  get_topology().AssignTopology(boundary_rank, entity_clone);
 
   return vertex_clone;
 }
@@ -707,7 +693,7 @@ EntityEntityMap
 Subgraph::splitArticulation(Vertex articulation_vertex)
 {
   stk::mesh::EntityRank
-  articulation_rank = Subgraph::getVertexRank(articulation_vertex);
+  articulation_rank = getVertexRank(articulation_vertex);
 
   size_t
   num_components;
@@ -864,6 +850,13 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
     inserted = addEdge(edge_id, source_vertex, split_vertex);
 
     assert(inserted.second == true);
+
+    // Assign topology here, otherwise STK complains when we add and
+    // remove edges from entities that their count is not correct.
+    stk::mesh::Entity
+    split_entity = entityFromVertex(split_vertex);
+
+    get_topology().AssignTopology(articulation_rank, split_entity);
   }
 
   return entity_split_point_map;
