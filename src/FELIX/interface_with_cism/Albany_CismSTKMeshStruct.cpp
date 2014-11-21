@@ -169,28 +169,28 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     for (int i=0; i<NumWestFaces; i++) {
        westFacesID[i] = global_west_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         wf[i][j] = global_west_face_conn_active_Ptr[i + NumWestFaces*j]; 
+         wf[i][j] = global_west_face_conn_active_Ptr[i + nCellsActive*j]; 
     }
   }
   if (have_ef) {
     for (int i=0; i<NumEastFaces; i++) {
        eastFacesID[i] = global_east_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         ef[i][j] = global_east_face_conn_active_Ptr[i + NumEastFaces*j]; 
+         ef[i][j] = global_east_face_conn_active_Ptr[i + nCellsActive*j]; 
     }
   }
   if (have_sf) {
     for (int i=0; i<NumSouthFaces; i++) {
        southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j]; 
+         sf[i][j] = global_south_face_conn_active_Ptr[i + nCellsActive*j]; 
     }
   }
   if (have_nf) {
     for (int i=0; i<NumNorthFaces; i++) {
        northFacesID[i] = global_north_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         nf[i][j] = global_north_face_conn_active_Ptr[i + NumNorthFaces*j]; 
+         nf[i][j] = global_north_face_conn_active_Ptr[i + nCellsActive*j]; 
     }
   }
 
