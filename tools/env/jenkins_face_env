@@ -2,44 +2,20 @@
 #
 # Platform and User-Specific Paths and environment variables
 #
-# This file must be modified for each user/machine
+# This file must be modified for each machine
 #
 # BvBW  10/06/08
 # AGS  04/09
+# JGF 11/14
 #-------------------------------------------
 
-# Set these to whatever you like
-export NIGHTLYDIR=$WORKSPACE
-
-#set this correctly
 export BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.55.0
 export NETCDFDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/pnetcdf_4.3.2
 export HDF5DIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/phdf5-1.8.12
-#set this correctly, to software.sandia.gov user name
+
 export SSGUSER=$(whoami)
+
 module load openmpi-x86_64
-
-# set to OFF to skip Dakota build
-## NOT WORKING YET
-#DAKOTABOOL="ON"
-
-# Don't change these
-export TRILDIR=$NIGHTLYDIR/Trilinos
-export TRILBUILDDIR=$NIGHTLYDIR/Trilinos/build
-export TRILINSTALLDIR=$NIGHTLYDIR/Trilinos/build/install
-export ALBDIR=$NIGHTLYDIR/Albany
-export TRIKOTADIR=$TRILDIR/packages/TriKota
-
-# Set these to whatever you like
-export TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
-export ALBOUTDIR=$NIGHTLYDIR/Albany_out
-export DAKOUTDIR=$NIGHTLYDIR/Dakota_out
-
-# Must be set: master is typical
-export TRILINOS_BRANCH=master
-export ALBANY_BRANCH=master
-
-export PATH=$ALBDIR/tools/build_scripts:$ALBDIR/tools/test_scripts:$ALBDIR/tools/checkout_scripts:$PATH
 
 # Pick up newer cmake
 export PATH=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/cmake-3.0.2/bin:$PATH

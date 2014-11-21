@@ -1,11 +1,7 @@
 #! /bin/bash
 
-# Here is a script for configuring Trilinos using cmake
-# that includes the packages needed for Albany.
-# Any environment variables (e.g. $BOOST_DIR) are
-# set in the customization file, e.g. set_andy_env.in
+/bin/rm -f CMakeCache.txt
 
-# Need shell independence?
 SOURCE_DIR=${TRILDIR:-..}
 INSTALL_DIR=${TRILINSTALLDIR:-$(pwd)/install}
 

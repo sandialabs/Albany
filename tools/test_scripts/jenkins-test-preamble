@@ -1,0 +1,24 @@
+#! /bin/bash
+
+#
+# Set up directory structure for jenkins test
+#
+
+set -e
+
+# Blow away old build and install directories
+
+if [ -d {$TRILBUILDDIR:?TRILBUILDDIR not set} ]; then
+  rm -rf  $TRILBUILDDIR
+fi
+mkdir -p $TRILBUILDDIR
+
+if [ -d {$TRILINSTALLDIR:?TRILINSTALLDIR not set} ]; then
+  rm -rf  $TRILINSTALLDIR
+fi
+mkdir -p $TRILINSTALLDIR
+
+if [ -d {$ALBBUILDDIR:?ALBBUILDDIR not set} ]; then
+  rm -rf  $ALBBUILDDIR
+fi
+mkdir -p $ALBBUILDDIR
