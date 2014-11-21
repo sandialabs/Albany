@@ -778,13 +778,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
-  sHeight.resize(numBuckets);
-  temperature.resize(numBuckets);
-  basalFriction.resize(numBuckets);
-  thickness.resize(numBuckets);
-  surfaceVelocity.resize(numBuckets);
-  velocityRMS.resize(numBuckets);
-  flowFactor.resize(numBuckets);
   sphereVolume.resize(numBuckets);
 
   // Clear map if remeshing
