@@ -18,6 +18,7 @@
     <ParameterList name="Physical Parameters">
       <Parameter name="Gravity" type="double" value="9.8"/>
       <Parameter name="Ice Density" type="double" value="910.0"/>
+      <Parameter name="Water Density" type="double" value="1028.0"/>
     </ParameterList>
     <ParameterList name="FELIX Viscosity">
       <Parameter name="Type" type="string" value="Glen's Law"/>

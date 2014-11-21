@@ -69,7 +69,11 @@ protected:
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
   enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE};
   BETAXY_NAME beta_type;
-  
+ 
+  //The following are for the lateral BC 
+  double g; 
+  double rho; 
+  double rho_w;  
 
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 

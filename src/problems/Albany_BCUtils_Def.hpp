@@ -425,7 +425,12 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           }
           else if(conditions[k] == "lateral") {
             std::string betaName = BCparams.get("BetaXY", "Constant");
-            double L = BCparams.get("L", 1.0);
+            double g = params->get("Gravity", 9.8);
+            double rho = params->get("Ice Density", 910.0);
+            double rho_w = params->get("Water Density", 1028.0);
+            p->set<double> ("Gravity", g); 
+            p->set<double> ("Ice Density", rho); 
+            p->set<double> ("Water Density", rho_w); 
             p->set<std::string>("thickness Field Name", "thickness");
             p->set<std::string>("Elevation Field Name", "surface_height");
             p->set<std::string>  ("DOF Name", dof_names[0]);
