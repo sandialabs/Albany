@@ -205,14 +205,14 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   //Distribute the elements according to the global element IDs
   elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); 
   //Distribute the nodes according to the global node IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); 
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT));
   //Distribute the elements according to the basal face IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); 
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT));
   //Distribute the elements according to the lateral face IDs
-  west_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
-  east_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
-  south_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
-  north_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT)); 
+  west_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT));
+  east_face_mapT = Teuchos::rcp(new Tpetra_Map(NumEastFaces, eastFacesIDAV, 0, commT));
+  south_face_mapT = Teuchos::rcp(new Tpetra_Map(NumSouthFaces, southFacesIDAV, 0, commT));
+  north_face_mapT = Teuchos::rcp(new Tpetra_Map(NumNorthFaces, northFacesIDAV, 0, commT));
 
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
