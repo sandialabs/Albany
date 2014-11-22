@@ -102,7 +102,7 @@ formatter_class=argparse.RawTextHelpFormatter
     parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
                         help="Print shell commands as they are executed")
 
-    parser.add_argument("mode", action="store", choices=("tril", "alb", "jenkins"),
+    parser.add_argument("mode", nargs="?", action="store", choices=("tril", "alb", "jenkins"),
                         default="jenkins", help="INTERNAL USE ONLY")
 
     args = parser.parse_args(args[1:])
