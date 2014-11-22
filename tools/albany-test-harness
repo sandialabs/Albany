@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Albany test harness
+A convenient way to manage and wrap Albany building and
+testing, including Trilinos building.
 """
 
 import argparse, sys, os, doctest
@@ -12,7 +13,6 @@ VERBOSE = False
 """
 TODO:
  - How to allow user overrides?
- - work from either jenkins or cmd line
  - allow multiple build types, IE: aeras + lcm
 """
 
@@ -136,7 +136,8 @@ def set_jenkins_env():
 ###############################################################################
     for env_var, env_setting in JENKINS_ENVS:
         # Set env after dereferencing vars
-        pass
+        components = [os.environ[item[1:]] if item.startswith('$') else item for item in env_setting.split("/")]
+        os.environ[env_var] = "/".join(components)
 
 ###############################################################################
 def perform_test(mode, build_type, build_mode):
@@ -149,7 +150,7 @@ def perform_test(mode, build_type, build_mode):
     if (mode == "jenkins"):
         set_jenkins_env()
 
-        test_script = os.path.join(exe_dir, "test_scripts", "test_engine")
+        test_script = os.path.join(exe_dir, "test_scripts", "test-engine")
         run_cmd(test_script)
 
     elif (mode == "tril"):
