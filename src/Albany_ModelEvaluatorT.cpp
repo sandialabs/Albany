@@ -479,7 +479,6 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
   return result;
 }
 
-
 void
 Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
@@ -653,6 +652,31 @@ Albany::ModelEvaluatorT::evalModelImpl(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);
     }
+  }
+
+  //exo-hack Problem: In AlbanyT-LOCA-Thyra, response functions are called
+  // after, not before, the Exodus file is written. Hence if a response function
+  // updates fields written to the exodus file, then the data will be one step
+  // off.
+  //   The call stack Piro::LOCASolver::evalModelImpl ... printSolution ...
+  // Albany::ObserverImpl::observeSolutionT calls evaluateStateFieldManager,
+  // updateStates, and writeSolutionT. Then, after that,
+  // Piro::LOCASolver::evalModelImpl calls evalConvergedModel, which calls the
+  // respnonse functions. That is too late.
+  //   All of this needs to be reworked. In the meantime, I'm hacking in a
+  // temporary fix. If there are response functions and get_g() is not null,
+  // then that means we're evaluating response functions after a continuation
+  // step or NOX solve. Do the Exodus write here instead of in observeSolutionT.
+  //   If Ng() == 0, then this hack isn't needed since there are no response
+  // functions.
+  //   Main_SolveT determines whether the Exodus file is written here or in
+  // observeSolutionT.
+  if (app->isModelEvaluatorTCallingWriteSolutionT() &&
+      outArgsT.Ng() && !outArgsT.get_g(0).is_null()) {
+    const Teuchos::RCP<const Tpetra_Vector>
+      overlappedSolutionT = app->getOverlapSolutionT(*xT);
+    app->getDiscretization()->writeSolutionToFileT(
+      *overlappedSolutionT, inArgsT.get_t(), /*overlapped =*/ true);
   }
 }
 

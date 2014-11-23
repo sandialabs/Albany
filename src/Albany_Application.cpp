@@ -4284,3 +4284,13 @@ Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 }
 #endif
 #endif
+
+//exo-hack
+void Albany::Application::modelEvaluatorTIsCallingWriteSolutionT(bool is_calling)
+{
+  ModelEvaluatorT_is_calling_writeSolutionT = is_calling;
+}
+bool Albany::Application::isModelEvaluatorTCallingWriteSolutionT()
+{
+  return ModelEvaluatorT_is_calling_writeSolutionT;
+}

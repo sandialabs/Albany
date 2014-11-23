@@ -109,8 +109,11 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    void writeAnySolution(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToMeshDatabase(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToFile(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 

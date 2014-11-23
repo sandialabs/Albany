@@ -609,20 +609,28 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
 }
 #endif
 
-//Tpetra version of writeSolution
-void Albany::STKDiscretization::writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped){
+void Albany::STKDiscretization::writeSolutionT(
+  const Tpetra_Vector& solnT, const double time, const bool overlapped)
+{
+  writeSolutionToMeshDatabaseT(solnT, time, overlapped);
+  writeSolutionToFileT(solnT, time, overlapped);
+}
 
+void Albany::STKDiscretization::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const double time, const bool overlapped)
+{
   // Put solution as Epetra_Vector into STK Mesh
-  if(!overlapped)
-
+  if (!overlapped)
     setSolutionFieldT(solnT);
-
   // soln coming in is overlapped
   else
-
     setOvlpSolutionFieldT(solnT);
+}
 
-
+void Albany::STKDiscretization::
+writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
+                     const bool overlapped)
+{
 #ifdef ALBANY_SEACAS
 
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {

@@ -219,8 +219,12 @@ class AbstractDiscretization {
     virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
 #endif
 
-   //! Write the solution to the output file - Tpetra version
+    //! Write the solution to the output file - Tpetra version. Calls next two together.
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    //! Write the solution to the mesh database.
+    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    //! Write the solution to file. Must call writeSolutionT first.
+    virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;
