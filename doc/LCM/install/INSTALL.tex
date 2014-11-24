@@ -114,9 +114,10 @@ LCM
 \end{verbatim}
 
 \section{Installation scripts}
-Copy the installation scripts inside the directory
-\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+
-directory. The necessary scripts are:
+Create symbolic links to the installation scripts inside the directory
+\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+ directory. If you
+intend to modify these scripts, it is better to copy them. The necessary scripts
+are:
 \begin{verbatim}
 albany-config.sh
 build-all.sh
@@ -126,12 +127,11 @@ env-single.sh
 trilinos-config.sh
 \end{verbatim}
 
-Once copied, go to the top-level \verb+LCM+ directory, open the
-\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they
-match your environment. If you do not want to tinker with any of this,
-just change the email addresses for tests reports at the end of
-\verb+env-single.sh+ and make sure all the scripts are executable and read
-only:
+Once this is done, go to the top-level \verb+LCM+ directory, open the
+\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they match your
+environment. If you do not want to tinker with any of this, just change the
+email addresses for tests reports at the end of \verb+env-single.sh+ and make
+sure all the scripts are executable and read only:
 \begin{verbatim}
 cd ~/LCM
 chmod +x *.sh
@@ -157,6 +157,8 @@ ln -s build.sh clean-config-build-test.sh
 ln -s build.sh config-build.sh
 ln -s build.sh config-build-test.sh
 \end{verbatim}
+There is also a script \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
+that will create the appropriate symbolic links. 
 
 \section{Environment variables}
 The following additions to the command shell environment variables are
