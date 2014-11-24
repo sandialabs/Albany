@@ -79,7 +79,7 @@ long debug_output_verbosity;
 long use_glissade_surf_height_grad;
 int nNodes, nElementsActive; 
 int nElementsActivePrevious = 0;  
-double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr;
+double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr, *thick_at_nodes_Ptr;
 double* dsurf_height_at_nodes_dx_Ptr, *dsurf_height_at_nodes_dy_Ptr; 
 double *flwa_at_active_elements_Ptr; 
 int * global_node_id_owned_map_Ptr; 
@@ -330,6 +330,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     }
     xyz_at_nodes_Ptr = ftg_ptr -> getDoubleVar("xyz_at_nodes","connectivity"); 
     surf_height_at_nodes_Ptr = ftg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
+    thick_at_nodes_Ptr = ftg_ptr -> getDoubleVar("thick_at_nodes","connectivity"); 
     dsurf_height_at_nodes_dx_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dx","connectivity"); 
     dsurf_height_at_nodes_dy_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dy","connectivity"); 
     beta_at_nodes_Ptr = ftg_ptr -> getDoubleVar("beta_at_nodes","connectivity");
@@ -363,6 +364,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //IK, 11/14/13, debug output: check that pointers that are passed from CISM are not null 
     //std::cout << "DEBUG: xyz_at_nodes_Ptr: " << xyz_at_nodes_Ptr << std::endl; 
     //std::cout << "DEBUG: surf_height_at_nodes_Ptr: " << surf_height_at_nodes_Ptr << std::endl; 
+    //std::cout << "DEBUG: thick_at_nodes_Ptr: " << thick_at_nodes_Ptr << std::endl; 
     //std::cout << "DEBUG: dsurf_height_at_nodes_dx_Ptr: " << dsurf_height_at_nodes_dx_Ptr << std::endl; 
     //std::cout << "DEBUG: dsurf_height_at_nodes_dy_Ptr: " << dsurf_height_at_nodes_dy_Ptr << std::endl; 
     //std::cout << "DEBUG: use_glissade_surf_height_grad: " << use_glissade_surf_height_grad << std::endl; 
@@ -387,9 +389,12 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //IK, 11/20/14: added this here: BCs are set in this file rather than in input.xml file to prevent confusion 
     //to the reader.  Basically the BCs should be passed from CISM.
     Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
-    //Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_water));
     parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Basal for DOF all set basal_scalar_field", *inputArrayBasal);  
-    //parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Lateral for DOF all set lateral", *inputArrayLateral);  
+    //Lateral floating ice BCs. 
+    if ((global_west_face_conn_active_Ptr != NULL || global_east_face_conn_active_Ptr != NULL || global_north_face_conn_active_Ptr != NULL || global_south_face_conn_active_Ptr != NULL) && (nWestFacesActive > 0 || nEastFacesActive > 0 || nSouthFacesActive > 0 || nNorthFacesActive > 0)) {
+      Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
+      parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Lateral for DOF all set lateral", *inputArrayLateral);  
+    }
 
  
    //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
@@ -424,6 +429,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            global_north_face_conn_active_Ptr,
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, 
                                                            dsurf_height_at_nodes_dx_Ptr, dsurf_height_at_nodes_dy_Ptr,
+                                                           thick_at_nodes_Ptr, 
                                                            flwa_at_active_elements_Ptr, 
                                                            nNodes, nElementsActive, nCellsActive, 
                                                            nWestFacesActive, nEastFacesActive,

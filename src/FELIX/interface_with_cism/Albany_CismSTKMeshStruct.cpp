@@ -51,6 +51,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const double * surf_height_at_nodes_Ptr,
                   const double * dsurf_height_at_nodes_dx_Ptr,
                   const double * dsurf_height_at_nodes_dy_Ptr,
+                  const double * thick_at_nodes_Ptr,
                   const double * flwa_at_active_elements_Ptr,
                   const int nNodes, const int nElementsActive,
                   const int nCellsActive, const int nWestFacesActive, 
@@ -86,6 +87,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   sf = new int[NumSouthFaces][5]; 
   nf = new int[NumNorthFaces][5]; 
   sh = new double[NumNodes];
+  thck = new double[NumNodes];
   shGrad = new double[NumNodes][2];
   globalNodesID = new GO[NumNodes];
   globalElesID = new GO[NumEles];
@@ -102,6 +104,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
   else have_sh = false;
+  if (thick_at_nodes_Ptr != NULL) have_thck = true;
+  else have_thck = false;
   if (dsurf_height_at_nodes_dx_Ptr != NULL && dsurf_height_at_nodes_dy_Ptr != NULL) have_shGrad = true;
   else have_shGrad = false;
   if (global_basal_face_active_owned_map_Ptr != NULL) have_bf = true;
@@ -130,6 +134,10 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   if (have_sh) {
     for (int i=0; i<NumNodes; i++)
       sh[i] = surf_height_at_nodes_Ptr[i];
+  }
+  if (have_thck) {
+    for (int i=0; i<NumNodes; i++)
+      thck[i] = thick_at_nodes_Ptr[i];
   }
   if (have_shGrad) {
     for (int i=0; i<NumNodes; i++){
@@ -301,6 +309,7 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
   delete [] xyz;
   if (have_sh) delete [] sh;
+  if (have_thck) delete [] thck;
   if (have_shGrad) delete [] shGrad;
   if (have_bf) delete [] bf;
   if (have_wf) delete [] wf;
@@ -348,6 +357,7 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
+  ScalarFieldType* thickness_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
   ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "xgrad_surface_height");
   ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "ygrad_surface_height");
   ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
@@ -356,6 +366,8 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   if(!surfaceHeight_field)
      have_sh = false;
+  if(!thickness_field)
+     have_thck = false;
   if(!dsurfaceHeight_dx_field || !dsurfaceHeight_dy_field)
      have_shGrad = false;
   if(!flowFactor_field)
@@ -514,6 +526,49 @@ Albany::CismSTKMeshStruct::constructMesh(
        node_GID = eles[i][7]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
+     }
+
+     if (have_thck) {
+       double* thickness;
+       thickness = stk::mesh::field_data(*thickness_field, llnode);
+       node_GID = eles[i][0]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, lrnode);
+       node_GID = eles[i][1]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, urnode);
+       node_GID = eles[i][2]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, ulnode);
+       node_GID = eles[i][3]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, llnodeb);
+       node_GID = eles[i][4]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, lrnodeb);
+       node_GID = eles[i][5]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, urnodeb);
+       node_GID = eles[i][6]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, ulnodeb);
+       node_GID = eles[i][7]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
      }
 
      if (have_shGrad) {
