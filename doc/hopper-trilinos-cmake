@@ -12,6 +12,7 @@ rm -f CMakeCache.txt
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/trilinos-albany-build/install \
       -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
       -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
       -D Netcdf_INCLUDE_DIRS:FILEPATH="${NETCDF_DIR}/include" \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
@@ -21,6 +22,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/
 \
       -D Trilinos_ENABLE_Fortran:BOOL=ON \
 \
+      -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
       -D HAVE_TEUCHOS_COMM_TIMERS=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
@@ -45,13 +47,16 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Piro:BOOL=ON \
-      -D Trilinos_ENABLE_STK:BOOL=ON \
+      -D Trilinos_ENABLE_STKIO:BOOL=ON \
+      -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \
       -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
       -D Boost_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
 \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_ThreadPool:STRING="ON" \
@@ -69,6 +74,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/global/project/projectdirs/piscees/trilinos/
       -D Trilinos_ENABLE_EXAMPLES:BOOL=OFF \
       -D TPL_ENABLE_MPI:BOOL=ON \
       -D TPL_ENABLE_Boost:BOOL=ON \
+      -D TPL_ENABLE_BoostLib:BOOL=ON \
 \
       -D Anasazi_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D AztecOO_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \

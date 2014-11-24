@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras {
 /** \brief Density for XZHydrostatic atmospheric model
@@ -39,22 +40,24 @@ public:
 
 private:
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradpivelx;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      pdotP0;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      Pi;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      Temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint>      Velx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  divpivelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint>            pdotP0;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  Velx;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint>  etadotdT;
-  PHX::MDField<ScalarT,Cell,QuadPoint>  etadotdVelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      etadotdT;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  etadotdVelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pidot;
 
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > Tracer;
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > etadotdTracer;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > Tracer;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > etadotdTracer;
 
   const Teuchos::ArrayRCP<std::string> tracerNames;
   const Teuchos::ArrayRCP<std::string> etadotdtracerNames;
 
   const int numQPs;
+  const int numDims;
   const int numLevels;
 
 };

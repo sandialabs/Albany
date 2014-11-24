@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
+//IK, 9/13/14: only Epetra is SG and MP 
+
 #ifndef PHAL_GATHER_SOLUTION_HPP
 #define PHAL_GATHER_SOLUTION_HPP
 
@@ -15,7 +18,9 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Vector.h"
+#endif
 
 namespace PHAL {
 /** \brief Gathers solution values from the Newton solution vector into
@@ -58,10 +63,13 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dotdot;
-  int numNodes;
-  int numFieldsBase; // Number of fields gathered in this call
-  int offset; // Offset of first DOF being gathered when numFields<neq
-  bool vectorField;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dot;
+  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dotdot;
+  std::size_t numNodes;
+  std::size_t numFieldsBase; // Number of fields gathered in this call
+  std::size_t offset; // Offset of first DOF being gathered when numFields<neq
+  unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
 };

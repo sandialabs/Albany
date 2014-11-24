@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras {
 /** \brief Pressure for XZHydrostatic atmospheric model
@@ -38,10 +39,10 @@ public:
 
 private:
   // Input
-  PHX::MDField<ScalarT,Cell,Node> Ps;
+  PHX::MDField<ScalarT,Cell,Node>       Ps;
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Pressure;
-  PHX::MDField<ScalarT,Cell,Node> Pi;
+  PHX::MDField<ScalarT,Cell,Node,Level> Pressure;
+  PHX::MDField<ScalarT,Cell,Node,Level> Pi;
 
   const int numNodes;
   const int numLevels;

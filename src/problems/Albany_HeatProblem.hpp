@@ -34,7 +34,7 @@ namespace Albany {
       const Teuchos::RCP<ParamLib>& paramLib,
       //const Teuchos::RCP<DistParamLib>& distParamLib,
       const int numDim_,
-      const Teuchos::RCP<const Epetra_Comm>& comm_);
+      Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
     //! Destructor
     ~HeatProblem();
@@ -91,7 +91,7 @@ namespace Albany {
     int numDim;
 
    Teuchos::RCP<QCAD::MaterialDatabase> materialDB;
-   Teuchos::RCP<const Epetra_Comm> comm;
+   Teuchos::RCP<const Teuchos::Comm<int> > commT; 
 
    Teuchos::RCP<Albany::Layouts> dl;
 

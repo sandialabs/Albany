@@ -15,7 +15,6 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace PHAL {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
@@ -49,6 +48,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  Teuchos::RCP<std::string> dispVecName;
  
   bool  periodic;
   std::size_t worksetSize;

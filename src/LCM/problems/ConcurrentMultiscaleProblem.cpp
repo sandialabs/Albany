@@ -14,7 +14,7 @@ ConcurrentMultiscaleProblem(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<ParamLib> const & param_lib,
     int const num_dims,
-    Teuchos::RCP<const Epetra_Comm> const & comm) :
+    Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
   Albany::AbstractProblem(params, param_lib),
   have_source_(false),
   num_dims_(num_dims)
@@ -31,7 +31,7 @@ ConcurrentMultiscaleProblem(
     invalid_material_DB = false;
     std::string
     filename = params->get<std::string>("MaterialDB Filename");
-    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, comm));
+    material_db_ = Teuchos::rcp(new QCAD::MaterialDatabase(filename, commT));
   }
 
   TEUCHOS_TEST_FOR_EXCEPTION(

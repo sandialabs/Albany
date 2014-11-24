@@ -27,7 +27,7 @@ DOFGradInterpolation(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("Aeras::DOFGradInterpolation" );
+  this->setName("Aeras::DOFGradInterpolation"+ PHX::typeAsString<PHX::Device>() );
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
     std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");
@@ -107,16 +107,12 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int qp=0; qp < numQPs; ++qp) {
-      for (int dim=0; dim<numDims; dim++) {
-        grad_val_qp(cell,qp,dim) = 0;
-        for (int node=0 ; node < numNodes; ++node) {
-          grad_val_qp(cell, qp, dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
-        }
-      }
-    }
-  }
+  for (std::size_t i=0; i < grad_val_qp.size(); ++i) grad_val_qp(i)=0.0;
+  for (int cell=0; cell < workset.numCells; ++cell) 
+    for (int qp=0; qp < numQPs; ++qp) 
+      for (int dim=0; dim<numDims; dim++) 
+        for (int node=0 ; node < numNodes; ++node) 
+          grad_val_qp(cell,qp,dim) += val_node(cell, node) * GradBF(cell, node, qp, dim);
 }
 
 //**********************************************************************

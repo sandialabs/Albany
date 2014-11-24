@@ -4,12 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "AAdapt_UnifSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
-#include "Epetra_Import.h"
 
 AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  comm(disc->getComm()) {
+  commT(disc->getComm()) {
 }
 
 AAdapt::UnifSizeField::

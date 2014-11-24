@@ -4,13 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
+
 #include <cmath>
 
 #include <Teuchos_CommHelpers.hpp>
 
 #include "AAdapt_InitialCondition.hpp"
 #include "AAdapt_AnalyticFunction.hpp"
-#include "Epetra_Comm.h"
 #include "Albany_Utils.hpp"
 
 namespace AAdapt {
@@ -39,6 +40,7 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
   return validPL;
 }
 
+#ifdef ALBANY_EPETRA
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,
@@ -232,6 +234,7 @@ lid[5] = DOF[1],eq[2] (z eqn)
   }
 
 }
+#endif
 
 void InitialConditionsT(const Teuchos::RCP<Tpetra_Vector>& solnT,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,

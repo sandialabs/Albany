@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_SAMPLING_BASED_SCALAR_RESPONSE_FUNCTION_HPP
 #define ALBANY_SAMPLING_BASED_SCALAR_RESPONSE_FUNCTION_HPP
 
@@ -22,8 +23,8 @@ namespace Albany {
   
     //! Default constructor
     SamplingBasedScalarResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm) : 
-      ScalarResponseFunction(comm) {};
+      const Teuchos::RCP<const Teuchos_Comm>& commT) : 
+      ScalarResponseFunction(commT) {};
 
     //! Destructor
     virtual ~SamplingBasedScalarResponseFunction() {};

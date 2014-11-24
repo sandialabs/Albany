@@ -8,6 +8,7 @@
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${runtest.py} ${CMAKE_CURRENT_BINARY_DIR}/runtest.py)
 
+
 # Create a symlink to the MPS
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${MPS.exe} ${CMAKE_CURRENT_BINARY_DIR}/MPS)
@@ -23,7 +24,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage.py
 # Copy Input files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-uniaxial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-uniaxial.xml COPYONLY)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnisotropicDamage-shear.xml
                ${CMAKE_CURRENT_BINARY_DIR}/AnisotropicDamage-shear.xml COPYONLY)
 

@@ -23,7 +23,7 @@ LoadStateField(const Teuchos::ParameterList& p)
   data = f;
 
   this->addEvaluatedField(data);
-  this->setName("Load State Field" );
+  this->setName("Load State Field" + PHX::typeAsString<PHX::Device>() );
 }
 
 // **********************************************************************
@@ -44,8 +44,8 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
   Albany::StateArray& states = *workset.stateArrayPtr;
   Albany::MDArray& stateToLoad  = states[stateName];
 
- // Kokkos::deep_copy(data, stateToLoad);
-   for (int i=0; i < data.size() ; ++i) data[i] = stateToLoad[i]; 
+  for (int i=0; i < stateToLoad.size() ; ++i) data[i] = stateToLoad[i];
+  for (int i=stateToLoad.size(); i < data.size() ; ++i) data[i] = 0.;  //filling non-used portion of workset.
 }
 
 // **********************************************************************

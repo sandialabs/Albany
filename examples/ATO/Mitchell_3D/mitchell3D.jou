@@ -1,0 +1,18 @@
+## /home/jrobbin/bin/cubit/14.1/bin/cubitx
+## Cubit Version 14.1
+## Cubit Build 390841
+## Revised 2014-02-25 13:34:42 -0700 (Tue, 25 Feb 2014)
+## Running 08/31/2014 04:48:35 PM
+## Command Options:
+## -warning = On
+## -information = On
+create brick x 1.5 y 1 z 0.2
+webcut volume all with plane yplane offset 0.1
+webcut volume all with plane yplane offset -0.1
+merge volume all
+body all size 0.05
+mesh volume all
+sideset 1 surface 26
+nodeset 1 surface 16 23 21
+export mesh "mitchell3D.gen" overwrite
+exit

@@ -23,7 +23,7 @@
       <Parameter name="Value" type="double" value="300.00"/>
     </ParameterList>
 
-        <!-- MATERIAL MODEL/PROPERTIES -->
+    <!-- Initial Conditions -->
     <ParameterList name="Initial Condition">
       <Parameter name="Function" type="string" value="Constant"/>
       <Parameter name="Function Data" type="Array(double)" value="{0.0, 0.0, 0.0, 3.87e-5, 0.0}"/>

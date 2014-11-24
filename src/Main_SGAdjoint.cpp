@@ -13,6 +13,8 @@
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+#include "Petra_Converters.hpp"
+#include "Albany_Utils.hpp"
 
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning:
@@ -146,8 +148,13 @@ int main(int argc, char *argv[]) {
 
     // Create SG solver
     Teuchos::RCP<Albany::Application> app;
-    Teuchos::RCP<EpetraExt::ModelEvaluator> model = 
-      sg_slvrfctry.createAlbanyAppAndModel(app, app_comm, ig);
+    Teuchos::RCP<EpetraExt::ModelEvaluator> model; {
+      Teuchos::RCP<const Teuchos_Comm>
+        commT = Albany::createTeuchosCommFromEpetraComm(app_comm);
+      model = sg_slvrfctry.createAlbanyAppAndModel(
+        app, app_comm, Petra::EpetraVector_To_TpetraVectorConst(
+          *ig, commT));
+    }
     sg_solver->setup(model);
 
     // Evaluate SG responses at SG parameters

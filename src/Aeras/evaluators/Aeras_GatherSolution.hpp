@@ -15,7 +15,6 @@
 #include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
@@ -51,11 +50,13 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
   const int numNodes;
+  const int numDims;
   const int numLevels;
   const int worksetSize;
   int numFields; 
   int numNodeVar; 
-  int numLevelVar;
+  int numVectorLevelVar;
+  int numScalarLevelVar;
   int numTracerVar;
 };
 

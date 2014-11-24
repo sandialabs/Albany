@@ -27,7 +27,7 @@ class AdaptationFactory {
     AdaptationFactory(const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
                       const Teuchos::RCP<ParamLib>& paramLib,
                       Albany::StateManager& StateMgr,
-                      const Teuchos::RCP<const Epetra_Comm>& comm);
+                      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ///
     /// Destructor
@@ -58,7 +58,7 @@ class AdaptationFactory {
     Teuchos::RCP<ParamLib> param_lib_;
 
     //! MPI Communicator
-    Teuchos::RCP<const Epetra_Comm> epetra_comm_;
+    Teuchos::RCP<const Teuchos_Comm> commT_;
 
     //! State manager (to get ahold of stress, etc)
     Albany::StateManager& state_mgr_;

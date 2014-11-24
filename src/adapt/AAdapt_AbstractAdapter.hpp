@@ -36,7 +36,7 @@ class AbstractAdapter : public NOX::Epetra::AdaptManager {
     AbstractAdapter(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                     const Teuchos::RCP<ParamLib>& paramLib_,
                     Albany::StateManager& StateMgr_,
-                    const Teuchos::RCP<const Epetra_Comm>& comm_);
+                    const Teuchos::RCP<const Teuchos_Comm>& commT_);
 
     ///
     /// Destructor
@@ -82,7 +82,7 @@ class AbstractAdapter : public NOX::Epetra::AdaptManager {
     ///
     /// Epetra communicator
     ///
-    Teuchos::RCP<const Epetra_Comm> epetra_comm_;
+    Teuchos::RCP<const Teuchos_Comm> commT_;
 
   private:
 

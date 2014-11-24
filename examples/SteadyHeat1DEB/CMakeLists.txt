@@ -26,5 +26,7 @@ if (ALBANY_IFPACK2)
   set_tests_properties(${testName}_Tpetra  PROPERTIES DEPENDS ${testName}_Prep)
 endif ()
 
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
 set_tests_properties(${testName}  PROPERTIES DEPENDS ${testName}_Prep)
+endif()

@@ -158,7 +158,7 @@ namespace LCM {
       }
     }
 
-    /*
+    
     // theta term C_T
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
@@ -166,7 +166,7 @@ namespace LCM {
           ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
       }
     }
-    */
+ 
     
     // trapped solvent
     if (have_eqps_) {
@@ -213,7 +213,6 @@ namespace LCM {
       }
     }
 
-    // trapped conecentration
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int pt(0); pt < num_pts_; ++pt) {
           theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /

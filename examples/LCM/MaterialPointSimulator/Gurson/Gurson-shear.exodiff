@@ -35,7 +35,7 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	solution_y  # min:               0 @ t1,n1	max:               0 @ t0,n1
 	solution_z  # min:               0 @ t1,n1	max:               0 @ t0,n1
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
+ELEMENT VARIABLES relative 1.e-6 floor 1e-10
 	Cauchy_Stress_1  # min:               0 @ t1,b1,e1	max:       189.08863 @ t21,b1,e1
 	Cauchy_Stress_2  # min:               0 @ t1,b1,e1	max:       210.27711 @ t7,b1,e1
 	Cauchy_Stress_3  # min:               0 @ t1,b1,e1	max:               0 @ t0,b0,e1

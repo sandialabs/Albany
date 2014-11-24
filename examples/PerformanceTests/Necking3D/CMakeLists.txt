@@ -16,10 +16,22 @@
 
 
 # 1. Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLD.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputLD.xml COPYONLY)
-#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLD.xml
-#               ${CMAKE_CURRENT_BINARY_DIR}/inputPlasLD.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLD.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputPlasLD.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputPlasLDMueLuT64.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputPlasLDMueLuT64.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRAdaptMmodelMueLuT64.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRAdaptMmodelMueLuT64.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRAdaptMmodel.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRAdaptMmodel.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptMmodel1M.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptMmodel1M.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputElastSPRStressAdaptParasolid.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputElastSPRStressAdaptParasolid.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole0.smb
                ${CMAKE_CURRENT_BINARY_DIR}/eighth_bar_hole0.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eighth_bar_hole_4_0.smb

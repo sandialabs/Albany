@@ -34,7 +34,7 @@ public:
       Teuchos::RCP<Teuchos::ParameterList> const & params,
       Teuchos::RCP<ParamLib> const & param_lib,
       int const num_dims,
-      Teuchos::RCP<const Epetra_Comm> const & comm);
+      Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
 
   ///
   /// Destructor

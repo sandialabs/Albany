@@ -7,23 +7,12 @@
 # GAH 08/11
 #-------------------------------------------
 
-#source .bash_profile
 # Outside variables for parallel
-# module load openmpi-1.4/gcc-4.1.2
-
 # Set these to whatever you like
-
-
-#PATH=$PATH:/usr/local/bin/
 
 SCRIPTDIR=$PWD
 NIGHTLYDIR=$SCRIPTDIR/Results
 
-#set this correctly
-#NETCDF=/home/ikalash/Install/netcdf-4.2
-#HDF5DIR=/home/ikalash/Install/hdf5-1.8.6
-#BOOSTDIR=/usr/local/boost_1_49_0
-#SUPERLUDIR=/home/ikalash/Install/SuperLU_4.3
 #set this correctly, to software.sandia.gov user name
 SSGUSER=ikalash
 
@@ -33,18 +22,17 @@ TRIBUILDDIR=$NIGHTLYDIR/Trilinos/build
 TRILINSTALLDIR=$TRIBUILDDIR/install
 ALBDIR=$NIGHTLYDIR/Albany
 ALBINSTALLDIR=$NIGHTLYDIR/Albany/build_cism/install
-CISMDIR=$NIGHTLYDIR/felix_interface 
-#TRIKOTADIR=$TRILDIR/packages/TriKota
+CISMDIR=$NIGHTLYDIR/cism-piscees 
+SUPERLUDIR=/project/projectdirs/piscees/tpl/SuperLU_4.3
 
 # Set these to whatever you like
 TRILOUTDIR=$NIGHTLYDIR/Trilinos_out
 ALBOUTDIR=$NIGHTLYDIR/Albany_out
 ALBCISMOUTDIR=$NIGHTLYDIR/Albany-Cism_out
 CISMOUTDIR=$NIGHTLYDIR/Cism_out
-#DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 
 # Must be set
 TRILINOS_BRANCH=master
 ALBANY_BRANCH=master
+CISM_BRANCH=felix_interface
 
-#LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib/

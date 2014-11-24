@@ -51,10 +51,9 @@ SchrodingerPotential(Teuchos::ParameterList& p,
   // Add E0 as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
       p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      "Schrodinger Potential E0", this, paramLib);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits> (
-      "Schrodinger Potential Scaling Factor", this, paramLib);
+
+  this->registerSacadoParameter("Schrodinger Potential E0", paramLib);
+  this->registerSacadoParameter("Schrodinger Potential Scaling Factor", paramLib);
 
   this->addDependentField(psi);
   this->addDependentField(coordVec);

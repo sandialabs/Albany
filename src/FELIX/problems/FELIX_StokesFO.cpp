@@ -28,13 +28,17 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->rigidBodyModes->setNumPDEs(neq);
 
   // Need to allocate a fields in mesh database
-  this->requirements.push_back("Surface Height");
-  this->requirements.push_back("Temperature");
-  this->requirements.push_back("Basal Friction");
-  this->requirements.push_back("Thickness");
-  this->requirements.push_back("Flow Factor");
-  this->requirements.push_back("Surface Velocity");
-  this->requirements.push_back("Velocity RMS");
+  this->requirements.push_back("surface_height");
+#ifdef CISM_HAS_FELIX
+  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM 
+  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM 
+#endif
+  this->requirements.push_back("temperature");
+  this->requirements.push_back("basal_friction");
+  this->requirements.push_back("thickness");
+  this->requirements.push_back("flow_factor");
+  this->requirements.push_back("surface_velocity");
+  this->requirements.push_back("surface_velocity_rms");
 }
 
 FELIX::StokesFO::
@@ -177,6 +181,7 @@ FELIX::StokesFO::getValidProblemParameters() const
     this->getGenericProblemParams("ValidStokesFOProblemParams");
 
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   return validPL;

@@ -64,7 +64,7 @@ Viscosity(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); 
   
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Glen's Law Homotopy Parameter", this, paramLib);   
+  this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
 
   this->setName("Viscosity"+PHX::typeAsString<EvalT>());
 }
@@ -85,7 +85,10 @@ template<typename EvalT,typename Traits>
 typename Viscosity<EvalT,Traits>::ScalarT& 
 Viscosity<EvalT,Traits>::getValue(const std::string &n)
 {
-  return homotopyParam;
+  if(n=="Glen's Law Homotopy Parameter")
+    return homotopyParam;
+  else
+    return dummyParam;
 }
 
 //**********************************************************************

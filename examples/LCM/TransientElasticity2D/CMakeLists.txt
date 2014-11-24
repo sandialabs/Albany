@@ -10,6 +10,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputLumped.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName}_explicit ${Albany.exe})
 add_test(${testName}_implicit ${Albany.exe} inputTR.xml)
 add_test(${testName}_lumped   ${Albany.exe} inputLumped.xml)
+endif()

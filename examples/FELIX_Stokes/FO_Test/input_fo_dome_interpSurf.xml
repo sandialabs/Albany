@@ -47,8 +47,8 @@
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
     <Parameter  name="Test Values" type="Array(double)" value="{99.4040977567, 99.4040977567, 0.0}"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="3"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.00131848940307}"/>
-    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-0.00131848940307}"/>
+    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{-0.00065928}"/>
+    <Parameter  name="Sensitivity Test Values 1" type="Array(double)" value="{-0.00065928}"/>
     <Parameter  name="Sensitivity Test Values 2" type="Array(double)" value="{ 0.0}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-4"/>
@@ -120,7 +120,22 @@
 		      <Parameter name="Output Frequency" type="int" value="20"/>
 		    </ParameterList>
 		    <Parameter name="Max Iterations" type="int" value="200"/>
-		    <Parameter name="Tolerance" type="double" value="1e-6"/>
+		    <Parameter name="Tolerance" type="double" value="1e-8"/>
+		  </ParameterList>
+		</ParameterList>
+		<ParameterList name="Belos">
+		  <Parameter name="Solver Type" type="string" value="Block GMRES"/>
+		  <ParameterList name="Solver Types">
+		    <ParameterList name="Block GMRES">
+		      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+		      <Parameter name="Output Frequency" type="int" value="20"/>
+		      <Parameter name="Output Style" type="int" value="1"/>
+		      <Parameter name="Verbosity" type="int" value="33"/>
+		      <Parameter name="Maximum Iterations" type="int" value="200"/>
+		      <Parameter name="Block Size" type="int" value="1"/>
+		      <Parameter name="Num Blocks" type="int" value="200"/>
+		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+		    </ParameterList>
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>

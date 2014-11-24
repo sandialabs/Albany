@@ -6,6 +6,7 @@
 #prior to configuring you need to load the following modules: 
 
 rm -f CMakeCache.txt
+
 cmake  \
     -D ALBANY_TRILINOS_DIR:FILEPATH=$TRILINSTALLDIR \
     -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \

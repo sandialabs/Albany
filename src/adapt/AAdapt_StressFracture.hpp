@@ -26,7 +26,7 @@ class StressFracture: public LCM::AbstractFractureCriterion {
     ///
     /// \brief Default constructor for the criterion object
     ///
-    StressFracture(int numDim_, stk_classic::mesh::EntityRank& elementRank,
+    StressFracture(int numDim_, stk::mesh::EntityRank& elementRank,
                    const std::vector<std::vector<double> >& stresses,
                    double crit_stress, Albany::STKDiscretization& stk);
 
@@ -47,7 +47,7 @@ class StressFracture: public LCM::AbstractFractureCriterion {
     ///
     virtual
     bool
-    computeFractureCriterion(stk_classic::mesh::Entity& entity, double p);
+    computeFractureCriterion(stk::mesh::Entity entity, double p);
 
   private:
 

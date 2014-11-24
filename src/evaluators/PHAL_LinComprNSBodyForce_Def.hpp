@@ -148,7 +148,7 @@ evaluateFields(typename Traits::EvalData workset)
        MeshScalarT x = coordVec(cell,qp,0); 
        MeshScalarT y = coordVec(cell,qp,1);
        f[0] = 0.0; 
-       if (x >= 0.9 & x <= 1.0 & y >= 0.9 & y <= 1.0)
+       if ((x >= 0.9) && (x <= 1.0) && (y >= 0.9) && (y <= 1.0))
          f[1] = (1.0e-4)*cos(2.0*pi*1000*time*tref); 
        else 
          f[1] = 0.0; 

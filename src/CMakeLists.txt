@@ -269,55 +269,67 @@ SET(SOURCES
   PHAL_Dimension.cpp
   PHAL_AlbanyTraits.cpp
   Albany_Application.cpp
-  Albany_ObserverFactory.cpp
-  Albany_RythmosObserver.cpp
-  Albany_NOXObserver.cpp
-  Albany_PiroObserver.cpp
   Albany_PiroObserverT.cpp
   Albany_StateManager.cpp
   Albany_ModelFactory.cpp
-  Albany_ModelEvaluator.cpp
   Albany_ModelEvaluatorT.cpp
-  Albany_SaveEigenData.cpp
   Albany_ObserverImpl.cpp
   )
 
-IF(ALBANY_64BIT_INT)
-  SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
-ELSE()
-  SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+IF (ALBANY_EPETRA)
+  SET(SOURCES ${SOURCES} Albany_ObserverFactory.cpp) 
+  IF(ALBANY_64BIT_INT)
+    SET(SOURCES ${SOURCES} Petra_Converters_64.cpp)
+  ELSE()
+    SET(SOURCES ${SOURCES} Petra_Converters.cpp)
+  ENDIF()
+ENDIF()
+
+
+IF(ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+    Albany_PiroObserver.cpp
+    Albany_ModelEvaluator.cpp
+    Albany_RythmosObserver.cpp
+    Albany_SaveEigenData.cpp
+    Albany_NOXObserver.cpp
+  )
 ENDIF()
 
 SET(HEADERS
   Albany_SolverFactory.hpp
   Albany_Utils.hpp
   Albany_DataTypes.hpp
-  Petra_Converters.hpp
   PHAL_Dimension.hpp
   PHAL_FactoryTraits.hpp
   PHAL_AlbanyTraits.hpp
   PHAL_Workset.hpp
   PHAL_TypeKeyMap.hpp
   Albany_Application.hpp
-  Albany_ObserverFactory.hpp
-  Albany_RythmosObserver.hpp
-  Albany_NOXObserver.hpp
-  Albany_PiroObserver.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp
   Albany_StateInfoStruct.hpp
-  Albany_EigendataInfoStruct.hpp
   Albany_ModelFactory.hpp
-  Albany_ModelEvaluator.hpp
   Albany_ModelEvaluatorT.hpp
-  Albany_SaveEigenData.hpp
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
-#  Albany_DistributedParameterLibrary_Epetra.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
   )
+
+IF(ALBANY_EPETRA) 
+  SET(HEADERS ${HEADERS} 
+    Albany_PiroObserver.hpp
+    Albany_ModelEvaluator.hpp
+    Albany_SaveEigenData.hpp
+    Albany_EigendataInfoStruct.hpp
+    Albany_RythmosObserver.hpp
+    Albany_NOXObserver.hpp
+    Petra_Converters.hpp
+    Albany_ObserverFactory.hpp
+  )
+ENDIF()
 
 #problems
 SET(SOURCES ${SOURCES}
@@ -367,9 +379,17 @@ SET(PDE_HDRS
   )
 
 #responses
-SET(SOURCES ${SOURCES}
+IF (ALBANY_EPETRA)
+SET(SOURCES ${SOURCES} 
+  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Epetra_GatherAllV.cpp
-  responses/Epetra_ImportWithAlternateMap.cpp
+)
+SET(HEADERS ${HEADERS} 
+  responses/Albany_SolutionValuesResponseFunction.hpp
+  responses/Epetra_GatherAllV.hpp
+)
+ENDIF()
+SET(SOURCES ${SOURCES}
   responses/Albany_SolutionCullingStrategy.cpp
   responses/Albany_ScalarResponseFunction.cpp
   responses/Albany_AggregateScalarResponseFunction.cpp
@@ -377,17 +397,14 @@ SET(SOURCES ${SOURCES}
   responses/Albany_SolutionAverageResponseFunction.cpp
   responses/Albany_SolutionMaxValueResponseFunction.cpp
   responses/Albany_SolutionTwoNormResponseFunction.cpp
-  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Albany_SolutionFileResponseFunction.cpp
   responses/Albany_FieldManagerScalarResponseFunction.cpp
+  responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
-  responses/Albany_SolutionResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
-  responses/Epetra_GatherAllV.hpp
-  responses/Epetra_ImportWithAlternateMap.hpp
   responses/Albany_SolutionCullingStrategy.hpp
   responses/Albany_AbstractResponseFunction.hpp
   responses/Albany_ScalarResponseFunction.hpp
@@ -396,14 +413,33 @@ SET(HEADERS ${HEADERS}
   responses/Albany_SolutionAverageResponseFunction.hpp
   responses/Albany_SolutionMaxValueResponseFunction.hpp
   responses/Albany_SolutionTwoNormResponseFunction.hpp
-  responses/Albany_SolutionValuesResponseFunction.hpp
   responses/Albany_SolutionFileResponseFunction.hpp
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
-  responses/Albany_SolutionResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
   )
+
+IF(ALBANY_EPETRA) 
+
+SET(SOURCES ${SOURCES}
+  responses/Albany_SolutionResponseFunction.cpp
+)
+
+SET(HEADERS ${HEADERS}
+  responses/Albany_SolutionResponseFunction.hpp
+)
+
+ENDIF()
+
+IF(ALBANY_EPETRA)
+SET(SOURCES ${SOURCES} 
+  responses/Epetra_ImportWithAlternateMap.cpp
+)
+SET(HEADERS ${HEADERS} 
+  responses/Epetra_ImportWithAlternateMap.hpp
+)
+ENDIF()
 
 #discretization
 SET(SOURCES ${SOURCES}
@@ -428,9 +464,7 @@ SET(HEADERS ${HEADERS}
 #evaluators
 SET(SOURCES ${SOURCES}
   evaluators/PHAL_GatherSolution.cpp
-  evaluators/PHAL_GatherEigenvectors.cpp
   evaluators/PHAL_GatherCoordinateVector.cpp
-  evaluators/PHAL_GatherAuxData.cpp
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
@@ -441,14 +475,14 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_DOFGradInterpolation.cpp
   evaluators/PHAL_DOFVecInterpolation.cpp
   evaluators/PHAL_DOFVecGradInterpolation.cpp
+  evaluators/PHAL_DOFTensorInterpolation.cpp
+  evaluators/PHAL_DOFTensorGradInterpolation.cpp
   evaluators/PHAL_MapToPhysicalFrame.cpp
   evaluators/PHAL_SaveStateField.cpp
   evaluators/PHAL_LoadStateField.cpp
   evaluators/PHAL_SharedParameter.cpp
-  evaluators/PHAL_ResponseFieldIntegral.cpp
   evaluators/PHAL_ResponseFieldIntegralT.cpp
   evaluators/PHAL_ScatterScalarResponse.cpp
-  evaluators/PHAL_SeparableScatterScalarResponse.cpp
   evaluators/PHAL_SeparableScatterScalarResponseT.cpp
   evaluators/QCAD_ResponseFieldIntegral.cpp
   evaluators/QCAD_ResponseFieldValue.cpp
@@ -463,34 +497,23 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ThermalConductivity.cpp
   evaluators/PHAL_NSMaterialProperty.cpp
   evaluators/PHAL_Absorption.cpp
-  evaluators/PHAL_GatherSHeight.cpp
-  evaluators/PHAL_GatherTemperature.cpp
-  evaluators/PHAL_GatherBasalFriction.cpp
-  evaluators/PHAL_GatherThickness.cpp
-  evaluators/PHAL_GatherFlowFactor.cpp
   evaluators/Adapt_ElementSizeField.cpp
-  evaluators/PHAL_GatherSurfaceVelocity.cpp
-  evaluators/PHAL_GatherVelocityRMS.cpp
+  evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
-  evaluators/PHAL_GatherSurfaceVelocity.cpp
   )
 
-ENDIF()
-
-#discretization
+ 
 SET(SOURCES ${SOURCES}
-  disc/Albany_DiscretizationFactory.cpp
-  disc/Albany_AbstractMeshStruct.cpp
-  disc/Adapt_NodalDataBlock.cpp
+ evaluators/PHAL_ResponseFieldIntegral.cpp
+ evaluators/PHAL_SeparableScatterScalarResponse.cpp
+ )
+
+IF (ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+    evaluators/PHAL_GatherEigenvectors.cpp
+    evaluators/PHAL_GatherAuxData.cpp
   )
-SET(HEADERS ${HEADERS}
-  disc/Albany_AbstractDiscretization.hpp
-  disc/Albany_AbstractMeshStruct.hpp
-  disc/Albany_AbstractFieldContainer.hpp
-  disc/Albany_AbstractNodeFieldContainer.hpp
-  disc/Albany_DiscretizationFactory.hpp
-  disc/Adapt_NodalDataBlock.hpp
-  )
+ENDIF() 
 
 SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_Constant.cpp
@@ -517,6 +540,7 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_NSBodyForce.cpp
   evaluators/PHAL_NSPermeabilityTerm.cpp
   evaluators/PHAL_NSForchheimerTerm.cpp
+  evaluators/PHAL_Permittivity.cpp
   evaluators/PNP_PotentialResid.cpp
   evaluators/PNP_ConcentrationResid.cpp
   )
@@ -524,12 +548,8 @@ SET(PDE_SRCS ${PDE_SRCS}
 SET(HEADERS ${HEADERS}
   evaluators/PHAL_GatherSolution.hpp
   evaluators/PHAL_GatherSolution_Def.hpp
-  evaluators/PHAL_GatherEigenvectors.hpp
-  evaluators/PHAL_GatherEigenvectors_Def.hpp
   evaluators/PHAL_GatherCoordinateVector.hpp
   evaluators/PHAL_GatherCoordinateVector_Def.hpp
-  evaluators/PHAL_GatherAuxData.hpp
-  evaluators/PHAL_GatherAuxData_Def.hpp
   evaluators/PHAL_ScatterResidual.hpp
   evaluators/PHAL_ScatterResidual_Def.hpp
   evaluators/PHAL_Dirichlet.hpp
@@ -550,6 +570,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_DOFVecInterpolation_Def.hpp
   evaluators/PHAL_DOFVecGradInterpolation.hpp
   evaluators/PHAL_DOFVecGradInterpolation_Def.hpp
+  evaluators/PHAL_DOFTensorInterpolation.hpp
+  evaluators/PHAL_DOFTensorInterpolation_Def.hpp
+  evaluators/PHAL_DOFTensorGradInterpolation.hpp
+  evaluators/PHAL_DOFTensorGradInterpolation_Def.hpp
   evaluators/PHAL_MapToPhysicalFrame.hpp
   evaluators/PHAL_MapToPhysicalFrame_Def.hpp
   evaluators/PHAL_SaveStateField.hpp
@@ -558,14 +582,10 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_LoadStateField_Def.hpp
   evaluators/PHAL_SharedParameter.hpp
   evaluators/PHAL_SharedParameter_Def.hpp
-  evaluators/PHAL_ResponseFieldIntegral.hpp
-  evaluators/PHAL_ResponseFieldIntegral_Def.hpp
   evaluators/PHAL_ResponseFieldIntegralT.hpp
   evaluators/PHAL_ResponseFieldIntegralT_Def.hpp
   evaluators/PHAL_ScatterScalarResponse.hpp
   evaluators/PHAL_ScatterScalarResponse_Def.hpp
-  evaluators/PHAL_SeparableScatterScalarResponse.hpp
-  evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT.hpp
   evaluators/PHAL_SeparableScatterScalarResponseT_Def.hpp
   evaluators/QCAD_ResponseFieldIntegral.hpp
@@ -594,25 +614,26 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_NSMaterialProperty_Def.hpp
   evaluators/PHAL_Absorption.hpp
   evaluators/PHAL_Absorption_Def.hpp
-  evaluators/PHAL_GatherSHeight.hpp
-  evaluators/PHAL_GatherSHeight_Def.hpp
-  evaluators/PHAL_GatherTemperature.hpp
-  evaluators/PHAL_GatherTemperature_Def.hpp
-  evaluators/PHAL_GatherBasalFriction.hpp
-  evaluators/PHAL_GatherBasalFriction_Def.hpp
-  evaluators/PHAL_GatherThickness.hpp
-  evaluators/PHAL_GatherThickness_Def.hpp
-  evaluators/PHAL_GatherFlowFactor.hpp
-  evaluators/PHAL_GatherFlowFactor_Def.hpp
   evaluators/Adapt_ElementSizeField.hpp
   evaluators/Adapt_ElementSizeField_Def.hpp
-  evaluators/PHAL_GatherSurfaceVelocity.hpp
-  evaluators/PHAL_GatherSurfaceVelocity_Def.hpp
-  evaluators/PHAL_GatherVelocityRMS.hpp
-  evaluators/PHAL_GatherVelocityRMS_Def.hpp
+  evaluators/PHAL_SaveNodalField.hpp
+  evaluators/PHAL_SaveNodalField_Def.hpp
   evaluators/PHAL_GatherScalarNodalParameter.hpp
   evaluators/PHAL_GatherScalarNodalParameter_Def.hpp
   )
+  
+IF (ALBANY_EPETRA) 
+  SET(HEADERS ${HEADERS}
+    evaluators/PHAL_GatherEigenvectors.hpp
+    evaluators/PHAL_GatherEigenvectors_Def.hpp
+    evaluators/PHAL_ResponseFieldIntegral.hpp
+    evaluators/PHAL_ResponseFieldIntegral_Def.hpp
+    evaluators/PHAL_SeparableScatterScalarResponse.hpp
+    evaluators/PHAL_SeparableScatterScalarResponse_Def.hpp
+    evaluators/PHAL_GatherAuxData.hpp
+    evaluators/PHAL_GatherAuxData_Def.hpp
+  )
+ENDIF()
 
 SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_ODEResid.hpp
@@ -680,8 +701,19 @@ IF (ALBANY_FELIX)
   )
 ENDIF()
 
+# AERAS
+IF (ALBANY_AERAS)
+  SET(SOURCES ${SOURCES}
+    evaluators/Aeras_ShallowWaterResponseL2Error.cpp
+  )
+  SET(HEADERS ${HEADERS}
+    evaluators/Aeras_ShallowWaterResponseL2Error.hpp
+    evaluators/Aeras_ShallowWaterResponseL2Error_Def.hpp
+  )
+ENDIF()
+
 # ASCR
-IF(ALBANY_ASCR)
+IF(ALBANY_ASCR AND ALBANY_EPETRA)
   SET(SOURCES ${SOURCES}
     Albany_Networks.cpp
     )
@@ -758,7 +790,7 @@ if (ALBANY_ENABLE_CUBIT)
   MESSAGE("-- CUBIT is Enabled, compiling with -DALBANY_CUTR")
 endif (ALBANY_ENABLE_CUBIT)
 
-if (ALBANY_MOR)
+if (ALBANY_MOR AND ALBANY_EPETRA)
   include_directories (./MOR)
 
   set (MOR_ALBANY_HEADERS
@@ -816,14 +848,41 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./SEE/
                      ./SEE/problems
                      ./SEE/evaluators
+                     ./SEE/responses
+                     ./AMP/
+		     ./AMP/problems
+		     ./AMP/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
                      ./QCAD/responses
+                     ./ATO
+                     ./ATO/problems
+                     ./ATO/evaluators
+                     ./ATO/utils
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
   ${FMDB_LIBRARY_DIR})
+
+IF ( NLOPT )
+  include_directories (${NLOPT_INCLUDE_DIR})
+  link_directories (${NLOPT_LIBRARY_DIR})
+  set(NLOPT_LIB nlopt)
+ELSE()
+  set(NLOPT_LIB )
+ENDIF()
+
+IF ( WITH_DOTK )
+  include_directories (${DOTK_INCLUDE_DIR})
+  link_directories (${DOTK_LIBRARY_DIR})
+  message("Adding DOTk")
+#  set(DOTK_LIB dotk)
+  set(DOTK_LIB )
+ELSE()
+  set(DOTK_LIB )
+ENDIF()
+
 
 # LAME
 IF(ALBANY_LAME)
@@ -844,7 +903,7 @@ ELSE()
 ENDIF()
 
 # PERIDIGM
-IF(ALBANY_PERIDIGM)
+IF(ALBANY_PERIDIGM AND ALBANY_EPETRA)
   include_directories (${Peridigm_INCLUDE_DIRS})
   link_directories (${Peridigm_LIBRARY_DIRS})
 ELSE()
@@ -877,14 +936,20 @@ endif()
 
 # Now build executables from this library, tailored main()s, and Trilinos
 
-add_executable(Albany Main_Solve.cpp)
+IF (ALBANY_EPETRA) 
+  add_executable(Albany Main_Solve.cpp)
+ENDIF() 
+
 add_executable(AlbanyT Main_SolveT.cpp)
-SET(ALBANY_EXECUTABLES Albany AlbanyT)
-if (ALBANY_SG_MP)
+SET(ALBANY_EXECUTABLES AlbanyT)
+IF (ALBANY_EPETRA) 
+  SET (ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} Albany )
+ENDIF()
+if (ALBANY_SG_MP AND ALBANY_EPETRA)
 add_executable(AlbanySG Main_SGSolve.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanySG )
 endif()
-if (ALBANY_ASCR)
+if (ALBANY_ASCR AND ALBANY_EPETRA)
   add_executable(AlbanyAdjoint Main_Adjoint.cpp)
   add_executable(AlbanySGAdjoint Main_SGAdjoint.cpp)
   add_executable(AlbanyCoupled Main_Coupled.cpp)
@@ -896,12 +961,12 @@ SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES}
     AlbanySGCoupled
     )
 endif()
-IF (ALBANY_DAKOTA)
+IF (ALBANY_DAKOTA AND ALBANY_EPETRA)
   add_executable(AlbanyDakota Main_Dakota.cpp Albany_Dakota.cpp Albany_Dakota.hpp)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyDakota)
 ENDIF ()
 
-IF (ALBANY_MOR)
+IF (ALBANY_MOR AND ALBANY_EPETRA)
   IF (ALBANY_RBGEN)
     add_executable(AlbanyRBGen MOR/Main_RBGen.cpp)
     SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRBGen)
@@ -914,14 +979,20 @@ IF (ALBANY_MOR)
   SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyRomPostProcess)
 ENDIF ()
 
+IF (ALBANY_EPETRA) 
 add_executable(AlbanyAnalysis Main_Analysis.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysis)
+ENDIF()
+add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
+SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 set(ALL_LIBRARIES
   ${ALBANY_CI_LIB}
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
   ${LAME_LIB}
+  ${NLOPT_LIB}
+  ${DOTK_LIB}
   ${LAMENT_LIB}
   ${Peridigm_LIBRARIES}
   ${SCOREC_LIB}
@@ -941,7 +1012,7 @@ IF(ALBANY_DEMO_PDES)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyPDEs)
 ENDIF()
 
-IF (ALBANY_MOR)
+IF (ALBANY_MOR AND ALBANY_EPETRA)
   add_subdirectory(MOR)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} MOR)
 ENDIF()
@@ -954,7 +1025,11 @@ ENDIF()
 IF (ALBANY_FELIX)
   add_subdirectory(FELIX)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} FELIX)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  
+  IF (ENABLE_MPAS_INTERFACE)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} mpasInterface)
+  ENDIF()
+  
   IF (ENABLE_CISM_INTERFACE)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} cismInterface)
   ENDIF()
@@ -975,9 +1050,20 @@ IF (ALBANY_SEE)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
 ENDIF()
 
+IF (ALBANY_AMP)
+  add_subdirectory(AMP)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
+ENDIF()
+
 IF(ALBANY_CATALYST)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanyCatalyst)
 endif()
+
+IF (ALBANY_ATO AND ALBANY_EPETRA)
+    SET(ALBANY_LCM ON)
+    add_subdirectory(ATO)
+    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
+ENDIF()
 
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
@@ -989,8 +1075,12 @@ IF (ALBANY_LCM)
   ELSE()
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
   ENDIF()
-
 ENDIF()
+
+# Can remove this once rebalance is in Trilnos again
+IF(ALBANY_STK_REBALANCE)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} albanySTKRebalance)
+endif()
 
 # Repeat libraries twice to catch circular dependencies
 SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES} ${ALBANY_LIBRARIES})

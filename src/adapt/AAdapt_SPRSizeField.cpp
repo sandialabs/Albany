@@ -4,15 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "AAdapt_SPRSizeField.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
-#include "Epetra_Import.h"
 
-#include <apfSPR.h>
+#include <spr.h>
 #include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  comm(disc->getComm()),
+  commT(disc->getComm()),
   mesh(disc->getFMDBMeshStruct()->getMesh()),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
@@ -91,8 +91,8 @@ void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
   apf::Field* f = mesh->findField("solution");
-  apf::Field* sol_grad = apf::getGradIPField(f,"sol_grad",cub_degree);
-  field = apf::getSPRSizeField(sol_grad,rel_err);
+  apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
+  field = spr::getSPRSizeField(sol_grad,rel_err);
   apf::destroyField(sol_grad);
 
 }
@@ -101,6 +101,6 @@ void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
   apf::Field* eps = mesh->findField("eps");
-  field = apf::getSPRSizeField(eps,rel_err);
+  field = spr::getSPRSizeField(eps,rel_err);
 
 }

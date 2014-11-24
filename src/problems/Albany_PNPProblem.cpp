@@ -157,6 +157,7 @@ Albany::PNPProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidPNPParams");
 
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("Permittivity", false, "");
   validPL->set<int>("Number of Species", 1, "Number of diffusing species");
 
   return validPL;

@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+
 #ifndef ALBANY_MULTISTKFIELDCONT_HPP
 #define ALBANY_MULTISTKFIELDCONT_HPP
 
@@ -19,8 +21,7 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
   public:
 
     MultiSTKFieldContainer(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-                           stk_classic::mesh::fem::FEMMetaData* metaData_,
-                           stk_classic::mesh::BulkData* bulkData_,
+                           const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
                            const int neq_,
                            const AbstractFieldContainer::FieldContainerRequirements& req,
                            const int numDim_,
@@ -31,22 +32,29 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
     ~MultiSTKFieldContainer();
 
     bool hasResidualField(){ return haveResidual; }
-    bool hasSurfaceHeightField(){ return false; }
-    bool hasTemperatureField(){ return false; }
-    bool hasBasalFrictionField(){ return false; }
-    bool hasThicknessField(){ return false; }
-    bool hasFlowFactorField(){ return false; }
-    bool hasSurfaceVelocityField(){ return false; }
-    bool hasVelocityRMSField(){ return false; }
     bool hasSphereVolumeField(){ return buildSphereVolume; }
 
-    void fillSolnVector(Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
-    void fillSolnVectorT(Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-    void saveSolnVector(const Epetra_Vector& soln, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#ifdef ALBANY_EPETRA
+    void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#endif
+    void fillSolnVectorT(Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+#ifdef ALBANY_EPETRA
+    void saveSolnVector(const Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#endif
     //Tpetra version of above
-    void saveSolnVectorT(const Tpetra_Vector& solnT, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
-    void saveResVector(const Epetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
-    void saveResVectorT(const Tpetra_Vector& res, stk_classic::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
+    void saveSolnVectorT(const Tpetra_Vector& solnT, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_mapT);
+#ifdef ALBANY_EPETRA
+    void saveResVector(const Epetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map);
+#endif
+    void saveResVectorT(const Tpetra_Vector& res, stk::mesh::Selector& sel, const Teuchos::RCP<const Tpetra_Map>& node_map);
+
+#ifdef ALBANY_EPETRA
+    void fillVector(Epetra_Vector& field_vector, const std::string&  field_name,
+        stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {exit(1);};
+
+    void saveVector(const Epetra_Vector& field_vector, const std::string&  field_name,
+           stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {exit(0);};
+#endif
 
     void transferSolutionToCoords();
 

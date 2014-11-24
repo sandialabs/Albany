@@ -6,13 +6,17 @@
 #include "Albany_ObserverImpl.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
+#ifdef ALBANY_EPETRA
 #include "AAdapt_AdaptiveSolutionManager.hpp"
+#endif
 
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
 
 #ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
 #include "PeridigmManager.hpp"
+#endif
 #endif
 
 #include <string>
@@ -35,16 +39,19 @@ RealType ObserverImpl::getTimeParamValueOrDefault(RealType defaultValue) const
     defaultValue;
 }
 
+#ifdef ALBANY_EPETRA
 Epetra_Map ObserverImpl::getNonOverlappedMap() const
 {
   return *app_->getMap();
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map> ObserverImpl::getNonOverlappedMapT() const
 {
   return app_->getMapT();
 }
 
+#ifdef ALBANY_EPETRA
 void ObserverImpl::observeSolution(
     double stamp,
     const Epetra_Vector &nonOverlappedSolution,
@@ -63,9 +70,11 @@ void ObserverImpl::observeSolution(
     app_->getStateMgr().updateStates();
 
 #ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
     LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
     peridigmManager.writePeridigmSubModel(stamp);
     peridigmManager.updateState();
+#endif
 #endif
   }
 
@@ -76,6 +85,7 @@ void ObserverImpl::observeSolution(
     app_->getDiscretization()->writeSolution(*overlappedSolution, stamp, /*overlapped =*/ true);
   }
 }
+#endif
 
 void ObserverImpl::observeSolutionT(
     double stamp,

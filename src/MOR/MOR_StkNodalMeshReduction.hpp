@@ -14,13 +14,13 @@
 namespace MOR {
 
 void addNodesToPart(
-    const Teuchos::ArrayView<const stk_classic::mesh::EntityId> &nodeIds,
-    stk_classic::mesh::Part &samplePart,
-    stk_classic::mesh::BulkData& bulkData);
+    const Teuchos::ArrayView<const stk::mesh::EntityId> &nodeIds,
+    stk::mesh::Part &samplePart,
+    stk::mesh::BulkData& bulkData);
 
 void performNodalMeshReduction(
-    stk_classic::mesh::Part &samplePart,
-    stk_classic::mesh::BulkData& bulkData);
+    stk::mesh::Part &samplePart,
+    stk::mesh::BulkData& bulkData);
 
 } // end namespace MOR
 

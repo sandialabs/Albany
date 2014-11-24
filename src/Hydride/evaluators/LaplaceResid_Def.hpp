@@ -67,6 +67,15 @@ evaluateFields(typename Traits::EvalData workset) {
   //  not functions of coordinates. This save 18min of compile time!!!
 
   Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  // Since Intrepid will perform calculations on the entire workset size and not
+  // just the used portion, we must fill the excess with reasonable values.
+  // Leaving this out leads to a floating point exception in
+  //   Intrepid::RealSpaceTools<Scalar>::det(ArrayDet & detArray,
+  //                                         const ArrayIn & inMats).
+  for (std::size_t cell = workset.numCells; cell < worksetSize; ++cell)
+    for (std::size_t qp = 0; qp < numQPs; ++qp)
+      for (std::size_t i = 0; i < numDims; ++i)
+        jacobian(cell, qp, i, i) = 1.0;
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
    // Straight Laplace's equation evaluation for the nodal coord solution

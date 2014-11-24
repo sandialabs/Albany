@@ -10,18 +10,18 @@
 
 namespace AAdapt {
 
-typedef stk_classic::mesh::Entity Entity;
-typedef stk_classic::mesh::EntityRank EntityRank;
-typedef stk_classic::mesh::RelationIdentifier EdgeId;
-typedef stk_classic::mesh::EntityKey EntityKey;
+typedef stk::mesh::Entity Entity;
+typedef stk::mesh::EntityRank EntityRank;
+typedef stk::mesh::RelationIdentifier EdgeId;
+typedef stk::mesh::EntityKey EntityKey;
 
 //----------------------------------------------------------------------------
 AAdapt::CopyRemesh::
 CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
            const Teuchos::RCP<ParamLib>& param_lib,
            Albany::StateManager& state_mgr,
-           const Teuchos::RCP<const Epetra_Comm>& comm) :
-  AAdapt::AbstractAdapter(params, param_lib, state_mgr, comm),
+           const Teuchos::RCP<const Teuchos_Comm>& commT) :
+  AAdapt::AbstractAdapter(params, param_lib, state_mgr, commT),
   remesh_file_index_(1) {
 
   discretization_ = state_mgr_.getDiscretization();
@@ -33,12 +33,6 @@ CopyRemesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   bulk_data_ = stk_mesh_struct_->bulkData;
   meta_data_ = stk_mesh_struct_->metaData;
-
-  // The entity ranks
-  node_rank_ = meta_data_->NODE_RANK;
-  edge_rank_ = meta_data_->EDGE_RANK;
-  face_rank_ = meta_data_->FACE_RANK;
-  element_rank_ = meta_data_->element_rank();
 
   num_dim_ = stk_mesh_struct_->numDim;
 

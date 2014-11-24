@@ -3,7 +3,7 @@
 #include "PeridigmManager.hpp"
 #include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/FieldData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
 #include "Phalanx_DataLayout.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_Dimension.hpp"
@@ -41,42 +41,41 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for STK meshes.\n\n");
-  const stk_classic::mesh::fem::FEMMetaData& metaData = stkDisc->getSTKMetaData();
-  const stk_classic::mesh::BulkData& bulkData = stkDisc->getSTKBulkData();
+  const stk::mesh::MetaData& metaData = stkDisc->getSTKMetaData();
+  const stk::mesh::BulkData& bulkData = stkDisc->getSTKBulkData();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(metaData.spatial_dimension() != 3, "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for three-dimensional meshes.\n\n");
 
   // Store the cell topology for each element mesh part
   std::map<std::string,CellTopologyData> partCellTopologyData; 
 
-  const stk_classic::mesh::PartVector& stkParts = metaData.get_parts();
-  stk_classic::mesh::PartVector stkElementBlocks;
-  for(stk_classic::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
-    stk_classic::mesh::Part* const part = *it;
-    if(part->name()[0] == '{')
-      continue;
-    if(part->primary_entity_rank() == metaData.element_rank()){
+  const stk::mesh::PartVector& stkParts = metaData.get_parts();
+  stk::mesh::PartVector stkElementBlocks;
+  for(stk::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
+    stk::mesh::Part* const part = *it;
+    if(!stk::mesh::is_auto_declared_part(*part) && 
+       part->primary_entity_rank() == stk::topology::ELEMENT_RANK){
       stkElementBlocks.push_back(part);
       partCellTopologyData[part->name()] = *metaData.get_cell_topology(*part).getCellTopologyData();
     }
   }
 
-  stk_classic::mesh::Field<double, stk_classic::mesh::Cartesian>* coordinatesField = 
-    metaData.get_field< stk_classic::mesh::Field<double, stk_classic::mesh::Cartesian> >("coordinates");
+  stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = 
+    metaData.get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("coordinates");
 
-  stk_classic::mesh::Field<double, stk_classic::mesh::Cartesian>* volumeField = 
-    metaData.get_field< stk_classic::mesh::Field<double, stk_classic::mesh::Cartesian> >("volume");
+  stk::mesh::Field<double, stk::mesh::Cartesian>* volumeField = 
+    metaData.get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("volume");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
-  stk_classic::mesh::Selector selector = 
-    stk_classic::mesh::Selector( metaData.universal_part() ) & ( stk_classic::mesh::Selector( metaData.locally_owned_part() ) | stk_classic::mesh::Selector( metaData.globally_shared_part() ) );
+  stk::mesh::Selector selector = 
+    stk::mesh::Selector( metaData.universal_part() ) & ( stk::mesh::Selector( metaData.locally_owned_part() ) | stk::mesh::Selector( metaData.globally_shared_part() ) );
 
   // Select element mesh entities that match the selector
-  std::vector<stk_classic::mesh::Entity*> elements;
-  stk_classic::mesh::get_selected_entities(selector, bulkData.buckets(metaData.element_rank()), elements);
+  std::vector<stk::mesh::Entity> elements;
+  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData.element_rank()), elements);
 
   // Select node mesh entities that match the selector
-  std::vector<stk_classic::mesh::Entity*> nodes;
-  stk_classic::mesh::get_selected_entities(selector, bulkData.buckets(metaData.node_rank()), nodes);
+  std::vector<stk::mesh::Entity> nodes;
+  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData.node_rank()), nodes);
 
   // List of blocks for peridynamics, partial stress, and standard FEM
   std::vector<std::string> peridynamicsBlocks, peridynamicPartialStressBlocks, classicalContinuumMechanicsBlocks;
@@ -103,12 +102,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     blockNameToBlockId[blockName] = bId;
 
     // Create a selector for all locally-owned elements in the block
-    stk_classic::mesh::Selector selector = 
-      stk_classic::mesh::Selector( *stkElementBlocks[iBlock] ) & stk_classic::mesh::Selector( metaData.locally_owned_part() );
+    stk::mesh::Selector selector = 
+      stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData.locally_owned_part() );
 
     // Select the mesh entities that match the selector
-    std::vector<stk_classic::mesh::Entity*> elementsInElementBlock;
-    stk_classic::mesh::get_selected_entities(selector, bulkData.buckets(metaData.element_rank()), elementsInElementBlock);
+    std::vector<stk::mesh::Entity> elementsInElementBlock;
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData.element_rank()), elementsInElementBlock);
 
     // Determine the material model assigned to this block
     std::string materialModelName;
@@ -119,7 +118,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     if(materialModelName == "Peridynamics"){
       peridynamicsBlocks.push_back(blockName);
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
-	stk_classic::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+	stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
 	int globalId = nodeRelations.begin()->entity()->identifier() - 1;
 	globalIds.push_back(globalId);
       }
@@ -146,8 +145,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       int elementId = elementsInElementBlock[iElement]->identifier() - 1;
       if(elementId > maxAlbanyElementId)
 	maxAlbanyElementId = elementId;
-      stk_classic::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
-      for(stk_classic::mesh::PairIterRelation::iterator it = nodeRelations.begin() ; it != nodeRelations.end() ; it++){
+      stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+      for(stk::mesh::PairIterRelation::iterator it = nodeRelations.begin() ; it != nodeRelations.end() ; it++){
 	int nodeId = it->entity()->identifier() - 1;
 	if(nodeId > maxAlbanyNodeId)
 	  maxAlbanyNodeId = nodeId;
@@ -211,12 +210,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     int bId = blockNameToBlockId[blockName];
 
     // Create a selector for all locally-owned elements in the block
-    stk_classic::mesh::Selector selector = 
-      stk_classic::mesh::Selector( *stkElementBlocks[iBlock] ) & stk_classic::mesh::Selector( metaData.locally_owned_part() );
+    stk::mesh::Selector selector = 
+      stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData.locally_owned_part() );
 
     // Select the mesh entities that match the selector
-    std::vector<stk_classic::mesh::Entity*> elementsInElementBlock;
-    stk_classic::mesh::get_selected_entities(selector, bulkData.buckets(metaData.element_rank()), elementsInElementBlock);
+    std::vector<stk::mesh::Entity> elementsInElementBlock;
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData.element_rank()), elementsInElementBlock);
 
     // Determine the material model assigned to this block
     std::string materialModelName;
@@ -225,18 +224,18 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
     if(materialModelName == "Peridynamics"){
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
-	stk_classic::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+	stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != 1, "\n\n**** Error in PeridigmManager::initialize(), \"Peridynamics\" material model may be assigned only to sphere elements.\n\n");
-	stk_classic::mesh::Entity* node = nodeRelations.begin()->entity();
+	stk::mesh::Entity node = nodeRelations.begin()->entity();
 	int globalId = node->identifier() - 1;
 	int oneDimensionalMapLocalId = oneDimensionalMap.LID(globalId);
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	int threeDimensionalMapLocalId = threeDimensionalMap.LID(globalId);
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMapLocalId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	(*blockId)[oneDimensionalMapLocalId] = bId;
-	double* exodusVolume = stk_classic::mesh::field_data(*volumeField, *elementsInElementBlock[iElement]);
+	double* exodusVolume = stk::mesh::field_data(*volumeField, *elementsInElementBlock[iElement]);
 	(*cellVolume)[oneDimensionalMapLocalId] = exodusVolume[0];
-	double* exodusCoordinates = stk_classic::mesh::field_data(*coordinatesField, *node);
+	double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, *node);
 	(*initialX)[threeDimensionalMapLocalId*3]   = exodusCoordinates[0];
 	(*initialX)[threeDimensionalMapLocalId*3+1] = exodusCoordinates[1];
 	(*initialX)[threeDimensionalMapLocalId*3+2] = exodusCoordinates[2];
@@ -300,12 +299,12 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       }
 
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
-	stk_classic::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
+	stk::mesh::PairIterRelation nodeRelations = elementsInElementBlock[iElement]->node_relations();
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != numNodes, "\n\n**** Error in PeridigmManager::initialize(), nodeRelations.size() != numNodes.\n\n");
 	int index = 0;
-	for(stk_classic::mesh::PairIterRelation::iterator it = nodeRelations.begin() ; it != nodeRelations.end() ; it++){
-	  stk_classic::mesh::Entity* node = it->entity();
-	  double* coordinates = stk_classic::mesh::field_data(*coordinatesField, *node);
+	for(stk::mesh::PairIterRelation::iterator it = nodeRelations.begin() ; it != nodeRelations.end() ; it++){
+	  stk::mesh::Entity node = it->entity();
+	  double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
 	  for(int dof=0 ; dof<3 ; ++dof)
 	    cellWorkset(0, index, dof) = coordinates[dof];
 	  index += 1;
@@ -475,9 +474,9 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Epet
 	}
       }
 
-      stk_classic::mesh::PairIterRelation nodeRelations = it->albanyElement->node_relations();
+      stk::mesh::PairIterRelation nodeRelations = it->albanyElement->node_relations();
       int index = 0;
-      for(stk_classic::mesh::PairIterRelation::iterator nodeIt = nodeRelations.begin() ; nodeIt != nodeRelations.end() ; nodeIt++){
+      for(stk::mesh::PairIterRelation::iterator nodeIt = nodeRelations.begin() ; nodeIt != nodeRelations.end() ; nodeIt++){
 	int globalAlbanyNodeId = nodeIt->entity()->identifier() - 1;
 	int albanySolutionVectorIndex = albanyMap.LID(3*globalAlbanyNodeId);
 	cellWorkset(0, index, 0) = it->albanyNodeInitialPositions[3*index]   + albanySolutionVector[albanySolutionVectorIndex];

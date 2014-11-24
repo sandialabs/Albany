@@ -51,11 +51,22 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
 #ifdef OUTPUT_TO_SCREEN
     *out << "INTERP SURFACE GRAD Source!" << std::endl;
 #endif
-    surfaceGrad = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-             p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
+    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+             p.get<std::string>("surface_height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
      bf_type = FO_INTERP_SURF_GRAD;
   }
+#ifdef CISM_HAS_FELIX
+  else if (type == "FO Surface Grad Provided") {
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Surface Grad Provided Source!" << std::endl;
+#endif
+    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+             p.get<std::string>("FELIX Surface Gradient QP Variable Name"), dl->qp_gradient);
+    this->addDependentField(surfaceGrad);
+    bf_type = FO_SURF_GRAD_PROVIDED;
+  }
+#endif
   else if (type == "FOSinCos2D") {
     bf_type = FO_SINCOS2D;  
     muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
@@ -122,8 +133,8 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
 	*out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
-    surfaceGrad = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
-    		p.get<std::string>("Surface Height Gradient Name"), dl->qp_gradient);
+    surfaceGrad = PHX::MDField<ScalarT,Cell,QuadPoint,Dim>(
+    		p.get<std::string>("surface_height Gradient Name"), dl->qp_gradient);
     this->addDependentField(surfaceGrad);
     bf_type = FO_INTERP_SURF_GRAD;
   }
@@ -145,11 +156,15 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   numDims = dims[2];
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2];
+  dl->node_qp_scalar->dimensions(dims);
+  numNodes = dims[1];
+
 
 //*out << " in FELIX Stokes FO source! " << std::endl;
 //*out << " vecDim = " << vecDim << std::endl;
 //*out << " numDims = " << numDims << std::endl;
 //*out << " numQPs = " << numQPs << std::endl; 
+//*out << " numNodes = " << numNodes << std::endl; 
 
   this->setName("StokesFOBodyForce"+PHX::typeAsString<EvalT>());
 }
@@ -199,8 +214,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   else if (bf_type == FO_DOME) {
     this->utils.setFieldData(coordVec,fm);
   }
-  else if (bf_type == FO_INTERP_SURF_GRAD)
+  else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
 	  this->utils.setFieldData(surfaceGrad,fm);
+  }
 
   this->utils.setFieldData(force,fm); 
 }
@@ -221,7 +237,7 @@ evaluateFields(typename Traits::EvalData workset)
   	 force(cell,qp,i) = 0.0;
  }
  //source using the gradient of the interpolated surface height
- else if (bf_type == FO_INTERP_SURF_GRAD) {
+ else if (bf_type == FO_INTERP_SURF_GRAD || bf_type == FO_SURF_GRAD_PROVIDED) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {
        force(cell,qp,0) = rho_g*surfaceGrad(cell,qp,0);

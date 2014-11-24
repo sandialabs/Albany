@@ -113,15 +113,6 @@ namespace QCAD {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
-    //! Evaluate responses
-    virtual void 
-    evaluateResponse(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Epetra_Vector& g);
-
     virtual void 
     evaluateResponseT(const double current_time,
 		     const Tpetra_Vector* xdot,
@@ -129,26 +120,6 @@ namespace QCAD {
 		     const Tpetra_Vector& x,
 		     const Teuchos::Array<ParamVec>& p,
 		     Tpetra_Vector& g);
-
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void 
-    evaluateTangent(const double alpha, 
-		    const double beta,
-		    const double omega,
-		    const double current_time,
-		    bool sum_derivs,
-		    const Epetra_Vector* xdot,
-		    const Epetra_Vector* xdotdot,
-		    const Epetra_Vector& x,
-		    const Teuchos::Array<ParamVec>& p,
-		    ParamVec* deriv_p,
-		    const Epetra_MultiVector* Vxdot,
-		    const Epetra_MultiVector* Vxdotdot,
-		    const Epetra_MultiVector* Vx,
-		    const Epetra_MultiVector* Vp,
-		    Epetra_Vector* g,
-		    Epetra_MultiVector* gx,
-		    Epetra_MultiVector* gp);
 
     virtual void 
     evaluateTangentT(const double alpha, 
@@ -171,19 +142,6 @@ namespace QCAD {
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
-    evaluateGradient(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     ParamVec* deriv_p,
-		     Epetra_Vector* g,
-		     Epetra_MultiVector* dg_dx,
-		     Epetra_MultiVector* dg_dxdot,
-		     Epetra_MultiVector* dg_dxdotdot,
-		     Epetra_MultiVector* dg_dp);
-
-    virtual void 
     evaluateGradientT(const double current_time,
 		     const Tpetra_Vector* xdotT,
 		     const Tpetra_Vector* xdotdotT,
@@ -197,6 +155,7 @@ namespace QCAD {
 		     Tpetra_MultiVector* dg_dpT);
 
 
+#ifdef ALBANY_EPETRA
     //! Post process responses
     virtual void 
     postProcessResponses(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_Vector>& g);
@@ -204,6 +163,7 @@ namespace QCAD {
     //! Post process response derivatives
     virtual void 
     postProcessResponseDerivatives(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_MultiVector>& gt);
+#endif
 
     //! Called by evaluator to interface with class data that persists across worksets
     std::string getMode();
@@ -224,62 +184,77 @@ namespace QCAD {
   private:
 
     //! Helper functions for Nudged Elastic Band (NEB) algorithm, performed in evaluateResponse
+#ifdef ALBANY_EPETRA
     void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& g, int dbMode);
+#endif
     //Tpetra version of above
     void initializeImagePointsT(const double current_time, const Tpetra_Vector* xdotT,
 			       const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			       Tpetra_Vector& gT, int dbMode);
+#ifdef ALBANY_EPETRA 
+//IK, 10/9/14, to do: convert this to Tpetra
     void initializeFinalImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& g, int dbMode);
     void doNudgedElasticBand(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
+#endif
     //Tpetra version of above
     void doNudgedElasticBandT(const double current_time, const Tpetra_Vector* xdotT,
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, int dbMode);
+#ifdef ALBANY_EPETRA 
     void fillSaddlePointData(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
+#endif
     //Tpetra version of above
     void fillSaddlePointDataT(const double current_time, const Tpetra_Vector* xdotT,
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, int dbMode);
 
+#ifdef ALBANY_EPETRA 
     //! Helper functions for level-set algorithm, performed in evaluateResponse
     void doLevelSet(const double current_time,  const Epetra_Vector* xdot,
 		    const Epetra_Vector& x,  const Teuchos::Array<ParamVec>& p,
 		    Epetra_Vector& g, int dbMode);
+#endif
     //Tpetra version of above
     void doLevelSetT(const double current_time,  const Tpetra_Vector* xdotT,
 		    const Tpetra_Vector& xT,  const Teuchos::Array<ParamVec>& p,
 		    Tpetra_Vector& gT, int dbMode);
+#ifdef ALBANY_EPETRA 
     int FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
 			     std::vector<double>* allCoords, std::vector<int>& ordering,
 			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
 			     Epetra_Vector& g);
+#endif
     //Tpetra version of above
     int FindSaddlePoint_LevelSetT(std::vector<double>& allFieldVals,
 			     std::vector<double>* allCoords, std::vector<int>& ordering,
 			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
 			     Tpetra_Vector& gT);
 
+#ifdef ALBANY_EPETRA 
     //! Helper functions for doNudgedElasticBand(...)
     void getImagePointValues(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, double* globalPtValues, double* globalPtWeights,
 			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
+#endif
     //Tpetra version of above
     void getImagePointValuesT(const double current_time, const Tpetra_Vector* xdotT,
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, double* globalPtValues, double* globalPtWeights,
 			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
+#ifdef ALBANY_EPETRA 
     void getFinalImagePointValues(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
+#endif
     void writeOutput(int nIters);
     void initialIterationSetup(double& gradScale, double& springScale, int dbMode);
     void computeTangent(std::size_t i, mathVector& tangent, int dbMode);
@@ -290,7 +265,9 @@ namespace QCAD {
 		      const double& gradScale,  const double& springScale, 
 		      QCAD::mathVector& force, double& dt, double& dt2, int dbMode);
 
+#ifdef ALBANY_EPETRA 
     bool matchesCurrentResults(Epetra_Vector& g) const;
+#endif
     bool matchesCurrentResultsT(Tpetra_Vector& gT) const;
 
 
@@ -306,8 +283,10 @@ namespace QCAD {
     //! helper function to get the highest image point (the one with the largest value)
     int getHighestPtIndex() const;
 
+#ifdef ALBANY_EPETRA 
     //! Epetra Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
+#endif
 
     //! data used across worksets and processors in saddle point algorithm
     std::size_t numDims;

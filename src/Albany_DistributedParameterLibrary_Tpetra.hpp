@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_TPETRA_HPP
 #define ALBANY_DISTRIBUTED_PARAMETER_LIBRARY_TPETRA_HPP
 
@@ -14,33 +17,35 @@ namespace Albany {
 
   //! Specialization of DistributedParameterTraits for Tpetra_Vector
   template <>
-  struct DistributedParameterTraits<Tpetra_Vector, Tpetra_MultiVector> {
+  struct DistributedParameterTraits<Tpetra_Vector, Tpetra_MultiVector, IDArray> {
     typedef Tpetra_Map map_type;
   };
 
   //! General distributed parameter storing an Tpetra_Vector
   class TpetraDistributedParameter :
-    public DistributedParameter<Tpetra_Vector, Tpetra_MultiVector> {
+    public DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, IDArray> {
   public:
 
-    typedef DistributedParameter<Tpetra_Vector, Tpetra_MultiVector> base_type;
+    typedef DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, IDArray> base_type;
     typedef base_type::vector_type vector_type; // Tpetra_Vector
     typedef base_type::multi_vector_type multi_vector_type; // Tpetra_MultiVector
     typedef base_type::map_type map_type;       // Tpetra_Map
+    typedef base_type::id_array_type id_array_type;  // IDArray
+    typedef std::vector<id_array_type> id_array_vec_type; //vector of IDArray
 
     //! Constructor
     TpetraDistributedParameter(
       const std::string& param_name_,
-      const int num_per_cell_,
       const Teuchos::RCP<Tpetra_Vector>& vec_,
       const Teuchos::RCP<const Tpetra_Map>& owned_map_,
       const Teuchos::RCP<const Tpetra_Map>& overlapped_map_) :
       param_name(param_name_),
-      num_per_cell(num_per_cell_),
       vec(vec_),
       owned_map(owned_map_),
       overlapped_map(overlapped_map_) {
-      importer = Teuchos::rcp(new Tpetra_Import(overlapped_map, owned_map));
+      importer = Teuchos::rcp(new Tpetra_Import(owned_map, overlapped_map));
+      exporter = Teuchos::rcp(new Tpetra_Export(owned_map, overlapped_map));
+      overlapped_vec = Teuchos::rcp(new Tpetra_Vector(overlapped_map, false));
     }
 
     //! Destructor
@@ -55,13 +60,28 @@ namespace Albany {
     }
 
     //! Get overlap parallel map
-    virtual Teuchos::RCP<const map_type> overlap_map() {
+    virtual Teuchos::RCP<const map_type> overlap_map() const {
       return overlapped_map;
+    }
+
+    //! Set workset_elem_dofs
+    virtual void set_workset_elem_dofs(const Teuchos::RCP<const id_array_vec_type>& ws_elem_dofs_) {
+      ws_elem_dofs = ws_elem_dofs_;
+    }
+
+    //! Return constant workset_elem_dofs.
+    virtual const id_array_vec_type& workset_elem_dofs() const {
+      return *ws_elem_dofs;
     }
 
     //! Get vector
     virtual Teuchos::RCP<vector_type> vector() const {
       return vec;
+    }
+
+    //! Get overlapped vector
+    virtual Teuchos::RCP<vector_type> overlapped_vector() const {
+      return overlapped_vec;
     }
 
     //! Import vector from owned to overlap maps
@@ -70,9 +90,15 @@ namespace Albany {
       dst.doImport(src, *importer, Tpetra::INSERT);
     }
 
-    //! Get number of parameter entries per cell
-    virtual int num_entries_per_cell() const {
-      return num_per_cell;
+    //! Export vector from overlap to owned maps, CombineMode = Add
+    virtual void export_add(multi_vector_type& dst,
+                            const multi_vector_type& src) const {
+      dst.doExport(src, *exporter, Tpetra::ADD);
+    }
+
+    //! Fill overlapped vector from owned vector
+    virtual void scatter() const {
+      overlapped_vec->doImport(*vec, *importer, Tpetra::INSERT);
     }
 
   protected:
@@ -80,11 +106,11 @@ namespace Albany {
     //! Name of parameter
     std::string param_name;
 
-    //! Number of entries per cell
-    int num_per_cell;
-
     //! Tpetra_Vector storing distributed parameter
     Teuchos::RCP<Tpetra_Vector> vec;
+
+    //! Overlapped Tpetra_Vector storing distributed parameter
+    Teuchos::RCP<Tpetra_Vector> overlapped_vec;
 
     //! Tpetra_Map storing distributed parameter vector's map
     Teuchos::RCP<const Tpetra_Map> owned_map;
@@ -94,6 +120,12 @@ namespace Albany {
 
     //! Importer from owned to overlap maps
     Teuchos::RCP<const Tpetra_Import> importer;
+
+    //! Exporter from overlap to owned maps
+    Teuchos::RCP<const Tpetra_Export> exporter;
+
+    //! vector over worksets, containing DOF's map from (elem, node, nComp) into local id
+    Teuchos::RCP<const id_array_vec_type> ws_elem_dofs;
 
   };
 

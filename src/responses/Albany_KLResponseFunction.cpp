@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out except SG and MP when ALBANY_EPETRA_EXE is off.
+
 #include "Albany_KLResponseFunction.hpp"
 #include "Stokhos_PCEAnasaziKL.hpp"
 #include "Teuchos_Array.hpp"
@@ -25,12 +27,14 @@ Albany::KLResponseFunction::
 {
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::KLResponseFunction::
 responseMap() const
 {
   return response->responseMap();
 }
+#endif
 
 Teuchos::RCP<const Tpetra_Map>
 Albany::KLResponseFunction::
@@ -39,12 +43,14 @@ responseMapT() const
   return response->responseMapT();
 }
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Operator> 
 Albany::KLResponseFunction::
 createGradientOp() const
 {
   return response->createGradientOp();
 }
+#endif
 
 Teuchos::RCP<Tpetra_Operator> 
 Albany::KLResponseFunction::
@@ -60,17 +66,6 @@ isScalarResponse() const
   return response->isScalarResponse();
 }
 
-void
-Albany::KLResponseFunction::
-evaluateResponse(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 Epetra_Vector& g)
-{
-  response->evaluateResponse(current_time, xdot, xdotdot, x, p, g);
-}
 
 void
 Albany::KLResponseFunction::
@@ -84,31 +79,6 @@ evaluateResponseT(const double current_time,
   response->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, gT);
 } 
 
-
-void
-Albany::KLResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  response->evaluateTangent(alpha, beta, omega, current_time, sum_derivs, 
-			    xdot, xdotdot, x, p, deriv_p, Vxdot, Vxdotdot, Vx, Vp,
-			    g, gx, gp);
-}
 
 void
 Albany::KLResponseFunction::
@@ -135,6 +105,23 @@ evaluateTangentT(const double alpha,
 			    gT, gxT, gpT);
 }
 
+#ifdef ALBANY_EPETRA
+//! Evaluate distributed parameter derivative dg/dp
+void
+Albany::KLResponseFunction::
+evaluateDistParamDeriv(
+  const double current_time,
+  const Epetra_Vector* xdot,
+  const Epetra_Vector* xdotdot,
+  const Epetra_Vector& x,
+  const Teuchos::Array<ParamVec>& param_array,
+  const std::string& dist_param_name,
+  Epetra_MultiVector*  dg_dp){
+  response->evaluateDistParamDeriv(current_time, xdot, xdotdot, x, param_array, dist_param_name, dg_dp);
+}
+#endif
+
+#ifdef ALBANY_EPETRA
 void
 Albany::KLResponseFunction::
 evaluateDerivative(const double current_time,
@@ -152,6 +139,7 @@ evaluateDerivative(const double current_time,
   response->evaluateDerivative(current_time, xdot, xdotdot, x, p, deriv_p, 
 			       g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
 }
+#endif
 
 void
 Albany::KLResponseFunction::
@@ -336,6 +324,7 @@ evaluateMPDerivative(
 }
 #endif //ALBANY_SG_MP
 
+#ifdef ALBANY_EPETRA
 bool
 Albany::KLResponseFunction::
 computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
@@ -365,3 +354,4 @@ computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
 
   return result;
 }
+#endif

@@ -4,17 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
-#include "Petra_Converters.hpp"
-#include "Epetra_Comm.h"
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
 
 Albany::SolutionMaxValueResponseFunction::
-SolutionMaxValueResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm,
+SolutionMaxValueResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT,
 				 int neq_, int eq_, bool interleavedOrdering_) :
-  SamplingBasedScalarResponseFunction(comm),
-  comm_(comm), 
+  SamplingBasedScalarResponseFunction(commT),
+  commT_(commT), 
   neq(neq_), eq(eq_), interleavedOrdering(interleavedOrdering_)
 {
 }
@@ -31,18 +30,6 @@ numResponses() const
   return 1;
 }
 
-void
-Albany::SolutionMaxValueResponseFunction::
-evaluateResponse(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 Epetra_Vector& g)
-{
-  int index;
-  computeMaxValue(x, g[0], index);
-}
 
 void
 Albany::SolutionMaxValueResponseFunction::
@@ -58,35 +45,6 @@ evaluateResponseT(const double current_time,
   computeMaxValueT(xT, gT_nonconstView[0], index);
 }
 
-void
-Albany::SolutionMaxValueResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  Teuchos::RCP<Epetra_MultiVector> dgdx;
-  if (gx != NULL && Vx != NULL)
-    dgdx = Teuchos::rcp(new Epetra_MultiVector(x.Map(), 1));
-  else
-    dgdx = Teuchos::rcp(gx,false);
-  evaluateGradient(current_time, xdot, xdotdot, x, p, deriv_p, g, dgdx.get(), NULL, NULL, gp);
-  if (gx != NULL && Vx != NULL)
-    gx->Multiply('T', 'N', alpha, *dgdx, *Vx, 0.0);
-}
 
 void
 Albany::SolutionMaxValueResponseFunction::
@@ -108,18 +66,19 @@ evaluateTangentT(const double alpha,
 		Tpetra_MultiVector* gxT,
 		Tpetra_MultiVector* gpT)
 {
-  Teuchos::RCP<Tpetra_MultiVector> dgdxT;
-  if (gxT != NULL && VxT != NULL)
-    dgdxT = Teuchos::rcp(new Tpetra_MultiVector(xT.getMap(), 1));
-  else
-    dgdxT = Teuchos::rcp(gxT,false);
-  evaluateGradientT(current_time, xdotT, xdotdotT, xT, p, deriv_p, gT, dgdxT.get(), NULL, NULL, gpT);
-  Teuchos::ETransp T = Teuchos::TRANS; 
-  Teuchos::ETransp N = Teuchos::NO_TRANS; 
-  if (gxT != NULL && VxT != NULL)
+
+  if (gxT != NULL || gpT != NULL)
+    evaluateGradientT(current_time, xdotT, xdotdotT, xT, p, deriv_p, gT, gxT, NULL, NULL, gpT);
+
+  if (gxT != NULL && VxT != NULL) {
+    Teuchos::RCP<Tpetra_MultiVector> dgdxT = Teuchos::rcp(new Tpetra_MultiVector(*gxT)); //is this needed? 
+    Teuchos::ETransp T = Teuchos::TRANS; 
+    Teuchos::ETransp N = Teuchos::NO_TRANS; 
     gxT->multiply(T, N, alpha, *dgdxT, *VxT, 0.0);
+  }
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionMaxValueResponseFunction::
 evaluateGradient(const double current_time,
@@ -144,12 +103,9 @@ evaluateGradient(const double current_time,
 
   // Evaluate dg/dx
   if (dg_dx != NULL) {
-    int im = -1;
-    for (int i=0; i<x.Map().NumMyElements(); i++) {
-       if (x[i] == mxv) { (*dg_dx)[0][i] = 1.0; im = i; }
-       else             (*dg_dx)[0][i] = 0.0;
-    }
-
+    dg_dx->PutScalar(0.0);
+    int lid = x.Map().LID(global_index);
+    if(lid >= 0) (*dg_dx)[0][lid] = 1.0;
   }
 
   // Evaluate dg/dxdot
@@ -162,6 +118,7 @@ evaluateGradient(const double current_time,
   if (dg_dp != NULL)
     dg_dp->PutScalar(0.0);
 }
+#endif
 
 void
 Albany::SolutionMaxValueResponseFunction::
@@ -213,6 +170,26 @@ evaluateGradientT(const double current_time,
 
 }
 
+#ifdef ALBANY_EPETRA
+//! Evaluate distributed parameter derivative dg/dp
+void
+Albany::SolutionMaxValueResponseFunction::
+evaluateDistParamDeriv(
+    const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    Epetra_MultiVector* dg_dp)
+{
+  if (dg_dp) {
+      dg_dp->PutScalar(0.0);
+  }
+}
+#endif
+
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
@@ -231,16 +208,6 @@ computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
     }
   }
 
-  // Check remainder (AGS: NOT SURE HOW THIS CODE GETS CALLED?)
-  if (num_my_nodes*neq+eq < x.MyLength()) {
-    if (interleavedOrdering)  index = num_my_nodes*neq+eq;
-    else                      index = num_my_nodes + eq*num_my_nodes;
-    if (x[index] > my_max) {
-      my_max = x[index];
-      my_index = index;
-    }
-  }
-
   // Get max value across all proc's
   x.Comm().MaxAll(&my_max, &global_max, 1);
 
@@ -251,12 +218,15 @@ computeMaxValue(const Epetra_Vector& x, double& global_max, int& global_index)
     my_index = x.GlobalLength();
   x.Comm().MinAll(&my_index, &global_index, 1);
 }
+#endif
 
 void
 Albany::SolutionMaxValueResponseFunction::
 computeMaxValueT(const Tpetra_Vector& xT, double& global_max, int& global_index)
 {
-  double my_max = -Epetra_MaxDouble;
+  //The following is needed b/c Epetra_MaxDouble comes from Trilinos Epetra package.
+  double Tpetra_MaxDouble = 1.0E+100; 
+  double my_max = -Tpetra_MaxDouble;
   int my_index = -1, index;
   
   Teuchos::ArrayRCP<const ST> xT_constView = xT.get1dView();

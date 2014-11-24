@@ -44,7 +44,7 @@ NODAL VARIABLES relative 1.e-6 floor 1.0e-8
 	nodal_Cauchy_Stress_8  # min:               0 @ t1,n1	max:       26313.746 @ t3,n461
 	nodal_Cauchy_Stress_9  # min:               0 @ t1,n1	max:       19644.462 @ t3,n471
 	nodal_weights          # min:   3.1878041e-05 @ t1,n1	max:   0.00073827564 @ t1,n328
-	pressure               # min:               0 @ t1,n1	max:       6937845.5 @ t3,n58
+	pressure relative 1.e-5
 
 # No ELEMENT VARIABLES
 

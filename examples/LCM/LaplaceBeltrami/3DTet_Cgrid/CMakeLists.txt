@@ -13,26 +13,28 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/3d_cgrid_tetra4.e
 get_filename_component(testDirName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 5. Create the test with this name and standard executable
-set(testName ${testDirName})
-add_test(NAME LaplaceBeltrami:${testName} 
+if (ALBANY_IFPACK2)
+  set(testName ${testDirName})
+  add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS= -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(LaplaceBeltrami:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+  set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
-set(testName ${testDirName}_TPS)
-add_test(NAME LaplaceBeltrami:${testName} 
+  set(testName ${testDirName}_TPS)
+  add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS=inputTPS.xml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(LaplaceBeltrami:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+  set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
 
-set(testName ${testDirName}_LB)
-add_test(NAME LaplaceBeltrami:${testName} 
+  set(testName ${testDirName}_LB)
+  add_test(NAME LaplaceBeltrami:${testName}_Tpetra 
          COMMAND ${CMAKE_COMMAND} "-DTEST_PROG=${AlbanyT.exe}"
          -DTEST_NAME=${testName} -DTEST_ARGS=inputLB.xml -DMPIMNP=${MPIMNP} 
          -DSEACAS_EPU=${SEACAS_EPU} -DSEACAS_EXODIFF=${SEACAS_EXODIFF} 
          -DDATA_DIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${CMAKE_CURRENT_SOURCE_DIR}/runtest.cmake)
-set_tests_properties(LaplaceBeltrami:${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+  set_tests_properties(LaplaceBeltrami:${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EPU};${SEACAS_EXODIFF}")
+endif()

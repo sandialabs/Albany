@@ -9,8 +9,10 @@
 #include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
+#endif
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Ptr.hpp"
@@ -25,14 +27,18 @@ public:
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
+#ifdef ALBANY_EPETRA
   Epetra_Map getNonOverlappedMap() const;
+#endif
 
   Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
 
+#ifdef ALBANY_EPETRA
   void observeSolution(
       double stamp,
       const Epetra_Vector &nonOverlappedSolution,
       Teuchos::Ptr<const Epetra_Vector> nonOverlappedSolutionDot);
+#endif
 
   void observeSolutionT(
       double stamp,

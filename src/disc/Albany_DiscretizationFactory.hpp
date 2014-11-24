@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_DISCRETIZATIONFACTORY_HPP
 #define ALBANY_DISCRETIZATIONFACTORY_HPP
 
@@ -11,7 +12,6 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
-#include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
@@ -34,7 +34,7 @@ class DiscretizationFactory {
     //! Default constructor
     DiscretizationFactory(
       const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams,
-      const Teuchos::RCP<const Epetra_Comm>& epetra_comm
+      const Teuchos::RCP<const Teuchos_Comm>& commT
     );
 
     //! Destructor
@@ -50,6 +50,8 @@ class DiscretizationFactory {
     }
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs();
+
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruct> mesh);
 
     Teuchos::RCP<Albany::AbstractDiscretization>
     createDiscretization(unsigned int num_equations,
@@ -89,7 +91,7 @@ class DiscretizationFactory {
     //! Parameter list specifying parameters for Catalyst
     Teuchos::RCP<Teuchos::ParameterList> catalystParams;
 
-    Teuchos::RCP<const Epetra_Comm> epetra_comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
 #ifdef ALBANY_CUTR
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;

@@ -4,11 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
 
 #include "AlbPUMI_FMDBDiscretization.hpp"
-#include "Epetra_Vector.h"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
 
@@ -42,7 +42,7 @@ class SPRSizeField : public ma::IsotropicFunction {
     Albany::WsLIDList& elemGIDws;
     Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_disc;
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
     std::string sv_name;
     double rel_err;

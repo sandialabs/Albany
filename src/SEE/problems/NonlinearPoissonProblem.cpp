@@ -17,7 +17,7 @@ Albany::NonlinearPoissonProblem::
 NonlinearPoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     const Teuchos::RCP<ParamLib>& param_lib,
     const int num_dims,
-    const Teuchos::RCP<const Epetra_Comm>& comm) :
+    Teuchos::RCP<const Teuchos::Comm<int> >& commT_):  
   Albany::AbstractProblem(params_, param_lib),
   num_dims_(num_dims)
 {

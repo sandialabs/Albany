@@ -32,7 +32,7 @@
     <Parameter name="1D Elements" type="int" value="60"/>
     <Parameter name="2D Elements" type="int" value="60"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="output/potential_stk2dT.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="output/potential_stk2d_tpetra.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
   </ParameterList>
   <ParameterList name="Regression Results">

@@ -8,9 +8,10 @@
 
 #include "Albany_SolutionCullingStrategy.hpp"
 
-#include "Epetra_ImportWithAlternateMap.hpp"
-
+#ifdef ALBANY_EPETRA
+//#include "Epetra_ImportWithAlternateMap.hpp"
 #include "Epetra_Import.h"
+#endif
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Array.hpp"
@@ -29,6 +30,7 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
 {
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 setup()
@@ -36,7 +38,17 @@ setup()
   cullingStrategy_->setup();
   this->updateSolutionImporter();
 }
+#endif
 
+void
+Albany::SolutionValuesResponseFunction::
+setupT()
+{
+  cullingStrategy_->setupT();
+  this->updateSolutionImporterT();
+}
+
+#ifdef ALBANY_EPETRA
 unsigned int
 Albany::SolutionValuesResponseFunction::
 numResponses() const
@@ -45,7 +57,18 @@ numResponses() const
     solutionImporter_->TargetMap().NumMyElements() :
     0u;
 }
+#endif
 
+unsigned int
+Albany::SolutionValuesResponseFunction::
+numResponsesT() const
+{
+  return Teuchos::nonnull(solutionImporterT_) ?
+    solutionImporterT_->getTargetMap()->getNodeNumElements() :
+    0u;
+}
+
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 evaluateResponse(const double /*current_time*/,
@@ -56,22 +79,24 @@ evaluateResponse(const double /*current_time*/,
 		 Epetra_Vector& g)
 {
   this->updateSolutionImporter();
-  Epetra::ImportWithAlternateMap(*solutionImporter_, x, g, Insert);
+  this->ImportWithAlternateMap(*solutionImporter_, x, g, Insert);
 }
+#endif
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateResponseT(const double current_time,
-                  const Tpetra_Vector* xdotT,
-                  const Tpetra_Vector* xdotdotT,
-                  const Tpetra_Vector& xT,
-                  const Teuchos::Array<ParamVec>& p,
-                  Tpetra_Vector& gT)
+evaluateResponseT(const double /*current_time*/,
+		 const Tpetra_Vector* /*xdot*/,
+		 const Tpetra_Vector* /*xdot*/,
+		 const Tpetra_Vector& xT,
+		 const Teuchos::Array<ParamVec>& /*p*/,
+		 Tpetra_Vector& gT)
 {
-  // TODO: Convert to Tpetra
-  std::cerr << "SolutionValuesResponseFunction::evaluateResponseT NOT IMPLEMETED\n";
+  this->updateSolutionImporterT();
+  this->ImportWithAlternateMapT(solutionImporterT_, xT, gT, Tpetra::INSERT);
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 evaluateTangent(const double /*alpha*/,
@@ -95,12 +120,12 @@ evaluateTangent(const double /*alpha*/,
   this->updateSolutionImporter();
 
   if (g) {
-    Epetra::ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
+    this->ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
   }
 
   if (gx) {
     TEUCHOS_ASSERT(Vx);
-    Epetra::ImportWithAlternateMap(*solutionImporter_, *Vx, *gx, Insert);
+    this->ImportWithAlternateMap(*solutionImporter_, *Vx, *gx, Insert);
     if (beta != 1.0) {
       gx->Scale(beta);
     }
@@ -110,31 +135,50 @@ evaluateTangent(const double /*alpha*/,
     gp->PutScalar(0.0);
   }
 }
+#endif
+
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateTangentT(const double alpha,
-                 const double beta,
-                 const double omega,
-                 const double current_time,
-                 bool sum_derivs,
-                 const Tpetra_Vector* xdotT,
-                 const Tpetra_Vector* xdotdotT,
-                 const Tpetra_Vector& xT,
-                 const Teuchos::Array<ParamVec>& p,
-                 ParamVec* deriv_p,
-                 const Tpetra_MultiVector* VxdotT,
-                 const Tpetra_MultiVector* VxdotdotT,
-                 const Tpetra_MultiVector* VxT,
-                 const Tpetra_MultiVector* VpT,
-                 Tpetra_Vector* gT,
-                 Tpetra_MultiVector* gxT,
-                 Tpetra_MultiVector* gpT)
+evaluateTangentT(const double /*alpha*/,
+		const double beta,
+		const double omega,
+		const double /*current_time*/,
+		bool /*sum_derivs*/,
+		const Tpetra_Vector* /*xdot*/,
+		const Tpetra_Vector* /*xdot*/,
+		const Tpetra_Vector& xT,
+		const Teuchos::Array<ParamVec>& /*p*/,
+		ParamVec* /*deriv_p*/,
+		const Tpetra_MultiVector* /*Vxdot*/,
+		const Tpetra_MultiVector* /*Vxdot*/,
+		const Tpetra_MultiVector* VxT,
+		const Tpetra_MultiVector* /*Vp*/,
+		Tpetra_Vector* gT,
+		Tpetra_MultiVector* gxT,
+		Tpetra_MultiVector* gpT)
 {
-  // TODO: Convert to Tpetra
-  std::cerr << "SolutionValuesResponseFunction::evaluateTangentT NOT IMPLEMETED\n";
+  this->updateSolutionImporterT();
+
+  if (gT) {
+    this->ImportWithAlternateMapT(solutionImporterT_, xT, *gT, Tpetra::INSERT);
+  }
+
+  if (gxT) {
+    TEUCHOS_ASSERT(VxT);
+    this->ImportWithAlternateMapT(solutionImporterT_, *VxT, gxT, Tpetra::INSERT);
+    if (beta != 1.0) {
+      gxT->scale(beta);
+    }
+  }
+
+  if (gpT) {
+    gpT->putScalar(0.0);
+  }
 }
 
+
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 evaluateGradient(const double /*current_time*/,
@@ -152,7 +196,7 @@ evaluateGradient(const double /*current_time*/,
   this->updateSolutionImporter();
 
   if (g) {
-    Epetra::ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
+    this->ImportWithAlternateMap(*solutionImporter_, x, *g, Insert);
   }
 
   if (dg_dx) {
@@ -180,25 +224,75 @@ evaluateGradient(const double /*current_time*/,
     dg_dp->PutScalar(0.0);
   }
 }
+#endif
+
+#ifdef ALBANY_EPETRA
+//! Evaluate distributed parameter derivative dg/dp
+void
+Albany::SolutionValuesResponseFunction::
+evaluateDistParamDeriv(
+    const double current_time,
+    const Epetra_Vector* xdot,
+    const Epetra_Vector* xdotdot,
+    const Epetra_Vector& x,
+    const Teuchos::Array<ParamVec>& param_array,
+    const std::string& dist_param_name,
+    Epetra_MultiVector* dg_dp)
+{
+  if (dg_dp) {
+      dg_dp->PutScalar(0.0);
+  }
+}
+#endif // ALBANY_EPETRA
 
 void
 Albany::SolutionValuesResponseFunction::
-evaluateGradientT(const double current_time,
-		 const Tpetra_Vector* xdotT,
-		 const Tpetra_Vector* xdotdotT,
+evaluateGradientT(const double /*current_time*/,
+		 const Tpetra_Vector* /*xdot*/,
+		 const Tpetra_Vector* /*xdot*/,
 		 const Tpetra_Vector& xT,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
+		 const Teuchos::Array<ParamVec>& /*p*/,
+		 ParamVec* /*deriv_p*/,
 		 Tpetra_Vector* gT,
 		 Tpetra_MultiVector* dg_dxT,
 		 Tpetra_MultiVector* dg_dxdotT,
 		 Tpetra_MultiVector* dg_dxdotdotT,
 		 Tpetra_MultiVector* dg_dpT)
 {
-  // TODO: Convert to Tpetra
-  std::cerr << "SolutionValuesResponseFunction::evaluateGradientT NOT IMPLEMETED\n";
+  this->updateSolutionImporterT();
+
+  if (gT) {
+    this->ImportWithAlternateMapT(solutionImporterT_, xT, *gT, Tpetra::INSERT);
+  }
+
+  if (dg_dxT) {
+    dg_dxT->putScalar(0.0);
+
+    Teuchos::RCP<const Tpetra_Map> replicatedMapT = solutionImporterT_->getTargetMap();
+    Teuchos::RCP<const Tpetra_Map> derivMapT = dg_dxT->getMap();
+    const int colCount = dg_dxT->getNumVectors();
+    for (int icol = 0; icol < colCount; ++icol) {
+      const int lid = derivMapT->getLocalElement(replicatedMapT->getGlobalElement(icol));
+      if (lid != -1) {
+        dg_dxT->replaceLocalValue(lid, icol, 1.0);
+      }
+    }
+  }
+
+  if (dg_dxdotT) {
+    dg_dxdotT->putScalar(0.0);
+  }
+  if (dg_dxdotdotT) {
+    dg_dxdotdotT->putScalar(0.0);
+  }
+
+  if (dg_dpT) {
+    dg_dpT->putScalar(0.0);
+  }
 }
 
+
+#ifdef ALBANY_EPETRA
 void
 Albany::SolutionValuesResponseFunction::
 updateSolutionImporter()
@@ -210,3 +304,70 @@ updateSolutionImporter()
     solutionImporter_ = Teuchos::rcp(new Epetra_Import(targetMap, *solutionMap));
   }
 }
+#endif
+
+void
+Albany::SolutionValuesResponseFunction::
+updateSolutionImporterT()
+{
+  const Teuchos::RCP<const Tpetra_Map> solutionMapT = app_->getMapT();
+  if (Teuchos::is_null(solutionImporterT_) || !solutionMapT->isSameAs(*solutionImporterT_->getSourceMap())) {
+    const Teuchos::Array<GO> selectedGIDsT = cullingStrategy_->selectedGIDsT(solutionMapT);
+    Teuchos::RCP<const Tpetra_Map> targetMapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode> (selectedGIDsT, solutionMapT->getComm(), solutionMapT->getNode());
+    //const Epetra_Map targetMap(-1, selectedGIDs.size(), selectedGIDs.getRawPtr(), 0, solutionMap->Comm());
+    solutionImporterT_ = Teuchos::rcp(new Tpetra_Import(solutionMapT, targetMapT));
+  }
+}
+#ifdef ALBANY_EPETRA
+void
+Albany::SolutionValuesResponseFunction::
+ImportWithAlternateMap(
+    const Epetra_Import &importer,
+    const Epetra_MultiVector &source,
+    Epetra_MultiVector &target,
+    Epetra_CombineMode mode)
+{
+  const Epetra_BlockMap savedMap = target.Map();
+  {
+    const int ierr = target.ReplaceMap(importer.TargetMap());
+    TEUCHOS_ASSERT(ierr == 0);
+  }
+  {
+    const int ierr = target.Import(source, importer, mode);
+    TEUCHOS_ASSERT(ierr == 0);
+  }
+  {
+    const int ierr = target.ReplaceMap(savedMap);
+    TEUCHOS_ASSERT(ierr == 0);
+  }
+}
+#endif
+
+void
+Albany::SolutionValuesResponseFunction::
+ImportWithAlternateMapT(
+    Teuchos::RCP<const Tpetra_Import> importerT,
+    const Tpetra_MultiVector& sourceT,
+    Tpetra_MultiVector* targetT,
+    Tpetra::CombineMode modeT)
+{
+  Teuchos::RCP<const Tpetra_Map> savedMapT = targetT->getMap();
+  targetT->replaceMap(importerT->getTargetMap());
+  targetT->doImport(sourceT, *importerT, modeT);
+  targetT->replaceMap(savedMapT);
+}
+
+void
+Albany::SolutionValuesResponseFunction::
+ImportWithAlternateMapT(
+    Teuchos::RCP<const Tpetra_Import> importerT,
+    const Tpetra_Vector& sourceT,
+    Tpetra_Vector& targetT,
+    Tpetra::CombineMode modeT)
+{
+  Teuchos::RCP<const Tpetra_Map> savedMapT = targetT.getMap();
+  targetT.replaceMap(importerT->getTargetMap());
+  targetT.doImport(sourceT, *importerT, modeT);
+  targetT.replaceMap(savedMapT);
+}
+

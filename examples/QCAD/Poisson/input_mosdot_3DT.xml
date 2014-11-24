@@ -76,7 +76,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Exodus Input File Name" type="string" value="../input_exodus/mosdot_3D.exo" />
     <Parameter name="Method" type="string" value="Ioss" />
-    <Parameter name="Exodus Output File Name" type="string" value="output/potential_mosdot_3DT.exo" />
+    <Parameter name="Exodus Output File Name" type="string" value="output/potential_mosdot_3D_tpetra.exo" />
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
 

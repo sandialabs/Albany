@@ -95,7 +95,7 @@
 	  <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9e3"/>
 	  <Parameter name="Trap Binding Energy" type="double" value="9.65e3"/>
 	  <Parameter name="Number of Lattice Sites" type="double" value="1.4e5"/>
-      <Parameter name="A Constant" type="double" value="26.6"/>
+          <Parameter name="A Constant" type="double" value="26.6"/>
 	  <Parameter name="B Constant" type="double" value="1.5"/>
 	  <Parameter name="C Constant" type="double" value="6.96"/>
 	  <Parameter name="Avogadro's Number" type="double" value="6.0221413e23"/>

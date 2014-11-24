@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: no Epetra except SG and MP
+
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -35,8 +37,8 @@ offset(p.get<int>("Equation Offset")),
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
     ("Parameter Library", Teuchos::null);
 
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits> (KI_name, this, paramLib);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits> (KII_name, this, paramLib);
+  this->registerSacadoParameter(KI_name, paramLib);
+  this->registerSacadoParameter(KII_name, paramLib);
 
   timeValues = p.get<Teuchos::Array<RealType> >("Time Values").toVector();
   KIValues = p.get<Teuchos::Array<RealType> >("KI Values").toVector();
@@ -160,9 +162,6 @@ void
 KfieldBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset)
 {
-  //Teuchos::RCP<Epetra_Vector> f = dirichletWorkset.f;
-  //Teuchos::RCP<const Epetra_Vector> x = dirichletWorkset.x;
-
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
   Teuchos::RCP<const Tpetra_Vector> xT = dirichletWorkset.xT;
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();

@@ -4,23 +4,27 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE is off, except SG and MP.
+
 #ifndef ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 #define ALBANY_ABSTRACTRESPONSEFUNCTION_HPP
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "EpetraExt_ModelEvaluator.h"
-#include "Stokhos_OrthogPolyBasis.hpp"
-#include "Stokhos_OrthogPolyExpansion.hpp"
-#include "Stokhos_Quadrature.hpp"
 #include "EpetraExt_MultiComm.h"
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "Stokhos_ProductEpetraVector.hpp"
 #include "Stokhos_ProductEpetraMultiVector.hpp"
+#endif
+#include "Stokhos_OrthogPolyBasis.hpp"
+#include "Stokhos_OrthogPolyExpansion.hpp"
+#include "Stokhos_Quadrature.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 #include "Thyra_ModelEvaluatorBase.hpp"
 #include "Albany_DataTypes.hpp"
@@ -39,12 +43,18 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractResponseFunction() {};
 
+#ifdef ALBANY_EPETRA
     //! Setup response function
     virtual void setup() = 0;
+#endif
 
+    //! Setup response function
+    virtual void setupT() = 0;
+
+#ifdef ALBANY_EPETRA
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
-    
+#endif    
 
     //! Get the map associate with this response - Tpetra version 
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const = 0;
@@ -55,8 +65,10 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const = 0;
 
+#ifdef ALBANY_EPETRA
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
+#endif
     //! Create Tpetra operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const = 0;
 
@@ -64,13 +76,6 @@ namespace Albany {
     //@{
 
     //! Evaluate responses
-    virtual void evaluateResponse(
-      const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      Epetra_Vector& g) = 0;
 
     virtual void evaluateResponseT(
       const double current_time,
@@ -79,26 +84,6 @@ namespace Albany {
       const Tpetra_Vector& xT,
       const Teuchos::Array<ParamVec>& p,
       Tpetra_Vector& gT) = 0;
-    
-    //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void evaluateTangent(
-      const double alpha, 
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vp,
-      Epetra_Vector* g,
-      Epetra_MultiVector* gx,
-      Epetra_MultiVector* gp) = 0;
     
     virtual void evaluateTangentT(
       const double alpha, 
@@ -119,6 +104,7 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp) = 0;
 
+#ifdef ALBANY_EPETRA
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -132,6 +118,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp) = 0;
+#endif
 
    virtual void evaluateDerivativeT(
       const double current_time,
@@ -146,6 +133,17 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) = 0;
     
+#ifdef ALBANY_EPETRA
+    //! Evaluate distributed parameter derivative dg/dp
+    virtual void evaluateDistParamDeriv(
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Epetra_MultiVector*  dg_dp) = 0;
+#endif
     //@}
 
     //! \name Stochastic Galerkin evaluation functions

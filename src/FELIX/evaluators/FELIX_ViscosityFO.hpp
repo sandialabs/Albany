@@ -57,6 +57,7 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   ScalarT homotopyParam;
+  ScalarT dummyParam;
 
   //coefficients for Glen's law
   double A; 

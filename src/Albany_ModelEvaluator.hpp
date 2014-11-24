@@ -4,6 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: this is Epetra (Albany) function.
+//Not compiled if ALBANY_EPETRA_EXE is off.
+
 #ifndef ALBANY_MODELEVALUATOR_HPP
 #define ALBANY_MODELEVALUATOR_HPP
 
@@ -62,6 +65,9 @@ namespace Albany {
 
     //! Create operator form of df/dp for distributed parameters
     Teuchos::RCP<Epetra_Operator> create_DfDp_op(int j) const;
+
+    //! Create operator form of df/dp for distributed parameters
+     Teuchos::RCP<Epetra_Operator> create_DgDp_op(int j, int l) const;
 
     //! Create operator form of dg/dx for distributed responses
     Teuchos::RCP<Epetra_Operator> create_DgDx_op(int j) const;

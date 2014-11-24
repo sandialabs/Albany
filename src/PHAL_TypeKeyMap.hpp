@@ -3,6 +3,9 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//IK, 9/12/14: no Epetra!
+
 #ifndef PHAL_TYPE_KEY_MAP_HPP
 #define PHAL_TYPE_KEY_MAP_HPP
 

@@ -4,11 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef AADAPT_UNIFREFSIZEFIELD_HPP
 #define AADAPT_UNIFREFSIZEFIELD_HPP
 
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
-#include "Epetra_Vector.h"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
 
@@ -34,7 +34,7 @@ class UnifRefSizeField : public ma::IsotropicFunction {
 
   private:
 
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
     double elem_size;
     double initialAverageEdgeLength;

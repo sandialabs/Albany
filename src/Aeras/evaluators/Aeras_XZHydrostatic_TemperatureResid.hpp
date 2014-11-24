@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
 namespace Aeras {
@@ -44,16 +45,16 @@ public:
 private:
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>         wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 
-  PHX::MDField<ScalarT,Cell,QuadPoint> temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> temperatureGrad;
-  PHX::MDField<ScalarT,Cell,QuadPoint> temperatureDot;
-  PHX::MDField<ScalarT,Cell,QuadPoint> temperatureSrc;
-  PHX::MDField<ScalarT,Cell,QuadPoint> u;
-  PHX::MDField<ScalarT,Cell,QuadPoint> omega;
-  PHX::MDField<ScalarT,Cell,QuadPoint> etadotdT;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> temperatureGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureDot;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     temperatureSrc;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> velx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     omega;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> Residual;

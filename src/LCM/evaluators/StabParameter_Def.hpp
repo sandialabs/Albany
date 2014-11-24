@@ -45,8 +45,7 @@ StabParameter(Teuchos::ParameterList& p) :
     constant_value = elmd_list->get("Value", 1.0);
 
     // Add StabParameter as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Stabilization Parameter", this, paramLib);
+    this->registerSacadoParameter("Stabilization Parameter", paramLib);
   }
   else if (type == "Gradient Dependent") {
     is_constant = false;

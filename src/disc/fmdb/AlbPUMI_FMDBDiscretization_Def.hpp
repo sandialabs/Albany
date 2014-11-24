@@ -4,10 +4,14 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include <limits>
+#ifdef ALBANY_EPETRA
 #include "Epetra_Export.h"
+#endif
 
 #include "Albany_Utils.hpp"
+#include "Petra_Converters.hpp"
 #include "AlbPUMI_FMDBDiscretization.hpp"
 #include <string>
 #include <iostream>
@@ -23,29 +27,50 @@
 #include <apfShape.h>
 #include <PCU.h>
 
+#ifdef ALBANY_EPETRA
+// Some integer-type converter helpers for Epetra_Map so that we can compile
+// the Epetra_Map file regardless of the value of ALBANY_64BIT_INT.
+namespace {
+typedef int EpetraInt;
+#ifdef ALBANY_64BIT_INT
+Teuchos::RCP< Teuchos::Array<int> >
+convert (const Teuchos::Array<GO>& indicesAV) {
+  Teuchos::RCP< Teuchos::Array<int> > ind = Teuchos::rcp(
+    new Teuchos::Array<int>(indicesAV.size()));
+  for (std::size_t i = 0; i < indicesAV.size(); ++i)
+    (*ind)[i] = Teuchos::as<int>(indicesAV[i]);
+  return ind;
+};
+#else // not ALBANY_64BIT_INT
+Teuchos::RCP< Teuchos::Array<GO> >
+convert (Teuchos::Array<GO>& indicesAV) {
+  return Teuchos::rcp(&indicesAV, false);
+}
+#endif // not ALBANY_64BIT_INT
+} // namespace
+#endif // ALBANY_EPETRA
+
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
-            const Teuchos::RCP<const Epetra_Comm>& comm_,
+            const Teuchos::RCP<const Teuchos_Comm>& commT_,
             const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
-  comm(comm_),
-  //Ultimately Tpetra comm needs to be passed in to this constructor like Epetra comm...
-  commT(Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm_))),
+  commT(commT_),
   rigidBodyModes(rigidBodyModes_),
   neq(fmdbMeshStruct_->neq),
   fmdbMeshStruct(fmdbMeshStruct_),
   interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
   outputInterval(0),
-  meshOutput(*fmdbMeshStruct_, comm_)
+  meshOutput(*fmdbMeshStruct_, commT_)
 {
-  //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
-  Teuchos::ParameterList kokkosNodeParams;
-  nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(commT_);
+#endif
   globalNumbering = 0;
   elementNumbering = 0;
 
+  // Initialize the mesh and all data structures
   bool shouldTransferIPData = false;
   AlbPUMI::FMDBDiscretization<Output>::updateMesh(shouldTransferIPData);
 
@@ -94,6 +119,15 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapMapT() const
   return overlap_mapT;
 }
 
+#ifdef ALBANY_EPETRA
+template<class Output>
+Teuchos::RCP<const Epetra_Map>
+AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
+{
+  return Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
+}
+#endif
+
 template<class Output>
 Teuchos::RCP<const Tpetra_CrsGraph>
 AlbPUMI::FMDBDiscretization<Output>::getJacobianGraphT() const
@@ -116,14 +150,14 @@ AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
 }
 
 template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
 template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeID() const
 {
   return wsElNodeID;
@@ -155,7 +189,7 @@ AlbPUMI::FMDBDiscretization<Output>::printCoords() const
 }
 
 template<class Output>
-Teuchos::ArrayRCP<double>&
+const Teuchos::ArrayRCP<double>&
 AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 {
   coordinates.resize(3 * numOverlapNodes);
@@ -165,54 +199,14 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
   return coordinates;
 }
 
-// FELIX uninitialized variables (FIXME)
 template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getSurfaceHeight() const
+void
+AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
+    const Teuchos::ArrayRCP<const double>& c)
 {
-  return sHeight;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
-AlbPUMI::FMDBDiscretization<Output>::getTemperature() const
-{
-  return temperature;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getBasalFriction() const
-{
-  return basalFriction;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getThickness() const
-{
-  return thickness;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
-AlbPUMI::FMDBDiscretization<Output>::getFlowFactor() const
-{
-  return flowFactor;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getSurfaceVelocity() const
-{
-  return surfaceVelocity;
-}
-
-template<class Output>
-const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getVelocityRMS() const
-{
-  return velocityRMS;
+  apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
+  for (size_t i=0; i < nodes.getSize(); ++i)
+    apf::setComponents(f,nodes[i].entity,nodes[i].node,&(c[3*i]));
 }
 
 template<class Output>
@@ -222,60 +216,70 @@ AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
   return sphereVolume;
 }
 
-//The function transformMesh() maps a unit cube domain by applying the transformation
-//x = L*x
-//y = L*y
-//z = s(x,y)*z + b(x,y)*(1-z)
-//where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
-//geometries respectively.
-//Currently this function is only needed for some FELIX problems.
-
+/* DAI: this function also has to change for high-order fields */
 template<class Output>
-void
-AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
+void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
 {
-
-  // Function to return x,y,z at owned nodes as double*, specifically for ML
-
-  // if ML is not used, return
-
-  if(rigidBodyModes.is_null()) return;
-
-  if(!rigidBodyModes->isMLUsed()) return;
+  if (rigidBodyModes.is_null()) return;
+  if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
 
   // get mesh dimension and part handle
-  int mesh_dim = getNumDim();
-
+  const int mesh_dim = getNumDim();
   rigidBodyModes->resize(mesh_dim, numOwnedNodes);
-
-  double *xx;
-  double *yy;
-  double *zz;
-
-  rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
-
-  apf::Vector3 node_coords;
-
   apf::Mesh* m = fmdbMeshStruct->getMesh();
-  apf::MeshIterator* it = m->begin(mesh_dim);
-  apf::MeshEntity* v;
+  apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
 
-  /* DAI: this function also has to change for high-order fields */
-  int i = 0;
-  while ((v = m->iterate(it))) {
-    m->getPoint(v, 0, node_coords);
-    for (int j = 0; j < mesh_dim; ++j) {
-      xx[i]=node_coords[j];
-      ++i;
-    }
+  // If ML preconditioner is selected
+  if (rigidBodyModes->isMLUsed()) {
+    double *xx, *yy, *zz;
+    rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
+  
+    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
+      apf::Node node = nodes[i];
+      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
+
+      const GO node_gid = apf::getNumber(globalNumbering, node);
+      const LO node_lid = node_mapT->getLocalElement(node_gid);
+      double lcoords[3];
+      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+      if (mesh_dim > 0) {
+        xx[node_lid] = lcoords[0];
+        if (mesh_dim > 1) {
+          yy[node_lid] = lcoords[1];
+          if (mesh_dim > 2)
+            zz[node_lid] = lcoords[2];
+        }
+      }
+    }  
+  
+    rigidBodyModes->informML();
   }
 
-  m->end(it);
+  // If MueLu(-Tpetra) preconditioner is selected
+  else if (rigidBodyModes->isMueLuUsed()) {
+    double *xxyyzz; // make this ST?
+    rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
 
-  rigidBodyModes->informML();
+    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
+      apf::Node node = nodes[i];
+      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
 
+      const GO node_gid = apf::getNumber(globalNumbering, node);
+      const LO node_lid = node_mapT->getLocalElement(node_gid);
+      double lcoords[3];
+      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+      for (std::size_t j = 0; j < mesh_dim; ++j)
+        xxyyzz[j*numOwnedNodes + node_lid] = lcoords[j];
+    }
+  
+    Teuchos::ArrayView<ST>
+      xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*mesh_dim);
+    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(
+      new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim));
+
+    rigidBodyModes->informMueLu(xyzMV, mapT);
+  }
 }
-
 
 template<class Output>
 const Albany::WorksetArray<std::string>::type&
@@ -381,23 +385,34 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& so
   writeAnySolution(&(data[0]),time_value,overlapped);
 }
 
+#ifdef ALBANY_EPETRA
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
   writeAnySolution(&(soln[0]),time_value,overlapped);
 }
+#endif
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
       const ST* soln, const double time_value,
-      const bool overlapped){
+      const bool overlapped)
+{
+  if (solNames.size() == 0)
+    this->setField("solution",soln,overlapped);
+  else
+    this->setSplitFields(solNames,solIndex,soln,overlapped);
 
-  if (fmdbMeshStruct->outputFileName.empty())
-    return;
+  fmdbMeshStruct->solutionInitialized = true;
 
   // Skip this write unless the proper interval has been reached
-  if(outputInterval++ % fmdbMeshStruct->outputInterval)
+  if (outputInterval++ % fmdbMeshStruct->outputInterval)
+    return;
+
+  outputInterval = 0;
+
+  if (fmdbMeshStruct->outputFileName.empty())
     return;
 
   double time_label = monotonicTimeLabel(time_value);
@@ -406,17 +421,9 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
   if (mapT->getComm()->getRank()==0) {
     *out << "AlbPUMI::FMDBDiscretization::writeSolution: writing time " << time_value;
     if (time_label != time_value) *out << " with label " << time_label;
-    *out << " to index " <<out_step<<" in file "<<fmdbMeshStruct->outputFileName<< std::endl;
+    *out << " to index " << out_step << " in file "
+         << fmdbMeshStruct->outputFileName << std::endl;
   }
-
-  if (solNames.size() == 0)
-    this->setField("solution",soln,overlapped);
-  else
-    this->setSplitFields(solNames,solIndex,soln,overlapped);
-
-  fmdbMeshStruct->solutionInitialized = true;
-
-  outputInterval = 0;
 
   apf::Field* f;
   int order = fmdbMeshStruct->cubatureDegree;
@@ -425,7 +432,6 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
   copyQPStatesToAPF(f,fs);
   meshOutput.writeFile(time_label);
   removeQPStatesFromAPF();
-
 }
 
 template<class Output>
@@ -468,6 +474,7 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& resi
   fmdbMeshStruct->residualInitialized = true;
 }
 
+#ifdef ALBANY_EPETRA
 template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
@@ -479,21 +486,23 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& resid
 
   fmdbMeshStruct->residualInitialized = true;
 }
+#endif
 
 template<class Output>
 Teuchos::RCP<Tpetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT() const
+AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(new Tpetra_Vector(mapT));
+  Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(
+    new Tpetra_Vector(overlapped ? overlap_mapT : mapT));
   {
     Teuchos::ArrayRCP<ST> data = solnT->get1dViewNonConst();
 
     if (fmdbMeshStruct->solutionInitialized) {
       if (solNames.size() == 0)
-        this->getField("solution",&(data[0]),/*overlapped=*/false);
+        this->getField("solution",&(data[0]),overlapped);
       else
-        this->getSplitFields(solNames,solIndex,&(data[0]),/*overlapped=*/false);
+        this->getSplitFields(solNames,solIndex,&(data[0]),overlapped);
     }
     else if ( ! PCU_Comm_Self())
       *out <<__func__<<": uninit field" << std::endl;
@@ -501,24 +510,38 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT() const
   return solnT;
 }
 
+// In the case of mesh-adaptation problems, the solution field is
+// displacement. The previous two methods are used to reset coordinates to
+// coordinates + displacement, and then this method is used to zero
+// displacement.
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::zeroSolutionField()
+{
+  //amb-todo Always "solution"?
+  apf::zeroField(fmdbMeshStruct->getMesh()->findField("solution"));
+}
+
+#ifdef ALBANY_EPETRA
 template<class Output>
 Teuchos::RCP<Epetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionField() const
+AlbPUMI::FMDBDiscretization<Output>::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
-  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(*map));
+  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(
+    new Epetra_Vector(overlapped ? *overlap_map : *map));
 
   if (fmdbMeshStruct->solutionInitialized) {
     if (solNames.size() == 0)
-      this->getField("solution",&((*soln)[0]),/*overlapped=*/false);
+      this->getField("solution",&((*soln)[0]),overlapped);
     else
-      this->getSplitFields(solNames,solIndex,&((*soln)[0]),/*overlapped=*/false);
+      this->getSplitFields(solNames,solIndex,&((*soln)[0]),overlapped);
   }
   else if ( ! PCU_Comm_Self())
     *out <<__func__<<": uninit field" << std::endl;
 
   return soln;
 }
+#endif
 
 template<class Output>
 int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
@@ -552,8 +575,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
   Teuchos::Array<GO> indices(numOwnedNodes);
   for (int i=0; i < numOwnedNodes; ++i)
     indices[i] = apf::getNumber(globalNumbering,ownedNodes[i]);
-  node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                                indices, commT, nodeT);
+  node_mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
     fmdbMeshStruct->nodal_data_base->resizeLocalMap(indices, commT);
@@ -563,9 +585,12 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
       GO gid = apf::getNumber(globalNumbering,ownedNodes[i]);
       indices[getDOF(i,j)] = getDOF(gid,j);
     }
-  mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                            indices, commT, nodeT);
-  map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), &(indices[0]), 0, *comm));
+  mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
+#ifdef ALBANY_EPETRA
+  map = Teuchos::rcp(
+    new Epetra_Map(-1, indices.size(), convert(indices)->getRawPtr(), 0,
+                   *comm));
+#endif
 }
 
 template <class Output>
@@ -585,12 +610,13 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
     for (int j=0; j < neq; ++j)
       dofIndices[getDOF(i,j)] = getDOF(global,j);
   }
-  overlap_node_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                              nodeIndices, commT, nodeT);
-  overlap_mapT = Tpetra::createNonContigMapWithNode<LO, GO, KokkosNode>(
-                                              dofIndices, commT, nodeT);
-  overlap_map = Teuchos::rcp(new Epetra_Map(-1, dofIndices.size(),
-					    &(dofIndices[0]), 0, *comm));
+  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(nodeIndices, commT);
+  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(dofIndices, commT);
+#ifdef ALBANY_EPETRA
+  overlap_map = Teuchos::rcp(
+    new Epetra_Map(-1, dofIndices.size(), convert(dofIndices)->getRawPtr(), 0,
+                   *comm));
+#endif
   if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
     fmdbMeshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
 }
@@ -598,50 +624,62 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
 {
-  // GAH: the following assumes all element blocks in the problem have the same
-  // number of nodes per element and that the cell topologies are the same.
+
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
+  std::vector<int> n_nodes_in_elem;
   cells.reserve(m->count(numDim));
   apf::MeshIterator* it = m->begin(numDim);
   apf::MeshEntity* e;
-  while ((e = m->iterate(it)))
+  GO node_sum = 0;
+  while ((e = m->iterate(it))){
     cells.push_back(e);
+    int nnodes = apf::countElementNodes(m->getShape(),m->getType(e));
+    n_nodes_in_elem.push_back(nnodes);
+    node_sum += nnodes;
+  }
   m->end(it);
-  //got cells, count the nodes on the first one
-  int nodes_per_element = apf::countElementNodes(
-      m->getShape(),m->getType(cells[0]));
+  int nodes_per_element = std::ceil((double)node_sum / (double)cells.size());
   /* construct the overlap graph of all local DOFs as they
      are coupled by element-node connectivity */
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(
                  overlap_mapT, neq*nodes_per_element));
+#ifdef ALBANY_EPETRA
   overlap_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
                                      neq*nodes_per_element, false));
+#endif
   for (size_t i=0; i < cells.size(); ++i) {
     apf::NewArray<long> cellNodes;
     apf::getElementNumbers(globalNumbering,cells[i],cellNodes);
-    for (int j=0; j < nodes_per_element; ++j) {
+    for (int j=0; j < n_nodes_in_elem[i]; ++j) {
       for (int k=0; k < neq; ++k) {
         GO row = getDOF(cellNodes[j],k);
-        for (int l=0; l < nodes_per_element; ++l) {
+        for (int l=0; l < n_nodes_in_elem[i]; ++l) {
           for (int m=0; m < neq; ++m) {
             GO col = getDOF(cellNodes[l],m);
             Teuchos::ArrayView<GO> colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
-            overlap_graph->InsertGlobalIndices(row,1,&col);
+#ifdef ALBANY_EPETRA
+            EpetraInt ecol = Teuchos::as<EpetraInt>(col);
+            overlap_graph->InsertGlobalIndices(row,1,&ecol);
+#endif
           }
         }
       }
     }
   }
   overlap_graphT->fillComplete();
+#ifdef ALBANY_EPETRA
   overlap_graph->FillComplete();
+#endif
 
   // Create Owned graph by exporting overlap with known row map
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
+#ifdef ALBANY_EPETRA
   graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *map, nonzeroesPerRow(neq), false));
+#endif
 
   // Create non-overlapped matrix using two maps and export object
   Teuchos::RCP<Tpetra_Export> exporterT = Teuchos::rcp(new Tpetra_Export(
@@ -649,9 +687,11 @@ void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
   graphT->fillComplete();
 
+#ifdef ALBANY_EPETRA
   Epetra_Export exporter(*overlap_map, *map);
   graph->Export(*overlap_graph, exporter, Insert);
   graph->FillComplete();
+#endif
 }
 
 static apf::StkModel* findElementBlock(
@@ -788,9 +828,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       // loop over local nodes
 
       for (int j=0; j < nodes_per_element; j++) {
-
-        GO node_gid = nodeIDs[j];
-        int node_lid = overlap_node_mapT->getLocalElement(node_gid);
+        const GO node_gid = nodeIDs[j];
+        const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
 			   "FMDB_Disc: node_lid out of range " << node_lid << std::endl);
@@ -801,7 +840,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 
         for (std::size_t eq=0; eq < neq; eq++)
           wsElNodeEqID[b][i][j][eq] = getDOF(node_lid,eq);
-
       }
     }
   }
@@ -1193,38 +1231,17 @@ template<class Output>
 void
 AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
+  // This function is called both to initialize the mesh at the beginning of the simulation
+  // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
+
   computeOwnedNodesAndUnknowns();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOwnedNodesAndUnknowns() completed\n";
-#endif
-
   computeOverlapNodesAndUnknowns();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeOverlapNodesAndUnknowns() completed\n";
-#endif
-
+  setupMLCoords();
   computeGraphs();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeGraphs() completed\n";
-#endif
-
   getCoordinates(); //fill the coordinates array
-
   computeWorksetInfo();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeWorksetInfo() completed\n";
-#endif
-
   computeNodeSets();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeNodeSets() completed\n";
-#endif
-
   computeSideSets();
-#ifdef ALBANY_DEBUG
-  std::cout<<"["<<SCUTIL_CommRank()<<"] "<<__func__<<": computeSideSets() completed\n";
-#endif
-
   // transfer of internal variables
   if (shouldTransferIPData)
     copyQPStatesFromAPF();

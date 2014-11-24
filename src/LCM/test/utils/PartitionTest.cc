@@ -15,6 +15,8 @@
 
 #include <LCMPartition.h>
 
+bool TpetraBuild = false;
+
 int main(int ac, char* av[])
 {
   //
@@ -48,10 +50,10 @@ int main(int ac, char* av[])
       &output_file,
       "Output File Name");
 
-  const int
+  int const
   number_schemes = 5;
 
-  const LCM::PARTITION::Scheme
+  LCM::PARTITION::Scheme const
   scheme_values[] = {
       LCM::PARTITION::GEOMETRIC,
       LCM::PARTITION::HYPERGRAPH,
@@ -59,7 +61,7 @@ int main(int ac, char* av[])
       LCM::PARTITION::SEQUENTIAL,
       LCM::PARTITION::KDTREE};
 
-  const char*
+  char const *
   scheme_names[] = {
       "geometric",
       "hypergraph",
@@ -110,16 +112,16 @@ int main(int ac, char* av[])
       &maximum_iterations,
       "Maximum Iterations");
 
-  const int
+  int const
   number_initializers = 3;
 
-  const LCM::PARTITION::Scheme
+  LCM::PARTITION::Scheme const
   initializer_values[] = {
       LCM::PARTITION::RANDOM,
       LCM::PARTITION::GEOMETRIC,
       LCM::PARTITION::HYPERGRAPH};
 
-  const char*
+  char const *
   initializer_names[] = {
       "random",
       "geometric",
@@ -171,7 +173,7 @@ int main(int ac, char* av[])
   //
   // Partition mesh
   //
-  const std::map<int, int>
+  std::map<int, int> const
   partitions = connectivity_array.Partition(partition_scheme, length_scale);
 
   // Get abstract discretization from connectivity array and convert
@@ -216,7 +218,7 @@ int main(int ac, char* av[])
         exit(1);
       }
 
-      const int
+      int const
       partition = (*partitions_iterator).second;
 
       element++;
@@ -226,23 +228,23 @@ int main(int ac, char* av[])
   }
 
   // Need solution for output call
-  Teuchos::RCP<Epetra_Vector>
-  solution_field = stk_discretization.getSolutionField();
+  Teuchos::RCP<Tpetra_Vector>
+  solution_fieldT = stk_discretization.getSolutionFieldT();
 
   // second arg to output is (pseudo)time
-  stk_discretization.writeSolution(*solution_field, 1.0);
+  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   // Write report
-  const double
+  double const
   volume = connectivity_array.GetVolume();
 
-  const double
+  double const
   length_scale_cubed = length_scale * length_scale * length_scale;
 
-  const LCM::ScalarMap
+  LCM::ScalarMap const
   partition_volumes = connectivity_array.GetPartitionVolumes();
 
-  const unsigned int
+  unsigned int const
   number_partitions = partition_volumes.size();
 
   std::cout << std::endl;
@@ -299,10 +301,10 @@ int main(int ac, char* av[])
       partitions_iter != partitions.end();
       ++partitions_iter) {
 
-    const int
+    int const
     element = (*partitions_iter).first;
 
-    const int
+    int const
     partition = (*partitions_iter).second;
 
     std::cout << std::setw(16) << element;

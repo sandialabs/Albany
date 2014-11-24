@@ -4,13 +4,15 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out!  
+//No Epetra if ALBANY_EPETRA_EXE turned off. 
+
 #ifndef ALBANY_STATEMANAGER
 #define ALBANY_STATEMANAGER
 
 #include <string>
 #include <map>
 #include <vector>
-#include "Epetra_Vector.h"
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FieldContainer.hpp"
@@ -18,9 +20,11 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_EigendataInfoStruct.hpp"
-#include "Adapt_NodalDataBlock.hpp"
-#include "Adapt_NodalDataVector.hpp"
+#include "Epetra_Vector.h"
+#endif
+#include "Adapt_NodalDataBase.hpp"
 
 namespace Albany {
 
@@ -51,7 +55,9 @@ public:
 			     const double init_val=0.0,
 			     const bool registerOldState=false,
 			     const bool outputToExodus=true,
-			     const std::string &responseIDtoRequire="");
+			     const std::string &responseIDtoRequire="",
+			     StateStruct::MeshFieldEntity const * fieldEntity=0,
+			     const std::string& meshPartName="");
 
   void registerNodalBlockStateVariable(const std::string &stateName,
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
@@ -80,6 +86,15 @@ public:
                         const std::string &init_type="scalar",
                         const double init_val=0.0,
                         const bool registerOldState=false);
+
+
+  //Field entity is known. Useful for NodalDataToElemNode field. Input dl is of ElemNode type
+  Teuchos::RCP<Teuchos::ParameterList>
+  registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
+                                              const std::string& ebName,
+                                              const bool outputToExodus,
+                                              StateStruct::MeshFieldEntity const* fieldEntity,
+                                              const std::string& meshPartName="");
 
   //! If field name to save/load is different from state name
   Teuchos::RCP<Teuchos::ParameterList>
@@ -152,8 +167,13 @@ public:
   //! Method to get state information for all worksets
   Albany::StateArrays& getStateArrays() const;
 
-  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase(){ return stateInfo->createNodalDataBase(); }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return stateInfo->createNodalDataBase(); }
+#ifdef ALBANY_ATO
+  Teuchos::RCP<Adapt::NodalDataBlock> getNodalDataBlock()
+  { return stateInfo->createNodalDataBase()->getNodalDataBlock(); }
+#endif
 
+#ifdef ALBANY_EPETRA
   //! Methods to get/set the EigendataStruct which holds eigenvalue / eigenvector data
   Teuchos::RCP<Albany::EigendataStruct> getEigenData();
   void setEigenData(const Teuchos::RCP<Albany::EigendataStruct>& eigdata);
@@ -161,6 +181,9 @@ public:
   //! Methods to get/set Auxilliary data vectors
   Teuchos::RCP<Epetra_MultiVector> getAuxData();
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
+#endif
+
+  bool areStateVarsAllocated() const {return stateVarsAreAllocated;}
 
 private:
   //! Private to prohibit copying
@@ -180,8 +203,10 @@ private:
 
   //! NEW WAY
   Teuchos::RCP<StateInfoStruct> stateInfo;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<EigendataStruct> eigenData;
   Teuchos::RCP<Epetra_MultiVector> auxData;
+#endif
 
 };
 

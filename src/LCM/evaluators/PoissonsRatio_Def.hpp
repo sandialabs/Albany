@@ -37,8 +37,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
     constant_value = pr_list->get<double>("Value");
 
     // Add Poissons Ratio as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      "Poissons Ratio", this, paramLib);
+    this->registerSacadoParameter("Poissons Ratio", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -55,7 +54,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Poissons Ratio KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = pr_list->get(ss, 0.0);
     }
   }
@@ -77,8 +76,7 @@ PoissonsRatio(Teuchos::ParameterList& p) :
     isThermoElastic = true;
     dnudT_value = pr_list->get("dnudT Value", 0.0);
     refTemp = p.get<RealType>("Reference Temperature", 0.0);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-                                "dnudT Value", this, paramLib);
+    this->registerSacadoParameter("dnudT Value", paramLib);
   }
   else {
     isThermoElastic=false;

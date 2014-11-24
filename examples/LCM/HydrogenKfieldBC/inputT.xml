@@ -85,6 +85,7 @@
 	<Parameter  name="Max Steps" type="int" value="1"/>         
 	<Parameter  name="Max Value" type="double" value="50000.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
+    <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
 	<!-- Compute eigenvalues of the global stiffness -->
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
 	<ParameterList name="Eigensolver">

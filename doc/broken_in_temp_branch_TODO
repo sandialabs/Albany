@@ -1,0 +1,16 @@
+=> Temporary branch remaining items:
+
+
+14.) Have Erik Nielsen/Rick Muller (QCAD guys) check ALBANY_CI with temporary_tpetra_newSTK branch of Albany.  Also 
+have them run some "real" QCAD tests to check that everything still works (right now with Albany executable only). --> Irina, Erik, Rick.
+
+=> New-STK related issues. Don't need to be resolved before making this branch master.
+
+Failed tests (10/28/14): 
+The following tests FAILED:
+	 51 - SteadyHeat2DInternalNeumann (Failed) - STK bug (Jim Foucar fixing; fails in branch master too)
+	 52 - SteadyHeat2DInternalNeumann_Tpetra (Failed) - STK bug (Jim Foucar fixing)
+
+
+15.) There's an output error when trying to write an .exo file with the solution in CISM-Albany + new STK.  Ultimately would 
+be worthwhile to debug.  

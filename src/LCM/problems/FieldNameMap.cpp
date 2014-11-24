@@ -15,7 +15,7 @@ namespace LCM {
       Teuchos::rcp( new std::map<std::string, std::string> );
 
     name_map->insert( std::make_pair("Cauchy_Stress","Cauchy_Stress") );
-    name_map->insert( std::make_pair("PK1","PK1") );
+    name_map->insert( std::make_pair("FirstPK","FirstPK") );
     name_map->insert( std::make_pair("Fp","Fp") );
     name_map->insert( std::make_pair("logFp","logFp") );
     name_map->insert( std::make_pair("eqps","eqps") );
@@ -27,8 +27,8 @@ namespace LCM {
     name_map->insert( std::make_pair("F1_Damage","F1_Damage") );
     name_map->insert( std::make_pair("F2_Damage","F2_Damage") );
     name_map->insert( std::make_pair("Void_Volume","Void_Volume") );
-    name_map->insert( std::make_pair("iso_Hardening","iso_Hardening") );
-    name_map->insert( std::make_pair("ess","ess") );
+    name_map->insert( std::make_pair("isotropic_hardening","isotropic_hardening") );
+    name_map->insert( std::make_pair("eps_ss","eps_ss") );
     name_map->insert( std::make_pair("Energy","Energy") );
     name_map->insert( std::make_pair("Material Tangent","Material Tangent") );
     name_map->insert( std::make_pair("Temperature","Temperature") );
@@ -58,6 +58,10 @@ namespace LCM {
     	"Concentration_Equilibrium_Parameter") );
     name_map->insert( std::make_pair("Gradient_Element_Length",
     	"Gradient_Element_Length") );
+    // helium ODEs
+    name_map->insert( std::make_pair("He_Concentration","He_Concentration") );
+    name_map->insert( std::make_pair("Total_Bubble_Density","Total_Bubble_Density") );
+    name_map->insert( std::make_pair("Bubble_Volume_Fraction","Bubble_Volume_Fraction") );
     // geo-models
     name_map->insert( std::make_pair("Back_Stress","Back_Stress") );
     name_map->insert( std::make_pair("Cap_Parameter","Cap_Parameter") );

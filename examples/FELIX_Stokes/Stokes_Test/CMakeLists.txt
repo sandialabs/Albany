@@ -7,5 +7,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 #  First test 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_dome.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_dome.xml COPYONLY)
+if (ALBANY_EPETRA) 
 add_test(${testName}_Dome ${Albany.exe} input_dome.xml)
+endif()
 

@@ -14,6 +14,8 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+//9/12/14: no Epetra! 
+
 #ifndef ALBANY_MODELEVALUATORT_HPP
 #define ALBANY_MODELEVALUATORT_HPP
 

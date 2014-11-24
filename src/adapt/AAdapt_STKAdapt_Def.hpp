@@ -19,8 +19,8 @@ AAdapt::STKAdapt<SizeField>::
 STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
          const Teuchos::RCP<ParamLib>& paramLib_,
          Albany::StateManager& StateMgr_,
-         const Teuchos::RCP<const Epetra_Comm>& comm_) :
-  AAdapt::AbstractAdapter(params_, paramLib_, StateMgr_, comm_),
+         const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+  AAdapt::AbstractAdapter(params_, paramLib_, StateMgr_, commT_),
   remeshFileIndex(1) {
 
   disc = StateMgr_.getDiscretization();
@@ -169,9 +169,9 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
 //  eMesh->save_as("local_tet_N_5_ElementBased_0_.e");
 
-  stk_classic::adapt::ElementRefinePredicate erp(0, refine_field, 0.0);
+  stk::adapt::ElementRefinePredicate erp(0, refine_field, 0.0);
 
-  stk_classic::adapt::PredicateBasedElementAdapter<stk_classic::adapt::ElementRefinePredicate>
+  stk::adapt::PredicateBasedElementAdapter<stk::adapt::ElementRefinePredicate>
   breaker(erp, *eMesh, *refinerPattern, proc_rank_field);
 
   breaker.setRemoveOldElements(false);
@@ -182,17 +182,17 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
     eMesh->elementOpLoop(set_ref_field, refine_field);
 
 #if 0
-    std::vector<stk_classic::mesh::Entity*> elems;
-    const std::vector<stk_classic::mesh::Bucket*>& buckets = eMesh->get_bulk_data()->buckets(eMesh->element_rank());
+    std::vector<stk::mesh::Entity> elems;
+    const std::vector<stk::mesh::Bucket*>& buckets = eMesh->get_bulk_data()->buckets(eMesh->element_rank());
 
-    for(std::vector<stk_classic::mesh::Bucket*>::const_iterator k = buckets.begin() ; k != buckets.end() ; ++k) {
-      stk_classic::mesh::Bucket& bucket = **k ;
+    for(std::vector<stk::mesh::Bucket*>::const_iterator k = buckets.begin() ; k != buckets.end() ; ++k) {
+      stk::mesh::Bucket& bucket = **k ;
 
       const unsigned num_elements_in_bucket = bucket.size();
 
       for(unsigned i_element = 0; i_element < num_elements_in_bucket; i_element++) {
-        stk_classic::mesh::Entity& element = bucket[i_element];
-        double* f_data = stk_classic::percept::PerceptMesh::field_data_entity(refine_field, element);
+        stk::mesh::Entity element = bucket[i_element];
+        double* f_data = stk::percept::PerceptMesh::field_data_entity(refine_field, element);
 
         std::cout << "Element: " << element.identifier() << "Refine field: " << f_data[0] << std::endl;
       }
@@ -214,7 +214,7 @@ AAdapt::STKAdapt<SizeField>::adaptMesh(const Epetra_Vector& sol, const Epetra_Ve
 
   if(adapt_params_->get<bool>("Rebalance", false))
 
-    genericMeshStruct->rebalanceAdaptedMesh(adapt_params_, epetra_comm_);
+    genericMeshStruct->rebalanceAdaptedMeshT(adapt_params_, commT_);
     
   stk_discretization->updateMesh();
 //  printElementData();

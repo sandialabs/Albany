@@ -14,4 +14,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/elastic.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe} dynamics.xml)
+endif()

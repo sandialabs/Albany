@@ -40,7 +40,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{2.65039305665, 956.807156838, 3690.87996}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{2.36055837796, 999.469707966, 3497.59294427}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -60,7 +60,9 @@
       <ParameterList name="Rythmos">
         
          <ParameterList name="Integrator Settings">
-           <Parameter name="Final Time" type="double" value="86400"/>
+           <Parameter name="Final Time" type="double" value="864"/>
+           <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
+           <!--Parameter name="Final Time" type="double" value="86400"/-->
            <!-- change to 1.037e6 to get full revolution -->
            <ParameterList name="Integrator Selection">
 	     <Parameter name="Integrator Type" type="string" value="Default Integrator"/>

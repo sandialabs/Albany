@@ -35,7 +35,7 @@ namespace QCAD {
     PoissonProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const Teuchos::RCP<ParamLib>& paramLib,
 		   const int numDim_,
-		   const Teuchos::RCP<const Epetra_Comm>& comm_);
+                   Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
     //! Destructor
     ~PoissonProblem();
@@ -89,7 +89,7 @@ namespace QCAD {
     bool periodic;
 
     //! Parameters to use when constructing evaluators
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos::Comm<int> > commT; 
     bool haveSource;
     int numDim;
     double length_unit_in_m;
@@ -116,13 +116,15 @@ namespace QCAD {
 #include "Albany_ProblemUtils.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 
-#include "PHAL_GatherEigenvectors.hpp"
 #include "QCAD_Permittivity.hpp"
 #include "PHAL_SharedParameter.hpp"
 #include "QCAD_PoissonSource.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "QCAD_PoissonResid.hpp"
+#ifdef ALBANY_EPETRA
 #include "QCAD_ResponseSaddleValue.hpp"
+#include "PHAL_GatherEigenvectors.hpp"
+#endif
 
 #include "PHAL_SaveStateField.hpp"
 
@@ -212,6 +214,7 @@ QCAD::PoissonProblem::constructEvaluators(
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
   }
 
+#ifdef ALBANY_EPETRA
   { // Gather Eigenvectors
     RCP<ParameterList> p = rcp(new ParameterList);
     p->set<string>("Eigenvector field name root", "Evec");
@@ -220,6 +223,7 @@ QCAD::PoissonProblem::constructEvaluators(
     ev = rcp(new PHAL::GatherEigenvectors<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+#endif
 
   { // Permittivity
     RCP<ParameterList> p = rcp(new ParameterList);

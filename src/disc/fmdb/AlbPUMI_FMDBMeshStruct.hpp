@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBPUMI_FMDBMESHSTRUCT_HPP
 #define ALBPUMI_FMDBMESHSTRUCT_HPP
 
@@ -31,12 +32,12 @@ namespace AlbPUMI {
 
     FMDBMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~FMDBMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,

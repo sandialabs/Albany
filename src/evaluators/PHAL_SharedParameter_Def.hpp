@@ -30,8 +30,7 @@ SharedParameter(const Teuchos::ParameterList& p)
   // Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); //, Teuchos::null ANDY - why a compiler error with this?
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      paramName, this, paramLib);
+  this->registerSacadoParameter(paramName, paramLib);
 
   this->addEvaluatedField(paramAsField);
   this->setName("Shared Parameter" );

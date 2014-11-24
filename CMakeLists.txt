@@ -46,6 +46,11 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
+LIST(FIND Trilinos_PACKAGE_LIST STKClassic STKClassic_List_ID)
+IF (STKClassic_List_ID GREATER -1)
+  MESSAGE(FATAL_ERROR "STKClassic is no longer used and conflicts with STKIo and STKMesh.")
+ENDIF()
+
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET (INSTALL_ALBANY FALSE)
@@ -141,6 +146,10 @@ ENDIF()
 
 # MPI check -- defaults to TRUE
 # MESSAGE("-- Checking if MPI is enabled in Trilinos:")
+  
+
+ADD_DEFINITIONS(-DPIRO_HAS_TPETRA)
+
 LIST(FIND Trilinos_TPL_LIST MPI MPI_List_ID)
 IF (MPI_List_ID GREATER -1)
   MESSAGE("-- Looking for MPI in Trilinos:    Found, compiling with -DALBANY_MPI")
@@ -151,17 +160,6 @@ ELSE()
   SET(ALBANY_MPI FALSE)
 ENDIF()
 
-
-# MESSAGE("-- Looking for Dakota (via TriKota):")
-LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
-IF (TriKota_List_ID GREATER -1)
-  ADD_DEFINITIONS(-DHAVE_CONFIG_H -DALBANY_DAKOTA)
-  MESSAGE("-- Looking for Dakota via TriKota: Found, compiling with -DALBANY_DAKOTA")
-  SET(ALBANY_DAKOTA TRUE)
-ELSE()
-  MESSAGE("-- Looking for Dakota via TriKota: NOT found.")
-  SET(ALBANY_DAKOTA FALSE)
-ENDIF()
 
 # set optional dependency on SEACAS, for I/O via stk_io
 # MESSAGE("-- Looking for SEACAS:")
@@ -198,11 +196,14 @@ ENDIF()
 LIST(FIND Trilinos_PACKAGE_LIST Zoltan Zoltan_List_ID)
 IF (Zoltan_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_ZOLTAN)
-  MESSAGE("-- Looking for Zoltan:             Found, compiling with -DALBANY_ZOLTAN")
+  ADD_DEFINITIONS(-DALBANY_STK_REBALANCE)
+  MESSAGE("-- Looking for Zoltan:             Found, compiling with -DALBANY_ZOLTAN -DALBANY_STK_REBALANCE")
   SET(ALBANY_ZOLTAN TRUE)
+  SET(ALBANY_STK_REBALANCE TRUE)
 ELSE()
   MESSAGE("-- Looking for Zoltan:             NOT found.")
   SET(ALBANY_ZOLTAN FALSE)
+  SET(ALBANY_STK_REBALANCE FALSE)
 ENDIF()
 
 # set optional dependency on Amesos2, for solving and preconditioning
@@ -257,6 +258,35 @@ ELSE()
   SET(ALBANY_MUELU_EXAMPLES FALSE)
 ENDIF()
 
+# Set optional build of only Albany (Epetra) executable. 
+# Be default, it will be on, so both the Albany and AlbanyT executables will 
+# be built in the Tpetra Albany branch.  The idea is ultimately you'll 
+# be able to build only the AlbanyT executable in which case Epetra will not
+# be needed at all in the Trilinos.  This will be accomplished by ifdef'ing
+# out all the Epetra stuff
+
+OPTION(ENABLE_ALBANY_EPETRA_EXE "Flag to turn on building of Albany Epetra Executable" ON)
+IF (ENABLE_ALBANY_EPETRA_EXE)
+  ADD_DEFINITIONS(-DALBANY_EPETRA)
+  MESSAGE("-- ALBANY_EPETRA_EXE     is Enabled, compiling with -DALBANY_EPETRA")
+  SET(ALBANY_EPETRA TRUE)
+
+  # DAKOTA uses Epetra currently
+  LIST(FIND Trilinos_PACKAGE_LIST TriKota TriKota_List_ID)
+  IF (TriKota_List_ID GREATER -1)
+    ADD_DEFINITIONS(-DHAVE_CONFIG_H -DALBANY_DAKOTA)
+    MESSAGE("-- Looking for Dakota via TriKota: Found, compiling with -DALBANY_DAKOTA")
+    SET(ALBANY_DAKOTA TRUE)
+  ELSE()
+    MESSAGE("-- Looking for Dakota via TriKota: NOT found.")
+    SET(ALBANY_DAKOTA FALSE)
+  ENDIF()
+
+ELSE()
+  MESSAGE("-- ALBANY_EPETRA_EXE     is NOT Enabled.")
+  SET(ALBANY_EPETRA FALSE)
+  SET(ALBANY_DAKOTA FALSE)
+ENDIF()
 
 # Check for optional physics sets in Albany
 MESSAGE("\nChecking which Albany physics sets are enabled:")
@@ -274,13 +304,44 @@ ENDIF()
 
 # set optional dependency on LCM, defaults to Disabled
 OPTION(ENABLE_LCM "Flag to turn on LCM Mechanics source code" OFF)
+OPTION(ENABLE_LCM_TEST_EXES "Flag to turn on LCM Mechanics test executables" ON)
+SET(LCM_TEST_EXES FALSE)
 IF (ENABLE_LCM)
   ADD_DEFINITIONS(-DALBANY_LCM)
   MESSAGE("-- LCM       is Enabled, compiling with -DALBANY_LCM")
   SET(ALBANY_LCM TRUE)
+  IF (ENABLE_LCM_TEST_EXES)
+    SET(LCM_TEST_EXES TRUE)
+  ENDIF()
 ELSE()
   MESSAGE("-- LCM       is NOT Enabled.")
   SET(ALBANY_LCM FALSE)
+ENDIF()
+
+# set optional dependency on ATO, defaults to Disabled
+OPTION(ENABLE_ATO "Flag to turn on ATO source code" OFF)
+IF (ENABLE_ATO)
+  IF (NOT ENABLE_ALBANY_EPETRA_EXE)
+    #todo Make a fatal error?
+    MESSAGE("-- WARNING:  ATO was set to be Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.  For now, turning off ATO.")
+    SET(ALBANY_ATO FALSE)
+  ELSE()
+    ADD_DEFINITIONS(-DALBANY_ATO)
+    MESSAGE("-- ATO       is Enabled, compiling with -DALBANY_ATO")
+    SET(ALBANY_ATO TRUE)
+    IF (NOT ENABLE_LCM)
+      SET(ENABLE_LCM TRUE)
+      ADD_DEFINITIONS(-DALBANY_LCM)
+      MESSAGE("-- ATO  requires LCM...  compiling with -DALBANY_LCM")
+      SET(ALBANY_LCM TRUE)
+    ENDIF()
+  ENDIF()
+  IF (ENABLE_DOTK)
+    ADD_DEFINITIONS(-DWITH_DOTK)
+  ENDIF()
+ELSE()
+  MESSAGE("-- ATO       is NOT Enabled.")
+  SET(ALBANY_ATO FALSE)
 ENDIF()
 
 # set optional dependency on Peridigm peridynamics code, defaults to Disabled
@@ -328,6 +389,16 @@ ENDIF()
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
+  IF (NOT ENABLE_ALBANY_EPETRA_EXE)
+    MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires
+ALBANY_EPETRA_EXE to be turned ON.  Tpetra version of felix_driver is not yet
+available\n")
+  ENDIF()
+  IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE OR ENABLE_DEMO_PDES)
+     MESSAGE("-- WARNING: cism_driver will not link properly when built if
+Albany was built with LCM, LAME, HYDRIDE or ENABLE_DEMO_PDES.  Turn these off to build
+cism_driver.")
+  ENDIF ()
   ADD_DEFINITIONS(-DCISM_HAS_FELIX)
   MESSAGE("-- CISM_INTERFACE     is Enabled, compiling with -DCISM_HAS_FELIX")
   SET(CISM_HAS_FELIX TRUE)
@@ -342,6 +413,26 @@ to be ON\n")
 ELSE()
   MESSAGE("-- CISM_INTERFACE     is NOT Enabled.")
   SET(CISM_HAS_FELIX FALSE)
+ENDIF()
+
+# Set optional build of MPAS Interface for FELIX (Land Ice SciDAC project),
+# defaults to Disabled
+OPTION(ENABLE_MPAS_INTERFACE "Flag to turn on FELIX Source code" OFF)
+IF (ENABLE_MPAS_INTERFACE AND ENABLE_FELIX)
+  ADD_DEFINITIONS(-DMPAS_HAS_FELIX)
+  MESSAGE("-- MPAS_INTERFACE     is Enabled, compiling with -DMPAS_HAS_FELIX")
+  SET(MPAS_HAS_FELIX TRUE)
+  IF (NOT MPAS_INCLUDE_DIR)
+    MESSAGE("\nError:  MPAS_INCLUDE_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- MPAS_INCLUDE_DIR ${MPAS_INCLUDE_DIR}")
+  ENDIF()
+ELSEIF(ENABLE_MPAS_INTERFACE AND (NOT ENABLE_FELIX))
+  MESSAGE(FATAL_ERROR "\nError:  ENABLE_MPAS_INTERFACE requires ENABLE_FELIX
+to be ON\n")
+ELSE()
+  MESSAGE("-- MPAS_INTERFACE     is NOT Enabled.")
+  SET(MPAS_HAS_FELIX FALSE)
 ENDIF()
 
 # Set optional build of Aeras (Atmosphere Dynamics LDRD), defaults to Disabled
@@ -435,6 +526,17 @@ ELSE()
   SET(ALBANY_SEE FALSE)
 ENDIF()
 
+# Set optional dependency on AMP, defaults to Disabled
+OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
+IF (ENABLE_AMP)
+  ADD_DEFINITIONS(-DALBANY_AMP)
+  MESSAGE("-- AMP       is Enabled, compiling with -DALBANY_AMP")
+  SET(ALBANY_AMP TRUE)
+ELSE()
+  MESSAGE("-- AMP       is NOT Enabled.")
+  SET(ALBANY_AMP FALSE)
+ENDIF()
+
 # Set optional build of MOR (Model Order Reduction) defaults to ON
 OPTION(ENABLE_MOR "Flag to turn on MOR Source code" ON)
 IF (ENABLE_MOR)
@@ -477,9 +579,13 @@ IF (ENABLE_64BIT_INT)
   ADD_DEFINITIONS(-DALBANY_64BIT_INT)
   MESSAGE("-- 64 bit GO is Enabled, compiling with -DALBANY_64BIT_INT")
   SET(ALBANY_64BIT_INT TRUE)
+  # Turn off all the old Epetra tests - they will not run in the 64 bit compilation environment
+  #configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CTestCustom.cmake ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ELSE()
   MESSAGE("-- 64 bit GO is NOT Enabled.")
   SET(ALBANY_64BIT_INT FALSE)
+  # Remove the CTestCustom.cmake file in the build directory if it exists
+  #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
 # Set optional dependency on SCOREC FMDB,  optional adaptivity
@@ -511,7 +617,7 @@ IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
   MESSAGE("----> Mesh Model is enabled")
   ADD_DEFINITIONS(-DSCOREC_MESHMODEL)
   SET(ENABLE_MESHMODEL TRUE)
-  IF (EXISTS ${Trilinos_LIB_DIRS}/libspr.a)
+  IF ((EXISTS ${Trilinos_LIB_DIRS}/libspr.a) OR (EXISTS ${Trilinos_LIB_DIRS}/libspr.so))
     MESSAGE("----> SPR is enabled")
     ADD_DEFINITIONS(-DSCOREC_SPR)
     SET(ENABLE_SPR TRUE)
@@ -631,6 +737,34 @@ ELSE (ENABLE_DAKOTA_RESTART_EXAMPLES)
   ENDIF (ALBANY_DAKOTA)
   SET (ALBANY_DAKOTA_RESTART_EXAMPLES FALSE)
 ENDIF (ENABLE_DAKOTA_RESTART_EXAMPLES)
+
+
+IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+  MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
+ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
+
+IF (ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+  MESSAGE("-- WARNING: MOR               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
+ENDIF(ENABLE_MOR AND (NOT ENABLE_ALBANY_EPETRA_EXE))
+
+IF (NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
+  MESSAGE(FATAL_ERROR "\nError:  ENABLE_SG_MP option does not work with ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you want to turn on ENABLE_SG_MP.  Note that SG and MP will only run with Albany executable (not AlbanyT).")
+ENDIF(NOT ENABLE_ALBANY_EPETRA_EXE AND ENABLE_SG_MP)
+
+# Repeat this warning.
+IF (ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
+  MESSAGE("-- WARNING: ATO                is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
+ENDIF(ENABLE_ATO AND (NOT ENABLE_ALBANY_EPETRA_EXE))
+   
+IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
+  MESSAGE(FATAL_ERROR "\nError:  TriKota option does not work with
+ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
+want to useTriKota.")
+ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
+
+IF (ALBANY_SEE AND (NOT ALBANY_SCOREC))
+  MESSAGE("-- WARNING: SEE              is Enabled but SCOREC is not; SEE tests will fail.")
+ENDIF(ALBANY_SEE AND (NOT ALBANY_SCOREC))
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)

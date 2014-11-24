@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBPUMI_FMDBDISCRETIZATION_HPP
 #define ALBPUMI_FMDBDISCRETIZATION_HPP
 
@@ -12,7 +13,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Comm.h"
+#endif
 
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
@@ -20,9 +23,10 @@
 #include "AlbPUMI_FMDBExodus.hpp"
 
 #include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
-
+#ifdef ALBANY_EPETRA
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
+#endif
 
 namespace AlbPUMI {
 
@@ -33,7 +37,7 @@ template<class Output>
     //! Constructor
     FMDBDiscretization(
        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
@@ -55,7 +59,6 @@ template<class Output>
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
 
-
     //! Process coords for ML
     void setupMLCoords();
 
@@ -66,28 +69,27 @@ template<class Output>
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
 
-   //! Get connectivity map from elementGID to workset
+    //! Get connectivity map from elementGID to workset
     Albany::WsLIDList& getElemGIDws() { return elemGIDws; };
 
-    //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
+    //! Get map from (Ws, El, Local Node, Eqn) -> dof LID
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
+    getWsElNodeEqID() const;
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+    //! Get map from (Ws, El, Local Node) -> NodeGID
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
 
-    //! Retrieve coodinate vector (num_used_nodes * 3)
-    Teuchos::ArrayRCP<double>& getCoordinates() const;
+    //! Get coordinate vector (overlap map, interleaved)
+    const Teuchos::ArrayRCP<double>& getCoordinates() const;
+    //! Set coordinate vector (overlap map, interleaved)
+    void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+    //! Zero the solution field, which is probably displacement if this method
+    //! is being called
+    void zeroSolutionField();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
-    // FIXME - Dummy FELIX accessor functions
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
 
     //! Print coords for debugging
     void printCoords() const;
@@ -95,7 +97,7 @@ template<class Output>
    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }
 
-    virtual Teuchos::RCP<const Epetra_Comm> getComm() const { return comm; }
+    virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return commT; }
 
     //! Get number of total DOFs per node
     int getNumEq() const { return neq; }
@@ -103,14 +105,14 @@ template<class Output>
     Albany::StateArrays& getStateArrays() {return stateArrays;};
 
     //! Retrieve Vector (length num worksets) of element block names
-    const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
+    const Albany::WorksetArray<std::string>::type& getWsEBNames() const;
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
     void writeAnySolution(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
-    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -146,6 +148,8 @@ template<class Output>
     // not supported in FMDB now
     void transformMesh(){}
 
+    // this is called with both LO's and GO's to compute a dof number
+    // based on a node number and an equation number
     GO getDOF(const GO inode, const int eq) const
     {
       if (interleavedOrdering) return inode*neq + eq;
@@ -175,21 +179,18 @@ template<class Output>
 
     /* DAI: old Epetra functions still used by parts of Albany/Trilinos
        Remove when we get to full Tpetra */
-    virtual Teuchos::RCP<const Epetra_Map>
-    getMap() const { return map; }
-    virtual Teuchos::RCP<const Epetra_Map>
-    getOverlapMap() const { return overlap_map; }
-    virtual Teuchos::RCP<const Epetra_CrsGraph>
-    getJacobianGraph() const { return graph; }
-    virtual Teuchos::RCP<const Epetra_CrsGraph>
-    getOverlapJacobianGraph() const { return overlap_graph; }
-    virtual Teuchos::RCP<const Epetra_Map>
-    getNodeMap() const {
+#ifdef ALBANY_EPETRA
+    virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
+    virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
+    virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+    virtual Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const { return graph; }
+    virtual Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const { return overlap_graph; }
+    virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const {
       fprintf(stderr,"PUMI Discretization unsupported call getNodeMap\n");
       abort();
       return Teuchos::RCP<const Epetra_Map>();
     }
-    virtual Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+    virtual Teuchos::RCP<Epetra_Vector> getSolutionField(bool overlapped=false) const;
     virtual void setResidualField(const Epetra_Vector& residual);
     virtual void writeSolution(const Epetra_Vector&, const double, const bool);
     void setSolutionField(const Epetra_Vector&) {
@@ -204,12 +205,6 @@ template<class Output>
       fprintf(stderr,"PUMI Discretization unsupported call debugMeshWrite\n");
       abort();
     }
-
-    int getGlobalDOF(const int inode, const int eq) const
-    {
-      return getDOF(inode,eq);
-    }
-
     // Copy field data from Epetra_Vector to APF
     void setField(
         const char* name,
@@ -227,6 +222,37 @@ template<class Output>
         int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         Epetra_Vector& data, bool overlapped) const;
+    //! Get field DOF map
+    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getMap(field_name) not implemented yet");
+    }
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getOverlapMap(field_name) not implemented yet");
+    }
+    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
+    const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getElNodeElID(field_name) not implemented yet");
+    }
+    //! Get field vector from mesh database
+    virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getField(field_vector, field_name) not implemented yet");
+    }
+    //! Set the field vector into mesh database
+    virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
+    }
+#endif
+    //! Get nodal parameters state info struct
+    virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getNodalParameterSIS() not implemented yet");
+    }
 
   private:
 
@@ -286,32 +312,41 @@ template<class Output>
 
     //! Stk Mesh Objects
 
+#ifdef ALBANY_EPETRA
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
+#endif
 
    //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
-    Teuchos::RCP<KokkosNode> nodeT;
 
     //! Node map
     Teuchos::RCP<const Tpetra_Map> node_mapT;
 
     //! Unknown Map
     Teuchos::RCP<const Tpetra_Map> mapT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Map> map;
+#endif
 
     //! Overlapped unknown map, and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Map> overlap_map;
+#endif
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_CrsGraph> graph;
+#endif
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
+#endif
 
     //! Number of equations (and unknowns) per node
     const unsigned int neq;
@@ -324,9 +359,10 @@ template<class Output>
     std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
 
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+    //! Connectivity array [workset, element, local-node] => GID
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;

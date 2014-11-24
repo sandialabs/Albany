@@ -69,12 +69,18 @@ ELSE()
 
 ENDIF()
    
+IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS 
+       interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
        interface_with_mpas/Interface.cpp
    )
+ENDIF()   
+   
 IF(ENABLE_CISM_INTERFACE) 
    SET(SOURCESCISM 
+       interface_with_cism/Albany_CismSTKMeshStruct.cpp
        interface_with_cism/felix_driver.cpp
+       evaluators/FELIX_CismSurfaceGradFO.cpp
    )
 ENDIF()
 
@@ -108,13 +114,18 @@ ENDIF()
        problems/FELIX_StokesL1L2.hpp
   )
   
+
+IF(ENABLE_MPAS_INTERFACE)
   SET(HEADERSMPAS 
        interface_with_mpas/Interface.hpp
-   )
+  )
+ENDIF()
   
 IF (ENABLE_CISM_INTERFACE)
   SET(HEADERSCISM
        interface_with_cism/felix_driver.H
+       evaluators/FELIX_CismSurfaceGradFO_Def.hpp
+       evaluators/FELIX_CismSurfaceGradFO.hpp
    )
 ENDIF()
 
@@ -145,11 +156,19 @@ ENDIF()
 add_library(FELIX ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 set_target_properties(FELIX PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
-add_library(mpasInterface ${Albany_LIBRARY_TYPE} ${SOURCESMPAS} ${HEADERSMPAS})
-set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERSMPAS}")
+IF(ENABLE_MPAS_INTERFACE)
+  add_library(mpasInterface STATIC ${SOURCESMPAS} ${HEADERSMPAS})
+  set_target_properties(mpasInterface PROPERTIES PUBLIC_HEADER "${HEADERSMPAS}")
+  IF (INSTALL_ALBANY)
+    install(TARGETS mpasInterface
+      LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
+      ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
+      PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+  ENDIF()
+ENDIF()
 
 IF (INSTALL_ALBANY)
-  install(TARGETS FELIX mpasInterface EXPORT albany-export
+  install(TARGETS FELIX EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")

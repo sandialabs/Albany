@@ -4,10 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_STATEINFOSTRUCT
 #define ALBANY_STATEINFOSTRUCT
 
-// THis file containts two structs that are containers for the
+// This file containts two structs that are containers for the
 // Albany::Problem to interface to STK::Mesh.
 // (1) The MeshSpecsStruct holds information that is loaded mostly
 //     from STK::metaData, which is needed to create an Albany::Problem.
@@ -31,6 +33,7 @@
 namespace Albany {
 
 typedef shards::Array<double, shards::NaturalOrder> MDArray;
+typedef shards::Array<LO, shards::NaturalOrder> IDArray;
 typedef std::map< std::string, MDArray > StateArray;
 typedef std::vector<StateArray> StateArrayVec;
 
@@ -44,7 +47,7 @@ typedef std::vector<StateArray> StateArrayVec;
                     int cubatureDegree_, std::vector<std::string> nsNames_,
                     std::vector<std::string> ssNames_,
                     int worsetSize_, const std::string ebName_,
-                    const std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
+                    std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
                     const Intrepid::EIntrepidPLPoly cubatureRule_ = Intrepid::PL_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
           nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_),
@@ -57,8 +60,8 @@ typedef std::vector<StateArray> StateArrayVec;
     std::vector<std::string> nsNames;  //Node Sets Names
     std::vector<std::string> ssNames;  //Side Sets Names
     int worksetSize;
-    const std::string ebName;  //Element block name for the EB that this struct corresponds to
-    const std::map<std::string, int>& ebNameToIndex;
+    std::string ebName;  //Element block name for the EB that this struct corresponds to
+    std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
     const Intrepid::EIntrepidPLPoly cubatureRule;
   };
@@ -68,27 +71,29 @@ typedef std::vector<StateArray> StateArrayVec;
 
 struct StateStruct {
 
-  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, QuadPoint};
-  //typedef std::vector<int> FieldDims;
-  //typedef PHX::MDField<double>::size_type size_type;
   typedef std::vector<PHX::DataLayout::size_type> FieldDims;
+  enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, ElemData, NodalDataToElemNode, NodalDistParameter, QuadPoint};
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent):
-        name(name_), responseIDtoRequire(""), output(true),
-	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
-  {};
+  StateStruct (const std::string& name_, MeshFieldEntity ent): 
+        name(name_), responseIDtoRequire(""), output(true), 
+	restartDataAvailable(false), saveOldState(false), meshPart(""),
+        pParentStateStruct(NULL), entity(ent)
+  {}
 
-  StateStruct (const std::string& name_, MeshFieldEntity ent, const FieldDims& dims, const std::string& type):
-        name(name_), responseIDtoRequire(""), output(true), dim(dims), initType(type),
-	restartDataAvailable(false), saveOldState(false), pParentStateStruct(NULL), entity(ent)
-  {};
+  StateStruct (const std::string& name_, MeshFieldEntity ent,
+               const FieldDims& dims, const std::string& type,
+               const std::string& meshPart_=""):
+        name(name_), responseIDtoRequire(""), output(true), dim(dims),
+        initType(type), restartDataAvailable(false), saveOldState(false),
+        meshPart(meshPart_), pParentStateStruct(NULL), entity(ent)
+  {}
 
   void setInitType(const std::string& type) { initType = type; }
   void setInitValue(const double val) { initValue = val; }
   void setFieldDims(const FieldDims& dims) { dim = dims; }
+  void setMeshPart(const std::string& meshPart_) {meshPart = meshPart_;}
 
-  void print(){
-
+  void print() {
     std::cout << "StateInfoStruct diagnostics for : " << name << std::endl;
     std::cout << "Dimensions : " << std::endl;
     for(unsigned int i = 0; i < dim.size(); i++)
@@ -109,6 +114,7 @@ struct StateStruct {
   bool output;
   bool restartDataAvailable;
   bool saveOldState; // Bool that this state is to be copied into name+"_old"
+  std::string meshPart;
   StateStruct *pParentStateStruct; // If this is a copy (name = parentName+"_old"), ptr to parent struct
 
   StateStruct ();
@@ -130,14 +136,13 @@ public:
    const_iterator begin() const { return sis.begin(); }
    const_iterator end() const { return sis.end(); }
 
-// Create storage on access - only if used
-   Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() {return nodal_data_base; }
-
-   Teuchos::RCP<Adapt::NodalDataBase> createNodalDataBase(){
-        if(Teuchos::is_null(nodal_data_base))
-            nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
-        return nodal_data_base;
-   }
+  // Create storage on access - only if used
+  Teuchos::RCP<Adapt::NodalDataBase> createNodalDataBase() {
+    if (Teuchos::is_null(nodal_data_base))
+      nodal_data_base = Teuchos::rcp(new Adapt::NodalDataBase);
+    return nodal_data_base;
+  }
+  Teuchos::RCP<Adapt::NodalDataBase> getNodalDataBase() { return nodal_data_base; }
 
 private:
 

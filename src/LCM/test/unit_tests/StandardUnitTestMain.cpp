@@ -6,6 +6,7 @@
 #include "Teuchos_UnitTestRepository.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 
+bool TpetraBuild = false;
 
 int main( int argc, char* argv[] )
 {

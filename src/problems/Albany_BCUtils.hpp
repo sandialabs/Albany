@@ -62,9 +62,8 @@ struct NeumannTraits {
   enum { typeGCV = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_coord_vector };
   enum { typeGS = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_solution };
   enum { typeTd = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_timedep_bc };
-  enum { typeGBF = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_basalFriction };
-  enum { typeGT = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_thickness };
-  enum { typeGSH = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_gather_surfaceHeight };
+  enum { typeSF = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_load_stateField };
+  enum { typeSNP = PHAL::NeumannFactoryTraits<PHAL::AlbanyTraits>::id_GatherScalarNodalParameter };
 
   static const std::string bcParamsPl;
 

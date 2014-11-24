@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out except SG and MP when ALBANY_EPETRA_EXE is off.
+
 #ifndef ALBANY_KL_RESPONSE_FUNCTION_HPP
 #define ALBANY_KL_RESPONSE_FUNCTION_HPP
 
@@ -13,9 +15,11 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_FancyOStream.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_CrsGraph.h"
+#endif
 
 namespace Albany {
 
@@ -36,11 +40,17 @@ namespace Albany {
     //! Destructor
     virtual ~KLResponseFunction();
 
+#ifdef ALBANY_EPETRA
     //! Setup response function
     virtual void setup() { response->setup(); }
+#endif
+    //! Setup response function
+    virtual void setupT() { response->setupT(); }
 
+#ifdef ALBANY_EPETRA
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
+#endif
     
     //! Get the map associate with this response - Tpetra version
     virtual Teuchos::RCP<const Tpetra_Map> responseMapT() const;
@@ -51,24 +61,17 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const;
 
+#ifdef ALBANY_EPETRA
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
+#endif
     //! Create Tpetra operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
 
     //! \name Deterministic evaluation functions
     //@{
 
-    //! Evaluate responses
-    virtual void evaluateResponse(
-      const double current_time,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      Epetra_Vector& g);
-
-    //! Evaluate responses - Tpetra
+    //! Evaluate responses 
     virtual void evaluateResponseT(
       const double current_time,
       const Tpetra_Vector* xdotT,
@@ -78,25 +81,6 @@ namespace Albany {
       Tpetra_Vector& gT);
     
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void evaluateTangent(
-      const double alpha, 
-      const double beta,
-      const double omega,
-      const double current_time,
-      bool sum_derivs,
-      const Epetra_Vector* xdot,
-      const Epetra_Vector* xdotdot,
-      const Epetra_Vector& x,
-      const Teuchos::Array<ParamVec>& p,
-      ParamVec* deriv_p,
-      const Epetra_MultiVector* Vxdot,
-      const Epetra_MultiVector* Vxdotdot,
-      const Epetra_MultiVector* Vx,
-      const Epetra_MultiVector* Vp,
-      Epetra_Vector* g,
-      Epetra_MultiVector* gx,
-      Epetra_MultiVector* gp);
-
     virtual void evaluateTangentT(
       const double alpha, 
       const double beta,
@@ -116,8 +100,20 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp);
 
+#ifdef ALBANY_EPETRA
+    //! Evaluate distributed parameter derivative dg/dp
+    virtual void evaluateDistParamDeriv(
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Epetra_MultiVector*  dg_dp);
+#endif
+
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-    //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
+#ifdef ALBANY_EPETRA
     virtual void evaluateDerivative(
       const double current_time,
       const Epetra_Vector* xdot,
@@ -130,6 +126,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+#endif
 
     virtual void evaluateDerivativeT(
       const double current_time,
@@ -274,10 +271,12 @@ namespace Albany {
 
   protected:
 
+#ifdef ALBANY_EPETRA
     bool computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
 		   const int NumKL,
 		   Teuchos::Array<double>& evals,
 		   Teuchos::RCP<Epetra_MultiVector>& evecs);
+#endif
 
   protected:
 

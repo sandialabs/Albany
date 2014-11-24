@@ -1,0 +1,113 @@
+
+This file summarizes what is missing in Trilinos / Albany as of Oct. 2014, which 
+prevents running the AlbanyT executable in the Albany Tpetra branch.
+
+General TO DOs: 
+- Turn on SCOREC in nightly tests (Irina)
+- Turn on DAKOTA in nightly tests (Irina).
+- Shorten Aeras tests run with AlbanyT executable, make consistent w/ Albany tests. 
+
+Things that don't work right now if ALBANY_EPETRA_EXE is turned OFF: 
+- QCAD will work only with Albany executable.
+- MOR will work only with Albany executable.
+- SG_MP will work only with Albany executable.
+- ATO will work only with Albany executable. 
+- catalyst - can't build, need ParaView source code? 
+- Teko stuff (uses Epetra) -- do not need? 
+- Albany_Dakota (TriKota).
+- peridigm - have David Littlewood test, for now will not convert to tpetra.
+- some adaptivity stuff will not work.  Check with Glen what.
+- Need to fix Aeras test cases and AlbanyAnalysisT test case which fail if ALBANY_EPETRA_EXE is off.
+- SaveEigenData and related files.
+- Albany_ObserverFactory, Albany_NOXObserver, Albany_RythmosObserver (these are based on EpetraExt; likely can be 
+converted to Thyra, like Albany_PiroObserverT).
+- Lament needs libraries... -- but we decided not to pursue lament (which was templated version of lame). 
+- There are inconsistencies b/w ST and double, GO and int, etc. throughout the code.  Needs to be cleaned up.
+
+
+Question: is there a way to test compilation of Albany tpetra branch with ALBANY_EPETRA_EXE turned off 
+w/o Epetra?  E.g., remove library linking from link line?  Unfortunately it's not possible to 
+turn off Epetra in Trilinos b/c some packages (e.g., Piro, Zoltan2) have dependencies on Epetra.  
+
+Piro: 
+- Need to add Piro_Thyra_RythmosSolver* to piro package of Trilinos.  
+Without this, it is not possible to select specialized time integration schemes
+with the AlbanyT executable.  Albany problems affected: Aeras, ComprNS, LinComprNS, 
+NSRayleighBernard2D, NSVortexShedding2D.
+- Need to add Piro_Thyra_InvertMassMatrixDecorator* to piro package of Trilinos.
+- Need to add Piro_Thyra_VelocityVerletSolver* to piro package of Trilinos.
+This requires extending the Thyra model evaluator to work with xdotdot.
+Albany problems affected: 
+- Need to add Piro_Thyra_TrapezoidRuleSolver* to piro package of Trilinos.
+Albany problems affected: LCM/Dynamics 
+
+
+Ifpack2: 
+- It appears ILU is not available in Ifpack2, just ILUT. (RILUK?)
+
+
+MueLu:
+- The following tests that use MueLu have a seg fault.  Need to figure out what is the problem:
+FELIX/FO_Test/input_fo_confinedShelf.xml (seg fault in parallel only)
+FELIX/FO_Test/input_fo_confinedShelf_depthIntBC.xml (seg fault in parallel only)
+QCAD/Poisson/input_mosdot_3D_tet10.xml (seg fault only with MueLu, not with Ifpack2) 
+- The following examples required "aggregation: local aggregates" and "aggregation: nodes per aggregate" 
+to be implemented in the METIS/ParMETIS interface:
+LCM/MechanicsWithTemperature/ThermalExpansion.xml
+LCM/MechanicsWithTemperature/MechanicsWithTemperature.xml
+- How to get ML symmetric Gauss-Seidel with MueLu?   Affects
+LCM/StabilizedTet4/galerkin.xml
+FELIX/FO_Test/input_fo_confinedShelf.xml
+FELIX/FO_Test/input_fo_confinedShelf_deptIntBC.xml
+
+
+Amesos2: 
+- Amesos2 is not at all hooked up to Stratimikos.  Need to do this.  
+Albany problems affected: LCM/ThermoPoroMechanics3D, LCM/TLPoroElasticity2D, 
+LCM/TLPoroElasticity3D, LCM/UnSatPoroElasticity3D, LCM/MechanicsPorePressure/inputOrthogonalFlow.xml
+
+QCAD: 
+The following need to be filled in for all of QCAD's capabilities to work with the AlbanyT executable.
+- QCAD::CoupledPoissonSchrodinger, QCAD::GenEigensolver and QCAD::Solver classes need to be implemented 
+to use the Thyra::ModelEvuator instead of the Epetra::ExtModelEvaluator.  Once that's done, Albany_SolverFactory.cpp 
+needs to be modified to call these.  Right now there is an error thrown if one tries to call "QCAD Multi-Physics", 
+"Eigensolve" or "QCAD Poisson-Schrodinger" with the AlbanyT executable.
+- QCAD::CoupledPSJacobian, QCAD::CoupledPSPreconditioner, QCAD::MultiSolutionObserver need to be implemented
+with Tpetra instead of Epetra objects.  It appears QCAD::CoupledPSObserver is not used (is that right?) 
+- QCAD::GreensFunctionTunneling response needs to be converted to Tpetra.
+- Irina K. converted QCAD::SaddleValueResponseFunction to Tpetra some time back.  Need to check that the conversions are up-to-date and complete.
+- There is a seg fault when running input_mosdot3D_tet10.xml with MueLu preconditioner (not Ifpack2).  Need to look into why (before 
+checking with MueLu developers, need to check if problem is in Albany or MueLu).
+- I believe NOX::Epetra::Observer does not have a Thyra/Tpetra analog and needs to be 
+implemented in nox, for SaveEigenDataConstructor and NOXObserverConstructor functions to work 
+in Albany::SolverFactory class. 
+
+
+Comments:
+- "NOX" can be called in parameter list under "Piro" instead of "ThyraNOX" when 
+running with the AlbanyT executable (e.g., SteadyHeat2D/inputThyra.xml, TransientHeat2D/inputThyra.xml). 
+- All examples in Albany tpetra branch have been converted to use Belos instead of AztecOO. 
+The latter will not work with the AlbanyT executable if requesting more than 1 
+sensitivity (epetraToThyra and MV dimension != 1 error).  
+- For the following example, needed to lower nonlinear solver tolerance to get same response, due 
+to difference in solve history with MueLu compared to ML: 
+LCM/ThermoElasticity3D/inputT.xml 
+- For the following example, the response changed slightly with AlbanyT executable 
+compared to when run with Albany executable (in 6th decimal point).  Ended up rebaselining 
+example since nothing looked significantly off/different.
+LCM/MechanicsTensileTet10/NotchedTensileTet10T.xml 
+
+
+TO DOs (Irina K., Andy, Andrew Bradley, et al.):
+- Figure out AlbanyAnalysisT executable error.  Test AlbanyAnalysisT executable when code has been built with DAKOTA (Andy).
+- Look into sensitivity / response discrepancies in FELIX/FO_Test and LCM/Mechanics2D 
+- Figure out time growing unbounded issue in LCM/Catalyst, LCM/Elasticity3DPressureBC, LCM/LaplaceBeltrami/2DCylMotion, LCM/StabilizedTet4
+- Convert QCAD suite to use Thyra model evaluator instead of EpetraExt model evaluator.
+- Figure out NaNs in LCM/MechanicsPorePressure/inputMechanics.xml (email Jake?)  
+- Figure out why "Piro Defaults Filename" is not recognized by AlbanyT executable for QCAD/Schrodinger/*qcad.xml problems
+- Anasazi seg fault when running inputT.xml for NSVortexShedding2D problem. 
+- Sensitivities are different when running with Belos comapred to AztecOO for FELIX_Stokes/FO_Test/*interpSurf.xml (with Albany executable)!
+- Different responses when running with Belos than AztecOO for: LinComprNS/input2D_drivenPulse.xml, LinComprNS/input3Dunsteady.xml, 
+LinComprNS/input3DunsteadyNS.xml...
+- Cleanups involving TpetraBuild flag?  
+

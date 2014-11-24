@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
 
 #ifndef ALBANY_ABSTRACTNODEFIELDCONT_HPP
 #define ALBANY_ABSTRACTNODEFIELDCONT_HPP

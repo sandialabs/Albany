@@ -9,7 +9,7 @@
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
-#include <stk_mesh/base/FieldData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
 #include "Piro_PerformSolve.hpp"
 #include "Thyra_EpetraThyraWrappers.hpp"
 #include <stk_io/IossBridge.hpp>
@@ -280,9 +280,9 @@ void velocity_solver_export_2d_data(double const * lowerSurface_F, double const 
 
 	    import2DFields(lowerSurface_F, thickness_F, beta_F);
 
-	    Teuchos::RCP<stk_classic::io::MeshData> mesh_data =Teuchos::rcp(new stk_classic::io::MeshData);
-	    stk_classic::io::create_output_mesh("mesh2D.exo", reducedComm, *meshStruct2D->bulkData, *mesh_data);
-	    stk_classic::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
+	    stk::io::create_output_mesh("mesh2D.exo", reducedComm, *meshStruct2D->bulkData, *mesh_data);
+	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
 
       //  iceProblemPtr->export_2D_fields(elevationData, thicknessData, betaData, indexToVertexID);
 }
@@ -378,12 +378,12 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 	void velocity_solver_export_fo_velocity()
 	{
 		Ioss::Init::Initializer io;
-	    Teuchos::RCP<stk_classic::io::MeshData> mesh_data =Teuchos::rcp(new stk_classic::io::MeshData);
-	//    stk_classic::io::define_output_fields(*mesh_data, *meshStruct->metaData);
-	    stk_classic::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
-	    stk_classic::io::define_output_fields(*mesh_data, *meshStruct->metaData);
-	    stk_classic::io::process_output_request(*mesh_data, *meshStruct->bulkData, 0.0);
-	  //  stk_classic::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
+	    Teuchos::RCP<stk::io::MeshData> mesh_data =Teuchos::rcp(new stk::io::MeshData);
+	//    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+	    stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
+	    stk::io::define_output_fields(*mesh_data, *meshStruct->metaData);
+	    stk::io::process_output_request(*mesh_data, *meshStruct->bulkData, 0.0);
+	  //  stk::io::create_output_mesh("mesh3D.exo", reducedComm, *meshStruct->bulkData, *mesh_data);
 
 	}
 
@@ -874,10 +874,10 @@ void velocity_solver_solve_l1l2(double const * lowerSurface_F, double const * th
 		  {
 			  int ib = (Ordering == 0)*(i%lVertexColumnShift) + (Ordering == 1)*(i/vertexLayerShift);
 			  int il = (Ordering == 0)*(i/lVertexColumnShift) + (Ordering == 1)*(i%vertexLayerShift);
-			  stk_classic::mesh::Entity& node = *meshStruct->bulkData->get_entity(meshStruct->metaData->node_rank(), il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1);
-			  double* coord = stk_classic::mesh::field_data(*meshStruct->coordinates_field, node);
+			  stk::mesh::Entity node = meshStruct->bulkData->get_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1);
+			  double* coord = stk::mesh::field_data(*meshStruct->coordinates_field, node);
 			  coord[2] = elevationData[ib] - levelsNormalizedThickness[nLayers-il]*regulThk[ib];
-			  double* sHeight = stk_classic::mesh::field_data(*meshStruct->surfaceHeight_field, node);
+			  double* sHeight = stk::mesh::field_data(*meshStruct->surfaceHeight_field, node);
 			  sHeight[0] = elevationData[ib];
 		  }
 

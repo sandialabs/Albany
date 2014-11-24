@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_TMPLSTKMESHSTRUCT_HPP
 #define ALBANY_TMPLSTKMESHSTRUCT_HPP
 
@@ -29,14 +30,14 @@ struct EBSpecsStruct {
     typedef traits traits_type;
 
     //! Single element block initializer
-    void Initialize(unsigned int nnelems[], double blLength[]);
+    void Initialize(GO nnelems[], double blLength[]);
 
     //! Multiple element block initializer
     void Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! Query function to determine if a given i, j, k value is in this element block
     // Note that elemNo is the logical lower left corner of the element being queried
-    bool inEB(const std::vector<int>& elemNo){ for(std::size_t i = 0; i < elemNo.size(); i++){
+    bool inEB(const std::vector<GO>& elemNo){ for(std::size_t i = 0; i < elemNo.size(); i++){
           if(elemNo[i] < min[i]) return false;
           if(elemNo[i] >= max[i]) return false;
         }
@@ -44,20 +45,20 @@ struct EBSpecsStruct {
     }
 
     //! Calculate the number of elements in this block on the given dimension
-    int numElems(int dim){ return (max[dim] - min[dim]);}
+    GO numElems(int dim){ return (max[dim] - min[dim]);}
 
     //! Calculate the sizes of the elements in this element block
 //    void calcElemSizes(std::vector<std::vector<double> > &h){ 
     void calcElemSizes(std::vector<double> h[]){ 
 //        for(std::size_t i = 0; i < h.size(); i++)
         for(unsigned i = 0; i < Dim; i++)
-          for(unsigned j = min[i]; j < max[i]; j++)
+          for(GO j = min[i]; j < max[i]; j++)
             h[i][j] = blLength[i] / double(max[i] - min[i]);
     }
 
     std::string name;      // Name of element block
-    int min[traits_type::size];       // Minimum logical coordinate of the block 
-    int max[traits_type::size];       // Maximum logical coordinate of the block 
+    GO min[traits_type::size];       // Minimum logical coordinate of the block 
+    GO max[traits_type::size];       // Maximum logical coordinate of the block 
     double blLength[traits_type::size];      
 
 };
@@ -80,13 +81,13 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     //! Default constructor
     TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                       const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
-                      const Teuchos::RCP<const Epetra_Comm>& comm);
+                      const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~TmplSTKMeshStruct() {};
 
     //! Sets mesh generation parameters
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -103,7 +104,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     private:
 
     //! Build the mesh
-    void buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
  
     //! Build a parameter list that contains valid input parameters
@@ -115,12 +116,12 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
          std::vector<std::string> ssNames,
          std::vector<std::string> nsNames);
 
-    unsigned int nelem[traits_type::size];
+    GO nelem[traits_type::size];
     double scale[traits_type::size];
     unsigned int numEB;
     std::vector<double> x[traits_type::size];
 //    std::vector<std::vector<double> > x;
-    Teuchos::RCP<Epetra_Map> elem_map;
+    Teuchos::RCP<Tpetra_Map> elem_map;
     std::vector<EBSpecsStruct<Dim, traits> > EBSpecs;
 
     bool periodic_x, periodic_y, periodic_z;
@@ -172,22 +173,22 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 
 // Now, the explicit template function declarations (templated on dimension)
 
-  template<> int  EBSpecsStruct<0>::numElems(int i);
+  template<> GO  EBSpecsStruct<0>::numElems(int i);
   template<> void EBSpecsStruct<0>::calcElemSizes(std::vector<double> h[]);
 
-  template<> void EBSpecsStruct<0>::Initialize(unsigned int nelems[], double blLen[]);
+  template<> void EBSpecsStruct<0>::Initialize(GO nelems[], double blLen[]);
   template<> void EBSpecsStruct<0>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
   template<> void EBSpecsStruct<1>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
   template<> void EBSpecsStruct<2>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
   template<> void EBSpecsStruct<3>::Initialize(int i, const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-  template<> void TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
-  template<> void TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
-  template<> void TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
-  template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+  template<> void TmplSTKMeshStruct<0>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  template<> void TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  template<> void TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
+  template<> void TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
   template<> void TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,

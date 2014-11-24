@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
+
 #ifndef ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
 #define ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
 
@@ -29,10 +31,12 @@ namespace AlbPUMI {
     // After mesh modification, need to update the element connectivity and nodal coordinates
     virtual void updateMesh(bool shouldTransferIPData) = 0;
 
+#ifdef ALBANY_EPETRA
     virtual void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename) = 0;
     virtual void debugMeshWrite(const Epetra_Vector& sol, const char* filename) = 0;
+#endif
 
-    virtual Teuchos::RCP<const Epetra_Comm> getComm() const = 0;
+    virtual Teuchos::RCP<const Teuchos_Comm> getComm() const = 0;
 
     virtual void reNameExodusOutput(const std::string& str) = 0;
 

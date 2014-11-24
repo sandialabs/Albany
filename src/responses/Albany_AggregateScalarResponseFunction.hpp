@@ -22,11 +22,16 @@ namespace Albany {
   
     //! Default constructor
     AggregateScalarResponseFunction(
-      const Teuchos::RCP<const Epetra_Comm>& comm,
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
       const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses);
 
+#ifdef ALBANY_EPETRA
     //! Setup response function
     virtual void setup();
+#endif
+
+    //! Setup response function
+    virtual void setupT();
 
     //! Destructor
     virtual ~AggregateScalarResponseFunction();
@@ -34,16 +39,7 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
-    //! Evaluate responses
-    virtual void 
-    evaluateResponse(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Epetra_Vector& g);
-    
-    //! Evaluate responses - Tpetra
+    //! Evaluate response
     virtual void 
     evaluateResponseT(const double current_time,
 		     const Tpetra_Vector* xdotT,
@@ -53,25 +49,6 @@ namespace Albany {
 		     Tpetra_Vector& gT); 
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void 
-    evaluateTangent(const double alpha, 
-		    const double beta,
-		    const double omega,
-		    const double current_time,
-		    bool sum_derivs,
-		    const Epetra_Vector* xdot,
-		    const Epetra_Vector* xdotdot,
-		    const Epetra_Vector& x,
-		    const Teuchos::Array<ParamVec>& p,
-		    ParamVec* deriv_p,
-		    const Epetra_MultiVector* Vxdot,
-		    const Epetra_MultiVector* Vxdotdot,
-		    const Epetra_MultiVector* Vx,
-		    const Epetra_MultiVector* Vp,
-		    Epetra_Vector* g,
-		    Epetra_MultiVector* gx,
-		    Epetra_MultiVector* gp);
-
     virtual void 
     evaluateTangentT(const double alpha, 
 		    const double beta,
@@ -90,7 +67,8 @@ namespace Albany {
 		    Tpetra_Vector* g,
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
-   
+  
+#ifdef ALBANY_EPETRA 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -104,6 +82,7 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dxdotdot,
 		     Epetra_MultiVector* dg_dp);
+#endif
     
     virtual void 
     evaluateGradientT(const double current_time,
@@ -119,6 +98,19 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dpT);
 
   private:
+
+#ifdef ALBANY_EPETRA
+    //! Evaluate Multi Vector distributed derivative dg_dp
+    virtual void
+    evaluateDistParamDeriv(
+         const double current_time,
+         const Epetra_Vector* xdot,
+         const Epetra_Vector* xdotdot,
+         const Epetra_Vector& x,
+         const Teuchos::Array<ParamVec>& param_array,
+         const std::string& dist_param_name,
+         Epetra_MultiVector* dg_dp);
+#endif
 
   private:
 

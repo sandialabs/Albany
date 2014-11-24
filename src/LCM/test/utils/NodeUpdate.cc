@@ -10,6 +10,8 @@
 #include "topology/Topology.h"
 #include "topology/Topology_Utils.h"
 
+bool TpetraBuild = false;
+
 int main(int ac, char* av[])
 {
 
@@ -62,8 +64,8 @@ int main(int ac, char* av[])
   LCM::Topology
     topology(input_file,output_file);
 
-  stk_classic::mesh::BulkData&
-    bulkData = *(topology.getBulkData());
+  stk::mesh::BulkData&
+    bulkData = topology.get_bulk_data();
 
   // Node rank should be 0 and element rank should be equal to the dimension of the
   // system (e.g. 2 for 2D meshes and 3 for 3D meshes)
@@ -77,8 +79,8 @@ int main(int ac, char* av[])
   // Start the mesh update process
   // Will fully separate the elements in the mesh by replacing element nodes
   // Get a vector containing the element set of the mesh.
-  std::vector<stk_classic::mesh::Entity*> element_lst;
-  stk_classic::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
+  std::vector<stk::mesh::Entity> element_lst;
+  stk::mesh::get_entities(bulkData, stk::topology::ELEMENT_RANK, element_lst);
 
   // Modifies mesh for graph algorithm
   // Function must be called each time before there are changes to the mesh
@@ -115,7 +117,7 @@ int main(int ac, char* av[])
   //   Redefine connectivity and coordinate arrays with updated values.
   //   Mesh must only have relations between elements and nodes.
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
-    topology.getDiscretization();
+    topology.get_discretization();
   Albany::STKDiscretization & stk_discretization =
     static_cast<Albany::STKDiscretization &>(*discretization_ptr);
 
@@ -126,11 +128,13 @@ int main(int ac, char* av[])
   //   disconnected nature of the final mesh
 
   // Create a vector to hold displacement values for nodes
-  Teuchos::RCP<const Epetra_Map> dof_map = stk_discretization.getMap();
-  Epetra_Vector displacement = Epetra_Vector(*(dof_map),true);
+  Teuchos::RCP<const Tpetra_Map> dof_mapT = stk_discretization.getMapT();
+  Teuchos::RCP<Tpetra_Vector> displacementT = Teuchos::rcp(new Tpetra_Vector(dof_mapT));
+  Teuchos::ArrayRCP<ST> displacementT_nonconstView = displacementT->get1dViewNonConst();
+
 
   // Add displacement to nodes
-  stk_classic::mesh::get_entities(bulkData,topology.getCellRank(),element_lst);
+  stk::mesh::get_entities(bulkData, stk::topology::ELEMENT_RANK, element_lst);
 
   // displacement scale factor
   double alpha = 0.5;
@@ -138,19 +142,19 @@ int main(int ac, char* av[])
   for (int i = 0; i < element_lst.size(); ++i){
     std::vector<double> centroid(3);
     std::vector<double> disp(3);
-    stk_classic::mesh::PairIterRelation relations =
-      element_lst[i]->relations(LCM::NODE_RANK);
+    stk::mesh::Entity const* relations = bulkData.begin_nodes(element_lst[i]);
+    int const num_relations = bulkData.num_nodes(element_lst[i]);
     // Get centroid of the element
-    for (int j = 0; j < relations.size(); ++j){
-      stk_classic::mesh::Entity & node = *(relations[j].entity());
-      int id = static_cast<int>(node.identifier());
+    for (int j = 0; j < num_relations; ++j){
+      stk::mesh::Entity node = relations[j];
+      int id = static_cast<int>(bulkData.identifier(node));
       centroid[0] += coordinates[id*3-3];
       centroid[1] += coordinates[id*3-2];
       centroid[2] += coordinates[id*3-1];
     }
-    centroid[0] /= relations.size();
-    centroid[1] /= relations.size();
-    centroid[2] /= relations.size();
+    centroid[0] /= num_relations;
+    centroid[1] /= num_relations;
+    centroid[2] /= num_relations;
 
     // Determine displacement
     for (int j = 0; j < 3; ++j){
@@ -158,24 +162,24 @@ int main(int ac, char* av[])
     }
 
     // Add displacement to nodes
-    for (int j = 0; j < relations.size(); ++j){
-      stk_classic::mesh::Entity & node = *(relations[j].entity());
-      int id = static_cast<int>(node.identifier());
-      displacement[id*3-3] += disp[0];
-      displacement[id*3-2] += disp[1];
-      displacement[id*3-1] += disp[2];
+    for (int j = 0; j < num_relations; ++j){
+      stk::mesh::Entity node = relations[j];
+      int id = static_cast<int>(bulkData.identifier(node));
+      displacementT_nonconstView[id*3-3] += disp[0];
+      displacementT_nonconstView[id*3-2] += disp[1];
+      displacementT_nonconstView[id*3-1] += disp[2];
     }
   }
 
-  stk_discretization.setResidualField(displacement);
+  stk_discretization.setResidualFieldT(*displacementT);
 
-  Teuchos::RCP<Epetra_Vector>
-    solution_field = stk_discretization.getSolutionField();
+  Teuchos::RCP<Tpetra_Vector>
+    solution_fieldT = stk_discretization.getSolutionFieldT();
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
 //  stk_discretization.outputToExodus(*solution_field, 1.0);
-  stk_discretization.writeSolution(*solution_field, 1.0);
+  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   return 0;
 

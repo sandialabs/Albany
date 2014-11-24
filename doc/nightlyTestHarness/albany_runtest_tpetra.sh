@@ -28,6 +28,6 @@ cd $ALBDIR/build
 echo "------------------CTEST----------------------" \
      > $ALBOUTDIR/albany_runtests.out
 
-/usr/local/bin/ctest >> $ALBOUTDIR/albany_runtests.out
+ctest >> $ALBOUTDIR/albany_runtests.out
 
 echo >> $ALBOUTDIR/albany_runtests.out

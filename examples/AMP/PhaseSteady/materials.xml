@@ -1,0 +1,47 @@
+<ParameterList>
+
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="Lower_Region">
+      <Parameter name="material" type="string" value="Solid" />
+    </ParameterList>
+    <ParameterList name="Upper_Region">
+      <Parameter name="material" type="string" value="Powder" />
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Solid">
+      <Parameter name="Category" type="string" value="Solid" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10"/>
+      </ParameterList>
+      <ParameterList name="Rho Cp">
+        <Parameter name="Rho Cp Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100.0"/>
+      </ParameterList>
+      <ParameterList name="Source">
+        <Parameter name="Phase Source Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1000.0"/>
+      </ParameterList>
+    </ParameterList>
+
+    <ParameterList name="Powder">
+      <Parameter name="Category" type="string" value="Powder" />
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="100.0"/>
+      </ParameterList> 
+      <ParameterList name="Rho Cp">
+        <Parameter name="Rho Cp Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="10.0"/>
+      </ParameterList>
+      <ParameterList name="Source">
+        <Parameter name="Phase Source Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1000.0"/>
+      </ParameterList>
+    </ParameterList>
+
+  </ParameterList>
+</ParameterList>

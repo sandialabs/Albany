@@ -20,13 +20,15 @@ template<typename EvalT, typename Traits>
 XZHydrostatic_UTracer<EvalT, Traits>::
 XZHydrostatic_UTracer(const Teuchos::ParameterList& p,
               const Teuchos::RCP<Aeras::Layouts>& dl) :
-  U        (p.get<std::string> ("Velx"),    dl->node_scalar_level),
+  PiVelx   (p.get<std::string> ("PiVelx"),  dl->node_vector_level),
   Tracer   (p.get<std::string> ("Tracer"),  dl->node_scalar_level),
-  UTracer  (p.get<std::string> ("UTracer"), dl->node_scalar_level),
+  UTracer  (p.get<std::string> ("UTracer"), dl->node_vector_level),
+
+  numDims    (dl->node_qp_gradient        ->dimension(3)),
   numNodes ( dl->node_scalar             ->dimension(1)),
   numLevels( dl->node_scalar_level       ->dimension(2))
 {
-  this->addDependentField(U);
+  this->addDependentField(PiVelx);
   this->addDependentField(Tracer);
   this->addEvaluatedField(UTracer);
 
@@ -39,8 +41,8 @@ void XZHydrostatic_UTracer<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(U,fm);
-  this->utils.setFieldData(Tracer,fm);
+  this->utils.setFieldData(PiVelx, fm);
+  this->utils.setFieldData(Tracer, fm);
   this->utils.setFieldData(UTracer,fm);
 }
 
@@ -49,12 +51,10 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_UTracer<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int cell=0; cell < workset.numCells; ++cell) {
-    for (int node=0; node < numNodes; ++node) {
-      for (int level=0; level < numLevels; ++level) {
-        UTracer(cell,node,level) = U(cell,node,level)*Tracer(cell,node,level);
-      }
-    }
-  }
+  for (int cell=0; cell < workset.numCells; ++cell) 
+    for (int node=0; node < numNodes; ++node) 
+      for (int level=0; level < numLevels; ++level) 
+        for (int dim=0; dim < numDims; ++dim) 
+          UTracer(cell,node,level,dim) = PiVelx(cell,node,level,dim)*Tracer(cell,node,level);
 }
 }

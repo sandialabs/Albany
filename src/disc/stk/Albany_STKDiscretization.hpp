@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_STKDISCRETIZATION_HPP
 #define ALBANY_STKDISCRETIZATION_HPP
 
@@ -13,14 +14,16 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-#include "Epetra_Comm.h"
 
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 
+#ifdef ALBANY_EPETRA
+#include "Epetra_Comm.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
+#endif
 
 #include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
 
@@ -32,21 +35,45 @@
 #include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldTraits.hpp>
 #ifdef ALBANY_SEACAS
-  #include <stk_io/MeshReadWriteUtils.hpp>
+  #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
 
 namespace Albany {
 
-/*
-=======
-  struct MeshGraph {
+#ifdef ALBANY_EPETRA
+  typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
 
-       std::vector<std::size_t> start;
-       std::vector<std::size_t> adj;
-
+  struct DOFsStruct {
+    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<Epetra_Map> overlap_map;
+    NodalDOFManager dofManager;
+    NodalDOFManager overlap_dofManager;
+    std::vector< std::vector<LO> > wsElNodeEqID_rawVec;
+    std::vector<IDArray> wsElNodeEqID;
+    std::vector< std::vector<GO> > wsElNodeID_rawVec;
+    std::vector<GIDArray> wsElNodeID;
   };
-*/
+
+  struct NodalDOFsStructContainer {
+    typedef std::map<std::pair<std::string,int>,  DOFsStruct >  MapOfDOFsStructs;
+
+    MapOfDOFsStructs mapOfDOFsStructs;
+    std::map<std::string, MapOfDOFsStructs::const_iterator> fieldToMap;
+    const DOFsStruct& getDOFsStruct(const std::string& field_name) const {return fieldToMap.find(field_name)->second->second;}; //TODO handole errors
+
+    void addEmptyDOFsStruct(const std::string& field_name, const std::string& meshPart, int numComps){
+    
+      if(numComps != 1)
+        mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,1),DOFsStruct()));
+
+      fieldToMap[field_name] = mapOfDOFsStructs.insert(make_pair(make_pair(meshPart,numComps),DOFsStruct())).first;
+    }
+    
+  };
+#endif // ALBANY_EPETRA
 
   class STKDiscretization : public Albany::AbstractDiscretization {
   public:
@@ -54,35 +81,55 @@ namespace Albany {
     //! Constructor
     STKDiscretization(
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
-       const Teuchos::RCP<const Epetra_Comm>& comm,
+       const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
     ~STKDiscretization();
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+#endif
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+#endif
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
+#ifdef ALBANY_EPETRA
+    //! Get field DOF map
+    Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
+
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
+#endif
+
+#ifdef ALBANY_EPETRA
     //! Get Epetra Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
+#endif
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
+#endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
+#ifdef ALBANY_EPETRA
     //! Get Epetra Node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
+    //! Get overlapped Node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+#endif
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
 
@@ -97,49 +144,62 @@ namespace Albany {
     WsLIDList& getElemGIDws() { return elemGIDws; };
 
     //! Get map from (Ws, El, Local Node) -> NodeLID
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type& getWsElNodeEqID() const;
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type& getWsElNodeEqID() const;
 
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type& getWsElNodeID() const;
+    //! Get map from (Ws, Local Node) -> NodeGID
+    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& getWsElNodeID() const;
+
+#ifdef ALBANY_EPETRA
+    //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
+    const std::vector<IDArray>& getElNodeEqID(const std::string& field_name) const
+        {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
+#endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
-    Teuchos::ArrayRCP<double>& getCoordinates() const;
+    const Teuchos::ArrayRCP<double>& getCoordinates() const;
+    void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+    void zeroSolutionField();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getSurfaceHeight() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getTemperature() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getBasalFriction() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type& getThickness() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getFlowFactor() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getSurfaceVelocity() const;
-    const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getVelocityRMS() const;
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const;
 
     //! Print the coordinates for debugging
 
     void printCoords() const;
 
+    //! Get stateArrays
     Albany::StateArrays& getStateArrays() {return stateArrays;}
+
+    //! Get nodal parameters state info struct
+    const Albany::StateInfoStruct& getNodalParameterSIS() const
+      {return stkMeshStruct->getFieldContainer()->getNodalParameterSIS();}
 
     //! Retrieve Vector (length num worksets) of element block names
     const Albany::WorksetArray<std::string>::type&  getWsEBNames() const;
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
+#ifdef ALBANY_EPETRA
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
+#endif
    
    //Tpetra version of writeSolution  
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
- 
-    Teuchos::RCP<Epetra_Vector> getSolutionField() const;
+
+#ifdef ALBANY_EPETRA 
+    Teuchos::RCP<Epetra_Vector> getSolutionField(const bool overlapped=false) const;
+#endif
     //Tpetra analog
-    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT() const;
+    Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistory(int maxStepCount) const;
     void getSolutionFieldHistory(Epetra_MultiVector &result) const;
 
     void setResidualField(const Epetra_Vector& residual);
+#endif
     //Tpetra analog
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
@@ -157,7 +217,7 @@ namespace Albany {
     double restartDataTime() const {return stkMeshStruct->restartDataTime();}
 
     //! After mesh modification, need to update the element connectivity and nodal coordinates
-    void updateMesh();
+    void updateMesh(bool shouldTransferIPData = false);
 
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
     void transformMesh();
@@ -178,7 +238,7 @@ namespace Albany {
     int getOverlapDOF(const int inode, const int eq) const;
 
     //! Locate nodal dofs using global indexing
-    int getGlobalDOF(const int inode, const int eq) const;
+    GO getGlobalDOF(const GO inode, const int eq) const;
 
 
     //! used when NetCDF output on a latitude-longitude grid is requested.
@@ -189,9 +249,9 @@ namespace Albany {
       std::pair<unsigned, unsigned> latitude_longitude;
     };
 
-    const stk_classic::mesh::fem::FEMMetaData& getSTKMetaData(){ return metaData; }
+    const stk::mesh::MetaData& getSTKMetaData(){ return metaData; }
 
-    const stk_classic::mesh::BulkData& getSTKBulkData(){ return bulkData; }
+    const stk::mesh::BulkData& getSTKBulkData(){ return bulkData; }
 
   private:
 
@@ -201,13 +261,21 @@ namespace Albany {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
-    inline int gid(const stk_classic::mesh::Entity& node) const;
-    inline int gid(const stk_classic::mesh::Entity* node) const;
+    inline GO gid(const stk::mesh::Entity node) const;
 
+#ifdef ALBANY_EPETRA
     // Copy values from STK Mesh field to given Epetra_Vector
-    void getSolutionField(Epetra_Vector &result) const;
+    void getSolutionField(Epetra_Vector &result, bool overlapped=false) const;
+#endif
     // Copy values from STK Mesh field to given Tpetra_Vector
-    void getSolutionFieldT(Tpetra_Vector &resultT) const;
+    void getSolutionFieldT(Tpetra_Vector &resultT, bool overlapped=false) const;
+
+#ifdef ALBANY_EPETRA
+    //! Copy field from STK Mesh field to given Epetra_Vector
+    void getField(Epetra_Vector &field_vector, const std::string& field_name) const;
+
+    // Copy field vector into STK Mesh field
+    void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped=false);
 
     Teuchos::RCP<Epetra_MultiVector> getSolutionFieldHistoryImpl(int stepCount) const;
     void getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const;
@@ -215,17 +283,24 @@ namespace Albany {
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
+#endif
     //Tpetra version of agove
     void setSolutionFieldT(const Tpetra_Vector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
+#ifdef ALBANY_EPETRA
     void setOvlpSolutionField(const Epetra_Vector& soln);
+#endif
     //Tpetra version of above
     void setOvlpSolutionFieldT(const Tpetra_Vector& solnT);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
+
+#ifdef ALBANY_EPETRA
+    void computeNodalEpetraMaps(bool overlapped);
+#endif
 
     //! Process STK mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
@@ -245,9 +320,13 @@ namespace Albany {
     void setupExodusOutput();
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
+#ifdef ALBANY_EPETRA
     int processNetCDFOutputRequest(const Epetra_Vector&);
+#endif
+    int processNetCDFOutputRequestT(const Tpetra_Vector&);
+
     //! Find the local side id number within parent element
-    unsigned determine_local_side_id( const stk_classic::mesh::Entity & elem , stk_classic::mesh::Entity & side );
+    unsigned determine_local_side_id( const stk::mesh::Entity elem , stk::mesh::Entity side );
     //! Call stk_io for creating exodus output file
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
@@ -260,25 +339,34 @@ namespace Albany {
 
 
     //! Stk Mesh Objects
-    stk_classic::mesh::fem::FEMMetaData& metaData;
-    stk_classic::mesh::BulkData& bulkData;
+    stk::mesh::MetaData& metaData;
+    stk::mesh::BulkData& bulkData;
 
+#ifdef ALBANY_EPETRA
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
+#endif
 
-   //! Tpetra communicator and Kokkos node
+    //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
-    Teuchos::RCP<KokkosNode> nodeT;
 
-    //! Node map
+    //! Unknown map and node map
     Teuchos::RCP<const Tpetra_Map> node_mapT; 
-
-    //! Unknown Map
     Teuchos::RCP<const Tpetra_Map> mapT; 
 
-    //! Overlapped unknown map, and node map
+    //! Overlapped unknown map and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT; 
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT; 
+
+#ifdef ALBANY_EPETRA
+    Teuchos::RCP<Epetra_Map> node_map;
+    Teuchos::RCP<Epetra_Map> map;
+    Teuchos::RCP<Epetra_Map> overlap_node_map;
+    Teuchos::RCP<Epetra_Map> overlap_map;
+
+    NodalDOFsStructContainer nodalDOFsStructContainer;
+#endif
+
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT; 
@@ -303,23 +391,17 @@ namespace Albany {
     std::vector<Albany::SideSetList> sideSets;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >::type wsElNodeEqID;
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
 
     //Albany::WorksetArray<Kokkos::View<int****, PHX::Device> >::type wsElNodeEqID_kokkos;
 
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type wsElNodeID;
+    //! Connectivity array [workset, element, local-node] => GID
+    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;
 
     mutable Teuchos::ArrayRCP<double> coordinates;
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type sHeight;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
@@ -327,24 +409,25 @@ namespace Albany {
 
     // States: vector of length worksets of a map from field name to shards array
     Albany::StateArrays stateArrays;
+    std::vector<std::vector<std::vector<double> > > nodesOnElemStateVec;
 
     //! list of all owned nodes, saved for setting solution
-    std::vector< stk_classic::mesh::Entity * > ownednodes ;
-    std::vector< stk_classic::mesh::Entity * > cells ;
+    std::vector< stk::mesh::Entity > ownednodes ;
+    std::vector< stk::mesh::Entity > cells ;
 
     //! list of all overlap nodes, saved for getting coordinates for mesh motion
-    std::vector< stk_classic::mesh::Entity * > overlapnodes ;
+    std::vector< stk::mesh::Entity > overlapnodes ;
 
     //! Number of elements on this processor
     int numOwnedNodes;
     int numOverlapNodes;
-    int numGlobalNodes;
+    GO numGlobalNodes;
 
     // Needed to pass coordinates to ML.
     Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
 
     int netCDFp;
-    int netCDFOutputRequest;
+    size_t netCDFOutputRequest;
     std::vector<int> varSolns;
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<interp> > >::type interpolateData;
 
@@ -355,15 +438,16 @@ namespace Albany {
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS
-    stk_classic::io::MeshData* mesh_data;
+    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
     int outputInterval;
+
+    size_t outputFileIdx;
 #endif
     bool interleavedOrdering;
 
   private:
 
-//    MeshGraph nodalGraph;
     Teuchos::RCP<Tpetra_CrsGraph> nodalGraph;
 
 
@@ -377,32 +461,25 @@ namespace Albany {
        return -1;
     }
 
-    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO> &vector) {
-
-      for(std::size_t i=0; i < vector.size(); i++) {
-        if(vector[i] == value)
+    ssize_t in_list(const std::size_t value, const Teuchos::Array<GO>& vector) {
+      for (std::size_t i=0; i < vector.size(); i++)
+        if (vector[i] == value)
           return i;
-      }
-       return -1;
-    }
-
-    ssize_t in_list(const std::size_t value, std::vector<std::size_t> vector) {
-
-      std::size_t count = vector.size();
-      for(std::size_t i=0; i < count; i++) {
-        if(vector[i] == value)
-          return i;
-      }
       return -1;
     }
 
-    ssize_t entity_in_list(const stk_classic::mesh::Entity *value, std::vector<stk_classic::mesh::Entity *> vector) {
-
-      std::size_t count = vector.size();
-      for(std::size_t i=0; i < count; i++) {
-        if(vector[i]->identifier() == value->identifier())
+    ssize_t in_list(const std::size_t value, const std::vector<std::size_t>& vector) {
+      for (std::size_t i=0; i < vector.size(); i++)
+        if (vector[i] == value)
           return i;
-      }
+      return -1;
+    }
+
+    ssize_t entity_in_list(const stk::mesh::Entity& value,
+                           const std::vector<stk::mesh::Entity>& vec) {
+      for (std::size_t i = 0; i < vec.size(); i++)
+        if (bulkData.identifier(vec[i]) == bulkData.identifier(value))
+          return i;
       return -1;
     }
 

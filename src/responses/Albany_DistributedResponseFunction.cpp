@@ -6,6 +6,9 @@
 
 #include "Albany_DistributedResponseFunction.hpp"
 
+//IK, 9/13/14: Epetra ifdef'ed out except if SG and MP if ALBANY_EPETRA_EXE set to off.
+
+#ifdef ALBANY_EPETRA
 void
 Albany::DistributedResponseFunction::
 evaluateDerivative(
@@ -26,6 +29,7 @@ evaluateDerivative(
     dg_dx.getLinearOp().get(), dg_dxdot.getLinearOp().get(),
     dg_dxdotdot.getLinearOp().get(), dg_dp.getMultiVector().get());
 }
+#endif
 
 void
 Albany::DistributedResponseFunction::

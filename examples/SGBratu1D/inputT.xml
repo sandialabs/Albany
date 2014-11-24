@@ -32,7 +32,7 @@
     <Parameter name="1D Elements" type="int" value="100"/>
     <Parameter name="Workset Size" type="int" value="10"/>
     <Parameter name="Method" type="string" value="STK1D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="sgb.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="sgb_tpetra.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>

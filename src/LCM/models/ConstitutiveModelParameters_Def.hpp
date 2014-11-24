@@ -202,7 +202,6 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-    // FIXME deal with Arrhenius temperature dependence, too
     if (have_temperature_) {
       if (temp_type_map_[it->first] == "Linear" ) {
         RealType dPdT = dparam_dtemp_map_[it->first];
@@ -244,7 +243,14 @@ ConstitutiveModelParameters<EvalT, Traits>::getValue(const std::string &n)
     if (n == Albany::strint(n + " KL Random Variable", i))
       return rv_map_[it2->first][i];
   }
+
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Constituitive model " << n << " not supported in getValue" << std::endl);
+
+  // Need to return something here or the Clang compiler complains a couple screenfuls of commentary
+  return dummy;
+
 }
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModelParameters<EvalT, Traits>::
@@ -259,7 +265,7 @@ parseParameters(const std::string &n,
   if (type == "Constant") {
     is_constant_map_.insert(std::make_pair(n, true));
     constant_value_map_.insert(std::make_pair(n, pl.get("Value", 1.0)));
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(n, this, paramLib);
+    this->registerSacadoParameter(n, paramLib);
     if (have_temperature_) {
       if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Linear") {
@@ -296,7 +302,7 @@ parseParameters(const std::string &n,
     rv_map_.insert(std::make_pair(n, Teuchos::Array<ScalarT>(num_KL)));
     for (int i(0); i < num_KL; ++i) {
       std::string ss = Albany::strint(n + " KL Random Variable", i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv_map_[n][i] = pl.get(ss, 0.0);
     }
   }

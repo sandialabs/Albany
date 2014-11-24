@@ -33,4 +33,8 @@ fi
 echo "    Finished Albany cmake, starting make" ; date
 
 #/usr/bin/make -j 8 > $ALBOUTDIR/albany_make.out 2>&1
-/usr/bin/make -j 4 > $ALBOUTDIR/albany_make.out 2>&1
+/usr/bin/make -j 8 > $ALBOUTDIR/albany_make.out 2>&1
+
+echo "    Finished Albany make, starting install" ; date
+/usr/bin/make install > $ALBOUTDIR/albany_install.out 2>&1
+echo "    Finished Albany install" ; date

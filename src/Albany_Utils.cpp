@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include <cstdlib>
@@ -11,6 +12,7 @@
   // Start of Utils to do with Communicators
 #ifdef ALBANY_MPI
 
+#ifdef ALBANY_EPETRA
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) {
     const Epetra_MpiComm& emc = dynamic_cast<const Epetra_MpiComm&>(ec);
     return emc.Comm();
@@ -37,11 +39,28 @@
     return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
   }
 
+  Teuchos::RCP<Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const Epetra_Comm& ec) {
+    const Epetra_MpiComm *mpiComm =
+               dynamic_cast<const Epetra_MpiComm *>(&ec);
+    return  Albany::createTeuchosCommFromMpiComm(mpiComm->Comm());
+  }
+#endif
+
+
+  Albany_MPI_Comm Albany::getMpiCommFromTeuchosComm(Teuchos::RCP<const Teuchos_Comm>& tc) {
+    Teuchos::Ptr<const Teuchos::MpiComm<int> > mpiComm =
+               Teuchos::ptr_dynamic_cast<const Teuchos::MpiComm<int> >(Teuchos::ptrFromRef(*tc));
+    return *mpiComm->getRawMpiComm();
+
+  }
+
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::MpiComm<int>(Teuchos::opaqueWrapper(mc)));
   }
 
 #else
+
+#ifdef ALBANY_EPETRA
 
   const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) { return 1; }
 
@@ -58,11 +77,14 @@
   Teuchos::RCP<const Teuchos_Comm> Albany::createTeuchosCommFromEpetraComm(const RCP<const Epetra_Comm>& ec) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
+#endif
 
   Teuchos::RCP<Teuchos::Comm<int> > Albany::createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc) {
     return Teuchos::rcp(new Teuchos::SerialComm<int>());
   }
+
 #endif
+
   // End of Utils to do with Communicators
 
   std::string Albany::strint(const std::string s, const int i) {
@@ -127,7 +149,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names, 
+  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<std::string>& names,
         const Teuchos::RCP<const Tpetra_Vector>& vec){
 
     Teuchos::ArrayRCP<const double> vv = vec->get1dView();
@@ -141,7 +163,7 @@
 
   }
 
-  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names, 
+  void Albany::printTpetraVector(std::ostream &os, const Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >& names,
         const Teuchos::RCP<const Tpetra_MultiVector>& vec){
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > mvv = vec->get2dView();

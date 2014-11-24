@@ -11,7 +11,7 @@
 
 QCAD::MaterialDatabase::
 MaterialDatabase( const std::string& inputFile,
-		  const Teuchos::RCP<const Epetra_Comm>& ecomm)
+                  Teuchos::RCP<const Teuchos::Comm<int> >& tcomm) 
   : data_("Material Parameters")
 {
   if(inputFile.length() == 0) {
@@ -22,10 +22,10 @@ MaterialDatabase( const std::string& inputFile,
     return;
   }
 
-  const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*ecomm);
-  Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
+  //const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*ecomm);
+  //Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
 
-  if(ecomm->MyPID() == 0)
+  if(tcomm->getRank() == 0)
     std::cout << "Initializing material database from " << inputFile << std::endl;
 
   Teuchos::updateParametersFromXmlFileAndBroadcast(inputFile, Teuchos::ptrFromRef(data_), *tcomm);

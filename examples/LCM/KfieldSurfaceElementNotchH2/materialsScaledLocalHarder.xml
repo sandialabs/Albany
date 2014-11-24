@@ -10,6 +10,7 @@
       <Parameter name="Volume Average Pressure" type="bool" value="true"/>
       <!-- Output Flags -->
       <Parameter name="Output Trapped_Concentration" type="bool" value="true"/>
+      <Parameter name="Output Total_Concentration" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="block_2">
       <Parameter name="material" type="string" value="Fast Metal" />
@@ -88,7 +89,6 @@
         <Parameter name="Saturation Exponent" type="double" value="1.0"/>>
         <!-- Output Flags -->
         <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-        <Parameter name="Output Total Concentration" type="bool" value="true"/>
         <Parameter name="Output eqps" type="bool" value="true"/>
     </ParameterList>
    

@@ -31,7 +31,7 @@ namespace QCAD {
     SchrodingerProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 		       const Teuchos::RCP<ParamLib>& paramLib,
 		       const int numDim_,
-		       const Teuchos::RCP<const Epetra_Comm>& comm_);
+                       Teuchos::RCP<const Teuchos::Comm<int> >& commT_); 
 
     //! Destructor
     ~SchrodingerProblem();
@@ -79,7 +79,7 @@ namespace QCAD {
     void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
 
   protected:
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos::Comm<int> > commT; 
     bool havePotential;
     double energy_unit_in_eV, length_unit_in_m;
     std::string potentialFieldName;
@@ -106,7 +106,9 @@ namespace QCAD {
 
 #include "QCAD_SchrodingerPotential.hpp"
 #include "QCAD_SchrodingerResid.hpp"
+#ifdef ALBANY_EPETRA
 #include "QCAD_ResponseSaddleValue.hpp"
+#endif
 
 
 template <typename EvalT>
@@ -195,7 +197,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
   }
 
    // Create Material Database
-   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+   RCP<QCAD::MaterialDatabase> materialDB = rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   if (havePotential) { // If a "Potential" sublist is specified in the input, add a potential energy term
 
@@ -221,7 +223,8 @@ QCAD::SchrodingerProblem::constructEvaluators(
       fm0.template registerEvaluator<EvalT>(ev);
     }
     else {
-      
+     
+#ifdef ALBANY_EPETRA 
       //Case when we load the potential from an aux data vector (on the nodes)
       // to the potential field (on the quad points).  Note this requires the
       // "Type" parameter of the "Potential" input file sublist to be "From Aux Data Vector"
@@ -249,6 +252,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
 
       ev = rcp(new PHAL::DOFInterpolation<EvalT,AlbanyTraits>(*p,dl));
       fm0.template registerEvaluator<EvalT>(ev);
+#endif
     }
   }
 

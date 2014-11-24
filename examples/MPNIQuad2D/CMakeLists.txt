@@ -1,13 +1,21 @@
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
-add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+endif()
+if (ALBANY_64BIT_INT)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_64.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_64.xml COPYONLY)
+  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT_64.xml)
+else ()
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+  add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+endif ()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)

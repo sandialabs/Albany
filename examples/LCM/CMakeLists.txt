@@ -6,8 +6,11 @@
 
 ###################
 set(PartitionTest.exe ${Albany_BINARY_DIR}/src/LCM/PartitionTest)
+set(PartitionTestT.exe ${Albany_BINARY_DIR}/src/LCM/PartitionTestT)
 set(Subdivision.exe   ${Albany_BINARY_DIR}/src/LCM/Subdivision)
+set(SubdivisionT.exe   ${Albany_BINARY_DIR}/src/LCM/SubdivisionT)
 set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
+set(MPST.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulatorT)
 
 IF(ALBANY_SEACAS)
   add_subdirectory(CohesiveElement)
@@ -24,10 +27,14 @@ IF(ALBANY_SEACAS)
   add_subdirectory(MechanicsRigidBody)
   add_subdirectory(Dynamics)
   add_subdirectory(Elasticity2DTraction)
+  add_subdirectory(QuasiStaticElasticityMM3D)
   add_subdirectory(Partition)
   add_subdirectory(MaterialPointSimulator)
   add_subdirectory(Subdivision)
   add_subdirectory(BoreDemo)
+  IF (ALBANY_EPETRA)
+    add_subdirectory(HMC)
+  ENDIF()
 ENDIF()
 
 add_subdirectory(Catalyst)
@@ -74,7 +81,6 @@ IF(ALBANY_SEACAS OR ALBANY_SCOREC)
 ENDIF()
 
 IF(ALBANY_SCOREC)
-  add_subdirectory(ElastMeshAdapt3D)
   add_subdirectory(SCOREC)
 ENDIF()
 

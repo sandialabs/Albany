@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #ifndef SURFACE_COHESIVE_RESIDUAL_HPP
-#define SURFACE_COHESIVE_RESIDUALHPP
+#define SURFACE_COHESIVE_RESIDUAL_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"

@@ -4,7 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include <Teuchos_Array.hpp>
+#ifdef ALBANY_EPETRA
 #include <Epetra_LocalMap.h>
+#endif
 #include "Albany_Utils.hpp"
 #include "QCAD_SaddleValueResponseFunction.hpp"
 #include "Teuchos_CommHelpers.hpp"
@@ -12,6 +14,7 @@
 #include "Tpetra_Map.hpp"
 #include "QCAD_GreensFunctionTunneling.hpp"
 #include <fstream>
+#include "Petra_Converters.hpp" 
 
 //! Helper function prototypes
 namespace QCAD 
@@ -19,8 +22,10 @@ namespace QCAD
   bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
   bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
 
+#ifdef ALBANY_EPETRA
   void gatherVector(std::vector<double>& v, std::vector<double>& gv,
 		    const Epetra_Comm& comm);
+#endif
   void gatherVectorT(std::vector<double>& v, std::vector<double>& gv,
 		    Teuchos::RCP<const Teuchos::Comm<int> >& commT);
   void getOrdering(const std::vector<double>& v, std::vector<int>& ordering);
@@ -38,8 +43,7 @@ SaddleValueResponseFunction(
   const Teuchos::RCP<Albany::StateManager>& stateMgr,
   Teuchos::ParameterList& params) : 
   Albany::FieldManagerScalarResponseFunction(application, problem, ms, stateMgr),
-  numDims(problem->spatialDimension()),
-  comm(application->getComm() )
+  numDims(problem->spatialDimension())
 {
   TEUCHOS_TEST_FOR_EXCEPTION (numDims < 2 || numDims > 3, Teuchos::Exceptions::InvalidParameter, std::endl 
 	      << "Saddle Point not implemented for " << numDims << " dimensions." << std::endl); 
@@ -47,7 +51,10 @@ SaddleValueResponseFunction(
   params.set("Response Function", Teuchos::rcp(this,false));
 
   Teuchos::Array<double> ar;
-
+  Teuchos::RCP<const Teuchos_Comm> commT = application->getComm(); 
+#ifdef ALBANY_EPETRA
+  comm = Albany::createEpetraCommFromTeuchosComm(commT);
+#endif
   imagePtSize   = params.get<double>("Image Point Size", 0.01);
   nImagePts     = params.get<int>("Number of Image Points", 10);
   maxTimeStep   = params.get<double>("Max Time Step", 1.0);
@@ -215,77 +222,6 @@ numResponses() const
 
 void
 QCAD::SaddleValueResponseFunction::
-evaluateResponse(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Epetra_Vector& g)
-{
-  int dbMode = (comm->MyPID() == 0) ? debugMode : 0;
-  if(comm->MyPID() != 0) outputFilename = ""; //Only root process outputs to files
-  if(comm->MyPID() != 0) debugFilename = ""; //Only root process outputs to files
-  
-  TEUCHOS_TEST_FOR_EXCEPTION (nImagePts < 2, Teuchos::Exceptions::InvalidParameter, std::endl 
-	      << "Saddle Point needs more than 2 image pts (" << nImagePts << " given)" << std::endl); 
-
-  // Clear output file if we're not told to append output
-  if( outputFilename.length() > 0) {
-    std::fstream out;
-    if(appendOutput) {
-      out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-      out << std::endl << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl; // to separate new data
-    }
-    else out.open(outputFilename.c_str(), std::fstream::out);
-    out.close();
-  }
-
-  // Find saddle point in stages:
- 
-  //  1) Initialize image points
-  initializeImagePoints(current_time, xdot, x, p, g, dbMode);
-  
-  if(maxIterations > 0) {
-    //  2) Perform Nudged Elastic Band (NEB) algorithm on image points (iterative)
-    doNudgedElasticBand(current_time, xdot, x, p, g, dbMode);
-  }
-  else {
-    // If no NEB iteractions, choose center image point as saddle point
-    int nFirstLeg = (nImagePts+1)/2, iCenter = nFirstLeg-1;
-    iSaddlePt = iCenter; //don't need to check for positive weight at this point
-  }
-
-  //  3) Perform level-set method in a radius around saddle image point
-  doLevelSet(current_time, xdot, x, p, g, dbMode);
-
-  //  4) Get data at "final points" which can be more dense than neb image points, if desired
-  if(maxIterations > 0 && maxFinalPts > 0) {
-    initializeFinalImagePoints(current_time, xdot, x, p, g, dbMode);
-    getFinalImagePointValues(current_time, xdot, x, p, g, dbMode);
-
-    // append "final point" data to output
-    if( outputFilename.length() > 0) {
-      std::fstream out; double pathLength = 0.0;
-      out.open(outputFilename.c_str(), std::fstream::out | std::fstream::app);
-      out << std::endl << std::endl << "% Saddle point path - interpolated 'final' points" << std::endl;
-      out << "% index xCoord yCoord value pathLength pointRadius" << std::endl;
-      for(std::size_t i=0; i<finalPts.size(); i++) {
-	out << i << " " << finalPts[i].coords[0] << " " << finalPts[i].coords[1] 
-	    << " " << finalPts[i].value << " " << pathLength << " " << finalPts[i].radius << std::endl;
-	if(i < (finalPts.size()-1)) pathLength += finalPts[i].coords.distanceTo(finalPts[i+1].coords);
-      }
-      out.close();
-    }
-  }
-
-  //  5) Fill response (g-vector) with values near the highest image point (computes current if desired)
-  fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
-
-  return;
-}
-
-void
-QCAD::SaddleValueResponseFunction::
 evaluateResponseT(const double current_time,
 		     const Tpetra_Vector* xdotT,
 		     const Tpetra_Vector* xdotdotT,
@@ -329,6 +265,8 @@ fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
   return;
 }
 
+
+#ifdef ALBANY_EPETRA
 void
 QCAD::SaddleValueResponseFunction::
 initializeImagePoints(const double current_time,
@@ -349,8 +287,18 @@ initializeImagePoints(const double current_time,
   imagePts[nImagePts-1].init(numDims, imagePtSize);
 
   mode = "Point location";
-  Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-	current_time, xdot, NULL, x, p, g);
+  
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+
+  //convert xdot_poisson and x_poisson to Tpetra  
+  Teuchos::RCP<const Tpetra_Vector> xT, xdotT; 
+  xT  = Petra::EpetraVector_To_TpetraVectorConst(x, commT); 
+  if (xdot != NULL)  
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  Teuchos::RCP<Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorNonConst(g, commT); 
+
+  Albany::FieldManagerScalarResponseFunction::evaluateResponseT(
+	current_time, xdotT.get(), NULL, *xT, p, *gT);
   if(dbMode > 2) std::cout << "Saddle Point:   -- done evaluation" << std::endl;
 
   if(beginRegionType == "Point") {
@@ -449,14 +397,15 @@ initializeImagePoints(const double current_time,
     vGrads.clear();
 
     mode = "Accumulate all field data";
-    Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				    current_time, xdot, NULL, x, p, g);
+    Albany::FieldManagerScalarResponseFunction::evaluateResponseT(
+				    current_time, xdotT.get(), NULL, *xT, p, *gT);
     //No MPI here - each proc only holds all of it's worksets -- not other procs worksets
   }
 
 
   return;
 }
+#endif
 
 void
 QCAD::SaddleValueResponseFunction::
@@ -599,6 +548,7 @@ initializeImagePointsT(const double current_time,
   }
 }
 
+#ifdef ALBANY_EPETRA
 void
 QCAD::SaddleValueResponseFunction::
 initializeFinalImagePoints(const double current_time,
@@ -1009,6 +959,7 @@ doNudgedElasticBand(const double current_time,
   if(debugFilename.length() > 0) fDebug.close();
   return;
 }
+#endif
 
 void
 QCAD::SaddleValueResponseFunction::
@@ -1276,6 +1227,7 @@ doNudgedElasticBandT(const double current_time,
   return;
 }
 
+#ifdef ALBANY_EPETRA
 void
 QCAD::SaddleValueResponseFunction::
 fillSaddlePointData(const double current_time,
@@ -1291,8 +1243,18 @@ fillSaddlePointData(const double current_time,
   }
 
   mode = "Fill saddle point";
-  Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				   current_time, xdot, NULL, x, p, g);
+  
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+
+  //convert xdot_poisson and x_poisson to Tpetra  
+  Teuchos::RCP<const Tpetra_Vector> xT, xdotT; 
+  xT  = Petra::EpetraVector_To_TpetraVectorConst(x, commT); 
+  if (xdot != NULL)  
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  Teuchos::RCP<Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorNonConst(g, commT); 
+
+  Albany::FieldManagerScalarResponseFunction::evaluateResponseT(
+				   current_time, xdotT.get(), NULL, *xT, p, *gT);
   if(dbMode > 1) std::cout << "Saddle Point:  Done filling saddle point data" << std::endl;
 
   //Note: MPI: saddle weight is already summed in evaluator's 
@@ -1325,7 +1287,7 @@ fillSaddlePointData(const double current_time,
 
   return;
 }
-
+#endif
 
 void
 QCAD::SaddleValueResponseFunction::
@@ -1378,6 +1340,7 @@ fillSaddlePointDataT(const double current_time,
   return;
 }
 
+#ifdef ALBANY_EPETRA
 void
 QCAD::SaddleValueResponseFunction::
 doLevelSet(const double current_time,
@@ -1395,8 +1358,18 @@ doLevelSet(const double current_time,
   for(std::size_t k=0; k<numDims; k++) vlsCoords[k].clear();
 
   mode = "Level set data collection";
-  Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				   current_time, xdot, NULL, x, p, g);
+  
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+
+  //convert xdot_poisson and x_poisson to Tpetra  
+  Teuchos::RCP<const Tpetra_Vector> xT, xdotT; 
+  xT  = Petra::EpetraVector_To_TpetraVectorConst(x, commT); 
+  if (xdot != NULL)  
+    xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+  Teuchos::RCP<Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorNonConst(g, commT); 
+
+  Albany::FieldManagerScalarResponseFunction::evaluateResponseT(
+				   current_time, xdotT.get(), NULL, *xT, p, *gT);
 
   //! Gather data from different processors
   std::vector<double> allFieldVals;
@@ -1469,6 +1442,7 @@ doLevelSet(const double current_time,
 
   return;
 }
+#endif
 
 void
 QCAD::SaddleValueResponseFunction::
@@ -1564,6 +1538,7 @@ doLevelSetT(const double current_time,
   return;
 }
 
+#ifdef ALBANY_EPETRA
 //! Level-set Algorithm for finding saddle point
 int QCAD::SaddleValueResponseFunction::
 FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
@@ -1706,6 +1681,7 @@ FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
   // nMaxTrees < 2 - so we need more trees.  Could try to increase cutoffDistance and/or cutoffFieldVal.
   return 2;
 }
+#endif
 
 int QCAD::SaddleValueResponseFunction::
 FindSaddlePoint_LevelSetT(std::vector<double>& allFieldVals,
@@ -2007,55 +1983,6 @@ double QCAD::SaddleValueResponseFunction::getCurrent
 
 void
 QCAD::SaddleValueResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-
-  // Require that g be computed to get tangent info 
-  if(g != NULL) {
-    
-    // HACK: for now do not evaluate response when tangent is requested,
-    //   as it is assumed that evaluateResponse has already been called
-    //   directly or by evaluateGradient.  This prevents repeated calling 
-    //   of evaluateResponse within the dg/dp loop of Albany::ModelEvaluator's
-    //   evalModel(...) function.  matchesCurrentResults(...) would be able to 
-    //   determine if evaluateResponse needs to be run, but 
-    //   Albany::AggregateScalarReponseFunction does not copy from global g 
-    //   to local g so the g parameter passed to this function will always 
-    //   be zeros when used in an aggregate response fn.  Change this?
-
-    // Evaluate response g and run algorithm (if it hasn't run already)
-    //if(!matchesCurrentResults(*g)) 
-    //  evaluateResponse(current_time, xdot, x, p, *g);
-
-    mode = "Fill saddle point";
-    Albany::FieldManagerScalarResponseFunction::evaluateTangent(
-                alpha, beta, omega, current_time, sum_derivs, xdot, xdotdot,
-  	        x, p, deriv_p, Vxdot, Vxdotdot, Vx, Vp, g, gx, gp);
-  }
-  else {
-    if (gx != NULL) gx->PutScalar(0.0);
-    if (gp != NULL) gp->PutScalar(0.0);
-  }
-}
-
-void
-QCAD::SaddleValueResponseFunction::
 evaluateTangentT(const double alpha, 
 		const double beta,
 		const double omega,
@@ -2104,39 +2031,6 @@ evaluateTangentT(const double alpha,
 
 void
 QCAD::SaddleValueResponseFunction::
-evaluateGradient(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 ParamVec* deriv_p,
-		 Epetra_Vector* g,
-		 Epetra_MultiVector* dg_dx,
-		 Epetra_MultiVector* dg_dxdot,
-		 Epetra_MultiVector* dg_dxdotdot,
-		 Epetra_MultiVector* dg_dp)
-{
-
-  // Require that g be computed to get gradient info 
-  if(g != NULL) {
-
-    // Evaluate response g and run algorithm (if it hasn't run already)
-    if(!matchesCurrentResults(*g)) 
-      evaluateResponse(current_time, xdot, xdotdot, x, p, *g);
-
-    mode = "Fill saddle point";
-    Albany::FieldManagerScalarResponseFunction::evaluateGradient(
-	   current_time, xdot, xdotdot, x, p, deriv_p, g, dg_dx, dg_dxdot, dg_dxdotdot, dg_dp);
-  }
-  else {
-    if (dg_dx != NULL)    dg_dx->PutScalar(0.0);
-    if (dg_dxdot != NULL) dg_dxdot->PutScalar(0.0);
-    if (dg_dp != NULL)    dg_dp->PutScalar(0.0);
-  }
-}
-
-void
-QCAD::SaddleValueResponseFunction::
 evaluateGradientT(const double current_time,
 		 const Tpetra_Vector* xdotT,
 		 const Tpetra_Vector* xdotdotT,
@@ -2168,6 +2062,8 @@ evaluateGradientT(const double current_time,
 
 }
 
+#ifdef ALBANY_EPETRA
+//IK, 10/9/14: are these functions even needed...
 void 
 QCAD::SaddleValueResponseFunction::
 postProcessResponses(const Epetra_Comm& comm_, const Teuchos::RCP<Epetra_Vector>& g)
@@ -2179,7 +2075,6 @@ QCAD::SaddleValueResponseFunction::
 postProcessResponseDerivatives(const Epetra_Comm& comm_, const Teuchos::RCP<Epetra_MultiVector>& gt)
 {
 }
-
 
 void
 QCAD::SaddleValueResponseFunction::
@@ -2219,8 +2114,17 @@ getImagePointValues(const double current_time,
   }
   else {
     mode = "Collect image point data";
-    Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				     current_time, xdot, NULL, x, p, g);
+    Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+
+    //convert xdot_poisson and x_poisson to Tpetra  
+    Teuchos::RCP<const Tpetra_Vector> xT, xdotT; 
+    xT  = Petra::EpetraVector_To_TpetraVectorConst(x, commT); 
+    if (xdot != NULL)  
+      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+    Teuchos::RCP<Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorNonConst(g, commT); 
+
+    Albany::FieldManagerScalarResponseFunction::evaluateResponseT(
+				     current_time, xdotT.get(), NULL, *xT, p, *gT);
   }
 
   //MPI -- sum weights, value, and gradient for each image pt
@@ -2280,8 +2184,17 @@ getFinalImagePointValues(const double current_time,
   }
   else {
     mode = "Collect final image point data";
-    Albany::FieldManagerScalarResponseFunction::evaluateResponse(
-				     current_time, xdot, NULL, x, p, g);
+    Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(comm);
+
+    //convert xdot_poisson and x_poisson to Tpetra  
+    Teuchos::RCP<const Tpetra_Vector> xT, xdotT; 
+    xT  = Petra::EpetraVector_To_TpetraVectorConst(x, commT); 
+    if (xdot != NULL)  
+      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, commT);
+    Teuchos::RCP<Tpetra_Vector> gT = Petra::EpetraVector_To_TpetraVectorNonConst(g, commT); 
+
+    Albany::FieldManagerScalarResponseFunction::evaluateResponseT(
+				     current_time, xdotT.get(), NULL, *xT, p, *gT);
   }
 
   //MPI -- sum weights, value, and gradient for each image pt
@@ -2306,7 +2219,7 @@ getFinalImagePointValues(const double current_time,
 
   return;
 }
-
+#endif
 
 
 void
@@ -2692,6 +2605,7 @@ getSaddlePointPosition() const
   return imagePts[iSaddlePt].coords.data();
 }
 
+#ifdef ALBANY_EPETRA
 bool QCAD::SaddleValueResponseFunction::
 matchesCurrentResults(Epetra_Vector& g) const
 {
@@ -2708,6 +2622,7 @@ matchesCurrentResults(Epetra_Vector& g) const
 
   return true;
 }
+#endif
 
 bool QCAD::SaddleValueResponseFunction::
 matchesCurrentResultsT(Tpetra_Vector& gT) const
@@ -3033,6 +2948,7 @@ std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebImagePt& np)
 //! Helper functions
 /*************************************************************/
 
+#ifdef ALBANY_EPETRA
 void QCAD::gatherVector(std::vector<double>& v, std::vector<double>& gv, const Epetra_Comm& comm_)
 {
   double *pvec, zeroSizeDummy = 0;
@@ -3049,24 +2965,21 @@ void QCAD::gatherVector(std::vector<double>& v, std::vector<double>& gv, const E
   Epetra_Import import(lomap,map);
   egv.Import(ev, import, Insert);
 }
+#endif
 
 void QCAD::gatherVectorT(std::vector<double>& v, std::vector<double>& gv, Teuchos::RCP<const Teuchos::Comm<int> >& commT)
 {
   double *pvec, zeroSizeDummy = 0;
   pvec = (v.size() > 0) ? &v[0] : &zeroSizeDummy;
 
-  //create KokkosNode object
-  Teuchos::ParameterList kokkosNodeParams;
-  Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
-
   Tpetra::global_size_t numGlobalElements = Teuchos::OrdinalTraits<size_t>::invalid(); 
   Tpetra::LocalGlobal lg = Tpetra::GloballyDistributed;
-  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(numGlobalElements, 0, commT, lg, nodeT));
+  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(numGlobalElements, 0, commT, lg));
   Teuchos::ArrayView<ST> pvecView = Teuchos::arrayView(pvec, v.size());  
   Teuchos::RCP<Tpetra_Vector> evT = Teuchos::rcp(new Tpetra_Vector(mapT, pvecView)); 
   int  N = mapT->getGlobalNumElements();
   lg = Tpetra::LocallyReplicated;
-  Teuchos::RCP<Tpetra_Map> lomapT = Teuchos::rcp(new Tpetra_Map(N, 0, commT, lg, nodeT)); //local map
+  Teuchos::RCP<Tpetra_Map> lomapT = Teuchos::rcp(new Tpetra_Map(N, 0, commT, lg)); //local map
 
   gv.resize(N);
   pvec = (gv.size() > 0) ? &gv[0] : &zeroSizeDummy;

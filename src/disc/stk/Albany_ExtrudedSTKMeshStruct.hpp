@@ -20,12 +20,12 @@ namespace Albany {
 
     ExtrudedSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     ~ExtrudedSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& comm,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -44,11 +44,11 @@ namespace Albany {
     Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
 
     inline void computeMap();
-    inline int prismType(long long int const* prismVertexMpasIds, int& minIndex);
-    inline void tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4]);
-    void read2DFileSerial(std::string &fname, Epetra_Vector& content, const Teuchos::RCP<const Epetra_Comm>& comm);
-    void readFileSerial(std::string &fname, std::vector<Epetra_Vector>& contentVec, const Teuchos::RCP<const Epetra_Comm>& comm);
-    void readFileSerial(std::string &fname, const Epetra_Map& map_serial, const Epetra_Map& map, const Epetra_Import& importOperator, std::vector<Epetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Epetra_Comm>& comm);
+    inline int prismType(GO const* prismVertexMpasIds, int& minIndex);
+    inline void tetrasFromPrismStructured (GO const* prismVertexMpasIds, GO const* prismVertexGIds, GO tetrasIdsOnPrism[][4]);
+    void read2DFileSerial(std::string &fname, Teuchos::RCP<Tpetra_Vector> content, const Teuchos::RCP<const Teuchos_Comm>& comm);
+    void readFileSerial(std::string &fname, std::vector<Tpetra_Vector>& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm);
+    void readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm);
 
 
     Teuchos::RCP<const Teuchos::ParameterList>
@@ -66,7 +66,7 @@ namespace Albany {
 
 
 
-  int ExtrudedSTKMeshStruct::prismType(long long int const* prismVertexMpasIds, int& minIndex)
+  int ExtrudedSTKMeshStruct::prismType(GO const* prismVertexMpasIds, int& minIndex)
   {
     int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
     minIndex = std::min_element (prismVertexMpasIds, prismVertexMpasIds + 3) - prismVertexMpasIds;
@@ -77,7 +77,7 @@ namespace Albany {
     return v1  > v2;
   }
 
-   void ExtrudedSTKMeshStruct::tetrasFromPrismStructured (long long int const* prismVertexMpasIds, long long int const* prismVertexGIds, long long int tetrasIdsOnPrism[][4])
+   void ExtrudedSTKMeshStruct::tetrasFromPrismStructured (GO const* prismVertexMpasIds, GO const* prismVertexGIds, GO tetrasIdsOnPrism[][4])
     {
         int PrismVerticesMap[6][6] = {{0, 1, 2, 3, 4, 5}, {1, 2, 0, 4, 5, 3}, {2, 0, 1, 5, 3, 4}, {3, 5, 4, 0, 2, 1}, {4, 3, 5, 1, 0, 2}, {5, 4, 3, 2, 1, 0}};
 
@@ -93,7 +93,7 @@ namespace Albany {
         int minIndex;
         int prismType = this->prismType(prismVertexMpasIds, minIndex);
 
-        long long int reorderedPrismLIds[6];
+        GO reorderedPrismLIds[6];
 
         for (int ii = 0; ii < 6; ii++)
         {

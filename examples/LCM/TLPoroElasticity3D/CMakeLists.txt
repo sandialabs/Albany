@@ -6,11 +6,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
-
 # 3. Limit the time the test can run
 if(ALBANY_CTEST_TIMEOUT)
   set_tests_properties (${testName} PROPERTIES TIMEOUT ${ALBANY_CTEST_TIMEOUT})
+endif()
 endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists

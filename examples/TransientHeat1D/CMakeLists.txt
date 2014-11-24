@@ -5,7 +5,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+endif()
+
+if (ALBANY_IFPACK2) 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
+add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+endif()
 
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)
@@ -51,5 +59,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputAnalysis.xml)
   endif ()
 
   get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR}_Analysis NAME)
-  add_test(${testName} ${AlbanyAnalysis.exe})
+  if (ALBANY_EPETRA) 
+    add_test(${testName} ${AlbanyAnalysis.exe})
+  endif()
 endif ()

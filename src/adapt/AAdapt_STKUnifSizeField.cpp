@@ -6,7 +6,6 @@
 
 #include "AAdapt_STKUnifSizeField.hpp"
 #include "Albany_AbstractSTKFieldContainer.hpp"
-#include "Epetra_Import.h"
 
 /*
  * Utility functions (from stk_adapt/regression_tests/RegressionTestLocalRefiner.cpp)
@@ -65,8 +64,8 @@ static void project_point_to_plane(double plane_point[3], double plane_normal[3]
 
 
 bool
-AAdapt::STKUnifRefineField::operator()(const stk_classic::mesh::Entity& element,
-                                       stk_classic::mesh::FieldBase* field,  const stk_classic::mesh::BulkData& bulkData) {
+AAdapt::STKUnifRefineField::operator()(const stk::mesh::Entity element,
+                                       stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
 
   /*
     double plane_point[3] = {2, 0, 0};
@@ -75,20 +74,21 @@ AAdapt::STKUnifRefineField::operator()(const stk_classic::mesh::Entity& element,
   double plane_point[3] = {0, 0.7, 0};
   double plane_normal[3] = {0, 1, 0};
 
-  const stk_classic::mesh::PairIterRelation elem_nodes = element.relations(stk_classic::mesh::fem::FEMMetaData::NODE_RANK);
+  const stk::mesh::PairIterRelation elem_nodes = element.relations(stk::topology::NODE_RANK);
   unsigned num_node = elem_nodes.size();
-  double* f_data = stk_classic::percept::PerceptMesh::field_data_entity(field, element);
-  Albany::AbstractSTKFieldContainer::VectorFieldType* coordField = m_eMesh.get_coordinates_field();
+  double* f_data = stk::percept::PerceptMesh::field_data_entity(field, element);
+  Albany::AbstractSTKFieldContainer::VectorFieldType* coordField = 
+    m_eMesh.get_coordinates_field();
 
   bool found = false;
 
   for(unsigned inode = 0; inode < num_node - 1; inode++) {
-    stk_classic::mesh::Entity& node_i = * elem_nodes[ inode ].entity();
-    double* coord_data_i = stk_classic::percept::PerceptMesh::field_data(coordField, node_i);
+    stk::mesh::Entity node_i = * elem_nodes[ inode ].entity();
+    double* coord_data_i = stk::percept::PerceptMesh::field_data(coordField, node_i);
 
     for(unsigned jnode = inode + 1; jnode < num_node; jnode++) {
-      stk_classic::mesh::Entity& node_j = * elem_nodes[ jnode ].entity();
-      double* coord_data_j = stk_classic::percept::PerceptMesh::field_data(coordField, node_j);
+      stk::mesh::Entity node_j = * elem_nodes[ jnode ].entity();
+      double* coord_data_j = stk::percept::PerceptMesh::field_data(coordField, node_j);
 
       double dot_0 = plane_dot_product(plane_point, plane_normal, coord_data_i);
       double dot_1 = plane_dot_product(plane_point, plane_normal, coord_data_j);
@@ -115,19 +115,19 @@ AAdapt::STKUnifRefineField::operator()(const stk_classic::mesh::Entity& element,
 }
 
 bool
-AAdapt::STKUnifUnrefineField::operator()(const stk_classic::mesh::Entity& element,
-    stk_classic::mesh::FieldBase* field,  const stk_classic::mesh::BulkData& bulkData) {
+AAdapt::STKUnifUnrefineField::operator()(const stk::mesh::Entity element,
+    stk::mesh::FieldBase* field,  const stk::mesh::BulkData& bulkData) {
 
-  const stk_classic::mesh::PairIterRelation elem_nodes = element.relations(stk_classic::mesh::fem::FEMMetaData::NODE_RANK);
+  const stk::mesh::PairIterRelation elem_nodes = element.relations(stk::topology::NODE_RANK);
   unsigned num_node = elem_nodes.size();
-  double* f_data = stk_classic::percept::PerceptMesh::field_data_entity(field, element);
+  double* f_data = stk::percept::PerceptMesh::field_data_entity(field, element);
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordField = m_eMesh.get_coordinates_field();
 
   bool found = true;
 
   for(unsigned inode = 0; inode < num_node; inode++) {
-    stk_classic::mesh::Entity& node = * elem_nodes[ inode ].entity();
-    double* coord_data = stk_classic::percept::PerceptMesh::field_data(coordField, node);
+    stk::mesh::Entity node = * elem_nodes[ inode ].entity();
+    double* coord_data = stk::percept::PerceptMesh::field_data(coordField, node);
 
     if(coord_data[0] < 0.0 || coord_data[1] < 0.0) { // || coord_data[2] > 1.1)
       found = false;

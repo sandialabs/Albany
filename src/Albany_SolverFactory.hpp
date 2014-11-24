@@ -14,19 +14,23 @@
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_VectorBase.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "EpetraExt_ModelEvaluator.h"
+#include "Epetra_Vector.h"
+#include "Stokhos_EpetraVectorOrthogPoly.hpp"
+#endif
+
 #include "Thyra_ModelEvaluator.hpp"
 #include "Thyra_ResponseOnlyModelEvaluatorBase.hpp"
 #include "Teuchos_SerialDenseVector.hpp"
-#include "Epetra_Vector.h"
-
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
 
 #include "Teuchos_SerialDenseVector.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
 
+#ifdef ALBANY_EPETRA
 #include "AAdapt_AdaptiveModelFactory.hpp"
+#endif
 
 
 //! Albany driver code, problems, discretizations, and responses
@@ -49,11 +53,13 @@ namespace Albany {
     //! Destructor
     virtual ~SolverFactory();
 
+#ifdef ALBANY_EPETRA
     //! Create solver as response-only model evaluator
     virtual Teuchos::RCP<EpetraExt::ModelEvaluator> create(
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
+#endif
 
    // Thyra version of above
    virtual Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createT(
@@ -61,11 +67,14 @@ namespace Albany {
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess = Teuchos::null);
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
+      bool createAlbanyApp = true);
+#endif
 
     //Thyra version of above
     Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> > createAndGetAlbanyAppT(
@@ -73,25 +82,36 @@ namespace Albany {
 //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
       const Teuchos::RCP<const Teuchos_Comm>& solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null, 
+      bool createAlbanyApp = true);  
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Thyra::ModelEvaluator<double> > createThyraSolverAndGetAlbanyApp(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Epetra_Comm>& solverComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
+      bool createAlbanyApp = true);
 
     Teuchos::RCP<EpetraExt::ModelEvaluator> createAlbanyAppAndModel(
       Teuchos::RCP<Application>& albanyApp,
       const Teuchos::RCP<const Epetra_Comm>& appComm,
       const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+#endif
 
     //Thyra version of above
     Teuchos::RCP<Thyra::ModelEvaluator<ST> > createAlbanyAppAndModelT(
       Teuchos::RCP<Application>& albanyApp,
 //      Teuchos::RCP<ApplicationT>& albanyApp,
       const Teuchos::RCP<const Teuchos_Comm>& appComm,
-      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null);
+      const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null,
+      const bool createAlbanyApp = true);
+
+#ifdef ALBANY_EPETRA
+    Teuchos::RCP<EpetraExt::ModelEvaluator> createModel(
+      const Teuchos::RCP<Application>& albanyApp,
+      const Teuchos::RCP<const Epetra_Comm>& appComm);
+#endif
 
     Teuchos::ParameterList& getAnalysisParameters() const
       { return appParams->sublist("Piro").sublist("Analysis"); }
@@ -130,12 +150,14 @@ namespace Albany {
     SolverFactory& operator=(const SolverFactory&);
 
   public:
-    /** \brief Function that does regression testing for problem solves. */
+#ifdef ALBANY_EPETRA 
+   /** \brief Function that does regression testing for problem solves. */
     int checkSolveTestResults(
       int response_index,
       int parameter_index,
       const Epetra_Vector* g,
       const Epetra_MultiVector* dgdp) const;
+#endif
 
     int checkSolveTestResultsT(
       int response_index,
@@ -153,12 +175,14 @@ namespace Albany {
       int response_index,
       const Teuchos::RCP<Thyra::VectorBase<double> >& tvec) const;
 
+#ifdef ALBANY_EPETRA
     /** \brief Function that does regression testing for SG runs. */
     int checkSGTestResults(
       int response_index,
       const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,
       const Epetra_Vector* g_mean = NULL,
       const Epetra_Vector* g_std_dev = NULL) const;
+#endif
 
   private:
     /** \brief Testing utility that compares two numbers using two tolerances */
@@ -177,7 +201,9 @@ namespace Albany {
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<AAdapt::AdaptiveModelFactory> thyraModelFactory;
+#endif
   };
 
 }

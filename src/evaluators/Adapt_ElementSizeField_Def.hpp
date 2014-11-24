@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra 
+
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Adapt_NodalDataBlock.hpp"
@@ -85,11 +87,11 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
       this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
-
     }
     else {
       this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
+
 
     }
 
@@ -206,7 +208,7 @@ evaluateFields(typename Traits::EvalData workset)
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
     Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
 
     int l_nV = this->numVertices;
@@ -296,7 +298,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     Teuchos::RCP<Adapt::NodalDataBlock> node_data =
       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
     Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
-    Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+    Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
     Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
 
     int  node_var_offset;

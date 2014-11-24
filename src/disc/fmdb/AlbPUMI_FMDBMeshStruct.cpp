@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include <iostream>
 
 #include <boost/mpi/exception.hpp>
@@ -56,7 +57,7 @@ static void loadSets(
 
 AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
-		  const Teuchos::RCP<const Epetra_Comm>& comm) :
+		  const Teuchos::RCP<const Teuchos_Comm>& commT) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   PCU_Comm_Init();
@@ -82,7 +83,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     model_file = params->get<std::string>("Mesh Model Input File Name");
 
   mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
-  model = apf::getMdsModel(mesh);
+  model = mesh->getModel();
 
   mesh->verify();
 
@@ -115,7 +116,6 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   // Build a map to get the EB name given the index
 
   int numEB = sets[d].getSize(), EB_size;
-  // DAN HERE
   std::vector<int> el_blocks;
 
   for (int eb=0; eb < numEB; eb++){
@@ -158,7 +158,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   }
 
   // Construct MeshSpecsStruct
-  const CellTopologyData* ctd = getCellTopology(mesh);
+  const CellTopologyData* ctd = apf::getCellTopology(mesh);
   if (!params->get("Separate Evaluators by Element Block",false))
   {
     // get elements in the first element block
@@ -195,7 +195,7 @@ AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
 
 void
 AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
@@ -310,27 +310,10 @@ AlbPUMI::FMDBMeshStruct::getMeshSpecs()
 Albany::AbstractMeshStruct::msType
 AlbPUMI::FMDBMeshStruct::meshSpecsType()
 {
-
-  std::string str = outputFileName;
-  size_t found = str.find("vtk");
-
-  if(found != std::string::npos){
-
-    return FMDB_VTK_MS;
-
-  }
-
-  found = str.find("exo");
-  if(found != std::string::npos){
-
+  if(outputFileName.find("exo") != std::string::npos)
     return FMDB_EXODUS_MS;
-
-  }
-
-  TEUCHOS_TEST_FOR_EXCEPTION(true,
-       std::logic_error,
-       "Unrecognized output file extension given in the input file" << std::endl);
-
+  else
+    return FMDB_VTK_MS;
 }
 
 int AlbPUMI::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,

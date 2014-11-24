@@ -13,7 +13,11 @@ set(performanceTestScript
     python ${CMAKE_CURRENT_SOURCE_DIR}/perfScript.py
      -machine ${machineName}
      -executable "${Albany_BINARY_DIR}/src")
-#     -executable "${AlbanyPath}")
+
+set(performanceTestScript_2
+    python ${CMAKE_CURRENT_SOURCE_DIR}/perfScript.py
+     -machine ${machineName}_2
+     -executable "${Albany_BINARY_DIR}/src")
 
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat2D)

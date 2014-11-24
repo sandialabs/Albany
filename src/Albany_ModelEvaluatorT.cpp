@@ -14,16 +14,13 @@
 *    Questions to Andy Salinger, agsalin@sandia.gov                  *
 \********************************************************************/
 
+//IK, 9/12/14: has Epetra_Comm! No other Epetra.
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DistributedParameterDerivativeOp.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
-#include "Stokhos_EpetraVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
-#include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #include "Tpetra_ConfigDefs.hpp"
-#include "Petra_Converters.hpp"
 
 Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Albany::Application>& app_,
@@ -139,16 +136,12 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
   *out << "Number of response vectors  = " << num_response_vecs << std::endl;
 
-  Teuchos::ParameterList kokkosNodeParams;
-  const Teuchos::RCP<KokkosNode> nodeT = Teuchos::rcp(new KokkosNode(kokkosNodeParams));
-
   sacado_param_vec.resize(num_param_vecs);
   tpetra_param_vec.resize(num_param_vecs);
   tpetra_param_map.resize(num_param_vecs);
   thyra_response_vec.resize(num_response_vecs);
 
-  const Teuchos::RCP<const Teuchos::Comm<int> > commT =
-    Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
    for (int l = 0; l < tpetra_param_vec.size(); ++l) {
      // Initialize Sacado parameter vector
      app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
@@ -199,8 +192,7 @@ void
 Albany::ModelEvaluatorT::allocateVectors()
     {
 
-     const Teuchos::RCP<const Teuchos::Comm<int> > commT =
-       Albany::createTeuchosCommFromMpiComm( Albany::getMpiCommFromEpetraComm( *app->getComm()));
+     const Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
 
       // Create Tpetra objects to be wrapped in Thyra
       const Teuchos::RCP<const Tpetra_Vector> xT_init = app->getInitialSolutionT();
@@ -482,7 +474,6 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
            Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, j+num_param_vecs,
            Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP);
     }
-    result.set_g(i, thyra_response_vec[i]);
   }
 
   return result;
@@ -614,7 +605,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   // Response functions
   for (int j = 0; j < outArgsT.Ng(); ++j) {
     const Teuchos::RCP<Thyra::VectorBase<ST> > g_out = outArgsT.get_g(j);
-    const Teuchos::RCP<Tpetra_Vector> gT_out =
+    Teuchos::RCP<Tpetra_Vector> gT_out =
       Teuchos::nonnull(g_out) ?
       ConverterT::getTpetraVector(g_out) :
       Teuchos::null;
@@ -624,8 +615,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
 
-    bool g_computed = false;
-
     // dg/dx, dg/dxdot
     if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
       const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
@@ -634,7 +623,8 @@ Albany::ModelEvaluatorT::evalModelImpl(
           sacado_param_vec, NULL,
           gT_out.get(), dgdxT_out,
           dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
-      g_computed = true;
+      // Set gT_out to null to indicate that g_out was evaluated.
+      gT_out = Teuchos::null;
     }
 
     // dg/dp
@@ -654,11 +644,11 @@ Albany::ModelEvaluatorT::evalModelImpl(
             sacado_param_vec, p_vec.get(),
             NULL, NULL, NULL, NULL, gT_out.get(), NULL,
             dgdpT_out.get());
-        g_computed = true;
+        gT_out = Teuchos::null;
       }
     }
 
-    if (Teuchos::nonnull(gT_out) && !g_computed) {
+    if (Teuchos::nonnull(gT_out)) {
       app->evaluateResponseT(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);

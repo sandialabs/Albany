@@ -14,7 +14,7 @@
     </ParameterList>
     <ParameterList name="Catalyst">
       <Parameter name="Interface Activated" type="bool" value="true"/>
-      <Parameter name="Pipeline Files" type="Array(string)" value="{ @PIPELINE_SCRIPT@ }"/>
+      <Parameter name="Pipeline Files" type="Array(string)" value="{ /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results/Albany/build/examples/LCM/Catalyst/pipeline.py }"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
       <ParameterList name="Time Dependent NBC on SS surface_1 for DOF all set P">
@@ -98,7 +98,7 @@
             <ParameterList name="NOX Stratimikos Options"> 	    </ParameterList>
             <!-- Set the linear solver -->
             <ParameterList name="Stratimikos">
-              <Parameter name="Linear Solver Type" type="string" value="AztecOO"/>
+              <Parameter name="Linear Solver Type" type="string" value="Belos"/>
               <!-- define the linear solvers -->
               <ParameterList name="Linear Solver Types">
                 <!-- AztecOO -->

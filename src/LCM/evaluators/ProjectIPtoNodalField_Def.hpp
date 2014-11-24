@@ -6,66 +6,252 @@
 
 #include <fstream>
 #include <Teuchos_TestForException.hpp>
+#include <Teuchos_AbstractFactoryStd.hpp>
 #include "Albany_Utils.hpp"
-#include "Adapt_NodalDataVector.hpp"
 
 #include "Thyra_VectorBase.hpp"
 #include <Thyra_TpetraMultiVector.hpp>
-//#include <Thyra_LinearOpBase_decl.hpp>
-//#include <Thyra_LinearOpWithSolveFactory_decl.hpp>
 #include <Thyra_TpetraLinearOp.hpp>
 #include "Thyra_LinearOpWithSolveBase.hpp"
-#include <Thyra_LinearOpWithSolveFactoryHelpers.hpp>
-#include <Thyra_MultiVectorStdOps.hpp>
 
-//#ifdef HAVE_MPI
-#  include "Tpetra_MpiPlatform.hpp"
-//#else
-//#  include "Tpetra_SerialPlatform.hpp"
-//#endif
-
-#ifdef ALBANY_MUELU
-#include <Thyra_MueLuPreconditionerFactory.hpp>
-#include "Stratimikos_MueluTpetraHelpers.hpp"
-#endif
+#include "Adapt_NodalDataVector.hpp"
 
 #ifdef ALBANY_IFPACK2
 #include <Thyra_Ifpack2PreconditionerFactory.hpp>
 #endif
 
+namespace LCM {
 
-
-namespace LCM
+template<typename EvalT, typename Traits>
+typename ProjectIPtoNodalFieldBase<EvalT, Traits>::EFieldLayout::Enum
+ProjectIPtoNodalFieldBase<EvalT, Traits>::EFieldLayout::
+fromString (const std::string& str)
+  throw (Teuchos::Exceptions::InvalidParameterValue)
 {
+  if (str == "Scalar") return scalar;
+  else if (str == "Vector") return vector;
+  else if (str == "Tensor") return tensor;
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameterValue,
+      "Field Layout value " << str
+      << "is invalid; valid values are Scalar, Vector, and Tensor.");
+  }
+}
+
+namespace {
+Teuchos::RCP<Teuchos::ParameterList> getValidProjectIPtoNodalFieldParameters ()
+{
+  Teuchos::RCP<Teuchos::ParameterList> valid_pl =
+    rcp(new Teuchos::ParameterList("Valid ProjectIPtoNodalField Params"));;
+
+  // Don't validate the solver parameters used in the projection solve; let
+  // Stratimikos do it.
+  valid_pl->sublist("Solver Options").disableRecursiveValidation();
+
+  valid_pl->set<std::string>("Name", "", "Name of field Evaluator");
+  valid_pl->set<int>("Number of Fields", 0);
+
+  for (int i = 0; i < 9; ++i) {
+    valid_pl->set<std::string>(Albany::strint("IP Field Name", i), "",
+                              "IP Field prefix");
+    valid_pl->set<std::string>(Albany::strint("IP Field Layout", i), "",
+                              "IP Field Layout: Scalar, Vector, or Tensor");
+  }
+
+  valid_pl->set<bool>("Output to File", true, "Whether nodal field info should be output to a file");
+  valid_pl->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
+
+  valid_pl->set<std::string>("Mass Matrix Type", "Full", "Full or Lumped");
+
+  return valid_pl;
+}
+
+void setDefaultSolverParameters (Teuchos::ParameterList& pl)
+{
+  pl.set<std::string>("Linear Solver Type", "Belos");
+
+  Teuchos::ParameterList& solver_types = pl.sublist("Linear Solver Types");
+  Teuchos::ParameterList& belos_types = solver_types.sublist("Belos");
+  belos_types.set<std::string>("Solver Type", "Block CG");
+
+  Teuchos::ParameterList& solver = belos_types.sublist("Solver Types").sublist("Block CG");
+  solver.set<int>("Maximum Iterations", 1000);
+  solver.set<double>("Convergence Tolerance", 1e-12);
+
+#ifdef ALBANY_IFPACK2
+  pl.set<std::string>("Preconditioner Type", "Ifpack2");
+  Teuchos::ParameterList& prec_types = pl.sublist("Preconditioner Types");
+  Teuchos::ParameterList& ifpack_types = prec_types.sublist("Ifpack2");
+
+  ifpack_types.set<int>("Overlap", 0);
+  // Both of these preconditioners are quite effective on the model
+  // problem. I'll have to wait to see other problems before I decided whether:
+  // (a) Diagonal is always sufficient; (b) ILU(0) with ovl=0 is good; or (c)
+  // something more powerful is required (ILUTP or overlap > 0, say).
+  const char* prec_type[] = {"RILUK", "Diagonal"};
+  ifpack_types.set<std::string>("Prec Type", prec_type[0]);
+
+  Teuchos::ParameterList& ifpack_settings = ifpack_types.sublist("Ifpack2 Settings");
+  ifpack_settings.set<int>("fact: iluk level-of-fill", 0);
+#else
+  pl.set<std::string>("Preconditioner Type", "None");
+#endif
+}
+
+// Represent the mass matrix type by an enumerated type.
+struct EMassMatrixType {
+  enum Enum { full, lumped };
+  static Enum fromString (const std::string& str)
+    throw (Teuchos::Exceptions::InvalidParameterValue)
+  {
+    if (str == "Full") return full;
+    else if (str == "Lumped") return lumped;
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true, Teuchos::Exceptions::InvalidParameterValue,
+        "Mass Matrix Type value " << str
+        << "is invalid; valid values are Full and Lumped.");
+    }
+  }
+};
+} // namespace
+
+template<typename Traits>
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix {
+public:
+  MassMatrix (
+    const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+    : base_(base) {}
+
+  virtual ~MassMatrix(){}
+
+  virtual void fill(const typename Traits::EvalData workset) = 0;
+
+  Teuchos::RCP<Tpetra_CrsMatrix>& matrix () { return matrix_; }
+
+  static MassMatrix*
+  create(EMassMatrixType::Enum type,
+         const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base);
+protected:
+  const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base_;
+  Teuchos::RCP<Tpetra_CrsMatrix> matrix_;
+};
+
+template<typename Traits>
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                            Traits>::FullMassMatrix
+  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                                 Traits>::MassMatrix {
+public:
+  FullMassMatrix (
+    const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+    : MassMatrix(base) {}
+  virtual void fill (const typename Traits::EvalData workset) {
+    const std::size_t
+      num_nodes = this->base_->num_nodes_,
+      num_pts   = this->base_->num_pts_;
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t rnode = 0; rnode < num_nodes; ++rnode) {
+        GO global_row = workset.wsElNodeID[cell][rnode];
+        Teuchos::Array<GO> cols;
+        Teuchos::Array<ST> vals;
+
+        for (std::size_t cnode = 0; cnode < num_nodes; ++cnode) {
+          const GO global_col = workset.wsElNodeID[cell][cnode];
+          cols.push_back(global_col);
+
+          ST mass_value = 0;
+          for (std::size_t qp = 0; qp < num_pts; ++qp)
+            mass_value +=
+              this->base_->wBF(cell, rnode, qp) *
+              this->base_->BF (cell, cnode, qp);
+          vals.push_back(mass_value);
+        }
+        const LO
+          ret = this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          ret != cols.size(), std::logic_error,
+          "global_row " << global_row << " of mass matrix is missing elements"
+          << std::endl);
+      }
+    }
+  }
+};
+
+template<typename Traits>
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                            Traits>::LumpedMassMatrix
+  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                                 Traits>::MassMatrix {
+public:
+  LumpedMassMatrix (
+    const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+    : MassMatrix(base) {}
+  virtual void fill (const typename Traits::EvalData workset) {
+    const std::size_t
+      num_nodes = this->base_->num_nodes_,
+      num_pts   = this->base_->num_pts_;
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t rnode = 0; rnode < num_nodes; ++rnode) {
+        const GO global_row = workset.wsElNodeID[cell][rnode];
+        const Teuchos::Array<GO> cols(1, global_row);
+        double diag = 0;
+        for (std::size_t qp = 0; qp < num_pts; ++qp) {
+          double diag_qp = 0;
+          for (std::size_t cnode = 0; cnode < num_nodes; ++cnode)
+            diag_qp += this->base_->BF(cell, cnode, qp);
+          diag += this->base_->wBF(cell, rnode, qp) * diag_qp;
+        }
+        const Teuchos::Array<ST> vals(1, diag);
+        this->matrix_->sumIntoGlobalValues(global_row, cols, vals);
+      }
+    }
+  }
+};
+
+template<typename Traits>
+typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
+                               Traits>::MassMatrix*
+ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix::
+create (EMassMatrixType::Enum type,
+        const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
+{
+  switch (type) {
+  case EMassMatrixType::full:
+    return new FullMassMatrix(base);
+    break;
+  case EMassMatrixType::lumped:
+    return new LumpedMassMatrix(base);
+    break;
+  }
+}
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 ProjectIPtoNodalFieldBase<EvalT, Traits>::
-ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl) :
-    wBF   (p.get<std::string>                   ("Weighted BF Name"), dl->node_qp_scalar),
-     BF   (p.get<std::string>                   ("BF Name"), dl->node_qp_scalar)
-
+ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
+                           const Teuchos::RCP<Albany::Layouts>& dl) :
+  wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
+  BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
 {
-
   this->addDependentField(wBF);
   this->addDependentField(BF);
+  this->setName("ProjectIPtoNodalField" + PHX::TypeString<EvalT>::value);
 
   //! get and validate ProjectIPtoNodalField parameter list
   Teuchos::ParameterList* plist =
     p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<const Teuchos::ParameterList> reflist =
-    this->getValidProjectIPtoNodalFieldParameters();
+    getValidProjectIPtoNodalFieldParameters();
   plist->validateParameters(*reflist,0);
 
   output_to_exodus_ = plist->get<bool>("Output to File", true);
 
   //! number of quad points per cell and dimension
-  Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
-  Teuchos::RCP<PHX::DataLayout> cell_dl = dl->cell_scalar;
-  Teuchos::RCP<PHX::DataLayout> node_dl = dl->node_qp_vector;
-  Teuchos::RCP<PHX::DataLayout> vert_vector_dl = dl->vertices_vector;
+  const Teuchos::RCP<PHX::DataLayout>& vector_dl = dl->qp_vector;
+  const Teuchos::RCP<PHX::DataLayout>& node_dl = dl->node_qp_vector;
+  const Teuchos::RCP<PHX::DataLayout>& vert_vector_dl = dl->vertices_vector;
   num_pts_ = vector_dl->dimension(1);
   num_dims_ = vector_dl->dimension(2);
   num_nodes_ = node_dl->dimension(1);
@@ -75,7 +261,8 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
 
   // loop over the number of fields and register
-  // Number of Fields is read off the input file - this is the number of named fields (scalar, vector, or tensor) to transfer
+  // Number of Fields is read off the input file - this is the number of named
+  // fields (scalar, vector, or tensor) to transfer.
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
 
   // resize field vectors
@@ -84,110 +271,83 @@ ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
   nodal_field_names_.resize(number_of_fields_);
   ip_fields_.resize(number_of_fields_);
 
-  for (int field(0); field < number_of_fields_; ++field) {
+  for (int field = 0; field < number_of_fields_; ++field) {
     ip_field_names_[field] = plist->get<std::string>(Albany::strint("IP Field Name", field));
-    ip_field_layouts_[field] = plist->get<std::string>(Albany::strint("IP Field Layout", field));
     nodal_field_names_[field] = "proj_nodal_" + ip_field_names_[field];
+    ip_field_layouts_[field] = EFieldLayout::fromString(
+      plist->get<std::string>(Albany::strint("IP Field Layout", field)));
 
-    if (ip_field_layouts_[field] == "Scalar") {
-      PHX::MDField<ScalarT> s(ip_field_names_[field], dl->qp_scalar);
-      ip_fields_[field] = s;
-    } else if (ip_field_layouts_[field] == "Vector") {
-      PHX::MDField<ScalarT> v(ip_field_names_[field], dl->qp_vector);
-      ip_fields_[field] = v;
-    } else if (ip_field_layouts_[field] == "Tensor") {
-      PHX::MDField<ScalarT> t(ip_field_names_[field], dl->qp_tensor);
-      ip_fields_[field] = t;
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Field Layout unknown");
+    Teuchos::RCP<PHX::DataLayout> qp_layout, node_node_layout;
+    switch (ip_field_layouts_[field]) {
+    case EFieldLayout::scalar:
+      qp_layout = dl->qp_scalar;
+      node_node_layout = dl->node_node_scalar;
+      break;
+    case EFieldLayout::vector:
+      qp_layout = dl->qp_vector;
+      node_node_layout = dl->node_node_vector;
+      break;
+    case EFieldLayout::tensor:
+      qp_layout = dl->qp_tensor;
+      node_node_layout = dl->node_node_tensor;
+      break;
     }
-
-    // incoming integration point field to transfer
+    ip_fields_[field] = PHX::MDField<ScalarT>(ip_field_names_[field], qp_layout);
+    // Incoming integration point field to transfer.
     this->addDependentField(ip_fields_[field]);
-
-    if (ip_field_layouts_[field] == "Scalar" ) {
-      this->p_state_mgr_->registerNodalVectorStateVariable(nodal_field_names_[field],
-                                                dl->node_node_scalar,
-                                                dl->dummy, "all",
-                                                "scalar", 0.0, false,
-                                                output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Vector" ) {
-      this->p_state_mgr_->registerNodalVectorStateVariable(nodal_field_names_[field],
-                                                dl->node_node_vector,
-                                                dl->dummy, "all",
-                                                "scalar", 0.0, false,
-                                                output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Tensor" ) {
-      this->p_state_mgr_->registerNodalVectorStateVariable(nodal_field_names_[field],
-                                                dl->node_node_tensor,
-                                                dl->dummy, "all",
-                                                "scalar", 0.0, false,
-                                                output_to_exodus_);
-    }
+    this->p_state_mgr_->registerNodalVectorStateVariable(
+      nodal_field_names_[field], node_node_layout, dl->dummy, "all", "scalar",
+      0.0, false, output_to_exodus_);
   }
 
-  // COunt the total number of vectors in the multivector
+  // Count the total number of vectors in the multivector.
   num_vecs_ = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getVecsize();
 
   // Create field tag
   field_tag_ =
     Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
 
-  // Setup linear solver
-
-#ifdef ALBANY_MUELU
-    {
-      Thyra::addMueLuToStratimikosBuilder(this->linearSolverBuilder); 
-      Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder,"MueLu-Tpetra");
-    }
-#endif // MUELU
-
+  // Set up linear solver
 #ifdef ALBANY_IFPACK2
-    {
-      typedef Thyra::PreconditionerFactoryBase<ST> Base;
-      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+  {
+    typedef Thyra::PreconditionerFactoryBase<ST> Base;
+    typedef Thyra::Ifpack2PreconditionerFactory<Tpetra_CrsMatrix> Impl;
 
-      this->linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-    }
+    this->linearSolverBuilder_.setPreconditioningStrategyFactory(
+      Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+  }
 #endif // IFPACK2
 
-  bool have_solver_pl = plist->isSublist("Solver Options");
-  if(have_solver_pl){
-
-    Teuchos::ParameterList &solver_list = plist->sublist("Solver Options");
-    this->linearSolverBuilder.setParameterList(Teuchos::rcpFromRef(solver_list));
-
+  { // Send parameters to the solver.
+    Teuchos::RCP<Teuchos::ParameterList> solver_list =
+      Teuchos::rcp(new Teuchos::ParameterList);
+    // Use what has been provided.
+    if (plist->isSublist("Solver Options"))
+      solver_list->setParameters(plist->sublist("Solver Options"));
+    { // Set the rest of the parameters to their default values.
+      Teuchos::ParameterList pl;
+      setDefaultSolverParameters(pl);
+      solver_list->setParametersNotAlreadySet(pl);
+    }
+    this->linearSolverBuilder_.setParameterList(solver_list);
   }
-  else {
 
-    Teuchos::RCP<Teuchos::ParameterList> solver_list = Teuchos::rcp(new Teuchos::ParameterList);
-    this->setDefaultSolverParameters(solver_list);
-    this->linearSolverBuilder.setParameterList(solver_list);
-
-  }
-
-  this->lowsFactory = createLinearSolveStrategy(this->linearSolverBuilder);
-  this->lowsFactory->setVerbLevel(Teuchos::VERB_LOW);
-//  this->lowsFactory->setVerbLevel(Teuchos::VERB_EXTREME);
-
+  this->lowsFactory_ = createLinearSolveStrategy(this->linearSolverBuilder_);
+  this->lowsFactory_->setVerbLevel(Teuchos::VERB_LOW);
 
   this->addEvaluatedField(*field_tag_);
-
 }
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ProjectIPtoNodalFieldBase<EvalT, Traits>::
-postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+postRegistrationSetup (typename Traits::SetupData d,
+                       PHX::FieldManager<Traits>& fm)
 {
-
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(wBF,fm);
-
-  for (int field(0); field < number_of_fields_; ++field) {
+  for (int field(0); field < number_of_fields_; ++field)
     this->utils.setFieldData(ip_fields_[field],fm);
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -196,164 +356,175 @@ postRegistrationSetup(typename Traits::SetupData d,
 //------------------------------------------------------------------------------
 template<typename Traits>
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-ProjectIPtoNodalField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
+ProjectIPtoNodalField (Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
   ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
 {
+  Teuchos::ParameterList* pl =
+    p.get<Teuchos::ParameterList*>("Parameter List");
+  if (!pl->getPtr<std::string>("Mass Matrix Type"))
+    pl->set<std::string>("Mass Matrix Type", "Full", "Full or Lumped");
+
+  { // Create the mass matrix of the desired type.
+    EMassMatrixType::Enum mass_matrix_type;
+    const std::string& mmstr = pl->get<std::string>("Mass Matrix Type");
+    try {
+      mass_matrix_type = EMassMatrixType::fromString(mmstr);
+    } catch (const Teuchos::Exceptions::InvalidParameterValue& e) {
+      *Teuchos::VerboseObjectBase::getDefaultOStream()
+        << "Warning: Mass Matrix Type was set to " << mmstr
+        << ", which is invalid; setting to Full." << std::endl;
+      mass_matrix_type = EMassMatrixType::full;
+    }
+    mass_matrix_ = Teuchos::rcp(MassMatrix::create(mass_matrix_type, this));
+  }
 }
 
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-preEvaluate(typename Traits::PreEvalData workset)
+preEvaluate (typename Traits::PreEvalData workset)
 {
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
   node_data->initializeVectors(0.0);
 
-  Teuchos::RCP<Tpetra_CrsGraph> currentGraph =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
+  Teuchos::RCP<Tpetra_CrsGraph> current_graph = this->p_state_mgr_->
+    getStateInfoStruct()->getNodalDataBase()->getNodalGraph();
 
-//  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getOverlapMap();
-  Teuchos::RCP<const Tpetra_Map> nodeMap = node_data->getLocalMap();
-
-//  if(Teuchos::is_null(this->mass_matrix) || !this->mass_matrix->getCrsGraph()->checkSizes(*currentGraph)){
-  if(Teuchos::is_null(this->mass_matrix) || !currentGraph->checkSizes(*this->mass_matrix->getCrsGraph())){
-
-     // reallocate the mass matrix
-
-     this->mass_matrix = Teuchos::rcp(new Tpetra_CrsMatrix(currentGraph));
-     this->source_load_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, true));
-     this->node_projected_ip_vector = Teuchos::rcp(new Tpetra_MultiVector(nodeMap, this->num_vecs_, false));
-
-  }
-  else {
-
-     this->mass_matrix->resumeFill();
-
-     // Zero the solution and mass matrix in preparation for summation / solution operations
-     this->mass_matrix->setAllToScalar(0.0);
-     this->source_load_vector->putScalar(0.0);
-
-  }
-
-
+  // Reallocate the mass matrix for assembly. Since the matrix is overwritten by
+  // a version used for linear algebra having a nonoverlapping row map, we can't
+  // just resumeFill. source_load_vector_ also alternates between overlapping
+  // and nonoverlapping maps and so must be reallocated.
+  this->mass_matrix_->matrix() =
+    Teuchos::rcp(new Tpetra_CrsMatrix(current_graph));
+  this->source_load_vector_ = Teuchos::rcp(
+    new Tpetra_MultiVector(current_graph->getRowMap(), this->num_vecs_, true));
 }
 
 //------------------------------------------------------------------------------
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-evaluateFields(typename Traits::EvalData workset)
+fillRHS (const typename Traits::EvalData workset)
 {
-  // volume averaged field, store as nodal data that will be scattered
-  // and summed
-
-  // Get the node data block container
   Teuchos::RCP<Adapt::NodalDataVector> node_data =
     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID = workset.wsElNodeID;
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >&  wsElNodeID = workset.wsElNodeID;
 
-  int num_nodes = this->num_nodes_;
-  int num_dims  = this->num_dims_;
-  int num_pts   = this->num_pts_;
+  const std::size_t
+    num_nodes = this->num_nodes_,
+    num_dims  = this->num_dims_,
+    num_pts   = this->num_pts_;
 
-  // Assumes: mass_matrix is the right size and ready to fill
-
-  // Fill the mass matrix
-
-
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int rnode = 0; rnode < num_nodes; ++rnode) {
-
-      GO global_row = wsElNodeID[cell][rnode];
-      Teuchos::Array<GO> cols;
-      Teuchos::Array<ST> vals;
-
-      for (int cnode = 0; cnode < num_nodes; ++cnode) {
-
-        GO global_col = wsElNodeID[cell][cnode];
-        cols.push_back(global_col);
-        ST mass_value = 0;
-
-        for (int qp=0; qp < num_pts; ++qp)
-
-          mass_value += this->wBF(cell, rnode, qp) * this->BF(cell, cnode, qp);
-
-        vals.push_back(mass_value);
-//std::cout << "Row : " << global_row << " Col : " << global_col << " Val : " << mass_value << std::endl;
-      }
-
-      this->mass_matrix->sumIntoGlobalValues(global_row, cols, vals);
-
-    }
-  }
-
-  // deal with each of the fields in the multivector that stores the RHS of the projection
-
-//std::cout << "Number of fields : " << this->number_of_fields_ << std::endl;
-
-  for (int field(0); field < this->number_of_fields_; ++field) {
-    int  node_var_offset;
-    int  node_var_ndofs;
+  for (std::size_t field = 0; field < this->number_of_fields_; ++field) {
+    int node_var_offset;
+    int node_var_ndofs;
     node_data->getNDofsAndOffset(this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int node = 0; node < num_nodes; ++node) {
+    for (unsigned int cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t node = 0; node < num_nodes; ++node) {
         GO global_row = wsElNodeID[cell][node];
-        for (int qp = 0; qp < num_pts; ++qp) {
-          if (this->ip_field_layouts_[field] == "Scalar" ) {
+        for (std::size_t qp = 0; qp < num_pts; ++qp) {
+          switch (this->ip_field_layouts_[field]) {
+          case ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::EFieldLayout::scalar:
             // save the scalar component
-            this->source_load_vector->sumIntoGlobalValue(global_row, node_var_offset,
+            this->source_load_vector_->sumIntoGlobalValue(
+              global_row, node_var_offset,
               this->ip_fields_[field](cell, qp) * this->wBF(cell, node, qp));
-          } else if (this->ip_field_layouts_[field] == "Vector" ) {
-            for (int dim0 = 0; dim0 < num_dims; ++dim0) {
+            break;
+          case ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::EFieldLayout::vector:
+            for (std::size_t dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
-              this->source_load_vector->sumIntoGlobalValue(global_row, node_var_offset + dim0,
+              this->source_load_vector_->sumIntoGlobalValue(
+                global_row, node_var_offset + dim0,
                 this->ip_fields_[field](cell, qp, dim0) * this->wBF(cell, node, qp));
             }
-          } else if (this->ip_field_layouts_[field] == "Tensor" ) {
-            for (int dim0 = 0; dim0 < num_dims; ++dim0) {
-              for (int dim1 = 0; dim1 < num_dims; ++dim1) {
+            break;
+          case ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::EFieldLayout::tensor:
+            for (std::size_t dim0 = 0; dim0 < num_dims; ++dim0) {
+              for (std::size_t dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
-                this->source_load_vector->sumIntoGlobalValue(global_row,
-                  node_var_offset + dim0*num_dims + dim1,
+                this->source_load_vector_->sumIntoGlobalValue(
+                  global_row, node_var_offset + dim0*num_dims + dim1,
                   this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp));
-//std::cout << "vector row : " << global_row << " col : " << node_var_offset + dim0*num_dims + dim1 << " value : " <<
-//this->ip_fields_[field](cell, qp, dim0, dim1) * this->wBF(cell, node, qp) << std::endl;
               }
             }
+            break;
           }
         }
       }
     } // end cell loop
   } // end field loop
-
 }
-//------------------------------------------------------------------------------
 
 template<typename Traits>
 void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-postEvaluate(typename Traits::PostEvalData workset)
+evaluateFields (typename Traits::EvalData workset)
 {
+  // Volume averaged field. Store as nodal data that will be scattered and
+  // summed.
+  this->mass_matrix_->fill(workset);
+  fillRHS(workset);
+}
 
+//------------------------------------------------------------------------------
+template<typename Traits>
+void ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+postEvaluate (typename Traits::PostEvalData workset)
+{
   typedef Teuchos::ScalarTraits<ST>::magnitudeType MT;  // Magnitude-type typedef
-  ST zero = Teuchos::ScalarTraits<ST>::zero();
-  ST one = Teuchos::ScalarTraits<ST>::one();
+  const ST zero = Teuchos::ScalarTraits<ST>::zero();
+  const ST one = Teuchos::ScalarTraits<ST>::one();
 
   Teuchos::RCP<Teuchos::FancyOStream>
     out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Note: we are in postEvaluate so all PEs call this
+  this->mass_matrix_->matrix()->fillComplete();
 
-  // Get the node data vector container
-  Teuchos::RCP<Adapt::NodalDataVector> node_data =
-    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+  // Right now, source_load_vector_ and mass_matrix_->matrix() have the same
+  // overlapping (row) map.
+  //   1. If we're not using a preconditioner, then we could fillComplete the
+  // mass matrix with valid 1-1 domain and range maps, export
+  // source_load_vector_ to b, where b has the mass matrix's range map, and
+  // proceed. The linear algebra using the matrix would be limited to
+  // matrix-vector products, which would use these valid range and domain maps.
+  //   2. However, we want to use Ifpack2, and Ifpack2 assumes the row map is
+  // nonoverlapping. (This assumption makes sense because of the type of
+  // operations Ifpack2 performs.) Hence I export mass matrix to a new matrix
+  // having nonoverlapping row and col maps. As in case 1, I also have to create
+  // a compatible b.
+  {
+    // Get overlapping and nonoverlapping maps.
+    const Teuchos::RCP<const Tpetra_CrsMatrix>&
+      mm_ovl = this->mass_matrix_->matrix();
+    const Teuchos::RCP<const Tpetra_Map> ovl_map = mm_ovl->getRowMap();
+    const Teuchos::RCP<const Tpetra_Map> map = Tpetra::createOneToOne(ovl_map);
+    // Export the mass matrix.
+    Teuchos::RCP<Tpetra_Export>
+      e = Teuchos::rcp(new Tpetra_Export(ovl_map, map));
+    Teuchos::RCP<Tpetra_CrsMatrix>
+      mm = rcp(new Tpetra_CrsMatrix(map, mm_ovl->getGlobalMaxNumRowEntries()));
+    mm->doExport(*mm_ovl, *e, Tpetra::ADD);
+    mm->fillComplete();
+    // We don't need the assemble form of the mass matrix any longer.
+    this->mass_matrix_->matrix() = mm;
+    // Now export source_load_vector_.
+    Teuchos::RCP<Tpetra_MultiVector> slv = rcp(
+      new Tpetra_MultiVector(mm->getRangeMap(),
+                             this->source_load_vector_->getNumVectors()));
+    slv->doExport(*this->source_load_vector_, *e, Tpetra::ADD);
+    // Don't need the assemble form of the source_load_vector_ either.
+    this->source_load_vector_ = slv;
+  }
 
-  this->mass_matrix->fillComplete();
+  // Create x in A x = b.
+  Teuchos::RCP<Tpetra_MultiVector> node_projected_ip_vector = rcp(
+    new Tpetra_MultiVector(this->mass_matrix_->matrix()->getDomainMap(),
+                           this->source_load_vector_->getNumVectors()));
 
   // Do the solve
   // Create a Thyra linear operator (A) using the Tpetra::CrsMatrix (tpetra_A).
-
-  const Teuchos::RCP<Tpetra::Operator<ST, LO, GO, KokkosNode> >
-    tpetra_A = this->mass_matrix;
+  const Teuchos::RCP<Tpetra_Operator>
+    tpetra_A = this->mass_matrix_->matrix();
 
   const Teuchos::RCP<Thyra::LinearOpBase<ST> > A =
     Thyra::createLinearOp(tpetra_A);
@@ -363,192 +534,76 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::ArrayView<MT> norm_res = Teuchos::arrayViewFromVector(norm_res_vec);
   Teuchos::ArrayView<MT> norm_b = Teuchos::arrayViewFromVector(norm_b_vec);
 
-  // Whether the linear solver succeeded.
-  // (this will be set during the residual check at the end)
-  bool success = true;
-  MT              maxResid               = 1e-5;
-
   // Create a BelosLinearOpWithSolve object from the Belos LOWS factory.
   Teuchos::RCP<Thyra::LinearOpWithSolveBase<ST> >
-    nsA = this->lowsFactory->createOp();
+    nsA = this->lowsFactory_->createOp();
 
   // Initialize the BelosLinearOpWithSolve object with the Thyra linear operator.
-  Thyra::initializeOp<ST>( *this->lowsFactory, A, nsA.ptr() );
+  Thyra::initializeOp<ST>(*this->lowsFactory_, A, nsA.ptr());
 
-  this->node_projected_ip_vector->putScalar(0.0);
-
-  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
-    x = Thyra::createMultiVector(this->node_projected_ip_vector);
+  node_projected_ip_vector->putScalar(0.0);
 
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
-    b = Thyra::createMultiVector(this->source_load_vector);
+    x = Thyra::createMultiVector(node_projected_ip_vector);
+
+  Teuchos::RCP< Thyra::MultiVectorBase<ST> >
+    b = Thyra::createMultiVector(this->source_load_vector_);
 
   // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
-  Thyra::norms_2( *b, norm_b );
-  bool b_is_zero = true; 
-  for (int i=0; i<this->num_vecs_; ++i) {
-    if(norm_b[i] > 1.0e-16) b_is_zero = false;
-  }
-  if(b_is_zero) return;
+  Thyra::norms_2(*b, norm_b);
+  bool b_is_zero = true;
+  for (int i = 0; i < this->num_vecs_; ++i)
+    // I'm changing this to a check for exact 0 because (i) I don't think
+    // there's any way to know how to make this a check on a relative quantity
+    // and (ii) the exact-0 case is in fact what we're currently checking for.
+    if (norm_b[i] != 0) {
+      b_is_zero = false;
+      break;
+    }
+  if (b_is_zero) return;
 
   // Perform solve using the linear operator to get the approximate solution of Ax=b,
   // where b is the right-hand side and x is the left-hand side.
 
-  Thyra::SolveStatus<ST> solveStatus = Thyra::solve( *nsA, Thyra::NOTRANS, *b, x.ptr() );
+  Thyra::SolveStatus<ST>
+    solveStatus = Thyra::solve(*nsA, Thyra::NOTRANS, *b, x.ptr());
 
-  // Print out status of solve.
-    *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
+#ifdef ALBANY_DEBUG
+  *out << "\nBelos LOWS Status: "<< solveStatus << std::endl;
 
-  //
   // Compute residual and ST check convergence.
   Teuchos::RCP< Thyra::MultiVectorBase<ST> >
     y = Thyra::createMembers(x->range(), x->domain());
 
-  Thyra::norms_2( *x, norm_b );
-  *out << "Norm of the x going out" << std::endl;
-  for (int i=0; i<this->num_vecs_; ++i) {
-    *out << "RHS " << i+1 << " : "
-	 << std::setw(16) << std::right << norm_b[i] << std::endl;
-  }
+  // Compute y = A*x, where x is the solution from the linear solver.
+  A->apply(Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0);
 
-  // Compute the column norms of the right-hand side b. If b = 0, no need to proceed.
-  Thyra::norms_2( *b, norm_b );
-
-  // Compute y=A*x, where x is the solution from the linear solver.
-  A->apply(  Thyra::NOTRANS, *x, y.ptr(), 1.0, 0.0 );
-
-  // Compute A*x-b = y-b
-  Thyra::update( -one, *b, y.ptr() );
-
+  // Compute A*x - b = y - b.
+  Thyra::update(-one, *b, y.ptr());
+  Thyra::norms_2(*y, norm_res);
   // Print out the final relative residual norms.
-  MT rel_res = 0.0;
   *out << "Final relative residual norms" << std::endl;
-  for (int i=0; i<this->num_vecs_; ++i) {
-    rel_res = norm_res[i]/norm_b[i];
-    if (rel_res > maxResid)
-      success = false;
+  for (int i = 0; i < this->num_vecs_; ++i) {
+    const double rel_res = norm_res[i]/norm_b[i];
     *out << "RHS " << i+1 << " : "
-	 << std::setw(16) << std::right << rel_res << std::endl;
+         << std::setw(16) << std::right << rel_res << std::endl;
   }
+#endif
 
-  // Store the overlapped vector data back in stk in the field "field_name"
-  node_data->saveNodalDataState(this->node_projected_ip_vector);
-
+  { // Store the overlapped vector data back in stk.
+    const Teuchos::RCP<const Tpetra_Map>
+      ovl_map = (this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+                 getNodalDataVector()->getOverlapMap()),
+      map = node_projected_ip_vector->getMap();
+    Teuchos::RCP<Tpetra_MultiVector> npiv = rcp(
+      new Tpetra_MultiVector(ovl_map,
+                             node_projected_ip_vector->getNumVectors()));
+    Teuchos::RCP<Tpetra_Import>
+      im = Teuchos::rcp(new Tpetra_Import(map, ovl_map));
+    npiv->doImport(*node_projected_ip_vector, *im, Tpetra::ADD);
+    this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
+      getNodalDataVector()->saveNodalDataState(npiv);
+  }
 }
 
-//------------------------------------------------------------------------------
-template<typename EvalT, typename Traits>
-Teuchos::RCP<const Teuchos::ParameterList>
-ProjectIPtoNodalFieldBase<EvalT,Traits>::getValidProjectIPtoNodalFieldParameters() const
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid ProjectIPtoNodalField Params"));;
-
-  // Dont validate the solver parameters used in the projection solve - let Stratimikos do it
-
-  validPL->sublist("Solver Options").disableRecursiveValidation();
-
-  validPL->set<std::string>("Name", "", "Name of field Evaluator");
-  validPL->set<int>("Number of Fields", 0);
-  validPL->set<std::string>("IP Field Name 0", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 0", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 1", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 1", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 2", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 2", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 3", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 3", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 4", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 4", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 5", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 5", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 6", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 6", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 7", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 7", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 8", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 8", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<std::string>("IP Field Name 9", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 9", "", "IP Field Layout: Scalar, Vector, or Tensor");
-
-  validPL->set<bool>("Output to File", true, "Whether nodal field info should be output to a file");
-  validPL->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
-
-  return validPL;
-}
-
-
-template<typename EvalT, typename Traits>
-void
-ProjectIPtoNodalFieldBase<EvalT,Traits>::setDefaultSolverParameters(const Teuchos::RCP<Teuchos::ParameterList>& pl) const
-{
-
-  pl->set<std::string>("Linear Solver Type", "Belos");
-
-  Teuchos::ParameterList& solver_types =
-    pl->sublist("Linear Solver Types");
-
-  Teuchos::ParameterList& belos_types =
-    solver_types.sublist("Belos");
-
-  //
-  // Set the parameters for the Belos LOWS Factory and create a parameter list.
-  //
-  int             blockSize              = 1;
-  int             maxIterations          = 1000;
-  int             maxRestarts            = 15;
-  int             gmresKrylovLength      = 50;
-  int             outputFrequency        = 100;
-  bool            outputMaxResOnly       = true;
-  double          maxResid               = 1e-5;
-
-  belos_types.set<std::string>("Solver Type", "Block GMRES");
-
-  Teuchos::ParameterList& belosLOWSFPL_solver =
-    belos_types.sublist("Solver Types");
-
-  Teuchos::ParameterList& belosLOWSFPL_gmres =
-    belosLOWSFPL_solver.sublist("Block GMRES");
-
-  belosLOWSFPL_gmres.set<int>("Maximum Iterations",maxIterations);
-  belosLOWSFPL_gmres.set<double>("Convergence Tolerance",maxResid);
-  belosLOWSFPL_gmres.set<int>("Maximum Restarts",maxRestarts);
-  belosLOWSFPL_gmres.set<int>("Block Size",blockSize);
-  belosLOWSFPL_gmres.set<int>("Num Blocks",gmresKrylovLength);
-  belosLOWSFPL_gmres.set<int>("Output Frequency",outputFrequency);
-  belosLOWSFPL_gmres.set<bool>("Show Maximum Residual Norm Only",outputMaxResOnly);
-
-//  pl->set<std::string>("Preconditioner Type", "Ifpack2");
-  pl->set<std::string>("Preconditioner Type", "None");
-
-/*
-  Teuchos::ParameterList& prec_types =
-    pl->sublist("Preconditioner Types");
-
-  Teuchos::ParameterList& ifpack_types =
-    prec_types.sublist("Ifpack2");
-
-  ifpack_types.set<int>("Overlap",2);
-  ifpack_types.set<std::string>("Prec Type", "ILUT");
-
-  Teuchos::ParameterList& ifpack_settings =
-    ifpack_types.sublist("Ifpack2 Settings");
-  ifpack_settings.set<double>("fact: drop tolerance", 0);
-  ifpack_settings.set<double>("fact: ilut level-of-fill", 1);
-  ifpack_settings.set<int>("fact: level-of-fill", 1);
-*/
-
-}
-
-//------------------------------------------------------------------------------
-}
-
+} // namespace LCM

@@ -15,7 +15,6 @@
 #include "Aeras_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
@@ -47,11 +46,13 @@ protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   const int numNodes;
+  const int numDims;
   const int numLevels;
   const int worksetSize;
   int numFields; 
   int numNodeVar; 
-  int numLevelVar;
+  int numVectorLevelVar;
+  int numScalarLevelVar;
   int numTracerVar;
 
 };
@@ -131,7 +132,12 @@ public:
   ScatterResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Aeras::Layouts>& dl)
       : ScatterResidualBase<EvalT,Traits>(p,dl)
-    {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
+    {
+      //amb I'm commenting this out. If we throw here, we'll throw when SG_MP is
+      // compiled even if it's not used. It's sufficient to throw in
+      // evaluateFields to guard against actually using SG_MP.
+      //throw "Aeras::GatherSolution not implemented for all tempate specializations";
+    };
   void evaluateFields(typename Traits::EvalData d)
     {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
 };

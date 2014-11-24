@@ -136,8 +136,8 @@ PoissonSource(Teuchos::ParameterList& p,
   // Add factor as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib =
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-      "Poisson Source Factor", this, paramLib);
+  this->registerSacadoParameter("Poisson Source Factor", paramLib);
+
 
   // Add parameters from material database as Sacado params
   std::vector<std::string> dopingParamNames = materialDB->getAllMatchingParams<std::string>("Doping Parameter Name");
@@ -147,13 +147,13 @@ PoissonSource(Teuchos::ParameterList& p,
   for(s = dopingParamNames.begin(); s != dopingParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
       materialParams[*s] = psList->get<double>(*s);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
+      this->registerSacadoParameter(*s, paramLib);
     }
   }
   for(s = chargeParamNames.begin(); s != chargeParamNames.end(); s++) {
     if( psList->isParameter(*s) ) {
       materialParams[*s] = psList->get<double>(*s);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(*s, this, paramLib);
+      this->registerSacadoParameter(*s, paramLib);
     }
   }
 
@@ -163,7 +163,7 @@ PoissonSource(Teuchos::ParameterList& p,
     std::string subListName = Albany::strint("Mesh Region",i);
     if( psList->isSublist(subListName) ) {
       std::string factorName = Albany::strint("Mesh Region Factor",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(factorName, this, paramLib);      
+      this->registerSacadoParameter(factorName, paramLib);
 
       // Validate sublist
       Teuchos::RCP<const Teuchos::ParameterList> regionreflist = 
@@ -216,12 +216,12 @@ PoissonSource(Teuchos::ParameterList& p,
 
 
   if(quantumRegionSource == "schrodinger") {
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Previous Quantum Density Mixing Factor", this, paramLib);
+    this->registerSacadoParameter("Previous Quantum Density Mixing Factor", paramLib);
   }
   else if(quantumRegionSource == "coulomb") {
     //Add Sacado parameters to set indices of eigenvectors to be multipled together
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 1", this, paramLib);
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Source Eigenvector 2", this, paramLib);
+    this->registerSacadoParameter("Source Eigenvector 1", paramLib);
+    this->registerSacadoParameter("Source Eigenvector 2", paramLib);
   }
 
   this->addDependentField(potential);
@@ -607,6 +607,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       //! Schrodinger source for electrons
       if(quantumRegionSource == "schrodinger")
       {
+#ifdef ALBANY_EPETRA
         // retrieve Previous Poisson Potential
         ScalarT prevPhi = 0.0, approxEDensity = 0.0;
         
@@ -666,7 +667,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 	}
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
-
+#endif
       }
 
       //! calculate the classical charge (RHS) for Poisson equation
@@ -727,6 +728,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       //! Schrodinger source for electrons
       if(quantumRegionSource == "schrodinger")
       {
+#ifdef ALBANY_EPETRA
         // retrieve Previous Poisson Potential
         ScalarT prevPhi = 0.0, approxEDensity = 0.0;
         
@@ -776,6 +778,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 	}
         
         valenceBand(cell, qp) = conductionBand(cell,qp)-Eg;
+#endif
       }
     
       else  // use semiclassical source
@@ -864,7 +867,7 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
     const std::string& condBandMin = materialDB->getElementBlockParam<std::string>(workset.EBName,"Conduction Band Minimum");
     double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
-    if ((condBandMin == "Gamma Valley") && (abs(ml-mt) > 1e-10))
+    if ((condBandMin == "Gamma Valley") && (std::abs(ml-mt) > 1e-10))
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Gamma Valley's longitudinal and "
         << "transverse electron effective mass must be equal ! "
         << "Please check the values in materials.xml" << std::endl);
@@ -988,7 +991,7 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
     //! parameters for computing exchange-correlation potential
     double ml = materialDB->getElementBlockParam<double>(workset.EBName,"Longitudinal Electron Effective Mass");
     double mt = materialDB->getElementBlockParam<double>(workset.EBName,"Transverse Electron Effective Mass");        
-    if (abs(ml-mt) > 1e-10) 
+    if (std::abs(ml-mt) > 1e-10) 
       TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Insulator's longitudinal and "
 	       << "transverse electron effective mass must be equal ! "
 	       << "Please check the values in materials.xml" << std::endl);
@@ -1035,16 +1038,20 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
 
   //Fill additional members for quantum and coulomb sources
   if(sourceName == "schrodinger") {
+#ifdef ALBANY_EPETRA
     if(bUsePredictorCorrector) // retrieve Previous Poisson Potential
       ret.prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"]; //assumed in [myV]
 
     ret.quantum_edensity_fn = &QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger;
+#endif
   }
   else if(sourceName == "ci") {
+#ifdef ALBANY_EPETRA
     if(bUsePredictorCorrector) // retrieve Previous Poisson Potential
       ret.prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"]; //assumed in [myV]
 
     ret.quantum_edensity_fn = &QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI;
+#endif
   }
   else if(sourceName == "coulomb")  {
     //RHS == evec[i] * evec[j]
@@ -1427,6 +1434,7 @@ QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, con
 //! ----------------- Quantum electron density functions ---------------------
 
 
+#ifdef ALBANY_EPETRA
 // *****************************************************************************
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT
@@ -1460,6 +1468,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonSchrodinger
   const std::vector<double>& neg_eigenvals = *(workset.eigenDataPtr->eigenvalueRe); 
   std::vector<double> eigenvals( neg_eigenvals );
   for(unsigned int i=0; i<eigenvals.size(); ++i) eigenvals[i] *= -1; //apply minus sign (b/c of eigenval convention)
+
 
   // determine deltaPhi used in computing quantum electron density
   ScalarT deltaPhi = 0.0;  // 0 by default
@@ -1729,7 +1738,7 @@ QCAD::PoissonSource<EvalT,Traits>::eDensityForPoissonCI
   return eDensity; 
 }
 
-
+#endif
 
 
 

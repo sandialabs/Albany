@@ -17,10 +17,10 @@ Albany::HydMorphProblem::
 HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              const int numDim_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_) :
+             Teuchos::RCP<const Teuchos::Comm<int> >& commT_):  
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_),
-  comm(comm_)
+  commT(commT_)
 {
 
   this->setNumEquations(2);
@@ -29,7 +29,7 @@ HydMorphProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
     std::string mtrlDbFilename = params->get<std::string>("MaterialDB Filename");
  // Create Material Database
-    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+    materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
 
   }
 

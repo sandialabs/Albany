@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
 #define ALBANY_SOLUTIONFILERESPONSEFUNCTION_HPP
 
@@ -20,7 +21,7 @@ namespace Albany {
   public:
   
     //! Default constructor
-    SolutionFileResponseFunction(const Teuchos::RCP<const Epetra_Comm>& comm);
+    SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Destructor
     virtual ~SolutionFileResponseFunction();
@@ -30,13 +31,6 @@ namespace Albany {
 
     //! Evaluate responses
     virtual void 
-    evaluateResponse(const double current_time,
-		     const Epetra_Vector* xdot,
-		     const Epetra_Vector* xdotdot,
-		     const Epetra_Vector& x,
-		     const Teuchos::Array<ParamVec>& p,
-		     Epetra_Vector& g);
-    virtual void 
     evaluateResponseT(const double current_time,
 		     const Tpetra_Vector* xdotT,
 		     const Tpetra_Vector* xdotdotT,
@@ -45,25 +39,6 @@ namespace Albany {
 		     Tpetra_Vector& gT);
 
     //! Evaluate tangent = dg/dx*dx/dp + dg/dxdot*dxdot/dp + dg/dp
-    virtual void 
-    evaluateTangent(const double alpha, 
-		    const double beta,
-		    const double omega,
-		    const double current_time,
-		    bool sum_derivs,
-		    const Epetra_Vector* xdot,
-		    const Epetra_Vector* xdotdot,
-		    const Epetra_Vector& x,
-		    const Teuchos::Array<ParamVec>& p,
-		    ParamVec* deriv_p,
-		    const Epetra_MultiVector* Vxdot,
-		    const Epetra_MultiVector* Vxdotdot,
-		    const Epetra_MultiVector* Vx,
-		    const Epetra_MultiVector* Vp,
-		    Epetra_Vector* g,
-		    Epetra_MultiVector* gx,
-		    Epetra_MultiVector* gp);
-
     virtual void 
     evaluateTangentT(const double alpha, 
 		    const double beta,
@@ -83,6 +58,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
+#ifdef ALBANY_EPETRA
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -96,6 +72,7 @@ namespace Albany {
 		     Epetra_MultiVector* dg_dxdot,
 		     Epetra_MultiVector* dg_dxdotdot,
 		     Epetra_MultiVector* dg_dp);
+#endif
   
     virtual void 
     evaluateGradientT(const double current_time,
@@ -110,6 +87,19 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
+#ifdef ALBANY_EPETRA
+    //! Evaluate distributed parameter derivative dg/dp
+    virtual void
+    evaluateDistParamDeriv(
+        const double current_time,
+        const Epetra_Vector* xdot,
+        const Epetra_Vector* xdotdot,
+        const Epetra_Vector& x,
+        const Teuchos::Array<ParamVec>& param_array,
+        const std::string& dist_param_name,
+        Epetra_MultiVector* dg_dp);
+#endif
+
   private:
 
     //! Private to prohibit copying
@@ -118,17 +108,21 @@ namespace Albany {
     //! Private to prohibit copying
     SolutionFileResponseFunction& operator=(const SolutionFileResponseFunction&);
 
+#ifdef ALBANY_EPETRA
     //! Reference Vector
     Epetra_Vector* RefSoln;
+#endif
     //! Reference Vector - Tpetra
     Tpetra_Vector* RefSolnT;
 
     bool solutionLoaded;
 
+#ifdef ALBANY_EPETRA
     //! Basic idea borrowed from EpetraExt - TO DO: put it back there?
     int MatrixMarketFileToVector( const char *filename, const Epetra_BlockMap & map, Epetra_Vector * & A);
     int MatrixMarketFileToMultiVector( const char *filename, const Epetra_BlockMap & map, Epetra_MultiVector * & A);
-    
+#endif    
+
     int MatrixMarketFileToTpetraVector( const char *filename, const Tpetra_Map & map, Tpetra_Vector * & A);
     int MatrixMarketFileToTpetraMultiVector( const char *filename, const Tpetra_Map & map, Tpetra_MultiVector * & A);
 
@@ -137,15 +131,18 @@ namespace Albany {
 //	namespace SolutionFileResponseFunction {
 	
 	  struct NormTwo {
-	
+#ifdef ALBANY_EPETRA	
 	    double Norm(const Epetra_Vector& vec){ double norm; vec.Norm2(&norm); return norm * norm;}
+#endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.norm2(); return normT * normT;}
 	
 	  };
 	
 	  struct NormInf {
 	
+#ifdef ALBANY_EPETRA
 	    double Norm(const Epetra_Vector& vec){ double norm; vec.NormInf(&norm); return norm;}
+#endif
 	    double NormT(const Tpetra_Vector& vecT){ Teuchos::ScalarTraits<ST>::magnitudeType normT = vecT.normInf(); return normT;}
 	
 	  };

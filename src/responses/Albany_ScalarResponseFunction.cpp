@@ -4,22 +4,28 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Teuchos_TestForException.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_LocalMap.h"
+#endif
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
 Albany::ScalarResponseFunction::
 responseMap() const
 {
   int num_responses = this->numResponses();
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
   Teuchos::RCP<const Epetra_LocalMap> response_map =
     Teuchos::rcp(new Epetra_LocalMap(num_responses, 0, *comm));
   return response_map;
 }
+#endif
 
 //Tpetra version of above
 Teuchos::RCP<const Tpetra_Map>
@@ -27,8 +33,6 @@ Albany::ScalarResponseFunction::
 responseMapT() const
 {
   int num_responses = this->numResponses();
-  //create commT object
-  Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(*comm));
   //the following is needed to create Tpetra local map...
   Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
   Teuchos::RCP<const Tpetra_Map> response_mapT =
@@ -38,6 +42,7 @@ responseMapT() const
 }
 
 
+#ifdef ALBANY_EPETRA
 Teuchos::RCP<Epetra_Operator>
 Albany::ScalarResponseFunction::
 createGradientOp() const
@@ -48,6 +53,7 @@ createGradientOp() const
     "Operator form of dg/dx is not supported for scalar responses.");
   return Teuchos::null;
 }
+#endif
 
 Teuchos::RCP<Tpetra_Operator>
 Albany::ScalarResponseFunction::
@@ -60,6 +66,7 @@ createGradientOpT() const
   return Teuchos::null;
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::ScalarResponseFunction::
 evaluateDerivative(
@@ -80,6 +87,7 @@ evaluateDerivative(
     dg_dx.getMultiVector().get(), dg_dxdot.getMultiVector().get(), dg_dxdotdot.getMultiVector().get(),
     dg_dp.getMultiVector().get());
 }
+#endif
 
 void
 Albany::ScalarResponseFunction::

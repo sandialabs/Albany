@@ -1,0 +1,105 @@
+# Instructional Trilinos configuration script for Tpetra-enabled Albany.
+
+# Modify these paths for your system.
+TRILINSTALLDIR=../install
+BOOSTDIR=/usr/local
+NETCDFDIR=/usr/local/parallel
+HDF5DIR=/usr/local/parallel
+SUPERLUDIR=/usr/local/SuperLU_4.3
+
+# Remove the CMake cache. For an extra clean start in an already-used build
+# directory, rm -rf CMake* to get rid of all CMake-generated files.
+rm -f CMakeCache.txt;
+
+# The CMake command. I divide it up into blocks using \.
+#   Block 1 is basic build info.
+#   Block 2 has all the packages for the old Epetra-only Albany.
+#   Block 3 has the packages (STKIo and STKMesh) and TPL (Boost) needed for the
+# new STK. STKClassic cannot simultaneously be built, as it conflicts with the
+# new STK.
+#   Block 4 has I/O util packages and TPLs.
+#   Blocks 1-4 are for the basic old Epetra-only Albany build. If you already
+# have a Trilinos configuration script for that build, you can use it instead of
+# blocks 1-4.
+#   Block 5 has the packages required by the new Tpetra-enabled Albany.
+cmake \
+ -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
+ -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
+ -D CMAKE_BUILD_TYPE:STRING="NONE" \
+ -D TPL_ENABLE_MPI:BOOL=ON \
+ -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+\
+ -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+ -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+ -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+ -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+ -D Trilinos_ENABLE_Shards:BOOL=ON \
+ -D Trilinos_ENABLE_Sacado:BOOL=ON \
+ -D Trilinos_ENABLE_Epetra:BOOL=ON \
+ -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+ -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+ -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+ -D Trilinos_ENABLE_Amesos:BOOL=ON \
+ -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+ -D Trilinos_ENABLE_Belos:BOOL=ON \
+ -D Trilinos_ENABLE_ML:BOOL=ON \
+ -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_NOX:BOOL=ON \
+ -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+ -D Trilinos_ENABLE_Thyra:BOOL=ON \
+ -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+ -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+ -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+ -D Trilinos_ENABLE_Piro:BOOL=ON \
+ -D Trilinos_ENABLE_Teko:BOOL=ON \
+\
+ -D Trilinos_ENABLE_STKIO:BOOL=ON \
+ -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+ -D TPL_ENABLE_Boost:BOOL=ON \
+ -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+ -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+ -D TPL_ENABLE_BoostLib:BOOL=ON \
+ -D BoostLib_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+ -D BoostLib_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+\
+ -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+ -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+ -D TPL_ENABLE_Netcdf:BOOL=ON \
+ -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+ -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
+ -D TPL_ENABLE_HDF5:BOOL=ON \
+ -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
+ -D HDF5_LIBRARY_DIRS:PATH="$HDF5DIR/lib" \
+\
+ -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+ -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+ -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+ -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+\
+ ../
+
+# Optionally enable MueLu by including the following flag:
+#   -D Trilinos_ENABLE_MueLu:BOOL=ON \
+# MueLu requires a coarse-level solver. One of the following must be provided:
+# (1) SuperLU:
+#   -D TPL_ENABLE_SuperLU:STRING=ON \
+#   -D SuperLU_INCLUDE_DIRS:STRING="${SUPERLUDIR}/include" \
+#   -D SuperLU_LIBRARY_DIRS:STRING="${SUPERLUDIR}/lib" \
+# or (2) KLU2:
+#   -D Amesos2_ENABLE_KLU2:BOOL=ON \
+# You can also include both and choose which one to use at run-time.
+
+# For ctests, include these additional SEACAS-related flags to build the
+# install/bin utils exodiff, algebra, and epu, as well as others:
+# -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+# -D TPL_ENABLE_Matio:BOOL=OFF \
+# -DTPL_ENABLE_X11:BOOL=OFF \
+
+# Use these lines to make a debug build.
+#   -D CMAKE_BUILD_TYPE:STRING=DEBUG \
+#   -D CMAKE_CXX_FLAGS:STRING="-ggdb" \
+# I strongly recommend doing only *shared library* debug builds, as the lib and
+# exe files for a static debug build can be huge.
+#   -D BUILD_SHARED_LIBS:BOOL=ON \

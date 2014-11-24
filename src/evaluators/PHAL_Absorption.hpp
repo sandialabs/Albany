@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra
 #ifndef PHAL_ABSORPTION_HPP
 #define PHAL_ABSORPTION_HPP
 
@@ -11,9 +12,11 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
+#ifdef ALBANY_EPETRA
+#include "Epetra_Vector.h"
+#endif
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"

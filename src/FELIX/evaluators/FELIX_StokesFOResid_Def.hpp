@@ -26,7 +26,6 @@ StokesFOResid(const Teuchos::ParameterList& p,
   wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
   U        (p.get<std::string> ("QP Variable Name"), dl->qp_vector),
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
-  UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
   force    (p.get<std::string> ("Body Force Name"), dl->qp_vector),
   muFELIX  (p.get<std::string> ("FELIX Viscosity QP Variable Name"), dl->qp_scalar),
   Residual (p.get<std::string> ("Residual Name"), dl->node_vector)

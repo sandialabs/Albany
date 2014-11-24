@@ -32,7 +32,7 @@ class STKAdapt : public AbstractAdapter {
     STKAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
              const Teuchos::RCP<ParamLib>& paramLib_,
              Albany::StateManager& StateMgr_,
-             const Teuchos::RCP<const Epetra_Comm>& comm_);
+             const Teuchos::RCP<const Teuchos_Comm>& commT_);
     //! Destructor
     ~STKAdapt();
 
@@ -68,8 +68,8 @@ class STKAdapt : public AbstractAdapter {
 
     Albany::STKDiscretization* stk_discretization;
 
-    Teuchos::RCP<stk_classic::percept::PerceptMesh> eMesh;
-    Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> refinerPattern;
+    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
+    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 
     int num_iterations;
 

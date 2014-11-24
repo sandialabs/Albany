@@ -45,6 +45,7 @@
         <Parameter name="IP Field Name 0" type="string" value="Cauchy_Stress"/>
         <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
         <Parameter name="Output to File" type="bool" value="true"/>
+        <Parameter name="Mass Matrix Type" type="string" value="Full"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>
@@ -77,10 +78,11 @@
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
-	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="2"/>
-	<Parameter  name="Max Value" type="double" value="5.0"/>
+	<!-- The number of steps in the problem. -->
+	<Parameter  name="Max Steps" type="int" value="4"/>
+	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
+        <Parameter name="Hit Continuation Bound" type="bool" value="0"/>
 	<!-- Compute eigenvalues of the global stiffness -->
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/>
 	<ParameterList name="Eigensolver">
@@ -100,6 +102,11 @@
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
+          <!-- This Tolerance, whether specified here or not, is used over those
+               provided in the AztecOO and Belos lists. -->
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-10"/>
+          </ParameterList>
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
 	  <ParameterList name="Stratimikos Linear Solver">
@@ -167,6 +174,11 @@
       </ParameterList>
       <ParameterList name="Solver Options">
 	<Parameter name="Status Test Check Type" type="string" value="Minimal"/>
+      </ParameterList>
+      <ParameterList name="Status Tests">
+        <ParameterList name="Test 0">
+          <Parameter name="Tolerance" type="double" value="1e-8"/>
+        </ParameterList>
       </ParameterList>
     </ParameterList>
   </ParameterList>

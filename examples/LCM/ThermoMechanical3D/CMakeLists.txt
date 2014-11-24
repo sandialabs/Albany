@@ -12,8 +12,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSplitSolutionT.xml
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
 add_test(${testName}_SplitOutput ${Albany.exe} inputSplitSolution.xml)
+endif()
 if (ALBANY_IFPACK2)
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 add_test(${testName}_SplitOutput_Tpetra ${AlbanyT.exe} inputSplitSolutionT.xml)

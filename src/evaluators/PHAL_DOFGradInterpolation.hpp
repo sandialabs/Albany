@@ -110,17 +110,18 @@ public:
 
 private:
 
+  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
   //! Values at nodes
-  PHX::MDField<RealType,Cell,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node> val_node;
   //! Basis Functions
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> grad_val_qp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
 
   std::size_t numNodes;
   std::size_t numQPs;

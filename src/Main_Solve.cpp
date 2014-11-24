@@ -29,8 +29,10 @@
 #include "Phalanx_KokkosUtilities.hpp"
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
+//
+//#define ALBANY_CHECK_FPE
 
-#ifdef ENABLE_CHECK_FPE
+#ifdef ALBANY_CHECK_FPE
 #include <math.h>
 //#include <Accelerate/Accelerate.h>
 #include <xmmintrin.h>
@@ -119,10 +121,11 @@ int main(int argc, char *argv[]) {
 
    PHX::InitializeKokkosDevice();
 
-#ifdef ENABLE_CHECK_FPE
-   // Catch FPEs
-   _mm_setcsr(_MM_MASK_MASK &~
-		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+#ifdef ALBANY_CHECK_FPE
+   // Catch FPEs. Follow Main_SolveT.cpp's approach to checking for floating
+   // point exceptions.
+   //_mm_setcsr(_MM_MASK_MASK &~ (_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+   _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 #endif
 
   using Teuchos::RCP;
@@ -146,6 +149,7 @@ int main(int argc, char *argv[]) {
     xmlfilename = "input.xml";
 
   try {
+
     RCP<Teuchos::Time> totalTime =
       Teuchos::TimeMonitor::getNewTimer("Albany: ***Total Time***");
 
@@ -192,10 +196,21 @@ int main(int argc, char *argv[]) {
     *out << "Finished eval of first model: Params, Responses "
       << std::setprecision(12) << std::endl;
 
+    Teuchos::ParameterList& parameterParams = slvrfctry.getParameters().sublist("Problem").sublist("Parameters");
+    int num_param_vecs = (parameterParams.isType<int>("Number")) ?
+        int(parameterParams.get("Number", 0) > 0) :
+        parameterParams.get("Number of Parameter Vectors", 0);
+
     const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
+    double norm2;
     for (int i=0; i<num_p; i++) {
       const Teuchos::RCP<const Epetra_Vector> p_init = epetraVectorFromThyra(appComm, nominal.get_p(i));
-      p_init->Print(*out << "\nParameter vector " << i << ":\n");
+      if(i < num_param_vecs)
+        p_init->Print(*out << "\nParameter vector " << i << ":\n");
+      else { //distributed parameters, we print only 2-norm
+        p_init->Norm2(&norm2);
+        *out << "\nDistributed Parameter " << i << ":  " << norm2 << " (two-norm)\n" << std::endl;
+      }
     }
 
     for (int i=0; i<num_g-1; i++) {
@@ -215,8 +230,21 @@ int main(int argc, char *argv[]) {
           for (int j=0; j<num_p; j++) {
             const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
             if (Teuchos::nonnull(dgdp)) {
-              dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "):!\n");
+              if(j < num_param_vecs)
+                dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "): \n");
+              else {
+              //  RCP<Albany::ScalarResponseFunction> response = rcp_dynamic_cast<Albany::ScalarResponseFunction>(app->getResponse(i));
+               // int numResponses = response->numResponses();
+                *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
+                *out << "    ";
+                for(int ir=0; ir<dgdp->NumVectors(); ++ir) {
+                  (*dgdp)(ir)->Norm2(&norm2);
+                  *out << "    " << norm2;
+                }
+                *out << "\n" << std::endl;
+              }
             }
+
             status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
           }
         }

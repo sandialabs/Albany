@@ -63,7 +63,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
 
   const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*comm);
   Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
-
+  commE = comm; 
   // Get sub-problem input xml files from problem parameters
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
 
@@ -310,10 +310,12 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   //   is needed to convert the poisson solution vector to conduction band values expected by the schrodinger problem
 
     // Material database
+
+  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(commE);
   std::string mtrlDbFilename = "materials.xml";
   if(problemParams.isType<std::string>("MaterialDB Filename"))
     mtrlDbFilename = problemParams.get<std::string>("MaterialDB Filename");
-  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, comm));
+  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
   
   std::string refMtrlName = materialDB->getParam<std::string>("Reference Material");
   double refmatChi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
@@ -372,7 +374,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   */
 
   // Create discretization object solely for producing collected output
-  Albany::DiscretizationFactory discFactory(appParams, comm);
+  Albany::DiscretizationFactory discFactory(appParams, commT);
 
   // Get mesh specification object: worksetSize, cell topology, etc
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs =
@@ -1171,6 +1173,25 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
     Derivative dgdx_out = outArgs.get_DgDx(i);
     Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
+        
+    //IK, 10/9/14
+    //convert g_out to Tpetra for evaluateResponseTangentT calls
+    Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(commE);
+    Teuchos::RCP<Tpetra_Vector> g_outT; 
+    if (g_out != Teuchos::null) 
+      g_outT = Petra::EpetraVector_To_TpetraVectorNonConst(*g_out, commT); 
+    //convert xdot_poisson and x_poisson to Tpetra  
+    Teuchos::RCP<const Tpetra_Vector> x_poissonT, xdot_poissonT; 
+    if (x_poisson != Teuchos::null) 
+      x_poissonT  = Petra::EpetraVector_To_TpetraVectorConst(*x_poisson, commT); 
+    if (xdot_poisson != Teuchos::null)  
+      xdot_poissonT = Petra::EpetraVector_To_TpetraVectorConst(*xdot_poisson, commT);
+    //convert xdot_schrodinger and x_schrodinger to Tpetra  
+    Teuchos::RCP<const Tpetra_Vector> x_schrodingerT, xdot_schrodingerT; 
+    if (x_schrodinger != Teuchos::null) 
+      x_schrodingerT  = Petra::EpetraVector_To_TpetraVectorConst(*((*x_schrodinger)(0)), commT); 
+    if (xdot_schrodinger != Teuchos::null)
+      xdot_schrodingerT  = Petra::EpetraVector_To_TpetraVectorConst(*xdot_schrodinger_vec[0], commT); 
 
     // dg/dx, dg/dxdot
     if (!dgdx_out.isEmpty() || !dgdxdot_out.isEmpty()) {
@@ -1213,22 +1234,34 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
             p_vec->addParam(sacado_param_vec[j-offset][p_indexes[k]].family,
                             sacado_param_vec[j-offset][p_indexes[k]].baseValue);
         }
+       //IK, 10/9/14: converg dgdp_out to Tpetra            
+       Teuchos::RCP<Tpetra_MultiVector> dgdp_outT;
+       if (dgdp_out != Teuchos::null) 
+        dgdp_outT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp_out, commT); 
 
 	if(i < poissonApp->getNumResponses() && j < num_poisson_param_vecs) {
 	  //both response and param vectors belong to poisson problem
-	  poissonApp->evaluateResponseTangent(i, alpha, beta, 0.0, curr_time, false,
-					      xdot_poisson.get(), NULL, *x_poisson,
+	  poissonApp->evaluateResponseTangentT(i, alpha, beta, 0.0, curr_time, false,
+					      xdot_poissonT.get(), NULL, *x_poissonT,
 					      poisson_sacado_param_vec, p_vec.get(),
-					      NULL, NULL, NULL, NULL, g_out.get(), NULL,
-					      dgdp_out.get());
+					      NULL, NULL, NULL, NULL, g_outT.get(), NULL,
+					      dgdp_outT.get());
+          //convert g_outT to Epetra_Vector g_out
+          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE); 	
+          //convert dgdp_outT to Epetra_MultiVector dgdp_out
+          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, commE); 	
 	}
 	else if(i >= poissonApp->getNumResponses() && j >= num_poisson_param_vecs) {
 	  //both response and param vectors belong to schrodinger problem -- evaluate dg/dp using first eigenvector
-	  schrodingerApp->evaluateResponseTangent(i - poissonApp->getNumResponses(), alpha, beta, 0.0, curr_time, false,
-						  xdot_schrodinger_vec[0], NULL, *((*x_schrodinger)(0)),
+	  schrodingerApp->evaluateResponseTangentT(i - poissonApp->getNumResponses(), alpha, beta, 0.0, curr_time, false,
+						  xdot_schrodingerT.get(), NULL, *x_schrodingerT,
 						  schrodinger_sacado_param_vec, p_vec.get(),
-						  NULL, NULL, NULL, NULL, g_out.get(), NULL,
-						  dgdp_out.get());
+						  NULL, NULL, NULL, NULL, g_outT.get(), NULL,
+						  dgdp_outT.get());
+          //convert g_outT to Epetra_Vector g_out
+          Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE); 	
+          //convert dgdp_outT to Epetra_MultiVector dgdp_out
+          Petra::TpetraMultiVector_To_EpetraMultiVector(dgdp_outT, *dgdp_out, commE); 	
 	}
 	else {
 	  // response and param vectors belong to different sub-problems (Poisson or Schrodinger)
@@ -1241,13 +1274,15 @@ QCAD::CoupledPoissonSchrodinger::evalModel(const InArgs& inArgs,
 
     if (g_out != Teuchos::null && !g_computed) {
       if(i < poissonApp->getNumResponses()) {
-	poissonApp->evaluateResponse(i, curr_time, xdot_poisson.get(), NULL, *x_poisson,
-				     poisson_sacado_param_vec, *g_out);
+	poissonApp->evaluateResponseT(i, curr_time, xdot_poissonT.get(), NULL, *x_poissonT,
+				     poisson_sacado_param_vec, *g_outT);
       }
       else {
-	schrodingerApp->evaluateResponse(i - poissonApp->getNumResponses(), curr_time, xdot_schrodinger_vec[0], NULL, *((*x_schrodinger)(0)), 
-					 schrodinger_sacado_param_vec, *g_out);
+	schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xdot_schrodingerT.get(), NULL, 
+                                         *x_schrodingerT, schrodinger_sacado_param_vec, *g_outT);
       }
+      //convert g_outT to Epetra_Vector g_out 
+      Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE); 
     }
 
   }

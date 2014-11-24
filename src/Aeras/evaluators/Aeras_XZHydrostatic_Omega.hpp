@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras {
 /** \brief Density for XZHydrostatic atmospheric model
@@ -39,18 +40,19 @@ public:
 
 private:
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint>     Velx;
-  PHX::MDField<ScalarT,Cell,QuadPoint>     density;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradp;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradpivelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> Velx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     Cpstar;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> gradp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     divpivelx;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint>      omega;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      omega;
 
   const int numQPs;
+  const int numDims;
   const int numLevels;
-  double Cp ;
-
+  const ScalarT Cp;
 };
 }
 

@@ -18,6 +18,7 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
+#include "Teuchos_FancyOStream.hpp"
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
@@ -33,6 +34,8 @@
 
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = true;
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
+
 
 void tpetraFromThyra(
   const Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > &thyraResponses,
@@ -80,8 +83,24 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
 #ifdef ALBANY_CHECK_FPE
-	_mm_setcsr(_MM_MASK_MASK &~
-		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+//	_mm_setcsr(_MM_MASK_MASK &~
+//		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
+    _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
+#endif
+
+#ifdef ALBANY_64BIT_INT
+// Albany assumes sizeof(long) is 64 bit ints
+
+//	if(sizeof(long) != sizeof(long long)){
+	if(sizeof(long) != 8){ // 8 bytes
+
+		std::cerr << "Error: The 64 bit build of Albany assumes that sizeof(long) == 64 bits."
+			<< " sizeof(long) = " << sizeof(long) << "; sizeof(long long) = " << sizeof(long long) << std::endl;
+
+        exit(1);
+
+    }
+
 #endif
 
   using Teuchos::RCP;
@@ -122,8 +141,6 @@ int main(int argc, char *argv[]) {
       slvrfctry.createAndGetAlbanyAppT(app, comm, comm);
 
     setupTimer.~TimeMonitor();
-
-    *out << "Before main solve" << std::endl;
 
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
@@ -263,6 +280,30 @@ int main(int argc, char *argv[]) {
 
     const RCP<const Tpetra_Vector> xfinal = responses.back();
     double mnv = xfinal->meanValue();
+    // Create debug output object
+    Teuchos::ParameterList &debugParams =
+      slvrfctry.getParameters().sublist("Debug Output", true);
+    bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+    if (writeToMatrixMarketSoln == true) { 
+
+      //create serial map that puts the whole solution on processor 0
+      int numMyElements = (xfinal->getMap()->getComm()->getRank() == 0) ? app->getDiscretization()->getMapT()->getGlobalNumElements() : 0;
+
+     Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
+ 
+      //create importer from parallel map to serial map and populate serial solution xfinal_serial
+      Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_map, app->getDiscretization()->getMapT())); 
+      Teuchos::RCP<Tpetra_Vector> xfinal_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
+      xfinal_serial->doImport(*app->getDiscretization()->getSolutionFieldT(), *importOperator, Tpetra::INSERT);
+
+      //writing to MatrixMarket file
+       Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
+    }
+    if (writeToCoutSoln == true) { 
+       std::cout << "xfinal: " << std::endl;
+       xfinal->describe(*out, Teuchos::VERB_EXTREME);
+    }
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }

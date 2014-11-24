@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
-#include "Albany_Layouts.hpp"
+#include "Aeras_Layouts.hpp"
 
 #include "Intrepid_CellTools.hpp"
 #include "Intrepid_Cubature.hpp"
@@ -32,7 +32,7 @@ class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
 
   ComputeBasisFunctions(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl);
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm);
@@ -56,6 +56,7 @@ private:
   //PHX::MDField<RealType,Node,QuadPoint>    val_at_cub_points;
   Intrepid::FieldContainer<RealType>    val_at_cub_points;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
+  Intrepid::FieldContainer<RealType>    D2_at_cub_points;
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
 
@@ -74,7 +75,11 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradGradBF;
+         
+         
+  const double earthRadius;
   void div_check(const int spatialDim, const int numelements) const;
   void spherical_divergence(Intrepid::FieldContainer<MeshScalarT> &,
                             const Intrepid::FieldContainer<MeshScalarT> &,

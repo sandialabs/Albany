@@ -13,7 +13,6 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
@@ -56,6 +55,8 @@ class ThermalConductivity :
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+
+  enum SG_RF {CONSTANT, UNIFORM, LOGNORMAL};
 
   ThermalConductivity(Teuchos::ParameterList& p);
   
@@ -100,6 +101,8 @@ private:
   //! Convenience function to initialize thermal conductivity based on 
   //  Truncated KL Expansion || Log Normal RF
   void init_KL_RF(std::string &type, Teuchos::ParameterList& subList, Teuchos::ParameterList& p);
+
+  SG_RF randField;
 
 };
 }

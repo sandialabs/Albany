@@ -21,7 +21,7 @@ namespace QCAD {
   
     //! Default constructor
     MaterialDatabase(const std::string& inputFile,
-		     const Teuchos::RCP<const Epetra_Comm>& ecomm);
+                     Teuchos::RCP<const Teuchos::Comm<int> >& tcomm);  
 
     //! Destructor
     ~MaterialDatabase();

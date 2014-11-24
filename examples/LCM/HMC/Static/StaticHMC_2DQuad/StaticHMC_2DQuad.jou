@@ -1,0 +1,32 @@
+create curve spline location 1 0 0 location 10 0 0
+create curve spline location 10 0 0 location 10 10 0
+create curve spline location 10 10 0 location 0 10 0
+create curve spline location 0 10 0 location 0 1 0
+create vertex 0 0 0 
+create curve arc center vertex 9 8 1
+
+create surface curve 1 2 3 4 5
+
+curve 2 3 interval size 1
+curve 1 scheme bias fine size 0.1 coarse size 1 start vertex 1
+curve 4 scheme bias fine size 0.1 coarse size 1 start vertex 8
+curve 5 interval size 0.1
+
+mesh surface 1
+
+block 1 surface 1
+
+block 1 element type QUAD4
+
+# bottom symmetry condition (u_2 = 0)
+nodeset 1 curve 1
+
+# left side (u_1 = 0)
+nodeset 2 curve 4 
+
+#top (\sigma \cdot n = 4.5)
+sideset 1 curve 3
+
+set large exodus file off
+
+export mesh "StaticHMC_2DQuad.gen" overwrite

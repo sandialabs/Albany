@@ -28,7 +28,7 @@ Time(Teuchos::ParameterList& p) :
   // Add Time as a Sacado-ized parameter
   Teuchos::RCP<ParamLib> paramLib = 
     p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-  new Sacado::ParameterRegistration<EvalT, SPL_Traits>("Time", this, paramLib);
+  this->registerSacadoParameter("Time", paramLib);
 
   this->addEvaluatedField(time);
   this->addEvaluatedField(deltaTime);

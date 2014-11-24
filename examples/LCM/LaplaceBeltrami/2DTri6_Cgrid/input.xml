@@ -95,7 +95,7 @@
                 </ParameterList>
               </ParameterList>
 <!-- Preconditioner -->
-              <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
 <!-- Ifpack -->
                 <ParameterList name="Ifpack2">

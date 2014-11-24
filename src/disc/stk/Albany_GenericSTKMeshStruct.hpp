@@ -4,12 +4,13 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra ifdef'ed out if ALBANY_EPETRA_EXE turned off
+
 #ifndef ALBANY_GENERICSTKMESHSTRUCT_HPP
 #define ALBANY_GENERICSTKMESHSTRUCT_HPP
 
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Comm.h"
 
 // Refinement
 #ifdef ALBANY_STK_PERCEPT
@@ -30,7 +31,7 @@ namespace Albany {
 
     public:
     virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -40,13 +41,10 @@ namespace Albany {
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
 #ifdef ALBANY_STK_PERCEPT
-    Teuchos::RCP<stk_classic::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
-    Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
+    Teuchos::RCP<stk::percept::PerceptMesh> getPerceptMesh(){ return eMesh; }
+    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> getRefinerPattern(){ return refinerPattern; }
 #endif
 
-    //! Re-load balance adapted mesh
-    void rebalanceAdaptedMesh(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                              const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Re-load balance adapted mesh
     void rebalanceAdaptedMeshT(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -67,7 +65,7 @@ namespace Albany {
                   const int numDim=-1);
 
     void SetupFieldData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -77,16 +75,13 @@ namespace Albany {
 
     bool buildLocalRefiner();
 
-    void printParts(stk_classic::mesh::fem::FEMMetaData *metaData);
+    void printParts(stk::mesh::MetaData *metaData);
 
     void cullSubsetParts(std::vector<std::string>& ssNames,
-        std::map<std::string, stk_classic::mesh::Part*>& partVec);
+        std::map<std::string, stk::mesh::Part*>& partVec);
 
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
-
-    //! Re-load balance mesh
-    void rebalanceInitialMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Re-load balance mesh
     void rebalanceInitialMeshT(const Teuchos::RCP<const Teuchos::Comm<int> >& comm);
@@ -96,7 +91,7 @@ namespace Albany {
     bool buildPerceptEMesh();
 
     //! Perform initial uniform refinement of the mesh
-    void uniformRefineMesh(const Teuchos::RCP<const Epetra_Comm>& comm);
+    void uniformRefineMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     //! Perform initial adaptation input checking
     void checkInput(std::string option, std::string value, std::string allowed_values);
@@ -120,8 +115,8 @@ namespace Albany {
     Albany::DynamicDataArray<CellSpecs>::type meshDynamicData;
 
 #ifdef ALBANY_STK_PERCEPT
-    Teuchos::RCP<stk_classic::percept::PerceptMesh> eMesh;
-    Teuchos::RCP<stk_classic::adapt::UniformRefinerPatternBase> refinerPattern;
+    Teuchos::RCP<stk::percept::PerceptMesh> eMesh;
+    Teuchos::RCP<stk::adapt::UniformRefinerPatternBase> refinerPattern;
 #endif
 
     bool uniformRefinementInitialized;

@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_PIROOBSERVERT_HPP
 #define ALBANY_PIROOBSERVERT_HPP
 

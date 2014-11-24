@@ -17,14 +17,14 @@ PotentialResid(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Albany::Layouts>& dl) :
   wBF         (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
   wGradBF     (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
-  //Permittivity (p.get<std::string>  ("Permittivity Name"), dl->qp_scalar),
+  Permittivity (p.get<std::string>  ("Permittivity Name"), dl->qp_scalar),
   Concentration     ("Concentration", dl->qp_vector),
   PotentialGrad     ("Potential Gradient", dl->qp_gradient),
   PotentialResidual ("Potential Residual",  dl->node_scalar )
 {
   this->addDependentField(wBF);
   this->addDependentField(wGradBF);
-  //this->addDependentField(Permittivity);
+  this->addDependentField(Permittivity);
   this->addDependentField(Concentration);
   this->addDependentField(PotentialGrad);
 
@@ -53,7 +53,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(wBF,fm);
   this->utils.setFieldData(wGradBF,fm);
-  //this->utils.setFieldData(Permittivity,fm);
+  this->utils.setFieldData(Permittivity,fm);
   this->utils.setFieldData(Concentration,fm);
   this->utils.setFieldData(PotentialGrad,fm);
 
@@ -68,9 +68,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
 
   // Scale gradient into a flux, reusing same memory
-//  FST::scalarMultiplyDataData<ScalarT> (PhiFlux, Permittivity, PhiGrad);
-
-  // TODO: add permittivity
+  FST::scalarMultiplyDataData<ScalarT> (PotentialGrad, Permittivity, PotentialGrad);
   FST::integrate<ScalarT>(PotentialResidual, PotentialGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
     

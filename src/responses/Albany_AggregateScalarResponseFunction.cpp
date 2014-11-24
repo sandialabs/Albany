@@ -4,22 +4,26 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_LocalMap.h"
+#endif
 
 using Teuchos::RCP;
 using Teuchos::rcp;
 
 Albany::AggregateScalarResponseFunction::
 AggregateScalarResponseFunction(
-  const Teuchos::RCP<const Epetra_Comm>& comm,
+  const Teuchos::RCP<const Teuchos_Comm>& commT,
   const Teuchos::Array< Teuchos::RCP<ScalarResponseFunction> >& responses_) :
-  SamplingBasedScalarResponseFunction(comm),
+  SamplingBasedScalarResponseFunction(commT),
   responses(responses_)
 {
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::AggregateScalarResponseFunction::
 setup()
@@ -27,6 +31,17 @@ setup()
   typedef Teuchos::Array<Teuchos::RCP<ScalarResponseFunction> > ResponseArray;
   for (ResponseArray::iterator it = responses.begin(), it_end = responses.end(); it != it_end; ++it) {
     (*it)->setup();
+  }
+}
+#endif
+
+void
+Albany::AggregateScalarResponseFunction::
+setupT()
+{
+  typedef Teuchos::Array<Teuchos::RCP<ScalarResponseFunction> > ResponseArray;
+  for (ResponseArray::iterator it = responses.begin(), it_end = responses.end(); it != it_end; ++it) {
+    (*it)->setupT();
   }
 }
 
@@ -47,38 +62,6 @@ numResponses() const
 
 void
 Albany::AggregateScalarResponseFunction::
-evaluateResponse(const double current_time,
-		 const Epetra_Vector* xdot,
-		 const Epetra_Vector* xdotdot,
-		 const Epetra_Vector& x,
-		 const Teuchos::Array<ParamVec>& p,
-		 Epetra_Vector& g)
-{
-  unsigned int offset = 0;
-  for (unsigned int i=0; i<responses.size(); i++) {
-
-    // Create Epetra_Map for response function
-    int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, 
-				       *(responses[i]->getComm()));
-
-    // Create Epetra_Vector for response function
-    Epetra_Vector local_g(local_response_map);
-
-    // Evaluate response function
-    responses[i]->evaluateResponse(current_time, xdot, xdotdot, x, p, local_g);
-    
-    // Copy result into combined result
-    for (unsigned int j=0; j<num_responses; j++)
-      g[offset+j] = local_g[j];
-
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-}
-
-void
-Albany::AggregateScalarResponseFunction::
 evaluateResponseT(const double current_time,
 		 const Tpetra_Vector* xdotT,
 		 const Tpetra_Vector* xdotdotT,
@@ -91,8 +74,7 @@ evaluateResponseT(const double current_time,
 
     // Create Tpetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    const Epetra_Comm& comm = *(responses[i]->getComm());
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
     
@@ -116,68 +98,6 @@ evaluateResponseT(const double current_time,
   
 }
 
-void
-Albany::AggregateScalarResponseFunction::
-evaluateTangent(const double alpha, 
-		const double beta,
-		const double omega,
-		const double current_time,
-		bool sum_derivs,
-		const Epetra_Vector* xdot,
-		const Epetra_Vector* xdotdot,
-		const Epetra_Vector& x,
-		const Teuchos::Array<ParamVec>& p,
-		ParamVec* deriv_p,
-		const Epetra_MultiVector* Vxdot,
-		const Epetra_MultiVector* Vxdotdot,
-		const Epetra_MultiVector* Vx,
-		const Epetra_MultiVector* Vp,
-		Epetra_Vector* g,
-		Epetra_MultiVector* gx,
-		Epetra_MultiVector* gp)
-{
-  unsigned int offset = 0;
-  for (unsigned int i=0; i<responses.size(); i++) {
-
-    // Create Epetra_Map for response function
-    int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, 
-      *(responses[i]->getComm()));
-
-    // Create Epetra_Vectors for response function
-    RCP<Epetra_Vector> local_g;
-    RCP<Epetra_MultiVector> local_gx, local_gp;
-    if (g != NULL)
-      local_g = rcp(new Epetra_Vector(local_response_map));
-    if (gx != NULL)
-      local_gx = rcp(new Epetra_MultiVector(local_response_map, 
-					    gx->NumVectors()));
-    if (gp != NULL)
-      local_gp = rcp(new Epetra_MultiVector(local_response_map, 
-					    gp->NumVectors()));
-
-    // Evaluate response function
-    responses[i]->evaluateTangent(alpha, beta, omega, current_time, sum_derivs,
-				  xdot, xdotdot, x, p, deriv_p, Vxdot, Vxdotdot, Vx, Vp, 
-				  local_g.get(), local_gx.get(), 
-				  local_gp.get());
-
-    // Copy results into combined result
-    for (unsigned int j=0; j<num_responses; j++) {
-      if (g != NULL)
-        (*g)[offset+j] = (*local_g)[j];
-      if (gx != NULL)
-	for (int k=0; k<gx->NumVectors(); k++)
-	  (*gx)[k][offset+j] = (*local_gx)[k][j];
-      if (gp != NULL)
-	for (int k=0; k<gp->NumVectors(); k++)
-	  (*gp)[k][offset+j] = (*local_gp)[k][j];
-    }
-
-    // Increment offset in combined result
-    offset += num_responses;
-  }
-}
 
 void
 Albany::AggregateScalarResponseFunction::
@@ -204,8 +124,7 @@ evaluateTangentT(const double alpha,
 
     // Create Tpetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    const Epetra_Comm& comm = *(responses[i]->getComm());
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
 
@@ -263,7 +182,7 @@ evaluateTangentT(const double alpha,
   }
 }
 
-
+#ifdef ALBANY_EPETRA
 void
 Albany::AggregateScalarResponseFunction::
 evaluateGradient(const double current_time,
@@ -283,8 +202,9 @@ evaluateGradient(const double current_time,
 
     // Create Epetra_Map for response function
     int num_responses = responses[i]->numResponses();
-    Epetra_LocalMap local_response_map(num_responses, 0, 
-				       *(responses[i]->getComm()));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
+    Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+    Epetra_LocalMap local_response_map(num_responses, 0, *comm); 
 
     // Create Epetra_Vectors for response function
     RCP<Epetra_Vector> local_g;
@@ -328,6 +248,7 @@ evaluateGradient(const double current_time,
     offset += num_responses;
   }
 }
+#endif
 
 void
 Albany::AggregateScalarResponseFunction::
@@ -348,8 +269,7 @@ evaluateGradientT(const double current_time,
 
     // Create Tpetra_Map for response function
     unsigned int num_responses = responses[i]->numResponses();
-    const Epetra_Comm& comm = *(responses[i]->getComm());
-    Teuchos::RCP<const Teuchos::Comm<int> > commT = Albany::createTeuchosCommFromMpiComm(Albany::getMpiCommFromEpetraComm(comm));
+    Teuchos::RCP<const Teuchos::Comm<int> > commT = responses[i]->getComm(); 
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     Teuchos::RCP<Tpetra_Map> local_response_map = Teuchos::rcp(new Tpetra_Map(num_responses, 0, commT, lg));
 
@@ -414,3 +334,40 @@ evaluateGradientT(const double current_time,
     offset += num_responses;
   }
 }
+
+#ifdef ALBANY_EPETRA
+void
+Albany::AggregateScalarResponseFunction::
+evaluateDistParamDeriv(
+      const double current_time,
+      const Epetra_Vector* xdot,
+      const Epetra_Vector* xdotdot,
+      const Epetra_Vector& x,
+      const Teuchos::Array<ParamVec>& param_array,
+      const std::string& dist_param_name,
+      Epetra_MultiVector* dg_dp) {
+  unsigned int offset = 0;
+  for (unsigned int i=0; i<responses.size(); i++) {
+
+    // Create Epetra_Map for response function
+    int num_responses = responses[i]->numResponses();
+
+    // Create Epetra_MultiVectors for response derivative function
+    RCP<Epetra_MultiVector> aggregated_dgdp;
+    if (dg_dp != NULL)
+      aggregated_dgdp = rcp(new Epetra_MultiVector(dg_dp->Map(),num_responses));
+
+    // Evaluate response function
+    responses[i]->evaluateDistParamDeriv(current_time, xdot, xdotdot, x, param_array, dist_param_name,
+           aggregated_dgdp.get());
+
+    // Copy results into combined result
+    if (dg_dp != NULL)
+      for (unsigned int j=0; j<num_responses; j++)
+        *(*dg_dp)(offset+j) = *(*aggregated_dgdp)(j);
+
+    // Increment offset in combined result
+    offset += num_responses;
+  }
+}
+#endif

@@ -4,12 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_ABSTRACTMESHSTRUCT_HPP
 #define ALBANY_ABSTRACTMESHSTRUCT_HPP
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Comm.h"
-#include "Epetra_Map.h"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
 
@@ -75,7 +74,7 @@ struct AbstractMeshStruct {
 #endif
 
     virtual void setFieldAndBulkData(
-      const Teuchos::RCP<const Epetra_Comm>& comm,
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
       const Teuchos::RCP<Teuchos::ParameterList>& params,
       const unsigned int neq_,
       const AbstractFieldContainer::FieldContainerRequirements& req,

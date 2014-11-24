@@ -53,6 +53,8 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_KokkosRefactor_CrsMatrix_def.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
+#include "MatrixMarket_Tpetra.hpp"
+
 
 //Kokkos includes
 #include "Kokkos_SerialNode.hpp"
@@ -61,13 +63,19 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 //Tpetra typedefs
 typedef double                                      ST;
 #ifdef ALBANY_64BIT_INT
-typedef long long                                         GO;
+typedef long                                        GO;
 #else
 typedef int                                         GO;
 #endif
 typedef int                                         LO;
-//typedef KokkosClassic::SerialNode                   KokkosNode;
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> KokkosNode;
+
+//typedef Kokkos::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
+//typedef Kokkos::SerialNode                          KokkosNode; // No threading
+//typedef Kokkos::TPINode                             KokkosNode; // custom Pthreads
+//typedef Kokkos::TBBNode                             KokkosNode; // Intel TBB
+//typedef Kokkos::ThrustNode                          KokkosNode; // C++ Cuda wtapper
+
 typedef Teuchos::Comm<int>                          Teuchos_Comm;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;
 typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;
@@ -82,6 +90,7 @@ typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
 typedef Tpetra::BlockMultiVector<ST, LO, GO, KokkosNode> Tpetra_BlockMultiVector;
 typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
+typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix> Tpetra_MatrixMarket_Writer;
 
 
 // Include ScalarParameterLibrary to specialize its traits

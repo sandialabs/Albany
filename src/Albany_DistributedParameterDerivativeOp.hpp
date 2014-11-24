@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #ifndef ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
 #define ALBANY_DISTRIBUTED_PARAMETER_DERIVATIVE_OP_HPP
 
@@ -57,6 +59,7 @@ namespace Albany {
     //! If set true, transpose of this operator will be applied.
     virtual int SetUseTranspose(bool UseTranspose) {
       use_transpose = UseTranspose;
+      return 0;
     }
 
     /*!

@@ -134,6 +134,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         //p->set< RCP< vector<RealType> > >("BC Values", b_ptr);
         //p->set< vector<RealType> >("BC Values", BCValues);
         p->set< Teuchos::Array<RealType> >("BC Values", sub_list.get<Teuchos::Array<RealType> >("BC Values"));
+        p->set< bool >("Mesh Deforms", sub_list.get< bool >("Mesh Deforms", false));
         p->set< RCP<DataLayout> >("Data Layout", dummy);
         p->set< std::string > ("Dirichlet Name", ss);
         p->set< RealType >("Dirichlet Value", 0.0);
@@ -408,7 +409,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
             p->set<std::string> ("BetaXY", betaName);
-            p->set<string>("Beta Field Name", "Basal Friction");
+            p->set<string>("Beta Field Name", "basal_friction");
             p->set<double> ("L", L);
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
@@ -416,7 +417,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
             else               p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_scalar);
           }
           else if(conditions[k] == "basal_scalar_field") {
-            p->set<string>("Beta Field Name", "Basal Friction");
+            p->set<string>("Beta Field Name", "basal_friction");
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
             if (isVectorField) p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
@@ -425,8 +426,8 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           else if(conditions[k] == "lateral") {
             std::string betaName = BCparams.get("BetaXY", "Constant");
             double L = BCparams.get("L", 1.0);
-            p->set<std::string>("Thickness Field Name", "Thickness");
-            p->set<std::string>("Elevation Field Name", "Surface Height");
+            p->set<std::string>("thickness Field Name", "thickness");
+            p->set<std::string>("Elevation Field Name", "surface_height");
             p->set<std::string>  ("DOF Name", dof_names[0]);
            	p->set<bool> ("Vector Field", isVectorField);
            	if (isVectorField) {p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);}
@@ -590,40 +591,48 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
     evaluators_to_build[NeuGCV] = p;
   }
 
-// Build evaluator for Gather Basal Friction
+
 #ifdef ALBANY_FELIX
-   string NeuGBF="Evaluator for Gather Basal Friction";
-   {
-     RCP<ParameterList> p = rcp(new ParameterList());
-     p->set<int>("Type", traits_type::typeGBF);
-
-     // for new way
-     p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
-     p->set< string >("Basal Friction Name", "Basal Friction");
-
-     evaluators_to_build[NeuGBF] = p;
-   }
-
-   string NeuGT="Evaluator for Gather Thickness";
+  // Build evaluator for basal_friction
+  string NeuGBF="Evaluator for Gather basal_friction";
   {
-	RCP<ParameterList> p = rcp(new ParameterList());
-	p->set<int>("Type", traits_type::typeGT);
+    RCP<ParameterList> p = rcp(new ParameterList());
+    p->set<int>("Type", traits_type::typeSNP);
+    //p->set<int>("Type", traits_type::typeSF);
 
-	// for new way
-	p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
-	p->set< string >("Thickness Name", "Thickness");
+    // for new way
+    p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
+    p->set< string >("Parameter Name", "basal_friction");
+    p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+    p->set< string >("State Name", "basal_friction");
+    p->set< string >("Field Name", "basal_friction");
 
-	evaluators_to_build[NeuGT] = p;
+    evaluators_to_build[NeuGBF] = p;
   }
 
-  string NeuGSH="Evaluator for Gather Surface Height";
+  // Build evaluator for thickness
+  string NeuGT="Evaluator for Gather thickness";
+  {
+	  RCP<ParameterList> p = rcp(new ParameterList());
+	  p->set<int>("Type", traits_type::typeSF);
+
+	  // for new way
+    p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+    p->set< string >("State Name", "thickness");
+    p->set< string >("Field Name", "thickness");
+
+	  evaluators_to_build[NeuGT] = p;
+  }
+
+  string NeuGSH="Evaluator for Gather surface_height";
     {
   	RCP<ParameterList> p = rcp(new ParameterList());
-  	p->set<int>("Type", traits_type::typeGSH);
+  	p->set<int>("Type", traits_type::typeSF);
 
   	// for new way
-  	p->set< RCP<DataLayout> >  ("Data Layout",  dl->node_scalar);
-  	p->set< string >("Surface Height Name", "Surface Height");
+    p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+    p->set< string >("State Name", "surface_height");
+    p->set< string >("Field Name", "surface_height");
 
   	evaluators_to_build[NeuGSH] = p;
     }
@@ -699,6 +708,9 @@ Albany::BCUtils<BCTraits>::buildFieldManager(const std::map < std::string,
 
   PHX::Tag<AlbanyTraits::Tangent::ScalarT> tan_tag0(allBC, dummy);
   fm->requireField<AlbanyTraits::Tangent>(tan_tag0);
+
+  PHX::Tag<AlbanyTraits::DistParamDeriv::ScalarT> dpd_tag0(allBC, dummy);
+  fm->requireField<AlbanyTraits::DistParamDeriv>(dpd_tag0);
 
 #ifdef ALBANY_SG_MP
   PHX::Tag<AlbanyTraits::SGResidual::ScalarT> sgres_tag0(allBC, dummy);

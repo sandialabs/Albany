@@ -4,12 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/13/14: Epetra ifdef'ed out except if SG and MP if ALBANY_EPETRA_EXE set to off.
+
 #ifndef ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 #define ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Stokhos_ProductEpetraOperator.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
+#endif
 
 namespace Albany {
 
@@ -29,6 +33,7 @@ namespace Albany {
     //! Destructor
     virtual ~DistributedResponseFunction() {};
 
+#ifdef ALBANY_EPETRA
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -42,6 +47,7 @@ namespace Albany {
       Epetra_Operator* dg_dxdot,
       Epetra_Operator* dg_dxdotdot,
       Epetra_MultiVector* dg_dp) = 0;
+#endif
     
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp - Tpetra
     virtual void evaluateGradientT(
@@ -100,6 +106,7 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const { return false; }
 
+#ifdef ALBANY_EPETRA
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -113,6 +120,7 @@ namespace Albany {
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
       const EpetraExt::ModelEvaluator::Derivative& dg_dp);
+#endif
 
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivativeT(
@@ -177,7 +185,7 @@ namespace Albany {
   protected:
 
     //! Comm for forming response map
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
   };
 

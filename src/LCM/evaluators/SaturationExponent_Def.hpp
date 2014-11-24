@@ -37,8 +37,7 @@ SaturationExponent(Teuchos::ParameterList& p) :
     constant_value = satExp_list->get("Value", 0.0);
 
     // Add Saturation Exponent as a Sacado-ized parameter
-    new Sacado::ParameterRegistration<EvalT, SPL_Traits>(
-	"Saturation Exponent", this, paramLib);
+    this->registerSacadoParameter("Saturation Exponent", paramLib);
   }
   else if (type == "Truncated KL Expansion") {
     is_constant = false;
@@ -55,7 +54,7 @@ SaturationExponent(Teuchos::ParameterList& p) :
     rv.resize(num_KL);
     for (int i=0; i<num_KL; i++) {
       std::string ss = Albany::strint("Saturation Exponent KL Random Variable",i);
-      new Sacado::ParameterRegistration<EvalT, SPL_Traits>(ss, this, paramLib);
+      this->registerSacadoParameter(ss, paramLib);
       rv[i] = satExp_list->get(ss, 0.0);
     }
   }

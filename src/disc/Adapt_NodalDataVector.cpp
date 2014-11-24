@@ -4,8 +4,11 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #include "Adapt_NodalDataVector.hpp"
 #include "Tpetra_Import_decl.hpp"
+#include "Teuchos_CommHelpers.hpp"
 
 Adapt::NodalDataVector::NodalDataVector(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
                                         NodeFieldSizeVector& nodeVectorLayout_,
@@ -17,45 +20,52 @@ Adapt::NodalDataVector::NodalDataVector(const Teuchos::RCP<Albany::NodeFieldCont
   mapsHaveChanged(false)
 {
 
-  //Create the Kokkos Node instance to pass into Tpetra::Map constructors.
-  Teuchos::ParameterList kokkosNodeParams;
-  node = Teuchos::rcp(new KokkosNode (kokkosNodeParams));
+}
 
+namespace {
+inline Teuchos::Array<GO>::size_type
+get_number_global_elements (const Teuchos::Comm<int>& comm,
+                            const Teuchos::Array<GO>& nodes) {
+  Teuchos::Array<GO>::size_type num_global_elem, n = nodes.size();
+  Teuchos::reduceAll<int, Teuchos::Array<GO>::size_type>(
+    comm, Teuchos::REDUCE_SUM, 1, &n, &num_global_elem);
+  return num_global_elem;
+}
 }
 
 void
-Adapt::NodalDataVector::resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
-         const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
-
-  overlap_node_map = Teuchos::rcp(new Tpetra_Map(overlap_nodeGIDs.size(),
-                            overlap_nodeGIDs,
-                            Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
-                            comm_,
-                            node));
+Adapt::NodalDataVector::
+resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
+                 const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
+{
+  overlap_node_map = Teuchos::rcp(
+    new Tpetra_Map(get_number_global_elements(*comm_, overlap_nodeGIDs),
+                   overlap_nodeGIDs,
+                   Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
+                   comm_));
 
   // Build the vector and accessors
   overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
 
   mapsHaveChanged = true;
-
 }
 
 void
-Adapt::NodalDataVector::resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
-     const Teuchos::RCP<const Teuchos::Comm<int> >& comm_){
-
-  local_node_map = Teuchos::rcp(new Tpetra_Map(local_nodeGIDs.size(),
-                            local_nodeGIDs,
-                            Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
-                            comm_,
-                            node));
-
+Adapt::NodalDataVector::
+resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
+               const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
+{
+  local_node_map = Teuchos::rcp(
+    new Tpetra_Map(
+      get_number_global_elements(*comm_, local_nodeGIDs),
+      local_nodeGIDs,
+      Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
+      comm_));
 
   // Build the vector and accessors
   local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
 
   mapsHaveChanged = true;
-
 }
 
 void

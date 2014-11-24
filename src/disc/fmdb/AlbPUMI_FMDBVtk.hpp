@@ -8,7 +8,6 @@
 #define FMDB_VTK_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "Epetra_Comm.h"
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
 namespace AlbPUMI {
@@ -17,14 +16,12 @@ class FMDBVtk {
 
   public:
 
-    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Epetra_Comm>& comm_);
+    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_);
 
     ~FMDBVtk();
 
     void writeFile(const double time);
     void setFileName(const std::string& fname){ outputFileName = fname; }
-
-    void debugMeshWrite(const char* filename);
 
   private:
 
@@ -39,7 +36,7 @@ class FMDBVtk {
 
 
     //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Teuchos::RCP<const Teuchos_Comm> commT;
 
 };
 

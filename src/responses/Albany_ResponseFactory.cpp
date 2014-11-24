@@ -4,19 +4,29 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "Albany_ResponseFactory.hpp"
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_SolutionValuesResponseFunction.hpp"
+#endif
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
+#include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
+#ifdef ALBANY_EPETRA
 #include "Albany_SolutionResponseFunction.hpp"
+#endif
 #include "Albany_KLResponseFunction.hpp"
+
+
 #ifdef ALBANY_QCAD
+#ifdef ALBANY_EPETRA
 #include "QCAD_SaddleValueResponseFunction.hpp"
+#endif
 #endif
 
 #include "Teuchos_TestForException.hpp"
@@ -34,7 +44,7 @@ createResponseFunction(
   using Teuchos::ParameterList;
   using Teuchos::Array;
 
-  RCP<const Epetra_Comm> comm = app->getComm();
+  RCP<const Teuchos_Comm> comm = app->getComm();
 
   if (name == "Solution Average") {
     responses.push_back(rcp(new Albany::SolutionAverageResponseFunction(comm)));
@@ -43,10 +53,11 @@ createResponseFunction(
   else if (name == "Solution Two Norm") {
     responses.push_back(rcp(new Albany::SolutionTwoNormResponseFunction(comm)));
   }
-
+#ifdef ALBANY_EPETRA
   else if (name == "Solution Values") {
     responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
   }
+#endif
 
   else if (name == "Solution Max Value") {
     int eq = responseParams.get("Equation", 0);
@@ -99,25 +110,48 @@ createResponseFunction(
 	   name == "Field Value" ||
 	   name == "Field Average" ||
 	   name == "Surface Velocity Mismatch" ||
+           name == "Aeras Shallow Water L2 Error" ||
+           name == "Aeras Total Volume" ||
 	   name == "Center Of Mass" ||
 	   name == "Save Field" ||
 	   name == "Region Boundary" ||
 	   name == "Element Size Field" ||
-	   name == "IP to Nodal Field" ||
-	   name == "Project IP to Nodal Field" ||
-	   name == "PHAL Field Integral" ||
-	   name == "PHAL Field IntegralT") {
+	   name == "Save Nodal Fields" ||
+	   name == "Stiffness Objective" ||
+           name == "Linear Adjoint Solve" ||
+           name == "PHAL Field Integral" ||
+           name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
+#ifdef ALBANY_LCM
+      // Skip if dealing with interface block
+      if (meshSpecs[i]->ebName == "interface") continue;
+#endif
       responses.push_back(
-	rcp(new Albany::FieldManagerScalarResponseFunction(
-	      app, prob, meshSpecs[i], stateMgr, responseParams)));
+          rcp(new Albany::FieldManagerScalarResponseFunction(
+              app, prob, meshSpecs[i], stateMgr, responseParams)));
+    }
+  }
+
+  else if (name == "IP to Nodal Field" ||
+           name == "Project IP to Nodal Field") {
+    responseParams.set("Name", name);
+    for (int i=0; i<meshSpecs.size(); i++) {
+#ifdef ALBANY_LCM
+      // Skip if dealing with interface block
+      if (meshSpecs[i]->ebName == "interface") continue;
+#endif
+      responses.push_back(
+        rcp(new Albany::FieldManagerResidualOnlyResponseFunction(
+              app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
 
   else if (name == "Solution") {
+#ifdef ALBANY_EPETRA
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
+#endif
   }
 
   else if (name == "KL") {
@@ -131,6 +165,7 @@ createResponseFunction(
   }
 
 #ifdef ALBANY_QCAD
+#ifdef ALBANY_EPETRA
   else if (name == "Saddle Value") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
@@ -139,6 +174,7 @@ createResponseFunction(
 	      app, prob, meshSpecs[i], stateMgr, responseParams)));
     }
   }
+#endif
 #endif
 
   else {

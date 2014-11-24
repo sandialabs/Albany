@@ -1,0 +1,39 @@
+<ParameterList>
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="block_3">
+      <Parameter name="material" type="string" value="Cohesive" />
+      <Parameter name="Surface Element" type="bool" value="true" />
+      <Parameter name="Cohesive Element" type="bool" value="true" />
+
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Cohesive">
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="Ortiz Pandolfi"/>
+      </ParameterList>
+ 
+      <Parameter name="delta_c" type="double" value="0.1"/>
+      <Parameter name="sigma_c" type="double" value="500."/>
+      <Parameter name="beta" type="double" value="1.0"/>
+      <Parameter name="stiff_c" type="double" value="100000.0"/>
+
+      <!-- Output -->
+      <Parameter name="Output Cohesive Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Traction" type="bool" value="true"/>
+      <Parameter name="Output Shear Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Jump" type="bool" value="true"/>
+      <Parameter name="Output Shear Jump" type="bool" value="true"/>
+      <Parameter name="Output Max Jump" type="bool" value="true"/>
+
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>
+
+

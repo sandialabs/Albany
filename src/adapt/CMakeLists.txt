@@ -8,55 +8,66 @@
 # Adaptation
 
 SET(SOURCES
-    AAdapt_AbstractAdapter.cpp
     AAdapt_AbstractAdapterT.cpp
     AAdapt_AdaptationFactory.cpp
-    AAdapt_CopyRemesh.cpp
     AAdapt_CopyRemeshT.cpp
-    AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
-    AAdapt_ThyraAdaptiveModelEvaluator.cpp
-    AAdapt_AdaptiveModelFactory.cpp
     AAdapt_SolutionObserver.cpp
-#    AAdapt_StratSolver.cpp
    )
 
 SET(HEADERS
-    AAdapt_AbstractAdapter.hpp
     AAdapt_AbstractAdapterT.hpp
     AAdapt_AdaptationFactory.hpp
-    AAdapt_CopyRemesh.hpp
     AAdapt_CopyRemeshT.hpp
-    AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
-    AAdapt_ThyraAdaptiveModelEvaluator.hpp
-    AAdapt_AdaptiveModelFactory.hpp
     AAdapt_SolutionObserver.hpp
-    AAdapt_StratSolver.hpp
    )
+
+IF (ALBANY_EPETRA) 
+  SET(SOURCES ${SOURCES} 
+    AAdapt_AbstractAdapter.cpp
+    AAdapt_CopyRemesh.cpp
+    AAdapt_AdaptiveSolutionManager.cpp
+    AAdapt_AdaptiveModelFactory.cpp
+    AAdapt_ThyraAdaptiveModelEvaluator.cpp
+   ) 
+  SET(HEADERS ${HEADERS} 
+    AAdapt_AbstractAdapter.hpp
+    AAdapt_CopyRemesh.hpp
+    AAdapt_AdaptiveSolutionManager.hpp
+    AAdapt_AdaptiveModelFactory.hpp
+    AAdapt_ThyraAdaptiveModelEvaluator.hpp
+  )
+ENDIF()
 
 # Topology Modification & Stress Fracture depend on LCM
 # Speculative features and code, currently
 IF(ALBANY_LCM AND LCM_SPECULATIVE)
 
 SET(SOURCES ${SOURCES}
-    AAdapt_RandomFracture.cpp
     AAdapt_RandomCriterion.cpp
-    AAdapt_TopologyModification.cpp
     AAdapt_StressFracture.cpp
    )
 
 SET(HEADERS ${HEADERS}
-    AAdapt_RandomFracture.hpp
     AAdapt_RandomCriterion.hpp
-    AAdapt_TopologyModification.hpp
     AAdapt_StressFracture.hpp
    )
 
+IF (ALBANY_EPETRA) 
+SET(SOURCES ${SOURCES} 
+    AAdapt_RandomFracture.cpp
+    AAdapt_TopologyModification.cpp
+    )
+SET(HEADERS ${HEADERS}
+    AAdapt_RandomFracture.hpp
+    AAdapt_TopologyModification.hpp
+    )
+ENDIF()
 ENDIF()
 
 # Topology Modification depends on LCM
@@ -75,18 +86,25 @@ ENDIF()
 IF(ALBANY_LCM AND ALBANY_STK_PERCEPT)
 
 SET(SOURCES ${SOURCES}
-    AAdapt_STKAdapt.cpp
     AAdapt_STKAdaptT.cpp
     AAdapt_STKUnifSizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
-    AAdapt_STKAdapt.hpp
-    AAdapt_STKAdapt_Def.hpp
     AAdapt_STKAdaptT.hpp
     AAdapt_STKAdaptT_Def.hpp
     AAdapt_STKUnifSizeField.hpp
    )
+
+IF (ALBANY_EPETRA) 
+SET(SOURCES ${SOURCES}
+    AAdapt_STKAdapt.cpp
+    )
+SET(HEADERS ${HEADERS}
+    AAdapt_STKAdapt.hpp
+    AAdapt_STKAdapt_Def.hpp
+)
+ENDIF()
 
 ENDIF()
 

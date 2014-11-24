@@ -13,6 +13,8 @@
 #include "topology/Topology.h"
 #include "topology/Topology_Utils.h"
 
+bool TpetraBuild = false;
+
 int
 main(int ac, char* av[])
 {
@@ -67,7 +69,7 @@ main(int ac, char* av[])
   std::cout << "Before mesh subdivision" << std::endl;
   std::cout << "***********************" << std::endl;
 
-  LCM::display_connectivity(topology.getBulkData(), topology.getCellRank());
+  LCM::display_connectivity(topology, stk::topology::ELEMENT_RANK);
 
   // Start the mesh update process
   // Prepares mesh for barycentric subdivision
@@ -105,24 +107,24 @@ main(int ac, char* av[])
   // Must be called each time at conclusion of mesh modification
   topology.restoreElementToNodeConnectivity();
 
-  LCM::display_connectivity(topology.getBulkData(), topology.getCellRank());
+  LCM::display_connectivity(topology, stk::topology::ELEMENT_RANK);
 
   std::cout << std::endl;
   std::cout << "topology.barycentricSubdivision() takes "
-	    << cpu_time_used << " seconds"<< std::endl;
+      << cpu_time_used << " seconds" << std::endl;
 
   Teuchos::RCP<Albany::AbstractDiscretization> discretization_ptr =
-      topology.getDiscretization();
+      topology.get_discretization();
   Albany::STKDiscretization & stk_discretization =
       static_cast<Albany::STKDiscretization &>(*discretization_ptr);
 
-  Teuchos::RCP<Epetra_Vector> solution_field =
-      stk_discretization.getSolutionField();
+  Teuchos::RCP<Tpetra_Vector> solution_fieldT =
+      stk_discretization.getSolutionFieldT();
 
   // Write final mesh to exodus file
   // second arg to output is (pseudo)time
 //  stk_discretization.outputToExodus(*solution_field, 1.0);
-  stk_discretization.writeSolution(*solution_field, 1.0);
+  stk_discretization.writeSolutionT(*solution_fieldT, 1.0);
 
   return 0;
 

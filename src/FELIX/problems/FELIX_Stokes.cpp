@@ -75,11 +75,11 @@ Stokes( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->setNumEquations(num_eq);
 
   // Need to allocate a surface height and temperature fields in mesh database
-  this->requirements.push_back("Surface Height");
-  this->requirements.push_back("Temperature");
-  this->requirements.push_back("Basal Friction");
-  this->requirements.push_back("Thickness");
-  this->requirements.push_back("Flow Factor");
+  this->requirements.push_back("surface_height");
+  this->requirements.push_back("temperature");
+  this->requirements.push_back("basal_friction");
+  this->requirements.push_back("thickness");
+  this->requirements.push_back("flow_factor");
 
   // Print out a summary of the problem
   *out << "Stokes problem:" << std::endl

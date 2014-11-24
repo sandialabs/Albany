@@ -13,7 +13,7 @@
 
 template<typename EvalT, typename Traits>
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-    coordVec("Coord Vec", dl->vertices_vector), surfaceVelocity_field("Surface Velocity", dl->node_vector), velocityRMS_field("Velocity RMS", dl->node_vector), velocity_field("Velocity", dl->node_vector), numVecDim(2) {
+    coordVec("Coord Vec", dl->vertices_vector), surfaceVelocity_field("surface_velocity", dl->node_vector), velocityRMS_field("surface_velocity_rms", dl->node_vector), velocity_field("Velocity", dl->node_vector), numVecDim(2) {
   // get and validate Response parameter list
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<Teuchos::ParameterList> paramList = p.get<Teuchos::RCP<Teuchos::ParameterList> >("Parameters From Problem");
@@ -99,14 +99,14 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   this->addDependentField(velocityRMS_field);
   this->addDependentField(coordVec);
 
-  this->setName(fieldName + " Response Surface Velocity Mismatch" );
+  this->setName(fieldName + " Response Surface Velocity Mismatch"+ PHX::typeAsString<PHX::Device>());
 
   using PHX::MDALayout;
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = fieldName + " Local Response Surface Velocity Mismatch";
-  std::string global_response_name = fieldName + " Global Response Surface Velocity Mismatch";
+  std::string local_response_name = fieldName + " Local Response surface_velocity Mismatch";
+  std::string global_response_name = fieldName + " Global Response surface_velocity Mismatch";
   int worksetSize = dl->qp_scalar->dimension(0);
   int responseSize = 1;
   Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
@@ -206,8 +206,8 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
     Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
-    Intrepid::FieldContainer<MeshScalarT> surfaceVelocityOnCell(1, numNodes, numVecDim);
-    Intrepid::FieldContainer<MeshScalarT> velocityRMSOnCell(1, numNodes, numVecDim);
+    Intrepid::FieldContainer<ScalarT> surfaceVelocityOnCell(1, numNodes, numVecDim);
+    Intrepid::FieldContainer<ScalarT> velocityRMSOnCell(1, numNodes, numVecDim);
     Intrepid::FieldContainer<ScalarT> velocityOnCell(1, numNodes, numVecDim);
     for (std::size_t node = 0; node < numNodes; ++node) {
       for (std::size_t dim = 0; dim < numVecDim; ++dim) {
@@ -284,8 +284,15 @@ template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
   // Add contributions across processors
   Teuchos::RCP<Teuchos::ValueTypeSerializer<int, ScalarT> > serializer = workset.serializerManager.template getValue<EvalT>();
-//IrinaTOFIX
-//Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, this->global_response.size(), &this->global_response[0], &this->global_response[0]);
+
+
+  // we cannot pass the same object for both the send and receive buffers in reduceAll call
+  // creating a copy of the global_response, not a view
+  std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
+  PHX::MDField<ScalarT> partial_response(this->global_response);
+  partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
+//Irina TOFIX Teuchos::reduceAll
+  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(), &partial_response[0], &this->global_response[0]);
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;

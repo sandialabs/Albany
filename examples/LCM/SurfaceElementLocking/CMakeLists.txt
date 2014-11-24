@@ -11,7 +11,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${SEACAS_ALGEBRA} ${CMAKE_CURRENT_BINARY_DIR}/algebra)
 execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
   ${AlbanyPath} ${CMAKE_CURRENT_BINARY_DIR}/Albany)
-
+if (ALBANY_IFPACK2)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${AlbanyTPath} ${CMAKE_CURRENT_BINARY_DIR}/AlbanyT)
+endif()
 
 # input files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJ.xml
@@ -20,6 +23,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJ.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputVolJ.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressure.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressure.xml COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNoVolJT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputNoVolJT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputVolJT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputVolJT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputAveragePressureT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputAveragePressureT.xml COPYONLY)
+endif()
 
 # material files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/1materialNoVolJ.xml
@@ -56,14 +67,24 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/outAveragePressure.alg.gold.e
 # python runtest file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtest.py
                ${CMAKE_CURRENT_BINARY_DIR}/runtest.py COPYONLY)
+if (ALBANY_IFPACK2)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/runtestT.py
+               ${CMAKE_CURRENT_BINARY_DIR}/runtestT.py COPYONLY)
+endif()
 
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # 3. Create the test with this name and standard executable
 IF(NOT ALBANY_PARALLEL_ONLY)
-  add_test(NAME ${testName} COMMAND "python" "runtest.py")
-  set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
+  if (ALBANY_EPETRA) 
+    add_test(NAME ${testName} COMMAND "python" "runtest.py")
+    set_tests_properties(${testName}  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
+  endif()
+  if (ALBANY_IFPACK2)
+    add_test(NAME ${testName}_Tpetra COMMAND "python" "runtestT.py")
+    set_tests_properties(${testName}_Tpetra  PROPERTIES REQUIRED_FILES "${SEACAS_EXODIFF};${SEACAS_ALGEBRA}")
+  endif()
 ENDIF()
 
 

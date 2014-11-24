@@ -13,8 +13,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_network_coupled.xml
 get_filename_component(testNameDomain ${CMAKE_CURRENT_SOURCE_DIR}_Domain NAME)
 get_filename_component(testNameNetwork ${CMAKE_CURRENT_SOURCE_DIR}_Network NAME)
 # 3. Create the test with this name and standard executable
+if (ALBANY_EPETRA) 
 add_test(${testNameDomain} ${Albany.exe} input_domain_coupled.xml)
 add_test(${testNameNetwork} ${AlbanyCoupled.exe} input_network_coupled.xml)
+endif()
 
 # 4. Repeat process for SG problems
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_heat_sg.xml

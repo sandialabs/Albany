@@ -95,28 +95,6 @@ const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type &Decor
   return discretization->getCoords();
 }
 
-const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type &Decorator::getSurfaceHeight() const
-{
-  return discretization->getSurfaceHeight();
-}
-
-const WorksetArray<Teuchos::ArrayRCP<double> >::type &
-Decorator::getTemperature() const
-{
-  return discretization->getTemperature();
-}
-
-const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type &
-Decorator::getBasalFriction() const
-{
-  return discretization->getBasalFriction();
-}
-
-const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type &
-Decorator::getThickness() const
-{
-  return discretization->getThickness();
-}
 
 void Decorator::printCoords() const
 {

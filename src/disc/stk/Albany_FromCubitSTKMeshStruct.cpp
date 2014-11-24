@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #include <iostream>
 
 #ifdef ALBANY_CUTR
@@ -18,7 +20,7 @@
 #include <stk_mesh/base/Entity.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
-#include <stk_mesh/base/FieldData.hpp>
+#include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
 #include <stk_mesh/fem/FieldDeclarations.hpp>
@@ -48,18 +50,18 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
 
   solution_field = & metaData->declare_field< VectorFieldType >( "solution" );
   residual_field = & metaData->declare_field< VectorFieldType >( "residual" );
-  stk_classic::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
-  stk_classic::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
+  stk::mesh::put_field( *solution_field , metaData->node_rank() , metaData->universal_part(), neq );
+  stk::mesh::put_field( *residual_field , metaData->node_rank() , metaData->universal_part() , neq );
 
   // Construct nsPartVec from similar stkMeshData struct
-  std::map<int, stk_classic::mesh::Part*> nsList= stkMeshData->get_nodeset_list();
-  std::map<int, stk_classic::mesh::Part*>::iterator ns = nsList.begin();
+  std::map<int, stk::mesh::Part*> nsList= stkMeshData->get_nodeset_list();
+  std::map<int, stk::mesh::Part*>::iterator ns = nsList.begin();
   while ( ns != nsList.end() ) {
     // Name chosen to be same as Ioss default "nodelist_" + <int>
     std::stringstream ss; ss << "nodelist_" << ns->first;
     nsPartVec[ss.str()] = ns->second;
 #ifdef ALBANY_SEACAS
-   stk_classic::io::put_io_part_attribute(*ns->second);
+   stk::io::put_io_part_attribute(*ns->second);
 #endif
     ns++;
   }
@@ -73,17 +75,17 @@ Albany::FromCubitSTKMeshStruct::FromCubitSTKMeshStruct(
 /*
   // set all top rank parts as IO parts
   int id=0;
-  stk_classic::mesh::Part* eb;
+  stk::mesh::Part* eb;
   do {
     if (numDim==2) eb = stkMeshData->surface_part(id++);
     else           eb = stkMeshData->volume_part(id++);
-    stk_classic::io::put_io_part_attribute(*eb);
+    stk::io::put_io_part_attribute(*eb);
   } while (eb!=NULL);
 */
 
-  stk_classic::io::set_field_role(*coordinates_field, Ioss::Field::TRANSIENT);
-  stk_classic::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
-  stk_classic::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
+  stk::io::set_field_role(*coordinates_field, Ioss::Field::TRANSIENT);
+  stk::io::set_field_role(*solution_field, Ioss::Field::TRANSIENT);
+  stk::io::set_field_role(*residual_field, Ioss::Field::TRANSIENT);
 #endif
 
   // This calls metaData->commit()

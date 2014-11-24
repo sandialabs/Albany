@@ -22,6 +22,7 @@
 #include "Piro_Epetra_StokhosNOXObserver.hpp"
 
 #include "QCAD_MaterialDatabase.hpp"
+#include "Petra_Converters.hpp"
 
 // Utility functions
 namespace QCAD {
@@ -138,6 +139,10 @@ namespace QCAD {
     Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
     bool bVerbose;
+
+  protected:
+    Teuchos::RCP<const Epetra_Comm> commE;
+
   };
 }
 #endif

@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #ifndef ALBANY_ABSTRACTSTKMESHSTRUCT_HPP
 #define ALBANY_ABSTRACTSTKMESHSTRUCT_HPP
 
@@ -17,7 +18,7 @@
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
 #include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/fem/FEMMetaData.hpp>
+#include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
 
 #include "Teuchos_ScalarTraits.hpp"
@@ -34,12 +35,12 @@ namespace Albany {
 
   struct AbstractSTKMeshStruct : public AbstractMeshStruct {
 
-  virtual ~AbstractSTKMeshStruct(){}
+    virtual ~AbstractSTKMeshStruct() {}
 
   public:
 
     virtual void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_, 
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -48,12 +49,12 @@ namespace Albany {
 
     msType meshSpecsType(){ return STK_MS; }
 
-    stk_classic::mesh::fem::FEMMetaData* metaData;
-    stk_classic::mesh::BulkData* bulkData;
+    Teuchos::RCP<stk::mesh::MetaData> metaData;
+    Teuchos::RCP<stk::mesh::BulkData> bulkData;
 
-    std::map<int, stk_classic::mesh::Part*> partVec;    //Element blocks
-    std::map<std::string, stk_classic::mesh::Part*> nsPartVec;  //Node Sets
-    std::map<std::string, stk_classic::mesh::Part*> ssPartVec;  //Side Sets
+    std::map<int, stk::mesh::Part*> partVec;    //Element blocks
+    std::map<std::string, stk::mesh::Part*> nsPartVec;  //Node Sets
+    std::map<std::string, stk::mesh::Part*> ssPartVec;  //Side Sets
 
     Teuchos::RCP<Albany::AbstractSTKFieldContainer> getFieldContainer(){return fieldContainer; }
     AbstractSTKFieldContainer::VectorFieldType* getCoordinatesField(){ return fieldContainer->getCoordinatesField(); }

@@ -3,13 +3,15 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+
 #ifdef ALBANY_SEACAS
 
 #ifndef ALBANY_IOSS_STKMESHSTRUCT_HPP
 #define ALBANY_IOSS_STKMESHSTRUCT_HPP
 
 #include "Albany_GenericSTKMeshStruct.hpp"
-#include <stk_io/MeshReadWriteUtils.hpp>
+#include <stk_io/StkMeshIoBroker.hpp>
 #include <stk_io/IossBridge.hpp>
 
 #include <Ionit_Initializer.h>
@@ -23,12 +25,12 @@ namespace Albany {
     IossSTKMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params, 
                   const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
-                  const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+                  const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~IossSTKMeshStruct();
 
     void setFieldAndBulkData(
-                  const Teuchos::RCP<const Epetra_Comm>& comm,
+                  const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
@@ -51,14 +53,11 @@ namespace Albany {
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
-    void readSerialMesh(const Teuchos::RCP<const Epetra_Comm>& comm,
-                        std::vector<std::string>& entity_rank_names);
-
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool usePamgen;
     bool useSerialMesh;
     bool periodic;
-    stk_classic::io::MeshData* mesh_data;
+    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
     bool m_hasRestartSolution;
     double m_restartDataTime;

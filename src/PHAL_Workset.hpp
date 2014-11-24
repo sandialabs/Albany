@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: Epetra has been ifdef'ed out if ALBANY_EPETRA_EXE is off. 
+
 #ifndef PHAL_WORKSET_HPP
 #define PHAL_WORKSET_HPP
 
@@ -11,29 +13,30 @@
 
 #include "Phalanx_config.hpp" // for std::vector
 #include "Albany_DataTypes.hpp"
+#ifdef ALBANY_EPETRA
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_Import.h"
+#endif
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_DistributedParameterLibrary.hpp"
-//IK, 6/27/14: changed the following to use Tpetra
-//#include "Albany_DistributedParameterLibrary_Epetra.hpp"
 #include "Albany_DistributedParameterLibrary_Tpetra.hpp"
 #include <Intrepid_FieldContainer.hpp>
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
+#ifdef ALBANY_EPETRA
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
+#endif
 
 #include "PHAL_AlbanyTraits.hpp"
 #include "PHAL_TypeKeyMap.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_Comm.hpp"
-#include "Epetra_Import.h"
 
-//IK, 6/27/14: changed the following to use Tpetra 
-//typedef Albany::DistributedParameterLibrary<Epetra_Vector, Epetra_MultiVector> DistParamLib;
-typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector> DistParamLib;
+typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
+typedef Albany::DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParam;
 
 namespace PHAL {
 
@@ -46,28 +49,34 @@ struct Workset {
 
   unsigned int numCells;
   unsigned int wsIndex;
+  unsigned int numEqs;
 
   Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
+#ifdef ALBANY_EPETRA
   // These are solution related.
   Teuchos::RCP<const Epetra_Vector> x;
   Teuchos::RCP<const Epetra_Vector> xdot;
   Teuchos::RCP<const Epetra_Vector> xdotdot;
+#endif
   //Tpetra analogs of x and xdot
   Teuchos::RCP<const Tpetra_Vector> xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT;
   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
   
   Teuchos::RCP<ParamVec> params;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<const Epetra_MultiVector> Vx;
   Teuchos::RCP<const Epetra_MultiVector> Vxdot;
   Teuchos::RCP<const Epetra_MultiVector> Vxdotdot;
   Teuchos::RCP<const Epetra_MultiVector> Vp;
+#endif
   //Tpetra analogs of Vx, Vxdot, Vxdotdot and Vp
   Teuchos::RCP<const Tpetra_MultiVector> VxT;
   Teuchos::RCP<const Tpetra_MultiVector> VxdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VxdotdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VpT;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_x;
 
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly > sg_xdot;
@@ -75,28 +84,38 @@ struct Workset {
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_x;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdot;
   Teuchos::RCP<const Stokhos::ProductEpetraVector > mp_xdotdot;
+#endif
 
+#ifdef ALBANY_EPETRA
   // These are residual related.
   Teuchos::RCP<Epetra_Vector> f;
+#endif
   //Tpetra analog of f
   Teuchos::RCP<Tpetra_Vector> fT;
  
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_CrsMatrix> Jac;
+#endif
   //Tpetra analog of Jac
   Teuchos::RCP<Tpetra_CrsMatrix> JacT;
 
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_MultiVector> JV;
   Teuchos::RCP<Epetra_MultiVector> fp;
+#endif
   //Tpetra analogs of JV and fp
   Teuchos::RCP<Tpetra_MultiVector> JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT;
 
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_MultiVector> fpV;
   Teuchos::RCP<Epetra_MultiVector> Vp_bc;
+#endif
   //Tpetra analogs of fpV and Vp_bc
   Teuchos::RCP<Tpetra_MultiVector> fpVT;
   Teuchos::RCP<Tpetra_MultiVector> Vp_bcT;
 
+#ifdef ALBANY_EPETRA
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > sg_Jac;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_JV;
@@ -105,6 +124,7 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > mp_Jac;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_fp;
+#endif
 
   Teuchos::RCP<const Albany::NodeSetList> nodeSets;
   Teuchos::RCP<const Albany::NodeSetCoordList> nodeSetCoords;
@@ -118,6 +138,7 @@ struct Workset {
 
   // Current Time as defined by Rythmos
   double current_time;
+  //amb Nowhere set. We should either set it or remove it.
   double previous_time;
 
   // flag indicating whether to sum tangent derivatives, i.e.,
@@ -134,27 +155,21 @@ struct Workset {
   std::string dist_param_deriv_name;
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > dist_param_index;
 
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >  wsElNodeEqID;
-  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >  wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
+  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos; 
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsSHeight;
   Teuchos::ArrayRCP<double>  wsSphereVolume;
-  Teuchos::ArrayRCP<double>  wsTemperature;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsBasalFriction;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> >  wsThickness;
-  Teuchos::ArrayRCP<double>  wsFlowFactor;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsSurfaceVelocity;
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsVelocityRMS;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
 
   Albany::StateArray* stateArrayPtr;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Albany::EigendataStruct> eigenDataPtr;
   Teuchos::RCP<Epetra_MultiVector> auxDataPtr;
+#endif
 
   bool transientTerms;
   bool accelerationTerms;
@@ -173,28 +188,41 @@ struct Workset {
 
   // New field manager response stuff
   Teuchos::RCP<const Teuchos::Comm<int> > comm;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<const Epetra_Import> x_importer;
+#endif
   Teuchos::RCP<const Tpetra_Import> x_importerT;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_Vector> g;
+#endif
   //Tpetra analog of g
   Teuchos::RCP<Tpetra_Vector> gT;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_MultiVector> dgdx;
   Teuchos::RCP<Epetra_MultiVector> dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> dgdxdotdot;
+#endif
   //Tpetra analogs of dgdx and dgdxdot 
   Teuchos::RCP<Tpetra_MultiVector> dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> dgdxdotdotT;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdx;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdot;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdxdotdot;
+#endif
   //Tpetra analogs of overlapped_dgdx and overlapped_dgdxdot
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotT;
   Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdxdotdotT;
+#ifdef ALBANY_EPETRA
   Teuchos::RCP<Epetra_MultiVector> dgdp;
+  Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp;
+#endif
   //Tpetra analog of dgdp
   Teuchos::RCP<Tpetra_MultiVector> dgdpT;
+  //dp-convert Teuchos::RCP<Tpetra_MultiVector> overlapped_dgdpT;
+#ifdef ALBANY_SG_MP
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > sg_g;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdx;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > sg_dgdxdot;
@@ -211,6 +239,7 @@ struct Workset {
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > overlapped_mp_dgdxdotdot;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > mp_dgdp;
+#endif
 
   // Meta-function class encoding T<EvalT::ScalarT> given EvalT
   // where T is any lambda expression (typically a placeholder expression)
@@ -298,6 +327,23 @@ struct Workset {
         setValue<PHAL::AlbanyTraits::Tangent>(serializer);
     }
   };
+
+  template <> struct BuildSerializer<PHAL::AlbanyTraits::DistParamDeriv> {
+     BuildSerializer(Workset& workset) {
+       const Albany::IDArray& wsElNode =
+           workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[0];
+       int num_dof = wsElNode.dimension(1)*wsElNode.dimension(2);
+       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
+         real_serializer =
+         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
+       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
+         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(
+                        real_serializer, num_dof));
+       workset.serializerManager.
+         setValue<PHAL::AlbanyTraits::DistParamDeriv>(serializer);
+     }
+  };
+
 #ifdef ALBANY_SG_MP
   template <> struct BuildSerializer<PHAL::AlbanyTraits::SGResidual> {
     BuildSerializer(Workset& workset) {

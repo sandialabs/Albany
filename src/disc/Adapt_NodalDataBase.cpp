@@ -4,7 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+//IK, 9/12/14: no Epetra!
+
 #include "Adapt_NodalDataBase.hpp"
+
+#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
 Adapt::NodalDataBase::NodalDataBase() :
   nodeContainer(Teuchos::rcp(new Albany::NodeFieldContainer)),
@@ -15,6 +20,7 @@ Adapt::NodalDataBase::NodalDataBase() :
 
 }
 
+//amb For now, keep the Tpetra_BlockMap version available.
 void
 Adapt::NodalDataBase::registerBlockState(const std::string &stateName, int ndofs){
 
@@ -51,7 +57,7 @@ Adapt::NodalDataBase::registerVectorState(const std::string &stateName, int ndof
 
    NodeFieldSize size;
    size.name = stateName;
-   size.offset = blocksize;
+   size.offset = vectorsize;
    size.ndofs = ndofs;
 
    nodeVectorMap[stateName] = nodeVectorLayout.size();
@@ -62,20 +68,16 @@ Adapt::NodalDataBase::registerVectorState(const std::string &stateName, int ndof
 }
 
 void
-Adapt::NodalDataBase::initialize(){
+Adapt::NodalDataBase::initialize() {
+  if (initialized) return;
 
-  if(initialized) return;
-
-  if(blocksize > 0)
-
+  if (blocksize > 0)
     nodal_data_block = Teuchos::rcp(new Adapt::NodalDataBlock(nodeContainer, nodeBlockLayout, nodeBlockMap, blocksize));
 
-  if(vectorsize > 0)
-
+  if (vectorsize > 0)
     nodal_data_vector = Teuchos::rcp(new Adapt::NodalDataVector(nodeContainer, nodeVectorLayout, nodeVectorMap, vectorsize));
 
   initialized = true;
-
 }
 
 void

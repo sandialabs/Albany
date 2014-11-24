@@ -15,7 +15,6 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#include "Epetra_Vector.h"
 
 namespace LCM {
 /** \brief Gathers sphere volume into the nodal fields of the field manager.
