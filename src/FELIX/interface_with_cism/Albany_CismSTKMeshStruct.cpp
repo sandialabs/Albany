@@ -228,43 +228,37 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 
   std::vector<std::string> nsNames;
-  std::string nsn="Bottom";
+  std::string nsn="NodeSetWest";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet0";
+  nsn="NodeSetEast";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet1";
+  nsn="NodeSetSouth";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet2";
+  nsn="NodeSetNorth";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet3";
+  nsn="NodeSetTop";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet4";
-  nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-#endif
-  nsn="NodeSet5";
+  nsn="NodeSetBottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
@@ -439,6 +433,46 @@ Albany::CismSTKMeshStruct::constructMesh(
      node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
+     //Nodesets for Dirichlet BCs
+     //These are hard-coded right now for confined shelf
+     node_GID = eles[i][0]-1;
+     node_LID = node_mapT->getLocalElement(node_GID);
+     double xl = xyz[node_LID][0];  //left node 
+     if (xl == 20.0) { 
+       singlePartVec[0] = nsPartVec["NodeSetWest"];
+       bulkData->change_entity_parts(llnode, singlePartVec); // node 0
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+     }
+     node_GID = eles[i][1]-1;
+     node_LID = node_mapT->getLocalElement(node_GID);
+     double xr = xyz[node_LID][0]; //right node
+    if (xr == 215.0) {
+       singlePartVec[0] = nsPartVec["NodeSetEast"];
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }
+    node_GID = eles[i][2]-1;
+    node_LID = node_mapT->getLocalElement(node_GID);
+    double yt = xyz[node_LID][1]; 
+    if (yt == 220.0) {
+       singlePartVec[0] = nsPartVec["NodeSetNorth"];
+       bulkData->change_entity_parts(llnode, singlePartVec); // 0
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+    }
+    /*if ((y_GIDplus1)==nelem[1]) {
+       singlePartVec[0] = nsPartVec["NodeSet3"];
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }*/
+ 
      if (have_sh) {
        double* sHeight;
        sHeight = stk::mesh::field_data(*surfaceHeight_field, llnode);
@@ -596,6 +630,8 @@ Albany::CismSTKMeshStruct::constructMesh(
        node_LID = node_mapT->getLocalElement(node_GID);
        bFriction[0] = beta[node_LID]; 
      }
+
+ 
 
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
