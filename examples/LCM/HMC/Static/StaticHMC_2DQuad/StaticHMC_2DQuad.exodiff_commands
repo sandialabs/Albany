@@ -20,17 +20,17 @@
 #         - Element block numbers are the block ids.
 #         - Node(n) and element(e) numbers are 1-offset.
 
-COORDINATES absolute 1.e-6    # min separation not calculated
+COORDINATES relative 1.e-5    # min separation not calculated
 
 TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:               0 @ t1
 
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES absolute 1.e-6 floor 0.0
-	solution_1  # min:               0 @ t1,n1585	max:              10 @ t1,n4403
-	solution_2  # min:               0 @ t1,n4590	max:              10 @ t1,n7788
-	solution_3  # min:               0 @ t1,n2625	max:              20 @ t1,n8051
+NODAL VARIABLES relative 1.e-4 floor 1e-8
+	solution_01  # min:               0 @ t1,n1585	max:              10 @ t1,n4403
+	solution_02  # min:               0 @ t1,n4590	max:              10 @ t1,n7788
+	solution_03  # min:               0 @ t1,n2625	max:              20 @ t1,n8051
 
 # No ELEMENT VARIABLES
 
