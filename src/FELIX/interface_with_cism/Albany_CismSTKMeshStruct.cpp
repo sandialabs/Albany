@@ -74,8 +74,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   NumNorthFaces = nNorthFacesActive; 
   debug_output_verbosity = verbosity;
   if (verbosity == 2) {
-    std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl;
-    std::cout <<"NumWestFaces = " << NumWestFaces << ", NumEastFaces = "<< NumEastFaces 
+    std::cout <<"Proc #" << commT->getRank() << ", NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces 
+               <<", NumWestFaces = " << NumWestFaces << ", NumEastFaces = "<< NumEastFaces 
               << ", NumSouthFaces = " << NumSouthFaces << ", NumNorthFaces = " << NumNorthFaces <<  std::endl;
   }
   xyz = new double[NumNodes][3];
@@ -177,28 +177,36 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     for (int i=0; i<NumWestFaces; i++) {
        westFacesID[i] = global_west_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         wf[i][j] = global_west_face_conn_active_Ptr[i + nCellsActive*j]; 
+         wf[i][j] = global_west_face_conn_active_Ptr[i + NumWestFaces*j]; 
     }
   }
   if (have_ef) {
     for (int i=0; i<NumEastFaces; i++) {
        eastFacesID[i] = global_east_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         ef[i][j] = global_east_face_conn_active_Ptr[i + nCellsActive*j]; 
+         ef[i][j] = global_east_face_conn_active_Ptr[i + NumEastFaces*j]; 
     }
   }
   if (have_sf) {
     for (int i=0; i<NumSouthFaces; i++) {
        southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
-       for (int j=0; j<5; j++) 
-         sf[i][j] = global_south_face_conn_active_Ptr[i + nCellsActive*j]; 
+       for (int j=0; j<5; j++)  
+         sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j];
+        /*if (commT->getRank() == 0) { 
+          *out << "proc 0, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
+        if (commT->getRank() == 1) { 
+          *out << "proc 1, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << bf[i][4] << std::endl; }
+        if (commT->getRank() == 2) { 
+          *out << "proc 2, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
+        if (commT->getRank() == 3) { 
+          *out << "proc 3, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; } */
     }
   }
   if (have_nf) {
     for (int i=0; i<NumNorthFaces; i++) {
        northFacesID[i] = global_north_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
-         nf[i][j] = global_north_face_conn_active_Ptr[i + nCellsActive*j]; 
+         nf[i][j] = global_north_face_conn_active_Ptr[i + NumNorthFaces*j]; 
     }
   }
 
