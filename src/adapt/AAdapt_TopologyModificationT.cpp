@@ -20,7 +20,7 @@ namespace AAdapt {
 AAdapt::TopologyModT::TopologyModT(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<ParamLib> const & param_lib,
-    Albany::StateManager & state_mgr,
+    Albany::StateManager const & state_mgr,
     Teuchos::RCP<Teuchos_Comm const> const & comm) :
   AAdapt::AbstractAdapterT(params, param_lib, state_mgr, comm),
   remesh_file_index_(1) {

@@ -34,7 +34,7 @@ public:
   TopologyModT(
       Teuchos::RCP<Teuchos::ParameterList> const & params,
       Teuchos::RCP<ParamLib> const & param_lib,
-      Albany::StateManager & state_mgr,
+      Albany::StateManager const & state_mgr,
       Teuchos::RCP<Teuchos_Comm const> const & comm);
 
   ///
