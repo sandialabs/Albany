@@ -558,6 +558,15 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
 
+  if(Teuchos::is_null(stratList)){
+
+	*out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
+    *out << "Printing the Piro parameter list:" << std::endl;
+    piroParams->print(*out);
+  }
+
+
+
   RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
   if (Teuchos::nonnull(modelT->get_W_factory())) {
     modelWithSolveT = modelT;
