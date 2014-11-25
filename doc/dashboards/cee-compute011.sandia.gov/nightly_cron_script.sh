@@ -11,6 +11,10 @@ module load sierra-devel
 module load sierra-mkl/15.0-2015.0.090
 module unload sierra-git/1.7.3
 module load sierra-git/2.0.0
+# Clang
+module load sierra-compiler/clang/3.5
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/projects/albany/clang/lib
 
 cd /projects/AppComp/nightly/cee-compute011
 

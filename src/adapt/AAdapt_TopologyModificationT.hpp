@@ -3,10 +3,8 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
-
-#if !defined(AAdapt_TopologyModification_hpp)
-#define AAdapt_TopologyModification_hpp
+#if !defined(AAdapt_TopologyModificationT_hpp)
+#define AAdapt_TopologyModificationT_hpp
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -15,7 +13,7 @@
 #include <PHAL_Workset.hpp>
 #include <PHAL_Dimension.hpp>
 
-#include "AAdapt_AbstractAdapter.hpp"
+#include "AAdapt_AbstractAdapterT.hpp"
 // Uses LCM Topology util class
 // Note that all topology functions are in Albany::LCM namespace
 #include "LCM/utils/topology/Topology.h"
@@ -27,22 +25,22 @@ namespace AAdapt {
 ///
 /// \brief Topology modification based adapter
 ///
-class TopologyMod : public AbstractAdapter {
+class TopologyModT : public AbstractAdapterT {
 public:
 
   ///
   /// Constructor
   ///
-  TopologyMod(
+  TopologyModT(
       Teuchos::RCP<Teuchos::ParameterList> const & params,
       Teuchos::RCP<ParamLib> const & param_lib,
-      Albany::StateManager & state_mgr,
-      const Teuchos::RCP<const Teuchos_Comm> & commT);
+      Albany::StateManager const & state_mgr,
+      Teuchos::RCP<Teuchos_Comm const> const & comm);
 
   ///
   /// Destructor
   ///
-  ~TopologyMod();
+  ~TopologyModT();
 
   ///
   /// Check adaptation criteria to determine if the mesh needs
@@ -50,7 +48,7 @@ public:
   ///
   virtual
   bool
-  queryAdaptationCriteria();
+  queryAdaptationCriteria(int iterarion);
 
   ///
   /// Apply adaptation method to mesh and problem.
@@ -59,8 +57,8 @@ public:
   virtual
   bool
   adaptMesh(
-      Epetra_Vector const & solution,
-      Epetra_Vector const & ovlp_solution);
+      Teuchos::RCP<Tpetra_Vector const> const & solution,
+      Teuchos::RCP<Tpetra_Vector const> const & ovlp_solution);
 
   ///
   /// Transfer solution between meshes.
@@ -68,8 +66,8 @@ public:
   virtual
   void
   solutionTransfer(
-      Epetra_Vector const & old_solution,
-      Epetra_Vector & new_solution);
+      Teuchos::RCP<Tpetra_Vector const> const & old_solution,
+      Teuchos::RCP<Tpetra_Vector const> & new_solution);
 
   ///
   /// Each adapter must generate its list of valid parameters
@@ -82,30 +80,9 @@ private:
   ///
   /// Disallow copy and assignment and default
   ///
-  TopologyMod();
-  TopologyMod(TopologyMod const &);
-  TopologyMod& operator=(TopologyMod const &);
-
-  ///
-  /// Connectivity display method
-  ///
-  void showElemToNodes();
-
-  ///
-  /// Relation display method
-  ///
-  void showRelations();
-
-  ///
-  /// Parallel all-reduce function. Returns the argument in serial,
-  /// returns the sum of the argument in parallel
-  int  accumulateFractured(int num_fractured);
-
-  /// Parallel all-gatherv function. Communicates local open list to
-  /// all processors to form global open list.
-  void getGlobalOpenList(
-      std::map<stk::mesh::EntityKey, bool> & local_entity_open,
-      std::map<stk::mesh::EntityKey, bool> & global_entity_open);
+  TopologyModT();
+  TopologyModT(TopologyModT const &);
+  TopologyModT & operator=(TopologyModT const &);
 
   ///
   /// stk_mesh Bulk Data
@@ -157,4 +134,4 @@ private:
 
 }
 
-#endif //AAdapt_TopologyModification_hpp
+#endif //AAdapt_TopologyModificationT_hpp

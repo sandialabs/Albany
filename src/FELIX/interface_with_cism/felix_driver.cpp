@@ -594,11 +594,13 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #endif
 
+    std::cout << "here1" << std::endl; 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", true);
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
+    std::cout << "here2" << std::endl; 
 
 #ifdef CISM_USE_EPETRA
     const Epetra_Map& ownedMap(*albanyApp->getDiscretization()->getMap()); //owned map
@@ -614,6 +616,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     solutionOverlap->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
     Teuchos::ArrayRCP<const ST> solutionOverlap_constView = solutionOverlap->get1dView();
 #endif
+   std::cout << "here3" << std::endl; 
 
 #ifdef WRITE_TO_MATRIX_MARKET
 #ifdef CISM_USE_EPETRA
