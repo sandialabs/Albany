@@ -100,8 +100,8 @@ evaluateFields(typename Traits::EvalData workset)
  //Irina comments:: was commented out
   RST::inverseTemp(F_inv, defgrad);
  // RST::transpose(F_invT, F_inv);
- //  //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
- // FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
+  //Irina TOFIX FST::scalarMultiplyDataDataTemp<ScalarT>(JF_invT, J, F_invT);
+  FST::tensorMultiplyDataDataTemp<ScalarT>(P, TotalStress, JF_invT);
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
