@@ -147,7 +147,7 @@ formatter_class=argparse.RawTextHelpFormatter
     global VERBOSE
     VERBOSE = args.verbose
 
-    expect(args.compiler == "none" or args.environment,
+    expect(args.compiler == "none" or args.manage_environment,
            "Cannot use -c without also using -e")
 
     return args.mode, args.build_type, args.build_mode, args.manage_environment, args.compiler
