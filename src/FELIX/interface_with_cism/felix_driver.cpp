@@ -70,33 +70,37 @@ long global_ewn, global_nsn;
 double gravity, rho_ice, rho_seawater; //IK, 3/18/14: why are these pointers?  wouldn't they just be doubles? 
 double final_time; //final time, added 10/30/14, IK 
 double seconds_per_year, vel_scaling_param; 
-double * thicknessDataPtr, *topographyDataPtr;
-double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
-double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
+//double * thicknessDataPtr, *topographyDataPtr;
+//double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
+//double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
 long nCellsActive;
 long nWestFacesActive, nEastFacesActive, nSouthFacesActive, nNorthFacesActive; 
 long debug_output_verbosity;
 long use_glissade_surf_height_grad;
 int nNodes, nElementsActive; 
 int nElementsActivePrevious = 0;  
-double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr, *thick_at_nodes_Ptr;
-double* dsurf_height_at_nodes_dx_Ptr, *dsurf_height_at_nodes_dy_Ptr; 
-double *flwa_at_active_elements_Ptr; 
-int * global_node_id_owned_map_Ptr; 
-int * global_element_conn_active_Ptr; 
-int * global_element_id_active_owned_map_Ptr; 
-int * global_basal_face_conn_active_Ptr; 
-int * global_basal_face_id_active_owned_map_Ptr; 
-int * global_west_face_conn_active_Ptr; 
-int * global_west_face_id_active_owned_map_Ptr; 
-int * global_east_face_conn_active_Ptr; 
-int * global_east_face_id_active_owned_map_Ptr; 
-int * global_south_face_conn_active_Ptr; 
-int * global_south_face_id_active_owned_map_Ptr; 
-int * global_north_face_conn_active_Ptr; 
-int * global_north_face_id_active_owned_map_Ptr; 
-double *uVel_ptr; 
-double *vVel_ptr; 
+double* xyz_at_nodes_Ptr = NULL; 
+double *surf_height_at_nodes_Ptr = NULL; 
+double *beta_at_nodes_Ptr = NULL; 
+double *thick_at_nodes_Ptr = NULL;
+double* dsurf_height_at_nodes_dx_Ptr = NULL;
+double *dsurf_height_at_nodes_dy_Ptr = NULL; 
+double *flwa_at_active_elements_Ptr = NULL; 
+int * global_node_id_owned_map_Ptr = NULL; 
+int * global_element_conn_active_Ptr = NULL; 
+int * global_element_id_active_owned_map_Ptr = NULL; 
+int * global_basal_face_conn_active_Ptr = NULL; 
+int * global_basal_face_id_active_owned_map_Ptr = NULL; 
+int * global_west_face_conn_active_Ptr = NULL; 
+int * global_west_face_id_active_owned_map_Ptr = NULL; 
+int * global_east_face_conn_active_Ptr = NULL; 
+int * global_east_face_id_active_owned_map_Ptr = NULL; 
+int * global_south_face_conn_active_Ptr = NULL; 
+int * global_south_face_id_active_owned_map_Ptr = NULL; 
+int * global_north_face_conn_active_Ptr = NULL; 
+int * global_north_face_id_active_owned_map_Ptr = NULL; 
+double *uVel_ptr = NULL; 
+double *vVel_ptr = NULL; 
 bool first_time_step = true;
 #ifdef CISM_USE_EPETRA 
   Teuchos::RCP<Epetra_Map> node_map; 
@@ -300,13 +304,13 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     rho_seawater = *(ftg_ptr -> getDoubleVar("rho_seawater","constants"));
     //std::cout << "g, rho, rho_w: " << gravity << ", " << rho_ice << ", " << rho_seawater << std::endl; 
     final_time = *(ftg_ptr -> getDoubleVar("tend","numerics"));
-    thicknessDataPtr = ftg_ptr -> getDoubleVar("thck","geometry");
-    topographyDataPtr = ftg_ptr -> getDoubleVar("topg","geometry");
-    upperSurfaceDataPtr = ftg_ptr -> getDoubleVar("usrf","geometry");
-    lowerSurfaceDataPtr = ftg_ptr -> getDoubleVar("lsrf","geometry");
-    floating_maskDataPtr = ftg_ptr -> getDoubleVar("floating_mask","geometry");
-    ice_maskDataPtr = ftg_ptr -> getDoubleVar("ice_mask","geometry");
-    lower_cell_locDataPtr = ftg_ptr -> getDoubleVar("lower_cell_loc","geometry");
+    //thicknessDataPtr = ftg_ptr -> getDoubleVar("thck","geometry");
+    //topographyDataPtr = ftg_ptr -> getDoubleVar("topg","geometry");
+    //upperSurfaceDataPtr = ftg_ptr -> getDoubleVar("usrf","geometry");
+    //lowerSurfaceDataPtr = ftg_ptr -> getDoubleVar("lsrf","geometry");
+    //floating_maskDataPtr = ftg_ptr -> getDoubleVar("floating_mask","geometry");
+    //ice_maskDataPtr = ftg_ptr -> getDoubleVar("ice_mask","geometry");
+    //lower_cell_locDataPtr = ftg_ptr -> getDoubleVar("lower_cell_loc","geometry");
 
     // ---------------------------------------------
     // get connectivity arrays from CISM 
@@ -388,13 +392,13 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
    
     //IK, 11/20/14: added this here: BCs are set in this file rather than in input.xml file to prevent confusion 
     //to the reader.  Basically the BCs should be passed from CISM.
-    Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
-    parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Basal for DOF all set basal_scalar_field", *inputArrayBasal);  
+    //Teuchos::RCP<Teuchos::Array<double> >inputArrayBasal = Teuchos::rcp(new Teuchos::Array<double> (1, 1.0));
+    //parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Basal for DOF all set basal_scalar_field", *inputArrayBasal);  
     //Lateral floating ice BCs. 
-    if ((global_west_face_conn_active_Ptr != NULL || global_east_face_conn_active_Ptr != NULL || global_north_face_conn_active_Ptr != NULL || global_south_face_conn_active_Ptr != NULL) && (nWestFacesActive > 0 || nEastFacesActive > 0 || nSouthFacesActive > 0 || nNorthFacesActive > 0)) {
-      Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
-      parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Lateral for DOF all set lateral", *inputArrayLateral);  
-    }
+    //if ((global_west_face_conn_active_Ptr != NULL || global_east_face_conn_active_Ptr != NULL || global_north_face_conn_active_Ptr != NULL || global_south_face_conn_active_Ptr != NULL) && (nWestFacesActive > 0 || nEastFacesActive > 0 || nSouthFacesActive > 0 || nNorthFacesActive > 0)) {
+      //Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
+      //parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Lateral for DOF all set lateral", *inputArrayLateral);  
+    //}
 
  
    //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
@@ -594,13 +598,11 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
 #endif
 
-    std::cout << "here1" << std::endl; 
     Teuchos::ParameterList solveParams;
     solveParams.set("Compute Sensitivities", true);
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<double> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
     Piro::PerformSolveBase(*solver, solveParams, thyraResponses, thyraSensitivities);
-    std::cout << "here2" << std::endl; 
 
 #ifdef CISM_USE_EPETRA
     const Epetra_Map& ownedMap(*albanyApp->getDiscretization()->getMap()); //owned map
@@ -616,7 +618,6 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     solutionOverlap->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
     Teuchos::ArrayRCP<const ST> solutionOverlap_constView = solutionOverlap->get1dView();
 #endif
-   std::cout << "here3" << std::endl; 
 
 #ifdef WRITE_TO_MATRIX_MARKET
 #ifdef CISM_USE_EPETRA
