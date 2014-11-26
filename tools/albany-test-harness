@@ -20,21 +20,57 @@ TODO:
 
 ALBANY_BUILD_TYPES = \
 {
-    "basic"     : [
+    "basic" : [
     ],
-    "piro"      : [
-        ("ALBANY_NEEDS_DAKOTA",  "ON")
+    "trikota" : [
+        ("TRILINOS_TRIKOTA",  "ON"),
     ],
-    "lcm"       : [
-        ("ALBANY_LCM", "ON")
+    "lcm" : [
+        ("ALBANY_LCM", "ON"),
+        ("ALBANY_SG_MP", "ON"),
     ],
-    "muelu_slu"  : [
-        ("ALBANY_NEEDS_MUELU",   "ON"),
-        ("ALBANY_NEEDS_SUPERLU", "ON")
+    "felix" : [
+        ("ALBANY_LCM", "ON"),
+        ("ALBANY_SG_MP", "ON"),
+        ("ALBANY_MOR", "ON"),
+        ("ALBANY_FELIX", "ON"),
+        ("ALBANY_HYDRIDE", "ON"),
+        ("ALBANY_AMP", "ON"),
+        ("ALBANY_ATO", "ON"),
+        ("ALBANY_QCAD", "ON"),
+        ("ALBANY_ASCR", "ON"),
+        ("ALBANY_AERAS", "ON"),
+        ("ALBANY_64BIT_INT", "ON"),
+        ("ALBANY_LAME", "ON"),
+        ("ALBANY_DEMO_PDES", "ON"),
+        ("ALBANY_MPAS_INTERFACE", "ON"),
+        ("TRILINOS_PHALANX_TEUCHOS_TIME_MONITOR", "ON"),
+        ("TRILINOS_STOKHOS_TEUCHOS_TIME_MONITOR", "ON"),
+        ("TRILINOS_STRATIMIKOS_TEUCHOS_TIME_MONITOR", "ON"),
+        ("TRILINOS_SUPERLU", "ON"),
+        ("TRILINOS_PARMETIS", "ON"),
+        ("TRILINOS_YAML", "ON"),
+        ("TRILINOS_BLAS", "ON"),
+        ("TRILINOS_DIDASKO", "ON"),
+        ("TRILINOS_GALERI", "ON"),
+        ("TRILINOS_GLOBIPACK", "ON"),
+        ("TRILINOS_ISORROPIA", "ON"),
+        ("TRILINOS_OPTIPACK", "ON"),
+        ("TRILINOS_PAMGEN", "ON"),
+        ("TRILINOS_RBGEN", "ON"),
+        ("TRILINOS_SCOREC", "ON"),
+        ("TRILINOS_THREADPOOL", "ON"),
+        ("TRILINOS_THYRA_TPETRA_ADAPTORS", "ON"),
+        ("TRILINOS_COUPLINGS", "ON"),
+        ("TRILINOS_ZOLTAN2_EXPERIMENTAL", "ON"),
+    ]
+    "muelu_slu" : [
+        ("TRILINOS_MUELU",   "ON"),
+        ("TRILINOS_SUPERLU", "ON"),
     ],
     "muelu_klu" : [
-        ("ALBANY_NEEDS_MUELU",   "ON"),
-        ("TRILINOS_ENABLE_KLU2", "ON")
+        ("TRILINOS_MUELU", "ON"),
+        ("TRILINOS_AMESOS_KLU2",  "ON"),
     ],
 }
 

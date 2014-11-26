@@ -12,6 +12,11 @@
 export BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.55.0
 export NETCDFDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/pnetcdf_4.3.2
 export HDF5DIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/phdf5-1.8.12
+export SUPERLUDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/SuperLU_4.3
+export LAMEDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/lame-4.24.1
+export PARMETISDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/lame-4.24.1
+export CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch # TODO - Fix
+export YAMLDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/yaml_cpp_0.5.1
 
 export SSGUSER=$(whoami)
 

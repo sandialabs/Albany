@@ -12,9 +12,17 @@ $ALBDIR/tools/test_scripts/jenkins-test-preamble
 #
 # Do Dakota checkout
 #
-if [ ${ALBANY_NEEDS_DAKOTA:-OFF} = "ON" ]
+if [ ${TRILINOS_TRIKOTA:-OFF} = "ON" ]
 then
     $ALBDIR/tools/checkout_scripts/dakota-checkout
+fi
+
+#
+# Do SCOREC checkout
+#
+if [ ${TRILINOS_SCOREC:-OFF} = "ON" ]
+then
+    $ALBDIR/tools/checkout_scripts/scorec-checkout
 fi
 
 #
