@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -xe
 
 /bin/rm -f CMakeCache.txt
 

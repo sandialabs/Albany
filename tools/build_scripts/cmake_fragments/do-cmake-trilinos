@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /bin/bash -xe
 
 /bin/rm -f CMakeCache.txt
 
@@ -8,7 +8,7 @@ INSTALL_DIR=${TRILINSTALLDIR:-$(pwd)/install}
 if [ ${ALBANY_NEEDS_SUPERLU:-OFF} = "ON" ]
 then
     SUPERLU_ARGS=" -D TPL_ENABLE_SuperLU:STRING=ON \
-                   -D SuperLU_INCLUDE_DIRS:STRING=${SUPERLUDIR}/include \
+                   -D SuperLU_INCLUDE_DIRS:STRING=${SUPERLUDIR:?SUPERLUDIR must be defined}/include \
                    -D SuperLU_LIBRARY_DIRS:STRING=${SUPERLUDIR}/lib"
 else
     SUPERLU_ARGS=""
@@ -62,15 +62,15 @@ cmake \
 \
     -D TPL_ENABLE_Boost:BOOL=ON \
     -D TPL_ENABLE_BoostLib:BOOL=ON \
-    -D Boost_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+    -D Boost_INCLUDE_DIRS:FILEPATH=${BOOSTDIR:?BOOSTDIR must be defined}/include \
     -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
     -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
     -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
     -D TPL_ENABLE_Netcdf:BOOL=ON \
-    -D Netcdf_INCLUDE_DIRS:PATH=$NETCDFDIR/include \
+    -D Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR:?NETCDFDIR must be defined}/include \
     -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
     -D TPL_ENABLE_HDF5:BOOL=ON \
-    -D HDF5_INCLUDE_DIRS:PATH=$HDF5DIR/include \
+    -D HDF5_INCLUDE_DIRS:PATH=${HDF5DIR:?HDF5DIR must be defined}/include \
     -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
     -D TPL_ENABLE_MPI:BOOL=ON \
     $SUPERLU_ARGS \
