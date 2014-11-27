@@ -1,0 +1,15 @@
+# Copy Input file from source to binary dir
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShear2d.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/ElasticShear2d.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CrystalElasticity2d_Material.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/CrystalElasticity2d_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PlasticShear2d.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/PlasticShear2d.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CrystalPlasticity2d_Material.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/CrystalPlasticity2d_Material.xml COPYONLY)
+
+# Add the tests
+if(ALBANY_IFPACK2)
+add_test(MPCrystalPlasticity_ElasticShear2d_Tpetra ${SerialAlbanyT.exe} ElasticShear2d.xml)
+add_test(MPCrystalPlasticity_PlasticShear2d_Tpetra ${SerialAlbanyT.exe} PlasticShear2d.xml)
+endif()

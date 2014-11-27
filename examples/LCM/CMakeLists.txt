@@ -38,6 +38,7 @@ add_subdirectory(ThermoMechanicalContact)
   ENDIF()
 ENDIF()
 
+add_subdirectory(MultiPhysicsCrystalPlasticity)
 add_subdirectory(Catalyst)
 add_subdirectory(DomainTear2D)
 add_subdirectory(RandomFracture3D)
