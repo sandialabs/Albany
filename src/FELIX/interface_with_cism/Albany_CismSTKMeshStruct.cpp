@@ -80,8 +80,26 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   }
   xyz = new double[NumNodes][3];
   eles = new int[NumEles][8];
+  //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+  bf = new int[NumBasalFaces][5]; 
+  wf = new int[NumWestFaces][5]; 
+  ef = new int[NumEastFaces][5]; 
+  sf = new int[NumSouthFaces][5]; 
+  nf = new int[NumNorthFaces][5]; 
+  sh = new double[NumNodes];
+  thck = new double[NumNodes];
+  shGrad = new double[NumNodes][2];
   globalNodesID = new GO[NumNodes];
   globalElesID = new GO[NumEles];
+  basalFacesID = new GO[NumBasalFaces];
+  westFacesID = new GO[NumWestFaces]; 
+  eastFacesID = new GO[NumEastFaces]; 
+  southFacesID = new GO[NumSouthFaces]; 
+  northFacesID = new GO[NumNorthFaces]; 
+  flwa = new double[NumEles];
+  beta = new double[NumNodes];
+  //TO DO? pass in temper?  for now, flwa is passed instead of temper
+  //temper = new double[NumEles];
 
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
@@ -105,9 +123,6 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   if (global_north_face_active_owned_map_Ptr != NULL && NumNorthFaces > 0) have_nf = true;
   else have_nf = false;
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
-  
-  //TO DO? pass in temper?  for now, flwa is passed instead of temper
-  //temper = new double[NumEles];
 
   for (int i=0; i<NumNodes; i++){
     globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;
@@ -117,24 +132,20 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
          //<< ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
   }
   if (have_sh) {
-    sh = new double[NumNodes];
     for (int i=0; i<NumNodes; i++)
       sh[i] = surf_height_at_nodes_Ptr[i];
   }
   if (have_thck) {
-    thck = new double[NumNodes];
     for (int i=0; i<NumNodes; i++)
       thck[i] = thick_at_nodes_Ptr[i];
   }
   if (have_shGrad) {
-    shGrad = new double[NumNodes][2];
     for (int i=0; i<NumNodes; i++){
       shGrad[i][0] = dsurf_height_at_nodes_dx_Ptr[i];
       shGrad[i][1] = dsurf_height_at_nodes_dy_Ptr[i];
     }
   }
   if (have_beta) {
-    beta = new double[NumNodes];
     for (int i=0; i<NumNodes; i++) {
       beta[i] = beta_at_nodes_Ptr[i];
       //*out << "beta[i] " << beta[i] << std::endl;
@@ -151,13 +162,10 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     //     << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
   }
   if (have_flwa) {
-    flwa = new double[NumEles];
     for (int i=0; i<NumEles; i++)
       flwa[i] = flwa_at_active_elements_Ptr[i];
   }
   if (have_bf) {
-    bf = new int[NumBasalFaces][5]; 
-    basalFacesID = new GO[NumBasalFaces];
     for (int i=0; i<NumBasalFaces; i++) {
       basalFacesID[i] = global_basal_face_active_owned_map_Ptr[i]-1;
       for (int j=0; j<5; j++)
@@ -166,8 +174,6 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     }
   }
   if (have_wf) {
-    wf = new int[NumWestFaces][5]; 
-    westFacesID = new GO[NumWestFaces]; 
     for (int i=0; i<NumWestFaces; i++) {
        westFacesID[i] = global_west_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
@@ -175,8 +181,6 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     }
   }
   if (have_ef) {
-    ef = new int[NumEastFaces][5]; 
-    eastFacesID = new GO[NumEastFaces]; 
     for (int i=0; i<NumEastFaces; i++) {
        eastFacesID[i] = global_east_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
@@ -184,17 +188,21 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     }
   }
   if (have_sf) {
-    sf = new int[NumSouthFaces][5]; 
-    southFacesID = new GO[NumSouthFaces]; 
     for (int i=0; i<NumSouthFaces; i++) {
        southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++)  
          sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j];
+        /*if (commT->getRank() == 0) { 
+          *out << "proc 0, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
+        if (commT->getRank() == 1) { 
+          *out << "proc 1, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << bf[i][4] << std::endl; }
+        if (commT->getRank() == 2) { 
+          *out << "proc 2, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
+        if (commT->getRank() == 3) { 
+          *out << "proc 3, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; } */
     }
   }
   if (have_nf) {
-    nf = new int[NumNorthFaces][5]; 
-    northFacesID = new GO[NumNorthFaces]; 
     for (int i=0; i<NumNorthFaces; i++) {
        northFacesID[i] = global_north_face_active_owned_map_Ptr[i]-1;    
        for (int j=0; j<5; j++) 
@@ -308,14 +316,14 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
   delete [] xyz;
-  if (have_sh) delete [] sh;
-  if (have_thck) delete [] thck;
-  if (have_shGrad) delete [] shGrad;
-  if (have_bf) delete [] bf;
-  if (have_wf) delete [] wf;
-  if (have_ef) delete [] ef;
-  if (have_sf) delete [] sf;
-  if (have_nf) delete [] nf;
+  delete [] sh;
+  delete [] thck;
+  delete [] shGrad;
+  delete [] bf;
+  delete [] wf;
+  delete [] ef;
+  delete [] sf;
+  delete [] nf;
   delete [] eles;
   delete [] globalElesID;
   delete [] globalNodesID;
