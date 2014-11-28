@@ -32,7 +32,6 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   const Teuchos::ArrayRCP<std::string>& names =
     p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
 
-
   tensorRank = p.get<int>("Tensor Rank");
 
   // scalar
@@ -163,6 +162,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   //get nonconst (read and write) view of fT
   Teuchos::ArrayRCP<ST> f_nonconstView = fT->get1dViewNonConst();
+
 #ifdef NO_KOKKOS_ALBANY
 
   if (this->tensorRank == 0) {
@@ -193,7 +193,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-
 
  Kokkos::parallel_for(workset.numCells, ScatterToVector_resid< PHX::MDField<ScalarT,Cell,Node,Dim> , Teuchos::ArrayRCP<ST>, Kokkos::View<int***, PHX::Device> >(f_nonconstView, this->valVec[0], workset.wsElNodeEqID_kokkos, this->numNodes, numFields) );
 #endif  
@@ -242,6 +241,7 @@ class ScatterToVector_jacob {
  KOKKOS_INLINE_FUNCTION
  void operator () (const int i) const
   {
+// IRINA TOFIX scatter functor 
     int neq=2;
     int nunk=neq*numNodes_;
     int colT[nunk];
@@ -272,18 +272,15 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType2 ;
-  if (!JacT->isFillComplete())
-      JacT->fillComplete();
-  LocalMatrixType2 jacobian=JacT->getLocalMatrix();
-  //const unsigned nrow = jacobian.numRows();
- // std::cout<< JacT;
+
+  ScalarT *valptr;
+
   bool loadResid = Teuchos::nonnull(fT);
   LO rowT;
   Teuchos::Array<LO> colT;
-#ifdef NO_KOKKOS_ALBANY
 
   int neq = workset.wsElNodeEqID[0][0].size();
   int nunk = neq*this->numNodes;
@@ -291,29 +288,28 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim=0;
   if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
-
+    numDim = this->valTensor[0].dimension(2); 
+ 
+/*  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType2 ;
+  if (!JacT->isFillComplete())
+      JacT->fillComplete();
+  LocalMatrixType2 jacobian=JacT->getLocalMatrix();
+*/
+#ifdef NO_KOKKOS_ALBANY
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
-
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
       }
     }
-
-    for (std::size_t node = 0; node < this->numNodes; ++node) {
+  
+//Irina TOFIX
+/* 
+   for (std::size_t node = 0; node < this->numNodes; ++node) {
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-           
-Irina put this to the end
-#else 
-Kokkos::parallel_for(workset.numCells, ScatterToVector_jacob< ScalarT, Tpetra_LocalMatrixType, Teuchos::RCP<Tpetra_Vector> , PHX::MDField<ScalarT,Cell,Node,Dim>, Kokkos::View<int***, PHX::Device> >(jacobian, fT, this->valVec[0], workset.wsElNodeEqID_kokkos, this->numNodes, numFields) );
-#endif
-
-JacT->resumeFill();
-
           if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
           else
           if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
@@ -329,8 +325,8 @@ JacT->resumeFill();
         if (valptr->hasFastAccess()) {
 
           if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (unsigned int lunk=0; lunk<nunk; lunk++)
+           // Sum Jacobian transposed
+           for (unsigned int lunk=0; lunk<nunk; lunk++)
               JacT->sumIntoLocalValues(colT[lunk], Teuchos::arrayView(&rowT, 1), Teuchos::arrayView(&(valptr->fastAccessDx(lunk)), 1));
           }
           else {
@@ -338,7 +334,16 @@ JacT->resumeFill();
             JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(valptr->fastAccessDx(0)), nunk));
           }
         } // has fast access
-*/
+      }
+    }
+  }
+*/ 
+#else
+ Kokkos::parallel_for(workset.numCells, ScatterToVector_jacob< ScalarT, Tpetra_LocalMatrixType, Teuchos::RCP<Tpetra_Vector> , PHX::MDField<ScalarT,Cell,Node,Dim>, Kokkos::View<int***, PHX::Device> >(jacobian, fT, this->valVec[0], workset.wsElNodeEqID_kokkos, this->numNodes, numFields) );
+#endif
+
+JacT->resumeFill();
+
 }
 
 // **********************************************************************
@@ -359,7 +364,9 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
+ //IRINA TOFIX
+ /*
+ Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
   ScalarT *valptr;
@@ -385,18 +392,18 @@ evaluateFields(typename Traits::EvalData workset)
         if (Teuchos::nonnull(fT))
           fT->sumIntoLocalValue(row, valptr->val());
 
-	if (Teuchos::nonnull(JVT))
-	  for (int col=0; col<workset.num_cols_x; col++)
-	    JVT->sumIntoLocalValue(row, col, valptr->dx(col));
+        if (Teuchos::nonnull(JVT))
+          for (int col=0; col<workset.num_cols_x; col++)
+            JVT->sumIntoLocalValue(row, col, valptr->dx(col));
 
-	if (Teuchos::nonnull(fpT)) 
-	  for (int col=0; col<workset.num_cols_p; col++)
-	    fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
-
+        if (Teuchos::nonnull(fpT))
+          for (int col=0; col<workset.num_cols_p; col++)
+            fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
       }
     }
   }
-}
+
+*/
 }
 
 // **********************************************************************
@@ -417,10 +424,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+ //Irina TOFIX
+ /*
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
-//  ScalarT *valptr;
+  ScalarT *valptr;
 
   int numDim=0;
   if(this->tensorRank==2)
@@ -455,7 +464,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   }
 
-  else {
+ else {
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
@@ -482,8 +491,10 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-    }
+
   }
+
+ */
 }
 
 // **********************************************************************
@@ -505,8 +516,10 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+ //Irina TOFIX
+ /*
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
-//  ScalarT *valptr;
+  ScalarT *valptr;
 
   int numDim=0;
   if(this->tensorRank==2)
@@ -530,6 +543,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+
+ */
 }
 
 // **********************************************************************
@@ -550,10 +565,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
+ //Irina TOFIX
+ /*
+ Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
-//  ScalarT *valptr;
+  ScalarT *valptr;
 
   int row, lcol, col;
   int nblock = 0;
@@ -581,14 +598,14 @@ evaluateFields(typename Traits::EvalData workset)
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
 
-
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
         }
 
         // Check derivative array is nonzero
-        if ((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+        if (valptr->hasFastAccess()) {
+
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
 
@@ -600,8 +617,7 @@ evaluateFields(typename Traits::EvalData workset)
               col =  nodeID[node_col][eq_col];
 
               // Sum Jacobian
-              for (int block=0; block<nblock_jac; block++) {
-                c = ((this->valVec[0])(cell,node,eq)).fastAccessDx(lcol).coeff(block);
+                 c = valptr->fastAccessDx(lcol).coeff(block);
                 if (workset.is_adjoint) {
                   (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
                 }
@@ -612,36 +628,11 @@ evaluateFields(typename Traits::EvalData workset)
             } // column equations
           } // column nodes
         } // has fast access
-       }
-/*
-       else{
-
-        if (f != Teuchos::null) {
-          for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->val[eq](cell,node)).val().coeff(block));
-        }
-        if (((this->val[eq])(cell,node)).hasFastAccess()) {
-           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){ 
-             for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-              lcol = neq * node_col + eq_col;
-              col =  nodeID[node_col][eq_col];
-              for (int block=0; block<nblock_jac; block++) {
-                c = ((this->val[eq])(cell,node)).fastAccessDx(lcol).coeff(block);
-                if (workset.is_adjoint) {
-                  (*Jac)[block].SumIntoMyValues(col, 1, &c, &row);
-                }
-                else {
-                  (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
-                }
-              }
-            } // column equations
-          } // column nodes
-        } // has fast access
-       }
-*/
       }
     }
   }
+
+ */
 }
 
 // **********************************************************************
@@ -662,10 +653,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
+ //Irina TOFIX
+ /*
+ Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
-//  ScalarT *valptr;
+  ScalarT *valptr;
 
   int nblock = 0;
   if (f != Teuchos::null)
@@ -696,42 +689,25 @@ evaluateFields(typename Traits::EvalData workset)
 
         int row = nodeID[node][this->offset + eq];
 
-/*       if (this->vectorField){
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, ((this->valVec[0])(cell,node,eq)).dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
 
         if (fp != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, ((this->valVec[0])(cell,node,eq)).dx(col+workset.param_offset).coeff(block));
-       }
-       else{
-         if (f != Teuchos::null)
-          for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->val[eq])(cell,node)).val().coeff(block));
-
-        if (JV != Teuchos::null)
-          for (int col=0; col<workset.num_cols_x; col++)
-            for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, ((this->val[eq])(cell,node)).dx(col).coeff(block));
-
-        if (fp != Teuchos::null)
-          for (int col=0; col<workset.num_cols_p; col++)
-            for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, ((this->val[eq])(cell,node)).dx(col+workset.param_offset).coeff(block));
-
-
-       }
-*/ 
+              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
       }
     }
   }
+
+
+ */
 }
 
 // **********************************************************************
@@ -752,8 +728,10 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
-//  ScalarT *valptr;
+ //Irina TOFIX
+ /*
+ Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
+  ScalarT *valptr;
 
   int numDim=0;
   if(this->tensorRank==2)
@@ -776,6 +754,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+ 
+*/
 }
 
 // **********************************************************************
@@ -796,10 +776,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
+  //Irina TOFIX
+  /*
+   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
-//  ScalarT *valptr;
+  ScalarT *valptr;
 
   int row, lcol, col;
   int nblock = 0;
@@ -827,15 +809,13 @@ evaluateFields(typename Traits::EvalData workset)
         row = nodeID[node][this->offset + eq];
         int neq = nodeID[node].size();
 
-/*       if (this->vectorField){
-
         if (f != Teuchos::null) {
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
         }
 
         // Check derivative array is nonzero
-        if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+        if (valptr->hasFastAccess()) {
 
           // Loop over nodes in element
           for (unsigned int node_col=0; node_col<this->numNodes; node_col++){
@@ -849,40 +829,17 @@ evaluateFields(typename Traits::EvalData workset)
 
               // Sum Jacobian
               for (int block=0; block<nblock_jac; block++) {
-                c = ((this->valVec[0])(cell,node,eq)).fastAccessDx(lcol).coeff(block);
+                c = valptr->fastAccessDx(lcol).coeff(block);
                 (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
               }
             } // column equations
           } // column nodes
         } // has fast access
-       }
-       else
-       {
-          if (f != Teuchos::null) {
-          for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->val[eq])(cell,node)).val().coeff(block));
-        }
-
-        // Check derivative array is nonzero
-        if (((this->val[eq])(cell,node)).hasFastAccess()) { 
-         for (unsigned int node_col=0; node_col<this->numNodes; node_col++){  
-           for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-              lcol = neq * node_col + eq_col;
-              col =  nodeID[node_col][eq_col];
-              for (int block=0; block<nblock_jac; block++) {
-                c = ((this->val[eq])(cell,node)).fastAccessDx(lcol).coeff(block);
-                (*Jac)[block].SumIntoMyValues(row, 1, &c, &col);
-              }
-            } // column equations
-          } // column nodes
-        } // has fast access
-
-
-       } 
-*/
       }
     }
   }
+
+ */
 }
 
 // **********************************************************************
@@ -903,10 +860,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
+ //Irina TOFIX
+ /*
+ Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
- // ScalarT *valptr;
+  ScalarT *valptr;
 
   int nblock = 0;
   if (f != Teuchos::null)
@@ -936,43 +895,25 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
         int row = nodeID[node][this->offset + eq];
-/*
-        if (this->vectorField) {
 
         if (f != Teuchos::null)
           for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->valVec[0])(cell,node,eq)).val().coeff(block));
+            (*f)[block].SumIntoMyValue(row, 0, valptr->val().coeff(block));
 
         if (JV != Teuchos::null)
           for (int col=0; col<workset.num_cols_x; col++)
             for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, ((this->valVec[0])(cell,node,eq)).dx(col).coeff(block));
+              (*JV)[block].SumIntoMyValue(row, col, valptr->dx(col).coeff(block));
 
         if (fp != Teuchos::null)
           for (int col=0; col<workset.num_cols_p; col++)
             for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, ((this->valVec[0])(cell,node,eq)).dx(col+workset.param_offset).coeff(block));
-        }
-        else{
-         if (f != Teuchos::null)
-          for (int block=0; block<nblock; block++)
-            (*f)[block].SumIntoMyValue(row, 0, ((this->val[eq])(cell,node)).val().coeff(block));
-
-        if (JV != Teuchos::null)
-          for (int col=0; col<workset.num_cols_x; col++)
-            for (int block=0; block<nblock; block++)
-              (*JV)[block].SumIntoMyValue(row, col, ((this->val[eq])(cell,node)).dx(col).coeff(block));
-
-        if (fp != Teuchos::null)
-          for (int col=0; col<workset.num_cols_p; col++)
-            for (int block=0; block<nblock; block++)
-              (*fp)[block].SumIntoMyValue(row, col, ((this->val[eq])(cell,node)).dx(col+workset.param_offset).coeff(block));
-
-        }
-*/
+              (*fp)[block].SumIntoMyValue(row, col, valptr->dx(col+workset.param_offset).coeff(block));
       }
     }
   }
+
+ */
 }
 #endif //ALBANY_SG_MP
 

@@ -131,7 +131,7 @@ evaluateFields(typename Traits::EvalData workset)
 //Irina TOFIX intrepid
   RST::inverseTemp(Fpinv, Fpold);
  // RST::transpose(FpinvT, Fpinv);
-  //FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
+  FST::tensorMultiplyDataDataTemp<ScalarT>(Cpinv, Fpinv, FpinvT);
 
   for (int cell=0; cell < workset.numCells; ++cell)
   {

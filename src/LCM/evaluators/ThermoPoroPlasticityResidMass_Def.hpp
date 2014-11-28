@@ -237,7 +237,7 @@ evaluateFields(typename Traits::EvalData workset)
     //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
     //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
 // Irina TOFIX intrepid
-//   FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+   FST::tensorMultiplyDataDataTemp<ScalarT>(Kref, F_inv, KJF_invT);
 
 //Irina comment: was commented out  
    /*
@@ -257,7 +257,7 @@ evaluateFields(typename Traits::EvalData workset)
 
    // Pore pressure gradient contribution
 //Irina TOFIX intrepid
-//  FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+  FST::tensorMultiplyDataDataTemp<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
 
    for (int cell=0; cell < workset.numCells; ++cell){
       for (int qp=0; qp < numQPs; ++qp) {

@@ -314,6 +314,7 @@ evaluateFields(typename Traits::EvalData workset)
 #else
  Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields) );
 #endif
+//  std::cout << (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
 }
 
 // **********************************************************************
@@ -404,18 +405,11 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT* valptr;
 
 
-  //Irina Kokkos refactoring
-//  ScalarT valVec_temp[workset.numCells][this->numNodes][numFields];
-// for  (std::size_t cell=0; cell < workset.numCells; ++cell )
-//    for (std::size_t node = 0; node < this->numNodes; ++node)
-//      for (std::size_t eq = 0; eq < numFields; eq++)
-//              this->Index(cell, node, eq) = workset.wsElNodeEqID[cell][node][this->offset + eq];
-
     Kokkos::parallel_for(workset.numCells, GatherSolution_jacob < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields, workset.ignore_residual, workset.j_coeff) );
 
-
+//Irina TOFIX
 /*
-  int numDim = 0;
+ int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -430,7 +424,7 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->tensorRank == 2) valptr = &((this->valTensor[0])(cell,node,eq/numDim,eq%numDim));
         else if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
         else                   valptr = &(this->val[eq])(cell,node);
-	*valptr = FadType(num_dof, xT_constView[eqID[this->offset + eq]]);
+        *valptr = FadType(num_dof, xT_constView[eqID[this->offset + eq]]);
         valptr->setUpdateValue(!workset.ignore_residual);
         valptr->fastAccessDx(firstunk + eq) = workset.j_coeff;
       }
@@ -453,9 +447,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
- }
-*/
+  }
 
+*/
 }
 
 // **********************************************************************
@@ -505,7 +499,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
-
+  
+  //Irina TOFIX
+  /*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -515,28 +511,28 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
         else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-	if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-	  *valptr = TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
-	  for (int k=0; k<workset.num_cols_x; k++) 
-	    valptr->fastAccessDx(k) =
-	      workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
-	}
-	else
-	  *valptr = TanFadType(xT_constView[eqID[this->offset + eq]]);
+        if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
+          *valptr = TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
+          for (int k=0; k<workset.num_cols_x; k++)
+            valptr->fastAccessDx(k) =
+              workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
+        }
+        else
+          *valptr = TanFadType(xT_constView[eqID[this->offset + eq]]);
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->tensorRank == 2) valptr = &(this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
-	  if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-	    *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
-	    for (int k=0; k<workset.num_cols_x; k++)
-	      valptr->fastAccessDx(k) =
-		workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
-	  }
-	  else
-	    *valptr = TanFadType(xdotT_constView[eqID[this->offset + eq]]);
+          if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
+            *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
+                workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
+          }
+          else
+            *valptr = TanFadType(xdotT_constView[eqID[this->offset + eq]]);
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
@@ -554,31 +550,8 @@ evaluateFields(typename Traits::EvalData workset)
             *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
         }
       }
-      if (workset.transientTerms && this->enableTransient) {
-        for (std::size_t eq = 0; eq < numFields; eq++) {
-           if (this->vectorField){
-              if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-                  (this->valVec_dot[0])(cell,node,eq)=TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
-		  for (int k=0; k<workset.num_cols_x; k++)
-			((this->valVec_dot[0])(cell,node,eq)).fastAccessDx(k) =
-				workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
-              }
-              else
-                  (this->valVec_dot[0])(cell,node,eq)=TanFadType(xdotT_constView[eqID[this->offset + eq]]);
-           }
-           else {
-              if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-		  (this->val_dot[eq])(cell,node)=TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
-		   for (int k=0; k<workset.num_cols_x; k++)
-			((this->val_dot[eq])(cell,node)).fastAccessDx(k) =
-				workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
-              }
-              else
-		  (this->val_dot[eq])(cell,node)=TanFadType(xdotT_constView[eqID[this->offset + eq]]);
-           }
-       }
-     }
-      if (workset.accelerationTerms && this->enableAcceleration) {
+
+    if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
@@ -596,6 +569,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
+ */
 }
 
 // **********************************************************************
@@ -919,8 +893,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
-
-  int nblock = x->size();
+  //Irina TOFIX
+  /*
+ int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -929,120 +904,61 @@ evaluateFields(typename Traits::EvalData workset)
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
         else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
-     if (this->tensorRank == 2){
-       if (Vx != Teuchos::null && workset.j_coeff != 0.0) {                                                                                                                                             
-           (this->valTensor[0])(cell,node,eq/numDim,eq%numDim) = SGFadType(num_cols_tot, 0.0);                                                                                                                                  
-            for (int k=0; k<workset.num_cols_x; k++)                                                                                                                                                        
-              ((this->valTensor[0])(cell,node,eq/numDim,eq%numDim)).fastAccessDx(k) =                                                                                                                                           
-                workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
-          }
-          else
-          (this->valTensor[0])(cell,node,eq/numDim,eq%numDim)= SGFadType(0.0);                                                                                                                                                  
-          ((this->valTensor[0])(cell,node,eq/numDim,eq%numDim)).val().reset(sg_expansion);                                                                                                                                      
-          ((this->valTensor[0])(cell,node,eq/numDim,eq%numDim)).val().copyForWrite();                                                                                                                                           
-          for (int block=0; block<nblock; block++)                                                                                                                                                          
-            ((this->valTensor[0])(cell,node,eq/numDim,eq%numDim)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];      
-     }     
-  
-      else  if (this->tensorRank == 1){
-         if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-         (this->valVec[0])(cell,node,eq) = SGFadType(num_cols_tot, 0.0);
+        if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
+          *valptr = SGFadType(num_cols_tot, 0.0);
           for (int k=0; k<workset.num_cols_x; k++)
-            ((this->valVec[0])(cell,node,eq)).fastAccessDx(k) =
+            valptr->fastAccessDx(k) =
               workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
         }
         else
-        (this->valVec[0])(cell,node,eq)= SGFadType(0.0);
-        ((this->valVec[0])(cell,node,eq)).val().reset(sg_expansion);
-        ((this->valVec[0])(cell,node,eq)).val().copyForWrite();
+          *valptr = SGFadType(0.0);
+        valptr->val().reset(sg_expansion);
+        valptr->val().copyForWrite();
         for (int block=0; block<nblock; block++)
-          ((this->valVec[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
-       }
-     
-      else{
-
-       if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          (this->val[eq])(cell,node) = SGFadType(num_cols_tot, 0.0);
-          for (int k=0; k<workset.num_cols_x; k++)
-            ((this->val[eq])(cell,node)).fastAccessDx(k) =
-              workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
-        }
-        else
-          (this->val[eq])(cell,node) = SGFadType(0.0);
-        ((this->val[eq])(cell,node)).val().reset(sg_expansion);
-        ((this->val[eq])(cell,node)).val().copyForWrite();
-        for (int block=0; block<nblock; block++)
-          ((this->val[eq])(cell,node)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
-       }
-     
-
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
-
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-//o
+          if (this->tensorRank == 2) valptr = &(this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
+          else if (this->tensorRank == 1) valptr = &(this->valVec_dot[0])(cell,node,eq);
+          else                   valptr = &(this->val_dot[eq])(cell,node);
+          if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
+            *valptr = SGFadType(num_cols_tot, 0.0);
+            for (int k=0; k<workset.num_cols_x; k++)
+              valptr->fastAccessDx(k) =
                 workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
-           }
-           else
-            (this->val_dot[eq])(cell,node) = SGFadType(0.0);
-           ((this->val_dot[eq])(cell,node)).val().reset(sg_expansion);
-           ((this->val_dot[eq])(cell,node)).val().copyForWrite();
-           for (int block=0; block<nblock; block++)
-             ((this->val_dot[eq])(cell,node)).val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
-         }
-
+          }
+          else
+            *valptr = SGFadType(0.0);
+          valptr->val().reset(sg_expansion);
+          valptr->val().copyForWrite();
+          for (int block=0; block<nblock; block++)
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
-      
-     // }
+      }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
-         // else                   valptr = &(this->val_dotdot[eq])(cell,node);
-
-          if (this->vectorField){
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
           else                   valptr = &(this->val_dotdot[eq])(cell,node);
->>>>>>> master
           if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
-            (this->valVec_dotdot[0])(cell,node,eq) = SGFadType(num_cols_tot, 0.0);
+            *valptr = SGFadType(num_cols_tot, 0.0);
             for (int k=0; k<workset.num_cols_x; k++)
-              ((this->valVec_dotdot[0])(cell,node,eq)).fastAccessDx(k) =
+              valptr->fastAccessDx(k) =
                 workset.n_coeff*(*Vxdotdot)[k][nodeID[node][this->offset + eq]];
           }
-          else
-           (this->valVec_dotdot[0])(cell,node,eq) = SGFadType(0.0);
-          ((this->valVec_dotdot[0])(cell,node,eq)).val().reset(sg_expansion);
-          ((this->valVec_dotdot[0])(cell,node,eq)).val().copyForWrite();
+       else
+            *valptr = SGFadType(0.0);
+          valptr->val().reset(sg_expansion);
+          valptr->val().copyForWrite();
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dotdot[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
-
-         }
-         else{
-
-         if (this->vectorField){
-          if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
-            (this->val_dotdot[eq])(cell,node) = SGFadType(num_cols_tot, 0.0);
-            for (int k=0; k<workset.num_cols_x; k++)
-             ((this->val_dotdot[eq])(cell,node)).fastAccessDx(k) =
-                workset.n_coeff*(*Vxdotdot)[k][nodeID[node][this->offset + eq]];
-          }
-          else
-           (this->val_dotdot[eq])(cell,node) = SGFadType(0.0);
-          ((this->val_dotdot[eq])(cell,node)).val().reset(sg_expansion);
-          ((this->val_dotdot[eq])(cell,node)).val().copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ().val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
-
-         }
-
+            valptr->val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
   }
 
+ */
 }
 
 // **********************************************************************
@@ -1085,105 +1001,51 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
 
+  //Irina TOFIX
+  /*
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-       // if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-       // else                   valptr = &(this->val[eq])(cell,node);
-      if (this->vectorField){
-        ((this->valVec[0])(cell,node,eq)).reset(nblock);
-        ((this->valVec[0])(cell,node,eq)).copyForWrite();
-=======
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
         else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
         valptr->reset(nblock);
         valptr->copyForWrite();
->>>>>>> master
         for (int block=0; block<nblock; block++)
-          ((this->valVec[0])(cell,node,eq)).fastAccessCoeff(block) =
+          valptr->fastAccessCoeff(block) =
             (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr= &(this->valVec_dot[0])(cell,node,eq);
-          //else                   valptr = &(this->val_dot[eq])(cell,node);
-          ((this->valVec_dot[0])(cell,node,eq)).reset(nblock);
-          ((this->valVec_dot[0])(cell,node,eq)).copyForWrite();
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
           valptr->reset(nblock);
           valptr->copyForWrite();
->>>>>>> master
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dot[0])(cell,node,eq)).fastAccessCoeff(block) =
+            valptr->fastAccessCoeff(block) =
               (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
-          //else                   valptr = &(this->val_dotdot[eq])(cell,node);
-          ((this->valVec_dotdot[0])(cell,node,eq)).reset(nblock);
-          ((this->valVec_dotdot[0])(cell,node,eq)).copyForWrite();
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
           else                   valptr = &(this->val_dotdot[eq])(cell,node);
           valptr->reset(nblock);
           valptr->copyForWrite();
->>>>>>> master
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dotdot[0])(cell,node,eq)).fastAccessCoeff(block) =
+            valptr->fastAccessCoeff(block) =
               (*xdotdot)[block][nodeID[node][this->offset + eq]];
         }
       }
-
-     }
-     else{
-
-        ((this->val[eq])(cell,node)).reset(nblock);
-        ((this->val[eq])(cell,node)).copyForWrite();
-        for (int block=0; block<nblock; block++)
-          ((this->val[eq])(cell,node)).fastAccessCoeff(block) =
-            (*x)[block][nodeID[node][this->offset + eq]];
-      }
-      if (workset.transientTerms && this->enableTransient) {
-        for (std::size_t eq = 0; eq < numFields; eq++) {
-        //  if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-        //  else                   valptr = &(this->val_dot[eq])(cell,node);
-          ((this->val_dot[eq])(cell,node)).reset(nblock);
-          ((this->val_dot[eq])(cell,node)).copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ((this->val_dot[eq])(cell,node)).fastAccessCoeff(block) =
-              (*xdot)[block][nodeID[node][this->offset + eq]];
-        }
-      }
-      if (workset.accelerationTerms && this->enableAcceleration) {
-        for (std::size_t eq = 0; eq < numFields; eq++) {
-          //if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
-          //else                   valptr = &(this->val_dotdot[eq])(cell,node);
-          ((this->val_dotdot[eq])(cell,node)).reset(nblock);
-          ((this->val_dotdot[eq])(cell,node)).copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ((this->val_dotdot[eq])(cell,node)).fastAccessCoeff(block) =
-              (*xdotdot)[block][nodeID[node][this->offset + eq]];
-        }
-      }
-
-
-     }
     }
   }
 
+ */
 }
 
 // **********************************************************************
@@ -1224,7 +1086,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
-
+  //Irina TOFIX
+  /*
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -1234,16 +1097,6 @@ evaluateFields(typename Traits::EvalData workset)
       std::size_t num_dof = neq * this->numNodes;
 
       for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-       // if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-       // else                   valptr = &(this->val[eq])(cell,node);
-       if (this->vectorField){
-        (this->valVec[0])(cell,node,eq) = MPFadType(num_dof, 0.0);
-        ((this->valVec[0])(cell,node,eq)).setUpdateValue(!workset.ignore_residual);
-        ((this->valVec[0])(cell,node,eq)).fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
-        ((this->valVec[0])(cell,node,eq)).val().reset(nblock);
-        ((this->valVec[0])(cell,node,eq)).val().copyForWrite();
-=======
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
         else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
@@ -1252,31 +1105,11 @@ evaluateFields(typename Traits::EvalData workset)
         valptr->fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
         valptr->val().reset(nblock);
         valptr->val().copyForWrite();
->>>>>>> master
         for (int block=0; block<nblock; block++)
-          ((this->valVec[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
-       }
-       else{
-         (this->val[eq])(cell,node) = MPFadType(num_dof, 0.0);
-        ((this->val[eq])(cell,node)).setUpdateValue(!workset.ignore_residual);
-        ((this->val[eq])(cell,node)).fastAccessDx(neq * node + eq + this->offset) = workset.j_coeff;
-        ((this->val[eq])(cell,node)).val().reset(nblock);
-        ((this->val[eq])(cell,node)).val().copyForWrite();
-        for (int block=0; block<nblock; block++)
-          ((this->val[eq])(cell,node)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
-       }
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-         // else                   valptr = &(this->val_dot[eq])(cell,node);
-         if (this->vectorField){
-          (this->valVec_dot[0])(cell,node,eq)r = MPFadType(num_dof, 0.0);
-          ((this->valVec_dot[0])(cell,node,eq)).fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
-          ((this->valVec_dot[0])(cell,node,eq)).val().reset(nblock);
-          ((this->valVec_dot[0])(cell,node,eq)).val().copyForWrite();
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
@@ -1284,32 +1117,12 @@ evaluateFields(typename Traits::EvalData workset)
           valptr->fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
           valptr->val().reset(nblock);
           valptr->val().copyForWrite();
->>>>>>> master
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dot[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
-         }
-        else{
-          (this->val_dot[eq])(cell,node) = MPFadType(num_dof, 0.0);
-          ((this->val_dot[eq])(cell,node)).fastAccessDx(neq * node + eq + this->offset) = workset.m_coeff;
-          ((this->val_dot[eq])(cell,node)).val().reset(nblock);
-          ((this->val_dot[eq])(cell,node)).val().copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ((this->val_dot[eq])(cell,node)).val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
-         
-        }
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
-         // else                   valptr = &(this->val_dotdot[eq])(cell,node);
-         if (this->vectorField){
-          (this->valVec_dotdot[0])(cell,node,eq) = MPFadType(num_dof, 0.0);
-          ((this->valVec_dotdot[0])(cell,node,eq)).fastAccessDx(neq * node + eq + this->offset) = workset.n_coeff;
-          ((this->valVec_dotdot[0])(cell,node,eq)).val().reset(nblock);
-          ((this->valVec_dotdot[0])(cell,node,eq)).val().copyForWrite();
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
           else                   valptr = &(this->val_dotdot[eq])(cell,node);
@@ -1317,23 +1130,14 @@ evaluateFields(typename Traits::EvalData workset)
           valptr->fastAccessDx(neq * node + eq + this->offset) = workset.n_coeff;
           valptr->val().reset(nblock);
           valptr->val().copyForWrite();
->>>>>>> master
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dotdot[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
-         }
-         else{
-          (this->val_dotdot[eq])(cell,node) = MPFadType(num_dof, 0.0);
-          ((this->val_dotdot[eq])(cell,node)).fastAccessDx(neq * node + eq + this->offset) = workset.n_coeff;
-          ((this->val_dotdot[eq])(cell,node)).val().reset(nblock);
-          ((this->val_dotdot[eq])(cell,node)).val().copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ((this->val_dotdot[eq])(cell,node)).val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
-
-        }
+            valptr->val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
   }
+
+ */
 
 }
 
@@ -1382,137 +1186,71 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
-
+  //Irina TOFIX
+  /*
   int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-       // if (this->vectorField) valptr = &(this->valVec[0])(cell,node,eq);
-       // else                   valptr = &(this->val[eq])(cell,node);
-       if (this->vectorField){
-=======
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
         else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
         else                   valptr = &(this->val[eq])(cell,node);
->>>>>>> master
         if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          (this->valVec[0])(cell,node,eq) = MPFadType(num_cols_tot, 0.0);
+          *valptr = MPFadType(num_cols_tot, 0.0);
           for (int k=0; k<workset.num_cols_x; k++)
-            ((this->valVec[0])(cell,node,eq)).fastAccessDx(k) =
+            valptr->fastAccessDx(k) =
               workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
         }
         else
-          (this->valVec[0])(cell,node,eq) = MPFadType(0.0);
-        ((this->valVec[0])(cell,node,eq)).val().reset(nblock);
-        ((this->valVec[0])(cell,node,eq)).val().copyForWrite();
+          *valptr = MPFadType(0.0);
+        valptr->val().reset(nblock);
+        valptr->val().copyForWrite();
         for (int block=0; block<nblock; block++)
-          ((this->valVec[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
-       }
+          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
-      else{
-        if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          (this->val[eq])(cell,node) = MPFadType(num_cols_tot, 0.0);
-          for (int k=0; k<workset.num_cols_x; k++)
-            ((this->val[eq])(cell,node)).fastAccessDx(k) =
-              workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
-        }
-        else
-          (this->val[eq])(cell,node) = MPFadType(0.0);
-        ((this->val[eq])(cell,node)).val().reset(nblock);
-        ((this->val[eq])(cell,node)).val().copyForWrite();
-        for (int block=0; block<nblock; block++)
-          ((this->val[eq])(cell,node)).val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
-       }
-
-      }
-   
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          //else                   valptr = &(this->val_dot[eq])(cell,node);
-         if (this->vectorField){
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dot[0])(cell,node,eq);
           else                   valptr = &(this->val_dot[eq])(cell,node);
->>>>>>> master
           if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-            (this->valVec_dot[0])(cell,node,eq) = MPFadType(num_cols_tot, 0.0);
+            *valptr = MPFadType(num_cols_tot, 0.0);
             for (int k=0; k<workset.num_cols_x; k++)
-              ((this->valVec_dot[0])(cell,node,eq)).fastAccessDx(k) =
+              valptr->fastAccessDx(k) =
                 workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
           }
           else
-           (this->valVec_dot[0])(cell,node,eq) = MPFadType(0.0);
-          ((this->valVec_dot[0])(cell,node,eq)).val().reset(nblock);
-          ((this->valVec_dot[0])(cell,node,eq)).val().copyForWrite();
+            *valptr = MPFadType(0.0);
+          valptr->val().reset(nblock);
+          valptr->val().copyForWrite();
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dot[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
-         }
-         else{
-          if (Vxdot != Teuchos::null && workset.m_coeff != 0.0) {
-            (this->val_dot[eq])(cell,node) = MPFadType(num_cols_tot, 0.0);
-            for (int k=0; k<workset.num_cols_x; k++)
-              ((this->val_dot[eq])(cell,node)).fastAccessDx(k) =
-                workset.m_coeff*(*Vxdot)[k][nodeID[node][this->offset + eq]];
-          }
-          else
-            (this->val_dot[eq])(cell,node) = MPFadType(0.0);
-          ((this->val_dot[eq])(cell,node)).val().reset(nblock);
-          ((this->val_dot[eq])(cell,node)).val().copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ((this->val_dot[eq])(cell,node)).val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
-
-         }
+            valptr->val().fastAccessCoeff(block) = (*xdot)[block][nodeID[node][this->offset + eq]];
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-<<<<<<< HEAD
-         // if (this->vectorField) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
-         // else                   valptr = &(this->val_dotdot[eq])(cell,node);
-         if (this->vectorField){
-=======
           if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
           else                   valptr = &(this->val_dotdot[eq])(cell,node);
->>>>>>> master
           if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
-            (this->valVec_dotdot[0])(cell,node,eq) = MPFadType(num_cols_tot, 0.0);
+            *valptr = MPFadType(num_cols_tot, 0.0);
             for (int k=0; k<workset.num_cols_x; k++)
-              ((this->valVec_dotdot[0])(cell,node,eq)).fastAccessDx(k) =
+              valptr->fastAccessDx(k) =
                 workset.n_coeff*(*Vxdotdot)[k][nodeID[node][this->offset + eq]];
           }
           else
-            (this->valVec_dotdot[0])(cell,node,eq) = MPFadType(0.0);
-          ((this->valVec_dotdot[0])(cell,node,eq)).val().reset(nblock);
-          ((this->valVec_dotdot[0])(cell,node,eq)).val().copyForWrite();
+            *valptr = MPFadType(0.0);
+          valptr->val().reset(nblock);
+          valptr->val().copyForWrite();
           for (int block=0; block<nblock; block++)
-            ((this->valVec_dotdot[0])(cell,node,eq)).val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
-         }
-         else{
-            if (Vxdotdot != Teuchos::null && workset.n_coeff != 0.0) {
-            (this->val_dotdot[eq])(cell,node) = MPFadType(num_cols_tot, 0.0);
-            for (int k=0; k<workset.num_cols_x; k++)
-              ((this->val_dotdot[eq])(cell,node)).fastAccessDx(k) =
-                workset.n_coeff*(*Vxdotdot)[k][nodeID[node][this->offset + eq]];
-          }
-          else
-            (this->val_dotdot[eq])(cell,node) = MPFadType(0.0);
-          ((this->val_dotdot[eq])(cell,node)).val().reset(nblock);
-          ((this->val_dotdot[eq])(cell,node)).val().copyForWrite();
-          for (int block=0; block<nblock; block++)
-            ((this->val_dotdot[eq])(cell,node)).val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
-         }
+            valptr->val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
         }
       }
     }
   }
-
+ */
 }
 #endif //ALBANY_SG_MP
 
