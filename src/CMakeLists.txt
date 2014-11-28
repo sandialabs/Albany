@@ -1110,5 +1110,5 @@ IF (INSTALL_ALBANY)
       ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
-
+ENDIF()
 ENDIF()

@@ -91,12 +91,10 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
   struct NodeData_Traits<T, 1> { 
 
     enum { size = 1 }; // Three array dimension tags (Node, Dim, Dim), store type T values
-    typedef stk_classic::mesh::Field<T> field_type ;
-    static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
-                                   stk_classic::mesh::fem::FEMMetaData* metaData){
     typedef stk::mesh::Field<T> field_type ;
     static field_type* createField(const std::string& name, const std::vector<int>& dim,
                                    stk::mesh::MetaData* metaData){
+
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
         // Multi-dim order is Fortran Ordering, so reversed here
         stk::mesh::put_field(*fld , metaData->universal_part());
