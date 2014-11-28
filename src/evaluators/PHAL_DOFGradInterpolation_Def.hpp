@@ -24,7 +24,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFGradInterpolation"+ PHX::typeAsString<PHX::Device>() );
+  this->setName("DOFGradInterpolation" );
 
  // std::vector<PHX::DataLayout::size_type> dims;
   std::vector<PHX::DataLayout::size_type> dims;
@@ -80,7 +80,7 @@ DOFGradInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("DOFGradInterpolation Jacobian"+PHX::typeAsString<PHX::Device>());
+  this->setName("DOFGradInterpolation Jacobian");
 
   std::vector<PHX::Device::size_type> dims;
   GradBF.fieldTag().dataLayout().dimensions(dims);

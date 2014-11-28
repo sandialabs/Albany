@@ -501,7 +501,6 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_SaveNodalField.cpp
   evaluators/PHAL_GatherScalarNodalParameter.cpp
   )
-
  
 SET(SOURCES ${SOURCES}
  evaluators/PHAL_ResponseFieldIntegral.cpp
@@ -1110,5 +1109,5 @@ IF (INSTALL_ALBANY)
       ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
   ENDIF()
   INSTALL(EXPORT albany-export DESTINATION ${LIB_INSTALL_DIR}/Albany/cmake  FILE "albany-targets.cmake")
-ENDIF()
+
 ENDIF()

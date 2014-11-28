@@ -156,8 +156,8 @@ struct Workset {
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
 
+  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
-  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos; 
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;
   Teuchos::ArrayRCP<double>  wsSphereVolume;

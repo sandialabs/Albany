@@ -27,7 +27,7 @@ DOFGradInterpolation(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("Aeras::DOFGradInterpolation"+ PHX::typeAsString<PHX::Device>() );
+  this->setName("Aeras::DOFGradInterpolation" );
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
     std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");

@@ -53,6 +53,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   
   // Get Dimensions
+  //
+  //std::vector<PHX::DataLayout::size_type> dim;
   std::vector<PHX::Device::size_type> dim;
   dl->node_qp_gradient->dimensions(dim);
 
@@ -91,7 +93,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   }
    
 
-  this->setName("Aeras::ComputeBasisFunctions"PHX::TypeString<EvalT>::value);
+  //Irina Debug:: remove strings with new Phalanx
+  //this->setName("Aeras::ComputeBasisFunctions"PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************
@@ -384,7 +387,7 @@ evaluateFields(typename Traits::EvalData workset)
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
-//    Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+    Intrepid::CellTools<RealType>::setJacobianTemp(jacobian, refPoints, coordVec, *cellType);
 //    Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 //    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
   } else {
@@ -511,6 +514,7 @@ evaluateFields(typename Traits::EvalData workset)
             jacobian(e,q,b1,b2) *= earthRadius/norm(q);
 
     }
+    
   }//end else
   
   
@@ -641,15 +645,14 @@ evaluateFields(typename Traits::EvalData workset)
   //////////////////////////////////////////////////////////////////////
 
   
- // Intrepid::CellTools<MeshScalarT>::setJacobianInvTemp(jacobian_inv, jacobian);
+  Intrepid::CellTools<MeshScalarT>::setJacobianInvTemp(jacobian_inv, jacobian);
 
-   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
+//   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
  
-  Kokkos::parallel_for (numelements, compute_jacobian_det< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint> > (jacobian, jacobian_det, numQPs));
+//  Kokkos::parallel_for (numelements, compute_jacobian_det< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint> > (jacobian, jacobian_det, numQPs));
 
- //Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
-  //Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+  Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
@@ -788,7 +791,7 @@ div_check(const int spatialDim, const int numelements) const
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
           for (int v = 0; v<numNodes;  ++v)
-            phi(q,d) += earthRadius*coordVec(e,v,d) * val_at_cub_points(v,q);
+            phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
 
       std::vector<MeshScalarT> divergence_v(numQPs);
       Intrepid::FieldContainer<MeshScalarT> v_lambda_theta(numQPs,2);

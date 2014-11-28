@@ -52,9 +52,9 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); 
   
-  this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
+   this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);  
+  this->setName("EpsilonL1L2"+PHX::typeAsString<EvalT>());
  
-  this->setName("EpsilonL1L2"+PHX::typeAsString<EvalT>() );
 }
 
 //**********************************************************************

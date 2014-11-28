@@ -57,7 +57,7 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 	vector_constant_value[i] = tmp[i];
 
       // Add property as a Sacado-ized parameter
-      for (PHX::index_size_type i=0; i<numDims; i++)
+      for (PHX::DataLayout::size_type i=0; i<numDims; i++)
         this->registerSacadoParameter(Albany::strint(name_mp,i), paramLib);
     }
     else if (rank == 4) {
@@ -81,8 +81,8 @@ NSMaterialProperty(Teuchos::ParameterList& p) :
 	  tensor_constant_value(i,j) = tmp(i,j);
 
       // Add property as a Sacado-ized parameter
-      for (PHX::index_size_type i=0; i<numRows; i++)
-	for (PHX::index_size_type j=0; j<numCols; j++)
+      for (PHX::DataLayout::size_type i=0; i<numRows; i++)
+	for (PHX::DataLayout::size_type j=0; j<numCols; j++)
           this->registerSacadoParameter(Albany::strint(Albany::strint(name_mp,i),j), paramLib);
     }
     else

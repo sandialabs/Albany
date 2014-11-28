@@ -67,7 +67,7 @@ postEvaluate(typename Traits::PostEvalData workset)
           int dof = nodeID[node_dof][eq_dof];
 
           // Set dg/dx
-          overlapped_dg->ReplaceMyValue(dof, res, (this->global_response(this->field_components[res])).dx(deriv));
+          overlapped_dgT->replaceLocalValue(dof, res, val.dx(deriv));
 
         } // column equations
       } // column nodes

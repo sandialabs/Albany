@@ -73,11 +73,12 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
     
   this->addEvaluatedField(Residual);
 
-  std::vector<PHX::Device::size_type> dims;
-    wGradBF.fieldTag().dataLayout().dimensions(dims);
-    numNodes = dims[1];
-    numQPs   = dims[2];
-    numDims  = dims[3];
+  std::vector<PHX::DataLayout::size_type> dims;
+  
+  wGradBF.fieldTag().dataLayout().dimensions(dims);
+  numNodes = dims[1];
+  numQPs   = dims[2];
+  numDims  = dims[3];
 
   refWeights        .resize               (numQPs);
   grad_at_cub_points.resize     (numNodes, numQPs, 2);
@@ -90,7 +91,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-s->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());  
+  this->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());
+
 
   U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
