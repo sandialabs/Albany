@@ -109,7 +109,6 @@ MultiPhysicsCrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
@@ -119,7 +118,6 @@ MultiPhysicsCrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // L
@@ -129,7 +127,6 @@ MultiPhysicsCrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
   // mechanical source

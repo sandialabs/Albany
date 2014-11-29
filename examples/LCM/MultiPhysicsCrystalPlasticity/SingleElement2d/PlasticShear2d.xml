@@ -34,7 +34,7 @@
     <Parameter name="2D Elements" type="int" value="1"/>
     <Parameter name="Workset Size" type="int" value="300"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="PlasticShear2dT.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="PlasticShear2d.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>
