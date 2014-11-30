@@ -806,16 +806,19 @@ IF (ALBANY_ATO AND ALBANY_EPETRA)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
 ENDIF()
 
+IF (ALBANY_HYDRIDE)
+  # Hydride requires LCM. However, LCM builds several excecutables. If shared
+  # libraries are used, then all symbols must be defined. Hence
+  # add_subdirectory(Hydride) must be called before, not after,
+  # add_subdirectory(LCM) so that LCM/CMakeLists.txt knows about the Hydride
+  # shared lib.
+  add_subdirectory(Hydride)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride)
+ENDIF()
+
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
-
-  IF (ALBANY_HYDRIDE)
-    #Hydride requires LCM
-    add_subdirectory(Hydride)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride LCM)
-  ELSE()
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
-  ENDIF()
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again
