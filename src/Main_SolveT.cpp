@@ -75,6 +75,29 @@ void tpetraFromThyra(
   }
 }
 
+// Only enable the Exodus-write order hack if an IP-to-nodal response is being
+// used.
+void setupAppForExohack(const Albany::SolverFactory& slvrfctry,
+                        const Teuchos::RCP<Albany::Application>& app)
+{
+  app->modelEvaluatorTIsCallingWriteSolutionT(false);
+  try {    
+    Teuchos::ParameterList&
+      resp_pl = (slvrfctry.getParameters().sublist("Problem").
+                 sublist("Response Functions"));
+    const int num_responses = resp_pl.get<int>("Number", 0);
+    for (int i = 0; i < num_responses; ++i) {
+      const std::string&
+        response_name = resp_pl.get<std::string>(Albany::strint("Response", i));
+      if (response_name == "Project IP to Nodal Field" ||
+          response_name == "IP to Nodal Field") {
+        app->modelEvaluatorTIsCallingWriteSolutionT(true);
+        break;
+      }
+    }
+  } catch (...) {}
+}
+
 int main(int argc, char *argv[]) {
 
   int status=0; // 0 = pass, failures are incremented
@@ -147,15 +170,8 @@ int main(int argc, char *argv[]) {
     // By default, request the sensitivities if not explicitly disabled
     solveParams.get("Compute Sensitivities", true);
 
-    { //exo-hack
-      int num_responses = 0;
-      try {
-        num_responses =
-          slvrfctry.getParameters().sublist("Problem").
-          sublist("Response Functions").get<int>("Number", 0);
-      } catch (...) {}
-      app->modelEvaluatorTIsCallingWriteSolutionT(num_responses != 0);
-    }
+    //exo-hack
+    setupAppForExohack(slvrfctry, app);
 
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;

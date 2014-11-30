@@ -68,7 +68,9 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0) {
+  stateGraphVisDetail(0),
+  ModelEvaluatorT_is_calling_writeSolutionT(false)
+{
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
@@ -88,7 +90,9 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     shapeParamsHaveBeenReset(false),
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
-    stateGraphVisDetail(0) {
+    stateGraphVisDetail(0),
+    ModelEvaluatorT_is_calling_writeSolutionT(false)
+{
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
