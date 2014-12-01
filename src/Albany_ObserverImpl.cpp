@@ -98,26 +98,16 @@ void ObserverImpl::observeSolutionT(
     // Evaluate state field manager
     app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT, Teuchos::null, nonOverlappedSolutionT);
 
-    if ( ! app_->isModelEvaluatorTCallingWriteSolutionT()) {
-      //exo-hack As part of the hack, do not call updateStates until after the
-      // RF are called. This breaks I think two tests because of a change in
-      // behavior of the LOCA start step's predictor. In any case, this hack is
-      // active only when an IP-to-nodal RF is used.
-
-      // Renames the New state as the Old state in preparation for the next step
-      app_->getStateMgr().updateStates();
-    }
+    // Renames the New state as the Old state in preparation for the next step
+    app_->getStateMgr().updateStates();
   }
 
   Teuchos::TimeMonitor timer(*solOutTime_);
   {
     const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
       app_->getOverlapSolutionT(nonOverlappedSolutionT);
-    app_->getDiscretization()->writeSolutionToMeshDatabaseT(
+    app_->getDiscretization()->writeSolutionT(
       *overlappedSolutionT, stamp, /*overlapped =*/ true);
-    if ( ! app_->isModelEvaluatorTCallingWriteSolutionT())
-      app_->getDiscretization()->writeSolutionToFileT(
-        *overlappedSolutionT, stamp, /*overlapped =*/ true);
   }
 }
 

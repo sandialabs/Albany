@@ -860,10 +860,6 @@ namespace Albany {
 #endif
 #endif
 
-    //exo-hack
-    void modelEvaluatorTIsCallingWriteSolutionT(bool);
-    bool isModelEvaluatorTCallingWriteSolutionT();
-
   protected:
 
 #ifdef ALBANY_EPETRA
@@ -1022,8 +1018,6 @@ namespace Albany {
 #endif
 #endif
 
-    //exo-hack
-    bool ModelEvaluatorT_is_calling_writeSolutionT;
   };
 }
 
