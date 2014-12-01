@@ -36,7 +36,7 @@ LameStressBase(Teuchos::ParameterList& p) :
   stressName = p.get<std::string>("Stress Name")+"_old";
   this->addEvaluatedField(stressField);
 
-  this->setName("LameStress"+PHX::TypeString<EvalT>::value);
+  this->setName("LameStress"+PHX::typeAsString<EvalT>());
 
   // Default to getting material info form base input file (possibley overwritten later)
   lameMaterialModelName = p.get<std::string>("Lame Material Model", "Elastic");

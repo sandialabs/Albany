@@ -210,7 +210,7 @@ void DOFGradInterpolation_noDeriv<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-#ifdef NO_KOKKOS_ALBANY
+//#ifdef NO_KOKKOS_ALBANY
   //Intrepid Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
@@ -226,11 +226,11 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-#else
+/*#else
 
   Kokkos::parallel_for ( workset.numCells,  GradInterpolation_noDeriv <  PHX::Device,  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>, PHX::MDField<RealType,Cell,Node>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>  >( grad_val_qp, val_node, GradBF, numQPs, numDims, numNodes));
 
-#endif
+#endif*/
 }
 
 //**********************************************************************

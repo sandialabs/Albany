@@ -117,7 +117,7 @@ JThermConductivity(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(thermalCond);
   this->addDependentField(Temperature);
-  this->setName("JTherm Conductivity"+PHX::TypeString<EvalT>::value);
+  this->setName("JTherm Conductivity"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

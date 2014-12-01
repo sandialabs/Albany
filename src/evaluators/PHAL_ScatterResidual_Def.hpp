@@ -67,7 +67,7 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(*scatter_operation);
 
-  this->setName(fieldName+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -179,6 +179,8 @@ evaluateFields(typename Traits::EvalData workset)
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
 
+//Irina TOFIX
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
@@ -219,6 +221,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -248,7 +251,8 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-
+//Irina TOFIX
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -275,6 +279,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -303,7 +308,8 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-
+//Irina TOFIX
+/*
   if (trans) {
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -362,6 +368,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
   }
+*/
 }
 
 // **********************************************************************
@@ -389,7 +396,8 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-
+//Irina TOFIX
+/*
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -408,6 +416,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -443,7 +452,8 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-
+//Irina TOFIX
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -493,6 +503,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -536,7 +547,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
-
+//Irina TOFIX
+/*
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
@@ -563,6 +575,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -589,7 +602,8 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-
+//Irina TOFIX
+/*
   int nblock = f->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -607,6 +621,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -643,6 +658,8 @@ evaluateFields(typename Traits::EvalData workset)
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
 
+//Irina TOFIX
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -687,6 +704,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 
 // **********************************************************************
@@ -727,7 +745,8 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
-
+//Irina TOFIX
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
@@ -757,6 +776,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+*/
 }
 #endif //ALBANY_SG_MP
 

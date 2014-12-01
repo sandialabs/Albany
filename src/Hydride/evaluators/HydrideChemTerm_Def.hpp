@@ -46,7 +46,7 @@ HydrideChemTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(chemTerm);
 
-  this->setName("HydrideChemTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("HydrideChemTerm"+PHX::typeAsString<EvalT>());
 
 }
 

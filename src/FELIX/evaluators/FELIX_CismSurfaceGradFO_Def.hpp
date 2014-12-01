@@ -37,7 +37,7 @@ CismSurfaceGradFO(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(gradS_qp);
 
-  this->setName("CismSurfaceGradFO"+PHX::TypeString<EvalT>::value);
+  this->setName("CismSurfaceGradFO"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);

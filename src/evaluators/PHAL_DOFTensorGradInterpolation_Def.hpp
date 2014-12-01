@@ -24,7 +24,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFTensorGradInterpolation"+PHX::TypeString<EvalT>::value);
+    this->setName("DOFTensorGradInterpolation"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -58,10 +58,10 @@ namespace PHAL {
           for (std::size_t j=0; j<vecDim; j++) {
             for (std::size_t dim=0; dim<numDims; dim++) {
               // For node==0, overwrite. Then += for 1 to numNodes.
-              ScalarT& gvqp = grad_val_qp(cell,qp,i,j,dim);
-              gvqp = val_node(cell, 0, i, j) * GradBF(cell, 0, qp, dim);
+              //ScalarT& gvqp = grad_val_qp(cell,qp,i,j,dim);
+              grad_val_qp(cell,qp,i,j,dim) = val_node(cell, 0, i, j) * GradBF(cell, 0, qp, dim);
               for (std::size_t node= 1 ; node < numNodes; ++node) {
-                gvqp += val_node(cell, node, i, j) * GradBF(cell, node, qp, dim);
+                grad_val_qp(cell,qp,i,j,dim) += val_node(cell, node, i, j) * GradBF(cell, node, qp, dim);
               }
             } 
           } 
@@ -83,7 +83,7 @@ namespace PHAL {
     this->addDependentField(GradBF);
     this->addEvaluatedField(grad_val_qp);
 
-    this->setName("DOFTensorGradInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+    this->setName("DOFTensorGradInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     GradBF.fieldTag().dataLayout().dimensions(dims);
@@ -115,7 +115,8 @@ namespace PHAL {
   {
   int num_dof = val_node(0,0,0,0).size();
   int neq = num_dof / numNodes;
-
+//Irina TOFIX
+/*
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t i=0; i<vecDim; i++) {
@@ -135,6 +136,7 @@ namespace PHAL {
         } 
       } 
     }
+*/
   }
   
   //**********************************************************************

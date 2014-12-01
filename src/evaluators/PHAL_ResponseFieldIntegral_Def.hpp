@@ -128,7 +128,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
-  this->setName(field_name+" Response Field Integral"+PHX::TypeString<EvalT>::value);
+  this->setName(field_name+" Response Field Integral"+PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -236,6 +236,9 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
+
+//Irina TOFIX
+/*
   std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
   PHX::MDField<ScalarT> partial_response(this->global_response);
   partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
@@ -247,7 +250,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
-}
+*/}
 
 // **********************************************************************
 template<typename EvalT,typename Traits>

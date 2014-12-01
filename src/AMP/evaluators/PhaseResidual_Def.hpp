@@ -47,7 +47,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(residual_);
   
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<int> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
   workset_size_ = dims[0];
   num_nodes_    = dims[1];
@@ -58,7 +58,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   term2_.resize(dims[0],num_qps_);
 //  term2_.initialize(0);
 
-  this->setName("PhaseResidual"+PHX::TypeString<EvalT>::value);
+  this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

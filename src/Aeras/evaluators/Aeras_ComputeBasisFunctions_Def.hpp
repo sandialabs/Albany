@@ -94,7 +94,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
    
 
   //Irina Debug:: remove strings with new Phalanx
-  //this->setName("Aeras::ComputeBasisFunctions"PHX::TypeString<EvalT>::value);
+  //this->setName("Aeras::ComputeBasisFunctions"PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

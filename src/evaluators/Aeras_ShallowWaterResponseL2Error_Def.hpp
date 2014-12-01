@@ -83,7 +83,7 @@ ShallowWaterResponseL2Error(Teuchos::ParameterList& p,
   this->addDependentField(flow_state_field);
   this->addDependentField(weighted_measure);
   this->addDependentField(BF);
-  this->setName(fieldName+" Aeras Shallow Water L2 Error"+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+" Aeras Shallow Water L2 Error"+PHX::typeAsString<EvalT>());
   
   using PHX::MDALayout;
 

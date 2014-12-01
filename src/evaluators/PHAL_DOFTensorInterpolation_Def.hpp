@@ -24,7 +24,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("DOFTensorInterpolation"+PHX::typeAsString<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -50,6 +50,8 @@ template<typename EvalT, typename Traits>
 void DOFTensorInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+//Irina TOFIX pointer
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
@@ -64,6 +66,7 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
+*/
 }
 
 //**********************************************************************
@@ -79,7 +82,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+  this->setName("DOFTensorInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -109,7 +112,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0,0).size();
   int neq = num_dof / numNodes; 
-
+//Irina TOFIX pointer
+/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
@@ -127,5 +131,6 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
+*/
 }
 }

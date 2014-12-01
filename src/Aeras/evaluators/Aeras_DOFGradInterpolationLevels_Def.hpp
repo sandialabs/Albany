@@ -28,7 +28,7 @@ DOFGradInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("Aeras::DOFGradInterpolationLevels"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFGradInterpolationLevels"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -84,7 +84,7 @@ DOFGradInterpolationLevels_noDeriv(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("Aeras::DOFGradInterpolationLevels_noDeriv"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFGradInterpolationLevels_noDeriv"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

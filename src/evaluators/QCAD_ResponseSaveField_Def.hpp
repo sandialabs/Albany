@@ -93,7 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Get shards Array (from STK) for this state
   // Need to check if we can just copy full size -- can assume same ordering?
   Albany::MDArray sta = (*workset.stateArrayPtr)[stateName];
-  std::vector<int> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   sta.dimensions(dims);
   int size = dims.size();
 

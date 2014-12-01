@@ -43,7 +43,7 @@ TotalVolume(Teuchos::ParameterList& p,
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<int> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];

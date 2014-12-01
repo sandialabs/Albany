@@ -102,7 +102,8 @@ computeState(typename Traits::EvalData workset,
     doubleStress[i] = *eval_fields[doubleStressName[i]];
   }
 
-
+//Irina TOFIX pointers and dimensions
+/*
   switch (num_dims_) {
   case 1:
     // Compute Stress (uniaxial strain)
@@ -224,6 +225,7 @@ computeState(typename Traits::EvalData workset,
     }
     break;
   }
+*/
 }
 //----------------------------------------------------------------------------
 }

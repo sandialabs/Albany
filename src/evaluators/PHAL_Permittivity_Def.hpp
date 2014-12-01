@@ -108,7 +108,7 @@ Permittivity(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(permittivity);
-  this->setName("Permittivity"+PHX::TypeString<EvalT>::value);
+  this->setName("Permittivity"+PHX::typeAsString<EvalT>());
 }
 
 template<typename EvalT, typename Traits>

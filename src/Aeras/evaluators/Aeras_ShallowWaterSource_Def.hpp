@@ -55,7 +55,7 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   this->addDependentField(sphere_coord);
   this->addEvaluatedField(source);
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<int> dims;
   
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
@@ -63,7 +63,7 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2]; //# of dofs/node
 
-  this->setName("ShallowWaterSource"+PHX::TypeString<EvalT>::value);
+  this->setName("ShallowWaterSource"+PHX::typeAsString<EvalT>());
   
   myPi = Aeras::ShallowWaterConstants::self().pi;
   

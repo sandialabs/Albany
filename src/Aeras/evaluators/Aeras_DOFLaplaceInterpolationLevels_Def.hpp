@@ -28,7 +28,7 @@ DOFLaplaceInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(GradGradBF);
   this->addEvaluatedField(Laplace_val_qp);
 
-  this->setName("Aeras::DOFLaplaceInterpolationLevels"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFLaplaceInterpolationLevels"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

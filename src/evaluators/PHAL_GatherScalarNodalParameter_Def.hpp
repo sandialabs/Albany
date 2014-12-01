@@ -62,7 +62,7 @@ evaluateFields(typename Traits::EvalData workset)
   try {
     pvecT = workset.distParamLib->get(this->param_name)->overlapped_vector();
   } catch (const std::logic_error& e) {
-    const std::string evalt = PHX::TypeString<EvalT>::value;
+    const std::string evalt = PHX::typeAsString<EvalT>();
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, std::logic_error,
       "PHAL::GatherScalarNodalParameter<"

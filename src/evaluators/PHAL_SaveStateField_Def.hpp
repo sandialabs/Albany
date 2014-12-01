@@ -77,7 +77,7 @@ evaluateFields(typename Traits::EvalData workset)
            std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
 
     Albany::MDArray sta = it->second;
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     sta.dimensions(dims);
     int size = dims.size();
 

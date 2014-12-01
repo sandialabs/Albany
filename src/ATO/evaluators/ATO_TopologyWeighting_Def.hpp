@@ -52,7 +52,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
   this->addDependentField(BF);
   this->addEvaluatedField(weightedVar);
 
-  this->setName("Topology Weighting"+PHX::TypeString<EvalT>::value);
+  this->setName("Topology Weighting"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

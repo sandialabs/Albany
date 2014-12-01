@@ -254,6 +254,10 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
+  //double   *valptr = &((this->valTensor[0])(1, 1, 1,1));
+ //  *valptr=2;
+
+
 #ifdef NO_KOKKOS_ALBANY
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -408,7 +412,7 @@ evaluateFields(typename Traits::EvalData workset)
     Kokkos::parallel_for(workset.numCells, GatherSolution_jacob < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields, workset.ignore_residual, workset.j_coeff) );
 
 //Irina TOFIX
-/*
+
  int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
 
@@ -449,7 +453,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-*/
+
 }
 
 // **********************************************************************

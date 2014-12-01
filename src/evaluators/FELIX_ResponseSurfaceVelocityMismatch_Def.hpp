@@ -99,7 +99,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   this->addDependentField(velocityRMS_field);
   this->addDependentField(coordVec);
 
-  this->setName(fieldName + " Response surface_velocity Mismatch" + PHX::TypeString<EvalT>::value);
+  this->setName(fieldName + " Response surface_velocity Mismatch" + PHX::typeAsString<EvalT>());
 
   using PHX::MDALayout;
 
@@ -288,11 +288,13 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
 
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
+//Irina TOFIX Teuchos::reduceAll & pointer
+/*
   std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
   PHX::MDField<ScalarT> partial_response(this->global_response);
   partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-//Irina TOFIX Teuchos::reduceAll
-//  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(), &partial_response[0], &this->global_response[0]);
+
+  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(), &partial_response[0], &this->global_response[0]);
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;
@@ -305,6 +307,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
+*/
 }
 
 // **********************************************************************

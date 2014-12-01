@@ -229,7 +229,7 @@ evaluateFields(typename Traits::EvalData workset)
 //Irina Debug
 // std::cout << "before bodyforce coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) <<std::endl;
 
-#ifdef NO_KOKKOS_ALBANY
+//#ifdef NO_KOKKOS_ALBANY
  if (bf_type == NONE) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
      for (std::size_t qp=0; qp < numQPs; ++qp)       
@@ -378,7 +378,7 @@ evaluateFields(typename Traits::EvalData workset)
      }
    }
  }
-#else
+/*#else
   if (bf_type == NONE) {
   }
   else if (bf_type == FO_INTERP_SURF_GRAD) {
@@ -400,7 +400,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if (bf_type == FO_DOME) {
   }
-#endif
+#endif*/
 //Irina Debug
 //std::cout << "after bodyForce coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,0) << "   " <<coordVec(3,3,0) << "   " <<std::endl;
 

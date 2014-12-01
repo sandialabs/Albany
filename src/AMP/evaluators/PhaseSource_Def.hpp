@@ -29,7 +29,7 @@ PhaseSource(Teuchos::ParameterList& p,
   this->addEvaluatedField(source_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<int> dims;
   scalar_dl->dimensions(dims);
   workset_size_ = dims[0];
   num_qps_      = dims[1];
@@ -48,7 +48,7 @@ PhaseSource(Teuchos::ParameterList& p,
   ScalarT value = cond_list->get("Value", 1.0);
   init_constant(value,p);
 
-  this->setName("PhaseSource"+PHX::TypeString<EvalT>::value);
+  this->setName("PhaseSource"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

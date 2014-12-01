@@ -24,7 +24,7 @@ ScaleVector(const Teuchos::ParameterList& p) :
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<int> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -32,7 +32,7 @@ ScaleVector(const Teuchos::ParameterList& p) :
   this->addDependentField(inVector);
   this->addEvaluatedField(outVector);
 
-  this->setName("ScaleVector"+PHX::TypeString<EvalT>::value);
+  this->setName("ScaleVector"+PHX::typeAsString<EvalT>());
 
 }
 

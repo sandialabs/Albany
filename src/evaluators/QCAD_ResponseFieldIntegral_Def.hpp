@@ -280,23 +280,26 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
-  std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
+
+//Irina TOFIX pointer
+/*std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
   PHX::MDField<ScalarT> partial_response(this->global_response);
   partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-
+*/
 //Irina TOFIX
 /*
   Teuchos::reduceAll(
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,
     this->global_response.size(), &partial_response[0],
     &this->global_response[0]);
-*/
+
   if (bPositiveOnly && this->global_response[0] < 1e-6) {
     this->global_response[0] = 1e+100;
   }
   
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
+*/
 }
 
 // **********************************************************************
