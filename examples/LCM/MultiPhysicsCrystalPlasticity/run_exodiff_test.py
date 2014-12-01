@@ -8,19 +8,30 @@
 import sys
 import os
 import string
+import glob
 from subprocess import Popen
 
 def runtest(albany_command, xml_file_name):
 
     result = 0
-    
-    log_file_name = xml_file_name[:-4] + ".log"
+
+    base_name = xml_file_name[:-4]
+
+    # parse the Albany command and append the xml file name
+    command = string.splitfields(albany_command, ";")
+    command.append(xml_file_name)
+
+    # open log file    
+    log_file_name = base_name + ".log"
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
     logfile = open(log_file_name, 'w')
 
-    command = string.splitfields(albany_command, ";")
-    command.append(xml_file_name)
+    # remove old output files, if any
+    files_to_remove = glob.glob(base_name+".exo")
+    for file in os.listdir(os.getcwd()):
+      if file in files_to_remove:
+        os.remove(file)
 
     # run Albany    
     p = Popen(command, stdout=logfile, stderr=logfile)
@@ -29,14 +40,14 @@ def runtest(albany_command, xml_file_name):
         result = return_code
 
     # run exodiff
-#    command = ["./exodiff", "-stat", "-f", \
-#                   base_name+".exodiff", \
-#                   base_name+".gold.exo", \
-#                   base_name+".exo"]
-#    p = Popen(command, stdout=logfile, stderr=logfile)
-#    return_code = p.wait()
-#    if return_code != 0:
-#        result = return_code
+    command = ["./exodiff", "-stat", "-f", \
+                   base_name+".exodiff", \
+                   base_name+".gold.exo", \
+                   base_name+".exo"]
+    p = Popen(command, stdout=logfile, stderr=logfile)
+    return_code = p.wait()
+    if return_code != 0:
+        result = return_code
 
     logfile.close()
         

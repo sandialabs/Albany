@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
+#include <boost/math/special_functions/fpclassify.hpp>
 
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
@@ -209,9 +210,9 @@ computeState(typename Traits::EvalData workset,
       double dgammas[24];
       double taus[24];
 #endif
+      // compute velocity gradient
+      L.fill(Intrepid::ZEROS);
       if (num_slip_ >0) { // crystal plasticity
-        // compute velocity gradient
-        L.fill(Intrepid::ZEROS);
         for (std::size_t s(0); s < num_slip_; ++s) {
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
@@ -228,6 +229,7 @@ computeState(typename Traits::EvalData workset,
           taus[s] = Sacado::ScalarValue<ScalarT>::eval(tau);
 #endif
         }
+
         // update plastic deformation gradient
         expL = Intrepid::exp(L);
         Fp_temp = expL * Fp;
@@ -238,6 +240,16 @@ computeState(typename Traits::EvalData workset,
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
+
+	  // Check for NaN and Inf
+	  // DJL this check could/should eventually be made to run with debug builds only
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(Fp(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in  MultiPhysicsCrystalPlasticityModel Fp");
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(sigma(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in  MultiPhysicsCrystalPlasticityModel sigma");
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(L(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in  MultiPhysicsCrystalPlasticityModel L");
+
           plastic_deformation(cell, pt, i, j) = Fp(i, j);
           stress(cell, pt, i, j) = sigma(i, j);
           velocity_gradient(cell, pt, i, j) = L(i, j);
