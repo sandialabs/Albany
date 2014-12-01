@@ -81,6 +81,7 @@ void setupAppForExohack(const Albany::SolverFactory& slvrfctry,
                         const Teuchos::RCP<Albany::Application>& app)
 {
   app->modelEvaluatorTIsCallingWriteSolutionT(false);
+  return; //amb Restore previous behavior in preparation for removing this hack.
   try {    
     Teuchos::ParameterList&
       resp_pl = (slvrfctry.getParameters().sublist("Problem").
