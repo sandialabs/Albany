@@ -212,9 +212,9 @@ computeState(typename Traits::EvalData workset,
       double dgammas[24];
       double taus[24];
 #endif
+      // compute velocity gradient
+      L.fill(Intrepid::ZEROS);
       if (num_slip_ >0) { // crystal plasticity
-        // compute velocity gradient
-        L.fill(Intrepid::ZEROS);
         for (std::size_t s(0); s < num_slip_; ++s) {
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
