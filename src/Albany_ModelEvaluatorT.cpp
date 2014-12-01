@@ -687,6 +687,7 @@ Albany::ModelEvaluatorT::evalModelImpl(
   // observeSolutionT.
   if (app->isModelEvaluatorTCallingWriteSolutionT() &&
       outArgsT.Ng() && !outArgsT.get_g(0).is_null()) {
+    app->getStateMgr().updateStates();
     const Teuchos::RCP<const Tpetra_Vector>
       overlappedSolutionT = app->getOverlapSolutionT(*xT);
     app->getDiscretization()->writeSolutionToFileT(
