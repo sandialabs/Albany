@@ -86,8 +86,7 @@ namespace LCM {
       for (int pt(0); pt < num_pts_; ++pt) {
         gradu.fill( grad_u_,cell,pt,0,0);
         F = I + gradu;
-        //Irina TOFIX intrepid
-        //j_(cell,pt) = Intrepid::det(F);
+        j_(cell,pt) = Intrepid::det(F);
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             def_grad_(cell,pt,i,j) = F(i,j);

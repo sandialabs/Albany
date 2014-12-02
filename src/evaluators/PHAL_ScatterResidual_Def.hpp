@@ -165,7 +165,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
-  ScalarT *valptr;
+//  ScalarT *valptr;
 
   bool loadResid = Teuchos::nonnull(fT);
   LO rowT;
@@ -178,6 +178,78 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim=0;
   if(this->tensorRank==2)
     numDim = this->valTensor[0].dimension(2);
+
+//Irina Temporary fix:
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    // Local Unks: Loop over nodes in element, Loop over equations per node
+    for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+      }
+    }
+ 
+    for (std::size_t node = 0; node < this->numNodes; ++node) {
+
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+      
+          rowT = nodeID[node][this->offset + eq];
+
+          if (this->tensorRank == 0){
+            if (loadResid) {
+              fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
+             }
+             if (((this->val[eq])(cell,node)).hasFastAccess()) {
+
+             if (workset.is_adjoint) {
+               for (unsigned int lunk=0; lunk<nunk; lunk++)
+                  JacT->sumIntoLocalValues(colT[lunk], Teuchos::arrayView(&rowT, 1), Teuchos::arrayView(&(((this->val[eq])(cell,node)).fastAccessDx(lunk)), 1));
+              }
+              else {
+                   JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(((this->val[eq])(cell,node)).fastAccessDx(0)), nunk));
+               }
+              } // has fast access
+
+           }
+          else
+          if (this->tensorRank == 1) {
+             if (loadResid) {
+             fT->sumIntoLocalValue(rowT, ((this->valVec[0])(cell,node,eq)).val());
+            }
+           if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+
+            if (workset.is_adjoint) {
+               for (unsigned int lunk=0; lunk<nunk; lunk++)
+                  JacT->sumIntoLocalValues(colT[lunk], Teuchos::arrayView(&rowT, 1), Teuchos::arrayView(&(((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk)), 1));
+             }
+             else {
+                   JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(((this->valVec[0])(cell,node,eq)).fastAccessDx(0)), nunk));
+              }
+             } // has fast access
+
+          }
+          else
+          if (this->tensorRank == 2){
+           
+           if (loadResid) {
+             fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
+            }
+           if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
+
+            if (workset.is_adjoint) {
+               for (unsigned int lunk=0; lunk<nunk; lunk++)
+                  JacT->sumIntoLocalValues(colT[lunk], Teuchos::arrayView(&rowT, 1), Teuchos::arrayView(&(((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(lunk)), 1));
+             }
+             else {
+                   JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(0)), nunk));
+              }
+             } // has fast access
+           }//end else if tensorRank == 2
+      }
+    }
+   } 
+                
+
 
 //Irina TOFIX
 /*

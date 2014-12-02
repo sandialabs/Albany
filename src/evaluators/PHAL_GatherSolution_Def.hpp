@@ -257,8 +257,7 @@ evaluateFields(typename Traits::EvalData workset)
   //double   *valptr = &((this->valTensor[0])(1, 1, 1,1));
  //  *valptr=2;
 
-
-#ifdef NO_KOKKOS_ALBANY
+//#ifdef NO_KOKKOS_ALBANY
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -315,9 +314,10 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-#else
+/*#else
  Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields) );
 #endif
+*/
 //  std::cout << (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
 }
 
@@ -406,13 +406,84 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
-  ScalarT* valptr;
+//  ScalarT* valptr;
 
-
+/*
     Kokkos::parallel_for(workset.numCells, GatherSolution_jacob < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields, workset.ignore_residual, workset.j_coeff) );
 
-//Irina TOFIX
+*/
 
+ int numDim = 0;
+  if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
+
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    int neq = nodeID[0].size();
+    std::size_t num_dof = neq * this->numNodes;
+   
+   for (std::size_t node = 0; node < this->numNodes; ++node) {
+      const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
+      int firstunk = neq * node + this->offset;
+      for (std::size_t eq = 0; eq < numFields; eq++) {
+        if (this->tensorRank == 2){
+          (this->valTensor[0])(cell,node,eq/numDim,eq%numDim) = FadType(num_dof, xT_constView[eqID[this->offset + eq]]);
+          ((this->valTensor[0])(cell,node,eq/numDim,eq%numDim)).setUpdateValue(!workset.ignore_residual);
+          ((this->valTensor[0])(cell,node,eq/numDim,eq%numDim)).fastAccessDx(firstunk + eq) = workset.j_coeff;
+        }
+        else if (this->tensorRank == 1){
+          (this->valVec[0])(cell,node,eq) = FadType(num_dof, xT_constView[eqID[this->offset + eq]]);
+          ((this->valVec[0])(cell,node,eq)).setUpdateValue(!workset.ignore_residual);
+          ((this->valVec[0])(cell,node,eq)).fastAccessDx(firstunk + eq) = workset.j_coeff;
+        }
+        else {
+          (this->val[eq])(cell,node) = FadType(num_dof, xT_constView[eqID[this->offset + eq]]);
+          ((this->val[eq])(cell,node)).setUpdateValue(!workset.ignore_residual);
+          ((this->val[eq])(cell,node)).fastAccessDx(firstunk + eq) = workset.j_coeff;
+       }//end else
+
+     }//end for eq
+    
+      if (workset.transientTerms && this->enableTransient) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->tensorRank == 2){
+            (this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim) = FadType(num_dof, xdotT_constView[eqID[this->offset + eq]]);
+            ((this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim)).fastAccessDx(firstunk + eq) = workset.m_coeff;
+          }
+          else if (this->tensorRank == 1) {
+            (this->valVec_dot[0])(cell,node,eq) = FadType(num_dof, xdotT_constView[eqID[this->offset + eq]]);
+            ((this->valVec_dot[0])(cell,node,eq)).fastAccessDx(firstunk + eq) = workset.m_coeff;
+          }
+          else{                  
+            (this->val_dot[eq])(cell,node) = FadType(num_dof, xdotT_constView[eqID[this->offset + eq]]);
+            ((this->val_dot[eq])(cell,node)).fastAccessDx(firstunk + eq) = workset.m_coeff;
+         }//end else
+        }//end eq
+      } //end if workset.transientTerms && this->enableTransient
+
+      if (workset.accelerationTerms && this->enableAcceleration) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          if (this->tensorRank == 2) {
+            (this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim) = FadType(num_dof, xdotdotT_constView[eqID[this->offset + eq]]);
+            ((this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim)).fastAccessDx(firstunk + eq) = workset.n_coeff;
+          }
+          else if (this->tensorRank == 1) {
+            (this->valVec_dotdot[0])(cell,node,eq) = FadType(num_dof, xdotdotT_constView[eqID[this->offset + eq]]);
+            ((this->valVec_dotdot[0])(cell,node,eq)).fastAccessDx(firstunk + eq) = workset.n_coeff;
+          }
+          else {                  
+            (this->val_dotdot[eq])(cell,node) = FadType(num_dof, xdotdotT_constView[eqID[this->offset + eq]]);
+            ((this->val_dotdot[eq])(cell,node)).fastAccessDx(firstunk + eq) = workset.n_coeff;
+         }
+        }
+      }
+
+     }//end for node
+ 
+  }//end for cell
+
+
+//Irina TOFIX
+/*
  int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
 
@@ -453,7 +524,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-
+*/
 }
 
 // **********************************************************************

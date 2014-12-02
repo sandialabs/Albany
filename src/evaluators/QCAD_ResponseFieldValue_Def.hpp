@@ -535,7 +535,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     workset.serializerManager.template getValue<EvalT>();
 
   // Compute contributions across processors
-//Irina TOFIX
+//Irina TOFIX reduceAll
 //  Teuchos::reduceAll<int, ScalarT>(
 //    *workset.comm, *serializer, reductType, 1,
 //    &this->global_response[indexToMax], &max);
@@ -547,7 +547,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   int winner;
 
-//Irina TOFIX
+//Irina TOFIX reduceAll
 //  Teuchos::reduceAll(
 //    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
 //  Teuchos::broadcast<int, ScalarT>(

@@ -531,40 +531,26 @@ evaluateFields(typename Traits::EvalData workset)
     * final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
     */
-#ifndef NO_KOKKOS_ALBANY
-//Irina debug
-//  std::cout << "before comute basis func gather coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
   Kokkos::deep_copy(GradBF.get_kokkos_view(),0.0); 
   Kokkos::parallel_for (GradBF.dimension(0), *this);
 
-//Irina debug
-  //std::cout << "after comute basis func gather coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
-#else
-
 /*
-  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
-//  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT, PHX::MDField<MeshScalarT,Cell,QuadPoint>, PHX::MDField<MeshScalarT,Cell,QuadPoint>, Intrepid::FieldContainer<RealType>  >
-//    (weighted_measure, jacobian_det, refWeights);
- //  computeCellMeasure<MeshScalarT, PHX::MDField<MeshScalarT,Cell,QuadPoint>, PHX::MDField<MeshScalarT,Cell,QuadPoint>, Intrepid::FieldContainer<RealType> >
-/////    computeCellMeasure<MeshScalarT>  (weighted_measure, jacobian_det, refWeights);
-//  Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
-//    (BF, val_at_cub_points); 
-/////////    HGRADtransformVALUE<RealType> (BF, val_at_cub_points);
- 
-//  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
-//    (wBF, weighted_measure, BF);
+  Intrepid::CellTools<RealType>::setJacobianTemp(jacobian, refPoints, coordVec, *cellType);
+  Intrepid::CellTools<MeshScalarT>::setJacobianInvTemp(jacobian_inv, jacobian);
+  Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
+  
+//  Intrepid::FunctionSpaceTools::computeCellMeasureTemp(weighted_measure, jacobian_det, refWeights);
+  computeCellMeasure<MeshScalarT>(weighted_measure, jacobian_det, refWeights);
+  Intrepid::FunctionSpaceTools::HGRADtransformVALUETemp<RealType> (BF, val_at_cub_points); 
+  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>(wBF, weighted_measure, BF);
    
-///    multiplyMeasure<MeshScalarT>    (wBF, weighted_measure, BF);
 
-  Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
+  Intrepid::FunctionSpaceTools::HGRADtransformGRADTemp<MeshScalarT>
     (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 */
-#endif
 }
 
 //**********************************************************************
