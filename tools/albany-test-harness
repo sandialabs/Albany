@@ -63,7 +63,7 @@ ALBANY_BUILD_TYPES = \
         ("TRILINOS_THYRA_TPETRA_ADAPTORS", "ON"),
         ("TRILINOS_COUPLINGS", "ON"),
         ("TRILINOS_ZOLTAN2_EXPERIMENTAL", "ON"),
-    ]
+    ],
     "muelu_slu" : [
         ("TRILINOS_MUELU",   "ON"),
         ("TRILINOS_SUPERLU", "ON"),
