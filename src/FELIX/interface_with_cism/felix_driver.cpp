@@ -316,15 +316,10 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl;
     //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/FELIX    
     nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
-    //nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
-    //nEastFacesActive = *(ftg_ptr -> getLongVar("nEastFacesActive","connectivity"));
-    //nSouthFacesActive = *(ftg_ptr -> getLongVar("nSouthFacesActive","connectivity"));
-    //nNorthFacesActive = *(ftg_ptr -> getLongVar("nNorthFacesActive","connectivity"));
-    //IK, 12/1/14: for now don't set lateral BCs.  TO DO: pass in flag to turn lateral BCs on/off
-    nWestFacesActive = 0; 
-    nEastFacesActive = 0; 
-    nSouthFacesActive = 0; 
-    nNorthFacesActive = 0; 
+    nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
+    nEastFacesActive = *(ftg_ptr -> getLongVar("nEastFacesActive","connectivity"));
+    nSouthFacesActive = *(ftg_ptr -> getLongVar("nSouthFacesActive","connectivity"));
+    nNorthFacesActive = *(ftg_ptr -> getLongVar("nNorthFacesActive","connectivity"));
     if (debug_output_verbosity == 2) {  
       std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() 
                 << ", nCellsActive = " << nCellsActive 
