@@ -216,14 +216,12 @@ void Topology::graphInitialization()
   stk::mesh::create_adjacent_entities(get_bulk_data(), add_parts);
 
   get_bulk_data().modification_begin();
-
   removeMultiLevelRelations();
   initializeFractureState();
-
   get_bulk_data().modification_end();
+  get_stk_discretization().updateMesh();
 
   initializeTopologies();
-
   initializeHighestIds();
 
   return;

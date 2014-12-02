@@ -80,9 +80,7 @@ FractureCriterionTraction::check(
   stress(get_space_dimension(), Intrepid::ZEROS);
 
   Intrepid::Tensor<double>
-  nodal_stresses(number_nodes);
-
-  nodal_stresses.set_dimension(get_space_dimension());
+  nodal_stress(get_space_dimension(), Intrepid::ZEROS);
 
   // The traction is evaluated at centroid of face, so a simple
   // average yields the value.
@@ -94,18 +92,21 @@ FractureCriterionTraction::check(
     double * const
     pstress = stk::mesh::field_data(stress_field_, node);
 
-    nodal_stresses.fill(pstress);
+    nodal_stress.fill(pstress);
 
-    stress += nodal_stresses;
+    stress += nodal_stress;
   }
 
   stress = stress / static_cast<double>(number_nodes);
 
-  Intrepid::Index const
-  face_index = get_topology().get_entity_id(interface) - 1;
+  // Use low level id functions from BulkData instead of the mapping
+  // functions for entity ids from the Topology class as the local
+  // element mapping functions expect the former.
+  stk::mesh::EntityId const
+  face_id = get_bulk_data().identifier(interface);
 
   Intrepid::Vector<double> const &
-  normal = normals_[face_index];
+  normal = getNormal(face_id);
 
   Intrepid::Vector<double> const
   traction = stress * normal;
@@ -129,6 +130,17 @@ FractureCriterionTraction::check(
   effective_traction = std::sqrt(t_s * t_s / beta_ / beta_ + t_n * t_n);
 
   return effective_traction >= critical_traction_;
+}
+
+Intrepid::Vector<double> const &
+FractureCriterionTraction::getNormal(stk::mesh::EntityId const entity_id)
+{
+  std::map<stk::mesh::EntityId, Intrepid::Vector<double> >::const_iterator
+  it = normals_.find(entity_id);
+
+  assert(it != normals_.end());
+
+  return it->second;
 }
 
 void
@@ -175,20 +187,22 @@ FractureCriterionTraction::computeNormals()
   EntityVectorIndex const
   number_normals = faces.size();
 
-  normals_.resize(number_normals);
-
+  // Use low level id functions from BulkData instead of the mapping
+  // functions for entity ids from the Topology class as the local
+  // element mapping functions expect the former.
   for (EntityVectorIndex i = 0; i < number_normals; ++i) {
 
     stk::mesh::Entity
     face = faces[i];
 
+    stk::mesh::EntityId
+    face_id = get_bulk_data().identifier(face);
+
     stk::mesh::EntityVector
     nodes = get_topology().getBoundaryEntityNodes(face);
 
-    Intrepid::Vector<double> &
-    normal = normals_[i];
-
-    normal.set_dimension(get_space_dimension());
+    Intrepid::Vector<double>
+    normal(get_space_dimension());
 
     // Depending on the dimension is how the normal is computed.
     // TODO: generalize this for all topologies.
@@ -202,18 +216,18 @@ FractureCriterionTraction::computeNormals()
 
     case 2:
       {
-        int const
-        gid0 = get_topology().get_entity_id(nodes[0]) - 1;
+        stk::mesh::EntityId const
+        gid0 = get_bulk_data().identifier(nodes[0]);
 
-        Intrepid::Index const
+        stk::mesh::EntityId const
         lid0 = get_stk_discretization().getNodeMapT()->getLocalElement(gid0);
 
         assert(lid0 < number_nodes);
 
-        int const
-        gid1 = get_topology().get_entity_id(nodes[1]) - 1;
+        stk::mesh::EntityId
+        gid1 = get_bulk_data().identifier(nodes[1]);
 
-        Intrepid::Index const
+        stk::mesh::EntityId const
         lid1 = get_stk_discretization().getNodeMapT()->getLocalElement(gid1);
 
         assert(lid1 < number_nodes);
@@ -230,26 +244,26 @@ FractureCriterionTraction::computeNormals()
 
     case 3:
       {
-        int const
-        gid0 = get_topology().get_entity_id(nodes[0]) - 1;
+        stk::mesh::EntityId const
+        gid0 = get_bulk_data().identifier(nodes[0]);
 
-        Intrepid::Index const
+        stk::mesh::EntityId const
         lid0 = get_stk_discretization().getNodeMapT()->getLocalElement(gid0);
 
         assert(lid0 < number_nodes);
 
-        int const
-        gid1 = get_topology().get_entity_id(nodes[1]) - 1;
+        stk::mesh::EntityId
+        gid1 = get_bulk_data().identifier(nodes[1]);
 
-        Intrepid::Index const
+        stk::mesh::EntityId const
         lid1 = get_stk_discretization().getNodeMapT()->getLocalElement(gid1);
 
         assert(lid1 < number_nodes);
 
-        int const
-        gid2 = get_topology().get_entity_id(nodes[2]) - 1;
+        stk::mesh::EntityId
+        gid2 = get_bulk_data().identifier(nodes[2]);
 
-        Intrepid::Index const
+        stk::mesh::EntityId const
         lid2 = get_stk_discretization().getNodeMapT()->getLocalElement(gid2);
 
         assert(lid2 < number_nodes);
@@ -268,6 +282,7 @@ FractureCriterionTraction::computeNormals()
 
     }
 
+    normals_.insert(std::make_pair(face_id, normal));
   }
 
 }
