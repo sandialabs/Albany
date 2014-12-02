@@ -22,24 +22,13 @@ Adapt::NodalDataVector::NodalDataVector(const Teuchos::RCP<Albany::NodeFieldCont
 
 }
 
-namespace {
-inline Teuchos::Array<GO>::size_type
-get_number_global_elements (const Teuchos::Comm<int>& comm,
-                            const Teuchos::Array<GO>& nodes) {
-  Teuchos::Array<GO>::size_type num_global_elem, n = nodes.size();
-  Teuchos::reduceAll<int, Teuchos::Array<GO>::size_type>(
-    comm, Teuchos::REDUCE_SUM, 1, &n, &num_global_elem);
-  return num_global_elem;
-}
-}
-
 void
 Adapt::NodalDataVector::
 resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
                  const Teuchos::RCP<const Teuchos::Comm<int> >& comm_)
 {
   overlap_node_map = Teuchos::rcp(
-    new Tpetra_Map(get_number_global_elements(*comm_, overlap_nodeGIDs),
+    new Tpetra_Map(Teuchos::OrdinalTraits<GO>::invalid(),
                    overlap_nodeGIDs,
                    Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
                    comm_));
@@ -57,7 +46,7 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
 {
   local_node_map = Teuchos::rcp(
     new Tpetra_Map(
-      get_number_global_elements(*comm_, local_nodeGIDs),
+      Teuchos::OrdinalTraits<GO>::invalid(),
       local_nodeGIDs,
       Teuchos::OrdinalTraits<Tpetra::global_size_t>::zero (),
       comm_));
