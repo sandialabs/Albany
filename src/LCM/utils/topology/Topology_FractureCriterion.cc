@@ -204,6 +204,9 @@ FractureCriterionTraction::computeNormals()
     Intrepid::Vector<double>
     normal(get_space_dimension());
 
+    Tpetra_Map const &
+    node_map = *(get_stk_discretization().getNodeMapT());
+
     // Depending on the dimension is how the normal is computed.
     // TODO: generalize this for all topologies.
     switch (get_space_dimension()) {
@@ -217,18 +220,18 @@ FractureCriterionTraction::computeNormals()
     case 2:
       {
         stk::mesh::EntityId const
-        gid0 = get_bulk_data().identifier(nodes[0]);
+        gid0 = get_bulk_data().identifier(nodes[0]) - 1;
 
         stk::mesh::EntityId const
-        lid0 = get_stk_discretization().getNodeMapT()->getLocalElement(gid0);
+        lid0 = node_map.getLocalElement(gid0);
 
         assert(lid0 < number_nodes);
 
         stk::mesh::EntityId
-        gid1 = get_bulk_data().identifier(nodes[1]);
+        gid1 = get_bulk_data().identifier(nodes[1]) - 1;
 
         stk::mesh::EntityId const
-        lid1 = get_stk_discretization().getNodeMapT()->getLocalElement(gid1);
+        lid1 = node_map.getLocalElement(gid1);
 
         assert(lid1 < number_nodes);
 
@@ -245,26 +248,26 @@ FractureCriterionTraction::computeNormals()
     case 3:
       {
         stk::mesh::EntityId const
-        gid0 = get_bulk_data().identifier(nodes[0]);
+        gid0 = get_bulk_data().identifier(nodes[0]) - 1;
 
         stk::mesh::EntityId const
-        lid0 = get_stk_discretization().getNodeMapT()->getLocalElement(gid0);
+        lid0 = node_map.getLocalElement(gid0);
 
         assert(lid0 < number_nodes);
 
         stk::mesh::EntityId
-        gid1 = get_bulk_data().identifier(nodes[1]);
+        gid1 = get_bulk_data().identifier(nodes[1]) - 1;
 
         stk::mesh::EntityId const
-        lid1 = get_stk_discretization().getNodeMapT()->getLocalElement(gid1);
+        lid1 = node_map.getLocalElement(gid1);
 
         assert(lid1 < number_nodes);
 
         stk::mesh::EntityId
-        gid2 = get_bulk_data().identifier(nodes[2]);
+        gid2 = get_bulk_data().identifier(nodes[2]) - 1;
 
         stk::mesh::EntityId const
-        lid2 = get_stk_discretization().getNodeMapT()->getLocalElement(gid2);
+        lid2 = node_map.getLocalElement(gid2);
 
         assert(lid2 < number_nodes);
 
