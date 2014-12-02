@@ -25,7 +25,7 @@
 #ifdef CISM_USE_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"
 #endif
-#include "Teuchos_TestForException.hpp"
+//#include "Teuchos_TestForException.hpp"
 
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -78,7 +78,7 @@ long nWestFacesActive, nEastFacesActive, nSouthFacesActive, nNorthFacesActive;
 long debug_output_verbosity;
 long use_glissade_surf_height_grad;
 int nNodes, nElementsActive; 
-int nElementsActivePrevious = 0;  
+//int nElementsActivePrevious = 0;  
 double* xyz_at_nodes_Ptr, *surf_height_at_nodes_Ptr, *beta_at_nodes_Ptr, *thick_at_nodes_Ptr;
 double* dsurf_height_at_nodes_dx_Ptr, *dsurf_height_at_nodes_dy_Ptr; 
 double *flwa_at_active_elements_Ptr; 
@@ -103,7 +103,7 @@ bool first_time_step = true;
 #else
   Teuchos::RCP<Tpetra_Map> node_map; 
 #endif
-Teuchos::RCP<Tpetra_Vector> previousSolution;
+//Teuchos::RCP<Tpetra_Vector> previousSolution;
 #ifdef CISM_USE_EPETRA
 bool TpetraBuild = false; 
 #else
@@ -316,10 +316,15 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       std::cout << "In felix_driver: grabbing connectivity array pointers from CISM..." << std::endl;
     //IK, 11/13/13: check that connectivity derived types are transfered over from CISM to Albany/FELIX    
     nCellsActive = *(ftg_ptr -> getLongVar("nCellsActive","connectivity"));
-    nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
-    nEastFacesActive = *(ftg_ptr -> getLongVar("nEastFacesActive","connectivity"));
-    nSouthFacesActive = *(ftg_ptr -> getLongVar("nSouthFacesActive","connectivity"));
-    nNorthFacesActive = *(ftg_ptr -> getLongVar("nNorthFacesActive","connectivity"));
+    //nWestFacesActive = *(ftg_ptr -> getLongVar("nWestFacesActive","connectivity"));
+    //nEastFacesActive = *(ftg_ptr -> getLongVar("nEastFacesActive","connectivity"));
+    //nSouthFacesActive = *(ftg_ptr -> getLongVar("nSouthFacesActive","connectivity"));
+    //nNorthFacesActive = *(ftg_ptr -> getLongVar("nNorthFacesActive","connectivity"));
+    //IK, 12/1/14: for now don't set lateral BCs.  TO DO: pass in flag to turn lateral BCs on/off
+    nWestFacesActive = 0; 
+    nEastFacesActive = 0; 
+    nSouthFacesActive = 0; 
+    nNorthFacesActive = 0; 
     if (debug_output_verbosity == 2) {  
       std::cout << "In felix_driver: Proc #" << mpiCommT->getRank() 
                 << ", nCellsActive = " << nCellsActive 
@@ -578,13 +583,14 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     }
 
     albanyApp->createDiscretization();
+    albanyApp->finalSetUp(parameterList); 
 
     //IK, 10/30/14: Check that # of elements from previous time step hasn't changed. 
     //If it has not, use previous solution as initial guess for current time step.
     //Otherwise do not set initial solution.  It's possible this can be improved so some part of the previous solution is used
     //defined on the current mesh (if it receded, which likely it will in dynamic ice sheet simulations...). 
-    if (nElementsActivePrevious != nElementsActive) previousSolution = Teuchos::null; 
-    albanyApp->finalSetUp(parameterList, previousSolution);
+    //if (nElementsActivePrevious != nElementsActive) previousSolution = Teuchos::null; 
+    //albanyApp->finalSetUp(parameterList, previousSolution);
 
     //if (!first_time_step) 
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
@@ -631,8 +637,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #endif
    
    //set previousSolution (used as initial guess for next time step) to final Albany solution. 
-   previousSolution = Teuchos::rcp(new Tpetra_Vector(*albanyApp->getDiscretization()->getSolutionFieldT())); 
-   nElementsActivePrevious = nElementsActive;   
+   //previousSolution = Teuchos::rcp(new Tpetra_Vector(*albanyApp->getDiscretization()->getSolutionFieldT())); 
+   //nElementsActivePrevious = nElementsActive;   
  
    //std::cout << "Final solution: " << *albanyApp->getDiscretization()->getSolutionField() << std::endl;  
     // ---------------------------------------------------------------------------------------------------
@@ -731,8 +737,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     if (debug_output_verbosity != 0 && cur_time_yr == final_time) //only print regression test result if you're in the final time step 
       *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     //IK, 10/30/14: added the following line so that when you run ctest from CISM the test fails if there are some failed comparisons.
-    if (status > 0)     
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "All regression comparisons did not pass!" << std::endl);
+    //if (status > 0)     
+    //  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "All regression comparisons did not pass!" << std::endl);
 
     // ---------------------------------------------------------------------------------------------------
     // Copy solution back to glimmer uvel and vvel arrays to be passed back
