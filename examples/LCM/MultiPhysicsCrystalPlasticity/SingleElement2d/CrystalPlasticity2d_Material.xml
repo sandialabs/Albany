@@ -10,7 +10,7 @@
 
     <ParameterList name="Metal">
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="MultiPhysicsCrystalPlasticity"/>
+        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
       </ParameterList>
       <!-- Crystal Elasticity moduli and orientation -->
       <ParameterList name="Crystal Elasticity">

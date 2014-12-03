@@ -28,7 +28,6 @@
 #include "CapImplicitModel.hpp"
 #include "DruckerPragerModel.hpp"
 #include "CrystalPlasticityModel.hpp"
-#include "MultiPhysicsCrystalPlasticityModel.hpp"
 #include "TvergaardHutchinsonModel.hpp"
 #include "AnisotropicViscoplasticModel.hpp"
 #include "OrtizPandolfiModel.hpp"
@@ -224,8 +223,6 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new J2Model<EvalT, Traits>(p, dl));
   } else if (model_name == "CrystalPlasticity") {
     model = rcp(new CrystalPlasticityModel<EvalT, Traits>(p, dl));
-  } else if (model_name == "MultiPhysicsCrystalPlasticity") {
-    model = rcp(new MultiPhysicsCrystalPlasticityModel<EvalT, Traits>(p, dl));
   } else if (model_name == "AHD") {
     model = rcp(new AnisotropicHyperelasticDamageModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Gurson") {

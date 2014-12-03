@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
+#include <boost/math/special_functions/fpclassify.hpp>
 
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
@@ -109,7 +110,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
@@ -119,7 +119,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // L
@@ -129,7 +128,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
   // mechanical source
@@ -241,6 +239,16 @@ computeState(typename Traits::EvalData workset,
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
+
+	  // Check for NaN and Inf
+	  // DJL this check could/should eventually be made to run with debug builds only
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(Fp(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in CrystalPlasticityModel Fp");
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(sigma(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in CrystalPlasticityModel sigma");
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(L(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in CrystalPlasticityModel L");
+
           plastic_deformation(cell, pt, i, j) = Fp(i, j);
           stress(cell, pt, i, j) = sigma(i, j);
           velocity_gradient(cell, pt, i, j) = L(i, j);
