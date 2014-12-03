@@ -13,7 +13,7 @@ set(MPS.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulator)
 set(MPST.exe           ${Albany_BINARY_DIR}/src/LCM/MaterialPointSimulatorT)
 
 IF(ALBANY_SEACAS)
-  add_subdirectory(MultiPhysicsCrystalPlasticity)
+  add_subdirectory(CrystalPlasticity)
   add_subdirectory(CohesiveElement)
   add_subdirectory(SurfaceElement)
   add_subdirectory(SurfaceElementLocking)
