@@ -6,8 +6,8 @@
 
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "AAdapt_CopyRemeshT.hpp"
-#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
-#include "AAdapt_TopologyModification.hpp"
+#if defined(ALBANY_LCM)
+#include "AAdapt_TopologyModificationT.hpp"
 #endif
 #if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
 //#include "AAdapt_RandomFracture.hpp"
@@ -108,16 +108,13 @@ AAdapt::AdaptiveSolutionManagerT::buildAdapter()
         commT_));
   }
 
-#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
-#if 0
-
+#if defined(ALBANY_LCM)
   else if (method == "Topmod") {
-    adapter_ = Teuchos::rcp(new AAdapt::TopologyMod(adaptParams_,
+    adapter_ = Teuchos::rcp(new AAdapt::TopologyModT(adaptParams_,
         paramLib_,
         stateMgr_,
         commT_));
   }
-#endif
 #endif
 
 #if 0

@@ -147,16 +147,6 @@ int main(int argc, char *argv[]) {
     // By default, request the sensitivities if not explicitly disabled
     solveParams.get("Compute Sensitivities", true);
 
-    { //exo-hack
-      int num_responses = 0;
-      try {
-        num_responses =
-          slvrfctry.getParameters().sublist("Problem").
-          sublist("Response Functions").get<int>("Number", 0);
-      } catch (...) {}
-      app->modelEvaluatorTIsCallingWriteSolutionT(num_responses != 0);
-    }
-
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
     Piro::PerformSolve(*solver, solveParams, thyraResponses, thyraSensitivities);

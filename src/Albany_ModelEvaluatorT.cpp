@@ -143,9 +143,23 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
    for (int l = 0; l < tpetra_param_vec.size(); ++l) {
-     // Initialize Sacado parameter vector
-     app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+     try {
+       // Initialize Sacado parameter vector
+       // The following call will throw, and it is often due to an incorrect input line in the "Parameters" PL
+       // in the input file. Give the user a hint about what might be happening
+       app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
          *(param_names[l]), sacado_param_vec[l]);
+     }
+     catch (const std::logic_error& le) {
+
+       *out << "Error: exception thrown from ParamLib fillVector in file " << __FILE__ << " line " << __LINE__ << std::endl;
+       *out << "This is probably due to something incorrect in the \"Parameters\" list in the input file, one of the lines:" 
+            << std::endl;
+       for (int k = 0; k < param_names[l]->size(); ++k) 
+         *out << "      " << (*param_names[l])[k] << std::endl;
+
+       throw le; // rethrow to shut things down
+     }
 
      // Create Tpetra map for parameter vector
      Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
@@ -652,31 +666,6 @@ Albany::ModelEvaluatorT::evalModelImpl(
           j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
           sacado_param_vec, *gT_out);
     }
-  }
-
-  //exo-hack Problem: In AlbanyT-LOCA-Thyra, response functions are called
-  // after, not before, the Exodus file is written. Hence if a response function
-  // updates fields written to the exodus file, then the data will be one step
-  // off.
-  //   The call stack Piro::LOCASolver::evalModelImpl ... printSolution ...
-  // Albany::ObserverImpl::observeSolutionT calls evaluateStateFieldManager,
-  // updateStates, and writeSolutionT. Then, after that,
-  // Piro::LOCASolver::evalModelImpl calls evalConvergedModel, which calls the
-  // respnonse functions. That is too late.
-  //   All of this needs to be reworked. In the meantime, I'm hacking in a
-  // temporary fix. If there are response functions and get_g() is not null,
-  // then that means we're evaluating response functions after a continuation
-  // step or NOX solve. Do the Exodus write here instead of in observeSolutionT.
-  //   If Ng() == 0, then this hack isn't needed since there are no response
-  // functions.
-  //   Main_SolveT determines whether the Exodus file is written here or in
-  // observeSolutionT.
-  if (app->isModelEvaluatorTCallingWriteSolutionT() &&
-      outArgsT.Ng() && !outArgsT.get_g(0).is_null()) {
-    const Teuchos::RCP<const Tpetra_Vector>
-      overlappedSolutionT = app->getOverlapSolutionT(*xT);
-    app->getDiscretization()->writeSolutionToFileT(
-      *overlappedSolutionT, inArgsT.get_t(), /*overlapped =*/ true);
   }
 }
 

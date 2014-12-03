@@ -61,12 +61,12 @@ Topology::Topology(
   adapt_params->set<std::string>("Method", "Topmod");
 
   std::string const
-  bulk_block_name = "bulk";
+  bulk_block_name = "Bulk";
 
   adapt_params->set<std::string>("Bulk Block Name", bulk_block_name);
 
   std::string const
-  interface_block_name = "interface";
+  interface_block_name = "Surface Element";
 
   adapt_params->set<std::string>("Interface Block Name", interface_block_name);
 
@@ -216,14 +216,12 @@ void Topology::graphInitialization()
   stk::mesh::create_adjacent_entities(get_bulk_data(), add_parts);
 
   get_bulk_data().modification_begin();
-
   removeMultiLevelRelations();
   initializeFractureState();
-
   get_bulk_data().modification_end();
+  get_stk_discretization().updateMesh();
 
   initializeTopologies();
-
   initializeHighestIds();
 
   return;
