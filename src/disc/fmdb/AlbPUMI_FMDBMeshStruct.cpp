@@ -82,7 +82,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 #ifdef SCOREC_SIMMODEL
   Sim_readLicenseFile(0);
   gmi_sim_start();
-  gmi_register_mesh();
+  gmi_register_sim();
 
   if (params->isParameter("Acis Model Input File Name"))
     model_file = params->get<std::string>("Parasolid Model Input File Name");
