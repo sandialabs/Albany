@@ -121,6 +121,16 @@ Albany::ModelEvaluator::ModelEvaluator(
       std::endl << "Error!  In Albany::ModelEvaluator constructor:  " <<
       "Invalid distributed parameter name " << name << std::endl);
     dist_param_names[i] = name;
+    //set parameters bonuds
+    std::string paramList_name = Albany::strint("Distributed Parameter",i);
+    if(distParameterParams.isSublist(paramList_name)) {
+      Teuchos::RCP<const DistParam> distParam = distParamLib->get(name);
+      Teuchos::ParameterList& distParameteri = distParameterParams.sublist(paramList_name);
+      if(distParameteri.isParameter("Lower Bound") && (distParam->lower_bounds_vector() != Teuchos::null))
+        distParam->lower_bounds_vector()->PutScalar(distParameteri.get<double>("Lower Bound", std::numeric_limits<double>::min()));
+      if(distParameteri.isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
+        distParam->upper_bounds_vector()->PutScalar(distParameteri.get<double>("Upper Bound", std::numeric_limits<double>::max()));
+    }
   }
 
   timer = Teuchos::TimeMonitor::getNewTimer("Albany: **Total Fill Time**");
@@ -238,6 +248,40 @@ Albany::ModelEvaluator::get_p_init(int l) const
   return epetra_param_vec_to_return; 
   //return distParamLib->get(dist_param_names[l-num_param_vecs])->vector();
 }
+
+Teuchos::RCP<const Epetra_Vector>
+Albany::ModelEvaluator::get_p_lower_bounds(int l) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::get_p_init():  " <<
+    "Invalid parameter index l = " << l << std::endl);
+
+  if (l < num_param_vecs) //need to be implemented
+    return Teuchos::null;
+  else {
+    if(distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector() == Teuchos::null)
+      std::cout << "\n\nShoot! this is wrong!" << std::endl;
+    return distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector();}
+}
+
+Teuchos::RCP<const Epetra_Vector>
+Albany::ModelEvaluator::get_p_upper_bounds(int l) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl <<
+    "Error!  Albany::ModelEvaluator::get_p_init():  " <<
+    "Invalid parameter index l = " << l << std::endl);
+  if (l < num_param_vecs) //need to be implemented
+    return Teuchos::null;
+  else
+    return distParamLib->get(dist_param_names[l-num_param_vecs])->upper_bounds_vector();
+}
+
 
 Teuchos::RCP<Epetra_Operator>
 Albany::ModelEvaluator::create_W() const
