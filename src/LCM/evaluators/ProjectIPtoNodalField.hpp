@@ -44,7 +44,7 @@ public:
   /// Constructor
   ///
   ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
-                     const Teuchos::RCP<Albany::Layouts>& dl);
+                            const Teuchos::RCP<Albany::Layouts>& dl);
   
   ///
   /// Phalanx method to allocate space
@@ -109,8 +109,9 @@ class ProjectIPtoNodalField
   : public ProjectIPtoNodalFieldBase<EvalT, Traits> {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl) :
-    ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl) {}
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs)
+    : ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl) {}
   void preEvaluate(typename Traits::PreEvalData d) {}
   void postEvaluate(typename Traits::PostEvalData d) {}
   void evaluateFields(typename Traits::EvalData d) {}
@@ -130,7 +131,8 @@ class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,Traits>
   : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -147,6 +149,8 @@ private:
   class FullMassMatrix;
   class LumpedMassMatrix;
   Teuchos::RCP<MassMatrix> mass_matrix_;
+  bool sep_by_eb_;
+  std::string eb_name_;
 
   void fillRHS(const typename Traits::EvalData workset);
 };

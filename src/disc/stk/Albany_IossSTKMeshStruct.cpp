@@ -207,9 +207,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   if (!params->get("Separate Evaluators by Element Block",false)) {
 
     const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                                                  nsNames, ssNames, worksetSize, partVec[0]->name(), 
-                                                                  this->ebNameToIndex, this->interleavedOrdering,cub_rule));
+    this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+        ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), 
+        this->ebNameToIndex, this->interleavedOrdering, false, cub_rule));
 
   }
   else {
@@ -219,9 +219,9 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
     this->meshSpecs.resize(numEB);
     for (int eb=0; eb<numEB; eb++) {
       const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[eb]).getCellTopologyData();
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                                                                     nsNames, ssNames, worksetSize, partVec[eb]->name(), 
-                                                                     this->ebNameToIndex, this->interleavedOrdering,cub_rule));
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+          ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
+          this->ebNameToIndex, this->interleavedOrdering, true, cub_rule));
       std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl; 
     }
 

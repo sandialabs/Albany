@@ -187,9 +187,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     for (int eb=0; eb<numEB; eb++)
     {
       std::string EB_name = sets[d][eb].stkName;
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cubatureDegree,
-                                              nsNames, ssNames, worksetSize, EB_name,
-                                              this->ebNameToIndex, this->interleavedOrdering));
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+          *ctd, numDim, cubatureDegree, nsNames, ssNames, worksetSize, EB_name,
+          this->ebNameToIndex, this->interleavedOrdering, true));
     } // for
   } // else
 

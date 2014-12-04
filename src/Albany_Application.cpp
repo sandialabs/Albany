@@ -44,6 +44,9 @@
 #endif
 #endif
 
+//eb-hack
+#include "Adapt_NodalDataVector.hpp"
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -1787,6 +1790,14 @@ evaluateResponseT(int response_index,
                  const Teuchos::Array<ParamVec>& p,
                  Tpetra_Vector& gT)
 {
+  //eb-hack Initialize the vectors here so that we can accumulate the nodal
+  // state data state in ProjectIPtoNodalField.
+  try {
+    Teuchos::RCP<Adapt::NodalDataBase>
+      ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
+    if (!ndb.is_null()) ndb->getNodalDataVector()->initializeVectors(0);
+  } catch (...) { /* No nodal data vector. */ }
+
   double t = current_time;
   if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");

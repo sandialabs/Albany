@@ -4,22 +4,20 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: no Epetra!
-
 #include "Adapt_NodalDataVector.hpp"
 #include "Tpetra_Import_decl.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
-Adapt::NodalDataVector::NodalDataVector(const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
-                                        NodeFieldSizeVector& nodeVectorLayout_,
-                                        NodeFieldSizeMap& nodeVectorMap_, LO& vectorsize_) :
-  nodeContainer(nodeContainer_),
-  nodeVectorLayout(nodeVectorLayout_),
-  nodeVectorMap(nodeVectorMap_),
-  vectorsize(vectorsize_),
-  mapsHaveChanged(false)
+Adapt::NodalDataVector::NodalDataVector(
+  const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
+  NodeFieldSizeVector& nodeVectorLayout_,
+  NodeFieldSizeMap& nodeVectorMap_, LO& vectorsize_)
+  : nodeContainer(nodeContainer_),
+    nodeVectorLayout(nodeVectorLayout_),
+    nodeVectorMap(nodeVectorMap_),
+    vectorsize(vectorsize_),
+    mapsHaveChanged(false)
 {
-
 }
 
 void
@@ -57,77 +55,64 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
   mapsHaveChanged = true;
 }
 
-void
-Adapt::NodalDataVector::initializeExport(){
-
- if(mapsHaveChanged){
-
-   importer = Teuchos::rcp(new Tpetra_Import(local_node_map, overlap_node_map));
-   mapsHaveChanged = false;
-
- }
-
+void Adapt::NodalDataVector::initializeExport()
+{
+  if (mapsHaveChanged) {
+    importer = Teuchos::rcp(new Tpetra_Import(local_node_map, overlap_node_map));
+    mapsHaveChanged = false;
+  }
 }
 
-void
-Adapt::NodalDataVector::exportAddNodalDataVector(){
-
- overlap_node_vec->doImport(*local_node_vec, *importer, Tpetra::ADD);
-
+void Adapt::NodalDataVector::exportAddNodalDataVector()
+{
+  overlap_node_vec->doImport(*local_node_vec, *importer, Tpetra::ADD);
 }
 
-void
-Adapt::NodalDataVector::getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const {
+void Adapt::NodalDataVector::
+getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const
+{
+  NodeFieldSizeMap::const_iterator it;
+  it = nodeVectorMap.find(stateName);
 
-   NodeFieldSizeMap::const_iterator it;
-   it = nodeVectorMap.find(stateName);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    (it == nodeVectorMap.end()), std::logic_error,
+    std::endl << "Error: cannot find state " << stateName
+    << " in NodalDataVector" << std::endl);
 
-   TEUCHOS_TEST_FOR_EXCEPTION((it == nodeVectorMap.end()), std::logic_error,
-           std::endl << "Error: cannot find state " << stateName << " in NodalDataVector" << std::endl);
+  std::size_t value = it->second;
 
-   std::size_t value = it->second;
-
-   offset = nodeVectorLayout[value].offset;
-   ndofs = nodeVectorLayout[value].ndofs;
-
+  offset = nodeVectorLayout[value].offset;
+  ndofs = nodeVectorLayout[value].ndofs;
 }
 
-void
-Adapt::NodalDataVector::saveNodalDataState() const {
-
-   // save the nodal data arrays back to stk
-   for(NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin(); i != nodeVectorLayout.end(); ++i){
-
-      // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
-
-      (*nodeContainer)[i->name]->saveFieldVector(overlap_node_vec, i->offset);
-
-   }
-
+void Adapt::NodalDataVector::saveNodalDataState() const
+{
+  // Save the nodal data arrays back to stk.
+  for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
+       i != nodeVectorLayout.end(); ++i)
+    (*nodeContainer)[i->name]->saveFieldVector(overlap_node_vec, i->offset);
 }
 
-void
-Adapt::NodalDataVector::saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const {
-
-   // save the nodal data arrays back to stk
-   for(NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin(); i != nodeVectorLayout.end(); ++i){
-
-      // Store the overlapped vector data back in stk in the vector field "i->first" dof offset is in "i->second"
-
-      (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset);
-
-   }
-
+//eb-hack Accumulate the overlapped vector. We don't know when the last
+// accumulation is done, so call saveFieldVector each time, even though doing so
+// performs wasted work.
+void Adapt::NodalDataVector::accumulateAndSaveNodalDataState(
+  const Teuchos::RCP<const Tpetra_MultiVector>& mv)
+{
+  overlap_node_vec->update(1, *mv, 1);
+  saveNodalDataState();
 }
 
-void
-Adapt::NodalDataVector::initializeVectors(ST value){
-
-    overlap_node_vec->putScalar(value);
-
-    local_node_vec->putScalar(value);
-
+void Adapt::NodalDataVector::
+saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
+{
+  // Save the nodal data arrays back to stk.
+  for (NodeFieldSizeVector::const_iterator i = nodeVectorLayout.begin();
+       i != nodeVectorLayout.end(); ++i)
+    (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset);
 }
 
-
-
+void Adapt::NodalDataVector::initializeVectors(ST value) {
+  overlap_node_vec->putScalar(value);
+  local_node_vec->putScalar(value);
+}
