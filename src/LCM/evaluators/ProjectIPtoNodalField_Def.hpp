@@ -229,10 +229,18 @@ create (EMassMatrixType::Enum type,
 template<typename EvalT, typename Traits>
 ProjectIPtoNodalFieldBase<EvalT, Traits>::
 ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
-                           const Teuchos::RCP<Albany::Layouts>& dl)
+                           const Teuchos::RCP<Albany::Layouts>& dl,
+                           const Albany::MeshSpecsStruct* mesh_specs)
   : wBF(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
     BF(p.get<std::string>("BF Name"), dl->node_qp_scalar)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    mesh_specs == NULL, std::logic_error,
+    "ProjectIPtoNodalFieldBase needs access to mesh_specs->ebName and "
+    "mesh_specs->sepEvalsByEB");
+  eb_name_ = mesh_specs->ebName;
+  sep_by_eb_ = mesh_specs->sepEvalsByEB;
+
   this->addDependentField(wBF);
   this->addDependentField(BF);
   this->setName("ProjectIPtoNodalField" + PHX::TypeString<EvalT>::value);
@@ -360,15 +368,9 @@ ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 ProjectIPtoNodalField (
   Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl,
   const Albany::MeshSpecsStruct* mesh_specs)
-  : ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
+  : ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl,
+                                                                    mesh_specs)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    mesh_specs == NULL, std::logic_error,
-    "ProjectIPtoNodalFieldBase needs access to mesh_specs->ebName and "
-    "mesh_specs->sepEvalsByEB");
-  eb_name_ = mesh_specs->ebName;
-  sep_by_eb_ = mesh_specs->sepEvalsByEB;
-
   Teuchos::ParameterList* pl =
     p.get<Teuchos::ParameterList*>("Parameter List");
   if (!pl->isType<std::string>("Mass Matrix Type"))
@@ -493,7 +495,7 @@ evaluateFields (typename Traits::EvalData workset)
   // and in this one only for the rhs and not the mass matrix. So there's a lot
   // of wasted work. (2) Later, x = sum_i x_i, and this accumulation involves
   // wasted writes the Exodus data structure holding data for writing.
-  if (!sep_by_eb_ || workset.EBName == eb_name_) fillRHS(workset);
+  if (!this->sep_by_eb_ || workset.EBName == this->eb_name_) fillRHS(workset);
 }
 
 //------------------------------------------------------------------------------
