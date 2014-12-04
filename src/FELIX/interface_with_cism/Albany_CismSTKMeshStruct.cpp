@@ -780,8 +780,8 @@ Albany::CismSTKMeshStruct::constructMesh(
 
        stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][1], nodePartVec);
        stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][2], nodePartVec);
-       stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][3], nodePartVec);
-       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][4], nodePartVec);
+       stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][3], nodePartVec);
+       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][4], nodePartVec);
        
        bulkData->declare_relation(side, lrnode, 0);
        bulkData->declare_relation(side, urnode, 1);
