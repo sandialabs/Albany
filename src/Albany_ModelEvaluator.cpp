@@ -127,9 +127,9 @@ Albany::ModelEvaluator::ModelEvaluator(
       Teuchos::RCP<const DistParam> distParam = distParamLib->get(name);
       Teuchos::ParameterList& distParameteri = distParameterParams.sublist(paramList_name);
       if(distParameteri.isParameter("Lower Bound") && (distParam->lower_bounds_vector() != Teuchos::null))
-        distParam->lower_bounds_vector()->PutScalar(distParameteri.get<double>("Lower Bound", std::numeric_limits<double>::min()));
+        distParam->lower_bounds_vector()->putScalar(distParameteri.get<double>("Lower Bound", std::numeric_limits<double>::min()));
       if(distParameteri.isParameter("Upper Bound") && (distParam->upper_bounds_vector() != Teuchos::null))
-        distParam->upper_bounds_vector()->PutScalar(distParameteri.get<double>("Upper Bound", std::numeric_limits<double>::max()));
+        distParam->upper_bounds_vector()->putScalar(distParameteri.get<double>("Upper Bound", std::numeric_limits<double>::max()));
     }
   }
 
@@ -261,10 +261,12 @@ Albany::ModelEvaluator::get_p_lower_bounds(int l) const
 
   if (l < num_param_vecs) //need to be implemented
     return Teuchos::null;
-  else {
-    if(distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector() == Teuchos::null)
-      std::cout << "\n\nShoot! this is wrong!" << std::endl;
-    return distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector();}
+
+  Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->lower_bounds_vector(), epetra_bounds_vec_to_return, comm);
+  return epetra_bounds_vec_to_return;
 }
 
 Teuchos::RCP<const Epetra_Vector>
@@ -278,8 +280,12 @@ Albany::ModelEvaluator::get_p_upper_bounds(int l) const
     "Invalid parameter index l = " << l << std::endl);
   if (l < num_param_vecs) //need to be implemented
     return Teuchos::null;
-  else
-    return distParamLib->get(dist_param_names[l-num_param_vecs])->upper_bounds_vector();
+
+  Teuchos::RCP<Epetra_Vector> epetra_bounds_vec_to_return;
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm();
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Petra::TpetraVector_To_EpetraVector(distParamLib->get(dist_param_names[l-num_param_vecs])->upper_bounds_vector(), epetra_bounds_vec_to_return, comm);
+  return epetra_bounds_vec_to_return;
 }
 
 
