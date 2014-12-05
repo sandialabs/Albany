@@ -37,7 +37,13 @@ ViscosityFO(const Teuchos::ParameterList& p,
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string viscType = visc_list->get("Type", "Constant");
-  std::string flowRateType = visc_list->get("Flow Rate Type", "Uniform");
+
+  std::string flowRateType;
+  if(visc_list->isParameter("Flow Rate Type"))
+    flowRateType = visc_list->get<std::string>("Flow Rate Type");
+  else
+    flowRateType = "Uniform";
+
   homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 1.0);
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
@@ -83,13 +89,17 @@ ViscosityFO(const Teuchos::ParameterList& p,
     	*out << "Flow Rate passed in from CISM." << std::endl;
 #endif
     }
-    else if (flowRateType == "temperature Based")
+    else if (flowRateType == "Temperature Based")
     {
     	flowRate_type = TEMPERATUREBASED;
     	this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
     	*out << "Flow Rate computed using temperature field." << std::endl;
 #endif
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in FELIX::ViscosityFO:  \"" << flowRateType << "\" is not a valid parameter for Flow Rate Type" << std::endl);
     }
 #ifdef OUTPUT_TO_SCREEN
     *out << "n: " << n << std::endl; 
