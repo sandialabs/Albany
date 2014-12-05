@@ -533,10 +533,10 @@ evaluateFields(typename Traits::EvalData workset)
     */
   Kokkos::deep_copy(GradBF.get_kokkos_view(),0.0); 
   Kokkos::parallel_for (GradBF.dimension(0), *this);
+//std::cout << "ComputeBasisFunction" <<std::endl;
+//std::cout << wGradBF(1, 1, 1, 1) <<"  " <<jacobian_inv(1,1,1,1) <<"   "<<grad_at_cub_points_CUDA(1,1,1) <<"   "<< weighted_measure(1,1)<<std::endl; 
 
-/*
-
-  Intrepid::CellTools<RealType>::setJacobianTemp(jacobian, refPoints, coordVec, *cellType);
+/*  Intrepid::CellTools<RealType>::setJacobianTemp(jacobian, refPoints, coordVec, *cellType);
   Intrepid::CellTools<MeshScalarT>::setJacobianInvTemp(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
   

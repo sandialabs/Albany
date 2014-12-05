@@ -266,7 +266,7 @@ void Albany::Application::buildProblem()   {
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
     std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(16);
+    derivative_dimensions.push_back(24);
     sfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
     sfm[ps]->postRegistrationSetup("");
   }
@@ -3435,7 +3435,7 @@ void Albany::Application::postRegSetup(std::string eval)
   }
   else if (eval=="Jacobian") {
     std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(16);
+    derivative_dimensions.push_back(24);
     for (int ps=0; ps < fm.size(); ps++){
        fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
        fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);

@@ -32,6 +32,11 @@
 
 #include "Albany_DataTypes.hpp"
 
+#include "Phalanx_config.hpp"
+#include "Phalanx.hpp"
+#include "Phalanx_KokkosUtilities.hpp"
+
+
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = true;
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
@@ -81,6 +86,8 @@ int main(int argc, char *argv[]) {
   bool success = true;
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+
+   PHX::InitializeKokkosDevice();
 
 #ifdef ALBANY_CHECK_FPE
 //	_mm_setcsr(_MM_MASK_MASK &~
@@ -311,5 +318,8 @@ int main(int argc, char *argv[]) {
   if (!success) status+=10000;
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+
+  PHX::FinalizeKokkosDevice();
+
   return status;
 }
