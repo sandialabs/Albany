@@ -212,6 +212,8 @@ FELIX::StokesFO::constructEvaluators(
      std::string stateName("basal_friction");
      const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity, meshPart);
+     fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherScalarNodalParameter(stateName));
     }
 
 
