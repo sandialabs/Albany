@@ -47,6 +47,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const int * global_south_face_conn_active_Ptr,
                   const int * global_north_face_active_owned_map_Ptr,
                   const int * global_north_face_conn_active_Ptr,
+                  const int * dirichlet_node_mask_Ptr,
                   const double * beta_at_nodes_Ptr,
                   const double * surf_height_at_nodes_Ptr,
                   const double * dsurf_height_at_nodes_dx_Ptr,
@@ -80,6 +81,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   }
   xyz = new double[NumNodes][3];
   eles = new int[NumEles][8];
+  dirichletNodeMask = new int[NumNodes];
   //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
   bf = new int[NumBasalFaces][5]; 
   wf = new int[NumWestFaces][5]; 
@@ -123,6 +125,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   if (global_north_face_active_owned_map_Ptr != NULL && NumNorthFaces > 0) have_nf = true;
   else have_nf = false;
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
+  if (dirichlet_node_mask_Ptr != NULL) have_dirichlet = true; 
+  else have_dirichlet = false; 
 
   for (int i=0; i<NumNodes; i++){
     globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;
@@ -161,6 +165,14 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     //     << eles[i][3] << " " << eles[i][4] << " "
     //     << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
   }
+  if (have_dirichlet) {
+    for (int i=0; i<NumNodes; i++) {
+      dirichletNodeMask[i] = dirichlet_node_mask_Ptr[i];
+      //*out << "i: " << i << ", x: " << xyz[i][0] 
+      //     << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", dirichlet: " << dirichletNodeMask[i] << std::endl;
+    }
+  }
+
   if (have_flwa) {
     for (int i=0; i<NumEles; i++)
       flwa[i] = flwa_at_active_elements_Ptr[i];
@@ -280,6 +292,12 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
+   nsn="NodeSetDirichlet";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+#ifdef ALBANY_SEACAS
+    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
 
 
   std::vector<std::string> ssNames;
@@ -316,6 +334,7 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
   delete [] xyz;
+  delete [] dirichletNodeMask;
   delete [] sh;
   delete [] thck;
   delete [] shGrad;
@@ -454,7 +473,74 @@ Albany::CismSTKMeshStruct::constructMesh(
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
      //Nodesets for Dirichlet BCs
-     //These are hard-coded right now for confined shelf
+     //Check which nodes have Dirichlet BCs based on mask passed in from CISM 
+     bool localDirichletMask[8]; 
+     for (int j=0; j<8; j++) {
+       int node_GID = eles[i][j]-1; 
+       int node_LID = node_mapT->getLocalElement(node_GID);
+       if (dirichletNodeMask[node_LID] == 1) {
+          localDirichletMask[j] = true;
+         //std::cout << "i, j, dirichlet xyz: " << i << ", " << j << ", " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+       }
+       else localDirichletMask[j] = false; 
+     }
+     singlePartVec[0] = nsPartVec["NodeSetDirichlet"];
+     //west boundary 
+     if ((localDirichletMask[0] == true) && (localDirichletMask[3] == true) &&  
+         (localDirichletMask[4] == true) && (localDirichletMask[7] == true)) {
+       std::cout << "element " << elem_GID << " has a dirichlet BC on the west boundary." << std::endl; 
+       bulkData->change_entity_parts(llnode, singlePartVec); // node 0
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+     }
+     //south boundary
+     if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
+         (localDirichletMask[4] == true) && (localDirichletMask[5] == true)) {
+       std::cout << "element " << elem_GID << " has a dirichlet BC on the south boundary." << std::endl; 
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+     }
+     //north boundary
+     if ((localDirichletMask[3] == true) && (localDirichletMask[2] == true) && 
+         (localDirichletMask[6] == true) && (localDirichletMask[7] == true)) {
+       std::cout << "element " << elem_GID << " has a dirichlet BC on the north boundary." << std::endl; 
+       bulkData->change_entity_parts(llnode, singlePartVec); // 0
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+     }
+     //east boundary
+     if ((localDirichletMask[1] == true) && (localDirichletMask[2] == true) && 
+         (localDirichletMask[5] == true) && (localDirichletMask[6] == true)) {
+       std::cout << "element " << elem_GID << " has a dirichlet BC on the east boundary." << std::endl; 
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+     }
+     //top boundary
+     if ((localDirichletMask[4] == true) && (localDirichletMask[5] == true) && 
+         (localDirichletMask[7] == true) && (localDirichletMask[6] == true)) {
+       std::cout << "element " << elem_GID << " has a dirichlet BC on the top boundary." << std::endl;
+       bulkData->change_entity_parts(llnode, singlePartVec); // 0
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+    }
+     //bottom boundary
+     if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
+         (localDirichletMask[2] == true) && (localDirichletMask[3] == true)) {
+       std::cout << "element " << elem_GID << " has a dirichlet BC on the bottom boundary." << std::endl; 
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+     }
+     
+     //The following are hard-coded right now for confined shelf
      node_GID = eles[i][0]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
      double xl = xyz[node_LID][0];  //left node 

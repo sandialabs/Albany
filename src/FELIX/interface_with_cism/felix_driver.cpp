@@ -70,9 +70,9 @@ long global_ewn, global_nsn;
 double gravity, rho_ice, rho_seawater; //IK, 3/18/14: why are these pointers?  wouldn't they just be doubles? 
 double final_time; //final time, added 10/30/14, IK 
 double seconds_per_year, vel_scaling_param; 
-double * thicknessDataPtr, *topographyDataPtr;
-double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
-double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
+//double * thicknessDataPtr, *topographyDataPtr;
+//double * upperSurfaceDataPtr, * lowerSurfaceDataPtr;
+//double * floating_maskDataPtr, * ice_maskDataPtr, * lower_cell_locDataPtr;
 long nCellsActive;
 long nWestFacesActive, nEastFacesActive, nSouthFacesActive, nNorthFacesActive; 
 long debug_output_verbosity;
@@ -95,6 +95,7 @@ int * global_south_face_conn_active_Ptr;
 int * global_south_face_id_active_owned_map_Ptr; 
 int * global_north_face_conn_active_Ptr; 
 int * global_north_face_id_active_owned_map_Ptr; 
+int * dirichlet_node_mask_Ptr;
 double *uVel_ptr; 
 double *vVel_ptr; 
 bool first_time_step = true;
@@ -300,13 +301,14 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     rho_seawater = *(ftg_ptr -> getDoubleVar("rho_seawater","constants"));
     //std::cout << "g, rho, rho_w: " << gravity << ", " << rho_ice << ", " << rho_seawater << std::endl; 
     final_time = *(ftg_ptr -> getDoubleVar("tend","numerics"));
-    thicknessDataPtr = ftg_ptr -> getDoubleVar("thck","geometry");
+    /*thicknessDataPtr = ftg_ptr -> getDoubleVar("thck","geometry");
     topographyDataPtr = ftg_ptr -> getDoubleVar("topg","geometry");
     upperSurfaceDataPtr = ftg_ptr -> getDoubleVar("usrf","geometry");
     lowerSurfaceDataPtr = ftg_ptr -> getDoubleVar("lsrf","geometry");
     floating_maskDataPtr = ftg_ptr -> getDoubleVar("floating_mask","geometry");
     ice_maskDataPtr = ftg_ptr -> getDoubleVar("ice_mask","geometry");
     lower_cell_locDataPtr = ftg_ptr -> getDoubleVar("lower_cell_loc","geometry");
+    */
 
     // ---------------------------------------------
     // get connectivity arrays from CISM 
@@ -348,6 +350,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_south_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_south_face_id_active_owned_map","connectivity");  
     global_north_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_north_face_conn_active","connectivity");  
     global_north_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_north_face_id_active_owned_map","connectivity");  
+    dirichlet_node_mask_Ptr = ftg_ptr -> getInt4Var("dirichlet_node_mask","connectivity");  
 
 
     // ---------------------------------------------
@@ -427,6 +430,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            global_south_face_conn_active_Ptr,
                                                            global_north_face_id_active_owned_map_Ptr, 
                                                            global_north_face_conn_active_Ptr,
+                                                           dirichlet_node_mask_Ptr, 
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, 
                                                            dsurf_height_at_nodes_dx_Ptr, dsurf_height_at_nodes_dy_Ptr,
                                                            thick_at_nodes_Ptr, 
