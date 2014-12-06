@@ -402,13 +402,14 @@ void ComputeBasisFunctions<EvalT, Traits>:: operator () (const int i) const
 
    // Intrepid::setJacobianInv & setJacobianDet
    
-  int k, j, rowID = 0, colID = 0;
-  int rowperm[3]={0,1,2};
-  int colperm[3]={0,1,2};
-  const int i0=i;
-  MeshScalarT determinant;
-  MeshScalarT emax(0);
   for (int i1=0; i1<numQPs_; i1++) {
+    int k, j, rowID = 0, colID = 0;
+    int rowperm[3]={0,1,2};
+    int colperm[3]={0,1,2};
+    const int i0=i;
+    MeshScalarT determinant;
+    MeshScalarT emax(0);
+
     for(k=0; k < 3; ++k){
          for(j=0; j < 3; ++j){
               if( std::abs( jacobian(i0,i1,k,j) ) >  emax){
