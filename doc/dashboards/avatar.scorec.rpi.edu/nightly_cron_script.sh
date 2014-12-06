@@ -14,8 +14,13 @@ export LD_LIBRARY_PATH
 
 cd /lore/ghansen/nightly
 
-now=$(date +"%m_%d_%Y-%H_%M")
-LOG_FILE=/lore/ghansen/nightly/nightly_$now
+#now=$(date +"%m_%d_%Y-%H_%M")
+#LOG_FILE=/lore/ghansen/nightly/nightly_$now
+
+LOG_FILE=/lore/ghansen/nightly/nightly_log.txt
+if [ -f $LOG_FILE ]; then
+  rm $LOG_FILE
+fi
 
 eval "env  TEST_DIRECTORY=/lore/ghansen/nightly SCRIPT_DIRECTORY=/users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu ctest -VV -S /users/ghansen/Albany/doc/dashboards/avatar.scorec.rpi.edu/ctest_nightly_mpi_opt_avatar.cmake" >> $LOG_FILE 2>&1
 
