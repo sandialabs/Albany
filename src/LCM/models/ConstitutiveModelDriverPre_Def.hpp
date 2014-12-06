@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Intrepid_MiniTensor.h>
+
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -21,7 +23,7 @@ ConstitutiveModelDriverPre(Teuchos::ParameterList& p,
   j_(p.get<std::string>("J Name"),dl->qp_scalar)
 {
   std::vector<PHX::DataLayout::size_type> dims;
-  dl->node_qp_tensor->dimensions(dims);
+  dl->node_qp_vector->dimensions(dims);
   num_nodes_ = dims[1];
   num_pts_   = dims[2];
   num_dims_  = dims[3];
@@ -50,7 +52,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t pt = 0; pt < num_pts_; ++pt) {    
       for (std::size_t node = 0; node < num_nodes_; ++node) {
         for (std::size_t dim = 0; dim < num_dims_; ++dim) {
-          def_grad_(cell, pt, ) = 0.0;
+          def_grad_(cell, pt, dim, dim) = 0.0;
         }
       }
     }

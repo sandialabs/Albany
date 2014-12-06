@@ -286,12 +286,13 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Temporary variable used numerous times below
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > ev;
 
-  { // Register the solution and residual fields
-    Teuchos::ArrayRCP<std::string> dof_names(1);
-    Teuchos::ArrayRCP<std::string> resid_names(1);
-    dof_names[0] = "driver deformation gradient";
-    resid_names[0] = "driver scatter";
+  // Register the solution and residual fields
+  Teuchos::ArrayRCP<std::string> dof_names(1);
+  Teuchos::ArrayRCP<std::string> resid_names(1);
+  dof_names[0] = "driver deformation gradient";
+  resid_names[0] = "driver scatter";
 
+  { // Register the solution and residual fields
     Teuchos::RCP<Teuchos::ParameterList> p = 
       Teuchos::rcp(new Teuchos::ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
@@ -336,9 +337,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("F Name", "F");
     p->set<std::string>("J Name", "J");
 
-    cmdpEv =
-        Teuchos::rcp(new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(*p,dl_));
-    fm0.template registerEvaluator<EvalT>(cmdpEv);
+    ev=Teuchos::rcp(new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   { // Constitutive Model Parameters

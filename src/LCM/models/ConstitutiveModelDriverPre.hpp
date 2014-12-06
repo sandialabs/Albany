@@ -44,8 +44,37 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  };
+    ///
+    /// solution field
+    ///
+    PHX::MDField<ScalarT, Cell, Node, Dim, Dim> solution_;
 
+    ///
+    /// def grad field
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
+
+    ///
+    /// det def grad field
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint> j_;
+
+    ///
+    /// Number of dimensions
+    ///
+    std::size_t num_dims_;
+    
+    ///
+    /// Number of integration points
+    ///
+    std::size_t num_pts_;
+    
+    ///
+    /// Number of integration points
+    ///
+    std::size_t num_nodes_;
+
+  };
 }
 
 #endif
