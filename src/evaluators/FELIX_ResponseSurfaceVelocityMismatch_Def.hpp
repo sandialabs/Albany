@@ -356,7 +356,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
         for (int pt = 0; pt < numPoints; pt++) {
           ScalarT sum=0;
          for (std::size_t dim = 0; dim < 2; ++dim)
-            sum += pow(basalFrictionGradOnSideT(0,pt,dim),2);
+            sum += std::pow(basalFrictionGradOnSideT(0,pt,dim),2.0);
           data(cell, pt) = sum;
         }
       }
