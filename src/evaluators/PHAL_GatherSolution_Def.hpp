@@ -254,8 +254,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
 
-  //double   *valptr = &((this->valTensor[0])(1, 1, 1,1));
- //  *valptr=2;
 
 //#ifdef NO_KOKKOS_ALBANY
   if (this->tensorRank == 1) {
@@ -318,7 +316,7 @@ evaluateFields(typename Traits::EvalData workset)
  Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields) );
 #endif
 */
-//  std::cout << (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
+//  std::cout <<"GatherSolution"<< (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
 }
 
 // **********************************************************************

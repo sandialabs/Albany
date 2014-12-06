@@ -98,10 +98,10 @@ namespace PHAL {
   void DOFVecGradInterpolation<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifdef NO_KOKKOS_ALBANY
-    // This is needed, since evaluate currently sums into
-    //for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
-  
+//#ifdef NO_KOKKOS_ALBANY
+    // This is needed, since evaluate currently sums into    
+   Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
+
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t i=0; i<vecDim; i++) {
@@ -116,21 +116,13 @@ namespace PHAL {
       } 
     }
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-#else
-//std::cout << " before parallel" <<std::endl;
+/*#else
     Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim));
 
-//for (std::size_t cell=0; cell < workset.numCells; ++cell)  
-//        for (std::size_t qp=0; qp < numQPs; ++qp)  
-//          for (std::size_t i=0; i<vecDim; i++)  
-//            for (std::size_t dim=0; dim<numDims; dim++)  
-//              std::cout << cell << " " <<qp << " " <<i << " " << dim << "    " <<grad_val_qp(cell, qp, i,dim)<<"   "<<GradBF(cell,1,qp,dim) << "   " << val_node(cell, qp, i) <<std::endl;
-
-
 //std::cout << grad_val_qp (30,3,0,0) << "      "<< val_node (30,3,0) << "       " <<GradBF (30,1,3,0) << std::endl;
 #endif
-  }
+*/  }
   
   //**********************************************************************
   template<typename Traits>
@@ -229,10 +221,9 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
   void DOFVecGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifdef NO_KOKKOS_ALBANY
+//#ifdef NO_KOKKOS_ALBANY
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes;
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           for (std::size_t i=0; i<vecDim; i++) {
@@ -243,19 +234,18 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
               for (std::size_t node= 1 ; node < numNodes; ++node) {
                 (grad_val_qp(cell,qp,i,dim)).val() += val_node(cell, node, i).val() * GradBF(cell, node, qp, dim);
                 (grad_val_qp(cell,qp,i,dim)).fastAccessDx(neq*node+offset+i) += val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * GradBF(cell, node, qp, dim);
-            } 
-          } 
+           }
+         } 
         } 
       } 
     }
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-#else
+/*#else
   
-//std::cout << val_node(30, 3, 0)<< "   " <<GradBF (30,3,3,0)<<std::endl;    
    //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), ScalarT(0.0));
    Kokkos::parallel_for ( workset.numCells,  VecGradInterpolationJacobian <FadType,  PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim, offset));
 #endif
-  }
+*/  }
   
   //**********************************************************************
 }
