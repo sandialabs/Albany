@@ -44,6 +44,7 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
+#include "LCM/problems/ConstitutiveDriverProblem.hpp"
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
 #include "LCM/problems/PeridigmProblem.hpp"
@@ -216,6 +217,9 @@ Albany::ProblemFactory::create()
   }
   else if (getName(method) == "Elasticity") {
     strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, getNumDim(method), rc_mgr));
+  else if (method == "Constitutive Model Driver") {
+    strategy = rcp(new Albany::ConstitutiveDriverProblem(problemParams, paramLib, 3, commT));
+  }
   }
   else if (method == "ThermoElasticity 1D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 1));
