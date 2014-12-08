@@ -757,6 +757,7 @@ computeGlobalResidualImplT(
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
       workset.current_time = current_time;
+    workset.distParamLib = distParamLib;
     if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
     if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
@@ -1007,6 +1008,7 @@ computeGlobalJacobianImplT(const double alpha,
     if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -1476,6 +1478,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -2032,6 +2035,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.sg_f = Teuchos::rcpFromRef(sg_f);
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
     if (sg_xdotdot != NULL) workset.accelerationTerms = true;
@@ -2223,6 +2227,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -2496,6 +2501,7 @@ computeGlobalSGTangent(
     if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -2716,6 +2722,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_f = Teuchos::rcpFromRef(mp_f);
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
     workset.mp_x = Teuchos::rcpFromRef(mp_x);
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
@@ -2901,6 +2908,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -3179,6 +3187,7 @@ computeGlobalMPTangent(
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
