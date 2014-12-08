@@ -210,6 +210,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_DirichletField.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_ComputeBasisFunctions.cpp
@@ -297,6 +298,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Dirichlet_Def.hpp
   evaluators/PHAL_DirichletCoordinateFunction.hpp
   evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
+  evaluators/PHAL_DirichletField.hpp
+  evaluators/PHAL_DirichletField_Def.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/PHAL_Neumann.hpp
