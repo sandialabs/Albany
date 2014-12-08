@@ -216,6 +216,8 @@ FELIX::StokesFO::constructEvaluators(
          (evalUtils.constructGatherScalarNodalParameter(stateName));
     }
 
+    // Here is how to register the field for dirichlet condition.
+    //RCP<ParameterList> p = stateMgr.registerStateVariable("dirichlet_field", dl->node_vector, elementBlockName,false, &entity);
 
 
    // Define Field Names
