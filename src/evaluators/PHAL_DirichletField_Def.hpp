@@ -236,6 +236,9 @@ DirichletField(Teuchos::ParameterList& p) :
 template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
+  Teuchos::RCP<Tpetra_Vector> pvecT =
+    dirichletWorkset.distParamLib->get(this->field_name)->vector();
+  Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
   Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly> f =
     dirichletWorkset.sg_f;
   Teuchos::RCP<const Stokhos::EpetraVectorOrthogPoly> x =
@@ -248,7 +251,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       int lunk = nsNodes[inode][this->offset];
       for (int block=0; block<nblock; block++)
         (*f)[block][lunk] = (*x)[block][lunk];
-      if(nblock>0) (*f)[0][lunk] -= pTt[lunk];
+      if(nblock>0) (*f)[0][lunk] -= pT[lunk];
   }
 }
 
