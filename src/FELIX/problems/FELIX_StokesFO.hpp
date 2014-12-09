@@ -216,8 +216,16 @@ FELIX::StokesFO::constructEvaluators(
          (evalUtils.constructGatherScalarNodalParameter(stateName));
     }
 
+#ifdef CISM_HAS_FELIX
+   {
     // Here is how to register the field for dirichlet condition.
-    RCP<ParameterList> p = stateMgr.registerStateVariable("dirichlet_field", dl->node_vector, elementBlockName,false, &entity);
+    std::string stateName("dirichlet_field");
+    // IK, 12/9/14: Changed "false" to "true" from Mauro's initial implementation for outputting to Exodus
+    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+#endif
 
 
    // Define Field Names
