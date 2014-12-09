@@ -488,7 +488,16 @@ Albany::CismSTKMeshStruct::constructMesh(
      //west boundary 
      if ((localDirichletMask[0] == true) && (localDirichletMask[3] == true) &&  
          (localDirichletMask[4] == true) && (localDirichletMask[7] == true)) {
-       std::cout << "element " << elem_GID << " has a dirichlet BC on the west boundary." << std::endl; 
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the west boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 0 || j == 3 || j == 4 || j == 7) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   west x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
        bulkData->change_entity_parts(llnode, singlePartVec); // node 0
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
@@ -497,7 +506,16 @@ Albany::CismSTKMeshStruct::constructMesh(
      //south boundary
      if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
          (localDirichletMask[4] == true) && (localDirichletMask[5] == true)) {
-       std::cout << "element " << elem_GID << " has a dirichlet BC on the south boundary." << std::endl; 
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the south boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 0 || j == 1 || j == 4 || j == 5) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   south x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
@@ -506,7 +524,16 @@ Albany::CismSTKMeshStruct::constructMesh(
      //north boundary
      if ((localDirichletMask[3] == true) && (localDirichletMask[2] == true) && 
          (localDirichletMask[6] == true) && (localDirichletMask[7] == true)) {
-       std::cout << "element " << elem_GID << " has a dirichlet BC on the north boundary." << std::endl; 
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the north boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 3 || j == 2 || j == 6 || j == 7) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   north x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
        bulkData->change_entity_parts(llnode, singlePartVec); // 0
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
@@ -515,7 +542,16 @@ Albany::CismSTKMeshStruct::constructMesh(
      //east boundary
      if ((localDirichletMask[1] == true) && (localDirichletMask[2] == true) && 
          (localDirichletMask[5] == true) && (localDirichletMask[6] == true)) {
-       std::cout << "element " << elem_GID << " has a dirichlet BC on the east boundary." << std::endl; 
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the east boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 1 || j == 2 || j == 5 || j == 6) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   east x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(urnode, singlePartVec); // 2
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
@@ -524,7 +560,16 @@ Albany::CismSTKMeshStruct::constructMesh(
      //top boundary
      if ((localDirichletMask[4] == true) && (localDirichletMask[5] == true) && 
          (localDirichletMask[7] == true) && (localDirichletMask[6] == true)) {
-       std::cout << "element " << elem_GID << " has a dirichlet BC on the top boundary." << std::endl;
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the top boundary." << std::endl;
+         for (int j=0; j<8; j++) {
+           if (j == 4 || j == 5 || j == 7 || j == 6) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   top x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
        bulkData->change_entity_parts(llnode, singlePartVec); // 0
        bulkData->change_entity_parts(lrnode, singlePartVec); // 1
        bulkData->change_entity_parts(ulnode, singlePartVec); // 3
@@ -533,7 +578,16 @@ Albany::CismSTKMeshStruct::constructMesh(
      //bottom boundary
      if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
          (localDirichletMask[2] == true) && (localDirichletMask[3] == true)) {
-       std::cout << "element " << elem_GID << " has a dirichlet BC on the bottom boundary." << std::endl; 
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the bottom boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 0 || j == 1 || j == 2 || j == 3) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   bottom x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
        bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
        bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
        bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
