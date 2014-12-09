@@ -25,6 +25,7 @@
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
+#include "AAdapt_ReferenceConfigurationManager.hpp"
 
 namespace AAdapt {
 
@@ -32,7 +33,8 @@ template<class SizeField>
 class MeshAdapt {
   public:
     MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-              const Albany::StateManager& StateMgr_);
+              const Albany::StateManager& StateMgr_,
+              const Teuchos::RCP<ReferenceConfigurationManager>& refConfigMgr_);
     ~MeshAdapt();
 
     //! Check adaptation criteria to determine if the mesh needs adapting
@@ -77,6 +79,7 @@ class MeshAdapt {
     std::string adaptation_method;
     std::string base_exo_filename;
 
+    Teuchos::RCP<ReferenceConfigurationManager> rc_mgr;
 };
 
 template <class SizeField>
@@ -85,6 +88,7 @@ class MeshAdaptT : public AbstractAdapterT {
     MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                const Teuchos::RCP<ParamLib>& paramLib_,
                const Albany::StateManager& StateMgr_,
+               const Teuchos::RCP<ReferenceConfigurationManager>& refConfigMgr_,
                const Teuchos::RCP<const Teuchos_Comm>& commT_);
     virtual bool queryAdaptationCriteria(int iteration);
     virtual bool adaptMesh(

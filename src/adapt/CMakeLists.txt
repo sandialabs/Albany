@@ -15,6 +15,7 @@ SET(SOURCES
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
+    AAdapt_ReferenceConfigurationManager.cpp
    )
 
 SET(HEADERS
@@ -25,6 +26,7 @@ SET(HEADERS
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
+    AAdapt_ReferenceConfigurationManager.hpp
    )
 
 IF (ALBANY_EPETRA) 

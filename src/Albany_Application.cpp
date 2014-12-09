@@ -6,6 +6,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_AdaptationFactory.hpp"
+#include "AAdapt_ReferenceConfigurationManager.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
@@ -648,6 +649,20 @@ deref_nfm (
     nfm[0] :              // ... hence this is the intended behavior ...
     nfm[wsPhysIndex[ws]]; // ... and this is not, but may one day be again.
 }
+
+// Convenience routine for setting dfm workset data. Cut down on redundant code.
+void dfm_set (
+  PHAL::Workset& workset,
+  const Teuchos::RCP<const Tpetra_Vector>& x,
+  const Teuchos::RCP<const Tpetra_Vector>& xd,
+  const Teuchos::RCP<const Tpetra_Vector>& xdd,
+  Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT>& soln_mgr)
+{
+  workset.xT = soln_mgr->using_rcm() ?
+    soln_mgr->get_rcm()->add_x(x) : x;
+  workset.transientTerms = ! Teuchos::nonnull(xd);
+  workset.accelerationTerms = ! Teuchos::nonnull(xdd);
+}
 } // namespace
 
 void
@@ -720,6 +735,8 @@ computeGlobalResidualImplT(
 
   // Set data in Workset struct, and perform fill via field manager
   {
+    if (solMgrT->using_rcm()) solMgrT->get_rcm()->init_x_if_not(xT->getMap());
+
     PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time")) {
@@ -752,14 +769,12 @@ computeGlobalResidualImplT(
 
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    workset.xT = xT;
+    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
 
@@ -1003,9 +1018,7 @@ computeGlobalJacobianImplT(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    workset.xT = xT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -1472,10 +1485,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.JVT = JVT;
     workset.j_coeff = beta;
     workset.n_coeff = omega;
-    workset.xT = xT;
     workset.VxT = VxT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -1694,9 +1705,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    workset.xT = xT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
 
     loadWorksetNodesetInfo(workset);
 
@@ -1771,9 +1780,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    workset.xT = xT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
 
     loadWorksetNodesetInfo(workset);
 
@@ -3638,7 +3645,10 @@ void Albany::Application::loadBasicWorksetInfoT(
        double current_time)
 {
     workset.numEqs = neq;
-    workset.xT        = solMgrT->get_overlapped_xT();
+    if (solMgrT->using_rcm())
+      workset.xT = solMgrT->get_rcm()->add_x_ol(solMgrT->get_overlapped_xT());
+    else
+      workset.xT = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;
@@ -3746,7 +3756,10 @@ void Albany::Application::setupBasicWorksetInfoT(
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  workset.xT = overlapped_xT;
+  if (solMgrT->using_rcm())
+    workset.xT = solMgrT->get_rcm()->add_x_ol(overlapped_xT);
+  else
+    workset.xT = overlapped_xT;
   workset.xdotT = overlapped_xdotT;
   workset.xdotdotT = overlapped_xdotdotT;
   workset.distParamLib = distParamLib;

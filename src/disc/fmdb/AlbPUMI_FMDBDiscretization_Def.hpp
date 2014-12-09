@@ -378,6 +378,14 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::
+createField(const char* name, int value_type)
+{
+  apf::createFieldOn(fmdbMeshStruct->getMesh(), name, value_type);
+  apf::zeroField(fmdbMeshStruct->getMesh()->findField(name));
+}
+
+template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {

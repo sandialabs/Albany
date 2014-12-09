@@ -177,6 +177,8 @@ template<class Output>
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         ST* dataT, bool overlapped) const;
 
+    void createField(const char* name, int value_type);
+
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
 
