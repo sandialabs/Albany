@@ -61,7 +61,7 @@ Topology::Topology(
   adapt_params->set<std::string>("Method", "Topmod");
 
   std::string const
-  bulk_block_name = "Bulk";
+  bulk_block_name = "Bulk Element";
 
   adapt_params->set<std::string>("Bulk Block Name", bulk_block_name);
 
