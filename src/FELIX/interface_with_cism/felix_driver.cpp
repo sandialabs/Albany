@@ -351,6 +351,11 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_north_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_north_face_conn_active","connectivity");  
     global_north_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_north_face_id_active_owned_map","connectivity");  
     dirichlet_node_mask_Ptr = ftg_ptr -> getInt4Var("dirichlet_node_mask","connectivity");  
+   //get pointers to uvel and vvel from CISM for prescribing Dirichlet BC
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver: grabbing pointers to u and v velocities in CISM..." << std::endl; 
+    uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity"); 
+    vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity"); 
 
 
     // ---------------------------------------------
@@ -398,6 +403,19 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, rho_ice/rho_seawater));
       parameterList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS Lateral for DOF all set lateral", *inputArrayLateral);  
     }
+    //Dirichlet BCs
+    if (dirichlet_node_mask_Ptr != NULL) {
+      if ((uVel_ptr != NULL) && (vVel_ptr != NULL) ) {
+        if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "Setting Dirichlet BCs from CISM..." << std::endl;
+        parameterList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS NodeSetDirichlet for DOF U0 prescribe Field", "dirichlet_field");
+        parameterList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS NodeSetDirichlet for DOF U1 prescribe Field", "dirichlet_field");
+        if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "...done." << std::endl;
+      }
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+          std::endl << "Error in felix_driver: cannot set Dirichlet BC from CISM; pointers to uvel and vvel passed from CISM are null."                    << std::endl);
+      }
+    }
 
  
    //IK, 11/20/14: pass gravity, ice density, and water density values to Albany.  These are needed 
@@ -431,6 +449,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            global_north_face_id_active_owned_map_Ptr, 
                                                            global_north_face_conn_active_Ptr,
                                                            dirichlet_node_mask_Ptr, 
+                                                           uVel_ptr, vVel_ptr,  
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, 
                                                            dsurf_height_at_nodes_dx_Ptr, dsurf_height_at_nodes_dy_Ptr,
                                                            thick_at_nodes_Ptr, 

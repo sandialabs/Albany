@@ -48,6 +48,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const int * global_north_face_active_owned_map_Ptr,
                   const int * global_north_face_conn_active_Ptr,
                   const int * dirichlet_node_mask_Ptr,
+                  const double * uvel_at_nodes_Ptr,
+                  const double * vvel_at_nodes_Ptr, 
                   const double * beta_at_nodes_Ptr,
                   const double * surf_height_at_nodes_Ptr,
                   const double * dsurf_height_at_nodes_dx_Ptr,
@@ -100,6 +102,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   northFacesID = new GO[NumNorthFaces]; 
   flwa = new double[NumEles];
   beta = new double[NumNodes];
+  uvel = new double[NumNodes];
+  vvel = new double[NumNodes];
   //TO DO? pass in temper?  for now, flwa is passed instead of temper
   //temper = new double[NumEles];
 
@@ -168,8 +172,12 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   if (have_dirichlet) {
     for (int i=0; i<NumNodes; i++) {
       dirichletNodeMask[i] = dirichlet_node_mask_Ptr[i];
+      uvel[i] = uvel_at_nodes_Ptr[i]; 
+      vvel[i] = vvel_at_nodes_Ptr[i]; 
       //*out << "i: " << i << ", x: " << xyz[i][0] 
       //     << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", dirichlet: " << dirichletNodeMask[i] << std::endl;
+      *out << "i: " << i << ", x: " << xyz[i][0] 
+           << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", uvel: " << uvel[i] << ", vvel: " << vvel[i] << std::endl;
     }
   }
 
@@ -351,6 +359,8 @@ Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
   delete [] eastFacesID;
   delete [] southFacesID;
   delete [] northFacesID;
+  delete [] uvel; 
+  delete [] vvel; 
 }
 
 void
@@ -390,6 +400,7 @@ Albany::CismSTKMeshStruct::constructMesh(
   ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
   ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
+  VectorFieldType* dirichlet_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "dirichlet_field");
 
   if(!surfaceHeight_field)
      have_sh = false;
@@ -791,6 +802,59 @@ Albany::CismSTKMeshStruct::constructMesh(
        //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
        temperature[0] = temper[i];
      }
+     
+     //set Dirichlet BCs to those passed from CISM.
+     if (have_dirichlet) {
+       std::cout << "setting dirichlet" << std::endl; 
+       double* dirichlet = stk::mesh::field_data(*dirichlet_field,llnode);
+       node_GID = eles[i][0]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, lrnode);
+       node_GID = eles[i][1]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, urnode);
+       node_GID = eles[i][2]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, ulnode);
+       node_GID = eles[i][3]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, llnodeb);
+       node_GID = eles[i][4]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, lrnodeb);
+       node_GID = eles[i][5]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+       
+       dirichlet = stk::mesh::field_data(*dirichlet_field, urnodeb);
+       node_GID = eles[i][6]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, ulnodeb);
+       node_GID = eles[i][7]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+     }
+
      if (have_beta) {
        double* bFriction; 
        bFriction = stk::mesh::field_data(*basal_friction_field, llnode);

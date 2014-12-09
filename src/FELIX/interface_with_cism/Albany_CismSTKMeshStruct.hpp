@@ -38,6 +38,8 @@ namespace Albany {
                   const int * global_north_face_active_owned_map_Ptr,
                   const int * global_north_face_conn_active_Ptr,
                   const int * dirichlet_node_mask_Ptr, 
+                  const double * uvel_at_nodes_Ptr, 
+                  const double * vvel_at_nodes_Ptr, 
                   const double * beta_at_nodes_Ptr, 
                   const double * surf_height_at_nodes_Ptr, 
                   const double * dsurf_height_at_nodes_dx_Ptr, 
@@ -122,7 +124,9 @@ namespace Albany {
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_temp; // Does temperature file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
-    bool have_dirichlet; 
+    bool have_dirichlet;
+    double *uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
+    double *vvel;  
     int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
     int (*wf)[5]; 
     int (*ef)[5]; 
