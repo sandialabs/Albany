@@ -71,8 +71,8 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   NumNodes = nNodes;
   NumEles = nElementsActive;
   NumBasalFaces = nCellsActive;
-  NumWestFaces = nWestFacesActive; 
-  NumEastFaces = nEastFacesActive; 
+  NumWestFaces =  nWestFacesActive; 
+  NumEastFaces =  nEastFacesActive; 
   NumSouthFaces = nSouthFacesActive; 
   NumNorthFaces = nNorthFacesActive; 
   debug_output_verbosity = verbosity;
@@ -957,10 +957,10 @@ Albany::CismSTKMeshStruct::constructMesh(
        stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  3 /*local side id*/);
 
-       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][1], nodePartVec);
-       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][2], nodePartVec);
-       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][3], nodePartVec);
-       stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][4], nodePartVec);
+       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][1], nodePartVec); //OK
+       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][2], nodePartVec); //OK
+       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][3], nodePartVec); //OK
+       stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][4], nodePartVec); //OK
        
        bulkData->declare_relation(side, llnode, 0);
        bulkData->declare_relation(side, llnodeb, 2);
@@ -983,9 +983,9 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(elem, side,  1 /*local side id*/);
 
        stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][1], nodePartVec);
-       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][2], nodePartVec);
+       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][2], nodePartVec);
        stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][3], nodePartVec);
-       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][4], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][4], nodePartVec);
        
        bulkData->declare_relation(side, lrnode, 0);
        bulkData->declare_relation(side, urnode, 1);
@@ -1031,9 +1031,9 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(elem, side,  2 /*local side id*/);
 
        stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][1], nodePartVec);
-       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][2], nodePartVec);
+       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][2], nodePartVec);
        stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][3], nodePartVec);
-       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][4], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][4], nodePartVec);
        
        bulkData->declare_relation(side, urnode, 0);
        bulkData->declare_relation(side, ulnode, 1);
