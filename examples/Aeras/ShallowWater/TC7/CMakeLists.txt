@@ -9,8 +9,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/REF0007.cdf
                ${CMAKE_CURRENT_BINARY_DIR}/REF0007.cdf COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/grid_and_IC_16_quad9_dummy.nc
                ${CMAKE_CURRENT_BINARY_DIR}/grid_and_IC_16_quad9_dummy.nc COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/grid_and_IC_16_quad9.g
-               ${CMAKE_CURRENT_BINARY_DIR}/grid_and_IC_16_quad9.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tc7_errorplot.ncl
                ${CMAKE_CURRENT_BINARY_DIR}/tc7_errorplot.ncl COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tc7_plot_init_conditions.ncl
@@ -23,6 +21,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/README
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA)
-add_test(Aeras_${testName}_Serial ${SerialAlbany.exe})
+add_test(Aeras_${testName} ${Albany.exe})
 endif()
 

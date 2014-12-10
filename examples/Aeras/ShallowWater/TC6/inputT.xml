@@ -35,7 +35,7 @@
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="3"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{3176.22270026, 10561.8102807, 746272.911082}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3176.21792262, 10550.5224039, 746276.610981}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -44,7 +44,10 @@
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="11280"/>
+      <Parameter name="Final Time" type="double" value="540"/>
+      <!-- Originally final time was 11280; reduced it for nightly tests (IK, 10/8/14) -->
+      <!--Parameter name="Final Time" type="double" value="11280"/-->
+      <!-- change to 12*24*3600 to get full 12 days -->
       <!--Parameter name="Max State Error" type="double" value="0.05"/>
       <Parameter name="Alpha"           type="double" value="0.0"/-->
       <ParameterList name="Rythmos Stepper">
@@ -54,7 +57,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Fixed dt" type="double" value="360"/>
+        <Parameter name="Fixed dt" type="double" value="180"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">
