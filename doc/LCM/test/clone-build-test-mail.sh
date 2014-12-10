@@ -8,11 +8,11 @@ for PACKAGE in $PACKAGES; do
     case "$PACKAGE" in
 	trilinos)
 	    PACKAGE_NAME="Trilinos"
-	    REPO="https://github.com/trilinos/trilinos.git"
+	    REPO="software.sandia.gov:/space/git/Trilinos"
 	    ;;
 	albany)
 	    PACKAGE_NAME="Albany"
-	    REPO="https://github.com/gahansen/Albany.git"
+	    REPO="git@github.com:gahansen/Albany.git"
 	    ;;
 	*)
 	    echo "Unrecognized package option"
