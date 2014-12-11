@@ -176,8 +176,10 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
       vvel[i] = vvel_at_nodes_Ptr[i]; 
       //*out << "i: " << i << ", x: " << xyz[i][0] 
       //     << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", dirichlet: " << dirichletNodeMask[i] << std::endl;
+      /*if (abs(uvel[i]) > 0) {
       *out << "i: " << i << ", x: " << xyz[i][0] 
            << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", uvel: " << uvel[i] << ", vvel: " << vvel[i] << std::endl;
+      }*/
     }
   }
 
@@ -805,7 +807,6 @@ Albany::CismSTKMeshStruct::constructMesh(
      
      //set Dirichlet BCs to those passed from CISM.
      if (have_dirichlet) {
-       std::cout << "setting dirichlet" << std::endl; 
        double* dirichlet = stk::mesh::field_data(*dirichlet_field,llnode);
        node_GID = eles[i][0]-1;
        node_LID = node_mapT->getLocalElement(node_GID);

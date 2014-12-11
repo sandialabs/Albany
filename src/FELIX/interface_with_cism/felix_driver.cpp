@@ -98,6 +98,8 @@ int * global_north_face_id_active_owned_map_Ptr;
 int * dirichlet_node_mask_Ptr;
 double *uVel_ptr; 
 double *vVel_ptr; 
+double *uvel_at_nodes_Ptr; 
+double *vvel_at_nodes_Ptr; 
 bool first_time_step = true;
 #ifdef CISM_USE_EPETRA 
   Teuchos::RCP<Epetra_Map> node_map; 
@@ -354,8 +356,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
    //get pointers to uvel and vvel from CISM for prescribing Dirichlet BC
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
       std::cout << "In felix_driver: grabbing pointers to u and v velocities in CISM..." << std::endl; 
-    uVel_ptr = ftg_ptr ->getDoubleVar("uvel", "velocity"); 
-    vVel_ptr = ftg_ptr ->getDoubleVar("vvel", "velocity"); 
+    uvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("uvel_at_nodes", "connectivity"); 
+    vvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("vvel_at_nodes", "connectivity"); 
 
 
     // ---------------------------------------------
@@ -405,7 +407,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     }
     //Dirichlet BCs
     if (dirichlet_node_mask_Ptr != NULL) {
-      if ((uVel_ptr != NULL) && (vVel_ptr != NULL) ) {
+      if ((uvel_at_nodes_Ptr != NULL) && (vvel_at_nodes_Ptr != NULL) ) {
         if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) std::cout << "Setting Dirichlet BCs from CISM..." << std::endl;
         parameterList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS NodeSetDirichlet for DOF U0 prescribe Field", "dirichlet_field");
         parameterList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS NodeSetDirichlet for DOF U1 prescribe Field", "dirichlet_field");
@@ -449,7 +451,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            global_north_face_id_active_owned_map_Ptr, 
                                                            global_north_face_conn_active_Ptr,
                                                            dirichlet_node_mask_Ptr, 
-                                                           uVel_ptr, vVel_ptr,  
+                                                           uvel_at_nodes_Ptr, vvel_at_nodes_Ptr,  
                                                            beta_at_nodes_Ptr, surf_height_at_nodes_Ptr, 
                                                            dsurf_height_at_nodes_dx_Ptr, dsurf_height_at_nodes_dy_Ptr,
                                                            thick_at_nodes_Ptr, 
