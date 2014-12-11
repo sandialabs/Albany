@@ -60,7 +60,6 @@ ALBANY_BUILD_TYPES = \
         ("TRILINOS_RBGEN", "ON"),
         ("TRILINOS_SCOREC", "ON"),
         ("TRILINOS_THREADPOOL", "ON"),
-        ("TRILINOS_THYRA_TPETRA_ADAPTORS", "ON"),
         ("TRILINOS_COUPLINGS", "ON"),
         ("TRILINOS_ZOLTAN2_EXPERIMENTAL", "ON"),
     ],
