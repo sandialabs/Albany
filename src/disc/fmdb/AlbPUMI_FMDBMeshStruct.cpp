@@ -19,6 +19,10 @@
 #include <Shards_BasicTopologies.hpp>
 
 #include <gmi_mesh.h>
+#ifdef SCOREC_SIMMODEL
+#include <gmi_sim.h>
+#include <SimUtil.h>
+#endif
 #include <apfShape.h>
 #include <ma.h>
 #include <PCU.h>
@@ -71,16 +75,21 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
   gmi_register_mesh();
 
-  assert(!params->isParameter("Acis Model Input File Name"));
-
   std::string model_file;
-  if(params->isParameter("Parasolid Model Input File Name")){
-    model_file = params->get<std::string>("Parasolid Model Input File Name");
-    gmi_register_parasolid();
-  }
-
   if(params->isParameter("Mesh Model Input File Name"))
     model_file = params->get<std::string>("Mesh Model Input File Name");
+
+#ifdef SCOREC_SIMMODEL
+  Sim_readLicenseFile(0);
+  gmi_sim_start();
+  gmi_register_sim();
+
+  if (params->isParameter("Acis Model Input File Name"))
+    model_file = params->get<std::string>("Parasolid Model Input File Name");
+
+  if(params->isParameter("Parasolid Model Input File Name"))
+    model_file = params->get<std::string>("Parasolid Model Input File Name");
+#endif
 
   mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
   model = mesh->getModel();
@@ -178,9 +187,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     for (int eb=0; eb<numEB; eb++)
     {
       std::string EB_name = sets[d][eb].stkName;
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cubatureDegree,
-                                              nsNames, ssNames, worksetSize, EB_name,
-                                              this->ebNameToIndex, this->interleavedOrdering));
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+          *ctd, numDim, cubatureDegree, nsNames, ssNames, worksetSize, EB_name,
+          this->ebNameToIndex, this->interleavedOrdering, true));
     } // for
   } // else
 
@@ -191,6 +200,10 @@ AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
   mesh->destroyNative();
   apf::destroyMesh(mesh);
   PCU_Comm_Free();
+#ifdef SCOREC_SIMMODEL
+  gmi_sim_stop();
+  Sim_unregisterAllKeys();
+#endif
 }
 
 void

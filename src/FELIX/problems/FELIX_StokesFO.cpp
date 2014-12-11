@@ -184,6 +184,7 @@ FELIX::StokesFO::getValidProblemParameters() const
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
+  validPL->sublist("Physical Parameters", false, "");
   return validPL;
 }
 

@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#if !defined(AAdapt_TopologyMOdification_hpp)
-#define AAdapt_TopologyMOdification_hpp
+#if !defined(AAdapt_TopologyModification_hpp)
+#define AAdapt_TopologyModification_hpp
 
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -157,4 +157,4 @@ private:
 
 }
 
-#endif //ALBANY_TOPOLOGYMOD_HPP
+#endif //AAdapt_TopologyModification_hpp

@@ -271,7 +271,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
       // Create data structures for passing information to/from Intrepid.
 
-      // \todo I think these call all just be Intrepid::FieldContainer<RealType> and that what's below is overkill
+      // \todo I think these can all just be Intrepid::FieldContainer<RealType> and that what's below is overkill
 
       // Physical points, which are the physical (x, y, z) values of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));

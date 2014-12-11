@@ -46,7 +46,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint, Dim> surfaceGrad;
   Teuchos::Array<double> gravity;
-  
+
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> force;
 
@@ -64,7 +64,10 @@ private:
   double n; 
   double A;
   //ISMIP-HOM parameter
-  double alpha; 
+  double alpha;
+  //physical parameters
+  double g; //gravity
+  double rho; //ice density  
 };
 }
 

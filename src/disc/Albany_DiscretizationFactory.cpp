@@ -186,6 +186,7 @@ void createInterfaceParts(
               element_block_name,
               eb_name_to_index_map,
               is_interleaved,
+              number_blocks > 1,
               cubature_rule));
 
   return;

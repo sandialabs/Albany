@@ -37,7 +37,12 @@ namespace Albany {
       PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       Teuchos::ParameterList& responseList, 
       Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem, 
-      Albany::StateManager& stateMgr);
+      Albany::StateManager& stateMgr,
+      // Optionally provide the MeshSpecsStruct. This is relevant only if the
+      // response function needs to know whether there are separate field
+      // managers for each element block. We can't use an RCP here because at
+      // the caller's level meshSpecs is a raw ref, so ownership is unknown.
+      const Albany::MeshSpecsStruct* meshSpecs = NULL);
 
     //! Utility for parsing response requests and creating response field manager
     //! (Convenience overload in the absence of parameters list from problem)

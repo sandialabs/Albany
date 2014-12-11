@@ -38,7 +38,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
-
+ 
   // The DOF offsets are contained in the Equation Offset array. The length of this array are the
   // number of DOFs we will set each call
   numDOFsSet = offset.size();
@@ -230,13 +230,29 @@ NeumannBase(const Teuchos::ParameterList& p) :
         bc_type = LATERAL;
         beta_type = LATERAL_BACKPRESSURE;
 
-        for(int i = 0; i < 5; i++) {
-          std::stringstream ss; ss << name << "[" << i << "]";
-          this->registerSacadoParameter(ss.str(), paramLib);
-        }
-         PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
+        g = p.get<double>("Gravity");
+        rho = p.get<double>("Ice Density");
+        rho_w = p.get<double>("Water Density");
+
+#ifdef OUTPUT_TO_SCREEN
+        std::cout << "g, rho, rho_w: " << g << ", " << rho << ", " << rho_w << std::endl;
+#endif
+      robin_vals[0] = inputValues[0]; // immersed ratio
+
+      int numInputs = inputValues.size(); //number of arguments user entered at command line.
+
+      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1. 
+      for (int i = numInputs; i < 5; i++) 
+        robin_vals[i] = 0.0;
+        
+      //The following should really go to 1 but above backward compatibility line keeps this at length 5.
+      for(int i = 0; i < 5; i++) {
+        std::stringstream ss; ss << name << "[" << i << "]";
+        this->registerSacadoParameter(ss.str(), paramLib);
+      }
+       PHX::MDField<ScalarT,Cell,Node,VecDim> tmp(p.get<std::string>("DOF Name"),
              p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
-         dofVec = tmp;
+       dofVec = tmp;
 #ifdef ALBANY_FELIX
        thickness_field = PHX::MDField<ScalarT,Cell,Node>(
                            p.get<std::string>("thickness Field Name"), dl->node_scalar);
@@ -353,14 +369,14 @@ postRegistrationSetup(typename Traits::SetupData d,
 #ifdef ALBANY_FELIX
   else if (inputConditions == "basal" || inputConditions == "basal_scalar_field")
   {
-          this->utils.setFieldData(dofVec,fm);
-          this->utils.setFieldData(beta_field,fm);
+    this->utils.setFieldData(dofVec,fm);
+    this->utils.setFieldData(beta_field,fm);
   }
   else if(inputConditions == "lateral")
   {
-          this->utils.setFieldData(dofVec,fm);
-          this->utils.setFieldData(thickness_field,fm);
-          this->utils.setFieldData(elevation_field,fm);
+    this->utils.setFieldData(dofVec,fm);
+    this->utils.setFieldData(thickness_field,fm);
+    this->utils.setFieldData(elevation_field,fm);
   }
 #endif
   // Note, we do not need to add dependent field to fm here for output - that is done
@@ -1051,33 +1067,32 @@ calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
   Intrepid::FunctionSpaceTools::scalarMultiplyDataData<MeshScalarT>(side_normals, normal_lengths,
     side_normals, true);
 
-  if (beta_type == LATERAL_BACKPRESSURE)
-  {
-          const double g = 9.8;
-          const double rho = 910;
-          const double rho_w = 1028;
-          for(int cell = 0; cell < numCells; cell++) {
-                for(int pt = 0; pt < numPoints; pt++) {
-                        ScalarT H = thickness_side(cell, pt);
-                        ScalarT s = elevation_side(cell, pt);
-                        ScalarT immersedRatio = 0.;
-                        if(H > 1e-8) //make sure H is not too small
-                        {
-                                ScalarT ratio = s/H;
-                                if(ratio < 0.)          //ice is completely under sea level
-                                        immersedRatio = 1;
-                                else if(ratio < 1)      //ice is partially under sea level
-                                        immersedRatio = 1. - ratio;
-                        }
-                        ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
-
-                        for(int dim = 0; dim < numDOFsSet; dim++)
-                                qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
-
-                }
+  const ScalarT &immersedRatioProvided = robin_vals[0];
+  if (beta_type == LATERAL_BACKPRESSURE)  {
+    for(int cell = 0; cell < numCells; cell++) {
+      for(int pt = 0; pt < numPoints; pt++) {
+        ScalarT H = thickness_side(cell, pt);
+        ScalarT s = elevation_side(cell, pt);
+        ScalarT immersedRatio = 0.;
+        if (immersedRatioProvided == 0) { //default case: immersedRatio calculated inside the code from s and H
+          if (H > 1e-8) { //make sure H is not too small
+            ScalarT ratio = s/H;
+            if(ratio < 0.)          //ice is completely under sea level
+              immersedRatio = 1;
+            else if(ratio < 1)      //ice is partially under sea level
+              immersedRatio = 1. - ratio;
+          }
+         }
+         else {
+           immersedRatio = immersedRatioProvided; //alteranate case: immersedRatio is set to some value given in the input file
+         }
+        ScalarT normalStress = - 0.5 * g *  H * (rho - rho_w * immersedRatio*immersedRatio);
+        for(int dim = 0; dim < numDOFsSet; dim++)
+          qp_data_returned(cell, pt, dim) =  normalStress * side_normals(cell,pt,dim);
       }
     }
   }
+}
 
 // **********************************************************************
 // Specialization: Residual

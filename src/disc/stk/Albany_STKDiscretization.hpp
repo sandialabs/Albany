@@ -183,8 +183,9 @@ namespace Albany {
     void writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped = false);
 #endif
    
-   //Tpetra version of writeSolution  
    void writeSolutionT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
+   void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false);
+   void writeSolutionToFileT(const Tpetra_Vector& solnT, const double time, const bool overlapped = false);
 
 #ifdef ALBANY_EPETRA 
     Teuchos::RCP<Epetra_Vector> getSolutionField(const bool overlapped=false) const;

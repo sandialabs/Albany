@@ -40,6 +40,15 @@ namespace AlbPUMI {
 
     virtual void reNameExodusOutput(const std::string& str) = 0;
 
+    //! Create a new field having a name and a value_type of apf::SCALAR,
+    //! apf::VECTOR, or apf::MATRIX.
+    virtual void createField(const char* name, int value_type) = 0;
+    //! Copy field data to APF.
+    virtual void setField(const char* name, const ST* data, bool overlapped,
+                          int offset = 0) = 0;
+    //! Copy field data from APF.
+    virtual void getField(const char* name, ST* dataT, bool overlapped,
+                          int offset = 0) const = 0;
   };
 
 }

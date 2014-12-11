@@ -3,7 +3,7 @@
     <Parameter name="Name" type="string" value="Mechanics 2D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="MaterialDB Filename" type="string" value="crystal_elasticity_material_2d.xml"/> -->
+    <Parameter name="MaterialDB Filename" type="string" value="CrystalElasticity2d_Material.xml"/> -->
     <!-- System Geometry: 
          nodeset 0 defined by X = 0 (left side)
          nodeset 1 defined by X = 1 (right side)
@@ -13,8 +13,8 @@
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS NodeSet3 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.1}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.1}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 1.0}"/>
       </ParameterList>
       <Parameter name="DBC on NS NodeSet3 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS NodeSet2 for DOF X" type="double" value="0.0"/>
@@ -34,7 +34,15 @@
     <Parameter name="2D Elements" type="int" value="1"/>
     <Parameter name="Workset Size" type="int" value="300"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="elastic_shear_2d.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="ElasticShear2d.exo"/>
+    <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
+    <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
+  </ParameterList>
+  <!-- The regression test examines "Response 0", as defined above. -->
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.025}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-12"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
@@ -100,7 +108,7 @@
                   </ParameterList>
                 </ParameterList>
               </ParameterList>
-              <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+              <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack">
                   <Parameter name="Overlap" type="int" value="2"/>

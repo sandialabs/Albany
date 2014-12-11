@@ -1,0 +1,52 @@
+#! /bin/bash -xe
+
+# Should only be run by Jenkins!
+
+#
+# Initial setup
+#
+
+DUMMY1=${WORKSPACE:?WORKSPACE not set}
+$ALBDIR/tools/test_scripts/jenkins-test-preamble
+
+#
+# Do Dakota checkout
+#
+if [ ${TRILINOS_TRIKOTA:-OFF} = "ON" ]
+then
+    $ALBDIR/tools/checkout_scripts/dakota-checkout
+fi
+
+#
+# Do SCOREC checkout
+#
+if [ ${TRILINOS_SCOREC:-OFF} = "ON" ]
+then
+    $ALBDIR/tools/checkout_scripts/scorec-checkout
+fi
+
+#
+# Do Trilinos build
+#
+
+cd $TRILBUILDDIR
+
+$ALBDIR/tools/build_scripts/cmake_fragments/do-cmake-trilinos
+
+make -j 4 install
+
+#
+# Do Albany build
+#
+
+cd $ALBBUILDDIR
+
+$ALBDIR/tools/build_scripts/cmake_fragments/do-cmake-albany
+
+make -j 4
+
+#
+# Run tests
+#
+
+ctest

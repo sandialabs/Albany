@@ -55,7 +55,7 @@ SET(HEADERS
   Albany_ObserverImpl.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
-  Albany_DistributedParameterDerivativeOp.hpp
+  Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
   )
 
@@ -63,6 +63,7 @@ IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS} 
     Albany_PiroObserver.hpp
     Albany_ModelEvaluator.hpp
+    Albany_DistributedParameterDerivativeOp.hpp
     Albany_SaveEigenData.hpp
     Albany_EigendataInfoStruct.hpp
     Albany_RythmosObserver.hpp
@@ -209,6 +210,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_DirichletField.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_ComputeBasisFunctions.cpp
@@ -296,6 +298,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Dirichlet_Def.hpp
   evaluators/PHAL_DirichletCoordinateFunction.hpp
   evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
+  evaluators/PHAL_DirichletField.hpp
+  evaluators/PHAL_DirichletField_Def.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/PHAL_Neumann.hpp
@@ -805,16 +809,19 @@ IF (ALBANY_ATO AND ALBANY_EPETRA)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
 ENDIF()
 
+IF (ALBANY_HYDRIDE)
+  # Hydride requires LCM. However, LCM builds several excecutables. If shared
+  # libraries are used, then all symbols must be defined. Hence
+  # add_subdirectory(Hydride) must be called before, not after,
+  # add_subdirectory(LCM) so that LCM/CMakeLists.txt knows about the Hydride
+  # shared lib.
+  add_subdirectory(Hydride)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride)
+ENDIF()
+
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
-
-  IF (ALBANY_HYDRIDE)
-    #Hydride requires LCM
-    add_subdirectory(Hydride)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride LCM)
-  ELSE()
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
-  ENDIF()
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again

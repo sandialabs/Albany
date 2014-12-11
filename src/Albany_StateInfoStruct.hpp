@@ -46,13 +46,14 @@ typedef std::vector<StateArray> StateArrayVec;
     MeshSpecsStruct(const CellTopologyData& ctd_, int numDim_,
                     int cubatureDegree_, std::vector<std::string> nsNames_,
                     std::vector<std::string> ssNames_,
-                    int worsetSize_, const std::string ebName_,
+                    int worksetSize_, const std::string ebName_,
                     std::map<std::string, int>& ebNameToIndex_, bool interleavedOrdering_,
+                    const bool sepEvalsByEB_ = false,
                     const Intrepid::EIntrepidPLPoly cubatureRule_ = Intrepid::PL_GAUSS)
        :  ctd(ctd_), numDim(numDim_), cubatureDegree(cubatureDegree_),
-          nsNames(nsNames_), ssNames(ssNames_), worksetSize(worsetSize_),
+          nsNames(nsNames_), ssNames(ssNames_), worksetSize(worksetSize_),
           ebName(ebName_), ebNameToIndex(ebNameToIndex_),
-          interleavedOrdering(interleavedOrdering_),
+          interleavedOrdering(interleavedOrdering_), sepEvalsByEB(sepEvalsByEB_),
           cubatureRule(cubatureRule_) {}
     CellTopologyData ctd;  // nonconst to allow replacement when the mesh adapts
     int numDim;
@@ -63,6 +64,12 @@ typedef std::vector<StateArray> StateArrayVec;
     std::string ebName;  //Element block name for the EB that this struct corresponds to
     std::map<std::string, int>& ebNameToIndex;
     bool interleavedOrdering;
+    // Records "Separate Evaluators by Element Block". This says whether there
+    // are as many MeshSpecsStructs as there are element blocks. If there is
+    // only one element block in the problem, then the value of this boolean
+    // doesn't matter. It is intended that interface blocks (LCM) don't count,
+    // but the user must enforce this intention.
+    bool sepEvalsByEB;
     const Intrepid::EIntrepidPLPoly cubatureRule;
   };
 

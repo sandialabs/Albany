@@ -41,10 +41,12 @@ namespace Albany {
       const Teuchos::RCP<const Tpetra_Map>& overlapped_map_) :
       param_name(param_name_),
       vec(vec_),
+      lower_bounds_vec(new Tpetra_Vector(owned_map_, false)),
+      upper_bounds_vec(new Tpetra_Vector(owned_map_, false)),
       owned_map(owned_map_),
       overlapped_map(overlapped_map_) {
       importer = Teuchos::rcp(new Tpetra_Import(owned_map, overlapped_map));
-      exporter = Teuchos::rcp(new Tpetra_Export(owned_map, overlapped_map));
+      exporter = Teuchos::rcp(new Tpetra_Export(overlapped_map, owned_map));
       overlapped_vec = Teuchos::rcp(new Tpetra_Vector(overlapped_map, false));
     }
 
@@ -84,6 +86,16 @@ namespace Albany {
       return overlapped_vec;
     }
 
+    //! Get lower bounds vector
+    virtual Teuchos::RCP<vector_type> lower_bounds_vector() const {
+      return lower_bounds_vec;
+    }
+
+    //! Get upper bounds vector
+    virtual Teuchos::RCP<vector_type> upper_bounds_vector() const {
+      return upper_bounds_vec;
+    }
+
     //! Import vector from owned to overlap maps
     virtual void import(multi_vector_type& dst,
                         const multi_vector_type& src) const {
@@ -108,6 +120,10 @@ namespace Albany {
 
     //! Tpetra_Vector storing distributed parameter
     Teuchos::RCP<Tpetra_Vector> vec;
+
+    Teuchos::RCP<Tpetra_Vector> lower_bounds_vec;
+
+    Teuchos::RCP<Tpetra_Vector> upper_bounds_vec;
 
     //! Overlapped Tpetra_Vector storing distributed parameter
     Teuchos::RCP<Tpetra_Vector> overlapped_vec;

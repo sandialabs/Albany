@@ -216,21 +216,25 @@ Subgraph::vertexFromEntity(stk::mesh::Entity entity)
 Vertex
 Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
 {
-  // Insert the vertex into the stk mesh
-  // First have to request a new entity of rank N
-  // number of entity ranks: 1 + number of dimensions
-  std::vector<size_t>
-  requests(get_space_dimension() + 1, 0);
+  get_topology().increase_highest_id(vertex_rank);
 
-  requests[vertex_rank] = 1;
+  stk::mesh::EntityId
+  low_id = get_topology().get_highest_id(vertex_rank);
 
-  stk::mesh::EntityVector
-  new_entities;
+  size_t const
+  dimension = get_space_dimension();
 
-  get_bulk_data().generate_new_entities(requests, new_entities);
+  int const
+  parallel_rank = get_bulk_data().parallel_rank();
+
+  stk::mesh::EntityId
+  high_id = high_id_from_low_id(dimension, parallel_rank, vertex_rank, low_id);
+
+  stk::mesh::PartVector
+  add_parts;
 
   stk::mesh::Entity
-  entity = new_entities[0];
+  entity = get_bulk_data().declare_entity(vertex_rank, high_id, add_parts);
 
   // Add the vertex to the subgraph
   Vertex
@@ -622,6 +626,13 @@ Subgraph::cloneBoundaryVertex(Vertex boundary_vertex)
   // Add edge to new vertex
   addEdge(edge_id, source, vertex_clone);
 
+  // Assign topology here, otherwise STK complains when we add and
+  // remove edges from entities that their count is not correct.
+  stk::mesh::Entity
+  entity_clone = entityFromVertex(vertex_clone);
+
+  get_topology().AssignTopology(boundary_rank, entity_clone);
+
   return vertex_clone;
 }
 
@@ -682,7 +693,7 @@ EntityEntityMap
 Subgraph::splitArticulation(Vertex articulation_vertex)
 {
   stk::mesh::EntityRank
-  articulation_rank = Subgraph::getVertexRank(articulation_vertex);
+  articulation_rank = getVertexRank(articulation_vertex);
 
   size_t
   num_components;
@@ -839,6 +850,13 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
     inserted = addEdge(edge_id, source_vertex, split_vertex);
 
     assert(inserted.second == true);
+
+    // Assign topology here, otherwise STK complains when we add and
+    // remove edges from entities that their count is not correct.
+    stk::mesh::Entity
+    split_entity = entityFromVertex(split_vertex);
+
+    get_topology().AssignTopology(articulation_rank, split_entity);
   }
 
   return entity_split_point_map;

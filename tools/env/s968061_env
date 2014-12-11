@@ -1,0 +1,13 @@
+export SSGUSER=$(whoami)
+
+COMMONDIR=/usr/local
+LIBDIR=$COMMONDIR/lib
+INCLUDEDIR=$COMMONDIR/include
+export BLASLIB=$COMMONDIR/opt/openblas/lib/libopenblas.dylib
+export LAPACKLIB=$COMMONDIR/opt/lapack/lib/liblapack.dylib
+export NETCDFDIR=$COMMONDIR
+export HDF5DIR=$COMMONDIR
+export BOOSTDIR=$COMMONDIR
+export GLM_INCLUDE_DIRS=$INCLUDEDIRS
+export GLM_LIBRARY_DIRS=$LIBDIR
+export SUPERLUDIR=$COMMONDIR

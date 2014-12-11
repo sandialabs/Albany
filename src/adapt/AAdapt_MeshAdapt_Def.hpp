@@ -10,15 +10,15 @@
 #include <PCU.h>
 #include <parma.h>
 
-//amb
 #include <Teuchos_DefaultComm.hpp>
 #include <Teuchos_CommHelpers.hpp>
 
 template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-          const Albany::StateManager& StateMgr_) :
-  remeshFileIndex(1)
+          const Albany::StateManager& StateMgr_,
+          const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& refConfigMgr_)
+  : remeshFileIndex(1), rc_mgr(refConfigMgr_)
 {
   disc = StateMgr_.getDiscretization();
 
@@ -40,6 +40,13 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
+
+  if (Teuchos::nonnull(rc_mgr)) {
+    // A field to store the reference configuration x (displacement). At each
+    // adapatation, it will be interpolated to the new mesh.
+    //rc-todo Always apf::VECTOR?
+    pumi_discretization->createField("x_rc", apf::VECTOR);
+  }
 }
 
 template<class SizeField>
@@ -115,13 +122,14 @@ void anlzCoords (
 // called after the current solution's file has been written. Hence it is safe
 // to mess with coordinates and the solution.
 void updateCoordinates (
-  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr)
 {
   //amb-todo Don't do work in apf::getComponents more than once/updateMesh.
   const Teuchos::ArrayRCP<const double>& coords = pumi_disc->getCoordinates();
   const int dim = pumi_disc->getNumDim();
 
-  const Teuchos::RCP<const Tpetra_Vector>
+  Teuchos::RCP<const Tpetra_Vector>
     soln = pumi_disc->getSolutionFieldT(true);
   const Teuchos::ArrayRCP<const ST> soln_data = soln->get1dView();
 
@@ -130,6 +138,16 @@ void updateCoordinates (
   const Teuchos::ArrayRCP<double> x(coords.size());
   for (std::size_t i = 0; i < coords.size(); ++i)
     x[i] = coords[i] + soln_data[i];
+
+  if (Teuchos::nonnull(rc_mgr)) {
+    // Get nonoverlapping solution.
+    soln = pumi_disc->getSolutionFieldT();
+    // x_refconfig += displacement.
+    rc_mgr->update_x(*soln);
+    // Save x_refconfig to the mesh database so it is interpolated after mesh
+    // adaptation.
+    pumi_disc->setField("x_rc", &rc_mgr->get_x()->get1dView()[0], false);
+  }
 
   pumi_disc->setCoordinates(x);
   pumi_disc->zeroSolutionField();
@@ -149,7 +167,7 @@ AAdapt::MeshAdapt<SizeField>::beforeAdapt(
   }
 
   if (adapt_params_->get<bool>("Reference Configuration: Update", false)) {
-    updateCoordinates(pumi_discretization);
+    updateCoordinates(pumi_discretization, rc_mgr);
     mesh->verify();
   }
 
@@ -227,6 +245,15 @@ AAdapt::MeshAdapt<SizeField>::afterAdapt(
   // detach QP fields from the apf mesh
   if (shouldTransferIPData)
     pumi_discretization->detachQPData();
+
+  if (Teuchos::nonnull(rc_mgr)) {
+    // Resize x.
+    rc_mgr->get_x() = Teuchos::rcp(
+      new Tpetra_Vector(pumi_discretization->getSolutionFieldT()->getMap()));
+    // Copy ref config data, now inter'ed to new mesh, into it.
+    pumi_discretization->getField(
+      "x_rc", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
+  }
 }
 
 template <class T>
@@ -316,8 +343,6 @@ AAdapt::MeshAdapt<SizeField>::getValidAdapterParameters(
   validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
   validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
   validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
-  // Reference configuration options.
-  validPL->set<bool>("Reference Configuration: Update", false, "Send coordinates + solution to SCOREC.");
 
   return validPL;
 }
@@ -327,9 +352,10 @@ AAdapt::MeshAdaptT<SizeField>::
 MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
            const Teuchos::RCP<ParamLib>& paramLib_,
            const Albany::StateManager& StateMgr_,
+           const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& refConfigMgr_,
            const Teuchos::RCP<const Teuchos_Comm>& commT_):
   AbstractAdapterT(params_,paramLib_,StateMgr_,commT_),
-  meshAdapt(params_,StateMgr_)
+  meshAdapt(params_,StateMgr_,refConfigMgr_)
 {
 }
 

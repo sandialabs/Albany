@@ -257,14 +257,6 @@ public:
       stk::mesh::EntityRank entity_rank);
 
   ///
-  /// \brief Number of entities of a specific rank
-  ///
-  EntityVectorIndex
-  getNumberEntitiesByRank(
-      stk::mesh::BulkData const & bulk_data,
-      stk::mesh::EntityRank entity_rank);
-
-  ///
   /// \brief Gets the local relation id (0,1,2,...) between two entities
   ///
   EdgeId
@@ -579,6 +571,15 @@ public:
   connectNewFaces();
 
   ///
+  /// \brief Place the entity in the root part that has the stk::topology
+  /// associated with the given rank.
+  ///
+  void
+  AssignTopology(
+      stk::mesh::EntityRank const rank,
+      stk::mesh::Entity const entity);
+
+  ///
   /// Accessors and mutators
   ///
   Topology &
@@ -828,6 +829,28 @@ public:
     return output_type_;
   }
 
+  ///
+  /// \brief Number of entities of a specific rank
+  ///
+  EntityVectorIndex
+  get_num_entities(stk::mesh::EntityRank const entity_rank);
+
+  stk::mesh::EntityId
+  get_highest_id(stk::mesh::EntityRank const rank);
+
+  void
+  increase_highest_id(stk::mesh::EntityRank const rank)
+  {
+    ++highest_ids_[rank];
+  }
+
+  stk::topology
+  get_rank_topology(stk::mesh::EntityRank const rank)
+  {
+    assert(rank < topologies_.size());
+    return topologies_[rank];
+  }
+
 private:
   ///
   /// \brief Create Albany discretization
@@ -837,11 +860,11 @@ private:
   void
   createDiscretization();
 
-  ///
-  /// \brief Assigns Ids to new nodes (not comptabile with STK)
-  /// FIXME check this method
   void
-  setHighestIds();
+  initializeHighestIds();
+
+  void
+  initializeTopologies();
 
   //
   //
@@ -857,7 +880,10 @@ private:
   std::set<EntityPair>
   fractured_faces_;
 
-  std::vector<int>
+  std::vector<stk::topology>
+  topologies_;
+
+  std::vector<stk::mesh::EntityId>
   highest_ids_;
 
   std::string

@@ -109,8 +109,11 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    void writeAnySolution(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToMeshDatabase(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToFile(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 
@@ -173,6 +176,8 @@ template<class Output>
         int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         ST* dataT, bool overlapped) const;
+
+    void createField(const char* name, int value_type);
 
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
@@ -368,15 +373,6 @@ template<class Output>
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-
-    // FELIX unused variables (FIXME)
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type sHeight;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset

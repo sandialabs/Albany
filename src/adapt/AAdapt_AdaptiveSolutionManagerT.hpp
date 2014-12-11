@@ -19,6 +19,8 @@
 
 namespace AAdapt {
 
+class ReferenceConfigurationManager;
+
 class AdaptiveSolutionManagerT : public LOCA::Thyra::AdaptiveSolutionManager {
 public:
     AdaptiveSolutionManagerT(
@@ -57,6 +59,10 @@ public:
        const Tpetra_Vector* x_dotT,
        const Tpetra_Vector* x_dotdotT);
 
+    const Teuchos::RCP<ReferenceConfigurationManager> get_rcm() { return rcm_; }
+    //! Says whether we are using the ReferenceConfigurationManager.
+    bool using_rcm() { return ! get_rcm().is_null(); }
+
 private:
     Teuchos::RCP<Tpetra_Import> importerT;
     Teuchos::RCP<Tpetra_Export> exporterT;
@@ -82,6 +88,8 @@ private:
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::RCP<AAdapt::AbstractAdapterT> adapter_;
+
+    Teuchos::RCP<ReferenceConfigurationManager> rcm_;
 
     void buildAdapter();
 

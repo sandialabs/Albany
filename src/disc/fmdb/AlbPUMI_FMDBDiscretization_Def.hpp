@@ -378,11 +378,36 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& solnT, const double time_value,
-      const bool overlapped)
+void AlbPUMI::FMDBDiscretization<Output>::
+createField(const char* name, int value_type)
+{
+  apf::createFieldOn(fmdbMeshStruct->getMesh(), name, value_type);
+  apf::zeroField(fmdbMeshStruct->getMesh()->findField(name));
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(
+  const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
-  writeAnySolution(&(data[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(data[0]),time_value,overlapped);
+  writeAnySolutionToFile(&(data[0]),time_value,overlapped);
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  writeAnySolutionToMeshDatabase(&(data[0]),time_value,overlapped);
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToFileT(
+  const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  writeAnySolutionToFile(&(data[0]),time_value,overlapped);
 }
 
 #ifdef ALBANY_EPETRA
@@ -390,12 +415,13 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
-  writeAnySolution(&(soln[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(soln[0]),time_value,overlapped);
+  writeAnySolutionToFile(&(soln[0]),time_value,overlapped);
 }
 #endif
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
+void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
@@ -405,7 +431,13 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
     this->setSplitFields(solNames,solIndex,soln,overlapped);
 
   fmdbMeshStruct->solutionInitialized = true;
+}
 
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
+      const ST* soln, const double time_value,
+      const bool overlapped)
+{
   // Skip this write unless the proper interval has been reached
   if (outputInterval++ % fmdbMeshStruct->outputInterval)
     return;
@@ -778,13 +810,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
-  sHeight.resize(numBuckets);
-  temperature.resize(numBuckets);
-  basalFriction.resize(numBuckets);
-  thickness.resize(numBuckets);
-  surfaceVelocity.resize(numBuckets);
-  velocityRMS.resize(numBuckets);
-  flowFactor.resize(numBuckets);
   sphereVolume.resize(numBuckets);
 
   // Clear map if remeshing

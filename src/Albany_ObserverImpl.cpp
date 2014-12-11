@@ -106,7 +106,8 @@ void ObserverImpl::observeSolutionT(
   {
     const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
       app_->getOverlapSolutionT(nonOverlappedSolutionT);
-    app_->getDiscretization()->writeSolutionT(*overlappedSolutionT, stamp, /*overlapped =*/ true);
+    app_->getDiscretization()->writeSolutionT(
+      *overlappedSolutionT, stamp, /*overlapped =*/ true);
   }
 }
 

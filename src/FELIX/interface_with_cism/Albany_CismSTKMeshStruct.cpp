@@ -37,15 +37,30 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
                   const int * global_node_id_owned_map_Ptr,
                   const int * global_element_id_active_owned_map_Ptr,
                   const int * global_element_conn_active_Ptr,
-                  const int *global_basal_face_active_owned_map_Ptr,
+                  const int * global_basal_face_active_owned_map_Ptr,
                   const int * global_basal_face_conn_active_Ptr,
+                  const int * global_west_face_active_owned_map_Ptr,
+                  const int * global_west_face_conn_active_Ptr,
+                  const int * global_east_face_active_owned_map_Ptr,
+                  const int * global_east_face_conn_active_Ptr,
+                  const int * global_south_face_active_owned_map_Ptr,
+                  const int * global_south_face_conn_active_Ptr,
+                  const int * global_north_face_active_owned_map_Ptr,
+                  const int * global_north_face_conn_active_Ptr,
+                  const int * dirichlet_node_mask_Ptr,
+                  const double * uvel_at_nodes_Ptr,
+                  const double * vvel_at_nodes_Ptr, 
                   const double * beta_at_nodes_Ptr,
                   const double * surf_height_at_nodes_Ptr,
                   const double * dsurf_height_at_nodes_dx_Ptr,
                   const double * dsurf_height_at_nodes_dy_Ptr,
+                  const double * thick_at_nodes_Ptr,
                   const double * flwa_at_active_elements_Ptr,
                   const int nNodes, const int nElementsActive,
-                  const int nCellsActive, const int verbosity) :
+                  const int nCellsActive, const int nWestFacesActive, 
+                  const int nEastFacesActive, const int nSouthFacesActive, 
+                  const int nNorthFacesActive, 
+                  const int verbosity) :
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   hasRestartSol(false),
@@ -56,25 +71,47 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   NumNodes = nNodes;
   NumEles = nElementsActive;
   NumBasalFaces = nCellsActive;
+  NumWestFaces =  nWestFacesActive; 
+  NumEastFaces =  nEastFacesActive; 
+  NumSouthFaces = nSouthFacesActive; 
+  NumNorthFaces = nNorthFacesActive; 
   debug_output_verbosity = verbosity;
-  if (verbosity == 2)
-    std::cout <<"NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces << std::endl;
+  if (verbosity == 2) {
+    std::cout <<"Proc #" << commT->getRank() << ", NumNodes = " << NumNodes << ", NumEles = "<< NumEles << ", NumBasalFaces = " << NumBasalFaces 
+               <<", NumWestFaces = " << NumWestFaces << ", NumEastFaces = "<< NumEastFaces 
+              << ", NumSouthFaces = " << NumSouthFaces << ", NumNorthFaces = " << NumNorthFaces <<  std::endl;
+  }
   xyz = new double[NumNodes][3];
   eles = new int[NumEles][8];
-  bf = new int[NumBasalFaces][5]; //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+  dirichletNodeMask = new int[NumNodes];
+  //1st column of bf: element # that face belongs to, 2rd-5th columns of bf: connectivity (hard-coded for quad faces)
+  bf = new int[NumBasalFaces][5]; 
+  wf = new int[NumWestFaces][5]; 
+  ef = new int[NumEastFaces][5]; 
+  sf = new int[NumSouthFaces][5]; 
+  nf = new int[NumNorthFaces][5]; 
   sh = new double[NumNodes];
+  thck = new double[NumNodes];
   shGrad = new double[NumNodes][2];
   globalNodesID = new GO[NumNodes];
   globalElesID = new GO[NumEles];
   basalFacesID = new GO[NumBasalFaces];
+  westFacesID = new GO[NumWestFaces]; 
+  eastFacesID = new GO[NumEastFaces]; 
+  southFacesID = new GO[NumSouthFaces]; 
+  northFacesID = new GO[NumNorthFaces]; 
   flwa = new double[NumEles];
   beta = new double[NumNodes];
+  uvel = new double[NumNodes];
+  vvel = new double[NumNodes];
   //TO DO? pass in temper?  for now, flwa is passed instead of temper
   //temper = new double[NumEles];
 
   //check if optional input fields exist
   if (surf_height_at_nodes_Ptr != NULL) have_sh = true;
   else have_sh = false;
+  if (thick_at_nodes_Ptr != NULL) have_thck = true;
+  else have_thck = false;
   if (dsurf_height_at_nodes_dx_Ptr != NULL && dsurf_height_at_nodes_dy_Ptr != NULL) have_shGrad = true;
   else have_shGrad = false;
   if (global_basal_face_active_owned_map_Ptr != NULL) have_bf = true;
@@ -83,18 +120,32 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
   else have_flwa = false;
   if (beta_at_nodes_Ptr != NULL) have_beta = true;
   else have_beta = false;
-
+  if (global_west_face_active_owned_map_Ptr != NULL && NumWestFaces > 0) have_wf = true; 
+  else have_wf = false; 
+  if (global_east_face_active_owned_map_Ptr != NULL && NumEastFaces > 0) have_ef = true;
+  else have_ef = false;
+  if (global_south_face_active_owned_map_Ptr != NULL && NumSouthFaces > 0) have_sf = true;
+  else have_sf = false;
+  if (global_north_face_active_owned_map_Ptr != NULL && NumNorthFaces > 0) have_nf = true;
+  else have_nf = false;
   have_temp = false; //for now temperature field is not passed; flwa is passed instead
+  if (dirichlet_node_mask_Ptr != NULL) have_dirichlet = true; 
+  else have_dirichlet = false; 
 
   for (int i=0; i<NumNodes; i++){
     globalNodesID[i] = global_node_id_owned_map_Ptr[i]-1;
     for (int j=0; j<3; j++)
       xyz[i][j] = xyz_at_nodes_Ptr[i + NumNodes*j];
-    //*out << "i: " << i << ", x: " << xyz[i][0] << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
+    //*out << "i: " << i << ", x: " << xyz[i][0] 
+         //<< ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << std::endl;
   }
   if (have_sh) {
     for (int i=0; i<NumNodes; i++)
       sh[i] = surf_height_at_nodes_Ptr[i];
+  }
+  if (have_thck) {
+    for (int i=0; i<NumNodes; i++)
+      thck[i] = thick_at_nodes_Ptr[i];
   }
   if (have_shGrad) {
     for (int i=0; i<NumNodes; i++){
@@ -113,9 +164,25 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
     globalElesID[i] = global_element_id_active_owned_map_Ptr[i]-1;
     for (int j = 0; j<8; j++)
       eles[i][j] = global_element_conn_active_Ptr[i + nElementsActive*j];
-    //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] << " " << eles[i][1] << " " << eles[i][2] << " " << eles[i][3] << " " << eles[i][4] << " "
-    //                      << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
+    //*out << "elt # " << globalElesID[i] << ": " << eles[i][0] 
+    //     << " " << eles[i][1] << " " << eles[i][2] << " " 
+    //     << eles[i][3] << " " << eles[i][4] << " "
+    //     << eles[i][5] << " " << eles[i][6] << " " << eles[i][7] << std::endl;
   }
+  if (have_dirichlet) {
+    for (int i=0; i<NumNodes; i++) {
+      dirichletNodeMask[i] = dirichlet_node_mask_Ptr[i];
+      uvel[i] = uvel_at_nodes_Ptr[i]; 
+      vvel[i] = vvel_at_nodes_Ptr[i]; 
+      //*out << "i: " << i << ", x: " << xyz[i][0] 
+      //     << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", dirichlet: " << dirichletNodeMask[i] << std::endl;
+      /*if (abs(uvel[i]) > 0) {
+      *out << "i: " << i << ", x: " << xyz[i][0] 
+           << ", y: " << xyz[i][1] << ", z: " << xyz[i][2] << ", uvel: " << uvel[i] << ", vvel: " << vvel[i] << std::endl;
+      }*/
+    }
+  }
+
   if (have_flwa) {
     for (int i=0; i<NumEles; i++)
       flwa[i] = flwa_at_active_elements_Ptr[i];
@@ -128,13 +195,62 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
         //*out << "bf # " << basalFacesID[i] << ": " << bf[i][0] << " " << bf[i][1] << " " << bf[i][2] << " " << bf[i][3] << " " << bf[i][4] << std::endl;
     }
   }
+  if (have_wf) {
+    for (int i=0; i<NumWestFaces; i++) {
+       westFacesID[i] = global_west_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         wf[i][j] = global_west_face_conn_active_Ptr[i + NumWestFaces*j]; 
+    }
+  }
+  if (have_ef) {
+    for (int i=0; i<NumEastFaces; i++) {
+       eastFacesID[i] = global_east_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         ef[i][j] = global_east_face_conn_active_Ptr[i + NumEastFaces*j]; 
+    }
+  }
+  if (have_sf) {
+    for (int i=0; i<NumSouthFaces; i++) {
+       southFacesID[i] = global_south_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++)  
+         sf[i][j] = global_south_face_conn_active_Ptr[i + NumSouthFaces*j];
+        /*if (commT->getRank() == 0) { 
+          *out << "proc 0, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
+        if (commT->getRank() == 1) { 
+          *out << "proc 1, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << bf[i][4] << std::endl; }
+        if (commT->getRank() == 2) { 
+          *out << "proc 2, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; }
+        if (commT->getRank() == 3) { 
+          *out << "proc 3, sf # " << southFacesID[i] << ": " << sf[i][0] << " " << sf[i][1] << " " << sf[i][2] << " " << sf[i][3] << " " << sf[i][4] << std::endl; } */
+    }
+  }
+  if (have_nf) {
+    for (int i=0; i<NumNorthFaces; i++) {
+       northFacesID[i] = global_north_face_active_owned_map_Ptr[i]-1;    
+       for (int j=0; j<5; j++) 
+         nf[i][j] = global_north_face_conn_active_Ptr[i + NumNorthFaces*j]; 
+    }
+  }
+
 
   Teuchos::ArrayView<const GO> globalElesIDAV = Teuchos::arrayView(globalElesID, NumEles);
   Teuchos::ArrayView<const GO> globalNodesIDAV = Teuchos::arrayView(globalNodesID, NumNodes);
   Teuchos::ArrayView<const GO> basalFacesIDAV = Teuchos::arrayView(basalFacesID, NumBasalFaces);
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); //Distribute the elements according to the global element IDs
-  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT)); //Distribute the nodes according to the global node IDs
-  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT)); //Distribute the elements according to the basal face IDs
+  Teuchos::ArrayView<const GO> westFacesIDAV = Teuchos::arrayView(westFacesID, NumWestFaces);
+  Teuchos::ArrayView<const GO> eastFacesIDAV = Teuchos::arrayView(eastFacesID, NumEastFaces);
+  Teuchos::ArrayView<const GO> southFacesIDAV = Teuchos::arrayView(southFacesID, NumSouthFaces);
+  Teuchos::ArrayView<const GO> northFacesIDAV = Teuchos::arrayView(northFacesID, NumNorthFaces);
+  //Distribute the elements according to the global element IDs
+  elem_mapT = Teuchos::rcp(new Tpetra_Map(NumEles, globalElesIDAV, 0, commT)); 
+  //Distribute the nodes according to the global node IDs
+  node_mapT = Teuchos::rcp(new Tpetra_Map(NumNodes, globalNodesIDAV, 0, commT));
+  //Distribute the elements according to the basal face IDs
+  basal_face_mapT = Teuchos::rcp(new Tpetra_Map(NumBasalFaces, basalFacesIDAV, 0, commT));
+  //Distribute the elements according to the lateral face IDs
+  west_face_mapT = Teuchos::rcp(new Tpetra_Map(NumWestFaces, westFacesIDAV, 0, commT));
+  east_face_mapT = Teuchos::rcp(new Tpetra_Map(NumEastFaces, eastFacesIDAV, 0, commT));
+  south_face_mapT = Teuchos::rcp(new Tpetra_Map(NumSouthFaces, southFacesIDAV, 0, commT));
+  north_face_mapT = Teuchos::rcp(new Tpetra_Map(NumNorthFaces, northFacesIDAV, 0, commT));
 
 
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -150,43 +266,43 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 
   std::vector<std::string> nsNames;
-  std::string nsn="Bottom";
+  std::string nsn="NodeSetWest";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet0";
+  nsn="NodeSetEast";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet1";
+  nsn="NodeSetSouth";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet2";
+  nsn="NodeSetNorth";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet3";
+  nsn="NodeSetTop";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet4";
+  nsn="NodeSetBottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="NodeSet5";
+   nsn="NodeSetDirichlet";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
@@ -195,15 +311,21 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 
 
   std::vector<std::string> ssNames;
-  std::string ssn="Basal";
-  ssNames.push_back(ssn);
-    ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
-#endif
+  std::string ssnBasal="Basal";
+  std::string ssnLateral="Lateral";
 
+  ssNames.push_back(ssnBasal);
+  ssNames.push_back(ssnLateral);
+
+  ssPartVec[ssnBasal] = & metaData->declare_part(ssnBasal, metaData->side_rank() );
+  ssPartVec[ssnLateral] = & metaData->declare_part(ssnLateral, metaData->side_rank() );
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*ssPartVec[ssnBasal]);
+  stk::io::put_io_part_attribute(*ssPartVec[ssnLateral]);
+#endif
   stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
-  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssn]);
+  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnBasal]);
+  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLateral]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -222,13 +344,25 @@ Albany::CismSTKMeshStruct::CismSTKMeshStruct(
 Albany::CismSTKMeshStruct::~CismSTKMeshStruct()
 {
   delete [] xyz;
-  if (have_sh) delete [] sh;
-  if (have_shGrad) delete [] shGrad;
-  if (have_bf) delete [] bf;
+  delete [] dirichletNodeMask;
+  delete [] sh;
+  delete [] thck;
+  delete [] shGrad;
+  delete [] bf;
+  delete [] wf;
+  delete [] ef;
+  delete [] sf;
+  delete [] nf;
   delete [] eles;
   delete [] globalElesID;
   delete [] globalNodesID;
   delete [] basalFacesID;
+  delete [] westFacesID;
+  delete [] eastFacesID;
+  delete [] southFacesID;
+  delete [] northFacesID;
+  delete [] uvel; 
+  delete [] vvel; 
 }
 
 void
@@ -262,14 +396,18 @@ Albany::CismSTKMeshStruct::constructMesh(
 
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
   ScalarFieldType* surfaceHeight_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
+  ScalarFieldType* thickness_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "thickness");
   ScalarFieldType* dsurfaceHeight_dx_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "xgrad_surface_height");
   ScalarFieldType* dsurfaceHeight_dy_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "ygrad_surface_height");
   ElemScalarFieldType* flowFactor_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "flow_factor");
   ElemScalarFieldType* temperature_field = metaData->get_field<ElemScalarFieldType>(stk::topology::ELEMENT_RANK, "temperature");
   ScalarFieldType* basal_friction_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "basal_friction");
+  VectorFieldType* dirichlet_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "dirichlet_field");
 
   if(!surfaceHeight_field)
      have_sh = false;
+  if(!thickness_field)
+     have_thck = false;
   if(!dsurfaceHeight_dx_field || !dsurfaceHeight_dy_field)
      have_shGrad = false;
   if(!flowFactor_field)
@@ -347,6 +485,167 @@ Albany::CismSTKMeshStruct::constructMesh(
      node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
 
+     //Nodesets for Dirichlet BCs
+     //Check which nodes have Dirichlet BCs based on mask passed in from CISM 
+     bool localDirichletMask[8]; 
+     for (int j=0; j<8; j++) {
+       int node_GID = eles[i][j]-1; 
+       int node_LID = node_mapT->getLocalElement(node_GID);
+       if (dirichletNodeMask[node_LID] == 1) {
+          localDirichletMask[j] = true;
+         //std::cout << "i, j, dirichlet xyz: " << i << ", " << j << ", " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+       }
+       else localDirichletMask[j] = false; 
+     }
+     singlePartVec[0] = nsPartVec["NodeSetDirichlet"];
+     //west boundary 
+     if ((localDirichletMask[0] == true) && (localDirichletMask[3] == true) &&  
+         (localDirichletMask[4] == true) && (localDirichletMask[7] == true)) {
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the west boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 0 || j == 3 || j == 4 || j == 7) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   west x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
+       bulkData->change_entity_parts(llnode, singlePartVec); // node 0
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+     }
+     //south boundary
+     if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
+         (localDirichletMask[4] == true) && (localDirichletMask[5] == true)) {
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the south boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 0 || j == 1 || j == 4 || j == 5) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   south x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+     }
+     //north boundary
+     if ((localDirichletMask[3] == true) && (localDirichletMask[2] == true) && 
+         (localDirichletMask[6] == true) && (localDirichletMask[7] == true)) {
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the north boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 3 || j == 2 || j == 6 || j == 7) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   north x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
+       bulkData->change_entity_parts(llnode, singlePartVec); // 0
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+     }
+     //east boundary
+     if ((localDirichletMask[1] == true) && (localDirichletMask[2] == true) && 
+         (localDirichletMask[5] == true) && (localDirichletMask[6] == true)) {
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the east boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 1 || j == 2 || j == 5 || j == 6) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   east x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+     }
+     //top boundary
+     if ((localDirichletMask[4] == true) && (localDirichletMask[5] == true) && 
+         (localDirichletMask[7] == true) && (localDirichletMask[6] == true)) {
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the top boundary." << std::endl;
+         for (int j=0; j<8; j++) {
+           if (j == 4 || j == 5 || j == 7 || j == 6) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   top x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
+       bulkData->change_entity_parts(llnode, singlePartVec); // 0
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+    }
+     //bottom boundary
+     if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
+         (localDirichletMask[2] == true) && (localDirichletMask[3] == true)) {
+       if (debug_output_verbosity == 2) {
+         std::cout << "element " << elem_GID << " has a dirichlet BC on the bottom boundary." << std::endl; 
+         for (int j=0; j<8; j++) {
+           if (j == 0 || j == 1 || j == 2 || j == 3) {
+             int node_GID = eles[i][j]-1; 
+             int node_LID = node_mapT->getLocalElement(node_GID);
+             std::cout << "   bottom x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
+           }
+         }
+       }
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+     }
+     
+     //The following are hard-coded right now for confined shelf
+     node_GID = eles[i][0]-1;
+     node_LID = node_mapT->getLocalElement(node_GID);
+     double xl = xyz[node_LID][0];  //left node 
+     if (xl == 20.0) { 
+       singlePartVec[0] = nsPartVec["NodeSetWest"];
+       bulkData->change_entity_parts(llnode, singlePartVec); // node 0
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+     }
+     node_GID = eles[i][1]-1;
+     node_LID = node_mapT->getLocalElement(node_GID);
+     double xr = xyz[node_LID][0]; //right node
+    if (xr == 215.0) {
+       singlePartVec[0] = nsPartVec["NodeSetEast"];
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }
+    node_GID = eles[i][2]-1;
+    node_LID = node_mapT->getLocalElement(node_GID);
+    double yt = xyz[node_LID][1]; 
+    if (yt == 220.0) {
+       singlePartVec[0] = nsPartVec["NodeSetNorth"];
+       bulkData->change_entity_parts(llnode, singlePartVec); // 0
+       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
+       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
+       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
+    }
+    /*if ((y_GIDplus1)==nelem[1]) {
+       singlePartVec[0] = nsPartVec["NodeSet3"];
+       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
+       bulkData->change_entity_parts(urnode, singlePartVec); // 2
+       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
+       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
+    }*/
+ 
      if (have_sh) {
        double* sHeight;
        sHeight = stk::mesh::field_data(*surfaceHeight_field, llnode);
@@ -388,6 +687,49 @@ Albany::CismSTKMeshStruct::constructMesh(
        node_GID = eles[i][7]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
        sHeight[0] = sh[node_LID];
+     }
+
+     if (have_thck) {
+       double* thickness;
+       thickness = stk::mesh::field_data(*thickness_field, llnode);
+       node_GID = eles[i][0]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, lrnode);
+       node_GID = eles[i][1]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, urnode);
+       node_GID = eles[i][2]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, ulnode);
+       node_GID = eles[i][3]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, llnodeb);
+       node_GID = eles[i][4]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, lrnodeb);
+       node_GID = eles[i][5]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, urnodeb);
+       node_GID = eles[i][6]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
+
+       thickness = stk::mesh::field_data(*thickness_field, ulnodeb);
+       node_GID = eles[i][7]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       thickness[0] = thck[node_LID];
      }
 
      if (have_shGrad) {
@@ -462,6 +804,58 @@ Albany::CismSTKMeshStruct::constructMesh(
        //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
        temperature[0] = temper[i];
      }
+     
+     //set Dirichlet BCs to those passed from CISM.
+     if (have_dirichlet) {
+       double* dirichlet = stk::mesh::field_data(*dirichlet_field,llnode);
+       node_GID = eles[i][0]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, lrnode);
+       node_GID = eles[i][1]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, urnode);
+       node_GID = eles[i][2]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, ulnode);
+       node_GID = eles[i][3]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, llnodeb);
+       node_GID = eles[i][4]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, lrnodeb);
+       node_GID = eles[i][5]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+       
+       dirichlet = stk::mesh::field_data(*dirichlet_field, urnodeb);
+       node_GID = eles[i][6]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+
+       dirichlet = stk::mesh::field_data(*dirichlet_field, ulnodeb);
+       node_GID = eles[i][7]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       dirichlet[0] = uvel[node_LID];
+       dirichlet[1] = vvel[node_LID];
+     }
+
      if (have_beta) {
        double* bFriction; 
        bFriction = stk::mesh::field_data(*basal_friction_field, llnode);
@@ -505,6 +899,8 @@ Albany::CismSTKMeshStruct::constructMesh(
        bFriction[0] = beta[node_LID]; 
      }
 
+ 
+
      // If first node has z=0 and there is no basal face file provided, identify it as a Basal SS
      if (have_bf == false) {
        if (debug_output_verbosity != 0) *out <<"No bf file specified...  setting basal boundary to z=0 plane..." << std::endl;
@@ -526,9 +922,9 @@ Albany::CismSTKMeshStruct::constructMesh(
   }
 
   if (have_bf == true) {
-    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from bf file provided..." << std::endl;
+    if (debug_output_verbosity != 0) *out << "Setting basal surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Basal"];
     for (int i=0; i<basal_face_mapT->getNodeNumElements(); i++) {
-       singlePartVec[0] = ssPartVec["Basal"];
        sideID = basal_face_mapT->getGlobalElement(i);
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
@@ -547,7 +943,107 @@ Albany::CismSTKMeshStruct::constructMesh(
        bulkData->declare_relation(side, urnode, 2);
        bulkData->declare_relation(side, lrnode, 1);
     }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
+
+  if (have_wf == true) {
+    if (debug_output_verbosity != 0) *out << "Setting west lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
+    for (int i=0; i<west_face_mapT->getNodeNumElements(); i++) {
+       sideID = west_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = wf[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  3 /*local side id*/);
+
+       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][1], nodePartVec); //OK
+       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][2], nodePartVec); //OK
+       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][3], nodePartVec); //OK
+       stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, wf[i][4], nodePartVec); //OK
+       
+       bulkData->declare_relation(side, llnode, 0);
+       bulkData->declare_relation(side, llnodeb, 2);
+       bulkData->declare_relation(side, ulnodeb, 3);
+       bulkData->declare_relation(side, ulnode, 1);
+
+    }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
+  }
+  if (have_ef == true) {
+    if (debug_output_verbosity != 0) *out << "Setting east lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
+    for (int i=0; i<east_face_mapT->getNodeNumElements(); i++) {
+       sideID = east_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = ef[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  1 /*local side id*/);
+
+       stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][1], nodePartVec);
+       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][2], nodePartVec);
+       stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][3], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, ef[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, lrnode, 0);
+       bulkData->declare_relation(side, urnode, 1);
+       bulkData->declare_relation(side, urnodeb, 3);
+       bulkData->declare_relation(side, lrnodeb, 2);
+    }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
+  }
+  if (have_sf == true) {
+    if (debug_output_verbosity != 0) *out << "Setting south lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
+    for (int i=0; i<south_face_mapT->getNodeNumElements(); i++) {
+       sideID = south_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = sf[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  0 /*local side id*/);
+
+       stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][1], nodePartVec);
+       stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][2], nodePartVec);
+       stk::mesh::Entity lrnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][3], nodePartVec);
+       stk::mesh::Entity llnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, sf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, llnode, 0);
+       bulkData->declare_relation(side, lrnode, 1);
+       bulkData->declare_relation(side, lrnodeb, 3);
+       bulkData->declare_relation(side, llnodeb, 2);
+    }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
+  }
+  if (have_nf == true) {
+    if (debug_output_verbosity != 0) *out << "Setting north lateral surface connectivity from data provided..." << std::endl;
+    singlePartVec[0] = ssPartVec["Lateral"];
+    for (int i=0; i<north_face_mapT->getNodeNumElements(); i++) {
+       sideID = north_face_mapT->getGlobalElement(i);
+       stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
+       stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
+       const unsigned int elem_GID = nf[i][0];
+       stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
+       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
+       bulkData->declare_relation(elem, side,  2 /*local side id*/);
+
+       stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][1], nodePartVec);
+       stk::mesh::Entity ulnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][2], nodePartVec);
+       stk::mesh::Entity urnodeb = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][3], nodePartVec);
+       stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, nf[i][4], nodePartVec);
+       
+       bulkData->declare_relation(side, urnode, 0);
+       bulkData->declare_relation(side, ulnode, 1);
+       bulkData->declare_relation(side, ulnodeb, 3);
+       bulkData->declare_relation(side, urnodeb, 2);
+    }
+    if (debug_output_verbosity != 0) *out << "...done." << std::endl;
+  }
+
   bulkData->modification_end();
 }
 

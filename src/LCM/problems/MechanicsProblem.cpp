@@ -158,11 +158,15 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     if (num_dims_ == 1) {
       null_space_dim = 0;
     }
-    if (num_dims_ == 2) {
+    else if (num_dims_ == 2) {
       null_space_dim = 3;
     }
-    if (num_dims_ == 3) {
+    else if (num_dims_ == 3) {
       null_space_dim = 6;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+        '\n' << "Error: " << __FILE__ << " line " << __LINE__ << ": num_dims_ set incorrectly." << '\n');
     }
   }
 
@@ -236,8 +240,8 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   int index = 0;
   if (have_mech_eq_) {
     dirichletNames[index++] = "X";
-    if (neq > 1) dirichletNames[index++] = "Y";
-    if (neq > 2) dirichletNames[index++] = "Z";
+    if (num_dims_ > 1) dirichletNames[index++] = "Y";
+    if (num_dims_ > 2) dirichletNames[index++] = "Z";
   }
 
   if (have_temperature_eq_) dirichletNames[index++] = "T";
