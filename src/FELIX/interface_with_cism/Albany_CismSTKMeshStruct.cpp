@@ -417,6 +417,7 @@ Albany::CismSTKMeshStruct::constructMesh(
   if(!basal_friction_field)
      have_beta = false;
 
+
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
      const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
@@ -444,6 +445,7 @@ Albany::CismSTKMeshStruct::constructMesh(
      double* coord;
      int node_GID;
      unsigned int node_LID;
+
 
      node_GID = eles[i][0]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
@@ -484,129 +486,17 @@ Albany::CismSTKMeshStruct::constructMesh(
      node_GID = eles[i][7]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
      coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
-
-     //Nodesets for Dirichlet BCs
-     //Check which nodes have Dirichlet BCs based on mask passed in from CISM 
-     bool localDirichletMask[8]; 
-     for (int j=0; j<8; j++) {
-       int node_GID = eles[i][j]-1; 
-       int node_LID = node_mapT->getLocalElement(node_GID);
-       if (dirichletNodeMask[node_LID] == 1) {
-          localDirichletMask[j] = true;
-         //std::cout << "i, j, dirichlet xyz: " << i << ", " << j << ", " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-       }
-       else localDirichletMask[j] = false; 
-     }
-     singlePartVec[0] = nsPartVec["NodeSetDirichlet"];
-     //west boundary 
-     if ((localDirichletMask[0] == true) && (localDirichletMask[3] == true) &&  
-         (localDirichletMask[4] == true) && (localDirichletMask[7] == true)) {
-       if (debug_output_verbosity == 2) {
-         std::cout << "element " << elem_GID << " has a dirichlet BC on the west boundary." << std::endl; 
-         for (int j=0; j<8; j++) {
-           if (j == 0 || j == 3 || j == 4 || j == 7) {
-             int node_GID = eles[i][j]-1; 
-             int node_LID = node_mapT->getLocalElement(node_GID);
-             std::cout << "   west x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-           }
-         }
-       }
-       bulkData->change_entity_parts(llnode, singlePartVec); // node 0
-       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
-       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
-       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
-     }
-     //south boundary
-     if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
-         (localDirichletMask[4] == true) && (localDirichletMask[5] == true)) {
-       if (debug_output_verbosity == 2) {
-         std::cout << "element " << elem_GID << " has a dirichlet BC on the south boundary." << std::endl; 
-         for (int j=0; j<8; j++) {
-           if (j == 0 || j == 1 || j == 4 || j == 5) {
-             int node_GID = eles[i][j]-1; 
-             int node_LID = node_mapT->getLocalElement(node_GID);
-             std::cout << "   south x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-           }
-         }
-       }
-       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
-       bulkData->change_entity_parts(urnode, singlePartVec); // 2
-       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
-       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
-     }
-     //north boundary
-     if ((localDirichletMask[3] == true) && (localDirichletMask[2] == true) && 
-         (localDirichletMask[6] == true) && (localDirichletMask[7] == true)) {
-       if (debug_output_verbosity == 2) {
-         std::cout << "element " << elem_GID << " has a dirichlet BC on the north boundary." << std::endl; 
-         for (int j=0; j<8; j++) {
-           if (j == 3 || j == 2 || j == 6 || j == 7) {
-             int node_GID = eles[i][j]-1; 
-             int node_LID = node_mapT->getLocalElement(node_GID);
-             std::cout << "   north x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-           }
-         }
-       }
-       bulkData->change_entity_parts(llnode, singlePartVec); // 0
-       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
-       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
-       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
-     }
-     //east boundary
-     if ((localDirichletMask[1] == true) && (localDirichletMask[2] == true) && 
-         (localDirichletMask[5] == true) && (localDirichletMask[6] == true)) {
-       if (debug_output_verbosity == 2) {
-         std::cout << "element " << elem_GID << " has a dirichlet BC on the east boundary." << std::endl; 
-         for (int j=0; j<8; j++) {
-           if (j == 1 || j == 2 || j == 5 || j == 6) {
-             int node_GID = eles[i][j]-1; 
-             int node_LID = node_mapT->getLocalElement(node_GID);
-             std::cout << "   east x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-           }
-         }
-       }
-       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
-       bulkData->change_entity_parts(urnode, singlePartVec); // 2
-       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
-       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
-     }
-     //top boundary
-     if ((localDirichletMask[4] == true) && (localDirichletMask[5] == true) && 
-         (localDirichletMask[7] == true) && (localDirichletMask[6] == true)) {
-       if (debug_output_verbosity == 2) {
-         std::cout << "element " << elem_GID << " has a dirichlet BC on the top boundary." << std::endl;
-         for (int j=0; j<8; j++) {
-           if (j == 4 || j == 5 || j == 7 || j == 6) {
-             int node_GID = eles[i][j]-1; 
-             int node_LID = node_mapT->getLocalElement(node_GID);
-             std::cout << "   top x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-           }
-         }
-       }
-       bulkData->change_entity_parts(llnode, singlePartVec); // 0
-       bulkData->change_entity_parts(lrnode, singlePartVec); // 1
-       bulkData->change_entity_parts(ulnode, singlePartVec); // 3
-       bulkData->change_entity_parts(urnode, singlePartVec); // 2
-    }
-     //bottom boundary
-     if ((localDirichletMask[0] == true) && (localDirichletMask[1] == true) && 
-         (localDirichletMask[2] == true) && (localDirichletMask[3] == true)) {
-       if (debug_output_verbosity == 2) {
-         std::cout << "element " << elem_GID << " has a dirichlet BC on the bottom boundary." << std::endl; 
-         for (int j=0; j<8; j++) {
-           if (j == 0 || j == 1 || j == 2 || j == 3) {
-             int node_GID = eles[i][j]-1; 
-             int node_LID = node_mapT->getLocalElement(node_GID);
-             std::cout << "   bottom x, y, z: " << xyz[node_LID][0] << ", " << xyz[node_LID][1] << ", " << xyz[node_LID][2] << std::endl; 
-           }
-         }
-       }
-       bulkData->change_entity_parts(llnodeb, singlePartVec); // 4
-       bulkData->change_entity_parts(lrnodeb, singlePartVec); // 5
-       bulkData->change_entity_parts(ulnodeb, singlePartVec); // 7
-       bulkData->change_entity_parts(urnodeb, singlePartVec); // 6
-     }
      
+     singlePartVec[0] = nsPartVec["NodeSetDirichlet"];
+     for (int j=0; j<8; j++) {
+       node_GID = eles[i][j]-1;
+       node_LID = node_mapT->getLocalElement(node_GID);
+       if (dirichletNodeMask[node_LID] == 1) {
+         stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][j], nodePartVec);
+         bulkData->change_entity_parts(node, singlePartVec); 
+       }
+     }
+
      //The following are hard-coded right now for confined shelf
      node_GID = eles[i][0]-1;
      node_LID = node_mapT->getLocalElement(node_GID);
@@ -954,6 +844,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = wf[i][0];
+       if (debug_output_verbosity != 0) *out << "   element " << elem_GID << " has a west lateral face." << std::endl; 
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
        stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  3 /*local side id*/);
@@ -979,6 +870,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = ef[i][0];
+       if (debug_output_verbosity != 0) *out << "   element " << elem_GID << " has an east lateral face." << std::endl; 
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
        stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  1 /*local side id*/);
@@ -1003,6 +895,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = sf[i][0];
+       if (debug_output_verbosity != 0) *out << "   element " << elem_GID << " has a south lateral face." << std::endl; 
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
        stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  0 /*local side id*/);
@@ -1027,6 +920,7 @@ Albany::CismSTKMeshStruct::constructMesh(
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(sideID);
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(),side_id+1, singlePartVec);
        const unsigned int elem_GID = nf[i][0];
+       if (debug_output_verbosity !=0) *out << "   element " << elem_GID << " has a north lateral face." << std::endl; 
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
        stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  2 /*local side id*/);
