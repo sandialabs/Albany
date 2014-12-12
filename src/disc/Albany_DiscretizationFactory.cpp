@@ -12,6 +12,7 @@
 #include "Aeras_SpectralDiscretization.hpp"
 #endif
 #include "Albany_TmplSTKMeshStruct.hpp"
+//#include "Albany_STK3DPointStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 
 #ifdef ALBANY_SEACAS
@@ -220,7 +221,12 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptParams, commT));
   }
 
+  //else if(method == "STK3DPoint") {
+  //  meshStruct = Teuchos::rcp(new Albany::STK3DPointStruct(discParams, adaptParams, commT));
+  //}
+
   else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
+
 #ifdef ALBANY_SEACAS
     meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptParams, commT));
 #else

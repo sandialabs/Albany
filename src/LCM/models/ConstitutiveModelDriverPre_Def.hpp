@@ -51,8 +51,12 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t pt = 0; pt < num_pts_; ++pt) {    
       for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t dim = 0; dim < num_dims_; ++dim) {
-          def_grad_(cell, pt, dim, dim) = 0.0;
+        for (std::size_t dim1 = 0; dim1 < num_dims_; ++dim1) {
+          for (std::size_t dim2 = 0; dim2 < num_dims_; ++dim2) {
+            def_grad_(cell,pt,dim1,dim2) = solution_(cell,node,dim1,dim2);
+            F.fill(&def_grad_(cell,pt,0,0));
+            j_(cell,pt) = Intrepid::det(F);
+          }
         }
       }
     }
