@@ -134,7 +134,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   // optional body force
   if (have_body_force_) {
-    std::cerr << "should not be here body\n"; throw "";
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
         for (int pt = 0; pt < num_pts_; ++pt) {
