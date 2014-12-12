@@ -759,27 +759,29 @@ int Albany::SolverFactory::checkSolveTestResultsT(
   }
 
   // Repeat comparisons for sensitivities
-  Teuchos::ParameterList *sensitivityParams;
+  Teuchos::ParameterList *sensitivityParams = 0;
   std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
-  else
+  else if(testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  const int numSensTests =
-    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0) {
-    if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
-    else {
-      for (int i=0; i<numSensTests; i++) {
-        Teuchos::Array<double> testSensValues =
-          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
+  if(sensitivityParams != 0) {
+    const int numSensTests =
+      sensitivityParams->get<int>("Number of Sensitivity Comparisons",0);
+    if (numSensTests > 0) {
+      if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
+      else {
+        for (int i=0; i<numSensTests; i++) {
+          Teuchos::Array<double> testSensValues =
+            sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+          TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
 
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
-        for (int j=0; j<dgdp->getNumVectors(); j++) {
-          failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
-          comparisons++;
+          Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
+          for (int j=0; j<dgdp->getNumVectors(); j++) {
+            failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
+            comparisons++;
+          }
         }
       }
     }
@@ -821,25 +823,28 @@ int Albany::SolverFactory::checkSolveTestResults(
   }
 
   // Repeat comparisons for sensitivities
-  Teuchos::ParameterList *sensitivityParams;
+  Teuchos::ParameterList *sensitivityParams = 0;
   std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
-  else
+  else if(testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  const int numSensTests =
-    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0) {
-    if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
-    else {
-      for (int i=0; i<numSensTests; i++) {
-        Teuchos::Array<double> testSensValues =
-          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
-        for (int j=0; j<dgdp->NumVectors(); j++) {
-          failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
-          comparisons++;
+
+  if(sensitivityParams != 0) {
+    const int numSensTests =
+      sensitivityParams->get<int>("Number of Sensitivity Comparisons", 0);
+    if (numSensTests > 0) {
+      if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
+      else {
+        for (int i=0; i<numSensTests; i++) {
+          Teuchos::Array<double> testSensValues =
+            sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+          TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
+          for (int j=0; j<dgdp->NumVectors(); j++) {
+            failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
+            comparisons++;
+          }
         }
       }
     }
