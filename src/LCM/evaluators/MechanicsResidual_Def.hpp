@@ -94,7 +94,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes_; ++node) {
       for (int dim = 0; dim < num_dims_; ++dim) {
-        residual_(cell, node, dim) = 0.0;
+        residual_(cell, node, dim) = typename EvalT::ScalarT(0.0);
       }
     }
     for (int pt = 0; pt < num_pts_; ++pt) {
