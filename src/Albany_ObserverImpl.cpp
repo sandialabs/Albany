@@ -12,6 +12,7 @@
 
 #include "Teuchos_TimeMonitor.hpp"
 #include "Teuchos_Ptr.hpp"
+#include "Petra_Converters.hpp"
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
@@ -76,6 +77,18 @@ void ObserverImpl::observeSolution(
     peridigmManager.updateState();
 #endif
 #endif
+  }
+
+  //! update distributed parameters in the mesh
+  Teuchos::RCP<DistParamLib> distParamLib = app_->getDistParamLib();
+  distParamLib->scatter();
+  DistParamLib::const_iterator it;
+  Teuchos::RCP<const Teuchos::Comm<int> > commT = app_->getComm();
+  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  for(it = distParamLib->begin(); it != distParamLib->end(); ++it) {
+    Teuchos::RCP<Epetra_Vector> epetra_vec;
+    Petra::TpetraVector_To_EpetraVector(it->second->overlapped_vector(), epetra_vec, comm);
+    app_->getDiscretization()->setField(*epetra_vec, it->second->name(), /*overlapped*/ true);
   }
 
   Teuchos::TimeMonitor timer(*solOutTime_);
