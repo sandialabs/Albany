@@ -95,6 +95,7 @@ IF(PHX_KOKKOS_DEVICE_TYPE_CUDA )
   Albany_SaveEigenData.cpp
   Albany_ObserverImpl.cpp
   disc/stk/Albany_IossSTKMeshStruct.cpp
+  amb.cpp
   )
 
   SET(HEADERS
@@ -123,6 +124,7 @@ IF(PHX_KOKKOS_DEVICE_TYPE_CUDA )
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DistributedParameterLibrary_Epetra.hpp
   disc/stk/Albany_IossSTKMeshStruct.hpp
+  amb.hpp
   )
 
 #problems
@@ -274,6 +276,7 @@ SET(SOURCES
   Albany_ModelFactory.cpp
   Albany_ModelEvaluatorT.cpp
   Albany_ObserverImpl.cpp
+  amb.cpp
   )
 
 IF (ALBANY_EPETRA)
@@ -316,6 +319,7 @@ SET(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOp.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
+  amb.hpp
   )
 
 IF(ALBANY_EPETRA) 

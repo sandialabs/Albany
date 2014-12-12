@@ -3,7 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
+#include "amb.hpp"
 #include <iostream>
 #include <string>
 
@@ -87,7 +87,10 @@ int main(int argc, char *argv[]) {
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-   PHX::InitializeKokkosDevice();
+  if (amb::set_own_omp_nthreads())
+    PHX::Device::initialize(4);
+  else
+    PHX::InitializeKokkosDevice();
 
 #ifdef ALBANY_CHECK_FPE
 //	_mm_setcsr(_MM_MASK_MASK &~

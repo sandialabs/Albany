@@ -39,7 +39,10 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-   KOKKOS_INLINE_FUNCTION
+  friend void writestuff(const ComputeBasisFunctions<EvalT, Traits>& cbf,
+                         typename Traits::EvalData workset);
+
+  KOKKOS_INLINE_FUNCTION
   void operator () (const int i) const;
  
   typedef typename PHX::Device device_type;

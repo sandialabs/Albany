@@ -7,6 +7,8 @@
 #ifndef PHAL_DATATYPES
 #define PHAL_DATATYPES
 
+#define AMB_KOKKOS
+
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types

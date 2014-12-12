@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include "amb.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -520,6 +521,32 @@ void ComputeBasisFunctions<EvalT, Traits>:: operator () (const int i) const
 
 
 // **********************************************************************
+#define wse(TYPE)                                                       \
+  void writestuff (                                                     \
+    const ComputeBasisFunctions<PHAL::AlbanyTraits::TYPE, PHAL::AlbanyTraits>& cbf, \
+    PHAL::AlbanyTraits::EvalData workset) {}
+wse(Jacobian);
+wse(Tangent);
+wse(DistParamDeriv);
+
+void writestuff (
+  const ComputeBasisFunctions<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>& cbf,
+  PHAL::AlbanyTraits::EvalData workset)
+{
+  if (amb::print_level() < 2) return;
+  const int nc = workset.numCells, nv = cbf.numVertices, nd = cbf.numDims,
+    nn = cbf.numNodes, nq = cbf.numQPs;
+  amb_write_mdfield3(cbf.coordVec, "cbf_coordVec", nc, nv, nd);
+  amb_write_mdfield2(cbf.weighted_measure, "cbf_weighted_measure", nc, nq);
+  amb_write_mdfield2(cbf.jacobian_det, "cbf_jacobian_det", nc, nq);
+  amb_write_mdfield4(cbf.jacobian, "cbf_jacobian", nc, nq, nd, nd);
+  amb_write_mdfield4(cbf.jacobian_inv, "cbf_jacobian_inv", nc, nq, nd, nd);
+  amb_write_mdfield3(cbf.BF, "cbf_BF", nc, nn, nq);
+  amb_write_mdfield3(cbf.wBF, "cbf_wBF", nc, nn, nq);
+  amb_write_mdfield4(cbf.GradBF, "cbf_GradBF", nc, nn, nq, nd);
+  amb_write_mdfield4(cbf.wGradBF, "cbf_wGradBF", nc, nn, nq, nd);
+}
+
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -552,6 +579,8 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 */
+
+  writestuff(*this, workset);
 }
 
 //**********************************************************************

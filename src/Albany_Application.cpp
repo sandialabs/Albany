@@ -3,6 +3,8 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include "amb.hpp"
+
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_AdaptationFactory.hpp"
@@ -68,7 +70,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0) {
+  stateGraphVisDetail(0)
+{
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
@@ -88,7 +91,8 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     shapeParamsHaveBeenReset(false),
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
-    stateGraphVisDetail(0) {
+    stateGraphVisDetail(0)
+{
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
@@ -658,6 +662,15 @@ computeGlobalResidualImplT(
     const Teuchos::Array<ParamVec>& p,
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
+  if (amb::set_xT_for_debug()) {
+    // If needed for debugging, overwrite xT so we can see the residual and
+    // Jacobian for a known and fixed xT.
+    Tpetra_Vector* xv = const_cast<Tpetra_Vector*>(xT.get());
+    double* x = &xv->get1dViewNonConst()[0];
+    int n = xT->getLocalLength();
+    for (int i = 0; i < n; ++i) x[i] = i*1e-5;
+  }
+
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
 
   postRegSetup("Residual");
@@ -720,16 +733,18 @@ computeGlobalResidualImplT(
   {
     PHAL::Workset workset;
 
-    if (!paramLib->isParameter("Time")) {
+    if (!paramLib->isParameter("Time"))
       loadBasicWorksetInfoT( workset, current_time );
-   }
-   else {
+    else
       loadBasicWorksetInfoT( workset,
-			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
-    }
-    workset.fT        = overlapped_fT;
+                             paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    workset.fT = overlapped_fT;
 
-
+    if (amb::print_level() > 0)
+      *Teuchos::VerboseObjectBase::getDefaultOStream()
+        << "amb: numWorksets " << numWorksets << std::endl;
+    amb::incr_global_int(amb::gi_res);
+    amb::set_global_int(amb::gi_ws, 0);
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
 
@@ -737,6 +752,8 @@ computeGlobalResidualImplT(
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
       if (nfm!=Teuchos::null)
          deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+
+      amb::incr_global_int(amb::gi_ws);
     }
   // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
@@ -763,6 +780,13 @@ computeGlobalResidualImplT(
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
+  }
+
+  if (amb::print_level() > 0) {
+    amb::write_multivector(xT, amb::get_filename_with_int(
+                             "res_xT", amb::get_global_int(amb::gi_res)));
+    amb::write_multivector(fT, amb::get_filename_with_int(
+                             "res_fT", amb::get_global_int(amb::gi_res)));
   }
 }
 
@@ -964,6 +988,9 @@ computeGlobalJacobianImplT(const double alpha,
     workset.JacT      = overlapped_jacT;
     loadWorksetJacobianInfo(workset, alpha, beta, omega);
 
+    amb::incr_global_int(amb::gi_jac);
+    amb::set_global_int(amb::gi_ws, 0);
+
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Jacobian>(workset, ws);
 
@@ -971,6 +998,8 @@ computeGlobalJacobianImplT(const double alpha,
       fm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
       if (Teuchos::nonnull(nfm))
         deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
+
+      amb::incr_global_int(amb::gi_ws);
     }
   }
 
@@ -979,7 +1008,6 @@ computeGlobalJacobianImplT(const double alpha,
   if (Teuchos::nonnull(fT)) {
     fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
   }
-
 
   // Assemble global Jacobian
   jacT->doExport(*overlapped_jacT, *exporterT, Tpetra::ADD);
@@ -1016,6 +1044,17 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   jacT->fillComplete();
+
+  if (amb::print_level() > 1) {
+    amb::write_multivector(xT, amb::get_filename_with_int(
+                             "jac_xT", amb::get_global_int(amb::gi_jac)));
+    if (!fT.is_null())
+      amb::write_multivector(fT, amb::get_filename_with_int(
+                               "jac_fT", amb::get_global_int(amb::gi_jac)));
+  }
+  if (amb::print_level() > 10)
+    amb::write_matrix(jacT, amb::get_filename_with_int(
+                        "jac_jacT", amb::get_global_int(amb::gi_jac)));
 }
 
 #ifdef ALBANY_EPETRA
@@ -3655,6 +3694,7 @@ void Albany::Application::loadBasicWorksetInfoT(
        PHAL::Workset& workset,
        double current_time)
 {
+    workset.numEqs = neq;
     workset.xT        = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
@@ -3754,6 +3794,9 @@ void Albany::Application::setupBasicWorksetInfoT(
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(*xT, xdotT.get(), xdotdotT.get());
+
+  //Scatter distributed parameters
+  distParamLib->scatter();
 
   // Set parameters
   for (int i=0; i<p.size(); i++)

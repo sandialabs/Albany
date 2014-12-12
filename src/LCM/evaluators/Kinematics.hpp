@@ -46,6 +46,9 @@ namespace LCM {
     ///
     void evaluateFields(typename Traits::EvalData d);
 
+    friend void writestuff(const Kinematics<EvalT, Traits>& k,
+                           typename Traits::EvalData workset);
+
   private:
 
     typedef typename EvalT::ScalarT ScalarT;
