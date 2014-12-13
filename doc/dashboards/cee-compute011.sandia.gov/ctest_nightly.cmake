@@ -9,10 +9,10 @@ SET(CTEST_TEST_TYPE Nightly)
 # What to build and test
 SET(BUILD_ALB32 TRUE)
 SET(BUILD_ALB64 TRUE)
-SET(BUILD_ALB64CLANG11 FALSE)
+SET(BUILD_ALB64CLANG11 TRUE)
 SET(DOWNLOAD TRUE)
 SET(BUILD_TRILINOS TRUE)
-SET(BUILD_TRILINOSCLANG11 FALSE)
+SET(BUILD_TRILINOSCLANG11 TRUE)
 SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
@@ -462,8 +462,8 @@ SET(CONFIGURE_OPTIONS
   "-DMPI_BASE_DIR:PATH=${PREFIX_DIR}/clang"
 #
   "-DTrilinos_ENABLE_CXX11:BOOL=ON"
-  "-DCMAKE_CXX_FLAGS:STRING='-O3 -w -DNDEBUG'"
-  "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
+  "-DCMAKE_CXX_FLAGS:STRING='-Os -w -DNDEBUG'"
+  "-DCMAKE_C_FLAGS:STRING='-Os -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-Os -w -DNDEBUG'"
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
@@ -730,6 +730,11 @@ ENDIF()
 IF (BUILD_ALB64CLANG11)
 SET_PROPERTY (GLOBAL PROPERTY SubProject Albany64BitClang++11)
 SET_PROPERTY (GLOBAL PROPERTY Label Albany64BitClang++11)
+
+# Need to add the openmpi libraries at the front of LD_LIBRARY_PATH
+set(ENV{LD_LIBRARY_PATH} 
+/projects/albany/clang/lib:/sierra/sntools/SDK/compilers/intel/composer_xe_2015.0.090/mkl/lib/intel64:/sierra/sntools/SDK/compilers/clang/3.5-RHEL6/lib:/sierra/sntools/SDK/mpi/openmpi/1.6.4-gcc-4.7.2-RHEL6/lib:/sierra/sntools/SDK/compilers/intel/composerxe-2011.13.367/tbb/lib/intel64/cc4.1.0_libc2.4_kernel2.6.16.21:/sierra/sntools/SDK/compilers/gcc/4.7.2-RHEL6/lib64:/sierra/sntools/SDK/compilers/gcc/4.7.2-RHEL6/lib
+)
 
 SET(CONFIGURE_OPTIONS
   "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
