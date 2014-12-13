@@ -83,9 +83,6 @@ template<class Output>
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
     //! Set coordinate vector (overlap map, interleaved)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
-    //! Zero the solution field, which is probably displacement if this method
-    //! is being called
-    void zeroSolutionField();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 

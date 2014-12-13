@@ -542,17 +542,6 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
   return solnT;
 }
 
-// In the case of mesh-adaptation problems, the solution field is
-// displacement. The previous two methods are used to reset coordinates to
-// coordinates + displacement, and then this method is used to zero
-// displacement.
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::zeroSolutionField()
-{
-  //amb-todo Always "solution"?
-  apf::zeroField(fmdbMeshStruct->getMesh()->findField("solution"));
-}
-
 #ifdef ALBANY_EPETRA
 template<class Output>
 Teuchos::RCP<Epetra_Vector>

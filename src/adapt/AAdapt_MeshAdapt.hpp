@@ -27,6 +27,8 @@
 #endif
 #include "AAdapt_ReferenceConfigurationManager.hpp"
 
+struct Parma_GroupCode;
+
 namespace AAdapt {
 
 template<class SizeField>
@@ -46,14 +48,11 @@ class MeshAdapt {
     bool adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
         Teuchos::RCP<Teuchos::FancyOStream>& output_stream_);
 
-    //! Each adapter must generate it's list of valid parameters
+  void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+
+    //! Each adapter must generate its list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters(
         Teuchos::RCP<Teuchos::ParameterList>& validPL) const;
-
-    void beforeAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-        Teuchos::RCP<Teuchos::FancyOStream>& output_stream_);
-    void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
-    void afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
   private:
 
@@ -72,14 +71,21 @@ class MeshAdapt {
 
     Teuchos::RCP<SizeField> szField;
   
-    void checkValidStateVariable(
-        const Albany::StateManager& state_mgr_,
-        const std::string name);
-
     std::string adaptation_method;
     std::string base_exo_filename;
 
+    bool should_transfer_ip_data;
+
     Teuchos::RCP<ReferenceConfigurationManager> rc_mgr;
+
+    void checkValidStateVariable(
+        const Albany::StateManager& state_mgr,
+        const std::string name);
+    void initAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params,
+                   Teuchos::RCP<Teuchos::FancyOStream>& output_stream);
+    void beforeAdapt();
+    bool adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback);
+    void afterAdapt();
 };
 
 template <class SizeField>
