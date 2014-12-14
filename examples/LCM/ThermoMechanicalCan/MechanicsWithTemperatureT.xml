@@ -157,9 +157,9 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
+	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
 	      <ParameterList name="Preconditioner Types">
-                <ParameterList name="MueLu-Tpetra">
+                <ParameterList name="MueLu">
 		  <Parameter name="verbosity" type="string" value="none"/>
                 </ParameterList>
 	      </ParameterList>
