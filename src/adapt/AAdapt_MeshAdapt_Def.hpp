@@ -148,7 +148,6 @@ template<class SizeField>
 void
 AAdapt::MeshAdapt<SizeField>::afterAdapt()
 {
-  std::cout << "amb: calling mesh->verify()\n";
   mesh->verify();
 
   szField->freeInputFields();
