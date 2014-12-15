@@ -524,7 +524,6 @@ Albany::STKDiscretization::setupMLCoords()
 
   //If MueLu preconditioner is selected
   if (rigidBodyModes->isMueLuUsed()) {
-    std::cout << "MueLu selected!" << std::endl;
     double *xxyyzz; //make this ST?
     rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
 

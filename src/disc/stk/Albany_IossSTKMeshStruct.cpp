@@ -222,7 +222,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[eb]->name(),
           this->ebNameToIndex, this->interleavedOrdering, true, cub_rule));
-      std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl; 
+      //std::cout << "el_block_size[" << eb << "] = " << el_blocks[eb] << "   name  " << partVec[eb]->name() << std::endl; 
     }
 
   }
