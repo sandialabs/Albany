@@ -56,7 +56,6 @@ ALBANY_BUILD_TYPES = \
         ("TRILINOS_GLOBIPACK", "ON"),
         ("TRILINOS_ISORROPIA", "ON"),
         ("TRILINOS_OPTIPACK", "ON"),
-        ("TRILINOS_PAMGEN", "ON"),
         ("TRILINOS_RBGEN", "ON"),
         ("TRILINOS_SCOREC", "ON"),
         ("TRILINOS_THREADPOOL", "ON"),

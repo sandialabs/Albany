@@ -65,7 +65,7 @@ cmake \
     -D Trilinos_ENABLE_GlobiPack:BOOL=${TRILINOS_GLOBIPACK:-OFF} \
     -D Trilinos_ENABLE_Isorropia:BOOL=${TRILINOS_ISORROPIA:-OFF} \
     -D Trilinos_ENABLE_OptiPack:BOOL=${TRILINOS_OPTIPACK:-OFF} \
-    -D Trilinos_ENABLE_Pamgen:BOOL=${TRILINOS_PAMGEN:-OFF} \
+    -D Trilinos_ENABLE_Pamgen:BOOL=ON \
     -D Trilinos_ENABLE_RBGen:BOOL=${TRILINOS_RBGEN:-OFF} \
     -D Trilinos_ENABLE_SCOREC:BOOL=${TRILINOS_SCOREC:-OFF} \
     -D Trilinos_ENABLE_ThreadPool:BOOL=${TRILINOS_THREADPOOL:-OFF} \
