@@ -246,7 +246,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     //p->set<std::string>("Stress Name", "Cauchy_Stress");
     //p->set<std::string>("Weights Name",  "Weights");
     RCP<LCM::IPtoNodalField<EvalT,Traits> > res_ev =
-      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl));
+      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

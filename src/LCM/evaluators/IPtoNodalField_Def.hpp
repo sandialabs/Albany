@@ -16,17 +16,25 @@ namespace LCM
 template<typename EvalT, typename Traits>
 IPtoNodalFieldBase<EvalT, Traits>::
 IPtoNodalFieldBase(Teuchos::ParameterList& p,
-		  const Teuchos::RCP<Albany::Layouts>& dl) :
-  weights_("Weights", dl->qp_scalar),
-  nodal_weights_name_("nodal_weights")
+    const Teuchos::RCP<Albany::Layouts>& dl,
+    const Albany::MeshSpecsStruct* mesh_specs) :
+    weights_("Weights", dl->qp_scalar),
+    nodal_weights_name_("nodal_weights")
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    mesh_specs == NULL, std::logic_error,
+    "IPtoNodalFieldBase needs access to mesh_specs->ebName and "
+    "mesh_specs->sepEvalsByEB");
+
+  eb_name_ = mesh_specs->ebName;
+  sep_by_eb_ = mesh_specs->sepEvalsByEB;
 
   //! get and validate IPtoNodalField parameter list
   Teuchos::ParameterList* plist =
-    p.get<Teuchos::ParameterList*>("Parameter List");
+      p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<const Teuchos::ParameterList> reflist =
-    this->getValidIPtoNodalFieldParameters();
-  plist->validateParameters(*reflist,0);
+      this->getValidIPtoNodalFieldParameters();
+  plist->validateParameters(*reflist, 0);
 
   output_to_exodus_ = plist->get<bool>("Output to File", true);
 
@@ -42,15 +50,15 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   num_vertices_ = vert_vector_dl->dimension(2);
 
   //! Register with state manager
-  this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
+  this->p_state_mgr_ = p.get<Albany::StateManager*>("State Manager Ptr");
 
   // register the nodal weights
   this->addDependentField(weights_);
   this->p_state_mgr_->registerNodalBlockStateVariable(nodal_weights_name_,
-                                            dl->node_node_scalar,
-                                            dl->dummy, "all",
-                                            "scalar", 0.0, false,
-                                            true);
+      dl->node_node_scalar,
+      dl->dummy, "all",
+      "scalar", 0.0, false,
+      true);
 
   // loop over the number of fields and register
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
@@ -61,50 +69,78 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   nodal_field_names_.resize(number_of_fields_);
   ip_fields_.resize(number_of_fields_);
 
+  // Surface element prefix, if any.
+  bool const
+  is_surface_block = eb_name_ == "Surface Element";
+
+  std::string const
+  field_name_prefix = is_surface_block == true ? "surf_" : "";
+
+
   for (int field(0); field < number_of_fields_; ++field) {
-    ip_field_names_[field] = plist->get<std::string>(Albany::strint("IP Field Name", field));
-    ip_field_layouts_[field] = plist->get<std::string>(Albany::strint("IP Field Layout", field));
+
+    ip_field_names_[field] = field_name_prefix +
+        plist->get<std::string>(Albany::strint("IP Field Name", field));
+
+    ip_field_layouts_[field] =
+        plist->get<std::string>(Albany::strint("IP Field Layout", field));
+
     nodal_field_names_[field] = "nodal_" + ip_field_names_[field];
 
     if (ip_field_layouts_[field] == "Scalar") {
-      PHX::MDField<ScalarT> s(ip_field_names_[field],dl->qp_scalar);
+      PHX::MDField<ScalarT> s(ip_field_names_[field], dl->qp_scalar);
       ip_fields_[field] = s;
     } else if (ip_field_layouts_[field] == "Vector") {
-      PHX::MDField<ScalarT> v(ip_field_names_[field],dl->qp_vector);
+      PHX::MDField<ScalarT> v(ip_field_names_[field], dl->qp_vector);
       ip_fields_[field] = v;
     } else if (ip_field_layouts_[field] == "Tensor") {
-      PHX::MDField<ScalarT> t(ip_field_names_[field],dl->qp_tensor);
+      PHX::MDField<ScalarT> t(ip_field_names_[field], dl->qp_tensor);
       ip_fields_[field] = t;
     } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::runtime_error,"Field Layout unknown");
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::runtime_error,
+          "Field Layout unknown");
     }
 
     this->addDependentField(ip_fields_[field]);
 
-     if (ip_field_layouts_[field] == "Scalar" ) {
-      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
-                                                dl->node_node_scalar,
-                                                dl->dummy, "all",
-                                                "scalar", 0.0, false,
-                                                output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Vector" ) {
-      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
-                                                dl->node_node_vector,
-                                                dl->dummy, "all",
-                                                "scalar", 0.0, false,
-                                                output_to_exodus_);
-    } else if (ip_field_layouts_[field] == "Tensor" ) {
-      this->p_state_mgr_->registerNodalBlockStateVariable(nodal_field_names_[field],
-                                                dl->node_node_tensor,
-                                                dl->dummy, "all",
-                                                "scalar", 0.0, false,
-                                                output_to_exodus_);
+    if (ip_field_layouts_[field] == "Scalar") {
+      this->p_state_mgr_->registerNodalBlockStateVariable(
+          nodal_field_names_[field],
+          dl->node_node_scalar,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          output_to_exodus_);
+    } else if (ip_field_layouts_[field] == "Vector") {
+      this->p_state_mgr_->registerNodalBlockStateVariable(
+          nodal_field_names_[field],
+          dl->node_node_vector,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          output_to_exodus_);
+    } else if (ip_field_layouts_[field] == "Tensor") {
+      this->p_state_mgr_->registerNodalBlockStateVariable(
+          nodal_field_names_[field],
+          dl->node_node_tensor,
+          dl->dummy,
+          "all",
+          "scalar",
+          0.0,
+          false,
+          output_to_exodus_);
     }
   }
 
   // Create field tag
   field_tag_ =
-    Teuchos::rcp(new PHX::Tag<ScalarT>("IP to Nodal Field", dl->dummy));
+      Teuchos::rcp(new PHX::Tag<ScalarT>("IP to Nodal Field", dl->dummy));
 
   this->addEvaluatedField(*field_tag_);
 }
@@ -113,11 +149,11 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits>
 void IPtoNodalFieldBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+    PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(weights_,fm);
+  this->utils.setFieldData(weights_, fm);
   for (int field(0); field < number_of_fields_; ++field) {
-    this->utils.setFieldData(ip_fields_[field],fm);
+    this->utils.setFieldData(ip_fields_[field], fm);
   }
 }
 
@@ -127,8 +163,11 @@ postRegistrationSetup(typename Traits::SetupData d,
 //------------------------------------------------------------------------------
 template<typename Traits>
 IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
-IPtoNodalField(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
-  IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl)
+IPtoNodalField(
+    Teuchos::ParameterList& p,
+    const Teuchos::RCP<Albany::Layouts>& dl,
+    const Albany::MeshSpecsStruct* mesh_specs) :
+    IPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits>(p, dl, mesh_specs)
 {
 }
 
@@ -138,7 +177,8 @@ void IPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
+          ->getNodalDataBlock();
   node_data->initializeVectors(0.0);
 }
 
@@ -152,25 +192,30 @@ evaluateFields(typename Traits::EvalData workset)
 
   // Get the node data block container
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
+          ->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
 
   int num_nodes = this->num_nodes_;
-  int num_dims  = this->num_dims_;
-  int num_pts   = this->num_pts_;
+  int num_dims = this->num_dims_;
+  int num_pts = this->num_pts_;
 
   // deal with weights
-  int  node_weight_offset;
-  int  node_weight_ndofs;
-  node_data->getNDofsAndOffset(this->nodal_weights_name_, node_weight_offset, node_weight_ndofs);
+  int node_weight_offset;
+  int node_weight_ndofs;
+  node_data->getNDofsAndOffset(
+      this->nodal_weights_name_,
+      node_weight_offset,
+      node_weight_ndofs);
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes; ++node) {
       GO global_block_id = wsElNodeID[cell][node];
       LO local_block_id = local_node_map->getLocalBlockID(global_block_id);
-      if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
-      LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(local_block_id);
+      if (local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
+      LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(
+          local_block_id);
       for (int pt = 0; pt < num_pts; ++pt) {
         data[first_local_dof + node_weight_offset] += this->weights_(cell, pt);
       }
@@ -180,32 +225,38 @@ evaluateFields(typename Traits::EvalData workset)
   // deal with each of the fields
 
   for (int field(0); field < this->number_of_fields_; ++field) {
-    int  node_var_offset;
-    int  node_var_ndofs;
-    node_data->getNDofsAndOffset(this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
+    int node_var_offset;
+    int node_var_ndofs;
+    node_data->getNDofsAndOffset(
+        this->nodal_field_names_[field],
+        node_var_offset,
+        node_var_ndofs);
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes; ++node) {
         GO global_block_id = wsElNodeID[cell][node];
         LO local_block_id = local_node_map->getLocalBlockID(global_block_id);
-        if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
-        LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(local_block_id);
+        if (local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
+        LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(
+            local_block_id);
         for (int pt = 0; pt < num_pts; ++pt) {
-          if (this->ip_field_layouts_[field] == "Scalar" ) {
+          if (this->ip_field_layouts_[field] == "Scalar") {
             // save the scalar component
             data[first_local_dof + node_var_offset] +=
-              this->ip_fields_[field](cell,pt) * this->weights_(cell,pt);
-          } else if (this->ip_field_layouts_[field] == "Vector" ) {
+                this->ip_fields_[field](cell, pt) * this->weights_(cell, pt);
+          } else if (this->ip_field_layouts_[field] == "Vector") {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               // save the vector component
               data[first_local_dof + node_var_offset + dim0] +=
-                this->ip_fields_[field](cell,pt,dim0) * this->weights_(cell,pt);
+                  this->ip_fields_[field](cell, pt, dim0)
+                      * this->weights_(cell, pt);
             }
-          } else if (this->ip_field_layouts_[field] == "Tensor" ) {
+          } else if (this->ip_field_layouts_[field] == "Tensor") {
             for (int dim0 = 0; dim0 < num_dims; ++dim0) {
               for (int dim1 = 0; dim1 < num_dims; ++dim1) {
                 // save the tensor component
-                data[first_local_dof + node_var_offset + dim0*num_dims + dim1] +=
-                  this->ip_fields_[field](cell,pt,dim0,dim1) * this->weights_(cell,pt);
+                data[first_local_dof + node_var_offset + dim0 * num_dims + dim1] +=
+                    this->ip_fields_[field](cell, pt, dim0, dim1)
+                        * this->weights_(cell, pt);
               }
             }
           }
@@ -223,10 +274,12 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Get the node data block container
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-     this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+      this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
+          ->getNodalDataBlock();
   Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
-  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
-  Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > wsElNodeID = workset.wsElNodeID;
+  Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data
+      ->getOverlapMap();
 
   // Build the exporter
   node_data->initializeExport();
@@ -238,21 +291,28 @@ postEvaluate(typename Traits::PostEvalData workset)
   int blocksize = node_data->getBlocksize();
 
   // get weight info
-  int  node_weight_offset;
-  int  node_weight_ndofs;
-  node_data->getNDofsAndOffset(this->nodal_weights_name_, node_weight_offset, node_weight_ndofs);
+  int node_weight_offset;
+  int node_weight_ndofs;
+  node_data->getNDofsAndOffset(
+      this->nodal_weights_name_,
+      node_weight_offset,
+      node_weight_ndofs);
 
   for (int field(0); field < this->number_of_fields_; ++field) {
-    int  node_var_offset;
-    int  node_var_ndofs;
-    node_data->getNDofsAndOffset(this->nodal_field_names_[field], node_var_offset, node_var_ndofs);
+    int node_var_offset;
+    int node_var_ndofs;
+    node_data->getNDofsAndOffset(
+        this->nodal_field_names_[field],
+        node_var_offset,
+        node_var_ndofs);
 
     // all PEs divide the accumulated value(s) by the weights
-    for (LO overlap_node=0; overlap_node < num_nodes; ++overlap_node){
-      LO first_local_dof = overlap_node_map->getFirstLocalPointInLocalBlock(overlap_node);
-      for (int k=0; k < node_var_ndofs; ++k)
+    for (LO overlap_node = 0; overlap_node < num_nodes; ++overlap_node) {
+      LO first_local_dof = overlap_node_map->getFirstLocalPointInLocalBlock(
+          overlap_node);
+      for (int k = 0; k < node_var_ndofs; ++k)
         data[first_local_dof + node_var_offset + k] /=
-          data[first_local_dof + node_weight_offset];
+            data[first_local_dof + node_weight_offset];
     }
 
   }
@@ -265,45 +325,82 @@ postEvaluate(typename Traits::PostEvalData workset)
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 Teuchos::RCP<const Teuchos::ParameterList>
-IPtoNodalFieldBase<EvalT,Traits>::getValidIPtoNodalFieldParameters() const
+IPtoNodalFieldBase<EvalT, Traits>::getValidIPtoNodalFieldParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL =
-     	rcp(new Teuchos::ParameterList("Valid IPtoNodalField Params"));;
+      rcp(new Teuchos::ParameterList("Valid IPtoNodalField Params"));
+  ;
 
   validPL->set<std::string>("Name", "", "Name of field Evaluator");
   validPL->set<int>("Number of Fields", 0);
   validPL->set<std::string>("IP Field Name 0", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 0", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 0",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 1", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 1", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 1",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 2", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 2", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 2",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 3", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 3", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 3",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 4", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 4", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 4",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 5", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 5", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 5",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 6", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 6", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 6",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 7", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 7", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 7",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 8", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 8", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 8",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
   validPL->set<std::string>("IP Field Name 9", "", "IP Field prefix");
-  validPL->set<std::string>("IP Field Layout 9", "", "IP Field Layout: Scalar, Vector, or Tensor");
+  validPL->set<std::string>(
+      "IP Field Layout 9",
+      "",
+      "IP Field Layout: Scalar, Vector, or Tensor");
 
-  validPL->set<bool>("Output to File", true, "Whether nodal field info should be output to a file");
-  validPL->set<bool>("Generate Nodal Values", true, "Whether values at the nodes should be generated");
+  validPL->set<bool>(
+      "Output to File",
+      true,
+      "Whether nodal field info should be output to a file");
+  validPL->set<bool>(
+      "Generate Nodal Values",
+      true,
+      "Whether values at the nodes should be generated");
 
   return validPL;
 }
