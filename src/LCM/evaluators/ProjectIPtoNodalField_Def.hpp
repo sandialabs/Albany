@@ -277,8 +277,15 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   nodal_field_names_.resize(number_of_fields_);
   ip_fields_.resize(number_of_fields_);
 
+  // Surface element prefix, if any.
+  bool const
+  is_surface_block = eb_name_ == "Surface Element";
+
+  std::string const
+  field_name_prefix = is_surface_block == true ? "surf_" : "";
+
   for (int field = 0; field < number_of_fields_; ++field) {
-    ip_field_names_[field] = plist->get<std::string>(
+    ip_field_names_[field] = field_name_prefix + plist->get<std::string>(
       Albany::strint("IP Field Name", field));
     nodal_field_names_[field] = "proj_nodal_" + ip_field_names_[field];
     ip_field_layouts_[field] = EFieldLayout::fromString(

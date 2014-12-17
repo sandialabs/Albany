@@ -76,7 +76,6 @@ IPtoNodalFieldBase(Teuchos::ParameterList& p,
   std::string const
   field_name_prefix = is_surface_block == true ? "surf_" : "";
 
-
   for (int field(0); field < number_of_fields_; ++field) {
 
     ip_field_names_[field] = field_name_prefix +
