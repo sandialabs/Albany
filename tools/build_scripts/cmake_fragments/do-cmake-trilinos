@@ -21,22 +21,20 @@ fi
 
 if [ ${TRILINOS_YAML:-OFF} = "ON" ]
 then
-    YAML_ARGS = "-D TPL_ENABLE_yaml-cpp:BOOL=ON \
-                 -D yaml-cpp_INCLUDE_DIRS:PATH=${YAMLDIR:?YAMLDIR must be defined}/include \
-                 -D yaml-cpp_LIBRARY_DIRS:PATH=YAMLDIR/lib"
+    YAML_ARGS="-D TPL_ENABLE_yaml-cpp:BOOL=ON \
+               -D yaml-cpp_INCLUDE_DIRS:PATH=${YAMLDIR:?YAMLDIR must be defined}/include \
+               -D yaml-cpp_LIBRARY_DIRS:PATH=YAMLDIR/lib"
 fi
 
 if [ ${TRILINOS_BLAS:-OFF} = "ON" ]
 then
-    BLAS_ARGS = "-D TPL_BLAS_LIBRARIES:FILEPATH=${BLASLIB:?BLASLIB must be defined}"
+    BLAS_ARGS="-D TPL_BLAS_LIBRARIES:FILEPATH=${BLASLIB:?BLASLIB must be defined}"
 fi
-
-
 
 cmake \
     -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
     -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR  \
-    -D CMAKE_BUILD_TYPE:STRING=$TRILINOS_BUILD_TYPE  \
+    -D CMAKE_BUILD_TYPE:STRING=$TRILINOS_BUILD_MODE  \
     -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
     -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
     -D Trilinos_ENABLE_SECONDARY_TESTED_CODE=OFF \
