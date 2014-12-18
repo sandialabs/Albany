@@ -71,7 +71,8 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   outputFileName = params->get<std::string>("FMDB Output File Name", "");
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
 
-  compositeTet = params->get<bool>("Use Composite Tet 10", false);
+  compositeTet = false;
+  outputQPFields = params->get<bool>("Output QP Fields", false);
 
   gmi_register_mesh();
 
@@ -364,10 +365,6 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL
      = rcp(new Teuchos::ParameterList("Valid FMDBParams"));
 
-  validPL->set<std::string>("FMDB Solution Name", "",
-      "Name of solution output vector written to output file");
-  validPL->set<std::string>("FMDB Residual Name", "",
-      "Name of residual output vector written to output file");
   validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
@@ -377,36 +374,22 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   Teuchos::Array<std::string> defaultFields;
-  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
-      "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layouts of solution vector components");
   validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
 
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
+  validPL->set<bool>("Output QP Fields", false, "Whether to copy QP data to output files");
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
   validPL->set<std::string>("Mesh Model Input File Name", "", "File Name for meshModel Input");
 
-  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
-  validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
-  validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for initial guess/condition.");
-  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
-
-  validPL->set<int>("Number of parts", 1, "Number of parts");
-  validPL->set<int>("Number of migrations", 0, "Number of migrations");
-  validPL->set<int>("Number of individual migrations", 0, "Number of individual migrations");
   validPL->set<double>("Imbalance tolerance", 1.03, "Imbalance tolerance");
-  validPL->set<bool>("Construct pset", false, "Construct pset");
 
   // Parameters to refine the mesh after input
   validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
-  validPL->set<int>("Max Number of Resize Iterations", 0, "Max number of iteration sweeps to use during initial element resize");
-
-  validPL->set<std::string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
-  validPL->set<std::string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
 
   Teuchos::TwoDArray<std::string> defaultData;
   validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData,

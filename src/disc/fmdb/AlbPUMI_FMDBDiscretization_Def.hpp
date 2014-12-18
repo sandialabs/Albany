@@ -457,6 +457,9 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
          << fmdbMeshStruct->outputFileName << std::endl;
   }
 
+  if ( ! fmdbMeshStruct->outputQPFields)
+    return;
+
   apf::Field* f;
   int dim = getNumDim();
   apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
