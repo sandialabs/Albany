@@ -458,9 +458,8 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
   }
 
   apf::Field* f;
-  int order = fmdbMeshStruct->cubatureDegree;
   int dim = getNumDim();
-  apf::FieldShape* fs = apf::getIPShape(dim,order);
+  apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
   copyQPStatesToAPF(f,fs);
   meshOutput.writeFile(time_label);
   removeQPStatesFromAPF();
