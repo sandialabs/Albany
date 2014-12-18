@@ -457,15 +457,17 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
          << fmdbMeshStruct->outputFileName << std::endl;
   }
 
-  if ( ! fmdbMeshStruct->outputQPFields)
-    return;
+  if (fmdbMeshStruct->outputQPFields) {
+    apf::Field* f;
+    int dim = getNumDim();
+    apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
+    copyQPStatesToAPF(f,fs);
+  }
 
-  apf::Field* f;
-  int dim = getNumDim();
-  apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
-  copyQPStatesToAPF(f,fs);
   meshOutput.writeFile(time_label);
-  removeQPStatesFromAPF();
+
+  if (fmdbMeshStruct->outputQPFields)
+    removeQPStatesFromAPF();
 }
 
 template<class Output>
