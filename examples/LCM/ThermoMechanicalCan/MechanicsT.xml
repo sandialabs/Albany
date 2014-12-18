@@ -3,14 +3,10 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
 
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
 
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="MechanicsWithTemperatureMaterials.xml"/>
-
-    <!--ParameterList name="Temperature">
-      <Parameter name="Variable Type" type="string" value="DOF"/>
-    </ParameterList-->
+    <Parameter name="MaterialDB Filename" type="string" value="MechanicsMaterials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
@@ -84,10 +80,11 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Constant"/>
+	<Parameter  name="Method" type="string" value="Secant"/>
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
+        <Parameter  name="Continuation Method" type="string" value="Natural"/>
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
@@ -161,6 +158,13 @@
 	      <ParameterList name="Preconditioner Types">
                 <ParameterList name="MueLu">
 		  <Parameter name="verbosity" type="string" value="none"/>
+                  <Parameter name="multigrid algorithm" type="string" value="sa"/>
+                  <Parameter name="aggregation: mode" type="string" value="old"/>
+                  <Parameter name="repartition: enable" type="bool" value="true"/>
+                  <Parameter name="repartition: partitioner" type="string" value="zoltan2"/>
+                  <ParameterList name="smoother: params">
+                    <Parameter name="relaxation: type" type="string" value="Symmetric Gauss-Seidel"/>
+                  </ParameterList>
                 </ParameterList>
 	      </ParameterList>
 	    </ParameterList>

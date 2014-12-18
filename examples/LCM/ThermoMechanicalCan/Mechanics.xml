@@ -3,14 +3,10 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
 
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
 
     <!-- XML filename with material definitions -->
-    <Parameter name="MaterialDB Filename" type="string" value="MechanicsWithTemperatureMaterials.xml"/>
-
-    <!--ParameterList name="Temperature">
-      <Parameter name="Variable Type" type="string" value="DOF"/>
-    </ParameterList-->
+    <Parameter name="MaterialDB Filename" type="string" value="MechanicsMaterials.xml"/>
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
@@ -76,10 +72,11 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-	<Parameter  name="Method" type="string" value="Constant"/>
+	<Parameter  name="Method" type="string" value="Secant"/>
       </ParameterList>
       <!-- PARAMETER STEPPING -->
       <ParameterList name="Stepper">
+        <Parameter  name="Continuation Method" type="string" value="Natural"/>
 	<Parameter  name="Initial Value" type="double" value="0.0"/>
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
@@ -153,6 +150,7 @@
                     <Parameter name="max levels" type="int" value="5"/>
                     <Parameter name="coarse: type" type="string" value="Amesos-Superludist"/>
                     <Parameter name="PDE equations" type="int" value="3"/>
+                    <Parameter name="smoother: type" type="string" value="symmetric Gauss-Seidel"/>
                   </ParameterList>
                 </ParameterList>
 		<ParameterList name="Ifpack">
