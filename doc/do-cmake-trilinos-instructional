@@ -93,13 +93,36 @@ cmake \
 
 # For ctests, include these additional SEACAS-related flags to build the
 # install/bin utils exodiff, algebra, and epu, as well as others:
-# -D Trilinos_ENABLE_SEACAS:BOOL=ON \
-# -D TPL_ENABLE_Matio:BOOL=OFF \
-# -DTPL_ENABLE_X11:BOOL=OFF \
+#   -D Trilinos_ENABLE_SEACAS:BOOL=ON \
+#   -D TPL_ENABLE_Matio:BOOL=OFF \
+#   -D TPL_ENABLE_X11:BOOL=OFF \
 
-# Use these lines to make a debug build.
+# Options for increasing Albany s/w dev efficience:
+#
+# Add this line to make a shared-library build.
+#   -D BUILD_SHARED_LIBS:BOOL=ON \
+# There are two advantages to using a shared-lib build: first, link time of
+# large executables is essentially gone; second, incremental rebuilds (in a
+# debug-modify-build loop) are much faster: on average, perhaps 5x faster, and
+# often up to 20x faster.
+#
+# Add these lines to make a debug build.
 #   -D CMAKE_BUILD_TYPE:STRING=DEBUG \
 #   -D CMAKE_CXX_FLAGS:STRING="-ggdb" \
 # I strongly recommend doing only *shared library* debug builds, as the lib and
 # exe files for a static debug build can be huge.
+#
+# Add this line to enable explicit template instantiation (ETI). This speeds up
+# compiling certain files in Albany by a factor of >3.
+#   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+# This speedup is particularly evident when doing incremental rebuilds during
+# development work.
+#
+# In summary, the optimal set of optional flags when doing development work in
+# Albany is
+#   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 #   -D BUILD_SHARED_LIBS:BOOL=ON \
+# In addition, if the dev work involves gdb-level debugging, include these as
+# well:
+#   -D CMAKE_BUILD_TYPE:STRING=DEBUG \
+#   -D CMAKE_CXX_FLAGS:STRING="-ggdb" \
