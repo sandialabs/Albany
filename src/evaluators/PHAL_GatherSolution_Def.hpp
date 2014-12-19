@@ -240,6 +240,103 @@ template < class DeviceType, class MDFieldType, class TpetraType, class IndexArr
      }
    }
 };
+// *********************************************************************
+//Kokkos functors
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_1Tag& tag, const int& i) const{
+  
+  for (int node = 0; node < this->numNodes; ++node) 
+    for (int eq = 0; eq < numFields; eq++) 
+     (this->valVec[0])(i,node,eq)= xT_constView[wsID_kokkos(i, node,this->offset+eq)];
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+     (this->valVec_dot[0])(i,node,eq)= xdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+}
+
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+     (this->valVec_dotdot[0])(i,node,eq)= xdotdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_2Tag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+        (this->valTensor[0])(i,node,eq/numDim,eq%numDim)= xT_constView[wsID_kokkos(i, node, this->offset+eq)];
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+       (this->valTensor_dot[0])(i,node,eq/numDim,eq%numDim)= xdotT_constView[wsID_kokkos (i, node, this->offset+eq)];
+}
+
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const{
+
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+       (this->valTensor_dotdot[0])(i,node,eq/numDim,eq%numDim)= xdotdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_0Tag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+        (this->val[eq])(i,node)= xT_constView[wsID_kokkos(i, node, this->offset+eq)];
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+       (this->val_dot[eq])(i,node)= xdotT_constView[wsID_kokkos (i, node, this->offset+eq)];
+}
+
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
+operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const{
+
+  for (int node = 0; node < this->numNodes; ++node)
+    for (int eq = 0; eq < numFields; eq++)
+       (this->val_dotdot[eq])(i,node)= xdotdotT_constView[wsID_kokkos(i, node, this->offset+eq)];
+}
+
+
 // **********************************************************************
 template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
@@ -250,12 +347,17 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<const Tpetra_Vector> xdotdotT = workset.xdotdotT;
 
   //get const (read-only) view of xT and xdotT
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
-  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+//  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+//  Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
+//  Teuchos::ArrayRCP<const ST> xdotdotT_constView = xdotdotT->get1dView();
+  
+  //numDim = this->valTensor[0].dimension(2);
 
+  xT_constView = xT->get1dView();
+  xdotT_constView = xdotT->get1dView();
+  xdotdotT_constView = xdotdotT->get1dView();
 
-//#ifdef NO_KOKKOS_ALBANY
+#ifdef NO_KOKKOS_ALBANY
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -312,10 +414,51 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-/*#else
- Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields) );
+#else
+
+ wsID_kokkos=workset.wsElNodeEqID_kokkos;
+
+   if (this->tensorRank == 2){
+
+    numDim = this->valTensor[0].dimension(2);
+
+     Kokkos::parallel_for(tensorRank_2Policy(0,workset.numCells),*this);
+
+     if (workset.transientTerms && this->enableTransient) {
+        Kokkos::parallel_for(tensorRank_2_enableTransientPolicy(0,workset.numCells),*this);    
+     }
+
+     if (workset.accelerationTerms && this->enableAcceleration) {
+        Kokkos::parallel_for(tensorRank_2_enableAccelerationPolicy(0,workset.numCells),*this);
+     }
+
+   }  else if (this->tensorRank == 1){
+     Kokkos::parallel_for(tensorRank_1Policy(1,4),*this);
+  
+     if (workset.transientTerms && this->enableTransient) {
+       Kokkos::parallel_for(tensorRank_1_enableTransientPolicy(0,workset.numCells),*this);
+     }
+  
+     if (workset.accelerationTerms && this->enableAcceleration) {
+        Kokkos::parallel_for(tensorRank_1_enableAccelerationPolicy(0,workset.numCells),*this);
+     }
+ 
+   } else  {
+     Kokkos::parallel_for(tensorRank_0Policy(0,workset.numCells),*this);
+     if (workset.transientTerms && this->enableTransient) {
+        Kokkos::parallel_for(tensorRank_0_enableTransientPolicy(0,workset.numCells),*this);
+     }
+
+     if (workset.accelerationTerms && this->enableAcceleration) {
+        Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
+     }
+   
+   }
+
+// Kokkos::parallel_for(workset.numCells, GatherSolution_resid < PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim> ,  Teuchos::ArrayRCP<const ST>, Kokkos::View<int***, PHX::Device> > (this->valVec[0], xT_constView, workset.wsElNodeEqID_kokkos, this->offset, this->numNodes, numFields) );
+// 
 #endif
-*/
+
 //  std::cout <<"GatherSolution"<< (*x)[workset.wsElNodeEqID[30][3][3]] <<std::endl;
 }
 

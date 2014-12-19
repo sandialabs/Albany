@@ -1075,7 +1075,6 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
       for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
           for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
               workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
- 
 
   PHAL::BuildSerializer<EvalT> bs(workset);
 }

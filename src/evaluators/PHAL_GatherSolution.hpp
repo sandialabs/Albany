@@ -72,6 +72,7 @@ protected:
   unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
+
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;
@@ -97,9 +98,54 @@ public:
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
 
+ struct tensorRank_2Tag{};
+ struct tensorRank_2_enableTransientTag{};
+ struct tensorRank_2_enableAccelerationTag{};
+
+ struct tensorRank_1Tag{};
+ struct tensorRank_1_enableTransientTag{};
+ struct tensorRank_1_enableAccelerationTag{};
+
+ struct tensorRank_0Tag{};
+ struct tensorRank_0_enableTransientTag{};
+ struct tensorRank_0_enableAccelerationTag{};
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
+
+  void operator() (const tensorRank_2Tag& tag, const int& i) const;
+  void operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const;
+  void operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const;
+
+  void operator() (const tensorRank_1Tag& tag, const int& i) const;
+  void operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const;
+  void operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const;
+
+  void operator() (const tensorRank_0Tag& tag, const int& i) const;
+  void operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const;
+  void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
+
+ 
+
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   const int numFields;
+  int numDim; 
+
+  Teuchos::ArrayRCP<const ST> xT_constView;
+  Teuchos::ArrayRCP<const ST> xdotT_constView;
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView;
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  
 };
 
 // **************************************************************
