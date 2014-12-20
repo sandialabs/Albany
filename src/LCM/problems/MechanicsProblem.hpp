@@ -282,6 +282,11 @@ protected:
   bool have_peridynamics_;
 
   ///
+  /// Topology adaptation (adaptive insertion)
+  ///
+  bool have_topmod_adaptation_;
+
+  ///
   /// Data layouts
   ///
   Teuchos::RCP<Albany::Layouts> dl_;
@@ -1545,7 +1550,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             "Reference Dual Basis");
         p->set<std::string>("Reference Normal Name", "Reference Normal");
         p->set<std::string>("Reference Area Name", "Weights");
-        p->set<std::string>("Jacobian Name", J);
 
         if (cohesive_element) {
           p->set<bool>("Use Cohesive Traction", true);
@@ -1556,7 +1560,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Surface Vector Residual Name",
             "Displacement Residual");
 
-        p->set<std::string>("Cauchy Stress Name", cauchy);
+        if (have_topmod_adaptation_ == true) {
+          // Input
+          p->set<std::string>("Jacobian Name", J);
+          // Output
+          p->set<std::string>("Cauchy Stress Name", cauchy);
+        }
 
         ev = Teuchos::rcp(
             new LCM::SurfaceVectorResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));

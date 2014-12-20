@@ -58,7 +58,8 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_hydrostress_eq_(false),
     have_damage_eq_(false),
     have_stab_pressure_eq_(false),
-    have_peridynamics_(false)
+    have_peridynamics_(false),
+    have_topmod_adaptation_(false)
 {
 
   std::string& method = params->get("Name", "Mechanics ");
@@ -175,6 +176,20 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       num_elasticity_dim,
       num_scalar,
       null_space_dim);
+
+  // Check whether we are doing adaptive insertion with topology modification.
+  bool const
+  have_adaptation = params->isSublist("Adaptation");
+
+  if (have_adaptation == true) {
+    Teuchos::ParameterList const &
+    adapt_params = params->sublist("Adaptation");
+
+    std::string const &
+    adaptation_method_name = adapt_params.get<std::string>("Method");
+
+    have_topmod_adaptation_ = adaptation_method_name == "Topmod";
+  }
 
 }
 //------------------------------------------------------------------------------
