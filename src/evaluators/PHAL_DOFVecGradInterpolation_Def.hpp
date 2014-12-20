@@ -119,7 +119,7 @@ void writestuff (
   void DOFVecGradInterpolation<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-//#ifdef NO_KOKKOS_ALBANY
+#ifdef NO_KOKKOS_ALBANY
     // This is needed, since evaluate currently sums into    
    Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 
@@ -140,13 +140,13 @@ void writestuff (
     writestuff(*this, workset);
 
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
-/*#else
+#else
     Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim));
 
 //std::cout << grad_val_qp (30,3,0,0) << "      "<< val_node (30,3,0) << "       " <<GradBF (30,1,3,0) << std::endl;
 #endif
-*/  }
+  }
   
   //**********************************************************************
   template<typename Traits>
@@ -245,7 +245,7 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
   void DOFVecGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-//#ifdef NO_KOKKOS_ALBANY
+#ifdef NO_KOKKOS_ALBANY
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -265,12 +265,12 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
     }
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-/*#else
+#else
   
    //Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), ScalarT(0.0));
    Kokkos::parallel_for ( workset.numCells,  VecGradInterpolationJacobian <FadType,  PHX::Device, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,Node,VecDim>,  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>  >(GradBF, val_node, grad_val_qp, numQPs, numNodes, numDims, vecDim, offset));
 #endif
-*/  }
+  }
   
   //**********************************************************************
 }

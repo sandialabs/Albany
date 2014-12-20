@@ -90,7 +90,7 @@ template<typename EvalT, typename Traits>
 void DOFVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-//#ifdef NO_KOKKOS_AERAS
+#ifdef NO_KOKKOS_AERAS
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
@@ -103,9 +103,9 @@ evaluateFields(typename Traits::EvalData workset)
     } 
   }
 //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
-/*#else
+#else
    Kokkos::parallel_for ( workset.numCells,  VecInterpolation <  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numQPs, numNodes, vecDim));
-#endif*/
+#endif
 }
 
 //**********************************************************************
@@ -198,7 +198,7 @@ template<typename Traits>
 void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-//#ifdef NO_KOKKOS_ALBANY
+#ifdef NO_KOKKOS_ALBANY
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes; 
 
@@ -216,10 +216,10 @@ evaluateFields(typename Traits::EvalData workset)
     } 
   }
 //Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
-/*#else
+#else
   int num_dof = val_node(0,0,0).size(); 
   Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <FadType,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
 #endif
-*/
+
 }
 }
