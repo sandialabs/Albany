@@ -41,12 +41,6 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
     refArea
     (p.get<std::string>("Reference Area Name"), dl->qp_scalar),
 
-    detF_
-    (p.get<std::string>("Jacobian Name"), dl->qp_scalar),
-
-    Cauchy_stress_
-    (p.get<std::string>("Cauchy Stress Name"), dl->qp_tensor),
-
     force
     (p.get<std::string>("Surface Vector Residual Name"), dl->node_vector),
 
@@ -54,16 +48,17 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
     (p.get<bool>("Use Cohesive Traction", false)),
 
     compute_membrane_forces_
-    (p.get<bool>("Compute Membrane Forces", false))
+    (p.get<bool>("Compute Membrane Forces", false)),
+
+    have_topmod_adaptation_
+    (p.get<bool>("Use Adaptive Insertion", false))
 {
   this->addDependentField(currentBasis);
   this->addDependentField(refDualBasis);
   this->addDependentField(refNormal);
   this->addDependentField(refArea);
-  this->addDependentField(detF_);
 
   this->addEvaluatedField(force);
-  this->addEvaluatedField(Cauchy_stress_);
 
   this->setName("Surface Vector Residual" + PHX::TypeString<EvalT>::value);
 
@@ -77,6 +72,21 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
     this->addDependentField(traction_);
   } else {
     this->addDependentField(stress);
+  }
+
+  if (have_topmod_adaptation_ == true) {
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
+    J(p.get<std::string>("Jacobian Name"), dl->qp_scalar);
+
+    detF_ = J;
+    this->addDependentField(detF_);
+
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+    sigma(p.get<std::string>("Cauchy Stress Name"), dl->qp_tensor);
+
+    Cauchy_stress_ = sigma;
+
+    this->addEvaluatedField(Cauchy_stress_);
   }
 
   std::vector<PHX::DataLayout::size_type> dims;

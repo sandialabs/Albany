@@ -1563,6 +1563,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         if (have_topmod_adaptation_ == true) {
           // Input
           p->set<std::string>("Jacobian Name", J);
+          p->set<bool>("Use Adaptive Insertion", true);
           // Output
           p->set<std::string>("Cauchy Stress Name", cauchy);
         }

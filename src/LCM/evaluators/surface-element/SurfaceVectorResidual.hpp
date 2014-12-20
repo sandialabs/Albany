@@ -96,6 +96,9 @@ private:
   /// Membrane Forces Flag
   ///
   bool compute_membrane_forces_;
+
+  // Topology modification for adaptive insertion flag.
+  bool have_topmod_adaptation_;
 };
 
 }
