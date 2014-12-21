@@ -56,6 +56,25 @@ public:
   friend void writestuff(const MechanicsResidual<EvalT, Traits>& mr,
                          typename Traits::EvalData workset);
 
+  //Kokkos kernel
+
+  struct residual_Tag{};
+  struct residual_haveBodyForce_Tag{};
+  struct residual_haveBodyForce_and_dynamic_Tag{};
+  struct residual_have_dynamic_Tag{};
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_Tag> residual_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_Tag> residual_haveBodyForce_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_and_dynamic_Tag> residual_haveBodyForce_and_dynamic_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_have_dynamic_Tag> residual_have_dynamic_Policy;
+
+  void operator() (const residual_Tag& tag, const int& i) const;
+  void operator() (const residual_haveBodyForce_Tag& tag, const int& i) const;
+  void operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
+  void operator() (const residual_have_dynamic_Tag& tag, const int& i) const;
+   
 private:
 
   ///
@@ -117,6 +136,8 @@ private:
   /// Dynamics flag
   ///
   bool enable_dynamics_;
+
+
 };
 }
 

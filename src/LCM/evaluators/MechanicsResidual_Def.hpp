@@ -103,7 +103,132 @@ void writestuff (
   amb_write_mdfield3(mr.w_bf_, "mr_w_bf", nc, nn, np);
   amb_write_mdfield3(mr.acceleration_, "mr_acceleration", nc, np, nd);
 }
+// ***************************************************************************
+//Kokkos kernels
+template<typename EvalT, typename Traits>
+void MechanicsResidual<EvalT, Traits>::
+operator() (const residual_Tag& tag, const int& i) const{
+ 
+   for (int node = 0; node < num_nodes_; ++node) {
+      for (int dim = 0; dim < num_dims_; ++dim) {
+        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
+      }
+    }
+    for (int pt = 0; pt < num_pts_; ++pt) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int dim = 0; dim < num_dims_; ++dim) {
+          for (int j = 0; j < num_dims_; ++j) {
+            residual_(i, node, dim) +=
+              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
+          }
+        }
+      }
+    }
 
+}
+
+template<typename EvalT, typename Traits>
+void MechanicsResidual<EvalT, Traits>::
+operator() (const residual_haveBodyForce_Tag& tag, const int& i) const{
+
+  for (int node = 0; node < num_nodes_; ++node) {
+      for (int dim = 0; dim < num_dims_; ++dim) {
+        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
+      }
+    }
+    for (int pt = 0; pt < num_pts_; ++pt) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int dim = 0; dim < num_dims_; ++dim) {
+          for (int j = 0; j < num_dims_; ++j) {
+            residual_(i, node, dim) +=
+              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
+          }
+        }
+      }
+    }
+
+    for (int node = 0; node < num_nodes_; ++node) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int dim = 0; dim < num_dims_; ++dim) {
+            residual_(i, node, dim) +=
+                w_bf_(i, node, pt) * body_force_(i, pt, dim);
+          }
+        }
+      }
+}
+
+template<typename EvalT, typename Traits>
+void MechanicsResidual<EvalT, Traits>::
+operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const{
+
+   for (int node = 0; node < num_nodes_; ++node) {
+      for (int dim = 0; dim < num_dims_; ++dim) {
+        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
+      }
+    }
+    for (int pt = 0; pt < num_pts_; ++pt) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int dim = 0; dim < num_dims_; ++dim) {
+          for (int j = 0; j < num_dims_; ++j) {
+            residual_(i, node, dim) +=
+              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
+          }
+        }
+      }
+    }
+
+    for (int node = 0; node < num_nodes_; ++node) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int dim = 0; dim < num_dims_; ++dim) {
+            residual_(i, node, dim) +=
+                w_bf_(i, node, pt) * body_force_(i, pt, dim);
+          }
+        }
+      }
+
+   for (int node=0; node < num_nodes_; ++node) {
+        for (int pt=0; pt < num_pts_; ++pt) {
+          for (int dim=0; dim < num_dims_; ++dim) {
+            residual_(i,node,dim) += density_ *
+              acceleration_(i,pt,dim) * w_bf_(i,node,pt);
+          }
+        }
+      }
+
+}
+
+template<typename EvalT, typename Traits>
+void MechanicsResidual<EvalT, Traits>::
+operator() (const residual_have_dynamic_Tag& tag, const int& i) const{
+
+  for (int node = 0; node < num_nodes_; ++node) {
+      for (int dim = 0; dim < num_dims_; ++dim) {
+        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
+      }
+    }
+    for (int pt = 0; pt < num_pts_; ++pt) {
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int dim = 0; dim < num_dims_; ++dim) {
+          for (int j = 0; j < num_dims_; ++j) {
+            residual_(i, node, dim) +=
+              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
+          }
+        }
+      }
+    }
+
+    for (int node=0; node < num_nodes_; ++node) {
+        for (int pt=0; pt < num_pts_; ++pt) {
+          for (int dim=0; dim < num_dims_; ++dim) {
+            residual_(i,node,dim) += density_ *
+              acceleration_(i,pt,dim) * w_bf_(i,node,pt);
+          }
+        }
+      }
+
+}
+
+// ***************************************************************************
 template<typename EvalT, typename Traits>
 void MechanicsResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
@@ -112,7 +237,7 @@ evaluateFields(typename Traits::EvalData workset)
   // initilize Tensors
   // Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
   // Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-
+#ifdef NO_KOKKOS_ALBANY
   // for large deformation, map Cauchy stress to 1st PK stress
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes_; ++node) {
@@ -159,6 +284,23 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#else
+
+  if (have_body_force_) {
+   if (workset.transientTerms && enable_dynamics_)
+     Kokkos::parallel_for(residual_haveBodyForce_and_dynamic_Policy(0,workset.numCells),*this);//call residual_haveBodyForce_and_dynamic kernel
+   else 
+     Kokkos::parallel_for(residual_haveBodyForce_Policy(0,workset.numCells),*this);//residual_haveBodyForce 
+  }
+  else{   
+    if (workset.transientTerms && enable_dynamics_)
+      Kokkos::parallel_for(residual_have_dynamic_Policy(0,workset.numCells),*this);
+    else 
+      Kokkos::parallel_for(residual_Policy(0,workset.numCells),*this);
+  }
+
+#endif
+
 
   writestuff(*this, workset);
 }
