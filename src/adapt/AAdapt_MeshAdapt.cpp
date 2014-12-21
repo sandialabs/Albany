@@ -136,6 +136,17 @@ public:
   }
 };
 
+void updateCoordinates (
+  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
+{
+  // AlbPUMI::FMDBDiscretization uses interleaved DOF and coordinates, so we
+  // can sum coords and soln_data straightforwardly.
+  for (std::size_t i = 0; i < cs.coords.size(); ++i)
+    x[i] = cs.coords[i] + cs.soln_ol_data[i];
+  pumi_disc->setCoordinates(x);
+}
+
 void updateRefConfig (
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
@@ -188,12 +199,7 @@ double findAlpha (
   double alpha_lo = 0, alpha_hi = 1, alpha = 1;
   for (int it = 0 ;; ) {
     cs.set_alpha(alpha);
-
-    // AlbPUMI::FMDBDiscretization uses interleaved DOF and coordinates, so we
-    // can sum coords and soln_data straightforwardly.
-    for (std::size_t i = 0; i < cs.coords.size(); ++i)
-      x[i] = cs.coords[i] + cs.soln_ol_data[i];
-    pumi_disc->setCoordinates(x);
+    updateCoordinates(pumi_disc, cs, x);
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(
@@ -203,6 +209,13 @@ double findAlpha (
       alpha_lo = alpha;
     else
       alpha_hi = alpha;
+
+    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
+      std::cout << "amb: findAlpha iteration " << it
+                << " n_negative_simplices " << n_negative_simplices
+                << " alpha " << alpha
+                << " in [" << alpha_lo << ", " << alpha_hi << "]\n";
+
     // Perfect (and typical) case: success on first try, and made it all the way
     // to alpha == 1.
     if (n_negative_simplices == 0 && alpha_lo == alpha_hi) break;
@@ -210,6 +223,7 @@ double findAlpha (
     if (it >= n_iterations_if_found && alpha_lo > 0) {
       cs.restore();
       cs.set_alpha(alpha_lo);
+      updateCoordinates(pumi_disc, cs, x);
       break;
     }
     // alpha_lo == 0 and we're out of iterations.
@@ -218,12 +232,6 @@ double findAlpha (
     alpha = 0.5*(alpha_lo + alpha_hi);
     // Restore original for next try.
     cs.restore();
-
-    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
-      std::cout << "amb: findAlpha iteration " << it
-                << " n_negative_simplices " << n_negative_simplices
-                << " alpha " << alpha
-                << " in [" << alpha_lo << ", " << alpha_hi << "]\n";
   }
 
   if (alpha_lo > 0) {

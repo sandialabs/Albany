@@ -223,8 +223,12 @@ adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback)
 {
   const int
     n_max_outer_iterations = 10,
-    n_max_inner_iterations_if_found = 3,
-    n_max_inner_iterations_to_fail = 8;
+    n_max_inner_iterations_if_found = 20,
+    // -log2(eps) = 52. Since this iteration uses bisection, we can go for about
+    // 50 iterations before failure is definite. The iteration is cheap relative
+    // to other parts of adaptation, so there is no reason not to set this
+    // parameter to ~50.
+    n_max_inner_iterations_to_fail = 50;
   bool success = false;
   for (int it = 0; it < n_max_outer_iterations; ++it) {
     const double alpha = al::findAlpha(
