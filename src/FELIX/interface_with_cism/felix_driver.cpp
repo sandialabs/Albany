@@ -333,12 +333,12 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                 << ", nNorthFacesActive = " << nNorthFacesActive <<std::endl;  
     }
     xyz_at_nodes_Ptr = ftg_ptr -> getDoubleVar("xyz_at_nodes","connectivity"); 
-    surf_height_at_nodes_Ptr = ftg_ptr -> getDoubleVar("surf_height_at_nodes","connectivity"); 
-    thick_at_nodes_Ptr = ftg_ptr -> getDoubleVar("thick_at_nodes","connectivity"); 
-    dsurf_height_at_nodes_dx_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dx","connectivity"); 
-    dsurf_height_at_nodes_dy_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dy","connectivity"); 
-    beta_at_nodes_Ptr = ftg_ptr -> getDoubleVar("beta_at_nodes","connectivity");
-    flwa_at_active_elements_Ptr = ftg_ptr -> getDoubleVar("flwa_at_active_elements","connectivity"); 
+    surf_height_at_nodes_Ptr = ftg_ptr -> getDoubleVar("surf_height_at_nodes","geometry"); 
+    thick_at_nodes_Ptr = ftg_ptr -> getDoubleVar("thick_at_nodes","geometry"); 
+    dsurf_height_at_nodes_dx_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dx","geometry"); 
+    dsurf_height_at_nodes_dy_Ptr = ftg_ptr -> getDoubleVar("dsurf_height_at_nodes_dy","geometry"); 
+    beta_at_nodes_Ptr = ftg_ptr -> getDoubleVar("beta_at_nodes","velocity");
+    flwa_at_active_elements_Ptr = ftg_ptr -> getDoubleVar("flwa_at_active_elements","temper"); 
     global_node_id_owned_map_Ptr = ftg_ptr -> getInt4Var("global_node_id_owned_map","connectivity");  
     global_element_conn_active_Ptr = ftg_ptr -> getInt4Var("global_element_conn_active","connectivity");  
     global_element_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_element_id_active_owned_map","connectivity");  
@@ -356,8 +356,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
    //get pointers to uvel and vvel from CISM for prescribing Dirichlet BC
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
       std::cout << "In felix_driver: grabbing pointers to u and v velocities in CISM..." << std::endl; 
-    uvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("uvel_at_nodes", "connectivity"); 
-    vvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("vvel_at_nodes", "connectivity"); 
+    uvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("uvel_at_nodes", "velocity"); 
+    vvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("vvel_at_nodes", "velocity"); 
 
 
     // ---------------------------------------------
