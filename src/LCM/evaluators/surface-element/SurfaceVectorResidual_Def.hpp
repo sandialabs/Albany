@@ -239,15 +239,17 @@ evaluateFields(typename Traits::EvalData workset)
   } // end of cell
 
   // This is here just to satisfy projection operators from QPs to nodes
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < numQPs; ++pt) {
-      for (int i = 0; i < numDims; ++i) {
-        for (int j = 0; j < numDims; ++j) {
-          if (use_cohesive_traction_) {
-            Cauchy_stress_(cell, pt, i, j) =
-                traction_(cell, pt, i) * refNormal(cell, pt, j);
-          } else {
-            Cauchy_stress_(cell, pt, i, j) = stress(cell, pt, i, j);
+  if (have_topmod_adaptation_ == true) {
+    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for (std::size_t pt = 0; pt < numQPs; ++pt) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
+            if (use_cohesive_traction_) {
+              Cauchy_stress_(cell, pt, i, j) =
+                  traction_(cell, pt, i) * refNormal(cell, pt, j);
+            } else {
+              Cauchy_stress_(cell, pt, i, j) = stress(cell, pt, i, j);
+            }
           }
         }
       }
