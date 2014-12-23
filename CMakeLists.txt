@@ -399,10 +399,13 @@ ENDIF()
 
 OPTION(ENABLE_CISM_INTERFACE "Flag to turn on FELIX Source code" OFF)
 IF (ENABLE_CISM_INTERFACE AND ENABLE_FELIX)
-  IF (NOT ENABLE_ALBANY_EPETRA_EXE)
-    MESSAGE(FATAL_ERROR "\nError:  ENABLE_CISM_INTERFACE requires
-ALBANY_EPETRA_EXE to be turned ON.  Tpetra version of felix_driver is not yet
-available\n")
+  IF (ENABLE_ALBANY_EPETRA_EXE) 
+    IF (ENABLE_CISM_EPETRA) 
+      ADD_DEFINITIONS(-DCISM_USE_EPETRA) 
+      MESSAGE("-- CISM_EPETRA     is Enabled, compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Epetra software stack.")
+     ELSE()
+      MESSAGE("-- CISM_EPETRA     is Disabled, NOT compiling with -DCISM_USE_EPETRA.  CISM-Albany will run with Tpetra software stack.")
+    ENDIF()
   ENDIF()
   IF (ENABLE_LCM OR ENABLE_LAME OR ENABLE_HYDRIDE OR ENABLE_DEMO_PDES)
      MESSAGE("-- WARNING: cism_driver will not link properly when built if

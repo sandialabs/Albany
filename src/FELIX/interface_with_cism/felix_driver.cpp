@@ -2,12 +2,6 @@
 //uncomment the following if you want to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET 
 
-//uncomment the following if you want to run Epetra version of CISM-Albany; otherwise 
-//it will be the tpetra version.
-//#define CISM_USE_EPETRA
-
-//#define CISM_HAS_FELIX
-
 #include <iostream>
 #include <fstream>
 #include "felix_driver.H"
