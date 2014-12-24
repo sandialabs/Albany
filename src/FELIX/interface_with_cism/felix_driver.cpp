@@ -2,6 +2,9 @@
 //uncomment the following if you want to write stuff out to matrix market to debug
 //#define WRITE_TO_MATRIX_MARKET 
 
+//uncomment the following if you want to exclude procs with 0 elements from solve.
+#define REDUCED_COMM
+
 #include <iostream>
 #include <fstream>
 #include "felix_driver.H"
@@ -34,16 +37,15 @@
 Teuchos::RCP<Albany::CismSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
 #ifdef CISM_USE_EPETRA
-  Teuchos::RCP<const Epetra_Comm> mpiComm;
+  Teuchos::RCP<const Epetra_Comm> mpiComm, reducedMpiComm;
   Teuchos::RCP<Thyra::ModelEvaluator<double> > solver;
 #else
   Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<double> > solver;
 #endif
-Teuchos::RCP<const Teuchos_Comm> mpiCommT;
+Teuchos::RCP<const Teuchos_Comm> mpiCommT, reducedMpiCommT;
 Teuchos::RCP<Teuchos::ParameterList> parameterList;
 Teuchos::RCP<Teuchos::ParameterList> discParams;
 Teuchos::RCP<Albany::SolverFactory> slvrfctry;
-//IK, 11/14/13: what is reducedComm for? 
 MPI_Comm comm, reducedComm;
 bool interleavedOrdering; 
 int nNodes2D; //number global nodes in the domain in 2D 
@@ -106,6 +108,7 @@ bool TpetraBuild = false;
 #else
 bool TpetraBuild = true; 
 #endif
+bool keep_proc = true; 
 
 #ifdef CISM_USE_EPETRA
 Teuchos::RCP<const Epetra_Vector>
@@ -211,6 +214,26 @@ void tpetraFromThyra(
   }
 }
 #endif
+
+void createReducedMPI(int nLocalEntities, MPI_Comm& reduced_comm_id) {
+  int numProcs, me;
+  MPI_Group world_group_id, reduced_group_id;
+  MPI_Comm_size(comm, &numProcs);
+  MPI_Comm_rank(comm, &me);
+  std::vector<int> haveElements(numProcs);
+  int nonEmpty = int(nLocalEntities > 0);
+  MPI_Allgather(&nonEmpty, 1, MPI_INT, &haveElements[0], 1, MPI_INT, comm);
+  std::vector<int> ranks;
+  for (int i = 0; i < numProcs; i++) {
+    if (haveElements[i])
+      ranks.push_back(i);
+  }
+
+  MPI_Comm_group(comm, &world_group_id);
+  MPI_Group_incl(world_group_id, ranks.size(), &ranks[0], &reduced_group_id);
+  MPI_Comm_create(comm, reduced_group_id, &reduced_comm_id);
+}
+
 
 extern "C" void felix_driver_();
 
@@ -353,6 +376,24 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     uvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("uvel_at_nodes", "velocity"); 
     vvel_at_nodes_Ptr = ftg_ptr ->getDoubleVar("vvel_at_nodes", "velocity"); 
 
+//If requesting to do solve only on procs with > 0 elements, create reduced comm
+#ifdef REDUCED_COMM
+    keep_proc = nCellsActive > 0;
+    createReducedMPI(keep_proc, reducedComm);
+#endif
+    if (keep_proc) { //in the case we're using the reduced Comm, only call routines if there is a nonzero # of elts on a proc. 
+#ifdef REDUCED_COMM 
+      reducedMpiCommT = Albany::createTeuchosCommFromMpiComm(reducedComm);
+   #ifdef CISM_USE_EPETRA
+      reducedMpiComm = Albany::createEpetraCommFromMpiComm(reducedComm); 
+   #endif
+#else
+      reducedMpiCommT = mpiCommT; 
+   #ifdef CISM_USE_EPETRA
+      reducedMpiComm = mpiComm; 
+   #endif
+#endif
+    
 
     // ---------------------------------------------
     // create Albany mesh  
@@ -360,7 +401,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     // Read input file, the name of which is provided in the Glimmer/CISM .config file.
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
       std::cout << "In felix_driver: creating Albany mesh struct..." << std::endl;
-    slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, mpiCommT));
+    slvrfctry = Teuchos::rcp(new Albany::SolverFactory(input_fname, reducedMpiCommT));
     parameterList = Teuchos::rcp(&slvrfctry->getParameters(),false);
     discParams = Teuchos::sublist(parameterList, "Discretization", true);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
@@ -429,9 +470,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
       parameterList->sublist("Problem").sublist("Body Force").set("Type", "FO INTERP SURF GRAD"); 
     }
 
-    albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
+    albanyApp = Teuchos::rcp(new Albany::Application(reducedMpiCommT));
     albanyApp->initialSetUp(parameterList);
-    meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, mpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr, 
+    meshStruct = Teuchos::rcp(new Albany::CismSTKMeshStruct(discParams, reducedMpiCommT, xyz_at_nodes_Ptr, global_node_id_owned_map_Ptr, 
                                                            global_element_id_active_owned_map_Ptr, 
                                                            global_element_conn_active_Ptr, 
                                                            global_basal_face_id_active_owned_map_Ptr, 
@@ -457,18 +498,18 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 
     albanyApp->createMeshSpecs(meshStruct);
     albanyApp->buildProblem();
-    meshStruct->constructMesh(mpiCommT, discParams, neq, req, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->getMeshSpecs()[0]->worksetSize);
+    meshStruct->constructMesh(reducedMpiCommT, discParams, neq, req, albanyApp->getStateMgr().getStateInfoStruct(), meshStruct->getMeshSpecs()[0]->worksetSize);
  
     //Create node_map
     //global_node_id_owned_map_Ptr is 1-based, so node_map is 1-based
     //Distribute the elements according to the global element IDs
 #ifdef CISM_USE_EPETRA
-     node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *mpiComm)); //node_map is 1-based
+     node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *reducedMpiComm)); //node_map is 1-based
 #else
     Teuchos::ArrayView<const GO> global_node_id_owned_map_AV = Teuchos::arrayView(global_node_id_owned_map_Ptr, nNodes);
-    node_map = Teuchos::rcp(new Tpetra_Map(nNodes, global_node_id_owned_map_AV, 0, mpiCommT));
+    node_map = Teuchos::rcp(new Tpetra_Map(nNodes, global_node_id_owned_map_AV, 0, reducedMpiCommT));
 #endif
-
+ }
 
 
  
@@ -503,7 +544,8 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     // Set restart solution to the one passed from CISM
     // IK, 3/14/14: moved this from felix_driver_init to felix_driver_run.  
     // ---------------------------------------------
-    
+   
+    if (keep_proc) { 
     if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
       std::cout << "In felix_driver_run: setting initial condition from CISM..." << std::endl;
     //Check what kind of ordering you have in the solution & create solutionField object.
@@ -611,7 +653,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 #ifdef CISM_USE_EPETRA 
     solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
 #else
-   solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, mpiCommT, mpiCommT, Teuchos::null, false);
+   solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
 #endif
 
     Teuchos::ParameterList solveParams;
@@ -906,7 +948,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
          }
         }
       }
-    
+    }
 
 
     first_time_step = false;
