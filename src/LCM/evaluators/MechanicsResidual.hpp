@@ -56,24 +56,6 @@ public:
   friend void writestuff(const MechanicsResidual<EvalT, Traits>& mr,
                          typename Traits::EvalData workset);
 
-  //Kokkos kernel
-
-  struct residual_Tag{};
-  struct residual_haveBodyForce_Tag{};
-  struct residual_haveBodyForce_and_dynamic_Tag{};
-  struct residual_have_dynamic_Tag{};
-
-  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_Tag> residual_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_Tag> residual_haveBodyForce_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_and_dynamic_Tag> residual_haveBodyForce_and_dynamic_Policy;
-  typedef Kokkos::RangePolicy<ExecutionSpace,residual_have_dynamic_Tag> residual_have_dynamic_Policy;
-
-  void operator() (const residual_Tag& tag, const int& i) const;
-  void operator() (const residual_haveBodyForce_Tag& tag, const int& i) const;
-  void operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
-  void operator() (const residual_have_dynamic_Tag& tag, const int& i) const;
    
 private:
 
@@ -136,6 +118,37 @@ private:
   /// Dynamics flag
   ///
   bool enable_dynamics_;
+
+  //Kokkos
+  public:
+
+  struct residual_Tag{};
+  struct residual_haveBodyForce_Tag{};
+  struct residual_haveBodyForce_and_dynamic_Tag{};
+  struct residual_have_dynamic_Tag{};
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_Tag> residual_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_Tag> residual_haveBodyForce_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_and_dynamic_Tag> residual_haveBodyForce_and_dynamic_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_have_dynamic_Tag> residual_have_dynamic_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_haveBodyForce_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_have_dynamic_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void compute_Stress(const int cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void compute_BodyForce(const int cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void compute_Acceleration(const int cell) const;
 
 
 };

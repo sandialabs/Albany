@@ -105,11 +105,13 @@ void writestuff (
 }
 // ***************************************************************************
 //Kokkos kernels
+//
 template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
 void MechanicsResidual<EvalT, Traits>::
-operator() (const residual_Tag& tag, const int& i) const{
- 
-   for (int node = 0; node < num_nodes_; ++node) {
+compute_Stress(const int i) const
+{
+  for (int node = 0; node < num_nodes_; ++node) {
       for (int dim = 0; dim < num_dims_; ++dim) {
         residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
       }
@@ -124,108 +126,75 @@ operator() (const residual_Tag& tag, const int& i) const{
         }
       }
     }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void MechanicsResidual<EvalT, Traits>::
+compute_BodyForce(const int i) const
+{
+  for (int node = 0; node < num_nodes_; ++node) {
+        for (int pt = 0; pt < num_pts_; ++pt) {
+          for (int dim = 0; dim < num_dims_; ++dim) {
+            residual_(i, node, dim) +=
+                w_bf_(i, node, pt) * body_force_(i, pt, dim);
+          }
+        }
+      }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void MechanicsResidual<EvalT, Traits>::
+compute_Acceleration(const int i) const
+{
+
+  for (int node=0; node < num_nodes_; ++node) {
+        for (int pt=0; pt < num_pts_; ++pt) {
+          for (int dim=0; dim < num_dims_; ++dim) {
+            residual_(i,node,dim) += density_ *
+              acceleration_(i,pt,dim) * w_bf_(i,node,pt);
+          }
+        }
+      }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void MechanicsResidual<EvalT, Traits>::
+operator() (const residual_Tag& tag, const int& i) const{
+
+  this->compute_Stress(i); 
 
 }
 
 template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
 void MechanicsResidual<EvalT, Traits>::
 operator() (const residual_haveBodyForce_Tag& tag, const int& i) const{
 
-  for (int node = 0; node < num_nodes_; ++node) {
-      for (int dim = 0; dim < num_dims_; ++dim) {
-        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
-      }
-    }
-    for (int pt = 0; pt < num_pts_; ++pt) {
-      for (int node = 0; node < num_nodes_; ++node) {
-        for (int dim = 0; dim < num_dims_; ++dim) {
-          for (int j = 0; j < num_dims_; ++j) {
-            residual_(i, node, dim) +=
-              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
-          }
-        }
-      }
-    }
-
-    for (int node = 0; node < num_nodes_; ++node) {
-        for (int pt = 0; pt < num_pts_; ++pt) {
-          for (int dim = 0; dim < num_dims_; ++dim) {
-            residual_(i, node, dim) +=
-                w_bf_(i, node, pt) * body_force_(i, pt, dim);
-          }
-        }
-      }
+   this->compute_Stress(i);
+   this->compute_BodyForce(i);
 }
 
 template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
 void MechanicsResidual<EvalT, Traits>::
 operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const{
 
-   for (int node = 0; node < num_nodes_; ++node) {
-      for (int dim = 0; dim < num_dims_; ++dim) {
-        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
-      }
-    }
-    for (int pt = 0; pt < num_pts_; ++pt) {
-      for (int node = 0; node < num_nodes_; ++node) {
-        for (int dim = 0; dim < num_dims_; ++dim) {
-          for (int j = 0; j < num_dims_; ++j) {
-            residual_(i, node, dim) +=
-              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
-          }
-        }
-      }
-    }
-
-    for (int node = 0; node < num_nodes_; ++node) {
-        for (int pt = 0; pt < num_pts_; ++pt) {
-          for (int dim = 0; dim < num_dims_; ++dim) {
-            residual_(i, node, dim) +=
-                w_bf_(i, node, pt) * body_force_(i, pt, dim);
-          }
-        }
-      }
-
-   for (int node=0; node < num_nodes_; ++node) {
-        for (int pt=0; pt < num_pts_; ++pt) {
-          for (int dim=0; dim < num_dims_; ++dim) {
-            residual_(i,node,dim) += density_ *
-              acceleration_(i,pt,dim) * w_bf_(i,node,pt);
-          }
-        }
-      }
+    this->compute_Stress(i);
+    this->compute_BodyForce(i);
+    this->compute_Acceleration(i);
 
 }
 
 template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
 void MechanicsResidual<EvalT, Traits>::
 operator() (const residual_have_dynamic_Tag& tag, const int& i) const{
 
-  for (int node = 0; node < num_nodes_; ++node) {
-      for (int dim = 0; dim < num_dims_; ++dim) {
-        residual_(i, node, dim) = typename EvalT::ScalarT(0.0);
-      }
-    }
-    for (int pt = 0; pt < num_pts_; ++pt) {
-      for (int node = 0; node < num_nodes_; ++node) {
-        for (int dim = 0; dim < num_dims_; ++dim) {
-          for (int j = 0; j < num_dims_; ++j) {
-            residual_(i, node, dim) +=
-              stress_(i, pt, dim, j) * w_grad_bf_(i, node, pt, j);
-          }
-        }
-      }
-    }
-
-    for (int node=0; node < num_nodes_; ++node) {
-        for (int pt=0; pt < num_pts_; ++pt) {
-          for (int dim=0; dim < num_dims_; ++dim) {
-            residual_(i,node,dim) += density_ *
-              acceleration_(i,pt,dim) * w_bf_(i,node,pt);
-          }
-        }
-      }
-
+    this->compute_Stress(i);
+    this->compute_Acceleration(i);
 }
 
 // ***************************************************************************

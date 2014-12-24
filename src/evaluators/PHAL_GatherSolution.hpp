@@ -123,16 +123,25 @@ public:
  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
  typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
 
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const;
 
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const;
 
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
 
  
