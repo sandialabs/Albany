@@ -3,7 +3,7 @@
 //#define WRITE_TO_MATRIX_MARKET 
 
 //uncomment the following if you want to exclude procs with 0 elements from solve.
-#define REDUCED_COMM
+//#define REDUCED_COMM
 
 #include <iostream>
 #include <fstream>
@@ -378,6 +378,8 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
 
 //If requesting to do solve only on procs with > 0 elements, create reduced comm
 #ifdef REDUCED_COMM
+    if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) 
+      std::cout << "In felix_driver: removing procs with 0 elements from computation (REDUCED_COMM set to ON)." << std::endl; 
     keep_proc = nCellsActive > 0;
     createReducedMPI(keep_proc, reducedComm);
 #endif
