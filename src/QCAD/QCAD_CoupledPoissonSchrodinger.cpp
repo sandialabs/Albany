@@ -37,7 +37,7 @@ Please remove when issue is resolved
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
-#include "Piro_NullSpaceUtils.hpp"
+#include "Albany_NullSpaceUtils.hpp"
 
 //Ifpack includes
 #include "Ifpack_ConfigDefs.h"
@@ -385,7 +385,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
                             //Teuchos::rcp(new Albany::StateInfoStruct); //empty
 
   int neq = 1+nEigenvals; // number of mesh-equations
-  Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes(Teuchos::rcp(new Piro::MLRigidBodyModes(neq)));
+  Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq)));
   disc = discFactory.createDiscretization(neq, stateInfo,requirements,rigidBodyModes);
 
   myComm = comm;

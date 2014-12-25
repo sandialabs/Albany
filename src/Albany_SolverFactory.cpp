@@ -24,7 +24,6 @@
 #include "Piro_SolverFactory.hpp"
 #include "Piro_AdaptiveSolverFactory.hpp"
 #include "Piro_NOXSolver.hpp"
-#include "Piro_NullSpaceUtils.hpp"
 #include "Piro_StratimikosUtils.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"

@@ -25,7 +25,7 @@
 #include "Epetra_Vector.h"
 #endif
 
-#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
+#include "Albany_NullSpaceUtils.hpp"
 
 // Start of STK stuff
 #include <stk_util/parallel/Parallel.hpp>
@@ -82,7 +82,7 @@ namespace Albany {
     STKDiscretization(
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
+       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
@@ -333,6 +333,8 @@ namespace Albany {
     //! Convert the stk mesh on this processor to a nodal graph using SEACAS
     void meshToGraph();
 
+    void writeCoordsToMatrixMarket() const;
+
     double previous_time_label;
 
   protected:
@@ -422,7 +424,7 @@ namespace Albany {
     GO numGlobalNodes;
 
     // Needed to pass coordinates to ML.
-    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
+    Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
 
     int netCDFp;
     size_t netCDFOutputRequest;

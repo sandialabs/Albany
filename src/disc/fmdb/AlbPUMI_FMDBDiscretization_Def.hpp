@@ -53,7 +53,7 @@ convert (Teuchos::Array<GO>& indicesAV) {
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Teuchos_Comm>& commT_,
-            const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
+            const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   commT(commT_),
@@ -216,6 +216,13 @@ AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
   return sphereVolume;
 }
 
+double mean (const double* x, const int n,
+             const Teuchos::RCP<const Tpetra_Map>& map) {
+  Teuchos::ArrayView<const double> xav = Teuchos::arrayView(x, n);
+  Tpetra_Vector xv(map, xav);
+  return xv.meanValue();
+}
+
 /* DAI: this function also has to change for high-order fields */
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
@@ -229,56 +236,23 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
 
-  // If ML preconditioner is selected
-  if (rigidBodyModes->isMLUsed()) {
-    double *xx, *yy, *zz;
-    rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
-  
-    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-      apf::Node node = nodes[i];
-      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
+  double* const coords = rigidBodyModes->getCoordArray();
+  for (std::size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
 
-      const GO node_gid = apf::getNumber(globalNumbering, node);
-      const LO node_lid = node_mapT->getLocalElement(node_gid);
-      double lcoords[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
-      if (mesh_dim > 0) {
-        xx[node_lid] = lcoords[0];
-        if (mesh_dim > 1) {
-          yy[node_lid] = lcoords[1];
-          if (mesh_dim > 2)
-            zz[node_lid] = lcoords[2];
-        }
-      }
-    }  
-  
-    rigidBodyModes->informML();
+    const GO node_gid = apf::getNumber(globalNumbering, node);
+    const LO node_lid = node_mapT->getLocalElement(node_gid);
+    double lcoords[3];
+    apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+    for (std::size_t j = 0; j < mesh_dim; ++j)
+      coords[j*numOwnedNodes + node_lid] = lcoords[j];
   }
 
-  // If MueLu(-Tpetra) preconditioner is selected
-  else if (rigidBodyModes->isMueLuUsed()) {
-    double *xxyyzz; // make this ST?
-    rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
-
-    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-      apf::Node node = nodes[i];
-      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
-
-      const GO node_gid = apf::getNumber(globalNumbering, node);
-      const LO node_lid = node_mapT->getLocalElement(node_gid);
-      double lcoords[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
-      for (std::size_t j = 0; j < mesh_dim; ++j)
-        xxyyzz[j*numOwnedNodes + node_lid] = lcoords[j];
-    }
-  
-    Teuchos::ArrayView<ST>
-      xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*mesh_dim);
-    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(
-      new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim));
-
-    rigidBodyModes->informMueLu(xyzMV, mapT);
-  }
+  if (fmdbMeshStruct->useNullspaceTranslationOnly)
+    rigidBodyModes->setCoordinates(node_mapT);
+  else
+    rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
 }
 
 template<class Output>

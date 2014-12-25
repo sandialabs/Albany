@@ -156,10 +156,13 @@ int main(int argc, char *argv[]) {
 
       if (sg_prec_params->isParameter("Mean Preconditioner Type")) {
         if (sg_prec_params->get<std::string>("Mean Preconditioner Type") == "ML") {
-
           Teuchos::RCP<Teuchos::ParameterList> ml_params =
             Teuchos::sublist(sg_prec_params, "Mean Preconditioner Parameters");
-          app->getProblem()->getNullSpace()->updateMLPL(ml_params);
+          const Teuchos::RCP<Albany::RigidBodyModes>&
+            rbm = app->getProblem()->getNullSpace();
+          // Previously, updateMLPL called importML, but there was no coordinate
+          // data yet. Now we just update the parameter list.
+          rbm->updatePL(ml_params);          
           sg_solver->resetSolverParameters(*sg_solver_params);
         }
       }

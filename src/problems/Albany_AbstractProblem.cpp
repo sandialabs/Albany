@@ -17,7 +17,7 @@ Albany::AbstractProblem::AbstractProblem(
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Piro::MLRigidBodyModes(neq_)))
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_)))
 {}
 
 unsigned int
