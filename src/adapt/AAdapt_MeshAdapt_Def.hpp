@@ -17,7 +17,7 @@ template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& refConfigMgr_)
+          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_)
   : remeshFileIndex(1), rc_mgr(refConfigMgr_)
 {
   disc = StateMgr_.getDiscretization();
@@ -45,7 +45,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     // A field to store the reference configuration x (displacement). At each
     // adapatation, it will be interpolated to the new mesh.
     //rc-todo Always apf::VECTOR?
-    pumi_discretization->createField("x_rc", apf::VECTOR);
+    pumi_discretization->createField("x_accum", apf::VECTOR);
   }
 }
 
@@ -176,7 +176,7 @@ void anlzCoords(
   const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc);
 double findAlpha(
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
   // Max number of iterations before failure is declared. Must be >=
@@ -248,7 +248,7 @@ adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback)
       new Tpetra_Vector(pumi_discretization->getSolutionFieldT()->getMap()));
     // Copy ref config data, now interp'ed to new mesh, into it.
     pumi_discretization->getField(
-      "x_rc", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
+      "x_accum", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
     
     if (alpha == 1) { success = true; break; }
   }
@@ -320,7 +320,7 @@ AAdapt::MeshAdaptT<SizeField>::
 MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
            const Teuchos::RCP<ParamLib>& paramLib_,
            const Albany::StateManager& StateMgr_,
-           const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& refConfigMgr_,
+           const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
            const Teuchos::RCP<const Teuchos_Comm>& commT_):
   AbstractAdapterT(params_,paramLib_,StateMgr_,commT_),
   meshAdapt(params_,StateMgr_,refConfigMgr_)

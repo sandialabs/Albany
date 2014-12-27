@@ -17,6 +17,8 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#include "AAdapt_RC_Manager.hpp"
+
 namespace Albany
 {
 
@@ -36,6 +38,7 @@ public:
   MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<ParamLib>& param_lib,
       const int num_dims,
+      const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
       Teuchos::RCP<const Teuchos::Comm<int> >& commT);
   ///
   /// Destructor
@@ -319,6 +322,12 @@ protected:
   /// new state data
   ///
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > new_state_;
+
+  ///
+  /// Reference configuration manager for mesh adaptation with ref config
+  /// updating.
+  ///
+  Teuchos::RCP<AAdapt::rc::Manager> rc_mgr_;
 
 };
 //------------------------------------------------------------------------------

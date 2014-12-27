@@ -18,7 +18,7 @@
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
 #endif
-#include "AAdapt_ReferenceConfigurationManager.hpp"
+#include "AAdapt_RC_Manager.hpp"
 
 #include "Thyra_ModelEvaluatorDelegatorBase.hpp"
 
@@ -29,6 +29,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
     const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
     const Teuchos::RCP<ParamLib>& param_lib,
     const Albany::StateManager& stateMgr,
+    const Teuchos::RCP<rc::Manager>& rc_mgr,
     const Teuchos::RCP<const Teuchos_Comm>& commT) :
 
     out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -50,14 +51,7 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
     // Note that piroParams_ and adaptiveMesh_ are members of LOCA_Thyra_AdaptiveSolutionManager
     adaptParams_ = Teuchos::sublist(problemParams, "Adaptation", true);
     adaptiveMesh_ = true;
-
-    // RCP with no ownership because otherwise there is a circular dependence
-    // between ReferenceConfigurationManager and this class.
-    if (adaptParams_->get<bool>("Reference Configuration: Update", false))
-      rcm_ = Teuchos::rcp(
-        new ReferenceConfigurationManager(Teuchos::rcp(this, false)));
-
-    buildAdapter();
+    buildAdapter(rc_mgr);
   }
 
   const Teuchos::RCP<const Tpetra_Map> mapT = disc_->getMapT();
@@ -100,8 +94,8 @@ AAdapt::AdaptiveSolutionManagerT::AdaptiveSolutionManagerT(
   }
 }
 
-void
-AAdapt::AdaptiveSolutionManagerT::buildAdapter()
+void AAdapt::AdaptiveSolutionManagerT::
+buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 {
 
   std::string& method = adaptParams_->get("Method", "");
@@ -138,16 +132,16 @@ AAdapt::AdaptiveSolutionManagerT::buildAdapter()
   // RCP needs to be non-owned because otherwise there is an RCP circle.
   else if(method == "RPI Unif Size") {
     adapter_ = Teuchos::rcp(new AAdapt::MeshAdaptT<AAdapt::UnifSizeField>(
-      adaptParams_, paramLib_, stateMgr_, rcm_, commT_));
+      adaptParams_, paramLib_, stateMgr_, rc_mgr, commT_));
   }
   else if(method == "RPI UnifRef Size") {
     adapter_ = Teuchos::rcp(new AAdapt::MeshAdaptT<AAdapt::UnifRefSizeField>(
-      adaptParams_, paramLib_, stateMgr_, rcm_, commT_));
+      adaptParams_, paramLib_, stateMgr_, rc_mgr, commT_));
   }
 # ifdef SCOREC_SPR
   else if(method == "RPI SPR Size") {
     adapter_ = Teuchos::rcp(new AAdapt::MeshAdaptT<AAdapt::SPRSizeField>(
-      adaptParams_, paramLib_, stateMgr_, rcm_, commT_));
+      adaptParams_, paramLib_, stateMgr_, rc_mgr, commT_));
   }
 # endif
 #endif

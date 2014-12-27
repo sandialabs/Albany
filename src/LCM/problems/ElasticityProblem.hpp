@@ -17,6 +17,7 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#include "AAdapt_RC_Manager.hpp"
 
 namespace Albany {
 
@@ -31,7 +32,8 @@ namespace Albany {
     ElasticityProblem(
 		      const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		      const Teuchos::RCP<ParamLib>& paramLib_,
-		      const int numDim_);
+		      const int numDim_,
+                      const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr);
 
     //! Destructor
     virtual ~ElasticityProblem();
@@ -98,6 +100,8 @@ namespace Albany {
 
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > oldState;
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > newState;
+
+    Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
   };
 
 }
@@ -317,6 +321,9 @@ Albany::ElasticityProblem::constructEvaluators(
 
     //Output
     p->set<std::string>("Strain Name", "Strain");
+
+    if (Teuchos::nonnull(rc_mgr))
+      rc_mgr->registerField("Strain", dl->qp_tensor, p);
 
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
@@ -563,6 +570,8 @@ Albany::ElasticityProblem::constructEvaluators(
     }
 
   }
+
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->createEvaluators<EvalT>(fm0);
 
    if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);

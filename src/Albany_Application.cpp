@@ -6,7 +6,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_AdaptationFactory.hpp"
-#include "AAdapt_ReferenceConfigurationManager.hpp"
+#include "AAdapt_RC_Manager.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
@@ -146,6 +146,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
+  rc_mgr = AAdapt::rc::Manager::create(
+    Teuchos::rcp(&stateMgr, false), *problemParams);
+  if (Teuchos::nonnull(rc_mgr))
+    problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
@@ -251,6 +255,7 @@ void Albany::Application::buildProblem()   {
   responses = responseFactory.createResponseFunctions(responseList);
 
   // Build state field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginBuildingSfm();
   sfm.resize(meshSpecs.size());
   Teuchos::RCP<PHX::DataLayout> dummy =
     Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
@@ -273,6 +278,7 @@ void Albany::Application::buildProblem()   {
     }
     sfm[ps]->postRegistrationSetup("");
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endBuildingSfm();
 
   neq = problem->numEquations();
 
@@ -312,7 +318,12 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   }
 #endif
 
-  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guess, paramLib, stateMgr, commT));
+  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(
+      params, initial_guess, paramLib, stateMgr,
+      // Prevent a circular dependency.
+      Teuchos::rcp(rc_mgr.get(), false),
+      commT));
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
 #ifdef ALBANY_EPETRA
   try {
@@ -656,10 +667,9 @@ void dfm_set (
   const Teuchos::RCP<const Tpetra_Vector>& x,
   const Teuchos::RCP<const Tpetra_Vector>& xd,
   const Teuchos::RCP<const Tpetra_Vector>& xdd,
-  Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT>& soln_mgr)
+  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
 {
-  workset.xT = soln_mgr->using_rcm() ?
-    soln_mgr->get_rcm()->add_x(x) : x;
+  workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
   workset.transientTerms = ! Teuchos::nonnull(xd);
   workset.accelerationTerms = ! Teuchos::nonnull(xdd);
 }
@@ -735,7 +745,7 @@ computeGlobalResidualImplT(
 
   // Set data in Workset struct, and perform fill via field manager
   {
-    if (solMgrT->using_rcm()) solMgrT->get_rcm()->init_x_if_not(xT->getMap());
+    if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
 
     PHAL::Workset workset;
 
@@ -769,7 +779,7 @@ computeGlobalResidualImplT(
 
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
@@ -1018,7 +1028,7 @@ computeGlobalJacobianImplT(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -1486,7 +1496,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.j_coeff = beta;
     workset.n_coeff = omega;
     workset.VxT = VxT;
-    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
@@ -1705,7 +1715,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
 
@@ -1780,7 +1790,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    dfm_set(workset, xT, xdotT, xdotdotT, solMgrT);
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
 
@@ -3645,10 +3655,7 @@ void Albany::Application::loadBasicWorksetInfoT(
        double current_time)
 {
     workset.numEqs = neq;
-    if (solMgrT->using_rcm())
-      workset.xT = solMgrT->get_rcm()->add_x_ol(solMgrT->get_overlapped_xT());
-    else
-      workset.xT = solMgrT->get_overlapped_xT();
+    workset.xT = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;
@@ -3756,10 +3763,7 @@ void Albany::Application::setupBasicWorksetInfoT(
     for (unsigned int j=0; j<p[i].size(); j++)
       p[i][j].family->setRealValueForAllTypes(p[i][j].baseValue);
 
-  if (solMgrT->using_rcm())
-    workset.xT = solMgrT->get_rcm()->add_x_ol(overlapped_xT);
-  else
-    workset.xT = overlapped_xT;
+  workset.xT = overlapped_xT;
   workset.xdotT = overlapped_xdotT;
   workset.xdotdotT = overlapped_xdotdotT;
   workset.distParamLib = distParamLib;

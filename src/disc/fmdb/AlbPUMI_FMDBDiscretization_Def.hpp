@@ -210,6 +210,11 @@ AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::
+setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& ircm)
+{ rcm = ircm; }
+
+template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
 {

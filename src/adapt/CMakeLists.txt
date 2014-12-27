@@ -15,7 +15,11 @@ SET(SOURCES
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
-    AAdapt_ReferenceConfigurationManager.cpp
+    AAdapt_RC_DataTypes.hpp
+    AAdapt_RC_Manager.cpp
+    AAdapt_RC_Field.cpp
+    AAdapt_RC_Reader.cpp
+    AAdapt_RC_Writer.cpp
    )
 
 SET(HEADERS
@@ -26,7 +30,10 @@ SET(HEADERS
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
-    AAdapt_ReferenceConfigurationManager.hpp
+    AAdapt_RC_Manager.hpp
+    AAdapt_RC_Field.hpp
+    AAdapt_RC_Reader.hpp
+    AAdapt_RC_Writer.hpp
    )
 
 IF (ALBANY_EPETRA) 

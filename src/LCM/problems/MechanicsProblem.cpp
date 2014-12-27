@@ -47,6 +47,7 @@ Albany::MechanicsProblem::
 MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<ParamLib>& param_lib,
     const int num_dims,
+    const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
     Albany::AbstractProblem(params, param_lib),
     have_source_(false),
@@ -61,7 +62,8 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_damage_eq_(false),
     have_stab_pressure_eq_(false),
     have_peridynamics_(false),
-    have_topmod_adaptation_(false)
+    have_topmod_adaptation_(false),
+    rc_mgr_(rc_mgr)
 {
 
   std::string& method = params->get("Name", "Mechanics ");

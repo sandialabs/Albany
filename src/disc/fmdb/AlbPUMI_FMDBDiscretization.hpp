@@ -83,6 +83,7 @@ template<class Output>
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
     //! Set coordinate vector (overlap map, interleaved)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+    void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
@@ -404,6 +405,8 @@ template<class Output>
     // counter for limiting data writes to output file
     int outputInterval;
 
+    // Mesh adaptation stuff.
+    Teuchos::RCP<AAdapt::rc::Manager> rcm;
   };
 
 }
