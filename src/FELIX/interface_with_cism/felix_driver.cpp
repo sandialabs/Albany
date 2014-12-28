@@ -109,6 +109,7 @@ bool TpetraBuild = false;
 bool TpetraBuild = true; 
 #endif
 bool keep_proc = true; 
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 #ifdef CISM_USE_EPETRA
 Teuchos::RCP<const Epetra_Vector>
@@ -509,7 +510,7 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
      node_map = Teuchos::rcp(new Epetra_Map(-1, nNodes, global_node_id_owned_map_Ptr, 0, *reducedMpiComm)); //node_map is 1-based
 #else
     Teuchos::ArrayView<const GO> global_node_id_owned_map_AV = Teuchos::arrayView(global_node_id_owned_map_Ptr, nNodes);
-    node_map = Teuchos::rcp(new Tpetra_Map(nNodes, global_node_id_owned_map_AV, 0, reducedMpiCommT));
+    node_map = Teuchos::rcp(new Tpetra_Map(INVALID, global_node_id_owned_map_AV, 0, reducedMpiCommT));
 #endif
  }
 
@@ -653,7 +654,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     //if (!first_time_step) 
     //  std::cout << "previousSolution: " << *previousSolution << std::endl;
 #ifdef CISM_USE_EPETRA 
-    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, mpiComm, mpiComm, Teuchos::null, false);
+    solver = slvrfctry->createThyraSolverAndGetAlbanyApp(albanyApp, reducedMpiComm, reducedMpiComm, Teuchos::null, false);
 #else
    solver = slvrfctry->createAndGetAlbanyAppT(albanyApp, reducedMpiCommT, reducedMpiCommT, Teuchos::null, false);
 #endif
@@ -690,7 +691,7 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
     Tpetra_MatrixMarket_Writer::writeMapFile("node_map.mm", *node_map);
     Tpetra_MatrixMarket_Writer::writeMapFile("map.mm", *ownedMap);
     Tpetra_MatrixMarket_Writer::writeMapFile("overlap_map.mm", *overlapMap);
-    Tpetra_MatrixMarket_Writer::writeDenseFile("solution.mm", app->getDiscretization()->getSolutionFieldT());
+    Tpetra_MatrixMarket_Writer::writeDenseFile("solution.mm", albanyApp->getDiscretization()->getSolutionFieldT());
 #endif
 #endif
    
