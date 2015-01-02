@@ -146,6 +146,14 @@ protected:
     MECH_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
   };
 
+  // Source function type
+  enum SOURCE_TYPE
+  {
+    SOURCE_TYPE_NONE,      //! No source
+    SOURCE_TYPE_INPUT,     //! Source is specified in input file
+    SOURCE_TYPE_MATERIAL   //! Source is specified in material database
+  };
+
   ///
   /// Accessor for variable type
   ///
@@ -169,6 +177,12 @@ protected:
   /// Boundary conditions on source term
   ///
   bool have_source_;
+
+  // Type of thermal source that is in effect
+  SOURCE_TYPE thermal_source_;
+
+  // Has the thermal source been evaluated in this element block?
+  bool thermal_source_evaluated_;
 
   ///
   /// num of dimensions
@@ -1150,7 +1164,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_source_) { // Source
+  // Source list exists and the mechanical source params are defined
+
+  if (have_source_ && 
+      params->sublist("Source Functions").isSublist("Mechanical Source")) { 
+
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList);
 
@@ -1161,11 +1179,65 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         dl_->qp_scalar);
 
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    Teuchos::ParameterList& paramList = 
+      params->sublist("Source Functions").sublist("Mechanical Source");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // Heat Source in Heat Equation
+
+  if (thermal_source_ != SOURCE_TYPE_NONE){
+
+
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+
+    p->set<std::string>("Source Name", "Heat Source");
+    p->set<std::string>("Variable Name", "Temperature");
+    p->set<Teuchos::RCP<PHX::DataLayout> >(
+      "QP Scalar Data Layout",
+      dl_->qp_scalar);
+
+    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    if(thermal_source_ == SOURCE_TYPE_INPUT) { // Thermal source in input file
+
+      Teuchos::ParameterList& paramList = params->sublist("Source Functions").sublist("Thermal Source");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      thermal_source_evaluated_ = true;
+
+    } else if(thermal_source_ == SOURCE_TYPE_MATERIAL){
+
+      // There may not be a source in every element block
+
+      if(material_db_->isElementBlockSublist(eb_name, "Source Functions")){ // Thermal source in matDB
+
+        Teuchos::ParameterList& srcParamList = material_db_->
+          getElementBlockSublist(eb_name, "Source Functions");
+
+        if(srcParamList.isSublist("Thermal Source")){ 
+
+          Teuchos::ParameterList& paramList = srcParamList.sublist("Thermal Source");
+          p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+          ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+
+          thermal_source_evaluated_ = true;
+        }
+      }
+    }
+    else 
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+         "Unrecognized thermal source specified in input file");
+
   }
 
   { // Constitutive Model Parameters
@@ -2446,6 +2518,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if ((have_mech_ || have_mech_eq_) && material_model_name == "J2") {
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
+    }
+    
+    // Thermal Source (internal energy generation)
+    if (thermal_source_evaluated_) {
+      p->set<bool>("Have Second Source", true);
+      p->set<std::string>("Second Source Name", "Heat Source");
     }
 
     // Output

@@ -50,6 +50,8 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
     Albany::AbstractProblem(params, param_lib),
     have_source_(false),
+    thermal_source_(SOURCE_TYPE_NONE),
+    thermal_source_evaluated_(false),
     num_dims_(num_dims),
     have_mech_eq_(false),
     have_temperature_eq_(false),
@@ -65,6 +67,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   std::string& method = params->get("Name", "Mechanics ");
   *out << "Problem Name = " << method << '\n';
 
+  // Are any source functions specified?
   have_source_ = params->isSublist("Source Functions");
 
   getVariableType(params->sublist("Displacement"),
@@ -103,8 +106,6 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       have_stab_pressure_,
       have_stab_pressure_eq_);
 
-  if (have_temperature_eq_)
-    have_source_ = params->isSublist("Source Functions");
 
   // Compute number of equations
   int num_eq = 0;
@@ -116,6 +117,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   if (have_damage_eq_) num_eq += 1;
   if (have_stab_pressure_eq_) num_eq += 1;
   this->setNumEquations(num_eq);
+
 
   // Print out a summary of the problem
   *out << "Mechanics problem:" << '\n'
@@ -143,6 +145,31 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       << '\n';
 
   material_db_ = LCM::createMaterialDatabase(params, commT);
+
+  // Determine the Thermal source 
+  //   - the "Source Functions" list must be present in the input file,
+  //   - we must have temperature and have included a temperature equation
+
+  if (have_source_ && have_temperature_ && have_temperature_eq_)
+    // If a thermal source is specified
+    if(params->sublist("Source Functions").isSublist("Thermal Source")){
+
+      Teuchos::ParameterList& thSrcPL = params->sublist("Source Functions").sublist("Thermal Source");
+
+      if(thSrcPL.get<std::string>("Thermal Source Type", "None") == "Block Dependent"){
+
+        if(Teuchos::nonnull(material_db_))
+
+          thermal_source_ = SOURCE_TYPE_MATERIAL;
+
+      }
+      else {
+
+        thermal_source_ = SOURCE_TYPE_INPUT;
+
+      }
+    }
+
 
   //the following function returns the problem information required for
   //setting the rigid body modes (RBMs) for elasticity problems (in

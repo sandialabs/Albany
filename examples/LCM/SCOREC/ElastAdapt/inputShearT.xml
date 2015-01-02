@@ -6,20 +6,12 @@
     <Parameter name="Solution Method"     type="string" value="Continuation"/>
 
     <ParameterList name="Dirichlet BCs">
-      <!-- ? is problem well posed with two torsion BC ?        -->
-      <!-- i.e. is rigid body translation/rotation constrained  -->
-      <!-- the problem converges... so there's that             -->
-      <ParameterList name="DBC on NS ns_top for DOF twist">
-        <Parameter name="BC Function" type="string" value="Torsion"/>
-        <Parameter name="Theta Dot"   type="double" value="1.0"/>
-        <Parameter name="X0"          type="double" value="0.0"/>
-        <Parameter name="Y0"          type="double" value="0.0"/>
-      </ParameterList>
-      <ParameterList name="DBC on NS ns_bottom for DOF twist">
-        <Parameter name="BC Function" type="string" value="Torsion"/>
-        <Parameter name="Theta Dot"   type="double" value="-1.0"/>
-        <Parameter name="X0"          type="double" value="0.0"/>
-        <Parameter name="Y0"          type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_1 for DOF X" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_1 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS ns_1 for DOF Z" type="double" value="0.0"/>
+      <ParameterList name="Time Dependent DBC on NS ns_4 for DOF Z">
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.0, 4.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 1.0, 2.0}"/>
       </ParameterList>
     </ParameterList>
 
@@ -47,11 +39,11 @@
   <ParameterList name="Discretization">
     <Parameter name="Method"                        type="string"             value="FMDB"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/>
-    <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/cylinder/cylinder.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cylinder/cylinder-serial.smb"/>
-    <Parameter name="FMDB Output File Name"         type="string"             value="twist_out.vtk"/>
-    <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{31, eb_1}"/>
-    <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x2:{17,6, ns_bottom, ns_top}"/>
+    <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/cube/cube.dmg"/>
+    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cube/cube.smb"/>
+    <Parameter name="FMDB Output File Name"         type="string"             value="shear_out.vtk"/>
+    <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{95, eb_1}"/>
+    <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x4:{85, 83, 43, 81, ns_1, ns_2, ns_3, ns_4}"/>
     <Parameter name="2nd Order Mesh"                type="bool"               value="false"/>
     <Parameter name="Cubature Degree"               type="int"                value="2"/>
   </ParameterList>
@@ -74,7 +66,7 @@
           <ParameterList name="Stepper">
             <Parameter  name="Initial Value"              type="double" value="0.0"/>
             <Parameter  name="Continuation Parameter"     type="string" value="Time"/>
-            <Parameter  name="Max Steps"                  type="int"    value="20"/>
+            <Parameter  name="Max Steps"                  type="int"    value="100"/>
             <Parameter  name="Max Value"                  type="double" value="50.0"/>
             <Parameter  name="Min Value"                  type="double" value="0"/>
             <Parameter  name="Compute Eigenvalues"        type="bool"   value="0"/>
@@ -90,7 +82,7 @@
 
           <ParameterList name="Step Size">
             <Parameter name="Method"            type="string" value="Constant"/>
-            <Parameter name="Initial Step Size" type="double" value="0.25"/>
+            <Parameter name="Initial Step Size" type="double" value="0.1"/>
           </ParameterList>
         </ParameterList>
 
