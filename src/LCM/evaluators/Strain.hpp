@@ -68,6 +68,9 @@ namespace LCM {
     ///
     unsigned int numDims;
 
+    ///
+    /// Input, if RCU.
+    ///
     AAdapt::rc::Field<2> strain_rc;
   };
 }

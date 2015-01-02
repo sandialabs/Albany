@@ -55,8 +55,12 @@ namespace LCM {
       this->addEvaluatedField(vel_grad_);
     }
 
-    this->setName("Kinematics"+PHX::TypeString<EvalT>::value);
+    if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
+      this->addDependentField(def_grad_rc_());
+    if (needs_strain_ && strain_rc_.init(p, p.get<std::string>("Strain Name")))
+      this->addDependentField(strain_rc_());
 
+    this->setName("Kinematics"+PHX::TypeString<EvalT>::value);
   }
 
   //----------------------------------------------------------------------------
@@ -71,6 +75,8 @@ namespace LCM {
     this->utils.setFieldData(grad_u_,fm);
     if (needs_strain_) this->utils.setFieldData(strain_,fm);
     if (needs_vel_grad_) this->utils.setFieldData(vel_grad_,fm);
+    if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(),fm);
+    if (strain_rc_) this->utils.setFieldData(strain_rc_(),fm);
   }
 
   //----------------------------------------------------------------------------
@@ -86,11 +92,16 @@ namespace LCM {
       for (std::size_t pt(0); pt < num_pts_; ++pt) {
         gradu.fill( &grad_u_(cell,pt,0,0) );
         F = I + gradu;
-        j_(cell,pt) = Intrepid::det(F);
+        if ( ! def_grad_rc_) j_(cell,pt) = Intrepid::det(F);
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
             def_grad_(cell,pt,i,j) = F(i,j);
           }
+        }
+        if (def_grad_rc_) {
+          def_grad_rc_.multiplyInto<ScalarT>(def_grad_);
+          F.fill( &def_grad_(cell,pt,0,0) );
+          j_(cell,pt) = Intrepid::det(F);
         }
       }
     }
@@ -133,6 +144,7 @@ namespace LCM {
           }
         }
       }
+      if (strain_rc_) strain_rc_.addTo<typename EvalT::ScalarT>(strain_);
     }
   }
   //----------------------------------------------------------------------------

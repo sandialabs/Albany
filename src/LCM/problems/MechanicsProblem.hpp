@@ -1668,6 +1668,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // strain
       if (small_strain) {
         p->set<std::string>("Strain Name", "Strain");
+        if (Teuchos::nonnull(rc_mgr_))
+          rc_mgr_->registerField("Strain", dl_->qp_tensor, p);
       }
 
       // set flag for return strain and velocity gradient
@@ -1699,6 +1701,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<Teuchos::RCP<PHX::DataLayout> >(
           "QP Scalar Data Layout",
           dl_->qp_scalar);
+
+      if (Teuchos::nonnull(rc_mgr_))
+        rc_mgr_->registerField(defgrad, dl_->qp_tensor, p);
 
       //ev = Teuchos::rcp(new LCM::DefGrad<EvalT,PHAL::AlbanyTraits>(*p));
       ev = Teuchos::rcp(
@@ -2831,6 +2836,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  if (Teuchos::nonnull(rc_mgr_)) rc_mgr_->createEvaluators<EvalT>(fm0);
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 

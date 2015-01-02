@@ -182,7 +182,7 @@ struct AdaptCallbackOf : public Parma_GroupCode
  * sign flips. If that fails, then it backs off. Once it finds 0 < alpha < 1 for
  * which c'' has all positive-volume tets, c'' is passed to the SCOREC
  * remesher. The remesher also interpolates (1 - alpha) d, which is the
- * displacment remaining to be accumulated into the coordinates, to the new
+ * displacement remaining to be accumulated into the coordinates, to the new
  * mesh. This procedure repeats until alpha = 1.
  */
 namespace al {

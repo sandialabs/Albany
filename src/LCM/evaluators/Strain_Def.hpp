@@ -30,7 +30,7 @@ namespace LCM {
     numQPs  = dims[1];
     numDims = dims[2];
 
-    if (strain_rc.init(p, "Strain"))
+    if (strain_rc.init(p, p.get<std::string>("Strain Name")))
       this->addDependentField(strain_rc());
   }
 
@@ -61,7 +61,7 @@ namespace LCM {
       }
     }
 
-    if (strain_rc) strain_rc.addTo<typename EvalT::ScalarT>(strain);
+    if (strain_rc) strain_rc.addTo<ScalarT>(strain);
   }
   //----------------------------------------------------------------------------
 }

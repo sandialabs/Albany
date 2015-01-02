@@ -36,6 +36,10 @@ public:
   template<typename ad_type>
   void addTo(typename Tensor<ad_type, rank>::type& f_incr) const;
 
+  //! f_incr = f_incr * f_accum.
+  template<typename ad_type>
+  void multiplyInto(typename Tensor<ad_type, 2>::type& f_incr) const;
+
 private:
   typename RTensor<rank>::type f_;
   bool valid_;
