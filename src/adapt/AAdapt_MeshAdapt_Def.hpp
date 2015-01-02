@@ -170,7 +170,21 @@ struct AdaptCallbackOf : public Parma_GroupCode
   }
 };
 
-// Adaptation loop.
+/* Adaptation loop.
+ *   Namespace al and method adaptMeshLoop implement the following operation. We
+ * have current coordinates c and the solution vector of displacements d. Now we
+ * need to update the coordinates to be c' = c + d and then hand c' to the
+ * SCOREC remesher.
+ *   One problem is that if we simply add d to c, some tets may flip from having
+ * positive volume to negative volume. This loop implements a stepping procedure
+ * that tries out c'' = c + alpha d, with the goal of moving alpha from 0 to
+ * 1. It tries alpha = 1 first to take advantage of the easy case of no volume
+ * sign flips. If that fails, then it backs off. Once it finds 0 < alpha < 1 for
+ * which c'' has all positive-volume tets, c'' is passed to the SCOREC
+ * remesher. The remesher also interpolates (1 - alpha) d, which is the
+ * displacment remaining to be accumulated into the coordinates, to the new
+ * mesh. This procedure repeats until alpha = 1.
+ */
 namespace al {
 void anlzCoords(
   const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc);
