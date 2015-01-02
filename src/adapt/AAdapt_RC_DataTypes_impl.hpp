@@ -84,9 +84,9 @@ namespace rc {
  *! rank.
  */
 #define aadapt_rc_apply_to_all_ad_types_all_ranks(macro)        \
-  aadapt_rc_apply_to_all_ad_types(eti, 0)                       \
-  aadapt_rc_apply_to_all_ad_types(eti, 1)                       \
-  aadapt_rc_apply_to_all_ad_types(eti, 2)
+  aadapt_rc_apply_to_all_ad_types(macro, 0)                     \
+  aadapt_rc_apply_to_all_ad_types(macro, 1)                     \
+  aadapt_rc_apply_to_all_ad_types(macro, 2)
 
 } // namespace rc
 } // namespace AAdapt
