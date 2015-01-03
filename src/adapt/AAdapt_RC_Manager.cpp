@@ -80,7 +80,7 @@ public:
 
   void registerField (
     const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl,
-    const Teuchos::RCP<Teuchos::ParameterList>& p)
+    const Init::Enum init, const Teuchos::RCP<Teuchos::ParameterList>& p)
   {
     const std::string name_rc = name + " RC";
     p->set<std::string>(name + " RC Name", name_rc);
@@ -95,9 +95,9 @@ public:
     f.name = name;
     f.layout = dl;
 
-    //amb-rc What's up with the element block name?
     state_mgr_->registerStateVariable(
-      name_rc, f.layout, "", "scalar", 0, false, false);
+      name_rc, f.layout, "", init == Init::zero ? "scalar" : "identity", 0,
+      false, false);
   }
 
 #define loop(i, dim)                                                    \
@@ -194,8 +194,8 @@ void Manager::createEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm) {
   
 void Manager::registerField (
   const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl,
-  const Teuchos::RCP<Teuchos::ParameterList>& p)
-{ db_->registerField(name, dl, p); }
+  const Init::Enum init, const Teuchos::RCP<Teuchos::ParameterList>& p)
+{ db_->registerField(name, dl, init, p); }
 
 void Manager::
 readField (PHX::MDField<RealType>& f, const PHAL::Workset& workset) const {

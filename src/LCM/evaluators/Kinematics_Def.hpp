@@ -98,8 +98,12 @@ namespace LCM {
             def_grad_(cell,pt,i,j) = F(i,j);
           }
         }
-        if (def_grad_rc_) {
-          def_grad_rc_.multiplyInto<ScalarT>(def_grad_);
+      }
+    }
+    if (def_grad_rc_) {
+      def_grad_rc_.multiplyInto<ScalarT>(def_grad_);
+      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+        for (std::size_t pt(0); pt < num_pts_; ++pt) {
           F.fill( &def_grad_(cell,pt,0,0) );
           j_(cell,pt) = Intrepid::det(F);
         }

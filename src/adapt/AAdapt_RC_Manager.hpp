@@ -79,7 +79,7 @@ public:
   //! The problem registers the field.
   void registerField(
     const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl,
-    const Teuchos::RCP<Teuchos::ParameterList>& p);
+    const Init::Enum init, const Teuchos::RCP<Teuchos::ParameterList>& p);
   //! The problem creates the evaluators associated with RCU.
   template<typename EvalT>
   void createEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm);

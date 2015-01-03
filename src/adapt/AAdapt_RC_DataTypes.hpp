@@ -35,6 +35,12 @@ template<typename ad_type> struct Tensor<ad_type, 2> {
  */
 template<int rank> struct RTensor : public Tensor<RealType, rank> {};
 
+/*! Initial value of an accumulatd quantity.
+ */
+struct Init {
+  enum Enum { zero, identity };
+};
+
 } // namespace rc
 } // namespace AAdapt
 
