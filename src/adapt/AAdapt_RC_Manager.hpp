@@ -19,7 +19,7 @@ class AdaptiveSolutionManagerT;
 
 namespace rc {
 
-/*! Manage reference configuration (RC) data for RC updating (RCU).
+/*! \brief Manage reference configuration (RC) data for RC updating (RCU).
  *
  * Equations are written relative to a reference configuration of the mesh. If
  * the mesh deforms a lot, defining quantities relative to a single initial
@@ -42,12 +42,12 @@ namespace rc {
  */
 class Manager {
 public:
-  /* Methods to set up and hook up the RCU framework. */
+  /* Methods to set up the RCU framework. */
 
   //! Static constructor.
   static Manager* create(const Teuchos::RCP<Albany::StateManager>& state_mgr);
   //! Static constructor that may return Teuchos::null depending on the contents
-  //! of the parameter list.
+  //  of the parameter list.
   static Teuchos::RCP<Manager> create(
     const Teuchos::RCP<Albany::StateManager>& state_mgr,
     Teuchos::ParameterList& problem_params);
@@ -63,7 +63,7 @@ public:
   //! Nonconst x getter.
   Teuchos::RCP<Tpetra_Vector>& get_x();
   //! Initialize x_accum using this nonoverlapping map if x_accum has not
-  //! already been initialized.
+  //  already been initialized.
   void init_x_if_not(const Teuchos::RCP<const Tpetra_Map>& map);
   //! x += soln, where soln is nonoverlapping.
   void update_x(const Tpetra_Vector& soln_nol);
@@ -79,16 +79,26 @@ public:
   //! The problem registers the field.
   void registerField(
     const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl,
-    const Init::Enum init, const Teuchos::RCP<Teuchos::ParameterList>& p);
+    const Init::Enum init, const Transformation::Enum transformation,
+    const Teuchos::RCP<Teuchos::ParameterList>& p);
   //! The problem creates the evaluators associated with RCU.
   template<typename EvalT>
   void createEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm);
 
   /* rc::Reader and rc::Writer use these methods to read and write data. */
 
+  //! Append a decoration to the name indicating this is an RCU field.
+  static inline std::string decorate(const std::string& name) {
+    return name + "_RC";
+  }
+  //! Remove the decoration from the end of the name. (No error checking.)
+  static inline std::string undecorate(const std::string& name_dec) {
+    return name_dec.substr(0, name_dec.size() - 3);
+  }
+
   //! Reader uses this method to load the data.
   void readField(PHX::MDField<RealType>& f,
-                 const PHAL::Workset& workset) const;
+                 const PHAL::Workset& workset);
   //! Writer uses this method to record the data.
   void writeField(const PHX::MDField<RealType>& f,
                   const PHAL::Workset& workset);
@@ -102,9 +112,14 @@ public:
   Field::iterator fieldsBegin();
   Field::iterator fieldsEnd();
 
-  /* Methods to inform Manager of what Albany is doing. */
+  /* Methods to inform Manager of what is happening. */
+
+  //! Albany is building the state field manager.
   void beginBuildingSfm();
+  //! Albany is done building the state field manager.
   void endBuildingSfm();
+  //! The mesh was just adapted.
+  void tellAdapted();
 
 private:
   class FieldDatabase;

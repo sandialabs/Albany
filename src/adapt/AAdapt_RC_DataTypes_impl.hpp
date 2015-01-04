@@ -12,12 +12,12 @@ namespace AAdapt {
 namespace rc {
 
 /*! Some macros for ETI. For internal use in the AAdapt::rc namespace. Include
- *! only in .cpp files.
+ *  only in .cpp files.
  */
 
 /*! aadapt_rc_apply_to_all_ad_types(macro, arg2) applies macro(Type, arg2) to
- *! every AD type Albany_DataTypes.hpp defines. Type is RealType, FadType, etc,
- *! and arg2 is a user's argument.
+ *  every AD type Albany_DataTypes.hpp defines. Type is RealType, FadType, etc,
+ *  and arg2 is a user's argument.
  */
 #ifdef ALBANY_SG_MP
 # ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
@@ -52,7 +52,7 @@ namespace rc {
 #endif // ALBANY_SG_MP
 
 /*! aadapt_rc_apply_to_all_eval_types(macro) applies a macro to every evaluation
- *! type PHAL::AlbanyTraits defines.
+ *  type PHAL::AlbanyTraits defines.
  */
 #ifdef ALBANY_SG_MP
 #define aadapt_rc_apply_to_all_eval_types(macro)        \
@@ -81,7 +81,7 @@ namespace rc {
   template class Class<1>;                      \
   template class Class<2>;
 /*! Apply \code aadapt_rc_apply_to_all_ad_types(eti, rank) \endcode to each \c
- *! rank.
+ *  rank.
  */
 #define aadapt_rc_apply_to_all_ad_types_all_ranks(macro)        \
   aadapt_rc_apply_to_all_ad_types(macro, 0)                     \

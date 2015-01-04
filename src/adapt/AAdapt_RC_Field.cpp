@@ -2,6 +2,7 @@
 #include "Intrepid_MiniTensor_Tensor.h"
 #include "AAdapt_RC_DataTypes_impl.hpp"
 #include "Albany_Layouts.hpp"
+#include "AAdapt_RC_Manager.hpp"
 #include "AAdapt_RC_Field.hpp"
 
 namespace AAdapt {
@@ -12,12 +13,14 @@ template<int rank> Field<rank>::Field () : valid_(false) {}
 template<int rank>
 bool Field<rank>::
 init (const Teuchos::ParameterList& p, const std::string& name) {
-  const std::string name_rc = name + " RC Name";
-  valid_ = p.isType<std::string>(name_rc);
+  const std::string
+    name_rc = Manager::decorate(name),
+    name_rc_name = name_rc + " Name";
+  valid_ = p.isType<std::string>(name_rc_name);
   if ( ! valid_) return false;
   f_ = typename RTensor<rank>::type(
-    p.get<std::string>(name_rc),
-    p.get< Teuchos::RCP<PHX::DataLayout> >(name + " Data Layout"));
+    p.get<std::string>(name_rc_name),
+    p.get< Teuchos::RCP<PHX::DataLayout> >(name_rc + " Data Layout"));
   return true;
 }
 
@@ -43,17 +46,55 @@ void Field<2>::addTo (typename Tensor<ad_type, 2>::type& f_incr) const {
   loopf(cell, 0) loopf(qp, 1) loopf(i0, 2) loopf(i1, 3)
     f_incr(cell,qp,i0,i1) += f_(cell,qp,i0,i1);
 }
+template<> template<typename ad_type>
+void Field<0>::addTo (typename Tensor<ad_type, 0>::type& f_incr,
+                      const std::size_t cell, const std::size_t qp) const {
+    f_incr(cell,qp) += f_(cell,qp);
+}
+template<> template<typename ad_type>
+void Field<1>::addTo (typename Tensor<ad_type, 1>::type& f_incr,
+                      const std::size_t cell, const std::size_t qp) const {
+  loopf(i0, 2)
+    f_incr(cell,qp,i0) += f_(cell,qp,i0);
+}
+template<> template<typename ad_type>
+void Field<2>::addTo (typename Tensor<ad_type, 2>::type& f_incr,
+                      const std::size_t cell, const std::size_t qp) const {
+  loopf(i0, 2) loopf(i1, 3)
+    f_incr(cell,qp,i0,i1) += f_(cell,qp,i0,i1);
+}
+
+namespace {
+template<typename ad_type> struct MultiplyWork {
+  Intrepid::Tensor<ad_type> f_incr_mt;
+  Intrepid::Tensor<RealType> f_accum_mt;
+  MultiplyWork(const std::size_t dim) : f_incr_mt(dim), f_accum_mt(dim) {}
+};
+
+template<typename ad_type>
+inline void
+multiplyIntoImpl (
+  const RTensor<2>::type& f_, typename Tensor<ad_type, 2>::type& f_incr,
+  const std::size_t cell, const std::size_t qp, MultiplyWork<ad_type>& w)
+{
+  loopf(i0, 2) loopf(i1, 3) w.f_incr_mt(i0, i1) = f_incr(cell, qp, i0, i1);
+  loopf(i0, 2) loopf(i1, 3) w.f_accum_mt(i0, i1) = f_(cell, qp, i0, i1);
+  Intrepid::Tensor<ad_type> C = Intrepid::dot(w.f_incr_mt, w.f_accum_mt);
+  loopf(i0, 2) loopf(i1, 3) f_incr(cell, qp, i0, i1) = C(i0, i1);  
+}
+} // namespace
 
 template<> template<typename ad_type>
+void Field<2>::
+multiplyInto (typename Tensor<ad_type, 2>::type& f_incr,
+               const std::size_t cell, const std::size_t qp) const {
+  MultiplyWork<ad_type> w(f_.dimension(2));
+  multiplyIntoImpl(f_, f_incr, cell, qp, w);
+}
+template<> template<typename ad_type>
 void Field<2>::multiplyInto (typename Tensor<ad_type, 2>::type& f_incr) const {
-  Intrepid::Tensor<ad_type, 3> f_incr_mt(f_.dimension(2));
-  Intrepid::Tensor<RealType, 3> f_accum_mt(f_.dimension(2));
-  loopf(cell, 0) loopf(qp, 1) {
-    loopf(i0, 2) loopf(i1, 3) f_incr_mt(i0, i1) = f_incr(cell, qp, i0, i1);
-    loopf(i0, 2) loopf(i1, 3) f_accum_mt(i0, i1) = f_(cell, qp, i0, i1);
-    Intrepid::Tensor<ad_type, 3> C = Intrepid::dot(f_incr_mt, f_accum_mt);
-    loopf(i0, 2) loopf(i1, 3) f_incr(cell, qp, i0, i1) = C(i0, i1);
-  }
+  MultiplyWork<ad_type> w(f_.dimension(2));
+  loopf(cell, 0) loopf(qp, 1) multiplyIntoImpl(f_, f_incr, cell, qp, w);
 }
 
 #undef loopf
@@ -64,8 +105,18 @@ aadapt_rc_eti_class(Field)
   template void Field<rank>::addTo<ad_type>(Tensor<ad_type, rank>::type&) const;
 aadapt_rc_apply_to_all_ad_types_all_ranks(eti)
 #undef eti
+#define eti(ad_type, rank)                                              \
+  template void Field<rank>::addTo<ad_type>(                            \
+    Tensor<ad_type, rank>::type&, const std::size_t, const std::size_t) const;
+aadapt_rc_apply_to_all_ad_types_all_ranks(eti)
+#undef eti
 #define eti(ad_type, arg2)                                              \
   template void Field<2>::multiplyInto<ad_type>(Tensor<ad_type,2>::type&) const;
+aadapt_rc_apply_to_all_ad_types(eti,)
+#undef eti
+#define eti(ad_type, arg2)                                              \
+  template void Field<2>::multiplyInto<ad_type>(                        \
+    Tensor<ad_type,2>::type&, const std::size_t, const std::size_t) const;
 aadapt_rc_apply_to_all_ad_types(eti,)
 #undef eti
 

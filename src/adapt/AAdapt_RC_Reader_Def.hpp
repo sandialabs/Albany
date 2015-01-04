@@ -16,7 +16,8 @@ Reader<EvalT, Traits>::Reader (const Teuchos::RCP<Manager>& rc_mgr)
   this->setName("AAdapt::rc::Reader" + PHX::TypeString<EvalT>::value);
   for (Manager::Field::iterator it = rc_mgr_->fieldsBegin(),
        end = rc_mgr_->fieldsEnd(); it != end; ++it) {
-    fields_.push_back(PHX::MDField<RealType>(it->name + " RC", it->layout));
+    fields_.push_back(
+      PHX::MDField<RealType>(Manager::decorate(it->name), it->layout));
     this->addEvaluatedField(fields_.back());
   }
 }

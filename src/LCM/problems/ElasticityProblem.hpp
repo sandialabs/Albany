@@ -323,7 +323,8 @@ Albany::ElasticityProblem::constructEvaluators(
     p->set<std::string>("Strain Name", "Strain");
 
     if (Teuchos::nonnull(rc_mgr))
-      rc_mgr->registerField("Strain", dl->qp_tensor, AAdapt::rc::Init::zero, p);
+      rc_mgr->registerField("Strain", dl->qp_tensor, AAdapt::rc::Init::zero,
+                            AAdapt::rc::Transformation::none, p);
 
     ev = rcp(new LCM::Strain<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

@@ -15,7 +15,7 @@ namespace rc {
  */
 
 /*! Define Tensor<ad_type, rank> Tensor<ad_type, rank>::type is the
- *! corresponding MDField type, and Tensor<ad_type, rank>::rank gives the rank.
+ *  corresponding MDField type, and Tensor<ad_type, rank>::rank gives the rank.
  */
 template<typename ad_type, int rank> struct Tensor;
 template<typename ad_type> struct Tensor<ad_type, 0> {
@@ -31,14 +31,24 @@ template<typename ad_type> struct Tensor<ad_type, 2> {
   typedef PHX::MDField<ad_type, Cell, QuadPoint, Dim, Dim> type;
 };
 /*! For convenience, define RTensor<rank> as shorthand for Tensor<RealType,
- *! rank>.
+ *  rank>.
  */
 template<int rank> struct RTensor : public Tensor<RealType, rank> {};
 
-/*! Initial value of an accumulatd quantity.
+/*! Initial value of an accumulated quantity.
  */
 struct Init {
   enum Enum { zero, identity };
+};
+/*! Transformation to apply before and after projection and interpolation.
+ */
+struct Transformation {
+  enum Enum {
+    none,
+    //! Compute F = R S, where R is a rotation and S is the stretch, then do
+    //  log/exp for R and S.
+    right_polar_LieR_LieS
+  };
 };
 
 } // namespace rc

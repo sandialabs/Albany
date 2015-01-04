@@ -11,8 +11,8 @@
 namespace AAdapt {
 namespace rc {
 
-/*! Encapsulate an MDField that holds accumulated data associated with another
- *! MDField containing incremental data.
+/*! \brief Encapsulate an MDField that holds accumulated data associated with
+ *         another MDField containing incremental data.
  *
  * Equations in evaluators are written relative to the current RC. Certain
  * quantities are therefore incremental. These must be combined with accumulated
@@ -26,19 +26,29 @@ public:
 
   bool init(const Teuchos::ParameterList& p, const std::string& name);
 
-  //! init has been called.
+  //! \c init has been called.
   operator bool() const;
 
   typename RTensor<rank>::type& operator() () { return f_; }
 
   //! f_incr += f_accum. Call as \code f_rc.addTo<typename EvalT::ScalarT>(f);
-  //! \endcode
+  //  \endcode
   template<typename ad_type>
   void addTo(typename Tensor<ad_type, rank>::type& f_incr) const;
+  //! f_incr += f_accum. Call as \code f_rc.addTo<typename EvalT::ScalarT>(f,
+  //  cell, qp); \endcode inside loops over workset.numCells and number of
+  //  quadrature points.
+  template<typename ad_type>
+  void addTo(typename Tensor<ad_type, rank>::type& f_incr,
+             const std::size_t cell, const std::size_t qp) const;
 
   //! f_incr = f_incr * f_accum.
   template<typename ad_type>
   void multiplyInto(typename Tensor<ad_type, 2>::type& f_incr) const;
+  //! f_incr = f_incr * f_accum.
+  template<typename ad_type>
+  void multiplyInto(typename Tensor<ad_type, 2>::type& f_incr,
+                    const std::size_t cell, const std::size_t qp) const;
 
 private:
   typename RTensor<rank>::type f_;

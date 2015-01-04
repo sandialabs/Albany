@@ -88,26 +88,34 @@ namespace LCM {
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
     // Compute DefGrad tensor from displacement gradient
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        gradu.fill( &grad_u_(cell,pt,0,0) );
-        F = I + gradu;
-        if ( ! def_grad_rc_) j_(cell,pt) = Intrepid::det(F);
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
-            def_grad_(cell,pt,i,j) = F(i,j);
+    if ( ! def_grad_rc_) {
+      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+          gradu.fill( &grad_u_(cell,pt,0,0) );
+          F = I + gradu;
+          j_(cell,pt) = Intrepid::det(F);
+          for (std::size_t i(0); i < num_dims_; ++i) {
+            for (std::size_t j(0); j < num_dims_; ++j) {
+              def_grad_(cell,pt,i,j) = F(i,j);
+            }
           }
         }
       }
-    }
-    if (def_grad_rc_) {
+    } else {
+      for (std::size_t cell(0); cell < workset.numCells; ++cell)
+        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+          gradu.fill( &grad_u_(cell,pt,0,0) );
+          F = I + gradu;
+          for (std::size_t i(0); i < num_dims_; ++i)
+            for (std::size_t j(0); j < num_dims_; ++j)
+              def_grad_(cell,pt,i,j) = F(i,j);
+        }
       def_grad_rc_.multiplyInto<ScalarT>(def_grad_);
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+      for (std::size_t cell(0); cell < workset.numCells; ++cell)
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
           F.fill( &def_grad_(cell,pt,0,0) );
           j_(cell,pt) = Intrepid::det(F);
         }
-      }
     }
 
     if (weighted_average_) {
@@ -148,7 +156,7 @@ namespace LCM {
           }
         }
       }
-      if (strain_rc_) strain_rc_.addTo<typename EvalT::ScalarT>(strain_);
+      if (strain_rc_) strain_rc_.addTo<ScalarT>(strain_);
     }
   }
   //----------------------------------------------------------------------------
