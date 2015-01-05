@@ -10,7 +10,7 @@
 // **********************************************************************
 // Base Class Generic Implemtation
 // **********************************************************************
-namespace PHAL {
+namespace LCM {
 
 template<typename EvalT, typename Traits>
 MortarContactBase<EvalT, Traits>::
