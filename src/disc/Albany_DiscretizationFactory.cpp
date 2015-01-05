@@ -295,7 +295,7 @@ Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const AbstractFieldContainer::FieldContainerRequirements& req,
-    const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes) {
+    const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
   TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
                              std::logic_error,
                              "meshStruct accessed, but it has not been constructed" << std::endl);
@@ -333,7 +333,7 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
 
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
-  const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes) {
+  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
 
   if(!piroParams.is_null() && !rigidBodyModes.is_null())
 

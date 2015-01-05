@@ -17,6 +17,8 @@
 #include "PHAL_Dimension.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
+#include "AAdapt_RC_Manager.hpp"
+
 namespace Albany
 {
 
@@ -36,6 +38,7 @@ public:
   MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       const Teuchos::RCP<ParamLib>& param_lib,
       const int num_dims,
+      const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
       Teuchos::RCP<const Teuchos::Comm<int> >& commT);
   ///
   /// Destructor
@@ -146,6 +149,14 @@ protected:
     MECH_VAR_TYPE_DOF        //! Variable is a degree-of-freedom
   };
 
+  // Source function type
+  enum SOURCE_TYPE
+  {
+    SOURCE_TYPE_NONE,      //! No source
+    SOURCE_TYPE_INPUT,     //! Source is specified in input file
+    SOURCE_TYPE_MATERIAL   //! Source is specified in material database
+  };
+
   ///
   /// Accessor for variable type
   ///
@@ -169,6 +180,12 @@ protected:
   /// Boundary conditions on source term
   ///
   bool have_source_;
+
+  // Type of thermal source that is in effect
+  SOURCE_TYPE thermal_source_;
+
+  // Has the thermal source been evaluated in this element block?
+  bool thermal_source_evaluated_;
 
   ///
   /// num of dimensions
@@ -282,6 +299,11 @@ protected:
   bool have_peridynamics_;
 
   ///
+  /// Topology adaptation (adaptive insertion)
+  ///
+  bool have_topmod_adaptation_;
+
+  ///
   /// Data layouts
   ///
   Teuchos::RCP<Albany::Layouts> dl_;
@@ -300,6 +322,12 @@ protected:
   /// new state data
   ///
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > new_state_;
+
+  ///
+  /// Reference configuration manager for mesh adaptation with ref config
+  /// updating.
+  ///
+  Teuchos::RCP<AAdapt::rc::Manager> rc_mgr_;
 
 };
 //------------------------------------------------------------------------------
@@ -1145,7 +1173,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (have_source_) { // Source
+  // Source list exists and the mechanical source params are defined
+
+  if (have_source_ && 
+      params->sublist("Source Functions").isSublist("Mechanical Source")) { 
+
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList);
 
@@ -1156,11 +1188,65 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         dl_->qp_scalar);
 
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Source Functions");
+    Teuchos::ParameterList& paramList = 
+      params->sublist("Source Functions").sublist("Mechanical Source");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+  }
+
+  // Heat Source in Heat Equation
+
+  if (thermal_source_ != SOURCE_TYPE_NONE){
+
+
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+
+    p->set<std::string>("Source Name", "Heat Source");
+    p->set<std::string>("Variable Name", "Temperature");
+    p->set<Teuchos::RCP<PHX::DataLayout> >(
+      "QP Scalar Data Layout",
+      dl_->qp_scalar);
+
+    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    if(thermal_source_ == SOURCE_TYPE_INPUT) { // Thermal source in input file
+
+      Teuchos::ParameterList& paramList = params->sublist("Source Functions").sublist("Thermal Source");
+      p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+      ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
+      fm0.template registerEvaluator<EvalT>(ev);
+
+      thermal_source_evaluated_ = true;
+
+    } else if(thermal_source_ == SOURCE_TYPE_MATERIAL){
+
+      // There may not be a source in every element block
+
+      if(material_db_->isElementBlockSublist(eb_name, "Source Functions")){ // Thermal source in matDB
+
+        Teuchos::ParameterList& srcParamList = material_db_->
+          getElementBlockSublist(eb_name, "Source Functions");
+
+        if(srcParamList.isSublist("Thermal Source")){ 
+
+          Teuchos::ParameterList& paramList = srcParamList.sublist("Thermal Source");
+          p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+          ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+
+          thermal_source_evaluated_ = true;
+        }
+      }
+    }
+    else 
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+         "Unrecognized thermal source specified in input file");
+
   }
 
   { // Constitutive Model Parameters
@@ -1555,6 +1641,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Surface Vector Residual Name",
             "Displacement Residual");
 
+        if (have_topmod_adaptation_ == true) {
+          // Input
+          p->set<std::string>("Jacobian Name", J);
+          p->set<bool>("Use Adaptive Insertion", true);
+          // Output
+          p->set<std::string>("Cauchy Stress Name", cauchy);
+        }
+
         ev = Teuchos::rcp(
             new LCM::SurfaceVectorResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
         fm0.template registerEvaluator<EvalT>(ev);
@@ -1574,6 +1668,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       // strain
       if (small_strain) {
         p->set<std::string>("Strain Name", "Strain");
+        if (Teuchos::nonnull(rc_mgr_))
+          rc_mgr_->registerField(
+            "Strain", dl_->qp_tensor, AAdapt::rc::Init::zero,
+            AAdapt::rc::Transformation::none, p);
       }
 
       // set flag for return strain and velocity gradient
@@ -1605,6 +1703,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<Teuchos::RCP<PHX::DataLayout> >(
           "QP Scalar Data Layout",
           dl_->qp_scalar);
+
+      if (Teuchos::nonnull(rc_mgr_))
+        rc_mgr_->registerField(
+          defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
+          AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
 
       //ev = Teuchos::rcp(new LCM::DefGrad<EvalT,PHAL::AlbanyTraits>(*p));
       ev = Teuchos::rcp(
@@ -2434,6 +2537,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
+    
+    // Thermal Source (internal energy generation)
+    if (thermal_source_evaluated_) {
+      p->set<bool>("Have Second Source", true);
+      p->set<std::string>("Second Source Name", "Heat Source");
+    }
 
     // Output
     p->set<std::string>("Residual Name", "Temperature Residual");
@@ -2731,6 +2840,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
             dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  if (Teuchos::nonnull(rc_mgr_)) rc_mgr_->createEvaluators<EvalT>(fm0);
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 

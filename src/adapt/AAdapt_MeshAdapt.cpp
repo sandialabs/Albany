@@ -149,14 +149,14 @@ void updateCoordinates (
 
 void updateRefConfig (
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   const CoordState& cs)
 {
   // x_refconfig += displacement (nonoverlapping).
   rc_mgr->update_x(*cs.soln_nol);
   // Save x_refconfig to the mesh database so it is interpolated after mesh
   // adaptation.
-  pumi_disc->setField("x_rc", &rc_mgr->get_x()->get1dView()[0], false);
+  pumi_disc->setField("x_accum", &rc_mgr->get_x()->get1dView()[0], false);
 }
 
 void updateSolution (
@@ -184,7 +184,7 @@ void updateSolution (
 // alpha) [original solution].
 double findAlpha (
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
   // Max number of iterations before failure is declared. Must be >=

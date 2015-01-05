@@ -17,7 +17,7 @@ template<class SizeField>
 AAdapt::MeshAdapt<SizeField>::
 MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
           const Albany::StateManager& StateMgr_,
-          const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& refConfigMgr_)
+          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_)
   : remeshFileIndex(1), rc_mgr(refConfigMgr_)
 {
   disc = StateMgr_.getDiscretization();
@@ -45,7 +45,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     // A field to store the reference configuration x (displacement). At each
     // adapatation, it will be interpolated to the new mesh.
     //rc-todo Always apf::VECTOR?
-    pumi_discretization->createField("x_rc", apf::VECTOR);
+    pumi_discretization->createField("x_accum", apf::VECTOR);
   }
 }
 
@@ -170,13 +170,27 @@ struct AdaptCallbackOf : public Parma_GroupCode
   }
 };
 
-// Adaptation loop.
+/* Adaptation loop.
+ *   Namespace al and method adaptMeshLoop implement the following operation. We
+ * have current coordinates c and the solution vector of displacements d. Now we
+ * need to update the coordinates to be c' = c + d and then hand c' to the
+ * SCOREC remesher.
+ *   One problem is that if we simply add d to c, some tets may flip from having
+ * positive volume to negative volume. This loop implements a stepping procedure
+ * that tries out c'' = c + alpha d, with the goal of moving alpha from 0 to
+ * 1. It tries alpha = 1 first to take advantage of the easy case of no volume
+ * sign flips. If that fails, then it backs off. Once it finds 0 < alpha < 1 for
+ * which c'' has all positive-volume tets, c'' is passed to the SCOREC
+ * remesher. The remesher also interpolates (1 - alpha) d, which is the
+ * displacement remaining to be accumulated into the coordinates, to the new
+ * mesh. This procedure repeats until alpha = 1.
+ */
 namespace al {
 void anlzCoords(
   const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc);
 double findAlpha(
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
   // Max number of iterations before failure is declared. Must be >=
@@ -210,8 +224,10 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
                   min_part_density, callback);
     afterAdapt();
     success = true;
-  } else
+  } else {
     success = adaptMeshLoop(min_part_density, callback);
+    rc_mgr->tellAdapted();
+  }
 
   al::anlzCoords(pumi_discretization);
   return success;
@@ -230,12 +246,16 @@ adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback)
     // parameter to ~50.
     n_max_inner_iterations_to_fail = 50;
   bool success = false;
+  double alpha_accum = 0;
   for (int it = 0; it < n_max_outer_iterations; ++it) {
     const double alpha = al::findAlpha(
       pumi_discretization, rc_mgr, n_max_inner_iterations_if_found,
       n_max_inner_iterations_to_fail);
-    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
-      std::cout << "amb: adaptMeshLoop it " << it << " alpha " << alpha << "\n";
+    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0) {
+      alpha_accum = alpha_accum + alpha*(1 - alpha_accum);
+      std::cout << "amb: adaptMeshLoop it " << it << " alpha " << alpha
+                << " alpha_accum " << alpha_accum << "\n";
+    }
     if (alpha == 0) { success = false; break; }
 
     beforeAdapt();
@@ -248,7 +268,7 @@ adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback)
       new Tpetra_Vector(pumi_discretization->getSolutionFieldT()->getMap()));
     // Copy ref config data, now interp'ed to new mesh, into it.
     pumi_discretization->getField(
-      "x_rc", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
+      "x_accum", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
     
     if (alpha == 1) { success = true; break; }
   }
@@ -320,7 +340,7 @@ AAdapt::MeshAdaptT<SizeField>::
 MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
            const Teuchos::RCP<ParamLib>& paramLib_,
            const Albany::StateManager& StateMgr_,
-           const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& refConfigMgr_,
+           const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
            const Teuchos::RCP<const Teuchos_Comm>& commT_):
   AbstractAdapterT(params_,paramLib_,StateMgr_,commT_),
   meshAdapt(params_,StateMgr_,refConfigMgr_)

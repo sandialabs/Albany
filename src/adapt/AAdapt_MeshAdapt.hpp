@@ -25,7 +25,7 @@
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
-#include "AAdapt_ReferenceConfigurationManager.hpp"
+#include "AAdapt_RC_Manager.hpp"
 
 struct Parma_GroupCode;
 
@@ -36,7 +36,7 @@ class MeshAdapt {
   public:
     MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
               const Albany::StateManager& StateMgr_,
-              const Teuchos::RCP<ReferenceConfigurationManager>& refConfigMgr_);
+              const Teuchos::RCP<rc::Manager>& refConfigMgr_);
     ~MeshAdapt();
 
     //! Check adaptation criteria to determine if the mesh needs adapting
@@ -76,7 +76,7 @@ class MeshAdapt {
 
     bool should_transfer_ip_data;
 
-    Teuchos::RCP<ReferenceConfigurationManager> rc_mgr;
+    Teuchos::RCP<rc::Manager> rc_mgr;
 
     void checkValidStateVariable(
         const Albany::StateManager& state_mgr,
@@ -94,7 +94,7 @@ class MeshAdaptT : public AbstractAdapterT {
     MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                const Teuchos::RCP<ParamLib>& paramLib_,
                const Albany::StateManager& StateMgr_,
-               const Teuchos::RCP<ReferenceConfigurationManager>& refConfigMgr_,
+               const Teuchos::RCP<rc::Manager>& refConfigMgr_,
                const Teuchos::RCP<const Teuchos_Comm>& commT_);
     virtual bool queryAdaptationCriteria(int iteration);
     virtual bool adaptMesh(
