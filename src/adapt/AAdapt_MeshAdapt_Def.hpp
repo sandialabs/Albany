@@ -246,12 +246,16 @@ adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback)
     // parameter to ~50.
     n_max_inner_iterations_to_fail = 50;
   bool success = false;
+  double alpha_accum = 0;
   for (int it = 0; it < n_max_outer_iterations; ++it) {
     const double alpha = al::findAlpha(
       pumi_discretization, rc_mgr, n_max_inner_iterations_if_found,
       n_max_inner_iterations_to_fail);
-    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
-      std::cout << "amb: adaptMeshLoop it " << it << " alpha " << alpha << "\n";
+    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0) {
+      alpha_accum = alpha_accum + alpha*(1 - alpha_accum);
+      std::cout << "amb: adaptMeshLoop it " << it << " alpha " << alpha
+                << " alpha_accum " << alpha_accum << "\n";
+    }
     if (alpha == 0) { success = false; break; }
 
     beforeAdapt();
