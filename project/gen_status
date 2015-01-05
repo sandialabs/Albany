@@ -2,4 +2,9 @@
 
 # Run from this directory to generate data in ./report
 
-/repository/usr/local/util/bin/gitstats .. ./report
+# Git gitstats this way
+#
+# git clone git://github.com/hoxu/gitstats.git
+
+# Location of the git clone on gitstats on Glen's laptop
+/usr/local/src/gitstats/gitstats .. ./report
