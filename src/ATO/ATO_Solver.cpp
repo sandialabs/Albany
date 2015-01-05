@@ -352,22 +352,12 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
       int numCells = wsTopo.dimension(0);
       int numNodes = wsTopo.dimension(1);
-      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ) {
         for(int cell=0; cell<numCells; cell++)
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
             int lid = localNodeMap->LID(gid);
             if(lid != -1) ltopo[lid] = p[lid];
           }
-      } else {
-        double matVal = _topology->getMaterialValue();
-        for(int cell=0; cell<numCells; cell++)
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = localNodeMap->LID(gid);
-            if(lid != -1) ltopo[lid] = matVal;
-          }
-      }
     }
 
     // save topology to nodal data for output sake
@@ -400,13 +390,29 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
       int numCells = wsTopo.dimension(0);
       int numNodes = wsTopo.dimension(1);
-      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ) continue;
-      for(int cell=0; cell<numCells; cell++)
-        for(int node=0; node<numNodes; node++){
-          int gid = wsElNodeID[ws][cell][node];
-          int lid = overlapNodeMap->LID(gid);
-          wsTopo(cell,node) = otopo[lid];
-        }
+      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ){
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
+            wsTopo(cell,node) = otopo[lid];
+          }
+      }
+    }
+    double matVal = _topology->getMaterialValue();
+    for(int ws=0; ws<numWorksets; ws++){
+      Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+      int numCells = wsTopo.dimension(0);
+      int numNodes = wsTopo.dimension(1);
+      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
+            wsTopo(cell,node) = matVal;
+            otopo[lid] = matVal;
+          }
+      }
     }
 
     std::string nodal_topoName = _topology->getName()+"_node";
@@ -433,8 +439,9 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
   std::string derName = _aggregator->getOutputDerivativeName();
 
   Albany::MDArray& fSrc = src[0][objName];
-  f = fSrc(0);
+  double flocal = fSrc(0);
   fSrc(0) = 0.0;
+  _solverComm->SumAll(&flocal, &f, 1);
 
   Teuchos::RCP<Albany::AbstractDiscretization> disc = stateMgr.getDiscretization();
   const Albany::WorksetArray<std::string>::type& wsEBNames = disc->getWsEBNames();
@@ -463,7 +470,6 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
     double* odfdp; overlapdfdpVec->ExtractView(&odfdp);
 
     for(int ws=0; ws<numWorksets; ws++){
-      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ) continue;
       Albany::MDArray& dfdpSrc = src[ws][derName];
       int numCells = dfdpSrc.dimension(0);
       int numNodes = dfdpSrc.dimension(1);
@@ -472,6 +478,21 @@ ATO::Solver::copyObjectiveFromStateMgr( double& f, double* dfdp )
           int gid = wsElNodeID[ws][cell][node];
           int lid = overlapNodeMap->LID(gid);
           odfdp[lid] += dfdpSrc(cell,node);
+        }
+    }
+    // set fixed blocks to the highest sensitivity (Material goes here first)
+    double globalMin = 0.0;
+    overlapdfdpVec->MinValue(&globalMin);
+    for(int ws=0; ws<numWorksets; ws++){
+      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ) continue;
+      Albany::MDArray& dfdpSrc = src[ws][derName];
+      int numCells = dfdpSrc.dimension(0);
+      int numNodes = dfdpSrc.dimension(1);
+      for(int cell=0; cell<numCells; cell++)
+        for(int node=0; node<numNodes; node++){
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = overlapNodeMap->LID(gid);
+          odfdp[lid] = globalMin;
         }
     }
     dfdpVec->Export(*overlapdfdpVec, *exporter, Add);
@@ -924,13 +945,31 @@ ATO::SpatialFilter::buildOperator(
   
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
       coords = app->getDiscretization()->getCoords();
+
+    const Albany::WorksetArray<std::string>::type& 
+      wsEBNames = app->getDiscretization()->getWsEBNames();
+
+    // if this filter operates on a subset of the blocks in the mesh, create a list
+    // of nodes that are not smoothed:
+    std::set<int> excludeNodes;
+    size_t num_worksets = coords.size();
+    for (size_t ws=0; ws<num_worksets; ws++) {
+      if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) == blocks.end() ) continue;
+      int num_cells = coords[ws].size();
+      for (int cell=0; cell<num_cells; cell++) {
+        size_t num_nodes = coords[ws][cell].size();
+        for (int node=0; node<num_nodes; node++) {
+          int gid = wsElNodeID[ws][cell][node];
+          excludeNodes.insert(gid);
+        }
+      }
+    }
   
     std::map< GlobalPoint, std::set<GlobalPoint> > neighbors;
   
     double filter_radius_sqrd = filterRadius*filterRadius;
     // awful n^2 search... all against all
     size_t dimension   = app->getDiscretization()->getNumDim();
-    size_t num_worksets = coords.size();
     GlobalPoint homeNode;
     for (size_t home_ws=0; home_ws<num_worksets; home_ws++) {
       int home_num_cells = coords[home_ws].size();
@@ -943,23 +982,28 @@ ATO::SpatialFilter::buildOperator(
               homeNode.coords[dim] = coords[home_ws][home_cell][home_node][dim];
             }
             std::set<GlobalPoint> my_neighbors;
-            for (size_t trial_ws=0; trial_ws<num_worksets; trial_ws++) {
-              int trial_num_cells = coords[trial_ws].size();
-              for (int trial_cell=0; trial_cell<trial_num_cells; trial_cell++) {
-                size_t trial_num_nodes = coords[trial_ws][trial_cell].size();
-                for (int trial_node=0; trial_node<trial_num_nodes; trial_node++) {
-                  double tmp;
-                  double delta_norm_sqr = 0.;
-                  for (int dim=0; dim<dimension; dim++)  { //individual coordinates
-                    tmp = homeNode.coords[dim]-coords[trial_ws][trial_cell][trial_node][dim];
-                    delta_norm_sqr += tmp*tmp;
-                  }
-                  if(delta_norm_sqr<=filter_radius_sqrd) {
-                    GlobalPoint newIntx;
-                    newIntx.gid = wsElNodeID[trial_ws][trial_cell][trial_node];
-                    for (int dim=0; dim<dimension; dim++) 
-                      newIntx.coords[dim] = coords[trial_ws][trial_cell][trial_node][dim];
-                    my_neighbors.insert(newIntx);
+            if( excludeNodes.find(homeNode.gid) == excludeNodes.end() ){
+              for (size_t trial_ws=0; trial_ws<num_worksets; trial_ws++) {
+                if( find(blocks.begin(), blocks.end(), wsEBNames[trial_ws]) != blocks.end() ) continue;
+                int trial_num_cells = coords[trial_ws].size();
+                for (int trial_cell=0; trial_cell<trial_num_cells; trial_cell++) {
+                  size_t trial_num_nodes = coords[trial_ws][trial_cell].size();
+                  for (int trial_node=0; trial_node<trial_num_nodes; trial_node++) {
+                    int gid = wsElNodeID[trial_ws][trial_cell][trial_node];
+                    if( excludeNodes.find(gid) != excludeNodes.end() ) continue; // don't add excluded nodes
+                    double tmp;
+                    double delta_norm_sqr = 0.;
+                    for (int dim=0; dim<dimension; dim++)  { //individual coordinates
+                      tmp = homeNode.coords[dim]-coords[trial_ws][trial_cell][trial_node][dim];
+                      delta_norm_sqr += tmp*tmp;
+                    }
+                    if(delta_norm_sqr<=filter_radius_sqrd) {
+                      GlobalPoint newIntx;
+                      newIntx.gid = wsElNodeID[trial_ws][trial_cell][trial_node];
+                      for (int dim=0; dim<dimension; dim++) 
+                        newIntx.coords[dim] = coords[trial_ws][trial_cell][trial_node][dim];
+                      my_neighbors.insert(newIntx);
+                    }
                   }
                 }
               }
@@ -985,16 +1029,22 @@ ATO::SpatialFilter::buildOperator(
       GlobalPoint homeNode = it->first;
       int home_node_gid = homeNode.gid;
       std::set<GlobalPoint> connected_nodes = it->second;
-      for (std::set<GlobalPoint>::iterator 
-           set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
-         int neighbor_node_gid = set_it->gid;
-         const double* coords = &(set_it->coords[0]);
-         double distance = 0.0;
-         for (int dim=0; dim<dimension; dim++) 
-           distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
-         distance = (distance > 0.0) ? sqrt(distance) : 0.0;
-         double weight = filterRadius - distance;
-         filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
+      if( connected_nodes.size() > 0 ){
+        for (std::set<GlobalPoint>::iterator 
+             set_it=connected_nodes.begin(); set_it!=connected_nodes.end(); ++set_it) {
+           int neighbor_node_gid = set_it->gid;
+           const double* coords = &(set_it->coords[0]);
+           double distance = 0.0;
+           for (int dim=0; dim<dimension; dim++) 
+             distance += (coords[dim]-homeNode.coords[dim])*(coords[dim]-homeNode.coords[dim]);
+           distance = (distance > 0.0) ? sqrt(distance) : 0.0;
+           double weight = filterRadius - distance;
+           filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&neighbor_node_gid);
+        }
+      } else {
+         // if the list of connected nodes is empty, still add a one on the diagonal.
+         double weight = 1.0;
+         filterOperator->InsertGlobalValues(home_node_gid,1,&weight,&home_node_gid);
       }
     }
   
@@ -1017,6 +1067,10 @@ ATO::SpatialFilter::SpatialFilter( Teuchos::ParameterList& params )
 /******************************************************************************/
 {
   filterRadius = params.get<double>("Filter Radius");
+  if( params.isType<Teuchos::Array<std::string> >("Blocks") ){
+    blocks = params.get<Teuchos::Array<std::string> >("Blocks");
+  }
+
 }
 
 /******************************************************************************/
