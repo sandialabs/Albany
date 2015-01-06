@@ -20,6 +20,7 @@
 
 #include <Intrepid_CellTools.hpp>
 #include <Intrepid_Basis.hpp>
+#include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
 
 #include <stk_util/parallel/Parallel.hpp>
 
@@ -1912,14 +1913,32 @@ namespace {
 
 
   const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > >
-  Basis(const int C) {
-    TEUCHOS_TEST_FOR_EXCEPTION(C!=4 && C!=9, std::logic_error,
-      " Albany_STKDiscretization Error Basis not linear or quad"<<std::endl);
-    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_4 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM<double, Intrepid::FieldContainer<double> >() );
-    static const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis_9 =
-      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM<double, Intrepid::FieldContainer<double> >() );
-    return C==4 ? HGRAD_Basis_4 : HGRAD_Basis_9;
+  Basis(const int C)
+  {
+    // Static types
+    typedef Intrepid::FieldContainer< double > Field_t;
+    typedef Intrepid::Basis< double, Field_t > Basis_t;
+    static const Teuchos::RCP< Basis_t > HGRAD_Basis_4 =
+      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C1_FEM< double, Field_t >() );
+    static const Teuchos::RCP< Basis_t > HGRAD_Basis_9 =
+      Teuchos::rcp( new Intrepid::Basis_HGRAD_QUAD_C2_FEM< double, Field_t >() );
+
+    // Check for valid value of C
+    int deg = (int) std::sqrt((double)C);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      deg*deg != C || deg < 2,
+      std::logic_error,
+      " Albany_STKDiscretization Error Basis not perfect "
+      "square > 1" << std::endl);
+
+    // Quick return for linear or quad
+    if (C == 4) return HGRAD_Basis_4;
+    if (C == 9) return HGRAD_Basis_9;
+
+    // Spectral bases
+    return Teuchos::rcp(
+      new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< double, Field_t >(
+        deg, Intrepid::POINTTYPE_SPECTRAL) );
   }
 
   double value(const std::vector<double> &soln,
