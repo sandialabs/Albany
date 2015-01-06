@@ -23,7 +23,7 @@ if [ ${TRILINOS_YAML:-OFF} = "ON" ]
 then
     YAML_ARGS="-D TPL_ENABLE_yaml-cpp:BOOL=ON \
                -D yaml-cpp_INCLUDE_DIRS:PATH=${YAMLDIR:?YAMLDIR must be defined}/include \
-               -D yaml-cpp_LIBRARY_DIRS:PATH=YAMLDIR/lib"
+               -D yaml-cpp_LIBRARY_DIRS:PATH=$YAMLDIR/lib"
 fi
 
 if [ ${TRILINOS_BLAS:-OFF} = "ON" ]

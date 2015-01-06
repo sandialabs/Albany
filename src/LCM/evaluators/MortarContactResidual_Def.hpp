@@ -15,19 +15,33 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 MortarContactBase<EvalT, Traits>::
 MortarContactBase(const Teuchos::ParameterList& p,
-                              const Teuchos::RCP<Albany::Layouts>& dl)
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+
+  meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
+  // The array of names of all the master side sets in the problem
+  masterSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Master Sideset Names")), 
+
+  // The array of sidesets to process
+  sideSetIDs (p.get<Teuchos::ArrayRCP<std::string> >("Sideset IDs")), 
+
+  // Node coords
+  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector) 
+
 {
   std::string fieldName;
-  if (p.isType<std::string>("Scatter Field Name"))
-    fieldName = p.get<std::string>("Scatter Field Name");
-  else fieldName = "Scatter";
 
-  scatter_operation = Teuchos::rcp(new PHX::Tag<ScalarT>
-    (fieldName, dl->dummy));
+  // Allow the user to name this instance of the mortar projection operation
+  // The default is just "MortarProjection"
+  if (p.isType<std::string>("Projection Field Name"))
+    fieldName = p.get<std::string>("Projection Field Name");
+  else fieldName = "MortarProjection";
 
+  mortar_projection_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
+
+  // Get the array of residual quantities that we need to project into the integration space
+  // These are the physics residuals that this class evaluates
   const Teuchos::ArrayRCP<std::string>& names =
     p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
-
 
   tensorRank = p.get<int>("Tensor Rank");
 
@@ -65,7 +79,9 @@ MortarContactBase(const Teuchos::ParameterList& p,
     offset = p.get<int>("Offset of First DOF");
   else offset = 0;
 
-  this->addEvaluatedField(*scatter_operation);
+  // Tell PHAL which field we are evaluating. Note that this is actually a dummy, as we fill in the
+  // residual vector directly. This tells PHAL to call this evaluator to satisfy this dummy field.
+  this->addEvaluatedField(*mortar_projection_operation);
 
   this->setName(fieldName+PHX::TypeString<EvalT>::value);
 }
@@ -118,6 +134,55 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+  // We assume global search is done. Perform local search to pair up each master segment in the element
+  // workset with the slave segments that it may potentially interact with
+
+  // Then, form the mortar integration space
+
+
+  // No work to do
+  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || this->sideSetIDs.size() == 0)
+
+    return;
+
+  const Albany::SideSetList& ssList = *(workset.sideSets);
+
+  for(std::size_t i = 0; i < this->sideSetIDs.size(); i++){
+
+    Albany::SideSetList::const_iterator it = ssList.find(this->sideSetIDs[i]);
+
+      if(it == ssList.end()) continue; // This sideset does not exist in this workset - try the next one
+
+/*
+      for (std::size_t cell=0; cell < workset.numCells; ++cell)
+       for (std::size_t node=0; node < numNodes; ++node)
+         for (std::size_t dim=0; dim < 3; ++dim)
+             neumann(cell, node, dim) = 0.0; // zero out the accumulation vector
+*/
+
+      const std::vector<Albany::SideStruct>& sideSet = it->second;
+
+      // Loop over the sides that form the boundary condition
+
+      for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
+
+        // Get the data that corresponds to the side. 
+
+        const int elem_GID = sideSet[side].elem_GID; // GID of the element that contains the master segment
+        const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
+        const int elem_side = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
+        const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
+
+      }
+    }
+
+
+
+  // Then assemble the DOFs (flux, traction) at the slaves into the master side local elements
+
+#if 0  // Here is the assemble code, more or less
+
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -150,6 +215,7 @@ evaluateFields(typename Traits::EvalData workset)
   
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -178,6 +244,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -235,6 +302,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -263,6 +331,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
@@ -299,6 +368,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -327,6 +397,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
@@ -394,6 +465,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
 
   }
+#endif
 }
 
 // **********************************************************************
@@ -423,6 +495,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   ScalarT *valptr;
 
@@ -448,6 +521,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -476,6 +550,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::VectorOrthogPoly<Epetra_CrsMatrix> > Jac =
     workset.sg_Jac;
@@ -541,6 +616,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -569,6 +645,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > f = workset.sg_f;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > JV = workset.sg_JV;
   Teuchos::RCP< Stokhos::EpetraMultiVectorOrthogPoly > fp = workset.sg_fp;
@@ -619,6 +696,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -647,6 +725,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   ScalarT *valptr;
 
@@ -671,6 +750,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -699,6 +779,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductContainer<Epetra_CrsMatrix> > Jac =
     workset.mp_Jac;
@@ -759,6 +840,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 
 // **********************************************************************
@@ -787,6 +869,7 @@ template<typename Traits>
 void MortarContact<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#if 0
   Teuchos::RCP< Stokhos::ProductEpetraVector > f = workset.mp_f;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > JV = workset.mp_JV;
   Teuchos::RCP< Stokhos::ProductEpetraMultiVector > fp = workset.mp_fp;
@@ -837,6 +920,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#endif
 }
 #endif //ALBANY_SG_MP
 
