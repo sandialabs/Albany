@@ -59,13 +59,22 @@ public:
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
-  Teuchos::RCP<PHX::FieldTag> scatter_operation;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  Teuchos::RCP<PHX::FieldTag> mortar_projection_operation;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec;
   std::vector< PHX::MDField<ScalarT,Cell,Node,Dim,Dim> > valTensor;
   std::size_t numNodes;
   std::size_t numFieldsBase; // Number of fields gathered in this call
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
+
+  const Teuchos::ArrayRCP<std::string>& masterSideNames;
+  const Teuchos::ArrayRCP<std::string>& sideSetIDs;
+  const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
+
+//! Coordinate vector at vertices
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+
 
   unsigned short int tensorRank;
 };
