@@ -24,18 +24,17 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    const int & numNodes = ctd.node_count;
    const int & numDim   = ctd.dimension;
    std::string name     = ctd.name;
-   std::string name4(name.begin(), name.begin() + 4); //first 4 characters of name string
-   std::size_t nine     = name.size(); 
-   if (nine > 8) nine = 9; 
-   std::string name9(name.begin(), name.begin() + nine); //first 9 characters of name string
+   size_t      len      = name.find("_");
+   if (len != std::string::npos) name = name.substr(0,len);
 
+// #define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
    cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
-   cout << "First 4 of CellTopology is " << name4<< ", First 9 of CellTopology is " << name9 << endl;
+   cout << "FullCellTopology name is " << ctd.name << endl;
 #endif
 
    // 1D elements
-   if (name4 == "Line")
+   if (name == "Line")
    {
      if (numNodes == 2)
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM< RealType, Field_t >() );
@@ -44,10 +43,13 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    }
 
    // 2D triangles
-   else if (name4 == "Tria")
+   else if (name == "Triangle")
    {
      // Use quadratic formula to get the element degree
-     int deg = (int) (std::sqrt(0.25 + 2.0*numNodes) + 0.5);
+     int deg = (int) (std::sqrt(0.25 + 2.0*numNodes) - 0.5);
+#ifdef ALBANY_VERBOSE
+     cout << "  For Traingle element, numNodes = " << numNodes << ", deg = " << deg << endl;
+#endif
      TEUCHOS_TEST_FOR_EXCEPTION(
        ((deg*deg + deg)/2 != numNodes || deg == 1),
        Teuchos::Exceptions::InvalidParameter,
@@ -62,10 +64,13 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    }
 
    // 2D quadrilateral elements
-   else if (name4 == "Quad" || name9 == "ShellQuad")
+   else if (name == "Quadrilateral" || name == "ShellQuadrilateral")
    {
      // Compute the element degree
      int deg = (int) std::sqrt((double)numNodes);
+#ifdef ALBANY_VERBOSE
+     cout << "  For " << name << " element, numNodes = " << numNodes << ", deg = " << deg << endl;
+#endif
      TEUCHOS_TEST_FOR_EXCEPTION(
        (deg*deg != numNodes || deg == 1),
        Teuchos::Exceptions::InvalidParameter,
@@ -80,18 +85,30 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    }
 
    // 3D tetrahedron elements
-   else if (name4 == "Tetr" && numNodes == 4 )
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM< RealType, Field_t >() );
-   else if (name4 == "Tetr" && !compositeTet  && numNodes == 10)
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM< RealType, Field_t >() );
-   else if (name4 == "Tetr" && compositeTet &&  numNodes == 10 )
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM< RealType, Field_t >() );
+   else if (name == "Tetrahedron")
+   {
+     if (numNodes == 4)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM< RealType, Field_t >() );
+     else if (numNodes == 10)
+       if (compositeTet)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM< RealType, Field_t >() );
+       else
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM< RealType, Field_t >() );
+     else
+       TEUCHOS_TEST_FOR_EXCEPTION(
+         true,
+         Teuchos::Exceptions::InvalidParameter,
+         "Albany::ProblemUtils::getIntrepidBasis tetrahedron element with " << numNodes << " nodes is not supported");
+   }
 
    // 3D hexahedron elements
-   else if (name4 == "Hexa")
+   else if (name == "Hexahedron")
    {
      // Compute the element degree
      int deg = (int) (std::pow((double)numNodes, 1.0/3.0));
+#ifdef ALBANY_VERBOSE
+     cout << "  For Hexahedron element, numNodes = " << numNodes << ", deg = " << deg << endl;
+#endif
      TEUCHOS_TEST_FOR_EXCEPTION(
        (deg*deg*deg != numNodes || deg == 1),
        Teuchos::Exceptions::InvalidParameter,
@@ -106,8 +123,16 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
 }
 
    // 3D wedge elements
-   else if (name4 == "Wedg" && numNodes == 6)
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_WEDGE_C1_FEM< RealType, Field_t >() );
+   else if (name == "Wedge")
+   {
+     if (numNodes == 6)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_WEDGE_C1_FEM< RealType, Field_t >() );
+     else
+       TEUCHOS_TEST_FOR_EXCEPTION(
+         true,
+         Teuchos::Exceptions::InvalidParameter,
+         "Albany::ProblemUtils::getIntrepidBasis wedge element with " << numNodes << " nodes is not supported");
+   }
 
    // Unrecognized element type
    else
