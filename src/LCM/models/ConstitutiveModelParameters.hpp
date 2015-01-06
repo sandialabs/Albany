@@ -135,6 +135,66 @@ namespace LCM {
     const Teuchos::RCP<Albany::Layouts>& dl_;
 
     ScalarT dummy;
+
+    //Kokkos kernels
+    
+    public:
+    struct   is_constant_map_Tag{};
+    struct   no_const_map_Tag{};
+    struct   is_const_map_have_temperature_Linear_Tag{};
+    struct   is_const_map_have_temperature_Arrhenius_Tag{};
+    struct   no_const_map_have_temperature_Linear_Tag{};
+    struct   no_const_map_have_temperature_Arrhenius_Tag{};
+
+    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+    typedef Kokkos::RangePolicy<ExecutionSpace, is_constant_map_Tag>  is_const_map_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, no_const_map_Tag>  no_const_map_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, is_const_map_have_temperature_Linear_Tag>  is_const_map_have_temperature_Linear_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, is_const_map_have_temperature_Arrhenius_Tag>  is_const_map_have_temperature_Arrhenius_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, no_const_map_have_temperature_Linear_Tag>  no_const_map_have_temperature_Linear_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, no_const_map_have_temperature_Arrhenius_Tag>  no_const_map_have_temperature_Arrhenius_Policy;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const is_constant_map_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const no_const_map_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const is_const_map_have_temperature_Linear_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const is_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const no_const_map_have_temperature_Linear_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const no_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const;
+    
+    KOKKOS_INLINE_FUNCTION
+    void compute_second_constMap(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_second_no_constMap(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_temperature_Linear(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_temperature_Arrhenius(const int cell) const;
+#ifndef NO_KOKKOS_ALBANY
+    private:
+    typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+    std::vector<PHX::index_size_type> ddims_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> second;
+    PHX::MDField<MeshScalarT,Dim> point;
+    RealType dPdT;
+    RealType ref_temp;
+    RealType pre_exp_;
+    RealType exp_param_;
+    int first;
+    ScalarT constant_value;
+    //Using raw pointers for Kokkos functors
+    Stokhos::KL::ExponentialRandomField<MeshScalarT>*  exp_rf_kl;
+    Teuchos::Array<ScalarT>* rv_map;
+#endif 
+   // ScalarT constant_value;
+ 
+    //typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
   };
 }
 

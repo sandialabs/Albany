@@ -153,6 +153,16 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
   }
   this->setName(
       "Constitutive Model Parameters" + PHX::typeAsString<PHX::Device>());
+
+#ifndef NO_KOKKOS_ALBANY
+    ddims_.push_back(24);
+    point=PHX::MDField<MeshScalarT,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Dim>(num_dims_)));
+    point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
+    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(conc_eq_param_.dimension(0), num_pts_)));
+    second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
+#endif
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -173,16 +183,112 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   if (have_temperature_) this->utils.setFieldData(temperature_, fm);
 }
+//------------------------------------------------------------------------------
+//Kokkos kernels
 
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_second_constMap(const int cell) const{
+        
+    for (int pt(0); pt < num_pts_; ++pt) 
+        second(cell, pt) = constant_value;
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_second_no_constMap(const int cell) const{
+
+  for (int pt(0); pt < num_pts_; ++pt) {
+     for (int i(0); i < num_dims_; ++i)
+        point(i) = Sacado::ScalarValue<MeshScalarT>::eval(coord_vec_(cell, pt, i));
+//is not supported in Stokhos todaym but should be fixed soon
+        //second(cell, pt) = exp_rf_kl->evaluate(point, *rv_map);
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_temperature_Arrhenius(const int cell) const{
+
+   for (int pt(0); pt < num_pts_; ++pt) {
+            second(cell, pt) = pre_exp_
+              * std::exp( -exp_param_ / temperature_(cell, pt) );
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_temperature_Linear(const int cell) const{
+
+ for (int pt(0); pt < num_pts_; ++pt) 
+     second(cell, pt) += dPdT * (temperature_(cell, pt) - ref_temp);
+
+}
+
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const is_constant_map_Tag& tag, const int& i) const {
+  compute_second_constMap(i);
+} 
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const no_const_map_Tag& tag, const int& i) const {
+  compute_second_no_constMap(i);
+}
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const is_const_map_have_temperature_Linear_Tag& tag, const int& i) const{
+  compute_second_constMap(i);
+  compute_temperature_Linear(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const is_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const{
+  compute_second_constMap(i);
+  compute_temperature_Arrhenius(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const no_const_map_have_temperature_Linear_Tag& tag, const int& i) const{
+ compute_second_no_constMap(i);
+ compute_temperature_Linear(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const no_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const{
+ compute_second_no_constMap(i);
+ compute_temperature_Arrhenius(i);
+}
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModelParameters<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+#ifdef NO_KOKKOS_ALBANY  
+
   typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
+    Stokhos::KL::ExponentialRandomField<MeshScalarT>*  exp_rf_kl =  exp_rf_kl_map_[it->first].get();
     ScalarT constant_value = constant_value_map_[it->first];
     if (is_constant_map_[it->first]) {
       for (int cell(0); cell < workset.numCells; ++cell) {
@@ -225,6 +331,43 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+#else
+    typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it; 
+   for (it = field_map_.begin(); it != field_map_.end();    ++it) {
+
+    constant_value = constant_value_map_[it->first];
+    second=it->second;
+    exp_rf_kl = exp_rf_kl_map_[it->first].get();
+    rv_map = &rv_map_[it->first];
+
+    if (have_temperature_){
+       if (temp_type_map_[it->first] == "Linear" ) {
+         dPdT = dparam_dtemp_map_[it->first];
+         ref_temp = ref_temp_map_[it->first];
+         if (is_constant_map_[it->first]) // is_const_map_have_temperature_Linear
+            Kokkos::parallel_for(is_const_map_have_temperature_Linear_Policy(0,workset.numCells),*this);
+         else //no_const_map_have temperature_Linear
+            Kokkos::parallel_for(no_const_map_have_temperature_Linear_Policy(0,workset.numCells),*this);
+       }
+       else if (temp_type_map_[it->first] == "Arrhenius") {
+         pre_exp_ = pre_exp_map_[it->first];
+         exp_param_ = exp_param_map_[it->first];
+         if (is_constant_map_[it->first]) // is_const_map_have_temperature_Arrhenius
+           Kokkos::parallel_for(is_const_map_have_temperature_Arrhenius_Policy(0,workset.numCells),*this);
+         else // no_const_map_have temperature_Arrhenius
+           Kokkos::parallel_for(no_const_map_have_temperature_Arrhenius_Policy(0,workset.numCells),*this);
+       }
+    }
+    else{
+       if (is_constant_map_[it->first]) //is_constant_map
+          Kokkos::parallel_for(is_const_map_Policy(0,workset.numCells),*this);
+       else //no_const_map
+           Kokkos::parallel_for(no_const_map_Policy(0,workset.numCells),*this);
+
+    }
+ } 
+#endif
+}
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 typename ConstitutiveModelParameters<EvalT, Traits>::ScalarT&
