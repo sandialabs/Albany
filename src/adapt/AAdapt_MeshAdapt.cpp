@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <iomanip>
 #include "AAdapt_MeshAdapt.hpp"
 #include "AAdapt_MeshAdapt_Def.hpp"
 
@@ -201,18 +202,21 @@ double findAlpha (
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(
-      pumi_disc->getFMDBMeshStruct()->getMesh());
+      pumi_disc->getFMDBMeshStruct()->getMesh(), false);
     // Adjust alpha bounds.
     if (n_negative_simplices == 0)
       alpha_lo = alpha;
     else
       alpha_hi = alpha;
 
-    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
-      std::cout << "amb: findAlpha iteration " << it
-                << " n_negative_simplices " << n_negative_simplices
-                << " alpha " << alpha
-                << " in [" << alpha_lo << ", " << alpha_hi << "]\n";
+    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0) {
+      static const int w = 8;
+      std::cout << "amb: findAlpha it " << std::setw(2) << it
+                << " negative volumes " << std::setw(4)
+                << n_negative_simplices << " alpha " << std::setw(w) << alpha
+                << " in [" << std::setw(w) << alpha_lo << ", " << std::setw(w)
+                << alpha_hi << "]\n";
+    }
 
     // Perfect (and typical) case: success on first try, and made it all the way
     // to alpha == 1.

@@ -118,8 +118,10 @@ public:
   void beginBuildingSfm();
   //! Albany is done building the state field manager.
   void endBuildingSfm();
+  //! The mesh is about to adapt.
+  void beginAdapt();
   //! The mesh was just adapted.
-  void tellAdapted();
+  void endAdapt();
 
 private:
   class FieldDatabase;

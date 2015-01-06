@@ -225,8 +225,9 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
     afterAdapt();
     success = true;
   } else {
+    rc_mgr->beginAdapt();
     success = adaptMeshLoop(min_part_density, callback);
-    rc_mgr->tellAdapted();
+    rc_mgr->endAdapt();
   }
 
   al::anlzCoords(pumi_discretization);
