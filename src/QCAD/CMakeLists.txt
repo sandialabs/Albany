@@ -26,6 +26,7 @@ SET(SOURCES
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     QCAD_Solver.cpp
+    QCAD_SolverT.cpp
     QCAD_CoupledPoissonSchrodinger.cpp
     QCAD_CoupledPSJacobian.cpp
     QCAD_CoupledPSPreconditioner.cpp
@@ -70,6 +71,7 @@ SET(HEADERS
 IF (ALBANY_EPETRA) 
   SET(HEADERS ${HEADERS} 
     QCAD_Solver.hpp
+    QCAD_SolverT.hpp
     QCAD_CoupledPoissonSchrodinger.hpp
     QCAD_CoupledPSJacobian.hpp
     QCAD_CoupledPSPreconditioner.hpp
