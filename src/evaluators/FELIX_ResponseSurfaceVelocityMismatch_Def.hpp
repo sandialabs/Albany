@@ -183,7 +183,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
     Intrepid::CellTools<RealType>::mapToReferenceSubcell(refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
     // Calculate side geometry
-    Intrepid::CellTools<RealType>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
+    Intrepid::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
 
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
 
@@ -197,13 +197,13 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
 
     // Transform values of the basis functions
-    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>(trans_basis_refPointsSide, basis_refPointsSide);
+    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>(trans_basis_refPointsSide, basis_refPointsSide);
 
     // Multiply with weighted measure
     Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
+    Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
 
     // Map cell (reference) degree of freedom points to the appropriate side (elem_side)
     Intrepid::FieldContainer<ScalarT> surfaceVelocityOnCell(1, numNodes, numVecDim);

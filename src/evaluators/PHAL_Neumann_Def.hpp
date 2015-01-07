@@ -424,7 +424,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
     // Calculate side geometry
-    Intrepid::CellTools<RealType>::setJacobian
+    Intrepid::CellTools<MeshScalarT>::setJacobian
        (jacobianSide, refPointsSide, physPointsCell, *cellType);
 
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
@@ -442,7 +442,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
 
     // Transform values of the basis functions
-    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
+    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
       (trans_basis_refPointsSide, basis_refPointsSide);
 
     // Multiply with weighted measure
@@ -450,7 +450,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid::CellTools<RealType>::mapToPhysicalFrame
+    Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, *cellType);
 
 

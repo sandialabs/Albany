@@ -73,6 +73,13 @@ setup(Teuchos::ParameterList& responseParams)
     num_responses = 1;
   
   // Do post-registration setup
+  std::vector<PHX::index_size_type> derivative_dimensions;
+  derivative_dimensions.push_back(24);
+
+//Irina TOFIX derivative dimentions for responses
+//
+//  rfm->setKokkosExtendedDataTypeDimensions(derivative_dimensions);
+
   rfm->postRegistrationSetup("");
 
   // Visualize rfm graph -- get file name from name of response function
