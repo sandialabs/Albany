@@ -58,6 +58,7 @@ namespace ATO {
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       double filterRadius;
+      Teuchos::Array<std::string> blocks;
   };
 
   class OptInterface {

@@ -285,7 +285,7 @@ namespace Albany {
     // Here soln is the local (non overlapped) solution
     void setSolutionField(const Epetra_Vector& soln);
 #endif
-    //Tpetra version of agove
+    //Tpetra version of above
     void setSolutionFieldT(const Tpetra_Vector& solnT);
 
     // Copy solution vector from Epetra_Vector into STK Mesh
