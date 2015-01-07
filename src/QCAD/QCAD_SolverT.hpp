@@ -209,7 +209,7 @@ namespace QCAD {
 		     int nEigenvalues);
     ~SolverResponseFn() {};
 
-    void fillSolverResponses(Epetra_Vector& g, Teuchos::RCP<Epetra_MultiVector>& dgdp, int offset,
+    void fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP<Tpetra_MultiVector>& dgdpT, int offset,
 			     const std::map<std::string, SolverSubSolver>& subSolvers,
 			     const std::vector<std::vector<Teuchos::RCP<SolverParamFn> > >& paramFnVecs,
 			     bool bSupportDpDg, const std::vector<double>& eigenvalueResponses) const;
