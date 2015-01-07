@@ -604,6 +604,7 @@ ENDIF()
 # Set optional dependency on SCOREC FMDB,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
+OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
 IF(ENABLE_SCOREC AND SCOREC_List_ID GREATER -1)
 #IF(SCOREC_List_ID GREATER -1)
   IF(NOT ALBANY_ZOLTAN)
