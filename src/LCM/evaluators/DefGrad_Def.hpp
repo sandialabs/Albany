@@ -96,7 +96,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int i=0; i < numDims; ++i)
 	defgrad(cell,qp,i,i) = 1.0;
 
-  Intrepid::RealSpaceTools<ScalarT>::detTemp(J, defgrad);
+  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 
   if (weightedAverage)
   {

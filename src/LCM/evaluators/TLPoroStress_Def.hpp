@@ -98,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
     {
 
 	  //Irina TOFIX intrepid
-	  RST::inverseTemp(F_inv, defGrad);
+	  RST::inverse(F_inv, defGrad);
 	  //RST::transpose(F_invT, F_inv);
 	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
 	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);

@@ -112,9 +112,9 @@ evaluateFields(typename Traits::EvalData workset)
 
   // compute the 'material' flux
 // Irina TOFIX intrepid
-FST::tensorMultiplyDataDataTemp<ScalarT> (C, F, F, 'T');
-  Intrepid::RealSpaceTools<ScalarT>::inverseTemp(Cinv, C);
-  FST::tensorMultiplyDataDataTemp<ScalarT> (CinvTgrad, Cinv, TGrad);
+FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
+  Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
+  FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
    //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites

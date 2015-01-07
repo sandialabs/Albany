@@ -112,6 +112,24 @@ private:
   ///
   bool small_strain_;
 
+ //Kokkos
+#ifndef NO_KOKKOS_ALBANY
+   typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+   std::vector<PHX::index_size_type> ddims_;
+   PHX::MDField<ScalarT,Dim,Dim> I;
+   PHX::MDField<ScalarT,Dim,Dim> sig;
+   PHX::MDField<ScalarT,Dim,Dim> F;
+   PHX::MDField<ScalarT,Dim,Dim> P;
+
+   template <class ArrayT>
+   KOKKOS_INLINE_FUNCTION
+   const ScalarT trace(const ArrayT &A) const;
+ 
+   template <class ArrayT>
+   KOKKOS_INLINE_FUNCTION
+   void piola(ArrayT &P, const ArrayT &F, const ArrayT &sigma) const;
+ 
+#endif
 };
 }
 

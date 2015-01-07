@@ -387,7 +387,7 @@ evaluateFields(typename Traits::EvalData workset)
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
-    Intrepid::CellTools<RealType>::setJacobianTemp(jacobian, refPoints, coordVec, *cellType);
+    Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
 //    Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 //    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
   } else {
@@ -645,7 +645,7 @@ evaluateFields(typename Traits::EvalData workset)
   //////////////////////////////////////////////////////////////////////
 
   
-  Intrepid::CellTools<MeshScalarT>::setJacobianInvTemp(jacobian_inv, jacobian);
+  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
 //   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
  

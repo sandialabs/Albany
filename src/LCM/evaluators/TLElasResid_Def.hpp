@@ -105,10 +105,10 @@ evaluateFields(typename Traits::EvalData workset)
   else
   {
 //Irina TOFIX intrepid
-    RST::inverseTemp(F_inv, defgrad);
+    RST::inverse(F_inv, defgrad);
     //RST::transpose(F_invT, F_inv);
      //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    //Irina TOFIX intrepid FST::tensorMultiplyDataDataTemp<ScalarT>(P, stress, JF_invT);
+    //Irina TOFIX intrepid FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
 	for (int dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;

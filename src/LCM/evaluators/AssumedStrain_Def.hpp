@@ -84,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-  Intrepid::RealSpaceTools<ScalarT>::detTemp(J, defgrad);
+  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 
   if (avgJ)
   {

@@ -61,6 +61,27 @@ FirstPK(Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+
+#ifndef NO_KOKKOS_ALBANYY
+  //Allocationg additional data for Kokkos functors
+  ddims_.push_back(24);
+  sig=PHX::MDField<ScalarT,Dim,Dim>("sig",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+  F=PHX::MDField<ScalarT,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+  P=PHX::MDField<ScalarT,Dim,Dim>("P",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+  I=PHX::MDField<ScalarT,Dim,Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+
+  sig.setFieldData(ViewFactory::buildView(sig.fieldTag(),ddims_));
+  F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
+  P.setFieldData(ViewFactory::buildView(P.fieldTag(),ddims_));
+  I.setFieldData(ViewFactory::buildView(I.fieldTag(),ddims_));
+
+  for (int i=0; i<num_dims_; i++){
+     for (int j=0; j<num_dims_; j++){
+        I(i,j)=ScalarT(0.0);
+        if (i==j) I(i,j)=ScalarT(1.0);
+     }
+   }
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -80,7 +101,61 @@ postRegistrationSetup(typename Traits::SetupData d,
     this->utils.setFieldData(stab_pressure_, fm);
   }
 }
+//-----------------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+template <class ArrayT>
+KOKKOS_INLINE_FUNCTION
+const typename FirstPK<EvalT, Traits>::ScalarT
+FirstPK<EvalT, Traits>::
+trace (const ArrayT &A) const
+{
 
+  ScalarT s = 0.0;
+
+  switch (num_dims_) {
+
+    default:
+      for (int i = 0; i < num_dims_; ++i) {
+        s += A(i,i);
+      }
+      break;
+
+    case 3:
+      s = A(0,0) + A(1,1) + A(2,2);
+      break;
+
+    case 2:
+      s = A(0,0) + A(1,1);
+      break;
+
+  }
+
+  return s;
+}
+
+template<typename EvalT, typename Traits>
+template <class ArrayT>
+KOKKOS_INLINE_FUNCTION
+void FirstPK<EvalT, Traits>::
+piola (ArrayT &C, const ArrayT &F, const ArrayT &A) const
+{
+ /* Kokkos::View<ScalarT**,PHX::Device> G("G", num_dims_, num_dims_);
+ 
+
+      G(0,0) =  F(1,1);
+      G(0,1) = -F(0,1);
+
+      G(1,0) = -F(1,0);
+      G(1,1) =  F(0,0);
+*/
+      C(0,0) = A(0,0)*F(1,1) - A(0,1)*F(0,1);
+      C(0,1) = -A(0,0)*F(1,0) + A(0,1)*F(0,0);
+
+      C(1,0) = A(1,0)*F(1,1) - A(1,1)*F(0,1);
+      C(1,1) = -A(1,0)*F(1,0) + A(1,1)*F(0,0);
+
+//  return C;
+}
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void FirstPK<EvalT, Traits>::
@@ -88,6 +163,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   //std::cout.precision(15);
   // initilize Tensors
+#ifdef NO_KOKKOS_ALBANY
   Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
@@ -154,6 +230,69 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#else
+    if (have_stab_pressure_) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
+             sig(i,j)=stress_(cell, pt, i, j);
+             sig(i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*trace(sig)*I(i,j);
+             stress_(cell, pt, i, j) = sig(i,j);
+          }
+        }
+      }
+    }
+  }
+
+  if (have_pore_pressure_) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
+       for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
+             sig(i,j)=stress_(cell, pt, i, j);
+             sig(i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
+             stress_(cell, pt, i, j)-=sig(i,j);
+          }
+        }
+      }
+    }
+  }
+
+
+   if (small_strain_) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int dim0 = 0; dim0 < num_dims_; ++dim0) {
+          for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
+            first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);
+          }
+        }
+      }
+    }
+  } else {
+     for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {    
+            F(i,j)=def_grad_(cell, pt,i,j);
+            sig(i,j)=stress_(cell, pt,i,j);
+          }
+        } 
+        piola(P, F, sig);
+
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
+            first_pk_stress_(cell,pt,i,j) = P(i, j);
+          }
+        }
+      }
+    }
+  }
+
+ 
+
+#endif
 }
 //------------------------------------------------------------------------------
 }

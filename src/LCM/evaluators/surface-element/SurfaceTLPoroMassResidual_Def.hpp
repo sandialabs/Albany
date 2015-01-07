@@ -162,7 +162,7 @@ namespace LCM {
     // Compute pore fluid flux
     if (haveMech) {
       // Put back the permeability tensor to the reference configuration
-      RST::inverseTemp(F_inv, defGrad);
+      RST::inverse(F_inv, defGrad);
       //Irina TOFIX intrepid
       //RST::transpose(F_invT, F_inv);
        //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);

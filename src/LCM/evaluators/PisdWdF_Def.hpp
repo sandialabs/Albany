@@ -105,7 +105,7 @@ PisdWdF<EvalT, Traits>::computeEnergy(ScalarT& kappa, ScalarT& mu, Intrepid::Fie
 {
   // array of length 1 so Intrepid::det can be called.
   Intrepid::FieldContainer<EnergyFadType> Jvec(1);
-  Intrepid::RealSpaceTools<EnergyFadType>::detTemp(Jvec, F);
+  Intrepid::RealSpaceTools<EnergyFadType>::det(Jvec, F);
   EnergyFadType& J =  Jvec(0);
   EnergyFadType Jm23  = std::pow(J, -2./3.);
   EnergyFadType trace = 0.0;

@@ -242,13 +242,13 @@ namespace LCM {
 
     if (haveMechanics) {
       //Irina TOFIX intrepid
-      RST::inverseTemp(F_inv, defgrad);
+      RST::inverse(F_inv, defgrad);
       //RST::transpose(F_invT, F_inv);
        //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
        //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
 //Irina TOFIX intrepid
-      FST::tensorMultiplyDataDataTemp<ScalarT>(Kref, F_inv, KJF_invT);
-      FST::tensorMultiplyDataDataTemp<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
+      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
     } else {
        //Irina TOFIX FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = kc p_i
     }

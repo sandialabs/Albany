@@ -146,9 +146,9 @@ namespace LCM {
 
     // compute Cp_{n}^{-1}
     //Irina TOFIX intrepid
-    RST::inverseTemp(Fpinv, Fpold);
+    RST::inverse(Fpinv, Fpold);
     //RST::transpose(FpinvT, Fpinv);
-    FST::tensorMultiplyDataDataTemp<ScalarT>(Cpinv, Fpinv, FpinvT);
+    FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
     // std::cout << "F:\n";
     // for (int cell=0; cell < workset.numCells; ++cell)
