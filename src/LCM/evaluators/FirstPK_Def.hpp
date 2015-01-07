@@ -102,6 +102,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 }
 //-----------------------------------------------------------------------------
+//Kokkos functions:
 template<typename EvalT, typename Traits>
 template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
@@ -137,25 +138,110 @@ template<typename EvalT, typename Traits>
 template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
-piola (ArrayT &C, const ArrayT &F, const ArrayT &A) const
+piola (const ArrayT &C, const ArrayT &F, const ArrayT &A) const
 {
- /* Kokkos::View<ScalarT**,PHX::Device> G("G", num_dims_, num_dims_);
+   switch (num_dims_) {  
  
+   default:
+     TEUCHOS_TEST_FOR_EXCEPTION( !( (num_dims_ == 2) || (num_dims_ == 3) ), std::invalid_argument,
+                                  ">>> ERROR (LCM FirstPK): piola function is defined only for rank-2 or 3 ."); 
+    break;
 
-      G(0,0) =  F(1,1);
-      G(0,1) = -F(0,1);
+   case 3:
 
-      G(1,0) = -F(1,0);
-      G(1,1) =  F(0,0);
-*/
+      C(0,0) = A(0,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + A(0,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + A(0,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
+      C(0,1) = A(0,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + A(0,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + A(0,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
+      C(0,2) = A(0,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1)) + A(0,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + A(0,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+
+      C(1,0) = A(1,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + A(1,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + A(1,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
+      C(1,1) = A(1,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + A(1,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + A(1,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
+      C(1,2) = A(1,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1))+ A(1,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + A(1,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+
+      C(2,0) = A(2,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + A(2,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2))+ A(2,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
+      C(2,1) = A(2,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2))+ A(2,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + A(2,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
+      C(2,2) = A(2,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1))+ A(2,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + A(2,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+
+    break;
+
+   case 2:
       C(0,0) = A(0,0)*F(1,1) - A(0,1)*F(0,1);
       C(0,1) = -A(0,0)*F(1,0) + A(0,1)*F(0,0);
 
       C(1,0) = A(1,0)*F(1,1) - A(1,1)*F(0,1);
       C(1,1) = -A(1,0)*F(1,0) + A(1,1)*F(0,0);
-
-//  return C;
+    break;
+   }
 }
+
+//Kokkos functors:
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void FirstPK<EvalT, Traits>::
+operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
+  for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
+             sig(i,j)=stress_(cell, pt, i, j);
+             sig(i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*trace(sig)*I(i,j);
+             stress_(cell, pt, i, j) = sig(i,j);
+          }
+        }
+      }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void FirstPK<EvalT, Traits>::
+operator() (const have_pore_pressure_Tag& tag, const int& cell) const{
+  for (int pt = 0; pt < num_pts_; ++pt) {
+       for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
+             sig(i,j)=stress_(cell, pt, i, j);
+             sig(i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
+             stress_(cell, pt, i, j)-=sig(i,j);
+          }
+        }
+      }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void FirstPK<EvalT, Traits>::
+operator() (const small_strain_Tag& tag, const int& cell) const{
+    for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int dim0 = 0; dim0 < num_dims_; ++dim0) {
+          for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
+            first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);
+          }
+        }
+      }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void FirstPK<EvalT, Traits>::
+operator() (const no_small_strain_Tag& tag, const int& cell) const{
+     for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {    
+            F(i,j)=def_grad_(cell, pt,i,j);
+            sig(i,j)=stress_(cell, pt,i,j);
+          }
+        } 
+        piola(P, F, sig);
+
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
+            first_pk_stress_(cell,pt,i,j) = P(i, j);
+          }
+        }
+      }
+
+}
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void FirstPK<EvalT, Traits>::
@@ -231,7 +317,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-    if (have_stab_pressure_) {
+/*    if (have_stab_pressure_) {
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; i++) {
@@ -290,8 +376,15 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
- 
-
+*/
+   if (have_stab_pressure_) 
+     Kokkos::parallel_for(have_stab_pressure_Policy(0,workset.numCells),*this);
+   if (have_pore_pressure_)
+     Kokkos::parallel_for(have_pore_pressure_Policy(0,workset.numCells),*this);
+   if (small_strain_)
+     Kokkos::parallel_for(small_strain_Policy(0,workset.numCells),*this);
+   else
+     Kokkos::parallel_for(no_small_strain_Policy(0,workset.numCells),*this);
 #endif
 }
 //------------------------------------------------------------------------------
