@@ -6,6 +6,7 @@
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_AdaptationFactory.hpp"
+#include "AAdapt_RC_Manager.hpp"
 #include "Albany_ProblemFactory.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_ResponseFactory.hpp"
@@ -44,6 +45,9 @@
 #endif
 #endif
 
+//eb-hack
+#include "Adapt_NodalDataVector.hpp"
+
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
 using Teuchos::rcp;
@@ -68,7 +72,8 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   shapeParamsHaveBeenReset(false),
   morphFromInit(true), perturbBetaForDirichlets(0.0),
   phxGraphVisDetail(0),
-  stateGraphVisDetail(0) {
+  stateGraphVisDetail(0)
+{
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
@@ -88,7 +93,8 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     shapeParamsHaveBeenReset(false),
     morphFromInit(true), perturbBetaForDirichlets(0.0),
     phxGraphVisDetail(0),
-    stateGraphVisDetail(0) {
+    stateGraphVisDetail(0)
+{
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
@@ -140,6 +146,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   // Create problem object
   problemParams = Teuchos::sublist(params, "Problem", true);
   Albany::ProblemFactory problemFactory(problemParams, paramLib, commT);
+  rc_mgr = AAdapt::rc::Manager::create(
+    Teuchos::rcp(&stateMgr, false), *problemParams);
+  if (Teuchos::nonnull(rc_mgr))
+    problemFactory.setReferenceConfigurationManager(rc_mgr);
   problem = problemFactory.create();
 
   // Validate Problem parameters against list for this specific problem
@@ -245,6 +255,7 @@ void Albany::Application::buildProblem()   {
   responses = responseFactory.createResponseFunctions(responseList);
 
   // Build state field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginBuildingSfm();
   sfm.resize(meshSpecs.size());
   Teuchos::RCP<PHX::DataLayout> dummy =
     Teuchos::rcp(new PHX::MDALayout<Dummy>(0));
@@ -267,6 +278,7 @@ void Albany::Application::buildProblem()   {
     }
     sfm[ps]->postRegistrationSetup("");
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endBuildingSfm();
 
   neq = problem->numEquations();
 
@@ -306,7 +318,12 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   }
 #endif
 
-  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(params, initial_guess, paramLib, stateMgr, commT));
+  solMgrT = rcp(new AAdapt::AdaptiveSolutionManagerT(
+      params, initial_guess, paramLib, stateMgr,
+      // Prevent a circular dependency.
+      Teuchos::rcp(rc_mgr.get(), false),
+      commT));
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
 #ifdef ALBANY_EPETRA
   try {
@@ -656,6 +673,19 @@ deref_nfm (
     nfm[0] :              // ... hence this is the intended behavior ...
     nfm[wsPhysIndex[ws]]; // ... and this is not, but may one day be again.
 }
+
+// Convenience routine for setting dfm workset data. Cut down on redundant code.
+void dfm_set (
+  PHAL::Workset& workset,
+  const Teuchos::RCP<const Tpetra_Vector>& x,
+  const Teuchos::RCP<const Tpetra_Vector>& xd,
+  const Teuchos::RCP<const Tpetra_Vector>& xdd,
+  Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr)
+{
+  workset.xT = Teuchos::nonnull(rc_mgr) ? rc_mgr->add_x(x) : x;
+  workset.transientTerms = ! Teuchos::nonnull(xd);
+  workset.accelerationTerms = ! Teuchos::nonnull(xdd);
+}
 } // namespace
 
 void
@@ -728,6 +758,8 @@ computeGlobalResidualImplT(
 
   // Set data in Workset struct, and perform fill via field manager
   {
+    if (Teuchos::nonnull(rc_mgr)) rc_mgr->init_x_if_not(xT->getMap());
+
     PHAL::Workset workset;
 
     if (!paramLib->isParameter("Time")) {
@@ -760,13 +792,12 @@ computeGlobalResidualImplT(
 
     workset.fT = fT;
     loadWorksetNodesetInfo(workset);
-    workset.xT = xT;
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
     else
       workset.current_time = current_time;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    workset.distParamLib = distParamLib;
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
 
@@ -1010,11 +1041,10 @@ computeGlobalJacobianImplT(const double alpha,
 
     if (beta==0.0 && perturbBetaForDirichlets>0.0) workset.j_coeff = perturbBetaForDirichlets;
 
-    workset.xT = xT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -1478,12 +1508,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     workset.JVT = JVT;
     workset.j_coeff = beta;
     workset.n_coeff = omega;
-    workset.xT = xT;
     workset.VxT = VxT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -1699,9 +1728,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    workset.xT = xT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
 
@@ -1776,9 +1803,7 @@ applyGlobalDistParamDerivImplT(const double current_time,
     else
       workset.current_time = current_time;
 
-    workset.xT = xT;
-    if (Teuchos::nonnull(xdotT)) workset.transientTerms = true;
-    if (Teuchos::nonnull(xdotdotT)) workset.accelerationTerms = true;
+    dfm_set(workset, xT, xdotT, xdotdotT, rc_mgr);
 
     loadWorksetNodesetInfo(workset);
 
@@ -1798,6 +1823,14 @@ evaluateResponseT(int response_index,
                  const Teuchos::Array<ParamVec>& p,
                  Tpetra_Vector& gT)
 {
+  //eb-hack Initialize the vectors here so that we can accumulate the nodal
+  // state data state in ProjectIPtoNodalField.
+  try {
+    Teuchos::RCP<Adapt::NodalDataBase>
+      ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
+    if (!ndb.is_null()) ndb->getNodalDataVector()->initializeVectors(0);
+  } catch (...) { /* No nodal data vector. */ }
+
   double t = current_time;
   if ( paramLib->isParameter("Time") )
     t = paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time");
@@ -2032,6 +2065,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.sg_f = Teuchos::rcpFromRef(sg_f);
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
     workset.sg_x = Teuchos::rcpFromRef(sg_x);
     if (sg_xdot != NULL) workset.transientTerms = true;
     if (sg_xdotdot != NULL) workset.accelerationTerms = true;
@@ -2223,6 +2257,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -2496,6 +2531,7 @@ computeGlobalSGTangent(
     if (sg_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -2716,6 +2752,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 
     workset.mp_f = Teuchos::rcpFromRef(mp_f);
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
     workset.mp_x = Teuchos::rcpFromRef(mp_x);
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
@@ -2901,6 +2938,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
@@ -3179,6 +3217,7 @@ computeGlobalMPTangent(
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
     loadWorksetNodesetInfo(workset);
+    workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
@@ -3629,7 +3668,7 @@ void Albany::Application::loadBasicWorksetInfoT(
        double current_time)
 {
     workset.numEqs = neq;
-    workset.xT        = solMgrT->get_overlapped_xT();
+    workset.xT = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;

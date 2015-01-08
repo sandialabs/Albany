@@ -22,6 +22,7 @@ namespace LCM {
     w_grad_bf_  (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
     residual_   (p.get<std::string>("Residual Name"), dl->node_scalar),
     have_source_          (p.get<bool>("Have Source", false)),
+    have_second_source_   (p.get<bool>("Have Second Source", false)),
     have_transient_       (p.get<bool>("Have Transient", false)),
     have_diffusion_       (p.get<bool>("Have Diffusion", false)),
     have_convection_      (p.get<bool>("Have Convection", false)),
@@ -42,6 +43,13 @@ namespace LCM {
         tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
       source_ = tmp;
       this->addDependentField(source_);
+    }
+
+    if (have_second_source_) {
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Second Source Name"), dl->qp_scalar);
+      second_source_ = tmp;
+      this->addDependentField(second_source_);
     }
 
     if (have_transient_) {
@@ -111,6 +119,10 @@ namespace LCM {
 
     if (have_source_) {
       this->utils.setFieldData(source_,fm);
+    }
+
+    if (have_second_source_) {
+      this->utils.setFieldData(second_source_,fm);
     }
 
     if (have_transient_) {
@@ -189,6 +201,17 @@ namespace LCM {
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt);
+          }
+        }
+      }
+    }
+
+    // second source term
+    if ( have_second_source_ ) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+          for (std::size_t node = 0; node < num_nodes_; ++node) {
+            residual_(cell,node) -= w_bf_(cell,node,pt) * second_source_(cell,pt);
           }
         }
       }

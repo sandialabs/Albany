@@ -19,6 +19,8 @@
 
 namespace AAdapt {
 
+namespace rc { class Manager; }
+
 class AdaptiveSolutionManagerT : public LOCA::Thyra::AdaptiveSolutionManager {
 public:
     AdaptiveSolutionManagerT(
@@ -26,6 +28,7 @@ public:
         const Teuchos::RCP<const Tpetra_Vector>& initial_guessT,
         const Teuchos::RCP<ParamLib>& param_lib,
         const Albany::StateManager& StateMgr,
+        const Teuchos::RCP<rc::Manager>& rc_mgr,
         const Teuchos::RCP<const Teuchos_Comm>& commT);
 
    //! Method called by LOCA Solver to determine if the mesh needs adapting
@@ -83,7 +86,7 @@ private:
 
     Teuchos::RCP<AAdapt::AbstractAdapterT> adapter_;
 
-    void buildAdapter();
+    void buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr);
 
     void resizeMeshDataArrays(
            const Teuchos::RCP<const Tpetra_Map> &mapT,

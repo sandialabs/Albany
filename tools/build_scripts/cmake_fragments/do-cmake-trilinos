@@ -1,0 +1,117 @@
+#! /bin/bash -xe
+
+/bin/rm -f CMakeCache.txt
+
+SOURCE_DIR=${TRILDIR:-..}
+INSTALL_DIR=${TRILINSTALLDIR:-$(pwd)/install}
+
+if [ ${TRILINOS_SUPERLU:-OFF} = "ON" ]
+then
+    SUPERLU_ARGS=" -D TPL_ENABLE_SuperLU:STRING=ON \
+                   -D SuperLU_INCLUDE_DIRS:STRING=${SUPERLUDIR:?SUPERLUDIR must be defined}/include \
+                   -D SuperLU_LIBRARY_DIRS:STRING=${SUPERLUDIR}/lib"
+fi
+
+if [ ${TRILINOS_PARMETIS:-OFF} = "ON" ]
+then
+    PARMETIS_ARGS=" -D TPL_ENABLE_ParMETIS:STRING=ON \
+                    -D ParMETIS_INCLUDE_DIRS:PATH=${PARMETISDIR:?PARMETISDIR must be defined}/include \
+                    -D ParMETIS_LIBRARY_DIRS:PATH=$PARMETISDIR/lib"
+fi
+
+if [ ${TRILINOS_YAML:-OFF} = "ON" ]
+then
+    YAML_ARGS="-D TPL_ENABLE_yaml-cpp:BOOL=ON \
+               -D yaml-cpp_INCLUDE_DIRS:PATH=${YAMLDIR:?YAMLDIR must be defined}/include \
+               -D yaml-cpp_LIBRARY_DIRS:PATH=$YAMLDIR/lib"
+fi
+
+if [ ${TRILINOS_BLAS:-OFF} = "ON" ]
+then
+    BLAS_ARGS="-D TPL_BLAS_LIBRARIES:FILEPATH=${BLASLIB:?BLASLIB must be defined}"
+fi
+
+cmake \
+    -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
+    -D CMAKE_INSTALL_PREFIX:PATH=$INSTALL_DIR  \
+    -D CMAKE_BUILD_TYPE:STRING=$TRILINOS_BUILD_MODE  \
+    -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+    -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+    -D Trilinos_ENABLE_SECONDARY_TESTED_CODE=OFF \
+    -D CMAKE_VERBOSE_MAKEFILE:BOOL=${TRILINOS_VERBOSE_MAKEFILE:-OFF} \
+    -D BUILD_SHARED_LIBS:BOOL=${TRILINOS_BUILD_SHARED_LIBS:-OFF} \
+    -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=${TRILINOS_EXPLICIT_INSTANTIATION:-OFF} \
+    -D CMAKE_CXX_FLAGS:STRING="$TRILINOS_CXX_FLAGS" \
+\
+    -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+    -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+    -D Trilinos_ENABLE_Shards:BOOL=ON \
+    -D Trilinos_ENABLE_Sacado:BOOL=ON \
+    -D Trilinos_ENABLE_Epetra:BOOL=ON \
+    -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+    -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+    -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+    -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+    -D Trilinos_ENABLE_Amesos:BOOL=ON \
+    -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+    -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+    -D Trilinos_ENABLE_Belos:BOOL=ON \
+    -D Trilinos_ENABLE_Pamgen:BOOL=ON \
+    -D Trilinos_ENABLE_ML:BOOL=ON \
+    -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+    -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+    -D Trilinos_ENABLE_NOX:BOOL=ON \
+    -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+    -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+    -D Trilinos_ENABLE_Thyra:BOOL=ON \
+    -D Trilinos_ENABLE_ThyraTpetraAdapters:BOOL=ON \
+    -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+    -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+    -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+    -D Trilinos_ENABLE_Piro:BOOL=ON \
+    -D Piro_ENABLE_TESTS:BOOL=ON \
+    -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+    -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+    -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+    -D Trilinos_ENABLE_STKIO:BOOL=ON \
+    -D Trilinos_ENABLE_Teko:BOOL=ON \
+    -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+    -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+\
+    -D Trilinos_ENABLE_TriKota:BOOL=${TRILINOS_TRIKOTA:-OFF} \
+    -D Amesos2_ENABLE_KLU2:BOOL=${TRILINOS_AMESOS2_KLU2:-OFF} \
+    -D Trilinos_ENABLE_Didasko:BOOL=${TRILINOS_DIDASKO:-OFF} \
+    -D Trilinos_ENABLE_Galeri:BOOL=${TRILINOS_GALERI:-OFF} \
+    -D Trilinos_ENABLE_GlobiPack:BOOL=${TRILINOS_GLOBIPACK:-OFF} \
+    -D Trilinos_ENABLE_Isorropia:BOOL=${TRILINOS_ISORROPIA:-OFF} \
+    -D Trilinos_ENABLE_OptiPack:BOOL=${TRILINOS_OPTIPACK:-OFF} \
+    -D Trilinos_ENABLE_RBGen:BOOL=${TRILINOS_RBGEN:-OFF} \
+    -D Trilinos_ENABLE_SCOREC:BOOL=${TRILINOS_SCOREC:-OFF} \
+    -D Trilinos_ENABLE_ThreadPool:BOOL=${TRILINOS_THREADPOOL:-OFF} \
+    -D Trilinos_ENABLE_TrilinosCouplings:BOOL=${TRILINOS_COUPLINGS:-OFF} \
+    -D Phalanx_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=${TRILINOS_PHALANX_TEUCHOS_TIME_MONITOR:-OFF} \
+    -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=${TRILINOS_STRATIMIKOS_TEUCHOS_TIME_MONITOR:-OFF} \
+    -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=${TRILINOS_STOKHOS_TEUCHOS_TIME_MONITOR:-OFF} \
+    -D Zoltan2_ENABLE_Experimental:BOOL=${TRILINOS_ZOLTAN2_EXPERIMENTAL:-OFF} \
+    -D Trilinos_ENABLE_MueLu:BOOL=${TRILINOS_MUELU:-OFF} \
+\
+    -D TPL_ENABLE_Boost:BOOL=ON \
+    -D TPL_ENABLE_BoostLib:BOOL=ON \
+    -D Boost_INCLUDE_DIRS:FILEPATH=${BOOSTDIR:?BOOSTDIR must be defined}/include \
+    -D Boost_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
+    -D BoostLib_INCLUDE_DIRS:FILEPATH=$BOOSTDIR/include \
+    -D BoostLib_LIBRARY_DIRS:FILEPATH=$BOOSTDIR/lib \
+    -D TPL_ENABLE_Netcdf:BOOL=ON \
+    -D Netcdf_INCLUDE_DIRS:PATH=${NETCDFDIR:?NETCDFDIR must be defined}/include \
+    -D Netcdf_LIBRARY_DIRS:PATH=$NETCDFDIR/lib \
+    -D TPL_ENABLE_HDF5:BOOL=ON \
+    -D HDF5_INCLUDE_DIRS:PATH=${HDF5DIR:?HDF5DIR must be defined}/include \
+    -D HDF5_LIBRARY_DIRS:PATH=$HDF5DIR/lib \
+    -D TPL_ENABLE_MPI:BOOL=ON \
+\
+    $SUPERLU_ARGS \
+    $PARMETIS_ARGS \
+    $YAML_ARGS \
+    $BLAS_ARGS \
+\
+    $SOURCE_DIR

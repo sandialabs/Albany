@@ -489,4 +489,103 @@ dot_relation(
   return oss.str();
 }
 
+//
+// The entity id has now some very high number.
+// Change it to something reasonable for debugging purposes.
+// See formula for creating high id in CreateFaces.cpp
+//
+stk::mesh::EntityId
+new_id_from_old_id(
+    size_t const dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const old_id,
+    bool const is_low_from_high)
+{
+  stk::mesh::EntityId const
+  start_id = 256 * parallel_rank +
+    (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) - 1;
+
+  bool const
+  needs_mapping =
+      is_low_from_high == true ?
+      old_id >= start_id :
+      old_id < start_id;
+
+  bool
+  is_face_or_edge = false;
+
+  switch (dimension) {
+
+  default:
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Invalid space dimension in graph output: ";
+    std::cerr << dimension;
+    std::cerr << '\n';
+    exit(1);
+    break;
+
+  case 2:
+    if (rank == stk::topology::EDGE_RANK) {
+      is_face_or_edge = true;
+    }
+    break;
+
+  case 3:
+    if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
+      is_face_or_edge = true;
+    }
+    break;
+  }
+
+  stk::mesh::EntityId
+  new_id = old_id;
+
+  if (is_face_or_edge == true && needs_mapping == true) {
+
+    new_id =
+        is_low_from_high == true ?
+        old_id - start_id :
+        old_id + start_id;
+
+  }
+
+  return new_id;
+}
+
+//
+//
+//
+stk::mesh::EntityId
+low_id_from_high_id(
+    size_t const dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const high_id)
+{
+  bool const
+  is_lo_from_hi = true;
+
+  return
+    new_id_from_old_id(dimension, parallel_rank, rank, high_id, is_lo_from_hi);
+}
+
+//
+//
+//
+stk::mesh::EntityId
+high_id_from_low_id(
+    size_t const dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const low_id)
+{
+  bool const
+  is_lo_from_hi = false;
+
+  return
+    new_id_from_old_id(dimension, parallel_rank, rank, low_id, is_lo_from_hi);
+}
+
 }  // namespace LCM

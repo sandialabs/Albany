@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "AAdapt_RC_Field.hpp"
 
 namespace LCM {
   ///\brief Infinitessimal strain tensor
@@ -66,6 +67,11 @@ namespace LCM {
     /// Number of problem dimensions
     ///
     unsigned int numDims;
+
+    ///
+    /// Input, if RCU.
+    ///
+    AAdapt::rc::Field<2> strain_rc;
   };
 }
 

@@ -255,6 +255,9 @@ private:
   FractureCriterionTraction(FractureCriterionTraction const &);
   FractureCriterionTraction & operator=(FractureCriterionTraction const &);
 
+  Intrepid::Vector<double> const &
+  getNormal(stk::mesh::EntityId const entity_id);
+
   void
   computeNormals();
 
@@ -269,7 +272,7 @@ private:
   double
   beta_;
 
-  std::vector<Intrepid::Vector<double> >
+  std::map<stk::mesh::EntityId, Intrepid::Vector<double> >
   normals_;
 };
 

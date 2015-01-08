@@ -15,6 +15,11 @@ SET(SOURCES
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
+    AAdapt_RC_DataTypes.hpp
+    AAdapt_RC_Manager.cpp
+    AAdapt_RC_Field.cpp
+    AAdapt_RC_Reader.cpp
+    AAdapt_RC_Writer.cpp
    )
 
 SET(HEADERS
@@ -25,6 +30,10 @@ SET(HEADERS
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
+    AAdapt_RC_Manager.hpp
+    AAdapt_RC_Field.hpp
+    AAdapt_RC_Reader.hpp
+    AAdapt_RC_Writer.hpp
    )
 
 IF (ALBANY_EPETRA) 
@@ -44,7 +53,7 @@ IF (ALBANY_EPETRA)
   )
 ENDIF()
 
-# Topology Modification & Stress Fracture depend on LCM
+# Random Criterion & Stress Fracture depend on LCM
 # Speculative features and code, currently
 IF(ALBANY_LCM AND LCM_SPECULATIVE)
 
@@ -61,11 +70,9 @@ SET(HEADERS ${HEADERS}
 IF (ALBANY_EPETRA) 
 SET(SOURCES ${SOURCES} 
     AAdapt_RandomFracture.cpp
-    AAdapt_TopologyModification.cpp
     )
 SET(HEADERS ${HEADERS}
     AAdapt_RandomFracture.hpp
-    AAdapt_TopologyModification.hpp
     )
 ENDIF()
 ENDIF()
@@ -74,12 +81,23 @@ ENDIF()
 IF(ALBANY_LCM)
 
 SET(SOURCES ${SOURCES}
-    AAdapt_TopologyModification.cpp
+    AAdapt_TopologyModificationT.cpp
    )
 
 SET(HEADERS ${HEADERS}
-    AAdapt_TopologyModification.hpp
+    AAdapt_TopologyModificationT.hpp
    )
+
+IF (ALBANY_EPETRA)
+ 
+SET(SOURCES ${SOURCES} 
+    AAdapt_TopologyModification.cpp
+    )
+SET(HEADERS ${HEADERS}
+    AAdapt_TopologyModification.hpp
+    )
+    
+ENDIF()
 
 ENDIF()
 

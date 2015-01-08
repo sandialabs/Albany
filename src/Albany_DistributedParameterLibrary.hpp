@@ -65,6 +65,12 @@ namespace Albany {
     //! Get vector
     virtual Teuchos::RCP<vector_type> vector() const = 0;
 
+    //! Get lower bounds vector
+    virtual Teuchos::RCP<vector_type> lower_bounds_vector() const = 0;
+
+    //! Get upper bounds vector
+    virtual Teuchos::RCP<vector_type> upper_bounds_vector() const = 0;
+
     //! Get overlapped vector
     virtual Teuchos::RCP<vector_type> overlapped_vector() const = 0;
 

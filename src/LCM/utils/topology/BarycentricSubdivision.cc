@@ -555,7 +555,7 @@ Topology::computeBarycentricCoordinates(
 void Topology::barycentricSubdivision()
 {
   // Use to assign unique ids
-  set_highest_ids();
+  initializeHighestIds();
 
   // Begin mesh update
   get_bulk_data().modification_begin();

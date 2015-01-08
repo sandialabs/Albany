@@ -9,6 +9,7 @@
 #include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Epetra_Export.h"
 #ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
 #endif
@@ -231,18 +232,8 @@ postEvaluate(typename Traits::PostEvalData workset)
        (*g)[res] = this->global_response[res].val();
    }
   if (dgdp != Teuchos::null) {
-    // workset.distParamLib->get(workset.dist_param_deriv_name)->export_add(*dgdp, *overlapped_dgdp);
-    Teuchos::RCP<Tpetra_MultiVector>
-      dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, workset.comm);
-    Teuchos::RCP<Tpetra_MultiVector>
-      overlapped_dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*overlapped_dgdp, workset.comm);
-
-    workset.distParamLib->get(workset.dist_param_deriv_name)->export_add(*dgdpT, *overlapped_dgdpT);
-
-    const Teuchos::RCP<const Epetra_Comm>
-      comm = Albany::createEpetraCommFromTeuchosComm(workset.comm);
-
-    Petra::TpetraMultiVector_To_EpetraMultiVector(dgdpT, *dgdp, comm);
+    Epetra_Export exporter(overlapped_dgdp->Map(), dgdp->Map());
+    dgdp->Export(*overlapped_dgdp, exporter, Add);
   }
 #endif
 }

@@ -180,6 +180,7 @@ evaluateFields(typename Traits::EvalData workset)
             topoVal += topo(cell,node)*BF(cell,node,qp);
           double P = topology->Penalize(topoVal);
           double dP = topology->dPenalize(topoVal);
+          double dE = 0.0;
           for(int i=0; i<numDims; i++)
             dE += gradX(cell,qp,i)*workConj(cell,qp,i);
           dE *= qp_weights(cell,qp);
@@ -199,6 +200,7 @@ evaluateFields(typename Traits::EvalData workset)
             topoVal += topo(cell,node)*BF(cell,node,qp);
           double P = topology->Penalize(topoVal);
           double dP = topology->dPenalize(topoVal);
+          double dE = 0.0;
           for(int i=0; i<numDims; i++)
             for(int j=0; j<numDims; j++)
               dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j);

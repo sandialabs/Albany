@@ -21,7 +21,7 @@
     <ParameterList name="Topological Optimization">
       <Parameter name="Package" type="string" value="NLopt" />
       <Parameter name="Method" type="string" value="MMA" />
-      <Parameter name="Optimization Maximum Iterations" type="int" value="50" />
+      <Parameter name="Optimization Maximum Iterations" type="int" value="3" />
       <Parameter name="Optimization Convergence Tolerance" type="double" value="1e-4" />
       <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-8" />
       <Parameter name="Minimum Density" type="double" value="0.05" />

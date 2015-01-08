@@ -126,7 +126,7 @@ createResponseFunction(
     for (int i=0; i<meshSpecs.size(); i++) {
 #ifdef ALBANY_LCM
       // Skip if dealing with interface block
-      if (meshSpecs[i]->ebName == "interface") continue;
+      //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif
       responses.push_back(
           rcp(new Albany::FieldManagerScalarResponseFunction(
@@ -140,7 +140,7 @@ createResponseFunction(
     for (int i=0; i<meshSpecs.size(); i++) {
 #ifdef ALBANY_LCM
       // Skip if dealing with interface block
-      if (meshSpecs[i]->ebName == "interface") continue;
+      //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif
       responses.push_back(
         rcp(new Albany::FieldManagerResidualOnlyResponseFunction(
