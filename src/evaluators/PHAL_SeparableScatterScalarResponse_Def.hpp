@@ -6,6 +6,7 @@
 
 //IK, 9/13/14: this has Epetra but does not get compiled if ALBANY_EPETRA_EXE is turned off.
 
+#include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #ifdef ALBANY_EPETRA
@@ -235,7 +236,13 @@ postEvaluate(typename Traits::PostEvalData workset)
       dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, workset.comm);
     Teuchos::RCP<Tpetra_MultiVector>
       overlapped_dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*overlapped_dgdp, workset.comm);
+
     workset.distParamLib->get(workset.dist_param_deriv_name)->export_add(*dgdpT, *overlapped_dgdpT);
+
+    const Teuchos::RCP<const Epetra_Comm>
+      comm = Albany::createEpetraCommFromTeuchosComm(workset.comm);
+
+    Petra::TpetraMultiVector_To_EpetraMultiVector(dgdpT, *dgdp, comm);
   }
 #endif
 }

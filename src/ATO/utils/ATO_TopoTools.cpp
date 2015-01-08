@@ -21,6 +21,7 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
     fixedBlocks = topoParams.get<Teuchos::Array<std::string> >("Fixed Blocks");
   }
 
+  entityType = topoParams.get<std::string>("Entity Type");
   
   if( topoParams.isType<int>("Topology Output Filter") )
     topologyOutputFilter = topoParams.get<int>("Topology Output Filter");

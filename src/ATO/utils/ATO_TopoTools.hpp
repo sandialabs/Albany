@@ -15,7 +15,6 @@ namespace ATO {
     This class provides basic support for various penalization approaches.
 
 */
-
 class Topology 
 {
 
@@ -33,6 +32,7 @@ public:
   double getInitialValue(){return initValue;}
   double getMaterialValue(){return materialValue;}
   double getVoidValue(){return voidValue;}
+  std::string getEntityType(){return entityType;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
 protected:
@@ -40,6 +40,8 @@ protected:
   // this should be a vector of strings at some point since, in the
   // general case, the topology may be defined by multiple fields.
   std::string name;
+  std::string entityType;
+
 
   std::vector<std::string> outputNames;
   double initValue;
@@ -50,7 +52,6 @@ protected:
   int topologyOutputFilter;
   int spatialFilterIndex;
 };
-
 
 class Topology_SIMP : public Topology {
  public:

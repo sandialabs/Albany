@@ -35,6 +35,7 @@
 #endif
 #ifdef ALBANY_ATO
 #include "ATO_StiffnessObjective.hpp"
+#include "ATO_InternalEnergyResponse.hpp"
 #endif
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
@@ -224,6 +225,26 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#endif
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  Response function " << responseName <<
+      " not available!" << std::endl << "Albany/ATO not enabled." <<
+      std::endl);
+#endif
+  }
+
+  else if (responseName == "Internal Energy Objective")
+  {
+#ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
+      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

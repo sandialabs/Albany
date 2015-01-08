@@ -606,19 +606,17 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
   ${FMDB_LIBRARY_DIR})
 
-IF ( NLOPT )
-  include_directories (${NLOPT_INCLUDE_DIR})
-  link_directories (${NLOPT_LIBRARY_DIR})
+IF ( ENABLE_NLopt )
+  include_directories (${NLopt_INCLUDE_DIR})
+  link_directories (${NLopt_LIBRARY_DIR})
   set(NLOPT_LIB nlopt)
 ELSE()
   set(NLOPT_LIB )
 ENDIF()
 
-IF ( WITH_DOTK )
+IF ( ENABLE_DOTK )
   include_directories (${DOTK_INCLUDE_DIR})
   link_directories (${DOTK_LIBRARY_DIR})
-  message("Adding DOTk")
-#  set(DOTK_LIB dotk)
   set(DOTK_LIB )
 ELSE()
   set(DOTK_LIB )

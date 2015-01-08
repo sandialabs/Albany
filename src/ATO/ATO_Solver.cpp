@@ -4,6 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
+// to do before commit:
+// 1. make sure direct calculation of dgdp still works. (i.e., not using distributed parameters.)
+// 2. fix the index into set_p(), around line 400.
+// 3. get this working with the 'pareto' method.
+// 4. use adjoint sensitivity functionality to do stress minimization calc?
+// 5. post-implementation walkthrough.
+// 6. penalization is hardwired.  Fix this!
+
+
 #include "ATO_Solver.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_TopoTools.hpp"
@@ -63,16 +73,16 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   _optimizer->SetInterface(this);
   _optimizer->SetCommunicator(comm);
 
-  // Parse and create aggregator
-  Teuchos::ParameterList& aggregatorParams = 
-    problemParams.get<Teuchos::ParameterList>("Objective Aggregator");
-  ATO::AggregatorFactory aggregatorFactory;
-  _aggregator = aggregatorFactory.create(aggregatorParams);
-
   // Parse topology info
   Teuchos::ParameterList& topoParams = problemParams.get<Teuchos::ParameterList>("Topology");
   ATO::TopologyFactory topoFactory;
   _topology = topoFactory.create(topoParams);
+
+  // Parse and create aggregator
+  Teuchos::ParameterList& aggregatorParams = problemParams.get<Teuchos::ParameterList>("Objective Aggregator");
+  std::string topoEntityType = topoParams.get<std::string>("Entity Type");
+  ATO::AggregatorFactory aggregatorFactory;
+  _aggregator = aggregatorFactory.create(aggregatorParams, topoEntityType);
 
   // Parse filters
   if( problemParams.isType<Teuchos::ParameterList>("Spatial Filters")){
@@ -149,7 +159,12 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
  
   // pass subProblems to the aggregator
-  _aggregator->SetInputVariables(_subProblems);
+  if( _topology->getEntityType() == "State Variable" )
+    _aggregator->SetInputVariables(_subProblems);
+  else 
+  if( _topology->getEntityType() == "Distributed Parameter" )
+    _aggregator->SetInputVariables(_subProblems, gMap, dgdpMap);
+
   _aggregator->SetCommunicator(comm);
   
 
@@ -295,8 +310,13 @@ ATO::Solver::ComputeObjective(const double* p, double& f, double* dfdp)
 {
   for(int i=0; i<_numPhysics; i++){
     // copy data from p into each stateManager
-    Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
-    copyTopologyIntoStateMgr( p, stateMgr );
+    if( _topology->getEntityType() == "State Variable" ){
+      Albany::StateManager& stateMgr = _subProblems[i].app->getStateMgr();
+      copyTopologyIntoStateMgr( p, stateMgr );
+    } else 
+    if( _topology->getEntityType() == "Distributed Parameter"){
+      copyTopologyIntoParameter( p, _subProblems[i] );
+    }
 
     // enforce PDE constraints
     _subProblems[i].model->evalModel((*_subProblems[i].params_in),
@@ -304,16 +324,96 @@ ATO::Solver::ComputeObjective(const double* p, double& f, double* dfdp)
   }
 
   _aggregator->Evaluate();
-  
-  // copy objective (f) and first derivative wrt the topology (dfdp) out 
-  // of stateManager
   copyObjectiveFromStateMgr( f, dfdp );
 
-  if(_solverComm->MyPID() == 0){
-  }
   
 }
 
+/******************************************************************************/
+void
+ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSolver )
+/******************************************************************************/
+{
+
+  Teuchos::RCP<Albany::Application> app = subSolver.app;
+  Albany::StateManager& stateMgr = app->getStateMgr();
+
+  Teuchos::RCP<DistParamLib> distParams = app->getDistParamLib();
+
+  const Albany::WorksetArray<std::string>::type& wsEBNames = stateMgr.getDiscretization()->getWsEBNames();
+  const Teuchos::Array<std::string>& fixedBlocks = _topology->getFixedBlocks();
+
+  if( _topology->getCentering() == "Element" ){
+    TEUCHOS_TEST_FOR_EXCEPTION (
+      true, Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error! 'Element' centering not available for 'Distributed Parameter' entity type" << std::endl);
+  } else 
+  if( _topology->getCentering() == "Node" ){
+ 
+    int ss_num_p = subSolver.params_in->Np();
+
+    const std::vector<Albany::IDArray>& 
+      wsElDofs = distParams->get(_topology->getName())->workset_elem_dofs();
+
+    // communicate boundary info
+    int numLocalNodes = topoVec->MyLength();
+    double* ltopo; topoVec->ExtractView(&ltopo);
+    int numWorksets = wsElDofs.size();
+    for(int ws=0; ws<numWorksets; ws++){
+      const Albany::IDArray& elDofs = wsElDofs[ws];
+      int numCells = elDofs.dimension(0);
+      int numNodes = elDofs.dimension(1);
+      if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) == fixedBlocks.end() ) {
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int lid = elDofs(cell,node,0);
+            if(lid != -1) ltopo[lid] = p[lid];
+          }
+      } else {
+        double matVal = _topology->getMaterialValue();
+        for(int cell=0; cell<numCells; cell++)
+          for(int node=0; node<numNodes; node++){
+            int lid = elDofs(cell,node,0);
+            if(lid != -1) ltopo[lid] = matVal;
+          }
+      }
+    }
+
+    // save topology to nodal data for output sake
+    Teuchos::RCP<Albany::NodeFieldContainer> 
+      nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
+
+    const Teuchos::RCP<const Teuchos_Comm>
+      commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
+
+    // apply filter if requested
+    if(_topologyFilter != Teuchos::null){
+      Epetra_Vector filtered_topoVec(*topoVec);
+      _topologyFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, filtered_topoVec);
+      *topoVec = filtered_topoVec;
+    } else
+    if(_postTopologyFilter != Teuchos::null){
+      _postTopologyFilter->FilterOperator()->Multiply(/*UseTranspose=*/false, *topoVec, *filteredTopoVec);
+      filteredOTopoVec->Import(*filteredTopoVec, *importer, Insert);
+      std::string nodal_topoName = _topology->getName()+"_node_filtered";
+      const Teuchos::RCP<const Tpetra_Vector>
+        filteredOTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
+          *filteredOTopoVec, commT);      
+      (*nodeContainer)[nodal_topoName]->saveFieldVector(filteredOTopoVecT,/*offset=*/0);
+    }
+
+    subSolver.params_in->set_p(ss_num_p-1,topoVec);
+
+    overlapTopoVec->Import(*topoVec, *importer, Insert);
+
+    std::string nodal_topoName = _topology->getName()+"_node";
+    const Teuchos::RCP<const Tpetra_Vector>
+      overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
+        *overlapTopoVec, commT);
+    (*nodeContainer)[nodal_topoName]->saveFieldVector(overlapTopoVecT,/*offset=*/0);
+
+  }
+}
 /******************************************************************************/
 void
 ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& stateMgr )
@@ -512,19 +612,22 @@ ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
   if( _topology->getCentering() == "Node" ){
     // communicate boundary topo data
     Albany::StateManager& stateMgr = _subProblems[0].app->getStateMgr();
-    Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
-    Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
-    int numWorksets = dest.size();
+//    Albany::StateArrays& stateArrays = stateMgr.getStateArrays();
+//    Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+//    int numWorksets = dest.size();
   
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
+    int numWorksets = wsElNodeID.size();
     int numLocalNodes = topoVec->MyLength();
     double* ltopo; topoVec->ExtractView(&ltopo);
     for(int ws=0; ws<numWorksets; ws++){
-      Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
-      int numCells = wsTopo.dimension(0);
-      int numNodes = wsTopo.dimension(1);
+//      Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+//      int numCells = wsTopo.dimension(0);
+//      int numNodes = wsTopo.dimension(1);
+      int numCells = wsElNodeID[ws].size();
+      int numNodes = wsElNodeID[ws][0].size();
       for(int cell=0; cell<numCells; cell++)
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
@@ -535,18 +638,19 @@ ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
   
       overlapTopoVec->Import(*topoVec, *importer, Insert);
   
+
       double* otopo; overlapTopoVec->ExtractView(&otopo);
-      for(int ws=0; ws<numWorksets; ws++){
-        Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
-        int numCells = wsTopo.dimension(0);
-        int numNodes = wsTopo.dimension(1);
-        for(int cell=0; cell<numCells; cell++)
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            wsTopo(cell,node) = otopo[lid];
-          }
-      }
+//      for(int ws=0; ws<numWorksets; ws++){
+//        Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
+//        int numCells = wsTopo.dimension(0);
+//        int numNodes = wsTopo.dimension(1);
+//        for(int cell=0; cell<numCells; cell++)
+//          for(int node=0; node<numNodes; node++){
+//            int gid = wsElNodeID[ws][cell][node];
+//            int lid = overlapNodeMap->LID(gid);
+//            wsTopo(cell,node) = otopo[lid];
+//          }
+//      }
   
     return _atoProblem->ComputeVolume(otopo, v, dvdp);
   }
@@ -596,7 +700,7 @@ ATO::Solver::GetNumOptDofs()
 ATO::SolverSubSolver
 ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                               const Epetra_Comm& comm,
-                              const Teuchos::RCP<const Epetra_Vector>& initial_guess) const
+                              const Teuchos::RCP<const Epetra_Vector>& initial_guess)
 /******************************************************************************/
 {
   using Teuchos::RCP;
@@ -622,45 +726,71 @@ ATO::Solver::CreateSubSolver( const Teuchos::RCP<Teuchos::ParameterList> appPara
     ret.model = slvrfctry.createAndGetAlbanyApp(ret.app, appComm, appComm, initial_guessT);
   }
 
+  Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
+
+  int numParameters = 0;
+  if( problemParams.isType<Teuchos::ParameterList>("Parameters") )
+    numParameters = problemParams.sublist("Parameters").get<int>("Number of Parameter Vectors");
+
+  int numResponses = 0;
+  if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
+    numResponses = problemParams.sublist("Response Functions").get<int>("Number");
+
+  
+  
+  if( problemParams.isType<Teuchos::ParameterList>("Response Functions") )
+ 
 
   ret.params_in = rcp(new EpetraExt::ModelEvaluator::InArgs);
   ret.responses_out = rcp(new EpetraExt::ModelEvaluator::OutArgs);
 
   *(ret.params_in) = ret.model->createInArgs();
   *(ret.responses_out) = ret.model->createOutArgs();
-  int ss_num_p = ret.params_in->Np();     // Number of *vectors* of parameters
-  int ss_num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
-  RCP<Epetra_Vector> p1;
+
+  // the createOutArgs() function doesn't allocate storage
   RCP<Epetra_Vector> g1;
+  int ss_num_g = ret.responses_out->Ng(); // Number of *vectors* of responses
+  for(int ig=0; ig<ss_num_g; ig++){
+    g1 = rcp(new Epetra_Vector(*(ret.model->get_g_map(ig))));
+    ret.responses_out->set_g(ig,g1);
+  }
 
-  if (ss_num_p > 0)
-    p1 = rcp(new Epetra_Vector(*(ret.model->get_p_init(0))));
-  if (ss_num_g > 1)
-    g1 = rcp(new Epetra_Vector(*(ret.model->get_g_map(0))));
-  RCP<Epetra_Vector> xfinal =
-    rcp(new Epetra_Vector(*(ret.model->get_g_map(ss_num_g-1)),true) );
+  RCP<Epetra_Vector> p1;
+  int ss_num_p = ret.params_in->Np();     // Number of *vectors* of parameters
+  TEUCHOS_TEST_FOR_EXCEPTION (
+    ss_num_p - numParameters > 1,
+    Teuchos::Exceptions::InvalidParameter, std::endl 
+    << "Error! Cannot have more than one distributed Parameter for topology optimization" << std::endl);
+  for(int ip=0; ip<ss_num_p; ip++){
+    p1 = rcp(new Epetra_Vector(*(ret.model->get_p_init(ip))));
+    ret.params_in->set_p(ip,p1);
+  }
 
-  // Sensitivity Analysis stuff
-  bool supportsSensitivities = false;
-  RCP<Epetra_MultiVector> dgdp;
-
-  if (ss_num_p>0 && ss_num_g>1) {
-    supportsSensitivities =
-      !ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, 0, 0).none();
-
-    if (supportsSensitivities) {
-      if (p1->GlobalLength() > 0)
-        dgdp = rcp(new Epetra_MultiVector(g1->Map(), p1->GlobalLength() ));
-      else
-        supportsSensitivities = false;
+  for(int ig=0; ig<numResponses; ig++){
+    if(ss_num_p > numParameters){
+      int ip = ss_num_p-1;
+      Teuchos::ParameterList& resParams = 
+        problemParams.sublist("Response Functions").sublist(Albany::strint("ResponseParams",ig));
+      std::string gName = resParams.get<std::string>("Response Name");
+      std::string dgdpName = resParams.get<std::string>("Response Derivative Name");
+      if(!ret.responses_out->supports(EpetraExt::ModelEvaluator::OUT_ARG_DgDp, ig, ip).none()){
+        RCP<const Epetra_Vector> p = ret.params_in->get_p(ip);
+        RCP<const Epetra_Vector> g = ret.responses_out->get_g(ig);
+        RCP<Epetra_MultiVector> dgdp = rcp(new Epetra_MultiVector(p->Map(), g->GlobalLength() ));
+        if(ret.responses_out->supports(OUT_ARG_DgDp,ig,ip).supports(DERIV_TRANS_MV_BY_ROW)){
+          Derivative dgdp_out(dgdp, DERIV_TRANS_MV_BY_ROW);
+          ret.responses_out->set_DgDp(ig,ip,dgdp_out);
+        } else 
+          ret.responses_out->set_DgDp(ig,ip,dgdp);
+        gMap.insert(std::pair<std::string,RCP<const Epetra_Vector> >(gName,g));
+        dgdpMap.insert(std::pair<std::string,RCP<Epetra_MultiVector> >(dgdpName,dgdp));
+      }
     }
   }
 
-  if (ss_num_p > 0)  ret.params_in->set_p(0,p1);
-  if (ss_num_g > 1)  ret.responses_out->set_g(0,g1);
+  RCP<Epetra_Vector> xfinal =
+    rcp(new Epetra_Vector(*(ret.model->get_g_map(ss_num_g-1)),true) );
   ret.responses_out->set_g(ss_num_g-1,xfinal);
-
-  if (supportsSensitivities) ret.responses_out->set_DgDp(0,0,dgdp);
 
   return ret;
 }
@@ -693,6 +823,23 @@ ATO::Solver::createInputFile( const Teuchos::RCP<Teuchos::ParameterList>& appPar
   // Add topology information
   physics_probParams.set<Teuchos::RCP<Topology> >("Topology",_topology);
 
+  Teuchos::ParameterList& topoParams = 
+    appParams->sublist("Problem").get<Teuchos::ParameterList>("Topology");
+  physics_probParams.set<Teuchos::ParameterList>("Topology Parameters",topoParams);
+
+  // Check topology.  If the topology is a distributed parameter, then 1) check for existing 
+  // "Distributed Parameter" list and error out if found, and 2) add a "Distributed Parameter" 
+  // list to the input file, 
+  if( _topology->getEntityType() == "Distributed Parameter" ){
+    TEUCHOS_TEST_FOR_EXCEPTION (
+      physics_subList.isType<Teuchos::ParameterList>("Distributed Parameters"),
+      Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Error! Cannot have 'Distributed Parameters' in both Topology and subproblems" << std::endl);
+    Teuchos::ParameterList distParams;
+    distParams.set("Number of Parameter Vectors",1);
+    distParams.set("Parameter 0", _topology->getName());
+    physics_probParams.set<Teuchos::ParameterList>("Distributed Parameters", distParams);
+  }
 
   // Add aggregator information
   Teuchos::ParameterList& aggParams = 
