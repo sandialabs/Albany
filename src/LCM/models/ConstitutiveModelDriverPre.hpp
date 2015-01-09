@@ -12,6 +12,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include <Intrepid_MiniTensor.h>
 
 namespace LCM {
 
@@ -44,6 +45,11 @@ namespace LCM {
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
 
+    Intrepid::Tensor<ScalarT>
+    computeLoading(std::string load, double inc);
+    
+    Intrepid::Tensor<ScalarT> F0_;
+
     ///
     /// solution field
     ///
@@ -55,9 +61,24 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> def_grad_;
 
     ///
+    /// prescribed def grad field
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> prescribed_def_grad_;
+
+    ///
     /// det def grad field
     ///
     PHX::MDField<ScalarT, Cell, QuadPoint> j_;
+
+    ///
+    /// time field
+    ///
+    PHX::MDField<ScalarT, Dummy> time_;
+
+    ///
+    /// problem final time
+    ///
+    RealType final_time_;
 
     ///
     /// Number of dimensions

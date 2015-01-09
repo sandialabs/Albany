@@ -194,7 +194,7 @@ protected:
 #include "PHAL_NSMaterialProperty.hpp"
 #include "PHAL_Source.hpp"
 #include "PHAL_SaveStateField.hpp"
-
+#include "PHAL_ScatterResidual.hpp"
 #include "FieldNameMap.hpp"
 
 #include "Time.hpp"
@@ -204,6 +204,7 @@ protected:
 #include "ConstitutiveModelInterface.hpp"
 #include "ConstitutiveModelParameters.hpp"
 #include "ConstitutiveModelDriver.hpp"
+#include "ConstitutiveModelDriverPre.hpp"
 #include "FirstPK.hpp"
 
 //------------------------------------------------------------------------------
@@ -234,25 +235,17 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       "A material model must be defined for block: "
           + eb_name);
 
-#ifdef ALBANY_VERBOSE
-  *out << "In MechanicsProblem::constructEvaluators" << std::endl;
-  *out << "element block name: " << eb_name << std::endl;
-  *out << "material model name: " << material_model_name << std::endl;
-#endif
-
   // Note that these are the volume element quantities
-  num_nodes_ = 8;
+  num_nodes_ = 1;
   const int workset_size = meshSpecs.worksetSize;
   num_pts_ = 1;
   num_vertices_ = num_nodes_;
   
-#ifdef ALBANY_VERBOSE
   *out << "Field Dimensions: Workset=" << workset_size
        << ", Vertices= " << num_vertices_
        << ", Nodes= " << num_nodes_
        << ", QuadPts= " << num_pts_
        << ", Dim= " << num_dims_ << std::endl;
-#endif
 
   // Construct standard FEM evaluators with standard field names
   dl_ = Teuchos::rcp(new Albany::Layouts(workset_size,
@@ -292,14 +285,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   dof_names[0] = "driver deformation gradient";
   resid_names[0] = "driver scatter";
 
-  { // Register the solution and residual fields
+  { // Gather Solution
     Teuchos::RCP<Teuchos::ParameterList> p = 
       Teuchos::rcp(new Teuchos::ParameterList("Gather Solution"));
     p->set< Teuchos::ArrayRCP<std::string> >("Solution Names", dof_names);
 
     p->set<int>("Tensor Rank", 2);
 
-    p->set<int>("Offset of First DOF", 0.0);
+    p->set<int>("Offset of First DOF", 0);
     p->set<bool>("Disable Transient", true);
 
     ev = Teuchos::rcp(new PHAL::GatherSolution<EvalT,PHAL::AlbanyTraits>(*p,dl_));
@@ -333,11 +326,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Constitutive Model Driver Preprocessor"));
 
+    p->set<Teuchos::ParameterList>("Driver Params", params->sublist("Constitutive Model Driver Parameters"));
     p->set<std::string>("Solution Name", dof_names[0]);
-    p->set<std::string>("F Name", "F");
-    p->set<std::string>("J Name", "J");
+    p->set<std::string>("F Name", defgrad);
+    p->set<std::string>("J Name", J);
 
-    ev=Teuchos::rcp(new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+    ev=Teuchos::rcp(new LCM::ConstitutiveModelDriverPre<EvalT, PHAL::AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
@@ -407,78 +401,34 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   { // Constitutive Model Driver
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList("Constitutive Model Driver"));
-    std::string matName = material_db_->getElementBlockParam<std::string>(
-        eb_name, "material");
-    Teuchos::ParameterList& param_list =
-        material_db_->getElementBlockSublist(eb_name, matName);
-
+    p->set<std::string>("Residual Name", resid_names[0]);
+    p->set<std::string>("F Name", defgrad);
+    p->set<std::string>("Stress Name", cauchy); 
     Teuchos::RCP<LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits> >
     cmdEv =
         Teuchos::rcp(new LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(cmdEv);
   }
 
-
-  // if (have_mech_eq_) {
-  //   Teuchos::ArrayRCP<std::string> dof_names(1);
-  //   Teuchos::ArrayRCP<std::string> dof_names_dot(1);
-  //   Teuchos::ArrayRCP<std::string> dof_names_dotdot(1);
-  //   Teuchos::ArrayRCP<std::string> resid_names(1);
-  //   dof_names[0] = "Displacement";
-  //   dof_names_dot[0] = "Velocity";
-  //   dof_names_dotdot[0] = "Acceleration";
-  //   resid_names[0] = dof_names[0] + " Residual";
-
-  //   if (supports_transient) {
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructGatherSolutionEvaluator_withAcceleration(
-  //         true,
-  //         dof_names,
-  //         dof_names_dot,
-  //         dof_names_dotdot));
-  //   } else {
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructGatherSolutionEvaluator_noTransient(true,
-  //         dof_names));
-  //   }
-
-  //   fm0.template registerEvaluator<EvalT>
-  //   (evalUtils.constructGatherCoordinateVectorEvaluator());
-
-  //   if (!surface_element) {
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names[0]));
-
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dot[0]));
-
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructDOFVecInterpolationEvaluator(dof_names_dotdot[0]));
-
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructDOFVecGradInterpolationEvaluator(dof_names[0]));
-
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructMapToPhysicalFrameEvaluator(cellType,
-  //         cubature));
-
-  //     fm0.template registerEvaluator<EvalT>
-  //     (evalUtils.constructComputeBasisFunctionsEvaluator(cellType,
-  //         intrepidBasis,
-  //         cubature));
-  //   }
-
-  //   fm0.template registerEvaluator<EvalT>
-  //   (evalUtils.constructScatterResidualEvaluator(true,
-  //       resid_names));
+  
+  { // Scatter Residual
+    Teuchos::RCP<Teuchos::ParameterList> p = 
+      Teuchos::rcp(new Teuchos::ParameterList("Scatter Residual"));
+    p->set< Teuchos::ArrayRCP<std::string> >("Residual Names", resid_names);
+    p->set<int>("Tensor Rank", 2);
+    p->set<int>("Offset of First DOF", 0);
+    p->set<bool>("Disable Transient", true);
+    ev = Teuchos::rcp(new PHAL::ScatterResidual<EvalT, PHAL::AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);    
+  }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 
     Teuchos::RCP<const PHX::FieldTag> ret_tag;
    
-   PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
-      fm0.requireField<EvalT>(res_tag);
-      ret_tag = res_tag.clone();
+    PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl_->dummy);
+    fm0.requireField<EvalT>(res_tag);
+    ret_tag = res_tag.clone();
 
     return ret_tag;
   }

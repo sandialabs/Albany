@@ -16,7 +16,8 @@ ConstitutiveDriverProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
                           const int num_dims,
                           Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
   Albany::AbstractProblem(params, param_lib),
-  have_temperature_(false)
+  have_temperature_(false),
+  num_dims_(num_dims)
 {
 
   std::string& method = params->get("Name", "ConstitutiveDriver");
@@ -99,6 +100,7 @@ getValidProblemParameters() const
       "materials.xml",
       "Filename of material database xml file");
   validPL->sublist("Temperature", false, "");
+  validPL->sublist("Constitutive Model Driver Parameters", false, "");
 
   return validPL;
 }
@@ -106,14 +108,9 @@ getValidProblemParameters() const
 void
 Albany::ConstitutiveDriverProblem::
 getAllocatedStates(
-    Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
-    old_state,
-    Teuchos::ArrayRCP<
-        Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > >
-    new_state
-    ) const
-    {
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > old_state,
+  Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<Intrepid::FieldContainer<RealType> > > > new_state) const
+{
   old_state = old_state_;
   new_state = new_state_;
 }
