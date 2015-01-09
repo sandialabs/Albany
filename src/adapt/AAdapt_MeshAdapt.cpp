@@ -50,8 +50,6 @@ void adaptShrunken(apf::Mesh2* m, double minPartDensity,
   }
 }
 
-namespace apf { extern long verifyVolumes(apf::Mesh* m); }
-
 // Adaptation loop. Looping is necessary only if updating the coordinates leads
 // to negative simplices.
 //rc-todo Can I deal with the "APF warning: 2 empty parts" issue by looping, too?
