@@ -85,16 +85,16 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
+   FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
   RST::scale(flux,-gc);
 
-   //Irina TOFIX FST::integrateTemp<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   //Irina TOFIX   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
-   //Irina TOFIX FST::integrateTemp<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   //Irina TOFIX   FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   
  // Irina TOFIX if (workset.transientTerms && enableTransient) 
-     //Irina TOFIX FST::integrateTemp<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+     //Irina TOFIX   FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 }
 
 //**********************************************************************

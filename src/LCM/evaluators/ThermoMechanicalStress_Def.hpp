@@ -161,18 +161,15 @@ namespace LCM {
                 - 3 * thermalExpansionCoeff * deltaTemp * (1 + 1 / (J * J)));
 
         // compute trial intermediate configuration
-     //Irina intrepid TOFIX
         Fpinv = Intrepid::inverse(Fpold);
-      //  Cpinv = Fpinv * Intrepid::transpose(Fpinv);
-      //  be = F * Cpinv * Intrepid::transpose(F);
+        Cpinv = Fpinv * Intrepid::transpose(Fpinv);
+        be = F * Cpinv * Intrepid::transpose(F);
 
         // compute the trial deviatoric stress
-      //Irina Intrepid TOFIX
-       // mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
-      //  s = mu * Intrepid::dev(be);
+        mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
+        s = mu * Intrepid::dev(be);
 
-        //Irina Intrepidd TOFIX
-        // smag = Intrepid::norm(s);
+        smag = Intrepid::norm(s);
         f = smag
             - sq23
                 * (Y + H * eqpsold(cell, qp)
@@ -227,8 +224,7 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-         //Irina TOFIX intrepid
-         //expA = Intrepid::exp<ScalarT>(A);
+         expA = Intrepid::exp<ScalarT>(A);
 
           // set plastic work
           if (dt > 0.0) mechSource(cell, qp) = sq23 * dgam / dt
@@ -260,9 +256,8 @@ namespace LCM {
         }
 
         // update be
-      //Irina TOFIX intrepid
-      //be = ScalarT(1 / mu) * s +
-      //      ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
+      be = ScalarT(1 / mu) * s +
+            ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
 
         if (print) {
           std::cout << "    sig : ";
@@ -280,7 +275,6 @@ namespace LCM {
           std::cout << "    work: " << mechSource(cell, qp) << std::endl;
           std::cout << "    dgam: " << dgam << std::endl;
           std::cout << "    smag: " << smag << std::endl;
-       //Irina TOFIX intrepid
           std::cout << "    n(s): " << Intrepid::norm(s) << std::endl;
           std::cout << "    temp: " << temperature(cell, qp) << std::endl;
           std::cout << "    Dtem: " << deltaTemp << std::endl;

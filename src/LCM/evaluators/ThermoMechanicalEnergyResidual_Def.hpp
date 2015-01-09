@@ -115,22 +115,22 @@ evaluateFields(typename Traits::EvalData workset)
 FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
   Intrepid::RealSpaceTools<ScalarT>::inverse(Cinv, C);
   FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
-   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
+   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
-   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   //Irina TOFIX   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
     //Irina TOFIX operator[] for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-     //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+     //Irina TOFIX   FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
  //Irina TOFIX operator[] for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
-    //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    //Irina TOFIX   FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
 
 //Irina comment: code below was commented out
   //if (workset.transientTerms && enableTransient)
-  //   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  //   //Irina TOFIX   FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   //
   // compute factor
   ScalarT fac(0.0);
@@ -140,7 +140,7 @@ FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');
   for (int cell=0; cell < workset.numCells; ++cell)
     for (int qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
-   //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   //Irina TOFIX   FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (print)
   {

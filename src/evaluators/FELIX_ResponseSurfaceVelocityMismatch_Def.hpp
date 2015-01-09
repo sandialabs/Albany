@@ -294,7 +294,11 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
   PHX::MDField<ScalarT> partial_response(this->global_response);
   partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
 
-  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(), &partial_response[0], &this->global_response[0]);
+  typename Kokkos::View<ScalarT*******,PHX::Device>::reference_type partial_response_ref=partial_response[0];
+
+  typename Kokkos::View<ScalarT*******,PHX::Device>::reference_type global_response_ref=this->global_response[0];
+
+  Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(),partial_response_ref, global_response_ref);
 
   if (rank(*workset.comm) == 0) {
     std::ofstream ofile;

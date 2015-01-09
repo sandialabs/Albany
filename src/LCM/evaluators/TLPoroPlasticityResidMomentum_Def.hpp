@@ -100,7 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
  //Irina comments:: was commented out
   RST::inverse(F_inv, defgrad);
  // RST::transpose(F_invT, F_inv);
-  //Irina TOFIX FST::scalarMultiplyDataDataTemp<ScalarT>(JF_invT, J, F_invT);
+  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
   FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
 
     for (int cell=0; cell < workset.numCells; ++cell) {
@@ -122,7 +122,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 
-//   //Irina TOFIX FST::integrateTemp<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   //Irina TOFIX   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
 }
 

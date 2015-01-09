@@ -234,8 +234,8 @@ evaluateFields(typename Traits::EvalData workset)
 //Irina TOFIX intrepid
    RST::inverse(F_inv, defgrad);
 //   RST::transpose(F_invT, F_inv);
-    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+    FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
 // Irina TOFIX intrepid
    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
@@ -256,7 +256,6 @@ evaluateFields(typename Traits::EvalData workset)
    */
 
    // Pore pressure gradient contribution
-//Irina TOFIX intrepid
   FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
 
    for (int cell=0; cell < workset.numCells; ++cell){
@@ -266,7 +265,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
- //Irina TOFIX FST::integrateTemp<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+ //Irina TOFIX  //Irina TOFIX   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
   for (int cell=0; cell < workset.numCells; ++cell) {

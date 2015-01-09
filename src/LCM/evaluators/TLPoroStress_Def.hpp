@@ -100,9 +100,9 @@ evaluateFields(typename Traits::EvalData workset)
 	  //Irina TOFIX intrepid
 	  RST::inverse(F_inv, defGrad);
 	  //RST::transpose(F_invT, F_inv);
-	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
-	   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
 //Irina TOFIX intrepid
 //	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
 

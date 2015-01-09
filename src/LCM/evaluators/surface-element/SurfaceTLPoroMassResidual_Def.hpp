@@ -165,13 +165,13 @@ namespace LCM {
       RST::inverse(F_inv, defGrad);
       //Irina TOFIX intrepid
       //RST::transpose(F_invT, F_inv);
-       //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-       //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+       FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+       FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
 //Irina TOFIX intrepid
 //      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 //      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
     } else {
-       //Irina TOFIX FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
     }
 
     for (int cell(0); cell < workset.numCells; ++cell) {

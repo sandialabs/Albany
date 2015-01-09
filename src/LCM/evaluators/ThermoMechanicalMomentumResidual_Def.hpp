@@ -85,7 +85,7 @@ evaluateFields(typename Traits::EvalData workset)
   //Irina TOFIX intrepid
   RST::inverse(F_inv, defgrad);
   //RST::transpose(F_invT, F_inv);
-   //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
    //Irina TOFIX intrepid
   FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
   for (int cell=0; cell < workset.numCells; ++cell) 

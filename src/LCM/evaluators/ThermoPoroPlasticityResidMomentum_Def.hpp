@@ -122,8 +122,8 @@ evaluateFields(typename Traits::EvalData workset)
    //Irina TOFIX intrepid
    RST::inverse(F_inv, defgrad);
    //RST::transpose(F_invT, F_inv);
-    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-    //Irina TOFIX FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
+    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+    FST::scalarMultiplyDataData<ScalarT>(thermoEPS, alphaSkeleton , JF_invT);
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
@@ -153,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 */
 
-//   //Irina TOFIX FST::integrateTemp<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   //Irina TOFIX   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
 }
 
