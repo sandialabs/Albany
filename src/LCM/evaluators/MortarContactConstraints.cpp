@@ -6,9 +6,8 @@
 
 #include "PHAL_AlbanyTraits.hpp"
 
-#include "MortarContactResidual.hpp"
-#include "MortarContactResidual_Def.hpp"
+#include "MortarContactConstraints.hpp"
+#include "MortarContactConstraints_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactResidualBase)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactResidual)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContact)
 

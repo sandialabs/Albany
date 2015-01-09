@@ -47,6 +47,11 @@ IF (ALBANY_FELIX)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)
 ENDIF()
 
+IF (ALBANY_AERAS)
+  SET(SOURCES ${SOURCES} Aeras_SpectralDiscretization.cpp)
+  SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp)
+ENDIF() 
+
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src 
   )

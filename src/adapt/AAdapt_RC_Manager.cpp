@@ -15,7 +15,7 @@
 
 //#define pr(msg) std::cout << "amb: " << msg << std::endl;
 #define pr(msg)
-//#define amb_do_transform
+#define amb_do_transform
 
 namespace AAdapt {
 namespace rc {
@@ -96,7 +96,8 @@ void read (const Albany::MDArray& mda, PHX::MDField<RealType>& f) {
   }
 }
 
-void write (Albany::MDArray& mda, const PHX::MDField<RealType>& f) {
+template<typename MDArray>
+void write (Albany::MDArray& mda, const MDArray& f) {
   switch (f.rank()) {
   case 2:
     loop(f, cell, 0) loop(f, qp, 1)
@@ -146,54 +147,57 @@ public:
     f.name = name;
     f.layout = dl;
 
-    switch (transformation) {
-    case Transformation::none:
-      registerStateVariable(name_rc, f.layout, init_G);
-      break;
-    case Transformation::right_polar_LieR_LieS:
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        init_G != Init::identity, std::logic_error, "If transformation is other"
-        " than 'none', 'init' almost surely should be identity.");
-      // Holds F and R in F = R S. Since we're actually initializing log(R) and
-      // log(S), these should be set to logm(eye), which is zero.
-      const Init::Enum init_g =
-#ifdef amb_do_transform
-        Init::zero
-#else
-        init_G
-#endif
-        ;
-      registerStateVariable(name_rc, f.layout, init_g);
-      // Holds S.
-      registerStateVariable(name_rc + "_1", f.layout, init_g);
-      break;
-    }
+    // Depending on the state variable, different quantities need to be read and
+    // written. In all cases, we need two fields.
+    //   Holds G and g1.
+    registerStateVariable(name_rc, f.layout, init_G);
+    //   Holds provisional G and, if needed, g2. If g2 is not needed, then this
+    // provisional field is a waste of space and also incurs wasted work in the
+    // QP transfer. However, I would need LOCA::AdaptiveSolver to always
+    // correctly say, before printSolution is called, whether the mesh will be
+    // adapted to avoid this extra storage and work. Maybe in the future.
+    registerStateVariable(name_rc + "_1", f.layout, Init::zero);    
   }
 
-  void tellAdapted () {
+  void beginAdapt () {
+    // Transform G -> g and write to the primary or, depending on state, primary
+    // and provisional fields.
+    pr("beginAdapt: write final");
+    for (Map::const_iterator it = ifield_map_.begin(); it != ifield_map_.end();
+         ++it)
+      for (WsIdx wi = 0; wi < is_g_.size(); ++wi)
+        transform(it->first, wi, Direction::G2g);
+  }
+
+  void endAdapt () {
+    pr("is_g_.size() was " << is_g_.size() << " and now will be "
+       << state_mgr_->getStateArrays().elemStateArrays.size());
     is_g_.clear();
-    pr("is_g_.size() " << is_g_.size());
+    is_g_.resize(state_mgr_->getStateArrays().elemStateArrays.size(), true);
   }
 
   void readField (PHX::MDField<RealType>& f,
                   const PHAL::Workset& workset) {
     if (workset.wsIndex == 0) pr("readField " << f.fieldTag().name());
-    // If this is the first read after an RCU, transform g -> G.
-    if (get_is_g(workset)) {
-      transform(f.fieldTag().name(), workset, Direction::g2G);
+    if (is_g_.empty()) {
+      // At startup, is_g_.size() is 0. We also initialized fields to their G,
+      // not g, values.
+      is_g_.resize(state_mgr_->getStateArrays().elemStateArrays.size(), false);
+    } else if (is_g_[workset.wsIndex]) {
+      // If this is the first read after an RCU, transform g -> G.
+      transform(f.fieldTag().name(), workset.wsIndex, Direction::g2G);
       is_g_[workset.wsIndex] = false;
     }
-    // Read from the state manager field database.
-    read(getMDArray(f.fieldTag().name(), workset), f);
+    // Read from the primary field.
+    read(getMDArray(f.fieldTag().name(), workset.wsIndex), f);
   }
   void writeField (const PHX::MDField<RealType>& f,
                    const PHAL::Workset& workset) {
-    if (workset.wsIndex == 0) pr("writeField " << f.fieldTag().name());
+    if (workset.wsIndex == 0)
+      pr("writeField (provisional) " << f.fieldTag().name());
     const std::string name_rc = decorate(f.fieldTag().name());
-    // Write to the state manager field database.
-    write(getMDArray(name_rc, workset), f);
-    // Transform G -> g.
-    transform(name_rc, workset, Direction::G2g);
+    // Write to the provisional field.
+    write(getMDArray(name_rc + "_1", workset.wsIndex), f);
   }
 
   Manager::Field::iterator fieldsBegin () { return fields_.begin(); }
@@ -209,6 +213,7 @@ public:
   }
 
 private:
+  typedef unsigned int WsIdx;
   struct IField {
     Transformation::Enum transformation;
     IField (const Transformation::Enum t) : transformation(t) {}
@@ -238,55 +243,57 @@ private:
   }
 
   Albany::MDArray& getMDArray (
-    const std::string& name, const PHAL::Workset& workset,
-    const bool is_const=true)
+    const std::string& name, const WsIdx wi, const bool is_const=true)
   {
-    Albany::StateArray&
-      esa = state_mgr_->getStateArrays().elemStateArrays[workset.wsIndex];
+    Albany::StateArray& esa = state_mgr_->getStateArrays().elemStateArrays[wi];
     Albany::StateArray::iterator it = esa.find(name);
     TEUCHOS_TEST_FOR_EXCEPTION(
       it == esa.end(), std::logic_error, "elemStateArrays is missing " + name);
     return it->second;
   }
 
-  bool get_is_g (const PHAL::Workset& workset) {
-    const bool idx_bigger = workset.wsIndex >= is_g_.size();
-    const bool is_g = idx_bigger || is_g_[workset.wsIndex];
-    if (idx_bigger)
-      is_g_.insert(is_g_.end(), workset.wsIndex - is_g_.size() + 1, true);
-    return is_g;
-  }
-
   struct Direction { enum Enum { g2G, G2g }; };
 
-  void transform (const std::string& name_rc, const PHAL::Workset& workset,
+  void transform (const std::string& name_rc, const WsIdx wi,
                   const Direction::Enum dir) {
-#ifndef amb_do_transform
-    return;
-#endif
-    if (workset.wsIndex == 0) pr("transform " << name_rc);
+    if (wi == 0) pr("transform " << name_rc);
     // Name decoration coordinates with registerField's calls to
     // registerStateVariable.
     const Transformation::Enum transformation = get_transformation(name_rc);
     switch (transformation) {
-    case Transformation::none: break;
+    case Transformation::none: {
+      if (wi == 0) pr("none " << (dir == Direction::g2G));
+      if (dir == Direction::G2g) {
+        // Copy from the provisional to the primary field.
+        Albany::MDArray& mda1 = getMDArray(name_rc, wi);
+        Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
+        write(mda1, mda2);
+      } else {
+        // In the g -> G direction, the values are already in the primary field,
+        // so there's nothing to do.
+      }
+    } break;
     case Transformation::right_polar_LieR_LieS: {
-      if (workset.wsIndex == 0) pr("right_polar_LieR_LieS " << (dir == Direction::g2G));
-      Albany::MDArray& mda1 = getMDArray(name_rc, workset);
-      Albany::MDArray& mda2 = getMDArray(name_rc + "_1", workset);
+#ifndef amb_do_transform
+    return;
+#endif
+      if (wi == 0) pr("right_polar_LieR_LieS " << (dir == Direction::g2G));
+      Albany::MDArray& mda1 = getMDArray(name_rc, wi);
+      Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
       loop(mda1, cell, 0) loop(mda1, qp, 1) {
         if (dir == Direction::G2g) {
-          // Copy mda1 -> local.
+          // Copy mda2 (provisional) -> local.
           Intrepid::Tensor<RealType> F(mda1.dimension(2));
-          loop(mda1, i, 2) loop(mda1, j, 3) F(i, j) = mda1(cell, qp, i, j);
+          loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
           // Math.
           std::pair< Intrepid::Tensor<RealType>, Intrepid::Tensor<RealType> >
             RS = Intrepid::polar_right(F);
-          if (workset.wsIndex == 0 && cell == 0 && qp == 0)
-            pr("F =\n" << F << " R =\n" << RS.first << " S =\n" << RS.second);
+          if (wi == 0 && cell == 0 && qp == 0)
+            pr("F = [\n" << F << "];\nR = [\n" << RS.first << "];\nS = [\n"
+               << RS.second << "];");
           RS.first = Intrepid::log_rotation(RS.first);
           RS.second = Intrepid::log_sym(RS.second);
-          if (workset.wsIndex == 0 && cell == 0 && qp == 0)
+          if (wi == 0 && cell == 0 && qp == 0)
             pr("r =\n" << RS.first << " s =\n" << RS.second);
           // Copy local -> mda1, mda2.
           loop(mda1, i, 2) loop(mda1, j, 3) {
@@ -300,13 +307,13 @@ private:
             R(i, j) = mda1(cell, qp, i, j);
             S(i, j) = mda2(cell, qp, i, j);
           }
-          if (workset.wsIndex == 0 && cell == 0 && qp == 0)
-            pr("r =\n" << R << " s =\n" << S);
+          if (wi == 0 && cell == 0 && qp == 0)
+            pr("r = [\n" << R << "];\ns = [\n" << S << "];");
           // Math.
           R = Intrepid::exp_skew_symmetric(R);
           S = Intrepid::exp(S);
           R = Intrepid::dot(R, S);
-          if (workset.wsIndex == 0 && cell == 0 && qp == 0) pr("F =\n" << R);
+          if (wi == 0 && cell == 0 && qp == 0) pr("F = [\n" << R << "];");
           // Copy local -> mda1. mda2 is unused after g -> G.
           loop(mda1, i, 2) loop(mda1, j, 3) mda1(cell, qp, i, j) = R(i, j);
         }
@@ -350,10 +357,8 @@ Manager::Field::iterator Manager::fieldsEnd () { return db_->fieldsEnd(); }
 
 void Manager::beginBuildingSfm () { db_->set_building_sfm(true); }
 void Manager::endBuildingSfm () { db_->set_building_sfm(false); }
-
-void Manager::tellAdapted () {
-  db_->tellAdapted();
-}
+void Manager::beginAdapt () { db_->beginAdapt(); }
+void Manager::endAdapt () { db_->endAdapt(); }
 
 Manager::Manager (const Teuchos::RCP<Albany::StateManager>& state_mgr)
   : db_(Teuchos::rcp(new FieldDatabase(state_mgr)))
