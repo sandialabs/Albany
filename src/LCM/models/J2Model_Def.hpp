@@ -295,5 +295,113 @@ computeState(typename Traits::EvalData workset,
 
 }
 //------------------------------------------------------------------------------
+// computeState Kokkos functor
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void J2Model<EvalT, Traits>::computeStateKernel::
+compute_common(const int cell) const{
+
+  for (int pt(0); pt < num_pts_; ++pt) {
+      kappa = elastic_modulus(cell, pt)
+          / (3. * (1. - 2. * poissons_ratio(cell, pt)));
+      mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
+      K = hardeningModulus(cell, pt);
+      Y = yieldStrength(cell, pt);
+      Jm23 = std::pow(J(cell, pt), -2. / 3.);
+
+      // fill local tensors
+      for (int i(0); i < dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
+          F(i,j) = ScalarT(def_grad,cell, pt, i, j));
+          Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+        }
+       }
+      
+      Fpinv = inverse(Fpn);
+
+      
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void J2Model<EvalT, Traits>::computeStateKernel::
+compute_with_temperature(const int cell) const{
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void J2Model<EvalT, Traits>::computeStateKernel::
+compute_with_no_temperature(const int cell) const{
+
+}
+
+template<typename EvalT, typename Traits> 
+KOKKOS_INLINE_FUNCTION
+void J2Model<EvalT, Traits>::computeStateKernel::
+operator() (const have_temperature_Tag& tag, const int i) const
+{
+  compute_common(i);
+  compute_with_temperature(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void J2Model<EvalT, Traits>::computeStateKernel::
+operator() (const dont_have_temperature_Tag& tag, const int i) const
+{
+  compute_common(i);
+  compute_with_no_temperature(i);
+}
+// computeState parallel function, which calls Kokkos::parallel_for
+template<typename EvalT, typename Traits>
+void J2Model<EvalT, Traits>::
+computeStateParallel(typename Traits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+{
+
+  std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
+  std::string Fp_string = (*field_name_map_)["Fp"];
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string yieldSurface_string = (*field_name_map_)["Yield_Surface"];
+  std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string F_string = (*field_name_map_)["F"];
+  std::string J_string = (*field_name_map_)["J"];
+
+  // extract dependent MDFields
+  PHX::MDField<ScalarT> def_grad = *dep_fields[F_string];
+  PHX::MDField<ScalarT> J = *dep_fields[J_string];
+  PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
+  PHX::MDField<ScalarT> elastic_modulus = *dep_fields["Elastic Modulus"];
+  PHX::MDField<ScalarT> yieldStrength = *dep_fields["Yield Strength"];
+  PHX::MDField<ScalarT> hardeningModulus = *dep_fields["Hardening Modulus"];
+  PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
+
+  // extract evaluated MDFields
+  PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
+  PHX::MDField<ScalarT> Fp = *eval_fields[Fp_string];
+  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> yieldSurf = *eval_fields[yieldSurface_string];
+  PHX::MDField<ScalarT> source;
+  if (have_temperature_) {
+    source = *eval_fields[source_string];
+  }
+  // get State Variables
+  Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
+  Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
+
+   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold);
+
+  if (have_temperature_)
+     Kokkos::parallel_for(have_temperature_Policy(0,workset.numCells),Kernel);
+  else
+     Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
+
+}
+//-------------------------------------------------------------------------------
 }
 
