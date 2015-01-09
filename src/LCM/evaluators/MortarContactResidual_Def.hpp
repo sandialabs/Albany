@@ -13,8 +13,8 @@
 namespace LCM {
 
 template<typename EvalT, typename Traits>
-MortarContactBase<EvalT, Traits>::
-MortarContactBase(const Teuchos::ParameterList& p,
+MortarContactResidualBase<EvalT, Traits>::
+MortarContactResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
 
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
@@ -88,7 +88,7 @@ MortarContactBase(const Teuchos::ParameterList& p,
 
 // **********************************************************************
 template<typename EvalT, typename Traits>
-void MortarContactBase<EvalT, Traits>::
+void MortarContactResidualBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
@@ -113,17 +113,17 @@ postRegistrationSetup(typename Traits::SetupData d,
 // Specialization: Residual
 // **********************************************************************
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::Residual,Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::Residual,Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                        const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::Residual,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::Residual,Traits>::numFieldsBase)
 
 {
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::Residual, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -131,7 +131,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::Residual, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
@@ -223,17 +223,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::Jacobian, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::Jacobian, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -241,7 +241,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::Jacobian, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -310,17 +310,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::Tangent, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::Tangent, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::Tangent,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::Tangent,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::Tangent, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -328,7 +328,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::Tangent, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -376,17 +376,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -394,7 +394,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -474,17 +474,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 #ifdef ALBANY_SG_MP
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::SGResidual, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::SGResidual,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::SGResidual,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::SGResidual, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -492,7 +492,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::SGResidual, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -529,17 +529,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::SGJacobian, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::SGJacobian,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -547,7 +547,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -624,17 +624,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::SGTangent, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::SGTangent,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::SGTangent, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -642,7 +642,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::SGTangent, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -704,17 +704,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::MPResidual, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::MPResidual,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::MPResidual,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::MPResidual, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -722,7 +722,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::MPResidual, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -758,17 +758,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::MPJacobian, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::MPJacobian,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -776,7 +776,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
@@ -848,17 +848,17 @@ evaluateFields(typename Traits::EvalData workset)
 // **********************************************************************
 
 template<typename Traits>
-MortarContact<PHAL::AlbanyTraits::MPTangent, Traits>::
-MortarContact(const Teuchos::ParameterList& p,
+MortarContactResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
+MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl)
-  : MortarContactBase<PHAL::AlbanyTraits::MPTangent,Traits>(p,dl),
-  numFields(MortarContactBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
+  : MortarContactResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>(p,dl),
+  numFields(MortarContactResidualBase<PHAL::AlbanyTraits::MPTangent,Traits>::numFieldsBase)
 {
 }
 
 // **********************************************************************
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::MPTangent, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
 preEvaluate(typename Traits::PreEvalData d){
 
 // Put global search in here
@@ -866,7 +866,7 @@ preEvaluate(typename Traits::PreEvalData d){
 }
 
 template<typename Traits>
-void MortarContact<PHAL::AlbanyTraits::MPTangent, Traits>::
+void MortarContactResidual<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 #if 0
