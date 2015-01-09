@@ -10,11 +10,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/eles
                ${CMAKE_CURRENT_BINARY_DIR}/eles COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xyz
                ${CMAKE_CURRENT_BINARY_DIR}/xyz COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_nodeGIDArrayResponse.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_nodeGIDArrayResponse.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
 add_test(${testName} ${Albany.exe})
+
+add_test(${testName}_nodeGIDArrayResponse ${Albany.exe} input_nodeGIDArrayResponse.xml)
 endif()
 
 IF(NOT ALBANY_PARALLEL_ONLY AND ALBANY_EPETRA)
