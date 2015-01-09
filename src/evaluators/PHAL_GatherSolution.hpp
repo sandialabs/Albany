@@ -72,6 +72,7 @@ protected:
   unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
+  
 
 };
 
@@ -144,7 +145,6 @@ public:
   KOKKOS_INLINE_FUNCTION
   void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
 
- 
 
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
@@ -239,6 +239,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+  typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
   const std::size_t numFields;
 };
 
@@ -310,6 +311,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+  typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
   const std::size_t numFields;
 };
 

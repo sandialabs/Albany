@@ -823,81 +823,93 @@ evaluateFields(typename Traits::EvalData workset)
 
   Teuchos::RCP<ParamVec> params = workset.params;
   int num_cols_tot = workset.param_offset + workset.num_cols_p;
-  ScalarT* valptr;
+  typedef typename Kokkos::View<ScalarT***, PHX::Device>::reference_type refType; //valptr=(this->valVec[0])(0,0,0);
+
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
   
-  //Irina TOFIX
-  /*
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
-        else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
-        if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
-          *valptr = TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
+        refType valptr= (this->tensorRank == 2) ? (this->valTensor[0])(cell,node,eq/numDim,eq%numDim) :
+                        (this->tensorRank == 1) ? (this->valVec[0])(cell,node,eq) :
+                                                  (this->val[eq])(cell,node);    
+   /*
+        if (this->tensorRank == 2)       valptr = (this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
+        else if (this->tensorRank == 1)  valptr = (this->valVec[0])(cell,node,eq);
+        else                             valptr = (this->val[eq])(cell,node);
+   */     if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
+          valptr = TanFadType(num_cols_tot, xT_constView[eqID[this->offset + eq]]);
           for (int k=0; k<workset.num_cols_x; k++)
-            valptr->fastAccessDx(k) =
+            valptr.fastAccessDx(k) =
               workset.j_coeff*VxT->getData(k)[eqID[this->offset + eq]];
         }
         else
-          *valptr = TanFadType(xT_constView[eqID[this->offset + eq]]);
+          valptr = TanFadType(xT_constView[eqID[this->offset + eq]]);
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->tensorRank == 2) valptr = &(this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
-          else if (this->tensorRank == 1) valptr = &(this->valVec_dot[0])(cell,node,eq);
-          else                   valptr = &(this->val_dot[eq])(cell,node);
-          if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
+          refType valptr= (this->tensorRank == 2) ? (this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim) :
+                        (this->tensorRank == 1) ? (this->valVec_dot[0])(cell,node,eq) :
+                                                  (this->val_dot[eq])(cell,node);
+/*          if (this->tensorRank == 2) valptr = (this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim);
+          else if (this->tensorRank == 1) valptr = (this->valVec_dot[0])(cell,node,eq);
+          else                   valptr = (this->val_dot[eq])(cell,node);
+*/          if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
+            valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[this->offset + eq]]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) =
+              valptr.fastAccessDx(k) =
                 workset.m_coeff*VxdotT->getData(k)[eqID[this->offset + eq]];
           }
           else
-            *valptr = TanFadType(xdotT_constView[eqID[this->offset + eq]]);
+            valptr = TanFadType(xdotT_constView[eqID[this->offset + eq]]);
         }
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
+          refType valptr= (this->tensorRank == 2) ? (this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim) :
+                        (this->tensorRank == 1) ? (this->valVec_dotdot[0])(cell,node,eq) :
+                                                  (this->val_dotdot[eq])(cell,node);
+/*          if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
           else                   valptr = &(this->val_dotdot[eq])(cell,node);
-          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
+*/          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
+            valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) =
+              valptr.fastAccessDx(k) =
                 workset.n_coeff*VxdotdotT->getData(k)[eqID[this->offset + eq]];
           }
           else
-            *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
+            valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
         }
       }
 
     if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
+          refType valptr= (this->tensorRank == 2) ? (this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim) :
+                        (this->tensorRank == 1) ? (this->valVec_dotdot[0])(cell,node,eq) :
+                                                  (this->val_dotdot[eq])(cell,node);
+/*          if (this->tensorRank == 2) valptr = &(this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim);
           else if (this->tensorRank == 1) valptr = &(this->valVec_dotdot[0])(cell,node,eq);
           else                   valptr = &(this->val_dotdot[eq])(cell,node);
-          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
-            *valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
+*/          if (VxdotdotT != Teuchos::null && workset.n_coeff != 0.0) {
+            valptr = TanFadType(num_cols_tot, xdotdotT_constView[eqID[this->offset + eq]]);
             for (int k=0; k<workset.num_cols_x; k++)
-              valptr->fastAccessDx(k) =
+              valptr.fastAccessDx(k) =
                 workset.n_coeff*VxdotdotT->getData(k)[eqID[this->offset + eq]];
           }
           else
-            *valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
+            valptr = TanFadType(xdotdotT_constView[eqID[this->offset + eq]]);
         }
       }
     }
   }
 
- */
+ 
 }
 
 // **********************************************************************
