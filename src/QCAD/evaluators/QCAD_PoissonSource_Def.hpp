@@ -2084,7 +2084,7 @@ void QCAD::PoissonSource<EvalT,Traits>::source_cloudcharges(typename Traits::Eva
     for( std::size_t i=0; i < cloudCharges.size(); ++i) {
       for (std::size_t qp=0; qp < numQPs; ++qp) {
     
-        assert (numDim == 3); // FIXME for numDim < 3;
+        assert (numDims == 3); // FIXME for numDim < 3;
         ScalarT distance = sqrt (
             (cloudCharges[i].position[0] - coordVec(cell,qp,0)) * (cloudCharges[i].position[0] - coordVec(cell,qp,0))
           + (cloudCharges[i].position[1] - coordVec(cell,qp,1)) * (cloudCharges[i].position[1] - coordVec(cell,qp,1))
