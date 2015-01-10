@@ -16,6 +16,7 @@
 //#define pr(msg) std::cout << "amb: " << msg << std::endl;
 #define pr(msg)
 #define amb_do_transform
+//#define amb_do_check
 
 namespace AAdapt {
 namespace rc {
@@ -131,9 +132,13 @@ public:
 
   void registerField (
     const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl,
-    const Init::Enum init_G, const Transformation::Enum transformation,
+    const Init::Enum init_G, /*const*/ Transformation::Enum transformation,
     const Teuchos::RCP<Teuchos::ParameterList>& p)
   {
+#ifndef amb_do_transform
+    transformation = Transformation::none;
+#endif
+
     const std::string name_rc = decorate(name);
     p->set<std::string>(name_rc + " Name", name_rc);
     p->set< Teuchos::RCP<PHX::DataLayout> >(name_rc + " Data Layout", dl);
@@ -252,6 +257,97 @@ private:
     return it->second;
   }
 
+#ifdef amb_do_check
+  class Checker {
+  private:
+    typedef Intrepid::Tensor<RealType> Tensor;
+    int wi_, cell_, qp_;
+    void display (const std::string& name, const Tensor& a,
+                  const std::string& msg) {
+      std::stringstream ss;
+      const int rank = Teuchos::DefaultComm<int>::getComm()->getRank();
+      ss << "amb: Checker: On rank " << rank << " with (wi, cell, qp) = ("
+         << wi_ << ", " << cell_ << ", " << qp_ << "), " << name
+         << " gave the following message: " << msg << std::endl << name
+         << " = [" << a << "];" << std::endl;
+      std::cout << ss.str();
+    }
+    bool equal (const RealType a, const RealType b) {
+      return a == b ||
+        std::abs(a - b) < (1e3 * std::numeric_limits<RealType>::epsilon() *
+                           std::max(std::abs(a), std::abs(b)));
+    }
+  public:
+    Checker (int wi, int cell, int qp) : wi_(wi), cell_(cell), qp_(qp) {}
+#define loopa(i, dim) for (Intrepid::Index i = 0; i < a.get_dimension(); ++i)
+    bool ok_numbers (const std::string& name, const Tensor& a) {
+      loopa(i, 0) loopa(j, 1) {
+        const bool is_inf = std::isinf(a(i,j)), is_nan = std::isnan(a(i,j));
+        if (is_nan || is_nan) {
+          display(name, a, is_inf ? "inf" : "nan");
+          return false;
+        }
+      }
+      return true;
+    }
+    bool is_rotation (const std::string& name, const Tensor& a) {
+      const double det = Intrepid::det(a);
+      if (std::abs(det - 1) >= 1e-10) {
+        std::stringstream ss;
+        ss << "det = " << det;
+        display(name, a, ss.str());
+        return false;
+      }
+      return true;
+    }
+    bool is_symmetric (const std::string& name, const Tensor& a) {
+      if ((a.get_dimension() > 1 && !equal(a(0,1), a(1,0))) || 
+          (a.get_dimension() > 2 &&
+           (!equal(a(0,2), a(2,0)) || !equal(a(1,2), a(2,1))))) {
+        display(name, a, "not symmetric");
+        return false;
+      }
+      return true;
+    }
+    bool is_antisymmetric (const std::string& name, const Tensor& a) {
+      if (!equal(a(0,0), 0) ||
+          (a.get_dimension() > 1 &&
+           (!equal(a(0,1), -a(1,0)) || !equal(a(1,1), 0))) ||
+          (a.get_dimension() > 2 &&
+           (!equal(a(0,2), -a(2,0)) || !equal(a(1,2), -a(2,1)) ||
+            !equal(a(2,2), 0)))) {
+        display(name, a, "not antisymmetric");
+        return false;
+      }
+      return true;
+    }
+#undef loopa
+  };
+#else // amb_do_check
+  class Checker {
+    typedef Intrepid::Tensor<RealType> Tensor;
+  public:
+    Checker (int wi, int cell, int qp) {}
+#define empty(s) bool s (const std::string&, const Tensor&) { return true; }
+    empty(ok_numbers) empty(is_rotation) empty(is_symmetric)
+    empty(is_antisymmetric)
+#undef empty
+  };    
+#endif // amb_do_check
+
+  static Intrepid::Tensor<RealType>&
+  symmetrize (Intrepid::Tensor<RealType>& a) {
+    const Intrepid::Index dim = a.get_dimension();
+    if (dim > 1) {
+      a(0,1) = a(1,0) = 0.5*(a(0,1) + a(1,0));
+      if (dim > 2) {
+        a(0,2) = a(2,0) = 0.5*(a(0,2) + a(2,0));
+        a(1,2) = a(2,1) = 0.5*(a(1,2) + a(2,1));
+      }
+    }
+    return a;
+  }
+
   struct Direction { enum Enum { g2G, G2g }; };
 
   void transform (const std::string& name_rc, const WsIdx wi,
@@ -274,25 +370,29 @@ private:
       }
     } break;
     case Transformation::right_polar_LieR_LieS: {
-#ifndef amb_do_transform
-    return;
-#endif
       if (wi == 0) pr("right_polar_LieR_LieS " << (dir == Direction::g2G));
       Albany::MDArray& mda1 = getMDArray(name_rc, wi);
       Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
       loop(mda1, cell, 0) loop(mda1, qp, 1) {
+        Checker c(wi, cell, qp);
         if (dir == Direction::G2g) {
           // Copy mda2 (provisional) -> local.
           Intrepid::Tensor<RealType> F(mda1.dimension(2));
           loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
+          c.ok_numbers("F", F);
           // Math.
           std::pair< Intrepid::Tensor<RealType>, Intrepid::Tensor<RealType> >
             RS = Intrepid::polar_right(F);
           if (wi == 0 && cell == 0 && qp == 0)
             pr("F = [\n" << F << "];\nR = [\n" << RS.first << "];\nS = [\n"
                << RS.second << "];");
+          c.ok_numbers("R", RS.first); c.ok_numbers("S", RS.second);
+          c.is_rotation("R", RS.first); c.is_symmetric("S", RS.second);
           RS.first = Intrepid::log_rotation(RS.first);
+          c.ok_numbers("r", RS.first); c.is_antisymmetric("r", RS.first);
           RS.second = Intrepid::log_sym(RS.second);
+          symmetrize(RS.second);
+          c.ok_numbers("s", RS.second); c.is_symmetric("s write", RS.second);
           if (wi == 0 && cell == 0 && qp == 0)
             pr("r =\n" << RS.first << " s =\n" << RS.second);
           // Copy local -> mda1, mda2.
@@ -302,17 +402,23 @@ private:
           }
         } else {
           // Copy mda1,2 -> local.
-          Intrepid::Tensor<RealType> R(mda1.dimension(2)), S(mda1.dimension(2));
+          Intrepid::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
           loop(mda1, i, 2) loop(mda1, j, 3) {
             R(i, j) = mda1(cell, qp, i, j);
             S(i, j) = mda2(cell, qp, i, j);
           }
+          c.ok_numbers("r", R); c.is_antisymmetric("r", R);
+          c.ok_numbers("s", S); c.is_symmetric("s read", S);
           if (wi == 0 && cell == 0 && qp == 0)
             pr("r = [\n" << R << "];\ns = [\n" << S << "];");
           // Math.
           R = Intrepid::exp_skew_symmetric(R);
+          c.ok_numbers("R", R); c.is_rotation("R", R);
           S = Intrepid::exp(S);
+          symmetrize(S);
+          c.ok_numbers("S", S); c.is_symmetric("S", S);
           R = Intrepid::dot(R, S);
+          c.ok_numbers("F", R);
           if (wi == 0 && cell == 0 && qp == 0) pr("F = [\n" << R << "];");
           // Copy local -> mda1. mda2 is unused after g -> G.
           loop(mda1, i, 2) loop(mda1, j, 3) mda1(cell, qp, i, j) = R(i, j);
