@@ -13,8 +13,6 @@
 //array needs to be sized to have the new enriched nodes.  All the maps need to be defined to have the 
 //enriched mesh.  wsElNode* objects need to be populated with enriched mesh.
 //
-//Also need to remove LCM ifdefs which will not be relevant in this (for now) Aeras specific evaluator.
-//
 #include <limits>
 
 #include "Albany_Utils.hpp"
@@ -554,50 +552,17 @@ Aeras::SpectralDiscretization::monotonicTimeLabel(const double time)
 }
 
 #ifdef ALBANY_EPETRA
-//IK, 1/8/15, FIXME: 
-//The setResidualField and setResidualFieldT need to work with enriched nodes, not STK nodes.
 void
 Aeras::SpectralDiscretization::setResidualField(const Epetra_Vector& residual)
 {
-#ifdef ALBANY_LCM
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  if(container->hasResidualField()){
-
-    // Iterate over the on-processor nodes
-    stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-    Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
-    container->saveResVector(residual, locally_owned, node_map);
-
-    // Write the overlapped data
-//    stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
-
-//    container->saveResVector(residual, select_owned_or_shared, overlap_node_map);
-  }
-#endif
+//Nothing to do for Aeras -- LCM only function
 }
 #endif
 
 void
 Aeras::SpectralDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
-#ifdef ALBANY_LCM
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-  if(container->hasResidualField()){
-
-    // Iterate over the on-processor nodes
-    stk::mesh::Selector locally_owned = metaData.locally_owned_part();
-
-    container->saveResVectorT(residualT, locally_owned, node_mapT);
-
-    // Write the overlapped data
-//    stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
-
-//    container->saveResVector(residual, select_owned_or_shared, overlap_node_map);
-  }
-#endif
+//Nothing to do for Aeras -- LCM only function
 }
 
 
@@ -1251,10 +1216,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     }
 
 
-#ifdef ALBANY_LCM
-    if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
-      sphereVolume[b].resize(buck.size());
-#endif
 
 #ifdef ALBANY_EPETRA
     stk::mesh::Entity element = buck[0];
@@ -1310,11 +1271,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
           }
         }
       }
-#endif
-
-#ifdef ALBANY_LCM
-      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1)
-	sphereVolume[b][i] = *stk::mesh::field_data(*sphereVolume_field, element);
 #endif
 
       // loop over local nodes
