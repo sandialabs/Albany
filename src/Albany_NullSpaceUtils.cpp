@@ -107,7 +107,8 @@ void subtractCentroid(
   // Construct a MultiVector with a shallow copy of the data. Could do a deep
   // copy if this nifty shallow-copy constructor goes away.
   const int nnodes = v.size() / ndim;
-  Teuchos::ArrayRCP<ST> data(&v[0], 0, v.size(), false);
+//  Teuchos::ArrayRCP<ST> data(&v[0], 0, v.size(), false);
+  Teuchos::ArrayView<ST> data(&v[0], v.size());
   Tpetra_MultiVector mv(node_map, data, nnodes, ndim);
 
   Teuchos::Array<ST> centroid(ndim);
