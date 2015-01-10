@@ -12,6 +12,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/xyz
                ${CMAKE_CURRENT_BINARY_DIR}/xyz COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_nodeGIDArrayResponse.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_nodeGIDArrayResponse.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_nodeGIDArrayResponse.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputT_nodeGIDArrayResponse.xml COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
@@ -39,6 +41,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_10x10x10_ascii.xml
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3'. Create the test with this name and standard executable
 add_test(${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
+add_test(${testName}_nodeGIDArrayResponse_Tpetra ${AlbanyT.exe} inputT_nodeGIDArrayResponse.xml)
 
 IF(NOT ALBANY_PARALLEL_ONLY)
   #add_test(${testName}_10x10x10_ioss_Tpetra ${SerialAlbanyT.exe} inputT_10x10x10_ioss.xml)

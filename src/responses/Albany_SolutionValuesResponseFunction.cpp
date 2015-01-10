@@ -48,24 +48,17 @@ setupT()
   this->updateSolutionImporterT();
 }
 
-#ifdef ALBANY_EPETRA
 unsigned int
 Albany::SolutionValuesResponseFunction::
 numResponses() const
 {
-  return Teuchos::nonnull(solutionImporter_) ?
-    solutionImporter_->TargetMap().NumMyElements() :
-    0u;
-}
+  if (Teuchos::nonnull(solutionImporterT_))
+    return solutionImporterT_->getTargetMap()->getNodeNumElements();
+#ifdef ALBANY_EPETRA
+  if (Teuchos::nonnull(solutionImporter_))
+    return solutionImporter_->TargetMap().NumMyElements();
 #endif
-
-unsigned int
-Albany::SolutionValuesResponseFunction::
-numResponsesT() const
-{
-  return Teuchos::nonnull(solutionImporterT_) ?
-    solutionImporterT_->getTargetMap()->getNodeNumElements() :
-    0u;
+  return 0u;
 }
 
 #ifdef ALBANY_EPETRA

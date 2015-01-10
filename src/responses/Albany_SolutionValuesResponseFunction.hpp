@@ -36,13 +36,8 @@ namespace Albany {
       const Teuchos::RCP<const Application>& app,
       Teuchos::ParameterList& responseParams);
 
-#ifdef ALBANY_EPETRA
     //! Get the number of responses
     virtual unsigned int numResponses() const;
-#endif
-    
-    //! Get the number of responses
-    virtual unsigned int numResponsesT() const;
 
 #ifdef ALBANY_EPETRA
     //! Setup response function
