@@ -192,9 +192,7 @@ namespace LCM {
     Stokhos::KL::ExponentialRandomField<MeshScalarT>*  exp_rf_kl;
     Teuchos::Array<ScalarT>* rv_map;
 #endif 
-   // ScalarT constant_value;
  
-    //typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
   };
 }
 

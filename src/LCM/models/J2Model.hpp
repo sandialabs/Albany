@@ -77,7 +77,7 @@ private:
   ///
   RealType sat_mod_, sat_exp_;
 
-
+#ifndef NO_KOKKOS_ALBANY
  //Kokkos 
 public:
 
@@ -89,6 +89,7 @@ public:
   typedef Kokkos::RangePolicy<ExecutionSpace, have_temperature_Tag>  have_temperature_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, dont_have_temperature_Tag>  dont_have_temperature_Policy;
 
+  virtual
   void
   computeStateParallel(typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
@@ -96,6 +97,8 @@ public:
 
   class computeStateKernel
   {
+
+    int derivative_dim ;
 
     typedef typename PHX::MDField<ScalarT> ArrayT;
     
@@ -126,29 +129,43 @@ public:
     PHX::MDField<ScalarT, Dim, Dim> Fpinv;
     PHX::MDField<ScalarT, Dim, Dim> Cpinv;
 
-    ScalarT kappa, mu, mubar, K, Y;
-    ScalarT Jm23, trace, smag2, smag, f, p, dgam;
+   // ScalarT kappa, mu, mubar, K, Y;
+   // ScalarT Jm23, trace, smag2, smag, f, p, dgam;
     ScalarT sq23;
+    bool have_temperature_;
 
    public:
    typedef PHX::Device device_type;
 
-    computeStateKernel ( int dims, 
-                         int num_pts_,
-                         ArrayT &def_grad_,
-                         ArrayT &J_,
-                         ArrayT &poissons_ratio_,
-                         ArrayT &elastic_modulus_, 
-                         ArrayT &yieldStrength_,
-                         ArrayT &hardeningModulus_,
-                         ArrayT &delta_time_,
-                         ArrayT &stress_,
-                         ArrayT &Fp_,
-                         ArrayT &eqps_,
-                         ArrayT &yieldSurf_,
-                         ArrayT &source_,
-                         Albany::MDArray &Fpold_,
-                         Albany::MDArray &eqpsold_)
+    computeStateKernel (const int dims, 
+                        const int num_pts_,
+                        const ArrayT &def_grad_,
+                        const ArrayT &J_,
+                        const ArrayT &poissons_ratio_,
+                        const ArrayT &elastic_modulus_, 
+                        const ArrayT &yieldStrength_,
+                        const ArrayT &hardeningModulus_,
+                        const ArrayT &delta_time_,
+                        ArrayT &stress_,
+                        ArrayT &Fp_,
+                        ArrayT &eqps_,
+                        ArrayT &yieldSurf_,
+                        ArrayT &source_,
+                        const Albany::MDArray &Fpold_,
+                        const Albany::MDArray &eqpsold_,
+                        const bool have_temperature, 
+                        PHX::MDField<ScalarT, Dim, Dim> &F_,
+                        PHX::MDField<ScalarT, Dim, Dim> &be_,
+                        PHX::MDField<ScalarT, Dim, Dim> &s_,
+                        PHX::MDField<ScalarT, Dim, Dim> &sigma_,
+                        PHX::MDField<ScalarT, Dim, Dim> &N_,
+                        PHX::MDField<ScalarT, Dim, Dim> &A_,
+                        PHX::MDField<ScalarT, Dim, Dim> &expA_,
+                        PHX::MDField<ScalarT, Dim, Dim> &Fpnew_,
+                        PHX::MDField<ScalarT, Dim, Dim> &I_,
+                        PHX::MDField<ScalarT, Dim, Dim> &Fpn_,
+                        PHX::MDField<ScalarT, Dim, Dim> &Fpinv_,
+                        PHX::MDField<ScalarT, Dim, Dim> &Cpinv_)
        : dims_(dims) 
        , num_pts(num_pts_)
        , def_grad(def_grad_)
@@ -165,14 +182,27 @@ public:
        , source(source_)
        , Fpold(Fpold_)
        , eqpsold(eqpsold_)
+       , have_temperature_(have_temperature)
+       , F(F_)
+       , be(be_)
+       , s(s_)
+       , sigma(sigma_)
+       , N(N_)
+       , A(A_)
+       , expA(expA_)
+       , Fpnew(Fpnew_)
+       , I(I_)
+       , Fpn(Fpn_)
+       , Fpinv(Fpinv_)
+       , Cpinv(Cpinv_)
     {
 
-     typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+  /*   typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
      std::vector<PHX::index_size_type> ddims_;
      ddims_.push_back(24);
 
-      F     = PHX::MDField<ScalarT, Dim, Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      be    = PHX::MDField<ScalarT, Dim, Dim>("be",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
+      //F     = PHX::MDField<ScalarT, Dim, Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
+      //be    = PHX::MDField<ScalarT, Dim, Dim>("be",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
       s     = PHX::MDField<ScalarT, Dim, Dim>("s",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
       sigma = PHX::MDField<ScalarT, Dim, Dim>("sigma",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
       N     = PHX::MDField<ScalarT, Dim, Dim>("N",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
@@ -180,12 +210,12 @@ public:
       expA  = PHX::MDField<ScalarT, Dim, Dim>("expA",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
       Fpnew = PHX::MDField<ScalarT, Dim, Dim>("Fpnew",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
       I     = PHX::MDField<ScalarT, Dim, Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      Fpn   = PHX::MDField<ScalarT, Dim, Dim>("Fpn",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      Fpinv = PHX::MDField<ScalarT, Dim, Dim>("Fpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      Cpinv = PHX::MDField<ScalarT, Dim, Dim>("Cpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
+     // Fpn   = PHX::MDField<ScalarT, Dim, Dim>("Fpn",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
+      //Fpinv = PHX::MDField<ScalarT, Dim, Dim>("Fpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
+      //Cpinv = PHX::MDField<ScalarT, Dim, Dim>("Cpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
 
-     F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
-     be.setFieldData(ViewFactory::buildView(be.fieldTag(),ddims_));
+     //F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
+    // be.setFieldData(ViewFactory::buildView(be.fieldTag(),ddims_));
      s.setFieldData(ViewFactory::buildView(s.fieldTag(),ddims_));
      sigma.setFieldData(ViewFactory::buildView(sigma.fieldTag(),ddims_));
      N.setFieldData(ViewFactory::buildView(N.fieldTag(),ddims_));
@@ -193,22 +223,21 @@ public:
      expA.setFieldData(ViewFactory::buildView(expA.fieldTag(),ddims_));
      Fpnew.setFieldData(ViewFactory::buildView(Fpnew.fieldTag(),ddims_));
      I.setFieldData(ViewFactory::buildView(I.fieldTag(),ddims_));
-     Fpn.setFieldData(ViewFactory::buildView(Fpn.fieldTag(),ddims_));
-     Fpinv.setFieldData(ViewFactory::buildView(Fpinv.fieldTag(),ddims_));
-     Cpinv.setFieldData(ViewFactory::buildView(Cpinv.fieldTag(),ddims_));
-
+   //  Fpn.setFieldData(ViewFactory::buildView(Fpn.fieldTag(),ddims_));
+  //   Fpinv.setFieldData(ViewFactory::buildView(Fpinv.fieldTag(),ddims_));
+  //   Cpinv.setFieldData(ViewFactory::buildView(Cpinv.fieldTag(),ddims_));
+*/
     sq23=(std::sqrt(2. / 3.));
-
+/*
+    for (int i=0; i<dims_; i++){
+      for (int j=0; j<dims_;j++){
+        I(i,j)=ScalarT(0.0);
+        if (j==j)I(i,j)=ScalarT(1.0);
+     }
+    }
+*/
     }
 
- /*   struct have_temperature_Tag{};
-    struct dont_have_temperature_Tag{};
-    
-    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
-
-    typedef Kokkos::RangePolicy<ExecutionSpace, have_temperature_Tag>  have_temperature_Policy; 
-    typedef Kokkos::RangePolicy<ExecutionSpace, dont_have_temperature_Tag>  dont_have_temperature_Policy;
-*/
     KOKKOS_INLINE_FUNCTION
     void operator() (const have_temperature_Tag& tag, const int i) const;   
 
@@ -221,16 +250,16 @@ public:
      void compute_with_temperature(const int cell) const;
     KOKKOS_INLINE_FUNCTION
      void compute_with_no_temperature(const int cell) const;
-
-    template <class ArrayT>
-    KOKKOS_INLINE_FUNCTION
-    const ArrayT  transpose(const ArrayT& A) const;
-
-    template <class ArrayT>
-    KOKKOS_INLINE_FUNCTION
-    const ArrayT  inverse(const ArrayT& A) const;  
  
   };
+ // template <class Array1, class Array2>
+ // KOKKOS_INLINE_FUNCTION
+ //   void  inverse(const Array1 &A,  Array2  &Atrans) const;
+
+  template <class ArrayT>
+  KOKKOS_INLINE_FUNCTION
+   const ScalarT trace(const ArrayT &A) const;
+#endif  
 };
 }
 

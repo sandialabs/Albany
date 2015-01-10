@@ -179,7 +179,7 @@ template<typename EvalT, typename Traits>
 void ConstitutiveModelInterface<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  model_->computeState(workset, dep_fields_map_, eval_fields_map_);
+  model_->computeStateParallel(workset, dep_fields_map_, eval_fields_map_);
   if (volume_average_pressure_) {
     model_->computeVolumeAverage(workset,dep_fields_map_, eval_fields_map_);
   }

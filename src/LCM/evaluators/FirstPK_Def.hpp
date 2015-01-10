@@ -65,6 +65,7 @@ FirstPK(Teuchos::ParameterList& p,
 #ifndef NO_KOKKOS_ALBANYY
   //Allocationg additional data for Kokkos functors
   ddims_.push_back(24);
+  derivative_dim=25;
   sig=PHX::MDField<ScalarT,Dim,Dim>("sig",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
   F=PHX::MDField<ScalarT,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
   P=PHX::MDField<ScalarT,Dim,Dim>("P",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
@@ -134,12 +135,14 @@ trace (const ArrayT &A) const
   return s;
 }
 
-template<typename EvalT, typename Traits>
-template <class ArrayT>
+/*//template<typename EvalT, typename Traits>
+template <class ArrayOut, class ArrayT>
 KOKKOS_INLINE_FUNCTION
-void FirstPK<EvalT, Traits>::
-piola (const ArrayT &C, const ArrayT &F, const ArrayT &A) const
+//void FirstPK<EvalT, Traits>::
+void piola (ArrayOut &C, const ArrayT &F, const ArrayT &A) 
 {
+ 
+   const int num_dims_=A.dimension(0);
    switch (num_dims_) {  
  
    default:
@@ -172,7 +175,7 @@ piola (const ArrayT &C, const ArrayT &F, const ArrayT &A) const
     break;
    }
 }
-
+*/
 //Kokkos functors:
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -224,6 +227,8 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const no_small_strain_Tag& tag, const int& cell) const{
+
+
      for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {    
@@ -231,7 +236,41 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const{
             sig(i,j)=stress_(cell, pt,i,j);
           }
         } 
-        piola(P, F, sig);
+        
+       //piola(P, F, sig);
+        {
+          switch (num_dims_) {
+
+           default:
+               TEUCHOS_TEST_FOR_EXCEPTION( !( (num_dims_ == 2) || (num_dims_ == 3) ), std::invalid_argument,
+                                  ">>> ERROR (LCM FirstPK): piola function is defined only for rank-2 or 3 .");
+           break;
+
+           case 3:
+
+           P(0,0) = sig(0,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + sig(0,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + sig(0,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
+           P(0,1) = sig(0,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + sig(0,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + sig(0,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
+           P(0,2) = sig(0,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1)) + sig(0,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + sig(0,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+
+           P(1,0) = sig(1,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + sig(1,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + sig(1,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
+           P(1,1) = sig(1,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + sig(1,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + sig(1,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
+           P(1,2) = sig(1,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1)) + sig(1,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + sig(1,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+
+           P(2,0) = sig(2,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2))+ sig(2,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + sig(2,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
+           P(2,1) = sig(2,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2))+ sig(2,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + sig(2,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
+           P(2,2) = sig(2,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1))+ sig(2,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + sig(2,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+
+           break;
+
+           case 2:
+           P(0,0) = sig(0,0)*F(1,1) - sig(0,1)*F(0,1);
+           P(0,1) = -sig(0,0)*F(1,0) + sig(0,1)*F(0,0);
+
+           P(1,0) = sig(1,0)*F(1,1) - sig(1,1)*F(0,1);
+           P(1,1) = -sig(1,0)*F(1,0) + sig(1,1)*F(0,0);
+            break;
+         }
+       }
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
