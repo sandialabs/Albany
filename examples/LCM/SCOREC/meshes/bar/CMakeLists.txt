@@ -17,3 +17,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar2.smb
                ${CMAKE_CURRENT_BINARY_DIR}/bar2.smb COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar3.smb
                ${CMAKE_CURRENT_BINARY_DIR}/bar3.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar-quad0.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/bar-quad0.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar-quad1.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/bar-quad1.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar-quad2.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/bar-quad2.smb COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bar-quad3.smb
+               ${CMAKE_CURRENT_BINARY_DIR}/bar-quad3.smb COPYONLY)
