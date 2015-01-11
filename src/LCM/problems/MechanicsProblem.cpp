@@ -53,6 +53,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
     thermal_source_evaluated_(false),
+    have_contact_(false),
     num_dims_(num_dims),
     have_mech_eq_(false),
     have_temperature_eq_(false),
@@ -71,6 +72,9 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
   // Are any source functions specified?
   have_source_ = params->isSublist("Source Functions");
+
+  // Is contact specified?
+  have_contact_ = params->isSublist("Contact");
 
   getVariableType(params->sublist("Displacement"),
       "DOF",
@@ -398,6 +402,7 @@ getValidProblemParameters() const
   validPL->sublist("HydroStress", false, "");
   validPL->sublist("Damage", false, "");
   validPL->sublist("Stabilized Pressure", false, "");
+  validPL->sublist("Contact", false, "");
 
   return validPL;
 }

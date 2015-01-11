@@ -187,6 +187,9 @@ protected:
   // Has the thermal source been evaluated in this element block?
   bool thermal_source_evaluated_;
 
+  // Is this a contact problem?
+  bool have_contact_;
+
   ///
   /// num of dimensions
   ///
@@ -400,6 +403,9 @@ protected:
 
 // Damage equation specific evaluators
 #include "StabilizedPressureResidual.hpp"
+
+// Contact evaluator
+#include "MortarContactConstraints.hpp"
 
 //------------------------------------------------------------------------------
 template<typename EvalT>
@@ -2508,6 +2514,32 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
+  // Evaluate contact contributions
+
+  if (have_contact_){ // create the contact evaluator to fill in the
+
+
+    Teuchos::ParameterList& paramList = params->sublist("Contact");
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+
+    p->set<Teuchos::Array<std::string> >("Master Sideset Names", 
+         paramList.get<Teuchos::Array<std::string> >("Mortar Side Sets"));
+    p->set<Teuchos::Array<std::string> >("Sideset IDs", 
+         paramList.get<Teuchos::Array<std::string> >("Nonmortar Side Sets"));
+
+    p->set<const Albany::MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
+    p->set<std::string>("Coordinate Vector Name", "Coord Vec");
+
+    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
+
+    p->set<std::string>("M Name", "M");
+
+    ev = Teuchos::rcp(new LCM::MortarContact<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+
+  }
+
   // Transport of the temperature field
   if (have_temperature_eq_ && !surface_element)
       {
@@ -2542,6 +2574,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (thermal_source_evaluated_) {
       p->set<bool>("Have Second Source", true);
       p->set<std::string>("Second Source Name", "Heat Source");
+    }
+
+    if (have_contact_){ // Pass M to the heat eqn for thermal fluxes between surfaces
+      p->set<bool>("Have Contact", true);
+      p->set<std::string>("M Name", "M");
     }
 
     // Output

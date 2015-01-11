@@ -84,6 +84,11 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> second_source_;
 
     ///
+    /// M operator for contact
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> M_operator_;
+
+    ///
     /// Scalar coefficient on the transient transport term
     ///
     PHX::MDField<ScalarT,Cell,QuadPoint> transient_coeff_;
@@ -123,6 +128,7 @@ namespace LCM {
     bool have_convection_;
     bool have_species_coupling_;
     bool have_stabilization_;
+    bool have_contact_;
 
     ///
     /// Data structure dimensions
