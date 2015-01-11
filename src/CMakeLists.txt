@@ -16,6 +16,7 @@ SET(SOURCES
   Albany_ModelEvaluatorT.cpp
   Albany_ObserverImpl.cpp
   Albany_NullSpaceUtils.cpp
+  Albany_Memory.cpp
   )
 
 IF (ALBANY_EPETRA)
@@ -55,6 +56,7 @@ SET(HEADERS
   Albany_ModelEvaluatorT.hpp
   Albany_ObserverImpl.hpp
   Albany_NullSpaceUtils.hpp
+  Albany_Memory.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOpT.hpp
