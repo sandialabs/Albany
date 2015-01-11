@@ -157,7 +157,9 @@ namespace Albany {
     Teuchos::RCP<const Application> app_;
 
     Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Import> solutionImporter_;
+#endif
     Teuchos::RCP<Tpetra_Import> solutionImporterT_;
 
 #ifdef ALBANY_EPETRA

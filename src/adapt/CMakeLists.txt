@@ -9,7 +9,6 @@
 
 SET(SOURCES
     AAdapt_AbstractAdapterT.cpp
-    AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemeshT.cpp
     AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
@@ -24,7 +23,6 @@ SET(SOURCES
 
 SET(HEADERS
     AAdapt_AbstractAdapterT.hpp
-    AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemeshT.hpp
     AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp
@@ -39,6 +37,7 @@ SET(HEADERS
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
     AAdapt_AbstractAdapter.cpp
+    AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemesh.cpp
     AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveModelFactory.cpp
@@ -46,6 +45,7 @@ IF (ALBANY_EPETRA)
    ) 
   SET(HEADERS ${HEADERS} 
     AAdapt_AbstractAdapter.hpp
+    AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemesh.hpp
     AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveModelFactory.hpp

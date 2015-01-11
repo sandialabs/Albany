@@ -25,8 +25,7 @@ SolutionValuesResponseFunction(const Teuchos::RCP<const Application>& app,
                                Teuchos::ParameterList& responseParams) :
   SamplingBasedScalarResponseFunction(app->getComm()),
   app_(app),
-  cullingStrategy_(createSolutionCullingStrategy(app, responseParams)),
-  solutionImporter_()
+  cullingStrategy_(createSolutionCullingStrategy(app, responseParams))
 {
 }
 
