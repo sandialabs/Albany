@@ -1304,6 +1304,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<bool>("Volume Average Pressure", volume_average_pressure);
     if (volume_average_pressure) {
       p->set<std::string>("Weights Name", "Weights");
+      p->set<std::string>("J Name", J);
     }
 
     Teuchos::RCP<LCM::ConstitutiveModelInterface<EvalT, PHAL::AlbanyTraits> >
