@@ -428,7 +428,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-  LCM::PeridigmManager::self().initialize(params, disc);
+  LCM::PeridigmManager::self().initialize(params, disc, commT);
 #endif
 #endif
 }
@@ -733,11 +733,18 @@ computeGlobalResidualImplT(
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
 
-//TO DO, IK, 6/26/14: convert setCurrentTimeAndDisplacement to Tpetra
 #ifdef ALBANY_PERIDIGM 
 #ifdef ALBANY_EPETRA
+
+//   xT
+//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
+//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
+//   return initial_x_dot;
+
+
+
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-  peridigmManager.setCurrentTimeAndDisplacement(current_time, x);
+  peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
 #endif
 #endif

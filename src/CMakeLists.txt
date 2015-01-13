@@ -735,6 +735,7 @@ add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 set(ALL_LIBRARIES
+  ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
@@ -742,7 +743,6 @@ set(ALL_LIBRARIES
   ${NLOPT_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
-  ${Peridigm_LIBRARIES}
   ${SCOREC_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
