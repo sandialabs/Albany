@@ -402,7 +402,6 @@ getValidProblemParameters() const
   validPL->sublist("HydroStress", false, "");
   validPL->sublist("Damage", false, "");
   validPL->sublist("Stabilized Pressure", false, "");
-  validPL->sublist("Contact", false, "");
 
   return validPL;
 }

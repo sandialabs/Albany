@@ -389,4 +389,5 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       return Teuchos::rcp(new Aeras::SpectralDiscretization(ms, commT, rigidBodyModes));
     }
 #endif
+  return Teuchos::null;
 }
