@@ -162,6 +162,9 @@ namespace Albany {
 #endif
     Teuchos::RCP<Tpetra_Import> solutionImporterT_;
 
+    class SolutionPrinter;
+    Teuchos::RCP<SolutionPrinter> sol_printer_;
+
 #ifdef ALBANY_EPETRA
     void updateSolutionImporter();
 #endif
