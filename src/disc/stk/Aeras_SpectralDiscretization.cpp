@@ -4,14 +4,17 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 //
-//IK, 1/8/15: This is a new class where we will implement spectral elements for Aeras, by reading 
-//in a STK mesh from an Exodus file containing a bilinear quad/hex mesh and enriching it with additional
-//nodes to create a higher order mesh.  
+// IK, 1/8/15: This is a new class where we will implement spectral
+// elements for Aeras, by reading in a STK mesh from an Exodus file
+// containing a bilinear quad/hex mesh and enriching it with
+// additional nodes to create a higher order mesh.
 //
-//I have begun filling in to-dos here towards getting the spectral elements, but have not completed it. 
-//Basically all the stk::mesh calls need to be examined and many of them rewritten.  The coordinates
-//array needs to be sized to have the new enriched nodes.  All the maps need to be defined to have the 
-//enriched mesh.  wsElNode* objects need to be populated with enriched mesh.
+// I have begun filling in to-dos here towards getting the spectral
+// elements, but have not completed it.  Basically all the stk::mesh
+// calls need to be examined and many of them rewritten.  The
+// coordinates array needs to be sized to have the new enriched nodes.
+// All the maps need to be defined to have the enriched mesh.
+// wsElNode* objects need to be populated with enriched mesh.
 //
 #include <limits>
 
@@ -47,7 +50,8 @@
 #include <netcdf.h>
 
 #ifdef ALBANY_PAR_NETCDF
-extern "C" {
+extern "C" 
+{
 #include <netcdf_par.h>
 }
 #endif
@@ -64,8 +68,8 @@ const double pi = 3.1415926535897932385;
 
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
 
-//uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+// uncomment the following line if you want debug output to be printed to screen
+// #define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -109,7 +113,7 @@ Aeras::SpectralDiscretization::~SpectralDiscretization()
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getMap() const
 {
-  //amb The new nodalDOFsStructContainer means that when Epetra is enabled, the
+  // AMB: The new nodalDOFsStructContainer means that when Epetra is enabled, the
   // Epetra maps have precedence, and the Tpetra maps must remain consistent
   // with them.
   //dp-remove Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
@@ -141,12 +145,14 @@ Aeras::SpectralDiscretization::getOverlapMapT() const
 
 #ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getMap(const std::string& field_name) const {
+Aeras::SpectralDiscretization::getMap(const std::string& field_name) const 
+{
   return nodalDOFsStructContainer.getDOFsStruct(field_name).map;
 }
 
 Teuchos::RCP<const Epetra_Map>
-Aeras::SpectralDiscretization::getOverlapMap(const std::string& field_name) const {
+Aeras::SpectralDiscretization::getOverlapMap(const std::string& field_name) const 
+{
   return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_map;
 }
 
@@ -234,22 +240,28 @@ Aeras::SpectralDiscretization::getSphereVolume() const
 void
 Aeras::SpectralDiscretization::printCoords() const
 {
-
-std::cout << "Processor " << bulkData.parallel_rank() << " has " << coords.size() << " worksets." << std::endl;
-
-       for (int ws=0; ws<coords.size(); ws++) {  //workset
-         for (int e=0; e<coords[ws].size(); e++) { //cell
-           for (int j=0; j<coords[ws][e].size(); j++) { //node
-             for (int d=0; d<stkMeshStruct->numDim; d++){  //node
-std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j << " DOF: " << d << " is: " <<
-                coords[ws][e][j][d] << std::endl;
-       } } } }
-
+  std::cout << "Processor " << bulkData.parallel_rank() << " has "
+            << coords.size() << " worksets." << std::endl;
+  for (int ws = 0; ws < coords.size(); ws++)             // workset
+  {
+    for (int e = 0; e < coords[ws].size(); e++)          // cell
+    {
+      for (int j = 0; j < coords[ws][e].size(); j++)     // node
+      {
+        for (int d = 0; d < stkMeshStruct->numDim; d++)  // node
+        {
+          std::cout << "Coord for workset: " << ws << " element: " << e
+                    << " node: " << j << " DOF: " << d << " is: "
+                    << coords[ws][e][j][d] << std::endl;
+        }
+      }
+    }
+  }
 }
 
 
-//IK, 1/8/15, FIXME: 
-//getCoordinates() needs to be rewritten to include the enriched nodes.
+// IK, 1/8/15, FIXME: getCoordinates() needs to be rewritten to
+// include the enriched nodes.
 const Teuchos::ArrayRCP<double>&
 Aeras::SpectralDiscretization::getCoordinates() const
 {
@@ -258,7 +270,8 @@ Aeras::SpectralDiscretization::getCoordinates() const
 
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
-  for (int i=0; i < numOverlapNodes; i++)  {
+  for (int i=0; i < numOverlapNodes; i++)
+  {
     GO node_gid = gid(overlapnodes[i]);
     int node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
@@ -288,19 +301,19 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
     "Aeras::SpectralDiscretization::setReferenceConfigurationManager is not implemented.");
 }
 
-//The function transformMesh() maps a unit cube domain by applying the transformation
-//x = L*x
-//y = L*y
-//z = s(x,y)*z + b(x,y)*(1-z)
-//where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
-//geometries respectively.
-//Currently this function is only needed for some FELIX problems.
+// The function transformMesh() maps a unit cube domain by applying the transformation
+// x = L*x
+// y = L*y
+// z = s(x,y)*z + b(x,y)*(1-z)
+// where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
+// geometries respectively.
+// Currently this function is only needed for some FELIX problems.
 
 
-//IK, 1/8/15, FIXME:
-//I've removed all the FELIX stuff from transformMesh() as this is for now an Aeras-only class.
-//The setting of the schar mountain transformation needs to be fixed to use the new (enriched) nodes 
-//rather than the nodes pulled from STK.
+// IK, 1/8/15, FIXME: I've removed all the FELIX stuff from
+// transformMesh() as this is for now an Aeras-only class.  The
+// setting of the schar mountain transformation needs to be fixed to
+// use the new (enriched) nodes rather than the nodes pulled from STK.
 void
 Aeras::SpectralDiscretization::transformMesh()
 {
@@ -309,28 +322,32 @@ Aeras::SpectralDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
-  else if (transformType == "Aeras Schar Mountain") {
+  else if (transformType == "Aeras Schar Mountain")
+  {
     *out << "Aeras Schar Mountain transformation!" << endl;
-    double rhoOcean = 1028.0; //ocean density, in kg/m^3
-    for (int i=0; i < numOverlapNodes; i++)  {
+    double rhoOcean = 1028.0; // ocean density, in kg/m^3
+    for (int i=0; i < numOverlapNodes; i++)
+    {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       x[0] = x[0];
       double hstar = 0.0, h;
-      if (std::abs(x[0]-150.0) <= 25.0) hstar = 3.0* std::pow(cos(M_PI*(x[0]-150.0) / 50.0),2);
+      if (std::abs(x[0]-150.0) <= 25.0)
+        hstar = 3.0* std::pow(cos(M_PI*(x[0]-150.0) / 50.0),2);
       h = hstar * std::pow(cos(M_PI*(x[0]-150.0) / 8.0),2);
       x[1] = x[1] + h*(25.0 - x[1])/25.0;
     }
   }
-  else {
+  else
+  {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
       "Aeras::SpectralDiscretization::transformMesh() Unknown transform type :" << transformType << std::endl);
   }
 }
 
-//IK, 1/8/15, FIXME: 
-//The following function that sets up the coordinates to pass to ML/MueLu needs to change to 
-//make use of the enriched nodes, not just the STK nodes read in.
-//WARNING: does ML/MueLu work well for higher order elements?  
+// IK, 1/8/15, FIXME: The following function that sets up the
+// coordinates to pass to ML/MueLu needs to change to make use of the
+// enriched nodes, not just the STK nodes read in.  WARNING: does
+// ML/MueLu work well for higher order elements?
 void Aeras::SpectralDiscretization::setupMLCoords()
 {
   if (rigidBodyModes.is_null()) return;
@@ -342,7 +359,8 @@ void Aeras::SpectralDiscretization::setupMLCoords()
   rigidBodyModes->resize(numDim, numOwnedNodes);
   double* const coords = rigidBodyModes->getCoordArray();
 
-  for (int i = 0; i < numOwnedNodes; i++) {
+  for (int i = 0; i < numOwnedNodes; i++)
+  {
     GO node_gid = gid(ownednodes[i]);
     int node_lid = node_mapT->getLocalElement(node_gid);
     double* X = stk::mesh::field_data(*coordinates_field, ownednodes[i]);
@@ -359,8 +377,10 @@ void Aeras::SpectralDiscretization::setupMLCoords()
 
 void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
 {
-  //if user wants to write the coordinates to matrix market file, write them to matrix market file
-  if (rigidBodyModes->isMLUsed() && stkMeshStruct->writeCoordsToMMFile) {
+  // if user wants to write the coordinates to matrix market file,
+  // write them to matrix market file
+  if (rigidBodyModes->isMLUsed() && stkMeshStruct->writeCoordsToMMFile)
+  {
     double *xx, *yy, *zz;
     rigidBodyModes->getCoordArrays(xx, yy, zz);
     if (node_mapT->getComm()->getRank()==0) {std::cout << "Writing mesh coordinates to Matrix Market file." << std::endl;}
@@ -369,22 +389,25 @@ void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
     Teuchos::RCP<Tpetra_Map> serial_mapT;
     Teuchos::ArrayView<ST> xxAV = Teuchos::arrayView(xx, numOwnedNodes);
     Teuchos::RCP<Tpetra_Vector> xCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, xxAV));
-    //Writing of coordinates to MatrixMarket file for Ray
-    if (node_mapT->getComm()->getSize() > 1) {
+    // Writing of coordinates to MatrixMarket file for Ray
+    if (node_mapT->getComm()->getSize() > 1)
+    {
       serial_mapT = Teuchos::rcp(new Tpetra_Map(INVALID, numMyElements, 0, node_mapT->getComm()));
-      //create importer from parallel map to serial map and populate serial solution xfinal_serial
+      // create importer from parallel map to serial map and populate serial solution xfinal_serial
       importOperatorT = Teuchos::rcp(new Tpetra_Import(node_mapT, serial_mapT));
-      //Writing of coordinates to MatrixMarket file for Ray
+      // Writing of coordinates to MatrixMarket file for Ray
       Teuchos::RCP<Tpetra_Vector> xCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
       xCoords_serialT->doImport(*xCoordsT, *importOperatorT, Tpetra::INSERT);
       Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoords_serialT);
     }
     else
       Tpetra_MatrixMarket_Writer::writeDenseFile("xCoords.mm", xCoordsT);
-    if (yy != NULL) {
+    if (yy != NULL)
+    {
       Teuchos::ArrayView<ST> yyAV = Teuchos::arrayView(yy, numOwnedNodes);
       Teuchos::RCP<Tpetra_Vector> yCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, yyAV));  
-      if (node_mapT->getComm()->getSize() > 1) {
+      if (node_mapT->getComm()->getSize() > 1)
+      {
         Teuchos::RCP<Tpetra_Vector> yCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         yCoords_serialT->doImport(*yCoordsT, *importOperatorT, Tpetra::INSERT);
         Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoords_serialT);
@@ -392,10 +415,12 @@ void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
       else 
         Tpetra_MatrixMarket_Writer::writeDenseFile("yCoords.mm", yCoordsT);
     }
-    if (zz != NULL){
+    if (zz != NULL)
+    {
       Teuchos::ArrayView<ST> zzAV = Teuchos::arrayView(zz, numOwnedNodes);
       Teuchos::RCP<Tpetra_Vector> zCoordsT = Teuchos::rcp(new Tpetra_Vector(node_mapT, zzAV));
-      if (node_mapT->getComm()->getSize() > 1) {
+      if (node_mapT->getComm()->getSize() > 1)
+      {
         Teuchos::RCP<Tpetra_Vector> zCoords_serialT = Teuchos::rcp(new Tpetra_Vector(serial_mapT));
         zCoords_serialT->doImport(*zCoordsT, *importOperatorT, Tpetra::INSERT);
         Tpetra_MatrixMarket_Writer::writeDenseFile("zCoords.mm", zCoords_serialT);
@@ -419,31 +444,32 @@ Aeras::SpectralDiscretization::getWsPhysIndex() const
 }
 
 #ifdef ALBANY_EPETRA
-void Aeras::SpectralDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
-
+void
+Aeras::SpectralDiscretization::writeSolution(const Epetra_Vector& soln,
+                                             const double time, const bool overlapped)
+{
   // Put solution as Epetra_Vector into STK Mesh
   if(!overlapped)
-
     setSolutionField(soln);
 
   // soln coming in is overlapped
   else
-
     setOvlpSolutionField(soln);
-
 
 #ifdef ALBANY_SEACAS
 
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
+  {
+    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
-   Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+    container->transferSolutionToCoords();
 
-   container->transferSolutionToCoords();
-
-   if (!mesh_data.is_null()) {
-     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
-     setupExodusOutput();
-   }
+    if (!mesh_data.is_null())
+    {
+      // Mesh coordinates have changed. Rewrite output file by
+      // deleting the mesh data object and recreate it
+      setupExodusOutput();
+    }
   }
 
 
@@ -465,15 +491,19 @@ void Aeras::SpectralDiscretization::writeSolution(const Epetra_Vector& soln, con
 }
 #endif
 
-void Aeras::SpectralDiscretization::writeSolutionT(
-  const Tpetra_Vector& solnT, const double time, const bool overlapped)
+void
+Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
+                                              const double time,
+                                              const bool overlapped)
 {
   writeSolutionToMeshDatabaseT(solnT, time, overlapped);
   writeSolutionToFileT(solnT, time, overlapped);
 }
 
-void Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
-  const Tpetra_Vector& solnT, const double time, const bool overlapped)
+void
+Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(const Tpetra_Vector& solnT,
+                                                            const double time,
+                                                            const bool overlapped)
 {
   // Put solution as Epetra_Vector into STK Mesh
   if (!overlapped)
@@ -483,48 +513,48 @@ void Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(
     setOvlpSolutionFieldT(solnT);
 }
 
-void Aeras::SpectralDiscretization::
-writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
-                     const bool overlapped)
+void
+Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
+                                                    const double time,
+                                                    const bool overlapped)
 {
 #ifdef ALBANY_SEACAS
 
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-
-   Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
-
-   container->transferSolutionToCoords();
-
-   if (!mesh_data.is_null()) {
-     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
-     setupExodusOutput();
-   }
+  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
+  {
+    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
+      stkMeshStruct->getFieldContainer();
+    container->transferSolutionToCoords();
+    if (!mesh_data.is_null())
+    {
+      // Mesh coordinates have changed. Rewrite output file by
+      // deleting the mesh data object and recreate it
+      setupExodusOutput();
+    }
   }
 
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval)) {
-
-   double time_label = monotonicTimeLabel(time);
-
-     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
-
-     if (mapT->getComm()->getRank()==0) {
-       *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
-       if (time_label != time) *out << " with label " << time_label;
-       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
-     }
-   }
-   if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval)) {
-
-     double time_label = monotonicTimeLabel(time);
-
-     const int out_step = processNetCDFOutputRequestT(solnT);
-
-     if (mapT->getComm()->getRank()==0) {
-       *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
-       if (time_label != time) *out << " with label " << time_label;
-       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
-     }
+  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
+  {
+    double time_label = monotonicTimeLabel(time);
+    int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
+    if (mapT->getComm()->getRank() == 0)
+    {
+      *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
+      if (time_label != time) *out << " with label " << time_label;
+      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
+    }
+  }
+  if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
+  {
+    double time_label = monotonicTimeLabel(time);
+    const int out_step = processNetCDFOutputRequestT(solnT);
+    if (mapT->getComm()->getRank() == 0)
+    {
+      *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
+      if (time_label != time) *out << " with label " << time_label;
+      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
+    }
   }
   outputInterval++;
 #endif
@@ -535,19 +565,23 @@ double
 Aeras::SpectralDiscretization::monotonicTimeLabel(const double time)
 {
   // If increasing, then all is good
-  if (time > previous_time_label) {
+  if (time > previous_time_label)
+  {
     previous_time_label = time;
     return time;
   }
-// Try absolute value
+
+  // Try absolute value
   double time_label = fabs(time);
-  if (time_label > previous_time_label) {
+  if (time_label > previous_time_label)
+  {
     previous_time_label = time_label;
     return time_label;
   }
 
   // Try adding 1.0 to time
-  if (time_label+1.0 > previous_time_label) {
+  if (time_label+1.0 > previous_time_label)
+  {
     previous_time_label = time_label+1.0;
     return time_label+1.0;
   }
@@ -561,14 +595,14 @@ Aeras::SpectralDiscretization::monotonicTimeLabel(const double time)
 void
 Aeras::SpectralDiscretization::setResidualField(const Epetra_Vector& residual)
 {
-//Nothing to do for Aeras -- LCM only function
+  // Nothing to do for Aeras -- LCM-only function
 }
 #endif
 
 void
 Aeras::SpectralDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
-//Nothing to do for Aeras -- LCM only function
+  // Nothing to do for Aeras -- LCM-only function
 }
 
 
@@ -624,7 +658,7 @@ Aeras::SpectralDiscretization::getSolutionFieldHistory(int maxStepCount) const
   return this->getSolutionFieldHistoryImpl(stepCount);
 }
 
-//IK, 10/28/13: this function should be converted to Tpetra...
+// IK, 10/28/13: this function should be converted to Tpetra...
 void
 Aeras::SpectralDiscretization::getSolutionFieldHistory(Epetra_MultiVector &result) const
 {
@@ -650,7 +684,8 @@ Aeras::SpectralDiscretization::getSolutionFieldHistoryImpl(int stepCount) const
   Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(-1, numElements, indicesAV.getRawPtr(), 0, *comm));
 #endif
   const Teuchos::RCP<Epetra_MultiVector> result = Teuchos::rcp(new Epetra_MultiVector(*map, vectorCount));
-  if (stepCount > 0) {
+  if (stepCount > 0)
+  {
     this->getSolutionFieldHistoryImpl(*result);
   }
   return result;
@@ -660,15 +695,17 @@ void
 Aeras::SpectralDiscretization::getSolutionFieldHistoryImpl(Epetra_MultiVector &result) const
 {
   const int stepCount = result.NumVectors();
-  for (int i = 0; i < stepCount; ++i) {
+  for (int i = 0; i < stepCount; ++i)
+  {
     stkMeshStruct->loadSolutionFieldHistory(i);
     Epetra_Vector v(View, result, i);
     this->getSolutionField(v);
   }
 }
 
-//IK, 1/8/15, FIXME: 
-//getSolutionField*, getField*, setField*, setSolutionField* need to work with enriched nodes rather than STK nodes.
+// IK, 1/8/15, FIXME: getSolutionField*, getField*, setField*,
+// setSolutionField* need to work with enriched nodes rather than STK
+// nodes.
 void
 Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result, const bool overlapped) const
 {
@@ -691,7 +728,8 @@ Aeras::SpectralDiscretization::getField(Epetra_Vector &result, const std::string
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
   const std::string& part = nodalDOFsStructContainer.fieldToMap.find(name)->second->first.first;
   stk::mesh::Selector selector = metaData.locally_owned_part();
-  if(part.size()) {
+  if(part.size())
+  {
     std::map<std::string, stk::mesh::Part*>::const_iterator it = stkMeshStruct->nsPartVec.find(part);
     if(it != stkMeshStruct->nsPartVec.end())
       selector &= stk::mesh::Selector( *(it->second) );
@@ -734,7 +772,8 @@ Aeras::SpectralDiscretization::setField(const Epetra_Vector &result, const std::
       metaData.locally_owned_part();
 
   // Iterate over the on-processor nodes by getting node buckets and iterating over each bucket.
-  if(part.size()) {
+  if(part.size())
+  {
     std::map<std::string, stk::mesh::Part*>::const_iterator it = stkMeshStruct->nsPartVec.find(part);
     if(it != stkMeshStruct->nsPartVec.end())
       selector &= stk::mesh::Selector( *(it->second) );
@@ -765,7 +804,7 @@ Aeras::SpectralDiscretization::setSolutionField(const Epetra_Vector& soln)
 }
 #endif // ALBANY_EPETRA
 
-//Tpetra version of above
+// Tpetra version of above
 void
 Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 {
@@ -840,7 +879,8 @@ int Aeras::SpectralDiscretization::nonzeroesPerRow(const int neq) const
 {
   int numDim = stkMeshStruct->numDim;
   int estNonzeroesPerRow;
-  switch (numDim) {
+  switch (numDim)
+  {
   case 0: estNonzeroesPerRow=1*neq; break;
   case 1: estNonzeroesPerRow=3*neq; break;
   case 2: estNonzeroesPerRow=9*neq; break;
@@ -867,7 +907,7 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
   std::vector<int> indices;
   int numNodes(0);
 
-  //compute NumGlobalNodes
+  // compute NumGlobalNodes
   stk::mesh::get_selected_entities( map_type_selector ,
                   bulkData.buckets( stk::topology::NODE_RANK ) ,
                   nodes );
@@ -876,18 +916,21 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
   for (int i=0; i < nodes.size(); i++)
     maxID = std::max(maxID, static_cast<long long int>(gid(nodes[i])));
   comm->MaxAll(&maxID, &maxGID, 1);
-  numGlobalNodes = maxGID+1; //maxGID is the same for overlapped and unique maps
+  numGlobalNodes = maxGID+1; // maxGID is the same for overlapped and unique maps
 
   // build maps
-  for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it ) {
+  for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it )
+  {
     stk::mesh::Selector selector(map_type_selector);
     const std::string& part = it->first.first;
     int nComp = it->first.second;
-    if(part.size())  {
+    if(part.size())
+    {
       std::map<std::string, stk::mesh::Part*>::const_iterator it3 = stkMeshStruct->nsPartVec.find(part);
       if(it3 != stkMeshStruct->nsPartVec.end())
         selector &= *(it3->second);
-      else { //throw error
+      else
+      { // throw error
         std::ostringstream msg;
         msg << "Aeras::SpectralDiscretization::computeNodalEpetraMaps(overlapped==" << overlapped <<
             "):\n    Part " << part << " is not in  stkMeshStruct->nsPartVec.\n";
@@ -916,7 +959,8 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
     node_map = Teuchos::null;
 
     it2=it;
-    if((nComp==1) || ((it2=mapOfDOFsStructs.find(make_pair(part,1)))!=mapOfDOFsStructs.end())) {
+    if((nComp==1) || ((it2=mapOfDOFsStructs.find(make_pair(part,1)))!=mapOfDOFsStructs.end()))
+    {
       node_map = (overlapped) ? it2->second.overlap_map : it2->second.map;
     }
   }
@@ -1042,21 +1086,26 @@ void Aeras::SpectralDiscretization::computeGraphs()
   GO row, col;
   Teuchos::ArrayView<GO> colAV;
 
-  for (std::size_t i=0; i < cells.size(); i++) {
+  for (std::size_t i=0; i < cells.size(); i++)
+  {
     stk::mesh::Entity e = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
     const size_t num_nodes = bulkData.num_nodes(e);
 
     // loop over local nodes
-    for (std::size_t j=0; j < num_nodes; j++) {
+    for (std::size_t j=0; j < num_nodes; j++)
+    {
       stk::mesh::Entity rowNode = node_rels[j];
 
       // loop over eqs
-      for (std::size_t k=0; k < neq; k++) {
+      for (std::size_t k=0; k < neq; k++)
+      {
         row = getGlobalDOF(gid(rowNode), k);
-        for (std::size_t l=0; l < num_nodes; l++) {
+        for (std::size_t l=0; l < num_nodes; l++)
+        {
           stk::mesh::Entity colNode = node_rels[l];
-          for (std::size_t m=0; m < neq; m++) {
+          for (std::size_t m=0; m < neq; m++)
+          {
             col = getGlobalDOF(gid(colNode), m);
             colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
@@ -1100,12 +1149,15 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
 
   wsEBNames.resize(numBuckets);
-  for (int i=0; i<numBuckets; i++) {
+  for (int i=0; i<numBuckets; i++)
+  {
     stk::mesh::PartVector const& bpv = buckets[i]->supersets();
 
-    for (std::size_t j=0; j<bpv.size(); j++) {
+    for (std::size_t j=0; j<bpv.size(); j++)
+    {
       if (bpv[j]->primary_entity_rank() == stk::topology::ELEMENT_RANK &&
-          !stk::mesh::is_auto_declared_part(*bpv[j])) {
+          !stk::mesh::is_auto_declared_part(*bpv[j]))
+      {
         // *out << "Bucket " << i << " is in Element Block:  " << bpv[j]->name()
         //      << "  and has " << buckets[i]->size() << " elements." << std::endl;
         wsEBNames[i]=bpv[j]->name();
@@ -1140,7 +1192,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 #ifdef ALBANY_EPETRA
   NodalDOFsStructContainer::MapOfDOFsStructs::iterator it;
   NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
-  for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
+  for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
+  {
     it->second.wsElNodeEqID.resize(numBuckets);
     it->second.wsElNodeEqID_rawVec.resize(numBuckets);
     it->second.wsElNodeID.resize(numBuckets);
@@ -1148,7 +1201,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   }
 #endif // ALBANY_EPETRA
   
-  for (int b=0; b < numBuckets; b++) {
+  for (int b=0; b < numBuckets; b++)
+  {
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
@@ -1156,41 +1210,47 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     coords[b].resize(buck.size());
 
 
-    {  //nodalDataToElemNode.
+    {  // nodalDataToElemNode.
 
       nodesOnElemStateVec[b].resize(nodal_states.size());
 
-      for (int is=0; is< nodal_states.size(); ++is) {
+      for (int is=0; is< nodal_states.size(); ++is)
+      {
         const std::string& name = nodal_states[is]->name;
         const Albany::StateStruct::FieldDims& dim = nodal_states[is]->dim;
         Albany::MDArray& array = stateArrays.elemStateArrays[b][name];
         std::vector<double>& stateVec = nodesOnElemStateVec[b][is];
-        int dim0 = buck.size(); //may be different from dim[0];
-        switch (dim.size()) {
-        case 2:     //scalar
+        int dim0 = buck.size(); // may be different from dim[0];
+        switch (dim.size())
+        {
+        case 2:     // scalar
         {
           const ScalarFieldType& field = *metaData.get_field<ScalarFieldType>(stk::topology::NODE_RANK, name);
           stateVec.resize(dim0*dim[1]);
           array.assign<ElemTag, NodeTag>(stateVec.data(),dim0,dim[1]);
-          for (int i=0; i < dim0; i++) {
+          for (int i=0; i < dim0; i++)
+          {
             stk::mesh::Entity element = buck[i];
             stk::mesh::Entity const* rel = bulkData.begin_nodes(element);
-            for (int j=0; j < dim[1]; j++) {
+            for (int j=0; j < dim[1]; j++)
+            {
               stk::mesh::Entity rowNode = rel[j];
               array(i,j) = *stk::mesh::field_data(field, rowNode);
             }
           }
           break;
         }
-        case 3:  //vector
+        case 3:  // vector
         {
           const VectorFieldType& field = *metaData.get_field<VectorFieldType>(stk::topology::NODE_RANK, name);
           stateVec.resize(dim0*dim[1]*dim[2]);
           array.assign<ElemTag, NodeTag,CompTag>(stateVec.data(),dim0,dim[1],dim[2]);
-          for (int i=0; i < dim0; i++) {
+          for (int i=0; i < dim0; i++)
+          {
             stk::mesh::Entity element = buck[i];
             stk::mesh::Entity const* rel = bulkData.begin_nodes(element);
-            for (int j=0; j < dim[1]; j++) {
+            for (int j=0; j < dim[1]; j++)
+            {
               stk::mesh::Entity rowNode = rel[j];
               double* entry = stk::mesh::field_data(field, rowNode);
               for(int k=0; k<dim[2]; k++)
@@ -1199,20 +1259,22 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
           }
           break;
         }
-        case 4: //tensor
+        case 4: // tensor
         {
           const TensorFieldType& field = *metaData.get_field<TensorFieldType>(stk::topology::NODE_RANK, name);
           stateVec.resize(dim0*dim[1]*dim[2]*dim[3]);
           array.assign<ElemTag, NodeTag, CompTag, CompTag>(stateVec.data(),dim0,dim[1],dim[2],dim[3]);
-          for (int i=0; i < dim0; i++) {
+          for (int i=0; i < dim0; i++)
+          {
             stk::mesh::Entity element = buck[i];
             stk::mesh::Entity const* rel = bulkData.begin_nodes(element);
-            for (int j=0; j < dim[1]; j++) {
+            for (int j=0; j < dim[1]; j++)
+            {
               stk::mesh::Entity rowNode = rel[j];
               double* entry = stk::mesh::field_data(field, rowNode);
               for(int k=0; k<dim[2]; k++)
                 for(int l=0; l<dim[3]; l++)
-                  array(i,j,k,l) = entry[k*dim[3]+l]; //check this, is stride Correct?
+                  array(i,j,k,l) = entry[k*dim[3]+l]; // check this, is stride Correct?
             }
           }
           break;
@@ -1221,12 +1283,11 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       }
     }
 
-
-
 #ifdef ALBANY_EPETRA
     stk::mesh::Entity element = buck[0];
     int nodes_per_element = bulkData.num_nodes(element);
-    for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
+    for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
+    {
       int nComp = it->first.second;
       it->second.wsElNodeEqID_rawVec[b].resize(buck.size()*nodes_per_element*nComp);
       it->second.wsElNodeEqID[b].assign<ElemTag, NodeTag, CompTag>(
@@ -1238,7 +1299,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 #endif // ALBANY_EPETRA
 
     // i is the element index within bucket b
-    for (std::size_t i=0; i < buck.size(); i++) {
+    for (std::size_t i=0; i < buck.size(); i++)
+    {
 
       // Traverse all the elements in this bucket
       stk::mesh::Entity element = buck[i];
@@ -1257,14 +1319,17 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       coords[b][i].resize(nodes_per_element);
  
 #ifdef ALBANY_EPETRA
-      for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
+      for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
+      {
         Albany::IDArray& wsElNodeEqID_array = it->second.wsElNodeEqID[b];
         GIDArray& wsElNodeID_array = it->second.wsElNodeID[b];
         int nComp = it->first.second;
-        for (int j=0; j < nodes_per_element; j++) {
+        for (int j=0; j < nodes_per_element; j++)
+        {
           stk::mesh::Entity node = node_rels[j];
           wsElNodeID_array((int)i,j) = gid(node);
-          for (int k=0; k < nComp; k++) {
+          for (int k=0; k < nComp; k++)
+          {
             const GO node_gid = it->second.overlap_dofManager.getGlobalDOF(node,k);
             const int node_lid = it->second.overlap_map->LID(
 #ifdef ALBANY_64BIT_INT
@@ -1284,7 +1349,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       DOFsStruct& dofs_struct = mapOfDOFsStructs[make_pair(std::string(""),neq)];
       GIDArray& node_array = dofs_struct.wsElNodeID[b];
       Albany::IDArray& node_eq_array = dofs_struct.wsElNodeEqID[b];
-      for (int j=0; j < nodes_per_element; j++) {
+      for (int j=0; j < nodes_per_element; j++)
+      {
         const stk::mesh::Entity rowNode = node_rels[j];
         const GO node_gid = gid(rowNode);
         const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
@@ -1300,7 +1366,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
           wsElNodeEqID[b][i][j][eq] = node_eq_array((int)i,j,eq);
       }
 #else
-      for (int j=0; j < nodes_per_element; j++) {
+      for (int j=0; j < nodes_per_element; j++)
+      {
         const stk::mesh::Entity rowNode = node_rels[j];
         const GO node_gid = gid(rowNode);
         const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
@@ -1319,33 +1386,42 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     }
   }
 
-  for (int d=0; d<stkMeshStruct->numDim; d++) {
-  if (stkMeshStruct->PBCStruct.periodic[d]) {
-    for (int b=0; b < numBuckets; b++) {
-      for (std::size_t i=0; i < buckets[b]->size(); i++) {
+  for (int d=0; d<stkMeshStruct->numDim; d++)
+  {
+  if (stkMeshStruct->PBCStruct.periodic[d])
+  {
+    for (int b=0; b < numBuckets; b++)
+    {
+      for (std::size_t i=0; i < buckets[b]->size(); i++)
+      {
         int nodes_per_element = buckets[b]->num_nodes(i);
         bool anyXeqZero=false;
         for (int j=0; j < nodes_per_element; j++)  if (coords[b][i][j][d]==0.0) anyXeqZero=true;
-        if (anyXeqZero)  {
+        if (anyXeqZero)
+        {
           bool flipZeroToScale=false;
           for (int j=0; j < nodes_per_element; j++)
               if (coords[b][i][j][d] > stkMeshStruct->PBCStruct.scale[d]/1.9) flipZeroToScale=true;
-          if (flipZeroToScale) {
-            for (int j=0; j < nodes_per_element; j++)  {
-              if (coords[b][i][j][d] == 0.0) {
+          if (flipZeroToScale)
+          {
+            for (int j=0; j < nodes_per_element; j++)
+            {
+              if (coords[b][i][j][d] == 0.0)
+              {
                 double* xleak = new double [stkMeshStruct->numDim];
                 for (int k=0; k < stkMeshStruct->numDim; k++)
                   if (k==d) xleak[d]=stkMeshStruct->PBCStruct.scale[d];
                   else xleak[k] = coords[b][i][j][k];
                 std::string transformType = stkMeshStruct->transformType;
                 double alpha = stkMeshStruct->felixAlpha;
-                alpha *= pi/180.; //convert alpha, read in from ParameterList, to radians
+                alpha *= pi/180.; // convert alpha, read in from ParameterList, to radians
                 if ((transformType=="ISMIP-HOM Test A" || transformType == "ISMIP-HOM Test B" ||
-                     transformType=="ISMIP-HOM Test C" || transformType == "ISMIP-HOM Test D") && d==0) {
-                    xleak[2] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
-                    Albany::StateArray::iterator sHeight = stateArrays.elemStateArrays[b].find("surface_height");
-                    if(sHeight != stateArrays.elemStateArrays[b].end())
-               	      sHeight->second(int(i),j) -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
+                     transformType=="ISMIP-HOM Test C" || transformType == "ISMIP-HOM Test D") && d==0)
+                {
+                  xleak[2] -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
+                  Albany::StateArray::iterator sHeight = stateArrays.elemStateArrays[b].find("surface_height");
+                  if(sHeight != stateArrays.elemStateArrays[b].end())
+                    sHeight->second(int(i),j) -= stkMeshStruct->PBCStruct.scale[d]*tan(alpha);
                 }
                 coords[b][i][j] = xleak; // replace ptr to coords
                 toDelete.push_back(xleak);
@@ -1359,14 +1435,13 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   }
 
   typedef Albany::AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarState QPScalarState ;
-  typedef Albany::AbstractSTKFieldContainer::QPVectorState QPVectorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensorState QPTensorState;
-  typedef Albany::AbstractSTKFieldContainer::QPTensor3State QPTensor3State;
-
-  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState ;
-  typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
-  typedef Albany::AbstractSTKFieldContainer::TensorState TensorState;
+  typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
+  typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
+  typedef Albany::AbstractSTKFieldContainer::QPTensorState    QPTensorState;
+  typedef Albany::AbstractSTKFieldContainer::QPTensor3State   QPTensor3State;
+  typedef Albany::AbstractSTKFieldContainer::ScalarState      ScalarState;
+  typedef Albany::AbstractSTKFieldContainer::VectorState      VectorState;
+  typedef Albany::AbstractSTKFieldContainer::TensorState      TensorState;
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
   // Code is data-type dependent
@@ -1378,48 +1453,54 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   QPTensor3State qptensor3_states = stkMeshStruct->getFieldContainer()->getQPTensor3States();
   std::map<std::string, double>& time = stkMeshStruct->getFieldContainer()->getTime();
 
-  for (std::size_t b=0; b < buckets.size(); b++) {
+  for (std::size_t b=0; b < buckets.size(); b++)
+  {
     stk::mesh::Bucket& buck = *buckets[b];
     for (QPScalarState::iterator qpss = qpscalar_states.begin();
-              qpss != qpscalar_states.end(); ++qpss){
+              qpss != qpscalar_states.end(); ++qpss)
+    {
       Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPScalarFieldType> array(**qpss, buck);
-//Debug
-//std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " << array.dimension(1) << std::endl;
+      // Debug
+      // std::cout << "Buck.size(): " << buck.size() << " QPSFT dim[1]: " << array.dimension(1) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpss)->name()] = ar;
     }
     for (QPVectorState::iterator qpvs = qpvector_states.begin();
-              qpvs != qpvector_states.end(); ++qpvs){
+              qpvs != qpvector_states.end(); ++qpvs)
+    {
       Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPVectorFieldType> array(**qpvs, buck);
-//Debug
-//std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " << array.dimension(2) << std::endl;
+      // Debug
+      // std::cout << "Buck.size(): " << buck.size() << " QPVFT dim[2]: " << array.dimension(2) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
     for (QPTensorState::iterator qpts = qptensor_states.begin();
-              qpts != qptensor_states.end(); ++qpts){
+              qpts != qptensor_states.end(); ++qpts)
+    {
       Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
-//Debug
-//std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
+      // Debug
+      // std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
     for (QPTensor3State::iterator qpts = qptensor3_states.begin();
-              qpts != qptensor3_states.end(); ++qpts){
+              qpts != qptensor3_states.end(); ++qpts)
+    {
       Albany::BucketArray<Albany::AbstractSTKFieldContainer::QPTensor3FieldType> array(**qpts, buck);
-//Debug
-//std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: " << array.dimension(4) << std::endl;
+      // Debug
+      // std::cout << "Buck.size(): " << buck.size() << " QPT3FT dim[4]: " << array.dimension(4) << std::endl;
       Albany::MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
     for (ScalarValueState::iterator svs = scalarValue_states.begin();
-              svs != scalarValue_states.end(); ++svs){
+         svs != scalarValue_states.end(); ++svs)
+    {
       const int size = 1;
       shards::Array<double, shards::NaturalOrder, Cell> array(&time[*svs], size);
       Albany::MDArray ar = array;
-//Debug
-//std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
-//std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
+      // Debug
+      // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
+      // std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
       stateArrays.elemStateArrays[b][*svs] = ar;
     }
   }
@@ -1427,7 +1508,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 // Process node data sets if present
 
   if (Teuchos::nonnull(stkMeshStruct->nodal_data_base) &&
-      stkMeshStruct->nodal_data_base->isNodeDataPresent()) {
+      stkMeshStruct->nodal_data_base->isNodeDataPresent())
+  {
     Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_base->getNodeContainer();
 
     stk::mesh::BucketVector const& node_buckets = bulkData.get_buckets( stk::topology::NODE_RANK, select_owned_in_part );
@@ -1435,10 +1517,12 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     const size_t numNodeBuckets = node_buckets.size();
 
     stateArrays.nodeStateArrays.resize(numNodeBuckets);
-    for (std::size_t b=0; b < numNodeBuckets; b++) {
+    for (std::size_t b=0; b < numNodeBuckets; b++)
+    {
       stk::mesh::Bucket& buck = *node_buckets[b];
       for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
-                nfs != node_states->end(); ++nfs){
+                nfs != node_states->end(); ++nfs)
+      {
         stateArrays.nodeStateArrays[b][(*nfs).first] =
              Teuchos::rcp_dynamic_cast<Albany::AbstractSTKNodeFieldContainer>((*nfs).second)->getMDA(buck);
       }
@@ -1446,10 +1530,9 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   }
 }
 
-void Aeras::SpectralDiscretization::computeSideSets(){
-
+void Aeras::SpectralDiscretization::computeSideSets()
+{
   // Clean up existing sideset structure if remeshing
-
   for(int i = 0; i < sideSets.size(); i++)
     sideSets[i].clear(); // empty the ith map
 
@@ -1462,8 +1545,8 @@ void Aeras::SpectralDiscretization::computeSideSets(){
 
   sideSets.resize(numBuckets); // Need a sideset list per workset
 
-  while ( ss != stkMeshStruct->ssPartVec.end() ) {
-
+  while ( ss != stkMeshStruct->ssPartVec.end() )
+  {
     // Get all owned sides in this side set
     stk::mesh::Selector select_owned_in_sspart =
 
@@ -1482,7 +1565,8 @@ void Aeras::SpectralDiscretization::computeSideSets(){
     // loop over the sides to see what they are, then fill in the data holder
     // for side set options, look at $TRILINOS_DIR/packages/stk/stk_usecases/mesh/UseCase_13.cpp
 
-    for (std::size_t localSideID=0; localSideID < sides.size(); localSideID++) {
+    for (std::size_t localSideID=0; localSideID < sides.size(); localSideID++)
+    {
 
       stk::mesh::Entity sidee = sides[localSideID];
 
@@ -1534,8 +1618,9 @@ void Aeras::SpectralDiscretization::computeSideSets(){
 }
 
 unsigned
-Aeras::SpectralDiscretization::determine_local_side_id( const stk::mesh::Entity elem , stk::mesh::Entity side ) {
-
+Aeras::SpectralDiscretization::determine_local_side_id(const stk::mesh::Entity elem,
+                                                       stk::mesh::Entity side)
+{
   using namespace stk;
 
   stk::topology elem_top = bulkData.bucket(elem).topology();
@@ -1555,8 +1640,8 @@ Aeras::SpectralDiscretization::determine_local_side_id( const stk::mesh::Entity 
     const unsigned num_sides = bulkData.num_connectivity(elem, side_rank);
     stk::mesh::Entity const* elem_sides = bulkData.begin(elem, side_rank);
 
-    for ( unsigned i = 0 ; i < num_sides ; ++i ) {
-
+    for ( unsigned i = 0 ; i < num_sides ; ++i )
+    {
       const stk::mesh::Entity elem_side = elem_sides[i];
 
       if (bulkData.identifier(elem_side) == bulkData.identifier(side)){ // Found the local side in the element
@@ -1568,14 +1653,16 @@ Aeras::SpectralDiscretization::determine_local_side_id( const stk::mesh::Entity 
 
     }
 
-    if ( side_id < 0 ) {
-      std::ostringstream msg ;
+    if ( side_id < 0 )
+    {
+      std::ostringstream msg;
       msg << "determine_local_side_id( " ;
       msg << elem_top.name() ;
       msg << " , Element[ " ;
       msg << bulkData.identifier(elem);
       msg << " ]{" ;
-      for ( unsigned i = 0 ; i < num_sides ; ++i ) {
+      for ( unsigned i = 0 ; i < num_sides ; ++i )
+      {
         msg << " " << bulkData.identifier(elem_sides[i]);
       }
       msg << " } , Side[ " ;
@@ -1588,23 +1675,27 @@ Aeras::SpectralDiscretization::determine_local_side_id( const stk::mesh::Entity 
   else { // Conventional elem->node - side->node connectivity present
 
     std::vector<unsigned> side_map;
-    for ( unsigned i = 0 ; side_id == -1 && i < elem_top.num_sides() ; ++i ) {
+    for ( unsigned i = 0 ; side_id == -1 && i < elem_top.num_sides() ; ++i )
+    {
       stk::topology side_top    = elem_top.side_topology(i);
       side_map.clear();
       elem_top.side_node_ordinals(i, std::back_inserter(side_map));
 
-      if ( num_side_nodes == side_top.num_nodes() ) {
+      if ( num_side_nodes == side_top.num_nodes() )
+      {
 
         side_id = i ;
 
         for ( unsigned j = 0 ;
-              side_id == static_cast<int>(i) && j < side_top.num_nodes() ; ++j ) {
+              side_id == static_cast<int>(i) && j < side_top.num_nodes() ; ++j )
+        {
 
           stk::mesh::Entity elem_node = elem_nodes[ side_map[j] ];
 
           bool found = false ;
 
-          for ( unsigned k = 0 ; ! found && k < side_top.num_nodes() ; ++k ) {
+          for ( unsigned k = 0 ; ! found && k < side_top.num_nodes() ; ++k )
+          {
             found = elem_node == side_nodes[k];
           }
 
@@ -1613,20 +1704,23 @@ Aeras::SpectralDiscretization::determine_local_side_id( const stk::mesh::Entity 
       }
     }
 
-    if ( side_id < 0 ) {
+    if ( side_id < 0 )
+    {
       std::ostringstream msg ;
       msg << "determine_local_side_id( " ;
       msg << elem_top.name() ;
       msg << " , Element[ " ;
       msg << bulkData.identifier(elem);
       msg << " ]{" ;
-      for ( unsigned i = 0 ; i < num_elem_nodes ; ++i ) {
+      for ( unsigned i = 0 ; i < num_elem_nodes ; ++i )
+      {
         msg << " " << bulkData.identifier(elem_nodes[i]);
       }
       msg << " } , Side[ " ;
       msg << bulkData.identifier(side);
       msg << " ]{" ;
-      for ( unsigned i = 0 ; i < num_side_nodes ; ++i ) {
+      for ( unsigned i = 0 ; i < num_side_nodes ; ++i )
+      {
         msg << " " << bulkData.identifier(side_nodes[i]);
       }
       msg << " } ) FAILED" ;
@@ -1658,7 +1752,8 @@ void Aeras::SpectralDiscretization::computeNodeSets()
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
     *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
-    for (std::size_t i=0; i < nodes.size(); i++) {
+    for (std::size_t i=0; i < nodes.size(); i++)
+    {
       GO node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
       nodeSets[ns->first][i].resize(neq);
@@ -1672,7 +1767,8 @@ void Aeras::SpectralDiscretization::computeNodeSets()
 void Aeras::SpectralDiscretization::setupExodusOutput()
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput) {
+  if (stkMeshStruct->exoOutput)
+  {
 
     outputInterval = 0;
 
@@ -1685,10 +1781,12 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
     const stk::mesh::FieldVector &fields = mesh_data->meta_data().get_fields();
-    for (size_t i=0; i < fields.size(); i++) {
+    for (size_t i=0; i < fields.size(); i++)
+    {
       // Hacky, but doesn't appear to be a way to query if a field is already
       // going to be output.
-      try {
+      try
+      {
         mesh_data->add_field(outputFileIdx, *fields[i]);
       }
       catch (std::runtime_error const&) { }
@@ -1702,45 +1800,52 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
 #endif
 }
 
-namespace {
-  const std::vector<double> spherical_to_cart(const std::pair<double, double> & sphere){
-    const double radius_of_earth = 1;
-    std::vector<double> cart(3);
+namespace
+{
+const std::vector<double> spherical_to_cart(const std::pair<double, double> & sphere)
+{
+  const double radius_of_earth = 1;
+  std::vector<double> cart(3);
+  
+  cart[0] = radius_of_earth*std::cos(sphere.first)*std::cos(sphere.second);
+  cart[1] = radius_of_earth*std::cos(sphere.first)*std::sin(sphere.second);
+  cart[2] = radius_of_earth*std::sin(sphere.first);
+  
+  return cart;
+}
 
-    cart[0] = radius_of_earth*std::cos(sphere.first)*std::cos(sphere.second);
-    cart[1] = radius_of_earth*std::cos(sphere.first)*std::sin(sphere.second);
-    cart[2] = radius_of_earth*std::sin(sphere.first);
+double distance (const double* x, const double* y)
+{
+  const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
+                             (x[1]-y[1])*(x[1]-y[1]) +
+                             (x[2]-y[2])*(x[2]-y[2]));
+  return d;
+}
 
-    return cart;
-  }
-  double distance (const double* x, const double* y) {
-    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
-                               (x[1]-y[1])*(x[1]-y[1]) +
-                               (x[2]-y[2])*(x[2]-y[2]));
-    return d;
-  }
-  double distance (const std::vector<double> &x, const std::vector<double> &y) {
-    const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
-                               (x[1]-y[1])*(x[1]-y[1]) +
-                               (x[2]-y[2])*(x[2]-y[2]));
-    return d;
-  }
+double distance (const std::vector<double> &x, const std::vector<double> &y) {
+  const double d = std::sqrt((x[0]-y[0])*(x[0]-y[0]) +
+                             (x[1]-y[1])*(x[1]-y[1]) +
+                             (x[2]-y[2])*(x[2]-y[2]));
+  return d;
+}
 
-  bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
-                    const std::vector<double>        &sphere_xyz) {
-    // first check if point is near the element:
-    const double  tol_inside = 1e-12;
-    const double elem_diam = std::max(::distance(coords[0],coords[2]), ::distance(coords[1],coords[3]));
-    std::vector<double> center(3,0);
-    for (unsigned i=0; i<4; ++i)
-      for (unsigned j=0; j<3; ++j) center[j] += coords[i][j];
-    for (unsigned j=0; j<3; ++j) center[j] /= 4;
-    bool inside = true;
+bool point_inside(const Teuchos::ArrayRCP<double*> &coords,
+                  const std::vector<double>        &sphere_xyz)
+{
+  // first check if point is near the element:
+  const double  tol_inside = 1e-12;
+  const double elem_diam = std::max(::distance(coords[0],coords[2]), ::distance(coords[1],coords[3]));
+  std::vector<double> center(3,0);
+  for (unsigned i=0; i<4; ++i)
+    for (unsigned j=0; j<3; ++j) center[j] += coords[i][j];
+  for (unsigned j=0; j<3; ++j) center[j] /= 4;
+  bool inside = true;
 
-    if ( ::distance(&center[0],&sphere_xyz[0]) > 1.0*elem_diam ) inside = false;
+  if ( ::distance(&center[0],&sphere_xyz[0]) > 1.0*elem_diam ) inside = false;
 
-    unsigned j=3;
-    for (unsigned i=0; i<4 && inside; ++i) {
+  unsigned j=3;
+    for (unsigned i=0; i<4 && inside; ++i)
+    {
       std::vector<double> cross(3);
       // outward normal to plane containing j->i edge:  corner(i) x corner(j)
       // sphere dot (corner(i) x corner(j) ) = negative if inside
@@ -1790,7 +1895,8 @@ namespace {
   }
 
   double value(const std::vector<double> &soln,
-               const std::pair<double, double> &ref) {
+               const std::pair<double, double> &ref)
+  {
 
     const int C = soln.size();
     const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
@@ -1810,7 +1916,8 @@ namespace {
 
   void value(double x[3],
              const Teuchos::ArrayRCP<double*> &coords,
-             const std::pair<double, double> &ref){
+             const std::pair<double, double> &ref)
+  {
 
     const int C = coords.size();
     const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
@@ -1831,7 +1938,8 @@ namespace {
 
   void grad(double x[3][2],
              const Teuchos::ArrayRCP<double*> &coords,
-             const std::pair<double, double> &ref){
+             const std::pair<double, double> &ref)
+  {
 
     const int C = coords.size();
     const Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double> > > HGRAD_Basis = Basis(C);
@@ -1844,16 +1952,19 @@ namespace {
 
     HGRAD_Basis->getValues(basisGrad, tempPoints, Intrepid::OPERATOR_GRAD);
 
-    for (unsigned i=0; i<3; ++i) x[i][0] = x[i][1] = 0;
-    for (unsigned i=0; i<3; ++i)
-      for (unsigned j=0; j<C; ++j) {
+    for (unsigned i = 0; i < 3; ++i)
+      x[i][0] = x[i][1] = 0;
+    for (unsigned i = 0; i < 3; ++i)
+      for (unsigned j = 0; j < C; ++j)
+      {
         x[i][0] += coords[j][i] * basisGrad(j,0,0);
         x[i][1] += coords[j][i] * basisGrad(j,0,1);
       }
   }
 
   std::pair<double, double>  ref2sphere(const Teuchos::ArrayRCP<double*> &coords,
-                                        const std::pair<double, double> &ref) {
+                                        const std::pair<double, double> &ref)
+  {
 
     static const double DIST_THRESHOLD= 1.0e-9;
 
@@ -1887,7 +1998,8 @@ namespace {
   void Dmap(const Teuchos::ArrayRCP<double*> &coords,
             const std::pair<double, double>  &sphere,
             const std::pair<double, double>  &ref,
-            double D[][2]) {
+            double D[][2])
+  {
 
     const double th     = sphere.first;
     const double lam    = sphere.second;
@@ -1923,7 +2035,8 @@ namespace {
   }
 
   std::pair<double, double> parametric_coordinates(const Teuchos::ArrayRCP<double*> &coords,
-                                                   const std::pair<double, double>  &sphere) {
+                                                   const std::pair<double, double>  &sphere)
+  {
 
     static const double tol_sq = 1e-26;
     static const unsigned MAX_NR_ITER = 10;
@@ -1933,7 +2046,8 @@ namespace {
     double resb = 1;
     std::pair<double, double> ref(0,0); // initial guess is center of element.
 
-    for (unsigned i=0; i<MAX_NR_ITER && tol_sq < (costh*resb*resb + resa*resa) ; ++i) {
+    for (unsigned i=0; i<MAX_NR_ITER && tol_sq < (costh*resb*resb + resa*resa) ; ++i)
+    {
       const std::pair<double, double> sph = ref2sphere(coords,ref);
       resa = sph.first  - sphere.first;
       resb = sph.second - sphere.second;
@@ -1958,13 +2072,17 @@ namespace {
 
   const std::pair<bool,std::pair<unsigned, unsigned> >point_in_element(const std::pair<double, double> &sphere,
       const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
-      std::pair<double, double> &parametric) {
+      std::pair<double, double> &parametric)
+  {
     const std::vector<double> sphere_xyz = spherical_to_cart(sphere);
     std::pair<bool,std::pair<unsigned, unsigned> > element(false,std::pair<unsigned, unsigned>(0,0));
-    for (unsigned i=0; i<coords.size() && !element.first; ++i) {
-      for (unsigned j=0; j<coords[i].size() && !element.first; ++j) {
+    for (unsigned i=0; i<coords.size() && !element.first; ++i)
+    {
+      for (unsigned j=0; j<coords[i].size() && !element.first; ++j)
+      {
         const bool found =  point_inside(coords[i][j], sphere_xyz);
-        if (found) {
+        if (found)
+        {
           parametric = parametric_coordinates(coords[i][j], sphere);
           if (parametric.first  < -1) parametric.first  = -1;
           if (parametric.second < -1) parametric.second = -1;
@@ -1980,25 +2098,31 @@ namespace {
   }
 
   void setup_latlon_interp(
-    const unsigned nlat, const double nlon,
+    const unsigned nlat,
+    const double nlon,
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords,
     Albany::WorksetArray<Teuchos::ArrayRCP<std::vector<Aeras::SpectralDiscretization::interp> > >::type& interpdata,
-    const Teuchos::RCP<const Teuchos_Comm> commT) {
-
+    const Teuchos::RCP<const Teuchos_Comm> commT)
+  {
     double err=0;
     const long long unsigned rank = commT->getRank();
     std::vector<double> lat(nlat);
     std::vector<double> lon(nlon);
 
     unsigned count=0;
-    for (unsigned i=0; i<nlat; ++i) lat[i] = -pi/2 + i*pi/(nlat-1);
-    for (unsigned j=0; j<nlon; ++j) lon[j] =       2*j*pi/nlon;
-    for (unsigned i=0; i<nlat; ++i) {
-      for (unsigned j=0; j<nlon; ++j) {
+    for (unsigned i=0; i<nlat; ++i)
+      lat[i] = -pi/2 + i*pi/(nlat-1);
+    for (unsigned j=0; j<nlon; ++j)
+      lon[j] =       2*j*pi/nlon;
+    for (unsigned i=0; i<nlat; ++i)
+    {
+      for (unsigned j=0; j<nlon; ++j)
+      {
         const std::pair<double, double> sphere(lat[i],lon[j]);
         std::pair<double, double> paramtric;
         const std::pair<bool,std::pair<unsigned, unsigned> >element = point_in_element(sphere, coords, paramtric);
-        if (element.first) {
+        if (element.first)
+        {
           // compute error: map 'cart' back to sphere and compare with original
           // interpolation point:
           const unsigned b = element.second.first ;
@@ -2019,14 +2143,18 @@ namespace {
   }
 }
 
-int Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& solution_fieldT) {
+int
+Aeras::SpectralDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& solution_fieldT)
+{
 #ifdef ALBANY_SEACAS
-//IK, 10/13/14: need to implement!
+  // IK, 10/13/14: need to implement!
 #endif
   return 0;
 }
 #ifdef ALBANY_EPETRA
-int Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
+int
+Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field)
+{
 #ifdef ALBANY_SEACAS
   const long long unsigned rank = commT->getRank();
   const unsigned nlat = stkMeshStruct->nLat;
@@ -2035,24 +2163,29 @@ int Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vecto
   std::vector<double> local(nlat*nlon*neq, -std::numeric_limits<double>::max());
 
 
-  for (unsigned n=0; n<neq; ++n) {
-    for (unsigned b=0; b<interpolateData.size(); ++b) {
+  for (unsigned n=0; n<neq; ++n)
+  {
+    for (unsigned b=0; b<interpolateData.size(); ++b)
+    {
       Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b];
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b];
       Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > ElNodeEqID = wsElNodeEqID[b];
 
-      for (unsigned e=0; e<Interpb.size(); ++e) {
+      for (unsigned e=0; e<Interpb.size(); ++e)
+      {
         const std::vector<interp>                    &interp = Interpb[e];
         Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e];
         Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e];
 
         const int C = coordp.size();
         std::vector<double> soln(C);
-        for (unsigned i=0; i<C; ++i) {
+        for (unsigned i=0; i<C; ++i)
+        {
           const int overlap_dof = elnode[i][n];
           soln[i] = solution_field[overlap_dof];
         }
-        for (unsigned p=0; p<interp.size(); ++p) {
+        for (unsigned p=0; p<interp.size(); ++p)
+        {
           Aeras::SpectralDiscretization::interp par    = interp[p];
           const double y = value(soln, par.parametric_coords);
           std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
@@ -2071,7 +2204,8 @@ int Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vecto
   const size_t end              = static_cast<size_t>(((rank+1)*nlat)/np);
   const size_t len              = end-start;
 
-  for (unsigned n=0; n<neq; ++n) {
+  for (unsigned n=0; n<neq; ++n)
+  {
     const size_t  startp[] = {netCDFOutputRequest,    0, start, 0};
     const size_t  countp[] = {1, 1, len, nlon};
     if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
@@ -2079,8 +2213,10 @@ int Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vecto
         "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
   }
 #else
-  if (netCDFp) {
-    for (unsigned n=0; n<neq; ++n)  {
+  if (netCDFp)
+  {
+    for (unsigned n=0; n<neq; ++n)
+    {
       const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
       const size_t  countp[] = {1, 1, nlat, nlon};
       if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
@@ -2098,7 +2234,8 @@ void Aeras::SpectralDiscretization::setupNetCDFOutput()
 {
   const long long unsigned rank = commT->getRank();
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->cdfOutput) {
+  if (stkMeshStruct->cdfOutput)
+  {
     outputInterval = 0;
     const unsigned nlat = stkMeshStruct->nLat;
     const unsigned nlon = stkMeshStruct->nLon;
@@ -2114,7 +2251,6 @@ void Aeras::SpectralDiscretization::setupNetCDFOutput()
     const std::string name = stkMeshStruct->cdfOutFile;
     netCDFp=0;
     netCDFOutputRequest=0;
-
 
 #ifdef ALBANY_PAR_NETCDF
     MPI_Comm theMPIComm = Albany::getMpiCommFromTeuchosComm(commT);
@@ -2136,7 +2272,8 @@ void Aeras::SpectralDiscretization::setupNetCDFOutput()
     const size_t  dimlen[] = {NC_UNLIMITED, nlev, nlat, nlon};
     int dimID[4]={0,0,0,0};
 
-    for (unsigned i=0; i<4; ++i) {
+    for (unsigned i=0; i<4; ++i)
+    {
       if (netCDFp)
       if (const int ierr = nc_def_dim (netCDFp,  dimnames[i], dimlen[i], &dimID[i]))
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -2144,7 +2281,8 @@ void Aeras::SpectralDiscretization::setupNetCDFOutput()
     }
     varSolns.resize(neq,0);
 
-    for (unsigned n=0; n<neq; ++n) {
+    for (unsigned n=0; n<neq; ++n)
+    {
       std::ostringstream var;
       var <<"variable_"<<n;
       const char *field_name = var.str().c_str();
@@ -2231,7 +2369,8 @@ void Aeras::SpectralDiscretization::setupNetCDFOutput()
 void Aeras::SpectralDiscretization::reNameExodusOutput(std::string& filename)
 {
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput && !mesh_data.is_null()) {
+  if (stkMeshStruct->exoOutput && !mesh_data.is_null())
+  {
     // Delete the mesh data object and recreate it
     mesh_data = Teuchos::null;
 
@@ -2249,8 +2388,9 @@ void Aeras::SpectralDiscretization::reNameExodusOutput(std::string& filename)
 }
 
 // Convert the stk mesh on this processor to a nodal graph.
-//todo Dev/tested on linear elements only.
-void Aeras::SpectralDiscretization::meshToGraph () {
+// todo Dev/tested on linear elements only.
+void Aeras::SpectralDiscretization::meshToGraph()
+{
   if (Teuchos::is_null(stkMeshStruct->nodal_data_base)) return;
   if (!stkMeshStruct->nodal_data_base->isNodeDataPresent()) return;
 
@@ -2273,16 +2413,19 @@ void Aeras::SpectralDiscretization::meshToGraph () {
   const stk::mesh::BucketVector& buckets = bulkData.get_buckets(
     stk::topology::ELEMENT_RANK, select_owned_in_part);
 
-  for (int b = 0; b < buckets.size(); ++b) {
+  for (int b = 0; b < buckets.size(); ++b)
+  {
     const stk::mesh::Bucket& cells = *buckets[b];
     // Find the surrounding elements for each node owned by this processor.
-    for (std::size_t ecnt = 0; ecnt < cells.size(); ecnt++) {
+    for (std::size_t ecnt = 0; ecnt < cells.size(); ecnt++)
+    {
       const stk::mesh::Entity e = cells[ecnt];
       const stk::mesh::Entity* node_rels = bulkData.begin_nodes(e);
       const size_t num_node_rels = bulkData.num_nodes(e);
 
       // Loop over nodes within the element.
-      for (std::size_t ncnt = 0; ncnt < num_node_rels; ++ncnt) {
+      for (std::size_t ncnt = 0; ncnt < num_node_rels; ++ncnt)
+      {
         const stk::mesh::Entity rowNode = node_rels[ncnt];
         GO nodeGID = gid(rowNode);
         int nodeLID = overlap_node_mapT->getLocalElement(nodeGID);
@@ -2296,12 +2439,16 @@ void Aeras::SpectralDiscretization::meshToGraph () {
   }
 
   std::size_t max_nsur = 0;
-  for (std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
-    if (sur_elem[ncnt].empty()) {
+  for (std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++)
+  {
+    if (sur_elem[ncnt].empty())
+    {
       TEUCHOS_TEST_FOR_EXCEPTION(
         true, std::logic_error,
         "Node = " << ncnt+1 << " has no elements" << std::endl);
-    } else {
+    }
+    else
+    {
       std::size_t nsur = sur_elem[ncnt].size();
       if (nsur > max_nsur) max_nsur = nsur;
     }
@@ -2315,17 +2462,20 @@ void Aeras::SpectralDiscretization::meshToGraph () {
   // want all nodes in the overlap graph to be covered in the nodal graph.
 
   // loop over all the nodes owned by this PE
-  for(std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++) {
+  for(std::size_t ncnt = 0; ncnt < numOverlapNodes; ncnt++)
+  {
     Teuchos::Array<GO> adjacency;
     GO globalrow = overlap_node_mapT->getGlobalElement(ncnt);
     // loop over the elements surrounding node ncnt
-    for(std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++) {
+    for(std::size_t ecnt = 0; ecnt < sur_elem[ncnt].size(); ecnt++)
+    {
       const stk::mesh::Entity elem  = sur_elem[ncnt][ecnt];
       const stk::mesh::Entity* node_rels = bulkData.begin_nodes(elem);
       const size_t num_node_rels = bulkData.num_nodes(elem);
       std::size_t ws = elemGIDws[gid(elem)].ws;
       // loop over the nodes in the surrounding element elem
-      for (std::size_t lnode = 0; lnode < num_node_rels; ++lnode) {
+      for (std::size_t lnode = 0; lnode < num_node_rels; ++lnode)
+      {
         const stk::mesh::Entity node_a = node_rels[lnode];
         // entry is the GID of each node
         GO entry = gid(node_a);
@@ -2345,11 +2495,13 @@ void Aeras::SpectralDiscretization::meshToGraph () {
 }
 
 void
-Aeras::SpectralDiscretization::printVertexConnectivity(){
+Aeras::SpectralDiscretization::printVertexConnectivity()
+{
 
   if(Teuchos::is_null(nodalGraph)) return;
 
-  for(std::size_t i = 0; i < numOverlapNodes; i++){
+  for(std::size_t i = 0; i < numOverlapNodes; i++)
+  {
 
     GO globalvert = overlap_node_mapT->getGlobalElement(i);
 
@@ -2373,17 +2525,18 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
   nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
-  for(int is=0; is<nodal_param_states.size(); is++) {
+  for(int is=0; is<nodal_param_states.size(); is++)
+  {
     const Albany::StateStruct& param_state = *nodal_param_states[is];
     const Albany::StateStruct::FieldDims& dim = param_state.dim;
     int numComps = 1;
-    if (dim.size()==3) //vector
+    if (dim.size()==3)      // vector
       numComps = dim[2];
-    else if (dim.size()==4) //tensor
+    else if (dim.size()==4) // tensor
       numComps = dim[2]*dim[3];
 
     nodalDOFsStructContainer.addEmptyDOFsStruct(param_state.name, param_state.meshPart,numComps);
-    }
+  }
 
   computeNodalEpetraMaps(false);
 #endif // ALBANY_EPETRA
@@ -2413,9 +2566,9 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   // Build the node graph needed for the mass matrix for solution transfer and projection operations
   // FIXME this only needs to be called if we are using the L2 Projection response
   meshToGraph();
-//  printVertexConnectivity();
+  // printVertexConnectivity();
   setupNetCDFOutput();
-//meshToGraph();
-//printVertexConnectivity();
+  // meshToGraph();
+  // printVertexConnectivity();
 
 }
