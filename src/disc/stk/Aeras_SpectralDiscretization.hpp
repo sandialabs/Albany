@@ -132,6 +132,7 @@ namespace Aeras {
 #endif
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::NodeSetList& getNodeSets() const { return nodeSets; };

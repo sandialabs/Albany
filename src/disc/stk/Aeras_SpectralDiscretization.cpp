@@ -201,6 +201,12 @@ Aeras::SpectralDiscretization::getNodeMapT() const
   return node_mapT;
 }
 
+Teuchos::RCP<const Tpetra_Map>
+Aeras::SpectralDiscretization::getOverlapNodeMapT() const
+{
+  return overlap_node_mapT;
+}
+
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 Aeras::SpectralDiscretization::getWsElNodeEqID() const
 {
