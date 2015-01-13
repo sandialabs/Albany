@@ -21,7 +21,11 @@
 namespace Albany {
 namespace {
 class MemoryAnalyzer {
+#ifdef HAVE_TEUCHOS_LONG_LONG_INT
   typedef long long int Int;
+#else
+  typedef int Int;
+#endif
 
   enum {
     // mallinfo
