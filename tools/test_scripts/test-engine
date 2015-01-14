@@ -2,6 +2,10 @@
 
 # Should only be run by test harness!
 
+# We want this script to fail if any command in a pipe fails. Without
+# this, pipes to tee hide failures.
+set -o pipefail
+
 #
 # Set up directory structure for jenkins test, blowing
 # away old build and install dirs
