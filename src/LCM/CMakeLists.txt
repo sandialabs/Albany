@@ -91,7 +91,7 @@ set(HEADERS ${HEADERS}
   ${topology-headers}
  )
 
-IF(NOT ENABLE_PERIDIGM)
+IF(NOT ALBANY_PERIDIGM)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)
