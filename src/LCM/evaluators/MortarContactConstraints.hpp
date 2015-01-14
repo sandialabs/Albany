@@ -63,8 +63,8 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint> M_operator; // This evaluator creates M and D, not sure what they look like yet
                                                    // so put in a placeholder
 
-  const Teuchos::Array<std::string>& masterSideNames;
-  const Teuchos::Array<std::string>& sideSetIDs;
+  const Teuchos::Array<std::string> masterSideNames;
+  const Teuchos::Array<std::string> sideSetIDs;
   const Albany::MeshSpecsStruct* meshSpecs;
 
 //! Coordinate vector at vertices
