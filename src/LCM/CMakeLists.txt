@@ -81,7 +81,6 @@ set(SOURCES ${SOURCES}
   ${utils-sources}
   ${topology-sources}
   )
-
 set(HEADERS ${HEADERS}
   ${problem-headers}
   ${evaluator-headers}
@@ -91,6 +90,19 @@ set(HEADERS ${HEADERS}
   ${utils-headers}
   ${topology-headers}
  )
+
+IF(NOT ENABLE_PERIDIGM)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmPartialStress.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/problems/PeridigmProblem.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/utils/PeridigmManager.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
+ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
