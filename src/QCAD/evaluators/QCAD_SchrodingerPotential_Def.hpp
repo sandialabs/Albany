@@ -59,7 +59,7 @@ SchrodingerPotential(Teuchos::ParameterList& p,
   this->addDependentField(coordVec);
 
   this->addEvaluatedField(V);
-  this->setName("Schrodinger Potential" );
+  this->setName( "Schrodinger Potential" + PHX::typeAsString<EvalT>() );
 }
 
 // **********************************************************************
@@ -84,7 +84,7 @@ evaluateFields(typename Traits::EvalData workset)
   {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t qp = 0; qp < numQPs; ++qp) {
-        V(cell, qp) = parabolicPotentialValue(numDims, &coordVec(cell,qp,0));
+        V(cell, qp) = parabolicPotentialValue(numDims,coordVec,cell,qp);
       }
     }
   }
@@ -103,7 +103,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp = 0; qp < numQPs; ++qp)
-        V(cell, qp) = finiteWallPotential(numDims, &coordVec(cell,qp,0));
+        V(cell, qp) = finiteWallPotential(numDims,coordVec,cell,qp);
     }    
   }
 
@@ -113,7 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t cell = 0; cell < workset.numCells; ++cell)
     {
       for (std::size_t qp = 0; qp < numQPs; ++qp)
-        V(cell, qp) = stringFormulaPotential(numDims, &coordVec(cell,qp,0));
+        V(cell, qp) = stringFormulaPotential(numDims,coordVec,cell,qp);
     }    
   }
 
@@ -199,7 +199,8 @@ QCAD::SchrodingerPotential<EvalT,Traits>::getValidSchrodingerPotentialParameters
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
 QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
-    const int numDim, const MeshScalarT* coord)
+   const int numDim, const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+   const int cell, const int qp )
 {
   ScalarT val;
   MeshScalarT r2;
@@ -219,7 +220,7 @@ QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
   
   prefactor = parabolicFctr * E0*E0 * (energy_unit_in_eV * pow(length_unit_in_m,2));  
   for(i=0, r2=0.0; i<numDim; i++)
-    r2 += (coord[i]-0.5)*(coord[i]-0.5);
+    r2 += (coord(cell,qp,i)-0.5)*(coord(cell,qp,i)-0.5);
   val = prefactor * r2;  
   
   return scalingFactor * val;
@@ -231,7 +232,8 @@ QCAD::SchrodingerPotential<EvalT,Traits>::parabolicPotentialValue(
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
 QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
-    const int numDim, const MeshScalarT* coord)
+   const int numDim, const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+   const int cell, const int qp )
 {
   ScalarT val;
   
@@ -239,11 +241,11 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
   {
     case 1: // 1D: total width = 2*barrWidth + wellWidth
     {
-      if ( (coord[0] >= 0) && (coord[0] < barrWidth) )
+      if ( (coord(cell,qp,0) >= 0) && (coord(cell,qp,0) < barrWidth) )
         val = E0;  // barrier
-      else if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) )
+      else if ( (coord(cell,qp,0) >= barrWidth) && (coord(cell,qp,0) <= (barrWidth+wellWidth)) )
         val = 0;   // well
-      else if ( (coord[0] > (barrWidth+wellWidth)) && (coord[0] <= (2*barrWidth+wellWidth)) )
+      else if ( (coord(cell,qp,0) > (barrWidth+wellWidth)) && (coord(cell,qp,0) <= (2*barrWidth+wellWidth)) )
         val = E0;  // barrier
       else 
         TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter, std::endl 
@@ -254,8 +256,8 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
     
     case 2: // 2D
     {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
-           (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) )
+      if ( (coord(cell,qp,0) >= barrWidth) && (coord(cell,qp,0) <= (barrWidth+wellWidth)) &&
+           (coord(cell,qp,1) >= barrWidth) && (coord(cell,qp,1) <= (barrWidth+wellWidth)) )
         val = 0.0;  // well
       else
         val = E0;   // barrier
@@ -264,9 +266,9 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
 
     case 3: // 3D
     {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
-           (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) && 
-           (coord[2] >= barrWidth) && (coord[2] <= (barrWidth+wellWidth)) )
+      if ( (coord(cell,qp,0) >= barrWidth) && (coord(cell,qp,0) <= (barrWidth+wellWidth)) &&
+           (coord(cell,qp,1) >= barrWidth) && (coord(cell,qp,1) <= (barrWidth+wellWidth)) && 
+           (coord(cell,qp,2) >= barrWidth) && (coord(cell,qp,2) <= (barrWidth+wellWidth)) )
         val = 0.0;  // well
       else
         val = E0;   // barrier
@@ -292,7 +294,8 @@ QCAD::SchrodingerPotential<EvalT,Traits>::finiteWallPotential(
 template<typename EvalT,typename Traits>
 typename QCAD::SchrodingerPotential<EvalT,Traits>::ScalarT
 QCAD::SchrodingerPotential<EvalT,Traits>::stringFormulaPotential(
-    const int numDim, const MeshScalarT* coord)
+   const int numDim, const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+   const int cell, const int qp )
 {
   ScalarT val;
   MeshScalarT x, y, z, result;
@@ -301,24 +304,24 @@ QCAD::SchrodingerPotential<EvalT,Traits>::stringFormulaPotential(
   {
     case 1: // 1D: total width = 2*barrWidth + wellWidth
     {
-      x = coord[0];
+      x = coord(cell,qp,0);
       y = 0; z=0;
       break;
     }
     
     case 2: // 2D
     {
-      x = coord[0];
-      y = coord[1];
+      x = coord(cell,qp,0);
+      y = coord(cell,qp,1);
       z = 0;
       break;
     }
 
     case 3: // 3D
     {
-      x = coord[0];
-      y = coord[1];
-      z = coord[2];
+      x = coord(cell,qp,0);
+      y = coord(cell,qp,1);
+      z = coord(cell,qp,2);
       break;
     }
     

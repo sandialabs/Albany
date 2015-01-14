@@ -89,7 +89,7 @@ ResponseSaddleValue(Teuchos::ParameterList& p,
   if(!bReturnSameField) this->addDependentField(retField);
 
   std::string responseID = "QCAD Saddle Value";
-  this->setName(responseID +  );
+  this->setName( responseID + PHX::typeAsString<EvalT>() );
 
   /*//! response evaluator must evaluate dummy operation
   Teuchos::RCP<PHX::DataLayout> dummy_dl =
@@ -304,14 +304,16 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // we cannot pass the same object for both the send and receive buffers in reduceAll call
     // creating a copy of the global_response, not a view
-    std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
+    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Transition of this "
+              << "function to Kokkos has not been completed" << std::endl);
+    std::vector<ScalarT> partial_vector;//Drake FIXME (&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
     PHX::MDField<ScalarT> partial_response(this->global_response);
     partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
 
-    Teuchos::reduceAll(
-      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-      this->global_response.size(), &partial_response[0],
-      &this->global_response[0]);
+//Drake FIXME    Teuchos::reduceAll(
+//Drake FIXME      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+//Drake FIXME      this->global_response.size(), &partial_response[0],
+//Drake FIXME      &this->global_response[0]);
 
     // Copy in position of saddle point here (no derivative info yet)
     const double* pt = svResponseFn->getSaddlePointPosition();

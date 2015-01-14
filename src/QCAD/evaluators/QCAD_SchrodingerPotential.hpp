@@ -50,9 +50,15 @@ namespace QCAD {
   	Teuchos::RCP<const Teuchos::ParameterList>
     		getValidSchrodingerPotentialParameters() const;
 
-  	ScalarT parabolicPotentialValue( const int numDim, const MeshScalarT* coord);
-  	ScalarT finiteWallPotential( const int numDim, const MeshScalarT* coord);
-  	ScalarT stringFormulaPotential( const int numDim, const MeshScalarT* coord);
+  	ScalarT parabolicPotentialValue( const int numDim,
+                                         const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                         const int cell, const int qp );
+  	ScalarT finiteWallPotential( const int numDim,
+                                     const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                     const int cell, const int qp );
+	ScalarT stringFormulaPotential( const int numDim,
+                                        const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                        const int cell, const int qp );
 
   	//! input
   	std::size_t numQPs;

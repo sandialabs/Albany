@@ -109,7 +109,7 @@ Permittivity(Teuchos::ParameterList& p,
   }
 
   this->addEvaluatedField(permittivity);
-  this->setName("Permittivity" );
+  this->setName( "Permittivity" + PHX::typeAsString<EvalT>() );
 }
 
 // **********************************************************************
@@ -168,15 +168,14 @@ evaluateFields(typename Traits::EvalData workset)
   // for testing 1D MOSCapacitor
   else if (typ == "Position Dependent")
   {
-    MeshScalarT* coord;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     {	
       for (std::size_t qp=0; qp < numQPs; ++qp)
       {
-        coord = &coordVec(cell,qp,0);
+        MeshScalarT coord0 = coordVec(cell,qp,0);
         
         // Silicon region
-        if ( (coord[0] > oxideWidth) && (coord[0] <= (oxideWidth + siliconWidth)) )
+        if ( (coord0 > oxideWidth) && (coord0 <= (oxideWidth + siliconWidth)) )
         {
           const std::string matName = "Silicon";
           const ScalarT& value = materialDB->getMaterialParam<double>(matName,"Permittivity");
@@ -184,7 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         
         // Oxide region
-        else if ((coord[0] >= 0) && (coord[0] <= oxideWidth))
+        else if ((coord0 >= 0) && (coord0 <= oxideWidth))
         {
           const std::string matName = "SiliconDioxide";
           const ScalarT& value = materialDB->getMaterialParam<double>(matName,"Permittivity");
@@ -193,7 +192,7 @@ evaluateFields(typename Traits::EvalData workset)
         
         else
           TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-	          std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
+	          std::endl << "Error!  x-coord:" << coord0 << "is outside the oxideWidth" << 
 	          " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
         
       }  // end of loop over QPs
