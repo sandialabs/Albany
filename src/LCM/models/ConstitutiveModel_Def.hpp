@@ -48,17 +48,77 @@ ConstitutiveModel(Teuchos::ParameterList* p,
   }
 }
 //------------------------------------------------------------------------------
+////Kokkos Kernel for computeVolumeAverage
+template < typename ScalarT, class ArrayStress, class ArrayWeights >
+class computeVolumeAverageKernel {
+ ArrayStress stress;
+ ArrayWeights weights_;
+ int num_pts_, num_dims_; 
+
+
+ public:
+ typedef PHX::Device device_type;
+
+ computeVolumeAverageKernel( ArrayStress &stress_,
+                             ArrayWeights &weights,
+                             const int num_pts,
+                             const int num_dims)
+                           : stress(stress_)
+                           , weights_(weights)
+                           , num_pts_(num_pts)
+                           , num_dims_(num_dims){}
+ 
+ KOKKOS_INLINE_FUNCTION
+ void operator () (const int cell) const
+ {
+    ScalarT volume, pbar, p;
+    Intrepid::Tensor<ScalarT> sig(num_dims_);
+    Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+
+    volume = pbar = 0.0;
+
+    for (int pt(0); pt < num_pts_; ++pt) {
+
+     for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig(i,j)=stress(cell,pt,i,j);
+
+      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
+      volume += weights_(cell,pt);
+    }
+
+    pbar /= volume;
+
+    for (int pt(0); pt < num_pts_; ++pt) {
+ 
+     for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig(i,j)=stress(cell,pt,i,j);     
+
+      p = (1./num_dims_) * Intrepid::trace(sig);
+      sig += (pbar - p)*I;
+
+      for (int i = 0; i < num_dims_; ++i) {
+        stress(cell,pt,i,i) = sig(i,i);
+      }
+    }
+
+ }
+
+};
+//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModel<EvalT, Traits>::
 computeVolumeAverage(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
-  Intrepid::Tensor<ScalarT> sig(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
+#ifdef NO_KOKKOS_ALBANY
+  Intrepid::Tensor<ScalarT> sig(num_dims_);
+  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
   ScalarT volume, pbar, p;
 
@@ -82,6 +142,9 @@ computeVolumeAverage(typename Traits::EvalData workset,
       }
     }
   }
+#else
+Kokkos::parallel_for(workset.numCells, computeVolumeAverageKernel<ScalarT, PHX::MDField<ScalarT>,PHX::MDField<MeshScalarT, Cell, QuadPoint>  >(stress, weights_, num_pts_, num_dims_));
+#endif
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
