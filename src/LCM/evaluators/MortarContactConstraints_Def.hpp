@@ -84,24 +84,19 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // No work to do
-  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || this->sideSetIDs.size() == 0)
+  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || sideSetIDs.size() == 0)
 
     return;
 
-std::cout << "Here 1" << std::endl;
-return;
-
   const Albany::SideSetList& ssList = *(workset.sideSets);
-std::cout << "Here 11" << std::endl;
 
-  for(std::size_t i = 0; i < this->sideSetIDs.size(); i++){
-std::cout << "Here 12" << std::endl;
+  for(std::size_t i = 0; i < sideSetIDs.size(); i++){
 
-    Albany::SideSetList::const_iterator it = ssList.find(this->sideSetIDs[i]);
-std::cout << "Here 13" << std::endl;
+std::cout << "The sideset ID for sideset : " << i << " is : " << sideSetIDs[i] << std::endl;
+
+    Albany::SideSetList::const_iterator it = ssList.find(sideSetIDs[i]);
 
       if(it == ssList.end()) continue; // This sideset does not exist in this workset - try the next one
-std::cout << "Here 2" << std::endl;
 
 /*
       for (std::size_t cell=0; cell < workset.numCells; ++cell)
@@ -113,10 +108,9 @@ std::cout << "Here 2" << std::endl;
       const std::vector<Albany::SideStruct>& sideSet = it->second;
 
       // Loop over the sides that form the boundary condition
-std::cout << "size = " << sideSet.size() << std::endl;
+std::cout << "size of sideset array in workset = " << sideSet.size() << std::endl;
 
       for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
-std::cout << "side = " << side << std::endl;
 
         // Get the data that corresponds to the side. 
 
@@ -124,6 +118,12 @@ std::cout << "side = " << side << std::endl;
         const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
         const int elem_side = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
         const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
+
+        std::cout << "side = " << side << std::endl;
+        std::cout << "    element that owns side GID = " << elem_GID << std::endl;
+        std::cout << "    element that owns side LID = " << elem_LID << std::endl;
+        std::cout << "    side, local ID inside element = " << elem_side << std::endl;
+        std::cout << "    element block side is in = " << elem_block << std::endl << std::endl;
 
       }
     }

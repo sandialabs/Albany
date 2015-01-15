@@ -96,6 +96,26 @@ NOXObserverConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &
   return instance_;
 }
 
+class NOXStatelessObserverConstructor :
+    public Piro::ProviderBase<NOX::Epetra::Observer> {
+public:
+  explicit NOXStatelessObserverConstructor (
+    const Teuchos::RCP<Application> &app)
+    : factory_(app),
+      instance_(Teuchos::null)
+  {}
+
+  virtual Teuchos::RCP<NOX::Epetra::Observer> getInstance (
+    const Teuchos::RCP<Teuchos::ParameterList> &params)
+  {
+    if (Teuchos::is_null(instance_)) instance_ = factory_.createInstance();
+    return instance_;
+  }
+private:
+  NOXStatelessObserverFactory factory_;
+  Teuchos::RCP<NOX::Epetra::Observer> instance_;
+};
+
 class RythmosObserverConstructor : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double> > {
 public:
   explicit RythmosObserverConstructor(const Teuchos::RCP<Application> &app) :
@@ -371,8 +391,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
         piroFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
 
+        const RCP<Piro::ProviderBase<NOX::Epetra::Observer> >
+          noxStatelessObserverProvider = rcp(
+            new NOXStatelessObserverConstructor(app));
         const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> > saveEigenDataProvider =
-          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(),
+                                           noxStatelessObserverProvider));
         piroFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(saveEigenDataProvider);
       }
     }

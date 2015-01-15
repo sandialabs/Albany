@@ -15,10 +15,7 @@
 
 DUMMY1=${TRIKOTADIR:?TRIKOTADIR: not set}
 
-if [ -a $dakota-stable.src.tar ]; then \rm $dakota-stable.src.tar
-fi
-if [ -a $dakota-stable.src.tar.gz ]; then \rm $dakota-stable.src.tar.gz
-fi
+\rm -rf dakota-stable.src.tar*
 
 DLDIR=`pwd`
 

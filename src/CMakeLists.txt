@@ -15,6 +15,7 @@ SET(SOURCES
   Albany_ModelFactory.cpp
   Albany_ModelEvaluatorT.cpp
   Albany_ObserverImpl.cpp
+  Albany_StatelessObserverImpl.cpp
   Albany_NullSpaceUtils.cpp
   Albany_Memory.cpp
   )
@@ -36,6 +37,7 @@ IF(ALBANY_EPETRA)
     Albany_RythmosObserver.cpp
     Albany_SaveEigenData.cpp
     Albany_NOXObserver.cpp
+    Albany_NOXStatelessObserver.cpp
   )
 ENDIF()
 
@@ -55,6 +57,7 @@ SET(HEADERS
   Albany_ModelFactory.hpp
   Albany_ModelEvaluatorT.hpp
   Albany_ObserverImpl.hpp
+  Albany_StatelessObserverImpl.hpp
   Albany_NullSpaceUtils.hpp
   Albany_Memory.hpp
   Albany_DummyParameterAccessor.hpp
@@ -72,6 +75,7 @@ IF(ALBANY_EPETRA)
     Albany_EigendataInfoStruct.hpp
     Albany_RythmosObserver.hpp
     Albany_NOXObserver.hpp
+    Albany_NOXStatelessObserver.hpp
     Petra_Converters.hpp
     Albany_ObserverFactory.hpp
   )
