@@ -106,11 +106,48 @@ ScatterResidual(const Teuchos::ParameterList& p,
 
 {
 }
+// **********************************************************************
+//Kokkos kernels:
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
+operator()(const ScatterRank0_Tag& tag, const int& cell) const
+{
+      for (std::size_t node = 0; node < this->numNodes; ++node){
+        for (std::size_t eq = 0; eq < numFields; eq++){
+          Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->val[eq])(cell,node));
+        }
+      }    
+}
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
+operator()(const ScatterRank1_Tag& tag, const int& cell) const
+{
+   for (std::size_t node = 0; node < this->numNodes; ++node){
+        for (std::size_t eq = 0; eq < numFields; eq++){
+             Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->valVec[0])(cell,node,eq));
+        }
+    }
+}
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
+operator()(const ScatterRank2_Tag& tag, const int& cell) const
+{
+  const int numDims = this->valTensor[0].dimension(2);
 
+  for (std::size_t node = 0; node < this->numNodes; ++node)
+      for (std::size_t i = 0; i < numDims; i++)
+          for (std::size_t j = 0; j < numDims; j++)
+              Kokkos::atomic_fetch_add( &f_nonconstView[Index(cell,node,this->offset + i*numDims + j)], (this->valTensor[0])(cell,node,i,j)); 
+}
+// **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef NO_KOKKOS_ALBANY
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -143,6 +180,21 @@ evaluateFields(typename Traits::EvalData workset)
   
     }
   }
+#else
+ fT = workset.fT;
+ f_nonconstView = fT->get1dViewNonConst();
+ Index=workset.wsElNodeEqID_kokkos;
+
+  if (this->tensorRank == 0) {
+   Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
+ }
+ else  if (this->tensorRank == 1) {
+  Kokkos::parallel_for(ScatterRank1_Policy(0,workset.numCells),*this);
+ }
+ else if (this->tensorRank == 2) {
+  Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
+ }
+#endif
 }
 
 // **********************************************************************
@@ -157,12 +209,191 @@ ScatterResidual(const Teuchos::ParameterList& p,
   numFields(ScatterResidualBase<PHAL::AlbanyTraits::Jacobian,Traits>::numFieldsBase)
 {
 }
+// **********************************************************************
+
+//Kokkos kernels:
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
+{
+
+  LO colT[nunk];
+  LO rowT;
+
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      }
+    }
+
+   for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; eq++) {
+          rowT= Index(cell,node,this->offset + eq);
+           if (loadResid) 
+              fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
+           if (((this->val[eq])(cell,node)).hasFastAccess()) {  
+               for (int lunk=0; lunk<nunk; lunk++){
+                   ST val = ((this->val[eq])(cell,node)).fastAccessDx(lunk);
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true); 
+               }
+            }//has fast access
+      }
+   }
+
+}
+
+template<typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
+{
+ 
+  LO colT[nunk];
+  LO rowT;
+  ST vals[nunk];
+
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      }
+    }
+
+   for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; eq++) {
+          rowT = Index(cell,node,this->offset + eq);
+           if (loadResid)
+              fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
+           if (((this->val[eq])(cell,node)).hasFastAccess()) {
+             for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
+              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);  
+        }
+      }
+   }
+
+}
+
+
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
+{
+  LO colT[nunk];
+  LO rowT;
+
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      }
+    }
+
+   for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; eq++) {
+          rowT= Index(cell,node,this->offset + eq);
+           if (loadResid)
+              fT->sumIntoLocalValue(rowT, ((this->valVec[0])(cell,node,eq)).val());
+           if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+               for (int lunk=0; lunk<nunk; lunk++){
+                   ST val = ((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk);
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
+               }
+            }//has fast access
+      }
+   }
+
+}
+
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
+{
+  LO colT[nunk];
+  LO rowT;
+  ST vals[nunk];
+
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      }
+    }
+
+   for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; eq++) {
+          rowT = Index(cell,node,this->offset + eq);
+           if (loadResid)
+              fT->sumIntoLocalValue(rowT, ((this->valVec[0])(cell,node,eq)).val());
+           if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+             for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec[0])(cell,node,eq).fastAccessDx(i);
+              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
+        }
+      }
+   }
+
+}
+
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
+{
+  LO colT[nunk];
+  LO rowT;
+
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      }
+    }
+
+   for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; eq++) {
+          rowT= Index(cell,node,this->offset + eq);
+           if (loadResid)
+              fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
+           if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
+               for (int lunk=0; lunk<nunk; lunk++){
+                    ST val = ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).fastAccessDx(lunk);
+                    jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
+               }
+            }//has fast access
+      }
+   }
+
+}
+
+template<typename Traits>
+void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
+operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
+{
+  LO colT[nunk];
+  LO rowT;
+  ST vals[nunk];
+
+  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+      for (int eq_col=0; eq_col<neq; eq_col++) {
+        colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
+      }
+    }
+
+   for (int node = 0; node < this->numNodes; ++node) {
+      for (int eq = 0; eq < numFields; eq++) {
+          rowT = Index(cell,node,this->offset + eq);
+           if (loadResid)
+              fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
+           if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
+             for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
+              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
+        }
+      }
+   }
+
+}
 
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifdef NO_KOKKOS_ALBANY
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
@@ -203,7 +434,8 @@ evaluateFields(typename Traits::EvalData workset)
             if (loadResid) {
               fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
              }
-             if (((this->val[eq])(cell,node)).hasFastAccess()) {
+
+            if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
 
              if (workset.is_adjoint) {
                for (unsigned int lunk=0; lunk<nunk; lunk++)
@@ -257,6 +489,52 @@ evaluateFields(typename Traits::EvalData workset)
    } 
   if (fid) fclose(fid);                
 
+#else
+   //Kokkos parallel execution
+
+   fT = workset.fT;
+   JacT = workset.JacT;
+   Index=workset.wsElNodeEqID_kokkos;
+
+   if (!JacT->isFillComplete())
+      JacT->fillComplete();
+
+   jacobian=JacT->getLocalMatrix();
+
+   loadResid = Teuchos::nonnull(fT);
+
+   neq = workset.wsElNodeEqID[0][0].size();
+   nunk = neq*this->numNodes;
+  // colT.resize(nunk);
+
+   numDim=0;
+   if(this->tensorRank==2)
+     numDim = this->valTensor[0].dimension(2);
+
+   if (this->tensorRank == 0) {
+      if (workset.is_adjoint) 
+         Kokkos::parallel_for(ScatterRank0_is_adjoint_Policy(0,workset.numCells),*this);  
+      else
+         Kokkos::parallel_for(ScatterRank0_no_adjoint_Policy(0,workset.numCells),*this);
+   }
+   else  if (this->tensorRank == 1) {
+       if (workset.is_adjoint) 
+          Kokkos::parallel_for(ScatterRank1_is_adjoint_Policy(0,workset.numCells),*this);
+       else
+          Kokkos::parallel_for(ScatterRank1_no_adjoint_Policy(0,workset.numCells),*this);
+
+   }
+   else if (this->tensorRank == 2) {
+        if (workset.is_adjoint) 
+            Kokkos::parallel_for(ScatterRank2_is_adjoint_Policy(0,workset.numCells),*this);
+        else
+            Kokkos::parallel_for(ScatterRank2_no_adjoint_Policy(0,workset.numCells),*this);
+   }
+
+ if (JacT->isFillComplete())
+    JacT->resumeFill();
+ 
+#endif
 
 //Irina TOFIX
 /*
