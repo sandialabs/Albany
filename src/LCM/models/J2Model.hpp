@@ -100,6 +100,7 @@ public:
 
     int derivative_dim ;
 
+   
     typedef typename PHX::MDField<ScalarT> ArrayT;
     
     PHX::MDField<ScalarT> def_grad;
@@ -116,23 +117,27 @@ public:
 
 
     int dims_, num_pts;
-    PHX::MDField<ScalarT, Dim, Dim> F;
-    PHX::MDField<ScalarT, Dim, Dim> be;
-    PHX::MDField<ScalarT, Dim, Dim> s;
-    PHX::MDField<ScalarT, Dim, Dim> sigma;
-    PHX::MDField<ScalarT, Dim, Dim> N;
-    PHX::MDField<ScalarT, Dim, Dim> A;
-    PHX::MDField<ScalarT, Dim, Dim> expA;
-    PHX::MDField<ScalarT, Dim, Dim> Fpnew;
-    PHX::MDField<ScalarT, Dim, Dim> I;
-    PHX::MDField<ScalarT, Dim, Dim> Fpn;
-    PHX::MDField<ScalarT, Dim, Dim> Fpinv;
-    PHX::MDField<ScalarT, Dim, Dim> Cpinv;
-
-   // ScalarT kappa, mu, mubar, K, Y;
-   // ScalarT Jm23, trace, smag2, smag, f, p, dgam;
+/*    PHX::MDField<ScalarT, Cell, Dim, Dim> F;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> be;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> s;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> sigma;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> N;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> A;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> expA;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> Fpnew;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> I;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> Fpn;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> Fpinv;
+    PHX::MDField<ScalarT, Cell, Dim, Dim> Cpinv;
+*/
     ScalarT sq23;
     bool have_temperature_;
+
+    RealType sat_mod_, sat_exp_;
+    RealType heat_capacity_, density_;
+    PHX::MDField<ScalarT, Cell, QuadPoint> temperature_;
+    RealType ref_temperature_;
+    RealType expansion_coeff_;
 
    public:
    typedef PHX::Device device_type;
@@ -154,18 +159,25 @@ public:
                         const Albany::MDArray &Fpold_,
                         const Albany::MDArray &eqpsold_,
                         const bool have_temperature, 
-                        PHX::MDField<ScalarT, Dim, Dim> &F_,
-                        PHX::MDField<ScalarT, Dim, Dim> &be_,
-                        PHX::MDField<ScalarT, Dim, Dim> &s_,
-                        PHX::MDField<ScalarT, Dim, Dim> &sigma_,
-                        PHX::MDField<ScalarT, Dim, Dim> &N_,
-                        PHX::MDField<ScalarT, Dim, Dim> &A_,
-                        PHX::MDField<ScalarT, Dim, Dim> &expA_,
-                        PHX::MDField<ScalarT, Dim, Dim> &Fpnew_,
-                        PHX::MDField<ScalarT, Dim, Dim> &I_,
-                        PHX::MDField<ScalarT, Dim, Dim> &Fpn_,
-                        PHX::MDField<ScalarT, Dim, Dim> &Fpinv_,
-                        PHX::MDField<ScalarT, Dim, Dim> &Cpinv_)
+/*                        PHX::MDField<ScalarT, Cell, Dim, Dim> &F_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &be_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &s_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &sigma_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &N_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &A_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &expA_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &Fpnew_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &I_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &Fpn_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &Fpinv_,
+                        PHX::MDField<ScalarT, Cell, Dim, Dim> &Cpinv_,
+*/                        const RealType sat_mod,
+                        const RealType sat_exp,
+                        const RealType heat_capacity,
+                        const RealType density,
+                        const PHX::MDField<ScalarT, Cell, QuadPoint> temperature,
+                        const RealType ref_temperature,
+                        const RealType expansion_coeff)
        : dims_(dims) 
        , num_pts(num_pts_)
        , def_grad(def_grad_)
@@ -183,7 +195,7 @@ public:
        , Fpold(Fpold_)
        , eqpsold(eqpsold_)
        , have_temperature_(have_temperature)
-       , F(F_)
+/*       , F(F_)
        , be(be_)
        , s(s_)
        , sigma(sigma_)
@@ -195,47 +207,16 @@ public:
        , Fpn(Fpn_)
        , Fpinv(Fpinv_)
        , Cpinv(Cpinv_)
+*/       , sat_mod_(sat_mod)
+       , sat_exp_(sat_exp)
+       , heat_capacity_(heat_capacity)
+       , density_(density)
+       , temperature_(temperature)
+       , ref_temperature_(ref_temperature)
+       , expansion_coeff_(expansion_coeff)
     {
 
-  /*   typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-     std::vector<PHX::index_size_type> ddims_;
-     ddims_.push_back(24);
-
-      //F     = PHX::MDField<ScalarT, Dim, Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      //be    = PHX::MDField<ScalarT, Dim, Dim>("be",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      s     = PHX::MDField<ScalarT, Dim, Dim>("s",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      sigma = PHX::MDField<ScalarT, Dim, Dim>("sigma",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      N     = PHX::MDField<ScalarT, Dim, Dim>("N",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      A     = PHX::MDField<ScalarT, Dim, Dim>("A",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      expA  = PHX::MDField<ScalarT, Dim, Dim>("expA",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      Fpnew = PHX::MDField<ScalarT, Dim, Dim>("Fpnew",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      I     = PHX::MDField<ScalarT, Dim, Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-     // Fpn   = PHX::MDField<ScalarT, Dim, Dim>("Fpn",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      //Fpinv = PHX::MDField<ScalarT, Dim, Dim>("Fpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-      //Cpinv = PHX::MDField<ScalarT, Dim, Dim>("Cpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(dims_,dims_)));
-
-     //F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
-    // be.setFieldData(ViewFactory::buildView(be.fieldTag(),ddims_));
-     s.setFieldData(ViewFactory::buildView(s.fieldTag(),ddims_));
-     sigma.setFieldData(ViewFactory::buildView(sigma.fieldTag(),ddims_));
-     N.setFieldData(ViewFactory::buildView(N.fieldTag(),ddims_));
-     A.setFieldData(ViewFactory::buildView(A.fieldTag(),ddims_));
-     expA.setFieldData(ViewFactory::buildView(expA.fieldTag(),ddims_));
-     Fpnew.setFieldData(ViewFactory::buildView(Fpnew.fieldTag(),ddims_));
-     I.setFieldData(ViewFactory::buildView(I.fieldTag(),ddims_));
-   //  Fpn.setFieldData(ViewFactory::buildView(Fpn.fieldTag(),ddims_));
-  //   Fpinv.setFieldData(ViewFactory::buildView(Fpinv.fieldTag(),ddims_));
-  //   Cpinv.setFieldData(ViewFactory::buildView(Cpinv.fieldTag(),ddims_));
-*/
     sq23=(std::sqrt(2. / 3.));
-/*
-    for (int i=0; i<dims_; i++){
-      for (int j=0; j<dims_;j++){
-        I(i,j)=ScalarT(0.0);
-        if (j==j)I(i,j)=ScalarT(1.0);
-     }
-    }
-*/
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -250,15 +231,20 @@ public:
      void compute_with_temperature(const int cell) const;
     KOKKOS_INLINE_FUNCTION
      void compute_with_no_temperature(const int cell) const;
- 
-  };
- // template <class Array1, class Array2>
- // KOKKOS_INLINE_FUNCTION
- //   void  inverse(const Array1 &A,  Array2  &Atrans) const;
 
-  template <class ArrayT>
-  KOKKOS_INLINE_FUNCTION
-   const ScalarT trace(const ArrayT &A) const;
+    typedef  ScalarT TensorType [3][3] ; 
+ 
+ /*  KOKKOS_INLINE_FUNCTION
+   const ScalarT trace(const TensorType &A, const int dim) const;
+
+   KOKKOS_INLINE_FUNCTION
+   const ScalarT norm( const TensorType &A, const int dim) const;
+
+   KOKKOS_INLINE_FUNCTION
+   const ScalarT det(const TensorType &A, const int dim) const;
+ */
+  };
+
 #endif  
 };
 }

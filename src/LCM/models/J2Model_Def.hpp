@@ -137,6 +137,14 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
+/*std::cout <<"before" << std::endl;
+for (int i(0); i < num_dims_; ++i) 
+        for (int j(0); j < num_dims_; ++j) 
+std::cout<<Fpold(i,j)<< std::endl;
+*/
+
+#ifndef NO_KOKKOS_ALBANY
+
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
   ScalarT sq23(std::sqrt(2. / 3.));
@@ -156,7 +164,6 @@ computeState(typename Traits::EvalData workset,
       K = hardeningModulus(cell, pt);
       Y = yieldStrength(cell, pt);
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
-
       // fill local tensors
       F.fill(def_grad,cell, pt,0,0);
       //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
@@ -168,9 +175,11 @@ computeState(typename Traits::EvalData workset,
 
       // compute trial state
       Fpinv = Intrepid::inverse(Fpn);
+
       Cpinv = Fpinv * Intrepid::transpose(Fpinv);
       be = Jm23 * F * Cpinv * Intrepid::transpose(F);
       s = mu * Intrepid::dev(be);
+
       mubar = Intrepid::trace(be) * mu / (num_dims_);
 
       // check yield condition
@@ -292,48 +301,88 @@ computeState(typename Traits::EvalData workset,
       }
     }
   }
+#else
+typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
+computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_,  sat_mod_, sat_exp_, heat_capacity_, density_, temperature_,ref_temperature_, expansion_coeff_);
+
+  if (have_temperature_)
+     Kokkos::parallel_for(have_temperature_Policy(0,workset.numCells),Kernel);
+  else
+     Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
+
+#endif
 }
 //------------------------------------------------------------------------------
 #ifndef NO_KOKKOS_ALBANY
 
-// computeState Kokkos functor
-//template<typename EvalT, typename Traits>
-template <class Array1, class Array2>
-KOKKOS_INLINE_FUNCTION
-//void J2Model<EvalT, Traits>::
-void inverse(const Array1 &A, Array2  &Atrans) 
-{
-  int num_dims_=A.dimension(0);
-  for (int i(0); i < num_dims_; ++i) 
-        for (int j(0); j < num_dims_; ++j) 
-            Atrans(i,j)=A(j,i);
-}
-
-template<typename EvalT, typename Traits>
 template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
+void inverse(const ArrayT &A, ArrayT  &Atrans) 
+{
+  const int num_dims_=sizeof(A)/sizeof(A[0]);
+  for (int i(0); i < num_dims_; ++i) 
+        for (int j(0); j < num_dims_; ++j) 
+            Atrans[i][j]=A[j][i];
+}
+
+template<typename ScalarT, class ArrayT>
+KOKKOS_INLINE_FUNCTION
+ScalarT norm( const ArrayT &A, const int dim) 
+{
+
+  ScalarT norm;
+
+   for (int i=0; i<dim; i++)
+    for (int j=0; j<dim; j++)
+     norm+=A[i][j]*A[i][j];
+
+  return norm;
+}
+
+/*
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
 const typename J2Model<EvalT, Traits>::ScalarT
-J2Model<EvalT, Traits>::
-trace (const ArrayT &A) const
+J2Model<EvalT, Traits>::computeStateKernel::
+norm( const TensorType &A, const int dim) const
+{
+
+  typename J2Model<EvalT, Traits>::ScalarT norm;
+
+   for (int i=0; i<dim; i++)
+    for (int j=0; j<dim; j++)
+     norm+=A[i][j]*A[i][j];
+
+  return norm;
+}
+*/
+
+
+template<typename ScalarT, class ArrayT>
+KOKKOS_INLINE_FUNCTION
+ScalarT det( const ArrayT &A, const int dimension) 
 {
 
   ScalarT s = 0.0;
 
-  switch (num_dims_) {
+  switch (dimension) {
 
     default:
-      for (int i = 0; i < num_dims_; ++i) {
-        s += A(i,i);
-      }
-      break;
+    {
+     TEUCHOS_TEST_FOR_EXCEPTION( !( (dimension == 2) || (dimension == 3) ), std::invalid_argument,
+                                  ">>> ERROR (LCM Kinematics): Det function is defined only for rank-2 or 3 .");
+    }
+    break;
 
     case 3:
-      s = A(0,0) + A(1,1) + A(2,2);
+      s = -A[0][2]*A[1][1]*A[2][0] + A[0][1]*A[1][2]*A[2][0] +
+           A[0][2]*A[1][0]*A[2][1] - A[0][0]*A[1][2]*A[2][1] -
+           A[0][1]*A[1][0]*A[2][2] + A[0][0]*A[1][1]*A[2][2];
       break;
 
     case 2:
-      s = A(0,0) + A(1,1);
+      s = A[0][0] * A[1][1] - A[1][0] * A[0][1];
       break;
 
   }
@@ -342,46 +391,270 @@ trace (const ArrayT &A) const
 }
 
 
+template<typename ScalarT, class ArrayT>
+KOKKOS_INLINE_FUNCTION
+ScalarT trace (const ArrayT &Array, const int dimension)
+{
+
+  ScalarT traceValue  = 0.0;
+
+
+  switch (dimension) {
+
+    default:
+      for (int i = 0; i < dimension; ++i) {
+        traceValue += Array[i][i];
+      }
+      break;
+
+    case 3:
+      traceValue = Array[0][0] + Array[1][1] + Array[2][2];
+      break;
+
+    case 2:
+      traceValue = Array[0][0] + Array[1][1];
+      break;
+
+  }
+  return traceValue;
+
+ 
+}
+
+
+/*template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+const typename J2Model<EvalT, Traits>::ScalarT
+J2Model<EvalT, Traits>::computeStateKernel::
+det( const TensorType &A, const int dimension) const
+{
+
+  J2Model<EvalT, Traits>::ScalarT s = 0.0;
+
+  switch (dimension) {
+
+    default:
+    {
+     TEUCHOS_TEST_FOR_EXCEPTION( !( (dimension == 2) || (dimension == 3) ), std::invalid_argument,
+                                  ">>> ERROR (LCM Kinematics): Det function is defined only for rank-2 or 3 .");
+    }
+    break;
+
+    case 3:
+      s = -A[0][2]*A[1][1]*A[2][0] + A[0][1]*A[1][2]*A[2][0] +
+           A[0][2]*A[1][0]*A[2][1] - A[0][0]*A[1][2]*A[2][1] -
+           A[0][1]*A[1][0]*A[2][2] + A[0][0]*A[1][1]*A[2][2];
+     break;
+
+    case 2:
+      s = A[0][0] * A[1][1] - A[1][0] * A[0][1];
+      break;
+
+  }
+
+  return s;
+}
+
+template<typename EvalT, typename Traits>
+//template <class ArrayT>
+KOKKOS_INLINE_FUNCTION
+const typename J2Model<EvalT, Traits>::ScalarT
+J2Model<EvalT, Traits>::computeStateKernel::
+trace (const TensorType &Array, const int dimension) const
+{
+
+  typename J2Model<EvalT, Traits>::ScalarT traceValue  = 0.0;
+
+
+  switch (dimension) {
+
+    default:
+      for (int i = 0; i < dimension; ++i) {
+        traceValue += Array[i][i];
+      }
+      break;
+
+    case 3:
+      traceValue = Array[0][0] + Array[1][1] + Array[2][2];
+      break;
+
+    case 2:
+      traceValue = Array[0][0] + Array[1][1];
+      break;
+
+  }
+  return traceValue;
+
+ 
+}
+*/
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void J2Model<EvalT, Traits>::computeStateKernel::
 compute_common(const int cell) const{
 
   ScalarT kappa, mu, mubar, K, Y;
-  ScalarT Jm23, trace, smag2, smag, f, p, dgam;
- 
-//  Kokkos::View <ScalarT**, PHX::Device> F ("F", dims_, dims_, derivative_dim);
-//  Kokkos::View <ScalarT**, PHX::Device> Fpn ("Fpn", dims_, dims_, derivative_dim);
-//  Kokkos::View <ScalarT**, PHX::Device> Fpinv ("Fpinv", dims_, dims_, derivative_dim);
-//  Kokkos::View <ScalarT**, PHX::Device> Cpinv ("Cpinv", dims_, dims_, derivative_dim);
-//  Kokkos::View <ScalarT**, PHX::Device> be ("be", dims_, dims_, derivative_dim);
+  ScalarT Jm23,  smag2, smag, f, p, dgam;
+/*  ScalarT F[dims_][dims_];
+  ScalarT be[dims_][dims_];
+  ScalarT s[dims_][dims_];
+  ScalarT sigma[dims_][dims_];
+  ScalarT N[dims_][dims_];
+  ScalarT A[dims_][dims_];
+  ScalarT expA[dims_][dims_];
+  ScalarT Fpnew[dims_][dims_];
+  ScalarT I[dims_][dims_];
+  ScalarT Fpn[dims_][dims_];
+  ScalarT Fpinv[dims_][dims_];
+  ScalarT Cpinv[dims_][dims_];
+*/
+ Intrepid::Tensor<ScalarT> F(dims_), be(dims_), s(dims_), sigma(dims_);
+  Intrepid::Tensor<ScalarT> N(dims_), A(dims_), expA(dims_), Fpnew(dims_);
+  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(dims_));
+  Intrepid::Tensor<ScalarT> Fpn(dims_), Fpinv(dims_), Cpinv(dims_);
+
 
   for (int pt(0); pt < num_pts; ++pt) {
+ 
+
       kappa = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       K = hardeningModulus(cell, pt);
       Y = yieldStrength(cell, pt);
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
-
       // fill local tensors
       for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {
           F(i,j) = ScalarT(def_grad(cell, pt, i, j));
-          Fpn(i, j) = ScalarT(Fpold(cell, pt, i, j));
+          Fpn(i,j) = ScalarT(Fpold(cell, pt, i, j));
         }
        }
       
-     inverse(Fpn, Fpinv); 
+     Fpinv=Intrepid::inverse(Fpn); 
 
      for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {  
-          Cpinv(i,j) = Fpinv(i,j) * Fpinv(j,i);
+          Cpinv (i,j) = Fpinv(i,j) * Fpinv(j,i);
           be(i,j) = Jm23 * F(i,j) * Cpinv(i,j) * F(j,i);
-   //   s = mu * Intrepid::dev(be);
-  //    mubar = Intrepid::trace(be) * mu / (num_dims_);
         }
-     }
+      }
+     for (int i(0); i < dims_; ++i) {
+        for (int j(0); j < dims_; ++j) {
+          ScalarT theta=(1.0/dims_) * Intrepid::trace(be);
+          s(i,j) = mu * (be(i,j)-theta*I(i,j));
+      }
+    }
+     mubar = Intrepid::trace(be) * mu / (dims_);
+     smag = norm(s);
+     f = smag - sq23 * (Y + K * eqpsold(cell, pt)
+         + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
+
+      if (f > 1E-12) {
+         bool converged = false;
+        ScalarT g = f;
+        ScalarT H = 0.0;
+        ScalarT dH = 0.0;
+        ScalarT alpha = 0.0;
+        ScalarT res = 0.0;
+        int count = 0;
+        dgam = 0.0;
+
+        LocalNonlinearSolver<EvalT, Traits> solver;
+
+        std::vector<ScalarT> F(1);
+        std::vector<ScalarT> dFdX(1);
+        std::vector<ScalarT> X(1);
+
+        F[0] = f;
+        X[0] = 0.0;
+        dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
+        while (!converged && count <= 30)
+        {
+          count++;
+          solver.solve(dFdX, X, F);
+          alpha = eqpsold(cell, pt) + sq23 * X[0];
+          H = K * alpha + sat_mod_ * (1. - exp(-sat_exp_ * alpha));
+          dH = K + sat_exp_ * sat_mod_ * exp(-sat_exp_ * alpha);
+          F[0] = smag - (2. * mubar * X[0] + sq23 * (Y + H));
+          dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
+
+          res = std::abs(F[0]);
+          if (res < 1.e-11 || res / Y < 1.E-11)
+            converged = true;
+
+          TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
+              std::endl <<
+              "Error in return mapping, count = " <<
+              count <<
+              "\nres = " << res <<
+              "\nrelres = " << res/f <<
+              "\ng = " << F[0] <<
+              "\ndg = " << dFdX[0] <<
+              "\nalpha = " << alpha << std::endl);
+        } //end while
+        solver.computeFadInfo(dFdX, X, F);
+        dgam = X[0];
+        
+         for (int i(0); i < dims_; ++i) {
+          for (int j(0); j < dims_; ++j) {
+             // plastic direction
+             N(i,j) = (1 / smag) * s(i,j);
+
+             // update s
+             s(i,j) -= 2 * mubar * dgam * N(i,j);
+           }
+         }
+          
+        // update eqps
+        eqps(cell, pt) = alpha;
+
+        // mechanical source
+        if (have_temperature_ && delta_time(0) > 0) {
+          source(cell, pt) = (sq23 * dgam / delta_time(0)
+            * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
+        }
+           
+       // exponential map to get Fpnew
+       for (int i(0); i < dims_; ++i) {
+        for (int j(0); j < dims_; ++j) {      
+          A(i,j) = dgam * N(i,j);
+        }
+       }
+          expA = Intrepid::exp(A);
+       for (int i(0); i < dims_; ++i) {
+        for (int j(0); j < dims_; ++j) {
+          Fpnew(i,j) = expA(i,j) * Fpn(i,j);
+        }
+       }
+        for (int i(0); i < dims_; ++i) {
+          for (int j(0); j < dims_; ++j) {
+            Fp(cell, pt, i, j) = Fpnew(i, j);
+          }
+        }
+      } else {
+        eqps(cell, pt) = eqpsold(cell, pt);
+        if (have_temperature_) source(cell, pt) = 0.0;
+        for (int i(0); i < dims_; ++i) {
+          for (int j(0); j < dims_; ++j) {
+            Fp(cell, pt, i, j) = Fpn(i, j);
+          }
+        }
+      }//end if
+      // update yield surface
+      yieldSurf(cell, pt) = Y + K * eqps(cell, pt)
+                           + sat_mod_ * (1. - std::exp(-sat_exp_ * eqps(cell, pt)));
+
+      // compute pressure
+      p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
+      // compute stress
+      for (int i(0); i < dims_; ++i) {
+        for (int j(0); j < dims_; ++j) {
+          sigma(i,j)=p*I(i,j)+s(i,j)/J(cell,pt);
+          stress(cell, pt, i, j) = sigma(i, j);
+        }
+      }
+   
   }
 }
 
@@ -389,6 +662,20 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void J2Model<EvalT, Traits>::computeStateKernel::
 compute_with_temperature(const int cell) const{
+/*
+  for (int pt(0); pt < num_pts; ++pt) {
+       // already set  F.fill(def_grad,cell,pt,0,0);
+       for (int i=0; i<dims_;i++){
+         for (int j=0; j<dims_;j++){
+            ScalarT J = det(F,cell);
+            sigma(cell,i,j)=stress(cell,pt,i,j);
+            sigma(cell,i,j) -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+              * (temperature_(cell,pt) - ref_temperature_) * I(cell,i,j);
+            stress(cell, pt, i, j) = sigma(cell,i, j);
+          }
+        }
+   }
+*/
 
 }
 
@@ -457,35 +744,35 @@ computeStateParallel(typename Traits::EvalData workset,
 
   //temporary data:
   
-  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+/*  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
   std::vector<PHX::index_size_type> ddims_;
   ddims_.push_back(24);
 
-  PHX::MDField<ScalarT, Dim, Dim> F;
-  PHX::MDField<ScalarT, Dim, Dim> be;
-  PHX::MDField<ScalarT, Dim, Dim> s;
-  PHX::MDField<ScalarT, Dim, Dim> sigma;
-  PHX::MDField<ScalarT, Dim, Dim> N;
-  PHX::MDField<ScalarT, Dim, Dim> A;
-  PHX::MDField<ScalarT, Dim, Dim> expA; 
-  PHX::MDField<ScalarT, Dim, Dim> Fpnew;
-  PHX::MDField<ScalarT, Dim, Dim> I;
-  PHX::MDField<ScalarT, Dim, Dim> Fpn;
-  PHX::MDField<ScalarT, Dim, Dim> Fpinv;
-  PHX::MDField<ScalarT, Dim, Dim> Cpinv;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> F;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> be;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> s;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> sigma;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> N;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> A;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> expA; 
+  PHX::MDField<ScalarT, Cell, Dim, Dim> Fpnew;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> I;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> Fpn;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> Fpinv;
+  PHX::MDField<ScalarT, Cell, Dim, Dim> Cpinv;
 
-  F     = PHX::MDField<ScalarT, Dim, Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  s    = PHX::MDField<ScalarT, Dim, Dim>("s",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  be    = PHX::MDField<ScalarT, Dim, Dim>("be",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  sigma = PHX::MDField<ScalarT, Dim, Dim>("sigma",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  N     = PHX::MDField<ScalarT, Dim, Dim>("N",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  A     = PHX::MDField<ScalarT, Dim, Dim>("A",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  expA  = PHX::MDField<ScalarT, Dim, Dim>("expA",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  Fpnew = PHX::MDField<ScalarT, Dim, Dim>("Fpnew",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  I     = PHX::MDField<ScalarT, Dim, Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  Fpn   = PHX::MDField<ScalarT, Dim, Dim>("Fpn",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  Fpinv = PHX::MDField<ScalarT, Dim, Dim>("Fpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  Cpinv = PHX::MDField<ScalarT, Dim, Dim>("Cpinv",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+  F     = PHX::MDField<ScalarT, Cell, Dim, Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  s    = PHX::MDField<ScalarT, Cell, Dim, Dim>("s",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  be    = PHX::MDField<ScalarT, Cell, Dim, Dim>("be",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  sigma = PHX::MDField<ScalarT, Cell, Dim, Dim>("sigma",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  N     = PHX::MDField<ScalarT, Cell, Dim, Dim>("N",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  A     = PHX::MDField<ScalarT, Cell, Dim, Dim>("A",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  expA  = PHX::MDField<ScalarT, Cell, Dim, Dim>("expA",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  Fpnew = PHX::MDField<ScalarT, Cell, Dim, Dim>("Fpnew",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  I     = PHX::MDField<ScalarT, Cell, Dim, Dim>("I",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  Fpn   = PHX::MDField<ScalarT, Cell, Dim, Dim>("Fpn",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  Fpinv = PHX::MDField<ScalarT, Cell, Dim, Dim>("Fpinv",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
+  Cpinv = PHX::MDField<ScalarT, Cell, Dim, Dim>("Cpinv",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
 
   F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
   be.setFieldData(ViewFactory::buildView(be.fieldTag(),ddims_));
@@ -499,23 +786,37 @@ computeStateParallel(typename Traits::EvalData workset,
   Fpn.setFieldData(ViewFactory::buildView(Fpn.fieldTag(),ddims_));
   Fpinv.setFieldData(ViewFactory::buildView(Fpinv.fieldTag(),ddims_));
   Cpinv.setFieldData(ViewFactory::buildView(Cpinv.fieldTag(),ddims_));
-
-  for (int i=0; i<num_dims_; i++){
+  for (int cell=0; cell<workset.numCells; cell++){
+   for (int i=0; i<num_dims_; i++){
      for (int j=0; j<num_dims_;j++){
-        I(i,j)=ScalarT(0.0);
-        if (j==j)I(i,j)=ScalarT(1.0);
+        I(cell,i,j)=0.0;
+        if (i==j)I(cell,i,j)=1.0;
+     }
+    }
+  }
+*/
+
+std::cout <<"before"<< std::endl;
+   for (int i=0; i<num_dims_; i++){
+     for (int j=0; j<num_dims_;j++){
+std::cout << Fpold(0,0,i,j) << std::endl;
+
      }
     }
 
+
    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-  computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_, F, be, s, sigma, N, A, expA, Fpnew, I, Fpn, Fpinv, Cpinv);
+//  computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_, F, be, s, sigma, N, A, expA, Fpnew, I, Fpn, Fpinv, Cpinv, sat_mod_, sat_exp_, heat_capacity_, density_, temperature_,ref_temperature_, expansion_coeff_);
+
+  computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_,  sat_mod_, sat_exp_, heat_capacity_, density_, temperature_,ref_temperature_, expansion_coeff_);
 
   if (have_temperature_)
      Kokkos::parallel_for(have_temperature_Policy(0,workset.numCells),Kernel);
   else
      Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
 
+std::cout <<"end debugging" << std::endl;
 }
 #endif
 //-------------------------------------------------------------------------------
