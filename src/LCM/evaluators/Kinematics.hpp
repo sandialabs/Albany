@@ -90,7 +90,7 @@ namespace LCM {
     //! flag to compute the strain
     bool needs_strain_;
 
-#ifndef NO_KOKKOS_ALBANYY
+#ifndef NO_KOKKOS_ALBANY
    //Kokkos
 
     public:

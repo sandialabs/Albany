@@ -59,7 +59,7 @@ namespace LCM {
     this->setName("Kinematics"+PHX::typeAsString<PHX::Device>());
 
    
-#ifndef NO_KOKKOS_ALBANYY
+#ifndef NO_KOKKOS_ALBANY
     //Allocationg additional data for Kokkos functors
     ddims_.push_back(24);
     F=PHX::MDField<ScalarT,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));   

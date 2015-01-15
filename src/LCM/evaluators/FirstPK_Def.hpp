@@ -62,7 +62,7 @@ FirstPK(Teuchos::ParameterList& p,
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
 
-#ifndef NO_KOKKOS_ALBANYY
+#ifndef NO_KOKKOS_ALBANY
   //Allocationg additional data for Kokkos functors
   ddims_.push_back(24);
   derivative_dim=25;
