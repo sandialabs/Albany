@@ -952,15 +952,17 @@ ATO::SpatialFilter::buildOperator(
     // if this filter operates on a subset of the blocks in the mesh, create a list
     // of nodes that are not smoothed:
     std::set<int> excludeNodes;
-    size_t num_worksets = coords.size();
-    for (size_t ws=0; ws<num_worksets; ws++) {
-      if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) == blocks.end() ) continue;
-      int num_cells = coords[ws].size();
-      for (int cell=0; cell<num_cells; cell++) {
-        size_t num_nodes = coords[ws][cell].size();
-        for (int node=0; node<num_nodes; node++) {
-          int gid = wsElNodeID[ws][cell][node];
-          excludeNodes.insert(gid);
+    if( blocks.size() > 0 ){
+      size_t num_worksets = coords.size();
+      for (size_t ws=0; ws<num_worksets; ws++) {
+        if( find(blocks.begin(), blocks.end(), wsEBNames[ws]) != blocks.end() ) continue;
+        int num_cells = coords[ws].size();
+        for (int cell=0; cell<num_cells; cell++) {
+          size_t num_nodes = coords[ws][cell].size();
+          for (int node=0; node<num_nodes; node++) {
+            int gid = wsElNodeID[ws][cell][node];
+            excludeNodes.insert(gid);
+          }
         }
       }
     }
@@ -971,6 +973,7 @@ ATO::SpatialFilter::buildOperator(
     // awful n^2 search... all against all
     size_t dimension   = app->getDiscretization()->getNumDim();
     GlobalPoint homeNode;
+    size_t num_worksets = coords.size();
     for (size_t home_ws=0; home_ws<num_worksets; home_ws++) {
       int home_num_cells = coords[home_ws].size();
       for (int home_cell=0; home_cell<home_num_cells; home_cell++) {
@@ -984,7 +987,7 @@ ATO::SpatialFilter::buildOperator(
             std::set<GlobalPoint> my_neighbors;
             if( excludeNodes.find(homeNode.gid) == excludeNodes.end() ){
               for (size_t trial_ws=0; trial_ws<num_worksets; trial_ws++) {
-                if( find(blocks.begin(), blocks.end(), wsEBNames[trial_ws]) != blocks.end() ) continue;
+                if( find(blocks.begin(), blocks.end(), wsEBNames[trial_ws]) == blocks.end() ) continue;
                 int trial_num_cells = coords[trial_ws].size();
                 for (int trial_cell=0; trial_cell<trial_num_cells; trial_cell++) {
                   size_t trial_num_nodes = coords[trial_ws][trial_cell].size();
