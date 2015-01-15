@@ -27,7 +27,7 @@ SchrodingerDirichletBase(Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(fieldTag);
 
-  this->setName(name+ );
+  this->setName(name+PHX::typeAsString<EvalT>());
 
   // Set up values as parameters for parameter library
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >
@@ -530,7 +530,7 @@ SchrodingerDirichletAggregator(Teuchos::ParameterList& p)
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("DBC Aggregator Name"), dl);
   this->addEvaluatedField(fieldTag);
 
-  this->setName("SchrodingerDirichlet Aggregator" );
+  this->setName("SchrodingerDirichlet Aggregator" + PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

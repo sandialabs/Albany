@@ -38,8 +38,9 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   //! Helper function to compute inverse effective mass
-  double getInvEffMassFiniteWall(const MeshScalarT* coord);
-  double getInvEffMass1DMosCap(const MeshScalarT* coord);
+  double getInvEffMassFiniteWall( const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+                                  const int cell, const int qp );
+  double getInvEffMass1DMosCap(const MeshScalarT coord0);
   
   // Input:
   std::size_t numQPs;
