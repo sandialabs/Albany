@@ -4,16 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-// to do before commit:
-// 1. make sure direct calculation of dgdp still works. (i.e., not using distributed parameters.)
-// 2. fix the index into set_p(), around line 400.
-// 3. get this working with the 'pareto' method.
-// 4. use adjoint sensitivity functionality to do stress minimization calc?
-// 5. post-implementation walkthrough.
-// 6. penalization is hardwired.  Fix this!
-
-
 #include "ATO_Solver.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "ATO_TopoTools.hpp"
@@ -32,14 +22,7 @@ Please remove when issue is resolved
 #include "Albany_StateInfoStruct.hpp"
 #include "Adapt_NodalDataBlock.hpp"
 #include "Petra_Converters.hpp"
-
-#define ATO_FILTER_ON
-//#undef ATO_FILTER_ON
-
-// TEV: Following is for debugging filter operator.
-#ifdef ATO_FILTER_ON
 #include "EpetraExt_RowMatrixOut.h"
-#endif //ATO_FILTER_ON
 
 MPI_Datatype MPI_GlobalPoint;
 
@@ -75,8 +58,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // Parse topology info
   Teuchos::ParameterList& topoParams = problemParams.get<Teuchos::ParameterList>("Topology");
-  ATO::TopologyFactory topoFactory;
-  _topology = topoFactory.create(topoParams);
+  _topology = Teuchos::rcp(new Topology(topoParams));
 
   // Parse and create aggregator
   Teuchos::ParameterList& aggregatorParams = problemParams.get<Teuchos::ParameterList>("Objective Aggregator");
@@ -230,7 +212,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
                                               //* source *//   //* target *//
     exporter = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
 
-#ifdef ATO_FILTER_ON
     // this should go somewhere else.  for now ...
     GlobalPoint gp;
     int blockcounts[3] = {1,3,1};
@@ -249,7 +230,6 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
         overlapNodeMap, localNodeMap,
         importer, exporter); 
     }
-#endif //ATO_FILTER_ON
 
   }
 
@@ -350,7 +330,6 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
   } else 
   if( _topology->getCentering() == "Node" ){
  
-    int ss_num_p = subSolver.params_in->Np();
 
     const std::vector<Albany::IDArray>& 
       wsElDofs = distParams->get(_topology->getName())->workset_elem_dofs();
@@ -402,7 +381,8 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
       (*nodeContainer)[nodal_topoName]->saveFieldVector(filteredOTopoVecT,/*offset=*/0);
     }
 
-    subSolver.params_in->set_p(ss_num_p-1,topoVec);
+    int distParamIndex = subSolver.params_in->Np()-1;
+    subSolver.params_in->set_p(distParamIndex,topoVec);
 
     overlapTopoVec->Import(*topoVec, *importer, Insert);
 
@@ -445,22 +425,12 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
       wsElNodeID = stateMgr.getDiscretization()->getWsElNodeID();
 
-    // communicate boundary info
-    int numLocalNodes = topoVec->MyLength();
+    // copy topology into Epetra_Vector to apply the filter and/or communicate boundary data
     double* ltopo; topoVec->ExtractView(&ltopo);
-    for(int ws=0; ws<numWorksets; ws++){
-      Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
-      int numCells = wsTopo.dimension(0);
-      int numNodes = wsTopo.dimension(1);
-        for(int cell=0; cell<numCells; cell++)
-          for(int node=0; node<numNodes; node++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = localNodeMap->LID(gid);
-            if(lid != -1) ltopo[lid] = p[lid];
-          }
-    }
+    int numLocalNodes = topoVec->MyLength();
+    for(int lid=0; lid<numLocalNodes; lid++)
+      ltopo[lid] = p[lid];
 
-    // save topology to nodal data for output sake
     Teuchos::RCP<Albany::NodeFieldContainer> 
       nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
 
@@ -485,6 +455,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
 
     overlapTopoVec->Import(*topoVec, *importer, Insert);
 
+    // If this is not a fixed block, copy the topology into the state manager
     double* otopo; overlapTopoVec->ExtractView(&otopo);
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
@@ -499,6 +470,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
           }
       }
     }
+    // Otherwise, if it is a fixed block, set the state and topology variable to the material value
     double matVal = _topology->getMaterialValue();
     for(int ws=0; ws<numWorksets; ws++){
       Albany::MDArray& wsTopo = dest[ws][_topology->getName()];
@@ -515,6 +487,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       }
     }
 
+    // save topology to nodal data for output sake
     std::string nodal_topoName = _topology->getName()+"_node";
     const Teuchos::RCP<const Tpetra_Vector>
       overlapTopoVecT = Petra::EpetraVector_To_TpetraVectorConst(
@@ -1444,9 +1417,6 @@ ATO::SpatialFilter::importNeighbors(
 }
   
   
-#ifdef ATO_FILTER_ON
-#undef ATO_FILTER_ON
-#endif //ATO_FILTER_ON
   
   
   

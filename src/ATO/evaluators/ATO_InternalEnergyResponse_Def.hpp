@@ -10,6 +10,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "ATO_TopoTools_Def.hpp"
 
 
 template<typename EvalT, typename Traits>
@@ -65,23 +66,6 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
     << "Error!  InternalEnergyResponse requires 'Distributed Parameter' based topology" << std::endl);
 
   topo = PHX::MDField<ScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
-
-  //FName    = responseParams->get<std::string>("Response Name");
-  //dFdpName = responseParams->get<std::string>("Response Derivative Name");
-
-  //! Register with state manager
-  this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
-//  this->pStateMgr->registerStateVariable(FName, dl->workset_scalar, dl->dummy,
-//                                         "all", "scalar", 0.0, false, true);
-
-//  if( topology->getCentering() == "Node" ){
-//    this->pStateMgr->registerStateVariable(dFdpName, dl->node_scalar, dl->dummy,
-//                                           "all", "scalar", 0.0, false, true);
-//  } else {
-//    TEUCHOS_TEST_FOR_EXCEPTION(
-//      true, Teuchos::Exceptions::InvalidParameter, std::endl
-//      << "Error!  InternalEnergyResponse requires 'Node' centering" << std::endl);
-//  }
 
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
@@ -157,8 +141,6 @@ evaluateFields(typename Traits::EvalData workset)
        i<this->local_response.size(); i++)
     this->local_response[i] = 0.0;
 
-//  Albany::MDArray F = (*workset.stateArrayPtr)[FName];
-//  Albany::MDArray topo = (*workset.stateArrayPtr)[topology->getName()];
   std::vector<int> dims;
   gradX.dimensions(dims);
   int size = dims.size();
@@ -177,8 +159,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-//          double P = topology->Penalize(topoVal);
-        ScalarT P = pow(topoVal,3.0);
+        ScalarT P = topology->Penalize(topoVal);
         for(int i=0; i<numDims; i++)
           dE += gradX(cell,qp,i)*workConj(cell,qp,i);
         dE *= qp_weights(cell,qp);
@@ -194,8 +175,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-//          double P = topology->Penalize(topoVal);
-        ScalarT P = pow(topoVal,3.0);
+        ScalarT P = topology->Penalize(topoVal);
         for(int i=0; i<numDims; i++)
           for(int j=0; j<numDims; j++)
             dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j);

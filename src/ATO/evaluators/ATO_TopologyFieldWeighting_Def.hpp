@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "ATO_TopoTools_Def.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
@@ -96,8 +97,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-//        ScalarT P = topology->Penalize(topoVal);
-        ScalarT P = pow(topoVal,3.0);
+        ScalarT P = topology->Penalize(topoVal);
         for(int i=0; i<numDims; i++)
           weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
       }
@@ -109,8 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
- //       ScalarT P = topology->Penalize(topoVal);
-        ScalarT P = pow(topoVal,3.0);
+        ScalarT P = topology->Penalize(topoVal);
         for(int i=0; i<numDims; i++)
           for(int j=0; j<numDims; j++)
             weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);

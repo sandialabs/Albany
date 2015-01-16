@@ -8,6 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Adapt_NodalDataBlock.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_TopoTools_Def.hpp"
 
 template<typename EvalT, typename Traits>
 ATO::StiffnessObjectiveBase<EvalT, Traits>::
@@ -174,7 +175,6 @@ evaluateFields(typename Traits::EvalData workset)
       for(int cell=0; cell<numCells; cell++){
         for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
         for(int qp=0; qp<numQPs; qp++){
-          double dE = 0.0;
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
@@ -194,7 +194,6 @@ evaluateFields(typename Traits::EvalData workset)
       for(int cell=0; cell<numCells; cell++){
         for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
         for(int qp=0; qp<numQPs; qp++){
-          double dE = 0.0;
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
