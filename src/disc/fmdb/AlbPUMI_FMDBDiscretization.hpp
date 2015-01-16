@@ -59,6 +59,9 @@ template<class Output>
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
 
+    //! Get Tpetra overlap Node map
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
+
     //! Process coords for ML
     void setupMLCoords();
 

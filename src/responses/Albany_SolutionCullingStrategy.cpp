@@ -162,10 +162,7 @@ void
 Albany::NodeSetSolutionCullingStrategy::
 setup()
 {
-  disc_ = app_->getDiscretization();
-  // Once the discretization has been obtained, a handle to the application is not required
-  // Release the resource to avoid possible circular references
-  app_.reset();
+  setupT();
 }
 
 Teuchos::Array<int>
@@ -316,10 +313,7 @@ void
 Albany::NodeGIDsSolutionCullingStrategy::
 setup()
 {
-  disc_ = app_->getDiscretization();
-  // Once the discretization has been obtained, a handle to the application is not required
-  // Release the resource to avoid possible circular references
-  app_.reset();
+  setupT();
 }
 
 

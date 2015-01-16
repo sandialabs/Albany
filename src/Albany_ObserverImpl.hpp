@@ -6,55 +6,29 @@
 #ifndef ALBANY_OBSERVERIMPL_HPP
 #define ALBANY_OBSERVERIMPL_HPP
 
-#include "Albany_Application.hpp"
-#include "Albany_DataTypes.hpp"
-
-#ifdef ALBANY_EPETRA
-#include "Epetra_Map.h"
-#include "Epetra_Vector.h"
-#endif
-
-#include "Teuchos_RCP.hpp"
-#include "Teuchos_Ptr.hpp"
-
-#include "Teuchos_Time.hpp"
+#include "Albany_StatelessObserverImpl.hpp"
 
 namespace Albany {
 
-class ObserverImpl {
+class ObserverImpl : public StatelessObserverImpl {
 public:
-  explicit ObserverImpl(const Teuchos::RCP<Application> &app);
-
-  RealType getTimeParamValueOrDefault(RealType defaultValue) const;
+  explicit ObserverImpl(const Teuchos::RCP<Application>& app);
 
 #ifdef ALBANY_EPETRA
-  Epetra_Map getNonOverlappedMap() const;
+  virtual void observeSolution(
+    double stamp, const Epetra_Vector& nonOverlappedSolution,
+    const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot);
 #endif
 
-  Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
-
-#ifdef ALBANY_EPETRA
-  void observeSolution(
-      double stamp,
-      const Epetra_Vector &nonOverlappedSolution,
-      Teuchos::Ptr<const Epetra_Vector> nonOverlappedSolutionDot);
-#endif
-
-  void observeSolutionT(
-      double stamp,
-      const Tpetra_Vector &nonOverlappedSolutionT,
-      Teuchos::Ptr<const Tpetra_Vector> nonOverlappedSolutionDotT);
+  virtual void observeSolutionT(
+    double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
+    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT);
 
 private:
-  Teuchos::RCP<Application> app_;
-
-  Teuchos::RCP<Teuchos::Time> solOutTime_;
-
-  // Disallow copy and assignment
-  ObserverImpl(const ObserverImpl &);
-  ObserverImpl &operator=(const ObserverImpl &);
+  ObserverImpl(const ObserverImpl&);
+  ObserverImpl& operator=(const ObserverImpl&);
 };
 
 } // namespace Albany
 
-#endif //ALBANY_OBSERVERIMPL_HPP
+#endif // ALBANY_OBSERVERIMPL_HPP

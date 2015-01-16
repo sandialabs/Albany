@@ -95,12 +95,17 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
     this->addDependentField(damage_);
   }
 
-  // optional volume averaging needs integration weights
+  // optional volume averaging needs integration weights and J
   if (volume_average_pressure_) {
     PHX::MDField<MeshScalarT, Cell, QuadPoint> w(p.get<std::string>("Weights Name"),
         dl->qp_scalar);
     weights_ = w;
     this->addDependentField(weights_);
+
+    PHX::MDField<ScalarT, Cell, QuadPoint> j(p.get<std::string>("J Name"),
+        dl->qp_scalar);
+    j_ = j;
+    this->addDependentField(j_);
   }
 
   // construct the evaluated fields
@@ -164,6 +169,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (volume_average_pressure_) {
     this->utils.setFieldData(weights_, fm);
     model_->setWeightsField(weights_);
+    this->utils.setFieldData(j_, fm);
+    model_->setJField(j_);
   }
 
   // evaluated fields

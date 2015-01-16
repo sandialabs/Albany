@@ -138,6 +138,15 @@ public:
     weights_ = weights;
   }
 
+  ///
+  /// set the J field
+  ///
+  void
+  setJField(PHX::MDField<ScalarT, Cell, QuadPoint> j)
+  {
+    j_ = j;
+  }
+
 protected:
 
   ///
@@ -199,6 +208,11 @@ protected:
   /// optional weights field
   ///
   PHX::MDField<MeshScalarT, Cell, QuadPoint> weights_;
+
+  ///
+  /// optional J field
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint> j_;
 
   ///
   /// Map of field names

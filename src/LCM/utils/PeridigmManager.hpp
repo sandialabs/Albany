@@ -51,10 +51,11 @@ public:
 
   //! Instantiate the Peridigm object
   void initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  Teuchos::RCP<Albany::AbstractDiscretization> disc);
+                  Teuchos::RCP<Albany::AbstractDiscretization> disc,
+		  const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   //! Load the current time and displacement from Albany into the Peridigm manager.
-  void setCurrentTimeAndDisplacement(double time, const Epetra_Vector& albanySolutionVector);
+  void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
 
   //! Evaluate the peridynamic internal force
   void evaluateInternalForce();
@@ -88,9 +89,12 @@ private:
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 #endif
 
+  Teuchos::RCP<const stk::mesh::MetaData> metaData;
+  Teuchos::RCP<const stk::mesh::BulkData> bulkData;
+
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
 
-  Teuchos::RCP<Epetra_Comm> epetraComm;
+  Teuchos::RCP<const Teuchos_Comm> teuchosComm;
 
   bool hasPeridynamics;
 
@@ -98,13 +102,17 @@ private:
   double currentTime;
   double timeStep;
 
-  Teuchos::RCP<Epetra_Vector> previousSolutionPositions;
+  std::vector<double> previousSolutionPositions;
 
   std::map<std::string, int> blockNameToBlockId;
 
   std::vector<OutputField> outputFields;
 
   std::vector<PartialStressElement> partialStressElements;
+
+  std::vector<int> peridigmNodeGlobalIds;
+
+  std::map<int,int> peridigmNodeGlobalIdToLocalId;
 
   std::vector<int> sphereElementGlobalNodeIds;
 

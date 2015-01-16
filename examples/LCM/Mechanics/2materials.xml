@@ -12,6 +12,7 @@
       <Parameter name="material" type="string" value="Metal" />
       <Parameter name="Weighted Volume Average J" type="bool" value="true" />
       <Parameter name="Average J Stabilization Parameter" type="double" value="0.05" />
+      <Parameter name="Volume Average Pressure" type="bool" value="true" />
     </ParameterList>
   </ParameterList>
 

@@ -17,73 +17,38 @@ MortarContact<EvalT, Traits>::
 MortarContact(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
 
-  meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
+  meshSpecs      (p.get<const Albany::MeshSpecsStruct*>("Mesh Specs Struct")),
   // The array of names of all the master side sets in the problem
-  masterSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Master Sideset Names")), 
+  masterSideNames (p.get<Teuchos::Array<std::string> >("Master Sideset Names")), 
 
   // The array of sidesets to process
-  sideSetIDs (p.get<Teuchos::ArrayRCP<std::string> >("Sideset IDs")), 
+  sideSetIDs (p.get<Teuchos::Array<std::string> >("Sideset IDs")), 
 
   // Node coords
-  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector) 
+  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector),
+
+  // Fill in M and D in this evaluator
+  M_operator       (p.get<std::string>("M Name"), dl->qp_scalar) 
 
 {
-  std::string fieldName;
 
-  // Allow the user to name this instance of the mortar projection operation
-  // The default is just "MortarProjection"
-  if (p.isType<std::string>("Projection Field Name"))
-    fieldName = p.get<std::string>("Projection Field Name");
-  else fieldName = "MortarProjection";
+  // Print the master side set names
 
-  mortar_projection_operation = Teuchos::rcp(new PHX::Tag<ScalarT>(fieldName, dl->dummy));
+  std::cout << "Master side sets found, number = " << masterSideNames.size() << std::endl;
 
-  // Get the array of residual quantities that we need to project into the integration space
-  // These are the physics residuals that this class evaluates
-  const Teuchos::ArrayRCP<std::string>& names =
-    p.get< Teuchos::ArrayRCP<std::string> >("Residual Names");
+  for(int i = 0; i < masterSideNames.size(); i++)
+    std::cout << masterSideNames[i] << std::endl;
 
-  tensorRank = p.get<int>("Tensor Rank");
+  std::cout << "Nonmaster side sets found, number = " << sideSetIDs.size() << std::endl;
 
-  // scalar
-  if (tensorRank == 0 ) {
-    numFieldsBase = names.size();
-    const std::size_t num_val = numFieldsBase;
-    val.resize(num_val);
-    for (std::size_t eq = 0; eq < numFieldsBase; ++eq) {
-      PHX::MDField<ScalarT,Cell,Node> mdf(names[eq],dl->node_scalar);
-      val[eq] = mdf;
-      this->addDependentField(val[eq]);
-    }
-  }
-  // vector
-  else
-  if (tensorRank == 1 ) {
-    valVec.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl->node_vector);
-    valVec[0] = mdf;
-    this->addDependentField(valVec[0]);
-    numFieldsBase = dl->node_vector->dimension(2);
-  }
-  // tensor
-  else
-  if (tensorRank == 2 ) {
-    valTensor.resize(1);
-    PHX::MDField<ScalarT,Cell,Node,Dim,Dim> mdf(names[0],dl->node_tensor);
-    valTensor[0] = mdf;
-    this->addDependentField(valTensor[0]);
-    numFieldsBase = (dl->node_tensor->dimension(2))*(dl->node_tensor->dimension(3));
-  }
+  for(int i = 0; i < sideSetIDs.size(); i++)
+    std::cout << sideSetIDs[i] << std::endl;
 
-  if (p.isType<int>("Offset of First DOF"))
-    offset = p.get<int>("Offset of First DOF");
-  else offset = 0;
+  // This evaluator uses the nodal coordinates to form the M and D operator
+  this->addDependentField(coordVec);
+  this->addEvaluatedField(M_operator);
 
-  // Tell PHAL which field we are evaluating. Note that this is actually a dummy, as we fill in the
-  // residual vector directly. This tells PHAL to call this evaluator to satisfy this dummy field.
-  this->addEvaluatedField(*mortar_projection_operation);
-
-  this->setName(fieldName+PHX::TypeString<EvalT>::value);
+  this->setName("Mortar Contact Constraints"+PHX::TypeString<EvalT>::value);
 }
 
 // **********************************************************************
@@ -92,21 +57,8 @@ void MortarContact<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  if (tensorRank == 0) {
-    for (std::size_t eq = 0; eq < numFieldsBase; ++eq)
-      this->utils.setFieldData(val[eq],fm);
-    numNodes = val[0].dimension(1);
-  }
-  else 
-  if (tensorRank == 1) {
-    this->utils.setFieldData(valVec[0],fm);
-    numNodes = valVec[0].dimension(1);
-  }
-  else 
-  if (tensorRank == 2) {
-    this->utils.setFieldData(valTensor[0],fm);
-    numNodes = valTensor[0].dimension(1);
-  }
+  this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(M_operator,fm);
 }
 
 // **********************************************************************
@@ -132,15 +84,17 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // No work to do
-  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || this->sideSetIDs.size() == 0)
+  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || sideSetIDs.size() == 0)
 
     return;
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
 
-  for(std::size_t i = 0; i < this->sideSetIDs.size(); i++){
+  for(std::size_t i = 0; i < sideSetIDs.size(); i++){
 
-    Albany::SideSetList::const_iterator it = ssList.find(this->sideSetIDs[i]);
+std::cout << "The sideset ID for sideset : " << i << " is : " << sideSetIDs[i] << std::endl;
+
+    Albany::SideSetList::const_iterator it = ssList.find(sideSetIDs[i]);
 
       if(it == ssList.end()) continue; // This sideset does not exist in this workset - try the next one
 
@@ -154,6 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
       const std::vector<Albany::SideStruct>& sideSet = it->second;
 
       // Loop over the sides that form the boundary condition
+std::cout << "size of sideset array in workset = " << sideSet.size() << std::endl;
 
       for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
 
@@ -163,6 +118,12 @@ evaluateFields(typename Traits::EvalData workset)
         const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
         const int elem_side = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
         const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
+
+        std::cout << "side = " << side << std::endl;
+        std::cout << "    element that owns side GID = " << elem_GID << std::endl;
+        std::cout << "    element that owns side LID = " << elem_LID << std::endl;
+        std::cout << "    side, local ID inside element = " << elem_side << std::endl;
+        std::cout << "    element block side is in = " << elem_block << std::endl << std::endl;
 
       }
     }

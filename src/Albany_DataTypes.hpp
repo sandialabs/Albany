@@ -56,7 +56,7 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 
 
 //Kokkos includes
-#include "Kokkos_SerialNode.hpp"
+#include "Kokkos_DefaultNode.hpp"
 
 
 //Tpetra typedefs
@@ -68,7 +68,7 @@ typedef int                                         GO;
 #endif
 typedef int                                         LO;
 
-typedef Kokkos::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
+typedef KokkosClassic::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
 //typedef Kokkos::SerialNode                          KokkosNode; // No threading
 //typedef Kokkos::TPINode                             KokkosNode; // custom Pthreads
 //typedef Kokkos::TBBNode                             KokkosNode; // Intel TBB

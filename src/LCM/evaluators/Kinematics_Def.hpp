@@ -124,14 +124,14 @@ namespace LCM {
         jbar = 0.0;
         volume = 0.0;
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
-          jbar += weights_(cell,pt) * std::log( j_(cell,pt) );
+          jbar += weights_(cell,pt) * j_(cell,pt);
           volume += weights_(cell,pt);
         }
         jbar /= volume;
 
         for (std::size_t pt(0); pt < num_pts_; ++pt) {
           weighted_jbar = 
-            std::exp( (1-alpha_) * jbar + alpha_ * std::log( j_(cell,pt) ) );
+            (1-alpha_) * jbar + alpha_ * j_(cell,pt);
           F.fill( &def_grad_(cell,pt,0,0) );
           F = F*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
           j_(cell,pt) = weighted_jbar;

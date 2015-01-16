@@ -25,6 +25,16 @@ private:
   Teuchos::RCP<Application> app_;
 };
 
+class NOXStatelessObserverFactory {
+public:
+  explicit NOXStatelessObserverFactory(const Teuchos::RCP<Application> &app);
+
+  Teuchos::RCP<NOX::Epetra::Observer> createInstance();
+
+private:
+  Teuchos::RCP<Application> app_;
+};
+
 class RythmosObserverFactory {
 public:
   explicit RythmosObserverFactory(const Teuchos::RCP<Application> &app);
