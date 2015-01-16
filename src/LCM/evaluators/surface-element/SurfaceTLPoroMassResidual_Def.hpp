@@ -163,13 +163,11 @@ namespace LCM {
     if (haveMech) {
       // Put back the permeability tensor to the reference configuration
       RST::inverse(F_inv, defGrad);
-      //Irina TOFIX intrepid
-      //RST::transpose(F_invT, F_inv);
+      RST::transpose(F_invT, F_inv);
        FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
        FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-//Irina TOFIX intrepid
-//      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
-//      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
+      FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
+      FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
     } else {
        FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
     }
@@ -182,8 +180,7 @@ namespace LCM {
         poroMassResidual(cell, node)  = 0.0;
       }
     }
-//Irina TOFIX dimensiona refArea should be 3D
-/* 
+ 
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
@@ -229,7 +226,7 @@ namespace LCM {
         }
       }
     }
-*/
+
   }
   //**********************************************************************  
 }

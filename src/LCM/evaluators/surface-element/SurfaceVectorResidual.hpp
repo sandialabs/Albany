@@ -60,7 +60,7 @@ namespace LCM
     //! Reference configuration normal
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
     //! Reference configuration area
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refArea;
+    PHX::MDField<MeshScalarT, Cell, QuadPoint> refArea;
 
     //! Reference Cell FieldContainers
     Intrepid::FieldContainer<RealType> refValues;
