@@ -237,12 +237,12 @@ PoissonSource(Teuchos::ParameterList& p,
       // QCAD::PoissonSource<EvalT, Traits>::CloudCharge clCharge;
       //   No Defaults for cloud parameters: X,Y,Z,Amplitude,Width,Cutoff
       CloudCharge clCharge;
-      clCharge.position[0] = psList->sublist(subListName).get<double>("X");
-      clCharge.position[1] = psList->sublist(subListName).get<double>("Y");
-      clCharge.position[2] = psList->sublist(subListName).get<double>("Z");
-      clCharge.amplitude   = psList->sublist(subListName).get<double>("Amplitude");
-      clCharge.width       = psList->sublist(subListName).get<double>("Width");
-      clCharge.cutoff      = psList->sublist(subListName).get<double>("Cutoff");
+      clCharge.position[0]               = psList->sublist(subListName).get<double>("X");
+      if(numDims>1) clCharge.position[1] = psList->sublist(subListName).get<double>("Y");
+      if(numDims>2) clCharge.position[2] = psList->sublist(subListName).get<double>("Z");
+      clCharge.amplitude                 = psList->sublist(subListName).get<double>("Amplitude");
+      clCharge.width                     = psList->sublist(subListName).get<double>("Width");
+      clCharge.cutoff                    = psList->sublist(subListName).get<double>("Cutoff");
 
       // TODO sacado-ize other parameters 
       std::stringstream ss; ss << "Cloud Charge " << i << " Amplitude";
@@ -2079,20 +2079,19 @@ bool QCAD::PoissonSource<EvalT,Traits>::
 template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT,Traits>::source_cloudcharges(typename Traits::EvalData workset)
 {
-
   //! add point charge contributions
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for( std::size_t i=0; i < cloudCharges.size(); ++i) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    
-        assert (numDims == 3); // FIXME for numDim < 3;
-        ScalarT distance = sqrt (
-            (cloudCharges[i].position[0] - coordVec(cell,qp,0)) * (cloudCharges[i].position[0] - coordVec(cell,qp,0))
-          + (cloudCharges[i].position[1] - coordVec(cell,qp,1)) * (cloudCharges[i].position[1] - coordVec(cell,qp,1))
-          + (cloudCharges[i].position[2] - coordVec(cell,qp,2)) * (cloudCharges[i].position[2] - coordVec(cell,qp,2)) );
+      ScalarT cutoff2 = cloudCharges[i].cutoff * cloudCharges[i].cutoff;
+      ScalarT width2  = cloudCharges[i].width  * cloudCharges[i].width;
 
-        if (distance <= cloudCharges[i].cutoff) {
- 	 poissonSource(cell, qp) += cloudCharges[i].amplitude * exp(-distance/cloudCharges[i].width);
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	ScalarT distance2 =        (cloudCharges[i].position[0] - coordVec(cell,qp,0)) * (cloudCharges[i].position[0] - coordVec(cell,qp,0));
+	if(numDims>1) distance2 += (cloudCharges[i].position[1] - coordVec(cell,qp,1)) * (cloudCharges[i].position[1] - coordVec(cell,qp,1));
+	if(numDims>2) distance2 += (cloudCharges[i].position[2] - coordVec(cell,qp,2)) * (cloudCharges[i].position[2] - coordVec(cell,qp,2));
+
+        if (distance2 <= cutoff2) {
+	  poissonSource(cell, qp) += cloudCharges[i].amplitude * exp(-distance2/(2.0*width2));
         }
       }
     }
