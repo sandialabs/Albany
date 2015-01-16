@@ -28,7 +28,8 @@ typedef double RealType;
   // Code templated on data type need to know if FadType and TanFadType
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-  typedef Sacado::ELRFad::SLFad<double,16> FadType;
+//  typedef Sacado::ELRFad::SLFad<double,16> FadType;
+  typedef Sacado::ELRFad::SFad<double,24> FadType;
 #else
   typedef Sacado::Fad::DFad<double> FadType;
 #endif

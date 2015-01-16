@@ -362,7 +362,9 @@ evaluateFields(typename Traits::EvalData workset)
        if (is_constant_map_[it->first]) //is_constant_map
           Kokkos::parallel_for(is_const_map_Policy(0,workset.numCells),*this);
        else //no_const_map
-           Kokkos::parallel_for(no_const_map_Policy(0,workset.numCells),*this);
+            TEUCHOS_TEST_FOR_EXCEPTION(!is_constant_map_[it->first], std::runtime_error,
+              std::endl <<  "Error in onstitutiveModelParameters : Stokhos functions don't have support for Kokkos yet" << std::endl;);
+          // Kokkos::parallel_for(no_const_map_Policy(0,workset.numCells),*this);
 
     }
  } 

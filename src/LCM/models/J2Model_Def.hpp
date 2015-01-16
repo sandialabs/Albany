@@ -662,20 +662,27 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void J2Model<EvalT, Traits>::computeStateKernel::
 compute_with_temperature(const int cell) const{
-/*
+
+  Intrepid::Tensor<ScalarT> sigma(dims_), F(dims_);
+  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(dims_));
+
+
   for (int pt(0); pt < num_pts; ++pt) {
-       // already set  F.fill(def_grad,cell,pt,0,0);
+  
+      for (int i=0; i<dims_;i++)
+         for (int j=0; j<dims_;j++)
+                F(i,j)=def_grad(cell,pt,i,j);
        for (int i=0; i<dims_;i++){
          for (int j=0; j<dims_;j++){
-            ScalarT J = det(F,cell);
-            sigma(cell,i,j)=stress(cell,pt,i,j);
-            sigma(cell,i,j) -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
-              * (temperature_(cell,pt) - ref_temperature_) * I(cell,i,j);
-            stress(cell, pt, i, j) = sigma(cell,i, j);
+            ScalarT J = Intrepid::det(F);
+            sigma(i,j)=stress(cell,pt,i,j);
+            sigma(i,j) -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+              * (temperature_(cell,pt) - ref_temperature_) * I(i,j);
+            stress(cell, pt, i, j) = sigma(i, j);
           }
         }
    }
-*/
+
 
 }
 
