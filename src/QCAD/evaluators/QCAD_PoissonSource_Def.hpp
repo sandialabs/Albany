@@ -31,7 +31,8 @@ PoissonSource(Teuchos::ParameterList& p,
   ionizedDopant("Ionized Dopant",dl->qp_scalar),
   conductionBand("Conduction Band",dl->qp_scalar),
   valenceBand("Valence Band",dl->qp_scalar),
-  approxQuanEDen("Approx Quantum EDensity",dl->qp_scalar)
+  approxQuanEDen("Approx Quantum EDensity",dl->qp_scalar),
+  bRealEigenvectors(false)
 {
   // Material database
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
