@@ -118,11 +118,11 @@ namespace LCM {
     
     template <class ArrayT>
     KOKKOS_INLINE_FUNCTION
-    const ArrayT  transpose(const ArrayT& A) const;
+    const ArrayT  transpose(const ArrayT& A, const int cell) const;
     
     template <class ArrayT>
     KOKKOS_INLINE_FUNCTION
-    const ScalarT det(const ArrayT &A) const;
+    const ScalarT det(const ArrayT &A, const int cell) const;
 
     KOKKOS_INLINE_FUNCTION
     void compute_defgrad(const int cell) const;
@@ -134,11 +134,11 @@ namespace LCM {
     private:
 
     typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-    PHX::MDField<ScalarT,Dim,Dim> F;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> F;
     std::vector<PHX::index_size_type> ddims_;
-    PHX::MDField<ScalarT,Dim,Dim> strain;
-    PHX::MDField<ScalarT,Dim,Dim> gradu;
-    PHX::MDField<ScalarT,Dim,Dim> tgradu;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> strain;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> gradu;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> tgradu;
     PHX::MDField<ScalarT,Dim,Dim> Itensor;
  
 #endif

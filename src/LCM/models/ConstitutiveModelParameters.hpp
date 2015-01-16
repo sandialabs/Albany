@@ -181,7 +181,7 @@ namespace LCM {
     typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
     std::vector<PHX::index_size_type> ddims_;
     PHX::MDField<ScalarT,Cell,QuadPoint> second;
-    PHX::MDField<MeshScalarT,Dim> point;
+    PHX::MDField<MeshScalarT,Cell,Dim> point;
     RealType dPdT;
     RealType ref_temp;
     RealType pre_exp_;

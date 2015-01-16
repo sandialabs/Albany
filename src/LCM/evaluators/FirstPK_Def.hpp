@@ -65,10 +65,11 @@ FirstPK(Teuchos::ParameterList& p,
 #ifndef NO_KOKKOS_ALBANY
   //Allocationg additional data for Kokkos functors
   ddims_.push_back(24);
-  derivative_dim=25;
-  sig=PHX::MDField<ScalarT,Dim,Dim>("sig",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  F=PHX::MDField<ScalarT,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-  P=PHX::MDField<ScalarT,Dim,Dim>("P",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+  const int derivative_dim=25;
+  const int num_cells=dims[0];
+  sig=PHX::MDField<ScalarT,Cell,Dim,Dim>("sig",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+  F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+  P=PHX::MDField<ScalarT,Cell,Dim,Dim>("P",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
   I=PHX::MDField<ScalarT,Dim,Dim>("I",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
 
   sig.setFieldData(ViewFactory::buildView(sig.fieldTag(),ddims_));
@@ -109,7 +110,7 @@ template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
 const typename FirstPK<EvalT, Traits>::ScalarT
 FirstPK<EvalT, Traits>::
-trace (const ArrayT &A) const
+trace (const ArrayT &A, const int cell) const
 {
 
   ScalarT s = 0.0;
@@ -118,16 +119,16 @@ trace (const ArrayT &A) const
 
     default:
       for (int i = 0; i < num_dims_; ++i) {
-        s += A(i,i);
+        s += A(cell,i,i);
       }
       break;
 
     case 3:
-      s = A(0,0) + A(1,1) + A(2,2);
+      s = A(cell,0,0) + A(cell,1,1) + A(cell,2,2);
       break;
 
     case 2:
-      s = A(0,0) + A(1,1);
+      s = A(cell,0,0) + A(cell,1,1);
       break;
 
   }
@@ -184,9 +185,9 @@ operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
   for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
-             sig(i,j)=stress_(cell, pt, i, j);
-             sig(i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*trace(sig)*I(i,j);
-             stress_(cell, pt, i, j) = sig(i,j);
+             sig(cell,i,j)=stress_(cell, pt, i, j);
+             sig(cell,i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*trace(sig,cell)*I(i,j);
+             stress_(cell, pt, i, j) = sig(cell,i,j);
           }
         }
       }
@@ -200,9 +201,9 @@ operator() (const have_pore_pressure_Tag& tag, const int& cell) const{
   for (int pt = 0; pt < num_pts_; ++pt) {
        for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
-             sig(i,j)=stress_(cell, pt, i, j);
-             sig(i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
-             stress_(cell, pt, i, j)-=sig(i,j);
+             sig(cell,i,j)=stress_(cell, pt, i, j);
+             sig(cell,i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
+             stress_(cell, pt, i, j)-=sig(cell,i,j);
           }
         }
       }
@@ -232,8 +233,8 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const{
      for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {    
-            F(i,j)=def_grad_(cell, pt,i,j);
-            sig(i,j)=stress_(cell, pt,i,j);
+            F(cell,i,j)=def_grad_(cell, pt,i,j);
+            sig(cell,i,j)=stress_(cell, pt,i,j);
           }
         } 
         
@@ -248,33 +249,42 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const{
 
            case 3:
 
-           P(0,0) = sig(0,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + sig(0,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + sig(0,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
-           P(0,1) = sig(0,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + sig(0,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + sig(0,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
-           P(0,2) = sig(0,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1)) + sig(0,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + sig(0,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+           P(cell,0,0) = sig(cell,0,0)*(-F(cell,1,2)*F(cell,2,1) + F(cell,1,1)*F(cell,2,2)) + sig(cell,0,1)*( F(cell,0,2)*F(cell,2,1) - F(cell,0,1)*F(cell,2,2)) 
+                        + sig(cell,0,2)*(-F(cell,0,2)*F(cell,1,1) + F(cell,0,1)*F(cell,1,2));
+           P(cell,0,1) = sig(cell,0,0)*( F(cell,1,2)*F(cell,2,0) - F(cell,1,0)*F(cell,2,2)) + sig(cell,0,1)*(-F(cell,0,2)*F(cell,2,0) + F(cell,0,0)*F(cell,2,2)) 
+                        + sig(cell,0,2)*( F(cell,0,2)*F(cell,1,0) - F(cell,0,0)*F(cell,1,2));
+           P(cell,0,2) = sig(cell,0,0)*(-F(cell,1,1)*F(cell,2,0) + F(cell,1,0)*F(cell,2,1)) + sig(cell,0,1)*( F(cell,0,1)*F(cell,2,0) - F(cell,0,0)*F(cell,2,1)) 
+                        + sig(cell,0,2)*(-F(cell,0,1)*F(cell,1,0) + F(cell,0,0)*F(cell,1,1));
 
-           P(1,0) = sig(1,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2)) + sig(1,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + sig(1,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
-           P(1,1) = sig(1,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2)) + sig(1,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + sig(1,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
-           P(1,2) = sig(1,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1)) + sig(1,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + sig(1,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+           P(cell,1,0) = sig(cell,1,0)*(-F(cell,1,2)*F(cell,2,1) + F(cell,1,1)*F(cell,2,2)) + sig(cell,1,1)*( F(cell,0,2)*F(cell,2,1) - F(cell,0,1)*F(cell,2,2)) 
+                       + sig(cell,1,2)*(-F(cell,0,2)*F(cell,1,1) + F(cell,0,1)*F(cell,1,2));
+           P(cell,1,1) = sig(cell,1,0)*( F(cell,1,2)*F(cell,2,0) - F(cell,1,0)*F(cell,2,2)) + sig(cell,1,1)*(-F(cell,0,2)*F(cell,2,0) + F(cell,0,0)*F(cell,2,2)) 
+                        + sig(cell,1,2)*( F(cell,0,2)*F(cell,1,0) - F(cell,0,0)*F(cell,1,2));
+           P(cell,1,2) = sig(cell,1,0)*(-F(cell,1,1)*F(cell,2,0) + F(cell,1,0)*F(cell,2,1)) + sig(cell,1,1)*( F(cell,0,1)*F(cell,2,0) - F(cell,0,0)*F(cell,2,1))
+                        + sig(cell,1,2)*(-F(cell,0,1)*F(cell,1,0) + F(cell,0,0)*F(cell,1,1));
 
-           P(2,0) = sig(2,0)*(-F(1,2)*F(2,1) + F(1,1)*F(2,2))+ sig(2,1)*( F(0,2)*F(2,1) - F(0,1)*F(2,2)) + sig(2,2)*(-F(0,2)*F(1,1) + F(0,1)*F(1,2));
-           P(2,1) = sig(2,0)*( F(1,2)*F(2,0) - F(1,0)*F(2,2))+ sig(2,1)*(-F(0,2)*F(2,0) + F(0,0)*F(2,2)) + sig(2,2)*( F(0,2)*F(1,0) - F(0,0)*F(1,2));
-           P(2,2) = sig(2,0)*(-F(1,1)*F(2,0) + F(1,0)*F(2,1))+ sig(2,1)*( F(0,1)*F(2,0) - F(0,0)*F(2,1)) + sig(2,2)*(-F(0,1)*F(1,0) + F(0,0)*F(1,1));
+           P(cell,2,0) = sig(cell,2,0)*(-F(cell,1,2)*F(cell,2,1) + F(cell,1,1)*F(cell,2,2))+ sig(cell,2,1)*( F(cell,0,2)*F(cell,2,1) - F(cell,0,1)*F(cell,2,2))
+                        + sig(cell,2,2)*(-F(cell,0,2)*F(cell,1,1) + F(cell,0,1)*F(cell,1,2));
+           P(cell,2,1) = sig(cell,2,0)*( F(cell,1,2)*F(cell,2,0) - F(cell,1,0)*F(cell,2,2))+ sig(cell,2,1)*(-F(cell,0,2)*F(cell,2,0) + F(cell,0,0)*F(cell,2,2)) 
+                        + sig(cell,2,2)*( F(cell,0,2)*F(cell,1,0) - F(cell,0,0)*F(cell,1,2));
+           P(cell,2,2) = sig(cell,2,0)*(-F(cell,1,1)*F(cell,2,0) + F(cell,1,0)*F(cell,2,1))+ sig(cell,2,1)*( F(cell,0,1)*F(cell,2,0) - F(cell,0,0)*F(cell,2,1)) 
+                        + sig(cell,2,2)*(-F(cell,0,1)*F(cell,1,0) + F(cell,0,0)*F(cell,1,1));
 
            break;
 
            case 2:
-           P(0,0) = sig(0,0)*F(1,1) - sig(0,1)*F(0,1);
-           P(0,1) = -sig(0,0)*F(1,0) + sig(0,1)*F(0,0);
+           P(cell,0,0) = sig(cell,0,0)*F(cell,1,1) - sig(cell,0,1)*F(cell,0,1);
+           P(cell,0,1) = -sig(cell,0,0)*F(cell,1,0) + sig(cell,0,1)*F(cell,0,0);
 
-           P(1,0) = sig(1,0)*F(1,1) - sig(1,1)*F(0,1);
-           P(1,1) = -sig(1,0)*F(1,0) + sig(1,1)*F(0,0);
+           P(cell,1,0) = sig(cell,1,0)*F(cell,1,1) - sig(cell,1,1)*F(cell,0,1);
+           P(cell,1,1) = -sig(cell,1,0)*F(cell,1,0) + sig(cell,1,1)*F(cell,0,0);
             break;
          }
        }
 
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
-            first_pk_stress_(cell,pt,i,j) = P(i, j);
+            first_pk_stress_(cell,pt,i,j) = P(cell,i, j);
           }
         }
       }
@@ -356,66 +366,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-/*    if (have_stab_pressure_) {
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        for (int i = 0; i < num_dims_; i++) {
-          for (int j = 0; j < num_dims_; j++) {
-             sig(i,j)=stress_(cell, pt, i, j);
-             sig(i,j)+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*trace(sig)*I(i,j);
-             stress_(cell, pt, i, j) = sig(i,j);
-          }
-        }
-      }
-    }
-  }
-
-  if (have_pore_pressure_) {
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < num_pts_; ++pt) {
-       for (int i = 0; i < num_dims_; i++) {
-          for (int j = 0; j < num_dims_; j++) {
-             sig(i,j)=stress_(cell, pt, i, j);
-             sig(i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
-             stress_(cell, pt, i, j)-=sig(i,j);
-          }
-        }
-      }
-    }
-  }
-
-
-   if (small_strain_) {
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        for (int dim0 = 0; dim0 < num_dims_; ++dim0) {
-          for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
-            first_pk_stress_(cell,pt,dim0,dim1) = stress_(cell,pt,dim0,dim1);
-          }
-        }
-      }
-    }
-  } else {
-     for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {    
-            F(i,j)=def_grad_(cell, pt,i,j);
-            sig(i,j)=stress_(cell, pt,i,j);
-          }
-        } 
-        piola(P, F, sig);
-
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {
-            first_pk_stress_(cell,pt,i,j) = P(i, j);
-          }
-        }
-      }
-    }
-  }
-
-*/
    if (have_stab_pressure_) 
      Kokkos::parallel_for(have_stab_pressure_Policy(0,workset.numCells),*this);
    if (have_pore_pressure_)

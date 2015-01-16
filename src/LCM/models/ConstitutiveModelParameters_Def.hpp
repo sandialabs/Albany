@@ -154,11 +154,13 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
   this->setName(
       "Constitutive Model Parameters" + PHX::typeAsString<PHX::Device>());
 
+
 #ifndef NO_KOKKOS_ALBANY
     ddims_.push_back(24);
-    point=PHX::MDField<MeshScalarT,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Dim>(num_dims_)));
+   int num_cells=dims[0];
+    point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
     point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
-    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(conc_eq_param_.dimension(0), num_pts_)));
+    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(num_cells, num_pts_)));
     second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
 #endif
 
@@ -202,7 +204,7 @@ compute_second_no_constMap(const int cell) const{
 
   for (int pt(0); pt < num_pts_; ++pt) {
      for (int i(0); i < num_dims_; ++i)
-        point(i) = Sacado::ScalarValue<MeshScalarT>::eval(coord_vec_(cell, pt, i));
+        point(cell,i) = Sacado::ScalarValue<MeshScalarT>::eval(coord_vec_(cell, pt, i));
 //is not supported in Stokhos todaym but should be fixed soon
         //second(cell, pt) = exp_rf_kl->evaluate(point, *rv_map);
   }
@@ -367,7 +369,8 @@ evaluateFields(typename Traits::EvalData workset)
           // Kokkos::parallel_for(no_const_map_Policy(0,workset.numCells),*this);
 
     }
- } 
+ }
+
 #endif
 }
 //------------------------------------------------------------------------------

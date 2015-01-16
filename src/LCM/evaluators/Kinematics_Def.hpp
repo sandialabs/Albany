@@ -62,10 +62,11 @@ namespace LCM {
 #ifndef NO_KOKKOS_ALBANY
     //Allocationg additional data for Kokkos functors
     ddims_.push_back(24);
-    F=PHX::MDField<ScalarT,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));   
-    strain=PHX::MDField<ScalarT,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-    gradu=PHX::MDField<ScalarT,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
-    tgradu=PHX::MDField<ScalarT,Dim,Dim>("tgradu",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
+    const int num_cells=dims[0];//
+    F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));   
+    strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
+    tgradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("tgradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
     Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
 
     F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
@@ -73,6 +74,14 @@ namespace LCM {
     gradu.setFieldData(ViewFactory::buildView(gradu.fieldTag(),ddims_));
     tgradu.setFieldData(ViewFactory::buildView(tgradu.fieldTag(),ddims_));
     Itensor.setFieldData(ViewFactory::buildView(Itensor.fieldTag(),ddims_));
+
+   for (int i=0; i<num_dims_; i++){
+     for (int j=0; j<num_dims_; j++){
+        Itensor(i,j)=ScalarT(0.0);
+        if (i==j) Itensor(i,j)=ScalarT(1.0);
+     }
+   }
+
 #endif 
  }
 
@@ -117,9 +126,9 @@ template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
 const typename Kinematics<EvalT, Traits>::ScalarT 
 Kinematics<EvalT, Traits>::
-det(const ArrayT &A) const
+det(const ArrayT &A, const int cell) const
 {
-  const int dimension = A.dimension(0);
+  const int dimension = A.dimension(1);
 
   ScalarT s = 0.0;
 
@@ -133,13 +142,13 @@ det(const ArrayT &A) const
     break;
 
     case 3:
-      s = -A(0,2)*A(1,1)*A(2,0) + A(0,1)*A(1,2)*A(2,0) +
-           A(0,2)*A(1,0)*A(2,1) - A(0,0)*A(1,2)*A(2,1) -
-           A(0,1)*A(1,0)*A(2,2) + A(0,0)*A(1,1)*A(2,2);
+      s = -A(cell,0,2)*A(cell,1,1)*A(cell,2,0) + A(cell,0,1)*A(cell,1,2)*A(cell,2,0) +
+           A(cell,0,2)*A(cell,1,0)*A(cell,2,1) - A(cell,0,0)*A(cell,1,2)*A(cell,2,1) -
+           A(cell,0,1)*A(cell,1,0)*A(cell,2,2) + A(cell,0,0)*A(cell,1,1)*A(cell,2,2);
       break;
 
     case 2:
-      s = A(0,0) * A(1,1) - A(1,0) * A(0,1);
+      s = A(cell,0,0) * A(cell,1,1) - A(cell,1,0) * A(cell,0,1);
       break;
 
   }
@@ -151,14 +160,14 @@ template<typename EvalT, typename Traits>
 template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
 const ArrayT Kinematics<EvalT, Traits>::
-transpose(const ArrayT& A) const
+transpose(const ArrayT& A, const int cell) const
 {
-  const int dimension = A.dimension(0);
+  const int dimension = A.dimension(1);
 
   ArrayT B = A;
       for (int i = 0; i < dimension; ++i) {
         for (int j = i + 1; j < dimension; ++j) {
-           B(i,j)=A(j,i);
+           B(cell,i,j)=A(cell,j,i);
         }
       }
   return B;
@@ -169,26 +178,20 @@ KOKKOS_INLINE_FUNCTION
 void Kinematics<EvalT, Traits>::
 compute_defgrad(const int cell) const{
 
- for (int ii=0; ii<num_dims_; ii++){
-     for (int j=0; j<num_dims_; j++){
-      Itensor(ii,j)=0.0;
-      if (ii==j) Itensor(ii,j)=1;
-     }
-  }
 
     for (int pt(0); pt < num_pts_; ++pt) {
      
       for (int ii=0; ii<num_dims_; ii++){
          for (int j=0; j<num_dims_; j++){
-            gradu(ii,j)=grad_u_(cell,pt,ii,j);
-            F(ii,j) = Itensor(ii,j) + gradu(ii,j);
+            gradu(cell,ii,j)=grad_u_(cell,pt,ii,j);
+            F(cell,ii,j) = Itensor(ii,j) + gradu(cell,ii,j);
          }
       }
      
-     j_(cell,pt)=det(F);
+     j_(cell,pt)=det(F,cell);
       for (int i(0); i < num_dims_; ++i) 
           for (int j(0); j < num_dims_; ++j) 
-            def_grad_(cell,pt,i,j) = F(i,j);
+            def_grad_(cell,pt,i,j) = F(cell,i,j);
     }
 
 }
@@ -212,14 +215,14 @@ compute_weighted_average(const int cell) const{
             std::exp( (1-alpha_) * jbar + alpha_ * std::log( j_(cell,pt) ) );
            for (int i=0; i<num_dims_; i++){
                for (int j=0; j<num_dims_; j++){
-                 F(i,j)=def_grad_(cell, pt,i,j);
-                 F(i,j)=F(i,j)*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
+                 F(cell,i,j)=def_grad_(cell, pt,i,j);
+                 F(cell,i,j)=F(cell,i,j)*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
                }
            }
           j_(cell,pt) = weighted_jbar;
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
-              def_grad_(cell,pt,i,j) = F(i,j);
+              def_grad_(cell,pt,i,j) = F(cell,i,j);
             }
           }
         }
@@ -233,13 +236,13 @@ compute_strain(const int cell) const{
          // tgradu=transpose(gradu);
           for (int i=0; i<num_dims_; i++){
             for (int j=0; j<num_dims_; j++){
-                F(i,j)=grad_u_(cell, pt,i,j);
-                strain(i,j) = 0.5 * (gradu(i,j) + gradu(j,i));
+                F(cell,i,j)=grad_u_(cell, pt,i,j);
+                strain(cell,i,j) = 0.5 * (gradu(cell,i,j) + gradu(cell,j,i));
             }
           }
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
-              strain_(cell,pt,i,j) = strain(i,j);
+              strain_(cell,pt,i,j) = strain(cell,i,j);
             }
           }
         }

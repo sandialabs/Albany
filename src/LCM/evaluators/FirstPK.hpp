@@ -141,13 +141,13 @@ private:
    std::vector<PHX::index_size_type> ddims_;
    int derivative_dim;
    PHX::MDField<ScalarT,Dim,Dim> I;
-   PHX::MDField<ScalarT,Dim,Dim> sig;
-   PHX::MDField<ScalarT,Dim,Dim> F;
-   PHX::MDField<ScalarT,Dim,Dim> P;
+   PHX::MDField<ScalarT,Cell,Dim,Dim> sig;
+   PHX::MDField<ScalarT,Cell,Dim,Dim> F;
+   PHX::MDField<ScalarT,Cell,Dim,Dim> P;
 
    template <class ArrayT>
    KOKKOS_INLINE_FUNCTION
-   const ScalarT trace(const ArrayT &A) const;
+   const ScalarT trace(const ArrayT &A, const int cell) const;
  
    //template <class ArrayT>
   // KOKKOS_INLINE_FUNCTION
