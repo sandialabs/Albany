@@ -88,13 +88,13 @@ evaluateFields(typename Traits::EvalData workset)
    FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
   RST::scale(flux,-gc);
 
-   //Irina TOFIX   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
-   //Irina TOFIX   FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   
  // Irina TOFIX if (workset.transientTerms && enableTransient) 
-     //Irina TOFIX   FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+     FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 }
 
 //**********************************************************************

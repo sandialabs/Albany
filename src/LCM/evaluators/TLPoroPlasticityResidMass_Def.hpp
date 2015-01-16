@@ -241,12 +241,10 @@ namespace LCM {
     ScalarT dt = deltaTime(0);
 
     if (haveMechanics) {
-      //Irina TOFIX intrepid
       RST::inverse(F_inv, defgrad);
-      //RST::transpose(F_invT, F_inv);
+      RST::transpose(F_invT, F_inv);
        FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
        FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-//Irina TOFIX intrepid
       FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
       FST::tensorMultiplyDataData<ScalarT> (flux, Kref, TGrad); // flux_i = k I_ij p_j
     } else {
@@ -260,8 +258,8 @@ namespace LCM {
         }
       }
     }
-    // Irina TOFIX intrepid  //Irina TOFIX   FST::integrateTemp<ScalarT>(TResidual, fluxdt,
-    //                        wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+      FST::integrate<ScalarT>(TResidual, fluxdt,
+                            wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
     //---------------------------------------------------------------------------//
     // Stabilization Term

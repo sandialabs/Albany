@@ -143,9 +143,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
- //Irina Debug 
- // FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid::COMP_CPP,  
- //                         false); // "false" overwrites
+  FST::integrate<ScalarT>(CResidual, divergence, wBF, Intrepid::COMP_CPP,  
+                          false); // "false" overwrites
 
   contractDataFieldScalar<ScalarT>(CResidual, divergence, wBF,false); // "false" overwrites
 

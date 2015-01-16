@@ -204,7 +204,7 @@ namespace LCM {
         }
       }
     }
-   //Irina TOFIX   FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
+   FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
 
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {

@@ -231,15 +231,12 @@ evaluateFields(typename Traits::EvalData workset)
    ScalarT dt = deltaTime(0);
 
    // Pull back permeability
-//Irina TOFIX intrepid
    RST::inverse(F_inv, defgrad);
-//   RST::transpose(F_invT, F_inv);
+   RST::transpose(F_invT, F_inv);
     FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
     FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
-// Irina TOFIX intrepid
    FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
 
-//Irina comment: was commented out  
    /*
    // gravity or other potential term
      for (int cell=0; cell < workset.numCells; ++cell){
@@ -265,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
     	  }
       }
   }
- //Irina TOFIX  //Irina TOFIX   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   // Pore-fluid diffusion coupling.
   for (int cell=0; cell < workset.numCells; ++cell) {

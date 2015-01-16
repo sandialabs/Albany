@@ -97,9 +97,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
- //Irina comments:: was commented out
   RST::inverse(F_inv, defgrad);
- // RST::transpose(F_invT, F_inv);
+  RST::transpose(F_invT, F_inv);
   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
   FST::tensorMultiplyDataData<ScalarT>(P, TotalStress, JF_invT);
 
@@ -122,7 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 
 
-//   //Irina TOFIX   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
 }
 

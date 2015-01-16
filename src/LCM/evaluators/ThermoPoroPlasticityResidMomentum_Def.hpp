@@ -153,7 +153,7 @@ evaluateFields(typename Traits::EvalData workset)
     } } } }
 */
 
-//   //Irina TOFIX   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   FST::integrate<ScalarT>(ExResidual, TotalStress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
 }
 

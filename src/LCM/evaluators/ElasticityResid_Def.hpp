@@ -100,8 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
                 ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
     } } } }
 
-//Irina comments: cose below was initially commeted out
-//   //Irina TOFIX   FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+//   FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
 }
 
