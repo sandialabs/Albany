@@ -19,6 +19,7 @@ SET(SOURCES
     AAdapt_RC_Field.cpp
     AAdapt_RC_Reader.cpp
     AAdapt_RC_Writer.cpp
+    AAdapt_RC_Projector_impl.cpp
    )
 
 SET(HEADERS
@@ -32,6 +33,7 @@ SET(HEADERS
     AAdapt_RC_Field.hpp
     AAdapt_RC_Reader.hpp
     AAdapt_RC_Writer.hpp
+    AAdapt_RC_Projector_impl.hpp
    )
 
 IF (ALBANY_EPETRA) 

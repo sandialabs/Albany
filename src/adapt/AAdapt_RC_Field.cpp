@@ -116,7 +116,7 @@ aadapt_rc_apply_to_all_ad_types(eti,)
 #undef eti
 #define eti(ad_type, arg2)                                              \
   template void Field<2>::multiplyInto<ad_type>(                        \
-    Tensor<ad_type,2>::type&, const std::size_t, const std::size_t) const;
+    Tensor<ad_type, 2>::type&, const std::size_t, const std::size_t) const;
 aadapt_rc_apply_to_all_ad_types(eti,)
 #undef eti
 

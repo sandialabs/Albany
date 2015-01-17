@@ -41,11 +41,43 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
     checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
 
-  if (Teuchos::nonnull(rc_mgr)) {
-    // A field to store the reference configuration x (displacement). At each
-    // adapatation, it will be interpolated to the new mesh.
-    //rc-todo Always apf::VECTOR?
-    pumi_discretization->createField("x_accum", apf::VECTOR);
+  initRcMgr();
+}
+
+namespace {
+inline int getValueType (const PHX::DataLayout& dl) {
+  switch (dl.rank() - 2) {
+  case 0: return apf::SCALAR;
+  case 1: return apf::VECTOR;
+  case 2: return apf::MATRIX;
+  default:
+    std::stringstream ss;
+    ss << "not a valid rank: " << dl.rank() - 2;
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+    return -1;
+  }
+}
+} // namespace
+
+template<class SizeField>
+void AAdapt::MeshAdapt<SizeField>::initRcMgr () {
+  if (rc_mgr.is_null()) return;
+  // A field to store the reference configuration x (displacement). At each
+  // adapatation, it will be interpolated to the new mesh.
+  //rc-todo Always apf::VECTOR?
+  //rc-todo Generalize to Albany::AbstractDiscretization.
+  pumi_discretization->createField("x_accum", apf::VECTOR);
+  if (rc_mgr->usingProjection()) {
+    rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
+                          pumi_discretization->getOverlapNodeMapT());
+    for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
+           end = rc_mgr->fieldsEnd();
+         it != end; ++it) {
+      const int value_type = getValueType(*(*it)->layout);
+      for (int i = 0; i < (*it)->num_g_fields; ++i)
+        pumi_discretization->createField(
+          (*it)->get_g_name(i).c_str(), value_type);
+    }
   }
 }
 
@@ -224,11 +256,8 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
                   min_part_density, callback);
     afterAdapt();
     success = true;
-  } else {
-    rc_mgr->beginAdapt();
-    success = adaptMeshLoop(min_part_density, callback);
-    rc_mgr->endAdapt();
-  }
+  } else
+    success = adaptMeshWithRc(min_part_density, callback);
 
   al::anlzCoords(pumi_discretization);
   return success;
@@ -236,8 +265,36 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
 
 template<class SizeField>
 bool AAdapt::MeshAdapt<SizeField>::
-adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback)
-{
+adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
+  const bool overlapped = true;
+  rc_mgr->beginAdapt();
+  if (rc_mgr->usingProjection())
+    for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
+           end = rc_mgr->fieldsEnd();
+         it != end; ++it)
+      for (int i = 0; i < (*it)->num_g_fields; ++i)
+        pumi_discretization->setField(
+          (*it)->get_g_name(i).c_str(),
+          &rc_mgr->getNodalField(**it, i, overlapped)->get1dView()[0],
+          overlapped);
+  const bool success = adaptMeshLoop(min_part_density, callback);
+  rc_mgr->endAdapt(pumi_discretization->getNodeMapT(),
+                   pumi_discretization->getOverlapNodeMapT());
+  if (rc_mgr->usingProjection())
+    for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
+           end = rc_mgr->fieldsEnd();
+         it != end; ++it)
+      for (int i = 0; i < (*it)->num_g_fields; ++i)
+        pumi_discretization->getField(
+          (*it)->get_g_name(i).c_str(),
+          &rc_mgr->getNodalField(**it, i, overlapped)->get1dViewNonConst()[0],
+          overlapped);
+  return success;
+}
+
+template<class SizeField>
+bool AAdapt::MeshAdapt<SizeField>::
+adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
   const int
     n_max_outer_iterations = 10,
     n_max_inner_iterations_if_found = 20,

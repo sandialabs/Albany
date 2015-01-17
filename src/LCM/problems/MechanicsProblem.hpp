@@ -2879,7 +2879,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     fm0.template registerEvaluator<EvalT>(ev);
   }
 
-  if (Teuchos::nonnull(rc_mgr_)) rc_mgr_->createEvaluators<EvalT>(fm0);
+  if (Teuchos::nonnull(rc_mgr_))
+    rc_mgr_->createEvaluators<EvalT>(fm0, dl_);
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM) {
 

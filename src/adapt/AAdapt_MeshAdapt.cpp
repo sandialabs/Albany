@@ -211,6 +211,7 @@ double findAlpha (
 
     if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0) {
       static const int w = 8;
+      std::cout.precision(4);
       std::cout << "amb: findAlpha it " << std::setw(2) << it
                 << " negative volumes " << std::setw(4)
                 << n_negative_simplices << " alpha " << std::setw(w) << alpha
