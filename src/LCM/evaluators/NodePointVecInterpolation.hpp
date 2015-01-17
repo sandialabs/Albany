@@ -94,12 +94,12 @@ private:
   nodal_value_;
 
   //! Basis Functions
-  PHX::MDField<RealType, Cell, Node, Point>
+  PHX::MDField<RealType, Cell, Node>
   basis_fn_;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT, Cell, Point, VecDim>
+  PHX::MDField<ScalarT, Cell, Point>
   point_value_;
 
   int

@@ -77,8 +77,7 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::Vector<ScalarT> p_grad(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_);
   // small strain version needs no pull back
-//Irina TOFIX dimensions
-/*
+
   if (small_strain_) {
     for (int cell = 0; cell < workset.numCells; ++cell) {
       for (int node = 0; node < num_nodes_; ++node) {
@@ -95,8 +94,8 @@ evaluateFields(typename Traits::EvalData workset)
       }
 
       // stabilization term
-      ScalarT stab_term = 0.5 * alpha_ * h_(cell) * h_(cell);
       for (int pt = 0; pt < num_pts_; ++pt) {
+        ScalarT stab_term = 0.5 * alpha_ * h_(cell,pt) * h_(cell,pt);
         ScalarT stab_param = stab_term / shear_modulus_(cell,pt);
         for (int node = 0; node < num_nodes_; ++node) {
           for (int i = 0; i < num_dims_; ++i) {
@@ -143,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-*/
+
 }
 //------------------------------------------------------------------------------
 }

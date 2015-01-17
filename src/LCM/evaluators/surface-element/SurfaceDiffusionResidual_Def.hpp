@@ -83,7 +83,7 @@ namespace LCM {
       for (int node(0); node < numPlaneNodes; ++node) {
     	  scalarResidual(cell, node) = 0;
     	  for (int pt=0; pt < numQPs; ++pt) {
-    		  //Irina TOFIX dimensions refArea should be 3d   scalarResidual(cell, node) += refValues(node, pt)*scalarJump(cell,pt)*thickness*refArea(cell,pt);
+    		  scalarResidual(cell, node) += refValues(node, pt)*scalarJump(cell,pt)*thickness*refArea(cell,pt);
     	  }
       }
     }

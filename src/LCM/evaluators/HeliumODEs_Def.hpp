@@ -238,12 +238,11 @@ evaluateFields(typename Traits::EvalData workset)
 		  }
 		  
 		  // Update global fields
-//Irina TOFIX dimensions
-/*
+
 		  he_concentration_(cell,pt) = n1;
 		  total_bubble_density_(cell,pt) = nb;
 		  bubble_volume_fraction_(cell,pt) = sb;
-*/
+
 	  }
   }  
   

@@ -55,7 +55,7 @@ private:
   unsigned int numDims;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> P;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> P;
 };
 }
 

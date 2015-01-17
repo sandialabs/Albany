@@ -77,9 +77,9 @@ namespace LCM {
     /// (2) Total bubble density
     /// (3) Bubble volume fracture
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> he_concentration_;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> total_bubble_density_;
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> bubble_volume_fraction_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> he_concentration_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> total_bubble_density_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> bubble_volume_fraction_;
 
     ///
     /// Constants

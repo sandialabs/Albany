@@ -140,8 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
       // Zero out for node==0; then += for node = 1 to number_nodes_
      // ScalarT &
      // vpt = point_value_(cell, i);
-//Irina TOFIX dimensions
-/*
+
       point_value_(cell, i) = FadType(
           num_dof,
           nodal_value_(cell, 0, i).val() * basis_fn_(cell, 0)
@@ -161,7 +160,7 @@ evaluateFields(typename Traits::EvalData workset)
             *
             basis_fn_(cell, node);
       }
-*/
+
     }
   }
 }

@@ -119,8 +119,7 @@ namespace LCM {
     for (int cell(0); cell < workset.numCells; ++cell) {
       for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
-//Irina TOFIX dimentions
- /*       	 for (int pt=0; pt < numQPs; ++pt) {
+        	 for (int pt=0; pt < numQPs; ++pt) {
         		 tau = 0.0;
  
                  for (int dim=0; dim <numDims; ++dim){
@@ -133,7 +132,7 @@ namespace LCM {
 
         	 }
         	 projection_residual_(cell, topNode) =  projection_residual_(cell, node);
-*/
+
       }
     }
 
