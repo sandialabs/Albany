@@ -146,8 +146,8 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp)
         Source(cell,qp) = 0.0;
 
-    for (int i =0, i< Source.dimention(0); i++)
-     for (int j =0, j< Source.dimention(1); j++)
+    for (int i =0; i< Source.dimension(0); i++)
+     for (int j =0; j< Source.dimension(1); j++)
         Source(i,j) *= -1.0;
     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
