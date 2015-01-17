@@ -447,8 +447,6 @@ namespace LCM
 
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
-    
     ScalarT J3 = Intrepid::det(s);
 
     ScalarT Gamma = 1.0;
@@ -486,7 +484,6 @@ namespace LCM
 
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
     ScalarT J3 = Intrepid::det(s);
 
     //dI1dsigma = I;
@@ -555,7 +552,6 @@ namespace LCM
 
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
     ScalarT J3 = Intrepid::det(s);
 
     //dJ2dsigma = s;
@@ -625,8 +621,7 @@ namespace LCM
 
     ScalarT J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    //Irina TOFIX intrepid
-    //ScalarT J3 = Intrepid::det(s);
+    ScalarT J3 = Intrepid::det(s);
 
     ScalarT Ff_I1 = A - C * std::exp(B * I1) - theta * I1;
 

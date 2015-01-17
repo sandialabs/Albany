@@ -83,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
   if (numDims == 1) {
-     //Irina TOFIX Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
+    Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
     for (int cell=0; cell < workset.numCells; ++cell) {
           for (int qp=0; qp < numQPs; ++qp) {
               for (int dim=0; dim<numDims; ++ dim) {
@@ -97,14 +97,12 @@ evaluateFields(typename Traits::EvalData workset)
   else
     {
 
-	  //Irina TOFIX intrepid
-	  RST::inverse(F_inv, defGrad);
-	  //RST::transpose(F_invT, F_inv);
+	   RST::inverse(F_inv, defGrad);
+	   RST::transpose(F_invT, F_inv);
 	   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
 	   FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
 	   FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
-//Irina TOFIX intrepid
-//	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
+  	   FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
 
     // Compute Stress
 

@@ -163,9 +163,8 @@ template<typename EvalT, typename Traits>
 void MapToPhysicalFrame<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- //Irina TOFIX 
-  //Intrepid::CellTools<RealType>::mapToPhysicalFrame
-  //     (coords_qp, refPoints, coords_vertices, *cellType);
+  Intrepid::CellTools<RealType>::mapToPhysicalFrame
+       (coords_qp, refPoints, coords_vertices, *cellType);
  // mapToPhysicalFrame<RealType>(coords_qp, refPoints, coords_vertices, *cellType);
   
 }

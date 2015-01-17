@@ -128,9 +128,8 @@ evaluateFields(typename Traits::EvalData workset)
   // compute Cp_{n}^{-1}
   // AGS MAY NEED TO ALLOCATE Fpinv FpinvT Cpinv  with actual workse size
   // to prevent going past the end of Fpold.
-//Irina TOFIX intrepid
   RST::inverse(Fpinv, Fpold);
- // RST::transpose(FpinvT, Fpinv);
+  RST::transpose(FpinvT, Fpinv);
   FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
   for (int cell=0; cell < workset.numCells; ++cell)

@@ -82,12 +82,11 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  //Irina TOFIX intrepid
-  RST::inverse(F_inv, defgrad);
-  //RST::transpose(F_invT, F_inv);
+   RST::inverse(F_inv, defgrad);
+   RST::transpose(F_invT, F_inv);
    FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-   //Irina TOFIX intrepid
-  FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
+   FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
+
   for (int cell=0; cell < workset.numCells; ++cell) 
   {
     for (int node=0; node < numNodes; ++node) 

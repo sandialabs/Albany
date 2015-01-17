@@ -145,9 +145,8 @@ namespace LCM {
     Albany::MDArray phi_old_FC = (*workset.stateArrayPtr)["Damage_old"];
 
     // compute Cp_{n}^{-1}
-    //Irina TOFIX intrepid
     RST::inverse(Fpinv, Fpold);
-    //RST::transpose(FpinvT, Fpinv);
+    RST::transpose(FpinvT, Fpinv);
     FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
     // std::cout << "F:\n";

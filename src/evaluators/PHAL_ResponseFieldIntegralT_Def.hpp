@@ -233,7 +233,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-//Irina TOFIX
+//Irina TOFIX reduceAll
 /* 
  Teuchos::reduceAll(
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,

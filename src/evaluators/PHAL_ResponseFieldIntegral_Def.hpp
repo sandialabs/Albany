@@ -237,7 +237,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
 
-//Irina TOFIX
+//Irina TOFIX reduceAll
 /*
   std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
   PHX::MDField<ScalarT> partial_response(this->global_response);

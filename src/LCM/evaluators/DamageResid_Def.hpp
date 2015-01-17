@@ -93,7 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
   //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
    FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   
- // Irina TOFIX if (workset.transientTerms && enableTransient) 
+  if (workset.transientTerms && enableTransient) 
      FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 }
 

@@ -119,10 +119,9 @@ void HeatEqResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-//Irina TOFIX
 //// workset.print(std::cout);
 
-/*
+
   typedef Intrepid::FunctionSpaceTools FST;
 
   // Since Intrepid will later perform calculations on the entire workset size
@@ -147,7 +146,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp)
         Source(cell,qp) = 0.0;
 
-    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
+    for (int i =0, i< Source.dimention(0); i++)
+     for (int j =0, j< Source.dimention(1); j++)
+        Source(i,j) *= -1.0;
     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
@@ -201,7 +202,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 //TResidual.print(std::cout, true);
-*/
+
 }
 
 //**********************************************************************

@@ -64,8 +64,6 @@ template<typename EvalT, typename Traits>
 void StokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-//Irina TOFIX
-/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t node=0; node < numNodes; ++node) {          
       for (std::size_t i=0; i<numDims; i++) {
@@ -85,7 +83,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   
  
-*/}
+}
 
 }
 

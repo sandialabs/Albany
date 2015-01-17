@@ -149,7 +149,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-//Irina TOFIX
+//Irina TOFIX reduceAll
 /*
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view

@@ -387,11 +387,9 @@ Albany::ProblemFactory::create()
   else if (method == "Aeras XZ Scalar Advection" ) {
     strategy = rcp(new Aeras::XZScalarAdvectionProblem(problemParams, paramLib, 2));
   }
-//Irina TOFIX
   else if (method == "Aeras X Scalar Advection" ) {
     strategy = rcp(new Aeras::XScalarAdvectionProblem(problemParams, paramLib, 1));
   }
-//Irina TOFIX
   else if (method == "Aeras XZ Hydrostatic" ) {
     strategy = rcp(new Aeras::XZHydrostaticProblem(problemParams, paramLib, 1));
   }
