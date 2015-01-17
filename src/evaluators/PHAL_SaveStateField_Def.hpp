@@ -81,9 +81,6 @@ evaluateFields(typename Traits::EvalData workset)
     sta.dimensions(dims);
     int size = dims.size();
 
-//Irina Debug
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0==0,
-                          "evaluators/PHAL_SaveStateField_Def.hpp: run-time rank is not supported: ");
     switch (size) {
     case 1:
       for (int cell = 0; cell < dims[0]; ++cell)

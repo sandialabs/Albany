@@ -42,9 +42,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions < 1, "SetField::evaluateFields(), unsupported field type.");  
   int dim1 = evaluatedFieldDimensions[0];
-// Irina TOFIX: we have 4d array with compile-time rank so if construction doesn't work
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0==0, "SetField:: run-time rank is not supported");
-/*
+
 
   if(numDimensions == 1){
     for (int i=0; i<dim1; ++i) {
@@ -73,7 +71,7 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0==0, "SetField:: run-time rank is not supported");
     }
   }
   else if(numDimensions == 4){
-*/    int dim3 = evaluatedFieldDimensions[2];
+    int dim3 = evaluatedFieldDimensions[2];
     int dim2 = evaluatedFieldDimensions[1];
     int dim4 = evaluatedFieldDimensions[3];
     TEUCHOS_TEST_FOR_EXCEPT_MSG(fieldValues.size() != dim1*dim2*dim3*dim4, "SetField::evaluateFields(), inconsistent data sizes.");
@@ -86,10 +84,10 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0==0, "SetField:: run-time rank is not supported");
         }
       }
     }
-/*  }
+  }
   else{
     TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions > 4, "SetField::evaluateFields(), unsupported data type.");
-  }*/
+  }
 }
 }
 

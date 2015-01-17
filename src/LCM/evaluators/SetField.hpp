@@ -38,7 +38,8 @@ private:
   std::string evaluatedFieldName;
 
   //! The field that will be set.
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> evaluatedField;
+ // PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> evaluatedField;
+  PHX::MDField<ScalarT> evaluatedField;
 
   //! The dimensions of the field to be set.
   std::vector<PHX::DataLayout::size_type> evaluatedFieldDimensions;
