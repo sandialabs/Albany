@@ -108,7 +108,6 @@ namespace PHAL {
     iterator begin() { return iterator(objects.begin()); }
 
     //! Return an iterator that points to the first object
-    //Irina Debug const_iterator begin() const { return iterator(objects.begin()); }
     const_iterator begin() const { return const_iterator(objects.begin()); }
 
     //! Return an iterator that points one past the last object

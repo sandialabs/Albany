@@ -155,6 +155,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
 //Irina TOFIX Teuchos::reduceAll & pointer
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "QCAD::ResponceCenterOfMass:: evaluator has to be fixed for Kokkos data types( reduceAll is not supported yet)");
 /*  std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
   PHX::MDField<ScalarT> partial_response(this->global_response);
   partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));

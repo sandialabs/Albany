@@ -103,6 +103,7 @@ computeState(typename Traits::EvalData workset,
   }
 
 //Irina TOFIX pointers and dimensions
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed for Kokkos data types");
 /*
   switch (num_dims_) {
   case 1:

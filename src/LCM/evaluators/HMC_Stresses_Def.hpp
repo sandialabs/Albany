@@ -139,6 +139,7 @@ evaluateFields(typename Traits::EvalData workset)
 //  ScalarT C11,C33,C12,C23,C44,C66;
 
 //Irina TOFIX pointers
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "Stress:: evaluator has to be fixed for Kokkos data types");
 /*
   switch (numDims) {
   case 1:

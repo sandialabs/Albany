@@ -42,7 +42,8 @@ evaluateFields(typename Traits::EvalData workset)
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(numDimensions < 1, "SetField::evaluateFields(), unsupported field type.");  
   int dim1 = evaluatedFieldDimensions[0];
-// Irina D Debug: we have 4d array with compile-time rank so if construction doesn't work
+// Irina TOFIX: we have 4d array with compile-time rank so if construction doesn't work
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0==0, "SetField:: run-time rank is not supported");
 /*
 
   if(numDimensions == 1){

@@ -234,6 +234,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
 //Irina TOFIX reduceAll
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
 /* 
  Teuchos::reduceAll(
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,

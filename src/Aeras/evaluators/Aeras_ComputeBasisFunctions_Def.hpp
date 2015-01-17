@@ -93,8 +93,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   }
    
 
-  //Irina Debug:: remove strings with new Phalanx
-  //this->setName("Aeras::ComputeBasisFunctions"PHX::typeAsString<EvalT>());
+  this->setName("Aeras::ComputeBasisFunctions"PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -381,15 +380,11 @@ evaluateFields(typename Traits::EvalData workset)
   const int numelements = coordVec.dimension(0);
   const int spatialDim  = coordVec.dimension(2);
   const int basisDim    =                    2;
-//Irina Debug
-//std::cout << numelements<< "  " << numQPs<< std::endl;
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
     Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-//    Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-//    Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
   } else {
     Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);
     Intrepid::FieldContainer<MeshScalarT> dphi(numQPs,spatialDim,basisDim);

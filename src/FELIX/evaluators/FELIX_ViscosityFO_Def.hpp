@@ -281,9 +281,6 @@ evaluateFields(typename Traits::EvalData workset)
 }
 #else
   Kokkos::parallel_for (workset.numCells, *this);
-  //std::cout <<mu(30,3)  << "   " << Ugrad(30,3,0,1) << "   " <<coordVec(30,3,0) <<std::endl;
- //Irina Debug
-// std::cout << "after viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
 #endif
 }
 }

@@ -174,9 +174,8 @@ namespace LCM {
           for (int node = 0; node < num_nodes_; ++node) {
             for (int i = 0; i < num_dims_; ++i) {
               for (int j = 0; j < num_dims_; ++j) {
-                //residual_(cell,node) += w_grad_bf_(cell,node,pt,i) *
-// Irina D Debug:: bolow doesn't work since scalar_grad_ is 2D
-//diffusivity_(cell,pt,i,j) * scalar_grad_(cell,pt,j);
+                residual_(cell,node) += w_grad_bf_(cell,node,pt,i) *
+                   diffusivity_(cell,pt,i,j) * scalar_grad_(cell,pt,j);
               }
             }
           }
@@ -201,9 +200,8 @@ namespace LCM {
         for (int pt = 0; pt < num_pts_; ++pt) {
           for (int node = 0; node < num_nodes_; ++node) {
             for (int dim = 0; dim < num_dims_; ++dim) {
-             // Irina D Debug:: bolow doesn't work since scalar_grad_ is 2D
-             // residual_(cell,node) += w_bf_(cell,node,pt) *
-             //   convection_vector_(cell,pt,dim) * scalar_grad_(cell,pt,dim);
+              residual_(cell,node) += w_bf_(cell,node,pt) *
+                convection_vector_(cell,pt,dim) * scalar_grad_(cell,pt,dim);
             }
           }
         }
