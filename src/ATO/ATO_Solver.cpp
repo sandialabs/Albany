@@ -987,7 +987,8 @@ ATO::SpatialFilter::buildOperator(
             std::set<GlobalPoint> my_neighbors;
             if( excludeNodes.find(homeNode.gid) == excludeNodes.end() ){
               for (size_t trial_ws=0; trial_ws<num_worksets; trial_ws++) {
-                if( find(blocks.begin(), blocks.end(), wsEBNames[trial_ws]) == blocks.end() ) continue;
+                if( blocks.size() > 0 && 
+                    find(blocks.begin(), blocks.end(), wsEBNames[trial_ws]) == blocks.end() ) continue;
                 int trial_num_cells = coords[trial_ws].size();
                 for (int trial_cell=0; trial_cell<trial_num_cells; trial_cell++) {
                   size_t trial_num_nodes = coords[trial_ws][trial_cell].size();
