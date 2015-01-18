@@ -15,40 +15,31 @@
 // coordinates array needs to be sized to have the new enriched nodes.
 // All the maps need to be defined to have the enriched mesh.
 // wsElNode* objects need to be populated with enriched mesh.
-//
-#include <limits>
 
-#include "Albany_Utils.hpp"
-#include "Aeras_SpectralDiscretization.hpp"
-#include "Albany_NodalGraphUtils.hpp"
-#include "Albany_STKNodeFieldContainer.hpp"
-#include "Albany_BucketArray.hpp"
-
-#include <string>
-#include <iostream>
+// Standard includes
+#include <algorithm>
 #include <fstream>
+#include <iostream>
+#include <limits>
+#include <string>
 
+// Trilinos includes
+#include <Teuchos_TwoDArray.hpp>
 #include <Shards_BasicTopologies.hpp>
-
 #include <Intrepid_CellTools.hpp>
 #include <Intrepid_Basis.hpp>
 #include <Intrepid_HGRAD_QUAD_Cn_FEM.hpp>
-
 #include <stk_util/parallel/Parallel.hpp>
-
+#include <stk_mesh/base/FEMHelpers.hpp>
 #include <stk_mesh/base/Entity.hpp>
+#include <stk_mesh/base/CreateEdges.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/Selector.hpp>
-
 #include <PHAL_Dimension.hpp>
-
-#include <stk_mesh/base/FEMHelpers.hpp>
-
 #ifdef ALBANY_SEACAS
 #include <Ionit_Initializer.h>
 #include <netcdf.h>
-
 #ifdef ALBANY_PAR_NETCDF
 extern "C" 
 {
@@ -56,26 +47,36 @@ extern "C"
 }
 #endif
 #endif
-
-#include <algorithm>
 #ifdef ALBANY_EPETRA
 #include "Epetra_Export.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "Petra_Converters.hpp"
 #endif
 
+// Albany includes
+#include "Albany_Utils.hpp"
+#include "Albany_NodalGraphUtils.hpp"
+#include "Albany_STKNodeFieldContainer.hpp"
+#include "Albany_BucketArray.hpp"
+#include "Aeras_SpectralDiscretization.hpp"
+
+// Constants
 const double pi = 3.1415926535897932385;
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
+const Tpetra::global_size_t INVALID =
+  Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
-// uncomment the following line if you want debug output to be printed to screen
+// Hard code the points per edge of enriched elements.  This will
+// later be changed to an input parameter.
+const int points_per_edge = 5;
+
+// Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
-
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   metaData(*stkMeshStruct_->metaData),
@@ -86,13 +87,15 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout <<"In Aeras::SpectralDiscretization constructor!" << std::endl; 
+#endif
 
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
-  Aeras::SpectralDiscretization::updateMesh();
 
+  Aeras::SpectralDiscretization::updateMesh();
 }
 
 Aeras::SpectralDiscretization::~SpectralDiscretization()
@@ -891,6 +894,151 @@ int Aeras::SpectralDiscretization::nonzeroesPerRow(const int neq) const
   return estNonzeroesPerRow;
 }
 
+stk::mesh::EntityId
+Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) const
+{
+  // Get the local maximum ID
+  stk::mesh::EntityId last_entity =
+    (--bulkData.end_entities(rank))->first.id();
+
+  // Use a parallel MAX reduction to obtain the global maximum ID
+  //
+  // FIXME: WFS: I added what appear to be unnecessary casts to (int*)
+  // in order to avoid compilation errors complaining that we do not
+  // have Teuchos::Serializations for unsigned long long.  This
+  // appears to be because HAVE_TEUCHOS_LONG_LONG_INT=OFF when
+  // building Trilinos.  That might be easily changed, but it might
+  // indicate some larger issue that needs to be dealt with.  I will
+  // leave it like this until I have figured it out.
+  stk::mesh::EntityId result;
+  Teuchos::reduceAll(*commT,
+                     Teuchos::REDUCE_MAX,
+                     1,
+                     (int*)(&last_entity),
+                     (int*)(&result));
+  return result;
+}
+
+void Aeras::SpectralDiscretization::enrichMesh()
+{
+  // Initialization
+  size_t np  = points_per_edge;
+  size_t np2 = np * np;
+  GO maxGID    = getMaximumID(stk::topology::NODE_RANK);
+  GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
+
+  // Edges are not created by default, so we create them here
+  stk::mesh::create_edges(bulkData);
+
+  // Fill in the enriched edge array
+  const stk::mesh::BucketVector & edgeBuckets =
+    bulkData.buckets(stk::topology::EDGE_RANK);
+  enrichedEdges.resize(edgeBuckets.size());
+  for (size_t ibuck = 0; ibuck < edgeBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
+    enrichedEdges[ibuck].resize(edgeBucket.size());
+    for (size_t ielem = 0; ielem < edgeBucket.size(); ++ielem)
+    {
+      stk::mesh::Entity edge = edgeBucket[ielem];
+      unsigned numNodes = bulkData.num_nodes(edge);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        numNodes != 2,
+        std::logic_error,
+        "Starting edges for enriched elements must be linear.  Edge " << edge
+        << " has " << numNodes << " nodes.");
+      const stk::mesh::Entity * nodes = bulkData.begin_nodes(edge);
+      enrichedEdges[ibuck][ielem].resize(np);
+      enrichedEdges[ibuck][ielem][0] = bulkData.identifier(nodes[0]);
+      for (GO inode = 1; inode < np-1; ++inode)
+      {
+        enrichedEdges[ibuck][ielem][inode] =
+          maxGID + bulkData.identifier(edge)*(np-2) + inode;
+      }
+      enrichedEdges[ibuck][ielem][np-1] = bulkData.identifier(nodes[1]);
+    }
+  }
+
+  // Fill in the enriched element array
+  const stk::mesh::BucketVector & elementBuckets =
+    bulkData.buckets(stk::topology::ELEMENT_RANK);
+  enrichedElements.resize(elementBuckets.size());
+  for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck];
+    enrichedElements[ibuck].resize(elementBucket.size());
+    for (size_t ielem = 0; ielem < elementBucket.size(); ++ielem)
+    {
+      stk::mesh::Entity element = elementBucket[ielem];
+      unsigned numNodes = bulkData.num_nodes(element);
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        numNodes != 4,
+        std::logic_error,
+        "Starting elements for enriched elements must be linear quadrilaterals."
+        "  Element " << element << " has " << numNodes << " nodes.");
+      const stk::mesh::Entity * nodes = bulkData.begin_nodes(element);
+      // Here we allocate a new Teuchos::TwoDArray (named buffer at
+      // address bufferPtr) for storing and accessing a 2D array of
+      // element nodes.  We will then construct a Teuchos::ArrayRCP
+      // pointing to the same buffer that assumes ownership of the
+      // buffer, so that it can be stored in the enrichedElements data
+      // structure.
+      Teuchos::TwoDArray<GO> * bufferPtr = new Teuchos::TwoDArray<GO>(np,np);
+      Teuchos::TwoDArray<GO> & buffer = *bufferPtr;
+      enrichedElements[ibuck][ielem] =
+        Teuchos::ArrayRCP<GO>(&buffer[0][0],0,np2,true);
+
+      // Copy the linear corner node IDs to the enriched element
+      buffer[0   ][0   ] = bulkData.identifier(nodes[0]);
+      buffer[0   ][np-1] = bulkData.identifier(nodes[1]);
+      buffer[np-1][np-1] = bulkData.identifier(nodes[2]);
+      buffer[np-1][0   ] = bulkData.identifier(nodes[3]);
+
+      // Copy the enriched edge nodes to the enriched element.  Note
+      // that the enriched edge may or may not be aligned with the
+      // tensor grid edge.  So we check the first node ID and copy
+      // in the appropriate direction.
+      const stk::mesh::Entity * edges = bulkData.begin_edges(element);
+      // Edge 0
+      const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(edges[0]);
+      for (unsigned inode = 1; inode < np-1; ++inode)
+        if (edgeNodes[0] == nodes[0])
+          buffer[0][inode] = bulkData.identifier(edgeNodes[inode]);
+        else
+          buffer[0][inode] = bulkData.identifier(edgeNodes[np-inode-1]);
+      // Edge 1
+      edgeNodes = bulkData.begin_nodes(edges[1]);
+      for (unsigned inode = 1; inode < np-1; ++inode)
+        if (edgeNodes[1] == nodes[1])
+          buffer[inode][np-1] = bulkData.identifier(edgeNodes[inode]);
+        else
+          buffer[inode][np-1] = bulkData.identifier(edgeNodes[np-inode-1]);
+      // Edge 2
+      edgeNodes = bulkData.begin_nodes(edges[2]);
+      for (unsigned inode = 1; inode < np-1; ++inode)
+        if (edgeNodes[2] == nodes[2])
+          buffer[np-1][inode] = bulkData.identifier(edgeNodes[np-inode-1]);
+        else
+          buffer[np-1][inode] = bulkData.identifier(edgeNodes[inode]);
+      // Edge 3
+      edgeNodes = bulkData.begin_nodes(edges[3]);
+      for (unsigned inode = 1; inode < np-1; ++inode)
+        if (edgeNodes[3] == nodes[3])
+          buffer[inode][0] = bulkData.identifier(edgeNodes[np-inode-1]);
+        else
+          buffer[inode][0] = bulkData.identifier(edgeNodes[inode]);
+
+      // Create new interior nodes for the enriched element
+      GO offset = maxGID + (maxEdgeID+1) * (np-2) +
+        bulkData.identifier(element) * (np-2) * (np-2) + 1;
+      for (unsigned ii = 0; ii < np-2; ++ii)
+        for (unsigned jj = 0; jj < np-2; ++jj)
+          buffer[ii+1][jj+1] = offset + ii * (np-2) + jj;
+    }
+  }
+
+}
+
 #ifdef ALBANY_EPETRA
 void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
 {
@@ -1064,8 +1212,8 @@ void Aeras::SpectralDiscretization::computeGraphs()
 {
   std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
-// int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
 
+  // int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
 
   overlap_graphT = Teuchos::null; // delete existing graph happens here on remesh
