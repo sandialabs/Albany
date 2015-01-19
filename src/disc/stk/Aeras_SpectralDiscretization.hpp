@@ -480,6 +480,9 @@ namespace Aeras
     //! workset (std::vector across worksets)
     std::vector<Albany::SideSetList> sideSets;
 
+    //! Flags indicating which edges are owned
+    std::map< GO, bool > edgeIsOwned;
+
     //! Enriched edge array [workset, edge, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type enrichedEdges;
 

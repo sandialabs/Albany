@@ -949,13 +949,13 @@ void Aeras::SpectralDiscretization::enrichMesh()
         << " has " << numNodes << " nodes.");
       const stk::mesh::Entity * nodes = bulkData.begin_nodes(edge);
       enrichedEdges[ibuck][ielem].resize(np);
-      enrichedEdges[ibuck][ielem][0] = bulkData.identifier(nodes[0]);
+      enrichedEdges[ibuck][ielem][0] = gid(nodes[0]);
       for (GO inode = 1; inode < np-1; ++inode)
       {
         enrichedEdges[ibuck][ielem][inode] =
-          maxGID + bulkData.identifier(edge)*(np-2) + inode;
+          maxGID + gid(edge)*(np-2) + inode;
       }
-      enrichedEdges[ibuck][ielem][np-1] = bulkData.identifier(nodes[1]);
+      enrichedEdges[ibuck][ielem][np-1] = gid(nodes[1]);
     }
   }
 
@@ -989,10 +989,10 @@ void Aeras::SpectralDiscretization::enrichMesh()
         Teuchos::ArrayRCP<GO>(&buffer[0][0],0,np2,true);
 
       // Copy the linear corner node IDs to the enriched element
-      buffer[0   ][0   ] = bulkData.identifier(nodes[0]);
-      buffer[0   ][np-1] = bulkData.identifier(nodes[1]);
-      buffer[np-1][np-1] = bulkData.identifier(nodes[2]);
-      buffer[np-1][0   ] = bulkData.identifier(nodes[3]);
+      buffer[0   ][0   ] = gid(nodes[0]);
+      buffer[0   ][np-1] = gid(nodes[1]);
+      buffer[np-1][np-1] = gid(nodes[2]);
+      buffer[np-1][0   ] = gid(nodes[3]);
 
       // Copy the enriched edge nodes to the enriched element.  Note
       // that the enriched edge may or may not be aligned with the
@@ -1003,40 +1003,62 @@ void Aeras::SpectralDiscretization::enrichMesh()
       const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(edges[0]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[0] == nodes[0])
-          buffer[0][inode] = bulkData.identifier(edgeNodes[inode]);
+          buffer[0][inode] = gid(edgeNodes[inode]);
         else
-          buffer[0][inode] = bulkData.identifier(edgeNodes[np-inode-1]);
+          buffer[0][inode] = gid(edgeNodes[np-inode-1]);
       // Edge 1
       edgeNodes = bulkData.begin_nodes(edges[1]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[1] == nodes[1])
-          buffer[inode][np-1] = bulkData.identifier(edgeNodes[inode]);
+          buffer[inode][np-1] = gid(edgeNodes[inode]);
         else
-          buffer[inode][np-1] = bulkData.identifier(edgeNodes[np-inode-1]);
+          buffer[inode][np-1] = gid(edgeNodes[np-inode-1]);
       // Edge 2
       edgeNodes = bulkData.begin_nodes(edges[2]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[2] == nodes[2])
-          buffer[np-1][inode] = bulkData.identifier(edgeNodes[np-inode-1]);
+          buffer[np-1][inode] = gid(edgeNodes[np-inode-1]);
         else
-          buffer[np-1][inode] = bulkData.identifier(edgeNodes[inode]);
+          buffer[np-1][inode] = gid(edgeNodes[inode]);
       // Edge 3
       edgeNodes = bulkData.begin_nodes(edges[3]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[3] == nodes[3])
-          buffer[inode][0] = bulkData.identifier(edgeNodes[np-inode-1]);
+          buffer[inode][0] = gid(edgeNodes[np-inode-1]);
         else
-          buffer[inode][0] = bulkData.identifier(edgeNodes[inode]);
+          buffer[inode][0] = gid(edgeNodes[inode]);
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + (maxEdgeID+1) * (np-2) +
-        bulkData.identifier(element) * (np-2) * (np-2) + 1;
+        gid(element) * (np-2) * (np-2) + 1;
       for (unsigned ii = 0; ii < np-2; ++ii)
         for (unsigned jj = 0; jj < np-2; ++jj)
           buffer[ii+1][jj+1] = offset + ii * (np-2) + jj;
     }
   }
 
+  // Mark locally owned edges as owned
+  edgeIsOwned.clear();
+  stk::mesh::Selector locally_owned  = metaData.locally_owned_part();
+  const stk::mesh::BucketVector & ownedEdgeBuckets =
+    bulkData.get_buckets(stk::topology::EDGE_RANK, locally_owned);
+  for (size_t ibuck = 0; ibuck < ownedEdgeBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & edgeBucket = *ownedEdgeBuckets[ibuck];
+    for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
+      edgeIsOwned[gid(edgeBucket[iedge])] = true;
+  }
+
+  // Marked locally shared edges as unowned
+  stk::mesh::Selector locally_shared = !locally_owned;
+  const stk::mesh::BucketVector & sharedEdgeBuckets =
+    bulkData.get_buckets(stk::topology::EDGE_RANK, locally_shared);
+  for (size_t ibuck = 0; ibuck < sharedEdgeBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & edgeBucket = *sharedEdgeBuckets[ibuck];
+    for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
+      edgeIsOwned[gid(edgeBucket[iedge])] = false;
+  }
 }
 
 #ifdef ALBANY_EPETRA
@@ -1117,18 +1139,46 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
 
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 {
-  // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes, map
-  // maps for owned nodes and unknowns
+  // Initialization
+  int np = points_per_edge;
+
+  // Compute the STK Mesh Selector
   stk::mesh::Selector select_owned_in_part =
-    stk::mesh::Selector( metaData.universal_part() ) &
-    stk::mesh::Selector( metaData.locally_owned_part() );
+    stk::mesh::Selector(metaData.universal_part()) &
+    stk::mesh::Selector(metaData.locally_owned_part());
 
-  stk::mesh::get_selected_entities( select_owned_in_part ,
-				    bulkData.buckets( stk::topology::NODE_RANK ) ,
-				    ownednodes );
-
+  // The owned nodes will be the owned corner nodes from the original
+  // linear STK mesh, the non-endpoint nodes from the owned edges, plus
+  // all of the enriched interior nodes.  Start with the corner nodes.
+  stk::mesh::get_selected_entities(select_owned_in_part,
+				   bulkData.buckets(stk::topology::NODE_RANK),
+				   ownednodes);
   numOwnedNodes = ownednodes.size();
+
+  // Now add the number of nodes from the owned edges
+  const stk::mesh::BucketVector & ownedEdgeBuckets =
+    bulkData.get_buckets(stk::topology::EDGE_RANK, select_owned_in_part);
+  size_t numNewEdgeNodes = 0;
+  for (size_t ibuck = 0; ibuck < ownedEdgeBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & edgeBucket = *ownedEdgeBuckets[ibuck];
+    numNewEdgeNodes += edgeBucket.size() * (np-2);
+  }
+  numOwnedNodes += numNewEdgeNodes;
+
+  // Now add the number of nodes from the enriched element interiors
+  const stk::mesh::BucketVector & elementBuckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
+  size_t numNewElementNodes = 0;
+  for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck];
+    numNewElementNodes += elementBucket.size() * (np-2) * (np-2);
+  }
+  numOwnedNodes += numNewElementNodes;
+
 #ifdef ALBANY_EPETRA
+  // FIXME: WFS: not updated yet for enriched elements
   node_map = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").map;
   map = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").map;
 
@@ -1139,24 +1189,64 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
     stkMeshStruct->nodal_data_base->resizeLocalMap(
       node_mapT->getNodeElementList(), commT);
 #else // ALBANY_EPETRA
+
+  //////////////////////////////////////////////////////////////////////
+  // N.B.: Filling the indicesT array is inherently serial
   Teuchos::Array<GO> indicesT(numOwnedNodes);
-  for (int i=0; i < numOwnedNodes; i++) indicesT[i] = gid(ownednodes[i]);
+  inode = 0;
+
+  // Add the ownednodes to indicesT
+  for (size_t i = 0; i < ownednodes.size(); ++i)
+    indicesT[inode++] = gid(ownednodes[i]);
+
+  // Get a bucket of all the edges so that the local indexes match the
+  // enrichedEdges indexes.  Loop over these edges to add their nodes
+  // to indicesT, when the edges are owned
+  const stk::mesh::BucketVector edgeBuckets =
+    bulkData.buckets(stk::topology::EDGE_RANK);
+  for (size_t ibuck = 0; ibuck < edgeBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
+    for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
+    {
+      stk::mesh::Entity edge = edgeBucket[iedge];
+      if (edgeIsOwned[gid(edge)])
+      {
+        // Note that local edge nodes 0 and 3 have already been
+        // handled correctly by the previous loop over ownednodes
+        indicesT[inode++] = enrichedEdges[ibuck][iedge][1];
+        indicesT[inode++] = enrichedEdges[ibuck][iedge][2];
+      }
+    }
+  }
+
+  // Add all of the interior nodes of the enriched elements to indicesT
+  for (size_t ibuck = 0; ibuck < enrichedElements.size(); ++ibuck)
+    for (size_t ielem = 0; ielem < enrichedElements[ibuck].size(); ++ielem)
+      for (size_t ii = 1; ii < np-1; ++ii)
+        for (size_t jj = 1; jj < np-1; ++jj)
+          indices[inode++] = enrichedElements[ibuck][ielem][ii*np+jj];
+
+  assert (inode == numOwnedNodes);
+  //////////////////////////////////////////////////////////////////////
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
   node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
 
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
-  indicesT.resize(numOwnedNodes * neq);
+  Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
   for (int i=0; i < numOwnedNodes; i++)
     for (std::size_t j=0; j < neq; j++)
-      indicesT[getOwnedDOF(i,j)] = getGlobalDOF(gid(ownednodes[i]),j);
+      dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
-  mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
+  mapT = Tpetra::createNonContigMap<LO, GO>(dofIndicesT(), commT);
 
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    Teuchos::nonnull(stkMeshStruct->nodal_data_base),
+    std::logic_error,
+    "Nodal database not implemented for Aeras::SpectralDiscretization");
 #endif
 }
 
@@ -2669,6 +2759,9 @@ Aeras::SpectralDiscretization::printVertexConnectivity()
 void
 Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
+
+  enrichMesh();
+
 #ifdef ALBANY_EPETRA
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
