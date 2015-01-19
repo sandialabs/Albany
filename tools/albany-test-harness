@@ -5,7 +5,7 @@ A convenient way to manage and wrap Albany building and
 testing, including Trilinos building.
 """
 
-import argparse, sys, os, doctest, socket, re
+import argparse, sys, os, doctest, socket, re, stat
 from subprocess import Popen, PIPE
 
 VERBOSE = False
@@ -26,23 +26,76 @@ ALBANY_BUILD_TYPES = \
     ],
     "lcm" : [
         ("ALBANY_LCM", "ON"),
-        ("ALBANY_SG_MP", "ON"),
+    ],
+    "ato" : [
+        ("ALBANY_ATO", "ON")
+    ],
+    "aeras" : [
+        ("ALBANY_AERAS", "ON"),
     ],
     "felix" : [
-        ("ALBANY_LCM", "ON"),
-        ("ALBANY_SG_MP", "ON"),
-        ("ALBANY_MOR", "ON"),
         ("ALBANY_FELIX", "ON"),
-        ("ALBANY_HYDRIDE", "ON"),
-        ("ALBANY_AMP", "ON"),
-        ("ALBANY_ATO", "ON"),
-        ("ALBANY_QCAD", "ON"),
-        ("ALBANY_ASCR", "ON"),
-        ("ALBANY_AERAS", "ON"),
-        ("ALBANY_64BIT_INT", "ON"),
+    ],
+    "peridigm" : [
+        ("ALBANY_PERIDIGM", "ON"),
+    ],
+    "cism" : [
+        "felix",
+        ("ALBANY_CISM_INTERFACE", "OFF"),
+    ],
+    "mpas" : [
+        "felix",
+        ("ALBANY_MPAS_INTERFACE", "OFF"),
+    ],
+    "performance" : [
+        ("ALBANY_PERFORMANCE_TESTS", "ON"),
+    ],
+    "lame" : [
         ("ALBANY_LAME", "ON"),
-        ("ALBANY_DEMO_PDES", "ON"),
-        ("ALBANY_MPAS_INTERFACE", "ON"),
+    ],
+    "lament" : [
+        ("ALBANY_LAMENT", "ON"),
+    ],
+    "ascr" : [
+        ("ALBANY_ASCR", "ON"),
+    ],
+    "hydride" : [
+        ("ALBANY_HYDRIDE", "ON"),
+    ],
+    "see" : [
+        ("ALBANY_SEE", "ON"),
+    ],
+    "amp" : [
+        ("ALBANY_AMP", "ON"),
+    ],
+    "ci" : [
+        ("ALBANY_CI", "ON"),
+    ],
+    "scorec" : [
+        ("ALBANY_SCOREC", "ON"),
+        ("TRILINOS_SCOREC", "ON"),
+        ("TRILINOS_PARMETIS", "ON"),
+    ],
+    "complete" : [
+        "trikota",
+        "felix",
+        "lcm",
+        "aeras",
+        "ascr",
+        "hydride",
+        "ato",
+        "performance"
+    ],
+    "irina-full" : [
+        "complete",
+        "amp",
+        "lame",
+        "mpas",
+
+        ("TRILINOS_TRIKOTA",  "OFF"),
+        ("ALBANY_PERFORMANCE_TESTS",  "OFF"),
+
+        ("ALBANY_64BIT_INT", "ON"),
         ("TRILINOS_PHALANX_TEUCHOS_TIME_MONITOR", "ON"),
         ("TRILINOS_STOKHOS_TEUCHOS_TIME_MONITOR", "ON"),
         ("TRILINOS_STRATIMIKOS_TEUCHOS_TIME_MONITOR", "ON"),
@@ -92,11 +145,11 @@ ALBANY_BUILD_MODES = \
         ("TRILINOS_BUILD_MODE", "RELEASE")
     ],
     "debug"   : [
-        ("ALBANY_BUILD_MODE",   "DEBUG"),
-        ("TRILINOS_BUILD_MODE", "DEBUG"),
-        ("BUILD_SHARED_LIBS",   "ON"),
-        ("ALBANY_CXX_FLAGS",    "-ggdb"),
-        ("TRILINOS_CXX_FLAGS",  "-ggdb")
+        ("ALBANY_BUILD_MODE",          "DEBUG"),
+        ("TRILINOS_BUILD_MODE",        "DEBUG"),
+        ("TRILINOS_BUILD_SHARED_LIBS", "ON"),
+        ("ALBANY_CXX_FLAGS",           "-ggdb"),
+        ("TRILINOS_CXX_FLAGS",         "-ggdb")
     ]
 }
 
@@ -107,7 +160,7 @@ COMPILERS = [
     "pgi"
 ]
 
-LOCAL_CMAKE_BASE_NAME = "do-cmake-test-harness"
+LOCAL_CMAKE_BASE_NAME = "do-cmake-ATH"
 
 ###############################################################################
 def expect(condition, error_msg):
@@ -230,12 +283,19 @@ def run_cmd(command, arg_stdout=None):
 ###############################################################################
 def set_env_for_build(build_keys, env_map):
 ###############################################################################
-    # TODO: Need to worry about contradictory settings?
     for build_key in build_keys:
         env_settings = env_map[build_key]
 
-        for env_var, env_setting in env_settings:
-            os.environ[env_var] = env_setting
+        for item in env_settings:
+            if (type(item) is str):
+                set_env_for_build([item], env_map)
+            else:
+                env_var, env_setting = item
+                if (env_var in os.environ and os.environ[env_var] != env_setting):
+                    expect(False,
+                           "Conflicting build modes: '%s' tried to set env '%s' to '%s' but already had '%s" %
+                           (build_key, env_var, env_setting, os.environ[env_var]))
+                os.environ[env_var] = env_setting
 
 ###############################################################################
 def set_jenkins_env():
@@ -252,7 +312,7 @@ def set_jenkins_env():
             expect(os.path.isdir(env_value), "Value of '%s', '%s', not a valid directory" % (env_var, env_value))
 
 ###############################################################################
-def generate_cmake_fragment(generic_fragment_path, env_cmd):
+def generate_cmake_fragment(generic_fragment_path, env_cmd, frag_name):
 ###############################################################################
     # Read in generic_fragment_path
     generic_fragment = open(generic_fragment_path, 'r').read()
@@ -265,8 +325,8 @@ def generate_cmake_fragment(generic_fragment_path, env_cmd):
 
     # Be aware of potential file name conflicts for local fragment we want
     # to create
-    old_frag_name = LOCAL_CMAKE_BASE_NAME
     renames = []
+    old_frag_name = frag_name
     while (os.path.exists(old_frag_name)):
         warning("File '%s' exists, adding '.old' to this file\'s name" % old_frag_name)
         renames.insert( 0, (old_frag_name, "%s.old" % old_frag_name) )
@@ -276,10 +336,10 @@ def generate_cmake_fragment(generic_fragment_path, env_cmd):
         assert( not os.path.exists(new_name) )
         os.rename(old_name, new_name)
 
-    assert( not os.path.exists(LOCAL_CMAKE_BASE_NAME) )
+    assert( not os.path.exists(frag_name) )
 
     # Create local fragment
-    local_frag = open(LOCAL_CMAKE_BASE_NAME, "w")
+    local_frag = open(frag_name, "w")
     local_frag.write("#!/bin/bash -xe\n\n")
     local_frag.write("/bin/rm -f CMakeCache.txt\n\n")
 
@@ -291,6 +351,17 @@ def generate_cmake_fragment(generic_fragment_path, env_cmd):
     local_frag.write(space_not_after_dash_d.sub('\\1 \\\n  ', cmake_cmd))
 
     local_frag.close()
+
+    # Make file executable
+    frag_st = os.stat(frag_name)
+    os.chmod(frag_name, frag_st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    print "Created CMake fragment:", frag_name
+
+###############################################################################
+def generate_frag_name(build_types, build_mode, compiler):
+###############################################################################
+    return "%s-%s-%s-%s" % (LOCAL_CMAKE_BASE_NAME, "-".join(sorted(build_types)), compiler, build_mode)
 
 ###############################################################################
 def perform_test(mode, build_types, build_mode, manage_environment, gen_cmake, compiler):
@@ -318,6 +389,9 @@ is already configured for a certain compiler."""
     else:
         env_cmd = ":"
 
+    if (gen_cmake):
+        frag_name = generate_frag_name(build_types, build_mode, compiler)
+
     if (mode == "jenkins"):
         set_jenkins_env()
 
@@ -329,7 +403,7 @@ is already configured for a certain compiler."""
     elif (mode == "tril"):
         tril_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-trilinos")
         if (gen_cmake):
-            generate_cmake_fragment(tril_fragment, env_cmd)
+            generate_cmake_fragment(tril_fragment, env_cmd, frag_name)
         else:
             run_cmd("%s && %s" % (env_cmd, tril_fragment))
 
@@ -338,7 +412,7 @@ is already configured for a certain compiler."""
 
         alb_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-albany")
         if (gen_cmake):
-            generate_cmake_fragment(alb_fragment, env_cmd)
+            generate_cmake_fragment(alb_fragment, env_cmd, frag_name)
         else:
             run_cmd("%s && %s" % (env_cmd, alb_fragment))
 

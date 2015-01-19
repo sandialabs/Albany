@@ -352,6 +352,14 @@ ConvergenceTest::ConvergenceTest(const Teuchos::ParameterList& convParams)
     double conValue = convParams.get<double>("Absolute Objective Change");
     conTests.push_back( Teuchos::rcp(new AbsDeltaF(conValue)) );
   }
+  if( convParams.isType<double>("Relative Objective Running Average Change") ){
+    double conValue = convParams.get<double>("Relative Objective Running Average Change");
+    conTests.push_back( Teuchos::rcp(new RelRunningDF(conValue)) );
+  }
+  if( convParams.isType<double>("Absolute Objective Running Average Change") ){
+    double conValue = convParams.get<double>("Absolute Objective Running Average Change");
+    conTests.push_back( Teuchos::rcp(new AbsRunningDF(conValue)) );
+  }
 }
 
 /******************************************************************************/
@@ -373,6 +381,18 @@ bool ConvergenceTest::AbsDeltaF::passed(double delta_f, double delta_p, bool wri
     << (status ? "true" : "false") << std::endl;
   return status;
 }
+bool ConvergenceTest::AbsRunningDF::passed(double delta_f, double delta_p, bool write)
+{
+  dF.push_back(delta_f);
+  runningDF += delta_f;
+  if(dF.size()>nave) runningDF -= *(dF.end()-nave);
+  bool status = ( runningDF < conValue );
+  if( write )
+    std::cout << "Test: Objective Change Running Average (Absolute): " << std::endl 
+    << "     abs(<df>) = " << runningDF << " < " << conValue << ": " 
+    << (status ? "true" : "false") << std::endl;
+  return status;
+}
 bool ConvergenceTest::RelDeltaP::passed(double delta_f, double delta_p, bool write){
   bool status = (p0 != 0.0) ? ( fabs(delta_p/p0) < conValue ) : false;
   if( write )
@@ -386,6 +406,22 @@ bool ConvergenceTest::RelDeltaF::passed(double delta_f, double delta_p, bool wri
   if( write )
     std::cout << "Test: Objective Change (Relative): " << std::endl 
     << "     abs(df) = " << fabs(delta_f) << ", fabs(df/f0) = " << fabs(delta_f/f0) << " < " << conValue 
+    << ": " << (status ? "true" : "false") << std::endl;
+  return status;
+}
+bool ConvergenceTest::RelRunningDF::passed(double delta_f, double delta_p, bool write){
+  dF.push_back(delta_f);
+  runningDF += delta_f;
+  int nvals = dF.size();
+  int lastVal = nvals-1;
+  if(nvals>nave){
+     runningDF -= dF[lastVal-nave];
+     nvals = nave;
+   }
+  bool status = (f0 != 0.0) ? ( fabs(runningDF/f0)/nvals < conValue ) : false;
+  if( write )
+    std::cout << "Test: Objective Change Running Average (Relative): " << std::endl 
+    << "     abs(<df>) = " << fabs(runningDF)/nvals << ", fabs(<df/f0>) = " << fabs(runningDF/f0)/nvals << " < " << conValue 
     << ": " << (status ? "true" : "false") << std::endl;
   return status;
 }
@@ -436,7 +472,7 @@ Optimizer_OC::computeUpdatedTopology()
     if( (vol - _volConstraint*_optVolume) > 0.0 ) v1 = vmid;
     else v2 = vmid;
     niters++;
-  } while ( fabs(vol - _volConstraint*_optVolume) > _volConvTol );
+  } while ( fabs(vol - _volConstraint*_optVolume) > _volConvTol*_optVolume );
 }
 
 #ifdef ATO_USES_NLOPT
@@ -483,7 +519,7 @@ Optimizer_NLopt::Initialize()
   nlopt_set_maxeval(opt, _optMaxIter);
 
   // set volume constraint
-  nlopt_add_inequality_constraint(opt, this->constraint, this, _volConvTol);
+  nlopt_add_inequality_constraint(opt, this->constraint, this, _volConvTol*_optVolume);
 
   p      = new double[numOptDofs];
   p_last = new double[numOptDofs];

@@ -288,26 +288,41 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
                                    "scalar", 0.0, /*registerOldState=*/ false, true);
 
     if( topology->getCentering() == "Element" ){
-      stateMgr->registerStateVariable(topology->getName(), dl->cell_scalar, meshSpecs[i]->ebName, 
-                                     "scalar", initValue, /*registerOldState=*/ false, true);
-      stateMgr->registerStateVariable(derName, dl->cell_scalar, meshSpecs[i]->ebName, 
-                                     "scalar", initValue, /*registerOldState=*/ false, true);
+      if( topology->getEntityType() == "State Variable" ){
+        stateMgr->registerStateVariable(topology->getName(), dl->cell_scalar, meshSpecs[i]->ebName, 
+                                       "scalar", initValue, /*registerOldState=*/ false, true);
+        stateMgr->registerStateVariable(derName, dl->cell_scalar, meshSpecs[i]->ebName, 
+                                       "scalar", initValue, /*registerOldState=*/ false, true);
+      } else
+      if( topology->getEntityType() == "Distributed Parameter" ){
+        TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+          "Error!  In ATO::OptimizationProblem setup:  " << 
+          "Entity Type = Distributed Parameter not supported for Element centering" << std::endl);
+      }
     } else
     if( topology->getCentering() == "Node" ){
       stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
                                      "scalar", initValue, /*registerOldState=*/ false, false);
-      stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, meshSpecs[i]->ebName, 
-                                     "scalar", initValue, /*registerOldState=*/ false, false);
       stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
                                      "scalar", initValue, /*registerOldState=*/ false, true);
+
       if( topology->TopologyOutputFilter() >= 0 )
         stateMgr->registerStateVariable(topology->getName()+"_node_filtered", dl->node_node_scalar, "all",
                                        "scalar", initValue, /*registerOldState=*/ false, true);
+
+      if( topology->getEntityType() == "State Variable" ){
+        stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, meshSpecs[i]->ebName, 
+                                       "scalar", initValue, /*registerOldState=*/ false, false);
+      } else if( topology->getEntityType() == "Distributed Parameter" ){
+        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+        stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, "all", true, &entity, "");
+      } 
+      else {
+        TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+          "Error!  In ATO::OptimizationProblem setup:  Entity Type not recognized" << std::endl);
+      }
     }
-
   }
-
- 
 }
 
 

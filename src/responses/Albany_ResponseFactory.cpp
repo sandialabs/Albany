@@ -9,9 +9,7 @@
 
 #include "Albany_SolutionAverageResponseFunction.hpp"
 #include "Albany_SolutionTwoNormResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
 #include "Albany_SolutionValuesResponseFunction.hpp"
-#endif
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
 #include "Albany_AggregateScalarResponseFunction.hpp"
@@ -53,11 +51,9 @@ createResponseFunction(
   else if (name == "Solution Two Norm") {
     responses.push_back(rcp(new Albany::SolutionTwoNormResponseFunction(comm)));
   }
-#ifdef ALBANY_EPETRA
   else if (name == "Solution Values") {
     responses.push_back(rcp(new Albany::SolutionValuesResponseFunction(app, responseParams)));
   }
-#endif
 
   else if (name == "Solution Max Value") {
     int eq = responseParams.get("Equation", 0);
@@ -118,6 +114,7 @@ createResponseFunction(
 	   name == "Element Size Field" ||
 	   name == "Save Nodal Fields" ||
 	   name == "Stiffness Objective" ||
+	   name == "Internal Energy Objective" ||
            name == "Linear Adjoint Solve" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT") {

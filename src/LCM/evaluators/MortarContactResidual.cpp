@@ -9,6 +9,6 @@
 #include "MortarContactResidual.hpp"
 #include "MortarContactResidual_Def.hpp"
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactBase)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContact)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactResidualBase)
+PHAL_INSTANTIATE_TEMPLATE_CLASS(LCM::MortarContactResidual)
 

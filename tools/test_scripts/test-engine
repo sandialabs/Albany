@@ -2,6 +2,10 @@
 
 # Should only be run by test harness!
 
+# We want this script to fail if any command in a pipe fails. Without
+# this, pipes to tee hide failures.
+set -o pipefail
+
 #
 # Set up directory structure for jenkins test, blowing
 # away old build and install dirs
@@ -60,4 +64,4 @@ make -j 4 2>&1 | tee $ALBOUTDIR/make
 # Run tests
 #
 
-ctest 2>&1 | tee $ALBOUTDIR/ctest
+ctest -T Test 2>&1 | tee $ALBOUTDIR/ctest

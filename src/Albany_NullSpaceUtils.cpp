@@ -104,18 +104,28 @@ void subtractCentroid(
   const Teuchos::RCP<const Tpetra_Map>& node_map, const int ndim,
   std::vector<ST>& v)
 {
-  // Construct a MultiVector with a shallow copy of the data. Could do a deep
-  // copy if this nifty shallow-copy constructor goes away.
   const int nnodes = v.size() / ndim;
-  Teuchos::ArrayRCP<ST> data(&v[0], 0, v.size(), false);
-  Tpetra_MultiVector mv(node_map, data, nnodes, ndim);
 
-  Teuchos::Array<ST> centroid(ndim);
-  mv.meanValue(centroid);
+  ST centroid[3]; // enough for up to 3d
+  {
+    ST sum[3];
+    ST* pv = &v[0];
+    for (int i = 0; i < ndim; ++i) {
+      sum[i] = 0;
+      for (int j = 0; j < nnodes; ++j) sum[i] += pv[j];
+      pv += nnodes;
+    }
+    Teuchos::reduceAll<int, ST>(*node_map->getComm(), Teuchos::REDUCE_SUM, ndim,
+                                sum, centroid);
+    const GO ng = node_map->getGlobalNumElements();
+    for (int i = 0; i < ndim; ++i) centroid[i] /= ng;
+  }
+
+  ST* pv = &v[0];
   for (int i = 0; i < ndim; ++i) {
-    ST* pv = &v[0] + i*nnodes;
     for (Teuchos::ArrayRCP<ST>::size_type j = 0; j < nnodes; ++j)
       pv[j] -= centroid[i];
+    pv += nnodes;
   }
 }
 } // namespace

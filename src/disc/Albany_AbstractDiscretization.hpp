@@ -120,7 +120,7 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
 #endif
     //! Get overlapped Node map
-    //dp-convert virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
+    virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
 
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;

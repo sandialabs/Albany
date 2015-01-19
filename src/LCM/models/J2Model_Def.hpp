@@ -212,7 +212,7 @@ computeState(typename Traits::EvalData workset,
           dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
 
           res = std::abs(F[0]);
-          if (res < 1.e-11 || res / Y < 1.E-11)
+          if (res < 1.e-11 || res / Y < 1.E-11 || res / f < 1.E-11)
             converged = true;
 
           TEUCHOS_TEST_FOR_EXCEPTION(count == num_max_iter, std::runtime_error,
@@ -220,7 +220,8 @@ computeState(typename Traits::EvalData workset,
               "Error in return mapping, count = " <<
               count <<
               "\nres = " << res <<
-              "\nrelres = " << res/f <<
+              "\nrelres  = " << res/f <<
+              "\nrelres2 = " << res/Y <<
               "\ng = " << F[0] <<
               "\ndg = " << dFdX[0] <<
               "\nalpha = " << alpha << std::endl);

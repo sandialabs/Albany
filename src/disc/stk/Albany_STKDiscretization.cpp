@@ -117,7 +117,6 @@ Albany::STKDiscretization::getMapT() const
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getOverlapMap() const
 {
-  //dp-remove Teuchos::RCP<const Epetra_Map> overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
   return overlap_map;
 }
 #endif
@@ -188,6 +187,12 @@ Teuchos::RCP<const Tpetra_Map>
 Albany::STKDiscretization::getNodeMapT() const
 {
   return node_mapT;
+}
+
+Teuchos::RCP<const Tpetra_Map>
+Albany::STKDiscretization::getOverlapNodeMapT() const
+{
+  return overlap_node_mapT;
 }
 
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&

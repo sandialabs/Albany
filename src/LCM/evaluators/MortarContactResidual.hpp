@@ -40,13 +40,13 @@ namespace LCM {
 // **************************************************************
 
 template<typename EvalT, typename Traits>
-class MortarContactBase
+class MortarContactResidualBase
   : public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  MortarContactBase(const Teuchos::ParameterList& p,
+  MortarContactResidualBase(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -79,7 +79,7 @@ protected:
   unsigned short int tensorRank;
 };
 
-template<typename EvalT, typename Traits> class MortarContact;
+template<typename EvalT, typename Traits> class MortarContactResidual;
 
 // **************************************************************
 // **************************************************************
@@ -92,10 +92,10 @@ template<typename EvalT, typename Traits> class MortarContact;
 // Residual
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::Residual,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::Residual, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::Residual,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::Residual, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -108,10 +108,10 @@ private:
 // Jacobian
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::Jacobian,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::Jacobian,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::Jacobian, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -124,10 +124,10 @@ private:
 // Tangent
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::Tangent,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::Tangent, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::Tangent,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::Tangent, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -140,10 +140,10 @@ private:
 // Distributed parameter derivative
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::DistParamDeriv, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -157,10 +157,10 @@ private:
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::SGResidual,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::SGResidual,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::SGResidual, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -173,10 +173,10 @@ private:
 // Stochastic Galerkin Jacobian
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::SGJacobian,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::SGJacobian,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::SGJacobian, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -189,10 +189,10 @@ private:
 // Stochastic Galerkin Tangent
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::SGTangent,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::SGTangent,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::SGTangent, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -205,10 +205,10 @@ private:
 // Multi-point Residual
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::MPResidual,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::MPResidual,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -221,10 +221,10 @@ private:
 // Multi-point Jacobian
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::MPJacobian,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::MPJacobian,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);
@@ -237,10 +237,10 @@ private:
 // Multi-point Tangent
 // **************************************************************
 template<typename Traits>
-class MortarContact<PHAL::AlbanyTraits::MPTangent,Traits>
-  : public MortarContactBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
+class MortarContactResidual<PHAL::AlbanyTraits::MPTangent,Traits>
+  : public MortarContactResidualBase<PHAL::AlbanyTraits::MPTangent, Traits>  {
 public:
-  MortarContact(const Teuchos::ParameterList& p,
+  MortarContactResidual(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl);
   void preEvaluate(typename Traits::PreEvalData d);
   void evaluateFields(typename Traits::EvalData d);

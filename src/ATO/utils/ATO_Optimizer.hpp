@@ -170,6 +170,26 @@ class ConvergenceTest {
       private:
         double f0;
     };
+    class AbsRunningDF : public ConTest {
+      public:
+        AbsRunningDF(double val) : ConTest(val),runningDF(0.0), nave(10){}
+        virtual bool passed(double delta_f, double delta_p, bool write);
+      private:
+        std::vector<double> dF;
+        double runningDF;
+        int nave;
+    };
+    class RelRunningDF : public ConTest {
+      public:
+        RelRunningDF(double val) : ConTest(val),f0(0.0),runningDF(0.0),nave(10){};
+        virtual bool passed(double delta_f, double delta_p, bool write);
+        virtual void initNorm(double f, double p){f0 = f;}
+      private:
+        double f0;
+        std::vector<double> dF;
+        double runningDF;
+        int nave;
+    };
 
     Teuchos::Array<Teuchos::RCP<ConTest> > conTests;
 };

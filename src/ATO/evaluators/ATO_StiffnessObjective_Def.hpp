@@ -8,6 +8,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Adapt_NodalDataBlock.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_TopoTools_Def.hpp"
 
 template<typename EvalT, typename Traits>
 ATO::StiffnessObjectiveBase<EvalT, Traits>::

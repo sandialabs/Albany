@@ -46,6 +46,7 @@
       -->
       <Parameter name="Centering" type="string" value="Element" />
       <Parameter name="Topology Name" type="string" value="Rho" />
+      <Parameter name="Entity Type" type="string" value="State Variable" />
       <Parameter name="Penalization" type="string" value="SIMP" />
       <Parameter name="Update Algorithm" type="string" value="OC" />
       <Parameter name="Initial Value" type="double" value="0.5" />

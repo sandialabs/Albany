@@ -7,7 +7,7 @@
 
 #include "Albany_AbstractDiscretization.hpp"
 #ifdef ALBANY_EPETRA
-#include "AAdapt_AdaptiveSolutionManager.hpp"
+# include "AAdapt_AdaptiveSolutionManager.hpp"
 #endif
 
 #include "Teuchos_TimeMonitor.hpp"
@@ -15,55 +15,33 @@
 #include "Petra_Converters.hpp"
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-#include "PeridigmManager.hpp"
-#endif
+# ifdef ALBANY_EPETRA
+#  include "PeridigmManager.hpp"
+# endif
 #endif
 
 #include <string>
 
 namespace Albany {
 
-ObserverImpl::ObserverImpl(const Teuchos::RCP<Application> &app) :
-   app_(app),
-   solOutTime_(Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"))
-{
-  // Nothing to do
-}
-
-RealType ObserverImpl::getTimeParamValueOrDefault(RealType defaultValue) const
-{
-  const std::string label("Time");
-
-  return (app_->getParamLib()->isParameter(label)) ?
-    app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(label) :
-    defaultValue;
-}
+ObserverImpl::
+ObserverImpl (const Teuchos::RCP<Application> &app)
+  : StatelessObserverImpl(app)
+{}
 
 #ifdef ALBANY_EPETRA
-Epetra_Map ObserverImpl::getNonOverlappedMap() const
+void ObserverImpl::observeSolution (
+  double stamp, const Epetra_Vector& nonOverlappedSolution,
+  const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot)
 {
-  return *app_->getMap();
-}
-#endif
-
-Teuchos::RCP<const Tpetra_Map> ObserverImpl::getNonOverlappedMapT() const
-{
-  return app_->getMapT();
-}
-
-#ifdef ALBANY_EPETRA
-void ObserverImpl::observeSolution(
-    double stamp,
-    const Epetra_Vector &nonOverlappedSolution,
-    Teuchos::Ptr<const Epetra_Vector> nonOverlappedSolutionDot)
-{
-  // If solution == "Steady" or "Continuation", we need to update the solution from the initial guess prior to
-  // writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
+  // If solution == "Steady" or "Continuation", we need to update the solution
+  // from the initial guess prior to writing it out, or we will not get the
+  // proper state of things like "Stress" in the Exodus file.
   {
     // Evaluate state field manager
     if(nonOverlappedSolutionDot != Teuchos::null)
-      app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(), NULL, nonOverlappedSolution);
+      app_->evaluateStateFieldManager(stamp, nonOverlappedSolutionDot.get(),
+                                      NULL, nonOverlappedSolution);
     else
       app_->evaluateStateFieldManager(stamp, NULL, NULL, nonOverlappedSolution);
 
@@ -84,44 +62,32 @@ void ObserverImpl::observeSolution(
   distParamLib->scatter();
   DistParamLib::const_iterator it;
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app_->getComm();
-  Teuchos::RCP<Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(commT);
+  Teuchos::RCP<Epetra_Comm>
+    comm = Albany::createEpetraCommFromTeuchosComm(commT);
   for(it = distParamLib->begin(); it != distParamLib->end(); ++it) {
     Teuchos::RCP<Epetra_Vector> epetra_vec;
-    Petra::TpetraVector_To_EpetraVector(it->second->overlapped_vector(), epetra_vec, comm);
-    app_->getDiscretization()->setField(*epetra_vec, it->second->name(), /*overlapped*/ true);
+    Petra::TpetraVector_To_EpetraVector(it->second->overlapped_vector(),
+                                        epetra_vec, comm);
+    app_->getDiscretization()->setField(*epetra_vec, it->second->name(),
+                                        /*overlapped*/ true);
   }
 
-  Teuchos::TimeMonitor timer(*solOutTime_);
-  {
-    const Teuchos::Ptr<const Epetra_Vector> overlappedSolution(
-        app_->getAdaptSolMgr()->getOverlapSolution(nonOverlappedSolution));
-    app_->getDiscretization()->writeSolution(*overlappedSolution, stamp, /*overlapped =*/ true);
-  }
+  StatelessObserverImpl::observeSolution(stamp, nonOverlappedSolution,
+                                         nonOverlappedSolutionDot);
 }
 #endif
 
 void ObserverImpl::observeSolutionT(
-    double stamp,
-    const Tpetra_Vector &nonOverlappedSolutionT,
-    Teuchos::Ptr<const Tpetra_Vector> nonOverlappedSolutionDotT)
+  double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
+  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
 {
-  // If solution == "Steady" or "Continuation", we need to update the solution from the initial guess prior to
-  // writing it out, or we will not get the proper state of things like "Stress" in the Exodus file.
-  {
-    // Evaluate state field manager
-    app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT, Teuchos::null, nonOverlappedSolutionT);
+  app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT,
+                                   Teuchos::null, nonOverlappedSolutionT);
+  app_->getStateMgr().updateStates();
 
-    // Renames the New state as the Old state in preparation for the next step
-    app_->getStateMgr().updateStates();
-  }
-
-  Teuchos::TimeMonitor timer(*solOutTime_);
-  {
-    const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
-      app_->getOverlapSolutionT(nonOverlappedSolutionT);
-    app_->getDiscretization()->writeSolutionT(
-      *overlappedSolutionT, stamp, /*overlapped =*/ true);
-  }
+  StatelessObserverImpl::observeSolutionT(stamp, nonOverlappedSolutionT,
+                                          nonOverlappedSolutionDotT);
 }
 
 } // namespace Albany
+

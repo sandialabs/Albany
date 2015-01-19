@@ -60,6 +60,7 @@ namespace Albany {
     //! If set true, transpose of this operator will be applied.
     virtual int SetUseTranspose(bool UseTranspose) {
       use_transpose = UseTranspose;
+      return 0;
     }
 
     /*!
@@ -88,6 +89,8 @@ namespace Albany {
       app->applyGlobalDistParamDerivImplT(time, xdotT, xdotdotT, xT, *scalar_params, param_name, use_transpose, XT, YT);
 
       Petra::TpetraMultiVector_To_EpetraMultiVector(YT, Y, comm);
+
+      return 0;
     }
 
     /*!

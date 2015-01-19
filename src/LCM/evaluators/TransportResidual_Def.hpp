@@ -28,6 +28,7 @@ namespace LCM {
     have_convection_      (p.get<bool>("Have Convection", false)),
     have_species_coupling_(p.get<bool>("Have Species Coupling", false)),
     have_stabilization_   (p.get<bool>("Have Stabilization", false)),
+    have_contact_         (p.get<bool>("Have Contact", false)),
     num_nodes_(0),
     num_pts_(0),
     num_dims_(0)
@@ -92,6 +93,13 @@ namespace LCM {
       this->addDependentField(stabilization_);
     }
 
+    if (have_contact_) {
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("M Name"), dl->qp_scalar);
+      M_operator_ = tmp;
+      this->addDependentField(M_operator_);
+    }
+
     this->addEvaluatedField(residual_);
 
     std::vector<PHX::DataLayout::size_type> dims;
@@ -144,6 +152,10 @@ namespace LCM {
 
     if (have_stabilization_) {
       this->utils.setFieldData(stabilization_,fm);
+    }
+
+    if (have_contact_) {
+      this->utils.setFieldData(M_operator_,fm);
     }
 
     this->utils.setFieldData(residual_,fm);

@@ -9,7 +9,7 @@
 PATH=/users/ghansen/Trilinos/MPI_REL/bin:/users/ghansen/bin:/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin
 export PATH
 
-LD_LIBRARY_PATH=/usr/local/intel/11.1/069/mkl/lib/em64t:/users/ghansen/lib:/users/ghansen/lib64:/usr/local/parasolid/25.1.181/shared_object
+LD_LIBRARY_PATH=/usr/local/intel/11.1/069/mkl/lib/em64t:/users/ghansen/ompi-clang/lib:/users/ghansen/lib:/users/ghansen/lib64:/usr/local/parasolid/25.1.181/shared_object
 export LD_LIBRARY_PATH
 
 cd /lore/ghansen/nightly

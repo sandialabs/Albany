@@ -84,6 +84,10 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
 
   validPL->sublist("Model Order Reduction", false, "Specify the options relative to model order reduction");
 
+  // Contact PL
+  validPL->sublist("Contact", false, "");
+
+
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
   validPL->set<double>("Homotopy Restart Step", 1., "Flag for Felix Homotopy Restart Step");

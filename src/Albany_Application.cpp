@@ -344,6 +344,19 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
         Epetra_Vector dist_param(*node_map);
         // Initialize parameter with data stored in the mesh
         disc->getField(dist_param, param_name);
+
+        // JR: for now, initialize to constant value from user input if requested.  This needs to be generalized.
+        if(params->sublist("Problem").isType<Teuchos::ParameterList>("Topology Parameters")){
+          Teuchos::ParameterList& topoParams = params->sublist("Problem").sublist("Topology Parameters");
+          if(topoParams.isType<std::string>("Entity Type") && topoParams.isType<double>("Initial Value")){
+            if(topoParams.get<std::string>("Entity Type") == "Distributed Parameter" &&
+               topoParams.get<std::string>("Topology Name") == param_name ){
+              double initVal = topoParams.get<double>("Initial Value");
+              dist_param.PutScalar(initVal);
+            }
+          }
+        }
+
         dist_paramT = Petra::EpetraVector_To_TpetraVectorNonConst(dist_param, commT);
         node_mapT = Petra::EpetraMap_To_TpetraMap(node_map, commT);
         overlap_node_mapT = Petra::EpetraMap_To_TpetraMap(overlap_node_map, commT);
@@ -428,7 +441,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-  LCM::PeridigmManager::self().initialize(params, disc);
+  LCM::PeridigmManager::self().initialize(params, disc, commT);
 #endif
 #endif
 }
@@ -733,11 +746,18 @@ computeGlobalResidualImplT(
   overlapped_fT->putScalar(0.0);
   fT->putScalar(0.0);
 
-//TO DO, IK, 6/26/14: convert setCurrentTimeAndDisplacement to Tpetra
 #ifdef ALBANY_PERIDIGM 
 #ifdef ALBANY_EPETRA
+
+//   xT
+//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
+//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
+//   return initial_x_dot;
+
+
+
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-  peridigmManager.setCurrentTimeAndDisplacement(current_time, x);
+  peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
 #endif
 #endif

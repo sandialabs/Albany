@@ -50,7 +50,7 @@
   <!-- RGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0111995}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{0.0111855}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>

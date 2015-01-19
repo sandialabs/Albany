@@ -150,6 +150,13 @@ AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
 }
 
 template<class Output>
+Teuchos::RCP<const Tpetra_Map>
+AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMapT() const
+{
+  return overlap_node_mapT;
+}
+
+template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {

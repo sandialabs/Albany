@@ -39,13 +39,21 @@ namespace rc {
  *   The BC field managers are given x (the solution, which is displacment) +
  * x_accum (the accumulated solution). This lets time-dependent BCs work
  * naturally. Volume field managers are given just x.
+ *
+ *   RCU is controlled by these parameters:
+ * \code
+ *     <ParameterList name="Adaptation">
+ *       <Parameter name="Reference Configuration: Update"  type="bool"
+ *        value="true"/>
+ *       <Parameter name="Reference Configuration: Project" type="bool"
+ *        value="true"/>
+ *     </ParameterList>
+ * \endcode
  */
 class Manager {
 public:
   /* Methods to set up the RCU framework. */
 
-  //! Static constructor.
-  static Manager* create(const Teuchos::RCP<Albany::StateManager>& state_mgr);
   //! Static constructor that may return Teuchos::null depending on the contents
   //  of the parameter list.
   static Teuchos::RCP<Manager> create(
@@ -83,9 +91,11 @@ public:
     const Teuchos::RCP<Teuchos::ParameterList>& p);
   //! The problem creates the evaluators associated with RCU.
   template<typename EvalT>
-  void createEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm);
+  void createEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm,
+                        const Teuchos::RCP<Albany::Layouts>& dl);
 
-  /* rc::Reader and rc::Writer use these methods to read and write data. */
+  /* rc::Reader, rc::Writer, and AAdapt::MeshAdapt use these methods to read and
+   * write data. */
 
   //! Append a decoration to the name indicating this is an RCU field.
   static inline std::string decorate(const std::string& name) {
@@ -96,21 +106,50 @@ public:
     return name_dec.substr(0, name_dec.size() - 3);
   }
 
-  //! Reader uses this method to load the data.
-  void readField(PHX::MDField<RealType>& f,
-                 const PHAL::Workset& workset);
-  //! Writer uses this method to record the data.
-  void writeField(const PHX::MDField<RealType>& f,
-                  const PHAL::Workset& workset);
-
   struct Field {
-    typedef std::vector<Field>::iterator iterator;
+    typedef std::vector< Teuchos::RCP<Field> >::iterator iterator;
+    //! Field name, undecorated.
     std::string name;
+    //! Field layout.
     Teuchos::RCP<PHX::DataLayout> layout;
+    //! Number of g (Lie algebra) components used to represent this field.
+    int num_g_fields;
+    //! Get decorated name for i'th g component field.
+    std::string get_g_name (const int i) const;
+  private:
+    friend class Manager;
+    struct Data;
+    Teuchos::RCP<Data> data_;
   };
 
   Field::iterator fieldsBegin();
   Field::iterator fieldsEnd();
+
+  typedef PHX::MDField<RealType,Cell,Node,QuadPoint> BasisField;
+  //! Reader<EvalT> uses these methods to load the data.
+  void beginQpInterp(const PHAL::Workset& workset,
+                     const BasisField& bf, const BasisField& wbf);
+  void interpQpField(PHX::MDField<RealType>& f, const PHAL::Workset& workset,
+                     const BasisField& bf, const BasisField& wbf);
+  void endQpInterp();
+  void readQpField(PHX::MDField<RealType>& f,
+                   const PHAL::Workset& workset);
+  //! Writer<Residual> uses these methods to record the data.
+  void beginQpWrite(const PHAL::Workset& workset,
+                    const BasisField& bf, const BasisField& wbf);
+  void writeQpField(const PHX::MDField<RealType>& f,
+                    const PHAL::Workset& workset, const BasisField& bf,
+                    const BasisField& wbf);
+  void endQpWrite();
+  //! MeshAdapt uses this method to read and write nodal data from the mesh
+  // database before and after adaptation.
+  const Teuchos::RCP<Tpetra_MultiVector>& getNodalField(
+    const Field& f, const int g_idx, const bool overlapped) const;
+  //! MeshAdapt does this if usingProjection(). In the future, I may switch to
+  //  keeping an RCP<AbstractDiscretization>, and then this call would be
+  //  unnecessary.
+  void initProjector(const Teuchos::RCP<const Tpetra_Map>& node_map,
+                     const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
 
   /* Methods to inform Manager of what is happening. */
 
@@ -118,17 +157,21 @@ public:
   void beginBuildingSfm();
   //! Albany is done building the state field manager.
   void endBuildingSfm();
-  //! The mesh was just adapted.
-  void tellAdapted();
+  //! The mesh is about to adapt.
+  void beginAdapt();
+  //! The mesh was just adapted. The maps are needed only if usingProjection().
+  void endAdapt(const Teuchos::RCP<const Tpetra_Map>& node_map,
+                const Teuchos::RCP<const Tpetra_Map>& ol_node_map);
+
+  /* Methods to inform others of what is happening. */
+  bool usingProjection() const;
 
 private:
-  class FieldDatabase;
+  struct Impl;
+  Teuchos::RCP<Impl> impl_;
 
-  Teuchos::RCP<AdaptiveSolutionManagerT> sol_mgr_;
-  Teuchos::RCP<Tpetra_Vector> x_;
-  Teuchos::RCP<FieldDatabase> db_;
-
-  Manager(const Teuchos::RCP<Albany::StateManager>& state_mgr);
+  Manager(const Teuchos::RCP<Albany::StateManager>& state_mgr,
+          const bool use_projection);
 };
 
 } // namespace rc
