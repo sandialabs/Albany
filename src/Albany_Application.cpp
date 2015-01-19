@@ -38,9 +38,8 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 
-
 #ifdef ALBANY_PERIDIGM
-#ifdef  ALBANY_EPETRA
+#ifdef ALBANY_EPETRA
 #include "PeridigmManager.hpp"
 #endif
 #endif

@@ -13,10 +13,8 @@
 #include "Phalanx_MDField.hpp"
 #include "PeridigmManager.hpp"
 
-#ifdef ALBANY_PERIDIGM
 #include <Peridigm.hpp>
 #include <Peridigm_AlbanyDiscretization.hpp>
-#endif
 
 namespace LCM {
 
@@ -58,9 +56,7 @@ protected:
   unsigned int numQPs;
   unsigned int numDims;
 
-#ifdef ALBANY_PERIDIGM
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
-#endif
 };
 
 // Inherted classes 

@@ -20,11 +20,6 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
                                       Teuchos::RCP<Albany::AbstractDiscretization> disc,
 				      const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
-#ifndef ALBANY_PERIDIGM
-
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error:  Peridigm interface not available!  Recompile with -DUSE_PERIDIGM.\n\n");
-
-#else
   teuchosComm = comm;
   peridigmParams = Teuchos::RCP<Teuchos::ParameterList>(new Teuchos::ParameterList(params->sublist("Problem").sublist("Peridigm Parameters", true)));
   Teuchos::ParameterList& problemParams = params->sublist("Problem");
@@ -390,14 +385,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     vector<int>& peridigmGlobalIds = partialStressElements[i].peridigmGlobalIds;
     albanyPartialStressElementGlobalIdToPeridigmGlobalIds[albanyGlobalElementId] = peridigmGlobalIds;
   }
-
-#endif
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics){
 
     currentTime = time;
@@ -515,14 +506,10 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       }
     }
   }
-
-#endif
 }
 
 void LCM::PeridigmManager::updateState()
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics){
     previousTime = currentTime;
     const Teuchos::RCP<const Epetra_Vector> peridigmY = peridigm->getY();
@@ -530,35 +517,23 @@ void LCM::PeridigmManager::updateState()
       previousSolutionPositions[i] = (*peridigmY)[i];
     peridigm->updateState();
   }
-
-#endif
 }
 
 void LCM::PeridigmManager::writePeridigmSubModel(RealType currentTime)
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics)
     peridigm->writePeridigmSubModel(currentTime);
-
-#endif
 }
 
 void LCM::PeridigmManager::evaluateInternalForce()
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics)
     peridigm->computeInternalForce();
-
-#endif
 }
 
 double LCM::PeridigmManager::getForce(int globalId, int dof)
 {
   double force(0.0);
-
-#ifdef ALBANY_PERIDIGM
 
   if(hasPeridynamics){
     Epetra_Vector& peridigmForce = *(peridigm->getForce());
@@ -568,16 +543,11 @@ double LCM::PeridigmManager::getForce(int globalId, int dof)
 
     // DEBUGGING ?? NEED MAP FROM ALBANY ELEMENT ID TO PERIDIGM NODE ID (NOT THE SAME UNLESS THE SIMULATION IS 100% PERIDYNAMICS)
   }
-
-#endif
-
   return force;
 }
 
 void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues)
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics){
 
     int globalElementId = worksetLocalIdToGlobalId[worksetIndex][worksetLocalElementId];
@@ -591,8 +561,6 @@ void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIn
       }
     }
   }
-
-#endif
 }
 
 Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string blockName, std::string fieldName)
@@ -600,12 +568,8 @@ Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string
 
   Teuchos::RCP<const Epetra_Vector> data;
 
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics)
     data = peridigm->getBlockData(blockName, fieldName);
-
-#endif
 
   return data;
 }
