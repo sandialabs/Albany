@@ -1,0 +1,54 @@
+//*****************************************************************//
+//    Albany 2.0:  Copyright 2012 Sandia Corporation               //
+//    This Software is released under the BSD license detailed     //
+//    in the file "license.txt" in the top-level Albany directory  //
+//*****************************************************************//
+
+#ifndef ATO_Optimizer_Pareto_HPP
+#define ATO_Optimizer_Pareto_HPP
+
+
+#include "Albany_StateManager.hpp"
+
+#include <string>
+#include <vector>
+#include <tr1/memory>
+
+#include "Teuchos_ParameterList.hpp"
+#include "ATO_Optimizer.hpp"
+
+namespace ATO {
+
+class Optimizer_Pareto : public Optimizer {
+ public:
+  Optimizer_Pareto(const Teuchos::ParameterList& optimizerParams);
+  ~Optimizer_Pareto();
+  void Initialize();
+  void Optimize();
+ private:
+
+  void computeUpdatedTopology(double volfrac);
+
+  double f;
+  double f_last;
+  double* p;
+  double* p_last;
+  double* dfdp;
+
+  int numOptDofs;
+
+  double _optVolume;
+  double _minDensity;
+
+  double _volFrac;
+
+  double _volFracHigh;
+  double _volFracLow;
+  int    _nVolFracSteps;
+
+  double _volConvTol;
+  double _volMaxIter;
+};
+
+}
+#endif
