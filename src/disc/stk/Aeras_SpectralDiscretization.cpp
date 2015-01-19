@@ -1142,7 +1142,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
   // Initialization
   int np = points_per_edge;
 
-  // Compute the STK Mesh Selector
+  // Compute the STK Mesh selector
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector(metaData.universal_part()) &
     stk::mesh::Selector(metaData.locally_owned_part());
@@ -1193,7 +1193,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
   Teuchos::Array<GO> indicesT(numOwnedNodes);
-  inode = 0;
+  size_t inode = 0;
 
   // Add the ownednodes to indicesT
   for (size_t i = 0; i < ownednodes.size(); ++i)
@@ -1228,6 +1228,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
           indices[inode++] = enrichedElements[ibuck][ielem][ii*np+jj];
 
   assert (inode == numOwnedNodes);
+  // End fill indicesT
   //////////////////////////////////////////////////////////////////////
 
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
@@ -1236,8 +1237,8 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
   Teuchos::Array<GO> dofIndicesT(numOwnedNodes * neq);
-  for (int i=0; i < numOwnedNodes; i++)
-    for (std::size_t j=0; j < neq; j++)
+  for (size_t i = 0; i < numOwnedNodes; ++i)
+    for (size_t j = 0; j < neq; ++j)
       dofIndicesT[getOwnedDOF(i,j)] = getGlobalDOF(indicesT[i],j);
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
@@ -1252,19 +1253,45 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
 {
-  // maps for overlap unknowns
+  // Initialization
+  int np = points_per_edge;
+
+  // Compute the STK Mesh selector
   stk::mesh::Selector select_overlap_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
     ( stk::mesh::Selector( metaData.locally_owned_part() )
       | stk::mesh::Selector( metaData.globally_shared_part() ) );
 
-  // overlapnodes used for overlap map; stored for changing coords
-  stk::mesh::get_selected_entities( select_overlap_in_part ,
-				    bulkData.buckets( stk::topology::NODE_RANK ) ,
-				    overlapnodes );
-
+  // Count the number of overlap nodes from the original linear STK mesh
+  stk::mesh::get_selected_entities(select_overlap_in_part,
+				   bulkData.buckets(stk::topology::NODE_RANK),
+				   overlapnodes);
   numOverlapNodes = overlapnodes.size();
+
+  // Now add the number of nodes from the edges
+  const stk::mesh::BucketVector & overlapEdgeBuckets =
+    bulkData.get_buckets(stk::topology::EDGE_RANK, select_overlap_in_part);
+  size_t numNewEdgeNodes = 0;
+  for (size_t ibuck = 0; ibuck < overlapEdgeBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & edgeBucket = *overlapEdgeBuckets[ibuck];
+    numNewEdgeNodes += edgeBucket.size() * (np-2);
+  }
+  numOverlapNodes += numNewEdgeNodes;
+
+  // Now add the number of nodes from the enriched element interiors
+  const stk::mesh::BucketVector & elementBuckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_overlap_in_part);
+  size_t numNewElementNodes = 0;
+  for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
+  {
+    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck];
+    numNewElementNodes += elementBucket.size() * (np-2) * (np-2);
+  }
+  numOverlapNodes += numNewElementNodes;
+
 #ifdef ALBANY_EPETRA
+  // FIXME: WFS: not updated yet for enriched elements
   numOverlapNodes = overlapnodes.size();
 
   overlap_map = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_map;
@@ -1277,23 +1304,56 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
     stkMeshStruct->nodal_data_base->resizeOverlapMap(
       overlap_node_mapT->getNodeElementList(), commT);
 #else // ALBANY_EPETRA
-  Teuchos::Array<GO> indicesT(numOverlapNodes * neq);
-  for (int i=0; i < numOverlapNodes; i++)
-    for (std::size_t j=0; j < neq; j++)
-      indicesT[getOverlapDOF(i,j)] = getGlobalDOF(gid(overlapnodes[i]),j);
 
-  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
+  //////////////////////////////////////////////////////////////////////
+  // N.B.: Filling the overlapIndicesT array is inherently serial
 
-  indicesT.resize(numOverlapNodes);
-  for (int i=0; i < numOverlapNodes; i++)
-    indicesT[i] = gid(overlapnodes[i]);
+  // Copy owned indices to overlap indices
+  Teuchos::ArrayView<const GO> ownedIndicesT = node_mapT.getNodeElementList();
+  Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
+  for (size_t i = 0; i < ownedIndicesT.size(); ++i)
+    overlapIndicesT[i] = ownedIndicesT[i];
+
+  // Copy shared nodes from original STK mesh to overlap indices
+  size_t inode = onwnedIndicesT.size();
+  std::vector< stk::mesh::Entity > shared_nodes;
+  stk::mesh::get_selected_entities(metaData.globally_shared_part(),
+				   bulkData.buckets(stk::topology::NODE_RANK),
+				   shared_nodes);
+  for (size_t i = 0; i < shared_nodes.size(); ++i)
+    overlapIndicesT[inode++] = gid(shared_nodes[i]);
+
+  // Copy non-vertex nodes from shared edges to overlap indices
+  std::vector< stk::mesh::Entity > shared_edges;
+  stk::mesh::get_selected_entities(metaData.globally_shared_part(),
+				   bulkData.buckets(stk::topology::EDGE_RANK),
+				   shared_edges);
+  for (size_t i = 0; i < shared_edges.size(); ++i)
+  {
+    const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(shared_edges[i]);
+    // Note that local edge nodes 0 and 3 have already been
+    // handled correctly by the previous loop over shared_nodes
+    overlapIndicesT[inode++] = gid(edgeNodes[1]);
+    overlapIndicesT[inode++] = gid(edgeNodes[2]);
+  }
+
+  assert (inode == numOverlapNodes);
+  // End fill overlapIndicesT
+  //////////////////////////////////////////////////////////////////////
 
   overlap_node_mapT = Teuchos::null; // delete existing map happens here on remesh
-  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
+  overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(overlapIndicesT(), commT);
 
-  if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeOverlapMap(indicesT, commT);
+  // Compute the overlap DOF indices.  Since these might be strided by
+  // the number of overlap nodes, we compute them from scratch.
+  Teuchos::Array<GO> overlapDofIndicesT(numOverlapNodes * neq);
+  for (size_t i = 0; i < numOverlapNodes; ++i)
+    for (size_t j = 0; j < neq; ++j)
+      overlapDofIndicesT[getOverlapDOF(i,j)] = getGlobalDOF(overlapIndicesT[i],j);
+
+  overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
+  overlap_mapT = Tpetra::createNonContigMap<LO, GO>(overlapDofIndicesT(), commT);
+
 #endif // ALBANY_EPETRA
   coordinates.resize(3*numOverlapNodes);
 }
