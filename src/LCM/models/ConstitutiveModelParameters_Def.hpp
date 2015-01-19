@@ -187,7 +187,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 //------------------------------------------------------------------------------
 //Kokkos kernels
-
+#ifndef NO_KOKKOS_ALBANY
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ConstitutiveModelParameters<EvalT, Traits>::
@@ -277,6 +277,7 @@ operator() (const no_const_map_have_temperature_Arrhenius_Tag& tag, const int& i
  compute_second_no_constMap(i);
  compute_temperature_Arrhenius(i);
 }
+#endif
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModelParameters<EvalT, Traits>::
@@ -331,7 +332,6 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-}
 
 #else
     typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it; 
@@ -369,8 +369,7 @@ evaluateFields(typename Traits::EvalData workset)
           // Kokkos::parallel_for(no_const_map_Policy(0,workset.numCells),*this);
 
     }
- }
-
+   }
 #endif
 }
 //------------------------------------------------------------------------------

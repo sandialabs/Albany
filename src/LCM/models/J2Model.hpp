@@ -77,8 +77,13 @@ private:
   ///
   RealType sat_mod_, sat_exp_;
 
-#ifndef NO_KOKKOS_ALBANY
  //Kokkos 
+  virtual
+  void
+  computeStateParallel(typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+#ifndef NO_KOKKOS_ALBANY
 public:
 
   struct have_temperature_Tag{};
@@ -88,12 +93,6 @@ public:
 
   typedef Kokkos::RangePolicy<ExecutionSpace, have_temperature_Tag>  have_temperature_Policy;
   typedef Kokkos::RangePolicy<ExecutionSpace, dont_have_temperature_Tag>  dont_have_temperature_Policy;
-
-  virtual
-  void
-  computeStateParallel(typename Traits::EvalData workset,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
   class computeStateKernel
   {

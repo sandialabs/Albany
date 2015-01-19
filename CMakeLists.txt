@@ -719,6 +719,14 @@ ELSE()
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
 ENDIF()
 
+option(ENABLE_KOKKOS "Turn on Kokkos" ON)
+IF(NOT ENABLE_KOKKOS)
+  ADD_DEFINITIONS(-DNO_KOKKOS_ALBANY)
+  MESSAGE("-- Kokkos                    is NOT Enabled.")
+ELSE()
+  MESSAGE("-- Kokkos                    is Enabled.")
+ENDIF()
+
 # Add option to include Dakota restart examples in the test suite
 IF (NOT APPLE)
 CMAKE_DEPENDENT_OPTION(ENABLE_DAKOTA_RESTART_EXAMPLES "Flag to include Dakota restart examples" ON

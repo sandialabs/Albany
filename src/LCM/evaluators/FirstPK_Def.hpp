@@ -104,6 +104,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 }
 //-----------------------------------------------------------------------------
+#ifndef NO_KOKKOS_ALBANY
 //Kokkos functions:
 template<typename EvalT, typename Traits>
 template <class ArrayT>
@@ -290,7 +291,7 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const{
       }
 
 }
-
+#endif
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void FirstPK<EvalT, Traits>::

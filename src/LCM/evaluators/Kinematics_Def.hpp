@@ -119,6 +119,7 @@ void writestuff (
   amb_write_mdfield4(k.grad_u_, "k_grad_u", nc, np, nd, nd);
 }
 //----------------------------------------------------------------------------
+#ifndef NO_KOKKOS_ALBANY
 //Kokkos kernels
 //
 template<typename EvalT, typename Traits>
@@ -287,7 +288,7 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
   this->compute_strain(i);  
 
 }
-
+#endif
 //----------------------------------------------------------------------------
   template<typename EvalT, typename Traits>
   void Kinematics<EvalT, Traits>::
