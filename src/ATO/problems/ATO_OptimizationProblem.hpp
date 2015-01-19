@@ -22,8 +22,9 @@ public virtual Albany::AbstractProblem {
                         const Teuchos::RCP<ParamLib>& _paramLib,
                         const int _numDim);
 
-
    void ComputeVolume(const double* p, double& v, double* dvdp=NULL);
+   void ComputeVolume(double* p, const double* dfdp,
+                      double& v, double threshhold, double minP);
    void ComputeVolume(double& v);
    void setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> _disc)
           {disc = _disc;}

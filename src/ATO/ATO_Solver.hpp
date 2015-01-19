@@ -63,8 +63,11 @@ namespace ATO {
 
   class OptInterface {
   public:
-    virtual void ComputeObjective(const double* p, double& f, double* dfdp=NULL)=0;
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
+
+    virtual void ComputeObjective(const double* p, double& f, double* dfdp=NULL)=0;
+    virtual void ComputeVolume(double* p, const double* dfdp,
+                               double& v, double threshhold, double minP=0.0)=0;
     virtual void ComputeVolume(const double* p, double& v, double* dvdp=NULL)=0;
     virtual void ComputeVolume(double& v)=0;
     virtual int GetNumOptDofs()=0;
@@ -90,8 +93,12 @@ namespace ATO {
     //pure virtual from EpetraExt::ModelEvaluator
     void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
 
-    void ComputeObjective(const double* p, double& f, double* dfdp=NULL);
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
+
+    void ComputeObjective(const double* p, double& f, double* dfdp=NULL);
+
+    void ComputeVolume(double* p, const double* dfdp, 
+                       double& v, double threshhold, double minP=0.0);
     void ComputeVolume(const double* p, double& v, double* dvdp=NULL);
     void ComputeVolume(double& v);
     int GetNumOptDofs();

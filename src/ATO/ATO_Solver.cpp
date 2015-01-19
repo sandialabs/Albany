@@ -575,6 +575,23 @@ ATO::Solver::ComputeVolume(const double* p, double& v, double* dvdp)
   return _atoProblem->ComputeVolume(p, v, dvdp);
 }
 
+
+/******************************************************************************/
+void
+ATO::Solver::ComputeVolume(double* p, const double* dfdp, 
+                           double& v, double threshhold, double minP)
+/******************************************************************************/
+{
+  /*  Assumptions:
+      -- dfdp is already consistent across proc boundaries.
+      -- the volume computation that's done by the atoProblem updates the topology, p.
+      -- Since dfdp is 'boundary consistent', the resulting topology, p, is also
+         'boundary consistent', so no communication is necessary.
+  */
+  return _atoProblem->ComputeVolume(p, dfdp, v, threshhold, minP);
+}
+
+
 /******************************************************************************/
 void
 ATO::Solver::ComputeConstraint(double* p, double& c, double* dcdp)

@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "ATO_Optimizer.hpp"
+#include "ATO_Pareto_Optimizer.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "ATO_Solver.hpp"
 
@@ -29,6 +30,9 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 
   if( optPackage == "OC"  )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
 
+  else
+  if( optPackage == "Pareto"  )  return Teuchos::rcp(new Optimizer_Pareto(optimizerParams));
+
 #ifdef ATO_USES_NLOPT
   else
   if( optPackage == "NLopt"  )  return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
@@ -43,7 +47,8 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Optimization package: " << optPackage << " Unknown!" << std::endl 
       << "Valid options are\n"
-      << "/t OC ... optimiality criterion\n"
+      << "/t OC ... optimality criterion\n"
+      << "/t Pareto ... pareto optimization\n"
 
 #ifdef ATO_USES_NLOPT
       << "/t NLopt ... NLOPT library\n" 
@@ -276,12 +281,17 @@ ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPI
       converged = ( find(results.begin(),results.end(),true) != results.end() );
     }
     if(writeToCout){
-      if(converged)
-        std::cout << "Converged!" << std::endl;
-      else
+      if(converged){
+        if( iter < minIterations )
+          std::cout << "Converged, but continuing because min iterations not reached." << std::endl;
+        else 
+          std::cout << "Converged!" << std::endl;
+      } else
         std::cout << "Not converged." << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
+
+    if( iter < minIterations ) converged = false;
 
     // check iteration limit
     if( iter >= maxIterations && !converged ){
@@ -302,6 +312,9 @@ ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPI
 ConvergenceTest::ConvergenceTest(const Teuchos::ParameterList& convParams)
 /******************************************************************************/
 {
+
+  if( convParams.isType<int>("Minimum Iterations") )
+    minIterations = convParams.get<int>("Minimum Iterations");
 
   if( convParams.isType<int>("Maximum Iterations") ){
     maxIterations = convParams.get<int>("Maximum Iterations");

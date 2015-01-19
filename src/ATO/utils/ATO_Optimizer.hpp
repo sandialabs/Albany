@@ -130,6 +130,7 @@ class ConvergenceTest {
   private:
 
     int maxIterations;
+    int minIterations;
 
     enum ComboType {AND, OR};
 

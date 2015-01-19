@@ -17,6 +17,7 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.cpp
 )
 
 IF (ENABLE_DOTK)
@@ -44,6 +45,7 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
 )
 
 IF (ENABLE_DOTK)

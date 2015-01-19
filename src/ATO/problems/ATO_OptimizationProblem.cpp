@@ -157,6 +157,81 @@ ComputeVolume(const double* p, double& v, double* dvdp)
 
 }
 
+
+/******************************************************************************/
+void
+ATO::OptimizationProblem::
+ComputeVolume(double* p, const double* dfdp, 
+              double& v, double threshhold, double minP)
+/******************************************************************************/
+{
+  double localv = 0.0;
+
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    wsElNodeID = disc->getWsElNodeID();
+  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeID.size();
+
+
+  if( topology->getCentering() == "Element" ){
+    int wsOffset = 0;
+    for(int ws=0; ws<numWorksets; ws++){
+  
+      int physIndex = wsPhysIndex[ws];
+  
+      int numCells = weighted_measure[ws].dimension(0);
+      int numQPs   = weighted_measure[ws].dimension(1);
+      
+      for(int cell=0; cell<numCells; cell++){
+        if( dfdp[wsOffset+cell] < threshhold ){
+          double elVol = 0.0;
+          for(int qp=0; qp<numQPs; qp++)
+            elVol += weighted_measure[ws](cell,qp);
+          localv += elVol;
+          p[wsOffset+cell] = 1.0;
+        } else
+        p[wsOffset+cell] = minP;
+      }
+      wsOffset += numCells;
+    }
+    comm->SumAll(&localv, &v, 1);
+
+  } else 
+  if( topology->getCentering() == "Node" ){
+    Teuchos::RCP<const Epetra_BlockMap>
+      overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMapE();
+    for(int ws=0; ws<numWorksets; ws++){
+  
+      int physIndex = wsPhysIndex[ws];
+      int numNodes  = basisAtQPs[physIndex].dimension(0);
+      int numCells  = weighted_measure[ws].dimension(0);
+      int numQPs    = weighted_measure[ws].dimension(1);
+      
+      for(int cell=0; cell<numCells; cell++){
+        double elVol = 0.0;
+        for(int node=0; node<numNodes; node++){
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = overlapNodeMap->LID(gid);
+          if(dfdp[lid] < threshhold) p[lid] = 1.0;
+          else p[lid] = minP;
+        }
+
+        for(int node=0; node<numNodes; node++){
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = overlapNodeMap->LID(gid);
+          for(int qp=0; qp<numQPs; qp++)
+            elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
+        }
+        localv += elVol;
+      }
+    }
+    comm->SumAll(&localv, &v, 1);
+  }
+
+}
+
+
 /******************************************************************************/
 void
 ATO::OptimizationProblem::
