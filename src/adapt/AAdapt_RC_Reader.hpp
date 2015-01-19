@@ -17,25 +17,46 @@ namespace rc {
 
 class Manager;
 
-/*! This evaluator reads data from the rc::Manager to provide to downstream
+/*! \brief This evaluator reads data from the rc::Manager to provide to downstream
  *! evaluators.
+ *
+ *  All specializations evaluate RealType state values. Additionally, the
+ *  Residual specialization optionally implements part of the projection.
  */
 
 template<typename EvalT, typename Traits>
-class Reader : public PHX::EvaluatorWithBaseImpl<Traits>,
-               public PHX::EvaluatorDerived<EvalT, Traits> {
+class ReaderBase : public PHX::EvaluatorWithBaseImpl<Traits>,
+                   public PHX::EvaluatorDerived<EvalT, Traits> {
 public:
-  Reader(const Teuchos::RCP<Manager>& rc_mgr);
+  ReaderBase(const Teuchos::RCP<Manager>& rc_mgr);
   void postRegistrationSetup(typename Traits::SetupData d,
-                             PHX::FieldManager<Traits>& vm);
+                             PHX::FieldManager<Traits>& fm);
   void evaluateFields(typename Traits::EvalData d);
-
-private:
+  const Teuchos::RCP<const PHX::FieldTag>& getNoOutputTag();
+protected:
   typedef typename std::vector< PHX::MDField<RealType> > FieldsVector;
   typedef typename FieldsVector::iterator FieldsIterator;
-
   Teuchos::RCP<Manager> rc_mgr_;
-  FieldsVector fields_;
+  FieldsVector fields_;  
+};
+
+template<typename EvalT, typename Traits>
+class Reader : public ReaderBase<EvalT, Traits> {
+public:
+  Reader(const Teuchos::RCP<Manager>& rc_mgr);
+};
+
+template<typename Traits>
+class Reader<PHAL::AlbanyTraits::Residual, Traits>
+  : public ReaderBase<PHAL::AlbanyTraits::Residual, Traits> {
+public:
+  Reader(const Teuchos::RCP<Manager>& rc_mgr,
+         const Teuchos::RCP<Albany::Layouts>& dl);
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& fm);
+  void evaluateFields(typename Traits::EvalData d);
+private:
+  PHX::MDField<RealType,Cell,Node,QuadPoint> bf_, wbf_;
 };
 
 } // namespace rc

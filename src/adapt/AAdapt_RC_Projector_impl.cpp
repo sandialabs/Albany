@@ -4,10 +4,12 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "PHAL_AlbanyTraits.hpp"
+#include "AAdapt_RC_Projector_impl.hpp"
 
-#include "AAdapt_RC_Reader.hpp"
-#include "AAdapt_RC_Reader_Def.hpp"
+namespace AAdapt {
+namespace rc {
 
-PHAL_INSTANTIATE_TEMPLATE_CLASS(AAdapt::rc::ReaderBase)
-PHAL_INSTANTIATE_TEMPLATE_CLASS(AAdapt::rc::Reader)
+
+
+} // namespace rc
+} // namespace AAdapt

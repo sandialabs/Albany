@@ -572,7 +572,7 @@ Albany::ElasticityProblem::constructEvaluators(
 
   }
 
-  if (Teuchos::nonnull(rc_mgr)) rc_mgr->createEvaluators<EvalT>(fm0);
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->createEvaluators<EvalT>(fm0, dl);
 
    if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter", dl->dummy);
