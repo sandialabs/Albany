@@ -51,7 +51,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> MResidual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
   bool enableTransient;

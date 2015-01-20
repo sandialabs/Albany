@@ -120,10 +120,6 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
   
-  // setJacobian only needs to be RealType since the data type is only
-  //  used internally for Basis Fns on reference elements, which are
-  //  not functions of coordinates. This save 18min of compile time!!!
-  //amb RealType doesn't compile. Changed to MeshScalarT.
   Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
   Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);

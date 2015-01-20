@@ -54,6 +54,7 @@ SET(HEADERS
   PHAL_AlbanyTraits.hpp
   PHAL_Workset.hpp
   PHAL_TypeKeyMap.hpp
+  PHAL_Utilities.hpp
   Albany_Application.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp

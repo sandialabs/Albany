@@ -47,7 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> ConcentrationGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> ConcentrationGrad;
   //PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;

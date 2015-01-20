@@ -39,7 +39,7 @@ private:
 
   // Input: 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   PHX::MDField<ScalarT,Cell,QuadPoint> Cp;

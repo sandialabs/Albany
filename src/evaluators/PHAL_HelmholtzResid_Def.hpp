@@ -9,6 +9,8 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
+#include "PHAL_Utilities.hpp"
+
 namespace PHAL {
 
 //**********************************************************************
@@ -91,10 +93,8 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(UResidual, UGrad, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
   FST::integrate<ScalarT>(VResidual, VGrad, wGradBF, Intrepid::COMP_CPP, false);
 
-  for (int i=0; i < UResidual.size() ; i++) {
-    UResidual[i] *= -1.0; 
-    VResidual[i] *= -1.0;
-  }
+  PHAL::scale(UResidual, -1.0);
+  PHAL::scale(VResidual, -1.0);
 
   if (haveSource) {
     FST::integrate<ScalarT>(UResidual, USource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
@@ -102,10 +102,8 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
   if (ksqr != 1.0) {
-    for (int i=0; i < U.size() ; i++) {
-      U[i] *= ksqr;
-      V[i] *= ksqr;
-    }
+    PHAL::scale(U, ksqr);
+    PHAL::scale(V, ksqr);
   }
 
   FST::integrate<ScalarT>(UResidual, U, wBF, Intrepid::COMP_CPP, true); // "true" sums into

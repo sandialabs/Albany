@@ -10,10 +10,9 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 
-template<typename T>
-T Sqr(T num)
-{
-    return num * num;
+template<typename EvalT>
+inline typename EvalT::ScalarT Sqr (typename EvalT::ScalarT num) {
+  return num * num;
 }
 
 namespace PHAL {
@@ -74,8 +73,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp)
 
-//        chemTerm(cell, qp) = 0.25 * Sqr(Sqr(rho(cell, qp)) - Sqr(b)) - w(cell, qp);
-        chemTerm(cell, qp) = ( Sqr(rho(cell, qp)) - Sqr(b) ) * rho(cell, qp) - w(cell, qp);
+      // chemTerm(cell, qp) = 0.25 * Sqr(Sqr(rho(cell, qp)) - Sqr(b)) - w(cell, qp);
+      chemTerm(cell, qp) = ( Sqr<EvalT>(rho(cell, qp)) - Sqr<EvalT>(b) ) * rho(cell, qp) - w(cell, qp);
 
 }
 

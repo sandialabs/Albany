@@ -158,7 +158,17 @@ evaluateFields(typename Traits::EvalData workset)
         tau13(cell,qp) += mu(cell,qp)*(qFluctGrad(cell,qp,1,2) + qFluctGrad(cell,qp,3,0)); //mu*(du/dz + dw/dx)
         tau22(cell,qp) += lambda(cell,qp)*qFluctGrad(cell,qp,3,2); //+lambda*dw/dz 
         tau23(cell,qp) += mu(cell,qp)*(qFluctGrad(cell,qp,2,3) + qFluctGrad(cell,qp,3,1)); //mu*(dv/dz + dw/dy)
-        tau33(cell,qp) += mu(cell,qp)*2.0*qFluctGrad(cell,qp,3,2) + lambda(cell,qp)*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1) + qFluct(cell,qp,3,2)); //mu*2*dw/dz + lambda*div(u) 
+        TEUCHOS_TEST_FOR_EXCEPTION(
+          true, std::logic_error,
+          "This next line has qFluct in it with the wrong indexing: there"
+          " should be 3, not 4. Inspection does not reveal what should be"
+          " fixed. I suspect qFluct should be qFluctGrad, but I can't be"
+          " sure. I suspect there is no test coverage of this codepath, so"
+          " for now I'll do the safe thing and throw an exception. I also"
+          " have to inactivate the code, as it won't compile with Kokkos.");
+#if 0
+        tau33(cell,qp) += 2.0*mu(cell,qp)*qFluctGrad(cell,qp,3,2) + lambda(cell,qp)*(qFluctGrad(cell,qp,1,0) + qFluctGrad(cell,qp,2,1) + qFluct(cell,qp,3,2)); //mu*2*dw/dz + lambda*div(u) 
+#endif
       }
     }
   }
