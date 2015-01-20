@@ -486,9 +486,6 @@ namespace Aeras
     //! Enriched edge array [workset, edge, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type enrichedEdges;
 
-    //! Enriched element array [workset, element, local-node] => GID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type enrichedElements;
-
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;
 

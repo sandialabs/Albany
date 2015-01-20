@@ -962,11 +962,11 @@ void Aeras::SpectralDiscretization::enrichMesh()
   // Fill in the enriched element array
   const stk::mesh::BucketVector & elementBuckets =
     bulkData.buckets(stk::topology::ELEMENT_RANK);
-  enrichedElements.resize(elementBuckets.size());
+  wsElNodeID.resize(elementBuckets.size());
   for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
   {
     stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck];
-    enrichedElements[ibuck].resize(elementBucket.size());
+    wsElNodeID[ibuck].resize(elementBucket.size());
     for (size_t ielem = 0; ielem < elementBucket.size(); ++ielem)
     {
       stk::mesh::Entity element = elementBucket[ielem];
@@ -981,11 +981,11 @@ void Aeras::SpectralDiscretization::enrichMesh()
       // address bufferPtr) for storing and accessing a 2D array of
       // element nodes.  We will then construct a Teuchos::ArrayRCP
       // pointing to the same buffer that assumes ownership of the
-      // buffer, so that it can be stored in the enrichedElements data
+      // buffer, so that it can be stored in the wsElNodeID data
       // structure.
       Teuchos::TwoDArray<GO> * bufferPtr = new Teuchos::TwoDArray<GO>(np,np);
       Teuchos::TwoDArray<GO> & buffer = *bufferPtr;
-      enrichedElements[ibuck][ielem] =
+      wsElNodeID[ibuck][ielem] =
         Teuchos::ArrayRCP<GO>(&buffer[0][0],0,np2,true);
 
       // Copy the linear corner node IDs to the enriched element
@@ -1221,11 +1221,11 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
   }
 
   // Add all of the interior nodes of the enriched elements to indicesT
-  for (size_t ibuck = 0; ibuck < enrichedElements.size(); ++ibuck)
-    for (size_t ielem = 0; ielem < enrichedElements[ibuck].size(); ++ielem)
+  for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
+    for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
       for (size_t ii = 1; ii < np-1; ++ii)
         for (size_t jj = 1; jj < np-1; ++jj)
-          indices[inode++] = enrichedElements[ibuck][ielem][ii*np+jj];
+          indices[inode++] = wsElNodeID[ibuck][ielem][ii*np+jj];
 
   assert (inode == numOwnedNodes);
   // End fill indicesT
@@ -1472,7 +1472,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 
   wsElNodeEqID.resize(numBuckets);
-  wsElNodeID.resize(numBuckets);
+  //wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
   sphereVolume.resize(numBuckets);
 
@@ -1488,6 +1488,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   typedef stk::mesh::Cartesian CompTag;
 
 #ifdef ALBANY_EPETRA
+  // FIXME: WFS: not yet updated for enriched elements
   NodalDOFsStructContainer::MapOfDOFsStructs::iterator it;
   NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
   for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
@@ -1504,7 +1505,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
-    wsElNodeID[b].resize(buck.size());
+    //wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
 
@@ -1582,6 +1583,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     }
 
 #ifdef ALBANY_EPETRA
+    // FIXME: WFS: not yet updated for enriched elements
     stk::mesh::Entity element = buck[0];
     int nodes_per_element = bulkData.num_nodes(element);
     for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
@@ -1613,7 +1615,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
       const int nodes_per_element = bulkData.num_nodes(element);
 
       wsElNodeEqID[b][i].resize(nodes_per_element);
-      wsElNodeID[b][i].resize(nodes_per_element);
+      //wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
  
 #ifdef ALBANY_EPETRA
@@ -1644,6 +1646,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
       // loop over local nodes
 #ifdef ALBANY_EPETRA
+      // FIXME: WFS: not yet updated for enriched elements
       DOFsStruct& dofs_struct = mapOfDOFsStructs[make_pair(std::string(""),neq)];
       GIDArray& node_array = dofs_struct.wsElNodeID[b];
       Albany::IDArray& node_eq_array = dofs_struct.wsElNodeEqID[b];
@@ -1674,7 +1677,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 			   "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
         coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
 
-        wsElNodeID[b][i][j] = node_gid;
+        //wsElNodeID[b][i][j] = node_gid;
 
         wsElNodeEqID[b][i][j].resize(neq);
         for (std::size_t eq=0; eq < neq; eq++)
