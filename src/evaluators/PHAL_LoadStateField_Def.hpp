@@ -43,6 +43,7 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
 
   Albany::StateArray& states = *workset.stateArrayPtr;
   Albany::MDArray& stateToLoad  = states[stateName];
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
 // Irina TOFIX need to discuss with Roger
 /*
   for (int i=0; i < stateToLoad.size() ; ++i) data[i] = stateToLoad[i];

@@ -50,6 +50,7 @@ template<typename EvalT, typename Traits>
 void DOFTensorInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
 //Irina TOFIX pointer
 /*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -112,6 +113,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0,0).size();
   int neq = num_dof / numNodes; 
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
 //Irina TOFIX pointer
 /*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

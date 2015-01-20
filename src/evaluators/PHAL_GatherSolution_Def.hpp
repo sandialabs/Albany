@@ -1233,6 +1233,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   //Irina TOFIX
   /*
  int nblock = x->size();
@@ -1340,7 +1341,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
-
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   //Irina TOFIX
   /*
   int nblock = x->size();
@@ -1426,6 +1427,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   //Irina TOFIX
   /*
   int nblock = x->size();
@@ -1526,6 +1528,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
   //Irina TOFIX
   /*
   int nblock = x->size();
