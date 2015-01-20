@@ -602,42 +602,37 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
-  ScalarT *valptr;
 
+  int numDim = 0;
+  if (this->tensorRank == 2) numDim = this->valTensor[0].dimension(2);
 
-  int numDim=0;
-  if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
-  for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell ) {
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> >&
+      nodeID = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-          else
-          if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
-          else
-          if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
+        PHAL::AlbanyTraits::Tangent::ScalarRefT
+          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                    this->tensorRank == 1 ? this->valVec[0](cell,node,eq) :
+                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
-        int row = nodeID[node][this->offset + eq];
+        const LO row = nodeID[node][this->offset + eq];
 
         if (Teuchos::nonnull(fT))
-          fT->sumIntoLocalValue(row, valptr->val());
+          fT->sumIntoLocalValue(row, valptr.val());
 
 	if (Teuchos::nonnull(JVT))
 	  for (int col=0; col<workset.num_cols_x; col++)
-	    JVT->sumIntoLocalValue(row, col, valptr->dx(col));
+	    JVT->sumIntoLocalValue(row, col, valptr.dx(col));
 
 	if (Teuchos::nonnull(fpT)) 
 	  for (int col=0; col<workset.num_cols_p; col++)
-	    fpT->sumIntoLocalValue(row, col, valptr->dx(col+workset.param_offset));
+	    fpT->sumIntoLocalValue(row, col,
+                                   valptr.dx(col + workset.param_offset));
       }
     }
   }
-*/
 }
 
 // **********************************************************************

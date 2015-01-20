@@ -42,14 +42,28 @@ namespace PHAL {
     //   * ScalarT is for quantities that depend on solution/params
     //   * MeshScalarT  is for quantities that depend on mesh coords only
     // ******************************************************************
-    struct Residual   { typedef RealType  ScalarT; typedef RealType MeshScalarT; };
-    struct Jacobian   { typedef FadType   ScalarT; typedef RealType MeshScalarT; };
-    struct Tangent    { typedef TanFadType   ScalarT;
-                        typedef TanFadType   MeshScalarT; };  // Use this for shape opt
-                        //typedef RealType MeshScalarT; }; // Uncomment for no shape opt
+    struct Residual {
+      typedef RealType ScalarT;
+      typedef RealType MeshScalarT;
+      typedef RealType& ScalarRefT;
+    };
+    struct Jacobian {
+      typedef FadType ScalarT;
+      typedef RealType MeshScalarT;
+      typedef Kokkos::View<ScalarT***, PHX::Device>::reference_type ScalarRefT;
+    };
+    struct Tangent {
+      typedef TanFadType ScalarT;
+      typedef TanFadType MeshScalarT; // Use this for shape opt
+      //typedef RealType MeshScalarT; // Uncomment for no shape opt
+      typedef Jacobian::ScalarRefT ScalarRefT;
+    };
 
-    struct DistParamDeriv { typedef TanFadType   ScalarT;
-                            typedef RealType      MeshScalarT; };
+    struct DistParamDeriv {
+      typedef TanFadType ScalarT;
+      typedef RealType MeshScalarT;
+      typedef Jacobian::ScalarRefT ScalarRefT;
+    };
 
 #ifdef ALBANY_SG_MP
     struct SGResidual { typedef SGType    ScalarT; typedef RealType MeshScalarT; };
