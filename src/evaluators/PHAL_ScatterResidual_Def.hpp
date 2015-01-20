@@ -435,7 +435,7 @@ evaluateFields(typename Traits::EvalData workset)
               fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
              }
 
-            if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+            if (((this->val[eq])(cell,node)).hasFastAccess()) {
 
              if (workset.is_adjoint) {
                for (unsigned int lunk=0; lunk<nunk; lunk++)

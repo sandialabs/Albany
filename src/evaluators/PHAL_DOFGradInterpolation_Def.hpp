@@ -112,7 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
 
-  int num_dof = val_node.size();
+  int num_dof = val_node(0,0).size();
   int neq = num_dof / numNodes;
 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

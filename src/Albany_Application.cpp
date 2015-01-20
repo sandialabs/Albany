@@ -236,6 +236,8 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
+  neq = problem->numEquations();
+
   // Construct responses
   // This really needs to happen after the discretization is created for
   // distributed responses, but currently it can't be moved because there
@@ -270,13 +272,10 @@ void Albany::Application::buildProblem()   {
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
     std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(24);
+    derivative_dimensions.push_back(8*neq);
     sfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
     sfm[ps]->postRegistrationSetup("");
   }
-
-  neq = problem->numEquations();
-
 }
 
 void Albany::Application::createDiscretization() {
@@ -3474,7 +3473,7 @@ void Albany::Application::postRegSetup(std::string eval)
   }
   else if (eval=="Jacobian") {
     std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(24);
+    derivative_dimensions.push_back(8*neq);
     for (int ps=0; ps < fm.size(); ps++){
        fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
        fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);

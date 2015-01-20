@@ -153,6 +153,8 @@ namespace Albany {
     //! Get number of responses
     int getNumResponses() const;
 
+    int getNumEquations() const { return neq; }
+
     //! Get response function
     Teuchos::RCP<AbstractResponseFunction> getResponse(int i) const;
 
