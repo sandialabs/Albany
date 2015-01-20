@@ -154,6 +154,7 @@ namespace Albany {
     int getNumResponses() const;
 
     int getNumEquations() const { return neq; }
+    int getSpatialDimension() const { return spatial_dimension; }
 
     //! Get response function
     Teuchos::RCP<AbstractResponseFunction> getResponse(int i) const;
@@ -1000,7 +1001,7 @@ namespace Albany {
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
 
-    unsigned int neq;
+    unsigned int neq, spatial_dimension;
 
 #ifdef ALBANY_EPETRA
     //! Teko stuff

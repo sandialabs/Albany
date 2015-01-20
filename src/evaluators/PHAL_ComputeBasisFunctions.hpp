@@ -24,7 +24,54 @@ namespace PHAL {
     This evaluator interpolates nodal DOF values to quad points.
 
 */
+#ifdef NO_KOKKOS_ALBANY
+template<typename EvalT, typename Traits>
+class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
+ 			 public PHX::EvaluatorDerived<EvalT, Traits>  {
 
+public:
+
+  ComputeBasisFunctions(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+  friend void writestuff(const ComputeBasisFunctions<EvalT, Traits>& cbf,
+                         typename Traits::EvalData workset);
+
+private:
+
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+  int  numVertices, numDims, numNodes, numQPs;
+
+  // Input:
+  //! Coordinate vector at vertices
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<shards::CellTopology> cellType;
+
+  // Temporary FieldContainers
+  Intrepid::FieldContainer<RealType> val_at_cub_points;
+  Intrepid::FieldContainer<RealType> grad_at_cub_points;
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid::FieldContainer<MeshScalarT> jacobian;
+  Intrepid::FieldContainer<MeshScalarT> jacobian_inv;
+
+  // Output:
+  //! Basis Functions at quadrature points
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
+  PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det; 
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
+};
+#else // NO_KOKKOS_ALBANY
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {
@@ -82,6 +129,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
 };
+#endif // NO_KOKKOS_ALBANY
 }
 
 #endif

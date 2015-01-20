@@ -237,6 +237,7 @@ void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
   neq = problem->numEquations();
+  spatial_dimension = problem->spatialDimension();
 
   // Construct responses
   // This really needs to happen after the discretization is created for
@@ -272,7 +273,7 @@ void Albany::Application::buildProblem()   {
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
     std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(8*neq);
+    derivative_dimensions.push_back((1 << spatial_dimension)*neq);
     sfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
     sfm[ps]->postRegistrationSetup("");
   }
@@ -3473,7 +3474,7 @@ void Albany::Application::postRegSetup(std::string eval)
   }
   else if (eval=="Jacobian") {
     std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(8*neq);
+    derivative_dimensions.push_back((1 << spatial_dimension)*neq);
     for (int ps=0; ps < fm.size(); ps++){
        fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
        fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);

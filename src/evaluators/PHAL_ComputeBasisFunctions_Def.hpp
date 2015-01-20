@@ -11,7 +11,137 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace PHAL {
+#ifdef NO_KOKKOS_ALBANY
+template<typename EvalT, typename Traits>
+ComputeBasisFunctions<EvalT, Traits>::
+ComputeBasisFunctions(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Albany::Layouts>& dl) :
+  coordVec      (p.get<std::string>  ("Coordinate Vector Name"), dl->vertices_vector ),
+  cubature      (p.get<Teuchos::RCP <Intrepid::Cubature<RealType> > >("Cubature")),
+  intrepidBasis (p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > ("Intrepid Basis") ),
+  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
+  weighted_measure (p.get<std::string>  ("Weights Name"), dl->qp_scalar ),
+  jacobian_det (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
+  BF            (p.get<std::string>  ("BF Name"), dl->node_qp_scalar),
+  wBF           (p.get<std::string>  ("Weighted BF Name"), dl->node_qp_scalar),
+  GradBF        (p.get<std::string>  ("Gradient BF Name"), dl->node_qp_gradient),
+  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient)
+{
+  this->addDependentField(coordVec);
+  this->addEvaluatedField(weighted_measure);
+  this->addEvaluatedField(jacobian_det);
+  this->addEvaluatedField(BF);
+  this->addEvaluatedField(wBF);
+  this->addEvaluatedField(GradBF);
+  this->addEvaluatedField(wGradBF);
 
+  // Get Dimensions
+  std::vector<PHX::DataLayout::size_type> dim;
+  dl->node_qp_gradient->dimensions(dim);
+
+  int containerSize = dim[0];
+  numNodes = dim[1];
+  numQPs = dim[2];
+  numDims = dim[3];
+
+
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->vertices_vector->dimensions(dims);
+  numVertices = dims[1];
+
+  // Allocate Temporary FieldContainers
+  val_at_cub_points.resize(numNodes, numQPs);
+  grad_at_cub_points.resize(numNodes, numQPs, numDims);
+  refPoints.resize(numQPs, numDims);
+  refWeights.resize(numQPs);
+  jacobian.resize(containerSize, numQPs, numDims, numDims);
+  jacobian_inv.resize(containerSize, numQPs, numDims, numDims);
+
+  // Pre-Calculate reference element quantitites
+  cubature->getCubature(refPoints, refWeights);
+  intrepidBasis->getValues(val_at_cub_points, refPoints, Intrepid::OPERATOR_VALUE);
+  intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
+
+  this->setName("ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+}
+
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void ComputeBasisFunctions<EvalT, Traits>::
+postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& fm)
+{
+  this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(weighted_measure,fm);
+  this->utils.setFieldData(jacobian_det,fm);
+  this->utils.setFieldData(BF,fm);
+  this->utils.setFieldData(wBF,fm);
+  this->utils.setFieldData(GradBF,fm);
+  this->utils.setFieldData(wGradBF,fm);
+}
+
+//**********************************************************************
+#define wse(TYPE)                                                       \
+  void writestuff (                                                     \
+    const ComputeBasisFunctions<PHAL::AlbanyTraits::TYPE, PHAL::AlbanyTraits>& cbf, \
+    PHAL::AlbanyTraits::EvalData workset) {}
+wse(Jacobian);
+wse(Tangent);
+wse(DistParamDeriv);
+
+void writestuff (
+  const ComputeBasisFunctions<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>& cbf,
+  PHAL::AlbanyTraits::EvalData workset)
+{
+  if (amb::print_level() < 3) return;
+  const int nc = workset.numCells, nv = cbf.numVertices, nd = cbf.numDims,
+    nn = cbf.numNodes, nq = cbf.numQPs;
+  amb_write_mdfield3(cbf.coordVec, "cbf_coordVec", nc, nv, nd);
+  amb_write_mdfield2(cbf.weighted_measure, "cbf_weighted_measure", nc, nq);
+  amb_write_mdfield2(cbf.jacobian_det, "cbf_jacobian_det", nc, nq);
+  amb_write_mdfield4(cbf.jacobian, "cbf_jacobian", nc, nq, nd, nd);
+  amb_write_mdfield4(cbf.jacobian_inv, "cbf_jacobian_inv", nc, nq, nd, nd);
+  amb_write_mdfield3(cbf.BF, "cbf_BF", nc, nn, nq);
+  amb_write_mdfield3(cbf.wBF, "cbf_wBF", nc, nn, nq);
+  amb_write_mdfield4(cbf.GradBF, "cbf_GradBF", nc, nn, nq, nd);
+  amb_write_mdfield4(cbf.wGradBF, "cbf_wGradBF", nc, nn, nq, nd);
+}
+
+template<typename EvalT, typename Traits>
+void ComputeBasisFunctions<EvalT, Traits>::
+evaluateFields(typename Traits::EvalData workset)
+{
+
+  /** The allocated size of the Field Containers must currently 
+    * match the full workset size of the allocated PHX Fields, 
+    * this is the size that is used in the computation. There is
+    * wasted effort computing on zeroes for the padding on the
+    * final workset. Ideally, these are size numCells.
+  //int containerSize = workset.numCells;
+    */
+  
+  // setJacobian only needs to be RealType since the data type is only
+  //  used internally for Basis Fns on reference elements, which are
+  //  not functions of coordinates. This save 18min of compile time!!!
+  //amb RealType doesn't compile. Changed to MeshScalarT.
+  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+  Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
+
+  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
+    (weighted_measure, jacobian_det, refWeights);
+  Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
+    (BF, val_at_cub_points);
+  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+    (wBF, weighted_measure, BF);
+  Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
+    (GradBF, jacobian_inv, grad_at_cub_points);
+  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+    (wGradBF, weighted_measure, GradBF);
+
+  writestuff(*this, workset);
+}
+#else // NO_KOKKOS_ALBANY
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
@@ -582,6 +712,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   writestuff(*this, workset);
 }
-
+#endif // NO_KOKKOS_ALBANY
 //**********************************************************************
 }

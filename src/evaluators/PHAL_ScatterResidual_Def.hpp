@@ -445,7 +445,10 @@ evaluateFields(typename Traits::EvalData workset)
                    JacT->sumIntoLocalValues(rowT, colT, Teuchos::arrayView(&(((this->val[eq])(cell,node)).fastAccessDx(0)), nunk));
                }
               } // has fast access
-
+            if (fid)
+              for (int lunk = 0; lunk < nunk; ++lunk)
+                fprintf(fid, "%d %d %d %d %d %1.15e\n", cell, node, eq, rowT, colT[lunk],
+                        ((this->val[eq])(cell,node)).fastAccessDx(lunk));
            }
           else
           if (this->tensorRank == 1) {
