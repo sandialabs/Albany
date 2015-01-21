@@ -73,13 +73,16 @@ setup(Teuchos::ParameterList& responseParams)
     num_responses = 1;
   
   // Do post-registration setup
+  
   std::vector<PHX::index_size_type> derivative_dimensions;
-  derivative_dimensions.push_back(24);
-
-//Irina TOFIX derivative dimentions for responses
-//
-//  rfm->setKokkosExtendedDataTypeDimensions(derivative_dimensions);
-
+  derivative_dimensions.push_back((1 << application->getSpatialDimension()) *
+                                  application->getNumEquations());
+  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
+    derivative_dimensions);
+  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
+    derivative_dimensions);
+  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+    derivative_dimensions);
   rfm->postRegistrationSetup("");
 
   // Visualize rfm graph -- get file name from name of response function
