@@ -88,7 +88,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int qp=0; qp < numQPs; ++qp) {
               for (int dim=0; dim<numDims; ++ dim) {
                   for (int j=0; j<numDims; ++ j) {
-        	    totstress(cell, qp, dim, j) = stress(cell, qp) - biotCoefficient(cell,qp)*porePressure(cell,qp);
+        	    totstress(cell, qp, dim, j) = stress(cell, qp, dim, j) - biotCoefficient(cell,qp)*porePressure(cell,qp);
                  }
               }
           }

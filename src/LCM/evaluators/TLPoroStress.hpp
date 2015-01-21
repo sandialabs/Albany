@@ -42,7 +42,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<ScalarT,Cell,QuadPoint> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 
