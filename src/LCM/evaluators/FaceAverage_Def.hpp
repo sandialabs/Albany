@@ -152,7 +152,10 @@ evaluateFields(typename Traits::EvalData workset)
       } // face
 
       // temp variable to trick the code into running the evaluator
-      temp(cell) = cell;
+      //amb, during kokkos conversion. What's going on here? Why does the
+      // evaluator need to be tricked? Why not use a dummy evaluated field like
+      // usual?
+      temp(cell,0) = cell;
     } // cell
 }
 
