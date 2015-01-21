@@ -115,6 +115,7 @@ namespace PHAL {
   {
   int num_dof = val_node(0,0,0,0).size();
   int neq = num_dof / numNodes;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
 //Irina TOFIX
 /*
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
