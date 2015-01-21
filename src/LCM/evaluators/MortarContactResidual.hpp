@@ -69,6 +69,7 @@ protected:
   std::size_t offset; // Offset of first DOF being gathered when numFields<neq
 
   const Teuchos::ArrayRCP<std::string>& masterSideNames;
+  const Teuchos::ArrayRCP<std::string>& slaveSideNames;
   const Teuchos::ArrayRCP<std::string>& sideSetIDs;
   const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs;
 

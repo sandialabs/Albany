@@ -64,6 +64,7 @@ protected:
                                                    // so put in a placeholder
 
   const Teuchos::Array<std::string> masterSideNames;
+  const Teuchos::Array<std::string> slaveSideNames;
   const Teuchos::Array<std::string> sideSetIDs;
   const Albany::MeshSpecsStruct* meshSpecs;
 

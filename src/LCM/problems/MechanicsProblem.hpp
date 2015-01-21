@@ -2523,10 +2523,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     Teuchos::ParameterList& paramList = params->sublist("Contact");
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
 
-    p->set<Teuchos::Array<std::string> >("Master Sideset Names", 
-         paramList.get<Teuchos::Array<std::string> >("Mortar Side Sets"));
+    p->set<Teuchos::Array<std::string> >("Master Side Set Names", 
+         paramList.get<Teuchos::Array<std::string> >("Master Side Sets"));
+    p->set<Teuchos::Array<std::string> >("Slave Side Set Names", 
+         paramList.get<Teuchos::Array<std::string> >("Slave Side Sets"));
     p->set<Teuchos::Array<std::string> >("Sideset IDs", 
-         paramList.get<Teuchos::Array<std::string> >("Nonmortar Side Sets"));
+         paramList.get<Teuchos::Array<std::string> >("Contact Side Set Pair"));
 
     p->set<const Albany::MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");

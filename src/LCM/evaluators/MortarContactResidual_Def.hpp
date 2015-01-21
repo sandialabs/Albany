@@ -19,7 +19,8 @@ MortarContactResidualBase(const Teuchos::ParameterList& p,
 
   meshSpecs      (p.get<Teuchos::RCP<Albany::MeshSpecsStruct> >("Mesh Specs Struct")),
   // The array of names of all the master side sets in the problem
-  masterSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Master Sideset Names")), 
+  masterSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Master Side Set Names")), 
+  slaveSideNames (p.get<Teuchos::ArrayRCP<std::string> >("Slave Side Set Names")), 
 
   // The array of sidesets to process
   sideSetIDs (p.get<Teuchos::ArrayRCP<std::string> >("Sideset IDs")), 
@@ -142,8 +143,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // No work to do
-  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || this->sideSetIDs.size() == 0)
-
+  if(workset.sideSets == Teuchos::null || 
+     this->masterSideNames.size() == 0 || 
+     this->slaveSideNames.size() == 0 || 
+     this->sideSetIDs.size() == 0)
     return;
 
   const Albany::SideSetList& ssList = *(workset.sideSets);
@@ -166,6 +169,15 @@ evaluateFields(typename Traits::EvalData workset)
       // Loop over the sides that form the boundary condition
 
       for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
+
+        const bool on_boundary = false; // node does not lie on a boundary.
+        const int  nid = 0; // need accessor for node global id.
+        const int  print_level = 0;
+        const int num_dofs_per_node = 2;
+
+//        MOERTEL::Node node( nid, x, num_dofs_per_node, dof, on_boundary, print_level );
+ 
+//        interface.AddNode(node,side);
 
         // Get the data that corresponds to the side. 
 
