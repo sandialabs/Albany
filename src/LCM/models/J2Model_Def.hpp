@@ -137,11 +137,6 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-/*std::cout <<"before" << std::endl;
-for (int i(0); i < num_dims_; ++i) 
-        for (int j(0); j < num_dims_; ++j) 
-std::cout<<Fpold(i,j)<< std::endl;
-*/
 
 #ifdef NO_KOKKOS_ALBANY
 
@@ -494,20 +489,8 @@ compute_common(const int cell) const{
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23,  smag2, smag, f, p, dgam;
-/*  ScalarT F[dims_][dims_];
-  ScalarT be[dims_][dims_];
-  ScalarT s[dims_][dims_];
-  ScalarT sigma[dims_][dims_];
-  ScalarT N[dims_][dims_];
-  ScalarT A[dims_][dims_];
-  ScalarT expA[dims_][dims_];
-  ScalarT Fpnew[dims_][dims_];
-  ScalarT I[dims_][dims_];
-  ScalarT Fpn[dims_][dims_];
-  ScalarT Fpinv[dims_][dims_];
-  ScalarT Cpinv[dims_][dims_];
-*/
- Intrepid::Tensor<ScalarT> F(dims_), be(dims_), s(dims_), sigma(dims_);
+ 
+  Intrepid::Tensor<ScalarT> F(dims_), be(dims_), s(dims_), sigma(dims_);
   Intrepid::Tensor<ScalarT> N(dims_), A(dims_), expA(dims_), Fpnew(dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(dims_));
   Intrepid::Tensor<ScalarT> Fpn(dims_), Fpinv(dims_), Cpinv(dims_);
@@ -532,7 +515,11 @@ compute_common(const int cell) const{
       
      Fpinv=Intrepid::inverse(Fpn); 
 
-     for (int i(0); i < dims_; ++i) {
+     Cpinv = Fpinv * Intrepid::transpose(Fpinv);
+     be = Jm23 * F * Cpinv * Intrepid::transpose(F);
+     s = mu * Intrepid::dev(be);
+
+/*     for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {  
           Cpinv (i,j) = Fpinv(i,j) * Fpinv(j,i);
           be(i,j) = Jm23 * F(i,j) * Cpinv(i,j) * F(j,i);
@@ -543,9 +530,9 @@ compute_common(const int cell) const{
           ScalarT theta=(1.0/dims_) * Intrepid::trace(be);
           s(i,j) = mu * (be(i,j)-theta*I(i,j));
       }
-    }
+    }*/
      mubar = Intrepid::trace(be) * mu / (dims_);
-     smag = norm(s);
+     smag = Intrepid::norm(s);
      f = smag - sq23 * (Y + K * eqpsold(cell, pt)
          + sat_mod_ * (1. - std::exp(-sat_exp_ * eqpsold(cell, pt))));
 
@@ -647,9 +634,9 @@ compute_common(const int cell) const{
       // compute pressure
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
       // compute stress
+      sigma = p * I + s / J(cell, pt);
       for (int i(0); i < dims_; ++i) {
         for (int j(0); j < dims_; ++j) {
-          sigma(i,j)=p*I(i,j)+s(i,j)/J(cell,pt);
           stress(cell, pt, i, j) = sigma(i, j);
         }
       }
