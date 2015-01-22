@@ -53,11 +53,17 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     }
   }
 
-  stk::mesh::Field<double>* coordinatesField = 
-    metaData->get_field< stk::mesh::Field<double> >(stk::topology::NODE_RANK, "coordinates");
+//   const stk::mesh::FieldVector &fields = metaData->get_fields();
+//   for(unsigned int i=0 ; i<fields.size() ; ++i)
+//     std::cout << "DJL DEBUGGING STK field " << *fields[i] << std::endl;
 
-  stk::mesh::Field<double>* volumeField = 
-    metaData->get_field< stk::mesh::Field<double> >(stk::topology::ELEMENT_RANK, "volume");
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access coordinates field.\n\n");
+
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access volume field.\n\n");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
@@ -237,8 +243,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(localId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	blockId[localId] = bId;
 	double* exodusVolume = stk::mesh::field_data(*volumeField, elementsInElementBlock[iElement]);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVolume == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to access element's volume field.\n\n");
 	cellVolume[localId] = exodusVolume[0];
 	double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, node[0]);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusCoordinates == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to access element's coordinates field.\n\n");
 	initialX[localId*3]   = exodusCoordinates[0];
 	initialX[localId*3+1] = exodusCoordinates[1];
 	initialX[localId*3+2] = exodusCoordinates[2];

@@ -43,8 +43,8 @@ protected:
 
   // Input:
   RealType density;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> sphereVolume;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> referenceCoordinates;
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> sphereVolume;
+  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
 
   // Output:
