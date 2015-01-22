@@ -1441,7 +1441,10 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   typedef Albany::AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-  ScalarFieldType* sphereVolume_field;
+  //IK, 1/22/15: changing type of sphereVolume_field to propagate David Littlewood's change 
+  //yesterday, so code will compile.  Need to llok into whether sphereVolume_field is needed for Aeras.
+  //ScalarFieldType* sphereVolume_field;
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field; 
 
   if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
     sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
