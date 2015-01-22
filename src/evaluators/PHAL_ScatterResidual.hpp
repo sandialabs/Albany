@@ -84,7 +84,7 @@ private:
   const std::size_t numFields;
 
 //Kokkos
-#ifndef NO_KOKKOS_ALBANYY
+#ifndef NO_KOKKOS_ALBANY
 public:
 
   Teuchos::RCP<Tpetra_Vector> fT;
@@ -130,7 +130,7 @@ private:
   const std::size_t numFields;
 
 //Kokkos
-#ifndef NO_KOKKOS_ALBANYY
+#ifndef NO_KOKKOS_ALBANY
 public:
 
   Teuchos::RCP<Tpetra_Vector> fT;

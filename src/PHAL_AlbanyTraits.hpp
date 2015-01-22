@@ -48,23 +48,27 @@ namespace PHAL {
       typedef RealType ScalarT;
       typedef RealType MeshScalarT;
       typedef RealType& ScalarRefT;
+      typedef RealType& MeshScalarRefT;
     };
     struct Jacobian {
       typedef FadType ScalarT;
       typedef RealType MeshScalarT;
       typedef Kokkos::View<ScalarT***, PHX::Device>::reference_type ScalarRefT;
+      typedef RealType& MeshScalarRefT;
     };
     struct Tangent {
       typedef TanFadType ScalarT;
       typedef TanFadType MeshScalarT; // Use this for shape opt
       //typedef RealType MeshScalarT; // Uncomment for no shape opt
-      typedef Jacobian::ScalarRefT ScalarRefT;
+      typedef Kokkos::View<ScalarT***, PHX::Device>::reference_type ScalarRefT;
+      typedef ScalarRefT MeshScalarRefT;
     };
 
     struct DistParamDeriv {
       typedef TanFadType ScalarT;
       typedef RealType MeshScalarT;
       typedef Jacobian::ScalarRefT ScalarRefT;
+      typedef RealType& MeshScalarRefT;
     };
 
 #ifdef ALBANY_SG_MP

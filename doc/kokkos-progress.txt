@@ -525,6 +525,7 @@ ScalarRefT in a few spots and (2) to cherry-pick Josh's rebaselining for
 132. Now down to
 	 24 - SGBratu1D_Tpetra (Failed)
 	 70 - GPAM_Tpetra (Failed)
+  All QCAD tests pass. Evidently they don't exercise reduceAll.
 
 >> TODO
 
@@ -534,10 +535,10 @@ Items without a name associated is up for grabs.
 - Implement derivative dimensions cleanly (Andrew or Andy)
 - Internal CDash (Duane and Glen)
 - reduceAll for FadType (Eric, but Andrew may hack in something for now)
-- QCAD ctests
-- ATO
-- MOR
-- AMP
+x QCAD ctests
+x ATO
+x MOR
+x AMP. But why no ctests?
 - Felix
 - Aeras
 - Hydride
