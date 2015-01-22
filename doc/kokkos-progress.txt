@@ -495,6 +495,18 @@ The following tests FAILED:
 	175 - MechanicsTensileTet10_STK (Failed)
 Errors while running CTest
 
+- 6:15pm
+These now pass:
+	126 - AnisotropicHyperelasticDamage (Failed)
+	127 - AnisotropicDamage (Failed)
+	128 - Gurson (Failed)
+	129 - Neohookean (Failed)
+These were broken because of the 4-index Intrepid::TensorBase::fill. I should
+have recorded which tests broke because of the 3- and 4-index
+Intrepid::Vector::fill bug. Sorry. Nonetheless, there were several, so we can
+view the LCM ctests as strong correctness checks of those three fill methods
+(and no others).
+
 >> TODO
 
 Items without a name associated is up for grabs.
@@ -512,6 +524,8 @@ Items without a name associated is up for grabs.
 - Hydride
 - SCOREC (Andrew)
 - SG_MP (Andrew)
+- Merge master into tpetra_kokkos (Andrew)
+- Merge tpetra_kokkos into master (Andrew)
 - Peridigm (Andrew and Dave)
 - Dakota (Andy?)
 - Figure out ETI in panzer_kokkos
