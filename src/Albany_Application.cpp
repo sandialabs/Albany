@@ -22,7 +22,6 @@
 #include "Petra_Converters.hpp"
 #endif
 
-
 #include<string>
 #include "Albany_DataTypes.hpp"
 
@@ -38,7 +37,7 @@
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
-
+#include "PHAL_Utilities.hpp"
 
 #ifdef ALBANY_PERIDIGM
 #ifdef  ALBANY_EPETRA
@@ -272,10 +271,6 @@ void Albany::Application::buildProblem()   {
         responseID, dummy);
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back((1 << spatial_dimension)*neq);
-    sfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
-    sfm[ps]->postRegistrationSetup("");
   }
 }
 
@@ -3351,6 +3346,36 @@ evaluateStateFieldManagerT(
     Teuchos::Ptr<const Tpetra_Vector> xdotdotT,
     const Tpetra_Vector& xT)
 {
+  {
+    const std::string eval = "SFM_Jacobian";
+    if (setupSet.find(eval) == setupSet.end()) {
+      setupSet.insert(eval);
+      for (int ps = 0; ps < sfm.size(); ++ps) {
+        std::vector<PHX::index_size_type> derivative_dimensions;
+        derivative_dimensions.push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+            this, ps));
+        sfm[ps]->setKokkosExtendedDataTypeDimensions
+          <PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+        sfm[ps]->postRegistrationSetup("");
+      }
+      // visualize state field manager
+      if (stateGraphVisDetail > 0) {
+        bool detail = false; if (stateGraphVisDetail > 1) detail=true;
+        *out << "Phalanx writing graphviz file for graph of Residual fill "
+             "(detail =" << stateGraphVisDetail << ")" << std::endl;
+        *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n"
+             << std::endl;
+        for (int ps=0; ps < sfm.size(); ps++) {
+          std::stringstream pg; pg << "state_phalanx_graph_" << ps;
+          sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(
+            pg.str(),detail,detail);
+        }
+        stateGraphVisDetail = -1;
+      }
+    }
+  }
+
   Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
 
   // Load connectivity map and coordinates
@@ -3362,19 +3387,6 @@ evaluateStateFieldManagerT(
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
-
-  // visualize state field manager
-  if (stateGraphVisDetail>0) {
-    bool detail = false; if (stateGraphVisDetail > 1) detail=true;
-    *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
-         << stateGraphVisDetail << ")"<<std::endl;
-    *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n" << std::endl;
-    for (int ps=0; ps < sfm.size(); ps++) {
-      std::stringstream pg; pg << "state_phalanx_graph_" << ps;
-      sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
-    }
-    stateGraphVisDetail = -1;
-  }
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(xT, xdotT.get(), xdotdotT.get());
@@ -3473,37 +3485,47 @@ void Albany::Application::postRegSetup(std::string eval)
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
   }
   else if (eval=="Jacobian") {
-    std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back((1 << spatial_dimension)*neq);
     for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
        fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
        fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+       if (nfm!=Teuchos::null) {
+         nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+       }
       }
     if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
     }
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++){
-        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
-        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-      }
   }
   else if (eval=="Tangent") {
-   std::vector<PHX::index_size_type> derivative_dimensions;
-    derivative_dimensions.push_back(32);
     for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-    }
-    if (dfm!=Teuchos::null){
-      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-      }
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++){
+      if (nfm!=Teuchos::null) {
         nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
       }
   }
   else if (eval=="Distributed Parameter Derivative") { //!!!

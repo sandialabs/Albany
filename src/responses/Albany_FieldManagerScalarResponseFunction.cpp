@@ -10,6 +10,7 @@
 #include "Petra_Converters.hpp"
 #endif
 #include <algorithm>
+#include "PHAL_Utilities.hpp"
 
 Albany::FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
@@ -74,15 +75,29 @@ setup(Teuchos::ParameterList& responseParams)
   
   // Do post-registration setup
   
-  std::vector<PHX::index_size_type> derivative_dimensions;
-  derivative_dimensions.push_back((1 << application->getSpatialDimension()) *
-                                  application->getNumEquations());
-  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    derivative_dimensions);
-  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
-    derivative_dimensions);
-  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    derivative_dimensions);
+  //amb This is not right because rfm doesn't account for multiple element
+  // blocks. Make do for now. Also, rewrite this code to get rid of all this
+  // redundancy.
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    derivative_dimensions[0] *= num_responses; //amb need to check
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    derivative_dimensions[0] *= num_responses; //amb need to check
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+      derivative_dimensions); }
   rfm->postRegistrationSetup("");
 
   // Visualize rfm graph -- get file name from name of response function

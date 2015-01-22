@@ -22,6 +22,7 @@ SET(SOURCES
   Albany_ModelFactory.cpp
   Albany_ModelEvaluatorT.cpp
   Albany_ObserverImpl.cpp
+  PHAL_Utilities.cpp
   amb.cpp
   )
 

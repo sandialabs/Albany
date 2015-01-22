@@ -72,6 +72,8 @@ cmake \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+ -D Trilinos_ENABLE_MueLu:BOOL=ON \
+ -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
  -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
  -D Tpetra_INST_FLOAT=OFF \
@@ -495,8 +497,8 @@ The following tests FAILED:
 	175 - MechanicsTensileTet10_STK (Failed)
 Errors while running CTest
 
-- 6:15pm
-These now pass:
+6:15pm
+  These now pass:
 	126 - AnisotropicHyperelasticDamage (Failed)
 	127 - AnisotropicDamage (Failed)
 	128 - Gurson (Failed)
@@ -506,6 +508,18 @@ have recorded which tests broke because of the 3- and 4-index
 Intrepid::Vector::fill bug. Sorry. Nonetheless, there were several, so we can
 view the LCM ctests as strong correctness checks of those three fill methods
 (and no others).
+
+22 Jan.
+  These tests:
+	124 - QuasiStaticElasticityMM3D_Tpetra_64 (Failed)
+	175 - MechanicsTensileTet10_STK (Failed)
+failed because the mesh uses tets, and I didn't have derivative dims working for
+other than N-D quads yet. Now I do. The breaking tests with demo PDEs and LCM
+enabled are now these:
+	 24 - SGBratu1D_Tpetra (Failed)
+	 70 - GPAM_Tpetra (Failed)
+	132 - HMC:StaticHMC_2DQuad (Failed)
+	133 - HMC:TransientHMC_2DQuad (Failed)
 
 >> TODO
 
