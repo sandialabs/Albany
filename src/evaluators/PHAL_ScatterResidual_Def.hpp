@@ -398,7 +398,6 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
   const bool loadResid = Teuchos::nonnull(fT);
-  LO rowT;
   Teuchos::Array<LO> colT;
 
   const int neq = workset.wsElNodeEqID[0][0].size();
@@ -428,11 +427,7 @@ evaluateFields(typename Traits::EvalData workset)
                     this->tensorRank == 1 ? this->valVec[0](cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
-        if (amb::get_global_int(amb::gi_ws) == amb::gi_magic && cell == 0 && node == 0 && eq == 0)
-          std::cout << "amb: tensorRank " << this->tensorRank << " hasFastAccess "
-                    << valptr.hasFastAccess() << " is_adjoint " << workset.is_adjoint << std::endl;
-
-        const rowT = nodeID[node][this->offset + eq];
+        const LO rowT = nodeID[node][this->offset + eq];
         if (loadResid)
           fT->sumIntoLocalValue(rowT, valptr.val());
 
