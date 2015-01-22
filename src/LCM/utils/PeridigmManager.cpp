@@ -355,18 +355,21 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   for(unsigned int i=0 ; i<initialX.size() ; ++i)
     previousSolutionPositions[i] = initialX[i];
 
-  // Create a Peridigm discretization DJL DEBUGGING
-  //const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) 
-//   peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm,
-//                                                                                                             peridigmParams,
-// 													    static_cast<int>(peridigmNodeGlobalIds.size()),
-// 													    &peridigmNodeGlobalIds[0],
-//                                                                                                             &initialX[0],
-//                                                                                                             &cellVolume[0],
-//                                                                                                             &blockId[0]));
+  // Create a Peridigm discretization
+  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
+  peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(*mpiComm->getRawMpiComm(),
+                                                                                                            peridigmParams,
+													    static_cast<int>(peridigmNodeGlobalIds.size()),
+													    &peridigmNodeGlobalIds[0],
+                                                                                                            &initialX[0],
+                                                                                                            &cellVolume[0],
+                                                                                                            &blockId[0]));
 
   // Create a Peridigm object DJL DEBUGGING
-//   peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, peridigmParams, peridynamicDiscretization));
+  peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(*mpiComm->getRawMpiComm(),
+									 peridigmParams,
+									 peridynamicDiscretization));
 
   // Create data structure for obtaining the global element id given the workset index and workset local element id.
   Albany::WsLIDList wsLIDList = stkDisc->getElemGIDws();

@@ -1242,10 +1242,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-  ScalarFieldType* sphereVolume_field;
 
-  if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field;
+  if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField()){
     sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
+  }
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
@@ -1432,8 +1433,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
 
 #ifdef ALBANY_LCM
-      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1)
-	sphereVolume[b][i] = *stk::mesh::field_data(*sphereVolume_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1){
+	double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
+	if(volumeTemp){
+	  sphereVolume[b][i] = volumeTemp[0];
+	}
+      }
 #endif
 
       // loop over local nodes
