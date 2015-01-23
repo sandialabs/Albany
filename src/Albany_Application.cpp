@@ -3507,7 +3507,8 @@ Albany::Application::getValue(const std::string& name)
 }
 
 
-void Albany::Application::postRegSetup(std::string eval)
+void Albany::Application::
+postRegSetup(std::string eval)
 {
   if (setupSet.find(eval) != setupSet.end())  return;
 
@@ -3527,13 +3528,13 @@ void Albany::Application::postRegSetup(std::string eval)
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
-       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
-       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-       if (nfm!=Teuchos::null) {
-         nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
-         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-       }
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+      fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+        nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
       }
+    }
     if (dfm!=Teuchos::null){
       //amb Need to look into this. What happens with DBCs in meshes having
       // different element types?
@@ -3551,7 +3552,7 @@ void Albany::Application::postRegSetup(std::string eval)
         PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-      if (nfm!=Teuchos::null) {
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
         nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
       }

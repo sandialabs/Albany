@@ -21,7 +21,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
   //amb Need to figure out.
-  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(app, ms);
+  return app->getNumEquations() * ms->ctd.node_count;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (

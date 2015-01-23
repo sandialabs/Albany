@@ -24,11 +24,19 @@ template<typename T1, typename T2, typename T3, typename T4>
 inline void scale (PHX::MDField<T1, T2, T3>& a, const T4& val) {
   loop(a, i, 0) loop(a, j, 1) a(i,j) *= val;
 }
+template<typename T1, typename T2, typename T3, typename T4, typename T>
+inline void scale (PHX::MDField<T1, T2, T3, T4>& a, const T& val) {
+  loop(a, i, 0) loop(a, j, 1) loop(a, k, 2) a(i,j,k) *= val;
+}
 
 // a(:) = v
-template<typename T1, typename T2, typename T3, typename T4>
-inline void set (PHX::MDField<T1, T2, T3>& a, const T4& val) {
+template<typename T1, typename T2, typename T3, typename T>
+inline void set (PHX::MDField<T1, T2, T3>& a, const T& val) {
   loop(a, i, 0) loop(a, j, 1) a(i,j) = val;
+}
+template<typename T1, typename T2, typename T3, typename T4, typename T>
+inline void set (PHX::MDField<T1, T2, T3, T4>& a, const T& val) {
+  loop(a, i, 0) loop(a, j, 1) loop(a, k, 2) a(i,j,k) = val;
 }
 
 template<typename EvalT>

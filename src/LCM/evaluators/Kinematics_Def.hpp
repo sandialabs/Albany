@@ -212,14 +212,14 @@ compute_weighted_average(const int cell) const{
         jbar = 0.0;
         volume = 0.0;
         for (int pt(0); pt < num_pts_; ++pt) {
-          jbar += weights_(cell,pt) * std::log( j_(cell,pt) );
+          jbar += weights_(cell,pt) * j_(cell,pt);
           volume += weights_(cell,pt);
         }
         jbar /= volume;
 
         for (int pt(0); pt < num_pts_; ++pt) {
           weighted_jbar =
-            std::exp( (1-alpha_) * jbar + alpha_ * std::log( j_(cell,pt) ) );
+            (1-alpha_) * jbar + alpha_ * j_(cell,pt);
            for (int i=0; i<num_dims_; i++){
                for (int j=0; j<num_dims_; j++){
                  F(cell,i,j)=def_grad_(cell, pt,i,j);
