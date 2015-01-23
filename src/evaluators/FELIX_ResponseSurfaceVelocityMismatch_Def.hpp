@@ -232,8 +232,6 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
           }
         }
 
-    // Calculate side geometry
-    Intrepid::CellTools<MeshScalarT>::setJacobian(jacobianSide, refPointsSide, physPointsCell, *cellType);
       int numCells = data.dimension(0); // How many cell's worth of data is being computed?
       int numPoints = data.dimension(1); // How many QPs per cell?
 
@@ -312,9 +310,6 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 
       Intrepid::FieldContainer<ScalarT> uTan(1, numQPsSide, cellDims), vTan(1, numQPsSide, cellDims);
       Intrepid::CellTools<MeshScalarT>::getPhysicalFaceTangents(uTan, vTan,jacobianSide,elem_side,*cellType);
-
-      // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-      Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame(physPointsSide, refPointsSide, physPointsCell, *cellType);
 
       // Multiply with weighted measure
       Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>(weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
