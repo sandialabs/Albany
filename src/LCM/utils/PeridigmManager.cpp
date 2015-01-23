@@ -592,43 +592,40 @@ Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string
 
 void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
 {
-  if(hasPeridynamics){
+  for(Teuchos::ParameterList::ConstIterator it = params.begin(); it != params.end(); ++it) {
+    std::string name = it->first;
 
-    for(Teuchos::ParameterList::ConstIterator it = params.begin(); it != params.end(); ++it) {
-      std::string name = it->first;
+    // Hard-code everything for the initial implementation
+    // It would be best to just use the PeridigmNS::FieldManager to figure out if
+    // a variable is a global, nodal, or element variable and if it is scalar or vector
+    // But there is an order-of-operations issue; the PeridigmNS::FieldManager has not
+    // been instantiated yet, so at this point it is empty
 
-      // Hard-code everything for the initial implementation
-      // It would be best to just use the PeridigmNS::FieldManager to figure out if
-      // a variable is a global, nodal, or element variable and if it is scalar or vector
-      // But there is an order-of-operations issue; the PeridigmNS::FieldManager has not
-      // been instantiated yet, so at this point it is empty
+    OutputField field;
+    field.albanyName = "Peridigm_" + name;
+    field.peridigmName = name;
 
-      OutputField field;
-      field.albanyName = "Peridigm_" + name;
-      field.peridigmName = name;
-
-      if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius" || name == "Number_Of_Neighbors" || name == "Horizon" || name == "Volume"){
-	field.relation = "element";
-	field.initType = "scalar";
-	field.length = 1;
-      }
-      else if(name == "Model_Coordinates" || name == "Coordinates" || name == "Displacement" || name == "Velocity" || name == "Force"){
-	field.relation = "node";
-	field.initType = "scalar";
-	field.length = 3;
-      }
-      else if(name == "Deformation_Gradient" || name == "Unrotated_Rate_Of_Deformation" || name == "Cauchy_Stress" || name == "Partial_Stress"){
-	field.relation = "element";
-	field.initType = "scalar";
-	field.length = 9;
-      }
-      else{
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::setOutputVariableList(), unknown variable.  All variables must be hard-coded in PeridigmManager.cpp (sad but true).\n\n");
-      }
-
-      if( std::find(outputFields.begin(), outputFields.end(), field) == outputFields.end() )
-	outputFields.push_back(field);
+    if(name == "Dilatation" || name == "Weighted_Volume" || name == "Radius" || name == "Number_Of_Neighbors" || name == "Horizon" || name == "Volume"){
+      field.relation = "element";
+      field.initType = "scalar";
+      field.length = 1;
     }
+    else if(name == "Model_Coordinates" || name == "Coordinates" || name == "Displacement" || name == "Velocity" || name == "Force"){
+      field.relation = "node";
+      field.initType = "scalar";
+      field.length = 3;
+    }
+    else if(name == "Deformation_Gradient" || name == "Unrotated_Rate_Of_Deformation" || name == "Cauchy_Stress" || name == "Partial_Stress"){
+      field.relation = "element";
+      field.initType = "scalar";
+      field.length = 9;
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::setOutputVariableList(), unknown variable.  All variables must be hard-coded in PeridigmManager.cpp (sad but true).\n\n");
+    }
+
+    if( std::find(outputFields.begin(), outputFields.end(), field) == outputFields.end() )
+      outputFields.push_back(field);
   }
 }
 
