@@ -14,8 +14,6 @@ namespace LCM {
 /** \brief Time Dependent BC Dirichlet evaluator.
  */
 
-class TimeDepBCMeshDeformMgr;
-
 template <typename EvalT, typename Traits>
 class TimeDepBC_Base : public PHAL::Dirichlet<EvalT, Traits> {
 private:
@@ -29,8 +27,6 @@ protected:
   const int offset;
   std::vector< RealType > timeValues;
   std::vector< RealType > BCValues;
-  // Handle Dirichlet BC when the mesh is deforming.
-  Teuchos::RCP<TimeDepBCMeshDeformMgr> mdm;
 };
 
 template<typename EvalT, typename Traits>

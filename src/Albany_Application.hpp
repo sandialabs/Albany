@@ -65,6 +65,9 @@
 #endif
 #endif
 
+// Forward declarations.
+namespace AAdapt { namespace rc { class Manager; } }
+
 namespace Albany {
 
   class Application :
@@ -298,22 +301,6 @@ namespace Albany {
                               Tpetra_MultiVector* JVT,
                               Tpetra_MultiVector* fpT);
 
-    //! Compute df/dp*V or (df/dp)^T*V for distributed parameter p
-    /*!
-     * Set xdot to NULL for steady-state problems
-     */
-    void applyGlobalDistParamDerivT(const double current_time,
-                                   const Tpetra_Vector* xdotT,
-                                   const Tpetra_Vector* xdotdotT,
-                                   const Tpetra_Vector& xT,
-                                   const Teuchos::Array<ParamVec>& p,
-                                   const std::string& dist_param_name,
-                                   const bool trans,
-                                   const Tpetra_MultiVector& VT,
-                                   Tpetra_MultiVector& fpVT);
-
-
-
   private:
 
      void computeGlobalTangentImplT(const double alpha,
@@ -334,8 +321,14 @@ namespace Albany {
                                     const Teuchos::RCP<Tpetra_MultiVector>& JVT,
                                     const Teuchos::RCP<Tpetra_MultiVector>& fpT);
     
-    //IK, 6/27/14: added the following function for Tpetra Albany branch
-    void applyGlobalDistParamDerivImplT(const double current_time,
+
+  public:
+
+     //! Compute df/dp*V or (df/dp)^T*V for distributed parameter p
+     /*!
+      * Set xdot to NULL for steady-state problems
+      */
+     void applyGlobalDistParamDerivImplT(const double current_time,
                                    const Teuchos::RCP<const Tpetra_Vector> &xdotT,
                                    const Teuchos::RCP<const Tpetra_Vector> &xdotdotT,
                                    const Teuchos::RCP<const Tpetra_Vector> &xT,
@@ -346,7 +339,6 @@ namespace Albany {
                                    const Teuchos::RCP<Tpetra_MultiVector>& fpVT);
     
 
-  public:
 
     //! Evaluate response functions
     /*!
@@ -916,6 +908,9 @@ namespace Albany {
     //! Solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> solMgrT;
 
+    //! Reference configuration (update) manager
+    Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
+
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;
 
@@ -1031,6 +1026,7 @@ namespace Albany {
     Teuchos::RCP<MORFacade> morFacade;
 #endif
 #endif
+
   };
 }
 

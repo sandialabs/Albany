@@ -526,6 +526,8 @@ ScalarRefT in a few spots and (2) to cherry-pick Josh's rebaselining for
 	 24 - SGBratu1D_Tpetra (Failed)
 	 70 - GPAM_Tpetra (Failed)
   All QCAD tests pass. Evidently they don't exercise reduceAll.
+  
+  Merged master.
 
 >> TODO
 

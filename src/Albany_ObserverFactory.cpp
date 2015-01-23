@@ -6,6 +6,7 @@
 #include "Albany_ObserverFactory.hpp"
 
 #include "Albany_NOXObserver.hpp"
+#include "Albany_NOXStatelessObserver.hpp"
 #include "Albany_RythmosObserver.hpp"
 
 #ifdef ALBANY_MOR
@@ -32,6 +33,26 @@ NOXObserverFactory::createInstance()
 #ifdef ALBANY_EPETRA
   if(app_->getDiscretization()->supportsMOR()){
     const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
+    result = morObserverFactory->create(result);
+  }
+#endif
+#endif
+  return result;
+}
+
+NOXStatelessObserverFactory::
+NOXStatelessObserverFactory (const Teuchos::RCP<Application> &app)
+  : app_(app)
+{}
+
+Teuchos::RCP<NOX::Epetra::Observer>
+NOXStatelessObserverFactory::createInstance () {
+  Teuchos::RCP<NOX::Epetra::Observer> result(new NOXStatelessObserver(app_));
+#ifdef ALBANY_MOR
+#ifdef ALBANY_EPETRA
+  if (app_->getDiscretization()->supportsMOR()) {
+    const Teuchos::RCP<MOR::ObserverFactory>
+      morObserverFactory = app_->getMorFacade()->observerFactory();
     result = morObserverFactory->create(result);
   }
 #endif

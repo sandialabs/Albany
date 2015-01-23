@@ -108,6 +108,7 @@ ScatterResidual(const Teuchos::ParameterList& p,
 }
 // **********************************************************************
 //Kokkos kernels:
+#ifndef NO_KOKKOS_ALBANY
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
@@ -142,6 +143,7 @@ operator()(const ScatterRank2_Tag& tag, const int& cell) const
           for (std::size_t j = 0; j < numDims; j++)
               Kokkos::atomic_fetch_add( &f_nonconstView[Index(cell,node,this->offset + i*numDims + j)], (this->valTensor[0])(cell,node,i,j)); 
 }
+#endif
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
@@ -210,7 +212,7 @@ ScatterResidual(const Teuchos::ParameterList& p,
 {
 }
 // **********************************************************************
-
+#ifndef NO_KOKKOS_ALBANY
 //Kokkos kernels:
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -387,7 +389,7 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
    }
 
 }
-
+#endif
 // **********************************************************************
 template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::

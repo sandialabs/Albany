@@ -32,6 +32,8 @@ PhaseResidual(const Teuchos::ParameterList& p,
                dl->qp_scalar),
   source_     (p.get<std::string>("Source Name"),
                dl->qp_scalar),
+  laser_source_     (p.get<std::string>("Laser Source Name"),
+               dl->qp_scalar),
   residual_   (p.get<std::string>("Residual Name"),
                dl->node_scalar)
 {
@@ -44,6 +46,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   this->addDependentField(k_);
   this->addDependentField(rho_cp_);
   this->addDependentField(source_);
+  this->addDependentField(laser_source_);
   
   this->addEvaluatedField(residual_);
   
@@ -75,7 +78,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(k_,fm);
   this->utils.setFieldData(rho_cp_,fm);
   this->utils.setFieldData(source_,fm);
-
+  this->utils.setFieldData(laser_source_,fm);
   this->utils.setFieldData(residual_,fm);
 }
 
@@ -92,7 +95,28 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid::COMP_CPP,true);
   PHAL::scale(source_, -1.0);
   FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid::COMP_CPP,true);
+  PHAL::scale(laser_source_, -1.0);
+  FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid::COMP_CPP,true);  
 
+/*
+ std::cout<<"rho Cp values"<<std::endl;
+ for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+            std::cout<<rho_cp_(cell,qp)<<" ";  
+         }
+     std::cout<<std::endl;
+     }
+
+  std::cout<<"Thermal cond values"<<std::endl;
+   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {          
+      for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+              std::cout<<k_(cell,qp)<<" ";
+          }
+      std::cout<<std::endl;
+      }
+       
+        
+*/
 
 //----------------------------
 #if 0

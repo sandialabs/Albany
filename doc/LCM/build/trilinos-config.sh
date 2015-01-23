@@ -88,8 +88,11 @@ cmake \
  -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
  -D TPL_ENABLE_HDF5:BOOL=OFF \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
+ -D TPL_ENABLE_Matio:BOOL=OFF \
+ -D TPL_ENABLE_X11:BOOL=OFF \
 \
  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
@@ -97,4 +100,6 @@ cmake \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
 \
+ -D BUILD_SHARED_LIBS:BOOL=ON \
+ -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
   package_dir

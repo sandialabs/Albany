@@ -1,0 +1,9 @@
+#!/bin/bash -xe
+
+SCORECDIR=${TRILDIR:?TRILDIR not set}/SCOREC
+if [ -e $SCORECDIR ]
+then
+    /bin/rm -rf $SCORECDIR
+fi
+
+git clone git@github.com:SCOREC/core.git $SCORECDIR

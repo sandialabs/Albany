@@ -105,6 +105,27 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
     }
   }
 
+  for(std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+    for(std::size_t j = 0; j < bcNames.size(); j++) {
+      std::string ss = traits_type::constructBCNameField(nodeSetIDs[i], bcNames[j]);
+      if(BCparams.isParameter(ss)) {
+        RCP<ParameterList> p = rcp(new ParameterList);
+        p->set<int>("Type", traits_type::typeF);
+        p->set< RCP<DataLayout> >("Data Layout", dummy);
+        p->set< std::string > ("Dirichlet Name", ss);
+        p->set< RealType > ("Dirichlet Value", 0.0);
+        p->set< std::string >("Field Name", BCparams.get<std::string>(ss));
+        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
+        p->set< int > ("Equation Offset", j);
+        p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+        std::stringstream ess;
+        ess << "Evaluator for " << ss;
+        evaluators_to_build[ess.str()] = p;
+        bcs.push_back(ss);
+      }
+    }
+  }
+
 #ifdef ALBANY_LCM
 
   ///
@@ -425,7 +446,12 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
           }
           else if(conditions[k] == "lateral") {
             std::string betaName = BCparams.get("BetaXY", "Constant");
-            double L = BCparams.get("L", 1.0);
+            double g = params->get("Gravity", 9.8);
+            double rho = params->get("Ice Density", 910.0);
+            double rho_w = params->get("Water Density", 1028.0);
+            p->set<double> ("Gravity", g); 
+            p->set<double> ("Ice Density", rho); 
+            p->set<double> ("Water Density", rho_w); 
             p->set<std::string>("thickness Field Name", "thickness");
             p->set<std::string>("Elevation Field Name", "surface_height");
             p->set<std::string>  ("DOF Name", dof_names[0]);
@@ -751,6 +777,8 @@ Albany::DirichletTraits::getValidBCParameters(
       std::string tt = Albany::DirichletTraits::constructTimeDepBCName(nodeSetIDs[i], bcNames[j]);
       validPL->set<double>(ss, 0.0, "Value of BC corresponding to nodeSetID and dofName");
       validPL->sublist(tt, false, "SubList of BC corresponding to nodeSetID and dofName");
+      ss = Albany::DirichletTraits::constructBCNameField(nodeSetIDs[i], bcNames[j]);
+      validPL->set<std::string>(ss, "dirichlet field", "Field used to prescribe Dirichlet BCs");
     }
   }
 
@@ -811,7 +839,7 @@ Albany::NeumannTraits::getValidBCParameters(
 }
 
 std::string
-Albany::DirichletTraits::constructBCName(const std::string ns, const std::string dof) {
+Albany::DirichletTraits::constructBCName(const std::string& ns, const std::string& dof) {
 
   std::stringstream ss;
   ss << "DBC on NS " << ns << " for DOF " << dof;
@@ -820,23 +848,32 @@ Albany::DirichletTraits::constructBCName(const std::string ns, const std::string
 }
 
 std::string
-Albany::NeumannTraits::constructBCName(const std::string ns, const std::string dof,
-                                       const std::string condition) {
+Albany::DirichletTraits::constructBCNameField(const std::string& ns, const std::string& dof) {
+
+  std::stringstream ss;
+  ss << "DBC on NS " << ns << " for DOF " << dof << " prescribe Field";
+
+  return ss.str();
+}
+
+std::string
+Albany::NeumannTraits::constructBCName(const std::string& ns, const std::string& dof,
+                                       const std::string& condition) {
   std::stringstream ss;
   ss << "NBC on SS " << ns << " for DOF " << dof << " set " << condition;
   return ss.str();
 }
 
 std::string
-Albany::DirichletTraits::constructTimeDepBCName(const std::string ns, const std::string dof) {
+Albany::DirichletTraits::constructTimeDepBCName(const std::string& ns, const std::string& dof) {
   std::stringstream ss;
   ss << "Time Dependent " << Albany::DirichletTraits::constructBCName(ns, dof);
   return ss.str();
 }
 
 std::string
-Albany::NeumannTraits::constructTimeDepBCName(const std::string ns,
-    const std::string dof, const std::string condition) {
+Albany::NeumannTraits::constructTimeDepBCName(const std::string& ns,
+    const std::string& dof, const std::string& condition) {
   std::stringstream ss;
   ss << "Time Dependent " << Albany::NeumannTraits::constructBCName(ns, dof, condition);
   return ss.str();

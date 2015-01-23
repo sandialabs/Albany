@@ -162,10 +162,7 @@ void
 Albany::NodeSetSolutionCullingStrategy::
 setup()
 {
-  disc_ = app_->getDiscretization();
-  // Once the discretization has been obtained, a handle to the application is not required
-  // Release the resource to avoid possible circular references
-  app_.reset();
+  setupT();
 }
 
 Teuchos::Array<int>
@@ -242,6 +239,131 @@ selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
       }
     }
 
+    Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm(); 
+    {
+      GO selectedGIDCount;
+      {
+        GO mySelectedGIDCount = mySelectedGIDs.size();
+        Teuchos::reduceAll<LO, GO>(*commT, Teuchos::REDUCE_SUM, 1, &mySelectedGIDCount, &selectedGIDCount); 
+      }
+      result.resize(selectedGIDCount);
+    }
+
+    const int ierr = Tpetra::GatherAllV(
+        commT,
+        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
+        result.getRawPtr(), result.size());
+    TEUCHOS_ASSERT(ierr == 0);
+  }
+
+  std::sort(result.begin(), result.end());
+
+  return result;
+}
+
+
+namespace Albany {
+
+class NodeGIDsSolutionCullingStrategy : public SolutionCullingStrategyBase {
+public:
+  NodeGIDsSolutionCullingStrategy(
+      const Teuchos::Array<int>& nodeGIDs,
+      const Teuchos::RCP<const Application> &app);
+
+#ifdef ALBANY_EPETRA
+  virtual void setup();
+
+  virtual Teuchos::Array<int> selectedGIDs(const Epetra_BlockMap &sourceMap) const;
+#endif
+  virtual Teuchos::Array<GO> selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const;
+  virtual void setupT();
+
+private:
+  Teuchos::Array<int> nodeGIDs_;
+  Teuchos::RCP<const Application> app_;
+
+  Teuchos::RCP<const AbstractDiscretization> disc_;
+};
+
+} // namespace Albany
+
+Albany::NodeGIDsSolutionCullingStrategy::
+NodeGIDsSolutionCullingStrategy(
+    const Teuchos::Array<int>& nodeGIDs,
+    const Teuchos::RCP<const Application> &app) :
+  nodeGIDs_(nodeGIDs),
+  app_(app),
+  disc_(Teuchos::null)
+{
+  // setup() must be called after the discretization has been created to finish initialization
+}
+
+void
+Albany::NodeGIDsSolutionCullingStrategy::
+setupT()
+{
+  disc_ = app_->getDiscretization();
+  // Once the discretization has been obtained, a handle to the application is not required
+  // Release the resource to avoid possible circular references
+  app_.reset();
+}
+
+#ifdef ALBANY_EPETRA
+void
+Albany::NodeGIDsSolutionCullingStrategy::
+setup()
+{
+  setupT();
+}
+
+
+Teuchos::Array<int>
+Albany::NodeGIDsSolutionCullingStrategy::
+selectedGIDs(const Epetra_BlockMap &sourceMap) const
+{
+  Teuchos::Array<int> result;
+  {
+    Teuchos::Array<int> mySelectedGIDs;
+
+    // Subract 1 to convert exodus GIDs to our GIDs
+    for (int i=0; i<nodeGIDs_.size(); i++)
+      if (sourceMap.MyGID(nodeGIDs_[i] -1) ) mySelectedGIDs.push_back(nodeGIDs_[i] - 1);
+
+    const Epetra_Comm &comm = sourceMap.Comm();
+
+    {
+      int selectedGIDCount;
+      {
+        int mySelectedGIDCount = mySelectedGIDs.size();
+        comm.SumAll(&mySelectedGIDCount, &selectedGIDCount, 1);
+      }
+      result.resize(selectedGIDCount);
+    }
+
+    const int ierr = Epetra::GatherAllV(
+        comm,
+        mySelectedGIDs.getRawPtr(), mySelectedGIDs.size(),
+        result.getRawPtr(), result.size());
+    TEUCHOS_ASSERT(ierr == 0);
+  }
+
+  std::sort(result.begin(), result.end());
+
+  return result;
+}
+#endif
+
+Teuchos::Array<GO>
+Albany::NodeGIDsSolutionCullingStrategy::
+selectedGIDsT(Teuchos::RCP<const Tpetra_Map> sourceMapT) const
+{
+  Teuchos::Array<GO> result;
+  {
+    Teuchos::Array<GO> mySelectedGIDs;
+
+    // Subract 1 to convert exodus GIDs to our GIDs
+    for (int i=0; i<nodeGIDs_.size(); i++)
+      if (sourceMapT->isNodeGlobalElement(nodeGIDs_[i] -1) ) mySelectedGIDs.push_back(nodeGIDs_[i] - 1);
 
     Teuchos::RCP<const Teuchos::Comm<int> >commT = sourceMapT->getComm(); 
     {
@@ -291,6 +413,9 @@ createSolutionCullingStrategy(
   } else if (cullingStrategyToken == "Node Set") {
     const std::string nodeSetLabel = params.get<std::string>("Node Set Label");
     return Teuchos::rcp(new NodeSetSolutionCullingStrategy(nodeSetLabel, app));
+  } else if (cullingStrategyToken == "Node GIDs") {
+    Teuchos::Array<int> nodeGIDs = params.get<Teuchos::Array<int> >("Node GID Array");
+    return Teuchos::rcp(new NodeGIDsSolutionCullingStrategy(nodeGIDs, app));
   }
 
   const bool unsupportedCullingStrategy = true;

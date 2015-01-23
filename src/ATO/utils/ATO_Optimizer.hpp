@@ -22,6 +22,7 @@ namespace ATO {
 
 class Solver;
 class OptInterface;
+class ConvergenceTest;
 
 class Optimizer 
 /** \brief Optimizer wrapper
@@ -41,10 +42,12 @@ class Optimizer
  protected:
 
   double computeDiffNorm(const double* v1, const double* v2, int n, bool printResult=false);
+  double computeNorm(const double* v2, int n);
   OptInterface* solverInterface;
   Teuchos::RCP<const Epetra_Comm> comm;
 
-  double _optConvTol;
+  Teuchos::RCP<ConvergenceTest> convergenceChecker;
+
   int    _optMaxIter;
 
 };
@@ -62,6 +65,7 @@ class Optimizer_OC : public Optimizer {
   double* p;
   double* p_last;
   double f;
+  double f_last;
   double* dfdp;
   int numOptDofs;
 
@@ -88,6 +92,7 @@ class Optimizer_NLopt : public Optimizer {
   double* p;
   double* p_last;
   double f;
+  double f_last;
   double* dfdp;
   int numOptDofs;
 
@@ -95,6 +100,7 @@ class Optimizer_NLopt : public Optimizer {
   double _volConstraint;
   double _volConvTol;
   double _optVolume;
+  double _optConvTol;
 
   std::string _optMethod;
 
@@ -114,6 +120,78 @@ class OptimizerFactory {
   Teuchos::RCP<Optimizer> create(const Teuchos::ParameterList& optimizerParams);
 };
 
+class ConvergenceTest {
+  public:
+    ConvergenceTest(const Teuchos::ParameterList& convParams);
+
+    bool isConverged( double delta_f, double delta_p, int iter, int myPID = -1);
+    void initNorm(double f, double p);
+
+  private:
+
+    int maxIterations;
+
+    enum ComboType {AND, OR};
+
+    ComboType comboType;
+
+    class ConTest {
+      public: 
+        ConTest(double val) : conValue(val){};
+        virtual bool passed(double delta_f, double delta_p, bool write) = 0;
+        virtual void initNorm(double f0, double p0){}
+      protected:
+        double conValue;
+    };
+    class AbsDeltaP : public ConTest {
+      public:
+        AbsDeltaP(double val) : ConTest(val){}
+        virtual bool passed(double delta_f, double delta_p, bool write);
+    };
+    class RelDeltaP : public ConTest {
+      public:
+        RelDeltaP(double val) : ConTest(val),p0(0.0){};
+        virtual bool passed(double delta_f, double delta_p, bool write);
+        virtual void initNorm(double f, double p){p0 = p;}
+      private:
+        double p0;
+    };
+    class AbsDeltaF : public ConTest {
+      public:
+        AbsDeltaF(double val) : ConTest(val){}
+        virtual bool passed(double delta_f, double delta_p, bool write);
+    };
+    class RelDeltaF : public ConTest {
+      public:
+        RelDeltaF(double val) : ConTest(val),f0(0.0){};
+        virtual bool passed(double delta_f, double delta_p, bool write);
+        virtual void initNorm(double f, double p){f0 = f;}
+      private:
+        double f0;
+    };
+    class AbsRunningDF : public ConTest {
+      public:
+        AbsRunningDF(double val) : ConTest(val),runningDF(0.0), nave(10){}
+        virtual bool passed(double delta_f, double delta_p, bool write);
+      private:
+        std::vector<double> dF;
+        double runningDF;
+        int nave;
+    };
+    class RelRunningDF : public ConTest {
+      public:
+        RelRunningDF(double val) : ConTest(val),f0(0.0),runningDF(0.0),nave(10){};
+        virtual bool passed(double delta_f, double delta_p, bool write);
+        virtual void initNorm(double f, double p){f0 = f;}
+      private:
+        double f0;
+        std::vector<double> dF;
+        double runningDF;
+        int nave;
+    };
+
+    Teuchos::Array<Teuchos::RCP<ConTest> > conTests;
+};
 
 }
 #endif

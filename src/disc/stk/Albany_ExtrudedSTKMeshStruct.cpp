@@ -458,7 +458,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       prismGlobalIds[j] = lowerId;
       prismGlobalIds[j + NumBaseElemeNodes] = lowerId + vertexColumnShift;
       if(hasTemperature)
-        tempOnPrism += 1. / NumBaseElemeNodes / 2. * temperatureVecInterp_constView_il[node2dLId] + temperatureVecInterp_constView_ilplus1[node2dLId];
+        tempOnPrism += 1. / NumBaseElemeNodes / 2. * (temperatureVecInterp_constView_il[node2dLId] + temperatureVecInterp_constView_ilplus1[node2dLId]);
     }
 
     switch (ElemShape) {
@@ -709,7 +709,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, std::vect
 
 void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::RCP<const Tpetra_Map> map_serial, Teuchos::RCP<const Tpetra_Map> map, Teuchos::RCP<Tpetra_Import> importOperator, std::vector<Tpetra_Vector>& temperatureVec, std::vector<double>& zCoords, const Teuchos::RCP<const Teuchos_Comm>& comm) {
   GO numNodes;
-  int numComponents;
+  GO numComponents;
   std::ifstream ifile;
   if (comm->getRank() == 0) {
     ifile.open(fname.c_str());
@@ -727,7 +727,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
     }
   }
   // The first int is for Comm<int>; the second is the type of numComponents.
-  Teuchos::broadcast<int, int>(*comm, 0, &numComponents);
+  Teuchos::broadcast<int, GO>(*comm, 0, 1, &numComponents);
   zCoords.resize(numComponents);
   Teuchos::RCP<Tpetra_Vector> tempT = Teuchos::rcp(new Tpetra_Vector(map_serial));
 
@@ -737,7 +737,7 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
   }
   //comm->Broadcast(&zCoords[0], numComponents, 0);
   //IK, 10/1/14: double should be ST? 
-  Teuchos::broadcast<int, double>(*comm, 0, &zCoords[0]);
+  Teuchos::broadcast<int, double>(*comm, 0, numComponents, &zCoords[0]);
   
   temperatureVec.resize(numComponents, Tpetra_Vector(map));
 

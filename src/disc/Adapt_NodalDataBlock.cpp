@@ -15,7 +15,9 @@ namespace {
 template<typename T> const int*
 convert(const Teuchos::ArrayView<const T>& av, std::vector<int>& v);
 template<> const int*
-convert<long> (const Teuchos::ArrayView<const long>& av, std::vector<int>& v) {
+convert<long long int> (
+  const Teuchos::ArrayView<const long long int>& av, std::vector<int>& v)
+{
   v.resize(av.size());
   for (std::size_t i = 0; i < av.size(); ++i) v[i] = static_cast<int>(av[i]);
   return &v[0];
@@ -38,17 +40,6 @@ Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContai
 {
 }
 
-namespace {
-inline Teuchos::Array<GO>::size_type
-get_number_global_elements (const Teuchos_Comm& comm,
-                            const Teuchos::ArrayView<const GO>& nodes) {
-  Teuchos::Array<GO>::size_type num_global_elem, n = nodes.size();
-  Teuchos::reduceAll<int, Teuchos::Array<GO>::size_type>(
-    comm, Teuchos::REDUCE_SUM, 1, &n, &num_global_elem);
-  return num_global_elem;
-}
-}
-
 void
 Adapt::NodalDataBlock::
 resizeOverlapMap(const Teuchos::ArrayView<const GO>& overlap_nodeGIDs,
@@ -63,7 +54,7 @@ resizeOverlapMap(const Teuchos::ArrayView<const GO>& overlap_nodeGIDs,
   }
 
   overlap_node_map = Teuchos::rcp(
-    new Tpetra_BlockMap(get_number_global_elements(*comm_, overlap_nodeGIDs),
+    new Tpetra_BlockMap(Teuchos::OrdinalTraits<GO>::invalid(),
                         overlap_nodeGIDs,
                         Teuchos::arrayViewFromVector(block_pt),
                         Teuchos::arrayViewFromVector(block_sizes),
@@ -106,7 +97,7 @@ resizeLocalMap(const Teuchos::ArrayView<const GO>& local_nodeGIDs,
 
   //amb See above.
   local_node_map = Teuchos::rcp(
-    new Tpetra_BlockMap(get_number_global_elements(*comm_, local_nodeGIDs),
+    new Tpetra_BlockMap(Teuchos::OrdinalTraits<GO>::invalid(),
                         local_nodeGIDs,
                         Teuchos::arrayViewFromVector(block_pt),
                         Teuchos::arrayViewFromVector(block_sizes),

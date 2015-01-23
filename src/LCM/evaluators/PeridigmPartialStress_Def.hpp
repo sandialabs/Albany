@@ -65,8 +65,6 @@ template<typename Traits>
 void PeridigmPartialStress<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_PERIDIGM
-
   std::string blockName = workset.EBName;
   int worksetIndex = static_cast<int>(workset.wsIndex);
   PeridigmManager& peridigmManager = PeridigmManager::self();
@@ -151,9 +149,6 @@ evaluateFields(typename Traits::EvalData workset)
 //       this->stress(cell,qp,0,2) = 0.0;
 //     }
 //   }
-
-
-#endif
 }
 
 //**********************************************************************

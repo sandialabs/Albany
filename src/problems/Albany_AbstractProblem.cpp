@@ -17,7 +17,7 @@ Albany::AbstractProblem::AbstractProblem(
   params(params_),
   paramLib(paramLib_),
   //distParamLib(distParamLib_),
-  rigidBodyModes(Teuchos::rcp(new Piro::MLRigidBodyModes(neq_)))
+  rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq_)))
 {}
 
 unsigned int
@@ -83,6 +83,10 @@ Albany::AbstractProblem::getGenericProblemParams(std::string listname) const
                      "Add this (small) perturbation to the diagonal to prevent Mass Matrices from being singular for Dirichlets)");
 
   validPL->sublist("Model Order Reduction", false, "Specify the options relative to model order reduction");
+
+  // Contact PL
+  validPL->sublist("Contact", false, "");
+
 
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");

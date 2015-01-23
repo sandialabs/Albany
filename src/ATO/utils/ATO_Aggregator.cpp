@@ -13,25 +13,35 @@ namespace ATO {
 
 //**********************************************************************
 Teuchos::RCP<Aggregator> 
-AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams)
+AggregatorFactory::create(const Teuchos::ParameterList& aggregatorParams, std::string entityType)
 {
   Teuchos::Array<std::string> objectives = 
     aggregatorParams.get<Teuchos::Array<std::string> >("Objectives");
 
-  if (objectives.size() == 1) 
-   return Teuchos::rcp(new Aggregator_PassThru(aggregatorParams));
-
-  std::string weightingType = aggregatorParams.get<std::string>("Weighting");
-  if( weightingType == "Uniform"  )  
-    return Teuchos::rcp(new Aggregator_Uniform(aggregatorParams));
-  else
-  if( weightingType == "Scaled"  )  
-    return Teuchos::rcp(new Aggregator_Scaled(aggregatorParams));
-  else
+  if( entityType == "State Variable" ){
+    if (objectives.size() == 1) 
+     return Teuchos::rcp(new Aggregator_PassThru(aggregatorParams));
+  
+    std::string weightingType = aggregatorParams.get<std::string>("Weighting");
+    if( weightingType == "Uniform"  )  
+      return Teuchos::rcp(new Aggregator_Uniform(aggregatorParams));
+    else
+    if( weightingType == "Scaled"  )  
+      return Teuchos::rcp(new Aggregator_Scaled(aggregatorParams));
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        true, Teuchos::Exceptions::InvalidParameter, std::endl 
+        << "Error!  Weighting type " << weightingType << " Unknown!" << std::endl 
+        << "Valid weighting types are (Uniform, Scaled)" << std::endl);
+  } else
+  if( entityType == "Distributed Parameter" ){
+    if (objectives.size() == 1) 
+     return Teuchos::rcp(new Aggregator_DistSingle(aggregatorParams));
+  } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Weighting type " << weightingType << " Unknown!" << std::endl 
-      << "Valid weighting types are (Uniform, Scaled)" << std::endl);
+      << "Error!  Unknown 'Entity Type' requested." << std::endl);
+  }
 }
 
 //**********************************************************************
@@ -63,8 +73,46 @@ Aggregator::parse(const Teuchos::ParameterList& aggregatorParams)
 }
 
 //**********************************************************************
+void 
+Aggregator_DistParamBased::
+SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
+                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap,
+                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap)
+//**********************************************************************
+{
+
+
+  outApp = subProblems[0].app;
+
+  // loop through sub variable names and find the containing state manager
+  int numVars = aggregatedObjectivesNames.size();
+  objectives.resize(numVars);
+  derivatives.resize(numVars);
+
+  std::map<std::string, Teuchos::RCP<const Epetra_Vector> >::const_iterator git;
+  std::map<std::string, Teuchos::RCP<Epetra_MultiVector> >::const_iterator gpit;
+  for(int ir=0; ir<numVars; ir++){
+    git = gMap.find(aggregatedObjectivesNames[ir]);
+    gpit = dgdpMap.find(aggregatedDerivativesNames[ir]);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      git == gMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Aggregator: Requested response (" << aggregatedObjectivesNames[ir] 
+      << ") not defined." << std::endl);
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      gpit == dgdpMap.end(), Teuchos::Exceptions::InvalidParameter, std::endl 
+      << "Aggregator: Requested response derivative (" << aggregatedDerivativesNames[ir] 
+      << ") not defined." << std::endl);
+    objectives[ir].name = git->first;
+    objectives[ir].value = git->second;
+    derivatives[ir].name = gpit->first;
+    derivatives[ir].value = gpit->second;
+  }
+}
+
+
+//**********************************************************************
 void
-Aggregator::SetInputVariables(const std::vector<SolverSubSolver>& subProblems)
+Aggregator_StateVarBased::SetInputVariables(const std::vector<SolverSubSolver>& subProblems)
 //**********************************************************************
 {
   outApp = subProblems[0].app;
@@ -113,6 +161,14 @@ Aggregator::SetInputVariables(const std::vector<SolverSubSolver>& subProblems)
 
 //**********************************************************************
 Aggregator_Uniform::Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams) :
+Aggregator(aggregatorParams),
+Aggregator_StateVarBased()
+//**********************************************************************
+{ 
+}
+
+//**********************************************************************
+Aggregator_DistSingle::Aggregator_DistSingle(const Teuchos::ParameterList& aggregatorParams) :
 Aggregator(aggregatorParams)
 //**********************************************************************
 { 
@@ -304,6 +360,54 @@ Aggregator_Scaled::Evaluate()
       }
     }
   }
+}
+
+//**********************************************************************
+void
+Aggregator_DistSingle::Evaluate()
+//**********************************************************************
+{
+
+  Albany::StateArrays& stateArrays = outApp->getStateMgr().getStateArrays();
+  Albany::StateArrayVec& dest = stateArrays.elemStateArrays;
+  int numWorksets = dest.size();
+  
+  // zero out the destination variable
+  for(int ws=0; ws<numWorksets; ws++){
+    Albany::MDArray& derDest = dest[ws][outputDerivativeName];
+    int dim0 = derDest.dimension(0);
+    int dim1 = derDest.dimension(1);
+    for(int i=0; i<dim0; i++)
+      for(int j=0; j<dim1; j++)
+        derDest(i,j)=0.0;
+  }
+
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
+    wsElNodeID = outApp->getStateMgr().getDiscretization()->getWsElNodeID();
+
+  SubObjective& objective = objectives[0];
+  SubDerivative& derivative = derivatives[0];
+
+  const Epetra_BlockMap& srcMap = derivative.value->Map();
+  double* srcView; (*derivative.value)(0)->ExtractView(&srcView);
+  for(int ws=0; ws<numWorksets; ws++){
+    Albany::MDArray& derDest = dest[ws][outputDerivativeName];
+    int numCells = derDest.dimension(0);
+    int numNodes = derDest.dimension(1);
+    for(int cell=0; cell<numCells; cell++)
+      for(int node=0; node<numNodes; node++){
+        int gid = wsElNodeID[ws][cell][node];
+        int lid = srcMap.LID(gid);
+        if( lid >= 0 )
+          derDest(cell,node) = srcView[lid];
+        else derDest(cell,node) = 0.0;
+      }
+  }
+
+  double* objView; objective.value->ExtractView(&objView);
+  Albany::MDArray& objDest = dest[0][outputObjectiveName];
+  objDest(0) = objView[0];
+
 }
 
 

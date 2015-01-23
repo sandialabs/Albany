@@ -58,7 +58,11 @@ namespace LCM {
 
     this->setName("Kinematics"+PHX::typeAsString<PHX::Device>());
 
-   
+    if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
+      this->addDependentField(def_grad_rc_());
+    if (needs_strain_ && strain_rc_.init(p, p.get<std::string>("Strain Name")))
+      this->addDependentField(strain_rc_());
+
 #ifndef NO_KOKKOS_ALBANY
     //Allocationg additional data for Kokkos functors
     ddims_.push_back(24);
@@ -97,6 +101,8 @@ namespace LCM {
     this->utils.setFieldData(grad_u_,fm);
     if (needs_strain_) this->utils.setFieldData(strain_,fm);
     if (needs_vel_grad_) this->utils.setFieldData(vel_grad_,fm);
+    if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(),fm);
+    if (strain_rc_) this->utils.setFieldData(strain_rc_(),fm);
   }
 
   //----------------------------------------------------------------------------
@@ -294,23 +300,39 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
   void Kinematics<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-
 #ifdef NO_KOKKOS_ALBANY
     Intrepid::Tensor<ScalarT> F(num_dims_), strain(num_dims_), gradu(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
     // Compute DefGrad tensor from displacement gradient
-    for (int cell(0); cell < workset.numCells; ++cell) {
-      for (int pt(0); pt < num_pts_; ++pt) {
-        gradu.fill( grad_u_,cell,pt,0,0);
-        F = I + gradu;
-        j_(cell,pt) = Intrepid::det(F);
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            def_grad_(cell,pt,i,j) = F(i,j);
+    if ( ! def_grad_rc_) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
+          gradu.fill(grad_u_,cell,pt,0,0);
+          F = I + gradu;
+          j_(cell,pt) = Intrepid::det(F);
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              def_grad_(cell,pt,i,j) = F(i,j);
+            }
           }
         }
       }
+    } else {
+      for (int cell(0); cell < workset.numCells; ++cell)
+        for (int pt(0); pt < num_pts_; ++pt) {
+          gradu.fill(grad_u_,cell,pt,0,0);
+          F = I + gradu;
+          for (int i(0); i < num_dims_; ++i)
+            for (int j(0); j < num_dims_; ++j)
+              def_grad_(cell,pt,i,j) = F(i,j);
+        }
+      def_grad_rc_.multiplyInto<ScalarT>(def_grad_);
+      for (int cell(0); cell < workset.numCells; ++cell)
+        for (int pt(0); pt < num_pts_; ++pt) {
+          F.fill(def_grad_,cell,pt,0,0);
+          j_(cell,pt) = Intrepid::det(F);
+        }
     }
 
     if (weighted_average_) {
@@ -319,15 +341,15 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
         jbar = 0.0;
         volume = 0.0;
         for (int pt(0); pt < num_pts_; ++pt) {
-          jbar += weights_(cell,pt) * std::log( j_(cell,pt) );
+          jbar += weights_(cell,pt) * j_(cell,pt);
           volume += weights_(cell,pt);
         }
         jbar /= volume;
 
         for (int pt(0); pt < num_pts_; ++pt) {
           weighted_jbar = 
-            std::exp( (1-alpha_) * jbar + alpha_ * std::log( j_(cell,pt) ) );
-          F.fill( def_grad_,cell,pt,0,0);
+            (1-alpha_) * jbar + alpha_ * j_(cell,pt);
+          F.fill(def_grad_,cell,pt,0,0);
           F = F*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
           j_(cell,pt) = weighted_jbar;
           for (int i(0); i < num_dims_; ++i) {
@@ -342,7 +364,7 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
     if (needs_strain_) {
       for (int cell(0); cell < workset.numCells; ++cell) {
         for (int pt(0); pt < num_pts_; ++pt) {
-          gradu.fill( grad_u_,cell,pt,0,0);
+          gradu.fill(grad_u_,cell,pt,0,0);
           strain = 0.5 * (gradu + Intrepid::transpose(gradu));
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -351,9 +373,9 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
           }
         }
       }
+      if (strain_rc_) strain_rc_.addTo<ScalarT>(strain_);
     }
-#else
-
+ #else
   if (weighted_average_) {
     if (needs_strain_) Kokkos::parallel_for(kinematic_weighted_average_needs_strain_Policy(0,workset.numCells),*this);
    else Kokkos::parallel_for(kinematic_weighted_average_Policy(0,workset.numCells),*this);

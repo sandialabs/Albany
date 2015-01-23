@@ -16,83 +16,89 @@
 
 #include "Albany_Layouts.hpp"
 
-namespace LCM
+namespace LCM {
+
+// \brief
+//
+// Compute the residual forces on a surface
+//
+
+template<typename EvalT, typename Traits>
+class SurfaceVectorResidual: public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>
 {
-  /** \brief
+public:
 
-   Compute the residual forces on a surface
+  SurfaceVectorResidual(Teuchos::ParameterList& p,
+      const Teuchos::RCP<Albany::Layouts>& dl);
 
-   **/
+  void postRegistrationSetup(typename Traits::SetupData d,
+      PHX::FieldManager<Traits>& vm);
 
-  template<typename EvalT, typename Traits>
-  class SurfaceVectorResidual: public PHX::EvaluatorWithBaseImpl<Traits>,
-      public PHX::EvaluatorDerived<EvalT, Traits>
-  {
+  void evaluateFields(typename Traits::EvalData d);
 
-  public:
+private:
 
-    SurfaceVectorResidual(Teuchos::ParameterList& p,
-        const Teuchos::RCP<Albany::Layouts>& dl);
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
 
-    void postRegistrationSetup(typename Traits::SetupData d,
-        PHX::FieldManager<Traits>& vm);
+  // Input:
+  //! Length scale parameter for localization zone
+  ScalarT thickness;
+  //! Numerical integration rule
+  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  //! Finite element basis for the midplane
+  Teuchos::RCP<Intrepid::Basis<RealType,
+    Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  //! First PK Stress
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
+  //! Current configuration basis
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
+  //! Reference configuration dual basis
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
+  //! Reference configuration normal
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
+  //! Reference configuration area
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> refArea;
+  //! Determinant of deformation gradient
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> detF_;
 
-    void evaluateFields(typename Traits::EvalData d);
+  //! Reference Cell FieldContainers
+  Intrepid::FieldContainer<RealType> refValues;
+  Intrepid::FieldContainer<RealType> refGrads;
+  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType> refWeights;
 
-  private:
+  ///
+  /// Optional Cohesive Traction
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> traction_;
 
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
+  //! Cauchy Stress
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> Cauchy_stress_;
+  // Output:
+  PHX::MDField<ScalarT, Cell, Node, Dim> force;
 
-    // Input:
-    //! Length scale parameter for localization zone
-    ScalarT thickness;
-    //! Numerical integration rule
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-    //! Finite element basis for the midplane
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
-    //! First PK Stress
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress;
-    //! Current configuration basis
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
-    //! Reference configuration dual basis
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
-    //! Reference configuration normal
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
-    //! Reference configuration area
-    PHX::MDField<MeshScalarT, Cell, QuadPoint> refArea;
+  unsigned int worksetSize;
+  unsigned int numNodes;
+  unsigned int numQPs;
+  unsigned int numDims;
+  unsigned int numPlaneNodes;
+  unsigned int numPlaneDims;
 
-    //! Reference Cell FieldContainers
-    Intrepid::FieldContainer<RealType> refValues;
-    Intrepid::FieldContainer<RealType> refGrads;
-    Intrepid::FieldContainer<RealType> refPoints;
-    Intrepid::FieldContainer<RealType> refWeights;
+  ///
+  /// Cohesive Flag
+  ///
+  bool use_cohesive_traction_;
 
-    ///
-    /// Optional Cohesive Traction
-    ///
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim> traction_;
-    
-    // Output:
-    PHX::MDField<ScalarT, Cell, Node, Dim> force;
+  ///
+  /// Membrane Forces Flag
+  ///
+  bool compute_membrane_forces_;
 
-    unsigned int worksetSize;
-    unsigned int numNodes;
-    unsigned int numQPs;
-    unsigned int numDims;
-    unsigned int numPlaneNodes;
-    unsigned int numPlaneDims;
-
-    ///
-    /// Cohesive Flag
-    ///
-    bool use_cohesive_traction_;
-
-    ///
-    /// Membrane Forces Flag
-    ///
-    bool compute_membrane_forces_;
-  };
+  // Topology modification for adaptive insertion flag.
+  bool have_topmod_adaptation_;
+};
 }
 
 #endif

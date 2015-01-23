@@ -10,6 +10,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_Memory.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -251,14 +252,22 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    const RCP<const Epetra_Vector> xfinal = responses.back();
-    double mnv; xfinal->MeanValue(&mnv);
-
     // Create debug output object
     Teuchos::ParameterList &debugParams =
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+
+    const RCP<const Epetra_Vector> xfinal = responses.back();
+    double mnv; xfinal->MeanValue(&mnv);
+    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+    if (writeToCoutSoln == true) 
+       std::cout << "xfinal: " << *xfinal << std::endl;
+
+    if (debugParams.get<bool>("Analyze Memory", false))
+      Albany::printMemoryAnalysis(std::cout, comm);
+
     if (writeToMatrixMarketSoln == true) { 
 
       //create serial map that puts the whole solution on processor 0
@@ -273,11 +282,6 @@ int main(int argc, char *argv[]) {
       //writing to MatrixMarket file
       EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
     }
-    if (writeToCoutSoln == true) 
-       std::cout << "xfinal: " << *xfinal << std::endl;
-
-    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
-    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;

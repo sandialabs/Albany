@@ -22,6 +22,9 @@ SET(SOURCES
   Albany_ModelFactory.cpp
   Albany_ModelEvaluatorT.cpp
   Albany_ObserverImpl.cpp
+  Albany_StatelessObserverImpl.cpp
+  Albany_NullSpaceUtils.cpp
+  Albany_Memory.cpp
   PHAL_Utilities.cpp
   amb.cpp
   )
@@ -43,6 +46,7 @@ IF(ALBANY_EPETRA)
     Albany_RythmosObserver.cpp
     Albany_SaveEigenData.cpp
     Albany_NOXObserver.cpp
+    Albany_NOXStatelessObserver.cpp
   )
 ENDIF()
 
@@ -63,9 +67,12 @@ SET(HEADERS
   Albany_ModelFactory.hpp
   Albany_ModelEvaluatorT.hpp
   Albany_ObserverImpl.hpp
+  Albany_StatelessObserverImpl.hpp
+  Albany_NullSpaceUtils.hpp
+  Albany_Memory.hpp
   Albany_DummyParameterAccessor.hpp
   Albany_DistributedParameterLibrary.hpp
-  Albany_DistributedParameterDerivativeOp.hpp
+  Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
   amb.hpp
   )
@@ -74,10 +81,12 @@ IF(ALBANY_EPETRA)
   SET(HEADERS ${HEADERS} 
     Albany_PiroObserver.hpp
     Albany_ModelEvaluator.hpp
+    Albany_DistributedParameterDerivativeOp.hpp
     Albany_SaveEigenData.hpp
     Albany_EigendataInfoStruct.hpp
     Albany_RythmosObserver.hpp
     Albany_NOXObserver.hpp
+    Albany_NOXStatelessObserver.hpp
     Petra_Converters.hpp
     Albany_ObserverFactory.hpp
   )
@@ -133,11 +142,9 @@ SET(PDE_HDRS
 #responses
 IF (ALBANY_EPETRA)
 SET(SOURCES ${SOURCES} 
-  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Epetra_GatherAllV.cpp
 )
 SET(HEADERS ${HEADERS} 
-  responses/Albany_SolutionValuesResponseFunction.hpp
   responses/Epetra_GatherAllV.hpp
 )
 ENDIF()
@@ -154,6 +161,7 @@ SET(SOURCES ${SOURCES}
   responses/Albany_FieldManagerResidualOnlyResponseFunction.cpp
   responses/Albany_DistributedResponseFunction.cpp
   responses/Albany_KLResponseFunction.cpp
+  responses/Albany_SolutionValuesResponseFunction.cpp
   responses/Albany_ResponseFactory.cpp
   )
 SET(HEADERS ${HEADERS}
@@ -169,6 +177,7 @@ SET(HEADERS ${HEADERS}
   responses/Albany_FieldManagerScalarResponseFunction.hpp
   responses/Albany_DistributedResponseFunction.hpp
   responses/Albany_KLResponseFunction.hpp
+  responses/Albany_SolutionValuesResponseFunction.hpp
   responses/Albany_ResponseFactory.hpp
   )
 
@@ -220,6 +229,7 @@ SET(SOURCES ${SOURCES}
   evaluators/PHAL_ScatterResidual.cpp
   evaluators/PHAL_Dirichlet.cpp
   evaluators/PHAL_DirichletCoordinateFunction.cpp
+  evaluators/PHAL_DirichletField.cpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.cpp
   evaluators/PHAL_Neumann.cpp
   evaluators/PHAL_ComputeBasisFunctions.cpp
@@ -307,6 +317,8 @@ SET(HEADERS ${HEADERS}
   evaluators/PHAL_Dirichlet_Def.hpp
   evaluators/PHAL_DirichletCoordinateFunction.hpp
   evaluators/PHAL_DirichletCoordinateFunction_Def.hpp
+  evaluators/PHAL_DirichletField.hpp
+  evaluators/PHAL_DirichletField_Def.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits.hpp
   evaluators/PHAL_IdentityCoordinateFunctionTraits_Def.hpp
   evaluators/PHAL_Neumann.hpp
@@ -616,19 +628,17 @@ include_directories (${Trilinos_INCLUDE_DIRS}
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
   ${FMDB_LIBRARY_DIR})
 
-IF ( NLOPT )
-  include_directories (${NLOPT_INCLUDE_DIR})
-  link_directories (${NLOPT_LIBRARY_DIR})
+IF ( ENABLE_NLopt )
+  include_directories (${NLopt_INCLUDE_DIR})
+  link_directories (${NLopt_LIBRARY_DIR})
   set(NLOPT_LIB nlopt)
 ELSE()
   set(NLOPT_LIB )
 ENDIF()
 
-IF ( WITH_DOTK )
+IF ( ENABLE_DOTK )
   include_directories (${DOTK_INCLUDE_DIR})
   link_directories (${DOTK_LIBRARY_DIR})
-  message("Adding DOTk")
-#  set(DOTK_LIB dotk)
   set(DOTK_LIB )
 ELSE()
   set(DOTK_LIB )
@@ -738,6 +748,7 @@ add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
 set(ALL_LIBRARIES
+  ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
   ${ALB_TRILINOS_LIBS}
   ${ALB_CUBIT_LIBS}
@@ -745,7 +756,6 @@ set(ALL_LIBRARIES
   ${NLOPT_LIB}
   ${DOTK_LIB}
   ${LAMENT_LIB}
-  ${Peridigm_LIBRARIES}
   ${SCOREC_LIB}
   ${Trilinos_EXTRA_LD_FLAGS}
   ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
@@ -816,16 +826,19 @@ IF (ALBANY_ATO AND ALBANY_EPETRA)
     SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} ATO)
 ENDIF()
 
+IF (ALBANY_HYDRIDE)
+  # Hydride requires LCM. However, LCM builds several excecutables. If shared
+  # libraries are used, then all symbols must be defined. Hence
+  # add_subdirectory(Hydride) must be called before, not after,
+  # add_subdirectory(LCM) so that LCM/CMakeLists.txt knows about the Hydride
+  # shared lib.
+  add_subdirectory(Hydride)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride)
+ENDIF()
+
 IF (ALBANY_LCM)
   add_subdirectory(LCM)
-
-  IF (ALBANY_HYDRIDE)
-    #Hydride requires LCM
-    add_subdirectory(Hydride)
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} hydride LCM)
-  ELSE()
-    SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
-  ENDIF()
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} LCM)
 ENDIF()
 
 # Can remove this once rebalance is in Trilnos again

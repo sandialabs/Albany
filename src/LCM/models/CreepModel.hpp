@@ -84,7 +84,7 @@ private:
   ///
   /// Saturation hardening constants
   ///
-  RealType creep_initial_guess;
+  RealType sat_mod_, sat_exp_, creep_initial_guess_, strain_rate_expo_, relaxation_para_, activation_para_;
 
 };
 }

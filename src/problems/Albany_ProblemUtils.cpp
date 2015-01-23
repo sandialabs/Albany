@@ -6,56 +6,140 @@
 #include "Albany_ProblemUtils.hpp"
 
 #include "Intrepid_HGRAD_LINE_Cn_FEM.hpp"
+#include "Intrepid_HGRAD_TRI_Cn_FEM.hpp"
+#include "Intrepid_HGRAD_QUAD_Cn_FEM.hpp"
+#include "Intrepid_HGRAD_HEX_Cn_FEM.hpp"
 
 /*********************** Helper Functions*********************************/
 
 Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
 Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
 {
+   typedef Intrepid::FieldContainer< RealType > Field_t;
    using Teuchos::rcp;
    using std::cout;
    using std::endl;
    using Intrepid::FieldContainer;
-   Teuchos::RCP<Intrepid::Basis<RealType, FieldContainer<RealType> > > intrepidBasis;
-   const int& numNodes = ctd.node_count;
-   const int& numDim = ctd.dimension;
-   std::string name = ctd.name;
+   Teuchos::RCP<Intrepid::Basis< RealType, Field_t > > intrepidBasis;
+   const int & numNodes = ctd.node_count;
+   const int & numDim   = ctd.dimension;
+   std::string name     = ctd.name;
+   size_t      len      = name.find("_");
+   if (len != std::string::npos) name = name.substr(0,len);
 
+// #define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
    cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
+   cout << "FullCellTopology name is " << ctd.name << endl;
 #endif
-   if (name == "Line_2" )
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM<RealType, FieldContainer<RealType> >() );
-// No HGRAD_LINE_C2 in Intrepid
-   else if (name == "Line_3" )
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_Cn_FEM<RealType, FieldContainer<RealType> >(2, Intrepid::POINTTYPE_EQUISPACED) );
-   else if (name == "Triangle_3" )
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Triangle_6" )
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C2_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Quadrilateral_4" || name == "ShellQuadrilateral_4" )
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Quadrilateral_9" || name == "ShellQuadrilateral_9")
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Hexahedron_8" )
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Hexahedron_27" )
-         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C2_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Tetrahedron_4" )
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Tetrahedron_10" && !compositeTet )
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Tetrahedron_10" && compositeTet )
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM<RealType, FieldContainer<RealType> >() );
-   else if (name == "Wedge_6")
-           intrepidBasis = rcp(new Intrepid::Basis_HGRAD_WEDGE_C1_FEM<RealType, FieldContainer<RealType> >() );
+
+   // 1D elements
+   if (name == "Line")
+   {
+     if (numNodes == 2)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM< RealType, Field_t >() );
+     else
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_Cn_FEM< RealType, Field_t >(numNodes, Intrepid::POINTTYPE_SPECTRAL) );
+   }
+
+   // 2D triangles
+   else if (name == "Triangle")
+   {
+     // Use quadratic formula to get the element degree
+     int deg = (int) (std::sqrt(0.25 + 2.0*numNodes) - 0.5);
+#ifdef ALBANY_VERBOSE
+     cout << "  For Traingle element, numNodes = " << numNodes << ", deg = " << deg << endl;
+#endif
+     TEUCHOS_TEST_FOR_EXCEPTION(
+       ((deg*deg + deg)/2 != numNodes || deg == 1),
+       Teuchos::Exceptions::InvalidParameter,
+       "Albany::ProblemUtils::getIntrepidBasis number of nodes for triangle element is not regular");
+     --deg;
+     if (deg == 1)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C1_FEM< RealType, Field_t >() );
+     else if (deg == 2)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_C2_FEM< RealType, Field_t >() );
+     else
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_Cn_FEM< RealType, Field_t >(deg, Intrepid::POINTTYPE_SPECTRAL) );
+   }
+
+   // 2D quadrilateral elements
+   else if (name == "Quadrilateral" || name == "ShellQuadrilateral")
+   {
+     // Compute the element degree
+     int deg = (int) std::sqrt((double)numNodes);
+#ifdef ALBANY_VERBOSE
+     cout << "  For " << name << " element, numNodes = " << numNodes << ", deg = " << deg << endl;
+#endif
+     TEUCHOS_TEST_FOR_EXCEPTION(
+       (deg*deg != numNodes || deg == 1),
+       Teuchos::Exceptions::InvalidParameter,
+       "Albany::ProblemUtils::getIntrepidBasis number of nodes for quadrilateral element is not perfect square > 1");
+     --deg;
+     if (deg == 1)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM< RealType, Field_t >() );
+     else if (deg == 2)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM< RealType, Field_t >() );
+     else
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< RealType, Field_t >(deg, Intrepid::POINTTYPE_SPECTRAL) );
+   }
+
+   // 3D tetrahedron elements
+   else if (name == "Tetrahedron")
+   {
+     if (numNodes == 4)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM< RealType, Field_t >() );
+     else if (numNodes == 10)
+       if (compositeTet)
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_COMP12_FEM< RealType, Field_t >() );
+       else
+         intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TET_C2_FEM< RealType, Field_t >() );
+     else
+       TEUCHOS_TEST_FOR_EXCEPTION(
+         true,
+         Teuchos::Exceptions::InvalidParameter,
+         "Albany::ProblemUtils::getIntrepidBasis tetrahedron element with " << numNodes << " nodes is not supported");
+   }
+
+   // 3D hexahedron elements
+   else if (name == "Hexahedron")
+   {
+     // Compute the element degree
+     int deg = (int) (std::pow((double)numNodes, 1.0/3.0));
+#ifdef ALBANY_VERBOSE
+     cout << "  For Hexahedron element, numNodes = " << numNodes << ", deg = " << deg << endl;
+#endif
+     TEUCHOS_TEST_FOR_EXCEPTION(
+       (deg*deg*deg != numNodes || deg == 1),
+       Teuchos::Exceptions::InvalidParameter,
+       "Albany::ProblemUtils::getIntrepidBasis number of nodes for hexahedron element is not perfect cube > 1");
+     --deg;
+     if (deg == 1)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM< RealType, Field_t >() );
+     else if (deg == 2)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_C2_FEM< RealType, Field_t >() );
+     else
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_HEX_Cn_FEM< RealType, Field_t >(deg, Intrepid::POINTTYPE_SPECTRAL) );
+}
+
+   // 3D wedge elements
+   else if (name == "Wedge")
+   {
+     if (numNodes == 6)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_WEDGE_C1_FEM< RealType, Field_t >() );
+     else
+       TEUCHOS_TEST_FOR_EXCEPTION(
+         true,
+         Teuchos::Exceptions::InvalidParameter,
+         "Albany::ProblemUtils::getIntrepidBasis wedge element with " << numNodes << " nodes is not supported");
+   }
+
+   // Unrecognized element type
    else
-     TEUCHOS_TEST_FOR_EXCEPTION( //JTO compiler doesn't like this --> ctd.name != "Recognized Element Name", 
-			true,
-			Teuchos::Exceptions::InvalidParameter,
-			"Albany::ProblemUtils::getIntrepidBasis did not recognize element name: "
-			<< ctd.name);
+     TEUCHOS_TEST_FOR_EXCEPTION(
+       true,
+       Teuchos::Exceptions::InvalidParameter,
+       "Albany::ProblemUtils::getIntrepidBasis did not recognize element name: " << ctd.name);
 
    return intrepidBasis;
 }
-

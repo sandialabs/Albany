@@ -425,7 +425,19 @@ evaluateDistParamDeriv(
 {
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfo(workset, current_time, xdot, xdotdot, &x, param_array);
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+   if (xdot != NULL) {
+      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, application->getComm());
+   }
+
+   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+   if (xdotdot != NULL) {
+      xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, application->getComm());
+   }
+
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x,application->getComm());
+
+  application->setupBasicWorksetInfoT(workset, current_time, xdotT, xdotdotT, xT, param_array);
 
   // Perform fill via field manager (dg/dx)
   int numWorksets = application->getNumWorksets();
@@ -440,6 +452,9 @@ evaluateDistParamDeriv(
           dg_dp->NumVectors()));
       const Teuchos::RCP<const Epetra_Comm>
         comm = createEpetraCommFromTeuchosComm(application->getComm());   
+
+      Teuchos::RCP<Epetra_Map> emap = Petra::TpetraMap_To_EpetraMap(overlapped_dgdpT->getMap(), comm);
+      workset.overlapped_dgdp = Teuchos::rcp(new Epetra_MultiVector(*emap, overlapped_dgdpT->getNumVectors()));
       Petra::TpetraMultiVector_To_EpetraMultiVector(
         overlapped_dgdpT, *workset.overlapped_dgdp, comm);
     }

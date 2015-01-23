@@ -25,6 +25,9 @@
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
+#include "AAdapt_RC_Manager.hpp"
+
+struct Parma_GroupCode;
 
 namespace AAdapt {
 
@@ -32,7 +35,8 @@ template<class SizeField>
 class MeshAdapt {
   public:
     MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
-              const Albany::StateManager& StateMgr_);
+              const Albany::StateManager& StateMgr_,
+              const Teuchos::RCP<rc::Manager>& refConfigMgr_);
     ~MeshAdapt();
 
     //! Check adaptation criteria to determine if the mesh needs adapting
@@ -44,14 +48,11 @@ class MeshAdapt {
     bool adaptMesh(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
         Teuchos::RCP<Teuchos::FancyOStream>& output_stream_);
 
-    //! Each adapter must generate it's list of valid parameters
+  void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
+
+    //! Each adapter must generate its list of valid parameters
     Teuchos::RCP<const Teuchos::ParameterList> getValidAdapterParameters(
         Teuchos::RCP<Teuchos::ParameterList>& validPL) const;
-
-    void beforeAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
-        Teuchos::RCP<Teuchos::FancyOStream>& output_stream_);
-    void adaptInPartition(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
-    void afterAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
   private:
 
@@ -70,13 +71,24 @@ class MeshAdapt {
 
     Teuchos::RCP<SizeField> szField;
   
-    void checkValidStateVariable(
-        const Albany::StateManager& state_mgr_,
-        const std::string name);
-
     std::string adaptation_method;
     std::string base_exo_filename;
 
+    bool should_transfer_ip_data;
+
+    Teuchos::RCP<rc::Manager> rc_mgr;
+
+    void initRcMgr();
+    void checkValidStateVariable(
+        const Albany::StateManager& state_mgr,
+        const std::string name);
+    void initAdapt(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params,
+                   Teuchos::RCP<Teuchos::FancyOStream>& output_stream);
+    void beforeAdapt();
+    bool adaptMeshWithRc(const double min_part_density,
+                         Parma_GroupCode& callback);
+    bool adaptMeshLoop(const double min_part_density, Parma_GroupCode& callback);
+    void afterAdapt();
 };
 
 template <class SizeField>
@@ -85,6 +97,7 @@ class MeshAdaptT : public AbstractAdapterT {
     MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
                const Teuchos::RCP<ParamLib>& paramLib_,
                const Albany::StateManager& StateMgr_,
+               const Teuchos::RCP<rc::Manager>& refConfigMgr_,
                const Teuchos::RCP<const Teuchos_Comm>& commT_);
     virtual bool queryAdaptationCriteria(int iteration);
     virtual bool adaptMesh(

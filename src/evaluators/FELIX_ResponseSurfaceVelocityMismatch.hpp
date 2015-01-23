@@ -48,6 +48,7 @@ namespace FELIX {
     PHX::MDField<ScalarT,Cell,Node,VecDim> velocity_field;
     PHX::MDField<ScalarT,Cell,Node,VecDim> surfaceVelocity_field;
     PHX::MDField<ScalarT,Cell,Node,VecDim> velocityRMS_field;
+    PHX::MDField<ScalarT,Cell,Node> basal_friction_field;
     PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
 
     Teuchos::RCP<shards::CellTopology> cellType;
@@ -65,13 +66,16 @@ namespace FELIX {
     Intrepid::FieldContainer<RealType> cubWeightsSide;
     Intrepid::FieldContainer<MeshScalarT> physPointsSide;
     Intrepid::FieldContainer<MeshScalarT> jacobianSide;
+    Intrepid::FieldContainer<MeshScalarT> invJacobianSide;
     Intrepid::FieldContainer<MeshScalarT> jacobianSide_det;
 
     Intrepid::FieldContainer<MeshScalarT> physPointsCell;
 
     Intrepid::FieldContainer<MeshScalarT> weighted_measure;
     Intrepid::FieldContainer<RealType> basis_refPointsSide;
+    Intrepid::FieldContainer<RealType> basisGrad_refPointsSide;
     Intrepid::FieldContainer<MeshScalarT> trans_basis_refPointsSide;
+    Intrepid::FieldContainer<MeshScalarT> trans_gradBasis_refPointsSide;
     Intrepid::FieldContainer<MeshScalarT> weighted_trans_basis_refPointsSide;
 
     Intrepid::FieldContainer<ScalarT> dofCell;
@@ -84,6 +88,8 @@ namespace FELIX {
 
     std::string sideSetID;
     Teuchos::Array<RealType> inputValues;
+    ScalarT p_resp, p_reg, resp, reg;
+    double scaling, alpha;
   };
 	
 }

@@ -22,7 +22,7 @@
 #include "AlbPUMI_FMDBVtk.hpp"
 #include "AlbPUMI_FMDBExodus.hpp"
 
-#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
+#include "Albany_NullSpaceUtils.hpp"
 #ifdef ALBANY_EPETRA
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
@@ -38,7 +38,7 @@ template<class Output>
     FMDBDiscretization(
        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
+       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
@@ -58,6 +58,9 @@ template<class Output>
 
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
+
+    //! Get Tpetra overlap Node map
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
 
     //! Process coords for ML
     void setupMLCoords();
@@ -83,9 +86,7 @@ template<class Output>
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
     //! Set coordinate vector (overlap map, interleaved)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
-    //! Zero the solution field, which is probably displacement if this method
-    //! is being called
-    void zeroSolutionField();
+    void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
@@ -109,8 +110,11 @@ template<class Output>
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-    void writeAnySolution(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToMeshDatabase(const ST* soln, const double time, const bool overlapped = false);
+    void writeAnySolutionToFile(const ST* soln, const double time, const bool overlapped = false);
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+    void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 
@@ -173,6 +177,8 @@ template<class Output>
         int offset = 0) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         ST* dataT, bool overlapped) const;
+
+    void createField(const char* name, int value_type);
 
     // Rename exodus output file when the problem is resized
     void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
@@ -368,15 +374,6 @@ template<class Output>
     Albany::WorksetArray<std::string>::type wsEBNames;
     Albany::WorksetArray<int>::type wsPhysIndex;
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type coords;
-
-    // FELIX unused variables (FIXME)
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type sHeight;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type temperature;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type basalFriction;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > >::type thickness;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type surfaceVelocity;
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type velocityRMS;
-    Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type flowFactor;
     Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type sphereVolume;
 
     //! Connectivity map from elementGID to workset and LID in workset
@@ -396,10 +393,6 @@ template<class Output>
     int numOverlapNodes;
     long numGlobalNodes;
 
-    // Coordinate vector in format needed by ML. Need to own memory here.
-    double *xx, *yy, *zz, *rr;
-    bool allocated_xyz;
-
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
     bool interleavedOrdering;
@@ -410,11 +403,13 @@ template<class Output>
     std::map<std::string, std::vector<double> > nodeset_node_coords;
 
     // Needed to pass coordinates to ML.
-    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
+    Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
 
     // counter for limiting data writes to output file
     int outputInterval;
 
+    // Mesh adaptation stuff.
+    Teuchos::RCP<AAdapt::rc::Manager> rcm;
   };
 
 }

@@ -315,7 +315,7 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
                                 nsNames, ssNames, worksetSize, partVec[eb]->name(),
-                                ebNameToIndex, this->interleavedOrdering));
+                                ebNameToIndex, this->interleavedOrdering, true));
     }
  }
 }

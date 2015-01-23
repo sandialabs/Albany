@@ -144,6 +144,11 @@ namespace LCM {
     PHX::MDField<MeshScalarT,Cell,QuadPoint> weights_;
 
     ///
+    /// Optional J
+    ///
+    PHX::MDField<ScalarT,Cell,QuadPoint> j_;
+
+    ///
     /// flag to indicate we have temperature
     ///
     bool have_temperature_;

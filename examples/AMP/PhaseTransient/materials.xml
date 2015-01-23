@@ -31,6 +31,19 @@
         <Parameter name="Value" type="double" value="10000"/>
       </ParameterList>
 
+      <ParameterList name="Laser Source">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Porosity Value" type="double" value="10"/>
+        <Parameter name="Particle Dia Type" type="string" value="Constant"/>
+        <Parameter name="Particle Dia Value" type="double" value="10"/>
+        <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="10"/>
+        <Parameter name="Laser Power Type" type="string" value="Constant"/>
+        <Parameter name="Laser Power Value" type="double" value="10"/>
+        <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="10"/>
+      </ParameterList>
+
     </ParameterList>
 
     <ParameterList name="Solid">
@@ -48,6 +61,19 @@
       <ParameterList name="Source">
         <Parameter name="Phase Source Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="10000"/>
+      </ParameterList>
+
+      <ParameterList name="Laser Source">
+        <Parameter name="Porosity Type" type="string" value="Constant"/>
+        <Parameter name="Porosity Value" type="double" value="10"/>
+        <Parameter name="Particle Dia Type" type="string" value="Constant"/>
+        <Parameter name="Particle Dia Value" type="double" value="10"/>
+        <Parameter name="Laser Beam Radius Type" type="string" value="Constant"/>
+        <Parameter name="Laser Beam Radius Value" type="double" value="10"/>
+        <Parameter name="Laser Power Type" type="string" value="Constant"/>
+        <Parameter name="Laser Power Value" type="double" value="10"/>
+        <Parameter name="Powder Hemispherical Reflectivity Type" type="string" value="Constant"/>
+        <Parameter name="Powder Hemispherical Reflectivity Value" type="double" value="10"/>
       </ParameterList>
 
   </ParameterList>
