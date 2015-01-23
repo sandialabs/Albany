@@ -20,6 +20,11 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
                                       Teuchos::RCP<Albany::AbstractDiscretization> disc,
 				      const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
+  if(!params->sublist("Problem").isSublist("Peridigm Parameters")){
+    hasPeridynamics = false;
+    return;
+  }
+
   teuchosComm = comm;
   peridigmParams = Teuchos::RCP<Teuchos::ParameterList>(new Teuchos::ParameterList(params->sublist("Problem").sublist("Peridigm Parameters", true)));
   Teuchos::ParameterList& problemParams = params->sublist("Problem");
