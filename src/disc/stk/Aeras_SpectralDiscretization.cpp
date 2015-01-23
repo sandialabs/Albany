@@ -69,7 +69,7 @@ const Tpetra::global_size_t INVALID =
 
 // Hard code the points per edge of enriched elements.  This will
 // later be changed to an input parameter.
-const int points_per_edge = 5;
+const int points_per_edge = 4;
 
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
@@ -348,13 +348,13 @@ Aeras::SpectralDiscretization::transformMesh()
   }
 }
 
-// IK, 1/8/15, FIXME: The following function that sets up the
-// coordinates to pass to ML/MueLu needs to change to make use of the
-// enriched nodes, not just the STK nodes read in.  WARNING: does
-// ML/MueLu work well for higher order elements?
+//IK, 1/23/15: ultimately we want to implement setupMLCoords() 
+//for the enriched mesh.  This could only be needed with ML/MueLu preconditioners.
 void Aeras::SpectralDiscretization::setupMLCoords()
 {
-  if (rigidBodyModes.is_null()) return;
+  *out << "Warning: setupMLCoords() not yet implemented in Aeras::SpectralDiscretization!" << 
+          "ML and MueLu will not receive coordinates for repartitioning if used." << std::endl; 
+/*  if (rigidBodyModes.is_null()) return;
   if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
 
   const int numDim = stkMeshStruct->numDim;
@@ -377,6 +377,7 @@ void Aeras::SpectralDiscretization::setupMLCoords()
   // Some optional matrix-market output was tagged on here; keep that
   // functionality.
   writeCoordsToMatrixMarket();
+  */
 }
 
 void Aeras::SpectralDiscretization::writeCoordsToMatrixMarket() const
@@ -1942,6 +1943,8 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
 void Aeras::SpectralDiscretization::computeSideSets()
 {
+  *out << "In Aeras::SpectralDiscretization::computeSideSets(): nothing to do!" << std::endl;
+  /* 
   // Clean up existing sideset structure if remeshing
   for(int i = 0; i < sideSets.size(); i++)
     sideSets[i].clear(); // empty the ith map
@@ -2024,7 +2027,7 @@ void Aeras::SpectralDiscretization::computeSideSets()
     }
 
     ss++;
-  }
+  }*/
 }
 
 unsigned
@@ -2144,6 +2147,8 @@ Aeras::SpectralDiscretization::determine_local_side_id(const stk::mesh::Entity e
 void Aeras::SpectralDiscretization::computeNodeSets()
 {
 
+  *out << "In Aeras::SpectralDiscretization::computeNodeSets(): nothing to do!" << std::endl; 
+  /*
   std::map<std::string, stk::mesh::Part*>::iterator ns = stkMeshStruct->nsPartVec.begin();
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
 
@@ -2171,7 +2176,7 @@ void Aeras::SpectralDiscretization::computeNodeSets()
       nodeSetCoords[ns->first][i] = stk::mesh::field_data(*coordinates_field, nodes[i]);
     }
     ns++;
-  }
+  }*/
 }
 
 void Aeras::SpectralDiscretization::setupExodusOutput()
@@ -2956,6 +2961,9 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeOwnedNodesAndUnknowns();
 
+  //IK, 1/23/15: I've commented out the guts of this function.
+  //It is only needed for ML/MueLu and is not critical right now to get spectral 
+  //elements to work.
   setupMLCoords();
 
 #ifdef ALBANY_EPETRA
@@ -2964,24 +2972,28 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeOverlapNodesAndUnknowns();
 
+  //IK, 1/23/15, FIXME: to implement
   transformMesh();
 
+  //IK, 1/23/15, FIXME: to implement
   computeGraphs();
 
+  //IK, 1/23/15, FIXME: to implement
   computeWorksetInfo();
-
+ 
+  //IK, 1/23/15: I have changed it so nothing happens in the following functions b/c 
+  //we have no Dirichlet/Neumann BCs for spherical mesh.
+  //Ultimately we probably want to remove these.
   computeNodeSets();
-
   computeSideSets();
 
   setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution transfer and projection operations
   // FIXME this only needs to be called if we are using the L2 Projection response
-  meshToGraph();
+  // IK, 1/23/15: I don't think we'll need meshToGraph for Aeras.
+  //meshToGraph();
   // printVertexConnectivity();
   setupNetCDFOutput();
-  // meshToGraph();
-  // printVertexConnectivity();
 
 }
