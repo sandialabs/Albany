@@ -545,7 +545,28 @@ rebaselining for 132. Now down to
 	 24 - FO_GIS_GisUnstructured (Failed)
 	 25 - FO_GIS_GisRestartUnstructured (Failed)
 	 26 - FO_GIS_Gis20km_Tpetra (Failed)
-I might do SG_MP or reduceAll before coming back to these.
+Now down to these:
+	218 - FELIX_FO_Dome_Ascii (Failed)
+	219 - FELIX_FO_Dome_Restart (Failed)
+	241 - FO_GIS_GisUnstructured (Failed)
+	242 - FO_GIS_GisRestartUnstructured (Failed)
+
+  Over all, at the end of this day, with FELIX, ATO, AMP, MOR, LCM, and demo
+PDEs enabled, we're at this:
+    96% tests passed, 10 tests failed out of 258
+    Total Test time (real) = 1299.51 sec
+    The following tests FAILED:
+	 26 - SGBratu1D_Tpetra (Failed)
+	 72 - GPAM_Tpetra (Failed)
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+	210 - ThermoElectrostatics2D (Failed)
+	211 - ThermoElectrostatics2D_Tpetra (Failed)
+	218 - FELIX_FO_Dome_Ascii (Failed)
+	219 - FELIX_FO_Dome_Restart (Failed)
+	241 - FO_GIS_GisUnstructured (Failed)
+	242 - FO_GIS_GisRestartUnstructured (Failed)
+
 
 >> TODO
 
@@ -560,7 +581,8 @@ x QCAD ctests
 x ATO
 x MOR
 x AMP. But why no ctests?
-- Felix
+x Felix builds.
+- Felix ctests
 - Aeras
 - Hydride
 - SCOREC (Andrew)
