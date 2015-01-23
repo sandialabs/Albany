@@ -18,6 +18,14 @@
 namespace FELIX {
 
 const double pi = 3.1415926535897932385;
+
+namespace {
+template<typename EvalT>
+KOKKOS_INLINE_FUNCTION
+typename EvalT::ScalarT flowRate (typename EvalT::ScalarT T) {
+  return (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
+}
+}
  
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -184,7 +192,7 @@ void ViscosityFO<EvalT, Traits>::operator () (const int i) const
             flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
           break;
         case TEMPERATUREBASED:
-             flowFactorVec = 1.0/2.0*pow(flowRate(temperature(i)), -1.0/n);
+            flowFactorVec = 1.0/2.0*pow(flowRate<EvalT>(temperature(i)), -1.0/n);
           break;
         case FROMFILE:
         case FROMCISM:
@@ -254,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
           break; 
         case TEMPERATUREBASED:
           for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-	    flowFactorVec[cell] = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
+	    flowFactorVec[cell] = 1.0/2.0*pow(flowRate<EvalT>(temperature(cell)), -1.0/n);
           break;
         case FROMFILE:
         case FROMCISM: 

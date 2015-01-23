@@ -52,7 +52,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> MResidual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
  

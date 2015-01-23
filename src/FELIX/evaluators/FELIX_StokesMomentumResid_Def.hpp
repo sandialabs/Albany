@@ -64,15 +64,15 @@ template<typename EvalT, typename Traits>
 void StokesMomentumResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t node=0; node < numNodes; ++node) {          
-      for (std::size_t i=0; i<numDims; i++) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {          
+      for (int i=0; i<numDims; i++) {
 	MResidual(cell,node,i) = 0.0;
-	for (std::size_t qp=0; qp < numQPs; ++qp) {
+	for (int qp=0; qp < numQPs; ++qp) {
 	  MResidual(cell,node,i) += 
 	    force(cell,qp,i)*wBF(cell,node,qp) -
 	     P(cell,qp)*wGradBF(cell,node,qp,i);          
-	  for (std::size_t j=0; j < numDims; ++j) { 
+	  for (int j=0; j < numDims; ++j) { 
 	    MResidual(cell,node,i) += 
 	      muFELIX(cell,qp)*(VGrad(cell,qp,i,j)+VGrad(cell,qp,j,i))*wGradBF(cell,node,qp,j);
 //	      muFELIX(cell,qp)*VGrad(cell,qp,i,j)*wGradBF(cell,node,qp,j);

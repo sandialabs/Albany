@@ -520,20 +520,39 @@ enabled are now these:
 	 70 - GPAM_Tpetra (Failed)
 	132 - HMC:StaticHMC_2DQuad (Failed)
 	133 - HMC:TransientHMC_2DQuad (Failed)
-  132 and 133 are failing because of DOFTensorInterpolation. Needed (1)
-ScalarRefT in a few spots and (2) to cherry-pick Josh's rebaselining for
-132. Now down to
+  132 and 133 are failing because of DOFTensorInterpolation.
+
+  Needed (1) ScalarRefT in a few spots and (2) to cherry-pick Josh's
+rebaselining for 132. Now down to
 	 24 - SGBratu1D_Tpetra (Failed)
 	 70 - GPAM_Tpetra (Failed)
+
   All QCAD tests pass. Evidently they don't exercise reduceAll.
+
+  All ATO and MOR tests pass.
   
   Merged master.
+
+  Got FELIX to build. 25/36 FELIX tests pass. These fail:
+	  1 - FELIX_FO_Dome_Ascii (Failed)
+	  2 - FELIX_FO_Dome_Restart (Failed)
+	 13 - FO_ISMIP_TestA (Failed)
+	 14 - FO_ISMIP_TestC (Failed)
+	 15 - FO_ISMIP_TestA_Tpetra (Failed)
+	 16 - FO_ISMIP_TestC_Tpetra (Failed)
+	 22 - FO_Test_Dome_interpSurf (Failed)
+	 23 - FO_GIS_Gis20km (Failed)
+	 24 - FO_GIS_GisUnstructured (Failed)
+	 25 - FO_GIS_GisRestartUnstructured (Failed)
+	 26 - FO_GIS_Gis20km_Tpetra (Failed)
+I might do SG_MP or reduceAll before coming back to these.
 
 >> TODO
 
 Items without a name associated is up for grabs.
 
 - Debug the rest of the LCM ctests (above) (Andrew)
+- Update Kinematics functor based on recent change (Andrew or Irina)
 - Implement derivative dimensions cleanly (Andrew or Andy)
 - Internal CDash (Duane and Glen)
 - reduceAll for FadType (Eric, but Andrew may hack in something for now)
@@ -548,6 +567,7 @@ x AMP. But why no ctests?
 - SG_MP (Andrew)
 - Merge master into tpetra_kokkos (Andrew)
 - Merge tpetra_kokkos into master (Andrew)
+  x 22 Jan.
 - Peridigm (Andrew and Dave)
 - Dakota (Andy?)
 - Figure out ETI in panzer_kokkos
