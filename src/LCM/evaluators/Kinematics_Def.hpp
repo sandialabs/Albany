@@ -386,7 +386,7 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
   }
 
 #endif
-   // writestuff(*this, workset);
+   writestuff(*this, workset);
   }
   //----------------------------------------------------------------------------
 }

@@ -54,6 +54,7 @@ void load (const Albany::MDArray& mda, PHX::MDField<ScalarT>& f) {
   case 4:
     loop(i, 0) loop(j, 1) loop(k, 2) loop(l, 3)
       f(i, j, k, l) = mda(i, j, k, l);
+    break;
   case 5:
     loop(i, 0) loop(j, 1) loop(k, 2) loop(l, 3) loop(m, 3)
       f(i, j, k, l, m) = mda(i, j, k, l, m);
