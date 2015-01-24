@@ -69,7 +69,7 @@ const Tpetra::global_size_t INVALID =
 
 // Hard code the points per edge of enriched elements.  This will
 // later be changed to an input parameter.
-const int points_per_edge = 4;
+const int points_per_edge = 3;
 
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
@@ -923,6 +923,7 @@ Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) co
 
 void Aeras::SpectralDiscretization::enrichMesh()
 {
+  *out << "In Aeras::SpectralDiscretization::enrichMesh()" << std::endl; 
   // Initialization
   size_t np  = points_per_edge;
   size_t np2 = np * np;
@@ -1141,6 +1142,7 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
 
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 {
+  *out << "In Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()" << std::endl; 
   // Initialization
   int np = points_per_edge;
 
@@ -1227,7 +1229,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
     for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
       for (size_t ii = 1; ii < np-1; ++ii)
         for (size_t jj = 1; jj < np-1; ++jj)
-          indices[inode++] = wsElNodeID[ibuck][ielem][ii*np+jj];
+          indicesT[inode++] = wsElNodeID[ibuck][ielem][ii*np+jj];
 
   assert (inode == numOwnedNodes);
   // End fill indicesT
@@ -1311,13 +1313,13 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
   // Copy owned indices to overlap indices
-  Teuchos::ArrayView<const GO> ownedIndicesT = node_mapT.getNodeElementList();
+  Teuchos::ArrayView<const GO> ownedIndicesT = node_mapT->getNodeElementList();
   Teuchos::Array<GO> overlapIndicesT(numOverlapNodes);
   for (size_t i = 0; i < ownedIndicesT.size(); ++i)
     overlapIndicesT[i] = ownedIndicesT[i];
 
   // Copy shared nodes from original STK mesh to overlap indices
-  size_t inode = onwnedIndicesT.size();
+  size_t inode = ownedIndicesT.size();
   std::vector< stk::mesh::Entity > shared_nodes;
   stk::mesh::get_selected_entities(metaData.globally_shared_part(),
 				   bulkData.buckets(stk::topology::NODE_RANK),
@@ -2959,7 +2961,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   computeNodalEpetraMaps(false);
 #endif // ALBANY_EPETRA
 
-  computeOwnedNodesAndUnknowns();
+  computeOwnedNodesAndUnknowns(); 
+
+  //write owned maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
 
   //IK, 1/23/15: I've commented out the guts of this function.
   //It is only needed for ML/MueLu and is not critical right now to get spectral 
@@ -2971,6 +2977,10 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 #endif // ALBANY_EPETRA
 
   computeOverlapNodesAndUnknowns();
+  
+  //write overlap maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
   //IK, 1/23/15, FIXME: to implement
   transformMesh();
