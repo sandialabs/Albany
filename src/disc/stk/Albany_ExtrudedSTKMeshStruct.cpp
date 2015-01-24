@@ -323,8 +323,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     std::string fname = params->get<std::string>("Surface Velocity File Name", "surface_velocity.ascii");
     readFileSerial(fname, tempSV, comm);
     sVelocityVec = Teuchos::rcp(new Tpetra_MultiVector (nodes_map, neq_));
-    for (int i = 0; i < tempSV.getNumVectors(); i++)
-      sVelocityVec->getVectorNonConst(i)->doImport(*tempSV.getVector(i), *importOperator, Tpetra::INSERT);
+    sVelocityVec->doImport(tempSV, *importOperator, Tpetra::INSERT);
   }
 
   bool hasSurfaceVelocityRMS = std::find(req.begin(), req.end(), "surface_velocity_rms") != req.end();
@@ -332,8 +331,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
     std::string fname = params->get<std::string>("Surface Velocity RMS File Name", "velocity_RMS.ascii");
     readFileSerial(fname, tempSV, comm);
     velocityRMSVec = Teuchos::rcp(new Tpetra_MultiVector (nodes_map, neq_));
-    for (int i = 0; i < tempSV.getNumVectors(); i++)
-      velocityRMSVec->getVectorNonConst(i)->doImport(*tempSV.getVector(i), *importOperator, Tpetra::INSERT);
+    velocityRMSVec->doImport(tempSV, *importOperator, Tpetra::INSERT);
   }
 
   if (comm->getRank() == 0) std::cout << " done." << std::endl;
