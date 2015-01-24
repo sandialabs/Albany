@@ -35,16 +35,43 @@ void LoadStateField<EvalT, Traits>::postRegistrationSetup(typename Traits::Setup
 }
 
 // **********************************************************************
+template<typename ScalarT>
+void load (const Albany::MDArray& mda, PHX::MDField<ScalarT>& f) {
+#define loop(i, dim) for (int i = 0; i < mda.dimension(dim); ++i)
+  switch (f.rank()) {
+  case 1:
+    loop(i, 0)
+      f(i) = mda(i);
+    break;
+  case 2:
+    loop(i, 0) loop(j, 1)
+      f(i, j) = mda(i, j);
+    break;
+  case 3:
+    loop(i, 0) loop(j, 1) loop(k, 2)
+      f(i, j, k) = mda(i, j, k);
+    break;
+  case 4:
+    loop(i, 0) loop(j, 1) loop(k, 2) loop(l, 3)
+      f(i, j, k, l) = mda(i, j, k, l);
+  case 5:
+    loop(i, 0) loop(j, 1) loop(k, 2) loop(l, 3) loop(m, 3)
+      f(i, j, k, l, m) = mda(i, j, k, l, m);
+    break;
+  default:
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                               "dims.size() \notin {1,2,3,4,5}.");
+  }
+#undef loop
+}
+
 template<typename EvalT, typename Traits>
 void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 {
   //cout << "LoadStateField importing state " << stateName << " to field " 
   //     << fieldName << " with size " << data.size() << endl;
 
-  Albany::StateArray& states = *workset.stateArrayPtr;
-  Albany::MDArray& stateToLoad  = states[stateName];
-  for (int i=0; i < stateToLoad.size() ; ++i) data[i] = stateToLoad[i];
-  for (int i=stateToLoad.size(); i < data.size() ; ++i) data[i] = 0.;  //filling non-used portion of workset.
+  load((*workset.stateArrayPtr)[stateName], data);
 }
 
 // **********************************************************************

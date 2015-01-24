@@ -87,7 +87,7 @@ cmake \
 \
  -D TPL_HWLOC_LIBRARIES:PATHNAME="${HWLOC_PATH}/lib/libhwloc.so" \
  -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME="${HWLOC_PATH}/include" \
- -D TPL_ENABLE_HWLOC:STRING=ON \
+ -D TPL_ENABLE_HWLOC:BOOL=ON \
 \
  -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
@@ -567,6 +567,11 @@ PDEs enabled, we're at this:
 	241 - FO_GIS_GisUnstructured (Failed)
 	242 - FO_GIS_GisRestartUnstructured (Failed)
 
+23 Jan.
+  MDField<DFad>::operator[] doesn't work at the moment. In the future, it won't
+be available. Turned out that was the problem with FELIX_FO_Dome*. I rewrote
+LoadStateField::evaluateFields to fix them.
+  Still something wrong with FO_GIS_Gis*Unstructured.
 
 >> TODO
 
