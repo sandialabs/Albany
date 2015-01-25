@@ -8,6 +8,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -96,9 +97,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (gT != Teuchos::null) {
     gT_nonconstView = gT->get1dViewNonConst();
   }
-  for (std::size_t res = 0; res < this->global_response.size(); res++) {
-    if (gT != Teuchos::null) 
-      gT_nonconstView[res] = this->global_response[res];
+  if (Teuchos::nonnull(gT)) {
+    PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+    do { gT_nonconstView[gr.idx()] = *gr; } while (++gr);
   }
 }
 
@@ -125,37 +126,21 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
-  for (std::size_t res = 0; res < this->global_response.size(); res++) {
-
-//Irina debug
-//ScalarT& val = this->global_response[res];
-//if (gT != Teuchos::null){
-//Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-////(*g)[res] = val.val();
-// gT_nonconstView[res] = val.val();
-// }
-// if (gxT != Teuchos::null)
-// for (int col=0; col<workset.num_cols_x; col++)
-// //gx->ReplaceMyValue(res, col, val.dx(col));
-// gxT->replaceLocalValue(res, col, val.dx(col));
-// if (gpT != Teuchos::null)
-//  for (int col=0; col<workset.num_cols_p; col++)
-//  //gp->ReplaceMyValue(res, col, val.dx(col+workset.param_offset));
-//  gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
-    
-
-    //ScalarT& val = this->global_response[res];
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  do {
+    PHAL::AlbanyTraits::Tangent::ScalarRefT val = *gr;
+    const int res = gr.idx();
     if (gT != Teuchos::null){
       Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-      gT_nonconstView[res] = (this->global_response[res]).val();
+      gT_nonconstView[res] = val.val();
     }
     if (gxT != Teuchos::null)
       for (int col=0; col<workset.num_cols_x; col++)
-	gxT->replaceLocalValue(res, col, (this->global_response[res]).dx(col));
+	gxT->replaceLocalValue(res, col, val.dx(col));
     if (gpT != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
-	gpT->replaceLocalValue(res, col, (this->global_response[res]).dx(col+workset.param_offset));
-  }
+	gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
+  } while (++gr);
 }
 
 // **********************************************************************

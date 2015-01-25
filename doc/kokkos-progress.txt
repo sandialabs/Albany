@@ -573,6 +573,17 @@ be available. Turned out that was the problem with FELIX_FO_Dome*. I rewrote
 LoadStateField::evaluateFields to fix them.
   Still something wrong with FO_GIS_Gis*Unstructured.
 
+24 Jan.
+  Fixed the first of the two problems in FO_GIS_Gis*Unstructured. Turns out
+there was a bug in Tpetra_KokkosRefactor_MultiVector's getVector(). I did
+another small breaking example for that but fixed the problem in Albany using a
+better approach that doesn't end up using getVector.
+  FO_GIS_Gis*Unstructured uses reduceAll, and I haven't done that yet, so it's
+still broken. But at least the test doesn't hang anymore.
+  Meanwhile, GPAM_Tpetra fails because of multiple problems: operator[], and
+reduceAll. I got the failed number of comparisons down from 8 to 0, but there's
+still a seg fault, and anyway the reduceAll doesn't in fact work.
+
 >> TODO
 
 Items without a name associated is up for grabs.
