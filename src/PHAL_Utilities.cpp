@@ -130,7 +130,6 @@ void reduceAll (
   copy<ScalarT>(v, a);
 }
 
-//amb Should put this somewhere useful.
 //amb This should go somewhere useful.
 #ifdef ALBANY_SG_MP
 # ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
@@ -170,6 +169,4 @@ void reduceAll (
 apply_to_all_ad_types(eti)
 #undef eti
 #undef apply_to_all_ad_types
-
-#undef apply_to_all_eval_types
 } // namespace PHAL

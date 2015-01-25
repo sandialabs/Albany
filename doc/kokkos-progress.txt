@@ -584,6 +584,9 @@ still broken. But at least the test doesn't hang anymore.
 reduceAll. I got the failed number of comparisons down from 8 to 0, but there's
 still a seg fault, and anyway the reduceAll doesn't in fact work.
 
+25 Jan.
+  PHAL::reduceAll impl got GPAM_Tpetra going.
+
 >> TODO
 
 Items without a name associated is up for grabs.
@@ -592,11 +595,11 @@ Items without a name associated is up for grabs.
 - Update Kinematics functor based on recent change (Andrew or Irina)
 - Implement derivative dimensions cleanly (Andrew or Andy)
 - Internal CDash (Duane and Glen)
-- reduceAll for FadType (Eric, but Andrew may hack in something for now)
+x reduceAll for FadType (hacked in something for now)
 x QCAD ctests
 x ATO
 x MOR
-x AMP. But why no ctests?
+x AMP.
 x Felix builds.
 - Felix ctests
 - Aeras
