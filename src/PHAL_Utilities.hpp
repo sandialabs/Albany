@@ -151,7 +151,7 @@ void loop (Functor& f, PHX::MDField<ScalarT, T1>& a) {
 }
 template<class Functor, typename ScalarT, typename T1>
 void loop (Functor& f, const PHX::MDField<ScalarT, T1>& a) {
-  loop(f, const_cast<PHX::MDField<ScalarT>&>(a));
+  loop(f, const_cast<const PHX::MDField<ScalarT, T1>&>(a));
 }
 template<class Functor, typename ScalarT, typename T1, typename T2>
 void loop (Functor& f, PHX::MDField<ScalarT, T1, T2>& a) {
@@ -163,7 +163,7 @@ void loop (Functor& f, PHX::MDField<ScalarT, T1, T2>& a) {
 }
 template<class Functor, typename ScalarT, typename T1, typename T2>
 void loop (Functor& f, const PHX::MDField<ScalarT, T1, T2>& a) {
-  loop(f, const_cast<PHX::MDField<ScalarT>&>(a));
+  loop(f, const_cast<PHX::MDField<ScalarT, T1, T2>&>(a));
 }
 template<class Functor, typename ScalarT, typename T1, typename T2,
          typename T3>
@@ -177,7 +177,7 @@ void loop (Functor& f, PHX::MDField<ScalarT, T1, T2, T3>& a) {
 template<class Functor, typename ScalarT, typename T1, typename T2,
          typename T3>
 void loop (Functor& f, const PHX::MDField<ScalarT, T1, T2, T3>& a) {
-  loop(f, const_cast<PHX::MDField<ScalarT>&>(a));
+  loop(f, const_cast<PHX::MDField<ScalarT, T1, T2, T3>&>(a));
 }
 template<class Functor, typename ScalarT, typename T1, typename T2,
          typename T3, typename T4>
@@ -191,7 +191,7 @@ void loop (Functor& f, PHX::MDField<ScalarT, T1, T2, T3, T4>& a) {
 template<class Functor, typename ScalarT, typename T1, typename T2,
          typename T3, typename T4>
 void loop (Functor& f, const PHX::MDField<ScalarT, T1, T2, T3, T4>& a) {
-  loop(f, const_cast<PHX::MDField<ScalarT>&>(a));
+  loop(f, const_cast<PHX::MDField<ScalarT, T1, T2, T3, T4>&>(a));
 }
 template<class Functor, typename ScalarT, typename T1, typename T2,
          typename T3, typename T4, typename T5>
@@ -205,7 +205,7 @@ void loop (Functor& f, PHX::MDField<ScalarT, T1, T2, T3, T4, T5>& a) {
 template<class Functor, typename ScalarT, typename T1, typename T2,
          typename T3, typename T4, typename T5>
 void loop (Functor& f, const PHX::MDField<ScalarT, T1, T2, T3, T4, T5>& a) {
-  loop(f, const_cast<PHX::MDField<ScalarT>&>(a));
+  loop(f, const_cast<PHX::MDField<ScalarT, T1, T2, T3, T4, T5>&>(a));
 }
 #undef dloop
 

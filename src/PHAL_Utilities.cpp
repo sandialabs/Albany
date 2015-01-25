@@ -103,6 +103,7 @@ void reduceAll (
   PHX::MDField<ScalarT>& a)
 {
   pr("rank " << a.rank() << " size " << a.size());
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "impl in progress");
   return;
   std::vector<ScalarT> v;
   copy<ScalarT>(a, v);
