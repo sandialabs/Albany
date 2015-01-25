@@ -82,14 +82,12 @@ setup(Teuchos::ParameterList& responseParams)
     derivative_dimensions.push_back(
       PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
         application.get(), meshSpecs.get()));
-    derivative_dimensions[0] *= num_responses; //amb need to check
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
       derivative_dimensions); }
   { std::vector<PHX::index_size_type> derivative_dimensions;
     derivative_dimensions.push_back(
       PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
         application.get(), meshSpecs.get()));
-    derivative_dimensions[0] *= num_responses; //amb need to check
     rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
       derivative_dimensions); }
   { std::vector<PHX::index_size_type> derivative_dimensions;
