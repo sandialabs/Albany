@@ -45,8 +45,6 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
     app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
 }
 
-#define pr(m) std::cout << "amb: (phu) " << m << std::endl;
-#define prc(m) std::cout << "amb: (phu) " << #m << " " << (m) << std::endl;
 namespace {
 template<typename ScalarT>
 struct A2V {
@@ -54,7 +52,6 @@ struct A2V {
   A2V (std::vector<ScalarT>& v) : v(v) {}
   void operator() (typename Ref<const ScalarT>::type a, const int i) {
     v[i] = a;
-    pr("v[" << i << "] = " << v[i] << "\na = " << a);
   }
 };
 
@@ -64,7 +61,6 @@ struct V2A {
   V2A (const std::vector<ScalarT>& v) : v(v) {}
   void operator() (typename Ref<ScalarT>::type a, const int i) {
     a = v[i];
-    pr("v[" << i << "] = " << v[i] << "\na = " << a);
   }
 };
 
@@ -86,14 +82,40 @@ void myReduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   std::vector<ScalarT>& v)
 {
-  
+  typedef typename ScalarT::value_type ValueT;
+  // Size of array to hold one Fad's derivatives.
+  const int sz = v[0].size();
+  // Pack into a vector of values.
+  std::vector<ValueT> pack;
+  for (int i = 0; i < v.size(); ++i) {
+    pack.push_back(v[i].val());
+    for (int j = 0; j < sz; ++j)
+      pack.push_back(v[i].fastAccessDx(j));
+  }
+  // reduceAll the package.
+  switch (reduct_type) {
+  case Teuchos::REDUCE_SUM: {
+    std::vector<ValueT> send(pack);
+    Teuchos::reduceAll<int, ValueT>(comm, reduct_type, pack.size(), &send[0],
+                                    &pack[0]);
+  } break;
+  default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  }
+  // Unpack.
+  int slot = 0;
+  for (int i = 0; i < v.size(); ++i) {
+    v[i].val() = pack[slot++];
+    for (int j = 0; j < sz; ++j)
+      v[i].fastAccessDx(j) = pack[slot++];
+  }
 }
 
 template<> void myReduceAll<double> (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   std::vector<double>& v)
 {
-  reduceAll<int, double>(comm, reduct_type, v.size(), Teuchos::ptr(&v[0]));
+  std::vector<double> send(v);
+  Teuchos::reduceAll<int, double>(comm, reduct_type, v.size(), &send[0], &v[0]);
 }
 } // namespace
 
@@ -102,12 +124,8 @@ void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<ScalarT>& a)
 {
-  pr("rank " << a.rank() << " size " << a.size());
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "impl in progress");
-  return;
   std::vector<ScalarT> v;
   copy<ScalarT>(a, v);
-  pr("reducing");
   myReduceAll<ScalarT>(comm, reduct_type, v);
   copy<ScalarT>(v, a);
 }

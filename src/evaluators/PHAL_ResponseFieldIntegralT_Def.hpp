@@ -228,8 +228,6 @@ void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Add contributions across processors
-//Irina TOFIX reduceAll
-//TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
 #if 0 
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
@@ -238,10 +236,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     this->global_response.size(), &this->global_response[0], 
     &this->global_response[0]);
 #else
-  std::cout << "integralT reduceAll " << typeid(EvalT).name() << "\n";
-  for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-       ! gr.done(); ++gr)
-    std::cout << "  " << gr.idx() << " " << *gr << std::endl;
+  //amb Use a workaround for now.
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
                            this->global_response);
 #endif

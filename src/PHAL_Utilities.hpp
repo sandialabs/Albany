@@ -208,7 +208,7 @@ void loop (Functor& f, const PHX::MDField<ScalarT, T1, T2, T3, T4, T5>& a) {
 }
 #undef dloop
 
-namespace {
+namespace impl {
 template<typename ScalarT, typename T>
 struct SetLooper {
   typename Ref<const T>::type val;
@@ -226,14 +226,14 @@ struct ScaleLooper {
 //! a(:) = val
 template<typename ArrayT, typename T>
 void set (ArrayT& a, const T& val) {
-  SetLooper<typename ArrayT::value_type, T> sl(val);
+  impl::SetLooper<typename ArrayT::value_type, T> sl(val);
   loop(sl, a);
 }
 
 //! a(:) *= val
 template<typename ArrayT, typename T>
 void scale (ArrayT& a, const T& val) {
-  ScaleLooper<typename ArrayT::value_type, T> sl(val);
+  impl::ScaleLooper<typename ArrayT::value_type, T> sl(val);
   loop(sl, a);
 }
 }
