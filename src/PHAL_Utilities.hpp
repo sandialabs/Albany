@@ -16,16 +16,26 @@ namespace PHAL {
 /*! Collection of PHX::MDField utilities to perform basic operations.
  */
 
+//! Get derivative dimensions for Phalanx fields.
 template<typename EvalT>
 int getDerivativeDimensions (const Albany::Application* app,
                              const Albany::MeshSpecsStruct* ms);
-//! Convenience. Can call this once app has the discretization.
+//! Get derivative dimensions for Phalanx fields. Convenience wrapper. Can call
+//! this once app has the discretization.
 template<typename EvalT>
 int getDerivativeDimensions (const Albany::Application* app,
                              const int element_block_idx);
 
-//! Replace use of runtime MDField operator[]. This class uses only stack
-//! allocation.
+/* \brief Replace use of runtime MDField operator[]. This class uses only stack
+ *        allocation.
+ *
+ * Example usage:
+ * \code
+ *    int i = 0;
+ *    for (PHAL::MDFieldIterator<ScalarT> d(array); ! d.done() ; ++d, ++i)
+ *      *d = val[i];
+ * \endcode
+ */
 template<typename T>
 class MDFieldIterator {
 public:
@@ -77,22 +87,31 @@ private:
   bool done_;
 };
 
-// Holdover until we get the official reduceAll implementation back.
+//! Reduce on an MDField. Holdover until we get the official reduceAll
+//! implementation back.
 template<typename T>
 void reduceAll(
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   PHX::MDField<T>& a);
+//! Reduce on a ScalarT. Holdover until we get the official reduceAll
+//! implementation back.
+template<typename T>
+void reduceAll(
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type, T& a);
 
-//! \brief Loop over an array and apply a functor.
-//
-// The functor has the form
-// \code
-// struct Functor {
-//   // e is the i'th serialized array entry.
-//   void operator() (T& e, int i);
-// };
-// \endcode
+/*! \brief Loop over an array and apply a functor.
+ *
+ * The functor has the form
+ * \code
+ * template<typename ScalarT>
+ * struct Functor {
+ *   // e is the i'th serialized array entry.
+ *   void operator() (PHAL::Ref<ScalarT>::type e, int i);
+ * };
+ * \endcode
+*/
 #define dloop(i, dim) for (int i = 0; i < a.dimension(dim); ++i)
+// Runtime MDField.
 template<class Functor, typename ScalarT>
 void loop (Functor& f, PHX::MDField<ScalarT>& a) {
   switch (a.rank()) {
@@ -136,6 +155,7 @@ void loop (Functor& f, PHX::MDField<ScalarT>& a) {
                                "dims.size() \notin {1,2,3,4,5}.");
   }
 }
+// Compile-time MDField.
 template<class Functor, typename ScalarT>
 void loop (Functor& f, const PHX::MDField<ScalarT>& a) {
   loop(f, const_cast<PHX::MDField<ScalarT>&>(a));
@@ -221,7 +241,7 @@ struct ScaleLooper {
   ScaleLooper (typename Ref<const T>::type val) : val(val) {}
   void operator() (typename Ref<ScalarT>::type a, int) { a *= val; }
 };
-} // namespace
+} // namespace impl
 
 //! a(:) = val
 template<typename ArrayT, typename T>

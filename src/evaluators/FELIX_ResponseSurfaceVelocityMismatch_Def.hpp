@@ -10,6 +10,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
+#include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
 FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMismatch(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dl) :
@@ -377,12 +378,9 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typename Traits::PostEvalData workset) {
-  //IRINA TOFIX
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokkos not impl'ed");
-  /*
+#if 0
   // Add contributions across processors
   Teuchos::RCP<Teuchos::ValueTypeSerializer<int, ScalarT> > serializer = workset.serializerManager.template getValue<EvalT>();
-
 
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
@@ -393,7 +391,15 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
   Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, partial_response.size(), &partial_response[0], &this->global_response[0]);
   Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM,1, &p_resp, &resp);
   Teuchos::reduceAll(*workset.comm, *serializer, Teuchos::REDUCE_SUM, 1, &p_reg, &reg);
-
+#else
+  //amb Deal with op[], pointers, and reduceAll.
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
+                           this->global_response);
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
+  resp = p_resp;
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
+  reg = p_reg;  
+#endif
 
   if(workset.comm->getRank()   ==0)
     std::cout << "resp: " << Sacado::ScalarValue<ScalarT>::eval(resp) << ", reg: " << Sacado::ScalarValue<ScalarT>::eval(reg) <<std::endl;
@@ -409,7 +415,6 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT, Traits>::postEvaluate(workset);
-  */
 }
 
 // **********************************************************************

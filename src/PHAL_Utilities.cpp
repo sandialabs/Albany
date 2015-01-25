@@ -96,8 +96,8 @@ void myReduceAll (
   switch (reduct_type) {
   case Teuchos::REDUCE_SUM: {
     std::vector<ValueT> send(pack);
-    Teuchos::reduceAll<int, ValueT>(comm, reduct_type, pack.size(), &send[0],
-                                    &pack[0]);
+    Teuchos::reduceAll<int, ValueT>(
+      comm, reduct_type, pack.size(), &send[0], &pack[0]);
   } break;
   default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
   }
@@ -110,12 +110,13 @@ void myReduceAll (
   }
 }
 
-template<> void myReduceAll<double> (
+template<> void myReduceAll<RealType> (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  std::vector<double>& v)
+  std::vector<RealType>& v)
 {
-  std::vector<double> send(v);
-  Teuchos::reduceAll<int, double>(comm, reduct_type, v.size(), &send[0], &v[0]);
+  std::vector<RealType> send(v);
+  Teuchos::reduceAll<int, RealType>(
+    comm, reduct_type, v.size(), &send[0], &v[0]);
 }
 } // namespace
 
@@ -128,6 +129,44 @@ void reduceAll (
   copy<ScalarT>(a, v);
   myReduceAll<ScalarT>(comm, reduct_type, v);
   copy<ScalarT>(v, a);
+}
+
+template<typename ScalarT>
+void reduceAll (
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
+  ScalarT& a)
+{
+  typedef typename ScalarT::value_type ValueT;
+  const int sz = a.size();
+  // Pack into a vector of values.
+  std::vector<ValueT> pack;
+  pack.push_back(a.val());
+  for (int j = 0; j < sz; ++j)
+    pack.push_back(a.fastAccessDx(j));
+  // reduceAll the package.
+  switch (reduct_type) {
+  case Teuchos::REDUCE_SUM: {
+    std::vector<ValueT> send(pack);
+    Teuchos::reduceAll<int, ValueT>(
+      comm, reduct_type, pack.size(), &send[0], &pack[0]);
+  } break;
+  default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  }
+  // Unpack.
+  int slot = 0;
+  a.val() = pack[slot++];
+  for (int j = 0; j < sz; ++j)
+    a.fastAccessDx(j) = pack[slot++];
+}
+
+template<>
+void reduceAll<RealType> (
+  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
+  RealType& a)
+{
+  RealType send = a;
+  Teuchos::reduceAll<int, RealType>(
+    comm, reduct_type, send, Teuchos::Ptr<RealType>(&a));
 }
 
 //amb This should go somewhere useful.
@@ -168,5 +207,11 @@ void reduceAll (
     const Teuchos_Comm&, const Teuchos::EReductionType, PHX::MDField<T>&);
 apply_to_all_ad_types(eti)
 #undef eti
+#define eti(T)                                                  \
+  template void reduceAll<T> (                                  \
+    const Teuchos_Comm&, const Teuchos::EReductionType, T&);
+apply_to_all_ad_types(eti)
+#undef eti
 #undef apply_to_all_ad_types
+
 } // namespace PHAL
