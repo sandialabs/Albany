@@ -44,15 +44,9 @@ void LoadStateField<EvalT, Traits>::evaluateFields(typename Traits::EvalData wor
 
   const Albany::MDArray& stateToLoad = (*workset.stateArrayPtr)[stateName];
   PHAL::MDFieldIterator<ScalarT> d(data);
-  int i = 0;
-  do {
+  for (int i = 0; ! d.done() && i < stateToLoad.size(); ++d, ++i)
     *d = stateToLoad[i];
-    ++i;
-  } while (++d && i < stateToLoad.size());
-  if ( ! d.done())
-    do {
-      *d = 0.;
-    } while (++d);
+  for ( ; ! d.done(); ++d) *d = 0.;
 }
 
 // **********************************************************************

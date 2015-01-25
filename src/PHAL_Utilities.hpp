@@ -31,24 +31,23 @@ class MDFieldIterator {
 public:
   MDFieldIterator (PHX::MDField<T>& a) : a_(a) {
     rank_ = a.rank();
+    done_ = a.size() == 0;
     for (int i = 0; i < rank_; ++i) {
       dimsm1_[i] = a.dimension(i) - 1;
       idxs_[i] = 0;
     }
     i_ = 0;
-    done_ = false;
   }
 
-  bool operator++ () {
+  void operator++ () {
     for (int i = rank_ - 1; i >= 0; --i)
       if (idxs_[i] < dimsm1_[i]) {
         ++idxs_[i];
         for (int j = i+1; j < rank_; ++j) idxs_[j] = 0;
         ++i_;
-        return true;
+        return;
       }
     done_ = true;
-    return false;
   }
 
   bool done () const { return done_; }

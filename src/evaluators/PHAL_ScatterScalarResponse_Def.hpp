@@ -97,10 +97,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (gT != Teuchos::null) {
     gT_nonconstView = gT->get1dViewNonConst();
   }
-  if (Teuchos::nonnull(gT)) {
-    PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-    do { gT_nonconstView[gr.idx()] = *gr; } while (++gr);
-  }
+  if (Teuchos::nonnull(gT))
+    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+         ! gr.done(); ++gr)
+      gT_nonconstView[gr.idx()] = *gr;
 }
 
 // **********************************************************************
@@ -126,8 +126,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   Teuchos::RCP<Tpetra_MultiVector> gxT = workset.dgdxT;
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
-  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-  do {
+  for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+       ! gr.done(); ++gr) {
     PHAL::AlbanyTraits::Tangent::ScalarRefT val = *gr;
     const int res = gr.idx();
     if (gT != Teuchos::null){
@@ -140,7 +140,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     if (gpT != Teuchos::null)
       for (int col=0; col<workset.num_cols_p; col++)
 	gpT->replaceLocalValue(res, col, val.dx(col+workset.param_offset));
-  } while (++gr);
+  }
 }
 
 // **********************************************************************

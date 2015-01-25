@@ -133,8 +133,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> g = workset.gT;
   if (g != Teuchos::null){
     const Teuchos::ArrayRCP<ST> g_nonConstView = g->get1dViewNonConst();
-    PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-    do { g_nonConstView[gr.idx()] = gr.ref().val(); } while (++gr);
+    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+         ! gr.done(); ++gr)
+      g_nonConstView[gr.idx()] = gr.ref().val();
   }
 
   // Here we scatter the *global* response derivatives
