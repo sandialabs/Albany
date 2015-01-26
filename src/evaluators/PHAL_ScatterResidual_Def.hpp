@@ -218,10 +218,11 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 {
 
-  LO colT[nunk];
+  //LO colT[nunk];
+  std::vector<LO> colT(nunk);
   LO rowT;
 
-  for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
+  for (int node_col=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
       }
@@ -249,9 +250,11 @@ void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 {
  
-  LO colT[nunk];
+  //LO colT[nunk];
+  std::vector<LO> colT(nunk);
   LO rowT;
-  ST vals[nunk];
+  //ST vals[nunk];
+  std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -278,7 +281,8 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 {
-  LO colT[nunk];
+  //LO colT[nunk];
+  std::vector<LO> colT(nunk);
   LO rowT;
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -307,9 +311,11 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 {
-  LO colT[nunk];
+  //LO colT[nunk];
+  std::vector<LO> colT(nunk);
   LO rowT;
-  ST vals[nunk];
+  //ST vals[nunk];
+  std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -335,7 +341,8 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 {
-  LO colT[nunk];
+  //LO colT[nunk];
+  std::vector<LO> colT(nunk);
   LO rowT;
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -364,9 +371,11 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
 {
-  LO colT[nunk];
+//  LO colT[nunk];
+  std::vector<LO> colT(nunk);
   LO rowT;
-  ST vals[nunk];
+//  ST vals[nunk];
+  std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
