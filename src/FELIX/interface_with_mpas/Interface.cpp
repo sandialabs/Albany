@@ -107,8 +107,8 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     sol[0] = velocityOnVertices[j];
     sol[1] = velocityOnVertices[j + numVertices3D];
     double* dirichletVel = stk::mesh::field_data(*dirichletField, node);
-    dirichletVel[0]=1;
-    dirichletVel[1]=1;
+    dirichletVel[0]=velocityOnVertices[j]; //velocityOnVertices stores initial guess and dirichlet velocities.
+    dirichletVel[1]=velocityOnVertices[j + numVertices3D];
     if (il == 0) {
       double* beta = stk::mesh::field_data(*basalFrictionField, node);
       beta[0] = std::max(betaData[ib], minBeta);
