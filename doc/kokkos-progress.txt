@@ -600,6 +600,27 @@ match master. I'm almost positive these two are broken because of the recent
 change LCM::Kinematics. So we've really just got this one:
 	 26 - SGBratu1D_Tpetra (Failed)
 
+Important observation
+---------------------
+  FELIX tests are at 100%, yet I have no ideal whether distributed derivatives
+work.
+  ATO tests are at 100%, and yet I know there is some op[] usage and a reduceAll
+that is protected by a no-impl exception.
+  QCAD is at 100%, and yet there are no-impl exceptions in the code and a lot of
+op[] usage.
+  The basic problem is that coverage in some of the app areas is not sufficient
+to protect the code during the Kokkos conversion. To be clear, if we don't touch
+the code at all, it may break on a real problem.
+  I propose the following approach: Don't touch the code. Tell everyone that
+they should come to me (Andrew) when they run a problem and it breaks. Then I'll
+have a correctness test for my mods. Mods in most or all cases will be a matter
+of minutes.
+  I decided to do the mods for ATO because they are trivial. Even so, I don't
+like having a test for it.
+  QCAD requires somewhat extensive changes, so I think we'll have to go with
+something like I propose above. Perhaps we can get a QCAD person involved before
+the official switch.
+
 >> TODO
 
 Items without a name associated is up for grabs.
