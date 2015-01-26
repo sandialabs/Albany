@@ -585,23 +585,35 @@ reduceAll. I got the failed number of comparisons down from 8 to 0, but there's
 still a seg fault, and anyway the reduceAll doesn't in fact work.
 
 25 Jan.
-  PHAL::reduceAll impl got GPAM_Tpetra going.
+  PHAL::reduceAll< MDField<ScalarT> > impl got GPAM_Tpetra going.
+  PHAL::reduceAll< ScalarT > impl + more op[] stuff got FO_GIS done.
+  Turns out the no-impl exception for ThermoElectrostatics2D was too
+conservative, so that was a 30-second easy fix.
+  Down to
+	 26 - SGBratu1D_Tpetra (Failed)
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+However,
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+match master. I'm almost positive these two are broken because of the recent
+change LCM::Kinematics. So we've really just got this one:
+	 26 - SGBratu1D_Tpetra (Failed)
 
 >> TODO
 
 Items without a name associated is up for grabs.
 
-- Debug the rest of the LCM ctests (above) (Andrew)
 - Update Kinematics functor based on recent change (Andrew or Irina)
 - Implement derivative dimensions cleanly (Andrew or Andy)
 - Internal CDash (Duane and Glen)
 x reduceAll for FadType (hacked in something for now)
-x QCAD ctests
+x LCMa
+x QCAD
 x ATO
 x MOR
-x AMP.
-x Felix builds.
-- Felix ctests
+x AMP
+x Felix
 - Aeras
 - Hydride
 - SCOREC (Andrew)

@@ -51,11 +51,8 @@ template<typename EvalT, typename Traits>
 void JouleHeating<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION (true, std::runtime_error,
-     "Kokkos transition for this function is not complete; issue "
-     << "is Intrepid::FunctionSpaceTools::dotMultiplyDataData" << std::endl);
-//Drake FIXME  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>
-//Drake FIXME                 (jouleHeating, potentialFlux, potentialGrad);
+  Intrepid::FunctionSpaceTools::dotMultiplyDataData<ScalarT>
+    (jouleHeating, potentialFlux, potentialGrad);
 }
 // **********************************************************************
 // **********************************************************************
