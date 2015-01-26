@@ -454,6 +454,8 @@ namespace Aeras
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
 
+    int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
+
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
 

@@ -67,10 +67,6 @@ const double pi = 3.1415926535897932385;
 const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
-// Hard code the points per edge of enriched elements.  This will
-// later be changed to an input parameter.
-const int points_per_edge = 3;
-
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
 
@@ -96,6 +92,8 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
 
+  // Get from parameter list how many points per edge we have (default = 2: no enrichment)
+  points_per_edge = stkMeshStruct->points_per_edge; 
   Aeras::SpectralDiscretization::updateMesh();
 }
 
@@ -305,14 +303,7 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
     "Aeras::SpectralDiscretization::setReferenceConfigurationManager is not implemented.");
 }
 
-// The function transformMesh() maps a unit cube domain by applying the transformation
-// x = L*x
-// y = L*y
-// z = s(x,y)*z + b(x,y)*(1-z)
-// where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
-// geometries respectively.
-// Currently this function is only needed for some FELIX problems.
-
+// The function transformMesh() maps a unit cube domain by applying a transformation
 
 // IK, 1/8/15, FIXME: I've removed all the FELIX stuff from
 // transformMesh() as this is for now an Aeras-only class.  The
@@ -926,6 +917,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
   *out << "In Aeras::SpectralDiscretization::enrichMesh()" << std::endl; 
   // Initialization
   size_t np  = points_per_edge;
+  *out << "Points per edge: " << np << std::endl; 
   size_t np2 = np * np;
   GO maxGID    = getMaximumID(stk::topology::NODE_RANK);
   GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
