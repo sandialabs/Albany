@@ -133,8 +133,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postRegistrationSetu
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::preEvaluate(typename Traits::PreEvalData workset) {
-  for (typename PHX::MDField<ScalarT>::size_type i = 0; i < this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+  PHAL::set(this->global_response, 0.0);
 
   p_resp = p_reg = 0;
 
@@ -159,8 +158,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
     Intrepid::FieldContainer<ScalarT> velocityOnSide(1, numQPsSide, numVecDim);
 
     // Zero out local response
-    for (typename PHX::MDField<ScalarT>::size_type i = 0; i < this->local_response.size(); i++)
-      this->local_response[i] = 0.0;
+    PHAL::set(this->local_response, 0.0);
 
     // Loop over the sides that form the boundary condition
     for (std::size_t side = 0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
@@ -398,7 +396,7 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_resp);
   resp = p_resp;
   PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, p_reg);
-  reg = p_reg;  
+  reg = p_reg;
 #endif
 
   if(workset.comm->getRank()   ==0)
@@ -408,7 +406,9 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::postEvaluate(typenam
     std::ofstream ofile;
     ofile.open("mismatch");
     if (ofile.is_open(), std::ofstream::out | std::ofstream::trunc) {
-      ofile << sqrt(this->global_response[0]);
+      //ofile << sqrt(this->global_response[0]);
+      PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+      ofile << sqrt(*gr);
       ofile.close();
     }
   }
