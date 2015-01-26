@@ -625,7 +625,7 @@ the official switch.
 
 Items without a name associated is up for grabs.
 
-- Update Kinematics functor based on recent change (Andrew or Irina)
+x Update Kinematics functor based on recent change (Andrew or Irina)
 - Implement derivative dimensions cleanly (Andrew or Andy)
 - Internal CDash (Duane and Glen)
 x reduceAll for FadType (hacked in something for now)
@@ -635,8 +635,8 @@ x ATO
 x MOR
 x AMP
 x Felix
+x Hydride
 - Aeras
-- Hydride
 - SCOREC (Andrew)
 - SG_MP (Andrew)
 - Merge master into tpetra_kokkos (Andrew)

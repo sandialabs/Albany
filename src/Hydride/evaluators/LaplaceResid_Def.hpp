@@ -66,7 +66,7 @@ evaluateFields(typename Traits::EvalData workset) {
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
 
-  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   // Since Intrepid will perform calculations on the entire workset size and not
   // just the used portion, we must fill the excess with reasonable values.
   // Leaving this out leads to a floating point exception in
