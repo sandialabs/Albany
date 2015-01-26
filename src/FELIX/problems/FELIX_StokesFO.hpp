@@ -83,6 +83,9 @@ namespace FELIX {
 
   protected:
     int numDim;
+    double gravity;  //gravity
+    double rho;  //ice density
+    double rho_w;  //water density
     Teuchos::RCP<Albany::Layouts> dl;
 
   };
@@ -209,8 +212,20 @@ FELIX::StokesFO::constructEvaluators(
      std::string stateName("basal_friction");
      const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
      RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity, meshPart);
+     fm0.template registerEvaluator<EvalT>
+         (evalUtils.constructGatherScalarNodalParameter(stateName));
     }
 
+#ifdef CISM_HAS_FELIX
+   {
+    // Here is how to register the field for dirichlet condition.
+    std::string stateName("dirichlet_field");
+    // IK, 12/9/14: Changed "false" to "true" from Mauro's initial implementation for outputting to Exodus
+    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity);
+     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+     fm0.template registerEvaluator<EvalT>(ev);
+   }
+#endif
 
 
    // Define Field Names
@@ -326,7 +341,9 @@ FELIX::StokesFO::constructEvaluators(
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
       
-
+    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters"); 
+    p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
+    
     //Output
     p->set<std::string>("Body Force Name", "Body Force");
 

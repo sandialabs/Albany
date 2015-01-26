@@ -25,7 +25,7 @@ ENDIF()
 
 # Paths to the actual executables
 set(AlbanyPath                         ${Albany_BINARY_DIR}/src/Albany)
-set(AlbanyTPath                         ${Albany_BINARY_DIR}/src/AlbanyT)
+set(AlbanyTPath                        ${Albany_BINARY_DIR}/src/AlbanyT)
 set(AlbanySGPath                       ${Albany_BINARY_DIR}/src/AlbanySG)
 set(AlbanyDakotaPath                   ${Albany_BINARY_DIR}/src/AlbanyDakota)
 set(AlbanyAnalysisPath                 ${Albany_BINARY_DIR}/src/AlbanyAnalysis)
@@ -37,27 +37,27 @@ set(AlbanySGCoupledPath                ${Albany_BINARY_DIR}/src/AlbanySGCoupled)
 
 IF (ALBANY_MPI)
   set(SerialAlbany.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyPath})
-  set(SerialAlbanyT.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyTPath})
+  set(SerialAlbanyT.exe                ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyTPath})
   set(SerialAlbanySG.exe               ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanySGPath})
   set(SerialAlbanyDakota.exe           ${MPIEX} ${MPIPRE} ${MPINPF} 1 ${AlbanyDakotaPath})
   set(Albany.exe                       ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyPath})
-  set(AlbanyT.exe                       ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyTPath})
+  set(AlbanyT.exe                      ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyTPath})
   set(AlbanyDakota.exe                 ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyDakotaPath})
   set(AlbanySG.exe                     ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanySGPath})
   set(AlbanyAnalysis.exe               ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyAnalysisPath})
-  set(AlbanyAnalysisT.exe               ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyAnalysisTPath})
+  set(AlbanyAnalysisT.exe              ${MPIEX} ${MPIPRE} ${MPINPF} ${MPIMNP} ${AlbanyAnalysisTPath})
   set(Albany8.exe                      ${MPIEX} ${MPIPRE} ${MPINPF} 8 ${AlbanyPath})
 ELSE()
   set(SerialAlbany.exe                 ${AlbanyPath})
-  set(SerialAlbanyT.exe                 ${AlbanyTPath})
+  set(SerialAlbanyT.exe                ${AlbanyTPath})
   set(SerialAlbanySG.exe               ${AlbanySGPath})
   set(SerialAlbanyDakota.exe           ${AlbanyDakotaPath})
   set(Albany.exe                       ${AlbanyPath})
-  set(AlbanyT.exe                       ${AlbanyTPath})
+  set(AlbanyT.exe                      ${AlbanyTPath})
   set(AlbanyDakota.exe                 ${AlbanyDakotaPath})
   set(AlbanySG.exe                     ${AlbanySGPath})
   set(AlbanyAnalysis.exe               ${AlbanyAnalysisPath})
-  set(AlbanyAnalysisT.exe               ${AlbanyAnalysisTPath})
+  set(AlbanyAnalysisT.exe              ${AlbanyAnalysisTPath})
 ENDIF()
 
 # Only use 2 proc's for Coupled problems, since they system is 2x2
@@ -76,7 +76,6 @@ if (ALBANY_ASCR)
   set(SerialAlbanyCoupled.exe  ${AlbanyCoupledPath})
   set(SerialAlbanySGCoupled.exe  ${AlbanySGCoupledPath})
 endif()
-
 
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
@@ -117,7 +116,6 @@ endif()
     add_subdirectory(Heat3DFMDB)
   ENDIF()
 
-
 # DEMO PDES ###############
 IF(ALBANY_DEMO_PDES)
   add_subdirectory(Helmholtz2D)
@@ -150,6 +148,7 @@ IF(ALBANY_DEMO_PDES)
 ENDIF(ALBANY_DEMO_PDES)
 
 # LCM ###############
+
 IF(ALBANY_LCM)
   add_subdirectory(LCM)
 ENDIF(ALBANY_LCM)

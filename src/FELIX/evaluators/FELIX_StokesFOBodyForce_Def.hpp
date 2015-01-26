@@ -17,9 +17,7 @@
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;
-const double g = 9.8; //gravity for FELIX; hard-coded here for now
-const double rho = 910; //density for FELIX; hard-coded here for now
-const double rho_g = rho*g; //density for FELIX; hard-coded here for now
+double rho_g; //rho*g 
 
 //**********************************************************************
 
@@ -30,17 +28,25 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   force(p.get<std::string>("Body Force Name"), dl->qp_vector), 
   A(1.0), 
   n(3.0), 
-  alpha(0.0)
+  alpha(0.0) 
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   Teuchos::ParameterList* bf_list = 
     p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::ParameterList* p_list = 
+    p.get<Teuchos::ParameterList*>("Physical Parameter List");
+
 
   std::string type = bf_list->get("Type", "None");
   A = bf_list->get("Glen's Law A", 1.0); 
   n = bf_list->get("Glen's Law n", 3.0); 
   alpha = bf_list->get("FELIX alpha", 0.0);
+
+  g = p_list->get("Gravity", 9.8);
+  rho = p_list->get("Ice Density", 910.0);  
+  rho_g = rho*g; 
 #ifdef OUTPUT_TO_SCREEN
+  *out << "rho, g: " << rho << ", " << g << std::endl; 
   *out << "alpha: " << alpha << std::endl;
 #endif 
   alpha *= pi/180.0; //convert alpha to radians 

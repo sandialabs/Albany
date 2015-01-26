@@ -1,0 +1,648 @@
+This file is meant to track progress on the Albany Kokkos conversion. There are
+two parallel efforts:
+  1. Demonstrate scalable speedup on one or a few problems.
+  2. Get Albany ready for the Phalanx/Sacado switch to Kokkos::View.
+This file focuses on 2.
+
+21 Jan 2015 5pm.
+  This Trilinos config for SerialNode:
+
+<<<<<
+TRILINSTALLDIR=../installserial
+BOOSTDIR=/usr/local
+NETCDFDIR=/usr/local/parallel
+HDF5DIR=/usr/local/parallel
+HWLOC_PATH=/usr/local
+
+rm -f CMakeCache.txt;
+
+cmake \
+ -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
+ -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
+ -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+ -D BUILD_SHARED_LIBS:BOOL=ON \
+ -D TPL_ENABLE_MPI:BOOL=ON \
+ -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+\
+ -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+ -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+ -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+ -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+ -D Trilinos_ENABLE_Shards:BOOL=ON \
+ -D Trilinos_ENABLE_Sacado:BOOL=ON \
+ -D Trilinos_ENABLE_Epetra:BOOL=ON \
+ -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+ -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+ -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+ -D Trilinos_ENABLE_Amesos:BOOL=ON \
+ -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+ -D Trilinos_ENABLE_Belos:BOOL=ON \
+ -D Trilinos_ENABLE_ML:BOOL=ON \
+ -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_NOX:BOOL=ON \
+ -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+ -D Trilinos_ENABLE_Thyra:BOOL=ON \
+ -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+ -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+ -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+ -D Trilinos_ENABLE_Piro:BOOL=ON \
+ -D Trilinos_ENABLE_Teko:BOOL=ON \
+\
+ -D Trilinos_ENABLE_STKIO:BOOL=ON \
+ -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+ -D TPL_ENABLE_Boost:BOOL=ON \
+ -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+ -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+ -D TPL_ENABLE_BoostLib:BOOL=ON \
+ -D BoostLib_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+ -D BoostLib_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+\
+ -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+ -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+ -D TPL_ENABLE_Netcdf:BOOL=ON \
+ -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+ -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
+ -D TPL_ENABLE_HDF5:BOOL=ON \
+ -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
+ -D HDF5_LIBRARY_DIRS:PATH="$HDF5DIR/lib" \
+\
+ -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+ -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+ -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+ -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+ -D Trilinos_ENABLE_MueLu:BOOL=ON \
+ -D Amesos2_ENABLE_KLU2:BOOL=ON \
+\
+ -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
+ -D Tpetra_INST_FLOAT=OFF \
+ -D Tpetra_INST_INT_INT=ON \
+ -D Tpetra_INST_DOUBLE=ON \
+ -D Tpetra_INST_COMPLEX_FLOAT=OFF \
+ -D Tpetra_INST_COMPLEX_DOUBLE=OFF \
+ -D Tpetra_INST_INT_LONG=OFF \
+ -D Tpetra_INST_INT_UNSIGNED=OFF \
+ -D Tpetra_INST_INT_LONG_LONG=ON \
+\
+ -D TPL_HWLOC_LIBRARIES:PATHNAME="${HWLOC_PATH}/lib/libhwloc.so" \
+ -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME="${HWLOC_PATH}/include" \
+ -D TPL_ENABLE_HWLOC:BOOL=ON \
+\
+ -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+ -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+ -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+ -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosClassic:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
+ -D Trilinos_ENABLE_TeuchosKokkosCompat:BOOL=ON \
+ -D Trilinos_ENABLE_TeuchosKokkosComm:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosTPL:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosMpiComm:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
+ -D Trilinos_ENABLE_TpetraKernels:BOOL=ON \
+ -D TPL_ENABLE_CUSPARSE:STRING=OFF \
+ -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
+ -D Kokkos_ENABLE_TESTS:BOOL=OFF \
+ -D Kokkos_ENABLE_CUDA:BOOL=OFF \
+ -D Kokkos_ENABLE_Thrust=OFF \
+ -D TPL_ENABLE_CUDA:STRING=OFF \
+\
+ ../
+>>>>>
+
+and this Albany config:
+
+<<<<<
+cmake \
+-D ALBANY_TRILINOS_DIR:FILEPATH=/home/ambradl/code/kokkos/Trilinos/installserial \
+-D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+-D ENABLE_DEMO_PDES=On -D ENABLE_SG_MP=OFF -D ENABLE_MOR=OFF -DENABLE_QCAD=Off -DENABLE_ASCR=OFF \
+-D ENABLE_FELIX=OFF -D ENABLE_LCM=On -D ENABLE_LCM_TEST_EXES:BOOL=On -D ENABLE_64BIT_INT:BOOL=On \
+-D ENABLE_CHECK_FPE:BOOL=Off -D ENABLE_KOKKOS:BOOL=OFF \
+ ..
+>>>>>
+
+are giving this ctest:
+
+        Start   1: SteadyHeat1D
+  1/175 Test   #1: SteadyHeat1D ......................................   Passed    0.80 sec
+        Start   2: SteadyHeat1D_Tpetra
+  2/175 Test   #2: SteadyHeat1D_Tpetra ...............................   Passed    0.81 sec
+        Start   3: SteadyHeat1D_Thyra
+  3/175 Test   #3: SteadyHeat1D_Thyra ................................   Passed    0.81 sec
+        Start   4: SteadyHeat2D
+  4/175 Test   #4: SteadyHeat2D ......................................   Passed    1.41 sec
+        Start   5: SteadyHeat2D_SERIAL_Tpetra
+  5/175 Test   #5: SteadyHeat2D_SERIAL_Tpetra ........................   Passed    2.60 sec
+        Start   6: SteadyHeat2D_Tpetra
+  6/175 Test   #6: SteadyHeat2D_Tpetra ...............................   Passed    1.41 sec
+        Start   7: SteadyHeat3D
+  7/175 Test   #7: SteadyHeat3D ......................................   Passed    1.40 sec
+        Start   8: SteadyHeat3D_10x10x10_ioss
+  8/175 Test   #8: SteadyHeat3D_10x10x10_ioss ........................   Passed    2.31 sec
+        Start   9: SteadyHeat3D_10x10x10_ascii
+  9/175 Test   #9: SteadyHeat3D_10x10x10_ascii .......................   Passed    2.30 sec
+        Start  10: SteadyHeat3D_Tpetra
+ 10/175 Test  #10: SteadyHeat3D_Tpetra ...............................   Passed    1.41 sec
+        Start  11: SteadyHeat1DEB_Prep
+ 11/175 Test  #11: SteadyHeat1DEB_Prep ...............................   Passed    0.01 sec
+        Start  12: SteadyHeat1DEB_Tpetra
+ 12/175 Test  #12: SteadyHeat1DEB_Tpetra .............................   Passed    0.77 sec
+        Start  13: SteadyHeat1DEB
+ 13/175 Test  #13: SteadyHeat1DEB ....................................   Passed    0.77 sec
+        Start  14: SteadyHeat2DEB
+ 14/175 Test  #14: SteadyHeat2DEB ....................................   Passed    0.78 sec
+        Start  15: SteadyHeat2DEB_Tpetra
+ 15/175 Test  #15: SteadyHeat2DEB_Tpetra .............................   Passed    1.07 sec
+        Start  16: ContinuationHeat1D
+ 16/175 Test  #16: ContinuationHeat1D ................................   Passed    1.97 sec
+        Start  17: ContinuationHeat1D_Tpetra
+ 17/175 Test  #17: ContinuationHeat1D_Tpetra .........................   Passed    2.27 sec
+        Start  18: Heat1DPeriodic
+ 18/175 Test  #18: Heat1DPeriodic ....................................   Passed    3.77 sec
+        Start  19: Heat1DPeriodic_Tpetra
+ 19/175 Test  #19: Heat1DPeriodic_Tpetra .............................   Passed    4.07 sec
+        Start  20: Heat2DTriangles
+ 20/175 Test  #20: Heat2DTriangles ...................................   Passed    1.07 sec
+        Start  21: Heat2DTriangles_Tpetra
+ 21/175 Test  #21: Heat2DTriangles_Tpetra ............................   Passed    1.07 sec
+        Start  22: Heat1DWithSource
+ 22/175 Test  #22: Heat1DWithSource ..................................   Passed    4.37 sec
+        Start  23: Heat1DWithSource_Tpetra
+ 23/175 Test  #23: Heat1DWithSource_Tpetra ...........................   Passed    4.68 sec
+        Start  24: SGBratu1D_Tpetra
+ 24/175 Test  #24: SGBratu1D_Tpetra ..................................***Failed    1.98 sec
+        Start  25: MPNIQuad2D
+ 25/175 Test  #25: MPNIQuad2D ........................................   Passed    0.81 sec
+        Start  26: MPNIQuad2D_Tpetra
+ 26/175 Test  #26: MPNIQuad2D_Tpetra .................................   Passed    0.81 sec
+        Start  27: TransientHeat1D
+ 27/175 Test  #27: TransientHeat1D ...................................   Passed   11.61 sec
+        Start  28: TransientHeat1D_Tpetra
+ 28/175 Test  #28: TransientHeat1D_Tpetra ............................   Passed   12.48 sec
+        Start  29: TransientHeat1D_Analysis
+ 29/175 Test  #29: TransientHeat1D_Analysis ..........................   Passed    2.57 sec
+        Start  30: TransientHeat2D
+ 30/175 Test  #30: TransientHeat2D ...................................   Passed    4.37 sec
+        Start  31: TransientHeat2D_Tpetra
+ 31/175 Test  #31: TransientHeat2D_Tpetra ............................   Passed    3.77 sec
+        Start  32: HeatEigenvalues
+ 32/175 Test  #32: HeatEigenvalues ...................................   Passed    0.77 sec
+        Start  33: HeatEigenvalues_Tpetra
+ 33/175 Test  #33: HeatEigenvalues_Tpetra ............................   Passed    0.77 sec
+        Start  34: Heat3DPamgen
+ 34/175 Test  #34: Heat3DPamgen ......................................   Passed    1.39 sec
+        Start  35: Heat3DPamgen_Tpetra
+ 35/175 Test  #35: Heat3DPamgen_Tpetra ...............................   Passed    1.37 sec
+        Start  36: Heat2DMMCylWithSource
+ 36/175 Test  #36: Heat2DMMCylWithSource .............................   Passed    0.79 sec
+        Start  37: Heat2DMMCylWithSource_Tpetra
+ 37/175 Test  #37: Heat2DMMCylWithSource_Tpetra ......................   Passed    0.79 sec
+        Start  38: HeatQuadTri
+ 38/175 Test  #38: HeatQuadTri .......................................   Passed    1.07 sec
+        Start  39: HeatQuadTri_Tpetra
+ 39/175 Test  #39: HeatQuadTri_Tpetra ................................   Passed    1.07 sec
+        Start  40: Ioss2D
+ 40/175 Test  #40: Ioss2D ............................................   Passed    0.78 sec
+        Start  41: Ioss2D_SerialInput
+ 41/175 Test  #41: Ioss2D_SerialInput ................................   Passed    1.07 sec
+        Start  42: Ioss2D_Tpetra
+ 42/175 Test  #42: Ioss2D_Tpetra .....................................   Passed    0.77 sec
+        Start  43: Ioss2D_SerialInput_Tpetra
+ 43/175 Test  #43: Ioss2D_SerialInput_Tpetra .........................   Passed    1.07 sec
+        Start  44: Ioss3D_SERIAL
+ 44/175 Test  #44: Ioss3D_SERIAL .....................................   Passed    1.97 sec
+        Start  45: Ioss3D_Tpetra_SERIAL
+ 45/175 Test  #45: Ioss3D_Tpetra_SERIAL ..............................   Passed    1.98 sec
+        Start  46: IossRestart
+ 46/175 Test  #46: IossRestart .......................................   Passed    0.79 sec
+        Start  47: IossRestart_Tpetra
+ 47/175 Test  #47: IossRestart_Tpetra ................................   Passed    0.77 sec
+        Start  48: SteadyHeat2DInternalNeumann
+ 48/175 Test  #48: SteadyHeat2DInternalNeumann .......................   Passed    0.77 sec
+        Start  49: SteadyHeat2DInternalNeumann_Tpetra
+ 49/175 Test  #49: SteadyHeat2DInternalNeumann_Tpetra ................   Passed    0.78 sec
+        Start  50: SteadyHeat2DRobin
+ 50/175 Test  #50: SteadyHeat2DRobin .................................   Passed    0.77 sec
+        Start  51: SteadyHeat2DRobin_Tpetra
+ 51/175 Test  #51: SteadyHeat2DRobin_Tpetra ..........................   Passed    0.77 sec
+        Start  52: SteadyHeat2DSS
+ 52/175 Test  #52: SteadyHeat2DSS ....................................   Passed    0.77 sec
+        Start  53: SteadyHeat2DSS_dudxdudy
+ 53/175 Test  #53: SteadyHeat2DSS_dudxdudy ...........................   Passed    0.77 sec
+        Start  54: SteadyHeat2DSS_Tpetra
+ 54/175 Test  #54: SteadyHeat2DSS_Tpetra .............................   Passed    1.08 sec
+        Start  55: SteadyHeat2DSS_dudxdudy_Tpetra
+ 55/175 Test  #55: SteadyHeat2DSS_dudxdudy_Tpetra ....................   Passed    1.07 sec
+        Start  56: Helmholtz2D
+ 56/175 Test  #56: Helmholtz2D .......................................   Passed    3.77 sec
+        Start  57: Helmholtz2D_Tpetra
+ 57/175 Test  #57: Helmholtz2D_Tpetra ................................   Passed    2.27 sec
+        Start  58: LinComprNS_2DSteady
+ 58/175 Test  #58: LinComprNS_2DSteady ...............................   Passed    0.77 sec
+        Start  59: LinComprNS_2DUnsteadyInvPressPulse
+ 59/175 Test  #59: LinComprNS_2DUnsteadyInvPressPulse ................   Passed   12.18 sec
+        Start  60: LinComprNS_2DUnsteadyEulerMMS
+ 60/175 Test  #60: LinComprNS_2DUnsteadyEulerMMS .....................   Passed    3.16 sec
+        Start  61: LinComprNS_2DDrivenPulse
+ 61/175 Test  #61: LinComprNS_2DDrivenPulse ..........................   Passed    1.67 sec
+        Start  62: LinComprNS_3DUnsteadyInvPressPulse
+ 62/175 Test  #62: LinComprNS_3DUnsteadyInvPressPulse ................   Passed    3.47 sec
+        Start  63: LinComprNS_3DUnsteadyInvPressPulseNS
+ 63/175 Test  #63: LinComprNS_3DUnsteadyInvPressPulseNS ..............   Passed    5.88 sec
+        Start  64: LinComprNS_1DStandingWave
+ 64/175 Test  #64: LinComprNS_1DStandingWave .........................   Passed    0.80 sec
+        Start  65: ComprNS_2DTaylorGreenVortex
+ 65/175 Test  #65: ComprNS_2DTaylorGreenVortex .......................   Passed    5.60 sec
+        Start  66: ODE_SERIAL
+ 66/175 Test  #66: ODE_SERIAL ........................................   Passed    0.77 sec
+        Start  67: ODE_Tpetra_SERIAL_Tpetra
+ 67/175 Test  #67: ODE_Tpetra_SERIAL_Tpetra ..........................   Passed    1.07 sec
+        Start  68: TekoPrec
+ 68/175 Test  #68: TekoPrec ..........................................   Passed    1.09 sec
+        Start  69: TekoPrec_Tpetra
+ 69/175 Test  #69: TekoPrec_Tpetra ...................................   Passed    1.07 sec
+        Start  70: GPAM_Tpetra
+ 70/175 Test  #70: GPAM_Tpetra .......................................***Failed    1.08 sec
+        Start  71: CahnHillElast2D
+ 71/175 Test  #71: CahnHillElast2D ...................................   Passed    4.39 sec
+        Start  72: CahnHillElast2D_Tpetra
+ 72/175 Test  #72: CahnHillElast2D_Tpetra ............................   Passed   16.09 sec
+        Start  73: NSPoiseuille2D
+ 73/175 Test  #73: NSPoiseuille2D ....................................   Passed    1.08 sec
+        Start  74: NSPoiseuille2D_Tpetra
+ 74/175 Test  #74: NSPoiseuille2D_Tpetra .............................   Passed    1.07 sec
+        Start  75: NSRayleighBernard2D
+ 75/175 Test  #75: NSRayleighBernard2D ...............................   Passed    7.38 sec
+        Start  76: NSVortexShedding2D
+ 76/175 Test  #76: NSVortexShedding2D ................................   Passed    7.98 sec
+        Start  77: NSVortexShedding2D_Blocked
+ 77/175 Test  #77: NSVortexShedding2D_Blocked ........................   Passed    8.88 sec
+        Start  78: NSVortexShedding2D_TransIRK
+ 78/175 Test  #78: NSVortexShedding2D_TransIRK .......................   Passed   52.42 sec
+        Start  79: PNP_test2D
+ 79/175 Test  #79: PNP_test2D ........................................   Passed    1.07 sec
+        Start  80: PNP_test2D_Tpetra
+ 80/175 Test  #80: PNP_test2D_Tpetra .................................   Passed    0.77 sec
+        Start  81: CohesiveElement
+ 81/175 Test  #81: CohesiveElement ...................................   Passed    0.37 sec
+        Start  82: CohesiveElement_Tpetra
+ 82/175 Test  #82: CohesiveElement_Tpetra ............................   Passed    0.35 sec
+        Start  83: SurfaceElement_SERIAL
+ 83/175 Test  #83: SurfaceElement_SERIAL .............................   Passed    0.77 sec
+        Start  84: SurfaceElement_Tpetra_SERIAL
+ 84/175 Test  #84: SurfaceElement_Tpetra_SERIAL ......................   Passed    0.77 sec
+        Start  85: SurfaceElementLocking
+ 85/175 Test  #85: SurfaceElementLocking .............................   Passed    1.20 sec
+        Start  86: SurfaceElementLocking_Tpetra
+ 86/175 Test  #86: SurfaceElementLocking_Tpetra ......................   Passed    1.33 sec
+        Start  87: KfieldBC_base_Tpetra
+ 87/175 Test  #87: KfieldBC_base_Tpetra ..............................   Passed    5.01 sec
+        Start  88: KfieldBC_Tpetra
+ 88/175 Test  #88: KfieldBC_Tpetra ...................................   Passed    4.68 sec
+        Start  89: KfieldBC_L2Proj_Tpetra
+ 89/175 Test  #89: KfieldBC_L2Proj_Tpetra ............................   Passed    7.08 sec
+        Start  90: HydrogenKfieldBC
+ 90/175 Test  #90: HydrogenKfieldBC ..................................   Passed    7.38 sec
+        Start  91: HydrogenKfieldBC_Tpetra
+ 91/175 Test  #91: HydrogenKfieldBC_Tpetra ...........................   Passed    5.58 sec
+        Start  92: TorsionBC
+ 92/175 Test  #92: TorsionBC .........................................   Passed    1.67 sec
+        Start  93: TorsionBC_Tpetra
+ 93/175 Test  #93: TorsionBC_Tpetra ..................................   Passed    1.07 sec
+        Start  94: Mechanics_SERIAL
+ 94/175 Test  #94: Mechanics_SERIAL ..................................   Passed    1.07 sec
+        Start  95: Mechanics_Tpetra_SERIAL
+ 95/175 Test  #95: Mechanics_Tpetra_SERIAL ...........................   Passed    1.08 sec
+        Start  96: Mechanics2D_Blocked
+ 96/175 Test  #96: Mechanics2D_Blocked ...............................   Passed    1.70 sec
+        Start  97: Mechanics2D_Blocked_Tpetra
+ 97/175 Test  #97: Mechanics2D_Blocked_Tpetra ........................   Passed    1.70 sec
+        Start  98: Mechanics2D_J2
+ 98/175 Test  #98: Mechanics2D_J2 ....................................   Passed    1.10 sec
+        Start  99: Mechanics2D_J2_Tpetra
+ 99/175 Test  #99: Mechanics2D_J2_Tpetra .............................   Passed    1.40 sec
+        Start 100: Mechanics2D_J2_Trac
+100/175 Test #100: Mechanics2D_J2_Trac ...............................   Passed    2.27 sec
+        Start 101: MechanicsPorePressureSimple_Serial
+101/175 Test #101: MechanicsPorePressureSimple_Serial ................   Passed    1.07 sec
+        Start 102: MechanicsPorePressureSimple_Serial_Tpetra
+102/175 Test #102: MechanicsPorePressureSimple_Serial_Tpetra .........   Passed    1.07 sec
+        Start 103: MechanicsPorePressure_Serial
+103/175 Test #103: MechanicsPorePressure_Serial ......................   Passed    1.97 sec
+        Start 104: MechanicsPorePressureLocalized_Serial
+104/175 Test #104: MechanicsPorePressureLocalized_Serial .............   Passed    1.68 sec
+        Start 105: MechanicsPorePressureLocalized_Serial_Tpetra
+105/175 Test #105: MechanicsPorePressureLocalized_Serial_Tpetra ......   Passed    1.97 sec
+        Start 106: MechanicsPorePressureParallelFlow_Serial
+106/175 Test #106: MechanicsPorePressureParallelFlow_Serial ..........   Passed    1.07 sec
+        Start 107: MechanicsPorePressureParallelFlow_Serial_Tpetra
+107/175 Test #107: MechanicsPorePressureParallelFlow_Serial_Tpetra ...   Passed    0.78 sec
+        Start 108: MechanicsPorePressureOrthogonalFlow_Serial
+108/175 Test #108: MechanicsPorePressureOrthogonalFlow_Serial ........   Passed    1.07 sec
+        Start 109: MechanicsWithHydrogen_SERIAL
+109/175 Test #109: MechanicsWithHydrogen_SERIAL ......................   Passed    0.77 sec
+        Start 110: MechanicsWithHydrogen_SERIAL_Tpetra
+110/175 Test #110: MechanicsWithHydrogen_SERIAL_Tpetra ...............   Passed    0.77 sec
+        Start 111: MechanicsWithHydrogenParallel_SERIAL
+111/175 Test #111: MechanicsWithHydrogenParallel_SERIAL ..............   Passed    1.08 sec
+        Start 112: MechanicsWithHydrogenParallel_SERIAL_Tpetra
+112/175 Test #112: MechanicsWithHydrogenParallel_SERIAL_Tpetra .......   Passed    1.08 sec
+        Start 113: MechanicsWithHydrogenOrthogonal_SERIAL
+113/175 Test #113: MechanicsWithHydrogenOrthogonal_SERIAL ............   Passed    1.08 sec
+        Start 114: MechanicsWithHydrogenOrthogonal_SERIAL_Tpetra
+114/175 Test #114: MechanicsWithHydrogenOrthogonal_SERIAL_Tpetra .....   Passed    1.07 sec
+        Start 115: MechanicsWithTemperatureTransientHeat2D
+115/175 Test #115: MechanicsWithTemperatureTransientHeat2D ...........   Passed    4.41 sec
+        Start 116: MechanicsWithTemperatureTransientHeat2D_Tpetra
+116/175 Test #116: MechanicsWithTemperatureTransientHeat2D_Tpetra ....   Passed    2.57 sec
+        Start 117: MechanicsWithTemperatureThermalExpansion
+117/175 Test #117: MechanicsWithTemperatureThermalExpansion ..........   Passed    3.77 sec
+        Start 118: MechanicsWithTemperature
+118/175 Test #118: MechanicsWithTemperature ..........................   Passed    2.57 sec
+        Start 119: MechanicsRigidBody
+119/175 Test #119: MechanicsRigidBody ................................   Passed    7.67 sec
+        Start 120: MechanicsRigidBody_Tpetra
+120/175 Test #120: MechanicsRigidBody_Tpetra .........................   Passed    3.18 sec
+        Start 121: Dynamics
+121/175 Test #121: Dynamics ..........................................   Passed    6.17 sec
+        Start 122: Elasticity2DTraction
+122/175 Test #122: Elasticity2DTraction ..............................   Passed    0.80 sec
+        Start 123: Elasticity2DTraction_Tpetra
+123/175 Test #123: Elasticity2DTraction_Tpetra .......................   Passed    1.09 sec
+        Start 124: QuasiStaticElasticityMM3D_Tpetra_64
+124/175 Test #124: QuasiStaticElasticityMM3D_Tpetra_64 ...............***Failed  217.60 sec
+        Start 125: Partition
+125/175 Test #125: Partition .........................................   Passed    1.35 sec
+        Start 126: AnisotropicHyperelasticDamage
+126/175 Test #126: AnisotropicHyperelasticDamage .....................***Failed    0.38 sec
+        Start 127: AnisotropicDamage
+127/175 Test #127: AnisotropicDamage .................................***Failed    0.39 sec
+        Start 128: Gurson
+128/175 Test #128: Gurson ............................................***Failed    0.37 sec
+        Start 129: Neohookean
+129/175 Test #129: Neohookean ........................................***Failed    0.37 sec
+        Start 130: BoreDemo
+130/175 Test #130: BoreDemo ..........................................   Passed    6.21 sec
+        Start 131: BoreDemo_Tpetra
+131/175 Test #131: BoreDemo_Tpetra ...................................   Passed    6.19 sec
+        Start 132: HMC:StaticHMC_2DQuad
+132/175 Test #132: HMC:StaticHMC_2DQuad ..............................***Failed    0.77 sec
+        Start 133: HMC:TransientHMC_2DQuad
+133/175 Test #133: HMC:TransientHMC_2DQuad ...........................***Failed    1.08 sec
+        Start 134: Catalyst
+134/175 Test #134: Catalyst ..........................................   Passed   11.89 sec
+        Start 135: DomainTear2D_BaseProblem
+135/175 Test #135: DomainTear2D_BaseProblem ..........................   Passed    1.07 sec
+        Start 136: DomainTear2D_BaseProblem_Tpetra
+136/175 Test #136: DomainTear2D_BaseProblem_Tpetra ...................   Passed    1.07 sec
+        Start 137: DomainTear2D_CopyRemesh_Tpetra
+137/175 Test #137: DomainTear2D_CopyRemesh_Tpetra ....................   Passed    1.38 sec
+        Start 138: ProjectionElasticity3D
+138/175 Test #138: ProjectionElasticity3D ............................   Passed    2.29 sec
+        Start 139: ProjectionElasticity3D_Tpetra
+139/175 Test #139: ProjectionElasticity3D_Tpetra .....................   Passed    1.09 sec
+        Start 140: CapModelPlasticity3D
+140/175 Test #140: CapModelPlasticity3D ..............................   Passed    1.10 sec
+        Start 141: CapModelPlasticity3D_Tpetra
+141/175 Test #141: CapModelPlasticity3D_Tpetra .......................   Passed    1.99 sec
+        Start 142: StaticElasticity1D
+142/175 Test #142: StaticElasticity1D ................................   Passed    1.09 sec
+        Start 143: StaticElasticity1D_Tpetra
+143/175 Test #143: StaticElasticity1D_Tpetra .........................   Passed    0.79 sec
+        Start 144: StaticElasticity2D
+144/175 Test #144: StaticElasticity2D ................................   Passed    1.40 sec
+        Start 145: StaticElasticity2D_Traction
+145/175 Test #145: StaticElasticity2D_Traction .......................   Passed    1.40 sec
+        Start 146: StaticElasticity2D_Traction_Tpetra
+146/175 Test #146: StaticElasticity2D_Traction_Tpetra ................   Passed    1.40 sec
+        Start 147: StaticElasticity2D_Tpetra
+147/175 Test #147: StaticElasticity2D_Tpetra .........................   Passed    1.40 sec
+        Start 148: StaticElasticity3D
+148/175 Test #148: StaticElasticity3D ................................   Passed    2.89 sec
+        Start 149: StaticElasticity3D_Traction
+149/175 Test #149: StaticElasticity3D_Traction .......................   Passed    2.88 sec
+        Start 150: Elasticity3DPressureBC
+150/175 Test #150: Elasticity3DPressureBC ............................   Passed    1.74 sec
+        Start 151: Elasticity3DPressureBC_Tpetra
+151/175 Test #151: Elasticity3DPressureBC_Tpetra .....................   Passed    1.68 sec
+        Start 152: Elasticity3DPressureBC_Transient
+152/175 Test #152: Elasticity3DPressureBC_Transient ..................   Passed   10.69 sec
+        Start 153: Elasticity2DTriangles
+153/175 Test #153: Elasticity2DTriangles .............................   Passed    1.08 sec
+        Start 154: Elasticity2DTriangles_Tpetra
+154/175 Test #154: Elasticity2DTriangles_Tpetra ......................   Passed    1.38 sec
+        Start 155: TransientElasticity2D_explicit
+155/175 Test #155: TransientElasticity2D_explicit ....................   Passed    0.78 sec
+        Start 156: TransientElasticity2D_implicit
+156/175 Test #156: TransientElasticity2D_implicit ....................   Passed    6.17 sec
+        Start 157: TransientElasticity2D_lumped
+157/175 Test #157: TransientElasticity2D_lumped ......................   Passed    0.77 sec
+        Start 158: PoroElasticity2D
+158/175 Test #158: PoroElasticity2D ..................................   Passed    0.77 sec
+        Start 159: PoroElasticity3D
+159/175 Test #159: PoroElasticity3D ..................................   Passed    1.08 sec
+        Start 160: UnSatPoroElasticity3D
+160/175 Test #160: UnSatPoroElasticity3D .............................   Passed   29.31 sec
+        Start 161: TLPoroElasticity2D
+161/175 Test #161: TLPoroElasticity2D ................................   Passed    0.77 sec
+        Start 162: TLPoroElasticity3D
+162/175 Test #162: TLPoroElasticity3D ................................   Passed    1.08 sec
+        Start 163: ThermoElasticity2D
+163/175 Test #163: ThermoElasticity2D ................................   Passed    1.38 sec
+        Start 164: ThermoElasticity2D_Tpetra
+164/175 Test #164: ThermoElasticity2D_Tpetra .........................   Passed    1.67 sec
+        Start 165: ThermoElasticity3D
+165/175 Test #165: ThermoElasticity3D ................................   Passed    2.27 sec
+        Start 166: ThermoMechanical3D
+166/175 Test #166: ThermoMechanical3D ................................   Passed    1.08 sec
+        Start 167: ThermoMechanical3D_SplitOutput
+167/175 Test #167: ThermoMechanical3D_SplitOutput ....................   Passed    1.07 sec
+        Start 168: ThermoMechanical3D_Tpetra
+168/175 Test #168: ThermoMechanical3D_Tpetra .........................   Passed    1.08 sec
+        Start 169: ThermoMechanical3D_SplitOutput_Tpetra
+169/175 Test #169: ThermoMechanical3D_SplitOutput_Tpetra .............   Passed    1.08 sec
+        Start 170: ThermoPoroMechanics3D
+170/175 Test #170: ThermoPoroMechanics3D .............................   Passed    1.67 sec
+        Start 171: utLocalNonlinearSolver
+171/175 Test #171: utLocalNonlinearSolver ............................   Passed    0.28 sec
+        Start 172: utSurfaceElement
+172/175 Test #172: utSurfaceElement ..................................   Passed    0.28 sec
+        Start 173: GradientDamage
+173/175 Test #173: GradientDamage ....................................   Passed    0.76 sec
+        Start 174: GradientDamage_Tpetra
+174/175 Test #174: GradientDamage_Tpetra .............................   Passed    0.77 sec
+        Start 175: MechanicsTensileTet10_STK
+175/175 Test #175: MechanicsTensileTet10_STK .........................***Failed   49.12 sec
+
+94% tests passed, 10 tests failed out of 175
+
+Total Test time (real) = 736.30 sec
+
+The following tests FAILED:
+	 24 - SGBratu1D_Tpetra (Failed)
+	 70 - GPAM_Tpetra (Failed)
+	124 - QuasiStaticElasticityMM3D_Tpetra_64 (Failed)
+	126 - AnisotropicHyperelasticDamage (Failed)
+	127 - AnisotropicDamage (Failed)
+	128 - Gurson (Failed)
+	129 - Neohookean (Failed)
+	132 - HMC:StaticHMC_2DQuad (Failed)
+	133 - HMC:TransientHMC_2DQuad (Failed)
+	175 - MechanicsTensileTet10_STK (Failed)
+Errors while running CTest
+
+6:15pm
+  These now pass:
+	126 - AnisotropicHyperelasticDamage (Failed)
+	127 - AnisotropicDamage (Failed)
+	128 - Gurson (Failed)
+	129 - Neohookean (Failed)
+These were broken because of the 4-index Intrepid::TensorBase::fill. I should
+have recorded which tests broke because of the 3- and 4-index
+Intrepid::Vector::fill bug. Sorry. Nonetheless, there were several, so we can
+view the LCM ctests as strong correctness checks of those three fill methods
+(and no others).
+
+22 Jan.
+  These tests:
+	124 - QuasiStaticElasticityMM3D_Tpetra_64 (Failed)
+	175 - MechanicsTensileTet10_STK (Failed)
+failed because the mesh uses tets, and I didn't have derivative dims working for
+other than N-D quads yet. Now I do. The breaking tests with demo PDEs and LCM
+enabled are now these:
+	 24 - SGBratu1D_Tpetra (Failed)
+	 70 - GPAM_Tpetra (Failed)
+	132 - HMC:StaticHMC_2DQuad (Failed)
+	133 - HMC:TransientHMC_2DQuad (Failed)
+  132 and 133 are failing because of DOFTensorInterpolation.
+
+  Needed (1) ScalarRefT in a few spots and (2) to cherry-pick Josh's
+rebaselining for 132. Now down to
+	 24 - SGBratu1D_Tpetra (Failed)
+	 70 - GPAM_Tpetra (Failed)
+
+  All QCAD tests pass. Evidently they don't exercise reduceAll.
+
+  All ATO and MOR tests pass.
+  
+  Merged master.
+
+  Got FELIX to build. 25/36 FELIX tests pass. These fail:
+	  1 - FELIX_FO_Dome_Ascii (Failed)
+	  2 - FELIX_FO_Dome_Restart (Failed)
+	 13 - FO_ISMIP_TestA (Failed)
+	 14 - FO_ISMIP_TestC (Failed)
+	 15 - FO_ISMIP_TestA_Tpetra (Failed)
+	 16 - FO_ISMIP_TestC_Tpetra (Failed)
+	 22 - FO_Test_Dome_interpSurf (Failed)
+	 23 - FO_GIS_Gis20km (Failed)
+	 24 - FO_GIS_GisUnstructured (Failed)
+	 25 - FO_GIS_GisRestartUnstructured (Failed)
+	 26 - FO_GIS_Gis20km_Tpetra (Failed)
+Now down to these:
+	218 - FELIX_FO_Dome_Ascii (Failed)
+	219 - FELIX_FO_Dome_Restart (Failed)
+	241 - FO_GIS_GisUnstructured (Failed)
+	242 - FO_GIS_GisRestartUnstructured (Failed)
+
+  Over all, at the end of this day, with FELIX, ATO, AMP, MOR, LCM, and demo
+PDEs enabled, we're at this:
+    96% tests passed, 10 tests failed out of 258
+    Total Test time (real) = 1299.51 sec
+    The following tests FAILED:
+	 26 - SGBratu1D_Tpetra (Failed)
+	 72 - GPAM_Tpetra (Failed)
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+	210 - ThermoElectrostatics2D (Failed)
+	211 - ThermoElectrostatics2D_Tpetra (Failed)
+	218 - FELIX_FO_Dome_Ascii (Failed)
+	219 - FELIX_FO_Dome_Restart (Failed)
+	241 - FO_GIS_GisUnstructured (Failed)
+	242 - FO_GIS_GisRestartUnstructured (Failed)
+
+23 Jan.
+  MDField<DFad>::operator[] doesn't work at the moment. In the future, it won't
+be available. Turned out that was the problem with FELIX_FO_Dome*. I rewrote
+LoadStateField::evaluateFields to fix them.
+  Still something wrong with FO_GIS_Gis*Unstructured.
+
+24 Jan.
+  Fixed the first of the two problems in FO_GIS_Gis*Unstructured. Turns out
+there was a bug in Tpetra_KokkosRefactor_MultiVector's getVector(). I did
+another small breaking example for that but fixed the problem in Albany using a
+better approach that doesn't end up using getVector.
+  FO_GIS_Gis*Unstructured uses reduceAll, and I haven't done that yet, so it's
+still broken. But at least the test doesn't hang anymore.
+  Meanwhile, GPAM_Tpetra fails because of multiple problems: operator[], and
+reduceAll. I got the failed number of comparisons down from 8 to 0, but there's
+still a seg fault, and anyway the reduceAll doesn't in fact work.
+
+25 Jan.
+  PHAL::reduceAll< MDField<ScalarT> > impl got GPAM_Tpetra going.
+  PHAL::reduceAll< ScalarT > impl + more op[] stuff got FO_GIS done.
+  Turns out the no-impl exception for ThermoElectrostatics2D was too
+conservative, so that was a 30-second easy fix.
+  Down to
+	 26 - SGBratu1D_Tpetra (Failed)
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+However,
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+match master. I'm almost positive these two are broken because of the recent
+change LCM::Kinematics. So we've really just got this one:
+	 26 - SGBratu1D_Tpetra (Failed)
+
+Important observation
+---------------------
+  FELIX tests are at 100%, yet I have no ideal whether distributed derivatives
+work.
+  ATO tests are at 100%, and yet I know there is some op[] usage and a reduceAll
+that is protected by a no-impl exception.
+  QCAD is at 100%, and yet there are no-impl exceptions in the code and a lot of
+op[] usage.
+  The basic problem is that coverage in some of the app areas is not sufficient
+to protect the code during the Kokkos conversion. To be clear, if we don't touch
+the code at all, it may break on a real problem.
+  I propose the following approach: Don't touch the code. Tell everyone that
+they should come to me (Andrew) when they run a problem and it breaks. Then I'll
+have a correctness test for my mods. Mods in most or all cases will be a matter
+of minutes.
+  I decided to do the mods for ATO because they are trivial. Even so, I don't
+like having a test for it.
+  QCAD requires somewhat extensive changes, so I think we'll have to go with
+something like I propose above. Perhaps we can get a QCAD person involved before
+the official switch.
+
+>> TODO
+
+Items without a name associated is up for grabs.
+
+x Update Kinematics functor based on recent change (Andrew or Irina)
+- Implement derivative dimensions cleanly (Andrew or Andy)
+- Internal CDash (Duane and Glen)
+x reduceAll for FadType (hacked in something for now)
+x LCMa
+x QCAD
+x ATO
+x MOR
+x AMP
+x Felix
+x Hydride
+- Aeras
+- SCOREC (Andrew)
+- SG_MP (Andrew)
+- Merge master into tpetra_kokkos (Andrew)
+- Merge tpetra_kokkos into master (Andrew)
+  x 22 Jan.
+- Peridigm (Andrew and Dave)
+- Dakota (Andy?)
+- Figure out ETI in panzer_kokkos
+- When all is done, strip out the amb:: debug stuff (Andrew)

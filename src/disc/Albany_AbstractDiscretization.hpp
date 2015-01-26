@@ -26,7 +26,8 @@
 #include "Shards_Array.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
-//#include "Adapt_NodalDataBlock.hpp"
+
+namespace AAdapt { namespace rc { class Manager; } }
 
 namespace Albany {
 
@@ -119,7 +120,7 @@ class AbstractDiscretization {
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
 #endif
     //! Get overlapped Node map
-    //dp-convert virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
+    virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
 
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
@@ -144,12 +145,15 @@ class AbstractDiscretization {
     //! Retrieve coodinate ptr_field (ws, el, node)
     virtual const WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const = 0;
 
-    //! Get coordinates (overlap map)
+    //! Get coordinates (overlap map).
     virtual const Teuchos::ArrayRCP<double>& getCoordinates() const = 0;
-    //! Set coordinates (overlap map) for mesh adaptation
+    //! Set coordinates (overlap map) for mesh adaptation.
     virtual void setCoordinates(const Teuchos::ArrayRCP<const double>& c) = 0;
-    //! Set the solution field (overlap map) to 0 for mesh adaptation
-    virtual void zeroSolutionField() = 0;
+
+    //! The reference configuration manager handles updating the reference
+    //! configuration. This is only relevant, and also only optional, in the
+    //! case of mesh adaptation.
+    virtual void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm) = 0;
 
     virtual const WorksetArray<Teuchos::ArrayRCP<double> >::type& getSphereVolume() const = 0;
 
@@ -219,8 +223,12 @@ class AbstractDiscretization {
     virtual void writeSolution(const Epetra_Vector& solution, const double time, const bool overlapped = false) = 0;
 #endif
 
-   //! Write the solution to the output file - Tpetra version
+    //! Write the solution to the output file - Tpetra version. Calls next two together.
     virtual void writeSolutionT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    //! Write the solution to the mesh database.
+    virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
+    //! Write the solution to file. Must call writeSolutionT first.
+    virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;

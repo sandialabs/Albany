@@ -8,6 +8,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -132,9 +133,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> g = workset.gT;
   if (g != Teuchos::null){
     const Teuchos::ArrayRCP<ST> g_nonConstView = g->get1dViewNonConst();
-    for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      g_nonConstView[res] = this->global_response[res].val();
-    }
+    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+         ! gr.done(); ++gr)
+      g_nonConstView[gr.idx()] = gr.ref().val();
   }
 
   // Here we scatter the *global* response derivatives
@@ -234,6 +235,7 @@ template<typename Traits>
 void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
   /*
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;

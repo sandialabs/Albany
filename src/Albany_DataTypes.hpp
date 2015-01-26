@@ -66,18 +66,18 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 //Tpetra typedefs
 typedef double                                      ST;
 #ifdef ALBANY_64BIT_INT
-typedef long                                        GO;
+typedef long long int                               GO;
 #else
 typedef int                                         GO;
 #endif
 typedef int                                         LO;
 typedef Kokkos::Compat::KokkosDeviceWrapperNode<PHX::Device> KokkosNode;
 
-//typedef Kokkos::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
-//typedef Kokkos::SerialNode                          KokkosNode; // No threading
-//typedef Kokkos::TPINode                             KokkosNode; // custom Pthreads
-//typedef Kokkos::TBBNode                             KokkosNode; // Intel TBB
-//typedef Kokkos::ThrustNode                          KokkosNode; // C++ Cuda wtapper
+//typedef Kokkos::DefaultNode::DefaultNodeType KokkosNode; // Whatever is Trilinos compiled to use?
+//typedef Kokkos::SerialNode KokkosNode; // No threading
+//typedef Kokkos::TPINode KokkosNode; // custom Pthreads
+//typedef Kokkos::TBBNode KokkosNode; // Intel TBB
+//typedef Kokkos::ThrustNode KokkosNode; // C++ Cuda wtapper
 
 typedef Teuchos::Comm<int>                          Teuchos_Comm;
 typedef Tpetra::Map<LO, GO, KokkosNode>             Tpetra_Map;

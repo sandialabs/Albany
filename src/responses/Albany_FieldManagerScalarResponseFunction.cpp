@@ -10,6 +10,7 @@
 #include "Petra_Converters.hpp"
 #endif
 #include <algorithm>
+#include "PHAL_Utilities.hpp"
 
 Albany::FieldManagerScalarResponseFunction::
 FieldManagerScalarResponseFunction(
@@ -74,15 +75,27 @@ setup(Teuchos::ParameterList& responseParams)
   
   // Do post-registration setup
   
-  std::vector<PHX::index_size_type> derivative_dimensions;
-  derivative_dimensions.push_back((1 << application->getSpatialDimension()) *
-                                  application->getNumEquations());
-  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    derivative_dimensions);
-  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
-    derivative_dimensions);
-  rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    derivative_dimensions);
+  //amb This is not right because rfm doesn't account for multiple element
+  // blocks. Make do for now. Also, rewrite this code to get rid of all this
+  // redundancy.
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+        application.get(), meshSpecs.get()));
+    rfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+      derivative_dimensions); }
   rfm->postRegistrationSetup("");
 
   // Visualize rfm graph -- get file name from name of response function
@@ -410,7 +423,19 @@ evaluateDistParamDeriv(
 {
   // Set data in Workset struct
   PHAL::Workset workset;
-  application->setupBasicWorksetInfo(workset, current_time, xdot, xdotdot, &x, param_array);
+  Teuchos::RCP<const Tpetra_Vector> xdotT;
+   if (xdot != NULL) {
+      xdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdot, application->getComm());
+   }
+
+   Teuchos::RCP<const Tpetra_Vector> xdotdotT;
+   if (xdotdot != NULL) {
+      xdotdotT = Petra::EpetraVector_To_TpetraVectorConst(*xdotdot, application->getComm());
+   }
+
+  Teuchos::RCP<const Tpetra_Vector> xT = Petra::EpetraVector_To_TpetraVectorConst(x,application->getComm());
+
+  application->setupBasicWorksetInfoT(workset, current_time, xdotT, xdotdotT, xT, param_array);
 
   // Perform fill via field manager (dg/dx)
   int numWorksets = application->getNumWorksets();
@@ -425,6 +450,9 @@ evaluateDistParamDeriv(
           dg_dp->NumVectors()));
       const Teuchos::RCP<const Epetra_Comm>
         comm = createEpetraCommFromTeuchosComm(application->getComm());   
+
+      Teuchos::RCP<Epetra_Map> emap = Petra::TpetraMap_To_EpetraMap(overlapped_dgdpT->getMap(), comm);
+      workset.overlapped_dgdp = Teuchos::rcp(new Epetra_MultiVector(*emap, overlapped_dgdpT->getNumVectors()));
       Petra::TpetraMultiVector_To_EpetraMultiVector(
         overlapped_dgdpT, *workset.overlapped_dgdp, comm);
     }

@@ -44,7 +44,8 @@ public:
   /// Constructor
   ///
   ProjectIPtoNodalFieldBase(Teuchos::ParameterList& p,
-                     const Teuchos::RCP<Albany::Layouts>& dl);
+                            const Teuchos::RCP<Albany::Layouts>& dl,
+                            const Albany::MeshSpecsStruct* mesh_specs);
   
   ///
   /// Phalanx method to allocate space
@@ -70,6 +71,9 @@ public:
 protected:
   int number_of_fields_;
 
+  bool output_to_exodus_;
+  bool output_node_data_;
+
   // Represent the Field Layout by an enumerated type.
   struct EFieldLayout {
     enum Enum { scalar, vector, tensor };
@@ -82,7 +86,6 @@ protected:
   std::vector<std::string> nodal_field_names_;
 
   int num_vecs_;
-
   int num_pts_;
   int num_dims_;
   int num_nodes_;
@@ -92,8 +95,8 @@ protected:
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
 
-  bool output_to_exodus_;
-  bool output_node_data_;
+  bool sep_by_eb_;
+  std::string eb_name_;
 
   Teuchos::RCP< PHX::Tag<ScalarT> > field_tag_;
   Albany::StateManager* p_state_mgr_;
@@ -109,8 +112,9 @@ class ProjectIPtoNodalField
   : public ProjectIPtoNodalFieldBase<EvalT, Traits> {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl) :
-    ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl) {}
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs)
+    : ProjectIPtoNodalFieldBase<EvalT, Traits>(p, dl, mesh_specs) {}
   void preEvaluate(typename Traits::PreEvalData d) {}
   void postEvaluate(typename Traits::PostEvalData d) {}
   void evaluateFields(typename Traits::EvalData d) {}
@@ -130,7 +134,8 @@ class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,Traits>
   : public ProjectIPtoNodalFieldBase<PHAL::AlbanyTraits::Residual, Traits> {
 public:
   ProjectIPtoNodalField(Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+                        const Teuchos::RCP<Albany::Layouts>& dl,
+                        const Albany::MeshSpecsStruct* mesh_specs);
   void preEvaluate(typename Traits::PreEvalData d);
   void postEvaluate(typename Traits::PostEvalData d);
   void evaluateFields(typename Traits::EvalData d);

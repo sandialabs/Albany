@@ -53,7 +53,7 @@ convert (Teuchos::Array<GO>& indicesAV) {
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Teuchos_Comm>& commT_,
-            const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
+            const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   commT(commT_),
@@ -150,6 +150,13 @@ AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
 }
 
 template<class Output>
+Teuchos::RCP<const Tpetra_Map>
+AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMapT() const
+{
+  return overlap_node_mapT;
+}
+
+template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {
@@ -210,10 +217,22 @@ AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::
+setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& ircm)
+{ rcm = ircm; }
+
+template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
 {
   return sphereVolume;
+}
+
+double mean (const double* x, const int n,
+             const Teuchos::RCP<const Tpetra_Map>& map) {
+  Teuchos::ArrayView<const double> xav = Teuchos::arrayView(x, n);
+  Tpetra_Vector xv(map, xav);
+  return xv.meanValue();
 }
 
 /* DAI: this function also has to change for high-order fields */
@@ -229,56 +248,23 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
 
-  // If ML preconditioner is selected
-  if (rigidBodyModes->isMLUsed()) {
-    double *xx, *yy, *zz;
-    rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
-  
-    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-      apf::Node node = nodes[i];
-      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
+  double* const coords = rigidBodyModes->getCoordArray();
+  for (std::size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
 
-      const GO node_gid = apf::getNumber(globalNumbering, node);
-      const LO node_lid = node_mapT->getLocalElement(node_gid);
-      double lcoords[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
-      if (mesh_dim > 0) {
-        xx[node_lid] = lcoords[0];
-        if (mesh_dim > 1) {
-          yy[node_lid] = lcoords[1];
-          if (mesh_dim > 2)
-            zz[node_lid] = lcoords[2];
-        }
-      }
-    }  
-  
-    rigidBodyModes->informML();
+    const GO node_gid = apf::getNumber(globalNumbering, node);
+    const LO node_lid = node_mapT->getLocalElement(node_gid);
+    double lcoords[3];
+    apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+    for (std::size_t j = 0; j < mesh_dim; ++j)
+      coords[j*numOwnedNodes + node_lid] = lcoords[j];
   }
 
-  // If MueLu(-Tpetra) preconditioner is selected
-  else if (rigidBodyModes->isMueLuUsed()) {
-    double *xxyyzz; // make this ST?
-    rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
-
-    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-      apf::Node node = nodes[i];
-      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
-
-      const GO node_gid = apf::getNumber(globalNumbering, node);
-      const LO node_lid = node_mapT->getLocalElement(node_gid);
-      double lcoords[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
-      for (std::size_t j = 0; j < mesh_dim; ++j)
-        xxyyzz[j*numOwnedNodes + node_lid] = lcoords[j];
-    }
-  
-    Teuchos::ArrayView<ST>
-      xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*mesh_dim);
-    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(
-      new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim));
-
-    rigidBodyModes->informMueLu(xyzMV, mapT);
-  }
+  if (fmdbMeshStruct->useNullspaceTranslationOnly)
+    rigidBodyModes->setCoordinates(node_mapT);
+  else
+    rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
 }
 
 template<class Output>
@@ -378,11 +364,36 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(const Tpetra_Vector& solnT, const double time_value,
-      const bool overlapped)
+void AlbPUMI::FMDBDiscretization<Output>::
+createField(const char* name, int value_type)
+{
+  apf::createFieldOn(fmdbMeshStruct->getMesh(), name, value_type);
+  apf::zeroField(fmdbMeshStruct->getMesh()->findField(name));
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(
+  const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
-  writeAnySolution(&(data[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(data[0]),time_value,overlapped);
+  writeAnySolutionToFile(&(data[0]),time_value,overlapped);
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToMeshDatabaseT(
+  const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  writeAnySolutionToMeshDatabase(&(data[0]),time_value,overlapped);
+}
+
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToFileT(
+  const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
+{
+  Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
+  writeAnySolutionToFile(&(data[0]),time_value,overlapped);
 }
 
 #ifdef ALBANY_EPETRA
@@ -390,12 +401,13 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
-  writeAnySolution(&(soln[0]),time_value,overlapped);
+  writeAnySolutionToMeshDatabase(&(soln[0]),time_value,overlapped);
+  writeAnySolutionToFile(&(soln[0]),time_value,overlapped);
 }
 #endif
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
+void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
@@ -405,7 +417,13 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
     this->setSplitFields(solNames,solIndex,soln,overlapped);
 
   fmdbMeshStruct->solutionInitialized = true;
+}
 
+template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
+      const ST* soln, const double time_value,
+      const bool overlapped)
+{
   // Skip this write unless the proper interval has been reached
   if (outputInterval++ % fmdbMeshStruct->outputInterval)
     return;
@@ -425,13 +443,17 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolution(
          << fmdbMeshStruct->outputFileName << std::endl;
   }
 
-  apf::Field* f;
-  int order = fmdbMeshStruct->cubatureDegree;
-  int dim = getNumDim();
-  apf::FieldShape* fs = apf::getIPShape(dim,order);
-  copyQPStatesToAPF(f,fs);
+  if (fmdbMeshStruct->outputQPFields) {
+    apf::Field* f;
+    int dim = getNumDim();
+    apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
+    copyQPStatesToAPF(f,fs);
+  }
+
   meshOutput.writeFile(time_label);
-  removeQPStatesFromAPF();
+
+  if (fmdbMeshStruct->outputQPFields)
+    removeQPStatesFromAPF();
 }
 
 template<class Output>
@@ -508,17 +530,6 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
       *out <<__func__<<": uninit field" << std::endl;
   }
   return solnT;
-}
-
-// In the case of mesh-adaptation problems, the solution field is
-// displacement. The previous two methods are used to reset coordinates to
-// coordinates + displacement, and then this method is used to zero
-// displacement.
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::zeroSolutionField()
-{
-  //amb-todo Always "solution"?
-  apf::zeroField(fmdbMeshStruct->getMesh()->findField("solution"));
 }
 
 #ifdef ALBANY_EPETRA
@@ -778,13 +789,6 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
-  sHeight.resize(numBuckets);
-  temperature.resize(numBuckets);
-  basalFriction.resize(numBuckets);
-  thickness.resize(numBuckets);
-  surfaceVelocity.resize(numBuckets);
-  velocityRMS.resize(numBuckets);
-  flowFactor.resize(numBuckets);
   sphereVolume.resize(numBuckets);
 
   // Clear map if remeshing

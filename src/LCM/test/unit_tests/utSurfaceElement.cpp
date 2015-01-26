@@ -466,7 +466,7 @@ TEUCHOS_UNIT_TEST( SurfaceElement, ScalarJump )
   fieldManager.postEvaluate<Residual>(workset);
 
   // Pull the vector jump from the FieldManager
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim> jumpField("Scalar Jump",
+  PHX::MDField<ScalarT, Cell, QuadPoint> jumpField("Scalar Jump",
       dl->qp_scalar);
   fieldManager.getFieldData<ScalarT, Residual, Cell, QuadPoint>(jumpField);
 

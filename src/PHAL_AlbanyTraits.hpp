@@ -37,34 +37,51 @@ namespace PHAL {
   // Forward declaration since Workset needs AlbanyTraits
   struct Workset;
 
+  // From a ScalarT, determine the ScalarRefT.
+  template<typename T> struct Ref {
+    typedef T& type;
+  };
+  template<> struct Ref<FadType> {
+    typedef Kokkos::View<FadType***, PHX::Device>::reference_type type;
+  };
+#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+  template<> struct Ref<TanFadType> {
+    typedef Kokkos::View<TanFadType***, PHX::Device>::reference_type type;
+  };
+#endif
+
   struct AlbanyTraits : public PHX::TraitsBase {
 
     // ******************************************************************
     // *** Evaluation Types
     //   * ScalarT is for quantities that depend on solution/params
-    //   * MeshScalarT  is for quantities that depend on mesh coords only
+    //   * MeshScalarT is for quantities that depend on mesh coords only
     // ******************************************************************
     struct Residual {
       typedef RealType ScalarT;
       typedef RealType MeshScalarT;
-      typedef RealType& ScalarRefT;
+      typedef Ref<ScalarT>::type ScalarRefT;
+      typedef Ref<MeshScalarT>::type MeshScalarRefT;
     };
     struct Jacobian {
       typedef FadType ScalarT;
       typedef RealType MeshScalarT;
-      typedef Kokkos::View<ScalarT***, PHX::Device>::reference_type ScalarRefT;
+      typedef Ref<ScalarT>::type ScalarRefT;
+      typedef Ref<MeshScalarT>::type MeshScalarRefT;
     };
     struct Tangent {
       typedef TanFadType ScalarT;
       typedef TanFadType MeshScalarT; // Use this for shape opt
       //typedef RealType MeshScalarT; // Uncomment for no shape opt
-      typedef Jacobian::ScalarRefT ScalarRefT;
+      typedef Ref<ScalarT>::type ScalarRefT;
+      typedef Ref<MeshScalarT>::type MeshScalarRefT;
     };
 
     struct DistParamDeriv {
       typedef TanFadType ScalarT;
       typedef RealType MeshScalarT;
-      typedef Jacobian::ScalarRefT ScalarRefT;
+      typedef Ref<ScalarT>::type ScalarRefT;
+      typedef Ref<MeshScalarT>::type MeshScalarRefT;
     };
 
 #ifdef ALBANY_SG_MP

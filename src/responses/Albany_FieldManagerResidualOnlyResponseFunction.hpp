@@ -100,7 +100,7 @@ namespace Albany {
       const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
       const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
       const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
-      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) {}
+      const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm);
 
     virtual void evaluateSGResponse(
       const double curr_time,

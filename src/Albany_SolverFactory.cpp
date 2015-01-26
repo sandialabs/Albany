@@ -24,7 +24,6 @@
 #include "Piro_SolverFactory.hpp"
 #include "Piro_AdaptiveSolverFactory.hpp"
 #include "Piro_NOXSolver.hpp"
-#include "Piro_NullSpaceUtils.hpp"
 #include "Piro_StratimikosUtils.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
@@ -96,6 +95,26 @@ NOXObserverConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &
   }
   return instance_;
 }
+
+class NOXStatelessObserverConstructor :
+    public Piro::ProviderBase<NOX::Epetra::Observer> {
+public:
+  explicit NOXStatelessObserverConstructor (
+    const Teuchos::RCP<Application> &app)
+    : factory_(app),
+      instance_(Teuchos::null)
+  {}
+
+  virtual Teuchos::RCP<NOX::Epetra::Observer> getInstance (
+    const Teuchos::RCP<Teuchos::ParameterList> &params)
+  {
+    if (Teuchos::is_null(instance_)) instance_ = factory_.createInstance();
+    return instance_;
+  }
+private:
+  NOXStatelessObserverFactory factory_;
+  Teuchos::RCP<NOX::Epetra::Observer> instance_;
+};
 
 class RythmosObserverConstructor : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double> > {
 public:
@@ -372,8 +391,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
         piroFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
 
+        const RCP<Piro::ProviderBase<NOX::Epetra::Observer> >
+          noxStatelessObserverProvider = rcp(
+            new NOXStatelessObserverConstructor(app));
         const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> > saveEigenDataProvider =
-          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(),
+                                           noxStatelessObserverProvider));
         piroFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(saveEigenDataProvider);
       }
     }
@@ -465,6 +488,51 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
   }
 }
 #endif
+
+namespace {
+//   Problem: Instead of renaming the sublist MueLu to MueLu-Tpetra,
+// Piro::renamePreconditionerParamList caused a new empty sublist called
+// MueLu-Tpetra to be created. Because it was empty, MueLu would behave badly,
+// being given no user-set parameter values. Hence the worst-case bug was
+// occurring: the program would run, but the performance would be terrible.
+//   Analysis: Piro::renamePreconditionerParamList uses setName to change the
+// sublist MueLu to MueLu-Tpetra. That does not actually work. But I think it's
+// possible there is a bug in Teuchos::ParameterList, and setName should in fact
+// work. The implementation of setName simply sets the private variable name_ to
+// the new name, but it does not change the associated key in params_. I think
+// that, or something related, is causing the problem. If I pin down the problem
+// as a bug in Teuchos::ParameterList, then I'll submit a bug report and revert
+// the following change.
+//   (Temporary) Solution: Here I implement a version of
+// renamePreconditionerParamList that uses set and then remove to do the
+// renaming. That works, although it's probably inefficient.
+//   Followup: Once I determine the exact issue with setName, I'll either (1)
+// move this implementation to Piro or (2) submit a bug report and remove this
+// implementation once the fix is in Teuchos::ParameterList.
+void renamePreconditionerParamList(
+  const Teuchos::RCP<Teuchos::ParameterList>& stratParams, 
+  const std::string &oldname, const std::string& newname)
+{
+  if (stratParams->isType<std::string>("Preconditioner Type")) {
+    const std::string&
+      currentval = stratParams->get<std::string>("Preconditioner Type");
+    if (currentval == oldname) {
+      stratParams->set<std::string>("Preconditioner Type", newname);
+      // Does the old sublist exist?
+      if (stratParams->isSublist("Preconditioner Types") &&
+          stratParams->sublist("Preconditioner Types", true).isSublist(oldname)) {
+        Teuchos::ParameterList& ptypes =
+          stratParams->sublist("Preconditioner Types", true);
+        Teuchos::ParameterList& mlist = ptypes.sublist(oldname, true);
+        // Copy the oldname sublist to the newname sublist.
+        ptypes.set(newname, mlist);
+        // Remove the oldname sublist.
+        ptypes.remove(oldname);
+      }
+    }
+  }      
+}
+} // namespace
 
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
@@ -558,6 +626,15 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
   const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
 
+  if(Teuchos::is_null(stratList)){
+
+	*out << "Error: cannot locate Stratimikos solver parameters in the input file." << std::endl;
+    *out << "Printing the Piro parameter list:" << std::endl;
+    piroParams->print(*out);
+  }
+
+
+
   RCP<Thyra::ModelEvaluator<ST> > modelWithSolveT;
   if (Teuchos::nonnull(modelT->get_W_factory())) {
     modelWithSolveT = modelT;
@@ -579,9 +656,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
+    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-    Piro::renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
 #else
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif
@@ -750,27 +827,29 @@ int Albany::SolverFactory::checkSolveTestResultsT(
   }
 
   // Repeat comparisons for sensitivities
-  Teuchos::ParameterList *sensitivityParams;
+  Teuchos::ParameterList *sensitivityParams = 0;
   std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
-  else
+  else if(testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  const int numSensTests =
-    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0) {
-    if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
-    else {
-      for (int i=0; i<numSensTests; i++) {
-        Teuchos::Array<double> testSensValues =
-          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
+  if(sensitivityParams != 0) {
+    const int numSensTests =
+      sensitivityParams->get<int>("Number of Sensitivity Comparisons",0);
+    if (numSensTests > 0) {
+      if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
+      else {
+        for (int i=0; i<numSensTests; i++) {
+          Teuchos::Array<double> testSensValues =
+            sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+          TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
 
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
-        for (int j=0; j<dgdp->getNumVectors(); j++) {
-          failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
-          comparisons++;
+          Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
+          for (int j=0; j<dgdp->getNumVectors(); j++) {
+            failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
+            comparisons++;
+          }
         }
       }
     }
@@ -812,25 +891,28 @@ int Albany::SolverFactory::checkSolveTestResults(
   }
 
   // Repeat comparisons for sensitivities
-  Teuchos::ParameterList *sensitivityParams;
+  Teuchos::ParameterList *sensitivityParams = 0;
   std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
-  else
+  else if(testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  const int numSensTests =
-    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0) {
-    if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
-    else {
-      for (int i=0; i<numSensTests; i++) {
-        Teuchos::Array<double> testSensValues =
-          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
-        for (int j=0; j<dgdp->NumVectors(); j++) {
-          failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
-          comparisons++;
+
+  if(sensitivityParams != 0) {
+    const int numSensTests =
+      sensitivityParams->get<int>("Number of Sensitivity Comparisons", 0);
+    if (numSensTests > 0) {
+      if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
+      else {
+        for (int i=0; i<numSensTests; i++) {
+          Teuchos::Array<double> testSensValues =
+            sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+          TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
+          for (int j=0; j<dgdp->NumVectors(); j++) {
+            failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
+            comparisons++;
+          }
         }
       }
     }

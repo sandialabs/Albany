@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 
@@ -162,10 +163,7 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
-
+  PHAL::set(this->global_response, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
@@ -176,9 +174,7 @@ void PHAL::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {   
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   if( ebNames.size() == 0 || 
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {

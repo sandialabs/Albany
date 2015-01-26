@@ -36,11 +36,15 @@ namespace Albany {
                   const int * global_south_face_active_owned_map_Ptr,
                   const int * global_south_face_conn_active_Ptr, 
                   const int * global_north_face_active_owned_map_Ptr,
-                  const int * global_north_face_conn_active_Ptr, 
+                  const int * global_north_face_conn_active_Ptr,
+                  const int * dirichlet_node_mask_Ptr, 
+                  const double * uvel_at_nodes_Ptr, 
+                  const double * vvel_at_nodes_Ptr, 
                   const double * beta_at_nodes_Ptr, 
                   const double * surf_height_at_nodes_Ptr, 
                   const double * dsurf_height_at_nodes_dx_Ptr, 
                   const double * dsurf_height_at_nodes_dy_Ptr, 
+                  const double * thick_at_nodes_Ptr, 
                   const double * flwa_at_active_elements_Ptr,
                   const int nNodes, const int nElementsActive, 
                   const int nCellsActive, 
@@ -98,6 +102,7 @@ namespace Albany {
     int NumNorthFaces; 
     double (*xyz)[3]; //hard-coded for 3D for now 
     double* sh; //surface height
+    double* thck; //thickness
     double (*shGrad)[2]; //surface height gradient (ds/dx, ds/dy)
     double* beta;
     GO* globalElesID; //int array to define element map 
@@ -106,20 +111,22 @@ namespace Albany {
     GO* westFacesID; 
     GO* eastFacesID; 
     GO* southFacesID; 
-    GO* northFacesID; 
+    GO* northFacesID;
+    GO* dirichletNodeMask;  
     int (*eles)[8]; //hard-coded for 3D hexes for now 
     double *flwa; //double array that gives value of flow factor  
     double *temper; //double array that gives value of flow factor  
     bool have_sh; // Does surface height data exist?
+    bool have_thck; // Does thickness data field exist? 
     bool have_shGrad; // Does surface height gradient data exist?
     bool have_bf; // Does basal face connectivity file exist?
-    bool have_wf; 
-    bool have_ef; 
-    bool have_sf; 
-    bool have_nf; 
+    bool have_wf, have_ef, have_sf, have_nf; 
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_temp; // Does temperature file exist?
     bool have_beta; // Does beta (basal fraction) file exist?
+    bool have_dirichlet;
+    double *uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
+    double *vvel;  
     int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
     int (*wf)[5]; 
     int (*ef)[5]; 

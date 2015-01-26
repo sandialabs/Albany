@@ -58,6 +58,7 @@ namespace ATO {
 
       Teuchos::RCP<Epetra_CrsMatrix> filterOperator;
       double filterRadius;
+      Teuchos::Array<std::string> blocks;
   };
 
   class OptInterface {
@@ -142,9 +143,13 @@ namespace ATO {
     Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Epetra_Export> exporter;
 
+    std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap;
+    std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap;
+
 
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
+    void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
     void copyObjectiveFromStateMgr( double& f, double* dfdp );
     void zeroSet();
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
@@ -155,7 +160,7 @@ namespace ATO {
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                                     const Epetra_Comm& comm,
-				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
+				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null);
 
     SolverSubSolverData CreateSubSolverData(const ATO::SolverSubSolver& sub) const;
 

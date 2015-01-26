@@ -40,13 +40,6 @@ public:
 
   ScalarT& getValue(const std::string &n); 
 
-  template <typename DataType>
-  KOKKOS_INLINE_FUNCTION
-  DataType flowRate (DataType T) const
-  {
-      return (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
-  }
-
   KOKKOS_INLINE_FUNCTION
   void operator () (const int i) const;
 

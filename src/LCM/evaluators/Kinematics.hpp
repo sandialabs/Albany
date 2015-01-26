@@ -14,6 +14,7 @@
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+#include "AAdapt_RC_Field.hpp"
 
 namespace LCM {
   /// \brief Kinematics Evaluator
@@ -90,6 +91,11 @@ namespace LCM {
     //! flag to compute the strain
     bool needs_strain_;
 
+    ///! Input, if RCU.
+    AAdapt::rc::Field<2> strain_rc_;
+    ///! Input, if RCU.
+    AAdapt::rc::Field<2> def_grad_rc_;
+
 #ifndef NO_KOKKOS_ALBANY
    //Kokkos
 
@@ -142,7 +148,6 @@ namespace LCM {
     PHX::MDField<ScalarT,Dim,Dim> Itensor;
  
 #endif
-
   };
 
 }

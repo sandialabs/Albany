@@ -133,6 +133,35 @@ public:
   void evaluateFields(typename Traits::EvalData d); 
 };
 
+#ifdef ALBANY_SG_MP
+// **************************************************************
+// Multi-point Residual 
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::MPResidual,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
+  
+public:
+  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
+// **************************************************************
+// Multi-point Jacobian
+// **************************************************************
+template<typename Traits>
+class GatherSolution<PHAL::AlbanyTraits::MPJacobian,Traits>
+   : public GatherSolutionBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+  
+public:
+  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  GatherSolution(const Teuchos::ParameterList& p,
+                 const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+#endif //ALBANY_SG_MP
 
 }
 

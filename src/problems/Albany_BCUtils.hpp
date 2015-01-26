@@ -37,6 +37,7 @@ struct DirichletTraits {
   enum { typeSw = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_schwarz_bc };
   enum { typeDa = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_aggregator };
   enum { typeFb = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_coordinate_function };
+  enum { typeF  = PHAL::DirichletFactoryTraits<PHAL::AlbanyTraits>::id_dirichlet_field };
 
   static const std::string bcParamsPl;
 
@@ -48,10 +49,13 @@ struct DirichletTraits {
     const std::vector<std::string>& bcNames);
 
   static std::string
-  constructBCName(const std::string ns, const std::string dof);
+  constructBCName(const std::string& ns, const std::string& dof);
 
   static std::string
-  constructTimeDepBCName(const std::string ns, const std::string dof);
+  constructBCNameField(const std::string& ns, const std::string& dof);
+
+  static std::string
+  constructTimeDepBCName(const std::string& ns, const std::string& dof);
 
 };
 
@@ -76,12 +80,12 @@ struct NeumannTraits {
     const std::vector<std::string>& conditions);
 
   static std::string
-  constructBCName(const std::string ns, const std::string dof,
-                  const std::string condition);
+  constructBCName(const std::string& ns, const std::string& dof,
+                  const std::string& condition);
 
   static std::string
-  constructTimeDepBCName(const std::string ns,
-                         const std::string dof, const std::string condition);
+  constructTimeDepBCName(const std::string& ns,
+                         const std::string& dof, const std::string& condition);
 
 };
 

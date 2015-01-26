@@ -68,7 +68,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,Face> criteriaMet;
 
     // This is in here to trick the code to run the evaluator - does absolutely nothing
-    PHX::MDField<ScalarT,Cell> temp;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temp;
 
     // Face topology object
     const struct CellTopologyData_Subcell * sides;

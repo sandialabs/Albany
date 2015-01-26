@@ -5,6 +5,8 @@
 //*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "PHAL_Utilities.hpp"
+#include <typeinfo>
 
 namespace PHAL {
 
@@ -162,10 +164,7 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
-
+  PHAL::set(this->global_response, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::preEvaluate(workset);
 }
@@ -176,9 +175,7 @@ void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {   
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   if( ebNames.size() == 0 || 
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
@@ -231,16 +228,18 @@ void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Add contributions across processors
+#if 0 
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-//Irina TOFIX reduceAll
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
-/* 
- Teuchos::reduceAll(
+  Teuchos::reduceAll(
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,
     this->global_response.size(), &this->global_response[0], 
     &this->global_response[0]);
-*/
+#else
+  //amb Use a workaround for now.
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
+                           this->global_response);
+#endif
   // Do global scattering
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }

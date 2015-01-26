@@ -24,7 +24,7 @@ ScaleVector(const Teuchos::ParameterList& p) :
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> vector_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Vector Data Layout");
-  std::vector<int> dims;
+  std::vector<PHX::Device::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];

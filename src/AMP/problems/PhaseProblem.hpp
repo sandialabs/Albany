@@ -103,6 +103,7 @@ protected:
 #include "RhoCp.hpp"
 #include "ThermalCond.hpp"
 #include "PhaseSource.hpp"
+#include "LaserSource.hpp"
 #include "PhaseResidual.hpp"
 
 template <typename EvalT>
@@ -232,7 +233,7 @@ Albany::PhaseProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Source Function"));
 
     Teuchos::ParameterList& param_list =
-      material_db_->getElementBlockSublist(eb_name, "Source"); 
+      material_db_->getElementBlockSublist(eb_name, "Source");
 
     //Input
     p->set<string>("Coordinate Name","Coord Vec");
@@ -244,6 +245,23 @@ Albany::PhaseProblem::constructEvaluators(
     ev = rcp(new AMP::PhaseSource<EvalT,AlbanyTraits>(*p,dl_));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
+  { // Laser Source Function
+    RCP<ParameterList> p = rcp(new ParameterList("Laser Source Function"));
+
+    Teuchos::ParameterList& param_list =
+      material_db_->getElementBlockSublist(eb_name, "Laser Source"); 
+
+    //Input
+    p->set<string>("Coordinate Name","Coord Vec");
+    p->set<Teuchos::ParameterList*>("Parameter List", &param_list);
+
+    //Output
+    p->set<string>("Laser Source Name", "Laser Source");
+    
+    ev = rcp(new AMP::LaserSource<EvalT,AlbanyTraits>(*p,dl_));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }  
 
   { // Phase Residual
     RCP<ParameterList> p = rcp(new ParameterList("u Resid"));
@@ -257,6 +275,7 @@ Albany::PhaseProblem::constructEvaluators(
     p->set<string>("Thermal Conductivity Name","k");
     p->set<string>("Rho Cp Name","Rho Cp");
     p->set<string>("Source Name","Source");
+    p->set<string>("Laser Source Name","Laser Source");	
 
     //Output
     p->set<string>("Residual Name", "T Residual");

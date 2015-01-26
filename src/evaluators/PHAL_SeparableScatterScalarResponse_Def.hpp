@@ -6,11 +6,14 @@
 
 //IK, 9/13/14: this has Epetra but does not get compiled if ALBANY_EPETRA_EXE is turned off.
 
+#include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Epetra_Export.h"
 #ifdef ALBANY_EPETRA
 #include "Petra_Converters.hpp"
 #endif
+#include "PHAL_Utilities.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -104,7 +107,8 @@ evaluateFields(typename Traits::EvalData workset)
     // Loop over responses
 
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-     // ScalarT& val = this->local_response(cell, res);
+      PHAL::AlbanyTraits::Jacobian::ScalarRefT
+        val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -120,7 +124,7 @@ evaluateFields(typename Traits::EvalData workset)
           int dof = nodeID[node_dof][eq_dof];
 
           // Set dg/dx
-          dgT->sumIntoLocalValue(dof, res, (this->local_response(cell, res)).dx(deriv));
+          dgT->sumIntoLocalValue(dof, res, val.dx(deriv));
 
         } // column equations
       } // column nodes
@@ -137,9 +141,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> gT = workset.gT;
   if (gT != Teuchos::null) {
     Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
-    for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      gT_nonconstView[res] = this->global_response[res].val();
-    }
+    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+         ! gr.done(); ++gr)
+      gT_nonconstView[gr.idx()] = gr.ref().val();
   }
 
   // Here we scatter the *global* response derivatives
@@ -232,12 +236,8 @@ postEvaluate(typename Traits::PostEvalData workset)
        (*g)[res] = this->global_response[res].val();
    }
   if (dgdp != Teuchos::null) {
-    // workset.distParamLib->get(workset.dist_param_deriv_name)->export_add(*dgdp, *overlapped_dgdp);
-    Teuchos::RCP<Tpetra_MultiVector>
-      dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*dgdp, workset.comm);
-    Teuchos::RCP<Tpetra_MultiVector>
-      overlapped_dgdpT = Petra::EpetraMultiVector_To_TpetraMultiVector(*overlapped_dgdp, workset.comm);
-    workset.distParamLib->get(workset.dist_param_deriv_name)->export_add(*dgdpT, *overlapped_dgdpT);
+    Epetra_Export exporter(overlapped_dgdp->Map(), dgdp->Map());
+    dgdp->Export(*overlapped_dgdp, exporter, Add);
   }
 #endif
 }

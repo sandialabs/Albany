@@ -17,7 +17,7 @@
 //IK, 9/12/14: has Epetra_Comm! No other Epetra.
 
 #include "Albany_ModelEvaluatorT.hpp"
-#include "Albany_DistributedParameterDerivativeOp.hpp"
+#include "Albany_DistributedParameterDerivativeOpT.hpp"
 #include "Teuchos_ScalarTraits.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
@@ -143,9 +143,23 @@ Albany::ModelEvaluatorT::ModelEvaluatorT(
 
   Teuchos::RCP<const Teuchos::Comm<int> > commT = app->getComm(); 
    for (int l = 0; l < tpetra_param_vec.size(); ++l) {
-     // Initialize Sacado parameter vector
-     app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
+     try {
+       // Initialize Sacado parameter vector
+       // The following call will throw, and it is often due to an incorrect input line in the "Parameters" PL
+       // in the input file. Give the user a hint about what might be happening
+       app->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
          *(param_names[l]), sacado_param_vec[l]);
+     }
+     catch (const std::logic_error& le) {
+
+       *out << "Error: exception thrown from ParamLib fillVector in file " << __FILE__ << " line " << __LINE__ << std::endl;
+       *out << "This is probably due to something incorrect in the \"Parameters\" list in the input file, one of the lines:" 
+            << std::endl;
+       for (int k = 0; k < param_names[l]->size(); ++k) 
+         *out << "      " << (*param_names[l])[k] << std::endl;
+
+       throw le; // rethrow to shut things down
+     }
 
      // Create Tpetra map for parameter vector
      Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
@@ -333,7 +347,7 @@ Albany::ModelEvaluatorT::create_DfDp_op_impl(int j) const
     "Error!  Albany::ModelEvaluatorT::create_DfDp_op_impl():  " <<
     "Invalid parameter index j = " << j << std::endl);
 
-  const Teuchos::RCP<Tpetra_Operator> DfDp = Teuchos::rcp(new DistributedParameterDerivativeOp(
+  const Teuchos::RCP<Tpetra_Operator> DfDp = Teuchos::rcp(new DistributedParameterDerivativeOpT(
                       app, dist_param_names[j-num_param_vecs]));
 
   return Thyra::createLinearOp(DfDp); 
@@ -478,7 +492,6 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
 
   return result;
 }
-
 
 void
 Albany::ModelEvaluatorT::evalModelImpl(

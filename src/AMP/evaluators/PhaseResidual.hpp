@@ -50,7 +50,8 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> k_;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
   PHX::MDField<ScalarT,Cell,QuadPoint> source_;
-
+  PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
+  
   PHX::MDField<ScalarT,Cell,Node> residual_;
 
   unsigned int num_qps_;

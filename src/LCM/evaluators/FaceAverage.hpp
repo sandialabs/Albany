@@ -66,7 +66,7 @@ class FaceAverage : public PHX::EvaluatorWithBaseImpl<Traits>,
       PHX::MDField<ScalarT,Cell,Face,VecDim> faceAve;
 
       // This is in here to trick the code to run the evaluator - does absolutely nothing
-      PHX::MDField<ScalarT,Cell> temp;
+      PHX::MDField<ScalarT,Cell,QuadPoint> temp;
 
       // For creating the quadrature weights
       Intrepid::FieldContainer<RealType> refPoints;

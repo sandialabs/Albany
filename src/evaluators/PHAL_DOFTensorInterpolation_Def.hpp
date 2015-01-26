@@ -50,15 +50,12 @@ template<typename EvalT, typename Traits>
 void DOFTensorInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX pointer
-/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          ScalarT& vqp = val_qp(cell,qp,i,j);
+          typename EvalT::ScalarRefT vqp = val_qp(cell,qp,i,j);
           vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
@@ -67,7 +64,6 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
-*/
 }
 
 //**********************************************************************
@@ -113,15 +109,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0,0).size();
   int neq = num_dof / numNodes; 
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX pointer
-/*
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          ScalarT& vqp = val_qp(cell,qp,i,j);
+          PHAL::AlbanyTraits::Jacobian::ScalarRefT vqp = val_qp(cell,qp,i,j);
 	  vqp = FadType(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
@@ -133,6 +126,5 @@ evaluateFields(typename Traits::EvalData workset)
       } 
     } 
   }
-*/
 }
 }

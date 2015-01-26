@@ -8,7 +8,7 @@
       <Parameter name="DBC on NS ns_1 for DOF X"  type="double" value="0.0"/>
       <Parameter name="DBC on NS ns_2 for DOF Y"  type="double" value="0.0"/>
       <Parameter name="DBC on NS ns_3 for DOF Z"  type="double" value="0.0"/>
-    </ParameterList>	
+    </ParameterList>  
 
     <ParameterList name="Neumann BCs">
       <Parameter name="NBC on SS ss_1 for DOF all set (t_x, t_y, t_z)" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
@@ -39,7 +39,7 @@
     <Parameter name="Method"                        type="string"             value="FMDB"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/> 
     <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/cube/cube.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cube/cube.smb"/>
+    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cube/cube-quad.smb"/>
     <Parameter name="FMDB Output File Name"         type="string"             value="out.vtk"/>
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{95, eb_1}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x3:{85,83,43, ns_1,ns_2,ns_3}"/>
@@ -60,7 +60,7 @@
         <ParameterList name="Constraints"/>
           
           <ParameterList name="Predictor">
-	          <Parameter  name="Method" type="string" value="Constant"/>
+            <Parameter  name="Method" type="string" value="Constant"/>
           </ParameterList>
           
           <ParameterList name="Stepper">
@@ -88,105 +88,106 @@
 
         <ParameterList name="NOX">
           <ParameterList name="Direction">
-	          <Parameter name="Method" type="string" value="Newton"/>
+            <Parameter name="Method" type="string" value="Newton"/>
 
-	          <ParameterList name="Newton">
-	            <Parameter name="Forcing Term Method"     type="string" value="Constant"/>
-	            <Parameter name="Rescue Bad Newton Solve" type="bool"   value="1"/>
-	            <ParameterList name="Stratimikos Linear Solver">
-	              <ParameterList name="NOX Stratimikos Options">
-	            </ParameterList>
+            <ParameterList name="Newton">
+              <Parameter name="Forcing Term Method"     type="string" value="Constant"/>
+              <Parameter name="Rescue Bad Newton Solve" type="bool"   value="1"/>
+              <ParameterList name="Stratimikos Linear Solver">
+                <ParameterList name="NOX Stratimikos Options">
+              </ParameterList>
 
-	            <ParameterList name="Stratimikos">
-	              <Parameter name="Linear Solver Type" type="string" value="Belos"/>
+              <ParameterList name="Stratimikos">
+                <Parameter name="Linear Solver Type" type="string" value="Belos"/>
               <ParameterList name="Linear Solver Types">
 
-		            <ParameterList name="AztecOO">
+                <ParameterList name="AztecOO">
                   <ParameterList name="VerboseObject">
                     <Parameter name="Verbosity Level" type="string" value="none"/>
                   </ParameterList>
-		              <ParameterList name="Forward Solve"> 
-		                <ParameterList name="AztecOO Settings">
-		                  <Parameter name="Aztec Solver"            type="string" value="GMRES"/>
-		                  <Parameter name="Convergence Test"        type="string" value="r0"/>
-		                  <Parameter name="Size of Krylov Subspace" type="int"    value="200"/>
-		                  <Parameter name="Output Frequency"        type="int"    value="10"/>
-		                </ParameterList>
-		                <Parameter name="Max Iterations"  type="int"    value="200"/>
-		                <Parameter name="Tolerance"       type="double" value="1e-10"/>
-		              </ParameterList>
-		            </ParameterList>
+                  <ParameterList name="Forward Solve"> 
+                    <ParameterList name="AztecOO Settings">
+                      <Parameter name="Aztec Solver"            type="string" value="GMRES"/>
+                      <Parameter name="Convergence Test"        type="string" value="r0"/>
+                      <Parameter name="Size of Krylov Subspace" type="int"    value="200"/>
+                      <Parameter name="Output Frequency"        type="int"    value="10"/>
+                    </ParameterList>
+                    <Parameter name="Max Iterations"  type="int"    value="200"/>
+                    <Parameter name="Tolerance"       type="double" value="1e-10"/>
+                  </ParameterList>
+                </ParameterList>
 
-		            <ParameterList name="Belos">
+                <ParameterList name="Belos">
                   <ParameterList name="VerboseObject">
                     <Parameter name="Verbosity Level" type="string" value="medium"/>
                   </ParameterList>
-		  
+      
                   <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 
-		              <ParameterList name="Solver Types">
+                  <ParameterList name="Solver Types">
 
-		                <ParameterList name="Block GMRES">
-		                  <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
-		                  <Parameter name="Output Frequency"      type="int"    value="1"/>
-		                  <Parameter name="Output Style"          type="int"    value="1"/>
-		                  <Parameter name="Verbosity"             type="int"    value="33"/>
-		                  <Parameter name="Maximum Iterations"    type="int"    value="200"/>
-		                  <Parameter name="Block Size"            type="int"    value="1"/>
-		                  <Parameter name="Num Blocks"            type="int"    value="200"/>
-		                  <Parameter name="Flexible Gmres"        type="bool"   value="0"/>
-		                </ParameterList>
-		              </ParameterList>
-		            </ParameterList>
-	            </ParameterList>
+                    <ParameterList name="Block GMRES">
+                      <Parameter name="Convergence Tolerance" type="double" value="1e-6"/>
+                      <Parameter name="Output Frequency"      type="int"    value="1"/>
+                      <Parameter name="Output Style"          type="int"    value="1"/>
+                      <Parameter name="Verbosity"             type="int"    value="33"/>
+                      <Parameter name="Maximum Iterations"    type="int"    value="200"/>
+                      <Parameter name="Block Size"            type="int"    value="1"/>
+                      <Parameter name="Num Blocks"            type="int"    value="200"/>
+                      <Parameter name="Flexible Gmres"        type="bool"   value="0"/>
+                    </ParameterList>
+                  </ParameterList>
+                </ParameterList>
+              </ParameterList>
 
-	            <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
-	      
+              <Parameter name="Preconditioner Type" type="string" value="MueLu-Tpetra"/>
+        
               <ParameterList name="Preconditioner Types">
                 
                 <ParameterList name="Ifpack2">
-		              <Parameter name="Overlap"   type="int"    value="2"/>
-		              <Parameter name="Prec Type" type="string" value="ILUT"/>
+                  <Parameter name="Overlap"   type="int"    value="2"/>
+                  <Parameter name="Prec Type" type="string" value="ILUT"/>
                   <ParameterList name="Ifpack2 Settings">
-		                <Parameter name="fact: drop tolerance"      type="double" value="0"/>
-		                <Parameter name="fact: ilut level-of-fill"  type="double" value="1"/>
-		                <Parameter name="fact: level-of-fill"       type="int"    value="1"/>
-		              </ParameterList>
-		            </ParameterList>
-
-                <ParameterList name="MueLu-Tpetra">
-		              <Parameter name="multigrid algorithm" type="string" value="sa"/>
-                    <Parameter name="cycle type" type="string" value="V"/>
-                    <Parameter name="max levels" type="int" value="4"/>
-                    <Parameter name="repartition: enable" type="bool" value="true"/>
-                    <Parameter name="repartition: min rows per proc" type="int" value="1000"/>
-                    <Parameter name="smoother: type" type="string" value="CHEBYSHEV"/>
-                    <ParameterList name="smoother: params">
-                      <Parameter name="chebyshev: degree" type="int" value="3"/>
-                      <Parameter name="chebyshev: ratio eigenvalue" type="double" value="30"/>
-                    </ParameterList>
-                    <Parameter name="smoother: pre or post" type="string" value="both"/>
-                    <Parameter name="coarse: max size" type="int" value="1500"/>
-                    <Parameter name="number of equations" type="int" value="3"/>
+                    <Parameter name="fact: drop tolerance"      type="double" value="0"/>
+                    <Parameter name="fact: ilut level-of-fill"  type="double" value="1"/>
+                    <Parameter name="fact: level-of-fill"       type="int"    value="1"/>
+                  </ParameterList>
                 </ParameterList>
 
-	            </ParameterList>
-	          </ParameterList>
-	        </ParameterList>
-	      </ParameterList>
+                <ParameterList name="MueLu-Tpetra">
+                  <Parameter name="multigrid algorithm" type="string" value="sa"/>
+                  <Parameter name="cycle type" type="string" value="V"/>
+                  <Parameter name="max levels" type="int" value="4"/>
+                  <Parameter name="repartition: enable" type="bool" value="true"/>
+                  <Parameter name="repartition: partitioner" type="string" value="zoltan2"/>
+                  <Parameter name="repartition: min rows per proc" type="int" value="1000"/>
+                  <Parameter name="smoother: type" type="string" value="CHEBYSHEV"/>
+                  <ParameterList name="smoother: params">
+                    <Parameter name="chebyshev: degree" type="int" value="3"/>
+                    <Parameter name="chebyshev: ratio eigenvalue" type="double" value="30"/>
+                  </ParameterList>
+                  <Parameter name="smoother: pre or post" type="string" value="both"/>
+                  <Parameter name="coarse: max size" type="int" value="1500"/>
+                  <Parameter name="number of equations" type="int" value="3"/>
+                </ParameterList>
+
+              </ParameterList>
+            </ParameterList>
+          </ParameterList>
+        </ParameterList>
       </ParameterList>
 
       <ParameterList name="Line Search">
-	      <ParameterList name="Full Step">
-	        <Parameter name="Full Step" type="double" value="1"/>
-	      </ParameterList>
-	      <Parameter name="Method" type="string" value="Full Step"/>
+        <ParameterList name="Full Step">
+          <Parameter name="Full Step" type="double" value="1"/>
+        </ParameterList>
+        <Parameter name="Method" type="string" value="Full Step"/>
       </ParameterList>
 
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	      <Parameter name="Output Precision" type="int" value="3"/>
-	      <Parameter name="Output Processor" type="int" value="0"/>
+        <Parameter name="Output Precision" type="int" value="3"/>
+        <Parameter name="Output Processor" type="int" value="0"/>
 
         <ParameterList name="Output Information">
           <Parameter name="Error"                 type="bool" value="1"/>

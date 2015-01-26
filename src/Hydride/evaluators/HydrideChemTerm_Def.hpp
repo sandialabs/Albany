@@ -10,10 +10,9 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 
-template<typename T>
-T Sqr(T num)
-{
-    return num * num;
+template<typename ScalarT>
+inline ScalarT Sqr (const ScalarT& num) {
+  return num * num;
 }
 
 namespace HYD {
@@ -75,7 +74,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t qp=0; qp < numQPs; ++qp)
 
 //        chemTerm(cell, qp) = 0.25 * Sqr(Sqr(c(cell, qp)) - Sqr(b)) - w(cell, qp);
-        chemTerm(cell, qp) = ( Sqr(c(cell, qp)) - Sqr(b) ) * c(cell, qp) - w(cell, qp);
+      chemTerm(cell, qp) = ( Sqr<ScalarT>(c(cell, qp)) - Sqr<ScalarT>(b) ) * c(cell, qp) - w(cell, qp);
 
 }
 

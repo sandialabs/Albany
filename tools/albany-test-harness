@@ -1,13 +1,166 @@
 #!/usr/bin/env python
 
 """
-Albany test harness
+A convenient way to manage and wrap Albany building and
+testing, including Trilinos building.
 """
 
-import argparse, sys, os, doctest
+import argparse, sys, os, doctest, socket, re, stat
 from subprocess import Popen, PIPE
 
 VERBOSE = False
+
+"""
+TODO:
+ - Way to provide overrides from the command line?
+ - May need machine categorization in the case where lots of
+   machines have the same env settings.
+"""
+
+ALBANY_BUILD_TYPES = \
+{
+    "basic" : [
+    ],
+    "trikota" : [
+        ("TRILINOS_TRIKOTA",  "ON"),
+    ],
+    "lcm" : [
+        ("ALBANY_LCM", "ON"),
+    ],
+    "ato" : [
+        ("ALBANY_ATO", "ON")
+    ],
+    "aeras" : [
+        ("ALBANY_AERAS", "ON"),
+    ],
+    "felix" : [
+        ("ALBANY_FELIX", "ON"),
+    ],
+    "peridigm" : [
+        ("ALBANY_PERIDIGM", "ON"),
+    ],
+    "cism" : [
+        "felix",
+        ("ALBANY_CISM_INTERFACE", "OFF"),
+    ],
+    "mpas" : [
+        "felix",
+        ("ALBANY_MPAS_INTERFACE", "OFF"),
+    ],
+    "performance" : [
+        ("ALBANY_PERFORMANCE_TESTS", "ON"),
+    ],
+    "lame" : [
+        ("ALBANY_LAME", "ON"),
+    ],
+    "lament" : [
+        ("ALBANY_LAMENT", "ON"),
+    ],
+    "ascr" : [
+        ("ALBANY_ASCR", "ON"),
+    ],
+    "hydride" : [
+        ("ALBANY_HYDRIDE", "ON"),
+    ],
+    "see" : [
+        ("ALBANY_SEE", "ON"),
+    ],
+    "amp" : [
+        ("ALBANY_AMP", "ON"),
+    ],
+    "ci" : [
+        ("ALBANY_CI", "ON"),
+    ],
+    "scorec" : [
+        ("ALBANY_SCOREC", "ON"),
+        ("TRILINOS_SCOREC", "ON"),
+        ("TRILINOS_PARMETIS", "ON"),
+    ],
+    "complete" : [
+        "trikota",
+        "felix",
+        "lcm",
+        "aeras",
+        "ascr",
+        "hydride",
+        "ato",
+        "performance"
+    ],
+    "irina-full" : [
+        "complete",
+        "amp",
+        "lame",
+        "mpas",
+
+        ("TRILINOS_TRIKOTA",  "OFF"),
+        ("ALBANY_PERFORMANCE_TESTS",  "OFF"),
+
+        ("ALBANY_64BIT_INT", "ON"),
+        ("TRILINOS_PHALANX_TEUCHOS_TIME_MONITOR", "ON"),
+        ("TRILINOS_STOKHOS_TEUCHOS_TIME_MONITOR", "ON"),
+        ("TRILINOS_STRATIMIKOS_TEUCHOS_TIME_MONITOR", "ON"),
+        ("TRILINOS_SUPERLU", "ON"),
+        ("TRILINOS_PARMETIS", "ON"),
+        ("TRILINOS_YAML", "ON"),
+        ("TRILINOS_BLAS", "ON"),
+        ("TRILINOS_DIDASKO", "ON"),
+        ("TRILINOS_GALERI", "ON"),
+        ("TRILINOS_GLOBIPACK", "ON"),
+        ("TRILINOS_ISORROPIA", "ON"),
+        ("TRILINOS_OPTIPACK", "ON"),
+        ("TRILINOS_RBGEN", "ON"),
+        ("TRILINOS_SCOREC", "ON"),
+        ("TRILINOS_THREADPOOL", "ON"),
+        ("TRILINOS_COUPLINGS", "ON"),
+        ("TRILINOS_ZOLTAN2_EXPERIMENTAL", "ON"),
+    ],
+    "muelu_slu" : [
+        ("TRILINOS_MUELU",   "ON"),
+        ("TRILINOS_SUPERLU", "ON"),
+    ],
+    "muelu_klu" : [
+        ("TRILINOS_MUELU", "ON"),
+        ("TRILINOS_AMESOS_KLU2",  "ON"),
+    ],
+}
+
+JENKINS_ENVS = \
+[
+    ("TRILDIR",        "$WORKSPACE/Trilinos"),
+    ("TRILBUILDDIR",   "$TRILDIR/build"),
+    ("TRILINSTALLDIR", "$TRILBUILDDIR/install"),
+    ("ALBDIR",         "$WORKSPACE/Albany"),
+    ("ALBBUILDDIR",    "$ALBDIR/build"),
+    ("TRIKOTADIR",     "$TRILDIR/packages/TriKota"),
+    ("TRILOUTDIR",     "$WORKSPACE/Trilinos_out"),
+    ("ALBOUTDIR",      "$WORKSPACE/Albany_out"),
+    ("DAKOUTDIR",      "$WORKSPACE/Dakota_out"),
+    ("SCOROUTDIR",     "$WORKSPACE/Dakota_out"),
+]
+
+ALBANY_BUILD_MODES = \
+{
+    "release" : [
+        ("ALBANY_BUILD_MODE",   "RELEASE"),
+        ("TRILINOS_BUILD_MODE", "RELEASE")
+    ],
+    "debug"   : [
+        ("ALBANY_BUILD_MODE",          "DEBUG"),
+        ("TRILINOS_BUILD_MODE",        "DEBUG"),
+        ("TRILINOS_BUILD_SHARED_LIBS", "ON"),
+        ("ALBANY_CXX_FLAGS",           "-ggdb"),
+        ("TRILINOS_CXX_FLAGS",         "-ggdb")
+    ]
+}
+
+COMPILERS = [
+    "gcc",
+    "intel",
+    "clang",
+    "pgi"
+]
+
+LOCAL_CMAKE_BASE_NAME = "do-cmake-ATH"
 
 ###############################################################################
 def expect(condition, error_msg):
@@ -16,70 +169,255 @@ def expect(condition, error_msg):
         raise SystemExit(error_msg)
 
 ###############################################################################
+def warning(msg):
+###############################################################################
+    print >> sys.stderr, "WARNING:", msg
+
+###############################################################################
 def parse_command_line(args, description):
 ###############################################################################
     parser = argparse.ArgumentParser(
-usage="""\n%s <ENV FILE> [<OPTIONS>]
-OR
-%s --help
-OR
-%s --test
+usage="""\n<WRAPPER> [-t <BUILD_TYPE> [-t <BUILD_TYPE>] ] [-m <BUILD_MODE>] [<OPTIONS>]
+
+Examples assume <Albany>/tools/build_tools is in your PATH
 
 \033[1mEXAMPLE:\033[0m
-  %s jenkins_face_env
-""" % ((os.path.basename(args[0]), ) * 4),
+  > cd <Trilinos>/build
+  > source <Albany>/tools/env/<my-env-file>
+  > build-trilinos -t lcm -m debug
+  > make -j 4 install
+  > export TRILINSTALLDIR=`pwd`/install
+  > cd <Albany>/build
+  > build-albany -t lcm -m debug
+  > make -j 4
+
+\033[1mEXAMPLE USING NON-STANDARD BUILD LOCATIONS:\033[0m
+  > cd <Trilinos-build-dir>
+  > source <Albany>/tools/env/<my-env-file>
+  > export TRILDIR=<path-to-trilinos-src>
+  > build-trilinos -t lcm -m debug
+  > make -j 4 install
+  > export TRILINSTALLDIR=`pwd`/install
+  > cd <Albany-build-dir>
+  > export ALBDIR=<path-to-albany-src>
+  > build-albany -t lcm -m debug
+  > make -j 4
+
+\033[1mEXAMPLE LETTING HARNESS MANAGE ENV:\033[0m
+  > cd <Trilinos>/build
+  > build-trilinos -t lcm -m debug -e -c gcc
+  > make -j 4 install
+  > export TRILINSTALLDIR=`pwd`/install
+  > cd <Albany>/build
+  > build-albany -t lcm -m debug -e -c gcc
+  > make -j 4
+
+\033[1mEXAMPLE GENERATING LOCAL CMAKE FRAGMENTS:\033[0m
+  > cd <Trilinos>/build
+  > build-trilinos -t lcm -m debug -e -c gcc -g
+  > cmake
+  > make -j 4 install
+  > export TRILINSTALLDIR=`pwd`/install
+  > cd <Albany>/build
+  > build-albany -t lcm -m debug -e -c gcc -g
+  > cmake
+  > make -j 4
+""",
 
 description=description,
 
-formatter_class=argparse.ArgumentDefaultsHelpFormatter
+formatter_class=argparse.RawTextHelpFormatter
 )
+    # Variables: Albany build type
+    # Release or debug
+    parser.add_argument("-t", action="append", choices=(ALBANY_BUILD_TYPES.keys()),
+                        dest="build_types", default=[],
+                        help="Choose build type, can do several at once. Default is basic.")
 
-    parser.add_argument("env_file", help="File that contains env settings")
+    parser.add_argument("-m", action="store", choices=("debug", "release"),
+                        dest="build_mode", default="release", help="Choose build mode")
 
-    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
+    parser.add_argument("-v", action="store_true", dest="verbose", default=False,
                         help="Print shell commands as they are executed")
 
-    if (len(args) == 1):
-        args.append("--help")
+    parser.add_argument("-e", action="store_true", dest="manage_environment", default=False,
+                        help="Have harness manage your environment for you")
+
+    parser.add_argument("-g", action="store_true", dest="generate_cmake", default=False,
+                        help="Generate local cmake fragment, do not run it")
+
+    parser.add_argument("-c", action="store", dest="compiler", choices=COMPILERS, default=None,
+                        help="Choose compiler. Only works with -e")
+
+    parser.add_argument("mode", nargs="?", action="store", choices=("tril", "alb", "jenkins"),
+                        default="jenkins", help="INTERNAL USE ONLY")
 
     args = parser.parse_args(args[1:])
 
     global VERBOSE
     VERBOSE = args.verbose
 
-    return args.env_file
+    expect(args.compiler is None or args.manage_environment,
+           "Cannot use -c without also using -e")
+
+    if (args.build_types == []):
+        args.build_types = ["basic"]
+
+    return args.mode, args.build_types, args.build_mode, \
+        args.manage_environment, args.generate_cmake, args.compiler
 
 ###############################################################################
-def run_cmd(command):
+def run_cmd(command, arg_stdout=None):
 ###############################################################################
-    """
-    Run a command, returning exit code and output
-
-    >>> run_cmd('cd /usr && pwd')
-    (0, '/usr', '')
-    >>> run_cmd('cd .')
-    (0, '', '')
-    >>> run_cmd('/bin/ls CHOKE')[0]
-    2
-    """
     if (VERBOSE):
         print command
 
-    proc = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-    output, errput = proc.communicate()
+    proc = Popen(command, shell=True, stdout=arg_stdout)
+    output, _ = proc.communicate()
     status = proc.wait()
-    return status, output.strip(), errput.strip()
+
+    expect(status == 0, "Failed")
+
+    return output
 
 ###############################################################################
-def run_cmd_no_fail(command, custom_error=None):
+def set_env_for_build(build_keys, env_map):
 ###############################################################################
-    status, output, errput = run_cmd(command)
-    if (status != 0):
-        custom_error_str = ""
-        if (custom_error is not None):
-            custom_error_str = custom_error + "\n\n"
-        raise SystemExit("%sCommand: '%s' FAILED\n\nWith error: '%s'" % (custom_error_str, command, errput))
-    return output
+    for build_key in build_keys:
+        env_settings = env_map[build_key]
+
+        for item in env_settings:
+            if (type(item) is str):
+                set_env_for_build([item], env_map)
+            else:
+                env_var, env_setting = item
+                if (env_var in os.environ and os.environ[env_var] != env_setting):
+                    expect(False,
+                           "Conflicting build modes: '%s' tried to set env '%s' to '%s' but already had '%s" %
+                           (build_key, env_var, env_setting, os.environ[env_var]))
+                os.environ[env_var] = env_setting
+
+###############################################################################
+def set_jenkins_env():
+###############################################################################
+    expect("WORKSPACE" in os.environ,
+           "You're in jenkins mode and WORKSPACE not set, did you mean to run build_albany or build_trilinos?")
+
+    for env_var, env_setting in JENKINS_ENVS:
+        # Set env after dereferencing vars
+        components = [os.environ[item[1:]] if item.startswith('$') else item for item in env_setting.split("/")]
+        env_value = "/".join(components)
+        os.environ[env_var] = env_value
+        if (env_var in ["ALBDIR", "TRILDIR"]):
+            expect(os.path.isdir(env_value), "Value of '%s', '%s', not a valid directory" % (env_var, env_value))
+
+###############################################################################
+def generate_cmake_fragment(generic_fragment_path, env_cmd, frag_name):
+###############################################################################
+    # Read in generic_fragment_path
+    generic_fragment = open(generic_fragment_path, 'r').read()
+
+    # Put echo infront of cmake
+    generic_fragment_echo = generic_fragment.replace("\ncmake ", "\necho cmake ")
+
+    # Run cmake echo, capture output
+    cmake_cmd = run_cmd("%s && %s" % (env_cmd, generic_fragment_echo), PIPE)
+
+    # Be aware of potential file name conflicts for local fragment we want
+    # to create
+    renames = []
+    old_frag_name = frag_name
+    while (os.path.exists(old_frag_name)):
+        warning("File '%s' exists, adding '.old' to this file\'s name" % old_frag_name)
+        renames.insert( 0, (old_frag_name, "%s.old" % old_frag_name) )
+        old_frag_name = "%s.old" % old_frag_name
+
+    for old_name, new_name in renames:
+        assert( not os.path.exists(new_name) )
+        os.rename(old_name, new_name)
+
+    assert( not os.path.exists(frag_name) )
+
+    # Create local fragment
+    local_frag = open(frag_name, "w")
+    local_frag.write("#!/bin/bash -xe\n\n")
+    local_frag.write("/bin/rm -f CMakeCache.txt\n\n")
+
+    if ("ATH_COMPILER" in os.environ):
+        local_frag.write("export ATH_COMPILER=%s\n" % os.environ["ATH_COMPILER"])
+    local_frag.write("%s\n\n" % env_cmd)
+
+    space_not_after_dash_d = re.compile(r'([^-][^D]) ')
+    local_frag.write(space_not_after_dash_d.sub('\\1 \\\n  ', cmake_cmd))
+
+    local_frag.close()
+
+    # Make file executable
+    frag_st = os.stat(frag_name)
+    os.chmod(frag_name, frag_st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    print "Created CMake fragment:", frag_name
+
+###############################################################################
+def generate_frag_name(build_types, build_mode, compiler):
+###############################################################################
+    return "%s-%s-%s-%s" % (LOCAL_CMAKE_BASE_NAME, "-".join(sorted(build_types)), compiler, build_mode)
+
+###############################################################################
+def perform_test(mode, build_types, build_mode, manage_environment, gen_cmake, compiler):
+###############################################################################
+    set_env_for_build(build_types, ALBANY_BUILD_TYPES)
+    set_env_for_build([build_mode], ALBANY_BUILD_MODES)
+
+    exe_dir = os.path.dirname(__file__)
+
+    if (manage_environment):
+        if (compiler is not None):
+            os.environ["ATH_COMPILER"] = compiler
+        else:
+            warning(
+"""You elected to have harness manage your environment but did not
+provide a compiler via the -c option. This is OK if your environment
+is already configured for a certain compiler."""
+)
+
+        nodename = socket.gethostname().split(".")[0]
+        env_file_path = os.path.join(exe_dir, "env", "%s_env" % nodename)
+        expect(os.path.exists(env_file_path), "env file '%s' does not exist" % env_file_path)
+
+        env_cmd = "source %s" % env_file_path
+    else:
+        env_cmd = ":"
+
+    if (gen_cmake):
+        frag_name = generate_frag_name(build_types, build_mode, compiler)
+
+    if (mode == "jenkins"):
+        set_jenkins_env()
+
+        expect(not gen_cmake, "-g option doesn't make sense in jenkins mode")
+
+        test_script = os.path.join(exe_dir, "test_scripts", "test-engine")
+        run_cmd("%s && %s" % (env_cmd, test_script))
+
+    elif (mode == "tril"):
+        tril_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-trilinos")
+        if (gen_cmake):
+            generate_cmake_fragment(tril_fragment, env_cmd, frag_name)
+        else:
+            run_cmd("%s && %s" % (env_cmd, tril_fragment))
+
+    elif (mode == "alb"):
+        expect("TRILINSTALLDIR" in os.environ, "TRILINSTALLDIR must be set for albany mode")
+
+        alb_fragment = os.path.join(exe_dir, "build_scripts", "cmake_fragments", "do-cmake-albany")
+        if (gen_cmake):
+            generate_cmake_fragment(alb_fragment, env_cmd, frag_name)
+        else:
+            run_cmd("%s && %s" % (env_cmd, alb_fragment))
+
+    else:
+        expect(False, "Unrecognized mode '%s'" % mode)
 
 ###############################################################################
 def _main_func(description):
@@ -88,10 +426,10 @@ def _main_func(description):
         doctest.testmod()
         return
 
-    env_file = parse_command_line(sys.argv, description)
+    mode, build_types, build_mode, manage_environment, gen_cmake, compiler = \
+        parse_command_line(sys.argv, description)
 
-    # TODO: Complete prototype
-    print "Not implemented"
+    perform_test(mode, build_types, build_mode, manage_environment, gen_cmake, compiler)
 
 ###############################################################################
 

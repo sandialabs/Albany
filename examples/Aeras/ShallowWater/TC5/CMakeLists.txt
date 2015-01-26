@@ -15,7 +15,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../grids/QUAD9/uniform_16_quad9.g
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
 if (ALBANY_EPETRA) 
-add_test(Aeras_${testName}_Serial ${SerialAlbany.exe})
+add_test(Aeras_${testName} ${Albany.exe})
 endif() 
-add_test(Aeras_${testName}_Serial_Tpetra ${SerialAlbanyT.exe} inputT.xml)
+add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 

@@ -65,6 +65,13 @@ esac
 case "$BUILD_TYPE" in
     debug)
 	BUILD_STRING="DEBUG"
+	case "$TOOL_CHAIN" in
+	    gcc)
+		CMAKE_CXX_FLAGS="-ggdb $CMAKE_CXX_FLAGS"
+		;;
+	    *)
+		;;
+	esac
 	;;
     release)
 	BUILD_STRING="RELEASE"

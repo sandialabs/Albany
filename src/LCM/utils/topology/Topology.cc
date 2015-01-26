@@ -61,12 +61,12 @@ Topology::Topology(
   adapt_params->set<std::string>("Method", "Topmod");
 
   std::string const
-  bulk_block_name = "bulk";
+  bulk_block_name = "Bulk Element";
 
   adapt_params->set<std::string>("Bulk Block Name", bulk_block_name);
 
   std::string const
-  interface_block_name = "interface";
+  interface_block_name = "Surface Element";
 
   adapt_params->set<std::string>("Interface Block Name", interface_block_name);
 
@@ -137,72 +137,14 @@ Topology(
   return;
 }
 
-namespace {
-
 //
-// The entity id has now some very high number.
-// Change it to something reasonable for debugging purposes.
-// See formula for creating high id in CreateFaces.cpp
 //
-stk::mesh::EntityId
-compute_true_id(
-    size_t const space_dimension,
-    int const parallel_rank,
-    stk::mesh::EntityRank const rank,
-    stk::mesh::EntityId const id)
-{
-  stk::mesh::EntityId const
-  start_id = 256 * parallel_rank +
-    (static_cast<stk::mesh::EntityId>(parallel_rank + 1) << 32) - 1;
-
-  bool const
-  is_high_id = id >= start_id;
-
-  bool
-  is_face_or_edge = false;
-
-  switch (space_dimension) {
-
-  default:
-    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
-    std::cerr << '\n';
-    std::cerr << "Invalid space dimension in graph output: ";
-    std::cerr << space_dimension;
-    std::cerr << '\n';
-    exit(1);
-    break;
-
-  case 2:
-    if (rank == stk::topology::EDGE_RANK) {
-      is_face_or_edge = true;
-    }
-    break;
-
-  case 3:
-    if (rank == stk::topology::EDGE_RANK || rank == stk::topology::FACE_RANK) {
-      is_face_or_edge = true;
-    }
-    break;
-  }
-
-  stk::mesh::EntityId
-  true_id = id;
-
-  if (is_face_or_edge == true && is_high_id == true) {
-    true_id = id - start_id;
-  }
-
-  return true_id;
-}
-
-} // anonymous namespace
-
+//
 stk::mesh::EntityId const
 Topology::get_entity_id(stk::mesh::Entity const entity)
 {
   size_t const
-  space_dimension =
-      static_cast<size_t>(get_meta_data().spatial_dimension());
+  space_dimension = get_space_dimension();
 
   int const
   parallel_rank = get_bulk_data().parallel_rank();
@@ -211,12 +153,12 @@ Topology::get_entity_id(stk::mesh::Entity const entity)
   rank = get_bulk_data().entity_rank(entity);
 
   stk::mesh::EntityId const
-  id = get_bulk_data().identifier(entity);
+  high_id = get_bulk_data().identifier(entity);
 
   stk::mesh::EntityId const
-  true_id = compute_true_id(space_dimension, parallel_rank, rank, id);
+  low_id = low_id_from_high_id(space_dimension, parallel_rank, rank, high_id);
 
-  return true_id;
+  return low_id;
 }
 
 //
@@ -274,13 +216,13 @@ void Topology::graphInitialization()
   stk::mesh::create_adjacent_entities(get_bulk_data(), add_parts);
 
   get_bulk_data().modification_begin();
-
   removeMultiLevelRelations();
   initializeFractureState();
-
   get_bulk_data().modification_end();
+  get_stk_discretization().updateMesh();
 
-  set_highest_ids();
+  initializeTopologies();
+  initializeHighestIds();
 
   return;
 }
@@ -1502,10 +1444,63 @@ Topology::outputToGraphviz(std::string const & output_filename)
 }
 
 //
+//
+//
+void
+Topology::initializeTopologies()
+{
+  size_t const
+  dimension = get_space_dimension();
+
+  for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
+        rank <= stk::topology::ELEMENT_RANK; ++rank) {
+
+    if (rank > dimension) break;
+
+    std::vector<stk::mesh::Bucket*>
+    buckets = get_bulk_data().buckets(rank);
+
+    stk::mesh::Bucket const &
+    bucket = *(buckets[0]);
+
+    topologies_.push_back(bucket.topology());
+  }
+  return;
+}
+
+//
+// Place the entity in the root part that has the stk::topology
+// associated with the given rank.
+//
+void
+Topology::AssignTopology(
+    stk::mesh::EntityRank const rank,
+    stk::mesh::Entity const entity)
+{
+  stk::topology
+  stk_topology = get_topology().get_rank_topology(rank);
+
+  shards::CellTopology
+  cell_topology = stk::mesh::get_cell_topology(stk_topology);
+
+  stk::mesh::Part &
+  part = get_meta_data().get_cell_topology_root_part(cell_topology);
+
+  stk::mesh::PartVector
+  add_parts;
+
+  add_parts.push_back(&part);
+
+  get_bulk_data().change_entity_parts(entity, add_parts);
+
+  return;
+}
+
+//
 // \brief This returns the number of entities of a given rank
 //
 EntityVectorIndex
-Topology::get_num_entities(stk::mesh::EntityRank entity_rank)
+Topology::get_num_entities(stk::mesh::EntityRank const entity_rank)
 {
   std::vector<stk::mesh::Bucket*>
   buckets = get_bulk_data().buckets(entity_rank);
@@ -1525,13 +1520,17 @@ Topology::get_num_entities(stk::mesh::EntityRank entity_rank)
 // Used to assign unique ids to newly created entities
 //
 void
-Topology::set_highest_ids()
+Topology::initializeHighestIds()
 {
-  highest_ids_.resize(stk::topology::ELEMENT_RANK + 1);
+  size_t const
+  dimension = get_space_dimension();
 
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK;
       rank <= stk::topology::ELEMENT_RANK; ++rank) {
-    highest_ids_[rank] = get_num_entities(rank);
+
+    if (rank > dimension) break;
+
+    highest_ids_.push_back(get_num_entities(rank));
   }
 
   return;
@@ -1541,7 +1540,7 @@ Topology::set_highest_ids()
 //
 //
 stk::mesh::EntityId
-Topology::get_highest_id(stk::mesh::EntityRank rank)
+Topology::get_highest_id(stk::mesh::EntityRank const rank)
 {
   return highest_ids_[rank];
 }

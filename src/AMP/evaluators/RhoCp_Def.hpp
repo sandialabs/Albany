@@ -29,7 +29,7 @@ RhoCp(Teuchos::ParameterList& p,
   this->addEvaluatedField(rho_cp_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  std::vector<int> dims;
+  std::vector<PHX::Device::size_type> dims;
   scalar_dl->dimensions(dims);
   workset_size_ = dims[0];
   num_qps_      = dims[1];
@@ -80,7 +80,6 @@ evaluateFields(typename Traits::EvalData workset)
   // specific heat function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      MeshScalarT* X = &coord_(cell,qp,0);
       rho_cp_(cell,qp) = constant_value_;
     }
   }

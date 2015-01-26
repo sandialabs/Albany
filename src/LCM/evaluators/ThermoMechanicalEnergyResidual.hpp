@@ -48,7 +48,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F; // deformation gradient
     PHX::MDField<ScalarT,Cell,QuadPoint> mechSource; // mechanical heat source
-    PHX::MDField<ScalarT,Cell,Dummy> deltaTime; // time step
+    PHX::MDField<ScalarT,Dummy> deltaTime; // time step
     RealType density;
     RealType Cv;
 

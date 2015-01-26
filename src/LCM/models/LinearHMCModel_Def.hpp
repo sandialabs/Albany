@@ -84,6 +84,8 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
+  typedef typename EvalT::ScalarRefT ScalarRefT;
+
   // extract independent MDFields
   PHX::MDField<ScalarT> macroStrain = *dep_fields[macroStrainName];
   std::vector< PHX::MDField<ScalarT> > strainDifference(numMicroScales);
@@ -102,9 +104,6 @@ computeState(typename Traits::EvalData workset,
     doubleStress[i] = *eval_fields[doubleStressName[i]];
   }
 
-//Irina TOFIX pointers and dimensions
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed for Kokkos data types");
-/*
   switch (num_dims_) {
   case 1:
     // Compute Stress (uniaxial strain)
@@ -116,9 +115,9 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
     // Compute Stress (plane strain)
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < num_pts_; ++qp) {
-        ScalarT &e1 = macroStrain(cell,qp,0,0), 
-                &e2 = macroStrain(cell,qp,1,1), 
-                &e3 = macroStrain(cell,qp,0,1);
+        const ScalarRefT e1 = macroStrain(cell,qp,0,0), 
+                         e2 = macroStrain(cell,qp,1,1), 
+                         e3 = macroStrain(cell,qp,0,1);
 	macroStress(cell,qp,0,0) = C11*e1 + C12*e2;
 	macroStress(cell,qp,1,1) = C12*e1 + C11*e2;
 	macroStress(cell,qp,0,1) = C44*e3;
@@ -132,10 +131,10 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
-          ScalarT& e1 = sd(cell,qp,0,0), 
-                   e2 = sd(cell,qp,1,1), 
-                   e3 = sd(cell,qp,0,1), 
-                   e4 = sd(cell,qp,1,0);
+          const ScalarT e1 = sd(cell,qp,0,0), 
+                        e2 = sd(cell,qp,1,1), 
+                        e3 = sd(cell,qp,0,1), 
+                        e4 = sd(cell,qp,1,0);
           ms(cell,qp,0,0) = beta*(C11*e1 + C12*e2);
           ms(cell,qp,1,1) = beta*(C12*e1 + C11*e2);
           ms(cell,qp,0,1) = beta*(C44*e3);
@@ -151,7 +150,7 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
           for (std::size_t k=0; k < num_dims_; ++k) {
-            ScalarT& e1 = msg(cell,qp,0,0,k), e2 = msg(cell,qp,1,1,k), e3 = msg(cell,qp,0,1,k), e4 = msg(cell,qp,1,0,k);
+            const ScalarT e1 = msg(cell,qp,0,0,k), e2 = msg(cell,qp,1,1,k), e3 = msg(cell,qp,0,1,k), e4 = msg(cell,qp,1,0,k);
             ds(cell,qp,0,0,k) = beta*(C11*e1 + C12*e2);
             ds(cell,qp,1,1,k) = beta*(C12*e1 + C11*e2);
             ds(cell,qp,0,1,k) = beta*(C44*e3);
@@ -165,8 +164,8 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
     // Compute Stress
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t qp=0; qp < num_pts_; ++qp) {
-        ScalarT &e1 = macroStrain(cell,qp,0,0), &e2 = macroStrain(cell,qp,1,1), &e3 = macroStrain(cell,qp,2,2);
-        ScalarT &e4 = macroStrain(cell,qp,1,2), &e5 = macroStrain(cell,qp,0,2), &e6 = macroStrain(cell,qp,0,1);
+        const ScalarRefT e1 = macroStrain(cell,qp,0,0), e2 = macroStrain(cell,qp,1,1), e3 = macroStrain(cell,qp,2,2);
+        const ScalarRefT e4 = macroStrain(cell,qp,1,2), e5 = macroStrain(cell,qp,0,2), e6 = macroStrain(cell,qp,0,1);
 	macroStress(cell,qp,0,0) = C11*e1 + C12*e2 + C23*e3;
 	macroStress(cell,qp,1,1) = C12*e1 + C11*e2 + C23*e3;
 	macroStress(cell,qp,2,2) = C23*e1 + C23*e2 + C33*e3;
@@ -185,9 +184,9 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
-          ScalarT& e1 = sd(cell,qp,0,0), e2 = sd(cell,qp,1,1), e3 = sd(cell,qp,2,2);
-          ScalarT& e4 = sd(cell,qp,1,2), e5 = sd(cell,qp,0,2), e6 = sd(cell,qp,0,1);
-          ScalarT& e7 = sd(cell,qp,2,1), e8 = sd(cell,qp,2,0), e9 = sd(cell,qp,1,0);
+          const ScalarRefT e1 = sd(cell,qp,0,0), e2 = sd(cell,qp,1,1), e3 = sd(cell,qp,2,2);
+          const ScalarRefT e4 = sd(cell,qp,1,2), e5 = sd(cell,qp,0,2), e6 = sd(cell,qp,0,1);
+          const ScalarRefT e7 = sd(cell,qp,2,1), e8 = sd(cell,qp,2,0), e9 = sd(cell,qp,1,0);
           ms(cell,qp,0,0) = beta*(C11*e1 + C12*e2 + C23*e3);
           ms(cell,qp,1,1) = beta*(C12*e1 + C11*e2 + C23*e3);
           ms(cell,qp,2,2) = beta*(C23*e1 + C23*e2 + C33*e3);
@@ -208,9 +207,9 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
       for (std::size_t cell=0; cell < workset.numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
           for (std::size_t k=0; k < num_dims_; ++k) {
-            ScalarT& e1 = msg(cell,qp,0,0,k), e2 = msg(cell,qp,1,1,k), e3 = msg(cell,qp,2,2,k);
-            ScalarT& e4 = msg(cell,qp,1,2,k), e5 = msg(cell,qp,0,2,k), e6 = msg(cell,qp,0,1,k);
-            ScalarT& e7 = msg(cell,qp,2,1,k), e8 = msg(cell,qp,2,0,k), e9 = msg(cell,qp,1,0,k);
+            const ScalarRefT e1 = msg(cell,qp,0,0,k), e2 = msg(cell,qp,1,1,k), e3 = msg(cell,qp,2,2,k);
+            const ScalarRefT e4 = msg(cell,qp,1,2,k), e5 = msg(cell,qp,0,2,k), e6 = msg(cell,qp,0,1,k);
+            const ScalarRefT e7 = msg(cell,qp,2,1,k), e8 = msg(cell,qp,2,0,k), e9 = msg(cell,qp,1,0,k);
             ds(cell,qp,0,0,k) = beta*(C11*e1 + C12*e2 + C23*e3);
             ds(cell,qp,1,1,k) = beta*(C12*e1 + C11*e2 + C23*e3);
             ds(cell,qp,2,2,k) = beta*(C23*e1 + C23*e2 + C33*e3);
@@ -226,7 +225,6 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "LinearHMCModel:: evaluator has to be fixed f
     }
     break;
   }
-*/
 }
 //----------------------------------------------------------------------------
 }

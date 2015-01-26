@@ -18,6 +18,14 @@
 namespace FELIX {
 
 const double pi = 3.1415926535897932385;
+
+namespace {
+template<typename ScalarT>
+KOKKOS_INLINE_FUNCTION
+ScalarT flowRate (const ScalarT& T) {
+  return (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
+}
+}
  
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -37,7 +45,13 @@ ViscosityFO(const Teuchos::ParameterList& p,
    p.get<Teuchos::ParameterList*>("Parameter List");
 
   std::string viscType = visc_list->get("Type", "Constant");
-  std::string flowRateType = visc_list->get("Flow Rate Type", "Uniform");
+
+  std::string flowRateType;
+  if(visc_list->isParameter("Flow Rate Type"))
+    flowRateType = visc_list->get<std::string>("Flow Rate Type");
+  else
+    flowRateType = "Uniform";
+
   homotopyParam = visc_list->get("Glen's Law Homotopy Parameter", 1.0);
   A = visc_list->get("Glen's Law A", 1.0); 
   n = visc_list->get("Glen's Law n", 3.0);  
@@ -83,13 +97,17 @@ ViscosityFO(const Teuchos::ParameterList& p,
     	*out << "Flow Rate passed in from CISM." << std::endl;
 #endif
     }
-    else if (flowRateType == "temperature Based")
+    else if (flowRateType == "Temperature Based")
     {
     	flowRate_type = TEMPERATUREBASED;
     	this->addDependentField(temperature);
 #ifdef OUTPUT_TO_SCREEN
     	*out << "Flow Rate computed using temperature field." << std::endl;
 #endif
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error in FELIX::ViscosityFO:  \"" << flowRateType << "\" is not a valid parameter for Flow Rate Type" << std::endl);
     }
 #ifdef OUTPUT_TO_SCREEN
     *out << "n: " << n << std::endl; 
@@ -174,7 +192,7 @@ void ViscosityFO<EvalT, Traits>::operator () (const int i) const
             flowFactorVec = 1.0/2.0*pow(A, -1.0/n);
           break;
         case TEMPERATUREBASED:
-             flowFactorVec = 1.0/2.0*pow(flowRate(temperature(i)), -1.0/n);
+            flowFactorVec = 1.0/2.0*pow(flowRate<ScalarT>(temperature(i)), -1.0/n);
           break;
         case FROMFILE:
         case FROMCISM:
@@ -244,7 +262,7 @@ evaluateFields(typename Traits::EvalData workset)
           break; 
         case TEMPERATUREBASED:
           for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-	    flowFactorVec[cell] = 1.0/2.0*pow(flowRate(temperature(cell)), -1.0/n);
+	    flowFactorVec[cell] = 1.0/2.0*pow(flowRate<ScalarT>(temperature(cell)), -1.0/n);
           break;
         case FROMFILE:
         case FROMCISM: 

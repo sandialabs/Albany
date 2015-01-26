@@ -110,7 +110,9 @@ namespace LCM {
       }
 
       // hack to force evaluation
-      temp(cell) = 0.0;
+      //amb Something's not right here. Probably a dummy evaluated field is
+      // intended.
+      temp(cell,0) = 0.0;
     }
 
   }
@@ -132,7 +134,7 @@ namespace LCM {
 
     for (int cell = 0; cell < worksetSize; ++cell) {
       //hack to force evaluation
-      temp(cell) = 0.0;
+      temp(cell,0) = 0.0;
 
       for (int face = 0; face < numFaces; ++face) {
         criteriaMet(cell, face) = 0;

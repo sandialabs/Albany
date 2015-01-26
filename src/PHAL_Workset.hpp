@@ -336,8 +336,8 @@ struct Workset {
        Teuchos::RCP< Teuchos::ValueTypeSerializer<int,RealType> >
          real_serializer =
          Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,RealType>);
-       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,FadType> > serializer =
-         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,FadType>(
+       Teuchos::RCP< Teuchos::ValueTypeSerializer<int,TanFadType> > serializer =
+         Teuchos::rcp(new Teuchos::ValueTypeSerializer<int,TanFadType>(
                         real_serializer, num_dof));
        workset.serializerManager.
          setValue<PHAL::AlbanyTraits::DistParamDeriv>(serializer);

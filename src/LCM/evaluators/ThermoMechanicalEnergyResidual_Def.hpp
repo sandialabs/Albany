@@ -107,7 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::MDArray Temperature_old = (*workset.stateArrayPtr)[tempName];
 
   // time step
-  ScalarT dt = deltaTime(0,0);
+  ScalarT dt = deltaTime(0);
 
   // compute the 'material' flux
   FST::tensorMultiplyDataData<ScalarT> (C, F, F, 'T');

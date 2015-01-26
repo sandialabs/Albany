@@ -1,0 +1,33 @@
+## /Applications/Cubit-12.0/Cubit.app/Contents/MacOS/Cubitx
+## Cubit Version 12.0
+## Cubit Build 42217
+## Revised 2009-12-01 13:53:33 -0700 (Tue, 01 Dec 2009)
+## Running 10/14/2010 09:09:59 AM
+## Command Options:
+## -warning = On
+## -information = On
+create cylinder height 4 radius 5.35
+create cylinder height 4 radius 4.75
+subtract volume 2 from volume 1
+create cylinder height 2 radius 4.67
+#save as "./small.cub" overwrite
+volume all scheme auto
+mesh volume all
+delete mesh volume 3 propagate
+delete mesh volume 1 propagate
+volume all size auto factor 8
+mesh volume all
+volume all size auto factor 7
+volume all size auto factor 7
+mesh volume all
+#save as "./small.cub" overwrite
+nodeset 1 surface 9
+nodeset 2 surface 12
+nodeset 3 node 4081
+sideset 1 surface 7
+sideset 2 surface 10
+block 1 volume all
+#save as "./small.cub" overwrite
+set large exodus file off
+export mesh "./small.e" overwrite
+

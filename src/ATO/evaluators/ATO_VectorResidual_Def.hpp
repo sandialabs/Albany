@@ -29,7 +29,7 @@ VectorResidual(const Teuchos::ParameterList& p) :
 
   this->setName("VectorResidual"+PHX::typeAsString<EvalT>());
 
-  std::vector<int> dims;
+  std::vector<PHX::Device::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
   numQPs   = dims[2];

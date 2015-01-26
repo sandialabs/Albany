@@ -161,15 +161,15 @@ evaluateFields(typename Traits::EvalData workset)
     	  L2GradT = 0.0;
     	  UGNparameter = 0.0;
 
+    	  		// calculate L2 norm of gradient T
+    	  	        for (int dim=0; dim <numDims; ++dim){
+    	  		    		 L2GradT += TGrad(cell,qp,dim)*TGrad(cell,qp,dim);
+    	  		}
 
 
-    	  		 // calculate L2 norm of gradient T
-    	  		 for (int dim=0; dim <numDims; ++dim){
-    	  		    		  L2GradT += TGrad(cell,qp,dim)*TGrad(cell,qp,dim);
-    	  		 }
-    	  		 L2GradT = std::sqrt(L2GradT);
+    	  		if (L2GradT > 0.0){
 
-    	  		if (L2GradT != 0.0){
+                    L2GradT = std::sqrt(L2GradT);
 
     	  			for (int node=0; node < numNodes; ++node) {
     	  				for (int dim=0; dim <numDims; ++dim){

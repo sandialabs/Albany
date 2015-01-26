@@ -17,7 +17,7 @@
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
-#include "Piro_NullSpaceUtils.hpp"
+#include "Albany_NullSpaceUtils.hpp"
 
 
 
@@ -120,7 +120,7 @@ void QCAD::MultiSolution_Observer::observeSolution(const Epetra_Vector& solution
 
     //Create a discretization object based on the one in apps[0]
   int neq = nDiscMapCopies;
-  Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes(Teuchos::rcp(new Piro::MLRigidBodyModes(neq)));
+  Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq)));
   Teuchos::RCP<Albany::AbstractDiscretization> my_disc = discFactory.createDiscretization(neq, stateInfo,requirements,rigidBodyModes);  
 
     //Copy in states from apps (just apps[0] for now)

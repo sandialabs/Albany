@@ -96,7 +96,22 @@ void set_global_int (int i, int v) { _get_global_int(i) = v; }
 int get_global_int (int i) { return _get_global_int(i); }
 void incr_global_int (int i) { ++_get_global_int(i); }
 
-int print_level () { return 0; }
+int print_level () {
+  static bool first = true;
+  static int pl = 0;
+  if (first) {
+    FILE* fid = fopen("print_level.txt", "r");
+    if (fid) {
+      int pl_file;
+      const int ret = fscanf(fid, "%d", &pl_file);
+      if (ret == 1) pl = pl_file;
+      fclose(fid);
+    }
+    first = false;
+    std::cout << "amb: print_level " << pl << std::endl;
+  }
+  return pl;
+}
 bool set_xT_for_debug () { return false; }
 bool set_own_omp_nthreads () { return false; }
 } // namespace amb

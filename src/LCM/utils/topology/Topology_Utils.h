@@ -131,6 +131,37 @@ dot_relation(
     stk::mesh::EntityRank const target_rank,
     unsigned int const relation_local_id);
 
+//
+// The entity id has now some very high number.
+// Change it to something reasonable for debugging purposes.
+// See formula for creating high id in CreateFaces.cpp
+//
+stk::mesh::EntityId
+new_id_from_old_id(
+    size_t const dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const old_id,
+    bool const is_low_from_high);
+//
+//
+//
+stk::mesh::EntityId
+low_id_from_high_id(
+    size_t const dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const high_id);
+//
+//
+//
+stk::mesh::EntityId
+high_id_from_low_id(
+    size_t const dimension,
+    int const parallel_rank,
+    stk::mesh::EntityRank const rank,
+    stk::mesh::EntityId const low_id);
+
 ///
 /// Determine surface element topology based on bulk element topology
 ///

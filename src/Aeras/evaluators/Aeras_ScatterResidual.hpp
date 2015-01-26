@@ -142,6 +142,34 @@ public:
     {throw "Aeras::GatherSolution not implemented for all tempate specializations";};
 };
 
+#ifdef ALBANY_SG_MP
+// **************************************************************
+// Multi-point Residual 
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::MPResidual,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::MPResidual, Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+
+// **************************************************************
+// Multi-point Jacobian
+// **************************************************************
+template<typename Traits>
+class ScatterResidual<PHAL::AlbanyTraits::MPJacobian,Traits>
+  : public ScatterResidualBase<PHAL::AlbanyTraits::MPJacobian, Traits>  {
+public:
+  typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
+  ScatterResidual(const Teuchos::ParameterList& p,
+                              const Teuchos::RCP<Aeras::Layouts>& dl);
+  void evaluateFields(typename Traits::EvalData d); 
+};
+#endif //ALBANY_SG_MP
+
 }
 
 #endif
