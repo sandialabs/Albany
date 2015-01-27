@@ -244,8 +244,7 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const{
           switch (num_dims_) {
 
            default:
-               TEUCHOS_TEST_FOR_EXCEPTION( !( (num_dims_ == 2) || (num_dims_ == 3) ), std::invalid_argument,
-                                  ">>> ERROR (LCM FirstPK): piola function is defined only for rank-2 or 3 .");
+             Kokkos::abort("Error(LCM FirstPK): piola function is defined only for rank-2 or 3 .");
            break;
 
            case 3:
