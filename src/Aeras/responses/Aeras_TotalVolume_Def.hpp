@@ -108,9 +108,7 @@ preEvaluate(typename Traits::PreEvalData workset)
 {
   const int imax = this->global_response.size();
 
-  for (typename PHX::MDField<ScalarT>::size_type i=0;
-       i< imax; i++)
-    this->global_response[i] = 0.0;
+  PHAL::set(this->global_response, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -123,9 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::cout << "TotalVolume evaluateFields()" << std::endl;
 
-  for (typename PHX::MDField<ScalarT>::size_type i=0;
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   ScalarT volume;
   ScalarT mass;
@@ -143,7 +139,10 @@ evaluateFields(typename Traits::EvalData workset)
           this->local_response(cell, 1) += mass;
           this->global_response(1) += mass;
 
-          energy = pie(cell, qp, ell)*(0.5*velocity(cell, qp, ell)*velocity(cell,qp,ell) +
+          //amb velocity (Velx) has rank 4, not 3. It appears to have dimension
+          // 1 in the fourth index. An Aeras person needs to check this.
+          const int level = 0;
+          energy = pie(cell, qp, ell)*(0.5*velocity(cell, qp, ell, level)*velocity(cell,qp,ell, level) +
               Cpstar(cell,qp,ell)*temperature(cell,qp,ell) + Phi0 )*volume;
 
           this->local_response(cell, 2) += energy;
