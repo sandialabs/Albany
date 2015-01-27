@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
@@ -47,7 +48,7 @@ template<typename EvalT, typename Traits>
 void DOFDivInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int i=0; i < div_val_qp.size(); ++i) div_val_qp(i)=0.0;
+  PHAL::set(div_val_qp, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int qp=0; qp < numQPs; ++qp) 
       for (int node= 0 ; node < numNodes; ++node) 

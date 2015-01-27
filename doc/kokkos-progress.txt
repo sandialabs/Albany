@@ -637,11 +637,14 @@ x AMP
 x Felix
 x Hydride
 - Aeras
-- SCOREC (Andrew)
-- SG_MP (Andrew)
+  x build
+  - ctests
+x SCOREC (Andrew)
+! SG_MP (Andrew)
+  - Eric P. writes that we should skip SG_MP for now.
 - Merge master into tpetra_kokkos (Andrew)
-- Merge tpetra_kokkos into master (Andrew)
   x 22 Jan.
+- Merge tpetra_kokkos into master (Andrew)
 - Peridigm (Andrew and Dave)
 - Dakota (Andy?)
 - Figure out ETI in panzer_kokkos

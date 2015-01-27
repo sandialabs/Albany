@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -51,7 +52,7 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_KineticEnergy<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int i=0; i < ke.size(); ++i) ke(i)=0.0;
+  PHAL::set(ke, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int node=0; node < numNodes; ++node) 
       for (int level=0; level < numLevels; ++level) 

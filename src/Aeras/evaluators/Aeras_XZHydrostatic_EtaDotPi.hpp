@@ -40,7 +40,7 @@ public:
 
 private:
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  divpivelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      divpivelx;
   PHX::MDField<ScalarT,Cell,QuadPoint>            pdotP0;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Temperature;

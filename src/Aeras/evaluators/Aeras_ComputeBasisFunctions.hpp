@@ -60,9 +60,6 @@ private:
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
 
-  Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
-  Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
-  Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
   // Output:
   //! Basis Functions at quadrature points
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
@@ -75,8 +72,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> GradGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
          
          
   const double earthRadius;
@@ -87,6 +84,12 @@ private:
                             const double rrearth=1) const;
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
 
+  // Kokkos
+#ifndef NO_KOKKOS_ALBANY
+  Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
+  Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
+  Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
+#endif
 };
 }
 

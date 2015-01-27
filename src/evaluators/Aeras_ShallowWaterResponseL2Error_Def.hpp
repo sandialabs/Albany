@@ -6,6 +6,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace Aeras {
 
@@ -394,6 +395,7 @@ void Aeras::ShallowWaterResponseL2Error<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+#if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
@@ -410,12 +412,29 @@ postEvaluate(typename Traits::PostEvalData workset)
       *workset.comm, *serializer, Teuchos::REDUCE_SUM,
       this->global_response.size(), &partial_response[0],
       &this->global_response[0]);
+#else
+  //amb reduceAll workaround
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+#endif
   
+#if 0
   ScalarT abs_err_sq = this->global_response[0];
   ScalarT norm_ref_sq = this->global_response[1];
   this-> global_response[0] = sqrt(abs_err_sq); //absolute error in solution w.r.t. reference solution.
   this-> global_response[1] = sqrt(norm_ref_sq); //norm of reference solution
   this-> global_response[2] = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
+#else
+  //amb op[] bracket workaround
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  ScalarT abs_err_sq = *gr;
+  *gr = sqrt(abs_err_sq); //absolute error in solution w.r.t. reference solution.
+  ++gr;
+  ScalarT norm_ref_sq = *gr;
+  *gr = sqrt(norm_ref_sq); //norm of reference solution
+  ++gr;
+  *gr = sqrt(abs_err_sq/norm_ref_sq); //relative error in solution w.r.t. reference solution.
+#endif
+
   if (norm_ref_sq == 0)  {
     *out << "Aeras::ShallowWaterResponseL2Error::postEvaluate WARNING: norm of reference solution is 0.  Aeras Shallow Water L2 Error response" <<
             "will report 'nan' or 'inf' for the relative error, so please look at the absolute error." << std::endl;

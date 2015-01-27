@@ -6,9 +6,10 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
-
+#include "Aeras_ShallowWaterConstants.hpp"
 
 
 namespace Aeras {
@@ -32,7 +33,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   BF            (p.get<std::string>  ("BF Name"),           dl->node_qp_scalar),
   wBF           (p.get<std::string>  ("Weighted BF Name"),  dl->node_qp_scalar),
   GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
-  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_gradient),
+  wGradBF       (p.get<std::string>  ("Weighted Gradient BF Name"), dl->node_qp_tensor),
   GradGradBF    (p.get<std::string>  ("Gradient Gradient BF Name"), dl->node_qp_tensor),
   wGradGradBF   (p.get<std::string>  ("Weighted Gradient Gradient BF Name"), dl->node_qp_tensor),
   jacobian  (p.get<std::string>  ("Jacobian Name"), dl->qp_tensor ),
@@ -53,9 +54,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   
   // Get Dimensions
-  //
-  //std::vector<PHX::DataLayout::size_type> dim;
-  std::vector<PHX::Device::size_type> dim;
+  std::vector<PHX::DataLayout::size_type> dim;
   dl->node_qp_gradient->dimensions(dim);
 
   const int containerSize   = dim[0];
@@ -71,29 +70,31 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   refPoints         .resize               (numQPs, basisDims);
   refWeights        .resize               (numQPs);
 
-  refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
-  val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
-  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
-
-  for (int i =0; i< numQPs; i++)
-     refWeights_CUDA(i)=refWeights(i);
-
+  
   intrepidBasis->getValues(val_at_cub_points,  refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid::OPERATOR_D2);
+
+  this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
+
+#ifndef NO_KOKKOS_ALBANY
+  refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
+  val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
+  grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
+
+  for (int i =0; i< numQPs; i++)
+    refWeights_CUDA(i)=refWeights(i);
 
   for (int i =0; i < numNodes; i++){
     for (int j=0; j < numQPs; j++){
       val_at_cub_points_CUDA(i,j)=val_at_cub_points(i,j);
       for (int k=0; k < basisDims; k++)
-         grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
+        grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
     }
   }
-   
-
-  this->setName("Aeras::ComputeBasisFunctions"PHX::typeAsString<EvalT>());
+#endif
 }
 
 //**********************************************************************
@@ -116,8 +117,10 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(wGradGradBF,fm);
   
 }
+
 //**********************************************************************
 //Kokkos functors:
+#ifndef NO_KOKKOS_ALBANY
 template < typename MeshScalarType,class DeviceType, class MDFieldType >
 class compute_jacobian_inv  {
  MDFieldType jacobian_;
@@ -360,8 +363,7 @@ class compute_wGradBF  {
       } // F-loop
  }
 };
-
-
+#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -376,10 +378,14 @@ evaluateFields(typename Traits::EvalData workset)
     * final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
     */
-  
+
+  const double pi = ShallowWaterConstants::self().pi;
+  const double DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
+
   const int numelements = coordVec.dimension(0);
   const int spatialDim  = coordVec.dimension(2);
   const int basisDim    =                    2;
+
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
@@ -453,8 +459,7 @@ evaluateFields(typename Traits::EvalData workset)
         // 3) range of lon is { 0<= lon < 2*PI }
         //
         // ==========================================================
-        static const double pi = 3.1415926535897932385;
-        static const double DIST_THRESHOLD = 1.0e-9;
+
         const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
 
         MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
@@ -462,8 +467,8 @@ evaluateFields(typename Traits::EvalData workset)
         else if (longitude < 0) longitude += 2*pi;
 
 
-        sphere_coord(e,q,0) = latitude;
-        sphere_coord(e,q,1) = longitude;
+        sphere_coord(e,q,0) = longitude;
+        sphere_coord(e,q,1) = latitude;
 
         sinT(q) = std::sin(latitude);
         cosT(q) = std::cos(latitude);
@@ -639,15 +644,9 @@ evaluateFields(typename Traits::EvalData workset)
   }//end of if-statement which turns on/off homme;s map
   //////////////////////////////////////////////////////////////////////
 
-  
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
-//   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
- 
-//  Kokkos::parallel_for (numelements, compute_jacobian_det< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint> > (jacobian, jacobian_det, numQPs));
-
-
-  Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
+  Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobian_det, jacobian);
 
   for (int e = 0; e<numelements;      ++e) {
     for (int q = 0; q<numQPs;          ++q) {
@@ -655,6 +654,24 @@ evaluateFields(typename Traits::EvalData workset)
                   std::logic_error,"Bad Jacobian Found.");
     }
   }
+
+#ifdef NO_KOKKOS_ALBANY
+  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
+    (weighted_measure, jacobian_det, refWeights);
+
+  Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
+    (BF, val_at_cub_points);
+  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+    (wBF, weighted_measure, BF);
+  Intrepid::FunctionSpaceTools::HGRADtransformGRAD<MeshScalarT>
+    (GradBF, jacobian_inv, grad_at_cub_points);
+  Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
+    (wGradBF, weighted_measure, GradBF);
+#else // NO_KOKKOS_ALBANY
+//   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
+ 
+//  Kokkos::parallel_for (numelements, compute_jacobian_det< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint> > (jacobian, jacobian_det, numQPs));
+
 
 /*  Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
@@ -677,8 +694,9 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::parallel_for (numelements, compute_GradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, Kokkos::View<RealType***, PHX::Device>  > (GradBF, jacobian_inv, grad_at_cub_points_CUDA, numNodes, numQPs, numDims));
 
   Kokkos::parallel_for (numelements, compute_wGradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint>  > (wGradBF, GradBF, weighted_measure, numNodes, numQPs, numDims));
+#endif // NO_KOKKOS_ALBANY
 
-  for (std::size_t i=0; i < GradGradBF.size(); ++i) GradGradBF(i)=0.0;
+  PHAL::set(GradGradBF, 0.0);
   if (spatialDim!=basisDim) 
     for (int e=0; e<numelements; ++e) 
       for (int v=0; v<numNodes; ++v) 
@@ -786,7 +804,7 @@ div_check(const int spatialDim, const int numelements) const
       for (int q = 0; q<numQPs;         ++q) 
         for (int d = 0; d<spatialDim;   ++d) 
           for (int v = 0; v<numNodes;  ++v)
-            phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
+            phi(q,d) += earthRadius*coordVec(e,v,d) * val_at_cub_points(v,q);
 
       std::vector<MeshScalarT> divergence_v(numQPs);
       Intrepid::FieldContainer<MeshScalarT> v_lambda_theta(numQPs,2);
@@ -906,4 +924,3 @@ div_check(const int spatialDim, const int numelements) const
 
 //**********************************************************************
 }
-

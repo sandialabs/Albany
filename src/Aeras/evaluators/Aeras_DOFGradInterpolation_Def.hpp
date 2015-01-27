@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
@@ -28,10 +29,6 @@ DOFGradInterpolation(Teuchos::ParameterList& p,
   this->addEvaluatedField(grad_val_qp);
 
   this->setName("Aeras::DOFGradInterpolation" );
-
-  TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3) ,
-    std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");
-  this->setName("Aeras::DOFGradInterpolation"+ PHX::typeAsString<PHX::Device>());
 }
 
 //**********************************************************************
@@ -107,7 +104,7 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-  for (std::size_t i=0; i < grad_val_qp.size(); ++i) grad_val_qp(i)=0.0;
+  PHAL::set(grad_val_qp, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int qp=0; qp < numQPs; ++qp) 
       for (int dim=0; dim<numDims; dim++) 

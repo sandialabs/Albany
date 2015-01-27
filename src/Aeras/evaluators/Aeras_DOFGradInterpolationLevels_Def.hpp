@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
@@ -51,7 +52,7 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 
-  for (int i=0; i < grad_val_qp.size(); ++i) grad_val_qp(i)=0.0;
+  PHAL::set(grad_val_qp, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
@@ -111,7 +112,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
         for (int dim=0; dim<numDims; dim++) {
-          MeshScalarT& gvqp = grad_val_qp(cell,qp,level,dim) = 0;
+          typename PHAL::Ref<MeshScalarT>::type gvqp = grad_val_qp(cell,qp,level,dim) = 0;
           for (int node=0 ; node < numNodes; ++node) {
             gvqp += val_node(cell, node, level) * GradBF(cell, node, qp, dim);
           }

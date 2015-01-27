@@ -55,7 +55,7 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   this->addDependentField(sphere_coord);
   this->addEvaluatedField(source);
 
-  std::vector<int> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];

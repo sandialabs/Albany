@@ -57,7 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Residual;
+  PHX::MDField<ScalarT,Cell,Node,Level> Residual;
 
   ScalarT Re; // Reynolds number (demo on how to get info from input file)
 
