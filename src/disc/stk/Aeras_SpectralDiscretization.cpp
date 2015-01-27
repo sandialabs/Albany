@@ -1209,7 +1209,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
       if (edgeIsOwned[gid(edge)])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
-          indices[inode++] = enrichedEdges[ibuck][iedge][lnode];
+          indicesT[inode++] = enrichedEdges[ibuck][iedge][lnode];
       }
     }
   }
