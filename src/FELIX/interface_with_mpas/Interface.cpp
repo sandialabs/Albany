@@ -288,7 +288,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
 
   //Lateral floating ice BCs
   Teuchos::RCP<Teuchos::Array<double> >inputArrayLateral = Teuchos::rcp(new Teuchos::Array<double> (1, MPAS_rho_ice/MPAS_rho_seawater));
-  paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS floatingside for DOF all set lateral", *inputArrayLateral);
+  paramList->sublist("Problem").sublist("Neumann BCs").set("NBC on SS floatinglateralside for DOF all set lateral", *inputArrayLateral);
 
   //Dirichlet BCs
   paramList->sublist("Problem").sublist("Dirichlet BCs").set("DBC on NS dirichlet for DOF U0 prescribe Field", "dirichlet_field");
