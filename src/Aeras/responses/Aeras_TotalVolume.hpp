@@ -3,6 +3,7 @@
 
 #include "PHAL_SeparableScatterScalarResponse.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras{
 
@@ -35,11 +36,11 @@ private:
   PHX::MDField<ScalarT> field;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> density;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> velocity;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> temperature;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Cpstar;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> pie;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level> density;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> velocity;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level> temperature;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level> Cpstar;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level> pie;
   const int numLevels;
   double Phi0;
 };

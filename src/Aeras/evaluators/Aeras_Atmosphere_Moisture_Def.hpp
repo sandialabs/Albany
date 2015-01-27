@@ -10,6 +10,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Aeras_Eta.hpp"
 
@@ -75,8 +76,8 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
 
   for (int i = 0; i < tracerNames.size(); ++i) {
     namesToSrc[tracerNames[i]] = tracerSrcNames[i];
-    PHX::MDField<ScalarT,Cell,QuadPoint> in   (tracerNames[i],   dl->qp_scalar_level);
-    PHX::MDField<ScalarT,Cell,QuadPoint> src(tracerSrcNames[i],  dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],   dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,QuadPoint,Level> src(tracerSrcNames[i],  dl->qp_scalar_level);
     TracerIn[tracerNames[i]]     = in;
     TracerSrc[tracerSrcNames[i]] = src;
     this->addDependentField(TracerIn   [tracerNames[i]]);
@@ -119,16 +120,10 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
   //const double ztop = 10000.0;
   const double gravity = 9.80616;
 
-  for (int cell=0; cell < numCells; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-       for (int vec=0; vec<numLevels; vec++)
-          TempSrc(cell, qp, vec)=0.0;
-//Irina TOFIX
-/*  for (int t=0; t < TracerSrc.size(); ++t)
-     for (int cell=0; cell < numCells; ++cell) 
-        for (int qp=0; qp < numQPs; ++qp) 
-           for (int level=0; level < numLevels; ++level)
-              TracerSrc[tracerSrcNames[t]](cell, qp, level)=0.0;
+  PHAL::set(TempSrc, 0.0);
+
+  for (int t=0; t < TracerSrc.size(); ++t)  
+    PHAL::set(TracerSrc[tracerSrcNames[t]], 0.0);
 
   if (compute_cloud_physics == true) {
 
@@ -193,7 +188,7 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
       }
     }
   }
-*/
+
 }
 
 // **********************************************************************

@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
@@ -150,10 +151,7 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-    for (int qp=0; qp < numQPs; ++qp)
-      for (int node=0; node < numNodes; ++node) 
-         for (int vec=0; vec <3; ++vec)
-           Residual(qp, node, vec)=0.0;
+  PHAL::set(Residual, 0.0);
 
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);

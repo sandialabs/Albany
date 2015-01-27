@@ -55,7 +55,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>        density;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Level,Node> Residual;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Residual;
 
   const double viscosity;
   const double hyperviscosity;

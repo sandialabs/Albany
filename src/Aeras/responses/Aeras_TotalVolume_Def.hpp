@@ -13,6 +13,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace Aeras {
 template<typename EvalT, typename Traits>
@@ -43,7 +44,7 @@ TotalVolume(Teuchos::ParameterList& p,
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
   Teuchos::RCP<PHX::DataLayout> vector_dl = dl->qp_vector;
 
-  std::vector<int> dims;
+  std::vector<PHX::DataLayout::size_type> dims;
   vector_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -107,9 +108,7 @@ preEvaluate(typename Traits::PreEvalData workset)
 {
   const int imax = this->global_response.size();
 
-  for (typename PHX::MDField<ScalarT>::size_type i=0;
-       i< imax; i++)
-    this->global_response[i] = 0.0;
+  PHAL::set(this->global_response, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -122,9 +121,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   std::cout << "TotalVolume evaluateFields()" << std::endl;
 
-  for (typename PHX::MDField<ScalarT>::size_type i=0;
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   ScalarT volume;
   ScalarT mass;
@@ -142,7 +139,10 @@ evaluateFields(typename Traits::EvalData workset)
           this->local_response(cell, 1) += mass;
           this->global_response(1) += mass;
 
-          energy = pie(cell, qp, ell)*(0.5*velocity(cell, qp, ell)*velocity(cell,qp,ell) +
+          //amb velocity (Velx) has rank 4, not 3. It appears to have dimension
+          // 1 in the fourth index. An Aeras person needs to check this.
+          const int level = 0;
+          energy = pie(cell, qp, ell)*(0.5*velocity(cell, qp, ell, level)*velocity(cell,qp,ell, level) +
               Cpstar(cell,qp,ell)*temperature(cell,qp,ell) + Phi0 )*volume;
 
           this->local_response(cell, 2) += energy;
@@ -163,7 +163,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 {
 
   std::cout << "TotalVolume postEvaluate()" << std::endl;
-
+#if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
@@ -178,14 +178,27 @@ postEvaluate(typename Traits::PostEvalData workset)
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,
     this->global_response.size(), &partial_response[0],
     &this->global_response[0]);
+#else
+  //amb reduceAll workaround.
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+#endif
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
 
+#if 0
+  //amb Won't work because of rank.
   std::cout << "Total Volume is " << this->global_response(0) << std::endl;
   std::cout << "Total Mass is " << this->global_response(1) << std::endl;
   std::cout << "Total Energy is " << this->global_response(2) << std::endl;
-
+#else
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  std::cout << "Total Volume is " << *gr << std::endl;
+  ++gr;
+  std::cout << "Total Mass is " << *gr << std::endl;
+  ++gr;
+  std::cout << "Total Energy is " << *gr << std::endl;  
+#endif
 }
 
 // **********************************************************************

@@ -32,19 +32,13 @@
 
 #define velocity_solver_init_mpi velocity_solver_init_mpi__
 #define velocity_solver_finalize velocity_solver_finalize__
-#define velocity_solver_init_l1l2 velocity_solver_init_l1l2__
-#define velocity_solver_solve_l1l2 velocity_solver_solve_l1l2__
 #define velocity_solver_init_fo velocity_solver_init_fo__
 #define velocity_solver_solve_fo velocity_solver_solve_fo__
-#define velocity_solver_init_stokes velocity_solver_init_stokes__
-#define velocity_solver_solve_stokes velocity_solver_solve_stokes__
 #define velocity_solver_compute_2d_grid velocity_solver_compute_2d_grid__
 #define velocity_solver_set_grid_data velocity_solver_set_grid_data__
 #define velocity_solver_extrude_3d_grid velocity_solver_extrude_3d_grid__
-#define velocity_solver_export_l1l2_velocity velocity_solver_export_l1l2_velocity__
-#define velocity_solver_export_2d_data velocity_solver_export_2d_data__
 #define velocity_solver_export_fo_velocity velocity_solver_export_fo_velocity__
-#define velocity_solver_estimate_SS_SMB velocity_solver_estimate_ss_smb__
+#define velocity_solver_set_physical_parameters velocity_solver_set_physical_parameters__
 /*
 #include "Extrude3DMesh.hpp"
 /*/
@@ -68,6 +62,8 @@ const ID NotAnId = std::numeric_limits<int>::max();
 
 // 1
 int velocity_solver_init_mpi(int *fComm);
+
+void velocity_solver_set_physical_parameters(double gravity_, double rho_ice_, double rho_seawater_);
 
 void velocity_solver_finalize();
 
@@ -103,11 +99,7 @@ void velocity_solver_set_grid_data(int const * _nCells_F, int const * _nEdges_F,
 void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles, int nGlobalVertices, int nGlobalEdges, int Ordering, MPI_Comm reducedComm,
     const std::vector<int>& indexToVertexID, const std::vector<int>& mpasIndexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary,
     const std::vector<int>& verticesOnTria, const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
-    const std::vector<int>& verticesOnEdge, const std::vector<int>& indexToEdgeID, const std::vector<int>& indexToTriangleID);
-
-void velocity_solver_export_2d_data(MPI_Comm reducedComm, const std::vector<double>& elevationData, const std::vector<double>& thicknessData,
-    const std::vector<double>& betaData, const std::vector<int>& indexToVertexID);
-
+    const std::vector<int>& verticesOnEdge, const std::vector<int>& indexToEdgeID, const std::vector<int>& indexToTriangleID, const std::vector<int>& dirichletNodesIds, const std::vector<int>& floating2dEdgesIds);
 
 void velocity_solver_export_fo_velocity(MPI_Comm reducedComm);
 

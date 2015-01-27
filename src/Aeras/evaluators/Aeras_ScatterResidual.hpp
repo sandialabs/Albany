@@ -44,7 +44,7 @@ public:
   
 protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
+  std::vector< PHX::MDField<ScalarT> > val;
   const int numNodes;
   const int numDims;
   const int numLevels;

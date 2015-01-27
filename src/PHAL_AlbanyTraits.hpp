@@ -41,13 +41,16 @@ namespace PHAL {
   template<typename T> struct Ref {
     typedef T& type;
   };
-  template<> struct Ref<FadType> {
-    typedef Kokkos::View<FadType***, PHX::Device>::reference_type type;
+  template<typename T> struct RefKokkos {
+    typedef typename Kokkos::View<T***, PHX::Device>::reference_type type;
   };
+  template<> struct Ref<FadType> : RefKokkos<FadType> {};
 #ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-  template<> struct Ref<TanFadType> {
-    typedef Kokkos::View<TanFadType***, PHX::Device>::reference_type type;
-  };
+  template<> struct Ref<TanFadType> : RefKokkos<TanFadType> {};
+#endif
+#ifdef ALBANY_SG_MP
+  template<> struct Ref<SGFadType> : RefKokkos<SGFadType> {};
+  template<> struct Ref<MPFadType> : RefKokkos<MPFadType> {};
 #endif
 
   struct AlbanyTraits : public PHX::TraitsBase {
@@ -57,40 +60,29 @@ namespace PHAL {
     //   * ScalarT is for quantities that depend on solution/params
     //   * MeshScalarT is for quantities that depend on mesh coords only
     // ******************************************************************
-    struct Residual {
-      typedef RealType ScalarT;
-      typedef RealType MeshScalarT;
-      typedef Ref<ScalarT>::type ScalarRefT;
-      typedef Ref<MeshScalarT>::type MeshScalarRefT;
-    };
-    struct Jacobian {
-      typedef FadType ScalarT;
-      typedef RealType MeshScalarT;
-      typedef Ref<ScalarT>::type ScalarRefT;
-      typedef Ref<MeshScalarT>::type MeshScalarRefT;
-    };
-    struct Tangent {
-      typedef TanFadType ScalarT;
-      typedef TanFadType MeshScalarT; // Use this for shape opt
-      //typedef RealType MeshScalarT; // Uncomment for no shape opt
-      typedef Ref<ScalarT>::type ScalarRefT;
-      typedef Ref<MeshScalarT>::type MeshScalarRefT;
+    template<typename ScalarT_, typename MeshScalarT_>
+    struct EvaluationType {
+      typedef ScalarT_ ScalarT;
+      typedef MeshScalarT_ MeshScalarT;
+      typedef typename Ref<ScalarT_>::type ScalarRefT;
+      typedef typename Ref<MeshScalarT_>::type MeshScalarRefT;
     };
 
-    struct DistParamDeriv {
-      typedef TanFadType ScalarT;
-      typedef RealType MeshScalarT;
-      typedef Ref<ScalarT>::type ScalarRefT;
-      typedef Ref<MeshScalarT>::type MeshScalarRefT;
-    };
+    struct Residual : EvaluationType<RealType, RealType> {};
+    struct Jacobian : EvaluationType<FadType,  RealType> {};
+    struct Tangent  : EvaluationType<TanFadType,
+                                     TanFadType // Use this for shape opt
+                                     //RealType // Uncomment for no shape opt
+                                     > {};
+    struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
 
 #ifdef ALBANY_SG_MP
-    struct SGResidual { typedef SGType    ScalarT; typedef RealType MeshScalarT; };
-    struct SGJacobian { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
-    struct SGTangent  { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
-    struct MPResidual { typedef MPType    ScalarT; typedef RealType MeshScalarT; };
-    struct MPJacobian { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
-    struct MPTangent  { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
+    struct SGResidual : EvaluationType<SGType,    RealType> {};
+    struct SGJacobian : EvaluationType<SGFadType, RealType> {};
+    struct SGTangent  : EvaluationType<SGFadType, RealType> {};
+    struct MPResidual : EvaluationType<MPType,    RealType> {};
+    struct MPJacobian : EvaluationType<MPFadType, RealType> {};
+    struct MPTangent  : EvaluationType<MPFadType, RealType> {};
 #endif //ALBANY_SG_MP
 
 #ifdef ALBANY_SG_MP

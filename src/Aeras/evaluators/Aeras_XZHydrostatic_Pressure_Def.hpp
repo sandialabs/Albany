@@ -66,7 +66,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       for (int level=0; level < numLevels; ++level) {
         const ScalarT pm   = level             ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level-1) ) : E.ptop();
-        const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : Ps(cell,node);
+        const ScalarT pp   = level<numLevels-1 ? 0.5*( Pressure(cell,node,level) + Pressure(cell,node,level+1) ) : ScalarT(Ps(cell,node));
         Pi(cell,node,level) = (pp - pm) /E.delta(level);
       }
     }

@@ -47,8 +47,8 @@ public:
   
 protected:
 
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
   const int numNodes;
   const int numDims;
   const int numLevels;
