@@ -408,12 +408,23 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
 
+  if (!JacT->isFillComplete())
+      JacT->fillComplete();
+
+  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
+  LocalMatrixType jacobian;
+
+   jacobian=JacT->getLocalMatrix();
+
+
   const bool loadResid = Teuchos::nonnull(fT);
-  Teuchos::Array<LO> colT;
+//  Teuchos::Array<LO> colT;
 
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*this->numNodes;
-  colT.resize(nunk);
+//  colT.resize(nunk);
+  
+  LO colT[nunk];
 
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
@@ -446,16 +457,23 @@ evaluateFields(typename Traits::EvalData workset)
         if (valptr.hasFastAccess()) {
           if (workset.is_adjoint) {
             // Sum Jacobian transposed
-            for (unsigned int lunk = 0; lunk < nunk; lunk++)
-              JacT->sumIntoLocalValues(
+            for (int lunk = 0; lunk < nunk; lunk++){
+              ST val = valptr.fastAccessDx(lunk);
+              jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
+            }
+ 
+/*              JacT->sumIntoLocalValues(
                 colT[lunk], Teuchos::arrayView(&rowT, 1),
                 Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-          }
+    */      }
           else {
             // Sum Jacobian entries all at once
-            JacT->sumIntoLocalValues(
+              ST vals[nunk];
+              for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
+              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
+/*            JacT->sumIntoLocalValues(
               rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-            if (fid)
+*/            if (fid)
               for (int lunk = 0; lunk < nunk; ++lunk)
                 fprintf(fid, "%d %d %d %d %d %1.15e\n", cell, node, eq, rowT,
                         colT[lunk], valptr.fastAccessDx(lunk));
@@ -465,6 +483,9 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   if (fid) fclose(fid);
+
+  if (JacT->isFillComplete())
+    JacT->resumeFill();
 #else
    //Kokkos parallel execution
 

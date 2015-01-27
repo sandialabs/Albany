@@ -179,7 +179,6 @@ public:
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const ScatterRank2_no_adjoint_Tag& tag, const int& i) const;
-
 #endif
 };
 
