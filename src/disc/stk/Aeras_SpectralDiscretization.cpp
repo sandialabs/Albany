@@ -2980,6 +2980,10 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   //IK, 1/23/15, FIXME: to implement
   computeGraphs();
 
+  //IK, 1/26/15: This will need to be uncommented at some point
+  //computeCoordinates(); 
+  //Note that coordinates are set in getCoordinates() and getCoords() as well.  I think the former isn't called anywhere however.
+
   //IK, 1/23/15, FIXME: to implement
   computeWorksetInfo();
  
@@ -2989,13 +2993,15 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   computeNodeSets();
   computeSideSets();
 
-  setupExodusOutput();
+  //IK, 1/26/15 -- commenting out for now
+  //setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution transfer and projection operations
   // FIXME this only needs to be called if we are using the L2 Projection response
   // IK, 1/23/15: I don't think we'll need meshToGraph for Aeras.
   //meshToGraph();
   // printVertexConnectivity();
-  setupNetCDFOutput();
+  // IK, 1/26/15 -- commenting out for now
+  //setupNetCDFOutput();
 
 }
