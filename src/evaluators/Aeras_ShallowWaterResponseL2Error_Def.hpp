@@ -125,10 +125,7 @@ template<typename EvalT, typename Traits>
 void Aeras::ShallowWaterResponseL2Error<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
-
+  PHAL::set(this->global_response, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
@@ -139,10 +136,7 @@ void Aeras::ShallowWaterResponseL2Error<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {   
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
-
+  PHAL::set(this->local_response, 0.0);
 
   Intrepid::FieldContainer<ScalarT> flow_state_field_qp(workset.numCells, numQPs, vecDim); //flow_state_field at quad points
   Intrepid::FieldContainer<ScalarT> flow_state_field_ref_qp(workset.numCells, numQPs, vecDim); //flow_state_field_ref (exact solution) at quad points
