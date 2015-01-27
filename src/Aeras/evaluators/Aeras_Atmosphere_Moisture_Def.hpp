@@ -123,6 +123,7 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
     for (int qp=0; qp < numQPs; ++qp) 
        for (int vec=0; vec<numLevels; vec++)
           TempSrc(cell, qp, vec)=0.0;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
 //Irina TOFIX
 /*  for (int t=0; t < TracerSrc.size(); ++t)
      for (int cell=0; cell < numCells; ++cell) 

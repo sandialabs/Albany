@@ -100,6 +100,7 @@ evaluateFields(typename Traits::EvalData workset)
         fT_nonconstView[eqID[n]] += (this->val[j])(cell,node);
       }
       eq += this->numNodeVar;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
 //Irina TOFIX
 /*
       for (int level = 0; level < this->numLevels; level++) { 
@@ -158,6 +159,7 @@ evaluateFields(typename Traits::EvalData workset)
         colT[neq * node + eq_col] =  nodeID[node][eq_col];
       }
     }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
 //Irina TOFIX
 /*
  for (int node = 0; node < this->numNodes; ++node) {
@@ -280,7 +282,7 @@ evaluateFields(typename Traits::EvalData workset)
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
                      "One of f, JV, or fp must be non-null! " << std::endl);
   }
-
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
   //Irina TOFIX
   /*
   for (int cell=0; cell < workset.numCells; ++cell ) {

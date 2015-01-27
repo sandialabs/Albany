@@ -220,6 +220,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
 
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
  //Irina TOFIX
  /*
 for (int cell=0; cell < workset.numCells; ++cell ) {
@@ -332,6 +333,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<const ST> xdotT_constView = xdotT->get1dView();
 
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
  //Irina TOFIX
  /*
  
