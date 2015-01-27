@@ -933,9 +933,9 @@ void Aeras::SpectralDiscretization::enrichMesh()
   {
     stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
     enrichedEdges[ibuck].resize(edgeBucket.size());
-    for (size_t ielem = 0; ielem < edgeBucket.size(); ++ielem)
+    for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
-      stk::mesh::Entity edge = edgeBucket[ielem];
+      stk::mesh::Entity edge = edgeBucket[iedge];
       unsigned numNodes = bulkData.num_nodes(edge);
       TEUCHOS_TEST_FOR_EXCEPTION(
         numNodes != 2,
@@ -943,14 +943,14 @@ void Aeras::SpectralDiscretization::enrichMesh()
         "Starting edges for enriched elements must be linear.  Edge " << edge
         << " has " << numNodes << " nodes.");
       const stk::mesh::Entity * nodes = bulkData.begin_nodes(edge);
-      enrichedEdges[ibuck][ielem].resize(np);
-      enrichedEdges[ibuck][ielem][0] = gid(nodes[0]);
+      enrichedEdges[ibuck][iedge].resize(np);
+      enrichedEdges[ibuck][iedge][0] = gid(nodes[0]);
       for (GO inode = 1; inode < np-1; ++inode)
       {
-        enrichedEdges[ibuck][ielem][inode] =
+        enrichedEdges[ibuck][iedge][inode] =
           maxGID + gid(edge)*(np-2) + inode;
       }
-      enrichedEdges[ibuck][ielem][np-1] = gid(nodes[1]);
+      enrichedEdges[ibuck][iedge][np-1] = gid(nodes[1]);
     }
   }
 
