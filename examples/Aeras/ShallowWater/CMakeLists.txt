@@ -10,3 +10,6 @@ add_subdirectory(TCGalewsky)
 add_subdirectory(TC4)
 add_subdirectory(TC7)
 
+if (NOT ALBANY_EPETRA) 
+add_subdirectory(Spectral)
+endif()
