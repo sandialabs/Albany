@@ -9,7 +9,7 @@
 #include "AlbPUMI_NodeData.hpp"
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const bool output){
+AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output){
 
   switch(dim.size()){
 
@@ -33,7 +33,7 @@ AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<int>& dim
 
 template<typename DataType, unsigned ArrayDim, class traits>
 AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_,
-                                const std::vector<int>& dim, const bool output_) :
+                                const std::vector<PHX::DataLayout::size_type>& dim, const bool output_) :
   name(name_),
   output(output_),
   dims(dim),
