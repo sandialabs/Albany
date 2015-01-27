@@ -1208,10 +1208,8 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
       stk::mesh::Entity edge = edgeBucket[iedge];
       if (edgeIsOwned[gid(edge)])
       {
-        // Note that local edge nodes 0 and 3 have already been
-        // handled correctly by the previous loop over ownednodes
-        indicesT[inode++] = enrichedEdges[ibuck][iedge][1];
-        indicesT[inode++] = enrichedEdges[ibuck][iedge][2];
+        for (size_t lnode = 1; lnode < np-1; ++lnode)
+          indices[inode++] = enrichedEdges[ibuck][iedge][lnode];
       }
     }
   }
