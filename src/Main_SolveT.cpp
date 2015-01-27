@@ -88,10 +88,10 @@ int main(int argc, char *argv[]) {
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
 
-  if (amb::set_own_omp_nthreads())
-    PHX::Device::initialize(4);
+/*  if (amb::set_own_omp_nthreads())
+    PHX::Device::initialize(4);// This doesn't work wit CUDA
   else
-    PHX::InitializeKokkosDevice();
+*/    PHX::InitializeKokkosDevice();
 
 #ifdef ALBANY_CHECK_FPE
 //	_mm_setcsr(_MM_MASK_MASK &~
