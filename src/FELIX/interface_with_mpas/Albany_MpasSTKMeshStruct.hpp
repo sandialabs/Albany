@@ -21,9 +21,9 @@ namespace Albany {
 
     public:
 
-	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-	                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-	                                               const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
+//	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+	//                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
+	  //                                             const std::vector<GO>& indexToTriangleID, const std::vector<int>& verticesOnTria, int nGlobalTriangles);
 
 	MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
 	                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
@@ -56,18 +56,6 @@ namespace Albany {
 
 
     void constructMesh(
-            const Teuchos::RCP<const Teuchos_Comm>& commT,
-            const Teuchos::RCP<Teuchos::ParameterList>& params,
-            const unsigned int neq_,
-            const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-            const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-            const std::vector<int>& indexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
-            const std::vector<int>& verticesOnTria,
-            const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
-            const std::vector<int>& verticesOnEdge, const std::vector<int>& indexToEdgeID, int nGlobalEdges,
-            const unsigned int worksetSize);
-
-    void constructMesh(
 		   const Teuchos::RCP<const Teuchos_Comm>& commT,
 		   const Teuchos::RCP<Teuchos::ParameterList>& params,
 		   const unsigned int neq_,
@@ -79,6 +67,8 @@ namespace Albany {
 		   const std::vector<int>& verticesOnEdge,
 		   const std::vector<int>& indexToEdgeID, int nGlobalEdges,
 		   const std::vector<GO>& indexToTriangleID,
+		   const std::vector<int>& dirichletNodesIds,
+		   const std::vector<int>& floating2dLateralEdgesIds,
 		   const unsigned int worksetSize,
 		   int numLayers, int Ordering = 0);
 
@@ -94,6 +84,8 @@ namespace Albany {
 		   const std::vector<int>& verticesOnEdge,
 		   const std::vector<int>& indexToEdgeID, int nGlobalEdges,
 		   const std::vector<GO>& indexToTriangleID,
+		   const std::vector<int>& dirichletNodesIds,
+		   const std::vector<int>& floating2dLateralEdgesIds,
 		   const unsigned int worksetSize,
 		   int numLayers, int Ordering = 0);
 

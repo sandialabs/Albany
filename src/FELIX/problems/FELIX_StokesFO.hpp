@@ -216,7 +216,7 @@ FELIX::StokesFO::constructEvaluators(
          (evalUtils.constructGatherScalarNodalParameter(stateName));
     }
 
-#ifdef CISM_HAS_FELIX
+#if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
    {
     // Here is how to register the field for dirichlet condition.
     std::string stateName("dirichlet_field");

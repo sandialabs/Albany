@@ -67,10 +67,6 @@ const double pi = 3.1415926535897932385;
 const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
-// Hard code the points per edge of enriched elements.  This will
-// later be changed to an input parameter.
-const int points_per_edge = 3;
-
 // Uncomment the following line if you want debug output to be printed to screen
 // #define OUTPUT_TO_SCREEN
 
@@ -96,6 +92,8 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
 
+  // Get from parameter list how many points per edge we have (default = 2: no enrichment)
+  points_per_edge = stkMeshStruct->points_per_edge; 
   Aeras::SpectralDiscretization::updateMesh();
 }
 
@@ -305,14 +303,7 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
     "Aeras::SpectralDiscretization::setReferenceConfigurationManager is not implemented.");
 }
 
-// The function transformMesh() maps a unit cube domain by applying the transformation
-// x = L*x
-// y = L*y
-// z = s(x,y)*z + b(x,y)*(1-z)
-// where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
-// geometries respectively.
-// Currently this function is only needed for some FELIX problems.
-
+// The function transformMesh() maps a unit cube domain by applying a transformation
 
 // IK, 1/8/15, FIXME: I've removed all the FELIX stuff from
 // transformMesh() as this is for now an Aeras-only class.  The
@@ -926,6 +917,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
   *out << "In Aeras::SpectralDiscretization::enrichMesh()" << std::endl; 
   // Initialization
   size_t np  = points_per_edge;
+  *out << "Points per edge: " << np << std::endl; 
   size_t np2 = np * np;
   GO maxGID    = getMaximumID(stk::topology::NODE_RANK);
   GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
@@ -941,9 +933,9 @@ void Aeras::SpectralDiscretization::enrichMesh()
   {
     stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
     enrichedEdges[ibuck].resize(edgeBucket.size());
-    for (size_t ielem = 0; ielem < edgeBucket.size(); ++ielem)
+    for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
-      stk::mesh::Entity edge = edgeBucket[ielem];
+      stk::mesh::Entity edge = edgeBucket[iedge];
       unsigned numNodes = bulkData.num_nodes(edge);
       TEUCHOS_TEST_FOR_EXCEPTION(
         numNodes != 2,
@@ -951,14 +943,14 @@ void Aeras::SpectralDiscretization::enrichMesh()
         "Starting edges for enriched elements must be linear.  Edge " << edge
         << " has " << numNodes << " nodes.");
       const stk::mesh::Entity * nodes = bulkData.begin_nodes(edge);
-      enrichedEdges[ibuck][ielem].resize(np);
-      enrichedEdges[ibuck][ielem][0] = gid(nodes[0]);
+      enrichedEdges[ibuck][iedge].resize(np);
+      enrichedEdges[ibuck][iedge][0] = gid(nodes[0]);
       for (GO inode = 1; inode < np-1; ++inode)
       {
-        enrichedEdges[ibuck][ielem][inode] =
+        enrichedEdges[ibuck][iedge][inode] =
           maxGID + gid(edge)*(np-2) + inode;
       }
-      enrichedEdges[ibuck][ielem][np-1] = gid(nodes[1]);
+      enrichedEdges[ibuck][iedge][np-1] = gid(nodes[1]);
     }
   }
 
@@ -1216,10 +1208,8 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
       stk::mesh::Entity edge = edgeBucket[iedge];
       if (edgeIsOwned[gid(edge)])
       {
-        // Note that local edge nodes 0 and 3 have already been
-        // handled correctly by the previous loop over ownednodes
-        indicesT[inode++] = enrichedEdges[ibuck][iedge][1];
-        indicesT[inode++] = enrichedEdges[ibuck][iedge][2];
+        for (size_t lnode = 1; lnode < np-1; ++lnode)
+          indices[inode++] = enrichedEdges[ibuck][iedge][lnode];
       }
     }
   }
@@ -1420,7 +1410,7 @@ void Aeras::SpectralDiscretization::computeCoordinates()
 
       // Phase I: project the reference element coordinates onto the
       // "twisted plane" defined by the four corners of the linear STK
-      // element, using bilinear interpolation
+      // shell element, using bilinear interpolation
       for (size_t idim = 0; idim < 3; ++idim)
       {
         // Get the coordinates value along this axis of the corner
@@ -2988,6 +2978,10 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   //IK, 1/23/15, FIXME: to implement
   computeGraphs();
 
+  //IK, 1/26/15: This will need to be uncommented at some point
+  //computeCoordinates(); 
+  //Note that coordinates are set in getCoordinates() and getCoords() as well.  I think the former isn't called anywhere however.
+
   //IK, 1/23/15, FIXME: to implement
   computeWorksetInfo();
  
@@ -2997,13 +2991,15 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   computeNodeSets();
   computeSideSets();
 
-  setupExodusOutput();
+  //IK, 1/26/15 -- commenting out for now
+  //setupExodusOutput();
 
   // Build the node graph needed for the mass matrix for solution transfer and projection operations
   // FIXME this only needs to be called if we are using the L2 Projection response
   // IK, 1/23/15: I don't think we'll need meshToGraph for Aeras.
   //meshToGraph();
   // printVertexConnectivity();
-  setupNetCDFOutput();
+  // IK, 1/26/15 -- commenting out for now
+  //setupNetCDFOutput();
 
 }
