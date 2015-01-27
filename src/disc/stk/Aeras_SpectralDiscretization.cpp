@@ -1412,7 +1412,7 @@ void Aeras::SpectralDiscretization::computeCoordinates()
 
       // Phase I: project the reference element coordinates onto the
       // "twisted plane" defined by the four corners of the linear STK
-      // element, using bilinear interpolation
+      // shell element, using bilinear interpolation
       for (size_t idim = 0; idim < 3; ++idim)
       {
         // Get the coordinates value along this axis of the corner
