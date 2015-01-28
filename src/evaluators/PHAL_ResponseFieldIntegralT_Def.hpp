@@ -64,6 +64,10 @@ ResponseFieldIntegralT(Teuchos::ParameterList& p,
     }
   }
   else if (fieldType == "Tensor") {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "local_ and global_response must have rank 2. However, this code path "
+      "makes them rank 3. Needs to be fixed.");
     field_layout = dl->qp_tensor;
     local_response_layout = dl->cell_tensor;
     global_response_layout = dl->workset_tensor;
