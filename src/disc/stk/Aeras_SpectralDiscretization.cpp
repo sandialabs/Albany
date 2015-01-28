@@ -1372,10 +1372,10 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   coordinates.resize(3*numOverlapNodes);
 }
 
-void Aeras::SpectralDiscretization::computeCoordinates()
+void Aeras::SpectralDiscretization::computeCoords()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeCoordinates()" << std::endl;
+  *out << "In Aeras::SpectralDiscretization::computeCoords()" << std::endl;
 #endif 
   // Initialization
   typedef Intrepid::FieldContainer< double > Field_t;
@@ -3019,7 +3019,7 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   
   //IK, 1/26/15: This will need to be uncommented at some point.
   //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
-  computeCoordinates(); 
+  computeCoords(); 
 
  //IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN

@@ -403,7 +403,7 @@ namespace Aeras
 
     //! Fill in the Workset of coordinates with corner nodes from the
     //! STK mesh and enriched points from Gauss-Lobatto quadrature
-    void computeCoordinates();
+    void computeCoords();
 
     //! Process spectral Albany mesh for CRS Graphs
     void computeGraphs();
