@@ -407,73 +407,47 @@ evaluateFields(typename Traits::EvalData workset)
 #ifdef NO_KOKKOS_ALBANY
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
-
-  if (!JacT->isFillComplete())
-      JacT->fillComplete();
-
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
-  LocalMatrixType jacobian;
-
-   jacobian=JacT->getLocalMatrix();
-
-
   const bool loadResid = Teuchos::nonnull(fT);
-//  Teuchos::Array<LO> colT;
-
+  Teuchos::Array<LO> colT;
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*this->numNodes;
-//  colT.resize(nunk);
-  
-  LO colT[nunk];
-
+  colT.resize(nunk);
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
-
   FILE* fid = amb::print_level() > 10 ?
     fopen(amb::get_full_filename("sr_jac").c_str(), "wa") :
     NULL;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
-
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+        colT[neq * node_col + eq_col] = nodeID[node_col][eq_col];
       }
     }
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
         PHAL::AlbanyTraits::Jacobian::ScalarRefT
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec[0](cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-
         const LO rowT = nodeID[node][this->offset + eq];
         if (loadResid)
           fT->sumIntoLocalValue(rowT, valptr.val());
-
         // Check derivative array is nonzero
         if (valptr.hasFastAccess()) {
           if (workset.is_adjoint) {
             // Sum Jacobian transposed
-            for (int lunk = 0; lunk < nunk; lunk++){
-              ST val = valptr.fastAccessDx(lunk);
-              jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
-            }
- 
-/*              JacT->sumIntoLocalValues(
+            for (unsigned int lunk = 0; lunk < nunk; lunk++)
+              JacT->sumIntoLocalValues(
                 colT[lunk], Teuchos::arrayView(&rowT, 1),
                 Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-    */      }
+          }
           else {
             // Sum Jacobian entries all at once
-              ST vals[nunk];
-              for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
-/*            JacT->sumIntoLocalValues(
+            JacT->sumIntoLocalValues(
               rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-*/            if (fid)
+            if (fid)
               for (int lunk = 0; lunk < nunk; ++lunk)
                 fprintf(fid, "%d %d %d %d %d %1.15e\n", cell, node, eq, rowT,
                         colT[lunk], valptr.fastAccessDx(lunk));
@@ -483,9 +457,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   if (fid) fclose(fid);
-
-  if (JacT->isFillComplete())
-    JacT->resumeFill();
 #else
    //Kokkos parallel execution
 
