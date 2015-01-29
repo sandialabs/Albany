@@ -206,7 +206,7 @@ evaluateFields(typename Traits::EvalData workset)
   // initilize Tensors
   // Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
   // Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   // for large deformation, map Cauchy stress to 1st PK stress
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int node = 0; node < num_nodes_; ++node) {

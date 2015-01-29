@@ -198,7 +198,7 @@ template<typename Traits>
 void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes; 
 

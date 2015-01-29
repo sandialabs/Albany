@@ -192,7 +192,7 @@ evaluateFields(typename Traits::EvalData workset)
 //    }
 //  
 //std::cout << Residual (30,1,1) <<std::endl;
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

@@ -113,7 +113,7 @@ private:
   bool small_strain_;
 
  //Kokkos
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
    public:
 
    struct have_stab_pressure_Tag{};

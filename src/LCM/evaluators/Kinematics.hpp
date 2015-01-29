@@ -96,7 +96,7 @@ namespace LCM {
     ///! Input, if RCU.
     AAdapt::rc::Field<2> def_grad_rc_;
 
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
    //Kokkos
 
     public:

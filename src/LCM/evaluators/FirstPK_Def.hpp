@@ -62,7 +62,7 @@ FirstPK(Teuchos::ParameterList& p,
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
 
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Allocationg additional data for Kokkos functors
   ddims_.push_back(24);
   const int derivative_dim=25;
@@ -104,7 +104,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 }
 //-----------------------------------------------------------------------------
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //Kokkos functions:
 template<typename EvalT, typename Traits>
 template <class ArrayT>
@@ -298,7 +298,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   //std::cout.precision(15);
   // initilize Tensors
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 

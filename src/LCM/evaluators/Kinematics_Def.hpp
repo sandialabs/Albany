@@ -63,7 +63,7 @@ namespace LCM {
     if (needs_strain_ && strain_rc_.init(p, p.get<std::string>("Strain Name")))
       this->addDependentField(strain_rc_());
 
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     //Allocationg additional data for Kokkos functors
     ddims_.push_back(24);
     const int num_cells=dims[0];//
@@ -125,7 +125,7 @@ void writestuff (
   amb_write_mdfield4(k.grad_u_, "k_grad_u", nc, np, nd, nd);
 }
 //----------------------------------------------------------------------------
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //Kokkos kernels
 //
 template<typename EvalT, typename Traits>
@@ -300,7 +300,7 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
   void Kinematics<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     Intrepid::Tensor<ScalarT> F(num_dims_), strain(num_dims_), gradu(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 

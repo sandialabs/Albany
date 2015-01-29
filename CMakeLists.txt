@@ -701,6 +701,17 @@ ELSE()
   SET(ALBANY_CHECK_FPE FALSE)
 ENDIF()
 
+#amb Default to on until the merge.
+OPTION(ENABLE_KOKKOS_UNDER_DEVELOPMENT "Flag to turn on Kokkos experimental code in Albany" ON)
+IF (ENABLE_KOKKOS_UNDER_DEVELOPMENT)
+  ADD_DEFINITIONS(-DALBANY_KOKKOS_UNDER_DEVELOPMENT)
+  MESSAGE("~~~~> Kokkos development     is Enabled, compiling with -DALBANY_KOKKOS_UNDER_DEVELOPMENT <~~~~")
+  SET(ALBANY_KOKKOS_UNDER_DEVELOPMENT TRUE)
+ELSE()
+  MESSAGE("-- Kokkos development        is NOT Enabled.")
+  SET(ALBANY_KOKKOS_UNDER_DEVELOPMENT FALSE)
+ENDIF()
+
 OPTION(ENABLE_ALBANY_VERBOSE "Flag to turn on verbose output" OFF)
 IF (NOT ENABLE_ALBANY_VERBOSE)
   MESSAGE("-- Verbose printing          is NOT Enabled")
