@@ -9,10 +9,6 @@ if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe})
 endif()
 
-if (ALBANY_IFPACK2) 
-add_test(${testName}_Tpetra ${AlbanyT.exe} input.xml)
-endif() 
-
 # 4. Repeat process for SG problems if "inputSG.xml" exists
 if (ALBANY_SG_MP)
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/inputSG.xml)

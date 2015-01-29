@@ -420,7 +420,12 @@ computeState(typename Traits::EvalData workset,
 template<typename EvalT, typename Traits>
 typename EvalT::ScalarT
 ElastoViscoplasticModel<EvalT, Traits>::YieldFunction()
-{}
+{
+  // need to return something from this function
+  typename EvalT::ScalarT zero = 0.0;
+
+  return zero;
+}
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void

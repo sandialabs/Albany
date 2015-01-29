@@ -15,7 +15,9 @@ namespace {
 template<typename T> const int*
 convert(const Teuchos::ArrayView<const T>& av, std::vector<int>& v);
 template<> const int*
-convert<long> (const Teuchos::ArrayView<const long>& av, std::vector<int>& v) {
+convert<long long int> (
+  const Teuchos::ArrayView<const long long int>& av, std::vector<int>& v)
+{
   v.resize(av.size());
   for (std::size_t i = 0; i < av.size(); ++i) v[i] = static_cast<int>(av[i]);
   return &v[0];

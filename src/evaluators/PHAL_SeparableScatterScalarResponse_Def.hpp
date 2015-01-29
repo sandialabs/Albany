@@ -6,6 +6,7 @@
 
 //IK, 9/13/14: this has Epetra but does not get compiled if ALBANY_EPETRA_EXE is turned off.
 
+#include "Albany_Utils.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Epetra_Export.h"

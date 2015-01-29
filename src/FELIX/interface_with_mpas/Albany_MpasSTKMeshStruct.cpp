@@ -25,76 +25,6 @@
 
 #include "Albany_Utils.hpp"
 
-Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                             const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                             const std::vector<GO>& indexToTriangleID,
-                                             const std::vector<int>& verticesOnTria,
-                                             int nGlobalTriangles) :
-
-
-  GenericSTKMeshStruct(params,Teuchos::null, 2),
-  out(Teuchos::VerboseObjectBase::getDefaultOStream()),
-  periodic(false),
-  NumEles(indexToTriangleID.size()),
-  hasRestartSol(false),
-  restartTime(0.)
-{
-  Teuchos::ArrayView<const GO> indexToTriangleIDAV = Teuchos::arrayViewFromVector(indexToTriangleID);
-  // Distribute the elems equally. Build total_elems elements, with nodeIDs starting at StartIndex
-  elem_mapT = Teuchos::rcp(new Tpetra_Map(nGlobalTriangles, indexToTriangleIDAV, 0, commT));
-
-  params->validateParameters(*getValidDiscretizationParameters(),0);
-
-
-  std::string ebn="Element Block 0";
-  partVec[0] = & metaData->declare_part(ebn, stk::topology::ELEMENT_RANK );
-  ebNameToIndex[ebn] = 0;
-
-#ifdef ALBANY_SEACAS
-  stk::io::put_io_part_attribute(*partVec[0]);
-#endif
-
-
-  std::vector<std::string> nsNames;
-  std::string nsn="Lateral";
-  nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-#endif
-  nsn="Internal";
-  nsNames.push_back(nsn);
-  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*nsPartVec[nsn]);
-#endif
-
-
-  std::vector<std::string> ssNames;
-  std::string ssn="LateralSide";
-  ssNames.push_back(ssn);
-    ssPartVec[ssn] = & metaData->declare_part(ssn, metaData->side_rank() );
-#ifdef ALBANY_SEACAS
-    stk::io::put_io_part_attribute(*ssPartVec[ssn]);
-#endif
-
-  stk::mesh::set_cell_topology<shards::Triangle<3> >(*partVec[0]);
-  stk::mesh::set_cell_topology<shards::Line<2> >(*ssPartVec[ssn]);
-
-  numDim = 2;
-  int cub = params->get("Cubature Degree",3);
-  int worksetSizeMax = params->get("Workset Size",50);
-  int worksetSize = this->computeWorksetSize(worksetSizeMax, elem_mapT->getNodeNumElements());
-
-  const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
-
-  this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub,
-                             nsNames, ssNames, worksetSize, partVec[0]->name(),
-                             ebNameToIndex, this->interleavedOrdering));
-
-
-}
-
 //Wedge
 Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
                                              const Teuchos::RCP<const Teuchos_Comm>& commT,
@@ -142,21 +72,27 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
 
   std::vector<std::string> nsNames;
-  std::string nsn="Lateral";
+  std::string nsn="lateral";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="Internal";
+  nsn="internal";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="Bottom";
+  nsn="bottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+#ifdef ALBANY_SEACAS
+	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
+	nsn="dirichlet";
+	nsNames.push_back(nsn);
+	nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
 	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
@@ -164,25 +100,30 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
   std::vector<std::string> ssNames;
   std::string ssnLat="lateralside";
+  std::string ssnLatFloat="floatinglateralside";
   std::string ssnBottom="basalside";
   std::string ssnTop="upperside";
 
   ssNames.push_back(ssnLat);
   ssNames.push_back(ssnBottom);
   ssNames.push_back(ssnTop);
+  ssNames.push_back(ssnLatFloat);
   ssPartVec[ssnLat] = & metaData->declare_part(ssnLat, metaData->side_rank() );
   ssPartVec[ssnBottom] = & metaData->declare_part(ssnBottom, metaData->side_rank() );
   ssPartVec[ssnTop] = & metaData->declare_part(ssnTop, metaData->side_rank() );
+  ssPartVec[ssnLatFloat] = & metaData->declare_part(ssnLatFloat, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*ssPartVec[ssnLat]);
     stk::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
     stk::io::put_io_part_attribute(*ssPartVec[ssnTop]);
+    stk::io::put_io_part_attribute(*ssPartVec[ssnLatFloat]);
 #endif
 
   stk::mesh::set_cell_topology<shards::Wedge<6> >(*partVec[0]);
   stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
   stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
   stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLat]);
+  stk::mesh::set_cell_topology<shards::Quadrilateral<4> >(*ssPartVec[ssnLatFloat]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -247,23 +188,29 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
 
   std::vector<std::string> nsNames;
-  std::string nsn="Lateral";
+  std::string nsn="lateral";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="Internal";
+  nsn="internal";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
-  nsn="Bottom";
+  nsn="bottom";
   nsNames.push_back(nsn);
   nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
 #ifdef ALBANY_SEACAS
 	stk::io::put_io_part_attribute(*nsPartVec[nsn]);
+#endif
+	nsn="dirichlet";
+  nsNames.push_back(nsn);
+  nsPartVec[nsn] = & metaData->declare_part(nsn, stk::topology::NODE_RANK );
+#ifdef ALBANY_SEACAS
+  stk::io::put_io_part_attribute(*nsPartVec[nsn]);
 #endif
 
 
@@ -271,23 +218,28 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   std::string ssnLat="lateralside";
   std::string ssnBottom="basalside";
   std::string ssnTop="upperside";
+  std::string ssnLatFloat="floatinglateralside";
 
   ssNames.push_back(ssnLat);
   ssNames.push_back(ssnBottom);
   ssNames.push_back(ssnTop);
+  ssNames.push_back(ssnLatFloat);
   ssPartVec[ssnLat] = & metaData->declare_part(ssnLat, metaData->side_rank() );
   ssPartVec[ssnBottom] = & metaData->declare_part(ssnBottom, metaData->side_rank() );
   ssPartVec[ssnTop] = & metaData->declare_part(ssnTop, metaData->side_rank() );
+  ssPartVec[ssnLatFloat] = & metaData->declare_part(ssnLatFloat, metaData->side_rank() );
 #ifdef ALBANY_SEACAS
     stk::io::put_io_part_attribute(*ssPartVec[ssnLat]);
     stk::io::put_io_part_attribute(*ssPartVec[ssnBottom]);
     stk::io::put_io_part_attribute(*ssPartVec[ssnTop]);
+    stk::io::put_io_part_attribute(*ssPartVec[ssnLatFloat]);
 #endif
 
   stk::mesh::set_cell_topology<shards::Tetrahedron<4> >(*partVec[0]);
   stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnBottom]);
   stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnTop]);
   stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLat]);
+  stk::mesh::set_cell_topology<shards::Triangle<3> >(*ssPartVec[ssnLatFloat]);
 
   numDim = 3;
   int cub = params->get("Cubature Degree",3);
@@ -321,6 +273,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<int>& verticesOnEdge,
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
                                                const std::vector<GO>& indexToTriangleID,
+                                               const std::vector<int>& dirichletNodesIds,
+                                               const std::vector<int>& floating2dLateralEdgesIds,
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
@@ -349,7 +303,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
-  singlePartVec[0] = nsPartVec["Bottom"];
+  singlePartVec[0] = nsPartVec["bottom"];
 
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
@@ -366,17 +320,21 @@ Albany::MpasSTKMeshStruct::constructMesh(
 		  node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, singlePartVec);
 	  else
 		  node = bulkData->declare_entity(stk::topology::NODE_RANK, il*vertexColumnShift+vertexLayerShift * indexToVertexID[ib]+1, nodePartVec);
-	  int numBdEdges(0);
-	  for (int i=0; i<indexToEdgeID.size(); i++)
-		  numBdEdges += isBoundaryEdge[i];
 
-
-          double* coord = stk::mesh::field_data(*coordinates_field, node);
+    double* coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
 
 	  double* sHeight;
 	   sHeight = stk::mesh::field_data(*surfaceHeight_field, node);
 	   sHeight[0] = 1.;
+  }
+
+
+  singlePartVec[0] = nsPartVec["dirichlet"];
+  for(int i=0; i<dirichletNodesIds.size(); ++i)
+  {
+    stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, dirichletNodesIds[i]+1);
+    bulkData->change_entity_parts(node, singlePartVec);
   }
 
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
@@ -427,6 +385,17 @@ Albany::MpasSTKMeshStruct::constructMesh(
 			 bulkData->declare_relation(side, nodeTop, j+2);
 		 }
 	 }
+  }
+
+
+  singlePartVec[0] = ssPartVec["floatinglateralside"];
+  for(int i=0; i<floating2dLateralEdgesIds.size(); ++i) {
+    int basalEdgeId = floating2dLateralEdgesIds[i]*edgeLayerShift;;
+    for(int il=0; il<numLayers; ++il) {
+    int sideId = edgeColumnShift*il+ basalEdgeId+1;
+    stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+    bulkData->change_entity_parts(side, singlePartVec);
+    }
   }
 
   //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
@@ -481,6 +450,8 @@ Albany::MpasSTKMeshStruct::constructMesh(
                                                const std::vector<int>& verticesOnEdge,
                                                const std::vector<int>& indexToEdgeID, int nGlobalEdges,
                                                const std::vector<GO>& indexToTriangleID,
+                                               const std::vector<int>& dirichletNodesIds,
+                                               const std::vector<int>& floating2dLateralEdgesIds,
                                                const unsigned int worksetSize,
                                                int numLayers, int Ordering)
 {
@@ -509,7 +480,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
   unsigned int ebNo = 0; //element block #???
 
-  singlePartVec[0] = nsPartVec["Bottom"];
+  singlePartVec[0] = nsPartVec["bottom"];
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
@@ -527,6 +498,13 @@ Albany::MpasSTKMeshStruct::constructMesh(
 
       double* coord = stk::mesh::field_data(*coordinates_field, node);
 	  coord[0] = verticesCoords[3*ib];   coord[1] = verticesCoords[3*ib+1]; coord[2] = double(il)/numLayers;
+  }
+
+  singlePartVec[0] = nsPartVec["dirichlet"];
+  for(int i=0; i<dirichletNodesIds.size(); ++i)
+  {
+    stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, dirichletNodesIds[i]+1);
+    bulkData->change_entity_parts(node, singlePartVec);
   }
 
   int tetrasLocalIdsOnPrism[3][4];
@@ -652,6 +630,17 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	 }
   }
 
+  singlePartVec[0] = ssPartVec["floatinglateralside"];
+  for(int i=0; i<floating2dLateralEdgesIds.size(); ++i) {
+    int basalEdgeId = floating2dLateralEdgesIds[i]*2*edgeLayerShift;
+    for(int il=0; il<numLayers; ++il)
+      for(int k=0; k< 2; k++){
+        int sideId = edgeColumnShift*il+basalEdgeId+k+1;
+        stk::mesh::Entity side = bulkData->get_entity(metaData->side_rank(), sideId);
+        bulkData->change_entity_parts(side, singlePartVec);
+      }
+  }
+
   //then we store the lower and upper faces of prisms, which corresponds to triangles of the basal mesh
 
   edgeLayerShift = (Ordering == 0) ? 1 : numLayers+1;
@@ -684,81 +673,6 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	  stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, vertexLayerShift*indexToVertexID[verticesOnTria[3*i+j]]+numLayers*vertexColumnShift+1);
 	  bulkData->declare_relation(side, node, j);
 	}
-  }
-
-  bulkData->modification_end();
-}
-
-void
-Albany::MpasSTKMeshStruct::constructMesh(
-                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                               const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                               const unsigned int neq_,
-                                               const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
-                                               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                                               const std::vector<int>& indexToVertexID, const std::vector<double>& verticesCoords, const std::vector<bool>& isVertexBoundary, int nGlobalVertices,
-                                               const std::vector<int>& verticesOnTria,
-                                               const std::vector<bool>& isBoundaryEdge, const std::vector<int>& trianglesOnEdge, const std::vector<int>& trianglesPositionsOnEdge,
-                                               const std::vector<int>& verticesOnEdge,
-                                               const std::vector<int>& indexToEdgeID, int nGlobalEdges,
-                                               const unsigned int worksetSize)
-{
-  this->SetupFieldData(commT, neq_, req, sis, worksetSize);
-
-  metaData->commit();
-
-  bulkData->modification_begin(); // Begin modifying the mesh
-
-  stk::mesh::PartVector nodePartVec;
-  stk::mesh::PartVector singlePartVec(1);
-  stk::mesh::PartVector emptyPartVec;
-  std::cout << "elem_map # elments: " << elem_mapT->getNodeNumElements() << std::endl;
-  unsigned int ebNo = 0; //element block #??? 
-  int sideID = 0;
-
-  AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
-  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-
-  for (int i=0; i<indexToVertexID.size(); i++)
-  {
-	  stk::mesh::Entity node = bulkData->declare_entity(stk::topology::NODE_RANK, indexToVertexID[i]+1, nodePartVec);
-
-	  double* coord;
-	  coord = stk::mesh::field_data(*coordinates_field, node);
-	  coord[0] = verticesCoords[3*i];   coord[1] = verticesCoords[3*i+1]; coord[2] = verticesCoords[3*i+2];
-  }
-
-  for (int i=0; i<elem_mapT->getNodeNumElements(); i++)
-  {
-
-     singlePartVec[0] = partVec[ebNo];
-     stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_mapT->getGlobalElement(i)+1, singlePartVec);
-
-     for(int j=0; j<3; j++)
-     {
-    	 stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[verticesOnTria[3*i+j]]+1);
-    	 bulkData->declare_relation(elem, node, j);
-     }
-    
-     int* p_rank = (int*)stk::mesh::field_data(*proc_rank_field, elem);
-     p_rank[0] = commT->getRank();
-  }
-
-  for (int i=0; i<indexToEdgeID.size(); i++) {
-
-	 if(isBoundaryEdge[i])
-	 {
-
-		 singlePartVec[0] = ssPartVec["lateralside"];
-		 stk::mesh::Entity side = bulkData->declare_entity(metaData->side_rank(), indexToEdgeID[i]+1, singlePartVec);
-		 stk::mesh::Entity elem  = bulkData->get_entity(stk::topology::ELEMENT_RANK,  elem_mapT->getGlobalElement(trianglesOnEdge[2*i])+1);
-		 bulkData->declare_relation(elem, side,  trianglesPositionsOnEdge[2*i] /*local side id*/);
-		 for(int j=0; j<2; j++)
-		 {
-			 stk::mesh::Entity node = bulkData->get_entity(stk::topology::NODE_RANK, indexToVertexID[verticesOnEdge[2*i+j]]+1);
-			 bulkData->declare_relation(side, node, j);
-		 }
-	 }
   }
 
   bulkData->modification_end();

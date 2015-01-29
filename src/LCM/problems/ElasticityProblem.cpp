@@ -10,10 +10,12 @@
 Albany::ElasticityProblem::
 ElasticityProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 		  const Teuchos::RCP<ParamLib>& paramLib_,
-		  const int numDim_) :
+		  const int numDim_,
+                  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr_) :
   Albany::AbstractProblem(params_, paramLib_, numDim_),
   haveSource(false),
-  numDim(numDim_)
+  numDim(numDim_),
+  rc_mgr(rc_mgr_)
 {
   std::string& method = params->get("Name", "Elasticity ");
   *out << "Problem Name = " << method << std::endl;

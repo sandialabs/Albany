@@ -184,8 +184,7 @@ Albany::LinearElasticityProblem::getValidProblemParameters() const
   Teuchos::RCP<ATO::Topology> emptyTopo;
   emptyTopo = Teuchos::null;
   validPL->set<Teuchos::RCP<ATO::Topology> >("Topology", emptyTopo);
-
-//  validPL->sublist("Topology", false, "");
+  validPL->sublist("Topology Parameters", false, "");
   validPL->sublist("Objective Aggregator", false, "");
 
   return validPL;

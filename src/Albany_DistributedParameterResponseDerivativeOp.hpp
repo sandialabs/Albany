@@ -61,6 +61,7 @@ namespace Albany {
     //! If set true, transpose of this operator will be applied.
     virtual int SetUseTranspose(bool UseTranspose) {
       use_transpose = UseTranspose;
+      return 0;
     }
 
     /*!
@@ -84,6 +85,7 @@ namespace Albany {
         true, std::logic_error,
         "Albany::DistributedParameterResponseDerivativeOp does not support " <<
         "Epetra_Operator::ApplyInverse()!");
+      return 0;
     }
 
     //! Returns the infinity norm of the global matrix.

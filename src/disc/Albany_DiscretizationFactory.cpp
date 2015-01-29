@@ -8,6 +8,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Albany_DiscretizationFactory.hpp"
 #include "Albany_STKDiscretization.hpp"
+#ifdef ALBANY_AERAS 
+#include "Aeras_SpectralDiscretization.hpp"
+#endif
 #include "Albany_TmplSTKMeshStruct.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
 
@@ -217,11 +220,12 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     meshStruct = Teuchos::rcp(new Albany::TmplSTKMeshStruct<3>(discParams, adaptParams, commT));
   }
 
-  else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen") {
+  else if(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" || method == "Exodus Aeras") {
 #ifdef ALBANY_SEACAS
     meshStruct = Teuchos::rcp(new Albany::IossSTKMeshStruct(discParams, adaptParams, commT));
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen",
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "Ioss" || method == "Exodus" ||  method == "Pamgen" || method == "Ioss Aeras" ||
+                               method == "Exodus Aeras",
                                Teuchos::Exceptions::InvalidParameter,
                                "Error: Discretization method " << method
                                << " requested, but not compiled in" << std::endl);
@@ -278,7 +282,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
-                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Exodus, Cubit, FMDB, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Ioss Aeras, Exodus, Exodus Aeras, Cubit, FMDB, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
   }
 
 #ifdef ALBANY_LCM
@@ -295,7 +299,7 @@ Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
     const AbstractFieldContainer::FieldContainerRequirements& req,
-    const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes) {
+    const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
   TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
                              std::logic_error,
                              "meshStruct accessed, but it has not been constructed" << std::endl);
@@ -333,34 +337,63 @@ Albany::DiscretizationFactory::setupInternalMeshStruct(
 
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
-  const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes) {
+  const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
 
   if(!piroParams.is_null() && !rigidBodyModes.is_null())
 
     rigidBodyModes->setPiroPL(piroParams);
 
-  switch(meshStruct->meshSpecsType()) {
+  std::string& method = discParams->get("Method", "STK1D");
 
-    case Albany::AbstractMeshStruct::STK_MS: {
-      Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
-      return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
-    }
-    break;
-
+  //IK, 1/8/15: added a method called "Ioss Aeras" and "Exodus Aeras" (which are equivalent)
+  //which would tell the code to read in an Ioss (Exodus) linear mesh and then 
+  //refine it.  Changed the logic here so that the switch statement on meshSpecsType() is only hit if the method is not Ioss Aeras
+  //or Exodus Aeras.
+  //If it is Ioss Aeras or Exodus Aeras we use the Aeras::SpectralDiscretization class (right now just a dummy class that's a copy of 
+  //Albany::STKDiscretization).  The class will impelement the enrichment of a linear mesh to get higher order meshes.
+  //
+  //NOTE: one may want to create STK Aeras methods too if for example the Aeras::SpectralDiscretization class can refine
+  //meshes created internally to Albany, if this is of interest.
+  
+  if(method != "Ioss Aeras" && method != "Exodus Aeras") {
+    switch(meshStruct->meshSpecsType()) {
+      case Albany::AbstractMeshStruct::STK_MS: {
+        Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::STKDiscretization(ms, commT, rigidBodyModes));
+      }
+      break;
 #ifdef ALBANY_SCOREC
 
-    case Albany::AbstractMeshStruct::FMDB_VTK_MS: {
-      Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-      return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBVtk>(ms, commT, rigidBodyModes));
-    }
-    break;
+      case Albany::AbstractMeshStruct::FMDB_VTK_MS: {
+        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
+        return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBVtk>(ms, commT, rigidBodyModes));
+      }
+      break;
 
-    case Albany::AbstractMeshStruct::FMDB_EXODUS_MS: {
-      Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-      return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBExodus>(ms, commT, rigidBodyModes));
-    }
-    break;
+      case Albany::AbstractMeshStruct::FMDB_EXODUS_MS: {
+        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
+        return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBExodus>(ms, commT, rigidBodyModes));
+      }
+      break;
 #endif
-
+    }
   }
+#ifdef ALBANY_AERAS
+  else if (method == "Ioss Aeras" || method == "Exodus Aeras") {
+#ifdef ALBANY_EPETRA
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Ioss Aeras and Exodus Aeras are not implemented to run with Albany executable!  " 
+                               << "Recompile with ALBANY_EPETRA_EXE turned OFF and run with AlbanyT executable." << std::endl);
+#endif
+     std::cout << "Creating Aeras::SpectralDiscretization!" << std::endl; 
+    //IK, 1/8/15: Added construction of Aeras::SpectralDiscretization object.
+    //WARNING: meshSpecsType() right now is set to STK_MS even for an Aeras::SpectralDiscretization, b/c that's how
+    //the code is structured.  That should be OK since meshSpecsType() is not used anywhere except this function.
+    //But one may want to change it to, e.g., AERAS_MS, to prevent confusion. 
+      Teuchos::RCP<Albany::AbstractSTKMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::AbstractSTKMeshStruct>(meshStruct);
+      return Teuchos::rcp(new Aeras::SpectralDiscretization(ms, commT, rigidBodyModes));
+    }
+#endif
+  return Teuchos::null;
 }

@@ -28,11 +28,14 @@
       </ParameterList>
 
       <Parameter name="Thermal Transient Coefficient" type="double" value="1.0"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="0.001"/>
 
    <!-- The fuel generates decay heat as a function of time -->
       <ParameterList name="Source Functions">
-         <ParameterList name="Constant">
-            <Parameter name="Value"         type="double" value="20095.0"/>
+        <ParameterList name="Thermal Source">
+           <ParameterList name="Constant">
+              <Parameter name="Value"         type="double" value="20.0"/>
+           </ParameterList>
          </ParameterList>
       </ParameterList> 
 

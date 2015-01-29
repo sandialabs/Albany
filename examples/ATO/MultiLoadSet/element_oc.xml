@@ -22,8 +22,12 @@
       <Parameter name="Package" type="string" value="OC" />
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
       <Parameter name="Move Limiter" type="double" value="0.2" />
-      <Parameter name="Optimization Maximum Iterations" type="int" value="3" />
-      <Parameter name="Optimization Convergence Tolerance" type="double" value="1e-6" />
+      <ParameterList name="Convergence Tests">
+        <Parameter name="Maximum Iterations" type="int" value="3" />
+        <Parameter name="Combo Type" type="string" value="OR"/>
+        <Parameter name="Relative Topology Change" type="double" value="5e-3" />
+        <Parameter name="Relative Objective Change" type="double" value="5e-3" />
+      </ParameterList>
       <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
       <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
       <Parameter name="Minimum Density" type="double" value="0.05" />
@@ -42,6 +46,7 @@
       -->
       <Parameter name="Centering" type="string" value="Element" />
       <Parameter name="Topology Name" type="string" value="Rho" />
+      <Parameter name="Entity Type" type="string" value="State Variable" />
       <Parameter name="Penalization" type="string" value="SIMP" />
       <Parameter name="Update Algorithm" type="string" value="OC" />
       <Parameter name="Initial Value" type="double" value="0.5" />

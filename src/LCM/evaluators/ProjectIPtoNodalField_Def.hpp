@@ -141,10 +141,10 @@ protected:
 };
 
 template<typename Traits>
-class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
-                            Traits>::FullMassMatrix
-  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
-                                 Traits>::MassMatrix {
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+FullMassMatrix
+  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+           MassMatrix {
 public:
   FullMassMatrix (
     const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
@@ -182,10 +182,10 @@ public:
 };
 
 template<typename Traits>
-class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
-                            Traits>::LumpedMassMatrix
-  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
-                                 Traits>::MassMatrix {
+class ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+LumpedMassMatrix
+  : public ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+           MassMatrix {
 public:
   LumpedMassMatrix (
     const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
@@ -213,8 +213,8 @@ public:
 };
 
 template<typename Traits>
-typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual,
-                               Traits>::MassMatrix*
+typename ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::
+         MassMatrix*
 ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>::MassMatrix::
 create (EMassMatrixType::Enum type,
         const ProjectIPtoNodalField<PHAL::AlbanyTraits::Residual, Traits>* base)
@@ -245,7 +245,7 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->setName("ProjectIPtoNodalField" + PHX::TypeString<EvalT>::value);
 
-  //! Get and validate ProjectIPtoNodalField parameter list.
+  // Get and validate ProjectIPtoNodalField parameter list.
   Teuchos::ParameterList*
     plist = p.get<Teuchos::ParameterList*>("Parameter List");
   Teuchos::RCP<const Teuchos::ParameterList>
@@ -254,7 +254,7 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
 
   output_to_exodus_ = plist->get<bool>("Output to File", true);
 
-  //! number of quad points per cell and dimension
+  // Number of quad points per cell and dimension.
   const Teuchos::RCP<PHX::DataLayout>& vector_dl = dl->qp_vector;
   const Teuchos::RCP<PHX::DataLayout>& node_dl = dl->node_qp_vector;
   const Teuchos::RCP<PHX::DataLayout>& vert_vector_dl = dl->vertices_vector;
@@ -263,7 +263,7 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   num_nodes_ = node_dl->dimension(1);
   num_vertices_ = vert_vector_dl->dimension(2);
 
-  //! Register with state manager
+  // Register with state manager.
   this->p_state_mgr_ = p.get< Albany::StateManager* >("State Manager Ptr");
 
   // loop over the number of fields and register
@@ -271,18 +271,15 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   // fields (scalar, vector, or tensor) to transfer.
   number_of_fields_ = plist->get<int>("Number of Fields", 0);
 
-  // resize field vectors
+  // Resize field vectors.
   ip_field_names_.resize(number_of_fields_);
   ip_field_layouts_.resize(number_of_fields_);
   nodal_field_names_.resize(number_of_fields_);
   ip_fields_.resize(number_of_fields_);
 
   // Surface element prefix, if any.
-  bool const
-  is_surface_block = eb_name_ == "Surface Element";
-
-  std::string const
-  field_name_prefix = is_surface_block == true ? "surf_" : "";
+  const std::string
+    field_name_prefix = eb_name_ == "Surface Element" ? "surf_" : "";
 
   for (int field = 0; field < number_of_fields_; ++field) {
     ip_field_names_[field] = field_name_prefix + plist->get<std::string>(
@@ -319,11 +316,11 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
   num_vecs_ = this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()->
     getVecsize();
 
-  // Create field tag
+  // Create field tag.
   field_tag_ =
     Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
 
-  // Set up linear solver
+  // Set up linear solver.
 #ifdef ALBANY_IFPACK2
   {
     typedef Thyra::PreconditionerFactoryBase<ST> Base;
@@ -363,7 +360,7 @@ postRegistrationSetup (typename Traits::SetupData d,
   this->utils.setFieldData(BF, fm);
   this->utils.setFieldData(wBF, fm);
   for (int field = 0; field < number_of_fields_; ++field)
-    this->utils.setFieldData(ip_fields_[field],fm);
+    this->utils.setFieldData(ip_fields_[field], fm);
 }
 
 //------------------------------------------------------------------------------

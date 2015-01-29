@@ -222,7 +222,10 @@ computeState(typename Traits::EvalData workset,
           g0   = slip_systems_[s].gamma_dot_0_;
           tauC = slip_systems_[s].tau_critical_;
           m    = slip_systems_[s].gamma_exp_;
-          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
+//          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
+//        NOTE: pow() of a negative base gives an FPE (edit by GAH)
+          ScalarT t1 = std::fabs(tau /tauC);
+          dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
           L += (dgamma* P);
 #ifdef PRINT_OUTPUT
           dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);

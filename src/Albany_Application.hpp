@@ -65,6 +65,9 @@
 #endif
 #endif
 
+// Forward declarations.
+namespace AAdapt { namespace rc { class Manager; } }
+
 namespace Albany {
 
   class Application :
@@ -901,6 +904,9 @@ namespace Albany {
 
     //! Solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> solMgrT;
+
+    //! Reference configuration (update) manager
+    Teuchos::RCP<AAdapt::rc::Manager> rc_mgr;
 
     //! Response functions
     Teuchos::Array< Teuchos::RCP<Albany::AbstractResponseFunction> > responses;

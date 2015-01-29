@@ -22,7 +22,7 @@
 #include "AlbPUMI_FMDBVtk.hpp"
 #include "AlbPUMI_FMDBExodus.hpp"
 
-#include "Piro_NullSpaceUtils.hpp" // has defn of struct that holds null space info for ML
+#include "Albany_NullSpaceUtils.hpp"
 #ifdef ALBANY_EPETRA
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
@@ -38,7 +38,7 @@ template<class Output>
     FMDBDiscretization(
        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
-       const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
+       const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
@@ -58,6 +58,9 @@ template<class Output>
 
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const;
+
+    //! Get Tpetra overlap Node map
+    Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const;
 
     //! Process coords for ML
     void setupMLCoords();
@@ -83,6 +86,7 @@ template<class Output>
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
     //! Set coordinate vector (overlap map, interleaved)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+    void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& getCoords() const;
 
@@ -389,10 +393,6 @@ template<class Output>
     int numOverlapNodes;
     long numGlobalNodes;
 
-    // Coordinate vector in format needed by ML. Need to own memory here.
-    double *xx, *yy, *zz, *rr;
-    bool allocated_xyz;
-
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
 
     bool interleavedOrdering;
@@ -403,11 +403,13 @@ template<class Output>
     std::map<std::string, std::vector<double> > nodeset_node_coords;
 
     // Needed to pass coordinates to ML.
-    Teuchos::RCP<Piro::MLRigidBodyModes> rigidBodyModes;
+    Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes;
 
     // counter for limiting data writes to output file
     int outputInterval;
 
+    // Mesh adaptation stuff.
+    Teuchos::RCP<AAdapt::rc::Manager> rcm;
   };
 
 }

@@ -28,6 +28,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3D.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3D.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_mosdot_3D_tet10.xml
                ${CMAKE_CURRENT_BINARY_DIR}/input_mosdot_3D_tet10.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_pointcharge_3D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_pointcharge_3D.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_cloudcharge_3D.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/input_cloudcharge_3D.xml COPYONLY)
 
 if (ALBANY_IFPACK2) 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/input_stk2DT.xml
@@ -62,6 +66,9 @@ add_test(${testRoot}_mosdot_2D_tri6 ${Albany.exe} input_mosdot_2D_tri6.xml)
 #add_test(${testRoot}_mosdot_2D_qcad ${Albany.exe} input_mosdot_2D_qcad.xml)
 add_test(${testRoot}_mosdot_3D ${Albany.exe} input_mosdot_3D.xml)
 add_test(${testRoot}_mosdot_3D_tet10 ${Albany.exe} input_mosdot_3D_tet10.xml)
+
+## TODO add_test(${testRoot}_pointcharge ${Albany.exe} input_pointcharge_3D.xml)
+## TODO add_test(${testRoot}_cloudcharge ${Albany.exe} input_cloudcharge_3D.xml)
 
 if (ALBANY_IFPACK2) 
 add_test(${testRoot}_mosdot_3D_Tpetra ${AlbanyT.exe} input_mosdot_3DT.xml)

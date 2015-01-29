@@ -925,6 +925,11 @@ Albany::StateManager::updateStates()
             nsa[ws][stateName_old][j] = nsa[ws][stateName][j];
 
         break;
+
+       default :
+         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+  				   "Error: Cannot match state entity : " << (*stateInfo)[i]->entity << " in state manager. " << std::endl);
+        break;
       }
     }
   }

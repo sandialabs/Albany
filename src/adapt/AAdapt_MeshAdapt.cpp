@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <iomanip>
 #include "AAdapt_MeshAdapt.hpp"
 #include "AAdapt_MeshAdapt_Def.hpp"
 
@@ -49,8 +50,6 @@ void adaptShrunken(apf::Mesh2* m, double minPartDensity,
     Parma_ShrinkPartition(m, factor, callback);
   }
 }
-
-namespace apf { extern long verifyVolumes(apf::Mesh* m); }
 
 // Adaptation loop. Looping is necessary only if updating the coordinates leads
 // to negative simplices.
@@ -136,16 +135,27 @@ public:
   }
 };
 
+void updateCoordinates (
+  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
+{
+  // AlbPUMI::FMDBDiscretization uses interleaved DOF and coordinates, so we
+  // can sum coords and soln_data straightforwardly.
+  for (std::size_t i = 0; i < cs.coords.size(); ++i)
+    x[i] = cs.coords[i] + cs.soln_ol_data[i];
+  pumi_disc->setCoordinates(x);
+}
+
 void updateRefConfig (
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   const CoordState& cs)
 {
   // x_refconfig += displacement (nonoverlapping).
   rc_mgr->update_x(*cs.soln_nol);
   // Save x_refconfig to the mesh database so it is interpolated after mesh
   // adaptation.
-  pumi_disc->setField("x_rc", &rc_mgr->get_x()->get1dView()[0], false);
+  pumi_disc->setField("x_accum", &rc_mgr->get_x()->get1dView()[0], false);
 }
 
 void updateSolution (
@@ -173,7 +183,7 @@ void updateSolution (
 // alpha) [original solution].
 double findAlpha (
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
-  const Teuchos::RCP<AAdapt::ReferenceConfigurationManager>& rc_mgr,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
   // Max number of iterations before failure is declared. Must be >=
@@ -188,21 +198,27 @@ double findAlpha (
   double alpha_lo = 0, alpha_hi = 1, alpha = 1;
   for (int it = 0 ;; ) {
     cs.set_alpha(alpha);
-
-    // AlbPUMI::FMDBDiscretization uses interleaved DOF and coordinates, so we
-    // can sum coords and soln_data straightforwardly.
-    for (std::size_t i = 0; i < cs.coords.size(); ++i)
-      x[i] = cs.coords[i] + cs.soln_ol_data[i];
-    pumi_disc->setCoordinates(x);
+    updateCoordinates(pumi_disc, cs, x);
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(
-      pumi_disc->getFMDBMeshStruct()->getMesh());
+      pumi_disc->getFMDBMeshStruct()->getMesh(), false);
     // Adjust alpha bounds.
     if (n_negative_simplices == 0)
       alpha_lo = alpha;
     else
       alpha_hi = alpha;
+
+    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0) {
+      static const int w = 8;
+      std::cout.precision(4);
+      std::cout << "amb: findAlpha it " << std::setw(2) << it
+                << " negative volumes " << std::setw(4)
+                << n_negative_simplices << " alpha " << std::setw(w) << alpha
+                << " in [" << std::setw(w) << alpha_lo << ", " << std::setw(w)
+                << alpha_hi << "]\n";
+    }
+
     // Perfect (and typical) case: success on first try, and made it all the way
     // to alpha == 1.
     if (n_negative_simplices == 0 && alpha_lo == alpha_hi) break;
@@ -210,6 +226,7 @@ double findAlpha (
     if (it >= n_iterations_if_found && alpha_lo > 0) {
       cs.restore();
       cs.set_alpha(alpha_lo);
+      updateCoordinates(pumi_disc, cs, x);
       break;
     }
     // alpha_lo == 0 and we're out of iterations.
@@ -218,12 +235,6 @@ double findAlpha (
     alpha = 0.5*(alpha_lo + alpha_hi);
     // Restore original for next try.
     cs.restore();
-
-    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0)
-      std::cout << "amb: findAlpha iteration " << it
-                << " n_negative_simplices " << n_negative_simplices
-                << " alpha " << alpha
-                << " in [" << alpha_lo << ", " << alpha_hi << "]\n";
   }
 
   if (alpha_lo > 0) {

@@ -30,6 +30,7 @@ class Aggregator
 
 public:
 
+  Aggregator(){}
   Aggregator(const Teuchos::ParameterList& aggregatorParams);
   virtual ~Aggregator(){};
 
@@ -38,13 +39,11 @@ public:
   virtual std::string getOutputObjectiveName(){return outputObjectiveName;}
   virtual std::string getOutputDerivativeName(){return outputDerivativeName;}
 
-  void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
+  virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems){};
+  virtual void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
+                                 const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap,
+                                 const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap){};
   void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
-
-  typedef struct {
-    std::string name;
-    Teuchos::RCP<Albany::Application> app;
-  } SubVariable;
 
 protected:
 
@@ -55,15 +54,44 @@ protected:
   std::string outputObjectiveName;
   std::string outputDerivativeName;
 
-  std::vector<SubVariable> objectives;
-  std::vector<SubVariable> derivatives;
-
   Teuchos::RCP<Albany::Application> outApp;
   Teuchos::RCP<const Epetra_Comm> comm;
 
 };
 
-class Aggregator_Scaled : public Aggregator {
+class Aggregator_StateVarBased : public virtual Aggregator {
+ public:
+  Aggregator_StateVarBased(){}
+  void SetInputVariables(const std::vector<SolverSubSolver>& subProblems);
+ protected:
+  typedef struct {
+    std::string name;
+    Teuchos::RCP<Albany::Application> app;
+  } SubVariable;
+
+  std::vector<SubVariable> objectives;
+  std::vector<SubVariable> derivatives;
+
+
+};
+
+class Aggregator_DistParamBased : public virtual Aggregator {
+ public:
+  Aggregator_DistParamBased(){}
+  void SetInputVariables(const std::vector<SolverSubSolver>& subProblems,
+                         const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap,
+                         const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap);
+ protected:
+  typedef struct { std::string name; Teuchos::RCP<const Epetra_Vector> value; } SubObjective;
+  typedef struct { std::string name; Teuchos::RCP<Epetra_MultiVector> value; } SubDerivative;
+
+  std::vector<SubObjective> objectives;
+  std::vector<SubDerivative> derivatives;
+
+};
+
+class Aggregator_Scaled : public virtual Aggregator,
+                          public virtual Aggregator_StateVarBased {
  public:
   Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams);
   virtual void Evaluate();
@@ -74,7 +102,8 @@ class Aggregator_Scaled : public Aggregator {
 };
 
 
-class Aggregator_Uniform : public Aggregator {
+class Aggregator_Uniform : public virtual Aggregator,
+                           public virtual Aggregator_StateVarBased {
  public:
   Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams);
   virtual void Evaluate();
@@ -87,10 +116,18 @@ class Aggregator_PassThru : public Aggregator {
   void Evaluate(){}
 };
 
+class Aggregator_DistSingle : public virtual Aggregator,
+                              public virtual Aggregator_DistParamBased {
+ public:
+  Aggregator_DistSingle(const Teuchos::ParameterList& aggregatorParams);
+  void Evaluate();
+};
+
 
 class AggregatorFactory {
 public:
-  Teuchos::RCP<Aggregator> create(const Teuchos::ParameterList& aggregatorParams);
+  Teuchos::RCP<Aggregator> create(const Teuchos::ParameterList& aggregatorParams,
+                                  std::string entityType);
 };
 
 

@@ -70,6 +70,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   std::string mesh_file = params->get<std::string>("FMDB Input File Name");
   outputFileName = params->get<std::string>("FMDB Output File Name", "");
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
+  useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
 
   compositeTet = false;
 
@@ -400,6 +401,9 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
       "Association between geometric edge ID and node set string");
   validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData,
       "Association between face ID and side set string");
+
+  validPL->set<bool>("Use Nullspace Translation Only", false,
+                     "Temporary hack to get MueLu (possibly) working for us");
 
   return validPL;
 }
