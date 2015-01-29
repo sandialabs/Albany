@@ -16,6 +16,9 @@
 
 #include "Teuchos_ParameterList.hpp"
 
+// Moertel-specific 
+#include "mrtr_interface.H"
+
 namespace LCM {
 /** \brief This class implements the Mortar contact algorithm. Here is the overall sketch of how things work:
 
@@ -67,9 +70,18 @@ protected:
   const Teuchos::Array<std::string> slaveSideNames;
   const Teuchos::Array<std::string> sideSetIDs;
   const Albany::MeshSpecsStruct* meshSpecs;
+  Teuchos::Array<int> offset;
+
+
+  // Moertel-specific library data
+  Teuchos::RCP<MOERTEL::Interface> _moertelInterface;
 
 //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+
+//! Temporary containers
+  Intrepid::FieldContainer<MeshScalarT> physPointsCell;
+
 
 
 };
