@@ -82,4 +82,6 @@ class Ramp {
 };
 
 }
+
+#include "ATO_TopoTools_Def.hpp"
 #endif

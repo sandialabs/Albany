@@ -180,16 +180,19 @@ namespace Aeras
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
+
+    //! Set coordinate vector (num_used_nodes * 3)
     void setCoordinates(const Teuchos::ArrayRCP<const double>& c);
+
     void setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm);
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
     getCoords() const;
+
     const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
     getSphereVolume() const;
 
     //! Print the coordinates for debugging
-
     void printCoords() const;
 
     //! Get stateArrays
@@ -271,7 +274,8 @@ namespace Aeras
       return stkMeshStruct->restartDataTime();
     }
 
-    //! After mesh modification, need to update the element connectivity and nodal coordinates
+    //! After mesh modification, need to update the element
+    //! connectivity and nodal coordinates
     void updateMesh(bool shouldTransferIPData = false);
 
     //! Function that transforms an STK mesh of a unit cube (for FELIX problems)
@@ -305,9 +309,9 @@ namespace Aeras
                     const int eq) const;
 
 
-    //! used when NetCDF output on a latitude-longitude grid is requested.
-    // Each struct contains a latitude/longitude index and it's parametric
-    // coordinates in an element.
+    //! Used when NetCDF output on a latitude-longitude grid is
+    //! requested.  Each struct contains a latitude/longitude index
+    //! and it's parametric coordinates in an element.
     struct interp
     {
       std::pair<double  , double  > parametric_coords ;
@@ -381,29 +385,43 @@ namespace Aeras
     stk::mesh::EntityId
     getMaximumID(const stk::mesh::EntityRank rank) const;
 
-    //! Enrich the mesh from linear to spectral
+    //! Enrich the linear STK mesh to a spectral Albany mesh
     void enrichMesh();
 
 #ifdef ALBANY_EPETRA
     void computeNodalEpetraMaps(bool overlapped);
 #endif
 
-    //! Process STK mesh for Owned nodal quantitites
+    //! Process spectral Albany mesh for owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
+
     //! Process coords for ML
     void setupMLCoords();
-    //! Process STK mesh for Overlap nodal quantitites
+
+    //! Process spectral Albany mesh for overlap nodal quantitites
     void computeOverlapNodesAndUnknowns();
-    //! Process STK mesh for CRS Graphs
+
+    //! Fill in the Workset of coordinates with corner nodes from the
+    //! STK mesh and enriched points from Gauss-Lobatto quadrature
+    void computeCoords();
+
+    //! Process spectral Albany mesh for CRS Graphs
     void computeGraphs();
-    //! Process STK mesh for Workset/Bucket Info
+
+    //! Process spectral Albany mesh for Workset/Bucket Info
     void computeWorksetInfo();
-    //! Process STK mesh for NodeSets
+
+    //! Process spectral Albany mesh for NodeSets
     void computeNodeSets();
-    //! Process STK mesh for SideSets
+
+    //! Process spectral Albany mesh for SideSets
     void computeSideSets();
-    //! Call stk_io for creating exodus output file
+
+    //! Create new STK mesh in which spectral elements are interpreted
+    //! as a patch of linear quadrilaterals, and use this to setup
+    //! Exodus output
     void setupExodusOutput();
+
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
 #ifdef ALBANY_EPETRA
@@ -435,6 +453,8 @@ namespace Aeras
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
+
+    int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
 
     //! Tpetra communicator and Kokkos node
     Teuchos::RCP<const Teuchos::Comm<int> > commT;
@@ -485,9 +505,6 @@ namespace Aeras
 
     //! Enriched edge array [workset, edge, local-node] => GID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type enrichedEdges;
-
-    //! Enriched element array [workset, element, local-node] => GID
-    Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type enrichedElements;
 
     //! Connectivity array [workset, element, local-node, Eq] => LID
     Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type wsElNodeEqID;

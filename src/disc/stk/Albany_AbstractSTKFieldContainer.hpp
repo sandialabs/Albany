@@ -79,7 +79,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #ifdef ALBANY_LCM
     IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
 #endif // ALBANY_LCM
-    ScalarFieldType* getSphereVolumeField(){ return sphereVolume_field; }
+    stk::mesh::Field<double,stk::mesh::Cartesian3d>* getSphereVolumeField(){ return sphereVolume_field; }
 
     ScalarValueState getScalarValueStates(){ return scalarValue_states;}
     QPScalarState getQPScalarStates(){return qpscalar_states;}
@@ -120,7 +120,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 #ifdef ALBANY_LCM
     IntScalarFieldType* fracture_state[stk::topology::ELEMENT_RANK];
 #endif // ALBANY_LCM
-     ScalarFieldType* sphereVolume_field; // Required for Peridynamics in LCM
+
+    stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field; // Required for Peridynamics in LCM
 
     ScalarValueState scalarValue_states;
     QPScalarState qpscalar_states;

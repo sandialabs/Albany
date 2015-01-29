@@ -380,6 +380,12 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
   }
 #ifdef ALBANY_AERAS
   else if (method == "Ioss Aeras" || method == "Exodus Aeras") {
+#ifdef ALBANY_EPETRA
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Ioss Aeras and Exodus Aeras are not implemented to run with Albany executable!  " 
+                               << "Recompile with ALBANY_EPETRA_EXE turned OFF and run with AlbanyT executable." << std::endl);
+#endif
      std::cout << "Creating Aeras::SpectralDiscretization!" << std::endl; 
     //IK, 1/8/15: Added construction of Aeras::SpectralDiscretization object.
     //WARNING: meshSpecsType() right now is set to STK_MS even for an Aeras::SpectralDiscretization, b/c that's how

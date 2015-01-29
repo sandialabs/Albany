@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************/
-#include "ATO_TopoTools.hpp"
 
 namespace ATO {
 
