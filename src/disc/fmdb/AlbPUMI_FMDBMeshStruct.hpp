@@ -95,7 +95,6 @@ namespace AlbPUMI {
 
     std::string outputFileName;
     int outputInterval;
-    bool outputQPFields;
 
 private:
 

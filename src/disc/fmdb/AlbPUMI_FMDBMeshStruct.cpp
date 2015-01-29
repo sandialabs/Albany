@@ -72,7 +72,6 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
 
   compositeTet = false;
-  outputQPFields = params->get<bool>("Output QP Fields", false);
 
   gmi_register_mesh();
 
@@ -380,7 +379,6 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
-  validPL->set<bool>("Output QP Fields", false, "Whether to copy QP data to output files");
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
