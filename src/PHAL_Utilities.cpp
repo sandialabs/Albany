@@ -12,16 +12,14 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
-  //amb Need to figure this out. Unlike the Jacobian case, it appears that in
-  // the Tangent case, it's OK to overestimate the size.
-  return 32;
+  return app->getParamLib()->size();
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
-  //amb Need to figure out.
-  return app->getNumEquations() * ms->ctd.node_count;
+  //amb No idea. Need to ask Mauro.
+  return app->getDistParamLib()->size();
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (

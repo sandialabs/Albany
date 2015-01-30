@@ -573,14 +573,14 @@ getInitialSolutionDotT() const
 
 RCP<ParamLib>
 Albany::Application::
-getParamLib()
+getParamLib() const
 {
   return paramLib;
 }
 
 RCP<DistParamLib>
 Albany::Application::
-getDistParamLib()
+getDistParamLib() const
 {
   return distParamLib;
 }

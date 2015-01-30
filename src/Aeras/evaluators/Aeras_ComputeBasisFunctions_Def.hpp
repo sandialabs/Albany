@@ -667,7 +667,7 @@ evaluateFields(typename Traits::EvalData workset)
     (GradBF, jacobian_inv, grad_at_cub_points);
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
-#else // NO_KOKKOS_ALBANY
+#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //   Kokkos::parallel_for (numelements, compute_jacobian_inv< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> > (jacobian, jacobian_inv, numQPs));  
  
 //  Kokkos::parallel_for (numelements, compute_jacobian_det< MeshScalarT, PHX::Device  ,PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint> > (jacobian, jacobian_det, numQPs));
@@ -694,7 +694,7 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::parallel_for (numelements, compute_GradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim>, Kokkos::View<RealType***, PHX::Device>  > (GradBF, jacobian_inv, grad_at_cub_points_CUDA, numNodes, numQPs, numDims));
 
   Kokkos::parallel_for (numelements, compute_wGradBF< PHX::Device , PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<MeshScalarT,Cell,QuadPoint>  > (wGradBF, GradBF, weighted_measure, numNodes, numQPs, numDims));
-#endif // NO_KOKKOS_ALBANY
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   PHAL::set(GradGradBF, 0.0);
   if (spatialDim!=basisDim) 
