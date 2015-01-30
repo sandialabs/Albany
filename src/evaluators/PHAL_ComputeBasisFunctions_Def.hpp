@@ -137,7 +137,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   writestuff(*this, workset);
 }
-#else // NO_KOKKOS_ALBANY
+#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
@@ -708,6 +708,6 @@ evaluateFields(typename Traits::EvalData workset)
 
   writestuff(*this, workset);
 }
-#endif // NO_KOKKOS_ALBANY
+#endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //**********************************************************************
 }
