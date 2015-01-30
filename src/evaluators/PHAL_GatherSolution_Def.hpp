@@ -1124,29 +1124,30 @@ evaluateFields(typename Traits::EvalData workset)
   int numDim = 0;
   if(this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-  //Irina TOFIX
-  /*
+//Irina TOFIX
+/*  
  int nblock = x->size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node,eq/numDim,eq%numDim);
-        else if (this->tensorRank == 1) valptr = &(this->valVec[0])(cell,node,eq);
-        else                   valptr = &(this->val[eq])(cell,node);
+        PHAL::AlbanyTraits::SGTangent::ScalarRefT
+        valptr = (this->tensorRank == 2 ? (this->valTensor[0])(cell,node,eq/numDim,eq%numDim) :
+                  this->tensorRank == 1 ? (this->valVec[0])(cell,node,eq) :
+                  (this->val[eq])(cell,node));
         if (Vx != Teuchos::null && workset.j_coeff != 0.0) {
-          *valptr = SGFadType(num_cols_tot, 0.0);
+          valptr = SGFadType(num_cols_tot, 0.0);
           for (int k=0; k<workset.num_cols_x; k++)
-            valptr->fastAccessDx(k) =
+            valptr.fastAccessDx(k) =
               workset.j_coeff*(*Vx)[k][nodeID[node][this->offset + eq]];
         }
         else
-          *valptr = SGFadType(0.0);
-        valptr->val().reset(sg_expansion);
-        valptr->val().copyForWrite();
+          valptr = SGFadType(0.0);
+        (valptr.val()).reset(sg_expansion);
+        (valptr.val()).copyForWrite();
         for (int block=0; block<nblock; block++)
-          valptr->val().fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
+          (valptr.val()).fastAccessCoeff(block) = (*x)[block][nodeID[node][this->offset + eq]];
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
@@ -1185,11 +1186,11 @@ evaluateFields(typename Traits::EvalData workset)
           for (int block=0; block<nblock; block++)
             valptr->val().fastAccessCoeff(block) = (*xdotdot)[block][nodeID[node][this->offset + eq]];
         }
-      }
+      }*/
     }
   }
 
- */
+ 
 }
 
 // **********************************************************************
