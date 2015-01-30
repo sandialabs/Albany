@@ -291,9 +291,9 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
  // LO colT[500];
-//  LO rowT;
+  LO rowT;
   std::vector<ST> vals(nunk);
-  std::vector<LO> colT(nunk)
+  std::vector<LO> colT(nunk);
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
