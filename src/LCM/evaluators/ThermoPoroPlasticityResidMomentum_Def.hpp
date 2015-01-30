@@ -73,7 +73,7 @@ ThermoPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(ExResidual);
 
 
-  this->setName("ThermoPoroPlasticityResidMomentum"+PHX::typeAsString<PHX::Device>());
+  this->setName("ThermoPoroPlasticityResidMomentum"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

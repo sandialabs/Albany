@@ -134,7 +134,7 @@ ResponseFieldIntegralT(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
-  this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<PHX::Device>());
+  this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);

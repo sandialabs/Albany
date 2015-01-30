@@ -43,7 +43,7 @@ namespace LCM {
 
     this->addEvaluatedField(projection_residual_);
 
-    this->setName("HydroStress Residual"+PHX::typeAsString<PHX::Device>());
+    this->setName("HydroStress Residual"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

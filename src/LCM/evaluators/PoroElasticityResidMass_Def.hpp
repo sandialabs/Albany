@@ -140,7 +140,7 @@ namespace LCM {
       }
     }
 
-    this->setName("PoroElasticityResidMass"+PHX::typeAsString<PHX::Device>());
+    this->setName("PoroElasticityResidMass"+PHX::typeAsString<EvalT>());
 
   }
 

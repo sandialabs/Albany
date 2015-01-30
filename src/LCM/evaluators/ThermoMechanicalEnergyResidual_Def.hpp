@@ -70,7 +70,7 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   CinvTgrad.resize(worksetSize, numQPs, numDims);
   Tdot.resize(worksetSize, numQPs);
 
-  this->setName("ThermoMechanicalEnergyResidual"+PHX::typeAsString<PHX::Device>());
+  this->setName("ThermoMechanicalEnergyResidual"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

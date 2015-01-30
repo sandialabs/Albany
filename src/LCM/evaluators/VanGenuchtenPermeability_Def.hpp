@@ -96,7 +96,7 @@ VanGenuchtenPermeability(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(vgPermeability);
-  this->setName("Van Genuchten Permeability"+PHX::typeAsString<PHX::Device>());
+  this->setName("Van Genuchten Permeability"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

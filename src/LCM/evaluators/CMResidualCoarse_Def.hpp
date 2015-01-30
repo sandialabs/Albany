@@ -36,7 +36,7 @@ CMResidualCoarse(Teuchos::ParameterList & p,
 
   this->addEvaluatedField(residual_);
 
-  this->setName("CMResidualCoarse" + PHX::typeAsString<PHX::Device>());
+  this->setName("CMResidualCoarse" + PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type>
   dims;

@@ -84,7 +84,7 @@ namespace LCM {
     this->addEvaluatedField(convection_coefficient_);
     this->addEvaluatedField(F_mech_);
 
-    this->setName("Transport Coefficients"+PHX::typeAsString<PHX::Device>());
+    this->setName("Transport Coefficients"+PHX::typeAsString<EvalT>());
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     worksetSize  = dims[0];

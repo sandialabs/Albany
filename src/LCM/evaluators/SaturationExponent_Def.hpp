@@ -64,7 +64,7 @@ SaturationExponent(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(satExp);
-  this->setName("Saturation Exponent"+PHX::typeAsString<PHX::Device>());
+  this->setName("Saturation Exponent"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

@@ -56,7 +56,7 @@ namespace LCM {
       this->addEvaluatedField(vel_grad_);
     }
 
-    this->setName("Kinematics"+PHX::typeAsString<PHX::Device>());
+    this->setName("Kinematics"+PHX::typeAsString<EvalT>());
 
     if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
       this->addDependentField(def_grad_rc_());

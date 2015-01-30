@@ -55,7 +55,7 @@ TLPoroStress(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(porePressure);
   this->addEvaluatedField(totstress);
 
-  this->setName("TLPoroStress"+PHX::typeAsString<PHX::Device>());
+  this->setName("TLPoroStress"+PHX::typeAsString<EvalT>());
 
 }
 

@@ -57,7 +57,7 @@ DamageResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
 
-  this->setName("DamageResid"+PHX::typeAsString<PHX::Device>());
+  this->setName("DamageResid"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

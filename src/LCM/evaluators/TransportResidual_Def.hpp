@@ -110,7 +110,7 @@ namespace LCM {
 
     scalar_name_ = p.get<std::string>("Scalar Variable Name")+"_old";
 
-    this->setName("TransportResidual"+PHX::typeAsString<PHX::Device>());
+    this->setName("TransportResidual"+PHX::typeAsString<EvalT>());
   }
 
   //----------------------------------------------------------------------------

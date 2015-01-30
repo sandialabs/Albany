@@ -49,7 +49,7 @@ DislocationDensity(const Teuchos::ParameterList& p) :
 			      "Dislocation Density Calculation currently needs numNodes == numQPs" );
 
 
-  this->setName("DislocationDensity"+PHX::typeAsString<PHX::Device>());
+  this->setName("DislocationDensity"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

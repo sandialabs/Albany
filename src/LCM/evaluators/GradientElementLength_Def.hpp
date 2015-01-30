@@ -22,7 +22,7 @@ namespace LCM {
     this->addDependentField(grad_bf_);
     this->addEvaluatedField(element_length_);
 
-    this->setName("Element Length"+PHX::typeAsString<PHX::Device>());
+    this->setName("Element Length"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_qp_vector->dimensions(dims);

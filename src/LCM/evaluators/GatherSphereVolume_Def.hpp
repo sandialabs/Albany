@@ -20,7 +20,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p,
   numVertices(0), worksetSize(0)
 {  
   this->addEvaluatedField(sphereVolume);
-  this->setName("Gather Sphere Volume"+PHX::typeAsString<PHX::Device>());
+  this->setName("Gather Sphere Volume"+PHX::typeAsString<EvalT>());
 }
 
 template<typename EvalT, typename Traits>
@@ -30,7 +30,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0)
 {
   this->addEvaluatedField(sphereVolume);
-  this->setName("Gather Sphere Volume"+PHX::typeAsString<PHX::Device>());
+  this->setName("Gather Sphere Volume"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

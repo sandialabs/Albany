@@ -81,7 +81,7 @@ DOFGradInterpolation_noDeriv(Teuchos::ParameterList& p,
   this->addDependentField(GradBF);
   this->addEvaluatedField(grad_val_qp);
 
-  this->setName("Aeras::DOFGradInterpolation_noDeriv"+ PHX::typeAsString<PHX::Device>());
+  this->setName("Aeras::DOFGradInterpolation_noDeriv"+ PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

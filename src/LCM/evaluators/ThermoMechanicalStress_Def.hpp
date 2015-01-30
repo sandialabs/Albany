@@ -76,7 +76,7 @@ namespace LCM {
     this->addEvaluatedField(eqps);
     this->addEvaluatedField(mechSource);
 
-    this->setName("ThermoMechanical Stress" + PHX::typeAsString<PHX::Device>());
+    this->setName("ThermoMechanical Stress" + PHX::typeAsString<EvalT>());
 
   }
 

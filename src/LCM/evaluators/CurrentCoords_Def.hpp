@@ -25,7 +25,7 @@ CurrentCoords(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(currentCoords);
 
-  this->setName("Current Coordinates"+PHX::typeAsString<PHX::Device>());
+  this->setName("Current Coordinates"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);

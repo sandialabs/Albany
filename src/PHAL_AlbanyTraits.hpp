@@ -22,9 +22,7 @@
 
 // Include User Data Types
 #include "Phalanx_config.hpp"
-//#include "Phalanx_Allocator_Contiguous.hpp"
-//#include "Phalanx_Allocator_New.hpp"
-//#include "Phalanx_TypeStrings.hpp"
+#include "Phalanx_TypeStrings.hpp"
 
 #include "Albany_DataTypes.hpp"
 #include "PHAL_Dimension.hpp"
@@ -186,70 +184,42 @@ namespace PHAL {
   // ******************************************************************
 
 }
-/*
+
 namespace PHX {
   // Evaluation Types
-  template<> struct TypeString<PHAL::AlbanyTraits::Residual>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Residual>()
+  { return "<Residual>"; }
 
-  template<> struct TypeString<PHAL::AlbanyTraits::Jacobian>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Jacobian>()
+  { return "<Jacobian>"; }
 
-  template<> struct TypeString<PHAL::AlbanyTraits::Tangent>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Tangent>()
+  { return "<Tangent>"; }
 
-  template<> struct TypeString<PHAL::AlbanyTraits::DistParamDeriv>
-  { static const std::string value; };
-
-#ifdef ALBANY_SG_MP
-  template<> struct TypeString<PHAL::AlbanyTraits::SGResidual>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::SGJacobian>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::SGTangent>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::MPResidual>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::MPJacobian>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::MPTangent>
-  { static const std::string value; };
-#endif //ALBANY_SG_MP
-
-  // Data Types
-  template<> struct TypeString<RealType>
-  { static const std::string value; };
-
-  template<> struct TypeString<FadType >
-  { static const std::string value; };
-
-#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-// This is necessary iff TanFadType is different from FadType
-  template<> struct TypeString<TanFadType >
-  { static const std::string value; };
-#endif
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::DistParamDeriv>()
+  { return "<DistParamDeriv>"; }
 
 #ifdef ALBANY_SG_MP
-  template<> struct TypeString<SGType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGResidual>()
+  { return "<SGResidual>"; }
 
-  template<> struct TypeString<SGFadType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGJacobian>()
+  { return "<SGJacobian>"; }
 
-  template<> struct TypeString<MPType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGTangent>()
+  { return "<SGTangent>"; }
 
-  template<> struct TypeString<MPFadType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPResidual>()
+  { return "<MPResidual>"; }
+
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPJacobian>()
+  { return "<MPJacobian>"; }
+
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPTangent>()
+  { return "<MPTangent>"; }
 #endif //ALBANY_SG_MP
-
 }
-*/
+
 // Define macro for explicit template instantiation
 #define PHAL_INSTANTIATE_TEMPLATE_CLASS_RESIDUAL(name) \
   template class name<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>;
