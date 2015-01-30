@@ -219,9 +219,10 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 {
-
-  //LO colT[nunk];
-  std::vector<LO> colT(nunk);
+// const int neq = workset.wsElNodeEqID[0][0].size();
+//  const int nunk = neq*this->numNodes;
+  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  LO colT[500];
   LO rowT;
 
   for (int node_col=0; node_col<this->numNodes; node_col++){
@@ -251,12 +252,12 @@ KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 {
- 
-  //LO colT[nunk];
-  std::vector<LO> colT(nunk);
+//  const int neq = workset.wsElNodeEqID[0][0].size();
+//  const int nunk = neq*this->numNodes;
+  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  LO colT[500];
   LO rowT;
-  //ST vals[nunk];
-  std::vector<ST> vals(nunk);
+  ST vals[500];
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -283,8 +284,10 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 {
-  //LO colT[nunk];
-  std::vector<LO> colT(nunk);
+//  const int neq = workset.wsElNodeEqID[0][0].size();
+//  const int nunk = neq*this->numNodes;
+  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  LO colT[500];
   LO rowT;
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -313,11 +316,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 {
-  //LO colT[nunk];
-  std::vector<LO> colT(nunk);
+ // const int neq = workset.wsElNodeEqID[0][0].size();
+//  const int nunk = neq*this->numNodes;
+  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  LO colT[500];
   LO rowT;
-  //ST vals[nunk];
-  std::vector<ST> vals(nunk);
+  ST vals[500];
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -343,8 +347,10 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 {
-  //LO colT[nunk];
-  std::vector<LO> colT(nunk);
+  //const int neq = workset.wsElNodeEqID[0][0].size();
+//  const int nunk = neq*this->numNodes;
+  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+  LO colT[500];
   LO rowT;
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
@@ -373,11 +379,12 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
 {
-//  LO colT[nunk];
-  std::vector<LO> colT(nunk);
-  LO rowT;
-//  ST vals[nunk];
-  std::vector<ST> vals(nunk);
+  //const int neq = workset.wsElNodeEqID[0][0].size();
+//  const int nunk = neq*this->numNodes;
+   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+   LO colT[500];
+   LO rowT;
+   ST vals[500];
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -422,7 +429,7 @@ evaluateFields(typename Traits::EvalData workset)
 
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*this->numNodes;
-//  colT.resize(nunk);
+  //colT.resize(nunk);
   
   LO colT[nunk];
 
@@ -502,7 +509,6 @@ evaluateFields(typename Traits::EvalData workset)
 
    neq = workset.wsElNodeEqID[0][0].size();
    nunk = neq*this->numNodes;
-  // colT.resize(nunk);
 
    numDim=0;
    if(this->tensorRank==2)
