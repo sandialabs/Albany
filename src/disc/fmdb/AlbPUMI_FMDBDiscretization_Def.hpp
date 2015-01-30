@@ -993,7 +993,7 @@ template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
     apf::Field* f,
     apf::FieldShape* fs,
-    bool copyAll = true)
+    bool copyAll)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
