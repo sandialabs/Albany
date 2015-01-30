@@ -288,7 +288,7 @@ template<class Output>
     void copyQPScalarToAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
     void copyQPVectorToAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
     void copyQPTensorToAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
-    void copyQPStatesToAPF(apf::Field* f, apf::FieldShape* fs);
+    void copyQPStatesToAPF(apf::Field* f, apf::FieldShape* fs, bool copyAll);
     void removeQPStatesFromAPF();
 
     //! Transfer QP Fields from APF to QPData
