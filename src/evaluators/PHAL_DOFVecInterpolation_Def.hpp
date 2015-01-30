@@ -200,7 +200,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  int neq = num_dof / numNodes; 
+  const int neq = workset.wsElNodeEqID[0][0].size();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {

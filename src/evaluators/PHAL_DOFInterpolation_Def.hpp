@@ -106,8 +106,8 @@ evaluateFields(typename Traits::EvalData workset)
   // for (int i=0; i < val_qp.size() ; i++) val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(val_qp, val_node, BF);
 
-  int num_dof = val_node(0,0).size();
-  int neq = num_dof / numNodes;
+  const int num_dof = val_node(0,0).size();
+  const int neq = workset.wsElNodeEqID[0][0].size();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
