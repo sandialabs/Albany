@@ -145,10 +145,10 @@ namespace Albany {
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> getAdaptSolMgrT(){ return solMgrT;}
 
     //! Get parameter library
-    Teuchos::RCP<ParamLib> getParamLib();
+    Teuchos::RCP<ParamLib> getParamLib() const;
 
     //! Get distributed parameter library
-    Teuchos::RCP<DistParamLib> getDistParamLib();
+    Teuchos::RCP<DistParamLib> getDistParamLib() const;
 
     //! Get solution method
     SolutionMethod getSolutionMethod() const {return solMethod; }
