@@ -176,7 +176,7 @@ namespace LCM {
     void compute_temperature_Linear(const int cell) const;
     KOKKOS_INLINE_FUNCTION
     void compute_temperature_Arrhenius(const int cell) const;
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     private:
     typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
     std::vector<PHX::index_size_type> ddims_;

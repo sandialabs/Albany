@@ -68,7 +68,7 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-// #define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -85,7 +85,7 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
 #ifdef OUTPUT_TO_SCREEN
-  std::cout <<"In Aeras::SpectralDiscretization constructor!" << std::endl; 
+  *out <<"In Aeras::SpectralDiscretization constructor!" << std::endl; 
 #endif
 
 #ifdef ALBANY_EPETRA
@@ -242,6 +242,7 @@ Aeras::SpectralDiscretization::getSphereVolume() const
 void
 Aeras::SpectralDiscretization::printCoords() const
 {
+  //print coordinates
   std::cout << "Processor " << bulkData.parallel_rank() << " has "
             << coords.size() << " worksets." << std::endl;
   for (int ws = 0; ws < coords.size(); ws++)             // workset
@@ -250,15 +251,23 @@ Aeras::SpectralDiscretization::printCoords() const
     {
       for (int j = 0; j < coords[ws][e].size(); j++)     // node
       {
-        for (int d = 0; d < stkMeshStruct->numDim; d++)  // node
-        {
-          std::cout << "Coord for workset: " << ws << " element: " << e
-                    << " node: " << j << " DOF: " << d << " is: "
-                    << coords[ws][e][j][d] << std::endl;
-        }
+      //IK, 1/27/15: the following assumes a 3D mesh but this is OK here.
+        std::cout << "Coord for workset: " << ws << " element: " << e
+                  << " node: " << j << " x, y, z: "
+                  << coords[ws][e][j][0] << ", " << coords[ws][e][j][1]  
+                  << ", " << coords[ws][e][j][2] << std::endl;
       }
     }
   }
+  //print element connectivity -- added 1/27/15
+  for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
+    for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
+      for (size_t inode = 0; inode < wsElNodeID[ibuck][ielem].size(); ++inode)
+          std::cout << "ibuck, ielem, inode, wsElNodeID: " << ibuck << ", " 
+                    << ielem << ", " << inode << ", " <<  wsElNodeID[ibuck][ielem][inode] 
+                    << std::endl;
+
+
 }
 
 
@@ -343,8 +352,10 @@ Aeras::SpectralDiscretization::transformMesh()
 //for the enriched mesh.  This could only be needed with ML/MueLu preconditioners.
 void Aeras::SpectralDiscretization::setupMLCoords()
 {
-  *out << "Warning: setupMLCoords() not yet implemented in Aeras::SpectralDiscretization!" << 
-          "ML and MueLu will not receive coordinates for repartitioning if used." << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "Warning: setupMLCoords() not yet implemented in Aeras::SpectralDiscretization!  " << 
+          "ML and MueLu will not receive coordinates for repartitioning if used." << std::endl;
+#endif 
 /*  if (rigidBodyModes.is_null()) return;
   if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
 
@@ -914,10 +925,14 @@ Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) co
 
 void Aeras::SpectralDiscretization::enrichMesh()
 {
-  *out << "In Aeras::SpectralDiscretization::enrichMesh()" << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "In Aeras::SpectralDiscretization::enrichMesh()" << std::endl;
+#endif 
   // Initialization
   size_t np  = points_per_edge;
-  *out << "Points per edge: " << np << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "Points per edge: " << np << std::endl;
+#endif 
   size_t np2 = np * np;
   GO maxGID    = getMaximumID(stk::topology::NODE_RANK);
   GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
@@ -1134,7 +1149,9 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
 
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 {
-  *out << "In Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()" << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "In Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()" << std::endl;
+#endif 
   // Initialization
   int np = points_per_edge;
 
@@ -1247,6 +1264,9 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "In Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()" << std::endl;
+#endif 
   // Initialization
   int np = points_per_edge;
 
@@ -1352,8 +1372,11 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   coordinates.resize(3*numOverlapNodes);
 }
 
-void Aeras::SpectralDiscretization::computeCoordinates()
+void Aeras::SpectralDiscretization::computeCoords()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "In Aeras::SpectralDiscretization::computeCoords()" << std::endl;
+#endif 
   // Initialization
   typedef Intrepid::FieldContainer< double > Field_t;
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
@@ -1419,7 +1442,11 @@ void Aeras::SpectralDiscretization::computeCoordinates()
         {
           const GO nodeGid = gid(stkNodes[ii]);
           const LO nodeLid = overlap_node_mapT->getLocalElement(nodeGid);
-          c[ii] = stk::mesh::field_data(*coordinates_field, nodeLid)[idim];
+          //IK, 1/27/15: this line used to be 
+          //  c[ii] = stk::mesh::field_data(*coordinates_field, nodeLid)[idim];
+          //This was causing a seg fault so I changed it to what I believe is correct.
+          //Needs further testing.  If my fix is correct, nodeGid, and nodeLid can be removed.
+          c[ii] = stk::mesh::field_data(*coordinates_field, stkNodes[ii])[idim];
         }
         for (size_t inode = 0; inode < np2; ++inode)
         {
@@ -1517,6 +1544,9 @@ void Aeras::SpectralDiscretization::computeGraphs()
 
 void Aeras::SpectralDiscretization::computeWorksetInfo()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "In Aeras::SpectralDiscretization::computeWorksetInfo()" << std::endl;
+#endif 
   stk::mesh::Selector select_owned_in_part =
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
@@ -1779,6 +1809,9 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     }
   }
 
+ //IK, 1/27/15: commented out the following as it has to do with periodic BCs, which I think are not relevant for 
+ //Aeras spectral elements.
+/*
   for (int d=0; d<stkMeshStruct->numDim; d++)
   {
   if (stkMeshStruct->PBCStruct.periodic[d])
@@ -1836,7 +1869,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
     }
   }
   }
-
+ */
   typedef Albany::AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
   typedef Albany::AbstractSTKFieldContainer::QPScalarState    QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState    QPVectorState;
@@ -1935,7 +1968,9 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 
 void Aeras::SpectralDiscretization::computeSideSets()
 {
+#ifdef OUTPUT_TO_SCREEN
   *out << "In Aeras::SpectralDiscretization::computeSideSets(): nothing to do!" << std::endl;
+#endif
   /* 
   // Clean up existing sideset structure if remeshing
   for(int i = 0; i < sideSets.size(); i++)
@@ -2138,8 +2173,9 @@ Aeras::SpectralDiscretization::determine_local_side_id(const stk::mesh::Entity e
 
 void Aeras::SpectralDiscretization::computeNodeSets()
 {
-
-  *out << "In Aeras::SpectralDiscretization::computeNodeSets(): nothing to do!" << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+  *out << "In Aeras::SpectralDiscretization::computeNodeSets(): nothing to do!" << std::endl;
+#endif 
   /*
   std::map<std::string, stk::mesh::Part*>::iterator ns = stkMeshStruct->nsPartVec.begin();
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
@@ -2972,18 +3008,23 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
-  //IK, 1/23/15, FIXME: to implement
+  //IK, 1/23/15, FIXME: to implement -- transform mesh based on new enriched coordinates
   transformMesh();
 
   //IK, 1/23/15, FIXME: to implement
   computeGraphs();
 
-  //IK, 1/26/15: This will need to be uncommented at some point
-  //computeCoordinates(); 
-  //Note that coordinates are set in getCoordinates() and getCoords() as well.  I think the former isn't called anywhere however.
-
   //IK, 1/23/15, FIXME: to implement
   computeWorksetInfo();
+  
+  //IK, 1/26/15: This will need to be uncommented at some point.
+  //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
+  computeCoords(); 
+
+ //IK, 1/27/15: debug output
+#ifdef OUTPUT_TO_SCREEN
+  printCoords(); 
+#endif
  
   //IK, 1/23/15: I have changed it so nothing happens in the following functions b/c 
   //we have no Dirichlet/Neumann BCs for spherical mesh.

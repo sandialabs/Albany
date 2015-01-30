@@ -11,7 +11,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace PHAL {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,

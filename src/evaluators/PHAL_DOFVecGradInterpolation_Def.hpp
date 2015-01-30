@@ -119,7 +119,7 @@ void writestuff (
   void DOFVecGradInterpolation<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     // This is needed, since evaluate currently sums into    
    Kokkos::deep_copy(grad_val_qp.get_kokkos_view(), 0.0);
 
@@ -245,7 +245,7 @@ Kokkos::parallel_for ( workset.numCells,  VecGradInterpolation < PHX::Device, PH
   void DOFVecGradInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int num_dof = val_node(0,0,0).size();
   int neq = num_dof / numNodes;
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {

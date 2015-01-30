@@ -79,7 +79,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
 
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
   val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
   grad_at_cub_points_CUDA=Kokkos::View<RealType***, PHX::Device>("grad_at_cub_points_CUDA", numNodes, numQPs, basisDims);
@@ -120,7 +120,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 //Kokkos functors:
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template < typename MeshScalarType,class DeviceType, class MDFieldType >
 class compute_jacobian_inv  {
  MDFieldType jacobian_;
@@ -655,7 +655,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Intrepid::FunctionSpaceTools::computeCellMeasure<MeshScalarT>
     (weighted_measure, jacobian_det, refWeights);
 

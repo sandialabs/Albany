@@ -63,6 +63,10 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     }
   }
   else if (fieldType == "Tensor") {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "local_ and global_response must have rank 2. However, this code path "
+      "makes them rank 3. Needs to be fixed.");
     field_layout = dl->qp_tensor;
     local_response_layout = dl->cell_tensor;
     global_response_layout = dl->workset_tensor;
@@ -194,7 +198,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	if (field_rank == 2) {
 	  s = field(cell,qp) * weights(cell,qp) * scaling;
-	  this->local_response(cell) += s;
+	  this->local_response(cell,0) += s;
 	  this->global_response(0) += s;
 	}
 	else if (field_rank == 3) {

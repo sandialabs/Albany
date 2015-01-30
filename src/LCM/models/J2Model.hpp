@@ -83,7 +83,7 @@ private:
   computeStateParallel(typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
 
   struct have_temperature_Tag{};

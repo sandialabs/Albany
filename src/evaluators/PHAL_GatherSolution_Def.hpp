@@ -317,7 +317,7 @@ evaluateFields(typename Traits::EvalData workset)
   xdotT_constView = xdotT->get1dView();
   xdotdotT_constView = xdotdotT->get1dView();
 
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (this->tensorRank == 1) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -616,7 +616,7 @@ evaluateFields(typename Traits::EvalData workset)
   xT_constView = xT->get1dView();
   xdotT_constView = xdotT->get1dView();
   xdotdotT_constView = xdotdotT->get1dView();
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2); // only needed for tensor fields
 

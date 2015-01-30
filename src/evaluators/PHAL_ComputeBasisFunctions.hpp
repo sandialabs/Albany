@@ -24,7 +24,7 @@ namespace PHAL {
     This evaluator interpolates nodal DOF values to quad points.
 
 */
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 class ComputeBasisFunctions : public PHX::EvaluatorWithBaseImpl<Traits>,
  			 public PHX::EvaluatorDerived<EvalT, Traits>  {

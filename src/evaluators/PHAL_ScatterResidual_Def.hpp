@@ -108,7 +108,7 @@ ScatterResidual(const Teuchos::ParameterList& p,
 }
 // **********************************************************************
 //Kokkos kernels:
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Residual,Traits>::
@@ -149,7 +149,7 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
 
   //get nonconst (read and write) view of fT
@@ -212,7 +212,7 @@ ScatterResidual(const Teuchos::ParameterList& p,
 {
 }
 // **********************************************************************
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //Kokkos kernels:
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -222,8 +222,9 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 // const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  LO colT[500];
+  //LO colT[500];
   LO rowT;
+  std::vector<LO> colT(nunk);
 
   for (int node_col=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -255,9 +256,11 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 //  const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  LO colT[500];
+  //LO colT[500];
   LO rowT;
-  ST vals[500];
+  //ST vals[500];
+  std::vector<LO> colT(nunk);
+  std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -272,7 +275,7 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
            if (((this->val[eq])(cell,node)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
-              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);  
+              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);  
         }
       }
    }
@@ -287,9 +290,10 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 //  const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  LO colT[500];
-  LO rowT;
-
+ // LO colT[500];
+//  LO rowT;
+  std::vector<ST> vals(nunk);
+  std::vector<LO> colT(nunk)
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
@@ -318,10 +322,12 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 {
  // const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
-  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  LO colT[500];
+//  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
+//  LO colT[500];
   LO rowT;
-  ST vals[500];
+//  ST vals[500];
+  std::vector<LO> colT(nunk);
+  std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -336,7 +342,7 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->valVec[0])(cell,node,eq)).val());
            if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec[0])(cell,node,eq).fastAccessDx(i);
-              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
+              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }
    }
@@ -350,8 +356,9 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
   //const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  LO colT[500];
+  //LO colT[500];
   LO rowT;
+  std::vector<LO> colT(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -382,9 +389,11 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
   //const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
    //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-   LO colT[500];
+   //LO colT[500];
    LO rowT;
-   ST vals[500];
+   //ST vals[500];
+   std::vector<LO> colT(nunk);
+   std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -399,7 +408,7 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
            if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
-              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
+              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }
    }
@@ -411,76 +420,50 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
-
-  if (!JacT->isFillComplete())
-      JacT->fillComplete();
-
-  typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
-  LocalMatrixType jacobian;
-
-   jacobian=JacT->getLocalMatrix();
-
-
   const bool loadResid = Teuchos::nonnull(fT);
-//  Teuchos::Array<LO> colT;
-
+  Teuchos::Array<LO> colT;
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*this->numNodes;
-  //colT.resize(nunk);
-  
-  LO colT[nunk];
-
+  colT.resize(nunk);
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
-
   FILE* fid = amb::print_level() > 10 ?
     fopen(amb::get_full_filename("sr_jac").c_str(), "wa") :
     NULL;
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
-    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
-
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
-        colT[neq * node_col + eq_col] =  nodeID[node_col][eq_col];
+        colT[neq * node_col + eq_col] = nodeID[node_col][eq_col];
       }
     }
-
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
         PHAL::AlbanyTraits::Jacobian::ScalarRefT
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec[0](cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-
         const LO rowT = nodeID[node][this->offset + eq];
         if (loadResid)
           fT->sumIntoLocalValue(rowT, valptr.val());
-
         // Check derivative array is nonzero
         if (valptr.hasFastAccess()) {
           if (workset.is_adjoint) {
             // Sum Jacobian transposed
-            for (int lunk = 0; lunk < nunk; lunk++){
-              ST val = valptr.fastAccessDx(lunk);
-              jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
-            }
- 
-/*              JacT->sumIntoLocalValues(
+            for (unsigned int lunk = 0; lunk < nunk; lunk++)
+              JacT->sumIntoLocalValues(
                 colT[lunk], Teuchos::arrayView(&rowT, 1),
                 Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-    */      }
+          }
           else {
             // Sum Jacobian entries all at once
-              ST vals[nunk];
-              for (int i = 0; i < nunk; ++i) vals[i] = valptr.fastAccessDx(i);
-              jacobian.sumIntoValues (rowT, colT, nunk,  vals, true);
-/*            JacT->sumIntoLocalValues(
+            JacT->sumIntoLocalValues(
               rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-*/            if (fid)
+            if (fid)
               for (int lunk = 0; lunk < nunk; ++lunk)
                 fprintf(fid, "%d %d %d %d %d %1.15e\n", cell, node, eq, rowT,
                         colT[lunk], valptr.fastAccessDx(lunk));
@@ -490,9 +473,6 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   if (fid) fclose(fid);
-
-  if (JacT->isFillComplete())
-    JacT->resumeFill();
 #else
    //Kokkos parallel execution
 

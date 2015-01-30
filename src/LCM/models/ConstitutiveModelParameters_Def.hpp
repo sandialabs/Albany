@@ -155,7 +155,7 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
       "Constitutive Model Parameters" + PHX::typeAsString<PHX::Device>());
 
 
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     ddims_.push_back(24);
    int num_cells=dims[0];
     point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
@@ -187,7 +187,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 //------------------------------------------------------------------------------
 //Kokkos kernels
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ConstitutiveModelParameters<EvalT, Traits>::
@@ -284,7 +284,7 @@ void ConstitutiveModelParameters<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-#ifdef NO_KOKKOS_ALBANY  
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
 
   typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
 

@@ -210,7 +210,7 @@ void DOFGradInterpolation_noDeriv<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-//#ifdef NO_KOKKOS_ALBANY
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Intrepid Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);

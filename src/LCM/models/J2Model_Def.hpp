@@ -138,7 +138,7 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
 
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
@@ -313,7 +313,7 @@ computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elas
 #endif
 }
 //------------------------------------------------------------------------------
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
 void inverse(const ArrayT &A, ArrayT  &Atrans) 
@@ -708,7 +708,7 @@ computeStateParallel(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
-#ifndef NO_KOKKOS_ALBANY
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //const int derivative_dim=25;
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];

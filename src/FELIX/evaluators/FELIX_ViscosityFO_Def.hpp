@@ -231,7 +231,7 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
 //std::cout << "before viscosity coord vec" << coordVec(0,0,0) << "   " <<coordVec(1,1,1) << "   " <<coordVec(2,2,2) << "   " <<coordVec(3,3,3) << "   " <<std::endl;
-#ifdef NO_KOKKOS_ALBANY
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   double a = 1.0;  
   switch (visc_type) {

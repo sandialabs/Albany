@@ -233,7 +233,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-//#ifdef NO_KOKKOS_ALBANY
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
  if (bf_type == NONE) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
      for (std::size_t qp=0; qp < numQPs; ++qp)       
