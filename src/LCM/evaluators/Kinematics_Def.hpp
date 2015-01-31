@@ -220,10 +220,11 @@ compute_weighted_average(const int cell) const{
         for (int pt(0); pt < num_pts_; ++pt) {
           weighted_jbar =
             (1-alpha_) * jbar + alpha_ * j_(cell,pt);
+          const ScalarT p = std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
            for (int i=0; i<num_dims_; i++){
                for (int j=0; j<num_dims_; j++){
                  F(cell,i,j)=def_grad_(cell, pt,i,j);
-                 F(cell,i,j)=F(cell,i,j)*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
+                 F(cell,i,j)=F(cell,i,j)*p;
                }
            }
           j_(cell,pt) = weighted_jbar;
@@ -350,7 +351,8 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
           weighted_jbar = 
             (1-alpha_) * jbar + alpha_ * j_(cell,pt);
           F.fill(def_grad_,cell,pt,0,0);
-          F = F*std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
+          const ScalarT p = std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
+          F *= p;
           j_(cell,pt) = weighted_jbar;
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
