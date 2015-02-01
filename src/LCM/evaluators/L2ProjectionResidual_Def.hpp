@@ -51,7 +51,7 @@ namespace LCM {
     numQPs  = dims[2];
     numDims = dims[3];
 
-    this->setName("L2ProjectionResidual"+PHX::typeAsString<PHX::Device>());
+    this->setName("L2ProjectionResidual"+PHX::typeAsString<EvalT>());
 
   }
 

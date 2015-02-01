@@ -84,7 +84,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(satMod);
-  this->setName("Saturation Modulus"+PHX::typeAsString<PHX::Device>());
+  this->setName("Saturation Modulus"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

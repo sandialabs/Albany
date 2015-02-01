@@ -110,7 +110,7 @@ YieldStrength(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(yieldStrength);
-  this->setName("Yield Strength"+PHX::typeAsString<PHX::Device>());
+  this->setName("Yield Strength"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

@@ -81,7 +81,7 @@ ShearModulus(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(shearModulus);
-  this->setName("Shear Modulus"+PHX::typeAsString<PHX::Device>());
+  this->setName("Shear Modulus"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

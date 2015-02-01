@@ -46,7 +46,7 @@ AssumedStrain(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(assumedStrain);
   this->addEvaluatedField(J);
 
-  this->setName("Assumed Strain"+PHX::typeAsString<PHX::Device>());
+  this->setName("Assumed Strain"+PHX::typeAsString<EvalT>());
 
 }
 

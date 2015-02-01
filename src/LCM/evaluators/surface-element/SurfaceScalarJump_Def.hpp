@@ -25,7 +25,7 @@ SurfaceScalarJump(const Teuchos::ParameterList& p,
 //  this->addEvaluatedField(scalarJump);
 //  this->addEvaluatedField(scalarAverage);
 
-  this->setName("Surface Scalar Jump"+PHX::typeAsString<PHX::Device>());
+  this->setName("Surface Scalar Jump"+PHX::typeAsString<EvalT>());
 
   haveTemperature = false;
   haveTransport = false;

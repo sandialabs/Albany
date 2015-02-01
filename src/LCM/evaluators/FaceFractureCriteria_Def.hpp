@@ -57,7 +57,7 @@ namespace LCM {
 
     sides = cellType->getCellTopologyData()->side;
 
-    this->setName("FaceFractureCriteria" + PHX::typeAsString<PHX::Device>());
+    this->setName("FaceFractureCriteria" + PHX::typeAsString<EvalT>());
   }
 
   template<typename EvalT, typename Traits>

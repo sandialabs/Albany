@@ -61,7 +61,7 @@ namespace LCM {
    // tauStress.resize(worksetSize, numQPs, numDims, numDims);
     tauH.resize(dims[0], numQPs);
 
-    this->setName("ScalarL2ProjectionResidual"+PHX::typeAsString<PHX::Device>());
+    this->setName("ScalarL2ProjectionResidual"+PHX::typeAsString<EvalT>());
 
   }
 

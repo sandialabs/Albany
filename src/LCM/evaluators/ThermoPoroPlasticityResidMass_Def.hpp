@@ -171,7 +171,7 @@ namespace LCM {
 	this->addDependentField(rhoCp);
       }
     }
-    this->setName("ThermoPoroPlasticityResidMass"+PHX::typeAsString<PHX::Device>());
+    this->setName("ThermoPoroPlasticityResidMass"+PHX::typeAsString<EvalT>());
   }
 
   //**********************************************************************

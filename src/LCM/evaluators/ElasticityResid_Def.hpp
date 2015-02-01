@@ -50,7 +50,7 @@ ElasticityResid(const Teuchos::ParameterList& p) :
   }
 
 
-  this->setName("ElasticityResid"+PHX::typeAsString<PHX::Device>());
+  this->setName("ElasticityResid"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

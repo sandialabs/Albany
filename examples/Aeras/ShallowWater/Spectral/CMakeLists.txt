@@ -12,6 +12,18 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g
                ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g.2.0
+               ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g.2.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g.2.1
+               ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g.2.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shell4_sphere_24faces.g.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/shell4_sphere_24faces.g.4.3 COPYONLY)
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable

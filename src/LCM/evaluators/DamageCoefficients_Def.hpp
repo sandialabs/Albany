@@ -39,7 +39,7 @@ DamageCoefficients(Teuchos::ParameterList& p,
   this->addEvaluatedField(damage_diffusivity_);
   this->addEvaluatedField(damage_dot_);
 
-  this->setName("Damage Coefficients" + PHX::typeAsString<PHX::Device>());
+  this->setName("Damage Coefficients" + PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);

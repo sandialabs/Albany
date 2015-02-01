@@ -49,10 +49,11 @@ ConstitutiveModel(Teuchos::ParameterList* p,
 }
 //------------------------------------------------------------------------------
 ////Kokkos Kernel for computeVolumeAverage
-template < typename ScalarT, class ArrayStress, class ArrayWeights >
+template < typename ScalarT, class ArrayStress, class ArrayWeights, class ArrayJ >
 class computeVolumeAverageKernel {
  ArrayStress stress;
- ArrayWeights weights_;
+ const ArrayWeights weights_;
+ const ArrayJ j_;
  int num_pts_, num_dims_; 
 
 
@@ -60,11 +61,13 @@ class computeVolumeAverageKernel {
  typedef PHX::Device device_type;
 
  computeVolumeAverageKernel( ArrayStress &stress_,
-                             ArrayWeights &weights,
+                             const ArrayWeights &weights,
+                             const ArrayJ &j,
                              const int num_pts,
                              const int num_dims)
                            : stress(stress_)
                            , weights_(weights)
+                           , j_(j)
                            , num_pts_(num_pts)
                            , num_dims_(num_dims){}
  
@@ -84,7 +87,7 @@ class computeVolumeAverageKernel {
          sig(i,j)=stress(cell,pt,i,j);
 
       pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
-      volume += weights_(cell,pt);
+      volume += weights_(cell,pt) * j_(cell,pt);
     }
 
     pbar /= volume;
@@ -143,7 +146,7 @@ computeVolumeAverage(typename Traits::EvalData workset,
     }
   }
 #else
-Kokkos::parallel_for(workset.numCells, computeVolumeAverageKernel<ScalarT, PHX::MDField<ScalarT>,PHX::MDField<MeshScalarT, Cell, QuadPoint>  >(stress, weights_, num_pts_, num_dims_));
+  Kokkos::parallel_for(workset.numCells, computeVolumeAverageKernel<ScalarT, PHX::MDField<ScalarT>, PHX::MDField<MeshScalarT, Cell, QuadPoint>, PHX::MDField<ScalarT, Cell, QuadPoint> >(stress, weights_, j_, num_pts_, num_dims_));
 #endif
 }
 //------------------------------------------------------------------------------

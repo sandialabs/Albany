@@ -24,7 +24,7 @@ namespace LCM {
 
     this->addEvaluatedField(jump);
 
-    this->setName("Surface Vector Jump" + PHX::typeAsString<PHX::Device>());
+    this->setName("Surface Vector Jump" + PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);

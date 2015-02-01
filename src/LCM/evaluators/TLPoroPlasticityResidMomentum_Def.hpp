@@ -57,7 +57,7 @@ TLPoroPlasticityResidMomentum(const Teuchos::ParameterList& p) :
   }
 
 
-  this->setName("TLPoroPlasticityResidMomentum"+PHX::typeAsString<PHX::Device>());
+  this->setName("TLPoroPlasticityResidMomentum"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

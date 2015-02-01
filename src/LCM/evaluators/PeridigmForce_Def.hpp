@@ -64,7 +64,7 @@ PeridigmForceBase(Teuchos::ParameterList& p,
     this->addEvaluatedField( this->outputFields[albanyName] );
   }
 
-  this->setName("Peridigm"+PHX::typeAsString<PHX::Device>());
+  this->setName("Peridigm"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

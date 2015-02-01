@@ -20,7 +20,7 @@ namespace LCM {
   {
     this->addDependentField(scalar_grad_);
     this->addEvaluatedField(unit_grad_);
-    this->setName("Unit Gradient QP Variable"+PHX::typeAsString<PHX::Device>());
+    this->setName("Unit Gradient QP Variable"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_vector->dimensions(dims);

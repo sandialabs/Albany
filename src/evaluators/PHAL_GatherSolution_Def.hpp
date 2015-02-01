@@ -141,7 +141,7 @@ GatherSolutionBase(const Teuchos::ParameterList& p,
 
   Index=Kokkos::View <int***, PHX::Device>("Index_kokkos", dl->node_vector->dimension(0), dl->node_vector->dimension(1), dl->node_vector->dimension(2));
 
-  this->setName("Gather Solution"+PHX::typeAsString<PHX::Device>() );
+  this->setName("Gather Solution"+PHX::typeAsString<EvalT>() );
 }
 
 // **********************************************************************

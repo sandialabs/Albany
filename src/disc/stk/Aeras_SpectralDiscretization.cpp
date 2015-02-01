@@ -966,6 +966,10 @@ void Aeras::SpectralDiscretization::enrichMesh()
           maxGID + gid(edge)*(np-2) + inode;
       }
       enrichedEdges[ibuck][iedge][np-1] = gid(nodes[1]);
+      for (GO inode = 0; inode < np; inode++)
+        *out << "ibuck, iedge, inode, enrichedEdges: " << ibuck  
+             << ", " << iedge << ", " << inode << ", "
+             << enrichedEdges[ibuck][iedge][inode] << std::endl; 
     }
   }
 
@@ -1013,30 +1017,41 @@ void Aeras::SpectralDiscretization::enrichMesh()
       const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(edges[0]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[0] == nodes[0])
-          buffer[0][inode] = gid(edgeNodes[inode]);
+          //buffer[0][inode] = gid(edgeNodes[inode]);
+          buffer[0][inode] = enrichedEdges[ibuck][0][inode];
         else
-          buffer[0][inode] = gid(edgeNodes[np-inode-1]);
+          //buffer[0][inode] = gid(edgeNodes[np-inode-1]);
+          buffer[0][inode] = enrichedEdges[ibuck][0][np-inode-1];
       // Edge 1
       edgeNodes = bulkData.begin_nodes(edges[1]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[1] == nodes[1])
-          buffer[inode][np-1] = gid(edgeNodes[inode]);
+          //buffer[inode][np-1] = gid(edgeNodes[inode]);
+          buffer[inode][np-1] = enrichedEdges[ibuck][1][inode];
         else
-          buffer[inode][np-1] = gid(edgeNodes[np-inode-1]);
+          //buffer[inode][np-1] = gid(edgeNodes[np-inode-1]);
+          buffer[inode][np-1] = enrichedEdges[ibuck][1][np-inode-1];
       // Edge 2
       edgeNodes = bulkData.begin_nodes(edges[2]);
-      for (unsigned inode = 1; inode < np-1; ++inode)
+      for (unsigned inode = 1; inode < np-1; ++inode) {
         if (edgeNodes[2] == nodes[2])
-          buffer[np-1][inode] = gid(edgeNodes[np-inode-1]);
-        else
-          buffer[np-1][inode] = gid(edgeNodes[inode]);
+          //buffer[np-1][inode] = gid(edgeNodes[np-inode-1]);
+          buffer[np-1][inode] = enrichedEdges[ibuck][2][np-inode-1];
+        else {
+          //*out << "gid: " << gid(edgeNodes[inode]) << std::endl; 
+          //buffer[np-1][inode] = gid(edgeNodes[inode]);
+          buffer[np-1][inode] = enrichedEdges[ibuck][2][inode];
+          }
+      }
       // Edge 3
       edgeNodes = bulkData.begin_nodes(edges[3]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[3] == nodes[3])
-          buffer[inode][0] = gid(edgeNodes[np-inode-1]);
+          //buffer[inode][0] = gid(edgeNodes[np-inode-1]);
+          buffer[inode][0] = enrichedEdges[ibuck][3][np-inode-1];
         else
-          buffer[inode][0] = gid(edgeNodes[inode]);
+          //buffer[inode][0] = gid(edgeNodes[inode]);
+          buffer[inode][0] = enrichedEdges[ibuck][3][inode];
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + (maxEdgeID+1) * (np-2) +

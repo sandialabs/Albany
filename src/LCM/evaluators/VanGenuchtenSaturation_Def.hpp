@@ -98,7 +98,7 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(vgSaturation);
-  this->setName("Van Genuchten Saturation"+PHX::typeAsString<PHX::Device>());
+  this->setName("Van Genuchten Saturation"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

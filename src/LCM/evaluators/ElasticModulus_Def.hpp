@@ -112,7 +112,7 @@ ElasticModulus(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(elasticModulus);
-  this->setName("Elastic Modulus"+PHX::typeAsString<PHX::Device>());
+  this->setName("Elastic Modulus"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

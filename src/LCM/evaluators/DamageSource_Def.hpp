@@ -56,7 +56,7 @@ DamageSource(Teuchos::ParameterList& p) :
   sourceName = p.get<std::string>("Damage Source Name")+"_old";
   damageName = p.get<std::string>("Damage Name")+"_old";
   this->addEvaluatedField(source);
-  this->setName("Damage Source"+PHX::typeAsString<PHX::Device>());
+  this->setName("Damage Source"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

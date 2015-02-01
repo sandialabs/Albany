@@ -47,7 +47,7 @@ ThermoMechanicalCoefficients(Teuchos::ParameterList& p,
   this->addEvaluatedField(temperature_dot_);
 
   this->setName(
-      "ThermoMechanical Coefficients" + PHX::typeAsString<PHX::Device>());
+      "ThermoMechanical Coefficients" + PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);

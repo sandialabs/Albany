@@ -36,7 +36,7 @@ namespace LCM {
 
     this->addEvaluatedField(stress);
 
-    this->setName("Neohookean Stress"+PHX::typeAsString<PHX::Device>());
+    this->setName("Neohookean Stress"+PHX::typeAsString<EvalT>());
 
     // initilize Tensors
     F = Intrepid::Tensor<ScalarT>(numDims);

@@ -31,7 +31,7 @@ namespace LCM{
     this->addDependentField(currentBasis);
     this->addEvaluatedField(cohesiveTraction);
 
-    this->setName("TvergaardHutchinson" + PHX::typeAsString<PHX::Device>());
+    this->setName("TvergaardHutchinson" + PHX::typeAsString<EvalT>());
 
     // get dimension
     std::vector<PHX::DataLayout::size_type> dims;

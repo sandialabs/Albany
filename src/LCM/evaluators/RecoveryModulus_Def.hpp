@@ -86,7 +86,7 @@ RecoveryModulus(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(recoveryModulus);
-  this->setName("Recovery Modulus"+PHX::typeAsString<PHX::Device>());
+  this->setName("Recovery Modulus"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

@@ -83,7 +83,7 @@ namespace LCM {
     intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
     intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
-    this->setName("SurfaceBasis" + PHX::typeAsString<PHX::Device>());
+    this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
   }
 
   //----------------------------------------------------------------------
