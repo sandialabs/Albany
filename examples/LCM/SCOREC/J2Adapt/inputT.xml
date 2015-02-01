@@ -45,7 +45,6 @@
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{115, eb_1}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x4:{97, 101, 51, 95, ns_1, ns_2, ns_3, ns_4}"/>
     <Parameter name="2nd Order Mesh"                type="bool"               value="true"/>
-    <Parameter name="Output QP Fields"              type="bool"               value="true"/>
     <Parameter name="Cubature Degree"               type="int"                value="2"/>
   </ParameterList>
 

@@ -100,7 +100,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
 
   std::vector<std::string> ssNames;
   std::string ssnLat="lateralside";
-  std::string ssnLatFloat="floatinglateral";
+  std::string ssnLatFloat="floatinglateralside";
   std::string ssnBottom="basalside";
   std::string ssnTop="upperside";
 
@@ -218,7 +218,7 @@ Albany::MpasSTKMeshStruct::MpasSTKMeshStruct(const Teuchos::RCP<Teuchos::Paramet
   std::string ssnLat="lateralside";
   std::string ssnBottom="basalside";
   std::string ssnTop="upperside";
-  std::string ssnLatFloat="floatinglateral";
+  std::string ssnLatFloat="floatinglateralside";
 
   ssNames.push_back(ssnLat);
   ssNames.push_back(ssnBottom);
@@ -388,7 +388,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   }
 
 
-  singlePartVec[0] = ssPartVec["floatinglateral"];
+  singlePartVec[0] = ssPartVec["floatinglateralside"];
   for(int i=0; i<floating2dLateralEdgesIds.size(); ++i) {
     int basalEdgeId = floating2dLateralEdgesIds[i]*edgeLayerShift;;
     for(int il=0; il<numLayers; ++il) {
@@ -630,7 +630,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	 }
   }
 
-  singlePartVec[0] = ssPartVec["floatinglateral"];
+  singlePartVec[0] = ssPartVec["floatinglateralside"];
   for(int i=0; i<floating2dLateralEdgesIds.size(); ++i) {
     int basalEdgeId = floating2dLateralEdgesIds[i]*2*edgeLayerShift;
     for(int il=0; il<numLayers; ++il)
