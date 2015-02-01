@@ -272,12 +272,12 @@ x Felix
 x Hydride
 x Aeras
 x SCOREC (Andrew)
-! SG_MP (Andrew)
-  - Eric P. writes that we should skip SG_MP for now.
-- SGBratu1D_Tpetra
+- SG_MP (Andrew, after merge)
+  . Eric P. writes that we should skip SG_MP for now.
+x SGBratu1D_Tpetra
 - Merge master into tpetra_kokkos (Andrew)
-  x 27 Jan.
-- Implement derivative dimensions cleanly (Andrew or Andy)
+  x 1 Feb
+- Implement derivative dimensions cleanly (Andrew)
 - Internal CDash (Duane and Glen)
 - Merge tpetra_kokkos into master (Andrew)
 - Peridigm (Andrew and Dave)
@@ -285,3 +285,4 @@ x SCOREC (Andrew)
 - Distributed derivatives and ROL? (Mauro)
 - Figure out ETI in panzer_kokkos
 - When all is done, strip out the amb:: debug stuff (Andrew)
+- SLFad, SFad (Andrew, before or after merge)
