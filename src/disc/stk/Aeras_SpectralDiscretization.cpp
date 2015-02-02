@@ -1361,19 +1361,42 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   for (size_t i = 0; i < shared_nodes.size(); ++i)
     overlapIndicesT[inode++] = gid(shared_nodes[i]);
 
-  // Copy non-vertex nodes from shared edges to overlap indices
-  std::vector< stk::mesh::Entity > shared_edges;
-  stk::mesh::get_selected_entities(metaData.globally_shared_part(),
-				   bulkData.buckets(stk::topology::EDGE_RANK),
-				   shared_edges);
-  for (size_t i = 0; i < shared_edges.size(); ++i)
+  // Get a bucket of all the edges so that the local indexes match the
+  // enrichedEdges indexes.  Loop over these edges to add their nodes
+  // to overlapIndicesT, when the edges are not owned
+  const stk::mesh::BucketVector edgeBuckets =
+    bulkData.buckets(stk::topology::EDGE_RANK);
+  for (size_t ibuck = 0; ibuck < edgeBuckets.size(); ++ibuck)
   {
-    const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(shared_edges[i]);
-    // Note that local edge nodes 0 and 3 have already been
-    // handled correctly by the previous loop over shared_nodes
-    overlapIndicesT[inode++] = gid(edgeNodes[1]);
-    overlapIndicesT[inode++] = gid(edgeNodes[2]);
+    stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
+    for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
+    {
+      stk::mesh::Entity edge = edgeBucket[iedge];
+      if (!edgeIsOwned[gid(edge)])
+      {
+        for (size_t lnode = 1; lnode < np-1; ++lnode)
+          overlapIndicesT[inode++] = enrichedEdges[ibuck][iedge][lnode];
+      }
+    }
   }
+
+  // // Copy non-vertex nodes from shared edges to overlap indices
+  // std::vector< stk::mesh::Entity > shared_edges;
+  // stk::mesh::get_selected_entities(metaData.globally_shared_part(),
+  //       			   bulkData.buckets(stk::topology::EDGE_RANK),
+  //       			   shared_edges);
+  // for (size_t iedge = 0; iedge < shared_edges.size(); ++iedge)
+  // {
+  //   const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(shared_edges[i]);
+  //   // Note that local edge nodes 0 and 3 have already been
+  //   // handled correctly by the previous loop over shared_nodes
+  //   overlapIndicesT[inode++] = gid(edgeNodes[1]);
+  //   overlapIndicesT[inode++] = gid(edgeNodes[2]);
+  // }
+
+#ifdef OUTPUT_TO_SCREEN
+  *out << "inode = " << inode << ", numOverlapNodes = " << numOverlapNodes << std::endl;
+#endif 
 
   assert (inode == numOverlapNodes);
   // End fill overlapIndicesT
