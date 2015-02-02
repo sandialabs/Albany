@@ -61,6 +61,14 @@ ViscosityFO(const Teuchos::ParameterList& p,
 #endif 
     visc_type = EXPTRIG; 
   }
+  //mu for x-z form of FO Stokes equations
+  else if (viscType == "Glen's Law X-Z"){
+    visc_type = GLENSLAW_XZ; 
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Glen's law x-z viscosity!" << std::endl;
+#endif
+    flowRate_type = UNIFORM; 
+  }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
 #ifdef OUTPUT_TO_SCREEN
@@ -173,6 +181,9 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       break; 
+    case GLENSLAW_XZ:
+      //IK, 2/1/15: implement mu for x-z equations for MMS test case derived by Mauro
+      //Is homotopy necessary?  
     case GLENSLAW: 
       std::vector<ScalarT> flowFactorVec; //create vector of the flow factor A at each cell 
       flowFactorVec.resize(workset.numCells);
