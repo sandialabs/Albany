@@ -309,7 +309,6 @@ evaluateFields(typename Traits::EvalData workset)
   //IK, 2/1/15: to implement!
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        //f[0] = ;  
      }
