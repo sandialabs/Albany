@@ -259,6 +259,11 @@ Aeras::SpectralDiscretization::printCoords() const
       }
     }
   }
+}
+
+void
+Aeras::SpectralDiscretization::printConnectivity() const
+{
   //print element connectivity -- added 1/27/15
   for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
     for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
@@ -3042,7 +3047,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
  //IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN
-  printCoords(); 
+  printCoords();
+  printConnectivity();  
 #endif
  
   //IK, 1/23/15: I have changed it so nothing happens in the following functions b/c 
