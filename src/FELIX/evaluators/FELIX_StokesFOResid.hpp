@@ -49,7 +49,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
-  enum EQNTYPE {FELIX, POISSON};
+  enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;
   
   // Output:

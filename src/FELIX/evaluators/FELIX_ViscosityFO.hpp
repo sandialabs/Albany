@@ -67,7 +67,7 @@ private:
 
   unsigned int numQPs, numDims, numNodes, numCells;
   
-  enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW};
+  enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW, GLENSLAW_XZ};
   enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE, FROMCISM};
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;

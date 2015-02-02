@@ -259,6 +259,11 @@ Aeras::SpectralDiscretization::printCoords() const
       }
     }
   }
+}
+
+void
+Aeras::SpectralDiscretization::printConnectivity() const
+{
   //print element connectivity -- added 1/27/15
   for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
     for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
@@ -318,6 +323,7 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 // transformMesh() as this is for now an Aeras-only class.  The
 // setting of the schar mountain transformation needs to be fixed to
 // use the new (enriched) nodes rather than the nodes pulled from STK.
+// This is not critical -- Schar Mountain transformation only called for XZ Hydrostatic equations.
 void
 Aeras::SpectralDiscretization::transformMesh()
 {
@@ -328,7 +334,10 @@ Aeras::SpectralDiscretization::transformMesh()
   if (transformType == "None") {}
   else if (transformType == "Aeras Schar Mountain")
   {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: transformMesh() is not implemented yet in Aeras::SpectralDiscretiation!" << std::endl);
+#ifdef OUTPUT_TO_SCREEN
     *out << "Aeras Schar Mountain transformation!" << endl;
+#endif
     double rhoOcean = 1028.0; // ocean density, in kg/m^3
     for (int i=0; i < numOverlapNodes; i++)
     {
@@ -3024,12 +3033,12 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
   //IK, 1/23/15, FIXME: to implement -- transform mesh based on new enriched coordinates
+  //This function is not critical and only called for XZ hydrostatic equations.
   transformMesh();
 
   //IK, 1/23/15, FIXME: to implement
   computeGraphs();
 
-  //IK, 1/23/15, FIXME: to implement
   computeWorksetInfo();
   
   //IK, 1/26/15: This will need to be uncommented at some point.
@@ -3038,7 +3047,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
  //IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN
-  printCoords(); 
+  printCoords();
+  printConnectivity();  
 #endif
  
   //IK, 1/23/15: I have changed it so nothing happens in the following functions b/c 
