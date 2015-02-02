@@ -99,6 +99,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j=0; j < numDims; ++j) 
             Residual(cell,node) += vel[0] * XGrad(cell,qp,j)*wBF(cell,node,qp);
         } else {
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "no impl");
 //Irina TOFIX
 /*          for (int level=0; level < numLevels; ++level) {
             Residual(cell,node,level) += XDot(cell,qp,level)*wBF(cell,node,qp);

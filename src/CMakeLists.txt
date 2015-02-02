@@ -60,6 +60,7 @@ SET(HEADERS
   PHAL_Workset.hpp
   PHAL_TypeKeyMap.hpp
   PHAL_Utilities.hpp
+  PHAL_Utilities_Def.hpp
   Albany_Application.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp

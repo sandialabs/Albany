@@ -136,6 +136,16 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
     this->addDependentField(muFELIX); 
     this->addDependentField(coordVec);
   }
+  //Source for xz MMS problem derived by Mauro.
+  else if (type == "FO_XZ_MMS") {
+    bf_type = FO_XZMMS;  
+    muFELIX = PHX::MDField<ScalarT,Cell,QuadPoint>(
+            p.get<std::string>("FELIX Viscosity QP Variable Name"), dl->qp_scalar);
+    coordVec = PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>(
+            p.get<std::string>("Coordinate Vector Name"), dl->qp_gradient);
+    this->addDependentField(muFELIX); 
+    this->addDependentField(coordVec);
+  }
   //kept for backward compatibility. Use type = "FO INTERP GRAD SURF" instead.
   else if ((type == "FO ISMIP-HOM Test A") || (type == "FO ISMIP-HOM Test B") || (type == "FO ISMIP-HOM Test C") || (type == "FO ISMIP-HOM Test D")) {
 	*out << "ISMIP-HOM Tests A/B/C/D \n WARNING: computing INTERP SURFACE GRAD Source! \nPlease set  Force Type = FO INTERP GRAD SURF." << std::endl;
@@ -213,7 +223,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   if (bf_type == FO_SINCOS2D || bf_type == FO_SINEXP2D || bf_type == FO_COSEXP2D || bf_type == FO_COSEXP2DFLIP || 
-      bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ || bf_type == POISSON) {
+      bf_type == FO_COSEXP2DALL || bf_type == FO_SINCOSZ || bf_type == POISSON || bf_type == FO_XZMMS) {
     this->utils.setFieldData(muFELIX,fm);
     this->utils.setFieldData(coordVec,fm);
   }
@@ -292,6 +302,15 @@ evaluateFields(typename Traits::EvalData workset)
       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        force(cell,qp,0) = exp(x);  
+     }
+   }
+ }
+ else if  (bf_type == FO_XZMMS) { //source term for FO xz equations derived by Mauro 
+  //IK, 2/1/15: to implement!
+   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (std::size_t qp=0; qp < numQPs; ++qp) {      
+       MeshScalarT x = coordVec(cell,qp,0);
+       //f[0] = ;  
      }
    }
  }

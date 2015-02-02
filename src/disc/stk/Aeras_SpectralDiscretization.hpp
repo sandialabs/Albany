@@ -194,6 +194,7 @@ namespace Aeras
 
     //! Print the coordinates for debugging
     void printCoords() const;
+    void printConnectivity() const;
 
     //! Get stateArrays
     Albany::StateArrays& getStateArrays() {return stateArrays;}
