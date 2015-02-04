@@ -762,6 +762,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       buckets[bucket_counter].push_back(element);
       // save the name of the new element block
       apf::StkModel* set = findElementBlock(m, sets, block);
+      TEUCHOS_TEST_FOR_EXCEPTION(!set, std::logic_error,
+			   "Error: findElementBlock() failed on line " << __LINE__ << " of file " << __FILE__ << std::endl);
       std::string EB_name = set->stkName;
       wsEBNames[bucket_counter] = EB_name;
       bucket_counter++;

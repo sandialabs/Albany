@@ -1,0 +1,9 @@
+Element Blocks:
+rod - "Region 3"
+plate - "Region 1"
+background - "Region 2" "Region 4"
+
+Dirichlet BCs:
+end of rod - "Face 6"
+bottom of plate = "Face 1"
+outer edge of plate - "Face 2"
