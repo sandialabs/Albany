@@ -22,7 +22,15 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-  neq = 2; //FELIX FO Stokes system is a system of 2 PDEs
+  //Set # of PDEs per node based on the Equation Set.  
+  //Equation Set is FELIX by default (2 dofs / node -- usual FELIX Stokes FO).
+  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX"); 
+  if (eqnSet == "FELIX") 
+    neq = 2; //FELIX FO Stokes system is a system of 2 PDEs
+  else if (eqnSet == "Poisson" || eqnSet == "FELIX X-Z") 
+    neq = 1; //1 PDE/node for Poisson or FELIX X-Z physics
+
+
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);

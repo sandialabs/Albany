@@ -13,7 +13,7 @@
 #include "Albany_Layouts.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 
@@ -68,6 +68,9 @@ ViscosityFO(const Teuchos::ParameterList& p,
     *out << "Glen's law x-z viscosity!" << std::endl;
 #endif
     flowRate_type = UNIFORM; 
+#ifdef OUTPUT_TO_SCREEN
+    	*out << "Uniform Flow Rate A: " << A << std::endl;
+#endif
   }
   else if (viscType == "Glen's Law"){
     visc_type = GLENSLAW; 
@@ -181,10 +184,8 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
       break; 
-    case GLENSLAW_XZ:
-      //IK, 2/1/15: implement mu for x-z equations for MMS test case derived by Mauro
-      //Is homotopy necessary?  
-    case GLENSLAW: 
+    case GLENSLAW:
+    case GLENSLAW_XZ: 
       std::vector<ScalarT> flowFactorVec; //create vector of the flow factor A at each cell 
       flowFactorVec.resize(workset.numCells);
       switch (flowRate_type) {
@@ -213,20 +214,33 @@ evaluateFields(typename Traits::EvalData workset)
       else { //set Glen's law viscosity with regularization specified by homotopyParam
         ScalarT ff = pow(10.0, -10.0*homotopyParam);
         ScalarT epsilonEqpSq = 0.0; //used to define the viscosity in non-linear Stokes 
-        for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-            ScalarT& u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-            ScalarT& u11 = Ugrad(cell,qp,1,1); //epsilon_yy
-            epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
-            epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
-            for (int dim = 2; dim < numDims; ++dim) //3D case
-               epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
-            epsilonEqpSq += ff; //add regularization "fudge factor" 
-            mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
-           }
-         }
-      }
+        if (visc_type == GLENSLAW) {
+          for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+              //evaluate non-linear viscosity, given by Glen's law, at quadrature points
+              ScalarT& u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+              ScalarT& u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+              epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
+              epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
+              for (int dim = 2; dim < numDims; ++dim) //3D case
+                epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,dim)*Ugrad(cell,qp,0,dim) + Ugrad(cell,qp,1,dim)*Ugrad(cell,qp,1,dim) ); // + 0.25*epsilon_xz^2 + 0.25*epsilon_yz^2
+              epsilonEqpSq += ff; //add regularization "fudge factor" 
+              mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
+            }
+          }
+        } //endif visc_type == GLENSLAW
+        else { //XZ FO Stokes equations -- treat 2nd dimension as z
+          for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+              ScalarT& u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+              epsilonEqpSq = u00*u00; //epsilon_xx^2
+              epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
+              epsilonEqpSq += ff; //add regularization "fudge factor" 
+              mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
+            }
+          }
+        }
+      } //endif Glen's law viscosity with regularization specified by homotopyParam
       break;
 }
 }

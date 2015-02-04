@@ -12,7 +12,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 namespace FELIX {
 const double pi = 3.1415926535897932385;
@@ -269,12 +269,39 @@ evaluateFields(typename Traits::EvalData workset)
    }
  }
  else if  (bf_type == FO_XZMMS) { //source term for FO xz equations derived by Mauro 
-  //IK, 2/1/15: to implement!
+  //Hard-coding parameters here...
+   double alpha0 = 4e-5; //renamed alpha alpha0 to prevent conflict with other alpha
+   double s0 = 2.0; 
+   double H = 1.0; 
+   double beta = 1.0; 
+   //IK, 2/4/15, WARNING: I think the source term has been derived assuming n = 3, even 
+   //though in theory n is a free parameter...
+   //TO DO: check sign!
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
        ScalarT* f = &force(cell,qp,0);
-       MeshScalarT x = coordVec(cell,qp,0);
-       //f[0] = ;  
+       MeshScalarT x = coordVec(cell,qp,0); //x
+       MeshScalarT z = coordVec(cell,qp,1); //z
+       MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
+       MeshScalarT phi1 = z - s; //phi1 = z-s
+       //phi2 = 4*A*alpha^3*rho^3*g^3*x
+       MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;  
+       //phi3 = 4*x^3*phi1^5*phi2^2
+       MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
+       //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
+       MeshScalarT phi4 = 8.0*alpha0*pow(x*phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta 
+                        + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
+       //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
+       MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
+                        + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
+       //mu = 1/2*(A*phi4^2 + A*x*phi1*phi3)^(-1/3)
+       MeshScalarT muargt = A*phi4*phi4 + A*x*phi1*phi3; 
+       MeshScalarT muqp = 0.5*pow(muargt, -1.0/3.0);  
+       //f = 16/3*A*mu^4*(-2*phi4^2*phi5 + 24*phi3*phi4*(phi1+2*alpha*x^2) - 6*x^3*phi1^2*phi2*phi3 
+       //                 -18*x^2*phi1^2*phi2*phi4^2 - 6*x*phi1*phi3*phi5); 
+       f[0] = 16.0/3.0*A*pow(muqp, 4)*(-2.0*phi4*phi4*phi5 + 24.0*phi3*phi4*(phi1 + 2.0*alpha0*x*x)
+                                       -6.0*x*x*x*phi1*phi1*phi2*phi3 - 18.0*x*x*phi1*phi1*phi2*phi4*phi4
+                                       -6.0*x*phi1*phi3*phi5); 
      }
    }
  }

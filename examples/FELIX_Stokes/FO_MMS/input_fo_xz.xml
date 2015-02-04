@@ -2,7 +2,6 @@
   <ParameterList name="Problem">
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Name" type="string" value="FELIX Stokes First Order 2D XZ"/>
-    <Parameter name="Number of PDE Equations" type="int" value="1"/>
     <ParameterList name="Neumann BCs">     
       <!--IK, 2/1/15: fill in the BCs for this problem!-->
     </ParameterList>
@@ -50,7 +49,7 @@
     <Parameter name="1D Scale" type="double" value="1"/>
     <Parameter name="2D Scale" type="double" value="1"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <Parameter name="Transform Type" type="string" value="FO XZ MMS"/>
+    <!--Parameter name="Transform Type" type="string" value="FO XZ MMS"/-->
     <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_xz_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
