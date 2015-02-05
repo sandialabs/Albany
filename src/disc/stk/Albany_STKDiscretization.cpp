@@ -446,8 +446,8 @@ Albany::STKDiscretization::transformMesh()
     stk::mesh::Field<double>* surfaceHeight_field = metaData.get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "surface_height");
     for (int i=0; i < numOverlapNodes; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-      x[0] = L*x[0];  //test case assumes domain is from [0, 2*L], so unscaled domain is from [0, 2]; 
-      double s = s0 - alpha0*(x[0]-L)*(x[0]-L);
+      x[0] = L*(x[0]-1.0);  //test case assumes domain is from [-L, L], where unscaled domain is from [0, 2]; 
+      double s = s0 - alpha0*x[0]*x[0];
       double b = s - H;
       //this transformation of y = [0,1] should give b(x) < y < s(x) 
       x[1] = b*(1-x[1]) + s*x[1]; 
