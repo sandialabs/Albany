@@ -199,12 +199,13 @@ computeState(typename Traits::EvalData workset,
 
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+    //std::cout << "Cell: " << cell << std::endl;
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      //std::cout << "  point: " << pt << std::endl;
       ScalarT bulk = elastic_modulus(cell, pt)
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       ScalarT Y = yield_strength(cell, pt);
-      ScalarT Jm23 = std::pow(J(cell, pt), -2. / 3.);
 
       // assign local state variables
       //
@@ -214,12 +215,20 @@ computeState(typename Traits::EvalData workset,
       ScalarT eps_ss_old = eps_ss_field_old(cell,pt);
       ScalarT eqps_old = eqps_field_old(cell,pt);
       ScalarT void_volume_fraction_old = void_volume_fraction_field_old(cell,pt);
-      bool failed = void_volume_fraction_old >= ff_;
+      bool failed(false);
+      if (Sacado::ScalarValue<ScalarT>::eval(void_volume_fraction_old) >= ff_) failed = true;
+
+      // std::cout << "  void volume fraction old: " << Sacado::ScalarValue<ScalarT>::eval(void_volume_fraction_old) << std::endl;
+      // std::cout << "  ff: " << ff_ << std::endl;
+      // std::cout << "  failed? " << failed << std::endl;
 
       if (!failed) {
         // fill local tensors
         //
         F.fill(&def_grad_field(cell, pt, 0, 0));
+
+        // std::cout << "  F:\n" << F << std::endl;
+
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
             Fpn(i, j) = ScalarT(Fp_field_old(cell, pt, i, j));
@@ -235,7 +244,7 @@ computeState(typename Traits::EvalData workset,
 
         // calculate \f$ b^{e} = F {C^{p}}^{-1} F^{T} \f$
         //
-        be = Jm23 * F * Cpinv * Intrepid::transpose(F);
+        be = F * Cpinv * Intrepid::transpose(F);
 
         // calculate the determinant of the deformation gradient: \f$ J = det[F] \f$
         //
@@ -248,6 +257,8 @@ computeState(typename Traits::EvalData workset,
         s = mu * Intrepid::dev(bebar);
         ScalarT smag = Intrepid::norm(s);
 
+        // std::cout << "  s:\n" << s << std::endl;
+
         // calculate trial (Kirchhoff) pressure
         //
         ScalarT p = 0.5 * bulk * (Je * Je - 1.0);
@@ -258,6 +269,7 @@ computeState(typename Traits::EvalData workset,
         ScalarT Ybar = Je * (Y + kappa_old);
         ScalarT arg = 1.5 * q2_ * p / Ybar;
         ScalarT fstar = compute_fstar(void_volume_fraction_old, fc_, ff_, q1_);
+        //ScalarT fstar = void_volume_fraction_old;
         ScalarT psi = 1.0 + q3_ * fstar * fstar - 2.0 * q1_ * fstar * std::cosh(arg);
 
         // Gurson quadratic yield surface
@@ -266,7 +278,7 @@ computeState(typename Traits::EvalData workset,
         
         // check yield condition
         //
-        //std::cout << "======== Phi: " << Phi << std::endl;
+        // std::cout << "  ======== Phi: " << Phi << std::endl;
         //std::cout << "======== eps: " << std::numeric_limits<RealType>::epsilon() << std::endl;
 
         if (Phi > std::numeric_limits<RealType>::epsilon()) {
@@ -323,6 +335,7 @@ computeState(typename Traits::EvalData workset,
           //
           Fad smagF = smag;
 
+          //std::cout << "======== local iterations ========" << std::endl;
           while (!converged) {
 
             // set up data types
@@ -346,6 +359,7 @@ computeState(typename Traits::EvalData workset,
             // account for void coalescence
             //
             Fad fstarF = compute_fstar(void_volume_fractionF, fc_, ff_, q1_);
+            //Fad fstarF = void_volume_fractionF;
 
             // compute yield stress and rate terms
             //
@@ -456,7 +470,8 @@ computeState(typename Traits::EvalData workset,
 
             // check for a sufficiently small residual
             //
-            //std::cout << "======== norm_res : " << norm_res << std::endl;
+            //std::cout << "======== norm_res  : " << norm_res
+            //          << " ======== norm_res2 : " << norm_res/max_norm << std::endl;
             if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
               converged = true;
 
@@ -479,7 +494,6 @@ computeState(typename Traits::EvalData workset,
           //
           solver.computeFadInfo(dRdX, X, R);
           
-
           // extract solution
           //
           ScalarT dgam = X[0];
@@ -494,6 +508,7 @@ computeState(typename Traits::EvalData workset,
           //std::cout << "======== kapp : " << kappa << std::endl;
 
           fstar = compute_fstar(void_volume_fraction, fc_, ff_, q1_);
+          //fstar = void_volume_fraction;
 
           // plastic direction
           //N = (1 / smag) * s;
@@ -533,11 +548,12 @@ computeState(typename Traits::EvalData workset,
           void_volume_fraction_field(cell,pt) = void_volume_fraction;
 
         } else {
-          // we are not yielding, variables do not evolve
+          //std::cout << "// we are not yielding, variables do not evolve" << std::endl;
           //
           eps_ss_field(cell, pt) = eps_ss_old;
           eqps_field(cell,pt) = eqps_old;
           kappa_field(cell,pt) = kappa_old;
+          void_volume_fraction_field(cell,pt) = void_volume_fraction_old;
           if (have_temperature_) source_field(cell, pt) = 0.0;
           for (std::size_t i(0); i < num_dims_; ++i) {
             for (std::size_t j(0); j < num_dims_; ++j) {
