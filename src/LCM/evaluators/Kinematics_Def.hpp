@@ -143,8 +143,8 @@ det(const ArrayT &A, const int cell) const
 
     default:
     {
-     TEUCHOS_TEST_FOR_EXCEPTION( !( (dimension == 2) || (dimension == 3) ), std::invalid_argument,
-                                  ">>> ERROR (LCM Kinematics): Det function is defined only for rank-2 or 3 .");
+     if (dimension != 2 && dimension != 3)
+            Kokkos::abort ( ">>> ERROR (LCM Kinematics): Det function is defined only for rank-2 or 3 .");
     }
     break;
 
