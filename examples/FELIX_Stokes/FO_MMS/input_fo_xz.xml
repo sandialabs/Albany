@@ -46,10 +46,11 @@
   <ParameterList name="Discretization">
     <Parameter name="1D Elements" type="int" value="20"/>
     <Parameter name="2D Elements" type="int" value="20"/>
-    <Parameter name="1D Scale" type="double" value="1"/>
+    <Parameter name="1D Scale" type="double" value="2"/>
     <Parameter name="2D Scale" type="double" value="1"/>
+    <Parameter name="FELIX L" type="double" value="50.0"/>
     <Parameter name="Method" type="string" value="STK2D"/>
-    <!--Parameter name="Transform Type" type="string" value="FO XZ MMS"/-->
+    <Parameter name="Transform Type" type="string" value="FO XZ MMS"/>
     <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_xz_out.exo"/>
   </ParameterList>
   <ParameterList name="Regression Results">
