@@ -18,7 +18,7 @@ class SchwarzMultiscale : public Albany::ModelEvaluatorT {
 
 public:
 
-  /// COnstructor
+  /// Constructor
   SchwarzMultiscale(
       const Teuchos::RCP<Albany::Application> & app,
       const Teuchos::RCP<Teuchos::ParameterList> & app_params);
@@ -43,7 +43,6 @@ public:
   Teuchos::RCP<const Teuchos::Array<std::string> >
   get_p_names(int l) const;
 
-
   Thyra::ModelEvaluatorBase::InArgs<ST>
   getNominalValues() const;
 
@@ -52,7 +51,6 @@ public:
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
   getUpperBounds() const;
-
 
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
   create_W_op() const;
@@ -64,11 +62,9 @@ public:
   Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
   get_W_factory() const;
 
-
   /// Create InArgs
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgs() const;
-
 
   void
   reportFinalPoint(
@@ -95,7 +91,7 @@ protected:
   Thyra::ModelEvaluatorBase::OutArgs<ST>
   createOutArgsImpl() const;
 
-  //! Evaluate model on InArgs
+  /// Evaluate model on InArgs
   void evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
