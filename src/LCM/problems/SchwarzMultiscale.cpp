@@ -3,14 +3,15 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "SchwarzMultiscaleProblem.hpp"
+#include "SchwarzMultiscale.hpp"
+
 #include "Albany_Utils.hpp"
 #include "Albany_ProblemUtils.hpp"
 #include "PHAL_AlbanyTraits.hpp"
 
 //------------------------------------------------------------------------------
-Albany::SchwarzMultiscaleProblem::
-SchwarzMultiscaleProblem(
+Albany::SchwarzMultiscale::
+SchwarzMultiscale(
     Teuchos::RCP<Teuchos::ParameterList> const & params,
     Teuchos::RCP<ParamLib> const & param_lib,
     int const num_dims,
@@ -40,7 +41,7 @@ SchwarzMultiscaleProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(
       invalid_material_DB,
       std::logic_error,
-      "SchwarzMultiscale Problem Requires a Material Database"
+      "SchwarzMultiscale Requires a Material Database"
   );
 
 
@@ -87,8 +88,8 @@ SchwarzMultiscaleProblem(
 //
 //
 //
-Albany::SchwarzMultiscaleProblem::
-~SchwarzMultiscaleProblem()
+Albany::SchwarzMultiscale::
+~SchwarzMultiscale()
 {
 }
 
@@ -96,7 +97,7 @@ Albany::SchwarzMultiscaleProblem::
 //
 //
 void
-Albany::SchwarzMultiscaleProblem::
+Albany::SchwarzMultiscale::
 buildProblem(
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs,
     Albany::StateManager & state_mgr)
@@ -107,7 +108,7 @@ buildProblem(
   std::cout << "Num MeshSpecs: " << physSets << '\n';
   fm.resize(physSets);
 
-  std::cout << "Calling SchwarzMultiscaleProblem::buildEvaluators" << '\n';
+  std::cout << "Calling SchwarzMultiscale::buildEvaluators" << '\n';
   for (int ps = 0; ps < physSets; ++ps) {
 
     std::string const
@@ -142,7 +143,7 @@ buildProblem(
 //
 //
 Teuchos::Array<Teuchos::RCP<const PHX::FieldTag> >
-Albany::SchwarzMultiscaleProblem::
+Albany::SchwarzMultiscale::
 buildEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits> & fm0,
     Albany::MeshSpecsStruct const & mesh_specs,
@@ -152,7 +153,7 @@ buildEvaluators(
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *mesh_specs[0], state_mgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  ConstructEvaluatorsOp<SchwarzMultiscaleProblem>
+  ConstructEvaluatorsOp<SchwarzMultiscale>
   op(
       *this,
       fm0,
@@ -169,7 +170,7 @@ buildEvaluators(
 //
 //
 void
-Albany::SchwarzMultiscaleProblem::
+Albany::SchwarzMultiscale::
 constructDirichletEvaluators(Albany::MeshSpecsStruct const & mesh_specs)
 {
 
@@ -195,11 +196,11 @@ constructDirichletEvaluators(Albany::MeshSpecsStruct const & mesh_specs)
 }
 //------------------------------------------------------------------------------
 Teuchos::RCP<const Teuchos::ParameterList>
-Albany::SchwarzMultiscaleProblem::
+Albany::SchwarzMultiscale::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> valid_pl =
-    this->getGenericProblemParams("ValidSchwarzMultiscaleProblemParams");
+    this->getGenericProblemParams("ValidSchwarzMultiscaleParams");
 
   valid_pl->set<std::string>(
       "MaterialDB Filename",
@@ -212,7 +213,7 @@ getValidProblemParameters() const
 
 //------------------------------------------------------------------------------
 void
-Albany::SchwarzMultiscaleProblem::
+Albany::SchwarzMultiscale::
 getAllocatedStates(
    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > old_state,
    Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::RCP<FC> > > new_state
