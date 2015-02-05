@@ -46,10 +46,10 @@ ScatterResidualBase(const Teuchos::ParameterList& p,
   // vector
   else
   if (tensorRank == 1 ) {
-    valVec.resize(1);
+//    valVec.resize(1);
     PHX::MDField<ScalarT,Cell,Node,Dim> mdf(names[0],dl->node_vector);
-    valVec[0] = mdf;
-    this->addDependentField(valVec[0]);
+    valVec= mdf;
+    this->addDependentField(valVec);
     numFieldsBase = dl->node_vector->dimension(2);
   }
   // tensor
@@ -84,8 +84,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
   else 
   if (tensorRank == 1) {
-    this->utils.setFieldData(valVec[0],fm);
-    numNodes = valVec[0].dimension(1);
+    this->utils.setFieldData(valVec,fm);
+    numNodes = valVec.dimension(1);
   }
   else 
   if (tensorRank == 2) {
@@ -127,7 +127,7 @@ operator()(const ScatterRank1_Tag& tag, const int& cell) const
 {
    for (std::size_t node = 0; node < this->numNodes; ++node){
         for (std::size_t eq = 0; eq < numFields; eq++){
-             Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->valVec[0])(cell,node,eq));
+             Kokkos::atomic_fetch_add(&f_nonconstView[Index(cell,node,this->offset + eq)], (this->valVec)(cell,node,eq));
         }
     }
 }
@@ -168,7 +168,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
       for (std::size_t node = 0; node < this->numNodes; ++node)
         for (std::size_t eq = 0; eq < numFields; eq++)
-          f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec[0])(cell,node,eq);
+          f_nonconstView[nodeID[node][this->offset + eq]] += (this->valVec)(cell,node,eq);
     }
   } else
   if (this->tensorRank == 2) {
@@ -186,7 +186,8 @@ evaluateFields(typename Traits::EvalData workset)
  fT = workset.fT;
  f_nonconstView = fT->get1dViewNonConst();
  Index=workset.wsElNodeEqID_kokkos;
-
+//Irina Debug
+std::cout <<"scatter resid"<< std::endl;
   if (this->tensorRank == 0) {
    Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
  }
@@ -304,10 +305,10 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
       for (int eq = 0; eq < numFields; eq++) {
           rowT= Index(cell,node,this->offset + eq);
            if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->valVec[0])(cell,node,eq)).val());
-           if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
+              fT->sumIntoLocalValue(rowT, ((this->valVec)(cell,node,eq)).val());
+           if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
                for (int lunk=0; lunk<nunk; lunk++){
-                   ST val = ((this->valVec[0])(cell,node,eq)).fastAccessDx(lunk);
+                   ST val = ((this->valVec)(cell,node,eq)).fastAccessDx(lunk);
                     jacobian.sumIntoValues (colT[lunk], &rowT, 1, &val,true);
                }
             }//has fast access
@@ -339,9 +340,9 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
       for (int eq = 0; eq < numFields; eq++) {
           rowT = Index(cell,node,this->offset + eq);
            if (loadResid)
-              fT->sumIntoLocalValue(rowT, ((this->valVec[0])(cell,node,eq)).val());
-           if (((this->valVec[0])(cell,node,eq)).hasFastAccess()) {
-             for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec[0])(cell,node,eq).fastAccessDx(i);
+              fT->sumIntoLocalValue(rowT, ((this->valVec)(cell,node,eq)).val());
+           if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
+             for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
               jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }
@@ -445,7 +446,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         PHAL::AlbanyTraits::Jacobian::ScalarRefT
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
-                    this->tensorRank == 1 ? this->valVec[0](cell,node,eq) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
         const LO rowT = nodeID[node][this->offset + eq];
         if (loadResid)
@@ -553,7 +554,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         PHAL::AlbanyTraits::Tangent::ScalarRefT
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
-                    this->tensorRank == 1 ? this->valVec[0](cell,node,eq) :
+                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
 
         const LO row = nodeID[node][this->offset + eq];
@@ -616,7 +617,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t eq = 0; eq < numFields; eq++) {
               if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
               else
-              if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+              if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
               else
               if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
@@ -645,7 +646,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t eq = 0; eq < numFields; eq++) {
           if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
           else
-          if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+          if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
           else
           if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
@@ -701,7 +702,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
         else
-        if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
@@ -757,7 +758,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
         else
-        if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
@@ -849,7 +850,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
         else
-        if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
@@ -910,7 +911,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
         else
-        if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
         for (int block=0; block<nblock; block++)
@@ -965,7 +966,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
         else
-        if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 
@@ -1052,7 +1053,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t eq = 0; eq < numFields; eq++) {
         if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
         else
-        if (this->tensorRank == 1) valptr = &((this->valVec[0])(cell,node,eq));
+        if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
         else
         if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
 

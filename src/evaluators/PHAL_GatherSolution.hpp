@@ -60,9 +60,9 @@ protected:
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dotdot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dotdot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dotdot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dotdot;

@@ -50,7 +50,7 @@ protected:
   typedef typename EvalT::ScalarT ScalarT;
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,Dim> > valVec;
+  PHX::MDField<ScalarT,Cell,Node,Dim>  valVec;
   //typedef Kokkos::View < ScalarT***, Kokkos::LayoutRight, PHX::Device > temp_view_type;
   std::vector< PHX::MDField<ScalarT,Cell,Node,Dim,Dim> > valTensor;
   std::size_t numNodes;
