@@ -79,11 +79,13 @@ StokesFOResid(const Teuchos::ParameterList& p,
   U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
-//*out << " in FELIX Stokes FO residual! " << std::endl;
-//*out << " vecDim = " << vecDim << std::endl;
-//*out << " numDims = " << numDims << std::endl;
-//*out << " numQPs = " << numQPs << std::endl; 
-//*out << " numNodes = " << numNodes << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+*out << " in FELIX Stokes FO residual! " << std::endl;
+*out << " vecDim = " << vecDim << std::endl;
+*out << " numDims = " << numDims << std::endl;
+*out << " numQPs = " << numQPs << std::endl; 
+*out << " numNodes = " << numNodes << std::endl; 
+#endif
 
 if (vecDim != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
@@ -263,11 +265,13 @@ evaluateFields(typename Traits::EvalData workset)
            
     } } }
     else if (eqn_type == FELIX_XZ) {
-    //IK, 2/1/15: need to implement residual for FELIX_XZ MMS test case derived by Mauro!
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
-             //Residual(cell,node,0) += 
+             //z dimension is treated as 2nd dimension
+             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) = f1
+             Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
+                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1); 
           }
        }
      } 

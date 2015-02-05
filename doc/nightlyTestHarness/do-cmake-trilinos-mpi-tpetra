@@ -151,6 +151,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D yaml-cpp_LIBRARY_DIRS:PATH="/home/ikalash/Install/yaml-cpp" \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
+      -D Trilinos_ENABLE_CXX11:BOOL=OFF \
 \
       -D MPI_EXEC=mpiexec \
        ..
