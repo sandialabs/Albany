@@ -186,8 +186,6 @@ evaluateFields(typename Traits::EvalData workset)
  fT = workset.fT;
  f_nonconstView = fT->get1dViewNonConst();
  Index=workset.wsElNodeEqID_kokkos;
-//Irina Debug
-std::cout <<"scatter resid"<< std::endl;
   if (this->tensorRank == 0) {
    Kokkos::parallel_for(ScatterRank0_Policy(0,workset.numCells),*this);
  }
@@ -223,9 +221,10 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
 // const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  //LO colT[500];
+  LO colT[500];
   LO rowT;
-  std::vector<LO> colT(nunk);
+  //std::vector<LO> colT(nunk);
+ // colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
 
   for (int node_col=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -257,11 +256,12 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 //  const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  //LO colT[500];
+  //colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
   LO rowT;
-  //ST vals[500];
-  std::vector<LO> colT(nunk);
-  std::vector<ST> vals(nunk);
+  LO colT[500];
+  ST vals[500];
+ // std::vector<LO> colT(nunk);
+  //std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -291,10 +291,13 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 //  const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
- // LO colT[500];
+  LO colT[500];
   LO rowT;
-  std::vector<ST> vals(nunk);
-  std::vector<LO> colT(nunk);
+  ST vals[500];
+  //std::vector<ST> vals(nunk);
+  //std::vector<LO> colT(nunk);
+  //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
@@ -324,11 +327,12 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
  // const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
 //  //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-//  LO colT[500];
+  LO colT[500];
   LO rowT;
-//  ST vals[500];
-  std::vector<LO> colT(nunk);
-  std::vector<ST> vals(nunk);
+  ST vals[500];
+  //std::vector<LO> colT(nunk);
+  //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+  //std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -357,9 +361,10 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
   //const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
   //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-  //LO colT[500];
+  LO colT[500];
   LO rowT;
-  std::vector<LO> colT(nunk);
+//  std::vector<LO> colT(nunk);
+//  colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -390,11 +395,12 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
   //const int neq = workset.wsElNodeEqID[0][0].size();
 //  const int nunk = neq*this->numNodes;
    //Irina TOFIX replace 500 with nunk with Kokkos::malloc is available
-   //LO colT[500];
+   LO colT[500];
    LO rowT;
-   //ST vals[500];
-   std::vector<LO> colT(nunk);
-   std::vector<ST> vals(nunk);
+   ST vals[500];
+   //std::vector<LO> colT(nunk);
+   //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+   //std::vector<ST> vals(nunk);
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {

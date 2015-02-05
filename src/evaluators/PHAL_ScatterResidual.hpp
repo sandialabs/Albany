@@ -138,8 +138,7 @@ public:
 
   Kokkos::View<int***, PHX::Device> Index;
   bool loadResid;
-  //LO rowT;
-  //Teuchos::Array<LO> colT;
+  //LO *colT;
   int neq, nunk, numDim;
 
   typedef typename Tpetra_CrsMatrix::k_local_matrix_type  LocalMatrixType;
