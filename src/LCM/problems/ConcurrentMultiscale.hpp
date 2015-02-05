@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#if !defined(LCM_ConcurrentMultiscaleProblem_hpp)
-#define LCM_ConcurrentMultiscaleProblem_hpp
+#if !defined(LCM_ConcurrentMultiscale_hpp)
+#define LCM_ConcurrentMultiscale_hpp
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -22,7 +22,7 @@ namespace Albany {
 ///
 /// \brief Definition for the ConcurrentMultiscale Problem
 ///
-class ConcurrentMultiscaleProblem : public Albany::AbstractProblem {
+class ConcurrentMultiscale : public Albany::AbstractProblem {
 public:
 
   typedef Intrepid::FieldContainer<RealType> FC;
@@ -30,7 +30,7 @@ public:
   ///
   /// Default constructor
   ///
-  ConcurrentMultiscaleProblem(
+  ConcurrentMultiscale(
       Teuchos::RCP<Teuchos::ParameterList> const & params,
       Teuchos::RCP<ParamLib> const & param_lib,
       int const num_dims,
@@ -40,7 +40,7 @@ public:
   /// Destructor
   ///
   virtual
-  ~ConcurrentMultiscaleProblem();
+  ~ConcurrentMultiscale();
 
   ///
   Teuchos::RCP<std::map<std::string, std::string> >
@@ -94,13 +94,13 @@ private:
   ///
   /// Private to prohibit copying
   ///
-  ConcurrentMultiscaleProblem(ConcurrentMultiscaleProblem const &);
+  ConcurrentMultiscale(ConcurrentMultiscale const &);
 
   ///
   /// Private to prohibit copying
   ///
-  ConcurrentMultiscaleProblem &
-  operator=(ConcurrentMultiscaleProblem const &);
+  ConcurrentMultiscale &
+  operator=(ConcurrentMultiscale const &);
 
   QCAD::MaterialDatabase &
   matDB()
@@ -212,7 +212,7 @@ protected:
 //
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-Albany::ConcurrentMultiscaleProblem::
+Albany::ConcurrentMultiscale::
 constructEvaluators(
     PHX::FieldManager<PHAL::AlbanyTraits> & fm0,
     Albany::MeshSpecsStruct const & mesh_specs,
@@ -247,7 +247,7 @@ constructEvaluators(
       "A material model must be defined for block: " + eb_name);
 
 #ifdef ALBANY_VERBOSE
-  *out << "In ConcurrentMultiscaleProblem::constructEvaluators" << '\n';
+  *out << "In ConcurrentMultiscale::constructEvaluators" << '\n';
   *out << "element block name: " << eb_name << '\n';
   *out << "material model name: " << material_model_name << '\n';
 #endif
@@ -762,4 +762,4 @@ constructEvaluators(
   return Teuchos::null;
 }
 
-#endif // LCM_ConcurrentMultiscaleProblem_hpp
+#endif // LCM_ConcurrentMultiscale_hpp

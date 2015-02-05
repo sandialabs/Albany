@@ -43,7 +43,7 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
-#include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
+#include "../LCM/problems/ConcurrentMultiscale.hpp"
 #include "LCM/problems/SchwarzMultiscaleProblem.hpp"
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
@@ -277,7 +277,7 @@ Albany::ProblemFactory::create()
     strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
   }
   else if (method == "Concurrent Multiscale 3D") {
-    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, commT));
+    strategy =   rcp(new Albany::ConcurrentMultiscale(problemParams, paramLib, 3, commT));
   }
   else if (method == "Schwarz Multiscale 3D") {
     strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, commT));
