@@ -297,8 +297,8 @@ evaluateFields(typename Traits::EvalData workset)
           for (std::size_t cell=0; cell < workset.numCells; ++cell) {
             for (std::size_t qp=0; qp < numQPs; ++qp) {
               //evaluate non-linear viscosity, given by Glen's law, at quadrature points
-              ScalarT& u00 = Ugrad(cell,qp,0,0); //epsilon_xx
-              ScalarT& u11 = Ugrad(cell,qp,1,1); //epsilon_yy
+              typename PHAL::Ref<ScalarT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+              typename PHAL::Ref<ScalarT>::type u11 = Ugrad(cell,qp,1,1); //epsilon_yy
               epsilonEqpSq = u00*u00 + u11*u11 + u00*u11; //epsilon_xx^2 + epsilon_yy^2 + epsilon_xx*epsilon_yy
               epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0))*(Ugrad(cell,qp,0,1) + Ugrad(cell,qp,1,0)); //+0.25*epsilon_xy^2
               for (int dim = 2; dim < numDims; ++dim) //3D case
@@ -311,7 +311,7 @@ evaluateFields(typename Traits::EvalData workset)
         else { //XZ FO Stokes equations -- treat 2nd dimension as z
           for (std::size_t cell=0; cell < workset.numCells; ++cell) {
             for (std::size_t qp=0; qp < numQPs; ++qp) {
-              ScalarT& u00 = Ugrad(cell,qp,0,0); //epsilon_xx
+              typename PHAL::Ref<ScalarT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
               epsilonEqpSq = u00*u00; //epsilon_xx^2
               epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
               epsilonEqpSq += ff; //add regularization "fudge factor" 
