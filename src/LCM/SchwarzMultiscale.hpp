@@ -8,20 +8,23 @@
 #define LCM_SchwarzMultiscale_hpp
 
 #include "Albany_ModelEvaluatorT.hpp"
+#include "Albany_DataTypes.hpp"
 
 namespace LCM {
 
 ///
 /// \brief Definition for the SchwarzMultiscale
 ///
-class SchwarzMultiscale : public Albany::ModelEvaluatorT {
+class SchwarzMultiscale : public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
+      /** \brief . */
   SchwarzMultiscale(
-      const Teuchos::RCP<Albany::Application> & app,
-      const Teuchos::RCP<Teuchos::ParameterList> & app_params);
+	const Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >& models,
+	const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >& params,
+        const Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
 
   /// Return solution vector map
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
@@ -101,6 +104,20 @@ private:
   /// RCP to matDB object
   ///
   Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
+  Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > params_;
+  Teuchos::RCP<const Teuchos::Comm<int> > commT_;
+      
+  Teuchos::Array< Teuchos::RCP<Thyra::ModelEvaluator<ST> > > solvers_;
+  int n_models_;
+  Teuchos::Array<int> num_params_;
+  Teuchos::Array<int> num_responses_;
+  int num_params_total_;
+  int num_responses_total_;
+
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> > solver_inargs_; 
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> > solver_outargs_;
+
 
 };
 

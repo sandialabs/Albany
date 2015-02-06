@@ -30,6 +30,14 @@ file (GLOB evaluator-headers
   "${LCM_DIR}/evaluators/*.hpp"
 )
 
+#LCM model evaluators 
+file (GLOB model-eval-sources
+  "${LCM_DIR}/*.cpp"
+)
+file (GLOB model-eval-headers
+  "${LCM_DIR}/*.hpp"
+)
+
 # LCM surface element evaluators
 file (GLOB surface-element-sources
   "${LCM_DIR}/evaluators/surface-element/*.cpp"
@@ -75,6 +83,7 @@ file (GLOB topology-headers
 set(SOURCES ${SOURCES}
   ${problem-sources}
   ${evaluator-sources}
+  ${model-eval-sources}
   ${surface-element-sources}
   ${bc-sources}
   ${models-sources}
@@ -84,6 +93,7 @@ set(SOURCES ${SOURCES}
 set(HEADERS ${HEADERS}
   ${problem-headers}
   ${evaluator-headers}
+  ${model-eval-headers}
   ${surface-element-headers}
   ${bc-headers}
   ${models-headers}
