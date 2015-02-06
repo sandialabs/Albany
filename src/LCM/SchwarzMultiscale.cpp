@@ -47,8 +47,11 @@ SchwarzMultiscale(
  
 }
 
-// Overridden from Thyra::ModelEvaluator<ST>
+LCM::SchwarzMultiscale::~SchwarzMultiscale()
+{
+}
 
+// Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_x_space() const
 {
@@ -199,4 +202,44 @@ LCM::SchwarzMultiscale::reportFinalPoint(
 //fill in
 }
 
-//fill in rest of functions 
+void
+LCM::SchwarzMultiscale::
+allocateVectors()
+{
+//fill in
+}
+
+
+/// Create operator form of dg/dx for distributed responses
+Teuchos::RCP<Thyra::LinearOpBase<ST> >
+LCM::SchwarzMultiscale::
+create_DgDx_op_impl(int j) const
+{
+//fill in
+}
+
+/// Create operator form of dg/dx_dot for distributed responses
+Teuchos::RCP<Thyra::LinearOpBase<ST> >
+LCM::SchwarzMultiscale::
+create_DgDx_dot_op_impl(int j) const
+{
+//fill in
+}
+
+/// Create OutArgs
+Thyra::ModelEvaluatorBase::OutArgs<ST>
+LCM::SchwarzMultiscale::
+createOutArgsImpl() const
+{
+//fill in
+}
+
+/// Evaluate model on InArgs
+void 
+LCM::SchwarzMultiscale::
+evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
+      Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const 
+{
+//fill in
+}
+

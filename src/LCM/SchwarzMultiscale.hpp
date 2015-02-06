@@ -26,6 +26,9 @@ public:
 	const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >& params,
         const Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
 
+  ///Destructor
+  ~SchwarzMultiscale();
+
   /// Return solution vector map
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
   get_x_space() const;
@@ -102,8 +105,8 @@ protected:
 private:
   ///
   /// RCP to matDB object
-  ///
   Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
   Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > params_;
   Teuchos::RCP<const Teuchos::Comm<int> > commT_;
