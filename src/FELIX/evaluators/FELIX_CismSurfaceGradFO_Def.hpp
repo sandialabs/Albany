@@ -71,15 +71,12 @@ evaluateFields(typename Traits::EvalData workset)
 {
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
-      ScalarT* gradS = &gradS_qp(cell,qp,0);
-      ScalarT dsdx_qp = dsdx_node(cell, 0) * BF(cell, 0, qp);
-      ScalarT dsdy_qp = dsdy_node(cell, 0) * BF(cell, 0, qp);
+      gradS_qp(cell,qp,0) = dsdx_node(cell, 0) * BF(cell, 0, qp); 
+      gradS_qp(cell,qp,1) = dsdy_node(cell, 0) * BF(cell, 0, qp); 
       for (std::size_t node=1; node < numNodes; ++node) {
-        dsdx_qp += dsdx_node(cell, node) * BF(cell, node, qp);
-        dsdy_qp += dsdy_node(cell, node) * BF(cell, node, qp);
+        gradS_qp(cell,qp,0) += dsdx_node(cell, node) * BF(cell, node, qp); 
+        gradS_qp(cell,qp,1) += dsdy_node(cell, node) * BF(cell, node, qp); 
       }
-      gradS[0] = dsdx_qp; 
-      gradS[1] = dsdy_qp; 
     }
 }
 }
