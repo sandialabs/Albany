@@ -5,9 +5,6 @@
 ##*****************************************************************//
 # FELIX
 
-set(CISM_INCLUDE_DIRS /home/ikalash/Desktop/interface
-    CISM_INCLUDE_DIRS /home/ikalash/Desktop/interface/FELIX
-)
 IF(PHX_KOKKOS_DEVICE_TYPE_CUDA)
   IF( TPL_ENABLE_MPI )
       CUDA_INCLUDE_DIRECTORIES( ${MPI_BASE_DIR}/include )
@@ -130,7 +127,9 @@ IF (ENABLE_CISM_INTERFACE)
 ENDIF()
 
 IF(ENABLE_CISM_INTERFACE)
-  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM} ${HEADERSCISM})
+  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM}
+              ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp 
+              ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
   set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                        ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
