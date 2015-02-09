@@ -44,6 +44,8 @@ public:
                                  const std::map<std::string, Teuchos::RCP<const Epetra_Vector> > gMap,
                                  const std::map<std::string, Teuchos::RCP<Epetra_MultiVector> > dgdpMap){};
   void SetCommunicator(const Teuchos::RCP<const Epetra_Comm>& _comm){comm = _comm;}
+  void SetOutputVariables(Teuchos::RCP<double> g, Teuchos::RCP<Epetra_Vector> dgdp)
+         {gAggregated = g; dgdpAggregated = dgdp;}
 
 protected:
 
@@ -54,9 +56,15 @@ protected:
   std::string outputObjectiveName;
   std::string outputDerivativeName;
 
+  Teuchos::RCP<double> gAggregated;
+  Teuchos::RCP<Epetra_Vector> dgdpAggregated;
+
   Teuchos::RCP<Albany::Application> outApp;
   Teuchos::RCP<const Epetra_Comm> comm;
 
+  bool shiftToZero;
+  bool scaleToOne;
+  Teuchos::Array<double> normalize;
 };
 
 class Aggregator_StateVarBased : public virtual Aggregator {
@@ -93,34 +101,31 @@ class Aggregator_DistParamBased : public virtual Aggregator {
 class Aggregator_Scaled : public virtual Aggregator,
                           public virtual Aggregator_StateVarBased {
  public:
+  Aggregator_Scaled(){}
   Aggregator_Scaled(const Teuchos::ParameterList& aggregatorParams);
   virtual void Evaluate();
- private:
+ protected:
   Teuchos::Array<double> weights;
-
-  bool shiftToZero;
 };
 
 
-class Aggregator_Uniform : public virtual Aggregator,
-                           public virtual Aggregator_StateVarBased {
+class Aggregator_Uniform : public Aggregator_Scaled {
  public:
   Aggregator_Uniform(const Teuchos::ParameterList& aggregatorParams);
-  virtual void Evaluate();
 };
 
-
-class Aggregator_PassThru : public Aggregator {
- public:
-  Aggregator_PassThru(const Teuchos::ParameterList& aggregatorParams);
-  void Evaluate(){}
-};
-
-class Aggregator_DistSingle : public virtual Aggregator,
+class Aggregator_DistScaled : public virtual Aggregator,
                               public virtual Aggregator_DistParamBased {
  public:
-  Aggregator_DistSingle(const Teuchos::ParameterList& aggregatorParams);
+  Aggregator_DistScaled(){}
+  Aggregator_DistScaled(const Teuchos::ParameterList& aggregatorParams);
   void Evaluate();
+ protected:
+  Teuchos::Array<double> weights;
+};
+class Aggregator_DistUniform : public Aggregator_DistScaled {
+ public:
+  Aggregator_DistUniform(const Teuchos::ParameterList& aggregatorParams);
 };
 
 

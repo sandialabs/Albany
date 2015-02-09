@@ -54,6 +54,7 @@ private:
   std::string topoCentering;;
 
   Teuchos::RCP<Topology> topology;
+  int functionIndex;
 };
 }
 

@@ -39,7 +39,6 @@ Optimizer(optimizerParams)
 
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
   _volMaxIter    = optimizerParams.get<int>("Volume Enforcement Maximum Iterations");
-  _minDensity    = optimizerParams.get<double>("Minimum Density");
 
 
 
@@ -145,6 +144,7 @@ Optimizer_Pareto::computeUpdatedTopology(double volFrac)
   comm->MinAll(&localTauMin, &tau_1, 1);
   comm->MaxAll(&localTauMax, &tau_2, 1);
 
+  const double minDensity = topology->getBounds()[0];
 
   for(int i=0; i<numOptDofs; i++)
     p_last[i] = p[i];
@@ -159,7 +159,7 @@ Optimizer_Pareto::computeUpdatedTopology(double volFrac)
     vol = 0.0;
     tauMid = (tau_2+tau_1)/2.0;
 
-    solverInterface->ComputeVolume(p, dfdp, vol, tauMid, _minDensity);
+    solverInterface->ComputeVolume(p, dfdp, vol, tauMid, minDensity);
 
     if( vol > volFrac*_optVolume ) 
       tau_2 = tauMid;

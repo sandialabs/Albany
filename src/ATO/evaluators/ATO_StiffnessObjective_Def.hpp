@@ -58,6 +58,9 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
 
   FName = responseParams->get<std::string>("Response Name");
   dFdpName = responseParams->get<std::string>("Response Derivative Name");
+  if(responseParams->isType<int>("Penalty Function")){
+    functionIndex = responseParams->get<int>("Penalty Function");
+  } else functionIndex = 0;
 
   //! Register with state manager
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
@@ -139,8 +142,8 @@ evaluateFields(typename Traits::EvalData workset)
     if( size == 3 ){
       for(int cell=0; cell<dims[0]; cell++){
         double dE = 0.0;
-        double P = topology->Penalize(topo(cell));
-        double dP = topology->dPenalize(topo(cell));
+        double P = topology->Penalize(functionIndex,topo(cell));
+        double dP = topology->dPenalize(functionIndex,topo(cell));
         for(int qp=0; qp<dims[1]; qp++)
           for(int i=0; i<dims[2]; i++)
             dE += gradX(cell,qp,i)*workConj(cell,qp,i)*qp_weights(cell,qp);
@@ -151,8 +154,8 @@ evaluateFields(typename Traits::EvalData workset)
     if( size == 4 ){
       for(int cell=0; cell<dims[0]; cell++){
         double dE = 0.0;
-        double P = topology->Penalize(topo(cell));
-        double dP = topology->dPenalize(topo(cell));
+        double P = topology->Penalize(functionIndex,topo(cell));
+        double dP = topology->dPenalize(functionIndex,topo(cell));
         for(int qp=0; qp<dims[1]; qp++)
           for(int i=0; i<dims[2]; i++)
             for(int j=0; j<dims[3]; j++)
@@ -178,11 +181,11 @@ evaluateFields(typename Traits::EvalData workset)
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
-          double P = topology->Penalize(topoVal);
-          double dP = topology->dPenalize(topoVal);
+          double P = topology->Penalize(functionIndex,topoVal);
+          double dP = topology->dPenalize(functionIndex,topoVal);
           double dE = 0.0;
           for(int i=0; i<numDims; i++)
-            dE += gradX(cell,qp,i)*workConj(cell,qp,i);
+            dE += gradX(cell,qp,i)*workConj(cell,qp,i)/2.0;
           dE *= qp_weights(cell,qp);
           internalEnergy += P*dE;
           for(int node=0; node<numNodes; node++)
@@ -197,12 +200,12 @@ evaluateFields(typename Traits::EvalData workset)
           double topoVal = 0.0;
           for(int node=0; node<numNodes; node++)
             topoVal += topo(cell,node)*BF(cell,node,qp);
-          double P = topology->Penalize(topoVal);
-          double dP = topology->dPenalize(topoVal);
+          double P = topology->Penalize(functionIndex,topoVal);
+          double dP = topology->dPenalize(functionIndex,topoVal);
           double dE = 0.0;
           for(int i=0; i<numDims; i++)
             for(int j=0; j<numDims; j++)
-              dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j);
+              dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j)/2.0;
           dE *= qp_weights(cell,qp);
           internalEnergy += P*dE;
           for(int node=0; node<numNodes; node++)

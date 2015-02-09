@@ -12,6 +12,7 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "ATO_OptimizationProblem.hpp"
+#include "ATO_Utils.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -168,6 +169,7 @@ Albany::LinearElasticityProblem::constructEvaluators(
                               "Data Layout Usage in Mechanics problems assume vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
 
 
 
@@ -236,9 +238,12 @@ Albany::LinearElasticityProblem::constructEvaluators(
 
     // state the strain in the state manager for ATO
     p = stateMgr.registerStateVariable(strainName, dl->qp_tensor, dl->dummy, 
-                                       elementBlockName, "scalar", 0.0, false);
+                                       elementBlockName, "scalar", 0.0, false, false);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    //if(some input stuff)
+    atoUtils.SaveCellStateField(fm0, stateMgr, strainName, elementBlockName, dl->qp_tensor, numDim);
   }
 
 
@@ -259,9 +264,13 @@ Albany::LinearElasticityProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
 
     // state the strain in the state manager so for ATO
-    p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy, elementBlockName, "scalar", 0.0);
+    p = stateMgr.registerStateVariable(stressName,dl->qp_tensor, dl->dummy, 
+                                       elementBlockName, "scalar", 0.0, false, false);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
+
+    //if(some input stuff)
+    atoUtils.SaveCellStateField(fm0, stateMgr, stressName, elementBlockName, dl->qp_tensor, numDim);
   }
 
   // Get distributed parameter
@@ -276,18 +285,21 @@ Albany::LinearElasticityProblem::constructEvaluators(
     }
   }
   
-  // ATO penalization
+  // ATO penalization ( generalize this from user input.  Currently hardwired for just "Stress". )
   if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
-  {
+  { // foreach weighted variable
     RCP<ParameterList> p = rcp(new ParameterList("TopologyWeighting"));
 
     Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
     p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
 
+    Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
+
     p->set<std::string>("BF Name", "BF");
     p->set<std::string>("Unweighted Variable Name", stressName);
     p->set<std::string>("Weighted Variable Name", stressName+"_Weighted");
     p->set<std::string>("Variable Layout", "QP Tensor");
+    p->set<int>("Function Index", wfParams.get<int>("Stress"));
 
     if( topology->getEntityType() == "Distributed Parameter" )
       ev = rcp(new ATO::TopologyFieldWeighting<EvalT,AlbanyTraits>(*p,dl));
@@ -295,9 +307,12 @@ Albany::LinearElasticityProblem::constructEvaluators(
       ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
 
     fm0.template registerEvaluator<EvalT>(ev);
+
+    //if(some input stuff)
+    atoUtils.SaveCellStateField(fm0, stateMgr, stressName+"_Weighted", elementBlockName, dl->qp_tensor, numDim);
   }
 
-  { // Displacement Resid
+  { // Displacement Resid ( generalize )
     RCP<ParameterList> p = rcp(new ParameterList("Displacement Resid"));
 
     p->set<bool>("Disable Transient", true);

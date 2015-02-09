@@ -250,6 +250,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     p->set<std::string>("Unweighted Variable Name", kinVarName);
     p->set<std::string>("Weighted Variable Name", kinVarName+"_Weighted");
     p->set<std::string>("Variable Layout", "QP Vector");
+    p->set<int>("Topology Function", params->get<int>("Topology Function"));
     
     ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);

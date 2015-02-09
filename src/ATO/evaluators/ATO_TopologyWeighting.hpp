@@ -54,6 +54,7 @@ private:
   PHX::MDField<ScalarT> weightedVar;
 
   Teuchos::RCP<Topology> topology;
+  int functionIndex;
 };
 }
 

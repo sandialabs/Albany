@@ -58,7 +58,11 @@ public virtual Albany::AbstractProblem {
    Teuchos::RCP<Epetra_Vector> localVec;
    Teuchos::RCP<Epetra_Export> exporter;
 
+   Teuchos::RCP<Epetra_Map> localMap;
+   Teuchos::RCP<Epetra_Map> overlapMap;
+
    Teuchos::RCP<Topology> topology;
+   int functionIndex;
 
 };
 

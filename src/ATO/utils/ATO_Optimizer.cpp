@@ -69,6 +69,8 @@ Optimizer::Optimizer(const Teuchos::ParameterList& optimizerParams)
   solverInterface = NULL;
   comm = Teuchos::null;
 
+  topology = optimizerParams.get<Teuchos::RCP<Topology> >("Topology");
+
   if( optimizerParams.isType<Teuchos::ParameterList>("Convergence Tests") ){
     const Teuchos::ParameterList& 
       convParams = optimizerParams.get<Teuchos::ParameterList>("Convergence Tests");
@@ -92,7 +94,6 @@ Optimizer(optimizerParams)
 
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
   _volMaxIter    = optimizerParams.get<int>("Volume Enforcement Maximum Iterations");
-  _minDensity    = optimizerParams.get<double>("Minimum Density");
   _initLambda    = optimizerParams.get<double>("Volume Multiplier Initial Guess");
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _moveLimit     = optimizerParams.get<double>("Move Limiter");
@@ -111,7 +112,6 @@ Optimizer(optimizerParams)
   f_last = 0.0;
   opt = NULL;
 
-  _minDensity    = optimizerParams.get<double>("Minimum Density");
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _optMethod     = optimizerParams.get<std::string>("Method");
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
@@ -435,7 +435,9 @@ Optimizer_OC::computeUpdatedTopology()
 {
 
   // find multiplier that enforces volume constraint
-  const double maxDensity = 1.0;
+  const Teuchos::Array<double>& bounds = topology->getBounds();
+  const double minDensity = bounds[0];
+  const double maxDensity = bounds[1];
   double vmid, v1=0.0;
   double v2=_initLambda;
   int niters=0;
@@ -457,12 +459,12 @@ Optimizer_OC::computeUpdatedTopology()
     for(int i=0; i<numOptDofs; i++) {
       double be = -dfdp[i]/vmid;
       double p_old = p_last[i];
-      double p_new = p_old*pow(be,_stabExponent);
+      double p_new = (p_old-minDensity)*pow(be,_stabExponent)+minDensity;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
       // enforce limits
-      if( p_new < _minDensity ) p_new = _minDensity;
+      if( p_new < minDensity ) p_new = minDensity;
       if( p_new > maxDensity ) p_new = maxDensity;
       p[i] = p_new;
     }
@@ -490,10 +492,12 @@ Optimizer_NLopt::Initialize()
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error! NLopt package doesn't work in parallel.  Use OC package." << std::endl);
   TEUCHOS_TEST_FOR_EXCEPT ( (comm->NumProc() != 1) );
- 
-  
 
   numOptDofs = solverInterface->GetNumOptDofs();
+ 
+  const Teuchos::Array<double>& bounds = topology->getBounds();
+  const double minDensity = bounds[0];
+  const double maxDensity = bounds[1];
   
   if( _optMethod == "MMA" )
     opt = nlopt_create(NLOPT_LD_MMA, numOptDofs);
@@ -508,8 +512,8 @@ Optimizer_NLopt::Initialize()
 
   
   // set bounds
-  nlopt_set_lower_bounds1(opt, _minDensity);
-  nlopt_set_upper_bounds1(opt, 1.0);
+  nlopt_set_lower_bounds1(opt, minDensity);
+  nlopt_set_upper_bounds1(opt, maxDensity);
 
   // set objective function
   nlopt_set_min_objective(opt, this->evaluate, this);
