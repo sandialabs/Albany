@@ -87,11 +87,14 @@ namespace Albany {
 
     virtual bool useCompositeTet() = 0;
 
-    //Flag for transforming STK mesh; currently only needed for FELIX problems 
+    //Flag for transforming STK mesh; currently only needed for FELIX/Aeras problems 
     std::string transformType;
     //alpha and L are parameters read in from ParameterList for FELIX problems 
     double felixAlpha; 
     double felixL; 
+    
+    //Points per edge in creating enriched spectral mesh in Aeras::SpectralDiscretization (for Aeras only). 
+    int points_per_edge;
 
     bool contigIDs; //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
 

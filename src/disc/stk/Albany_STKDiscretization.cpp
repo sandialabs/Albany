@@ -56,7 +56,7 @@ const double pi = 3.1415926535897932385;
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::
 STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -281,8 +281,6 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 //where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
 //geometries respectively.
 //Currently this function is only needed for some FELIX problems.
-
-
 void
 Albany::STKDiscretization::transformMesh()
 {
@@ -430,6 +428,31 @@ Albany::STKDiscretization::transformMesh()
       x[2] = s*x[2] + b*(1.0-x[2]);
       *stk::mesh::field_data(*surfaceHeight_field, overlapnodes[i]) = s;
     }
+  }
+  else if (transformType == "FO XZ MMS") {
+   //This test case assumes the domain read in from the input file is 0 < x < 2, 0 < y < 1, where y = z
+#ifdef OUTPUT_TO_SCREEN
+    *out << "FO XZ MMS transform!" << endl;
+#endif
+    double L = stkMeshStruct->felixL;
+    //hard-coding values of parameters...  make sure these are same as in the FOStokes body force evaluator!
+    double alpha0 = 4e-5; 
+    double s0 = 2.0; 
+    double H = 1.0; 
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+#endif
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stk::mesh::Field<double>* surfaceHeight_field = metaData.get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "surface_height");
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+      x[0] = L*(x[0]-1.0);  //test case assumes domain is from [-L, L], where unscaled domain is from [0, 2]; 
+      double s = s0 - alpha0*x[0]*x[0];
+      double b = s - H;
+      //this transformation of y = [0,1] should give b(x) < y < s(x) 
+      x[1] = b*(1-x[1]) + s*x[1]; 
+      *stk::mesh::field_data(*surfaceHeight_field, overlapnodes[i]) = s;
+     }
   }
 #ifdef ALBANY_AERAS
   else if (transformType == "Aeras Schar Mountain") {
@@ -1242,10 +1265,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef AbstractSTKFieldContainer::TensorFieldType TensorFieldType;
 
   VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
-  ScalarFieldType* sphereVolume_field;
 
-  if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* sphereVolume_field;
+  if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField()){
     sphereVolume_field = stkMeshStruct->getFieldContainer()->getSphereVolumeField();
+  }
 
   wsEBNames.resize(numBuckets);
   for (int i=0; i<numBuckets; i++) {
@@ -1432,8 +1456,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
 
 #ifdef ALBANY_LCM
-      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1)
-	sphereVolume[b][i] = *stk::mesh::field_data(*sphereVolume_field, element);
+      if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1){
+	double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
+	if(volumeTemp){
+	  sphereVolume[b][i] = volumeTemp[0];
+	}
+      }
 #endif
 
       // loop over local nodes

@@ -37,9 +37,8 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   this->addEvaluatedField(force);
   this->addEvaluatedField(residual);
 
-#ifdef ALBANY_PERIDIGM
   outputFieldInfo = LCM::PeridigmManager::self().getOutputFields();
-#endif
+
   for(unsigned int i=0 ; i<outputFieldInfo.size() ; ++i){
     std::string albanyName = outputFieldInfo[i].albanyName;
     std::string relation = outputFieldInfo[i].relation;
@@ -99,8 +98,6 @@ template<typename Traits>
 void PeridigmForce<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_PERIDIGM
-
   std::string blockName = workset.EBName;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > wsElNodeID = workset.wsElNodeID;
 
@@ -136,8 +133,6 @@ evaluateFields(typename Traits::EvalData workset)
         this->outputFields[albanyName](cell, j) = data[length*peridigmLocalId + j];
     }
   }
-
-#endif
 }
 
 } // namespace LCM

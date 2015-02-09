@@ -6,7 +6,6 @@
 
 #include "Albany_Utils.hpp"
 #include "ATO_TopoTools.hpp"
-#include "ATO_TopoTools_Def.hpp"
 #include "Teuchos_TestForException.hpp"
 
 namespace ATO {

@@ -20,11 +20,11 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
                                       Teuchos::RCP<Albany::AbstractDiscretization> disc,
 				      const Teuchos::RCP<const Teuchos_Comm>& comm)
 {
-#ifndef ALBANY_PERIDIGM
+  if(!params->sublist("Problem").isSublist("Peridigm Parameters")){
+    hasPeridynamics = false;
+    return;
+  }
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error:  Peridigm interface not available!  Recompile with -DUSE_PERIDIGM.\n\n");
-
-#else
   teuchosComm = comm;
   peridigmParams = Teuchos::RCP<Teuchos::ParameterList>(new Teuchos::ParameterList(params->sublist("Problem").sublist("Peridigm Parameters", true)));
   Teuchos::ParameterList& problemParams = params->sublist("Problem");
@@ -58,11 +58,17 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     }
   }
 
-  stk::mesh::Field<double>* coordinatesField = 
-    metaData->get_field< stk::mesh::Field<double> >(stk::topology::NODE_RANK, "coordinates");
+//   const stk::mesh::FieldVector &fields = metaData->get_fields();
+//   for(unsigned int i=0 ; i<fields.size() ; ++i)
+//     std::cout << "DJL DEBUGGING STK field " << *fields[i] << std::endl;
 
-  stk::mesh::Field<double>* volumeField = 
-    metaData->get_field< stk::mesh::Field<double> >(stk::topology::ELEMENT_RANK, "volume");
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access coordinates field.\n\n");
+
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access volume field.\n\n");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
@@ -242,8 +248,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(localId == -1, "\n\n**** Error in PeridigmManager::initialize(), invalid global id.\n\n");
 	blockId[localId] = bId;
 	double* exodusVolume = stk::mesh::field_data(*volumeField, elementsInElementBlock[iElement]);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVolume == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to access element's volume field.\n\n");
 	cellVolume[localId] = exodusVolume[0];
 	double* exodusCoordinates = stk::mesh::field_data(*coordinatesField, node[0]);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusCoordinates == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to access element's coordinates field.\n\n");
 	initialX[localId*3]   = exodusCoordinates[0];
 	initialX[localId*3+1] = exodusCoordinates[1];
 	initialX[localId*3+2] = exodusCoordinates[2];
@@ -360,18 +368,21 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   for(unsigned int i=0 ; i<initialX.size() ; ++i)
     previousSolutionPositions[i] = initialX[i];
 
-  // Create a Peridigm discretization DJL DEBUGGING
-  //const Albany_MPI_Comm Albany::getMpiCommFromEpetraComm(const Epetra_Comm& ec) 
-//   peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(epetraComm,
-//                                                                                                             peridigmParams,
-// 													    static_cast<int>(peridigmNodeGlobalIds.size()),
-// 													    &peridigmNodeGlobalIds[0],
-//                                                                                                             &initialX[0],
-//                                                                                                             &cellVolume[0],
-//                                                                                                             &blockId[0]));
+  // Create a Peridigm discretization
+  const Teuchos::MpiComm<int>* mpiComm = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::initialize(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
+  peridynamicDiscretization = Teuchos::rcp<PeridigmNS::Discretization>(new PeridigmNS::AlbanyDiscretization(*mpiComm->getRawMpiComm(),
+                                                                                                            peridigmParams,
+													    static_cast<int>(peridigmNodeGlobalIds.size()),
+													    &peridigmNodeGlobalIds[0],
+                                                                                                            &initialX[0],
+                                                                                                            &cellVolume[0],
+                                                                                                            &blockId[0]));
 
   // Create a Peridigm object DJL DEBUGGING
-//   peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(epetraComm, peridigmParams, peridynamicDiscretization));
+  peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(*mpiComm->getRawMpiComm(),
+									 peridigmParams,
+									 peridynamicDiscretization));
 
   // Create data structure for obtaining the global element id given the workset index and workset local element id.
   Albany::WsLIDList wsLIDList = stkDisc->getElemGIDws();
@@ -390,14 +401,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     vector<int>& peridigmGlobalIds = partialStressElements[i].peridigmGlobalIds;
     albanyPartialStressElementGlobalIdToPeridigmGlobalIds[albanyGlobalElementId] = peridigmGlobalIds;
   }
-
-#endif
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics){
 
     currentTime = time;
@@ -515,14 +522,10 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       }
     }
   }
-
-#endif
 }
 
 void LCM::PeridigmManager::updateState()
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics){
     previousTime = currentTime;
     const Teuchos::RCP<const Epetra_Vector> peridigmY = peridigm->getY();
@@ -530,35 +533,23 @@ void LCM::PeridigmManager::updateState()
       previousSolutionPositions[i] = (*peridigmY)[i];
     peridigm->updateState();
   }
-
-#endif
 }
 
 void LCM::PeridigmManager::writePeridigmSubModel(RealType currentTime)
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics)
     peridigm->writePeridigmSubModel(currentTime);
-
-#endif
 }
 
 void LCM::PeridigmManager::evaluateInternalForce()
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics)
     peridigm->computeInternalForce();
-
-#endif
 }
 
 double LCM::PeridigmManager::getForce(int globalId, int dof)
 {
   double force(0.0);
-
-#ifdef ALBANY_PERIDIGM
 
   if(hasPeridynamics){
     Epetra_Vector& peridigmForce = *(peridigm->getForce());
@@ -568,16 +559,11 @@ double LCM::PeridigmManager::getForce(int globalId, int dof)
 
     // DEBUGGING ?? NEED MAP FROM ALBANY ELEMENT ID TO PERIDIGM NODE ID (NOT THE SAME UNLESS THE SIMULATION IS 100% PERIDYNAMICS)
   }
-
-#endif
-
   return force;
 }
 
 void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues)
 {
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics){
 
     int globalElementId = worksetLocalIdToGlobalId[worksetIndex][worksetLocalElementId];
@@ -591,8 +577,6 @@ void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIn
       }
     }
   }
-
-#endif
 }
 
 Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string blockName, std::string fieldName)
@@ -600,12 +584,8 @@ Teuchos::RCP<const Epetra_Vector> LCM::PeridigmManager::getBlockData(std::string
 
   Teuchos::RCP<const Epetra_Vector> data;
 
-#ifdef ALBANY_PERIDIGM
-
   if(hasPeridynamics)
     data = peridigm->getBlockData(blockName, fieldName);
-
-#endif
 
   return data;
 }

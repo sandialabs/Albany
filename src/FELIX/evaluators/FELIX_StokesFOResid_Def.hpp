@@ -11,7 +11,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 
 
@@ -43,6 +43,13 @@ StokesFOResid(const Teuchos::ParameterList& p,
 #endif 
     eqn_type = FELIX;
   }
+  //FELIX FO x-z MMS test case
+  else if (type == "FELIX X-Z") {
+#ifdef OUTPUT_TO_SCREEN
+    *out << "setting FELIX FO X-Z model physics" << std::endl; 
+#endif
+  eqn_type = FELIX_XZ; 
+  }
   else if (type == "Poisson") { //temporary addition of Poisson operator for debugging of Neumann BC
 #ifdef OUTPUT_TO_SCREEN
     *out << "setting Poisson (Laplace) operator" << std::endl; 
@@ -72,11 +79,13 @@ StokesFOResid(const Teuchos::ParameterList& p,
   U.fieldTag().dataLayout().dimensions(dims);
   vecDim  = dims[2];
 
-//*out << " in FELIX Stokes FO residual! " << std::endl;
-//*out << " vecDim = " << vecDim << std::endl;
-//*out << " numDims = " << numDims << std::endl;
-//*out << " numQPs = " << numQPs << std::endl; 
-//*out << " numNodes = " << numNodes << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+*out << " in FELIX Stokes FO residual! " << std::endl;
+*out << " vecDim = " << vecDim << std::endl;
+*out << " numDims = " << numDims << std::endl;
+*out << " numQPs = " << numQPs << std::endl; 
+*out << " numNodes = " << numNodes << std::endl; 
+#endif
 
 if (vecDim != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
@@ -84,7 +93,12 @@ if (vecDim != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos:
 if (vecDim != 1 & eqn_type == POISSON)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
 				  "Invalid Parameter vecDim.  Poisson problem implemented for 1 dof per node only. " << std::endl);}
-
+if (vecDim != 1 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+				  "Invalid Parameter vecDim.  FELIX XZ problem implemented for 1 dof per node only. " << std::endl);}
+if (numDims != 2 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
+				  "Invalid Parameter numDims.  FELIX XZ problem is 2D. " << std::endl);}
 }
 
 //**********************************************************************
@@ -166,6 +180,18 @@ evaluateFields(typename Traits::EvalData workset)
               }
            
     } } }
+    else if (eqn_type == FELIX_XZ) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t node=0; node < numNodes; ++node) {
+          for (std::size_t qp=0; qp < numQPs; ++qp) {
+             //z dimension is treated as 2nd dimension
+             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) = f1
+             Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
+                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1); 
+          }
+       }
+     } 
+    }
     else if (eqn_type == POISSON) { //Laplace (Poisson) operator
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       for (std::size_t node=0; node < numNodes; ++node) {

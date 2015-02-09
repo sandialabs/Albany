@@ -1,0 +1,12 @@
+set node constraint on
+create Cylinder height 20 radius 5 
+create Cylinder height 1 radius 5 
+move Volume 2 z -7 
+create Cylinder height 10 radius 0.25 
+move Volume 3 z 4
+subtract volume 2 from volume 1 keep
+delete volume 1 
+split body 4
+subtract volume 3 from volume 5 keep
+delete volume 5
+export acis "/Users/gahanse/Codes/Albany/build/examples/PerformanceTests/ALE/pencil.sat" overwrite

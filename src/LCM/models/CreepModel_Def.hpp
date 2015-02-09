@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#define DEBUG_FREQ 1000
+#define DEBUG_FREQ 1000000
 #include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -147,9 +147,8 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Fpinv(num_dims_), Cpinv(num_dims_);
 
-  long int foo = -1;
+  long int debug_output_counter = 0;
   //std::cout << "Entering CreepModel_Def code" << std::endl;
-  std::cout<<"delta_time(0) = "<<delta_time(0)<<std::endl;
 
 
   //check delta_time(0)
@@ -157,11 +156,10 @@ computeState(typename Traits::EvalData workset,
     
   //  std::cout << "delta_time(0) == 0, do J2" << std::endl;
 
-  std::cout << "Entering CreepModel_Def code" << std::endl;
-  //if(foo%DEBUG_FREQ == 0) std::cout << "delta_time is not 0" << std::endl;  
+  //if(debug_output_counter%DEBUG_FREQ == 0) std::cout << "delta_time is not 0" << std::endl;  
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      foo++;
+      debug_output_counter++;
       kappa = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
@@ -173,10 +171,13 @@ computeState(typename Traits::EvalData workset,
       // ----------------------------  temperature dependent coefficient ------------------------
       
       // the effective 'B' we had before in the previous models, with mu
-       temp_adj_relaxation_para_ = relaxation_para_ *  std::exp( - activation_para_ * (1/temperature_(cell,pt))) ;
+      if(have_temperature_) {
+	temp_adj_relaxation_para_ = relaxation_para_ *  std::exp( - activation_para_ / temperature_(cell,pt)) ;
+      }else {
+	temp_adj_relaxation_para_ = relaxation_para_ *  std::exp( - activation_para_ / 303.0);
+      }
        
-       if(foo%DEBUG_FREQ == 0)std::cout<<"B = "<<temp_adj_relaxation_para_<<std::endl;
-
+      if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"B = "<<temp_adj_relaxation_para_<<std::endl;
 
       // fill local tensors
       F.fill(&def_grad(cell, pt, 0, 0));
@@ -186,10 +187,8 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      if(foo%DEBUG_FREQ == 0) std::cout<<"F = "<<F<<std::endl;
-      if(foo%DEBUG_FREQ == 0) std::cout<<"Fp = "<<Fpn<<std::endl;
-
-
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"F = "<<F<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"Fp = "<<Fpn<<std::endl;
 
       // compute trial state
       Fpinv = Intrepid::inverse(Fpn);
@@ -199,20 +198,20 @@ computeState(typename Traits::EvalData workset,
       a0 = Intrepid::norm(Intrepid::dev(be));
       a1 = Intrepid::trace(be); 
       
-      if(foo%DEBUG_FREQ == 0) std::cout<<"a0 = "<<a0<<std::endl;
-      if(foo%DEBUG_FREQ == 0) std::cout<<"a1 = "<<a1<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"a0 = "<<a0<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"a1 = "<<a1<<std::endl;
 
 
       s = mu * Intrepid::dev(be);
-      if(foo%DEBUG_FREQ == 0) std::cout<<"s_trial = "<<s<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"s_trial = "<<s<<std::endl;
       mubar = Intrepid::trace(be) * mu / (num_dims_);
-      if(foo%DEBUG_FREQ == 0) std::cout<<"mubar = "<<mubar<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"mubar = "<<mubar<<std::endl;
 
       smag = Intrepid::norm(s);
-      if(foo%DEBUG_FREQ == 0) std::cout<<"smag = "<<smag<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"smag = "<<smag<<std::endl;
       
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
-      if(foo%DEBUG_FREQ == 0) std::cout<<"f(yield condition)= "<<f<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0) std::cout<<"f(yield condition)= "<<f<<std::endl;
 
       // check yield condition
       if (f <= 0.0) {
@@ -238,16 +237,16 @@ computeState(typename Traits::EvalData workset,
          
          F[0] = X[0] - smag + 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_) ;
 
-         dFdX[0] = 1. + strain_rate_expo_ * 2 * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ - 1);
+         dFdX[0] = 1. + strain_rate_expo_ * 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ - 1.);
 
           solver.solve(dFdX, X, F);
           count++;
 
-          if(foo%DEBUG_FREQ == 0)std::cout<<"Creep Solver count = "<<count<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"***finish return mapping***"<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"Creep Solver count = "<<count<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"***finish return mapping***"<<std::endl;
 
           res = std::abs(F[0]);
           if (res < 1.e-10 )
@@ -273,11 +272,11 @@ computeState(typename Traits::EvalData workset,
         // s -= 2 * mubar * dgam * N;
         s = X[0]*N;
 
-        if(foo%DEBUG_FREQ == 0)std::cout<<"s = "<<s<<std::endl;
+        if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"s = "<<s<<std::endl;
 
 
         // mechanical source
-        if (have_temperature_ && delta_time(0) > 0) {
+        if (have_temperature_ && delta_time(0) > 0.0) {
           source(cell, pt) = 0.0 * (sq23 * dgam / delta_time(0)
             * (Y + temperature_(cell,pt))) / (density_ * heat_capacity_);
         }
@@ -293,7 +292,7 @@ computeState(typename Traits::EvalData workset,
         }
       } else {
         
-        if(foo%DEBUG_FREQ == 0) std::cout << "hit alternate condition in creep" << std::endl;
+        if(debug_output_counter%DEBUG_FREQ == 0) std::cout << "hit alternate condition in creep" << std::endl;
         eqps(cell, pt) = eqpsold(cell, pt);
         if (have_temperature_) source(cell, pt) = 0.0;
         for (std::size_t i(0); i < num_dims_; ++i) {
@@ -303,7 +302,7 @@ computeState(typename Traits::EvalData workset,
         }
        }
       } else {
-        if(foo%DEBUG_FREQ == 0) std::cout << " beyond the yield condition here, should do combination now" << std::endl;
+        if(debug_output_counter%DEBUG_FREQ == 0) std::cout << " beyond the yield condition here, should do combination now" << std::endl;
   
         bool converged = false;
         ScalarT H = 0.0;
@@ -325,43 +324,43 @@ computeState(typename Traits::EvalData workset,
        
         // X[0] = creep_initial_guess_;
 
-	if(foo%DEBUG_FREQ == 0)std::cout<<"Creep/Plasticity Solver initial X[0] = "<<X[0]<<std::endl;
+	if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"Creep/Plasticity Solver initial X[0] = "<<X[0]<<std::endl;
         
         while (!converged && count < 30)
         {
 
           //alpha = eqpsold(cell, pt) + sq23 * X[0];
-          //if(foo%DEBUG_FREQ == 0)std::cout<<"eqps_old = "<<eqpsold(cell, pt)<<std::endl;
+          //if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"eqps_old = "<<eqpsold(cell, pt)<<std::endl;
          
           //H = std::pow( (f - (2. * mubar + 2./3. * K)*X[0]) , 1./strain_rate_expo_ );
 
-          H = (K/( K + 3* mubar))* 2* mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ );          
+          H = (K/( K + 3. * mubar))* 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ );          
 
-          //if(foo%DEBUG_FREQ == 0)std::cout<<"H = "<<H<<std::endl;
+          //if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"H = "<<H<<std::endl;
 
           //dH =  (1./strain_rate_expo_ )
           // * std::pow( (f - (2. * mubar + 2./3. * K)*X[0]), 1./strain_rate_expo_ - 1.0)
           // * (-2. * mubar - 2./3. * K);
     
-          dH = strain_rate_expo_ * (K/( K + 3* mubar))* 2* mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ -1 );
+          dH = strain_rate_expo_ * (K/( K + 3. * mubar))* 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ -1.);
          
           //F[0] = (std::pow( 2. * mubar * delta_time(0) * temp_adj_relaxation_para_, 1./strain_rate_expo_ )*( f - smag - 2./3. * K * X[0] ) + H);
           //dFdX[0] = (std::pow( 2. * mubar * delta_time(0) * temp_adj_relaxation_para_, 1./strain_rate_expo_ ) * (- 2./3. * K) + dH);
 
-          F[0] = X[0] - smag + H + (3*mubar/( K + 3* mubar))*f;
-          dFdX[0] = 1 + dH;
+          F[0] = X[0] - smag + H + (3. * mubar/( K + 3. * mubar))*f;
+          dFdX[0] = 1. + dH;
 
 
           solver.solve(dFdX, X, F);
           count++;
 
-	  if(foo%DEBUG_FREQ == 0)std::cout<<"Creep/Plasticity Solver count = "<<count<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"H = "<<H<<std::endl;
-          if(foo%DEBUG_FREQ == 0)std::cout<<"dH = "<<dH<<std::endl; 
-          if(foo%DEBUG_FREQ == 0)std::cout<<"***finish return mapping***"<<std::endl;
+	  if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"Creep/Plasticity Solver count = "<<count<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"H = "<<H<<std::endl;
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dH = "<<dH<<std::endl; 
+          if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"***finish return mapping***"<<std::endl;
 
           res = std::abs(F[0]);
           if (res < 1.e-08 || res / f < 1.E-11)
@@ -382,11 +381,11 @@ computeState(typename Traits::EvalData workset,
         // update dgam
         // dgam = delta_time(0) * temp_adj_relaxation_para_ * std::pow(smag_new, strain_rate_expo_ ) + (1./(2 * mubar + 2*K/3)) * (f - 2 * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(smag_new, strain_rate_expo_ ));
         
-        dgam = ( smag_new - smag ) / (-2 * mubar);   
-        if(foo%DEBUG_FREQ == 0)std::cout<<"dgam = "<<dgam<<std::endl; 
+        dgam = ( smag_new - smag ) / (-2. * mubar);   
+        if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dgam = "<<dgam<<std::endl; 
 
-        dgam_plastic = (1./(2 * mubar + 2*K/3)) * (f - 2 * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(smag_new, strain_rate_expo_ )) ;
-        if(foo%DEBUG_FREQ == 0)std::cout<<"dgam_plastic = "<<dgam_plastic<<std::endl;      
+        dgam_plastic = (1./(2. * mubar + 2.*K / 3.)) * (f - 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(smag_new, strain_rate_expo_ )) ;
+        if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dgam_plastic = "<<dgam_plastic<<std::endl;      
 
 
         alpha = eqpsold(cell, pt) + sq23 * dgam_plastic ;
@@ -400,11 +399,11 @@ computeState(typename Traits::EvalData workset,
         //  * std::pow( (f - (2. * mubar + 2./3. * K)*X[0]), 1./strain_rate_expo_ ) * N;
      
         s = smag_new * N;
-        if(foo%DEBUG_FREQ == 0)std::cout<<"s_tensor = "<<s<<std::endl;
+        if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"s_tensor = "<<s<<std::endl;
 
         // update eqps
         eqps(cell, pt) = alpha;
-        if(foo%DEBUG_FREQ == 0)std::cout<<"eqps_updated = "<<eqps(cell, pt)<<std::endl;
+        if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"eqps_updated = "<<eqps(cell, pt)<<std::endl;
 
         // mechanical source
         if (have_temperature_ && delta_time(0) > 0) {
@@ -434,7 +433,7 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      if(foo%DEBUG_FREQ == 0)std::cout<<"sigma(combine) = "<<sigma<<std::endl;
+      if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"sigma(combine) = "<<sigma<<std::endl;
 
     }
   }
@@ -458,7 +457,6 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
-  std::cout << "Exiting CreepModel_Def code" << std::endl;
 }
 //------------------------------------------------------------------------------
 }

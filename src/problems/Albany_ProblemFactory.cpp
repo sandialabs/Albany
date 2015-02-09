@@ -43,10 +43,10 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
-#include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
-#include "LCM/problems/SchwarzMultiscaleProblem.hpp"
+#ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
 #include "LCM/problems/PeridigmProblem.hpp"
+#endif
 #endif
 #include "LCM/problems/HMCProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
@@ -274,12 +274,6 @@ Albany::ProblemFactory::create()
   else if (method == "Total Lagrangian Plasticity with Projection 3D") {
     strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
   }
-  else if (method == "Concurrent Multiscale 3D") {
-    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "Schwarz Multiscale 3D") {
-    strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, commT));
-  }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
   }
@@ -368,7 +362,8 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Stokes 2D" ) {
     strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ) {
+  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ||
+           method == "FELIX Stokes First Order 2D XZ" || method == "FELIX Stokes FO 2D XZ") {
     strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 2));
   }
   else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
@@ -402,6 +397,8 @@ Albany::ProblemFactory::create()
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
     strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling requires epetra and Peridigm, recompile with -DENABLE_ALBANY_EPETRA_EXE and -DENABLE_PERIDIGM ****\n");
 #endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");

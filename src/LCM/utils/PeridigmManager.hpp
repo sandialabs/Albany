@@ -6,10 +6,8 @@
 #include "Albany_AbstractDiscretization.hpp"
 #include "Albany_STKDiscretization.hpp"
 
-#ifdef ALBANY_PERIDIGM
 #include <Peridigm.hpp>
 #include <Peridigm_AlbanyDiscretization.hpp>
-#endif
 
 namespace LCM {
 
@@ -83,11 +81,9 @@ public:
 
 private:
 
-#ifdef ALBANY_PERIDIGM
   // Peridigm objects
   Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
-#endif
 
   Teuchos::RCP<const stk::mesh::MetaData> metaData;
   Teuchos::RCP<const stk::mesh::BulkData> bulkData;

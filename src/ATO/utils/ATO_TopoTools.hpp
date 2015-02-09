@@ -107,4 +107,6 @@ class H2 {
 };
 
 }
+
+#include "ATO_TopoTools_Def.hpp"
 #endif

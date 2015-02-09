@@ -52,6 +52,10 @@
   #include "ATO_Solver.hpp"
 #endif
 
+#ifdef ALBANY_LCM
+  #include "SchwarzMultiscale.hpp"
+#endif
+
 //#include "Thyra_EpetraModelEvaluator.hpp"
 //#include "AAdapt_AdaptiveModelFactory.hpp"
 
@@ -613,7 +617,25 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
 //#endif /* ALBANY_ATO */
 //    }
+  
+#ifdef ALBANY_LCM
+  if (solutionMethod == "Coupled Schwarz") {
+    //FIXME: set correctly from parameterlist the following parameters
+    //Teuchos::ParameterList& coupledParams = slvrfctry.getParameters();
+    //Teuchos::ParameterList& coupledSystemParams = coupledParams.sublist("Coupled System");
+    Teuchos::ParameterList coupledParams;// = slvrfctry.getParameters();
+    Teuchos::ParameterList coupledSystemParams; // = coupledParams.sublist("Coupled System");
+    //Teuchos::RCP< Teuchos::ParameterList> coupledPiroParams = Teuchos::rcp(&(coupledParams.sublist("Piro")),false);
+    Teuchos::Array<std::string> model_filenames = coupledSystemParams.get<Teuchos::Array<std::string> >("Model XML Files");
+    int num_models = model_filenames.size();
+    Teuchos::Array< RCP<Albany::Application> > apps(num_models);
+    Teuchos::Array< RCP<Thyra::ModelEvaluator<ST> > > models(num_models);
+    //FIXME: populate models array with actual models
+    Teuchos::Array< RCP<Teuchos::ParameterList> > coupled_params(num_models);
 
+    const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(models, coupled_params, appComm));
+  }
+#endif
 
   RCP<Albany::Application> app = albanyApp;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =

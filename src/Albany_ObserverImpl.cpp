@@ -15,9 +15,9 @@
 #include "Petra_Converters.hpp"
 
 #ifdef ALBANY_PERIDIGM
-# ifdef ALBANY_EPETRA
-#  include "PeridigmManager.hpp"
-# endif
+#ifdef ALBANY_EPETRA
+#include "PeridigmManager.hpp"
+#endif
 #endif
 
 #include <string>

@@ -19,7 +19,8 @@ MortarContact(const Teuchos::ParameterList& p,
 
   meshSpecs      (p.get<const Albany::MeshSpecsStruct*>("Mesh Specs Struct")),
   // The array of names of all the master side sets in the problem
-  masterSideNames (p.get<Teuchos::Array<std::string> >("Master Sideset Names")), 
+  masterSideNames (p.get<Teuchos::Array<std::string> >("Master Side Set Names")), 
+  slaveSideNames (p.get<Teuchos::Array<std::string> >("Slave Side Set Names")), 
 
   // The array of sidesets to process
   sideSetIDs (p.get<Teuchos::Array<std::string> >("Sideset IDs")), 
@@ -33,14 +34,16 @@ MortarContact(const Teuchos::ParameterList& p,
 {
 
   // Print the master side set names
-
   std::cout << "Master side sets found, number = " << masterSideNames.size() << std::endl;
-
   for(int i = 0; i < masterSideNames.size(); i++)
     std::cout << masterSideNames[i] << std::endl;
 
-  std::cout << "Nonmaster side sets found, number = " << sideSetIDs.size() << std::endl;
+  // Print the slave side set names
+  std::cout << "Slave side sets found, number = " << slaveSideNames.size() << std::endl;
+  for(int i = 0; i < slaveSideNames.size(); i++)
+    std::cout << slaveSideNames[i] << std::endl;
 
+  // Print all sideset ids
   for(int i = 0; i < sideSetIDs.size(); i++)
     std::cout << sideSetIDs[i] << std::endl;
 
@@ -84,8 +87,10 @@ evaluateFields(typename Traits::EvalData workset)
 
 
   // No work to do
-  if(workset.sideSets == Teuchos::null || this->masterSideNames.size() == 0 || sideSetIDs.size() == 0)
-
+  if(workset.sideSets == Teuchos::null || 
+     this->masterSideNames.size() == 0 || 
+     this->slaveSideNames.size() ==0 || 
+     sideSetIDs.size() == 0)
     return;
 
   const Albany::SideSetList& ssList = *(workset.sideSets);

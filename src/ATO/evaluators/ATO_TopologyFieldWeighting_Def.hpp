@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-#include "ATO_TopoTools_Def.hpp"
+#include "ATO_TopoTools.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
