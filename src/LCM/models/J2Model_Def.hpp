@@ -138,7 +138,7 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if !defined(ALBANY_KOKKOS_UNDER_DEVELOPMENT) || defined(PHX_KOKKOS_DEVICE_TYPE_CUDA)
 
   ScalarT kappa, mu, mubar, K, Y;
   ScalarT Jm23, trace, smag2, smag, f, p, dgam;
@@ -301,6 +301,7 @@ computeState(typename Traits::EvalData workset,
     }
   }
 #else
+#ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
 typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
 computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_,  sat_mod_, sat_exp_, heat_capacity_, density_, temperature_,ref_temperature_, expansion_coeff_);
@@ -309,11 +310,12 @@ computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elas
      Kokkos::parallel_for(have_temperature_Policy(0,workset.numCells),Kernel);
   else
      Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
-
+#endif
 #endif
 }
 //------------------------------------------------------------------------------
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
 template <class ArrayT>
 KOKKOS_INLINE_FUNCTION
 void inverse(const ArrayT &A, ArrayT  &Atrans) 
@@ -701,6 +703,7 @@ operator() (const dont_have_temperature_Tag& tag, const int i) const
   compute_with_no_temperature(i);
 }
 #endif
+#endif
 // computeState parallel function, which calls Kokkos::parallel_for
 template<typename EvalT, typename Traits>
 void J2Model<EvalT, Traits>::
@@ -709,6 +712,7 @@ computeStateParallel(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
   //const int derivative_dim=25;
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
@@ -815,6 +819,7 @@ std::cout << Fpold(0,0,i,j) << std::endl;
      Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
 
 std::cout <<"end debugging" << std::endl;
+#endif
 #endif
 }
 //-------------------------------------------------------------------------------

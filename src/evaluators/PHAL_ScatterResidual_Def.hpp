@@ -196,6 +196,14 @@ evaluateFields(typename Traits::EvalData workset)
   Kokkos::parallel_for(ScatterRank2_Policy(0,workset.numCells),*this);
  }
 #endif
+/*  //Irina Debug
+  std::cout <<"Irina Debug Scatter valvec" <<std::endl;
+  for (std::size_t cell=0; cell < workset.numCells; ++cell ) 
+    for (std::size_t node = 0; node < this->numNodes; ++node)
+        for (std::size_t eq = 0; eq < numFields; eq++)
+         std::cout << (this->valVec)(cell,node,eq)<< std::endl;
+  std::cout << "Irina Debug Scatter f_nonconst" <<f_nonconstView <<std::endl;
+*/
 }
 
 // **********************************************************************
@@ -225,6 +233,9 @@ operator()(const ScatterRank0_is_adjoint_Tag& tag, const int& cell) const
   LO rowT;
   //std::vector<LO> colT(nunk);
  // colT=(LO*) Kokkos::cuda_malloc<PHX::Device>(nunk*sizeof(LO));
+
+  if (nunk>500) 
+       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
 
   for (int node_col=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -263,6 +274,9 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
  // std::vector<LO> colT(nunk);
   //std::vector<ST> vals(nunk);
 
+  if (nunk>500)
+       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
@@ -297,6 +311,9 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
   //std::vector<ST> vals(nunk);
   //std::vector<LO> colT(nunk);
   //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+
+  if (nunk>500)
+       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -334,6 +351,9 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
   //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
   //std::vector<ST> vals(nunk);
 
+  if (nunk>500)
+       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
+
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] =  Index(cell,node_col,eq_col);
@@ -365,6 +385,9 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
   LO rowT;
 //  std::vector<LO> colT(nunk);
 //  colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
+
+  if (nunk>500)
+       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
@@ -401,6 +424,9 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
    //std::vector<LO> colT(nunk);
    //colT=(LO*) Kokkos::malloc<PHX::Device>(nunk*sizeof(LO));
    //std::vector<ST> vals(nunk);
+
+   if (nunk>500)
+       Kokkos::abort ("ERROR (ScatterResidual): nunk >500");
 
   for (int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (int eq_col=0; eq_col<neq; eq_col++) {
