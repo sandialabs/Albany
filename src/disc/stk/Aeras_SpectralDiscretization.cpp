@@ -1570,17 +1570,7 @@ void Aeras::SpectralDiscretization::computeCoords()
         // Get the coordinates value along this axis of the corner
         // nodes from the STK mesh
         for (size_t ii = 0; ii < 4; ++ii)
-        {
-          const GO nodeGid = gid(stkNodes[ii]);
-          const LO nodeLid = overlap_node_mapT->getLocalElement(nodeGid);
-          //IK, 1/27/15: this line used to be c[ii] =
-          //  stk::mesh::field_data(*coordinates_field,
-          //  nodeLid)[idim]; This was causing a seg fault so I
-          //  changed it to what I believe is correct.  Needs further
-          //  testing.  If my fix is correct, nodeGid, and nodeLid can
-          //  be removed.
           c[ii] = stk::mesh::field_data(*coordinates_field, stkNodes[ii])[idim];
-        }
         for (size_t inode = 0; inode < np2; ++inode)
         {
           double x = refCoords(inode,0);
