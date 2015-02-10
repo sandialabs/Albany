@@ -503,9 +503,9 @@ operator() (const tensorRank_1Tag& tag, const int& i) const{
   for (int node = 0; node < this->numNodes; node++){
     int firstunk = neq * node + this->offset;
     for (int eq = 0; eq < numFields; eq++){
-       (this->valVec)(i,node,eq)=1.0; //FadType(num_dof, xT_constView[wsID_kokkos(i,node,this->offset+eq)]);
-//       ((this->valVec)(i,node,eq)).setUpdateValue(!ignore_residual);
-//       ((this->valVec)(i,node,eq)).fastAccessDx(firstunk + eq) =j_coeff;
+       this->valVec(i,node,eq)=FadType(num_dof, xT_constView[wsID_kokkos(i,node,this->offset+eq)]);
+       ((this->valVec)(i,node,eq)).setUpdateValue(!ignore_residual);
+       ((this->valVec)(i,node,eq)).fastAccessDx(firstunk + eq) =j_coeff;
     }
   }
 }
@@ -697,6 +697,7 @@ evaluateFields(typename Traits::EvalData workset)
         Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
    }
 #endif
+
 }
 
 // **********************************************************************
