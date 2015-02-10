@@ -38,6 +38,7 @@
   #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
+#include "Shards_CellTopology.hpp"
 
 namespace Aeras
 {
@@ -68,8 +69,10 @@ namespace Aeras
       //Create enrihed MeshSpecsStruct object, to be returned.  It will have the same everything as the original mesh struct 
       //except a CellTopologyData (ctd) with a different name and node_count (and dimension?). 
       //FIXME: create the new ctd object.  Right now the MeshSpecsStruct that's returned 
-      //is a copy of the one that's passed in. 
-      return Teuchos::rcp(new Albany::MeshSpecsStruct(orig_ctd, orig_numDim, orig_cubatureDegree,
+      //is a copy of the one that's passed in.
+      //How to construct CellTopologyData for arbitrary name, vertex_count, node_count, etc?...
+      Teuchos::RCP<shards::CellTopology> new_ct = Teuchos::rcp(new shards::CellTopology(&orig_ctd)); 
+      return Teuchos::rcp(new Albany::MeshSpecsStruct(*(new_ct->getCellTopologyData()), orig_numDim, orig_cubatureDegree,
                               orig_nsNames, orig_ssNames, orig_worksetSize,
                               orig_ebName, orig_ebNameToIndex, orig_interleavedOrdering,
                               orig_sepEvalsByEB, orig_cubatureRule));
