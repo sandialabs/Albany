@@ -287,7 +287,7 @@ computeState(typename Traits::EvalData workset,
           //
           bool converged = false;
           int iter(0);
-          const int max_iter(20);
+          const int max_iter(30);
           RealType max_norm = std::numeric_limits<RealType>::min();
 
           // hardening and recovery parameters
@@ -309,15 +309,46 @@ computeState(typename Traits::EvalData workset,
           const int num_vars(5);
           std::vector<ScalarT> R(num_vars);
           std::vector<ScalarT> dRdX(num_vars*num_vars);
-          std::vector<ScalarT> X(num_vars);
+          std::vector<ScalarT> X(num_vars), X_tr(num_vars);
 
           // initial guess
           //
+          ScalarT dgam_tr = std::sqrt(smag/(2.0 * mubar * Phi));
+          ScalarT eps_ss_tr = eps_ss_old + delta_time(0) * (H - Rd * eps_ss_old) * dgam_tr;
+          ScalarT kappa_tr = 2.0 * mu * eps_ss_tr;
+          ScalarT Ybar_tr = Je * (Y + kappa_tr);
+          ScalarT arg_tr = 1.5 * q2_ * p / Ybar_tr;
+          ScalarT p_tr = p - delta_time(0) * (dgam_tr * q1_ * q2_ * bulk * Ybar_tr * fstar * std::sinh(arg_tr)) / bulk;
+          arg_tr = 1.5 * q2_ * p_tr / Ybar_tr;
+          ScalarT void_tr = void_volume_fraction_old + delta_time(0) * (dgam_tr * q1_ * q2_ * ( 1.0 - fstar ) * fstar * Ybar_tr * std::sinh(arg_tr));
+          ScalarT eqps_tr = eqps_old + delta_time(0) * (dgam_tr * ((q1_ * q2_ * p * Ybar_tr * fstar * std::sinh(arg_tr)) / (1.0 - fstar) / Ybar_tr + smag * smag / (1.0 - fstar) / Ybar_tr));
+
           X[0] = 0.0;
           X[1] = eps_ss_old;
           X[2] = p;
           X[3] = void_volume_fraction_old;
           X[4] = eqps_old;
+
+          // X[0] = dgam_tr;
+          // X[1] = eps_ss_tr;
+          // X[2] = p_tr;
+          // X[3] = void_volume_fraction_old;
+          // X[4] = eqps_old;
+
+          X_tr[0] = dgam_tr;
+          X_tr[1] = eps_ss_tr;
+          X_tr[2] = p_tr;
+          X_tr[3] = void_tr;
+          X_tr[4] = eqps_tr;
+
+          // std::cout << "arg_tr    : " << arg_tr << ", arg: " << arg << std::endl;
+          // std::cout << "Ybar_tr   : " << Ybar_tr << ", Ybar: " << Ybar << std::endl;
+          // std::cout << "kappa_tr  : " << kappa_tr << ", kappa: " << kappa_old << std::endl;
+          // std::cout << "dgam_tr   : " << dgam_tr << ", old: " << 0.0 << std::endl;
+          // std::cout << "eps_ss_tr : " << eps_ss_tr << ", old: " << eps_ss_old << std::endl;
+          // std::cout << "p_tr      : " << p_tr << ", old: " << p << std::endl;
+          // std::cout << "void_tr   : " << void_tr << ", old: " << void_volume_fraction_old << std::endl;
+          // std::cout << "eqps_tr   : " << eqps_tr << ", old: " << eqps_old << std::endl;
 
           // create a copy of be as a Fad
           //
@@ -328,16 +359,20 @@ computeState(typename Traits::EvalData workset,
             }
           }
           Fad two_mubarF = 2.0 * Intrepid::trace(beF) * mu / (num_dims_);
-          //Fad sq32F = std::sqrt(3.0/2.0);
+
           // FIXME this seems to be necessary to get PhiF to compile below
           // need to look into this more, it appears to be a conflict
           // between the Intrepid::norm and FadType operations
           //
           Fad smagF = smag;
 
-          //std::cout << "======== local iterations ========" << std::endl;
+          // std::cout << "p: " << p << ", Je: " << Je << ", psi: " << psi << std::endl;
+          // std::cout << "q1: " << q1_ << ", q2: " << q2_ << ", q3: " << q3_ << std::endl;
+
+          // std::cout << "======== local iterations ========" << std::endl;
           while (!converged) {
 
+            // std::cout << "********************************" << std::endl;
             // set up data types
             //
             std::vector<Fad> XFad(num_vars);
@@ -367,7 +402,7 @@ computeState(typename Traits::EvalData workset,
             if (delta_time(0) > 0) eqps_rateF = sq23 * dgamF / delta_time(0);
             Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
             Fad kappaF = two_mubarF * eps_ssF;
-            Fad YbarF = Je * (Y + kappaF);
+            Fad YbarF = Je * (Y + kappaF) * rate_termF;
             //Fad PhiF = sq32 * (smagF - two_mubarF * dgamF) - ( YbarF ) * rate_termF;
 
             // arguments that feed into the yield function
@@ -428,7 +463,7 @@ computeState(typename Traits::EvalData workset,
 
             // yield surface
             //
-            Fad PhiF = (0.5 * smag2 - psiF * YbarF * YbarF / 3.0) * rate_termF;
+            Fad PhiF = 0.5 * smag2 - psiF * YbarF * YbarF / 3.0;
 
             // for convenience put the residuals into a container
             //
@@ -438,6 +473,25 @@ computeState(typename Traits::EvalData workset,
             RFad[3] = void_volume_fractionF - void_volume_fraction_old - dfg - dfnuc;
             RFad[4] = eqpsF - eqps_old - deq;
 
+            // std::cout << "  dgamF : " << dgamF << std::endl;
+            // std::cout << "  psiF : " << psiF << std::endl;
+            // std::cout << "  smag2 : " << smag2 << std::endl;
+            // std::cout << "  fstarF : " << fstarF << std::endl;
+            // std::cout << "  PhiF : " << PhiF << std::endl;
+            // std::cout << "  d_t : " << delta_time(0) << std::endl;
+            // std::cout << "  eqps_rateF : " << eqps_rateF << std::endl;
+            // std::cout << "  rate_termF : " << rate_termF << std::endl;
+            // std::cout << "  argF : " << argF << std::endl;
+            // std::cout << "  YbarF : " << YbarF << std::endl;
+            // std::cout << "  eps_ss : " << eps_ssF << std::endl;
+            // std::cout << "  eps_ss_old : " << eps_ss_old << std::endl;
+            // std::cout << "  d_eps_ss : " << (H - Rd*eps_ssF) * dgamF << std::endl;
+            // std::cout << "  pF : " << pF << std::endl;
+            // std::cout << "  p_old : " << p << std::endl;
+            // std::cout << "  d_p : " << dgamF * q1_ * q2_ * bulk * YbarF * fstarF * std::sinh(argF) << std::endl;
+            // std::cout << "  eqpsF : " << eqpsF << std::endl;
+            // std::cout << "  eqps_old : " << eqps_old << std::endl;
+            // std::cout << "  d_eq : " << deq << std::endl;
 
             // extract the values of the residuals
             //
@@ -454,7 +508,13 @@ computeState(typename Traits::EvalData workset,
             RealType R4 = Sacado::ScalarValue<ScalarT>::eval(R[4]);
             RealType norm_res = std::sqrt(R0*R0 + R1*R1 + R2*R2 + R3*R3 + R4*R4);
             max_norm = std::max(norm_res, max_norm);
-            
+            // std::cout << "  R0: " << R0 << std::endl;
+            // std::cout << "  R1: " << R1 << std::endl;
+            // std::cout << "  R2: " << R2 << std::endl;
+            // std::cout << "  R3: " << R3 << std::endl;
+            // std::cout << "  R4: " << R4 << std::endl;
+
+
             // check against too many iterations and failure
             //
             if (iter == max_iter) {
@@ -462,16 +522,18 @@ computeState(typename Traits::EvalData workset,
                 failed = true;
                 break;
               }
-              TEUCHOS_TEST_FOR_EXCEPTION(iter == 30, std::runtime_error,
-                                         std::endl <<
-                                         "Error in ElastoViscoplastic return mapping\n" <<
-                                         "iter count = " << iter << "\n" << std::endl);
+              // TEUCHOS_TEST_FOR_EXCEPTION(iter == max_iter, std::runtime_error,
+              //                            std::endl <<
+              //                            "Error in ElastoViscoplastic return mapping\n" <<
+              //                            "iter count = " << iter << "\n" << std::endl);
+              break;
             }
 
             // check for a sufficiently small residual
             //
-            //std::cout << "======== norm_res  : " << norm_res
-            //          << " ======== norm_res2 : " << norm_res/max_norm << std::endl;
+            // std::cout << "  iter  : " << iter
+            //           << ", norm_res  : " << norm_res
+            //           << ", norm_res2 : " << norm_res/max_norm << std::endl;
             if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
               converged = true;
 
@@ -543,7 +605,7 @@ computeState(typename Traits::EvalData workset,
           // update other plasticity state variables
           //
           eps_ss_field(cell, pt) = eps_ss;
-          eqps_field(cell,pt) = eqps_old + sq23 * dgam;
+          eqps_field(cell,pt) = eqps;
           kappa_field(cell,pt) = kappa;
           void_volume_fraction_field(cell,pt) = void_volume_fraction;
 
