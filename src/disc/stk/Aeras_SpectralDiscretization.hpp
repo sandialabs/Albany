@@ -42,6 +42,41 @@
 namespace Aeras
 {
 
+  struct AerasMeshSpectStruct
+  { 
+    Teuchos::RCP<Albany::MeshSpecsStruct> createAerasMeshSpecs(const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
+                                                               const int points_per_edge) 
+      {
+      std::cout << "DEBUG: in AerasMeshSpectStruct!  Points Per Edge =  " << points_per_edge << std::endl; 
+      //get data from original STK Mesh struct
+      CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd;  
+      int orig_numDim = orig_mesh_specs_struct->numDim;
+      int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
+      std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;  //Node Sets Names
+      std::vector<std::string> orig_ssNames = orig_mesh_specs_struct->ssNames;  //Side Sets Names
+      int orig_worksetSize = orig_mesh_specs_struct->worksetSize;
+      std::string orig_ebName = orig_mesh_specs_struct->ebName;  //Element block name for the EB that this struct corresponds to
+      std::map<std::string, int>& orig_ebNameToIndex = orig_mesh_specs_struct->ebNameToIndex;
+      bool orig_interleavedOrdering = orig_mesh_specs_struct->interleavedOrdering;
+      // Records "Separate Evaluators by Element Block". This says whether there
+      // are as many MeshSpecsStructs as there are element blocks. If there is
+      // only one element block in the problem, then the value of this boolean
+      // doesn't matter. It is intended that interface blocks (LCM) don't count,
+      // but the user must enforce this intention.
+      bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
+      const Intrepid::EIntrepidPLPoly orig_cubatureRule = orig_mesh_specs_struct->cubatureRule;
+      //Create enrihed MeshSpecsStruct object, to be returned.  It will have the same everything as the original mesh struct 
+      //except a CellTopologyData (ctd) with a different name and node_count (and dimension?). 
+      //FIXME: create the new ctd object.  Right now the MeshSpecsStruct that's returned 
+      //is a copy of the one that's passed in. 
+      return Teuchos::rcp(new Albany::MeshSpecsStruct(orig_ctd, orig_numDim, orig_cubatureDegree,
+                              orig_nsNames, orig_ssNames, orig_worksetSize,
+                              orig_ebName, orig_ebNameToIndex, orig_interleavedOrdering,
+                              orig_sepEvalsByEB, orig_cubatureRule));
+
+    }
+  };
+
 #ifdef ALBANY_EPETRA
   typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
 

@@ -291,7 +291,24 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   createInterfaceParts(adaptParams, meshStruct);
 #endif // ALBANY_LCM
 
-  return meshStruct->getMeshSpecs();
+  //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization, 
+  //overwrite the meshSpecs of the meshStruct with an enriched one. 
+  if (method == "Ioss Aeras" || method == "Exodus Aeras") { 
+    //get "Points Per Edge" from parameter list.  Default value is 2. 
+    int points_per_edge = discParams->get("Points Per Edge", 2); 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > &mesh_specs_struct = meshStruct->getMeshSpecs();
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type number_blocks = mesh_specs_struct.size();
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > enriched_mesh_specs_struct; 
+    enriched_mesh_specs_struct.resize(number_blocks); 
+    for (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type i=0; i< number_blocks; i++) { 
+      Teuchos::RCP<Albany::MeshSpecsStruct> orig_mesh_specs_struct = mesh_specs_struct[i];
+      Aeras::AerasMeshSpectStruct aeras_mesh_specs_struct;
+      enriched_mesh_specs_struct[i] = aeras_mesh_specs_struct.createAerasMeshSpecs(orig_mesh_specs_struct, points_per_edge); 
+    }
+    return enriched_mesh_specs_struct;
+  }
+  else 
+    return meshStruct->getMeshSpecs(); 
 
 }
 
