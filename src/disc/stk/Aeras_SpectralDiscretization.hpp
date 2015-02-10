@@ -232,7 +232,7 @@ namespace Aeras
 
     //! Print the coordinates for debugging
     void printCoords() const;
-    void printConnectivity() const;
+    void printConnectivity(bool printEdges=false) const;
 
     //! Get stateArrays
     Albany::StateArrays& getStateArrays() {return stateArrays;}
