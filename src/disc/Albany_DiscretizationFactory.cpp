@@ -293,6 +293,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   //IK, 2/9/15: if the method is Ioss Aeras or Exodus Aeras (corresponding to Aeras::SpectralDiscretization, 
   //overwrite the meshSpecs of the meshStruct with an enriched one. 
+#ifdef ALBANY_AERAS
   if (method == "Ioss Aeras" || method == "Exodus Aeras") { 
     //get "Points Per Edge" from parameter list.  Default value is 2. 
     int points_per_edge = discParams->get("Points Per Edge", 2); 
@@ -308,6 +309,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     return enriched_mesh_specs_struct;
   }
   else 
+#endif
     return meshStruct->getMeshSpecs(); 
 
 }
