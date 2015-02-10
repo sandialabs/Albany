@@ -68,7 +68,7 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -1533,13 +1533,12 @@ void Aeras::SpectralDiscretization::computeCoords()
   Field_t refWeights(np2);
   gl2D.getCubature(refCoords, refWeights);
 
-  // Get the appropriate STK element buckets to extract the element
-  // corner nodes
-  stk::mesh::Selector select_owned =
-    stk::mesh::Selector(metaData.universal_part())    &
-    stk::mesh::Selector(metaData.locally_owned_part());
+  // Get the appropriate STK element buckets for extracting the
+  // element corner nodes
+  stk::mesh::Selector select_all =
+    stk::mesh::Selector(metaData.universal_part());
   stk::mesh::BucketVector const& buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_all);
 
   // Allocate and populate the coordinates
   VectorFieldType * coordinates_field = stkMeshStruct->getCoordinatesField();
@@ -1574,10 +1573,12 @@ void Aeras::SpectralDiscretization::computeCoords()
         {
           const GO nodeGid = gid(stkNodes[ii]);
           const LO nodeLid = overlap_node_mapT->getLocalElement(nodeGid);
-          //IK, 1/27/15: this line used to be 
-          //  c[ii] = stk::mesh::field_data(*coordinates_field, nodeLid)[idim];
-          //This was causing a seg fault so I changed it to what I believe is correct.
-          //Needs further testing.  If my fix is correct, nodeGid, and nodeLid can be removed.
+          //IK, 1/27/15: this line used to be c[ii] =
+          //  stk::mesh::field_data(*coordinates_field,
+          //  nodeLid)[idim]; This was causing a seg fault so I
+          //  changed it to what I believe is correct.  Needs further
+          //  testing.  If my fix is correct, nodeGid, and nodeLid can
+          //  be removed.
           c[ii] = stk::mesh::field_data(*coordinates_field, stkNodes[ii])[idim];
         }
         for (size_t inode = 0; inode < np2; ++inode)
