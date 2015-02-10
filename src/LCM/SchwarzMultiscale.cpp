@@ -4,48 +4,68 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "SchwarzMultiscale.hpp"
-
+#include "Albany_SolverFactory.hpp" 
+#include "Albany_ModelFactory.hpp" 
 
 LCM::
 SchwarzMultiscale::
-SchwarzMultiscale(
-  const Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >& models,
-  const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >& params,
-  const Teuchos::RCP<const Teuchos::Comm<int> >& commT): 
-  models_(models),
-  params_(params),
-  commT_(commT)
+SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+                  const Teuchos::RCP<const Teuchos::Comm<int> >& commT,  
+                  const Teuchos::RCP<const Tpetra_Vector>& initial_guessT)
 {
-  // Setup VerboseObject
-  //Teuchos::readVerboseObjectSublist(params.get(), this);
+  std::cout << "Initializing Schwarz Multiscale constructor!" << std::endl;
 
-  n_models_ = models.size();
-  solvers_.resize(n_models_);
+  // Get "Coupled Schwarz" parameter sublist
+  Teuchos::ParameterList& coupledSystemParams = appParams->sublist("Coupled System");
+  // Get names of individual model xml input files from problem parameterlist
+  Teuchos::Array<std::string> model_filenames =
+      coupledSystemParams.get<Teuchos::Array<std::string> >("Model XML Files");
+  //number of models
+  int num_models = model_filenames.size(); 
+  std::cout << "DEBUG: num_models: " << num_models << std::endl;
+  Teuchos::Array< Teuchos::RCP<Albany::Application> > apps(num_models);
+  Teuchos::Array< Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models(num_models);
+  Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > modelAppParams(num_models);
+  Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > modelProblemParams(num_models);
+  
+  //Create a dummy solverFactory for validating application parameter lists 
+  //(see QCAD::CoupledPoissonSchorodinger)
+  //FIXME: look into how this is used, uncomment if necessary 
+  /*Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), commT );
+  Teuchos::RCP<const Teuchos::ParameterList> validAppParams = validFactory.getValidAppParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> validParameterParams = validFactory.getValidParameterParameters();
+  Teuchos::RCP<const Teuchos::ParameterList> validResponseParams = validFactory.getValidResponseParameters();
+  */
 
-  /*
-  // Create solvers for models - rewrite using Albany solver factory
-    Piro::Epetra::SolverFactory solverFactory;
-    for (int i=0; i<n_models; i++)
-      solvers[i] = solverFactory.createSolver(params[i], models[i]);
-   */
-
-  // Get number of parameter and response vectors
-  solver_inargs_.resize(n_models_); 
-  solver_outargs_.resize(n_models_);
-  num_params_.resize(n_models_);
-  num_responses_.resize(n_models_);
-  num_params_total_ = 0;
-  num_responses_total_ = 0;
-  for (int i=0; i<n_models_; i++) {
-    solver_inargs_[i] = solvers_[i]->createInArgs();
-    solver_outargs_[i] = solvers_[i]->createOutArgs();
-    num_params_[i] = solver_inargs_[i].Np();
-    num_responses_[i] = solver_outargs_[i].Ng();
-    num_params_total_ += num_params_[i];
-    num_responses_total_ += num_responses_[i];
-  }
- 
+  //Set up each application and model object in Teuchos::Array
+  //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT) 
+  for (int m=0; m<num_models; m++) {
+    //get parameterlist from mth model *.xml file 
+    Albany::SolverFactory slvrfctry(model_filenames[m], commT);
+    Teuchos::ParameterList& appParams_m = slvrfctry.getParameters(); 
+    modelAppParams[m] = Teuchos::rcp(&(appParams_m)); 
+    Teuchos::RCP<Teuchos::ParameterList> problemParams_m = Teuchos::sublist(modelAppParams[m], "Problem"); 
+    modelProblemParams[m] = problemParams_m;
+    std::string &problem_name = problemParams_m->get("Name", "");
+    //FIXME: should we throw an error if the problem names in the input files don't match??
+    std::cout << "DEBUG: name of problem #" << m <<": " << problem_name << std::endl; 
+    //create application for mth model 
+    //FIXME: initial_guessT needs to be made the right one for the mth model!  Or can it be null?  
+    apps[m] = Teuchos::rcp(new Albany::Application(commT, modelAppParams[m], initial_guessT));
+    //Validate parameter lists
+    //FIXME: add relevant things to validate to getValid* functions below
+    //Uncomment
+    //problemParams_m->validateParameters(*getValidProblemParameters(),0); 
+    //problemParams_m->sublist("Parameters").validateParameters(*validParameterParams, 0);
+    //problemParams_m->sublist("Response Functions").validateParameters(*validResponseParams, 0);
+    //Create model evaluator
+    Albany::ModelFactory modelFactory(modelAppParams[m], apps[m]); 
+    models[m] = modelFactory.createT();     
+   }
+   std::cout <<"Finished creating Albany apps and models!" << std::endl; 
+  
 }
+
 
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
@@ -243,3 +263,34 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
 //fill in
 }
 
+//Copied from Albany::SolverFactory -- used to validate applicaton parameters of applications not created via a SolverFactory
+Teuchos::RCP<const Teuchos::ParameterList>
+LCM::SchwarzMultiscale::
+getValidAppParameters() const
+{  
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));;
+  validPL->sublist("Problem",            false, "Problem sublist");
+  validPL->sublist("Debug Output",       false, "Debug Output sublist");
+  validPL->sublist("Discretization",     false, "Discretization sublist");
+  validPL->sublist("Quadrature",         false, "Quadrature sublist");
+  validPL->sublist("Regression Results", false, "Regression Results sublist");
+  validPL->sublist("VTK",                false, "DEPRECATED  VTK sublist");
+  validPL->sublist("Piro",               false, "Piro sublist");
+  validPL->sublist("Coupled System",     false, "Coupled system sublist");
+
+  return validPL;
+}
+
+Teuchos::RCP<const Teuchos::ParameterList> 
+LCM::SchwarzMultiscale::
+getValidProblemParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::createParameterList("ValidCoupledSchwarzProblemParams");
+
+  validPL->set<std::string>("Name", "", "String to designate Problem Class");
+  validPL->set<int>("Phalanx Graph Visualization Detail", 0, "Flag to select output of Phalanx Graph and level of detail");
+  //FIXME: anything else to validate? 
+  validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
+  
+  return validPL;
+}

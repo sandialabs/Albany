@@ -21,10 +21,9 @@ public:
 
   /// Constructor
       /** \brief . */
-  SchwarzMultiscale(
-	const Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >& models,
-	const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >& params,
-        const Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
+  SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+                    const Teuchos::RCP<const Teuchos::Comm<int> >& commT,  
+                    const Teuchos::RCP<const Tpetra_Vector>& initial_guessT);
 
   ///Destructor
   ~SchwarzMultiscale();
@@ -103,7 +102,8 @@ protected:
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
 private:
-  ///
+  Teuchos::RCP<const Teuchos::ParameterList> getValidAppParameters() const;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const; 
   /// RCP to matDB object
   Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
   

@@ -620,20 +620,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   
 #ifdef ALBANY_LCM
   if (solutionMethod == "Coupled Schwarz") {
-    //FIXME: set correctly from parameterlist the following parameters
-    //Teuchos::ParameterList& coupledParams = slvrfctry.getParameters();
-    //Teuchos::ParameterList& coupledSystemParams = coupledParams.sublist("Coupled System");
-    Teuchos::ParameterList coupledParams;// = slvrfctry.getParameters();
-    Teuchos::ParameterList coupledSystemParams; // = coupledParams.sublist("Coupled System");
-    //Teuchos::RCP< Teuchos::ParameterList> coupledPiroParams = Teuchos::rcp(&(coupledParams.sublist("Piro")),false);
-    Teuchos::Array<std::string> model_filenames = coupledSystemParams.get<Teuchos::Array<std::string> >("Model XML Files");
-    int num_models = model_filenames.size();
-    Teuchos::Array< RCP<Albany::Application> > apps(num_models);
-    Teuchos::Array< RCP<Thyra::ModelEvaluator<ST> > > models(num_models);
-    //FIXME: populate models array with actual models
-    Teuchos::Array< RCP<Teuchos::ParameterList> > coupled_params(num_models);
+    std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl; 
+    //FIXME: will need to get initial guess into LCM::SchwarzMultiscale models class constructor...
+    const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, initial_guess));
 
-    const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(models, coupled_params, appComm));
   }
 #endif
 
