@@ -57,7 +57,6 @@ namespace Aeras
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
       std::string orig_name = orig_ctd.name;
-      const char * old_name = orig_ctd.name;  
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
 #endif 
@@ -86,8 +85,11 @@ namespace Aeras
       std::ostringstream convert; //used to convert int to string  
       convert << np; 
       std::string new_name = orig_name + '_' + convert.str();
-      //IK, 2/11/15, FIXME: need to figure out how to set the name of the new ctd.  
-      //Somehow if it's set to new_name.c_str(), it shows up as empty in getIntrepidBasis()... 
+      //The following seems to be necessary b/c setting new_ctd.name = new_name.c_str() does not work. 
+      char* new_name_char = new char[new_name.size() + 1]; 
+      std::copy(new_name.begin(), new_name.end(), new_name_char);
+      new_name_char[new_name.size()] = '\0';
+      new_ctd.name = new_name_char;   
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
 #endif
@@ -96,6 +98,7 @@ namespace Aeras
                               orig_nsNames, orig_ssNames, orig_worksetSize,
                               orig_ebName, orig_ebNameToIndex, orig_interleavedOrdering,
                               orig_sepEvalsByEB, orig_cubatureRule));
+      delete [] new_name_char; 
     }
   };
 
