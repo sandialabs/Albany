@@ -105,7 +105,7 @@ private:
   Teuchos::RCP<const Teuchos::ParameterList> getValidAppParameters() const;
   Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const; 
   /// RCP to matDB object
-  Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> > material_dbs_;
   
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
   Teuchos::RCP<const Teuchos::Comm<int> > commT_;
