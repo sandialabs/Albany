@@ -40,6 +40,9 @@
 
 #include "Shards_CellTopology.hpp"
 
+// Uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
+
 namespace Aeras
 {
 
@@ -48,9 +51,16 @@ namespace Aeras
     Teuchos::RCP<Albany::MeshSpecsStruct> createAerasMeshSpecs(const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
                                                                const int points_per_edge) 
       {
-      std::cout << "DEBUG: in AerasMeshSpectStruct!  Points Per Edge =  " << points_per_edge << std::endl; 
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "DEBUG: in AerasMeshSpectStruct!  Points Per Edge =  " << points_per_edge << std::endl;
+#endif 
       //get data from original STK Mesh struct
-      CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd;  
+      CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
+      std::string orig_name = orig_ctd.name;
+      const char * old_name = orig_ctd.name;  
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
+#endif 
       int orig_numDim = orig_mesh_specs_struct->numDim;
       int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
       std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;  //Node Sets Names
@@ -59,24 +69,33 @@ namespace Aeras
       std::string orig_ebName = orig_mesh_specs_struct->ebName;  //Element block name for the EB that this struct corresponds to
       std::map<std::string, int>& orig_ebNameToIndex = orig_mesh_specs_struct->ebNameToIndex;
       bool orig_interleavedOrdering = orig_mesh_specs_struct->interleavedOrdering;
-      // Records "Separate Evaluators by Element Block". This says whether there
-      // are as many MeshSpecsStructs as there are element blocks. If there is
-      // only one element block in the problem, then the value of this boolean
-      // doesn't matter. It is intended that interface blocks (LCM) don't count,
-      // but the user must enforce this intention.
       bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
       const Intrepid::EIntrepidPLPoly orig_cubatureRule = orig_mesh_specs_struct->cubatureRule;
-      //Create enrihed MeshSpecsStruct object, to be returned.  It will have the same everything as the original mesh struct 
+      //Create enriched MeshSpecsStruct object, to be returned.  It will have the same everything as the original mesh struct 
       //except a CellTopologyData (ctd) with a different name and node_count (and dimension?). 
-      //FIXME: create the new ctd object.  Right now the MeshSpecsStruct that's returned 
-      //is a copy of the one that's passed in.
-      //How to construct CellTopologyData for arbitrary name, vertex_count, node_count, etc?...
-      Teuchos::RCP<shards::CellTopology> new_ct = Teuchos::rcp(new shards::CellTopology(&orig_ctd)); 
-      return Teuchos::rcp(new Albany::MeshSpecsStruct(*(new_ct->getCellTopologyData()), orig_numDim, orig_cubatureDegree,
+      //New (enriched) CellTopologyData is same as original (unenriched) 
+      //cell topology data (ctd), but with a different node_count, vertex_count and name. 
+      CellTopologyData new_ctd = orig_ctd; 
+      //overwrite node_count, vertex_count and name of the original ctd.
+      int np = points_per_edge*points_per_edge; 
+      new_ctd.node_count = np; 
+      new_ctd.vertex_count = np; //Assumes vertex_count = node_count for ctd, which is the case for 
+                                 //isoparametric finite elements.
+      size_t len      = orig_name.find("_");
+      if (len != std::string::npos) orig_name = orig_name.substr(0,len);
+      std::ostringstream convert; //used to convert int to string  
+      convert << np; 
+      std::string new_name = orig_name + '_' + convert.str();
+      //IK, 2/11/15, FIXME: need to figure out how to set the name of the new ctd.  
+      //Somehow if it's set to new_name.c_str(), it shows up as empty in getIntrepidBasis()... 
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
+#endif
+      //create and return Albany::MeshSpecsStruct object based on the new (enriched) ctd. 
+      return Teuchos::rcp(new Albany::MeshSpecsStruct(new_ctd, orig_numDim, orig_cubatureDegree,
                               orig_nsNames, orig_ssNames, orig_worksetSize,
                               orig_ebName, orig_ebNameToIndex, orig_interleavedOrdering,
                               orig_sepEvalsByEB, orig_cubatureRule));
-
     }
   };
 

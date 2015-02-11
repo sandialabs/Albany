@@ -621,9 +621,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #ifdef ALBANY_LCM
   if (solutionMethod == "Coupled Schwarz") {
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl; 
-    //FIXME: will need to get initial guess into LCM::SchwarzMultiscale models class constructor...
+    //FIXME: will need to get the right initial guess into LCM::SchwarzMultiscale models class constructor...
+    //FIXME: throw error if "Coupled Schwarz" solutionMethod is requested with Albany executable. 
+    //It is being implemented to work only with the AlbanyT executable.
     const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, initial_guess));
-
   }
 #endif
 
