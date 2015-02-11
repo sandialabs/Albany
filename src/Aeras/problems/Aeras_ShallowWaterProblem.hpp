@@ -126,7 +126,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(shards::getCellTopologyData< shards::Quadrilateral<4> >()));
+ 
+  //IK, 2/11/15: changed cellType to be obtained from meshSpecs.  Before it was hard-coded to 
+  //4-node quadrilateral. 
+  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
@@ -140,7 +143,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
 
   const int numQPts     = cubature->getNumPoints();
-  const int numVertices = cellType->getNodeCount();
+  //const int numVertices = cellType->getNodeCount();
+  const int numVertices = meshSpecs.ctd.node_count; 
   int vecDim = spatialDim;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
@@ -213,7 +217,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
  
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > 
         ("Intrepid Basis", intrepidBasis);
- 
+
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Spherical Coord Name",       "Lat-Long");
@@ -235,8 +239,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   }
   //Planar case: 
   else {
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+    //IK, 2/11/15, WARNING: cellType was originally set to 4-node quadrilateral.  Will 
+    //the planar case work for a generic element? 
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }
 
   { // ShallowWater Resid
