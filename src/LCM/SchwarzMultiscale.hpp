@@ -15,37 +15,36 @@ namespace LCM {
 ///
 /// \brief Definition for the SchwarzMultiscale
 ///
-class SchwarzMultiscale : public Thyra::ModelEvaluatorDefaultBase<ST> {
+class SchwarzMultiscale: public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
-      /** \brief . */
-  SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
-                    const Teuchos::RCP<const Teuchos::Comm<int> >& commT,  
-                    const Teuchos::RCP<const Tpetra_Vector>& initial_guessT);
+  SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
+      Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
+      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT);
 
   ///Destructor
   ~SchwarzMultiscale();
 
   /// Return solution vector map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_x_space() const;
 
   /// Return residual vector map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_f_space() const;
 
   /// Return parameter vector map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_p_space(int l) const;
 
   /// Return response function map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_g_space(int j) const;
 
   /// Return array of parameter names
-  Teuchos::RCP<const Teuchos::Array<std::string> >
+  Teuchos::RCP<Teuchos::Array<std::string> const>
   get_p_names(int l) const;
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -64,7 +63,7 @@ public:
   Teuchos::RCP<Thyra::PreconditionerBase<ST> >
   create_W_prec() const;
 
-  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   get_W_factory() const;
 
   /// Create InArgs
@@ -97,45 +96,77 @@ protected:
   createOutArgsImpl() const;
 
   /// Evaluate model on InArgs
-  void evalModelImpl(
+  void
+  evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
 private:
-  Teuchos::RCP<const Teuchos::ParameterList> getValidAppParameters() const;
-  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const; 
+  Teuchos::RCP<Teuchos::ParameterList const>
+  getValidAppParameters() const;
+
+  Teuchos::RCP<Teuchos::ParameterList const>
+  getValidProblemParameters() const;
+
   /// RCP to matDB object
-  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> > material_dbs_;
-  
-  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
-  Teuchos::Array< Teuchos::RCP<Albany::Application> > apps_;
-  Teuchos::RCP<const Teuchos::Comm<int> > commT_;
+  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> >
+  material_dbs_;
 
-  //! Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
-  Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_;
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >
+  models_;
 
-  Thyra::ModelEvaluatorBase::InArgs<ST> createInArgsImpl() const;
-      
-  Teuchos::RCP<Tpetra_Map> coupled_disc_map_; 
-  int n_models_;
-  Teuchos::Array<int> num_params_; 
-  Teuchos::Array<int> num_responses_; 
-  int num_params_total_; //like num_param_vecs
-  int num_dist_params_total_; //like dist_param_vecs
-  int num_responses_total_; //like num_response_vecs
+  Teuchos::Array<Teuchos::RCP<Albany::Application> >
+  apps_;
 
-  //! Sacado parameter vector
+  Teuchos::RCP<Teuchos::Comm<int> const>
+  commT_;
+
+  /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
+  Thyra::ModelEvaluatorBase::InArgs<ST>
+  nominal_values_;
+
+  Thyra::ModelEvaluatorBase::InArgs<ST>
+  createInArgsImpl() const;
+
+  Teuchos::RCP<Tpetra_Map>
+  coupled_disc_map_;
+
+  int
+  n_models_;
+
+  Teuchos::Array<int>
+  num_params_;
+
+  Teuchos::Array<int>
+  num_responses_;
+
+  //like num_param_vecs
+  int
+  num_params_total_;
+
+  //like dist_param_vecs
+  int
+  num_dist_params_total_;
+
+  //like num_response_vecs
+  int
+  num_responses_total_;
+
+  /// Sacado parameter vector
   mutable Teuchos::Array<ParamVec> coupled_sacado_param_vec_;
 
-  //! Tpetra map for parameter vector
+  /// Tpetra map for parameter vector
   Teuchos::Array<Teuchos::RCP<Tpetra_Map> > coupled_param_map_;
 
-  //! Tpetra parameter vector
+  /// Tpetra parameter vector
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > coupled_param_vec_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> > solver_inargs_; 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> > solver_outargs_;
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
+  solver_inargs_;
+>>>>>>> LCM: Working through Schwarz task list.
 
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> >
+  solver_outargs_;
 
 };
 
