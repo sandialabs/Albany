@@ -22,8 +22,8 @@ than me what are the valid/required parameters for the problems we're looking at
 
 2.) Write function that creates coupled_disc_map_ in LCM::SchwarzMultiscale class [Irina].
 
-3.) Implement get_p_space, get_g_space and get_p_names in SchwarzMultiscale.cpp.  
-See get_p_map, get_g_map and get_p_names routines in Piro_Epetra_NECoupledModelEvaluator.cpp. [TBD]
+3.) Implement get_g_space and get_p_names in SchwarzMultiscale.cpp.  
+See get_g_map and get_p_names routines in Piro_Epetra_NECoupledModelEvaluator.cpp. [TBD]
 
 4.) Implement create_W_op() in SchwarzMultiscale.cpp.  Look at create_W function 
 in QCAD_CoupledPoissonSchrodinger.cpp as an example.  We may want to write a separate class 
@@ -31,17 +31,14 @@ to return the Jacobian operator, as in QCAD. [TBD -- I suggest we hold off on th
 the other easier stuff.  I also suggest in the first attempt we just implement the 
 Jacobian for 2 models that are concatenated but not coupled.]
 
-6.) Implement createInArgsImpl() in SchwarzMultiscale.cpp [Irina]
-
 7.) Implement allocateVectors() in SchwarzMultiscale.cpp.  Here we'll create x_init and x_dot_init 
 (by concatenating x_init and x_dot_init from each model that's coupled), and then set these for the nominalValues 
 object: nominalValues.set_x(...), nominalValues.set_x_dot(...).  See Albany_ModelEvaluatorT.cpp 
 and QCAD_CoupledSchrodingerPoisson.cpp. [TBD -- Irina implemented shell]
 
-8.) Once allocateVectors() is implemented, set up nominal values in LCM::SchwarzMultiscale 
-constructor.  See Albany_ModelEvaluatorT.cpp.  This is where set_p will be 
-set in nominal values.  That's analogous to get_p_init in EpetraExt::ModelEvaluator
-[Irina will put in a template now.  Implementation TBD.]
+8.) Implement coupled_sacado_param_vec_ in the LCM::SchwarzMultiScale constructor. 
+This is used to create the coupled parameter map. [TBD] 
+---> Need to talk to discuss how distributed parameters will work. 
 
 9.) Implement create_DgDx_op_impl and create_DgDx_dot_op_impl in SchwarzMultiscale.cpp. 
 See QCAD_CoupledSchrodingerPoisson.cpp for an example. [TBD]

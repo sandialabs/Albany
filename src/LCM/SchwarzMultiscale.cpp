@@ -88,26 +88,71 @@ SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
    num_params_total_ = 0; 
    num_responses_total_ = 0; 
    for (int m=0; m<n_models_; m++) {
-    //FIXME: set 
     disc_maps[m] = apps_[m]->getMapT(); 
-    //FIXME: set 
     disc_overlap_maps[m] = apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT(); 
-    //FIXME: set 
     solver_inargs_[m] = models_[m]->createInArgs(); 
-    //FIXME: set 
     solver_outargs_[m] = models_[m]->createOutArgs(); 
-    //FIXME: set 
     num_params_[m] = solver_inargs_[m].Np(); 
-    //FIXME: set 
     num_responses_[m] = solver_outargs_[m].Ng(); 
     //Does it make sense for num_params_total and num_responses_total to be the sum 
     //of these values for each model?  I guess so. 
-    //FIXME: set 
     num_params_total_ += num_params_[m]; 
-    //FIXME: set 
     num_responses_total_ += num_responses_[m]; 
    }
+
    std::cout << "Total # parameters, responses: " << num_params_total_ << ", " << num_responses_total_ << std::endl; 
+  
+  // Setup nominal values
+  {
+    nominal_values_ = this->createInArgsImpl();
+
+    // All the ME vectors are allocated/unallocated here
+    // Calling allocateVectors() will set x and x_dot in nominal_values_
+    allocateVectors();
+
+    coupled_sacado_param_vec_.resize(num_params_total_);
+    coupled_param_map_.resize(num_params_total_); 
+    coupled_param_vec_.resize(num_params_total_); 
+    //! Create sacado parameter vector for coupled problem
+    //This is for setting p_init in nominal_values_
+    //First get each model's parameter vector and put them in an array 
+    Teuchos::Array< Teuchos::Array<ParamVec> >sacado_param_vec_array(n_models_);
+    for (int m=0; m<n_models_; m++) {
+      Teuchos::Array<ParamVec> sacado_param_vec_m;
+      sacado_param_vec_m.resize(num_params_[m]); 
+      for (int i=0; i<solver_inargs_[m].Np(); i++) {
+        Teuchos::RCP<const Tpetra_Vector> p = ConverterT::getConstTpetraVector(solver_inargs_[m].get_p(i));
+        Teuchos::ArrayRCP<const ST> p_constView = p->get1dView();
+        if (p != Teuchos::null) {
+          for (unsigned int j=0; j<sacado_param_vec_m[i].size(); j++)
+            sacado_param_vec_m[i][j].baseValue = p_constView[j];
+        }
+      }
+      sacado_param_vec_array[m] = sacado_param_vec_m; 
+    }
+    //FIXME: populate coupled_sacado_param_vec_, the parameter vec for the coupled model
+    //coupled_sacado_param_vec_ = ... 
+   
+    //Create Tpetra map and Tpetra vectors for coupled parameters
+    //TODO: check with Alejandro that this makes sense for the parameters 
+    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+    for (int l = 0; l < coupled_sacado_param_vec_.size(); ++l) { 
+       coupled_param_map_[l] = Teuchos::rcp(new Tpetra_Map(coupled_sacado_param_vec_[l].size(), 0, commT_, lg));
+       coupled_param_vec_[l] = Teuchos::rcp(new Tpetra_Vector(coupled_param_map_[l]));
+       for (unsigned int k = 0; k < coupled_sacado_param_vec_[l].size(); ++k) {
+         const Teuchos::ArrayRCP<ST> coupled_param_vec_nonConstView = coupled_param_vec_[l]->get1dViewNonConst();
+         coupled_param_vec_nonConstView[k] = coupled_sacado_param_vec_[l][k].baseValue;
+       }
+    }
+
+    // TODO: Check if correct nominal values for parameters
+    for (int l = 0; l < num_params_total_; ++l) {
+      Teuchos::RCP<const Tpetra_Map> map = coupled_param_map_[l];
+      Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_param_space = Thyra::createVectorSpace<ST>(map);
+      nominal_values_.set_p(l, Thyra::createVector(coupled_param_vec_[l], coupled_param_space));
+    }
+   } //end setting of nominal values
+   
    //FIXME: define coupled_disc_map, a map for the entire coupled ME solution, 
    //created from the entries of the disc_map array (individual maps).
    //coupled_disc_map_ = ...  (write separate function to compute this map?) 
@@ -151,20 +196,19 @@ LCM::SchwarzMultiscale::get_f_space() const
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
 {
-  //FIXME: fill in!
-  /*TEUCHOS_TEST_FOR_EXCEPTION(
-    l >= num_param_vecs + num_dist_param_vecs || l < 0,
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    l >= num_params_total_ + num_dist_params_total_ < 0,
     Teuchos::Exceptions::InvalidParameter,
     std::endl <<
     "Error!  LCM::SchwarzMultiscale::get_p_space():  " <<
     "Invalid parameter index l = " << l << std::endl);
   Teuchos::RCP<const Tpetra_Map> map; 
-  if (l < num_param_vecs)
-    map = tpetra_param_map[l];  
+  if (l < num_params_total_)
+    map = coupled_param_map_[l];  
   //IK, 7/1/14: commenting this out for now
   //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map(); 
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(map);
-  return tpetra_param_space;*/
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_param_space = Thyra::createVectorSpace<ST>(map);
+  return coupled_param_space;
 }
 
 
@@ -364,7 +408,23 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::
 createInArgsImpl() const
 {
-  //FIXME: fill in!
+  Thyra::ModelEvaluatorBase::InArgsSetup<ST> result;
+  result.setModelEvalDescription(this->description());
+
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x, true);
+
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dot, true);
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_x_dotdot, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_t, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_alpha, true);
+  result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_beta, true);
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_omega, true);
+
+  result.set_Np(num_params_total_ + num_dist_params_total_);
+
+  return result;
 }
 
 //Copied from QCAD::CoupledPoissonSchrodinger -- used to validate applicaton parameters of applications not created via a SolverFactory
