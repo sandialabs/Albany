@@ -89,12 +89,13 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::ParameterList &
     app_params_m = solver_factory.getParameters();
 
-    model_app_params[m] = Teuchos::rcp(&(app_params_m));
+    model_app_params[m] = Teuchos::rcp(&(app_params_m), false);
 
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
 
     model_problem_params[m] = problem_params_m;
+
     std::string &
     problem_name = problem_params_m->get("Name", "");
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
@@ -197,17 +198,24 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     coupled_sacado_param_vec_.resize(num_params_total_);
     coupled_param_map_.resize(num_params_total_);
     coupled_param_vec_.resize(num_params_total_);
-    //! Create sacado parameter vector for coupled problem
+
+    /// Create sacado parameter vector for coupled problem
     //This is for setting p_init in nominal_values_
     //First get each model's parameter vector and put them in an array 
-    Teuchos::Array<Teuchos::Array<ParamVec> > sacado_param_vec_array(
-        num_models_);
-    for (int m = 0; m < num_models_; m++) {
-      Teuchos::Array<ParamVec> sacado_param_vec_m;
+    Teuchos::Array<Teuchos::Array<ParamVec> >
+    sacado_param_vec_array(num_models_);
+
+    for (int m = 0; m < num_models_; ++m) {
+
+      Teuchos::Array<ParamVec>
+      sacado_param_vec_m;
+
       sacado_param_vec_m.resize(num_params_[m]);
-      for (int i = 0; i < solver_inargs_[m].Np(); i++) {
-        Teuchos::RCP<const Tpetra_Vector> p = ConverterT::getConstTpetraVector(
-            solver_inargs_[m].get_p(i));
+
+      for (int i = 0; i < solver_inargs_[m].Np(); ++i) {
+        Teuchos::RCP<Tpetra_Vector const>
+        p = ConverterT::getConstTpetraVector(solver_inargs_[m].get_p(i));
+
         Teuchos::ArrayRCP<const ST> p_constView = p->get1dView();
         if (p != Teuchos::null) {
           for (unsigned int j = 0; j < sacado_param_vec_m[i].size(); j++)
@@ -216,7 +224,8 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       }
       sacado_param_vec_array[m] = sacado_param_vec_m;
     }
-    //FIXME: populate coupled_sacado_param_vec_, the parameter vec for the coupled model
+    //FIXME: populate coupled_sacado_param_vec_,
+    //the parameter vec for the coupled model
     //coupled_sacado_param_vec_ = ... 
 
     //Create Tpetra map and Tpetra vectors for coupled parameters
@@ -444,8 +453,8 @@ allocateVectors()
   //In this function, we create and set x_init and x_dot_init in nominal_values_ for the coupled model.
 
   //Create Teuchos::Arrays of hte x_init and x_dot init Tpetra_Vectors for each of the models 
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > x_inits(num_models_);
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > x_dot_inits(num_models_);
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > x_inits(num_models_);
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > x_dot_inits(num_models_);
 
   //Populate the arrays with the x_init and x_dot_init for each model.
   for (int m = 0; m < num_models_; m++) {
@@ -454,8 +463,8 @@ allocateVectors()
   }
 
   // Create Tpetra objects to be wrapped in Thyra for coupled model
-  const Teuchos::RCP<const Tpetra_Vector> coupled_x_init; //FIXME: implement by concatenating individual x_inits 
-  const Teuchos::RCP<const Tpetra_Vector> coupled_x_dot_init; //FIXME: implement by concatenating individual x_dot_inits
+  const Teuchos::RCP<Tpetra_Vector const> coupled_x_init; //FIXME: implement by concatenating individual x_inits
+  const Teuchos::RCP<Tpetra_Vector const> coupled_x_dot_init; //FIXME: implement by concatenating individual x_dot_inits
   Teuchos::RCP<const Tpetra_Map> map = Teuchos::rcp(
       new const Tpetra_Map(*coupled_disc_map_));
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_x_space =
