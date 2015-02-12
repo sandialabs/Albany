@@ -36,7 +36,7 @@ Jacobian for 2 models that are concatenated but not coupled.]
 7.) Implement allocateVectors() in SchwarzMultiscale.cpp.  Here we'll create x_init and x_dot_init 
 (by concatenating x_init and x_dot_init from each model that's coupled), and then set these for the nominalValues 
 object: nominalValues.set_x(...), nominalValues.set_x_dot(...).  See Albany_ModelEvaluatorT.cpp 
-and QCAD_CoupledSchrodingerPoisson.cpp. [Irina will put in a template now.  Implementation TBD.]
+and QCAD_CoupledSchrodingerPoisson.cpp. [TBD -- Irina implemented shell]
 
 8.) Once allocateVectors() is implemented, set up nominal values in LCM::SchwarzMultiscale 
 constructor.  See Albany_ModelEvaluatorT.cpp.  This is where set_p will be 
