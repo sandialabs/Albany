@@ -199,8 +199,8 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     coupled_param_vec_.resize(num_params_total_);
 
     /// Create sacado parameter vector for coupled problem
-    //This is for setting p_init in nominal_values_
-    //First get each model's parameter vector and put them in an array 
+    // This is for setting p_init in nominal_values_
+    // First get each model's parameter vector and put them in an array
     Teuchos::Array<Teuchos::Array<ParamVec> >
     sacado_param_vec_array(num_models_);
 
@@ -254,15 +254,17 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     }
   } //end setting of nominal values
 
-  //FIXME: define coupled_disc_map, a map for the entire coupled ME solution,
-  //created from the entries of the disc_map array (individual maps).
-  //coupled_disc_map_ = ...  (write separate function to compute this map?)
+  //FIXME: define coupled_disc_map, a map for the entire coupled ME
+  //solution, created from the entries of the disc_map array
+  //(individual maps).  coupled_disc_map_ = ...  (write separate
+  //function to compute this map?)
 
-  //
-  //FIXME: Add discretization parameterlist and discretization object for the "combined" solution
-  //vector from all the coupled Model Evaluators.  Refer to QCAD_CoupledPoissonSchrodinger.cpp.
-  //FIXME: How are we going to collect output?  Write exodus files for each model evaluator?  Joined
-  //exodus file?
+  //FIXME: Add discretization parameterlist and discretization object
+  //for the "combined" solution vector from all the coupled Model
+  //Evaluators.  Refer to QCAD_CoupledPoissonSchrodinger.cpp.
+  
+  //FIXME: How are we going to collect output?  Write exodus files for
+  //each model evaluator?  Joined exodus file?
 
 }
 
@@ -396,8 +398,10 @@ Teuchos::RCP<Thyra::PreconditionerBase<ST> >
 LCM::SchwarzMultiscale::create_W_prec() const
 {
   //IK, 2/10/15: this function is done for now...
-  //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist in Thyra yet!  
-  //So problem will run for now with no preconditioner...
+  
+  //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
+  //in Thyra yet!  So problem will run for now with no
+  //preconditioner...
   const bool W_prec_not_supported = true;
   TEUCHOS_TEST_FOR_EXCEPT(W_prec_not_supported);
   return Teuchos::null;
@@ -449,9 +453,11 @@ void
 LCM::SchwarzMultiscale::
 allocateVectors()
 {
-  //In this function, we create and set x_init and x_dot_init in nominal_values_ for the coupled model.
+  //In this function, we create and set x_init and x_dot_init in
+  //nominal_values_ for the coupled model.
 
-  //Create Teuchos::Arrays of hte x_init and x_dot init Tpetra_Vectors for each of the models 
+  //Create Teuchos::Arrays of hte x_init and x_dot init Tpetra_Vectors
+  //for each of the models
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > x_inits(num_models_);
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > x_dot_inits(num_models_);
 
@@ -462,8 +468,10 @@ allocateVectors()
   }
 
   // Create Tpetra objects to be wrapped in Thyra for coupled model
-  const Teuchos::RCP<Tpetra_Vector const> coupled_x_init; //FIXME: implement by concatenating individual x_inits
-  const Teuchos::RCP<Tpetra_Vector const> coupled_x_dot_init; //FIXME: implement by concatenating individual x_dot_inits
+  //FIXME: implement by concatenating individual x_inits
+  const Teuchos::RCP<Tpetra_Vector const> coupled_x_init;
+  //FIXME: implement by concatenating individual x_dot_inits
+  const Teuchos::RCP<Tpetra_Vector const> coupled_x_dot_init;
   Teuchos::RCP<const Tpetra_Map> map = Teuchos::rcp(
       new const Tpetra_Map(*coupled_disc_map_));
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_x_space =
@@ -538,8 +546,9 @@ createInArgsImpl() const
   return result;
 }
 
-//Copied from QCAD::CoupledPoissonSchrodinger -- used to validate applicaton parameters of applications not created via a SolverFactory
-//Check usage and whether necessary...
+//Copied from QCAD::CoupledPoissonSchrodinger -- used to validate
+//applicaton parameters of applications not created via a
+//SolverFactory Check usage and whether necessary...
 Teuchos::RCP<const Teuchos::ParameterList>
 LCM::SchwarzMultiscale::
 getValidAppParameters() const
