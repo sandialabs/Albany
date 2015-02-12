@@ -3,9 +3,6 @@
 
 2.) Incrementing of materials*.xml file name in SchwarzMultiscale constructor [Alejandro].
 
-3.) Check that problem names for all input files are the same and throw error if they're not in 
-SchwarzMultiscale constructor [Irina].
-
 4.) Change variable/function names to comply with C++ coding standards [Alejandro].
 
 5.) Further down the line, we'll want to clean up the input files to remove stuff that's not read in 
@@ -48,7 +45,8 @@ See QCAD_CoupledSchrodingerPoisson.cpp for an example. [TBD]
 11.) Implement evalModelImpl in SchwarzMultiscale.cpp. [TBD]
 
 12.) Whether we need to implement create_DfDp_op_impl depends on whether we'll have distributed 
-parameters (see "Questions/Comments/Notes"). [TBD?] 
+parameters (see "Questions/Comments/Notes"). [TBD?]
+--> Need to discuss. 
 
 
 ------------------Questions/Comments/Notes-----------------------------

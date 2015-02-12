@@ -7,7 +7,7 @@
   <ParameterList name="Problem">
 
     <!-- Declare your Physics (What you intend to model)! -->
-    <Parameter name="Name" type="string" value="Mechanics 3D"/>
+    <!--Parameter name="Name" type="string" value="Mechanics 3D"/-->
     <!-- Transient or Steady (Quasi-Static) or Continuation (load steps) -->
     <Parameter name="Solution Method" type="string" value="Coupled Schwarz"/>
     <!-- Have Phalanx output a graph of the used evaluators -->

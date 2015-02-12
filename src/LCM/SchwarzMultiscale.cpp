@@ -6,6 +6,10 @@
 #include "SchwarzMultiscale.hpp"
 #include "Albany_SolverFactory.hpp" 
 #include "Albany_ModelFactory.hpp" 
+#include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
+
+std::string problem_name0; 
 
 LCM::
 SchwarzMultiscale::
@@ -16,6 +20,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   std::cout << "Initializing Schwarz Multiscale constructor!" << std::endl;
 
   commT_ = commT;
+
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   //TODO: Check with Alejandro.
@@ -92,6 +97,20 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     model_problem_params[m] = problem_params_m;
     std::string &
     problem_name = problem_params_m->get("Name", "");
+    std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
+
+    if (m == 0) problem_name0 = problem_params_m->get("Name", "");
+
+    if (problem_name0.compare(problem_name)) {
+      std::cerr << std::endl <<  "Error in LCM::CoupledSchwarz constructor: attempting go couple different models " << 
+                    problem_name0 << " and " << problem_name << "!" << std::endl << std::endl; 
+      exit (1);
+      /*TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
+                                 std::endl << "Error in LCM::CoupledSchwarz constructor:  " <<
+                                 "attempting go couple different models " << problem_name0 << " and " <<
+                                 problem_name << std::endl);*/
+    }
+    else std::cout << "same!" << std::endl; 
 
     std::ostringstream
     oss("materials");
@@ -109,7 +128,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     material_dbs_[m] =
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
 
-    std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
     //create application for mth model 
