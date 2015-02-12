@@ -744,81 +744,11 @@ computeStateParallel(typename Traits::EvalData workset,
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-  //temporary data:
-  
-/*  typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
-  std::vector<PHX::index_size_type> ddims_;
-  ddims_.push_back(24);
-
-  PHX::MDField<ScalarT, Cell, Dim, Dim> F;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> be;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> s;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> sigma;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> N;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> A;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> expA; 
-  PHX::MDField<ScalarT, Cell, Dim, Dim> Fpnew;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> I;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> Fpn;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> Fpinv;
-  PHX::MDField<ScalarT, Cell, Dim, Dim> Cpinv;
-
-  F     = PHX::MDField<ScalarT, Cell, Dim, Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  s    = PHX::MDField<ScalarT, Cell, Dim, Dim>("s",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  be    = PHX::MDField<ScalarT, Cell, Dim, Dim>("be",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  sigma = PHX::MDField<ScalarT, Cell, Dim, Dim>("sigma",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  N     = PHX::MDField<ScalarT, Cell, Dim, Dim>("N",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  A     = PHX::MDField<ScalarT, Cell, Dim, Dim>("A",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  expA  = PHX::MDField<ScalarT, Cell, Dim, Dim>("expA",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  Fpnew = PHX::MDField<ScalarT, Cell, Dim, Dim>("Fpnew",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  I     = PHX::MDField<ScalarT, Cell, Dim, Dim>("I",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  Fpn   = PHX::MDField<ScalarT, Cell, Dim, Dim>("Fpn",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  Fpinv = PHX::MDField<ScalarT, Cell, Dim, Dim>("Fpinv",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-  Cpinv = PHX::MDField<ScalarT, Cell, Dim, Dim>("Cpinv",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(workset.numCells, num_dims_,num_dims_)));
-
-  F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
-  be.setFieldData(ViewFactory::buildView(be.fieldTag(),ddims_));
-  s.setFieldData(ViewFactory::buildView(s.fieldTag(),ddims_));
-  sigma.setFieldData(ViewFactory::buildView(sigma.fieldTag(),ddims_));
-  N.setFieldData(ViewFactory::buildView(N.fieldTag(),ddims_));
-  A.setFieldData(ViewFactory::buildView(A.fieldTag(),ddims_));
-  expA.setFieldData(ViewFactory::buildView(expA.fieldTag(),ddims_));
-  Fpnew.setFieldData(ViewFactory::buildView(Fpnew.fieldTag(),ddims_));
-  I.setFieldData(ViewFactory::buildView(I.fieldTag(),ddims_));
-  Fpn.setFieldData(ViewFactory::buildView(Fpn.fieldTag(),ddims_));
-  Fpinv.setFieldData(ViewFactory::buildView(Fpinv.fieldTag(),ddims_));
-  Cpinv.setFieldData(ViewFactory::buildView(Cpinv.fieldTag(),ddims_));
-  for (int cell=0; cell<workset.numCells; cell++){
-   for (int i=0; i<num_dims_; i++){
-     for (int j=0; j<num_dims_;j++){
-        I(cell,i,j)=0.0;
-        if (i==j)I(cell,i,j)=1.0;
-     }
-    }
-  }
-*/
-
-std::cout <<"before"<< std::endl;
-   for (int i=0; i<num_dims_; i++){
-     for (int j=0; j<num_dims_;j++){
-std::cout << Fpold(0,0,i,j) << std::endl;
-
-     }
-    }
+  TEUCHOS_TEST_FOR_EXCEPTION(true), std::invalid_argument,
+                                  ">>> ERROR (J2Model): computeStateParallel not implemented");
 
 
-   typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
-//  computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_, F, be, s, sigma, N, A, expA, Fpnew, I, Fpn, Fpinv, Cpinv, sat_mod_, sat_exp_, heat_capacity_, density_, temperature_,ref_temperature_, expansion_coeff_);
-
-  computeStateKernel Kernel(num_dims_, num_pts_, def_grad, J, poissons_ratio, elastic_modulus, yieldStrength, hardeningModulus, delta_time, stress, Fp, eqps, yieldSurf, source, Fpold, eqpsold, have_temperature_,  sat_mod_, sat_exp_, heat_capacity_, density_, temperature_,ref_temperature_, expansion_coeff_);
-
-  if (have_temperature_)
-     Kokkos::parallel_for(have_temperature_Policy(0,workset.numCells),Kernel);
-  else
-     Kokkos::parallel_for(dont_have_temperature_Policy(0,workset.numCells),Kernel);
-
-std::cout <<"end debugging" << std::endl;
 #endif
 #endif
 }

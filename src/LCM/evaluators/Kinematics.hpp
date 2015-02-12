@@ -144,7 +144,6 @@ namespace LCM {
     std::vector<PHX::index_size_type> ddims_;
     PHX::MDField<ScalarT,Cell,Dim,Dim> strain;
     PHX::MDField<ScalarT,Cell,Dim,Dim> gradu;
-    PHX::MDField<ScalarT,Cell,Dim,Dim> tgradu;
     PHX::MDField<ScalarT,Dim,Dim> Itensor;
  
 #endif

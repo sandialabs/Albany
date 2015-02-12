@@ -70,13 +70,11 @@ namespace LCM {
     F=PHX::MDField<ScalarT,Cell,Dim,Dim>("F",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));   
     strain=PHX::MDField<ScalarT,Cell,Dim,Dim>("strain",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
     gradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("gradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
-    tgradu=PHX::MDField<ScalarT,Cell,Dim,Dim>("tgradu",Teuchos::rcp(new PHX::MDALayout<Cell,Dim,Dim>(num_cells,num_dims_,num_dims_)));
     Itensor=PHX::MDField<ScalarT,Dim,Dim>("Itensor",Teuchos::rcp(new PHX::MDALayout<Dim,Dim>(num_dims_,num_dims_)));
 
     F.setFieldData(ViewFactory::buildView(F.fieldTag(),ddims_));
     strain.setFieldData(ViewFactory::buildView(strain.fieldTag(),ddims_));
     gradu.setFieldData(ViewFactory::buildView(gradu.fieldTag(),ddims_));
-    tgradu.setFieldData(ViewFactory::buildView(tgradu.fieldTag(),ddims_));
     Itensor.setFieldData(ViewFactory::buildView(Itensor.fieldTag(),ddims_));
 
    for (int i=0; i<num_dims_; i++){
@@ -184,23 +182,56 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void Kinematics<EvalT, Traits>::
 compute_defgrad(const int cell) const{
-
-
+/*
     for (int pt(0); pt < num_pts_; ++pt) {
      
       for (int ii=0; ii<num_dims_; ii++){
          for (int j=0; j<num_dims_; j++){
-            gradu(cell,ii,j)=grad_u_(cell,pt,ii,j);
-            F(cell,ii,j) = Itensor(ii,j) + gradu(cell,ii,j);
+            //gradu(cell,ii,j)=grad_u_(cell,pt,ii,j);
+            F(cell,ii,j) = Itensor(ii,j) + grad_u_(cell,pt,ii,j);// gradu(cell,ii,j);
          }
       }
      
-     j_(cell,pt)=det(F,cell);
+   //  j_(cell,pt)=det(F,cell);
+
+     if (num_dims_==3){
+      j_(cell,pt) = -F(cell,0,2)*F(cell,1,1)*F(cell,2,0) + F(cell,0,1)*F(cell,1,2)*F(cell,2,0) +
+           F(cell,0,2)*F(cell,1,0)*F(cell,2,1) - F(cell,0,0)*F(cell,1,2)*F(cell,2,1) -
+           F(cell,0,1)*F(cell,1,0)*F(cell,2,2) + F(cell,0,0)*F(cell,1,1)*F(cell,2,2);
+      }
+
+     else if (num_dims_==2){
+       j_(cell,pt) = F(cell,0,0) * F(cell,1,1) - F(cell,1,0) * F(cell,0,1);
+     }
+
+
       for (int i(0); i < num_dims_; ++i) 
           for (int j(0); j < num_dims_; ++j) 
             def_grad_(cell,pt,i,j) = F(cell,i,j);
     }
+*/
+   //Irina TOFIX F allocated as MDField gives uncorrect results. we'll switch back to the previous version when it is fixed
+   ScalarT F[3][3];
+   for (int pt(0); pt < num_pts_; ++pt) {
 
+      for (int ii=0; ii<num_dims_; ii++){
+         for (int j=0; j<num_dims_; j++){
+          F[ii][j] = Itensor(ii,j) + grad_u_(cell,pt,ii,j);
+          }
+        }
+
+     if (num_dims_==3){
+      j_(cell,pt) = -F[0][2]*F[1][1]*F[2][0] + F[0][1]*F[1][2]*F[2][0] +(F[0][2]*F[1][0]*F[2][1])-(F[0][0]*F[1][2]*F[2][1])-(F[0][1]*F[1][0]*F[2][2])+(F[0][0]*F[1][1]*F[2][2]);
+      }
+
+     else if (num_dims_==2){
+       j_(cell,pt) = F[0][0] * F[1][1] - F[1][0] * F[0][1];
+     }
+
+     for (int i(0); i < num_dims_; ++i)
+          for (int j(0); j < num_dims_; ++j)
+            def_grad_(cell,pt,i,j) = F[i][j];
+    }
 }
 
 template<typename EvalT, typename Traits>
@@ -216,8 +247,7 @@ compute_weighted_average(const int cell) const{
           volume += weights_(cell,pt);
         }
         jbar /= volume;
-
-        for (int pt(0); pt < num_pts_; ++pt) {
+/*        for (int pt(0); pt < num_pts_; ++pt) {
           weighted_jbar =
             (1-alpha_) * jbar + alpha_ * j_(cell,pt);
           const ScalarT p = std::pow( (weighted_jbar/j_(cell,pt)), 1./3. );
@@ -228,12 +258,33 @@ compute_weighted_average(const int cell) const{
                }
            }
           j_(cell,pt) = weighted_jbar;
-          for (int i(0); i < num_dims_; ++i) {
+           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
               def_grad_(cell,pt,i,j) = F(cell,i,j);
             }
           }
         }
+*/
+   //Irina TOFIX F allocated as MDField gives uncorrect results. we'll switch back to the initial version when it is fixed
+   ScalarT F[3][3];
+ 
+    for (int pt(0); pt < num_pts_; ++pt) {
+          weighted_jbar =
+            (1-alpha_) * jbar + alpha_ * j_(cell,pt);
+          const ScalarT p = ScalarT(std::pow( (weighted_jbar/j_(cell,pt)), 1./3. ));
+           for (int i=0; i<num_dims_; i++){
+               for (int j=0; j<num_dims_; j++){
+                 F[i][j]=def_grad_(cell, pt,i,j);
+                 F[i][j]=F[i][j]*p;
+               }
+           }
+          j_(cell,pt) = weighted_jbar;
+           for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
+              def_grad_(cell,pt,i,j) = def_grad_(cell, pt,i,j)*p;
+            }
+          }
+     }
 }
 
 template<typename EvalT, typename Traits>
@@ -378,9 +429,12 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
       if (strain_rc_) strain_rc_.addTo<ScalarT>(strain_);
     }
  #else
-  if (weighted_average_) {
-    if (needs_strain_) Kokkos::parallel_for(kinematic_weighted_average_needs_strain_Policy(0,workset.numCells),*this);
-   else Kokkos::parallel_for(kinematic_weighted_average_Policy(0,workset.numCells),*this);
+
+
+
+    if (weighted_average_) {
+     if (needs_strain_) Kokkos::parallel_for(kinematic_weighted_average_needs_strain_Policy(0,workset.numCells),*this);
+     else{ Kokkos::parallel_for(kinematic_weighted_average_Policy(0,workset.numCells),*this);}
   }
   else{
    if (needs_strain_) Kokkos::parallel_for(kinematic_needs_strain_Policy(0,workset.numCells),*this);

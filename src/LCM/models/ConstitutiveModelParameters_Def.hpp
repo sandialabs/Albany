@@ -205,6 +205,7 @@ compute_second_no_constMap(const int cell) const{
   for (int pt(0); pt < num_pts_; ++pt) {
      for (int i(0); i < num_dims_; ++i)
         point(cell,i) = Sacado::ScalarValue<MeshScalarT>::eval(coord_vec_(cell, pt, i));
+      Kokkos::abort ("ERROR (ConstitutiveModelParamaters) : Stokhos cna't be called from the Kokkos kernels");
 //is not supported in Stokhos todaym but should be fixed soon
         //second(cell, pt) = exp_rf_kl->evaluate(point, *rv_map);
   }

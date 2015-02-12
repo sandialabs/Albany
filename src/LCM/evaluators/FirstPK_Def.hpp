@@ -183,7 +183,7 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
-  for (int pt = 0; pt < num_pts_; ++pt) {
+/*  for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
              sig(cell,i,j)=stress_(cell, pt, i, j);
@@ -192,19 +192,48 @@ operator() (const have_stab_pressure_Tag& tag, const int& cell) const{
           }
         }
       }
+*/
 
+  ScalarT sig[3][3], traceSig;
+  
+  for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
+             sig[i][j]=stress_(cell, pt, i, j);
+             traceSig=0.0;
+ 
+             for (int k = 0; k < num_dims_; ++k) {
+              traceSig += sig[k][k];;
+             }
+    
+             sig[i][j]+= stab_pressure_(cell,pt)*I(i,j)-(1.0/3.0)*traceSig*I(i,j);
+             stress_(cell, pt, i, j) = sig[i][j];
+          }
+        }
+      }
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const have_pore_pressure_Tag& tag, const int& cell) const{
-  for (int pt = 0; pt < num_pts_; ++pt) {
+/*  for (int pt = 0; pt < num_pts_; ++pt) {
        for (int i = 0; i < num_dims_; i++) {
           for (int j = 0; j < num_dims_; j++) {
              sig(cell,i,j)=stress_(cell, pt, i, j);
              sig(cell,i,j)-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
-             stress_(cell, pt, i, j)-=sig(cell,i,j);
+             stress_(cell, pt, i, j)=sig(cell,i,j);
+          }
+        }
+      }
+*/
+   ScalarT sig[3][3];   
+    for (int pt = 0; pt < num_pts_; ++pt) {
+       for (int i = 0; i < num_dims_; i++) {
+          for (int j = 0; j < num_dims_; j++) {
+             sig[i][j]=stress_(cell, pt, i, j);
+             sig[i][j]-=biot_coeff_(cell, pt) * pore_pressure_(cell, pt) * I(i,j);
+             stress_(cell, pt, i, j)=sig[i][j];
           }
         }
       }
@@ -230,7 +259,7 @@ KOKKOS_INLINE_FUNCTION
 void FirstPK<EvalT, Traits>::
 operator() (const no_small_strain_Tag& tag, const int& cell) const{
 
-
+/*
      for (int pt = 0; pt < num_pts_; ++pt) {
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {    
@@ -281,10 +310,69 @@ operator() (const no_small_strain_Tag& tag, const int& cell) const{
             break;
          }
        }
-
         for (int i = 0; i < num_dims_; ++i) {
           for (int j = 0; j < num_dims_; ++j) {
             first_pk_stress_(cell,pt,i,j) = P(cell,i, j);
+          }
+        }
+      }
+*/
+
+   ScalarT sig[3][3], F[3][3], P[3][3];
+
+       for (int pt = 0; pt < num_pts_; ++pt) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
+            F[i][j]=def_grad_(cell, pt,i,j);
+            sig[i][j]=stress_(cell, pt,i,j);
+          }
+        }
+
+       //piola(P, F, sig);
+      {
+          switch (num_dims_) {
+
+           default:
+             Kokkos::abort("Error(LCM FirstPK): piola function is defined only for rank-2 or 3 .");
+           break;
+
+           case 3:
+
+           P[0][0] = sig[0][0]*(-F[1][2]*F[2][1] + F[1][1]*F[2][2]) + sig[0][1]*( F[0][2]*F[2][1] - F[0][1]*F[2][2])
+                        + sig[0][2]*(-F[0][2]*F[1][1] + F[0][1]*F[1][2]);
+           P[0][1] = sig[0][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2]) + sig[0][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2])
+                        + sig[0][2]*( F[0][2]*F[1][0] - F[0][0]*F[1][2]);
+           P[0][2] = sig[0][0]*(-F[1][1]*F[2][0] + F[1][0]*F[2][1]) + sig[0][1]*( F[0][1]*F[2][0] - F[0][0]*F[2][1])
+                        + sig[0][2]*(-F[0][1]*F[1][0] + F[0][0]*F[1][1]);
+
+           P[1][0] = sig[1][0]*(-F[1][2]*F[2][1] + F[1][1]*F[2][2]) + sig[1][1]*( F[0][2]*F[2][1] - F[0][1]*F[2][2])
+                       + sig[1][2]*(-F[0][2]*F[1][1] + F[0][1]*F[1][2]);
+           P[1][1] = sig[1][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2]) + sig[1][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2]) 
+                        + sig[1][2]*( F[0][2]*F[1][0] - F[0][0]*F[1][2]);
+           P[1][2] = sig[1][0]*(-F[1][1]*F[2][0] + F[1][0]*F[2][1]) + sig[1][1]*( F[0][1]*F[2][0] - F[0][0]*F[2][1])
+                        + sig[1][2]*(-F[0][1]*F[1][0] + F[0][0]*F[1][1]);
+
+           P[2][0] = sig[2][0]*(-F[1][2]*F[2][1] + F[1][1]*F[2][2])+ sig[2][1]*( F[0][2]*F[2][1] - F[0][1]*F[2][2])
+                        + sig[2][2]*(-F[0][2]*F[1][1] + F[0][1]*F[1][2]);
+           P[2][1] = sig[2][0]*( F[1][2]*F[2][0] - F[1][0]*F[2][2])+ sig[2][1]*(-F[0][2]*F[2][0] + F[0][0]*F[2][2]) 
+                        + sig[2][2]*( F[0][2]*F[1][0] - F[0][0]*F[1][2]);
+           P[2][2] = sig[2][0]*(-F[1][1]*F[2][0] + F[1][0]*F[2][1])+ sig[2][1]*( F[0][1]*F[2][0] - F[0][0]*F[2][1]) 
+                        + sig[2][2]*(-F[0][1]*F[1][0] + F[0][0]*F[1][1]);
+
+           break;
+
+           case 2:
+           P[0][0] = sig[0][0]*F[1][1] - sig[0][1]*F[0][1];
+           P[0][1] = -sig[0][0]*F[1][0] + sig[0][1]*F[0][0];
+
+           P[1][0] = sig[1][0]*F[1][1] - sig[1][1]*F[0][1];
+           P[1][1] = -sig[1][0]*F[1][0] + sig[1][1]*F[0][0];
+            break;
+         }
+       }
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
+            first_pk_stress_(cell,pt,i,j) = P[i][j];
           }
         }
       }

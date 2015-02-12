@@ -183,6 +183,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
+
  fT = workset.fT;
  f_nonconstView = fT->get1dViewNonConst();
  Index=workset.wsElNodeEqID_kokkos;
@@ -290,7 +291,8 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->val[eq])(cell,node)).val());
            if (((this->val[eq])(cell,node)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = this->val[eq](cell,node).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);  
+                jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+//              jacobian.sumIntoValues(rowT, &colT[0], nunk,  &vals[0], true);  
         }
       }
    }
@@ -367,7 +369,8 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->valVec)(cell,node,eq)).val());
            if (((this->valVec)(cell,node,eq)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = (this->valVec)(cell,node,eq).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
+              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+//              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }
    }
@@ -441,7 +444,8 @@ operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
               fT->sumIntoLocalValue(rowT, ((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).val());
            if (((this->valTensor[0])(cell,node, eq/numDim, eq%numDim)).hasFastAccess()) {
              for (int i = 0; i < nunk; ++i) vals[i] = (this->valTensor[0])(cell,node, eq/numDim, eq%numDim).fastAccessDx(i);
-              jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
+              jacobian.sumIntoValues(rowT, colT, nunk,  vals, true);
+           //   jacobian.sumIntoValues(rowT, &colT[0], nunk, &vals[0], true);
         }
       }
    }
@@ -551,6 +555,7 @@ evaluateFields(typename Traits::EvalData workset)
     JacT->resumeFill();
  
 #endif
+
 }
 
 // **********************************************************************
