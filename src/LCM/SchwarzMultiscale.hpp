@@ -163,7 +163,6 @@ private:
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
   solver_inargs_;
->>>>>>> LCM: Working through Schwarz task list.
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> >
   solver_outargs_;
