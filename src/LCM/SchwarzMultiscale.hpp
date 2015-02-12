@@ -132,7 +132,7 @@ private:
   coupled_disc_map_;
 
   int
-  n_models_;
+  num_models_;
 
   Teuchos::Array<int>
   num_params_;
