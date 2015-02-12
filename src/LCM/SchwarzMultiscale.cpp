@@ -204,15 +204,15 @@ LCM::SchwarzMultiscale::get_p_names(int l) const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getNominalValues() const
 {
-  //FIXME: fill in!
-  //return nominalValues;
+  //IK, 2/11/15: this function is done!
+  return nominal_values_;
 }
 
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getLowerBounds() const
 {
-  //IK, 2/10/15: I think this function is done
+  //IK, 2/10/15: this function is done!
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
@@ -220,7 +220,7 @@ LCM::SchwarzMultiscale::getLowerBounds() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getUpperBounds() const
 {
-  //IK, 2/10/15: I think this function is done
+  //IK, 2/10/15: this function is done!
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
@@ -268,8 +268,7 @@ LCM::SchwarzMultiscale::create_DfDp_op_impl(int j) const
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
 LCM::SchwarzMultiscale::get_W_factory() const
 {
-  //IK, 2/10/15: I think this is done.
-  //Need to look up what's supposed to happen here.
+  //IK, 2/10/15: this function is done!
   return Teuchos::null;
 }
 
@@ -277,8 +276,8 @@ LCM::SchwarzMultiscale::get_W_factory() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::createInArgs() const
 {
-  //FIXME: fill in!
-  //return this->createInArgsImpl();
+  //IK, 2/11/15: this function is done! 
+  return this->createInArgsImpl();
 
 }
 
@@ -288,7 +287,10 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint,
     const bool wasSolved)
 {
-  //FIXME: is this function necessary? 
+  //IK, 2/11/15: this function is done! 
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+     Teuchos::Exceptions::InvalidParameter,
+     "Calling reportFinalPoint in CoupledSchwarz.cpp" << std::endl);
 }
 
 void

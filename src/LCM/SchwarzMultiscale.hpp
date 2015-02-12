@@ -109,6 +109,9 @@ private:
   
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
   Teuchos::RCP<const Teuchos::Comm<int> > commT_;
+
+  //! Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
+  Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_;
       
   Teuchos::RCP<Tpetra_Map> coupled_disc_map_; 
   int n_models_;

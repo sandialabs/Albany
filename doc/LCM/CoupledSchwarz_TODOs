@@ -1,8 +1,6 @@
 
 -----------------------Cleanup TODOs---------------------------
 
-1.) Throw error when solutin method = Coupled Schwarz and running with Albany exe in Albany::SolverFactory [Irina].
-
 2.) Incrementing of materials*.xml file name in SchwarzMultiscale constructor [Alejandro].
 
 3.) Check that problem names for all input files are the same and throw error if they're not in 
@@ -32,9 +30,6 @@ in QCAD_CoupledPoissonSchrodinger.cpp as an example.  We may want to write a sep
 to return the Jacobian operator, as in QCAD. [TBD -- I suggest we hold off on this until we do 
 the other easier stuff.  I also suggest in the first attempt we just implement the 
 Jacobian for 2 models that are concatenated but not coupled.]
-
-5.) Some trivial function implementations in SchwarzMultiscale.cpp: getNominalValues(),
-reportFinalPoint, get_W_factory(), getUpperBounds(), getLowerBounds(), createInArgs() [Irina].
 
 6.) Implement createInArgsImpl() in SchwarzMultiscale.cpp [Irina]
 
