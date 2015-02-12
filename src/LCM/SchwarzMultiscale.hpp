@@ -108,13 +108,20 @@ private:
   Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> > material_dbs_;
   
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
+  Teuchos::Array< Teuchos::RCP<Albany::Application> > apps_;
   Teuchos::RCP<const Teuchos::Comm<int> > commT_;
+
+  //! Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
+  Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_;
+
+  Thyra::ModelEvaluatorBase::InArgs<ST> createInArgsImpl() const;
       
   Teuchos::RCP<Tpetra_Map> coupled_disc_map_; 
   int n_models_;
   Teuchos::Array<int> num_params_;
   Teuchos::Array<int> num_responses_;
   int num_params_total_;
+  int num_dist_params_total_; 
   int num_responses_total_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> > solver_inargs_; 

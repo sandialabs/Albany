@@ -127,8 +127,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
  
-  //IK, 2/11/15: changed cellType to be obtained from meshSpecs.  Before it was hard-coded to 
-  //4-node quadrilateral. 
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
@@ -143,7 +141,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
 
   const int numQPts     = cubature->getNumPoints();
-  //const int numVertices = cellType->getNodeCount();
   const int numVertices = meshSpecs.ctd.node_count; 
   int vecDim = spatialDim;
   
@@ -237,10 +234,9 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  //Planar case: 
+  //Planar case:
+  //IK, 2/11/15: Planar case is obsolete I believe.  Should it be removed?  
   else {
-    //IK, 2/11/15, WARNING: cellType was originally set to 4-node quadrilateral.  Will 
-    //the planar case work for a generic element? 
     fm0.template registerEvaluator<EvalT>
       (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }

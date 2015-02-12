@@ -15,6 +15,9 @@ SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 {
   std::cout << "Initializing Schwarz Multiscale constructor!" << std::endl;
   commT_ = commT; 
+  //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
+  //TODO: Check with Alejandro.
+  num_dist_params_total_ = 0; 
   // Get "Coupled Schwarz" parameter sublist
   Teuchos::ParameterList& coupledSystemParams = appParams->sublist("Coupled System");
   // Get names of individual model xml input files from problem parameterlist
@@ -23,7 +26,7 @@ SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   //number of models
   n_models_ = model_filenames.size(); 
   std::cout << "DEBUG: n_models_: " << n_models_ << std::endl;
-  Teuchos::Array< Teuchos::RCP<Albany::Application> > apps(n_models_);
+  apps_.resize(n_models_);
   models_.resize(n_models_);
   Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > modelAppParams(n_models_);
   Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > modelProblemParams(n_models_);
@@ -63,7 +66,7 @@ SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     std::cout << "DEBUG: material of problem #" << m << ": " << mtrDbFilename << std::endl; 
     //create application for mth model 
     //FIXME: initial_guessT needs to be made the right one for the mth model!  Or can it be null?  
-    apps[m] = Teuchos::rcp(new Albany::Application(commT, modelAppParams[m], initial_guessT));
+    apps_[m] = Teuchos::rcp(new Albany::Application(commT, modelAppParams[m], initial_guessT));
     //Validate parameter lists
     //FIXME: add relevant things to validate to getValid* functions below
     //Uncomment
@@ -71,10 +74,10 @@ SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     //problemParams_m->sublist("Parameters").validateParameters(*validParameterParams, 0);
     //problemParams_m->sublist("Response Functions").validateParameters(*validResponseParams, 0);
     //Create model evaluator
-    Albany::ModelFactory modelFactory(modelAppParams[m], apps[m]); 
+    Albany::ModelFactory modelFactory(modelAppParams[m], apps_[m]); 
     models_[m] = modelFactory.createT();    
    }
-   std::cout <<"Finished creating Albany apps and models!" << std::endl;
+   std::cout <<"Finished creating Albany apps_ and models!" << std::endl;
 
    //Now get maps, InArgs, OutArgs for each model.
    //Calculate how many parameters, responses there are total. 
@@ -86,9 +89,9 @@ SchwarzMultiscale(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
    num_responses_total_ = 0; 
    for (int m=0; m<n_models_; m++) {
     //FIXME: set 
-    disc_maps[m] = apps[m]->getMapT(); 
+    disc_maps[m] = apps_[m]->getMapT(); 
     //FIXME: set 
-    disc_overlap_maps[m] = apps[m]->getStateMgr().getDiscretization()->getOverlapMapT(); 
+    disc_overlap_maps[m] = apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT(); 
     //FIXME: set 
     solver_inargs_[m] = models_[m]->createInArgs(); 
     //FIXME: set 
@@ -204,15 +207,15 @@ LCM::SchwarzMultiscale::get_p_names(int l) const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getNominalValues() const
 {
-  //FIXME: fill in!
-  //return nominalValues;
+  //IK, 2/11/15: this function is done!
+  return nominal_values_;
 }
 
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getLowerBounds() const
 {
-  //IK, 2/10/15: I think this function is done
+  //IK, 2/10/15: this function is done!
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
@@ -220,7 +223,7 @@ LCM::SchwarzMultiscale::getLowerBounds() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getUpperBounds() const
 {
-  //IK, 2/10/15: I think this function is done
+  //IK, 2/10/15: this function is done!
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
@@ -268,8 +271,7 @@ LCM::SchwarzMultiscale::create_DfDp_op_impl(int j) const
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
 LCM::SchwarzMultiscale::get_W_factory() const
 {
-  //IK, 2/10/15: I think this is done.
-  //Need to look up what's supposed to happen here.
+  //IK, 2/10/15: this function is done!
   return Teuchos::null;
 }
 
@@ -277,9 +279,8 @@ LCM::SchwarzMultiscale::get_W_factory() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::createInArgs() const
 {
-  //FIXME: fill in!
-  //return this->createInArgsImpl();
-
+  //IK, 2/11/15: this function is done! 
+  return this->createInArgsImpl();
 }
 
 
@@ -288,14 +289,41 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint,
     const bool wasSolved)
 {
-  //FIXME: is this function necessary? 
+  //IK, 2/11/15: this function is done! 
+  TEUCHOS_TEST_FOR_EXCEPTION(true,
+     Teuchos::Exceptions::InvalidParameter,
+     "Calling reportFinalPoint in CoupledSchwarz.cpp" << std::endl);
 }
 
 void
 LCM::SchwarzMultiscale::
 allocateVectors()
 {
-  //FIXME: is this function necessary? 
+  //In this function, we create and set x_init and x_dot_init in nominal_values_ for the coupled model.
+  
+  //Create Teuchos::Arrays of hte x_init and x_dot init Tpetra_Vectors for each of the models 
+  Teuchos::Array< Teuchos::RCP<const Tpetra_Vector> > x_inits(n_models_);
+  Teuchos::Array< Teuchos::RCP<const Tpetra_Vector> > x_dot_inits(n_models_);
+
+  //Populate the arrays with the x_init and x_dot_init for each model.
+  for (int m=0; m<n_models_; m++) {
+    x_inits[m] = apps_[m]->getInitialSolutionT(); 
+    x_dot_inits[m] = apps_[m]->getInitialSolutionDotT();  
+  }
+   
+  // Create Tpetra objects to be wrapped in Thyra for coupled model
+  const Teuchos::RCP<const Tpetra_Vector> coupled_x_init; //FIXME: implement by concatenating individual x_inits 
+  const Teuchos::RCP<const Tpetra_Vector> coupled_x_dot_init; //FIXME: implement by concatenating individual x_dot_inits
+  Teuchos::RCP<const Tpetra_Map> map = Teuchos::rcp(new const Tpetra_Map(*coupled_disc_map_));
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_x_space = Thyra::createVectorSpace<ST>(map);
+
+  // Create non-const versions of xT_init and x_dotT_init
+  const Teuchos::RCP<Tpetra_Vector> coupled_x_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*coupled_x_init));
+  const Teuchos::RCP<Tpetra_Vector> coupled_x_dot_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*coupled_x_dot_init));
+
+  nominal_values_.set_x(Thyra::createVector(coupled_x_init_nonconst, coupled_x_space));
+  nominal_values_.set_x_dot(Thyra::createVector(coupled_x_dot_init_nonconst, coupled_x_space));
+  
 }
 
 
@@ -328,6 +356,13 @@ void
 LCM::SchwarzMultiscale::
 evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const 
+{
+  //FIXME: fill in!
+}
+
+Thyra::ModelEvaluatorBase::InArgs<ST>
+LCM::SchwarzMultiscale::
+createInArgsImpl() const
 {
   //FIXME: fill in!
 }
