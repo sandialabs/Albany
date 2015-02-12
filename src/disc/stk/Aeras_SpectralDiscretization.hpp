@@ -57,6 +57,13 @@ namespace Aeras
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
       std::string orig_name = orig_ctd.name;
+      size_t len      = orig_name.find("_");
+      if (len != std::string::npos) orig_name = orig_name.substr(0,len);
+      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral"), 
+                                  Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error!  Attempting to enrich a non-quadrilateral element (" <<
+                                  orig_name << ")!  Aeras::SpectralDiscretization is currently implemented only for " <<
+                                  "Quadrilateral and ShellQuadrilateral elements.\n"); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
 #endif 
@@ -80,8 +87,7 @@ namespace Aeras
       new_ctd.node_count = np; 
       new_ctd.vertex_count = np; //Assumes vertex_count = node_count for ctd, which is the case for 
                                  //isoparametric finite elements.
-      size_t len      = orig_name.find("_");
-      if (len != std::string::npos) orig_name = orig_name.substr(0,len);
+
       std::ostringstream convert; //used to convert int to string  
       convert << np; 
       std::string new_name = orig_name + '_' + convert.str();
