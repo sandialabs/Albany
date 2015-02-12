@@ -28,7 +28,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   // Get names of individual model xml input files from problem parameterlist
   Teuchos::Array<std::string>
   model_filenames =
-      coupled_system_params.get<Teuchos::Array<std::string>>("Model XML Files");
+      coupled_system_params.get<Teuchos::Array<std::string> >("Model XML Files");
 
   //number of models
   num_models_ = model_filenames.size();
@@ -44,10 +44,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >
   model_problem_params(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_overlap_maps(num_models_);
 
   material_dbs_.resize(num_models_);
@@ -243,6 +243,14 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
 }
+
+Teuchos::RCP<Tpetra_Map> 
+LCM::SchwarzMultiscale::createCoupledMap(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > maps,
+                 const Teuchos::RCP<const Teuchos::Comm<int> >& commT) 
+{
+//FIXME: to fill in! 
+}
+
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
