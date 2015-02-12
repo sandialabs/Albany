@@ -245,26 +245,30 @@ LCM::SchwarzMultiscale::~SchwarzMultiscale()
 }
 
 // Overridden from Thyra::ModelEvaluator<ST>
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_x_space() const
 {
   //IK, 2/10/15: this function is done!
-  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_x_space()!" << std::endl;
-  Teuchos::RCP<const Tpetra_Map> map = Teuchos::rcp(
-      new const Tpetra_Map(*coupled_disc_map_));
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_x_space =
-      Thyra::createVectorSpace<ST>(map);
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_x_space()!\n";
+
+  Teuchos::RCP<Tpetra_Map const>
+  map = Teuchos::rcp(new (Tpetra_Map const)(*coupled_disc_map_));
+
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  coupled_x_space = Thyra::createVectorSpace<ST>(map);
+
   return coupled_x_space;
 }
 
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_f_space() const
 {
   //IK, 2/10/15: this function is done!
-  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_f_space()!" << std::endl;
-  Teuchos::RCP<const Tpetra_Map> map = Teuchos::rcp(
-      new const Tpetra_Map(*coupled_disc_map_));
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_f_space =
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_f_space()!\n";
+
+  Teuchos::RCP<Tpetra_Map const>
+  map = Teuchos::rcp(new (Tpetra_Map const)(*coupled_disc_map_));
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> coupled_f_space =
       Thyra::createVectorSpace<ST>(map);
   return coupled_f_space;
 }
