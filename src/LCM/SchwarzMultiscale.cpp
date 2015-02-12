@@ -111,7 +111,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
                                  "attempting go couple different models " << problem_name0 << " and " <<
                                  problem_name << std::endl);*/
     }
-    else std::cout << "same!" << std::endl; 
 
     std::ostringstream
     oss("materials");
