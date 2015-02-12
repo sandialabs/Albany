@@ -14,105 +14,159 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
 {
   std::cout << "Initializing Schwarz Multiscale constructor!" << std::endl;
+
   commT_ = commT;
+
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   //TODO: Check with Alejandro.
   num_dist_params_total_ = 0;
+
   // Get "Coupled Schwarz" parameter sublist
-  Teuchos::ParameterList& coupledSystemParams = app_params->sublist(
-      "Coupled System");
+  Teuchos::ParameterList &
+  coupled_system_params = app_params->sublist("Coupled System");
+
   // Get names of individual model xml input files from problem parameterlist
-  Teuchos::Array<std::string> model_filenames =
-      coupledSystemParams.get<Teuchos::Array<std::string> >("Model XML Files");
+  Teuchos::Array<std::string>
+  model_filenames =
+      coupled_system_params.get<Teuchos::Array<std::string>>("Model XML Files");
+
   //number of models
   num_models_ = model_filenames.size();
-  std::cout << "DEBUG: n_models_: " << num_models_ << std::endl;
+
+  std::cout << "DEBUG: num_models_: " << num_models_ << std::endl;
+
   apps_.resize(num_models_);
   models_.resize(num_models_);
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> > modelAppParams(
-      num_models_);
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> > modelProblemParams(
-      num_models_);
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps(num_models_);
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_overlap_maps(
-      num_models_);
+
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >
+  model_app_params(num_models_);
+
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >
+  model_problem_params(num_models_);
+
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
+  disc_maps(num_models_);
+
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
+  disc_overlap_maps(num_models_);
+
   material_dbs_.resize(num_models_);
-  std::string mtrDbFilename = "materials.xml";
+
   //char mtrDbFilename[100];  //create string for file name
   //
 
   //Create a dummy solverFactory for validating application parameter lists 
   //(see QCAD::CoupledPoissonSchorodinger)
   //FIXME: look into how this is used, uncomment if necessary 
-  /*Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), commT );
-   Teuchos::RCP<const Teuchos::ParameterList> validAppParams = validFactory.getValidAppParameters();
-   Teuchos::RCP<const Teuchos::ParameterList> validParameterParams = validFactory.getValidParameterParameters();
-   Teuchos::RCP<const Teuchos::ParameterList> validResponseParams = validFactory.getValidResponseParameters();
+  /*
+   Albany::SolverFactory
+   validFactory(
+   Teuchos::createParameterList("Empty dummy for Validation"), commT );
+
+   Teuchos::RCP<const Teuchos::ParameterList>
+   validAppParams = validFactory.getValidAppParameters();
+
+   Teuchos::RCP<const Teuchos::ParameterList>
+   validParameterParams = validFactory.getValidParameterParameters();
+
+   Teuchos::RCP<const Teuchos::ParameterList>
+   validResponseParams = validFactory.getValidResponseParameters();
    */
 
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT) 
-  for (int m = 0; m < num_models_; m++) {
+  for (int m = 0; m < num_models_; ++m) {
+
     //get parameterlist from mth model *.xml file 
-    Albany::SolverFactory slvrfctry(model_filenames[m], commT_);
-    Teuchos::ParameterList& appParams_m = slvrfctry.getParameters();
-    modelAppParams[m] = Teuchos::rcp(&(appParams_m));
-    Teuchos::RCP<Teuchos::ParameterList> problemParams_m = Teuchos::sublist(
-        modelAppParams[m],
-        "Problem");
-    modelProblemParams[m] = problemParams_m;
-    std::string &problem_name = problemParams_m->get("Name", "");
-    //FIXME: fix the following line to material name gets incremented
-    //sprintf(mtrDbFilename, "materials%i.xml", m);
-    if (problemParams_m->isType<std::string>("MaterialDB Filename"))
-      mtrDbFilename = problemParams_m->get<std::string>("MaterialDB Filename");
-    material_dbs_[m] = Teuchos::rcp(
-        new QCAD::MaterialDatabase(mtrDbFilename, commT_));
-    //FIXME: should we throw an error if the problem names in the input files don't match??
-    std::cout << "DEBUG: name of problem #" << m << ": " << problem_name
-        << std::endl;
-    std::cout << "DEBUG: material of problem #" << m << ": " << mtrDbFilename
-        << std::endl;
+    Albany::SolverFactory
+    solver_factory(model_filenames[m], commT_);
+
+    Teuchos::ParameterList &
+    app_params_m = solver_factory.getParameters();
+
+    model_app_params[m] = Teuchos::rcp(&(app_params_m));
+
+    Teuchos::RCP<Teuchos::ParameterList>
+    problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
+
+    model_problem_params[m] = problem_params_m;
+    std::string &
+    problem_name = problem_params_m->get("Name", "");
+
+    std::ostringstream
+    oss("materials");
+
+    oss << '_' << m << ".xml";
+
+    std::string
+    matdb_filename(oss.str());
+
+    if (problem_params_m->isType<std::string>("MaterialDB Filename")) {
+      matdb_filename =
+          problem_params_m->get<std::string>("MaterialDB Filename");
+    }
+
+    material_dbs_[m] =
+        Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
+
+    std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
+    std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
+
     //create application for mth model 
-    //FIXME: initial_guessT needs to be made the right one for the mth model!  Or can it be null?  
+    //FIXME: initial_guessT needs to be made the right one for the mth model!
+    // Or can it be null?
     apps_[m] = Teuchos::rcp(
-        new Albany::Application(commT, modelAppParams[m], initial_guessT));
+        new Albany::Application(commT, model_app_params[m], initial_guessT));
+
     //Validate parameter lists
     //FIXME: add relevant things to validate to getValid* functions below
-    //Uncomment
     //problemParams_m->validateParameters(*getValidProblemParameters(),0); 
-    //problemParams_m->sublist("Parameters").validateParameters(*validParameterParams, 0);
-    //problemParams_m->sublist("Response Functions").validateParameters(*validResponseParams, 0);
+    //problemParams_m->sublist("Parameters").validateParameters(
+    // *validParameterParams, 0);
+    //problemParams_m->sublist("Response Functions").validateParameters(
+    // *validResponseParams, 0);
+
     //Create model evaluator
-    Albany::ModelFactory modelFactory(modelAppParams[m], apps_[m]);
-    models_[m] = modelFactory.createT();
+    Albany::ModelFactory
+    model_factory(model_app_params[m], apps_[m]);
+
+    models_[m] = model_factory.createT();
   }
-  std::cout << "Finished creating Albany apps_ and models!" << std::endl;
+
+  std::cout << "Finished creating Albany apps_ and models!\n";
 
   //Now get maps, InArgs, OutArgs for each model.
-  //Calculate how many parameters, responses there are total.
+  //Calculate how many parameters, responses there are in total.
   solver_inargs_.resize(num_models_);
   solver_outargs_.resize(num_models_);
   num_params_.resize(num_models_);
   num_responses_.resize(num_models_);
   num_params_total_ = 0;
   num_responses_total_ = 0;
-  for (int m = 0; m < num_models_; m++) {
+
+  for (int m = 0; m < num_models_; ++m) {
     disc_maps[m] = apps_[m]->getMapT();
-    disc_overlap_maps[m] = apps_[m]->getStateMgr().getDiscretization()
-        ->getOverlapMapT();
+
+    disc_overlap_maps[m] =
+        apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT();
+
     solver_inargs_[m] = models_[m]->createInArgs();
+
     solver_outargs_[m] = models_[m]->createOutArgs();
+
     num_params_[m] = solver_inargs_[m].Np();
+
     num_responses_[m] = solver_outargs_[m].Ng();
-    //Does it make sense for num_params_total and num_responses_total to be the sum 
-    //of these values for each model?  I guess so. 
+
+    //Does it make sense for num_params_total and num_responses_total to be
+    //the sum of these values for each model?  I guess so.
     num_params_total_ += num_params_[m];
+
     num_responses_total_ += num_responses_[m];
   }
 
-  std::cout << "Total # parameters, responses: " << num_params_total_ << ", "
-      << num_responses_total_ << std::endl;
+  std::cout << "Total # parameters, responses: " << num_params_total_;
+  std::cout << ", " << num_responses_total_ << '\n';
 
   // Setup nominal values
   {
