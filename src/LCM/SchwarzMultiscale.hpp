@@ -78,10 +78,12 @@ public:
   void
   allocateVectors();
   
-  //! Create the map for the coupled solution from an array of the maps for each invidivual 
-  // model that is being coupled. 
-  Teuchos::RCP<const Tpetra_Map> createCoupledMap(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > maps,
-                                            const Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
+  /// Create the map for the coupled solution from an array of the maps
+  /// for each invidivual model that is being coupled.
+  Teuchos::RCP<Tpetra_Map const>
+  createCoupledMap(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
+      Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
 
 protected:
   /// Create operator form of df/dp for distributed parameters
