@@ -4,16 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include "SchwarzMultiscale.hpp"
-#include "Albany_SolverFactory.hpp" 
-#include "Albany_ModelFactory.hpp" 
+#include "Albany_SolverFactory.hpp"
+#include "Albany_ModelFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
-//uncomment the following if you want to write stuff out to matrix market to debug
-#define WRITE_TO_MATRIX_MARKET 
+//uncomment the following to write stuff out to matrix market to debug
+#define WRITE_TO_MATRIX_MARKET
 
 //string for storing name of first problem, for error checking
-std::string problem_name0; 
+std::string problem_name0;
 
 LCM::
 SchwarzMultiscale::
@@ -21,10 +21,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
     Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
 {
-  std::cout << "Initializing Schwarz Multiscale constructor!" << std::endl;
+  std::cout << "Initializing Schwarz Multiscale constructor!\n";
+  ;
 
   commT_ = commT;
-
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   //TODO: Check with Alejandro.
@@ -37,12 +37,13 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   // Get names of individual model xml input files from problem parameterlist
   Teuchos::Array<std::string>
   model_filenames =
-      coupled_system_params.get<Teuchos::Array<std::string> >("Model XML Files");
+      coupled_system_params.get<Teuchos::Array<std::string> >(
+          "Model XML Files");
 
   //number of models
   num_models_ = model_filenames.size();
 
-  std::cout << "DEBUG: num_models_: " << num_models_ << std::endl;
+  std::cout << "DEBUG: num_models_: " << num_models_ << '\n';
 
   apps_.resize(num_models_);
   models_.resize(num_models_);
@@ -64,9 +65,9 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   //char mtrDbFilename[100];  //create string for file name
   //
 
-  //Create a dummy solverFactory for validating application parameter lists 
+  //Create a dummy solverFactory for validating application parameter lists
   //(see QCAD::CoupledPoissonSchorodinger)
-  //FIXME: look into how this is used, uncomment if necessary 
+  //FIXME: look into how this is used, uncomment if necessary
   /*
    Albany::SolverFactory
    validFactory(
@@ -83,10 +84,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
    */
 
   //Set up each application and model object in Teuchos::Array
-  //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT) 
+  //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
   for (int m = 0; m < num_models_; ++m) {
 
-    //get parameterlist from mth model *.xml file 
+    //get parameterlist from mth model *.xml file
     Albany::SolverFactory
     solver_factory(model_filenames[m], commT_);
 
@@ -107,15 +108,20 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     if (m == 0) problem_name0 = problem_params_m->get("Name", "");
 
     if (problem_name0.compare(problem_name)) {
-      std::cerr << std::endl <<  "Error in LCM::CoupledSchwarz constructor: attempting go couple different models " << 
-                    problem_name0 << " and " << problem_name << "!" << std::endl << std::endl; 
-      exit (1);
-      //FIXME: the above is not a very elegant way to exit, but somehow the below line using Teuchos 
-      //exceptions does not seem to work...
-      /*TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
-                                 std::endl << "Error in LCM::CoupledSchwarz constructor:  " <<
-                                 "attempting go couple different models " << problem_name0 << " and " <<
-                                 problem_name << std::endl);*/
+      std::cerr << "\nError in LCM::CoupledSchwarz constructor: ";
+      std::cerr << "attempting go couple different models ";
+      std::cerr << problem_name0 << " and " << problem_name << "!\n\n";
+      exit(1);
+      //FIXME: the above is not a very elegant way to exit,
+      // but somehow the below line using Teuchos
+      // exceptions does not seem to work...
+      /*
+       TEUCHOS_TEST_FOR_EXCEPTION(
+       true, std::runtime_error,
+       std::endl << "Error in LCM::CoupledSchwarz constructor:  " <<
+       "attempting go couple different models " << problem_name0 << " and " <<
+       problem_name << std::endl);
+       */
     }
 
     std::ostringstream
@@ -136,7 +142,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
-    //create application for mth model 
+    //create application for mth model
     //FIXME: initial_guessT needs to be made the right one for the mth model!
     // Or can it be null?
     apps_[m] = Teuchos::rcp(
@@ -144,7 +150,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     //Validate parameter lists
     //FIXME: add relevant things to validate to getValid* functions below
-    //problemParams_m->validateParameters(*getValidProblemParameters(),0); 
+    //problemParams_m->validateParameters(*getValidProblemParameters(),0);
     //problemParams_m->sublist("Parameters").validateParameters(
     // *validParameterParams, 0);
     //problemParams_m->sublist("Response Functions").validateParameters(
@@ -195,12 +201,17 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   //Create ccoupled_disc_map, a map for the entire coupled ME solution,
   //created from the entries of the disc_maps array (individual maps).
   coupled_disc_map_ = createCoupledMap(disc_maps, commT_);
-  std::cout << "LCM::CoupledSchwarz constructor DEBUG: created coupled map!" << std::endl;
+
+  std::cout << "LCM::CoupledSchwarz constructor DEBUG: created coupled map!\n";
+
 #ifdef WRITE_TO_MATRIX_MARKET
-  //For debug, write the coupled map to matrix market file to look at in vi or matlab
-  Tpetra_MatrixMarket_Writer::writeMapFile("coupled_disc_map.mm", *coupled_disc_map_);
+  // For debug, write the coupled map to matrix market file to
+  // look at in vi or matlab
+  Tpetra_MatrixMarket_Writer::writeMapFile(
+      "coupled_disc_map.mm",
+      *coupled_disc_map_);
 #endif
- 
+
   // Setup nominal values
   {
     nominal_values_ = this->createInArgsImpl();
@@ -240,10 +251,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     }
     //FIXME: populate coupled_sacado_param_vec_,
     //the parameter vec for the coupled model
-    //coupled_sacado_param_vec_ = ... 
+    //coupled_sacado_param_vec_ = ...
 
     //Create Tpetra map and Tpetra vectors for coupled parameters
-    //TODO: check with Alejandro that this makes sense for the parameters 
+    //TODO: check with Alejandro that this makes sense for the parameters
     Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
     for (int l = 0; l < coupled_sacado_param_vec_.size(); ++l) {
       coupled_param_map_[l] = Teuchos::rcp(
@@ -269,11 +280,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     }
   } //end setting of nominal values
 
-
   //FIXME: Add discretization parameterlist and discretization object
   //for the "combined" solution vector from all the coupled Model
   //Evaluators.  Refer to QCAD_CoupledPoissonSchrodinger.cpp.
-  
+
   //FIXME: How are we going to collect output?  Write exodus files for
   //each model evaluator?  Joined exodus file?
 
@@ -283,42 +293,64 @@ LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
 }
 
-Teuchos::RCP<const Tpetra_Map> 
-LCM::SchwarzMultiscale::createCoupledMap(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > maps,
-                                         const Teuchos::RCP<const Teuchos::Comm<int> >& commT) 
+Teuchos::RCP<const Tpetra_Map>
+LCM::SchwarzMultiscale::createCoupledMap(
+    Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
+    Teuchos::RCP<Teuchos::Comm<int> const> const & commT)
 {
-  int n_maps = maps.size(); 
-  std::cout << "DEBUG: LCM::SchwarzMultiscale::createCoupledMap, # maps: " << n_maps << std::endl;
-  //Figure out how many local and global elements are in the coupled map by summing 
-  //these quantities over each model's map. 
-  LO my_nElements = 0; 
-  GO global_nElements = 0; 
-  for (int m=0; m<n_maps; m++) {
-    my_nElements += maps[m]->getNodeNumElements(); 
-    global_nElements += maps[m]->getGlobalNumElements();
-    std::cout << "DEBUG: map #" <<  m << " has " << maps[m]->getGlobalNumElements() << " global elements." << std::endl; 
+  int
+  n_maps = maps.size();
+
+  std::cout << "DEBUG: LCM::SchwarzMultiscale::createCoupledMap, # maps: ";
+  std::cout << n_maps << '\n';
+
+  // Figure out how many local and global elements are in the
+  // coupled map by summing these quantities over each model's map.
+  LO
+  local_num_elements = 0;
+
+  GO
+  global_num_elements = 0;
+
+  for (int m = 0; m < n_maps; ++m) {
+    local_num_elements += maps[m]->getNodeNumElements();
+    global_num_elements += maps[m]->getGlobalNumElements();
+
+    std::cout << "DEBUG: map #" << m << " has ";
+    std::cout << maps[m]->getGlobalNumElements() << " global elements.\n";
   }
   //Create global element indices array for coupled map for this processor,
   //to be used to create the coupled map.
-  GO * my_global_elements = new GO[my_nElements];  
-  LO counter_local = 0; 
-  GO counter_global = 0;  
-  for (int m=0; m<n_maps; m++) {
-    LO disc_nMyElements = maps[m]->getNodeNumElements();
-    GO disc_nGlobalElements = maps[m]->getGlobalNumElements(); 
-    Teuchos::ArrayView<const GO> disc_global_elements = maps[m]->getNodeElementList();
-    for (int l=0; l<disc_nMyElements; l++) {
-      my_global_elements[counter_local + l] = counter_global + disc_global_elements[l]; 
-    } 
-    counter_local += disc_nMyElements; 
-    counter_global += disc_nGlobalElements; 
-  }
-  const Teuchos::ArrayView<GO> my_global_elements_AV = Teuchos::arrayView(my_global_elements, my_nElements);
-  std::cout << "DEBUG: coupled map has " << global_nElements << " global elements." << std::endl;  
-  Teuchos::RCP<const Tpetra_Map> coupled_map = Teuchos::rcp(new Tpetra_Map(global_nElements, my_global_elements_AV, 0, commT_));  
-  return coupled_map; 
-}
+  GO *
+  my_global_elements = new GO[local_num_elements];
 
+  LO
+  counter_local = 0;
+
+  GO
+  counter_global = 0;
+
+  for (int m = 0; m < n_maps; ++m) {
+    LO disc_nMyElements = maps[m]->getNodeNumElements();
+    GO disc_nGlobalElements = maps[m]->getGlobalNumElements();
+    Teuchos::ArrayView<const GO> disc_global_elements = maps[m]
+        ->getNodeElementList();
+    for (int l = 0; l < disc_nMyElements; l++) {
+      my_global_elements[counter_local + l] = counter_global
+          + disc_global_elements[l];
+    }
+    counter_local += disc_nMyElements;
+    counter_global += disc_nGlobalElements;
+  }
+  const Teuchos::ArrayView<GO> my_global_elements_AV = Teuchos::arrayView(
+      my_global_elements,
+      local_num_elements);
+  std::cout << "DEBUG: coupled map has " << global_num_elements
+      << " global elements." << std::endl;
+  Teuchos::RCP<const Tpetra_Map> coupled_map = Teuchos::rcp(
+      new Tpetra_Map(global_num_elements, my_global_elements_AV, 0, commT_));
+  return coupled_map;
+}
 
 // Overridden from Thyra::ModelEvaluator<ST>
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
@@ -362,7 +394,7 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
   if (l < num_params_total_)
     map = coupled_param_map_[l];
   //IK, 7/1/14: commenting this out for now
-  //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map(); 
+  //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map();
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_param_space =
       Thyra::createVectorSpace<ST>(map);
   return coupled_param_space;
@@ -438,7 +470,7 @@ Teuchos::RCP<Thyra::PreconditionerBase<ST> >
 LCM::SchwarzMultiscale::create_W_prec() const
 {
   //IK, 2/10/15: this function is done for now...
-  
+
   //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
   //in Thyra yet!  So problem will run for now with no
   //preconditioner...
@@ -474,7 +506,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::createInArgs() const
 {
-  //IK, 2/11/15: this function is done! 
+  //IK, 2/11/15: this function is done!
   return this->createInArgsImpl();
 }
 
@@ -483,7 +515,7 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint,
     const bool wasSolved)
 {
-  //IK, 2/11/15: this function is done! 
+  //IK, 2/11/15: this function is done!
   TEUCHOS_TEST_FOR_EXCEPTION(true,
       Teuchos::Exceptions::InvalidParameter,
       "Calling reportFinalPoint in CoupledSchwarz.cpp" << std::endl);
@@ -609,7 +641,7 @@ getValidAppParameters() const
 }
 
 //Copied from QCAD::CoupledPoissonSchrodinger
-//Check usage and whether neessary...  
+//Check usage and whether neessary...
 Teuchos::RCP<const Teuchos::ParameterList>
 LCM::SchwarzMultiscale::
 getValidProblemParameters() const
@@ -622,7 +654,7 @@ getValidProblemParameters() const
       "Phalanx Graph Visualization Detail",
       0,
       "Flag to select output of Phalanx Graph and level of detail");
-  //FIXME: anything else to validate? 
+  //FIXME: anything else to validate?
   validPL->set<std::string>(
       "Solution Method",
       "Steady",

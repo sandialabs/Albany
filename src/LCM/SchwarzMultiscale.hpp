@@ -77,7 +77,7 @@ public:
 
   void
   allocateVectors();
-  
+
   /// Create the map for the coupled solution from an array of the maps
   /// for each invidivual model that is being coupled.
   Teuchos::RCP<Tpetra_Map const>
