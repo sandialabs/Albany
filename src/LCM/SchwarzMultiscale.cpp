@@ -9,6 +9,10 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 
+//uncomment the following if you want to write stuff out to matrix market to debug
+#define WRITE_TO_MATRIX_MARKET 
+
+//string for storing name of first problem, for error checking
 std::string problem_name0; 
 
 LCM::
@@ -106,6 +110,8 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       std::cerr << std::endl <<  "Error in LCM::CoupledSchwarz constructor: attempting go couple different models " << 
                     problem_name0 << " and " << problem_name << "!" << std::endl << std::endl; 
       exit (1);
+      //FIXME: the above is not a very elegant way to exit, but somehow the below line using Teuchos 
+      //exceptions does not seem to work...
       /*TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error,
                                  std::endl << "Error in LCM::CoupledSchwarz constructor:  " <<
                                  "attempting go couple different models " << problem_name0 << " and " <<
@@ -186,6 +192,15 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   std::cout << "Total # parameters, responses: " << num_params_total_;
   std::cout << ", " << num_responses_total_ << '\n';
 
+  //Create ccoupled_disc_map, a map for the entire coupled ME solution,
+  //created from the entries of the disc_maps array (individual maps).
+  coupled_disc_map_ = createCoupledMap(disc_maps, commT_);
+  std::cout << "LCM::CoupledSchwarz constructor DEBUG: created coupled map!" << std::endl;
+#ifdef WRITE_TO_MATRIX_MARKET
+  //For debug, write the coupled map to matrix market file to look at in vi or matlab
+  Tpetra_MatrixMarket_Writer::writeMapFile("coupled_disc_map.mm", *coupled_disc_map_);
+#endif
+ 
   // Setup nominal values
   {
     nominal_values_ = this->createInArgsImpl();
@@ -254,9 +269,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     }
   } //end setting of nominal values
 
-  //FIXME: define coupled_disc_map, a map for the entire coupled ME solution,
-  //created from the entries of the disc_map array (individual maps).
-  //coupled_disc_map_ = ...  (write separate function to compute this map?)
 
   //
   //FIXME: Add discretization parameterlist and discretization object for the "combined" solution
@@ -270,11 +282,40 @@ LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
 }
 
-Teuchos::RCP<Tpetra_Map> 
+Teuchos::RCP<const Tpetra_Map> 
 LCM::SchwarzMultiscale::createCoupledMap(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > maps,
-                 const Teuchos::RCP<const Teuchos::Comm<int> >& commT) 
+                                         const Teuchos::RCP<const Teuchos::Comm<int> >& commT) 
 {
-//FIXME: to fill in! 
+  int n_maps = maps.size(); 
+  std::cout << "DEBUG: LCM::SchwarzMultiscale::createCoupledMap, # maps: " << n_maps << std::endl;
+  //Figure out how many local and global elements are in the coupled map by summing 
+  //these quantities over each model's map. 
+  LO my_nElements = 0; 
+  GO global_nElements = 0; 
+  for (int m=0; m<n_maps; m++) {
+    my_nElements += maps[m]->getNodeNumElements(); 
+    global_nElements += maps[m]->getGlobalNumElements();
+    std::cout << "DEBUG: map #" <<  m << " has " << maps[m]->getGlobalNumElements() << " global elements." << std::endl; 
+  }
+  //Create global element indices array for coupled map for this processor,
+  //to be used to create the coupled map.
+  GO * my_global_elements = new GO[my_nElements];  
+  LO counter_local = 0; 
+  GO counter_global = 0;  
+  for (int m=0; m<n_maps; m++) {
+    LO disc_nMyElements = maps[m]->getNodeNumElements();
+    GO disc_nGlobalElements = maps[m]->getGlobalNumElements(); 
+    Teuchos::ArrayView<const GO> disc_global_elements = maps[m]->getNodeElementList();
+    for (int l=0; l<disc_nMyElements; l++) {
+      my_global_elements[counter_local + l] = counter_global + disc_global_elements[l]; 
+    } 
+    counter_local += disc_nMyElements; 
+    counter_global += disc_nGlobalElements; 
+  }
+  const Teuchos::ArrayView<GO> my_global_elements_AV = Teuchos::arrayView(my_global_elements, my_nElements);
+  std::cout << "DEBUG: coupled map has " << global_nElements << " global elements." << std::endl;  
+  Teuchos::RCP<const Tpetra_Map> coupled_map = Teuchos::rcp(new Tpetra_Map(global_nElements, my_global_elements_AV, 0, commT_));  
+  return coupled_map; 
 }
 
 

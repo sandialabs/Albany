@@ -9,6 +9,7 @@
 (e.g., the coupled one won't have a discretization section probably) [TBD -- I suggest we hold 
 off on this for now until we decide definitively what'll be read in from what file.].
 
+6.) Eventually we'll want to put an ifdef to suppress all the debug output [TBD]. 
 
 ---------------------Development TODOs------------------------
 
@@ -16,8 +17,6 @@ off on this for now until we decide definitively what'll be read in from what fi
 QCAD::CoupledSchrodingerPoisson; I started it in SchwarzMultiscale.cpp; see getValidProblemParameters 
 and getValidAppParameters at the bottom) [Alejandro, perhaps you could do this since you know better
 than me what are the valid/required parameters for the problems we're looking at?].
-
-2.) Write function that creates coupled_disc_map_ in LCM::SchwarzMultiscale class [Irina].
 
 3.) Implement get_g_space and get_p_names in SchwarzMultiscale.cpp.  
 See get_g_map and get_p_names routines in Piro_Epetra_NECoupledModelEvaluator.cpp. [TBD]

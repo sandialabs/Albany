@@ -80,7 +80,7 @@ public:
   
   //! Create the map for the coupled solution from an array of the maps for each invidivual 
   // model that is being coupled. 
-  Teuchos::RCP<Tpetra_Map> createCoupledMap(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > maps,
+  Teuchos::RCP<const Tpetra_Map> createCoupledMap(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > maps,
                                             const Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
 
 protected:
@@ -133,7 +133,7 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  Teuchos::RCP<Tpetra_Map>
+  Teuchos::RCP<const Tpetra_Map>
   coupled_disc_map_;
 
   int
