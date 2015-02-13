@@ -51,7 +51,7 @@ cmake \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
- -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+ -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
