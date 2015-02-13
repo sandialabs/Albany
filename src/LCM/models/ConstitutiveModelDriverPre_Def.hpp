@@ -19,9 +19,10 @@ ConstitutiveModelDriverPre(Teuchos::ParameterList& p,
   solution_(p.get<std::string>("Solution Name"),dl->node_tensor),
   def_grad_(p.get<std::string>("F Name"),dl->qp_tensor),
   j_(p.get<std::string>("J Name"),dl->qp_scalar),
-  prescribed_def_grad_(p.get<std::string>("prescribed def grad Name"),dl->qp_tensor),
+  prescribed_def_grad_(p.get<std::string>("Prescribed F Name"),dl->qp_tensor),
   time_(p.get<std::string>("Time Name"),dl->workset_scalar)
 {
+  std::cout << "ConstitutiveModelDriverPre<EvalT, Traits>::constructor" << std::endl;
   Teuchos::ParameterList driver_params = p.get<Teuchos::ParameterList>("Driver Params");
   std::string loading_case = driver_params.get<std::string>("loading case", "uniaxial-strain");
   double increment = driver_params.get<double>("increment", 0.1);
@@ -29,6 +30,7 @@ ConstitutiveModelDriverPre(Teuchos::ParameterList& p,
   std::string component = driver_params.get<std::string>("component", "00");
 
   this->addDependentField(solution_);
+  this->addDependentField(time_);
   this->addEvaluatedField(def_grad_);
   this->addEvaluatedField(j_);
   this->addEvaluatedField(prescribed_def_grad_);
@@ -51,6 +53,7 @@ postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(solution_, fm);
+  this->utils.setFieldData(time_, fm);
   this->utils.setFieldData(def_grad_, fm);
   this->utils.setFieldData(j_, fm);
   this->utils.setFieldData(prescribed_def_grad_, fm);
@@ -61,6 +64,7 @@ template<typename EvalT, typename Traits>
 void ConstitutiveModelDriverPre<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  std::cout << "ConstitutiveModelDriverPre<EvalT, Traits>::evaluateFields" << std::endl;
   Intrepid::Tensor<ScalarT> F(num_dims_);
 
   RealType alpha = Sacado::ScalarValue<ScalarT>::eval(time_(0)) / final_time_;

@@ -43,6 +43,7 @@ template<typename EvalT, typename Traits>
 void ConstitutiveModelDriver<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  std::cout << "ConstitutiveModelDriver<EvalT, Traits>::evaluateFields" << std::endl;
   Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
 
   Intrepid::Tensor<ScalarT> F0(num_dims_), P0(num_dims_);

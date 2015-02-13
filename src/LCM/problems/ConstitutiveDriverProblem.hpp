@@ -328,6 +328,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<Teuchos::ParameterList>("Driver Params", params->sublist("Constitutive Model Driver Parameters"));
     p->set<std::string>("Solution Name", dof_names[0]);
+    p->set<std::string>("Prescribed F Name", "Prescribed F");
+    p->set<std::string>("Time Name", "Time");
     p->set<std::string>("F Name", defgrad);
     p->set<std::string>("J Name", J);
 
