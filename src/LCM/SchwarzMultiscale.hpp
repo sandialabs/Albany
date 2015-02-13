@@ -141,6 +141,9 @@ private:
   int
   num_models_;
 
+  //! List of free parameter names
+  Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > coupled_param_names_;
+
   Teuchos::Array<int>
   num_params_;
 

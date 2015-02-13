@@ -163,7 +163,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     models_[m] = model_factory.createT();
   }
 
-  std::cout << "Finished creating Albany apps_ and models!\n";
+  std::cout << "Finished creating Albany apps and models!\n";
 
   //Now get maps, InArgs, OutArgs for each model.
   //Calculate how many parameters, responses there are in total.
@@ -197,6 +197,27 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
   std::cout << "Total # parameters, responses: " << num_params_total_;
   std::cout << ", " << num_responses_total_ << '\n';
+ 
+  //Set coupled parameter names array, for get_p_names by concatenating parameter names
+  //from each model.  
+  coupled_param_names_.resize(num_params_total_ + num_dist_params_total_);
+  int counter = 0; 
+  for (int m=0; m<num_models_; m++) {
+    for (int l=0; l<num_params_[m]; l++) {
+      int num_parameters = models_[m]->get_p_names(l)->size();
+      coupled_param_names_[l+counter] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+      for (int j=0; j<num_parameters; j++) {
+        (*coupled_param_names_[l+counter])[j] = (*models_[m]->get_p_names(l))[j]; 
+        
+      } 
+      counter += num_parameters; 
+    }
+  }
+  /*for (int m=0; m<n_models_; m++) {
+    for (int i=0; i<num_params_[m]; i++) {
+
+    }
+  }*/
 
   //Create ccoupled_disc_map, a map for the entire coupled ME solution,
   //created from the entries of the disc_maps array (individual maps).
@@ -407,6 +428,14 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
     {
   //FIXME: fill in!
+  //IKT, 2/13/15: 
+  //The coupled g_space will come from concatenating individual model g_spaces
+  //Unfortunately get_g_space for each model will extract the ThyraVectorSpace 
+  //and there does not appear to be a function to convert a thyra vector space 
+  //to a tpetra map. 
+  //Workaround: 1.) get_g for each model, 2.) convert g to tpetra vector, 
+  //3.) get g's map, 4.) use that map to create coupled tpetra map, 5.) convert coupled tpetra map to 
+  //coupled thyra vector space. 
   /*TEUCHOS_TEST_FOR_EXCEPTION(
    l >= app->getNumResponses() || l < 0,
    Teuchos::Exceptions::InvalidParameter,
@@ -422,19 +451,14 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string> >
 LCM::SchwarzMultiscale::get_p_names(int l) const
     {
-  //FIXME: fill in!
-  /*
    TEUCHOS_TEST_FOR_EXCEPTION(
-   l >= num_param_vecs + num_dist_param_vecs || l < 0,
+   l >= num_params_total_ + num_dist_params_total_ || l < 0,
    Teuchos::Exceptions::InvalidParameter,
    std::endl <<
    "Error!  LCM::SchwarzMultiscale::get_p_names():  " <<
    "Invalid parameter index l = " << l << std::endl);
 
-   if (l < num_param_vecs)
-   return param_names[l];
-   return Teuchos::rcp(new Teuchos::Array<std::string>(1, dist_param_names[l-num_param_vecs]));
-   */
+   return coupled_param_names_[l];
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
