@@ -212,8 +212,11 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       *coupled_disc_map_);
 #endif
 
+  //IKT, 2/13/15: commenting out the following for now as it'll cause a seg fault due 
+  //to some things not being allocated yet.  This is to facilitate implementation of 
+  //other things, like parameter list validation.
   // Setup nominal values
-  {
+ /* {
     nominal_values_ = this->createInArgsImpl();
 
     // All the ME vectors are allocated/unallocated here
@@ -279,7 +282,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
           Thyra::createVector(coupled_param_vec_[l], coupled_param_space));
     }
   } //end setting of nominal values
-
+*/
   //FIXME: Add discretization parameterlist and discretization object
   //for the "combined" solution vector from all the coupled Model
   //Evaluators.  Refer to QCAD_CoupledPoissonSchrodinger.cpp.
