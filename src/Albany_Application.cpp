@@ -4173,10 +4173,10 @@ void Albany::Application::setupTangentWorksetInfoT(
 
   // Initialize
   if (params != Teuchos::null) {
-    FadType p;
+    TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (VpT != Teuchos::null) {
         Teuchos::ArrayRCP<const ST> VpT_constView;
         for (int k=0; k<num_cols_p; k++) {

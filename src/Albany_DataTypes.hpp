@@ -18,6 +18,7 @@
 #include "Sacado_ELRCacheFad_DFad.hpp"
 #include "Sacado_Fad_DFad.hpp"
 #include "Sacado_ELRFad_SLFad.hpp"
+#include "Sacado_ELRFad_SFad.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Sacado_ETV_Vector.hpp"
