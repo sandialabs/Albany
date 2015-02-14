@@ -1,8 +1,6 @@
 
 -----------------------Cleanup TODOs---------------------------
 
-2.) Incrementing of materials*.xml file name in SchwarzMultiscale constructor [Alejandro].
-
 4.) Change variable/function names to comply with C++ coding standards [Alejandro].
 
 5.) Further down the line, we'll want to clean up the input files to remove stuff that's not read in 
