@@ -628,6 +628,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
     //files for each model).  This makes sense I think.  
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+   
     const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
     // Create and setup the Piro solver factory
     Piro::SolverFactory piroFactory;
