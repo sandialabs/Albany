@@ -143,6 +143,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   solver_outargs_.resize(num_models_);
   num_params_.resize(num_models_);
   num_responses_.resize(num_models_);
+  num_responses_partial_sum_.resize(num_models_); 
   num_params_total_ = 0;
   num_responses_total_ = 0;
 
@@ -159,6 +160,9 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     num_params_[m] = solver_inargs_[m].Np();
 
     num_responses_[m] = solver_outargs_[m].Ng();
+
+    if (m == 0) num_responses_partial_sum_[m] = num_responses_[m]; 
+    else num_responses_partial_sum_[m] = num_responses_partial_sum_[m-1] + num_responses_[m]; 
 
     //Does it make sense for num_params_total and num_responses_total to be
     //the sum of these values for each model?  I guess so.
@@ -399,25 +403,21 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
     {
-  //FIXME: fill in!
-  //IKT, 2/13/15: 
-  //The coupled g_space will come from concatenating individual model g_spaces
-  //Unfortunately get_g_space for each model will extract the ThyraVectorSpace 
-  //and there does not appear to be a function to convert a thyra vector space 
-  //to a tpetra map. 
-  //Workaround: 1.) get_g for each model, 2.) convert g to tpetra vector, 
-  //3.) get g's map, 4.) use that map to create coupled tpetra map, 5.) convert coupled tpetra map to 
-  //coupled thyra vector space. 
-  /*TEUCHOS_TEST_FOR_EXCEPTION(
-   l >= app->getNumResponses() || l < 0,
+  TEUCHOS_TEST_FOR_EXCEPTION(
+   l >= num_responses_total_  || l < 0,
    Teuchos::Exceptions::InvalidParameter,
    std::endl <<
    "Error!  LCM::SchwarzMultiscale::get_g_space():  " <<
    "Invalid response index l = " << l << std::endl);
 
-   Teuchos::RCP<const Tpetra_Map> mapT = app->getResponse(l)->responseMapT();
-   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > gT_space = Thyra::createVectorSpace<ST>(mapT);
-   return gT_space;*/
+   if (l <= num_responses_partial_sum_[0]) 
+     return models_[0]->get_g_space(l); 
+   else {
+     for (int m=1; m<num_models_; m++){
+       if (l > num_responses_partial_sum_[m-1] && l <= num_responses_partial_sum_[m])
+         return models_[m]->get_g_space(l - num_responses_partial_sum_[m-1]); 
+     }
+   } 
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string> >

@@ -146,6 +146,9 @@ private:
 
   Teuchos::Array<int>
   num_responses_;
+  
+  Teuchos::Array<int>
+  num_responses_partial_sum_;
 
   //like num_param_vecs
   int

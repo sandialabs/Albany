@@ -11,12 +11,8 @@ off on this for now until we decide definitively what'll be read in from what fi
 
 ---------------------Development TODOs------------------------
 
-1.) Put in validatian of parameter lists in LCM::SchwarzMultiscale class (similar to how it's done in 
-QCAD::CoupledSchrodingerPoisson; I started it in SchwarzMultiscale.cpp; see getValidProblemParameters 
-and getValidAppParameters at the bottom) [Alejandro, perhaps you could do this since you know better
-than me what are the valid/required parameters for the problems we're looking at?].
-
-3.) Implement get_g_space in SchwarzMultiscale.cpp.  [TBD]
+1.) We may want to put in validatian of parameter lists in LCM::SchwarzMultiscale class, 
+if necessary.  It appears to be handled in general already in other parts of the code. [TBD?]
 
 4.) Implement create_W_op() in SchwarzMultiscale.cpp.  Look at create_W function 
 in QCAD_CoupledPoissonSchrodinger.cpp as an example.  We may want to write a separate class 
@@ -31,7 +27,6 @@ and QCAD_CoupledSchrodingerPoisson.cpp. [TBD -- Irina implemented shell]
 
 8.) Implement coupled_sacado_param_vec_ in the LCM::SchwarzMultiScale constructor. 
 This is used to create the coupled parameter map. [TBD] 
----> Need to talk to discuss how distributed parameters will work. 
 
 9.) Implement create_DgDx_op_impl and create_DgDx_dot_op_impl in SchwarzMultiscale.cpp. 
 See QCAD_CoupledSchrodingerPoisson.cpp for an example. [TBD]
