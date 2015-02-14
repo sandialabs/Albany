@@ -100,42 +100,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
 
-    Teuchos::RCP<Teuchos::ParameterList> 
-    piro_params_m = Teuchos::sublist(model_app_params[m], "Piro"); 
-
-    if (!piro_params_m->getPtr<std::string>("Solver Type")) {
-      const std::string solution_method = problem_params_m->get("Solution Method", "Steady");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        solution_method != "Steady" &&
-        solution_method != "Transient",
-        std::logic_error,
-        "Solution Method must be Steady or Transient, not : " <<
-        solution_method <<
-        "\n");
-
-      const std::string second_order = problem_params_m->get("Second Order", "No");
-       TEUCHOS_TEST_FOR_EXCEPTION(
-         second_order != "No",
-         std::logic_error,
-         "Second Order is not supported" <<
-         "\n");
-    
-       // Populate the Piro parameter list accordingly to inform the Piro solver factory
-       std::string piro_solver_token;
-       if (solution_method == "Steady") {
-         piro_solver_token = "NOX";
-       } 
-       else if (solution_method == "Transient") {
-         piro_solver_token = "Rythmos";
-       } 
-       else {
-        // Piro cannot handle the corresponding problem
-        piro_solver_token = "Unsupported";
-       }
-
-       piro_params_m->set("Solver Type", piro_solver_token);
-    }
-
     model_problem_params[m] = problem_params_m;
 
     std::string &

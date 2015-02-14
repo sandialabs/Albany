@@ -62,6 +62,7 @@
   </ParameterList>
 
   <ParameterList name="Piro">
+    <Parameter name="Solver Type" type="string" value="LOCA"/>
     <!-- LOCA is used for stability analysis, continuation -->
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>

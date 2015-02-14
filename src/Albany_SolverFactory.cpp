@@ -633,7 +633,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // Create and setup the Piro solver factory
     Piro::SolverFactory piroFactory;
     RCP<Thyra::ModelEvaluator<ST> > coupled_model_with_solveT;
-    if (Teuchos::nonnull(coupled_model_with_solveT->get_W_factory())) {
+    if (Teuchos::nonnull(coupled_model->get_W_factory())) {
       coupled_model_with_solveT = coupled_model;
     } 
     else {
