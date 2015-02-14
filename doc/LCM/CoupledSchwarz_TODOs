@@ -40,10 +40,6 @@ See QCAD_CoupledSchrodingerPoisson.cpp for an example. [TBD]
 
 11.) Implement evalModelImpl in SchwarzMultiscale.cpp. [TBD]
 
-12.) Whether we need to implement create_DfDp_op_impl depends on whether we'll have distributed 
-parameters (see "Questions/Comments/Notes"). [TBD?]
---> Need to discuss. 
-
 
 ------------------Questions/Comments/Notes-----------------------------
 
@@ -51,9 +47,6 @@ parameters (see "Questions/Comments/Notes"). [TBD?]
 at the beginning.
 
 2.) get_W_factory() is not needed -- just returns null.
-
-3.) create_DfDp_op_impl is for distributed parameters.  Are we going to have distributed parameters? 
-If not, we don't need this function.  QCAD does not have it. 
 
 4.) initial_guess, passed to the LCM::CoupledSchwarz constructor, is used to 
 create the Albany_Application object for each model.  There, it's used to set 

@@ -478,22 +478,6 @@ LCM::SchwarzMultiscale::create_W_prec() const
   return Teuchos::null;
 }
 
-Teuchos::RCP<Thyra::LinearOpBase<ST> >
-LCM::SchwarzMultiscale::create_DfDp_op_impl(int j) const
-    {
-  //FIXME: fill in!
-  /*TEUCHOS_TEST_FOR_EXCEPTION(
-   j >= num_param_vecs+num_dist_param_vecs || j < num_param_vecs,
-   Teuchos::Exceptions::InvalidParameter,
-   std::endl <<
-   "Error!  LCM::SchwarzMultiscale::create_DfDp_op_impl():  " <<
-   "Invalid parameter index j = " << j << std::endl);
-
-   const Teuchos::RCP<Tpetra_Operator> DfDp = Teuchos::rcp(new DistributedParameterDerivativeOpT(
-   app, dist_param_names[j-num_param_vecs]));
-
-   return Thyra::createLinearOp(DfDp); */
-}
 
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
 LCM::SchwarzMultiscale::get_W_factory() const

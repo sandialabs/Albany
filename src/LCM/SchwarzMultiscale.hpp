@@ -86,9 +86,6 @@ public:
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
 
 protected:
-  /// Create operator form of df/dp for distributed parameters
-  Teuchos::RCP<Thyra::LinearOpBase<ST> >
-  create_DfDp_op_impl(int j) const;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
