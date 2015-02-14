@@ -56,7 +56,7 @@ private:
   std::size_t numDim;
 };
 
-
+#ifdef ALBANY_MESH_TANFAD
 template<typename Traits> 
 class GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits> 
                     : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -85,6 +85,7 @@ private:
   std::size_t numVertices;
   std::size_t numDim;
 };
+#endif
 }
 
 #endif

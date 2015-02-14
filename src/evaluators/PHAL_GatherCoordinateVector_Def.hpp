@@ -117,6 +117,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   }
 }
 // **********************************************************************
+#ifdef ALBANY_MESH_TANFAD
 template<typename Traits>
 GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p,
@@ -197,4 +198,5 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif
 }

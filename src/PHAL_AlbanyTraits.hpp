@@ -69,8 +69,11 @@ namespace PHAL {
     struct Residual : EvaluationType<RealType, RealType> {};
     struct Jacobian : EvaluationType<FadType,  RealType> {};
     struct Tangent  : EvaluationType<TanFadType,
+#ifdef ALBANY_MESH_TANFAD
                                      TanFadType // Use this for shape opt
-                                     //RealType // Uncomment for no shape opt
+#else
+                                     RealType // Uncomment for no shape opt
+#endif
                                      > {};
     struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
 

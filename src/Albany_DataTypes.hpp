@@ -23,6 +23,10 @@
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Sacado_ETV_Vector.hpp"
 
+//amb Need to move to configuration.
+#define ALBANY_SFAD_SIZE 24
+#define ALBANY_SLFAD_SIZE 24
+
 // Typedef AD types to standard names
 typedef double RealType;
 #ifdef ALBANY_FAST_FELIX
@@ -30,7 +34,7 @@ typedef double RealType;
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 //  typedef Sacado::ELRFad::SLFad<double,16> FadType;
-  typedef Sacado::ELRFad::SFad<double,24> FadType;
+  typedef Sacado::ELRFad::SFad<double, ALBANY_SFAD_SIZE> FadType;
 #else
   typedef Sacado::Fad::DFad<double> FadType;
 #endif
