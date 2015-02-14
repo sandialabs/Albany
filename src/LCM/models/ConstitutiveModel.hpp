@@ -121,7 +121,7 @@ public:
   }
 
   ///
-  /// set the Temperature field
+  /// set the damage field
   ///
   void
   setDamageField(PHX::MDField<ScalarT, Cell, QuadPoint> damage)
@@ -198,6 +198,21 @@ protected:
   /// optional temperature field
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint> temperature_;
+
+  ///
+  /// Optional total concentration field
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint> total_concentration_;
+
+  ///
+  /// Optional total (He) bubble density field
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint> total_bubble_density_;
+
+  ///
+  /// Optional bubble volume fraction field
+  ///
+  PHX::MDField<ScalarT,Cell,QuadPoint> bubble_volume_fraction_;
 
   ///
   /// optional damage field

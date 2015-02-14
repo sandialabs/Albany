@@ -143,6 +143,8 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
+  // get strings from field_name_map in order to extract MDFields
+  //
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
@@ -154,6 +156,7 @@ computeState(typename Traits::EvalData workset,
   std::string void_volume_fraction_string = (*field_name_map_)["void_volume_fraction"];
 
   // extract dependent MDFields
+  //
   PHX::MDField<ScalarT> def_grad_field = *dep_fields[F_string];
   PHX::MDField<ScalarT> J = *dep_fields[J_string];
   PHX::MDField<ScalarT> poissons_ratio = *dep_fields["Poissons Ratio"];
@@ -166,6 +169,7 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
+  //
   PHX::MDField<ScalarT> stress_field = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> Fp_field = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps_field = *eval_fields[eqps_string];
@@ -178,6 +182,7 @@ computeState(typename Traits::EvalData workset,
   }
 
   // get State Variables
+  //
   Albany::MDArray Fp_field_old     = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqps_field_old   = (*workset.stateArrayPtr)[eqps_string + "_old"];
   Albany::MDArray eps_ss_field_old = (*workset.stateArrayPtr)[eps_ss_string + "_old"];
@@ -185,11 +190,13 @@ computeState(typename Traits::EvalData workset,
   Albany::MDArray void_volume_fraction_field_old  = (*workset.stateArrayPtr)[void_volume_fraction_string + "_old"];
 
   // define constants
+  //
   const RealType sq23(std::sqrt(2. / 3.));
   const RealType sq32(std::sqrt(3. / 2.));
   const RealType pi    = 3.141592653589793;
 
   // pre-define some tensors that will be re-used below
+  //
   Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), bebar(num_dims_);
   Intrepid::Tensor<ScalarT> s(num_dims_), sigma(num_dims_);
   Intrepid::Tensor<ScalarT> N(num_dims_), A(num_dims_);
@@ -199,35 +206,34 @@ computeState(typename Traits::EvalData workset,
 
 
   for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    //std::cout << "Cell: " << cell << std::endl;
     for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      //std::cout << "  point: " << pt << std::endl;
       ScalarT bulk = elastic_modulus(cell, pt)
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       ScalarT Y = yield_strength(cell, pt);
 
       // assign local state variables
+      // eps_ss is a scalar internal strain measure
+      // kappa is a scalar internal strength = 2 mu * eps_ss
+      // eqps is equivalent plastic strain
+      // void volume fraction ~ damage
       //
-      //ScalarT kappa = kappa_field(cell,pt);
       ScalarT kappa_old = kappa_field_old(cell,pt);
       ScalarT eps_ss = eps_ss_field(cell,pt);
       ScalarT eps_ss_old = eps_ss_field_old(cell,pt);
       ScalarT eqps_old = eqps_field_old(cell,pt);
       ScalarT void_volume_fraction_old = void_volume_fraction_field_old(cell,pt);
+
+      // check to see if this point has exceeded its critical void volume fraction
+      // if so, skip and set stress to zero (below)
+      //
       bool failed(false);
       if (Sacado::ScalarValue<ScalarT>::eval(void_volume_fraction_old) >= ff_) failed = true;
-
-      // std::cout << "  void volume fraction old: " << Sacado::ScalarValue<ScalarT>::eval(void_volume_fraction_old) << std::endl;
-      // std::cout << "  ff: " << ff_ << std::endl;
-      // std::cout << "  failed? " << failed << std::endl;
 
       if (!failed) {
         // fill local tensors
         //
         F.fill(&def_grad_field(cell, pt, 0, 0));
-
-        // std::cout << "  F:\n" << F << std::endl;
 
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
@@ -257,8 +263,6 @@ computeState(typename Traits::EvalData workset,
         s = mu * Intrepid::dev(bebar);
         ScalarT smag = Intrepid::norm(s);
 
-        // std::cout << "  s:\n" << s << std::endl;
-
         // calculate trial (Kirchhoff) pressure
         //
         ScalarT p = 0.5 * bulk * (Je * Je - 1.0);
@@ -269,7 +273,6 @@ computeState(typename Traits::EvalData workset,
         ScalarT Ybar = Je * (Y + kappa_old);
         ScalarT arg = 1.5 * q2_ * p / Ybar;
         ScalarT fstar = compute_fstar(void_volume_fraction_old, fc_, ff_, q1_);
-        //ScalarT fstar = void_volume_fraction_old;
         ScalarT psi = 1.0 + q3_ * fstar * fstar - 2.0 * q1_ * fstar * std::cosh(arg);
 
         // Gurson quadratic yield surface
@@ -278,9 +281,6 @@ computeState(typename Traits::EvalData workset,
         
         // check yield condition
         //
-        // std::cout << "  ======== Phi: " << Phi << std::endl;
-        //std::cout << "======== eps: " << std::numeric_limits<RealType>::epsilon() << std::endl;
-
         if (Phi > std::numeric_limits<RealType>::epsilon()) {
 
           // return mapping algorithm
@@ -309,19 +309,20 @@ computeState(typename Traits::EvalData workset,
           const int num_vars(5);
           std::vector<ScalarT> R(num_vars);
           std::vector<ScalarT> dRdX(num_vars*num_vars);
-          std::vector<ScalarT> X(num_vars), X_tr(num_vars);
+          std::vector<ScalarT> X(num_vars);
 
+          // FIXME: the initial guess needs some work, not active
           // initial guess
           //
-          ScalarT dgam_tr = std::sqrt(smag/(2.0 * mubar * Phi));
-          ScalarT eps_ss_tr = eps_ss_old + delta_time(0) * (H - Rd * eps_ss_old) * dgam_tr;
-          ScalarT kappa_tr = 2.0 * mu * eps_ss_tr;
-          ScalarT Ybar_tr = Je * (Y + kappa_tr);
-          ScalarT arg_tr = 1.5 * q2_ * p / Ybar_tr;
-          ScalarT p_tr = p - delta_time(0) * (dgam_tr * q1_ * q2_ * bulk * Ybar_tr * fstar * std::sinh(arg_tr)) / bulk;
-          arg_tr = 1.5 * q2_ * p_tr / Ybar_tr;
-          ScalarT void_tr = void_volume_fraction_old + delta_time(0) * (dgam_tr * q1_ * q2_ * ( 1.0 - fstar ) * fstar * Ybar_tr * std::sinh(arg_tr));
-          ScalarT eqps_tr = eqps_old + delta_time(0) * (dgam_tr * ((q1_ * q2_ * p * Ybar_tr * fstar * std::sinh(arg_tr)) / (1.0 - fstar) / Ybar_tr + smag * smag / (1.0 - fstar) / Ybar_tr));
+          // ScalarT dgam_tr = std::sqrt(smag/(2.0 * mubar * Phi));
+          // ScalarT eps_ss_tr = eps_ss_old + delta_time(0) * (H - Rd * eps_ss_old) * dgam_tr;
+          // ScalarT kappa_tr = 2.0 * mu * eps_ss_tr;
+          // ScalarT Ybar_tr = Je * (Y + kappa_tr);
+          // ScalarT arg_tr = 1.5 * q2_ * p / Ybar_tr;
+          // ScalarT p_tr = p - delta_time(0) * (dgam_tr * q1_ * q2_ * bulk * Ybar_tr * fstar * std::sinh(arg_tr)) / bulk;
+          // arg_tr = 1.5 * q2_ * p_tr / Ybar_tr;
+          // ScalarT void_tr = void_volume_fraction_old + delta_time(0) * (dgam_tr * q1_ * q2_ * ( 1.0 - fstar ) * fstar * Ybar_tr * std::sinh(arg_tr));
+          // ScalarT eqps_tr = eqps_old + delta_time(0) * (dgam_tr * ((q1_ * q2_ * p * Ybar_tr * fstar * std::sinh(arg_tr)) / (1.0 - fstar) / Ybar_tr + smag * smag / (1.0 - fstar) / Ybar_tr));
 
           X[0] = 0.0;
           X[1] = eps_ss_old;
@@ -329,27 +330,9 @@ computeState(typename Traits::EvalData workset,
           X[3] = void_volume_fraction_old;
           X[4] = eqps_old;
 
-          // X[0] = dgam_tr;
-          // X[1] = eps_ss_tr;
-          // X[2] = p_tr;
-          // X[3] = void_volume_fraction_old;
-          // X[4] = eqps_old;
-
-          X_tr[0] = dgam_tr;
-          X_tr[1] = eps_ss_tr;
-          X_tr[2] = p_tr;
-          X_tr[3] = void_tr;
-          X_tr[4] = eqps_tr;
-
-          // std::cout << "arg_tr    : " << arg_tr << ", arg: " << arg << std::endl;
-          // std::cout << "Ybar_tr   : " << Ybar_tr << ", Ybar: " << Ybar << std::endl;
-          // std::cout << "kappa_tr  : " << kappa_tr << ", kappa: " << kappa_old << std::endl;
-          // std::cout << "dgam_tr   : " << dgam_tr << ", old: " << 0.0 << std::endl;
-          // std::cout << "eps_ss_tr : " << eps_ss_tr << ", old: " << eps_ss_old << std::endl;
-          // std::cout << "p_tr      : " << p_tr << ", old: " << p << std::endl;
-          // std::cout << "void_tr   : " << void_tr << ", old: " << void_volume_fraction_old << std::endl;
-          // std::cout << "eqps_tr   : " << eqps_tr << ", old: " << eqps_old << std::endl;
-
+          // *!*!*
+          // now below we introduce a local 'Fad' type
+          // this is specifically for the nonlinear solve for our constitutive model
           // create a copy of be as a Fad
           //
           Intrepid::Tensor<Fad> beF(num_dims_);
@@ -366,15 +349,12 @@ computeState(typename Traits::EvalData workset,
           //
           Fad smagF = smag;
 
-          // std::cout << "p: " << p << ", Je: " << Je << ", psi: " << psi << std::endl;
-          // std::cout << "q1: " << q1_ << ", q2: " << q2_ << ", q3: " << q3_ << std::endl;
-
-          // std::cout << "======== local iterations ========" << std::endl;
+          // check for convergence
+          //
           while (!converged) {
 
-            // std::cout << "********************************" << std::endl;
             // set up data types
-            //
+            // again inside this loop everything is a local 'Fad'
             std::vector<Fad> XFad(num_vars);
             std::vector<Fad> RFad(num_vars);
             std::vector<ScalarT> Xval(num_vars);
@@ -384,6 +364,12 @@ computeState(typename Traits::EvalData workset,
             }
 
             // get solution vars
+            // NOTE: we have 5 independent variables
+            // dgam - plastic increment
+            // eps_ss - internal strain
+            // p - pressure
+            // void_volume_fraction
+            // eqps
             //
             Fad dgamF = XFad[0];
             Fad eps_ssF = XFad[1];
@@ -394,7 +380,6 @@ computeState(typename Traits::EvalData workset,
             // account for void coalescence
             //
             Fad fstarF = compute_fstar(void_volume_fractionF, fc_, ff_, q1_);
-            //Fad fstarF = void_volume_fractionF;
 
             // compute yield stress and rate terms
             //
@@ -403,13 +388,11 @@ computeState(typename Traits::EvalData workset,
             Fad rate_termF = 1.0 + std::asinh( std::pow(eqps_rateF / f, n));
             Fad kappaF = two_mubarF * eps_ssF;
             Fad YbarF = Je * (Y + kappaF) * rate_termF;
-            //Fad PhiF = sq32 * (smagF - two_mubarF * dgamF) - ( YbarF ) * rate_termF;
 
             // arguments that feed into the yield function
             //
             Fad argF = ( 1.5 * q2_ * pF ) / YbarF;
             Fad psiF = 1. + q3_ * fstarF * fstarF - 2. * q1_ * fstarF * std::cosh(argF);
-            //Fad factor = 1.0 / ( 1.0 + ( 2.0 * (mu * dgamF) ) );
             Fad factor = 1.0 / ( 1.0 + ( two_mubarF * dgamF) );
 
             // deviatoric stress
@@ -473,26 +456,6 @@ computeState(typename Traits::EvalData workset,
             RFad[3] = void_volume_fractionF - void_volume_fraction_old - dfg - dfnuc;
             RFad[4] = eqpsF - eqps_old - deq;
 
-            // std::cout << "  dgamF : " << dgamF << std::endl;
-            // std::cout << "  psiF : " << psiF << std::endl;
-            // std::cout << "  smag2 : " << smag2 << std::endl;
-            // std::cout << "  fstarF : " << fstarF << std::endl;
-            // std::cout << "  PhiF : " << PhiF << std::endl;
-            // std::cout << "  d_t : " << delta_time(0) << std::endl;
-            // std::cout << "  eqps_rateF : " << eqps_rateF << std::endl;
-            // std::cout << "  rate_termF : " << rate_termF << std::endl;
-            // std::cout << "  argF : " << argF << std::endl;
-            // std::cout << "  YbarF : " << YbarF << std::endl;
-            // std::cout << "  eps_ss : " << eps_ssF << std::endl;
-            // std::cout << "  eps_ss_old : " << eps_ss_old << std::endl;
-            // std::cout << "  d_eps_ss : " << (H - Rd*eps_ssF) * dgamF << std::endl;
-            // std::cout << "  pF : " << pF << std::endl;
-            // std::cout << "  p_old : " << p << std::endl;
-            // std::cout << "  d_p : " << dgamF * q1_ * q2_ * bulk * YbarF * fstarF * std::sinh(argF) << std::endl;
-            // std::cout << "  eqpsF : " << eqpsF << std::endl;
-            // std::cout << "  eqps_old : " << eqps_old << std::endl;
-            // std::cout << "  d_eq : " << deq << std::endl;
-
             // extract the values of the residuals
             //
             for (int i = 0; i < num_vars; ++i)
@@ -508,32 +471,23 @@ computeState(typename Traits::EvalData workset,
             RealType R4 = Sacado::ScalarValue<ScalarT>::eval(R[4]);
             RealType norm_res = std::sqrt(R0*R0 + R1*R1 + R2*R2 + R3*R3 + R4*R4);
             max_norm = std::max(norm_res, max_norm);
-            // std::cout << "  R0: " << R0 << std::endl;
-            // std::cout << "  R1: " << R1 << std::endl;
-            // std::cout << "  R2: " << R2 << std::endl;
-            // std::cout << "  R3: " << R3 << std::endl;
-            // std::cout << "  R4: " << R4 << std::endl;
-
 
             // check against too many iterations and failure
+            //
+            // if we have iterated the maximum number of times, just quit.
+            // we are banking on the global (NOX/LOCA) solver strategy to detect
+            // global convergence failure and cut back if necessary.
+            // this is not ideal and needs more work.
             //
             if (iter == max_iter) {
               if (void_volume_fractionF.val() >= ff_) {
                 failed = true;
-                break;
               }
-              // TEUCHOS_TEST_FOR_EXCEPTION(iter == max_iter, std::runtime_error,
-              //                            std::endl <<
-              //                            "Error in ElastoViscoplastic return mapping\n" <<
-              //                            "iter count = " << iter << "\n" << std::endl);
               break;
             }
 
             // check for a sufficiently small residual
             //
-            // std::cout << "  iter  : " << iter
-            //           << ", norm_res  : " << norm_res
-            //           << ", norm_res2 : " << norm_res/max_norm << std::endl;
             if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
               converged = true;
 
@@ -553,6 +507,7 @@ computeState(typename Traits::EvalData workset,
           }
 
           // patch local sensistivities into global 
+          // (magic!)
           //
           solver.computeFadInfo(dRdX, X, R);
           
@@ -565,18 +520,9 @@ computeState(typename Traits::EvalData workset,
           ScalarT void_volume_fraction = X[3];
           ScalarT eqps = X[4];
 
-          //std::cout << "======== dgam : " << dgam << std::endl;
-          //std::cout << "======== e_ss : " << eps_ss << std::endl;
-          //std::cout << "======== kapp : " << kappa << std::endl;
-
+          // compute modified void volume fraction
+          //
           fstar = compute_fstar(void_volume_fraction, fc_, ff_, q1_);
-          //fstar = void_volume_fraction;
-
-          // plastic direction
-          //N = (1 / smag) * s;
-
-          // update s
-          //s -= 2 * mubar * dgam * N;
 
           // return mapping of stress state
           //
@@ -610,7 +556,7 @@ computeState(typename Traits::EvalData workset,
           void_volume_fraction_field(cell,pt) = void_volume_fraction;
 
         } else {
-          //std::cout << "// we are not yielding, variables do not evolve" << std::endl;
+          // we are not yielding, variables do not evolve
           //
           eps_ss_field(cell, pt) = eps_ss_old;
           eqps_field(cell,pt) = eqps_old;
