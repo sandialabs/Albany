@@ -63,27 +63,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   material_dbs_.resize(num_models_);
   
 
-  //char mtrDbFilename[100];  //create string for file name
-  //
-
-  //Create a dummy solverFactory for validating application parameter lists
-  //(see QCAD::CoupledPoissonSchorodinger)
-  //FIXME: look into how this is used, uncomment if necessary
-  /*
-   Albany::SolverFactory
-   validFactory(
-   Teuchos::createParameterList("Empty dummy for Validation"), commT );
-
-   Teuchos::RCP<const Teuchos::ParameterList>
-   validAppParams = validFactory.getValidAppParameters();
-
-   Teuchos::RCP<const Teuchos::ParameterList>
-   validParameterParams = validFactory.getValidParameterParameters();
-
-   Teuchos::RCP<const Teuchos::ParameterList>
-   validResponseParams = validFactory.getValidResponseParameters();
-   */
-
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
   for (int m = 0; m < num_models_; ++m) {
@@ -148,14 +127,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     // Or can it be null?
     apps_[m] = Teuchos::rcp(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
-
-    //Validate parameter lists
-    //FIXME: add relevant things to validate to getValid* functions below
-    //problemParams_m->validateParameters(*getValidProblemParameters(),0);
-    //problemParams_m->sublist("Parameters").validateParameters(
-    // *validParameterParams, 0);
-    //problemParams_m->sublist("Response Functions").validateParameters(
-    // *validResponseParams, 0);
 
     //Create model evaluator
     Albany::ModelFactory
