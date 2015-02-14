@@ -40,7 +40,7 @@ namespace PHAL {
     typedef T& type;
   };
   template<typename T> struct RefKokkos {
-    typedef typename Kokkos::View<T***, PHX::Device>::reference_type type;
+    typedef typename Kokkos::View<T, PHX::Device>::reference_type type;
   };
   template<> struct Ref<FadType> : RefKokkos<FadType> {};
 #ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
