@@ -39,9 +39,6 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  friend void writestuff(const ComputeBasisFunctions<EvalT, Traits>& cbf,
-                         typename Traits::EvalData workset);
-
 private:
 
   typedef typename EvalT::MeshScalarT MeshScalarT;
@@ -85,9 +82,6 @@ public:
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
-  friend void writestuff(const ComputeBasisFunctions<EvalT, Traits>& cbf,
-                         typename Traits::EvalData workset);
 
   KOKKOS_INLINE_FUNCTION
   void operator () (const int i) const;

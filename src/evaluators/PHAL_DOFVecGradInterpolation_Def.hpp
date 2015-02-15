@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "amb.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -94,27 +93,6 @@ namespace PHAL {
   }
 };
 
-  //**********************************************************************
-#define wse(TYPE)                                                       \
-  void writestuff (                                                     \
-    const DOFVecGradInterpolation<PHAL::AlbanyTraits::TYPE, PHAL::AlbanyTraits>& v, \
-    PHAL::AlbanyTraits::EvalData workset) {}
-wse(Jacobian);
-wse(Tangent);
-wse(DistParamDeriv);
-
-void writestuff (
-  const DOFVecGradInterpolation<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>& v,
-  PHAL::AlbanyTraits::EvalData workset)
-{
-  if (amb::print_level() < 2) return;
-  const int nc = workset.numCells, nn = v.numNodes, nq = v.numQPs,
-    nd = v.numDims, nv = v.vecDim;
-  amb_write_mdfield3(v.val_node, "dvg_val_node", nc, nn, nv);
-  amb_write_mdfield4(v.GradBF, "dvg_GradBF", nc, nn, nq, nd);
-  amb_write_mdfield4(v.grad_val_qp, "dvg_grad_val_qp", nc, nq, nv, nd);
-}
-
   template<typename EvalT, typename Traits>
   void DOFVecGradInterpolation<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
@@ -136,8 +114,6 @@ void writestuff (
         } 
       } 
     }
-
-    writestuff(*this, workset);
 
     //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
 #else

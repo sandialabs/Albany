@@ -26,7 +26,6 @@ SET(SOURCES
   Albany_NullSpaceUtils.cpp
   Albany_Memory.cpp
   PHAL_Utilities.cpp
-  amb.cpp
   )
 
 IF (ALBANY_EPETRA)
@@ -75,7 +74,6 @@ SET(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
-  amb.hpp
   )
 
 IF(ALBANY_EPETRA) 

@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "amb.hpp"
 
 #include <Intrepid_MiniTensor_Mechanics.h>
 #include <Teuchos_TestForException.hpp>
@@ -81,28 +80,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 }
 
-//------------------------------------------------------------------------------
-#define wse(TYPE)                                                       \
-  void writestuff (                                                     \
-    const LCM::MechanicsResidual<PHAL::AlbanyTraits::TYPE, PHAL::AlbanyTraits>& mr, \
-    PHAL::AlbanyTraits::EvalData workset) {}
-wse(Jacobian);
-wse(Tangent);
-wse(DistParamDeriv);
-
-void writestuff (
-  const MechanicsResidual<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>& mr,
-  PHAL::AlbanyTraits::EvalData workset)
-{
-  if (amb::print_level() < 2) return;
-  const int nc = workset.numCells, nn = mr.num_nodes_, nd = mr.num_dims_,
-    np = mr.num_pts_;
-  amb_write_mdfield3(mr.residual_, "mr_residual", nc, nn, nd);
-  amb_write_mdfield4(mr.stress_, "mr_stress", nc, np, nd, nd);
-  amb_write_mdfield4(mr.w_grad_bf_, "mr_w_grad_bf", nc, nn, nd, nd);
-  amb_write_mdfield3(mr.w_bf_, "mr_w_bf", nc, nn, np);
-  amb_write_mdfield3(mr.acceleration_, "mr_acceleration", nc, np, nd);
-}
 // ***************************************************************************
 //Kokkos kernels
 //
@@ -269,9 +246,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 #endif
-
-
-  writestuff(*this, workset);
 }
 //------------------------------------------------------------------------------
 }

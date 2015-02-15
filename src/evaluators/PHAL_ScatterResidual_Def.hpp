@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "amb.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -467,9 +466,7 @@ evaluateFields(typename Traits::EvalData workset)
   colT.resize(nunk);
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
-  FILE* fid = amb::print_level() > 10 ?
-    fopen(amb::get_full_filename("sr_jac").c_str(), "wa") :
-    NULL;
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     // Local Unks: Loop over nodes in element, Loop over equations per node
@@ -500,16 +497,11 @@ evaluateFields(typename Traits::EvalData workset)
             // Sum Jacobian entries all at once
             JacT->sumIntoLocalValues(
               rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-            if (fid)
-              for (int lunk = 0; lunk < nunk; ++lunk)
-                fprintf(fid, "%d %d %d %d %d %1.15e\n", cell, node, eq, rowT,
-                        colT[lunk], valptr.fastAccessDx(lunk));
           }
         } // has fast access
       }
     }
   }
-  if (fid) fclose(fid);
 #else
    //Kokkos parallel execution
 

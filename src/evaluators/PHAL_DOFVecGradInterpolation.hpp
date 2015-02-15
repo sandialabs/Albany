@@ -36,9 +36,6 @@ public:
 
   void evaluateFields(typename Traits::EvalData d);
 
-  friend void writestuff(const DOFVecGradInterpolation<EvalT, Traits>& mr,
-                         typename Traits::EvalData workset);
-
 private:
 
   typedef typename EvalT::ScalarT ScalarT;

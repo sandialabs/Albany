@@ -278,6 +278,7 @@ x Implement derivative dimensions cleanly (Andrew)
   . We're thinking it's OK. Mauro's in the loop, so he and I will deal with it
     post-merge if necessary.
 x global replace to ExponentialRandomField<RealType>.
+x When all is done, strip out the amb:: debug stuff (Andrew)
 - final decision on ScalarT references
   x Albany has something working now
 - SG_MP (Andrew, after merge)
@@ -285,7 +286,6 @@ x global replace to ExponentialRandomField<RealType>.
 - DEBUG build nans.
 - Merge master into tpetra_kokkos (Andrew)
   x 5 Feb
-- When all is done, strip out the amb:: debug stuff (Andrew)
 - Merge tpetra_kokkos into master (Andrew)
 - SLFad, SFad (Andrew, before or after merge)
 - Peridigm (Andrew and Dave)

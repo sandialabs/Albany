@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "amb.hpp"
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -103,25 +102,6 @@ namespace LCM {
     if (strain_rc_) this->utils.setFieldData(strain_rc_(),fm);
   }
 
-  //----------------------------------------------------------------------------
-#define wse(TYPE)                                                       \
-  void writestuff (                                                     \
-    const LCM::Kinematics<PHAL::AlbanyTraits::TYPE, PHAL::AlbanyTraits>& k, \
-    PHAL::AlbanyTraits::EvalData workset) {}
-wse(Jacobian);
-wse(Tangent);
-wse(DistParamDeriv);
-
-void writestuff (
-  const Kinematics<PHAL::AlbanyTraits::Residual, PHAL::AlbanyTraits>& k,
-  PHAL::AlbanyTraits::EvalData workset)
-{
-  if (amb::print_level() < 2) return;
-  const int nc = workset.numCells, nd = k.num_dims_, np = k.num_pts_;
-  amb_write_mdfield2(k.j_, "k_j", nc, np);
-  amb_write_mdfield4(k.def_grad_, "k_def_grad", nc, np, nd, nd);
-  amb_write_mdfield4(k.grad_u_, "k_grad_u", nc, np, nd, nd);
-}
 //----------------------------------------------------------------------------
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //Kokkos kernels
@@ -442,7 +422,6 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
   }
 
 #endif
-   writestuff(*this, workset);
   }
   //----------------------------------------------------------------------------
 }

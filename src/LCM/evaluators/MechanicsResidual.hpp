@@ -53,10 +53,6 @@ public:
   void
   evaluateFields(typename Traits::EvalData d);
 
-  friend void writestuff(const MechanicsResidual<EvalT, Traits>& mr,
-                         typename Traits::EvalData workset);
-
-   
 private:
 
   ///
