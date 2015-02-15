@@ -744,7 +744,7 @@ computeStateParallel(typename Traits::EvalData workset,
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
   Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqps_string + "_old"];
 
-  TEUCHOS_TEST_FOR_EXCEPTION(true), std::invalid_argument,
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
                                   ">>> ERROR (J2Model): computeStateParallel not implemented");
 
 
