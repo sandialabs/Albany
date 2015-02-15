@@ -48,7 +48,7 @@ SaturationModulus(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*satmod_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*satmod_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters

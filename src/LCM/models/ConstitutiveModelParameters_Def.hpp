@@ -292,7 +292,7 @@ evaluateFields(typename Traits::EvalData workset)
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
-    Stokhos::KL::ExponentialRandomField<MeshScalarT>*  exp_rf_kl =  exp_rf_kl_map_[it->first].get();
+    Stokhos::KL::ExponentialRandomField<RealType>*  exp_rf_kl =  exp_rf_kl_map_[it->first].get();
     ScalarT constant_value = constant_value_map_[it->first];
     if (is_constant_map_[it->first]) {
       for (int cell(0); cell < workset.numCells; ++cell) {
@@ -443,7 +443,7 @@ parseParameters(const std::string &n,
         insert(
         std::make_pair(n,
             Teuchos::rcp(
-                new Stokhos::KL::ExponentialRandomField<MeshScalarT>(pl))));
+                new Stokhos::KL::ExponentialRandomField<RealType>(pl))));
     int num_KL = exp_rf_kl_map_[n]->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters

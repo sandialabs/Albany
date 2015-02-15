@@ -53,7 +53,7 @@ namespace LCM {
       this->addDependentField(coordVec);
 
       exp_rf_kl = 
-        Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>
+        Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>
                      (*porosity_list));
       int num_KL = exp_rf_kl->stochasticDimension();
 

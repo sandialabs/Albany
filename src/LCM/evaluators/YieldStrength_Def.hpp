@@ -48,7 +48,7 @@ YieldStrength(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*elmd_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*elmd_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters

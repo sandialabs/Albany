@@ -272,17 +272,21 @@ x Felix
 x Hydride
 x Aeras
 x SCOREC (Andrew)
+x SGBratu1D_Tpetra
+x Implement derivative dimensions cleanly (Andrew)
++ Distributed derivatives and ROL? (Andrew and Mauro)
+  . We're thinking it's OK. Mauro's in the loop, so he and I will deal with it
+    post-merge if necessary.
+x global replace to ExponentialRandomField<RealType>.
+- final decision on ScalarT references
+  x Albany has something working now
 - SG_MP (Andrew, after merge)
   . Eric P. writes that we should skip SG_MP for now.
-x SGBratu1D_Tpetra
+- DEBUG build nans.
 - Merge master into tpetra_kokkos (Andrew)
-  x 1 Feb
-- Implement derivative dimensions cleanly (Andrew)
-- Internal CDash (Duane and Glen)
+  x 5 Feb
+- When all is done, strip out the amb:: debug stuff (Andrew)
 - Merge tpetra_kokkos into master (Andrew)
+- SLFad, SFad (Andrew, before or after merge)
 - Peridigm (Andrew and Dave)
 - Dakota (Andy?)
-- Distributed derivatives and ROL? (Mauro)
-- Figure out ETI in panzer_kokkos
-- When all is done, strip out the amb:: debug stuff (Andrew)
-- SLFad, SFad (Andrew, before or after merge)
