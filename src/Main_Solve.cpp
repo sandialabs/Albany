@@ -27,7 +27,9 @@
 
 #include "Phalanx_config.hpp"
 #include "Phalanx.hpp"
-#include "Phalanx_KokkosUtilities.hpp"
+
+#include "Kokkos_Core.hpp"
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 //
@@ -120,7 +122,7 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
 #endif
 
-   PHX::InitializeKokkosDevice();
+  Kokkos::initialize(argc, argv);
 
 #ifdef ALBANY_CHECK_FPE
    // Catch FPEs. Follow Main_SolveT.cpp's approach to checking for floating
@@ -289,7 +291,7 @@ int main(int argc, char *argv[]) {
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
 
-   PHX::FinalizeKokkosDevice();
+  Kokkos::finalize_all();
  
   return status;
 }
