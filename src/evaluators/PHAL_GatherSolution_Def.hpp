@@ -630,7 +630,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int firstunk = neq * node + this->offset;
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Jacobian::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -640,7 +640,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Jacobian::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = (this->tensorRank == 0 ? this->val_dot[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec_dot(cell,node,eq) :
                     this->valTensor_dot[0](cell,node, eq/numDim, eq%numDim));
@@ -650,7 +650,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Jacobian::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = (this->tensorRank == 0 ? this->val_dotdot[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec_dotdot(cell,node,eq) :
                     this->valTensor_dotdot[0](cell,node, eq/numDim, eq%numDim));
@@ -753,7 +753,7 @@ evaluateFields(typename Traits::EvalData workset)
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Tangent::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = ((this->tensorRank == 2) ? (this->valTensor[0])(cell,node,eq/numDim,eq%numDim) :
                     (this->tensorRank == 1) ? (this->valVec)(cell,node,eq) :
                     (this->val[eq])(cell,node));
@@ -768,7 +768,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.transientTerms && this->enableTransient) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Tangent::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = ((this->tensorRank == 2) ? (this->valTensor_dot[0])(cell,node,eq/numDim,eq%numDim) :
                     (this->tensorRank == 1) ? (this->valVec_dot)(cell,node,eq) :
                     (this->val_dot[eq])(cell,node));
@@ -784,7 +784,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
       if (workset.accelerationTerms && this->enableAcceleration) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Tangent::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = ((this->tensorRank == 2) ? (this->valTensor_dotdot[0])(cell,node,eq/numDim,eq%numDim) :
                     (this->tensorRank == 1) ? (this->valVec_dotdot)(cell,node,eq) :
                     (this->val_dotdot[eq])(cell,node));
@@ -1132,7 +1132,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::SGTangent::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
         valptr = (this->tensorRank == 2 ? (this->valTensor[0])(cell,node,eq/numDim,eq%numDim) :
                   this->tensorRank == 1 ? (this->valVec)(cell,node,eq) :
                   (this->val[eq])(cell,node));

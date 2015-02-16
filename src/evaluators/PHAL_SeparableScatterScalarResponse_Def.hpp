@@ -107,8 +107,7 @@ evaluateFields(typename Traits::EvalData workset)
     // Loop over responses
 
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      PHAL::AlbanyTraits::Jacobian::ScalarRefT
-        val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {

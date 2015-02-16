@@ -290,3 +290,4 @@ x When all is done, strip out the amb:: debug stuff (Andrew)
 - SLFad, SFad (Andrew, before or after merge)
 - Peridigm (Andrew and Dave)
 - Dakota (Andy?)
+- scorec_elastadapt_spr_tpetra, scorec_j2adapt_tpetra failing?
