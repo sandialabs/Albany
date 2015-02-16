@@ -1600,8 +1600,17 @@ void Aeras::SpectralDiscretization::computeCoords()
 
 void Aeras::SpectralDiscretization::computeGraphs()
 {
-  std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
-  int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
+  //std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
+  //int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
+
+#ifdef OUTPUT_TO_SCREEN
+  *out <<"In Aeras::SpectralDiscretization computeGraphs()!" << std::endl; 
+#endif
+  
+  const int nodes_per_element = points_per_edge*points_per_edge;
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl; 
+#endif 
 
   // int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
@@ -1615,8 +1624,10 @@ void Aeras::SpectralDiscretization::computeGraphs()
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
 
+  const stk::mesh::BucketVector & elementBuckets = bulkData.buckets(stk::topology::ELEMENT_RANK);
+  
   stk::mesh::get_selected_entities(select_owned,
-				   bulkData.buckets(stk::topology::ELEMENT_RANK),
+				   elementBuckets,
 				   cells);
 
   if (commT->getRank()==0)
@@ -1625,34 +1636,36 @@ void Aeras::SpectralDiscretization::computeGraphs()
   GO row, col;
   Teuchos::ArrayView<GO> colAV;
 
-  for (std::size_t i=0; i < cells.size(); i++)
+  //Use wsElNodeEqID to populate the graphs
+
+  //loop over number of element buckets 
+  for (size_t ibuck=0; ibuck < elementBuckets.size(); ++ibuck) 
   {
-    stk::mesh::Entity e = cells[i];
-    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-    const size_t num_nodes = bulkData.num_nodes(e);
-
-    // loop over local nodes
-    for (std::size_t j=0; j < num_nodes; j++)
+    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck]; 
+    //loop over elements in bucket
+    for (size_t ielem = 0; ielem < elementBucket.size(); ++ielem) 
     {
-      stk::mesh::Entity rowNode = node_rels[j];
-
-      // loop over eqs
-      for (std::size_t k=0; k < neq; k++)
+      //loop over local nodes
+      for (size_t j =0; j < nodes_per_element; ++ j)
       {
-        row = getGlobalDOF(gid(rowNode), k);
-        for (std::size_t l=0; l < num_nodes; l++)
+        //loop over equations
+        for (size_t k=0; k < neq; k++)
         {
-          stk::mesh::Entity colNode = node_rels[l];
-          for (std::size_t m=0; m < neq; m++)
+          row = wsElNodeEqID[ibuck][ielem][j][k]; 
+          //loop over local nodes
+          for (size_t l = 0; l < nodes_per_element; l++) 
           {
-            col = getGlobalDOF(gid(colNode), m);
-            colAV = Teuchos::arrayView(&col, 1);
-            overlap_graphT->insertGlobalIndices(row, colAV);
+            for (size_t m = 0; m < neq; m++) 
+            {
+              col = wsElNodeEqID[ibuck][ielem][l][m]; 
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT->insertGlobalIndices(row, colAV);
+            }
           }
         }
       }
-    }
-  }
+    }     
+  }       
   overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map
@@ -3142,12 +3155,12 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   //This function is not critical and only called for XZ hydrostatic equations.
   transformMesh();
 
-  //IK, 1/23/15, FIXME: to implement
+  computeWorksetInfo();
+ 
+  //IKT, 2/16/15: moving computeGraphs() to after computeWorksetInfo(), as computeGraphs() relies on wsElNodeEqID array
+  //which is set in computeWorksetInfo()  
   computeGraphs();
 
-  computeWorksetInfo();
-  
-  //IK, 1/26/15: This will need to be uncommented at some point.
   //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
   computeCoords(); 
 
