@@ -141,9 +141,6 @@ private:
   int
   num_models_;
 
-  //! List of free parameter names
-  Teuchos::Array< Teuchos::RCP< Teuchos::Array<std::string> > > coupled_param_names_;
-
   Teuchos::Array<int>
   num_params_;
 
@@ -167,15 +164,6 @@ private:
   //like num_response_vecs
   int
   num_responses_total_;
-
-  /// Sacado parameter vector
-  mutable Teuchos::Array<ParamVec> coupled_sacado_param_vec_;
-
-  /// Tpetra map for parameter vector
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map> > coupled_param_map_;
-
-  /// Tpetra parameter vector
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > coupled_param_vec_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
   solver_inargs_;

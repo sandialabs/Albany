@@ -27,7 +27,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   commT_ = commT;
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
-  //TODO: Check with Alejandro.
   num_dist_params_total_ = 0;
 
   // Get "Coupled Schwarz" parameter sublist
@@ -180,22 +179,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   std::cout << "Total # parameters, responses: " << num_params_total_;
   std::cout << ", " << num_responses_total_ << '\n';
  
-  //Set coupled parameter names array, for get_p_names by concatenating parameter names
-  //from each model.  
-  coupled_param_names_.resize(num_params_total_ + num_dist_params_total_);
-  int counter = 0; 
-  for (int m=0; m<num_models_; m++) {
-    for (int l=0; l<num_params_[m]; l++) {
-      int num_parameters = models_[m]->get_p_names(l)->size();
-      coupled_param_names_[l+counter] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
-      for (int j=0; j<num_parameters; j++) {
-        (*coupled_param_names_[l+counter])[j] = (*models_[m]->get_p_names(l))[j]; 
-        
-      } 
-      counter += num_parameters; 
-    }
-  }
-
   //Create ccoupled_disc_map, a map for the entire coupled ME solution,
   //created from the entries of the disc_maps array (individual maps).
   coupled_disc_map_ = createCoupledMap(disc_maps_, commT_);
@@ -341,26 +324,27 @@ LCM::SchwarzMultiscale::get_f_space() const
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
-    {
+{
   TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_params_total_ + num_dist_params_total_ < 0,
+      l >= num_params_total_ < 0,
       Teuchos::Exceptions::InvalidParameter,
       std::endl <<
       "Error!  LCM::SchwarzMultiscale::get_p_space():  " <<
       "Invalid parameter index l = " << l << std::endl);
-  Teuchos::RCP<const Tpetra_Map> map;
-  if (l < num_params_total_)
-    map = coupled_param_map_[l];
-  //IK, 7/1/14: commenting this out for now
-  //map = distParamLib->get(dist_param_names[l-num_param_vecs])->map();
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_param_space =
-      Thyra::createVectorSpace<ST>(map);
-  return coupled_param_space;
+   if (l < num_params_partial_sum_[0])
+     return models_[0]->get_p_space(l); 
+   else {
+     for (int m=1; m<num_models_; m++){
+       if (l >= num_params_partial_sum_[m-1] && l < num_params_partial_sum_[m]) {
+         return models_[m]->get_p_space(l - num_params_partial_sum_[m-1]); 
+       }
+     }
+   }
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
-    {
+{
   TEUCHOS_TEST_FOR_EXCEPTION(
    l >= num_responses_total_  || l < 0,
    Teuchos::Exceptions::InvalidParameter,
@@ -380,15 +364,23 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 
 Teuchos::RCP<const Teuchos::Array<std::string> >
 LCM::SchwarzMultiscale::get_p_names(int l) const
-    {
+{
    TEUCHOS_TEST_FOR_EXCEPTION(
-   l >= num_params_total_ + num_dist_params_total_ || l < 0,
+   l >= num_params_total_ || l < 0,
    Teuchos::Exceptions::InvalidParameter,
    std::endl <<
    "Error!  LCM::SchwarzMultiscale::get_p_names():  " <<
    "Invalid parameter index l = " << l << std::endl);
-
-   return coupled_param_names_[l];
+    
+   if (l < num_params_partial_sum_[0])
+     return models_[0]->get_p_names(l); 
+   else {
+     for (int m=1; m<num_models_; m++){
+       if (l >= num_params_partial_sum_[m-1] && l < num_params_partial_sum_[m]) {
+         return models_[m]->get_p_names(l - num_params_partial_sum_[m-1]); 
+       }
+     }
+   }
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -542,16 +534,44 @@ allocateVectors()
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_op_impl(int j) const
-    {
-  //FIXME: fill in!
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= num_responses_total_ || j < 0, 
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl << 
+    "Error!  LCM::SchwarzMultiscale::create_DgDx_op_impl():  " << 
+    "Invalid response index j = " << j << std::endl);
+  
+   if (j < num_responses_partial_sum_[0]) 
+     return Thyra::createLinearOp(apps_[0]->getResponse(j)->createGradientOpT());
+   else {
+     for (int m=1; m<num_models_; m++){
+       if (j >= num_responses_partial_sum_[m-1] && j < num_responses_partial_sum_[m])
+         return Thyra::createLinearOp(apps_[m]->getResponse(j - num_responses_partial_sum_[m-1])->createGradientOpT()); 
+     }
+   } 
 }
 
 /// Create operator form of dg/dx_dot for distributed responses
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
-    {
-  //FIXME: fill in!
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    j >= num_responses_total_ || j < 0, 
+    Teuchos::Exceptions::InvalidParameter,
+    std::endl << 
+    "Error!  LCM::SchwarzMultiscale::create_DgDx_dot_op():  " << 
+    "Invalid response index j = " << j << std::endl);
+  
+   if (j < num_responses_partial_sum_[0]) 
+     return Thyra::createLinearOp(apps_[0]->getResponse(j)->createGradientOpT());
+   else {
+     for (int m=1; m<num_models_; m++){
+       if (j >= num_responses_partial_sum_[m-1] && j < num_responses_partial_sum_[m])
+         return Thyra::createLinearOp(apps_[m]->getResponse(j - num_responses_partial_sum_[m-1])->createGradientOpT()); 
+     }
+   } 
 }
 
 /// Create OutArgs
@@ -559,7 +579,58 @@ Thyra::ModelEvaluatorBase::OutArgs<ST>
 LCM::SchwarzMultiscale::
 createOutArgsImpl() const
 {
-  //FIXME: fill in!
+  Thyra::ModelEvaluatorBase::OutArgsSetup<ST> result;
+  result.setModelEvalDescription(this->description());
+
+  //Note: it is assumed her there are no distributed parameters.
+  result.set_Np_Ng(num_params_total_, num_responses_total_);
+
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
+
+  result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
+  result.set_W_properties(
+      Thyra::ModelEvaluatorBase::DerivativeProperties(
+        Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
+        Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
+        true));
+
+  for (int l = 0; l < num_params_total_; ++l) {
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, l,
+        Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+  }
+  for (int i = 0; i < num_responses_total_; ++i) {
+    Thyra::ModelEvaluatorBase::DerivativeSupport dgdx_support;
+   if (i < num_responses_partial_sum_[0]) {
+     if (apps_[0]->getResponse(i)->isScalarResponse()) 
+       dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
+     else 
+      dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
+   }
+   else {
+     for (int m=1; m<num_models_; m++){
+       if (i >= num_responses_partial_sum_[m-1] && i < num_responses_partial_sum_[m]) {
+         if (apps_[m]->getResponse(i - num_responses_partial_sum_[m-1])->isScalarResponse()) 
+           dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
+         else
+           dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
+       }
+     }
+   } 
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, i, dgdx_support);
+    result.setSupports(
+        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, i, dgdx_support);
+    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+    //result.setSupports(
+    //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
+
+    for (int l = 0; l < num_params_total_; l++)
+      result.setSupports(
+          Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, l,
+          Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+  }
+  return result;
 }
 
 /// Evaluate model on InArgs
@@ -589,7 +660,7 @@ createInArgsImpl() const
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
   //result.setSupports(Thyra::ModelEvaluatorBase::IN_ARG_omega, true);
 
-  result.set_Np(num_params_total_ + num_dist_params_total_);
+  result.set_Np(num_params_total_);
 
   return result;
 }

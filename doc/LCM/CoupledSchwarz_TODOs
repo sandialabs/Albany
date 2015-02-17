@@ -9,8 +9,6 @@ off on this for now until we decide definitively what'll be read in from what fi
 
 6.) Eventually we'll want to put an ifdef to suppress all the debug output [TBD].
 
-7.) Reimplement get_p_names and get_p_space in SchwarzMultiscale class -- forming/storing coupled
-vectors/arrays for these is not necessary. [TBD]   
 
 ---------------------Development TODOs------------------------
 
@@ -22,11 +20,6 @@ in QCAD_CoupledPoissonSchrodinger.cpp as an example.  We may want to write a sep
 to return the Jacobian operator, as in QCAD. [TBD -- I suggest we hold off on this until we do 
 the other easier stuff.  I also suggest in the first attempt we just implement the 
 Jacobian for 2 models that are concatenated but not coupled.]
-
-9.) Implement create_DgDx_op_impl and create_DgDx_dot_op_impl in SchwarzMultiscale.cpp. 
-See QCAD_CoupledSchrodingerPoisson.cpp for an example. [TBD]
-
-10.) Implement createOutArgsImpl() in SchwarzMultiscale.cpp. [TBD]
 
 11.) Implement evalModelImpl in SchwarzMultiscale.cpp. [TBD]
 
