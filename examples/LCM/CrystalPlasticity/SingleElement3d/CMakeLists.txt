@@ -9,6 +9,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShear3d.xml
                ${CMAKE_CURRENT_BINARY_DIR}/ElasticShear3d.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CrystalElasticity3d_Material.xml
                ${CMAKE_CURRENT_BINARY_DIR}/CrystalElasticity3d_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleHexElement.g
+               ${CMAKE_CURRENT_BINARY_DIR}/SingleHexElement.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShear3d.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/ElasticShear3d.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShear3d.gold.exo
