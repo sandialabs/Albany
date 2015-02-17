@@ -141,6 +141,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   solver_inargs_.resize(num_models_);
   solver_outargs_.resize(num_models_);
   num_params_.resize(num_models_);
+  num_params_partial_sum_.resize(num_models_); 
   num_responses_.resize(num_models_);
   num_responses_partial_sum_.resize(num_models_); 
   num_params_total_ = 0;
@@ -160,8 +161,14 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     num_responses_[m] = solver_outargs_[m].Ng();
 
-    if (m == 0) num_responses_partial_sum_[m] = num_responses_[m]; 
-    else num_responses_partial_sum_[m] = num_responses_partial_sum_[m-1] + num_responses_[m]; 
+    if (m == 0) {
+      num_responses_partial_sum_[m] = num_responses_[m]; 
+      num_params_partial_sum_[m] = num_params_[m]; 
+    }
+    else {
+      num_responses_partial_sum_[m] = num_responses_partial_sum_[m-1] + num_responses_[m]; 
+      num_params_partial_sum_[m] = num_params_partial_sum_[m-1] + num_params_[m];
+    } 
 
     //Does it make sense for num_params_total and num_responses_total to be
     //the sum of these values for each model?  I guess so.
@@ -188,11 +195,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       counter += num_parameters; 
     }
   }
-  /*for (int m=0; m<n_models_; m++) {
-    for (int i=0; i<num_params_[m]; i++) {
-
-    }
-  }*/
 
   //Create ccoupled_disc_map, a map for the entire coupled ME solution,
   //created from the entries of the disc_maps array (individual maps).
@@ -216,67 +218,25 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     // Calling allocateVectors() will set x and x_dot in nominal_values_
     allocateVectors();
 
-    //IKT, 2/13/15: commenting out the following for now as it'll cause a seg fault due 
-    //to some things not being allocated yet.  
-    /*coupled_sacado_param_vec_.resize(num_params_total_);
-    coupled_param_map_.resize(num_params_total_);
-    coupled_param_vec_.resize(num_params_total_);
-
-    /// Create sacado parameter vector for coupled problem
-    // This is for setting p_init in nominal_values_
-    // First get each model's parameter vector and put them in an array
-    Teuchos::Array<Teuchos::Array<ParamVec> >
-    sacado_param_vec_array(num_models_);
-
-    for (int m = 0; m < num_models_; ++m) {
-
-      Teuchos::Array<ParamVec>
-      sacado_param_vec_m;
-
-      sacado_param_vec_m.resize(num_params_[m]);
-
-      for (int i = 0; i < solver_inargs_[m].Np(); ++i) {
-        Teuchos::RCP<Tpetra_Vector const>
-        p = ConverterT::getConstTpetraVector(solver_inargs_[m].get_p(i));
-
-        Teuchos::ArrayRCP<const ST> p_constView = p->get1dView();
-        if (p != Teuchos::null) {
-          for (unsigned int j = 0; j < sacado_param_vec_m[i].size(); j++)
-            sacado_param_vec_m[i][j].baseValue = p_constView[j];
-        }
-      }
-      sacado_param_vec_array[m] = sacado_param_vec_m;
-    }
-    //FIXME: populate coupled_sacado_param_vec_,
-    //the parameter vec for the coupled model
-    //coupled_sacado_param_vec_ = ...
-
-    //Create Tpetra map and Tpetra vectors for coupled parameters
-    //TODO: check with Alejandro that this makes sense for the parameters
-    Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
-    for (int l = 0; l < coupled_sacado_param_vec_.size(); ++l) {
-      coupled_param_map_[l] = Teuchos::rcp(
-          new Tpetra_Map(coupled_sacado_param_vec_[l].size(), 0, commT_, lg));
-      coupled_param_vec_[l] = Teuchos::rcp(
-          new Tpetra_Vector(coupled_param_map_[l]));
-      for (unsigned int k = 0; k < coupled_sacado_param_vec_[l].size(); ++k) {
-        const Teuchos::ArrayRCP<ST> coupled_param_vec_nonConstView =
-            coupled_param_vec_[l]->get1dViewNonConst();
-        coupled_param_vec_nonConstView[k] = coupled_sacado_param_vec_[l][k]
-            .baseValue;
-      }
-    }
-
+    //set p_init in nominal_values_  
     // TODO: Check if correct nominal values for parameters
-    for (int l = 0; l < num_params_total_; ++l) {
-      Teuchos::RCP<const Tpetra_Map> map = coupled_param_map_[l];
-      Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_param_space =
-          Thyra::createVectorSpace<ST>(map);
-      nominal_values_.set_p(
-          l,
-          Thyra::createVector(coupled_param_vec_[l], coupled_param_space));
-    }*/
+    for (int l = 0; l < num_params_total_; l++) {
+      if (l < num_params_partial_sum_[0])
+        {
+        nominal_values_.set_p(l,solver_inargs_[0].get_p(l)); 
+        }
+      else {
+        for (int m=1; m<num_models_; m++){
+          if (l >= num_params_partial_sum_[m-1] && l < num_params_partial_sum_[m]) {
+            nominal_values_.set_p(l, solver_inargs_[m].get_p(l - num_params_partial_sum_[m-1])); 
+          }
+         }
+      }
+    } 
+
   } //end setting of nominal values
+  
+  std::cout << "Set nominal_values_! \n"; 
 
   //FIXME: Add discretization parameterlist and discretization object
   //for the "combined" solution vector from all the coupled Model
@@ -285,7 +245,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   //FIXME: How are we going to collect output?  Write exodus files for
   //each model evaluator?  Joined exodus file?
 
-  std::cout << "Set nominal_values_! \n"; 
 }
 
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
@@ -409,11 +368,11 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
    "Error!  LCM::SchwarzMultiscale::get_g_space():  " <<
    "Invalid response index l = " << l << std::endl);
 
-   if (l <= num_responses_partial_sum_[0]) 
+   if (l < num_responses_partial_sum_[0]) 
      return models_[0]->get_g_space(l); 
    else {
      for (int m=1; m<num_models_; m++){
-       if (l > num_responses_partial_sum_[m-1] && l <= num_responses_partial_sum_[m])
+       if (l >= num_responses_partial_sum_[m-1] && l < num_responses_partial_sum_[m])
          return models_[m]->get_g_space(l - num_responses_partial_sum_[m-1]); 
      }
    } 
