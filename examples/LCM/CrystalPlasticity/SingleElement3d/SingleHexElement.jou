@@ -1,0 +1,10 @@
+
+reset
+create brick x 1.0 y 1.0 z 1.0
+move volume 1 x 0.5 y 0.5 z 0.5
+volume all size 1.0
+block 1 volume 1
+mesh volume all
+nodeset 1 surface 3
+nodeset 2 surface 5
+export genesis 'SingleHexElement.g' overwrite
