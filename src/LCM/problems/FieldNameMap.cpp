@@ -26,7 +26,7 @@ namespace LCM {
     name_map->insert( std::make_pair("Matrix_Damage","Matrix_Damage") );
     name_map->insert( std::make_pair("F1_Damage","F1_Damage") );
     name_map->insert( std::make_pair("F2_Damage","F2_Damage") );
-    name_map->insert( std::make_pair("Void_Volume","Void_Volume") );
+    name_map->insert( std::make_pair("void_volume_fraction","void_volume_fraction") );
     name_map->insert( std::make_pair("isotropic_hardening","isotropic_hardening") );
     name_map->insert( std::make_pair("eps_ss","eps_ss") );
     name_map->insert( std::make_pair("Energy","Energy") );

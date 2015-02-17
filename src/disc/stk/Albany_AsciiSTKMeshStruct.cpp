@@ -17,6 +17,8 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
+// needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#include <stk_mesh/base/MeshUtils.hpp>
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -706,6 +708,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
   bulkData->modification_end();
 }
 
