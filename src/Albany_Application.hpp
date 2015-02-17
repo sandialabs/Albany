@@ -158,6 +158,7 @@ namespace Albany {
 
     int getNumEquations() const { return neq; }
     int getSpatialDimension() const { return spatial_dimension; }
+    int getTangentDerivDimension() const { return tangent_deriv_dim; }
 
     //! Get response function
     Teuchos::RCP<AbstractResponseFunction> getResponse(int i) const;
@@ -996,7 +997,7 @@ namespace Albany {
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
 
-    unsigned int neq, spatial_dimension;
+    unsigned int neq, spatial_dimension, tangent_deriv_dim;
 
 #ifdef ALBANY_EPETRA
     //! Teko stuff

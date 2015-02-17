@@ -12,7 +12,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
-  return app->getParamLib()->size();
+  return app->getTangentDerivDimension();
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (

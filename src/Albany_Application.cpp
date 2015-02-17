@@ -100,6 +100,32 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #endif
 };
 
+namespace {
+int calcTangentDerivDimension (
+  const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+{
+  Teuchos::ParameterList& parameterParams =
+    problemParams->sublist("Parameters");
+  int num_param_vecs =
+    parameterParams.get("Number of Parameter Vectors", 0);
+  bool using_old_parameter_list = false;
+  if (parameterParams.isType<int>("Number")) {
+    int numParameters = parameterParams.get<int>("Number");
+    if (numParameters > 0) {
+      num_param_vecs = 1;
+      using_old_parameter_list = true;
+    }
+  }
+  int np = 0;
+  for (int i = 0; i < num_param_vecs; ++i) {
+    Teuchos::ParameterList& pList = using_old_parameter_list ?
+      parameterParams :
+      parameterParams.sublist(Albany::strint("Parameter Vector", i));
+    np += pList.get<int>("Number");
+  }
+  return std::max(1, np);
+}
+} // namespace
 
 void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params) {
   // Create parameter libraries
@@ -154,6 +180,12 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
+
+  try {
+    tangent_deriv_dim = calcTangentDerivDimension(problemParams);
+  } catch (...) {
+    tangent_deriv_dim = 1;
+  }
 
   // Save the solution method to be used
   std::string solutionMethod = problemParams->get("Solution Method", "Steady");
