@@ -17,8 +17,10 @@
 #include <stk_mesh/base/GetBuckets.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
+#ifdef STKFIX
 // needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
 #include <stk_mesh/base/MeshUtils.hpp>
+#endif
 
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
@@ -708,7 +710,9 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
     }
   }
 
+#ifdef STKFIX
   stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#endif
   bulkData->modification_end();
 }
 

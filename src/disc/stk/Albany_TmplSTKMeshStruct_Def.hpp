@@ -14,8 +14,10 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
+#ifdef STKFIX
 // needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
 #include <stk_mesh/base/MeshUtils.hpp>
+#endif
 
 #include <stk_mesh/base/FEMHelpers.hpp>
 #include "Albany_Utils.hpp"
@@ -378,7 +380,9 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
   buildMesh(commT);
 
   // STK
+#ifdef STKFIX
   stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#endif
   bulkData->modification_end();
 
   // Refine the mesh before starting the simulation if indicated
@@ -602,7 +606,9 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
   TmplSTKMeshStruct<0, albany_stk_mesh_traits<0> >::buildMesh(commT);
 
   // STK
+#ifdef STKFIX
   stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#endif
   bulkData->modification_end();
 
 }

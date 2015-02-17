@@ -285,9 +285,12 @@ x When all is done, strip out the amb:: debug stuff (Andrew)
   . Eric P. writes that we should skip SG_MP for now.
 - DEBUG build nans.
 - Merge master into tpetra_kokkos (Andrew)
-  x 5 Feb
+  x 16 Feb
 - Merge tpetra_kokkos into master (Andrew)
 - SLFad, SFad (Andrew, before or after merge)
-- Peridigm (Andrew and Dave)
-- Dakota (Andy?)
 - scorec_elastadapt_spr_tpetra, scorec_j2adapt_tpetra failing?
+- redo Tangent deriv dims to get upper bound from Problems -> Parameters, like
+  in ModelEvaluator(T). calc has to come before ModelEvaluator ctor, though.
+- flip ALBANY_KOKKOS_UNDER_DEVELOPMENT default
+- remove STKFIX guards
+

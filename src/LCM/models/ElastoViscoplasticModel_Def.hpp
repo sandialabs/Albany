@@ -204,8 +204,8 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fpinv(num_dims_);
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       ScalarT bulk = elastic_modulus(cell, pt)
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
@@ -234,8 +234,8 @@ computeState(typename Traits::EvalData workset,
         //
         F.fill(def_grad_field, cell, pt, 0, 0);
 
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
             Fpn(i, j) = ScalarT(Fp_field_old(cell, pt, i, j));
           }
         }
@@ -582,8 +582,8 @@ computeState(typename Traits::EvalData workset,
         eqps_field(cell,pt) = eqps_field_old(cell,pt);
         kappa_field(cell,pt) = kappa_field_old(cell,pt);
         if (have_temperature_) source_field(cell, pt) = 0.0;
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
             Fp_field(cell,pt,i,j) = Fp_field_old(cell,pt,i,j);
             stress_field(cell,pt,i,j) = 0.0;
           }
