@@ -638,8 +638,31 @@ void
 LCM::SchwarzMultiscale::
 evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
-    {
+{
   //FIXME: fill in!
+  
+  // Get the input arguments
+  const Teuchos::RCP<const Tpetra_Vector> xT =
+    ConverterT::getConstTpetraVector(in_args.get_x());
+
+  const Teuchos::RCP<const Tpetra_Vector> x_dotT =
+    Teuchos::nonnull(in_args.get_x_dot()) ?
+    ConverterT::getConstTpetraVector(in_args.get_x_dot()) :
+    Teuchos::null;
+
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
+  //  Teuchos::nonnull(in_args.get_x_dotdot()) ?
+  //  ConverterT::getConstTpetraVector(in_args.get_x_dotdot()) :
+  //  Teuchos::null;
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::null;
+  
+  const double alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? in_args.get_alpha() : 0.0;
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  // const double omega = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? in_args.get_omega() : 0.0;
+  const double omega = 0.0;
+  const double beta = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? in_args.get_beta() : 1.0;
+  const double curr_time = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ? in_args.get_t() : 0.0;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
