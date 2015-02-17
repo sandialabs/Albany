@@ -54,8 +54,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >
   model_problem_params(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
-  disc_maps(num_models_);
+  disc_maps_.resize(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_overlap_maps(num_models_);
@@ -148,7 +147,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   num_responses_total_ = 0;
 
   for (int m = 0; m < num_models_; ++m) {
-    disc_maps[m] = apps_[m]->getMapT();
+    disc_maps_[m] = apps_[m]->getMapT();
 
     disc_overlap_maps[m] =
         apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT();
@@ -197,7 +196,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
   //Create ccoupled_disc_map, a map for the entire coupled ME solution,
   //created from the entries of the disc_maps array (individual maps).
-  coupled_disc_map_ = createCoupledMap(disc_maps, commT_);
+  coupled_disc_map_ = createCoupledMap(disc_maps_, commT_);
 
   std::cout << "LCM::CoupledSchwarz constructor DEBUG: created coupled map!\n";
 
@@ -209,18 +208,17 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       *coupled_disc_map_);
 #endif
 
-  //IKT, 2/13/15: commenting out the following for now as it'll cause a seg fault due 
-  //to some things not being allocated yet.  This is to facilitate implementation of 
-  //other things, like parameter list validation.
   // Setup nominal values
- /* {
+  {
     nominal_values_ = this->createInArgsImpl();
 
     // All the ME vectors are allocated/unallocated here
     // Calling allocateVectors() will set x and x_dot in nominal_values_
     allocateVectors();
 
-    coupled_sacado_param_vec_.resize(num_params_total_);
+    //IKT, 2/13/15: commenting out the following for now as it'll cause a seg fault due 
+    //to some things not being allocated yet.  
+    /*coupled_sacado_param_vec_.resize(num_params_total_);
     coupled_param_map_.resize(num_params_total_);
     coupled_param_vec_.resize(num_params_total_);
 
@@ -277,9 +275,9 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       nominal_values_.set_p(
           l,
           Thyra::createVector(coupled_param_vec_[l], coupled_param_space));
-    }
+    }*/
   } //end setting of nominal values
-*/
+
   //FIXME: Add discretization parameterlist and discretization object
   //for the "combined" solution vector from all the coupled Model
   //Evaluators.  Refer to QCAD_CoupledPoissonSchrodinger.cpp.
@@ -287,6 +285,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   //FIXME: How are we going to collect output?  Write exodus files for
   //each model evaluator?  Joined exodus file?
 
+  std::cout << "Set nominal_values_! \n"; 
 }
 
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
@@ -524,9 +523,44 @@ allocateVectors()
 
   // Create Tpetra objects to be wrapped in Thyra for coupled model
   //FIXME: implement by concatenating individual x_inits
-  const Teuchos::RCP<Tpetra_Vector const> coupled_x_init;
+  Teuchos::RCP<Tpetra_Vector> coupled_x_init = Teuchos::rcp(new Tpetra_Vector(coupled_disc_map_)); 
   //FIXME: implement by concatenating individual x_dot_inits
-  const Teuchos::RCP<Tpetra_Vector const> coupled_x_dot_init;
+  Teuchos::RCP<Tpetra_Vector> coupled_x_dot_init = Teuchos::rcp(new Tpetra_Vector(coupled_disc_map_)); 
+
+  //initialize coupled vecs to all 0s 
+  coupled_x_init->putScalar(0.0); 
+  coupled_x_dot_init->putScalar(0.0); 
+
+  LO counter_local = 0;
+  //get nonconst view of coupled_x_init & coupled_x_dot_init
+  Teuchos::ArrayRCP<ST> coupled_x_init_nonconstView = coupled_x_init->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> coupled_x_dot_init_nonconstView = coupled_x_dot_init->get1dViewNonConst();
+  for (int m = 0; m < num_models_; m++) {
+    //get const view of mth x_init & x_dot_init vector
+    Teuchos::ArrayRCP<const ST> x_init_constView = x_inits[m]->get1dView(); 
+    Teuchos::ArrayRCP<const ST> x_dot_init_constView = x_dot_inits[m]->get1dView(); 
+    //The following assumes x_init and x_dot_init have same length.  
+    //FIXME? Could have error checking to make sure. 
+    for (int i=0; i<x_inits[m]->getLocalLength(); i++) {
+      coupled_x_init_nonconstView[counter_local + i] = x_init_constView[i];   
+      coupled_x_dot_init_nonconstView[counter_local + i] = x_dot_init_constView[i];   
+    }
+    counter_local += x_inits[m]->getLocalLength(); 
+  } 
+ 
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug
+  Tpetra_MatrixMarket_Writer::writeDenseFile("x_init0.mm", *(x_inits[0]));
+  Tpetra_MatrixMarket_Writer::writeDenseFile("x_dot_init0.mm", *(x_dot_inits[0]));
+  if (num_models_ > 1) {
+    Tpetra_MatrixMarket_Writer::writeDenseFile("x_init1.mm", *(x_inits[1]));
+    Tpetra_MatrixMarket_Writer::writeDenseFile("x_dot_init1.mm", *(x_dot_inits[1]));
+  }
+  Tpetra_MatrixMarket_Writer::writeDenseFile("coupled_x_init.mm", *coupled_x_init);
+  Tpetra_MatrixMarket_Writer::writeDenseFile("coupled_x_dot_init.mm", *coupled_x_dot_init);
+#endif
+
+
   Teuchos::RCP<const Tpetra_Map> map = Teuchos::rcp(
       new const Tpetra_Map(*coupled_disc_map_));
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > coupled_x_space =

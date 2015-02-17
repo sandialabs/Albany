@@ -134,6 +134,9 @@ private:
 
   Teuchos::RCP<const Tpetra_Map>
   coupled_disc_map_;
+  
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
+  disc_maps_;
 
   int
   num_models_;
