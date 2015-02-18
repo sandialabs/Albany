@@ -337,8 +337,10 @@ LCM::SchwarzMultiscale::get_f_space() const
 
   Teuchos::RCP<Tpetra_Map const>
   map = Teuchos::rcp(new (Tpetra_Map const)(*coupled_disc_map_));
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> coupled_f_space =
-      Thyra::createVectorSpace<ST>(map);
+
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  coupled_f_space = Thyra::createVectorSpace<ST>(map);
+
   return coupled_f_space;
 }
 
@@ -348,13 +350,14 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= num_params_total_ < 0,
       Teuchos::Exceptions::InvalidParameter,
-      std::endl <<
-      "Error!  LCM::SchwarzMultiscale::get_p_space():  " <<
-      "Invalid parameter index l = " << l << std::endl);
-  if (l < num_params_partial_sum_[0])
+      "\nError!  LCM::SchwarzMultiscale::get_p_space():  " <<
+      "Invalid parameter index l = " << l << '\n');
+
+  if (l < num_params_partial_sum_[0]) {
     return models_[0]->get_p_space(l);
+  }
   else {
-    for (int m = 1; m < num_models_; m++) {
+    for (int m = 1; m < num_models_; ++m) {
       if (l >= num_params_partial_sum_[m - 1]
           && l < num_params_partial_sum_[m]) {
         return models_[m]->get_p_space(l - num_params_partial_sum_[m - 1]);
