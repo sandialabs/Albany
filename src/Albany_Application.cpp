@@ -46,6 +46,7 @@
 
 //eb-hack
 #include "Adapt_NodalDataVector.hpp"
+#include "Adapt_NodalDataBlock.hpp"
 
 using Teuchos::ArrayRCP;
 using Teuchos::RCP;
@@ -1835,6 +1836,11 @@ evaluateResponseT(int response_index,
     Teuchos::RCP<Adapt::NodalDataBase>
       ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
     if (!ndb.is_null()) ndb->getNodalDataVector()->initializeVectors(0);
+  } catch (...) { /* No nodal data vector. */ }
+  try {
+    Teuchos::RCP<Adapt::NodalDataBase>
+      ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
+    if (!ndb.is_null()) ndb->getNodalDataBlock()->initEvaluateCalls();
   } catch (...) { /* No nodal data vector. */ }
 
   double t = current_time;
