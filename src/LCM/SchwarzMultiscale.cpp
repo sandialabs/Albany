@@ -179,8 +179,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
   // Create sacado parameter vectors of appropriate size for use in evalModelImpl
   sacado_param_vecs_.resize(num_models_);
-  for (int m = 0; m < num_models_; m++)
+
+  for (int m = 0; m < num_models_; ++m) {
     sacado_param_vecs_[m].resize(num_params_[m]);
+  }
 
   std::cout << "Total # parameters, responses: " << num_params_total_;
   std::cout << ", " << num_responses_total_ << '\n';
@@ -209,13 +211,12 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     //set p_init in nominal_values_  
     // TODO: Check if correct nominal values for parameters
-    for (int l = 0; l < num_params_total_; l++) {
-      if (l < num_params_partial_sum_[0])
-          {
+    for (int l = 0; l < num_params_total_; ++l) {
+      if (l < num_params_partial_sum_[0]) {
         nominal_values_.set_p(l, solver_inargs_[0].get_p(l));
       }
       else {
-        for (int m = 1; m < num_models_; m++) {
+        for (int m = 1; m < num_models_; ++m) {
           if (l >= num_params_partial_sum_[m - 1]
               && l < num_params_partial_sum_[m]) {
             nominal_values_.set_p(
