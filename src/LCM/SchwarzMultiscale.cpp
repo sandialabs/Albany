@@ -282,24 +282,34 @@ LCM::SchwarzMultiscale::createCoupledMap(
   counter_global = 0;
 
   for (int m = 0; m < n_maps; ++m) {
-    LO disc_nMyElements = maps[m]->getNodeNumElements();
-    GO disc_nGlobalElements = maps[m]->getGlobalNumElements();
-    Teuchos::ArrayView<const GO> disc_global_elements = maps[m]
-        ->getNodeElementList();
-    for (int l = 0; l < disc_nMyElements; l++) {
+    LO
+    disc_nMyElements = maps[m]->getNodeNumElements();
+
+    GO
+    disc_nGlobalElements = maps[m]->getGlobalNumElements();
+
+    Teuchos::ArrayView<const GO>
+    disc_global_elements = maps[m]->getNodeElementList();
+
+    for (int l = 0; l < disc_nMyElements; ++l) {
       my_global_elements[counter_local + l] = counter_global
           + disc_global_elements[l];
     }
     counter_local += disc_nMyElements;
     counter_global += disc_nGlobalElements;
   }
-  const Teuchos::ArrayView<GO> my_global_elements_AV = Teuchos::arrayView(
-      my_global_elements,
-      local_num_elements);
-  std::cout << "DEBUG: coupled map has " << global_num_elements
-      << " global elements." << std::endl;
-  Teuchos::RCP<const Tpetra_Map> coupled_map = Teuchos::rcp(
+
+  Teuchos::ArrayView<GO> const
+  my_global_elements_AV =
+      Teuchos::arrayView(my_global_elements, local_num_elements);
+
+  std::cout << "DEBUG: coupled map has " << global_num_elements;
+  std::cout << " global elements.\n";
+
+  Teuchos::RCP<Tpetra_Map const>
+  coupled_map = Teuchos::rcp(
       new Tpetra_Map(global_num_elements, my_global_elements_AV, 0, commT_));
+
   return coupled_map;
 }
 
