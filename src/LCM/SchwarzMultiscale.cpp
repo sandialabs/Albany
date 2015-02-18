@@ -806,7 +806,7 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
        }
     }
   }
-  //FIXME: create fT_out and dfdp_outT from fTs_out and dfdps_outT.
+  //FIXME: create fT_out and dfdp_outT from fTs_out and dfdps_outT -- fTs_out and dfdps_outT arrays likely not needed
 
   // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {
@@ -815,15 +815,29 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Teuchos::nonnull(g_out) ?
       ConverterT::getTpetraVector(g_out) :
       Teuchos::null;
-    Teuchos::RCP<Thyra::VectorBase<ST> > g_out_m; 
+    
+
+    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = out_args.get_DgDx(j);
+    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = out_args.get_DgDx_dot(j);
+    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
+
+    Teuchos::RCP<Thyra::VectorBase<ST> > g_out_m;
+    //crate array of Tpetra_Vectors from individual model gT_outs 
     Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > gTs_out;
     gTs_out.resize(num_models_); 
+    Teuchos::Array<Thyra::ModelEvaluatorBase::Derivative<ST> >dgdxTs_out;
+    Teuchos::Array<Thyra::ModelEvaluatorBase::Derivative<ST> >dgdxdotTs_out; 
+    dgdxTs_out.resize(num_models_); 
+    dgdxdotTs_out.resize(num_models_); 
     if (j < num_responses_partial_sum_[0])
       {
       g_out_m = solver_outargs_[0].get_g(j); 
       gTs_out[0] = Teuchos::nonnull(g_out_m) ?
                    ConverterT::getTpetraVector(g_out_m) :
                    Teuchos::null;
+      dgdxTs_out[0] = solver_outargs_[0].get_DgDx(j); 
+      dgdxdotTs_out[0] = solver_outargs_[0].get_DgDx_dot(j); 
     }
     else {
       for (int m=1; m<num_models_; m++){
@@ -832,27 +846,28 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
           gTs_out[m] = Teuchos::nonnull(g_out_m) ?
                        ConverterT::getTpetraVector(g_out_m) :
                        Teuchos::null;
+          dgdxTs_out[m] = solver_outargs_[m].get_DgDx(j); 
+          dgdxdotTs_out[m] = solver_outargs_[m].get_DgDx_dot(j); 
         }
       }
     }
 
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxT_out = out_args.get_DgDx(j);
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = out_args.get_DgDx_dot(j);
-    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-    const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
-/*
+
     // dg/dx, dg/dxdot
     if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
-      const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
-      app->evaluateResponseDerivativeT(
-          j, curr_time, x_dotT.get(), x_dotdotT.get(), *xT,
-          sacado_param_vec, NULL,
-          gT_out.get(), dgdxT_out,
-          dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
-      // Set gT_out to null to indicate that g_out was evaluated.
-      gT_out = Teuchos::null;
+      for (int m=0; m<num_models_; m++) {
+        const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+        apps_[m]->evaluateResponseDerivativeT(
+            j, curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+            sacado_param_vecs_[m], NULL,
+            gTs_out[m].get(), dgdxTs_out[m],
+            dgdxdotTs_out[m], dgdxdotdotT_out, dummy_derivT);
+        // Set gT_out to null to indicate that g_out was evaluated.
+        gTs_out[m] = Teuchos::null;
+      }
     }
-*/
+    //FIXME: create gT_out for coupled model from gTs_out -- creating array gTs_out likely not needed
+
     // dg/dp
     for (int l = 0; l < out_args.Np(); ++l) {
       const Teuchos::RCP<Thyra::MultiVectorBase<ST> > dgdp_out =
@@ -861,18 +876,26 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
         Teuchos::nonnull(dgdp_out) ?
         ConverterT::getTpetraMultiVector(dgdp_out) :
         Teuchos::null;
-/*
+      Teuchos::RCP<Thyra::MultiVectorBase<ST> > dgdp_out_temp;
+      Teuchos::Array<Teuchos::RCP<Tpetra_MultiVector> > dgdpTs_out; 
+      dgdpTs_out.resize(num_models_); 
+      //FIXME: populate dgdpTs! 
+
       if (Teuchos::nonnull(dgdpT_out)) {
-        const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vec[l]);
-        app->evaluateResponseTangentT(
-            j, alpha, beta, omega, curr_time, false,
-            x_dotT.get(), x_dotdotT.get(), *xT,
-            sacado_param_vec, p_vec.get(),
-            NULL, NULL, NULL, NULL, gT_out.get(), NULL,
-            dgdpT_out.get());
-        gT_out = Teuchos::null;
-      }*/
+        for (int m=0; m<num_models_; m++) {
+          const Teuchos::RCP<ParamVec> p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][l]);
+          apps_[m]->evaluateResponseTangentT(
+              j, alpha, beta, omega, curr_time, false,
+              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+              sacado_param_vecs_[m], p_vec.get(),
+              NULL, NULL, NULL, NULL, gTs_out[m].get(), NULL,
+              dgdpTs_out[m].get());
+          gTs_out[m] = Teuchos::null;
+        }
+      }
     }
+    
+    //FIXME: create gT_out and dgdpT_out for coupled model from dgdpTs_out and gTs_out -- likely arrays not needed.
 
     if (Teuchos::nonnull(gT_out)) {
       for (int m=0; m<num_models_; m++) {
@@ -881,6 +904,7 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
             sacado_param_vecs_[m], *gTs_out[m]);
       }
     }
+    //FIXME: create gT_out for coupled model from gTs_out
   }
 
 }
