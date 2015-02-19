@@ -68,7 +68,7 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+// #define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -262,17 +262,52 @@ Aeras::SpectralDiscretization::printCoords() const
 }
 
 void
-Aeras::SpectralDiscretization::printConnectivity() const
+Aeras::SpectralDiscretization::printConnectivity(bool printEdges) const
 {
-  //print element connectivity -- added 1/27/15
-  for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
-    for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
-      for (size_t inode = 0; inode < wsElNodeID[ibuck][ielem].size(); ++inode)
-          std::cout << "ibuck, ielem, inode, wsElNodeID: " << ibuck << ", " 
-                    << ielem << ", " << inode << ", " <<  wsElNodeID[ibuck][ielem][inode] 
-                    << std::endl;
+  commT->barrier();
+  if (printEdges)
+    for (int rank = 0; rank < commT->getSize(); ++rank)
+    {
+      if (rank == commT->getRank())
+      {
+        std::cout << std::endl << "Process rank " << rank << std::endl;
+        for (size_t ibuck = 0; ibuck < enrichedEdges.size(); ++ibuck)
+        {
+          std::cout << "  Bucket " << ibuck << std::endl;
+          for (size_t iedge = 0; iedge < enrichedEdges[ibuck].size(); ++iedge)
+          {
+            int numNodes = enrichedEdges[ibuck][iedge].size();
+            std::cout << "    Edge " << iedge << ": Nodes = ";
+            for (size_t inode = 0; inode < numNodes; ++inode)
+              std::cout << enrichedEdges[ibuck][iedge][inode] << " ";
+            std::cout << std::endl;
+          }
+        }
+      }
+      commT->barrier();
+    }
 
-
+  else
+    for (int rank = 0; rank < commT->getSize(); ++rank)
+    {
+      if (rank == commT->getRank())
+      {
+        std::cout << std::endl << "Process rank " << rank << std::endl;
+        for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
+        {
+          std::cout << "  Bucket " << ibuck << std::endl;
+          for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
+          {
+            int numNodes = wsElNodeID[ibuck][ielem].size();
+            std::cout << "    Element " << ielem << ": Nodes = ";
+            for (size_t inode = 0; inode < numNodes; ++inode)
+              std::cout << wsElNodeID[ibuck][ielem][inode] << " ";
+            std::cout << std::endl;
+          }
+        }
+      }
+      commT->barrier();
+    }
 }
 
 
@@ -942,12 +977,13 @@ void Aeras::SpectralDiscretization::enrichMesh()
 #ifdef OUTPUT_TO_SCREEN
   *out << "Points per edge: " << np << std::endl;
 #endif 
-  size_t np2 = np * np;
-  GO maxGID    = getMaximumID(stk::topology::NODE_RANK);
-  GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
 
   // Edges are not created by default, so we create them here
   stk::mesh::create_edges(bulkData);
+
+  size_t np2 = np * np;
+  GO maxGID    = getMaximumID(stk::topology::NODE_RANK);
+  GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
 
   // Fill in the enriched edge array
   const stk::mesh::BucketVector & edgeBuckets =
@@ -975,10 +1011,10 @@ void Aeras::SpectralDiscretization::enrichMesh()
           maxGID + gid(edge)*(np-2) + inode;
       }
       enrichedEdges[ibuck][iedge][np-1] = gid(nodes[1]);
-      for (GO inode = 0; inode < np; inode++)
-        *out << "ibuck, iedge, inode, enrichedEdges: " << ibuck  
-             << ", " << iedge << ", " << inode << ", "
-             << enrichedEdges[ibuck][iedge][inode] << std::endl; 
+      // for (GO inode = 0; inode < np; inode++)
+      //   *out << "ibuck, iedge, inode, enrichedEdges: " << ibuck  
+      //        << ", " << iedge << ", " << inode << ", "
+      //        << enrichedEdges[ibuck][iedge][inode] << std::endl; 
     }
   }
 
@@ -1000,6 +1036,13 @@ void Aeras::SpectralDiscretization::enrichMesh()
         "Starting elements for enriched elements must be linear quadrilaterals."
         "  Element " << element << " has " << numNodes << " nodes.");
       const stk::mesh::Entity * nodes = bulkData.begin_nodes(element);
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "Proc " << commT->getRank() << ": Bucket " << ibuck
+                << ", Element " << element << " has nodes ";
+      for (unsigned inode = 0; inode < numNodes; ++inode)
+        std::cout << gid(nodes[inode]) << " ";
+      std::cout << std::endl;
+#endif
       // Here we allocate a new Teuchos::TwoDArray (named buffer at
       // address bufferPtr) for storing and accessing a 2D array of
       // element nodes.  We will then construct a Teuchos::ArrayRCP
@@ -1180,32 +1223,67 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
   int np = points_per_edge;
 
   // Compute the STK Mesh selector
-  stk::mesh::Selector select_owned_in_part =
-    stk::mesh::Selector(metaData.universal_part()) &
+  stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());
+
+#ifdef OUTPUT_TO_SCREEN
+  //////////////////////////////////////////////////////////////////////
+  // Debugging code
+  stk::mesh::get_selected_entities(select_owned,
+				   bulkData.buckets(stk::topology::ELEMENT_RANK),
+				   cells);
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    if (rank == commT->getRank())
+    {
+      std::cout << std::endl << "Rank " << rank << ": owned elements = { ";
+      for (size_t i = 0; i < cells.size(); ++i)
+      {
+        std::cout << gid(cells[i]) << "(";
+        const stk::mesh::Entity * nodes = bulkData.begin_nodes(cells[i]);
+        std::cout << gid(nodes[0]) << "," << gid(nodes[1]) << ","
+                  << gid(nodes[2]) << "," << gid(nodes[3]) << ") ";
+      }
+      std::cout << "}" << std::endl;
+    }
+    commT->barrier();
+  }
+  //////////////////////////////////////////////////////////////////////
+#endif
 
   // The owned nodes will be the owned corner nodes from the original
   // linear STK mesh, the non-endpoint nodes from the owned edges, plus
   // all of the enriched interior nodes.  Start with the corner nodes.
-  stk::mesh::get_selected_entities(select_owned_in_part,
+  stk::mesh::get_selected_entities(select_owned,
 				   bulkData.buckets(stk::topology::NODE_RANK),
 				   ownednodes);
   numOwnedNodes = ownednodes.size();
+#ifdef OUTPUT_TO_SCREEN
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    if (rank == commT->getRank())
+    {
+      std::cout << std::endl << "Rank " << rank << ": owned nodes = { ";
+      for (size_t i = 0; i < ownednodes.size(); ++i)
+        std::cout << gid(ownednodes[i]) << " ";
+      std::cout << "}" << std::endl;
+    }
+    commT->barrier();
+  }
+#endif
 
   // Now add the number of nodes from the owned edges
   const stk::mesh::BucketVector & ownedEdgeBuckets =
-    bulkData.get_buckets(stk::topology::EDGE_RANK, select_owned_in_part);
-  size_t numNewEdgeNodes = 0;
+    bulkData.get_buckets(stk::topology::EDGE_RANK, select_owned);
   for (size_t ibuck = 0; ibuck < ownedEdgeBuckets.size(); ++ibuck)
   {
     stk::mesh::Bucket & edgeBucket = *ownedEdgeBuckets[ibuck];
-    numNewEdgeNodes += edgeBucket.size() * (np-2);
+    numOwnedNodes += edgeBucket.size() * (np-2);
   }
-  numOwnedNodes += numNewEdgeNodes;
 
   // Now add the number of nodes from the enriched element interiors
   const stk::mesh::BucketVector & elementBuckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
   size_t numNewElementNodes = 0;
   for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
   {
@@ -1289,44 +1367,69 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()" << std::endl;
+  *out << "In Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()"
+       << std::endl;
 #endif 
   // Initialization
   int np = points_per_edge;
 
   // Compute the STK Mesh selector
-  stk::mesh::Selector select_overlap_in_part =
-    stk::mesh::Selector( metaData.universal_part() ) &
-    ( stk::mesh::Selector( metaData.locally_owned_part() )
-      | stk::mesh::Selector( metaData.globally_shared_part() ) );
+  stk::mesh::Selector select_unowned =
+    stk::mesh::Selector(metaData.globally_shared_part()) -
+    stk::mesh::Selector(metaData.locally_owned_part());
 
-  // Count the number of overlap nodes from the original linear STK mesh
-  stk::mesh::get_selected_entities(select_overlap_in_part,
+  // Use node_mapT to get the number of locally owned nodes
+  numOverlapNodes = node_mapT->getNodeNumElements();
+
+  // Count the number of unowned nodes from the original linear STK mesh
+  std::vector< stk::mesh::Entity > unownedNodes;
+  stk::mesh::get_selected_entities(select_unowned,
 				   bulkData.buckets(stk::topology::NODE_RANK),
-				   overlapnodes);
-  numOverlapNodes = overlapnodes.size();
+				   unownedNodes);
+  numOverlapNodes += unownedNodes.size();
+#ifdef OUTPUT_TO_SCREEN
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    commT->barrier();
+    if (rank == commT->getRank())
+    {
+      std::cout << std::endl << "Rank " << rank << ": unowned nodes = { ";
+      for (size_t i = 0; i < unownedNodes.size(); ++i)
+        std::cout << gid(unownedNodes[i]) << " ";
+      std::cout << "}" << std::endl;
+    }
+  }
+#endif
 
   // Now add the number of nodes from the edges
   const stk::mesh::BucketVector & overlapEdgeBuckets =
-    bulkData.get_buckets(stk::topology::EDGE_RANK, select_overlap_in_part);
-  size_t numNewEdgeNodes = 0;
+    bulkData.get_buckets(stk::topology::EDGE_RANK, select_unowned);
+#ifdef OUTPUT_TO_SCREEN
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    commT->barrier();
+    if (rank == commT->getRank())
+    {
+      std::cout << std::endl << "Rank " << rank << ": unowned shared edges = { ";
+      for (size_t ibuck = 0; ibuck < overlapEdgeBuckets.size(); ++ibuck)
+      {
+        stk::mesh::Bucket & edgeBucket = *overlapEdgeBuckets[ibuck];
+        for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
+        {
+          const stk::mesh::Entity * nodes =
+            bulkData.begin_nodes(edgeBucket[iedge]);
+          std::cout << "(" << gid(nodes[0]) << "," << gid(nodes[1]) << ") ";
+        }
+      }
+      std::cout << "}" << std::endl;
+    }
+  }
+#endif
   for (size_t ibuck = 0; ibuck < overlapEdgeBuckets.size(); ++ibuck)
   {
     stk::mesh::Bucket & edgeBucket = *overlapEdgeBuckets[ibuck];
-    numNewEdgeNodes += edgeBucket.size() * (np-2);
+    numOverlapNodes += edgeBucket.size() * (np-2);
   }
-  numOverlapNodes += numNewEdgeNodes;
-
-  // Now add the number of nodes from the enriched element interiors
-  const stk::mesh::BucketVector & elementBuckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_overlap_in_part);
-  size_t numNewElementNodes = 0;
-  for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
-  {
-    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck];
-    numNewElementNodes += elementBucket.size() * (np-2) * (np-2);
-  }
-  numOverlapNodes += numNewElementNodes;
 
 #ifdef ALBANY_EPETRA
   // FIXME: WFS: not updated yet for enriched elements
@@ -1354,21 +1457,15 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
 
   // Copy shared nodes from original STK mesh to overlap indices
   size_t inode = ownedIndicesT.size();
-  std::vector< stk::mesh::Entity > shared_nodes;
-  stk::mesh::get_selected_entities(metaData.globally_shared_part(),
-				   bulkData.buckets(stk::topology::NODE_RANK),
-				   shared_nodes);
-  for (size_t i = 0; i < shared_nodes.size(); ++i)
-    overlapIndicesT[inode++] = gid(shared_nodes[i]);
+  for (size_t i = 0; i < unownedNodes.size(); ++i)
+    overlapIndicesT[inode++] = gid(unownedNodes[i]);
 
   // Get a bucket of all the edges so that the local indexes match the
   // enrichedEdges indexes.  Loop over these edges to add their nodes
   // to overlapIndicesT, when the edges are not owned
-  const stk::mesh::BucketVector edgeBuckets =
-    bulkData.buckets(stk::topology::EDGE_RANK);
-  for (size_t ibuck = 0; ibuck < edgeBuckets.size(); ++ibuck)
+  for (size_t ibuck = 0; ibuck < overlapEdgeBuckets.size(); ++ibuck)
   {
-    stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
+    stk::mesh::Bucket & edgeBucket = *overlapEdgeBuckets[ibuck];
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
@@ -1380,23 +1477,11 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
     }
   }
 
-  // // Copy non-vertex nodes from shared edges to overlap indices
-  // std::vector< stk::mesh::Entity > shared_edges;
-  // stk::mesh::get_selected_entities(metaData.globally_shared_part(),
-  //       			   bulkData.buckets(stk::topology::EDGE_RANK),
-  //       			   shared_edges);
-  // for (size_t iedge = 0; iedge < shared_edges.size(); ++iedge)
-  // {
-  //   const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(shared_edges[i]);
-  //   // Note that local edge nodes 0 and 3 have already been
-  //   // handled correctly by the previous loop over shared_nodes
-  //   overlapIndicesT[inode++] = gid(edgeNodes[1]);
-  //   overlapIndicesT[inode++] = gid(edgeNodes[2]);
-  // }
-
 #ifdef OUTPUT_TO_SCREEN
-  *out << "inode = " << inode << ", numOverlapNodes = " << numOverlapNodes << std::endl;
-#endif 
+  commT->barrier();
+  std::cout << "Rank " << commT->getRank() << ": inode = " << inode
+            << ", numOverlapNodes = " << numOverlapNodes << std::endl;
+#endif
 
   assert (inode == numOverlapNodes);
   // End fill overlapIndicesT
@@ -1448,13 +1533,12 @@ void Aeras::SpectralDiscretization::computeCoords()
   Field_t refWeights(np2);
   gl2D.getCubature(refCoords, refWeights);
 
-  // Get the appropriate STK element buckets to extract the element
-  // corner nodes
-  stk::mesh::Selector select_owned_in_part =
-    stk::mesh::Selector(metaData.universal_part())    &
-    stk::mesh::Selector(metaData.locally_owned_part());
+  // Get the appropriate STK element buckets for extracting the
+  // element corner nodes
+  stk::mesh::Selector select_all =
+    stk::mesh::Selector(metaData.universal_part());
   stk::mesh::BucketVector const& buckets =
-    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned_in_part);
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_all);
 
   // Allocate and populate the coordinates
   VectorFieldType * coordinates_field = stkMeshStruct->getCoordinatesField();
@@ -1486,15 +1570,7 @@ void Aeras::SpectralDiscretization::computeCoords()
         // Get the coordinates value along this axis of the corner
         // nodes from the STK mesh
         for (size_t ii = 0; ii < 4; ++ii)
-        {
-          const GO nodeGid = gid(stkNodes[ii]);
-          const LO nodeLid = overlap_node_mapT->getLocalElement(nodeGid);
-          //IK, 1/27/15: this line used to be 
-          //  c[ii] = stk::mesh::field_data(*coordinates_field, nodeLid)[idim];
-          //This was causing a seg fault so I changed it to what I believe is correct.
-          //Needs further testing.  If my fix is correct, nodeGid, and nodeLid can be removed.
           c[ii] = stk::mesh::field_data(*coordinates_field, stkNodes[ii])[idim];
-        }
         for (size_t inode = 0; inode < np2; ++inode)
         {
           double x = refCoords(inode,0);
@@ -1524,23 +1600,35 @@ void Aeras::SpectralDiscretization::computeCoords()
 
 void Aeras::SpectralDiscretization::computeGraphs()
 {
-  std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
-  int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
+  //std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
+  //int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
+
+#ifdef OUTPUT_TO_SCREEN
+  *out <<"In Aeras::SpectralDiscretization computeGraphs()!" << std::endl; 
+#endif
+  
+  const int nodes_per_element = points_per_edge*points_per_edge;
+#ifdef OUTPUT_TO_SCREEN
+  *out << "nodes_per_element: " << nodes_per_element << std::endl; 
+#endif 
 
   // int nodes_per_element_est =  metaData.get_cell_topology(*(stkMeshStruct->partVec[0])).getNodeCount();
   // Loads member data:  overlap_graph, numOverlapodes, overlap_node_map, coordinates, graphs
 
   overlap_graphT = Teuchos::null; // delete existing graph happens here on remesh
 
-  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT, neq*nodes_per_element));
+  overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(overlap_mapT,
+                                                    neq*nodes_per_element));
 
-  stk::mesh::Selector select_owned_in_part =
+  stk::mesh::Selector select_owned =
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
 
-  stk::mesh::get_selected_entities( select_owned_in_part ,
-				    bulkData.buckets( stk::topology::ELEMENT_RANK ) ,
-				    cells );
+  const stk::mesh::BucketVector & elementBuckets = bulkData.buckets(stk::topology::ELEMENT_RANK);
+  
+  stk::mesh::get_selected_entities(select_owned,
+				   elementBuckets,
+				   cells);
 
   if (commT->getRank()==0)
     *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
@@ -1548,34 +1636,36 @@ void Aeras::SpectralDiscretization::computeGraphs()
   GO row, col;
   Teuchos::ArrayView<GO> colAV;
 
-  for (std::size_t i=0; i < cells.size(); i++)
+  //Use wsElNodeEqID to populate the graphs
+
+  //loop over number of element buckets 
+  for (size_t ibuck=0; ibuck < elementBuckets.size(); ++ibuck) 
   {
-    stk::mesh::Entity e = cells[i];
-    stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
-    const size_t num_nodes = bulkData.num_nodes(e);
-
-    // loop over local nodes
-    for (std::size_t j=0; j < num_nodes; j++)
+    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck]; 
+    //loop over elements in bucket
+    for (size_t ielem = 0; ielem < elementBucket.size(); ++ielem) 
     {
-      stk::mesh::Entity rowNode = node_rels[j];
-
-      // loop over eqs
-      for (std::size_t k=0; k < neq; k++)
+      //loop over local nodes
+      for (size_t j =0; j < nodes_per_element; ++ j)
       {
-        row = getGlobalDOF(gid(rowNode), k);
-        for (std::size_t l=0; l < num_nodes; l++)
+        //loop over equations
+        for (size_t k=0; k < neq; k++)
         {
-          stk::mesh::Entity colNode = node_rels[l];
-          for (std::size_t m=0; m < neq; m++)
+          row = wsElNodeEqID[ibuck][ielem][j][k]; 
+          //loop over local nodes
+          for (size_t l = 0; l < nodes_per_element; l++) 
           {
-            col = getGlobalDOF(gid(colNode), m);
-            colAV = Teuchos::arrayView(&col, 1);
-            overlap_graphT->insertGlobalIndices(row, colAV);
+            for (size_t m = 0; m < neq; m++) 
+            {
+              col = wsElNodeEqID[ibuck][ielem][l][m]; 
+              colAV = Teuchos::arrayView(&col, 1);
+              overlap_graphT->insertGlobalIndices(row, colAV);
+            }
           }
         }
       }
-    }
-  }
+    }     
+  }       
   overlap_graphT->fillComplete();
 
   // Create Owned graph by exporting overlap with known row map
@@ -1594,11 +1684,11 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
 #ifdef OUTPUT_TO_SCREEN
   *out << "In Aeras::SpectralDiscretization::computeWorksetInfo()" << std::endl;
 #endif 
-  stk::mesh::Selector select_owned_in_part =
+  stk::mesh::Selector select_owned =
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
 
-  stk::mesh::BucketVector const& buckets = bulkData.get_buckets( stk::topology::ELEMENT_RANK, select_owned_in_part );
+  stk::mesh::BucketVector const& buckets = bulkData.get_buckets( stk::topology::ELEMENT_RANK, select_owned );
 
   const int numBuckets =  buckets.size();
 
@@ -1995,7 +2085,7 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   {
     Teuchos::RCP<Albany::NodeFieldContainer> node_states = stkMeshStruct->nodal_data_base->getNodeContainer();
 
-    stk::mesh::BucketVector const& node_buckets = bulkData.get_buckets( stk::topology::NODE_RANK, select_owned_in_part );
+    stk::mesh::BucketVector const& node_buckets = bulkData.get_buckets( stk::topology::NODE_RANK, select_owned );
 
     const size_t numNodeBuckets = node_buckets.size();
 
@@ -2896,12 +2986,12 @@ void Aeras::SpectralDiscretization::meshToGraph()
   sur_elem.resize(numOverlapNodes);
 
   // Get the elements owned by the current processor
-  const stk::mesh::Selector select_owned_in_part =
+  const stk::mesh::Selector select_owned =
     stk::mesh::Selector( metaData.universal_part() ) &
     stk::mesh::Selector( metaData.locally_owned_part() );
 
   const stk::mesh::BucketVector& buckets = bulkData.get_buckets(
-    stk::topology::ELEMENT_RANK, select_owned_in_part);
+    stk::topology::ELEMENT_RANK, select_owned);
 
   for (int b = 0; b < buckets.size(); ++b)
   {
@@ -3014,6 +3104,12 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   enrichMesh();
 
+#ifdef OUTPUT_TO_SCREEN
+  printConnectivity(true);
+  commT->barrier();
+  printConnectivity();
+#endif
+
 #ifdef ALBANY_EPETRA
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
@@ -3059,19 +3155,18 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   //This function is not critical and only called for XZ hydrostatic equations.
   transformMesh();
 
-  //IK, 1/23/15, FIXME: to implement
+  computeWorksetInfo();
+ 
+  //IKT, 2/16/15: moving computeGraphs() to after computeWorksetInfo(), as computeGraphs() relies on wsElNodeEqID array
+  //which is set in computeWorksetInfo()  
   computeGraphs();
 
-  computeWorksetInfo();
-  
-  //IK, 1/26/15: This will need to be uncommented at some point.
   //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
   computeCoords(); 
 
  //IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN
   printCoords();
-  printConnectivity();  
 #endif
  
   //IK, 1/23/15: I have changed it so nothing happens in the following functions b/c 

@@ -128,7 +128,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> gpT = workset.dgdpT;
   for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
        ! gr.done(); ++gr) {
-    PHAL::AlbanyTraits::Tangent::ScalarRefT val = *gr;
+    typename PHAL::Ref<ScalarT>::type val = *gr;
     const int res = gr.idx();
     if (gT != Teuchos::null){
       Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();

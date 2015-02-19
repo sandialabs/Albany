@@ -314,7 +314,7 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 #endif
   E_ = 0.5*( Intrepid::transpose(Fe_) * Fe_ - I_);
   S = Intrepid::dotdot(C_,E_);
-  sigma = (1.0 / Intrepid::det(F) ) * F* S * Intrepid::transpose(F);
+  sigma = (1.0 / Intrepid::det(F) ) * F * S * Intrepid::transpose(F);
 }
 //------------------------------------------------------------------------------
 }

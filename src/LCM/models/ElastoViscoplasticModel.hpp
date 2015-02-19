@@ -83,16 +83,36 @@ private:
   ElastoViscoplasticModel& operator=(const ElastoViscoplasticModel&);
 
   ///
-  /// Compute Yield Function
+  /// Initial Void Volume
   ///
-  ScalarT
-  YieldFunction();
+  RealType f0_;
 
   ///
-  /// Compute Nonlinear Flow Residual
+  /// Shear Damage Parameter
   ///
-  void
-  Residual();
+  RealType kw_;
+
+  ///
+  /// Void Nucleation Parameters
+  ///
+  RealType eN_, sN_, fN_;
+
+  ///
+  /// Critical Void Parameters
+  ///
+  RealType fc_, ff_;
+
+  ///
+  /// Yield Parameters
+  ///
+  RealType q1_, q2_, q3_;
+
+  ///
+  /// Compute Yield Function
+  ///
+  template<typename T>
+  T
+  compute_fstar(T f, RealType fc, RealType ff, RealType q1);
 
 };
 }

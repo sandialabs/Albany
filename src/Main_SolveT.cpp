@@ -35,8 +35,8 @@
 
 #include "Phalanx_config.hpp"
 #include "Phalanx.hpp"
-#include "Phalanx_KokkosUtilities.hpp"
 
+#include "Kokkos_Core.hpp"
 
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = true;
@@ -87,11 +87,7 @@ int main(int argc, char *argv[]) {
   bool success = true;
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
-
-/*  if (amb::set_own_omp_nthreads())
-    PHX::Device::initialize(4);// This doesn't work wit CUDA
-  else
-*/    PHX::InitializeKokkosDevice();
+  Kokkos::initialize(argc, argv);
 
 #ifdef ALBANY_CHECK_FPE
 //	_mm_setcsr(_MM_MASK_MASK &~
@@ -328,7 +324,7 @@ int main(int argc, char *argv[]) {
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
 
-  PHX::FinalizeKokkosDevice();
+  Kokkos::finalize_all();
 
   return status;
 }

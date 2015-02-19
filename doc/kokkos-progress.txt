@@ -279,14 +279,16 @@ x Implement derivative dimensions cleanly (Andrew)
     post-merge if necessary.
 x global replace to ExponentialRandomField<RealType>.
 x When all is done, strip out the amb:: debug stuff (Andrew)
+x DEBUG build nans.
 - final decision on ScalarT references
   x Albany has something working now
 - SG_MP (Andrew, after merge)
   . Eric P. writes that we should skip SG_MP for now.
-- DEBUG build nans.
 - Merge master into tpetra_kokkos (Andrew)
-  x 5 Feb
+  x 18 Feb
 - Merge tpetra_kokkos into master (Andrew)
 - SLFad, SFad (Andrew, before or after merge)
+- scorec_elastadapt_spr_tpetra, scorec_j2adapt_tpetra failing?
 - Peridigm (Andrew and Dave)
 - Dakota (Andy?)
+- switch the default for ENABLE_KOKKOS_UNDER_DEVELOPMENT

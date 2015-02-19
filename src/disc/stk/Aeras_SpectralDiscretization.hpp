@@ -38,9 +38,75 @@
   #include <stk_io/StkMeshIoBroker.hpp>
 #endif
 
+#include "Shards_CellTopology.hpp"
+
+// Uncomment the following line if you want debug output to be printed to screen
+//#define OUTPUT_TO_SCREEN
 
 namespace Aeras
 {
+
+  struct AerasMeshSpectStruct
+  { 
+    Teuchos::RCP<Albany::MeshSpecsStruct> createAerasMeshSpecs(const Teuchos::RCP<Albany::MeshSpecsStruct>& orig_mesh_specs_struct, 
+                                                               const int points_per_edge) 
+      {
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "DEBUG: in AerasMeshSpectStruct!  Points Per Edge =  " << points_per_edge << std::endl;
+#endif 
+      //get data from original STK Mesh struct
+      CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
+      std::string orig_name = orig_ctd.name;
+      size_t len      = orig_name.find("_");
+      if (len != std::string::npos) orig_name = orig_name.substr(0,len);
+      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral"), 
+                                  Teuchos::Exceptions::InvalidParameter,
+                                  std::endl << "Error!  Attempting to enrich a non-quadrilateral element (" <<
+                                  orig_name << ")!  Aeras::SpectralDiscretization is currently implemented only for " <<
+                                  "Quadrilateral and ShellQuadrilateral elements.\n"); 
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
+#endif 
+      int orig_numDim = orig_mesh_specs_struct->numDim;
+      int orig_cubatureDegree = orig_mesh_specs_struct->cubatureDegree;
+      std::vector<std::string> orig_nsNames = orig_mesh_specs_struct->nsNames;  //Node Sets Names
+      std::vector<std::string> orig_ssNames = orig_mesh_specs_struct->ssNames;  //Side Sets Names
+      int orig_worksetSize = orig_mesh_specs_struct->worksetSize;
+      std::string orig_ebName = orig_mesh_specs_struct->ebName;  //Element block name for the EB that this struct corresponds to
+      std::map<std::string, int>& orig_ebNameToIndex = orig_mesh_specs_struct->ebNameToIndex;
+      bool orig_interleavedOrdering = orig_mesh_specs_struct->interleavedOrdering;
+      bool orig_sepEvalsByEB = orig_mesh_specs_struct->sepEvalsByEB;
+      const Intrepid::EIntrepidPLPoly orig_cubatureRule = orig_mesh_specs_struct->cubatureRule;
+      //Create enriched MeshSpecsStruct object, to be returned.  It will have the same everything as the original mesh struct 
+      //except a CellTopologyData (ctd) with a different name and node_count (and dimension?). 
+      //New (enriched) CellTopologyData is same as original (unenriched) 
+      //cell topology data (ctd), but with a different node_count, vertex_count and name. 
+      CellTopologyData new_ctd = orig_ctd; 
+      //overwrite node_count, vertex_count and name of the original ctd.
+      int np = points_per_edge*points_per_edge; 
+      new_ctd.node_count = np; 
+      new_ctd.vertex_count = np; //Assumes vertex_count = node_count for ctd, which is the case for 
+                                 //isoparametric finite elements.
+
+      std::ostringstream convert; //used to convert int to string  
+      convert << np; 
+      std::string new_name = orig_name + '_' + convert.str();
+      //The following seems to be necessary b/c setting new_ctd.name = new_name.c_str() does not work. 
+      char* new_name_char = new char[new_name.size() + 1]; 
+      std::copy(new_name.begin(), new_name.end(), new_name_char);
+      new_name_char[new_name.size()] = '\0';
+      new_ctd.name = new_name_char;   
+#ifdef OUTPUT_TO_SCREEN
+      std::cout << "DEBUG: new_ctd.name = " << new_ctd.name << std::endl; 
+#endif
+      //create and return Albany::MeshSpecsStruct object based on the new (enriched) ctd. 
+      return Teuchos::rcp(new Albany::MeshSpecsStruct(new_ctd, orig_numDim, orig_cubatureDegree,
+                              orig_nsNames, orig_ssNames, orig_worksetSize,
+                              orig_ebName, orig_ebNameToIndex, orig_interleavedOrdering,
+                              orig_sepEvalsByEB, orig_cubatureRule));
+      delete [] new_name_char; 
+    }
+  };
 
 #ifdef ALBANY_EPETRA
   typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
@@ -194,7 +260,7 @@ namespace Aeras
 
     //! Print the coordinates for debugging
     void printCoords() const;
-    void printConnectivity() const;
+    void printConnectivity(bool printEdges=false) const;
 
     //! Get stateArrays
     Albany::StateArrays& getStateArrays() {return stateArrays;}

@@ -34,6 +34,7 @@ cmake \
  -D BoostLib_INCLUDE_DIRS:FILEPATH="/usr/include/boost" \
  -D BoostLib_LIBRARY_DIRS:FILEPATH="/usr/lib64" \
 \
+ -D Trilinos_ENABLE_CXX11:BOOL=ON \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
@@ -50,7 +51,7 @@ cmake \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
- -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+ -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \

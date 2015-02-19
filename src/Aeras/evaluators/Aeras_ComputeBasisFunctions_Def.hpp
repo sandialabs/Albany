@@ -390,6 +390,14 @@ evaluateFields(typename Traits::EvalData workset)
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
   if (spatialDim==basisDim) {
+    //Check that we don't have a higher order spectral element.  The node_count is based on 
+    //2D quad/shellquad elements.  This logic will only get hit if spatialDim = 2.
+    //Only a quad or shellquad element can be enriched according to the logic in Aeras::SpectralDiscretization.
+    TEUCHOS_TEST_FOR_EXCEPTION(cellType->getNodeCount() > 9, 
+                               Teuchos::Exceptions::InvalidParameter,
+                               std::endl << "Error!  Intrepid::CellTools<RealType>::setJacobian " <<
+                               "is only implemented for bilinear and biquadratic elements!  Attempting " <<
+                               "to call this function for a higher order element. \n"); 
     Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   } else {
     Intrepid::FieldContainer<MeshScalarT>  phi(numQPs,spatialDim);

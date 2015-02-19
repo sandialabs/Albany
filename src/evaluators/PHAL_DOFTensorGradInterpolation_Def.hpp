@@ -121,8 +121,7 @@ namespace PHAL {
           for (std::size_t j=0; j<vecDim; j++) {
             for (std::size_t dim=0; dim<numDims; dim++) {
               // For node==0, overwrite. Then += for 1 to numNodes.
-              PHAL::AlbanyTraits::Jacobian::ScalarRefT
-                gvqp = grad_val_qp(cell,qp,i,j,dim);
+              typename PHAL::Ref<ScalarT>::type gvqp = grad_val_qp(cell,qp,i,j,dim);
               gvqp = FadType(num_dof, val_node(cell, 0, i, j).val() * GradBF(cell, 0, qp, dim));
               gvqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * GradBF(cell, 0, qp, dim);
               for (std::size_t node= 1 ; node < numNodes; ++node) {

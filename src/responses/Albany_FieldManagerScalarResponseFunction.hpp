@@ -281,6 +281,14 @@ namespace Albany {
     //! Response name for visualization file
     std::string vis_response_name;
 
+  private:
+
+    template <typename EvalT> void evaluate(PHAL::Workset& workset);
+
+    //! Restrict the field manager to an element block, as is done for fm and
+    //! sfm in Albany::Application.
+    int element_block_index;
+
   };
 
   template <typename EvalT> 

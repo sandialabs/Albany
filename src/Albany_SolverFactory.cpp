@@ -52,6 +52,10 @@
   #include "ATO_Solver.hpp"
 #endif
 
+#ifdef ALBANY_LCM
+  #include "SchwarzMultiscale.hpp"
+#endif
+
 //#include "Thyra_EpetraModelEvaluator.hpp"
 //#include "AAdapt_AdaptiveModelFactory.hpp"
 
@@ -334,8 +338,11 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
-
-
+#ifdef ALBANY_LCM
+    if (solutionMethod == "Coupled Schwarz") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Coupled Schwarz Solution Method does not work with Albany executable!  Please re-run with AlbanyT Executable. \n");
+    }
+#endif
     if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
 //IK, 10/16/14: need to convert ATO::Solver to Tpetra
@@ -613,7 +620,72 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
 //#endif /* ALBANY_ATO */
 //    }
+  
+#ifdef ALBANY_LCM
+  if (solutionMethod == "Coupled Schwarz") {
+    std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl; 
+    const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, initial_guess));
+    //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
+    //files for each model).  This makes sense I think.  
+    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+   
+    const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
+    // Create and setup the Piro solver factory
+    Piro::SolverFactory piroFactory;
+    RCP<Thyra::ModelEvaluator<ST> > coupled_model_with_solveT;
+    if (Teuchos::nonnull(coupled_model->get_W_factory())) {
+      coupled_model_with_solveT = coupled_model;
+    } 
+    else {
+      // Setup linear solver
+      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+#ifdef ALBANY_IFPACK2
+      {
+#ifdef ALBANY_64BIT_INT
+        typedef Thyra::PreconditionerFactoryBase<ST> Base;
+        typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+#else
+        typedef Thyra::PreconditionerFactoryBase<double> Base;
+        typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+#endif
 
+        linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+      }
+#endif /* ALBANY_IFPACK2 */
+#ifdef ALBANY_MUELU
+#ifdef ALBANY_64BIT_INT
+      renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+      Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
+      Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+#else
+      Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+#endif
+#endif /* ALBANY_MUELU */
+
+      linearSolverBuilder.setParameterList(stratList);
+
+      const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
+        createLinearSolveStrategy(linearSolverBuilder);
+
+      coupled_model_with_solveT =
+        rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(coupled_model, lowsFactory));
+    }
+
+    //FIXME, IKT, 2/13/15: the following needs to be replaced with the right observer for CoupledSchwarz!
+    //I think we need to write an observer that takes in coupled_model similar to QCAD::CoupledPS_NOXObserverConstructor.
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    //Will have something like: 
+    //const RCP<Piro::ObserverBase<double> > coupled_observer = rcp(new LCM::CoupledSchwarz_NOXObserverConstructor(coupled_model));
+    //Coupled observer would split up the coupled solution into individual solution vectors (one for each model/domain)
+    //and write it to its own exodus output file. 
+    //setSource is not implemented for Tpetra in Piro!! 
+    //piroFactory.setSource<NOX::Tpetra?::Observer>(coupled_observer);
+    // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
+    // FIXME?
+    std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
+    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    }
+#endif
 
   RCP<Albany::Application> app = albanyApp;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =

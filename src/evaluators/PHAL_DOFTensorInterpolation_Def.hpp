@@ -55,7 +55,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          typename EvalT::ScalarRefT vqp = val_qp(cell,qp,i,j);
+          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
           vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
@@ -114,7 +114,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          PHAL::AlbanyTraits::Jacobian::ScalarRefT vqp = val_qp(cell,qp,i,j);
+          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
 	  vqp = FadType(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {

@@ -99,7 +99,7 @@ private:
   struct SlipSystemStruct {
 
     SlipSystemStruct() {
-      //  s_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
+      // s_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
       // n_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
       // tau_critical_ = 1.0;
       // gamma_dot_0_  = 0.0;

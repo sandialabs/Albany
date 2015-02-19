@@ -31,6 +31,7 @@
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int"    value="1"/>
       <Parameter name="Error Bound"                         type="double" value="0.04"/>
       <Parameter name="State Variable"                      type="string" value="Cauchy_Stress"/>
+      <Parameter name="Minimum Part Density"                type="double" value="2500"/>
     </ParameterList>
 
   </ParameterList>

@@ -209,7 +209,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef PHAL::AlbanyTraits::Jacobian::ScalarRefT ScalarRefT;
   const Teuchos::RCP<const Tpetra_Vector>    xT = workset.xT;
   const Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
 
@@ -228,7 +227,7 @@ evaluateFields(typename Traits::EvalData workset)
       const int firstunk = neq * node;
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        ScalarRefT valptr = (this->val[j])(cell,node);
+        typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         valptr = FadType(num_dof, xT_constView[eqID[n]]);
         valptr.setUpdateValue(!workset.ignore_residual);
         valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
@@ -237,7 +236,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            ScalarRefT valptr = (this->val[j])(cell,node,level,dim);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             valptr = FadType(num_dof, xT_constView[eqID[n]]);
             valptr.setUpdateValue(!workset.ignore_residual);
             valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
@@ -245,7 +244,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           valptr = FadType(num_dof, xT_constView[eqID[n]]);
           valptr.setUpdateValue(!workset.ignore_residual);
           valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
@@ -254,7 +253,7 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           valptr = FadType(num_dof, xT_constView[eqID[n]]);
           valptr.setUpdateValue(!workset.ignore_residual);
           valptr.fastAccessDx(firstunk + n) = workset.j_coeff;
@@ -265,7 +264,7 @@ evaluateFields(typename Traits::EvalData workset)
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          ScalarRefT valptr = (this->val_dot[j])(cell,node);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
           valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
           valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
         }
@@ -273,14 +272,14 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; level++) {
           for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-              ScalarRefT valptr = (this->val_dot[j])(cell,node,level,dim);
+              typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
               valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
               valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
             }
           }
           for (int j = eq+this->numVectorLevelVar;
                    j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
             valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
           }
@@ -288,7 +287,7 @@ evaluateFields(typename Traits::EvalData workset)
         eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) {
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr = FadType(num_dof, xdotT_constView[eqID[n]]);
             valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
           }
@@ -316,7 +315,6 @@ template<typename Traits>
 void GatherSolution<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  typedef PHAL::AlbanyTraits::Tangent::ScalarRefT ScalarRefT;
   Teuchos::RCP<const Tpetra_Vector> xT = workset.xT;
   Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
   Teuchos::RCP<const Tpetra_MultiVector> VxT = workset.VxT;
@@ -338,7 +336,7 @@ evaluateFields(typename Traits::EvalData workset)
       const Teuchos::ArrayRCP<int>& eqID  = nodeID[node];
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
-        ScalarRefT valptr = (this->val[j])(cell,node);
+        typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
           valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
           for (int k=0; k<workset.num_cols_x; k++)
@@ -351,7 +349,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            ScalarRefT valptr = (this->val[j])(cell,node,level,dim);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
               valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
               for (int k=0; k<workset.num_cols_x; k++)
@@ -363,7 +361,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++, ++n) {
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
@@ -376,7 +374,7 @@ evaluateFields(typename Traits::EvalData workset)
      eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           if (VxT != Teuchos::null && workset.j_coeff != 0.0) {
             valptr = TanFadType(num_cols_tot, xT_constView[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
@@ -390,7 +388,7 @@ evaluateFields(typename Traits::EvalData workset)
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; j++, ++n) {
-          ScalarRefT valptr = (this->val_dot[j])(cell,node);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
           if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
             valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
             for (int k=0; k<workset.num_cols_x; k++)
@@ -404,7 +402,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; level++) {
           for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-              ScalarRefT valptr = (this->val_dot[j])(cell,node,level,dim);
+              typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
               if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
                 valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
                 for (int k=0; k<workset.num_cols_x; k++)
@@ -417,7 +415,7 @@ evaluateFields(typename Traits::EvalData workset)
           }
           for (int j = eq+this->numVectorLevelVar;
                    j < eq+this->numScalarLevelVar+this->numScalarLevelVar; j++,++n) {
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
               valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
               for (int k=0; k<workset.num_cols_x; k++)
@@ -431,7 +429,7 @@ evaluateFields(typename Traits::EvalData workset)
        eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) {
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             if (VxdotT != Teuchos::null && workset.m_coeff != 0.0) {
               valptr = TanFadType(num_cols_tot, xdotT_constView[eqID[n]]);
               for (int k=0; k<workset.num_cols_x; k++)
@@ -481,7 +479,7 @@ evaluateFields(typename Traits::EvalData workset)
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
 //        (this->val    [j])(cell,node) = xT_constView[eqID[n]];
-        ScalarRefT valptr = (this->val[j])(cell,node);
+        typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
         valptr.reset(nblock);
         valptr.copyForWrite();
         for (int block=0; block<nblock; block++)
@@ -492,7 +490,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
 //            (this->val    [j])(cell,node,level,dim) = xT_constView   [eqID[n]];
-            ScalarRefT valptr = (this->val[j])(cell,node,level,dim);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
             valptr.reset(nblock);
             valptr.copyForWrite();
             for (int block=0; block<nblock; block++)
@@ -502,7 +500,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j, ++n) {
 //          (this->val    [j])(cell,node,level) = xT_constView   [eqID[n]];
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           valptr.reset(nblock);
           valptr.copyForWrite();
           for (int block=0; block<nblock; block++)
@@ -513,7 +511,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
 //          (this->val    [j])(cell,node,level) = xT_constView[eqID[n]];
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
           valptr.reset(nblock);
           valptr.copyForWrite();
           for (int block=0; block<nblock; block++)
@@ -526,7 +524,7 @@ evaluateFields(typename Traits::EvalData workset)
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
 //        (this->val_dot[j])(cell,node) = xdotT_constView[eqID[n]];
-          ScalarRefT valptr = (this->val_dot[j])(cell,node);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
           valptr.reset(nblock);
           valptr.copyForWrite();
           for (int block=0; block<nblock; block++)
@@ -537,7 +535,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
 //            (this->val_dot[j])(cell,node,level,dim) = xdotT_constView[eqID[n]];
-              ScalarRefT valptr = (this->val_dot[j])(cell,node,level,dim);
+              typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
               valptr.reset(nblock);
               valptr.copyForWrite();
               for (int block=0; block<nblock; block++)
@@ -547,7 +545,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = eq+this->numVectorLevelVar; 
                    j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
 //          (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr.reset(nblock);
             valptr.copyForWrite();
             for (int block=0; block<nblock; block++)
@@ -558,7 +556,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
 //          (this->val_dot[j])(cell,node,level) = xdotT_constView[eqID[n]];
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr.reset(nblock);
             valptr.copyForWrite();
             for (int block=0; block<nblock; block++)
@@ -606,7 +604,7 @@ evaluateFields(typename Traits::EvalData workset)
       const int firstunk = neq * node;
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        ScalarRefT valptr = (this->val[j])(cell,node);
+        typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node);
 //        valptr = FadType(num_dof, xT_constView[eqID[n]]);
         valptr = MPFadType(num_dof, 0.0);
         valptr.setUpdateValue(!workset.ignore_residual);
@@ -620,7 +618,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (int level = 0; level < this->numLevels; level++) { 
         for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            ScalarRefT valptr = (this->val[j])(cell,node,level,dim);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level,dim);
 //            valptr = FadType(num_dof, xT_constView[eqID[n]]);
             valptr = MPFadType(num_dof, 0.0);
             valptr.setUpdateValue(!workset.ignore_residual);
@@ -633,7 +631,7 @@ evaluateFields(typename Traits::EvalData workset)
         }
         for (int j = eq+this->numVectorLevelVar; 
                  j < eq+this->numVectorLevelVar+this->numScalarLevelVar; ++j,++n) {
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
 //          valptr = FadType(num_dof, xT_constView[eqID[n]]);
           valptr = MPFadType(num_dof, 0.0);
           valptr.setUpdateValue(!workset.ignore_residual);
@@ -647,7 +645,7 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numVectorLevelVar+this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) { 
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          ScalarRefT valptr = (this->val[j])(cell,node,level);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val[j])(cell,node,level);
 //          valptr = FadType(num_dof, xT_constView[eqID[n]]);
           valptr = MPFadType(num_dof, 0.0);
           valptr.setUpdateValue(!workset.ignore_residual);
@@ -663,7 +661,7 @@ evaluateFields(typename Traits::EvalData workset)
       if (workset.transientTerms) {
         int n = 0, eq = 0;
         for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-          ScalarRefT valptr = (this->val_dot[j])(cell,node);
+          typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node);
           valptr = MPFadType(num_dof, 0.0);
           valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
           valptr.val().reset(nblock);
@@ -675,7 +673,7 @@ evaluateFields(typename Traits::EvalData workset)
         for (int level = 0; level < this->numLevels; level++) { 
           for (int j = eq; j < eq+this->numVectorLevelVar; j++) {
             for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-              ScalarRefT valptr = (this->val_dot[j])(cell,node,level,dim);
+              typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level,dim);
               valptr = MPFadType(num_dof, 0.0);
               valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
               valptr.val().reset(nblock);
@@ -686,7 +684,7 @@ evaluateFields(typename Traits::EvalData workset)
           }
           for (int j = eq+this->numVectorLevelVar; 
                    j < eq+this->numVectorLevelVar+this->numScalarLevelVar; j++,++n) {
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr = MPFadType(num_dof, 0.0);
             valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
             valptr.val().reset(nblock);
@@ -698,7 +696,7 @@ evaluateFields(typename Traits::EvalData workset)
         eq += this->numVectorLevelVar+this->numScalarLevelVar;
         for (int level = 0; level < this->numLevels; ++level) { 
           for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-            ScalarRefT valptr = (this->val_dot[j])(cell,node,level);
+            typename PHAL::Ref<ScalarT>::type valptr = (this->val_dot[j])(cell,node,level);
             valptr = MPFadType(num_dof, 0.0);
             valptr.fastAccessDx(firstunk + n) = workset.m_coeff;
             valptr.val().reset(nblock);

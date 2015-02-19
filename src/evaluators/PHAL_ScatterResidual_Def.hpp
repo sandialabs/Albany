@@ -477,7 +477,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Jacobian::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
@@ -581,7 +581,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        PHAL::AlbanyTraits::Tangent::ScalarRefT
+        typename PHAL::Ref<ScalarT>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
