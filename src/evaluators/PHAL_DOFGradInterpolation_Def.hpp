@@ -166,51 +166,27 @@ postRegistrationSetup(typename Traits::SetupData d,
 }
 //**********************************************************************
 //Kokkos functor GradInt noDeriv
-template <class DeviceType, class MDFieldType1, class MDFieldType2, class MDFieldType3 >
-class GradInterpolation_noDeriv {
-  MDFieldType1 grad_val_qp_;
-  MDFieldType2 val_node_;
-  MDFieldType3 GradBF_;
-  const int numQPs_;
-  const int numDims_;
-  const int numNodes_;
-
-  public:
-  typedef DeviceType device_type;
-
-  GradInterpolation_noDeriv (MDFieldType1 &grad_val_qp,
-                             MDFieldType2 &val_node,
-                             MDFieldType3 &GradBF,
-                             int numQPs,
-                             int numDims,
-                             int numNodes)
-                           : grad_val_qp_(grad_val_qp)
-                           , val_node_(val_node)
-                           , GradBF_(GradBF)
-                           , numQPs_(numQPs)
-                           , numDims_(numDims)
-                           , numNodes_(numNodes){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DOFGradInterpolation_noDeriv<EvalT, Traits>::
+operator()(const int& i) const
  {
-   for (int qp=0; qp < numQPs_; ++qp) {
-       for (int dim=0; dim<numDims_; dim++) {
-           grad_val_qp_(i,qp,dim) = val_node_(i, 0) * GradBF_(i, 0, qp, dim);
-            for (int node= 1 ; node < numNodes_; ++node) {
-              grad_val_qp_(i,qp,dim) += val_node_(i, node) * GradBF_(i, node, qp, dim);
+   for (int qp=0; qp < numQPs; ++qp) {
+       for (int dim=0; dim<numDims; dim++) {
+           grad_val_qp(i,qp,dim) = val_node(i, 0) * GradBF(i, 0, qp, dim);
+            for (int node= 1 ; node < numNodes; ++node) {
+              grad_val_qp(i,qp,dim) += val_node(i, node) * GradBF(i, node, qp, dim);
           }
         }
       }  
  }
-};
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFGradInterpolation_noDeriv<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Intrepid Version:
   // for (int i=0; i < grad_val_qp.size() ; i++) grad_val_qp[i] = 0.0;
   // Intrepid::FunctionSpaceTools:: evaluate<ScalarT>(grad_val_qp, val_node, GradBF);
@@ -226,11 +202,11 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-/*#else
+#else
 
-  Kokkos::parallel_for ( workset.numCells,  GradInterpolation_noDeriv <  PHX::Device,  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>, PHX::MDField<RealType,Cell,Node>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>  >( grad_val_qp, val_node, GradBF, numQPs, numDims, numNodes));
+  Kokkos::parallel_for(workset.numCells,*this);
 
-#endif*/
+#endif
 }
 
 //**********************************************************************

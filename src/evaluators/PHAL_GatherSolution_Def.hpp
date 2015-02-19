@@ -661,6 +661,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
+
     wsID_kokkos=workset.wsElNodeEqID_kokkos;
 
     ignore_residual=workset.ignore_residual;
@@ -697,6 +698,7 @@ evaluateFields(typename Traits::EvalData workset)
         Kokkos::parallel_for(tensorRank_0_enableAccelerationPolicy(0,workset.numCells),*this);
    }
 #endif
+
 
 }
 

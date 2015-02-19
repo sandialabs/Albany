@@ -185,36 +185,18 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   this->setName("StokesFOBodyForce"+PHX::typeAsString<EvalT>());
 }
 //**********************************************************************
-//Kokkos functors
-template < class DeviceType, class MDFieldType1, class MDFieldType2 >
-class FOBodyForce_FO_INTERP_SURF_GRAD  {
- MDFieldType1 surfaceGrad_;
- MDFieldType2 force_;
- const double rho_g_;
- const int numQPs_;  
-
- public:
- typedef DeviceType device_type;
-
- FOBodyForce_FO_INTERP_SURF_GRAD (MDFieldType1 &surfaceGrad,
-              MDFieldType2 &force,
-              double rho_g,
-              int numQPs)
-  : surfaceGrad_(surfaceGrad)
-  , force_(force)
-  , rho_g_(rho_g)
-  , numQPs_(numQPs){}
-
- KOKKOS_INLINE_FUNCTION
- void operator () (const int i) const
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void StokesFOBodyForce<EvalT, Traits>::
+operator () (const int i) const
  {
-  for (int j=0; j<numQPs_; j++)
+  const double rho_g = rho*g;
+  for (int j=0; j<numQPs; j++)
   {
-   force_(i, j, 0)=rho_g_*surfaceGrad_(i,j,0);
-   force_(i, j, 1)=rho_g_*surfaceGrad_(i,j,1);
+   force(i, j, 0)=rho_g*surfaceGrad(i,j,0);
+   force(i, j, 1)=rho_g*surfaceGrad(i,j,1);
   }
  }
-};
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -243,7 +225,7 @@ void StokesFOBodyForce<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
  if (bf_type == NONE) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
      for (std::size_t qp=0; qp < numQPs; ++qp)       
@@ -428,11 +410,11 @@ evaluateFields(typename Traits::EvalData workset)
      }
    }
  }
-/*#else
+#else
   if (bf_type == NONE) {
   }
   else if (bf_type == FO_INTERP_SURF_GRAD) {
-  Kokkos::parallel_for ( workset.numCells,FOBodyForce_FO_INTERP_SURF_GRAD < PHX::Device,  PHX::MDField<MeshScalarT,Cell,QuadPoint, Dim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >( surfaceGrad, force, rho_g, numQPs) );
+  Kokkos::parallel_for ( workset.numCells, *this);
   }
   else if (bf_type == FO_SINCOS2D) {
   }
@@ -450,7 +432,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
   else if (bf_type == FO_DOME) {
   }
-#endif*/
+#endif
 
 
 }

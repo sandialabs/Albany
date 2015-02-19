@@ -35,7 +35,9 @@ public:
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
+  
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
 
 private:
  
