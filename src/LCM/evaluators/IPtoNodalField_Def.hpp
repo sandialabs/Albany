@@ -178,6 +178,10 @@ preEvaluate(typename Traits::PreEvalData workset)
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
           ->getNodalDataBlock();
+  //eb-hack Call initializeVectors just once. Protection is needed if there are
+  // multiple element blocks.
+  if (node_data->numPreEvaluateCalls() > 1) return;
+
   node_data->initializeVectors(0.0);
 }
 
@@ -275,6 +279,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Adapt::NodalDataBlock> node_data =
       this->p_state_mgr_->getStateInfoStruct()->getNodalDataBase()
           ->getNodalDataBlock();
+  //eb-hack Do the postEvaluate calculations just once even if there are
+  // multiple element blocks.
+  if (node_data->numPostEvaluateCalls() > 1) return;
+
   Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > wsElNodeID = workset.wsElNodeID;
   Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data
