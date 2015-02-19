@@ -12,11 +12,13 @@
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types
+#include "Sacado_Kokkos.hpp"
 #include "Sacado_MathFunctions.hpp"
 #include "Stokhos_Sacado_MathFunctions.hpp"
 #include "Sacado_ELRFad_DFad.hpp"
 #include "Sacado_ELRCacheFad_DFad.hpp"
 #include "Sacado_Fad_DFad.hpp"
+#include "Sacado_Fad_SLFad.hpp"
 #include "Sacado_ELRFad_SLFad.hpp"
 #include "Sacado_ELRFad_SFad.hpp"
 #include "Sacado_CacheFad_DFad.hpp"
@@ -24,9 +26,10 @@
 #include "Sacado_ETV_Vector.hpp"
 
 //amb Need to move to configuration.
-#define ALBANY_SFAD_SIZE 24
-#define ALBANY_SLFAD_SIZE 24
+#define ALBANY_SFAD_SIZE 16
+#define ALBANY_SLFAD_SIZE 16
 
+//#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
 typedef double RealType;
 #ifdef ALBANY_FAST_FELIX
@@ -34,7 +37,7 @@ typedef double RealType;
   // are the same or different typdefs
 #define ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 //  typedef Sacado::ELRFad::SLFad<double,16> FadType;
-  typedef Sacado::ELRFad::SFad<double, ALBANY_SFAD_SIZE> FadType;
+  typedef Sacado::Fad::SLFad<double, ALBANY_SFAD_SIZE> FadType;
 #else
   typedef Sacado::Fad::DFad<double> FadType;
 #endif
