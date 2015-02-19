@@ -5,44 +5,6 @@
 ##*****************************************************************//
 # FELIX
 
-IF(PHX_KOKKOS_DEVICE_TYPE_CUDA)
-  IF( TPL_ENABLE_MPI )
-      CUDA_INCLUDE_DIRECTORIES( ${MPI_BASE_DIR}/include )
-  ENDIF()
-
-
-  CUDA_INCLUDE_DIRECTORIES( "." )
-  CUDA_INCLUDE_DIRECTORIES( ${KokkosCore_INCLUDE_DIRS})
-  CUDA_COMPILE( OBJECTS_CUDA1 problems/FELIX_Stokes_CU.cu )
-  CUDA_COMPILE( OBJECTS_CUDA2 problems/FELIX_StokesFO_CU.cu )
-  CUDA_COMPILE( OBJECTS_CUDA3 problems/FELIX_StokesL1L2_CU.cu)
-  CUDA_COMPILE( OBJECTS_CUDA4 evaluators/FELIX_ViscosityFO_CU.cu)
-  CUDA_COMPILE( OBJECTS_CUDA5 evaluators/FELIX_StokesFOBodyForce_CU.cu)
-  CUDA_COMPILE( OBJECTS_CUDA6 evaluators/FELIX_StokesFOResid_CU.cu)
-#  CUDA_COMPILE( OBJECTS_CUDA4 evaluators/Aeras_ComputeBasisFunctions_CU.cu)
-
-  SET(SOURCES 
-       evaluators/FELIX_StokesMomentumResid.cpp
-       ${OBJECTS_CUDA6}
-       evaluators/FELIX_StokesL1L2Resid.cpp
-       evaluators/FELIX_Viscosity.cpp
-       ${OBJECTS_CUDA4}
-       evaluators/FELIX_ViscosityL1L2.cpp
-       evaluators/FELIX_EpsilonL1L2.cpp
-       evaluators/FELIX_StokesContinuityResid.cpp
-       evaluators/FELIX_StokesTauM.cpp
-       evaluators/FELIX_StokesContravarientMetricTensor.cpp
-       evaluators/FELIX_StokesRm.cpp
-       evaluators/FELIX_StokesBodyForce.cpp
-       ${OBJECTS_CUDA5}
-       evaluators/FELIX_StokesL1L2BodyForce.cpp
-       ${OBJECTS_CUDA1}
-       ${OBJECTS_CUDA2}
-       ${OBJECTS_CUDA3}
-   )
-
-
-ELSE()
 
   SET(SOURCES 
        evaluators/FELIX_StokesMomentumResid.cpp
@@ -64,7 +26,6 @@ ELSE()
        problems/FELIX_StokesL1L2.cpp
    )
 
-ENDIF()
    
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS 

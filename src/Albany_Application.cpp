@@ -3488,7 +3488,9 @@ postRegSetup(std::string eval)
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+std::cout<< "deriv_dim Jac" << PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps)<<std::endl;
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+std::cout<< "deriv_dim Jac2 " <<std::endl; 
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
       if (nfm!=Teuchos::null && ps < nfm.size()) {
         nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
@@ -3501,6 +3503,7 @@ postRegSetup(std::string eval)
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
+std::cout<< "deriv_dim Jac 0" << PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0)<<std::endl;
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
     }
@@ -3510,6 +3513,7 @@ postRegSetup(std::string eval)
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
+std::cout<< "deriv_dim Tan" << PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps)<<std::endl;
       fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
       if (nfm!=Teuchos::null && ps < nfm.size()) {
@@ -3523,6 +3527,7 @@ postRegSetup(std::string eval)
       std::vector<PHX::index_size_type> derivative_dimensions;
       derivative_dimensions.push_back(
         PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, 0));
+std::cout<< "deriv_dim Tan0" << PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, 0)<<std::endl;
       dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
       }

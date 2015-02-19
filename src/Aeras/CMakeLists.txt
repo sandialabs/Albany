@@ -5,42 +5,6 @@
 ##    *****************************************************************//
 ##    # Aeras
 
-IF(PHX_KOKKOS_DEVICE_TYPE_CUDA)
-  IF( TPL_ENABLE_MPI )
-      CUDA_INCLUDE_DIRECTORIES( ${MPI_BASE_DIR}/include )
-  ENDIF()
-
-
-  CUDA_INCLUDE_DIRECTORIES( "." )
-  CUDA_INCLUDE_DIRECTORIES( ${KokkosCore_INCLUDE_DIRS}) 
-  CUDA_COMPILE( OBJECTS_CUDA1 problems/Aeras_ShallowWaterProblem_CU.cu )
-  CUDA_COMPILE( OBJECTS_CUDA2 problems/Aeras_XZScalarAdvectionProblem_CU.cu )
-  CUDA_COMPILE( OBJECTS_CUDA3 problems/Aeras_XScalarAdvectionProblem_CU.cu)
-  CUDA_COMPILE( OBJECTS_CUDA4 evaluators/Aeras_ComputeBasisFunctions_CU.cu)
-
-#  LIST( APPEND SOURCES ${OBJECTS_CUDA})
-   SET(SOURCES 
-       ${OBJECTS_CUDA4}
-       evaluators/Aeras_ShallowWaterResid.cpp
-       evaluators/Aeras_Atmosphere.cpp
-       evaluators/Aeras_Atmosphere_Moisture.cpp
-       evaluators/Aeras_GatherCoordinateVector.cpp
-       evaluators/Aeras_SurfaceHeight.cpp
-       ${OBJECTS_CUDA1}
-       evaluators/Aeras_XZScalarAdvectionResid.cpp
-       ${OBJECTS_CUDA2}
-       evaluators/Aeras_ScalarAdvectionResid.cpp
-       evaluators/Aeras_XScalarAdvectionResid.cpp
-       ${OBJECTS_CUDA3}
-       problems/Aeras_Layouts.cpp
-       evaluators/Aeras_GatherSolution.cpp
-       evaluators/Aeras_ScatterResidual.cpp
-       evaluators/Aeras_DOFInterpolation.cpp
-       evaluators/Aeras_DOFGradInterpolation.cpp
-       evaluators/Aeras_Atmosphere_Moisture.cpp
-   )
-
-ELSE()
 
   SET(SOURCES 
        evaluators/Aeras_ComputeBasisFunctions.cpp
@@ -91,7 +55,6 @@ ELSE()
 
    )
    
-ENDIF()
 
   SET(HEADERS
        evaluators/Aeras_Eta.hpp
