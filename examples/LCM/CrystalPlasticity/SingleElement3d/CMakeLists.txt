@@ -21,8 +21,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/AnalyticSolution.py
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShearRotated3d.xml
                ${CMAKE_CURRENT_BINARY_DIR}/ElasticShearRotated3d.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CrystalElasticity3d_Material.xml
-               ${CMAKE_CURRENT_BINARY_DIR}/CrystalElasticity3d_Material.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CrystalElasticityRotated3d_Material.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/CrystalElasticityRotated3d_Material.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShearRotated3d.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/ElasticShearRotated3d.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ElasticShearRotated3d.gold.exo
