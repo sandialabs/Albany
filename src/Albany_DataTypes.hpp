@@ -58,7 +58,7 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_Operator.hpp"
 #include "Tpetra_MultiVector.hpp"
 #include "Tpetra_BlockMultiVector.hpp"
-#include "Tpetra_KokkosRefactor_CrsMatrix_def.hpp"
+#include "Tpetra_KokkosRefactor_CrsMatrix_decl.hpp"
 #include "MatrixMarket_Tpetra.hpp"
 #include "Thyra_TpetraThyraWrappers.hpp"
 #include "MatrixMarket_Tpetra.hpp"
