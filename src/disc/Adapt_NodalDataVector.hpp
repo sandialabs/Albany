@@ -41,6 +41,13 @@ class NodalDataVector {
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
+    const Teuchos::RCP<Tpetra_MultiVector>& getLocalNodeVector() const {
+      return local_node_vec;
+    }
+    const Teuchos::RCP<Tpetra_MultiVector>& getOverlapNodeVector() const {
+      return overlap_node_vec;
+    }
+
     Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i) {
       return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
     }
@@ -77,6 +84,18 @@ class NodalDataVector {
 
     LO getVecSize() { return vectorsize; }
 
+    //eb-hack This interface, and the evaluator-based response functions that
+    // interact with Exodus files through this and the Vector version of this
+    // interface, need to be redesigned. There are number of problems. For
+    // example, if there are multiple element blocks, multiple redundant calls
+    // are made to these methods in preEvaluate and postEvaluate, possibly with
+    // erroneous results.
+    //   However, I want to continue to push off this task, so I'm expanding
+    // eb-hack to take care of IPtoNodalField.
+    void initEvaluateCalls();
+    int numPreEvaluateCalls();
+    int numPostEvaluateCalls();
+
   private:
 
     NodalDataVector();
@@ -102,6 +121,8 @@ class NodalDataVector {
     LO& vectorsize;
 
     bool mapsHaveChanged;
+
+    int num_preeval_calls, num_posteval_calls;
 
 };
 

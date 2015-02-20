@@ -37,7 +37,8 @@ Adapt::NodalDataVector::NodalDataVector(
     nodeVectorLayout(nodeVectorLayout_),
     nodeVectorMap(nodeVectorMap_),
     vectorsize(vectorsize_),
-    mapsHaveChanged(false)
+    mapsHaveChanged(false),
+    num_preeval_calls(0), num_posteval_calls(0)
 {
 }
 
@@ -160,4 +161,16 @@ saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
 void Adapt::NodalDataVector::initializeVectors(ST value) {
   overlap_node_vec->putScalar(value);
   local_node_vec->putScalar(value);
+}
+
+void Adapt::NodalDataVector::initEvaluateCalls () {
+  num_preeval_calls = num_posteval_calls = 0;
+}
+
+int Adapt::NodalDataVector::numPreEvaluateCalls () {
+  return ++num_preeval_calls;
+}
+
+int Adapt::NodalDataVector::numPostEvaluateCalls () {
+  return ++num_posteval_calls;
 }
