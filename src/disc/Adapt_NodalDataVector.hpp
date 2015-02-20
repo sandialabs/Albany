@@ -16,6 +16,10 @@
 
 #include "Adapt_NodalFieldUtils.hpp"
 
+#ifdef ALBANY_ATO
+#include "Epetra_BlockMap.h"
+#endif
+
 namespace Adapt {
 
 /*!
@@ -31,28 +35,40 @@ class NodalDataVector {
                     NodeFieldSizeMap& nodeVectorMap, LO& vectorsize);
 
     //! Destructor
-    virtual ~NodalDataVector(){}
+    virtual ~NodalDataVector() {}
 
     void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i){
-             return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
-             }
-    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i){
-             return overlap_node_vec->getVectorNonConst(i)->get1dViewNonConst();
-             }
+    const Teuchos::RCP<Tpetra_MultiVector>& getLocalNodeVector() const {
+      return local_node_vec;
+    }
+    const Teuchos::RCP<Tpetra_MultiVector>& getOverlapNodeVector() const {
+      return overlap_node_vec;
+    }
+
+    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i) {
+      return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
+    }
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i) {
+      return overlap_node_vec->getVectorNonConst(i)->get1dViewNonConst();
+    }
 
     Teuchos::ArrayRCP<const ST> getOverlapNodeConstView(std::size_t i) const {
-             return overlap_node_vec->getVector(i)->get1dView();
-             }
+      return overlap_node_vec->getVector(i)->get1dView();
+    }
     Teuchos::ArrayRCP<const ST> getLocalNodeConstView(std::size_t i) const {
-             return local_node_vec->getVector(i)->get1dView();
-             }
+      return local_node_vec->getVector(i)->get1dView();
+    }
 
     Teuchos::RCP<const Tpetra_Map> getOverlapMap() const { return overlap_node_map; }
     Teuchos::RCP<const Tpetra_Map> getLocalMap() const { return local_node_map; }
+
+#ifdef ALBANY_ATO
+    Teuchos::RCP<const Epetra_BlockMap> getOverlapBlockMapE() const { return overlap_node_mapE; }
+    Teuchos::RCP<const Epetra_BlockMap> getLocalBlockMapE() const { return local_node_mapE; }
+#endif
 
     void initializeVectors(ST value);
 
@@ -64,9 +80,26 @@ class NodalDataVector {
     void saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const;
     void accumulateAndSaveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv);
 
+  void saveTpetraNodalDataVector(
+    const std::string& name,
+    const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+    const int offset) const;
+
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
-    LO getVecSize(){ return vectorsize; }
+    LO getVecSize() { return vectorsize; }
+
+    //eb-hack This interface, and the evaluator-based response functions that
+    // interact with Exodus files through this and the Vector version of this
+    // interface, need to be redesigned. There are number of problems. For
+    // example, if there are multiple element blocks, multiple redundant calls
+    // are made to these methods in preEvaluate and postEvaluate, possibly with
+    // erroneous results.
+    //   However, I want to continue to push off this task, so I'm expanding
+    // eb-hack to take care of IPtoNodalField.
+    void initEvaluateCalls();
+    int numPreEvaluateCalls();
+    int numPostEvaluateCalls();
 
   private:
 
@@ -77,6 +110,11 @@ class NodalDataVector {
 
     Teuchos::RCP<Tpetra_MultiVector> overlap_node_vec;
     Teuchos::RCP<Tpetra_MultiVector> local_node_vec;
+
+#ifdef ALBANY_ATO
+    Teuchos::RCP<const Epetra_BlockMap> overlap_node_mapE;
+    Teuchos::RCP<const Epetra_BlockMap> local_node_mapE;
+#endif
 
     Teuchos::RCP<Tpetra_Import> importer;
 
@@ -89,8 +127,9 @@ class NodalDataVector {
 
     bool mapsHaveChanged;
 
-};
+    int num_preeval_calls, num_posteval_calls;
 
+};
 
 }
 

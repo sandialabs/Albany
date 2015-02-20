@@ -9,19 +9,17 @@ off on this for now until we decide definitively what'll be read in from what fi
 
 6.) Eventually we'll want to put an ifdef to suppress all the debug output [TBD].
 
+7.) Debug seg fault in SchwarzMultiscale model evaluator class. 
 
 ---------------------Development TODOs------------------------
 
 1.) We may want to put in validatian of parameter lists in LCM::SchwarzMultiscale class, 
 if necessary.  It appears to be handled in general already in other parts of the code. [TBD?]
 
-4.) Implement create_W_op() in SchwarzMultiscale.cpp.  Look at create_W function 
-in QCAD_CoupledPoissonSchrodinger.cpp as an example.  We may want to write a separate class 
-to return the Jacobian operator, as in QCAD. [TBD -- I suggest we hold off on this until we do 
-the other easier stuff.  I also suggest in the first attempt we just implement the 
-Jacobian for 2 models that are concatenated but not coupled.]
+4.) Implement Schwarz_CoupledJacobian "apply" method, which takes a vector X, and forms a vector Y, 
+where Y = Jac*X, with Jac = the coupled Jacbian matrix.  
 
-11.) Implement evalModelImpl in SchwarzMultiscale.cpp. [TBD]
+11.) Finish implementation of evalModelImpl in SchwarzMultiscale.cpp. [TBD]
 
 
 ------------------Questions/Comments/Notes-----------------------------
@@ -47,6 +45,9 @@ We would need a routine that breaks up the final concatenated solutions into sep
 ones and gives these to the mesh output routines (like separateCombinedVector in QCAD?).
 
 3.) Figure out how we'll hook in Teko for the preconditioner.
+
+4.) Figure out if Thyra can be used for efficient matrix/vector multiplies and getting submatrices/vectors
+for coupled model.  Is Tpetra_Operator Jacobian class OK, or should this be Thyra? 
 
 -----------------Notes from emails with Andy---------------------------------------
 

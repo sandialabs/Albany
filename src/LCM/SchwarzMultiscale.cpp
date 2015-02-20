@@ -8,6 +8,7 @@
 #include "Albany_ModelFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Schwarz_CoupledJacobian.hpp" 
 
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
@@ -346,7 +347,8 @@ LCM::SchwarzMultiscale::get_f_space() const
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
-    {
+{
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_p_space()!\n";
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= num_params_total_ < 0,
       Teuchos::Exceptions::InvalidParameter,
@@ -368,7 +370,8 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
-    {
+{
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_g_space()!\n";
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= num_responses_total_ || l < 0,
       Teuchos::Exceptions::InvalidParameter,
@@ -390,6 +393,7 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 Teuchos::RCP<const Teuchos::Array<std::string> >
 LCM::SchwarzMultiscale::get_p_names(int l) const
     {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_p_names()!\n";
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= num_params_total_ || l < 0,
       Teuchos::Exceptions::InvalidParameter,
@@ -413,6 +417,7 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getNominalValues() const
 {
   //IK, 2/11/15: this function is done!
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::getNominalValues()!\n";
   return nominal_values_;
 }
 
@@ -420,6 +425,7 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getLowerBounds() const
 {
   //IK, 2/10/15: this function is done!
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::getLowerBounds()!\n";
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
@@ -427,6 +433,7 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getUpperBounds() const
 {
   //IK, 2/10/15: this function is done!
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::getUpperBounds()!\n";
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
@@ -434,14 +441,14 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::create_W_op() const
 {
   std::cout << "DEBUG:  LCM::SchwarzMultizcale create_W_op() called! \n";
-   //FIXME: implement LCM::CoupledSchwarzJacobian class!  Will inherit from Tpetra_Operator
-  //Teuchos::RCP<LCM::CoupledSchwarzJacobian> W_out_coupled = Teuchos::rcp(new LCM::CoupledSchwarzJacobian(...)); 
-   //return Thyra::createLinearOp(W_out_coupled);
+  const Teuchos::RCP<Tpetra_Operator> W_out_coupled = Teuchos::rcp(new LCM::Schwarz_CoupledJacobian(disc_maps_, coupled_disc_map_, commT_)); 
+  return Thyra::createLinearOp(W_out_coupled);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
 LCM::SchwarzMultiscale::create_W_prec() const
 {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::create_W_prec()!\n";
   //IK, 2/10/15: this function is done for now...
 
   //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
@@ -455,6 +462,7 @@ LCM::SchwarzMultiscale::create_W_prec() const
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
 LCM::SchwarzMultiscale::get_W_factory() const
 {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::get_W_factory()!\n";
   //IK, 2/10/15: this function is done!
   return Teuchos::null;
 }
@@ -462,6 +470,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::createInArgs() const
 {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::createInArgs()!\n";
   //IK, 2/11/15: this function is done!
   return this->createInArgsImpl();
 }
@@ -471,6 +480,7 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& finalPoint,
     const bool wasSolved)
 {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::reportFinalPoint()!\n";
   //IK, 2/11/15: this function is done!
   TEUCHOS_TEST_FOR_EXCEPTION(true,
       Teuchos::Exceptions::InvalidParameter,
@@ -483,6 +493,7 @@ allocateVectors()
 {
   //In this function, we create and set x_init and x_dot_init in
   //nominal_values_ for the coupled model.
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::allocateVectors()!\n";
 
   //Create Teuchos::Arrays of hte x_init and x_dot init Tpetra_Vectors
   //for each of the models
@@ -571,6 +582,7 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_op_impl(int j) const
     {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::create_DgDx_op_impl()!\n";
   TEUCHOS_TEST_FOR_EXCEPTION(
       j >= num_responses_total_ || j < 0,
       Teuchos::Exceptions::InvalidParameter,
@@ -595,7 +607,8 @@ create_DgDx_op_impl(int j) const
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
-    {
+{
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::create_DgDdx_dot_op_impl()!\n";
   TEUCHOS_TEST_FOR_EXCEPTION(
       j >= num_responses_total_ || j < 0,
       Teuchos::Exceptions::InvalidParameter,
@@ -621,6 +634,7 @@ Thyra::ModelEvaluatorBase::OutArgs<ST>
 LCM::SchwarzMultiscale::
 createOutArgsImpl() const
 {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::createOutArgsImpl()!\n";
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> result;
   result.setModelEvalDescription(this->description());
 
@@ -682,8 +696,11 @@ void
 LCM::SchwarzMultiscale::
 evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
-    {
-  //FIXME: fill in!
+{
+  //FIXME: finish filling in!
+  
+std::cout <<"DEBUG: in LCM::SchwarzMultiscale::evalModelImpl! \n"; 
+
 
   // Get the input arguments
   const Teuchos::RCP<const Tpetra_Vector> xT =
@@ -822,8 +839,8 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
 
 
   //FIXME: create coupled W matrix from array of model W matrices   
-  //Teuchos::RCP<LCM::CoupledSchwarzJacobian> W_out_coupled = Teuchos::rcp_dynamic_cast<LCM::CoupledSchwarzJacobian>(W_out, true);
-  // W_out_coupled->initialize(W_outs_crs);
+  Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled = Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
+  W_op_out_coupled->initialize(W_op_outs_crsT);
   
   // Create fT_out from fTs_out[m]
   LO counter_local = 0;
@@ -960,6 +977,7 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::
 createInArgsImpl() const
 {
+  std::cout << "DEBUG: In LCM::SchwarzMultiScale::createInArgsImpl()!\n";
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> result;
   result.setModelEvalDescription(this->description());
 

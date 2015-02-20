@@ -78,7 +78,6 @@ setupT()
   }
   gradient_graphT->fillComplete();
   //IK, 8/22/13: Tpetra_CrsGraph does not appear to have optimizeStorage() function...
-  //Tpetra_BlockCrsGraph does
   //gradient_graphT->optimizeStorage();
 }
 

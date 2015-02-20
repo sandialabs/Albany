@@ -8,6 +8,27 @@
 #include "Tpetra_Import_decl.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
+#ifdef ALBANY_ATO
+#include <vector>
+#include "Albany_Utils.hpp"
+namespace {
+template<typename T> const int* convert(
+  const Teuchos::Array<T>& av, std::vector<int>& v);
+template<> const int*
+convert<long long int> (
+  const Teuchos::Array<long long int>& av, std::vector<int>& v)
+{
+  v.resize(av.size());
+  for (std::size_t i = 0; i < av.size(); ++i) v[i] = static_cast<int>(av[i]);
+  return &v[0];
+}
+template<> const int*
+convert<int> (const Teuchos::Array<int>& av, std::vector<int>& v) {
+  return &av[0];
+}
+}
+#endif
+
 Adapt::NodalDataVector::NodalDataVector(
   const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer_,
   NodeFieldSizeVector& nodeVectorLayout_,
@@ -16,7 +37,8 @@ Adapt::NodalDataVector::NodalDataVector(
     nodeVectorLayout(nodeVectorLayout_),
     nodeVectorMap(nodeVectorMap_),
     vectorsize(vectorsize_),
-    mapsHaveChanged(false)
+    mapsHaveChanged(false),
+    num_preeval_calls(0), num_posteval_calls(0)
 {
 }
 
@@ -35,6 +57,18 @@ resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs,
   overlap_node_vec = Teuchos::rcp(new Tpetra_MultiVector(overlap_node_map, vectorsize));
 
   mapsHaveChanged = true;
+
+#ifdef ALBANY_ATO 
+  {
+    Teuchos::RCP<Epetra_Comm>
+      commE = Albany::createEpetraCommFromTeuchosComm(comm_);
+    std::vector<int> buf;
+    const int* gids = convert(overlap_nodeGIDs, buf);
+    overlap_node_mapE = Teuchos::rcp(
+      new Epetra_BlockMap(-1, overlap_nodeGIDs.size(), gids, vectorsize, 0,
+                          *commE));
+  }
+#endif
 }
 
 void
@@ -53,6 +87,18 @@ resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs,
   local_node_vec = Teuchos::rcp(new Tpetra_MultiVector(local_node_map, vectorsize));
 
   mapsHaveChanged = true;
+
+#ifdef ALBANY_ATO
+  {
+    Teuchos::RCP<Epetra_Comm>
+      commE = Albany::createEpetraCommFromTeuchosComm(comm_);
+    std::vector<int> buf;
+    const int* gids = convert(local_nodeGIDs, buf);
+    local_node_mapE = Teuchos::rcp(
+      new Epetra_BlockMap(-1, local_nodeGIDs.size(), gids, vectorsize, 0,
+                          *commE));
+  }
+#endif
 }
 
 void Adapt::NodalDataVector::initializeExport()
@@ -112,7 +158,32 @@ saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
     (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset);
 }
 
+void Adapt::NodalDataVector::
+saveTpetraNodalDataVector (
+  const std::string& name,
+  const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+  const int offset) const
+{
+  Albany::NodeFieldContainer::const_iterator it = nodeContainer->find(name);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    it == nodeContainer->end(), std::logic_error,
+    "Error: Cannot locate nodal field " << name << " in NodalDataVector");
+  (*nodeContainer)[name]->saveFieldVector(overlap_node_vec, offset);
+}
+
 void Adapt::NodalDataVector::initializeVectors(ST value) {
   overlap_node_vec->putScalar(value);
   local_node_vec->putScalar(value);
+}
+
+void Adapt::NodalDataVector::initEvaluateCalls () {
+  num_preeval_calls = num_posteval_calls = 0;
+}
+
+int Adapt::NodalDataVector::numPreEvaluateCalls () {
+  return ++num_preeval_calls;
+}
+
+int Adapt::NodalDataVector::numPostEvaluateCalls () {
+  return ++num_posteval_calls;
 }

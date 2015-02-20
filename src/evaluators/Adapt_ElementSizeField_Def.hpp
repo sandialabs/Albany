@@ -8,7 +8,7 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
 template<typename T>
 T Sqr(T num)
@@ -80,16 +80,16 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
   if( outputNodeData ) {
     // The weighted projected value
 
-    // Note that all dl->node_node_* layouts are handled by the Adapt_NodalDataBlock class, inside
+    // Note that all dl->node_node_* layouts are handled by the Adapt_NodalDataVector class, inside
     // of the state manager, as they require interprocessor synchronization
 
     if(isAnisotropic){ //An-isotropic
-      this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
+      this->pStateMgr->registerNodalVectorStateVariable(className + "_Node", dl->node_node_vector, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
     }
     else {
-      this->pStateMgr->registerNodalBlockStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
+      this->pStateMgr->registerNodalVectorStateVariable(className + "_Node", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
 
@@ -97,7 +97,7 @@ ElementSizeFieldBase(Teuchos::ParameterList& p,
 
     // The value of the weights used in the projection
     // Initialize to zero - should give us nan's during the division step if something is wrong
-    this->pStateMgr->registerNodalBlockStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all",
+    this->pStateMgr->registerNodalVectorStateVariable(className + "_NodeWgt", dl->node_node_scalar, dl->dummy, "all",
          "scalar", 0.0, false, outputToExodus);
 
   }
@@ -142,8 +142,8 @@ preEvaluate(typename Traits::PreEvalData workset)
   // the vectors are initialized to zero for Epetra_Export "ADD" operation
   // Zero data for accumulation here
   if( this->outputNodeData ) {
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+    Teuchos::RCP<Adapt::NodalDataVector> node_data =
+       this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
     node_data->initializeVectors(0.0);
   }
 }
@@ -205,11 +205,11 @@ evaluateFields(typename Traits::EvalData workset)
   if( this->outputNodeData ) { // nominal radius, store as nodal data that will be scattered and summed
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
-    Teuchos::ArrayRCP<ST> data = node_data->getLocalNodeView();
+    Teuchos::RCP<Adapt::NodalDataVector> node_data =
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+    const Teuchos::RCP<Tpetra_MultiVector>& data = node_data->getLocalNodeVector();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Tpetra_BlockMap> local_node_map = node_data->getLocalMap();
+    Teuchos::RCP<const Tpetra_Map> local_node_map = node_data->getLocalMap();
 
     int l_nV = this->numVertices;
     int l_nD = this->numDims;
@@ -237,41 +237,33 @@ evaluateFields(typename Traits::EvalData workset)
       if(this->isAnisotropic) //An-isotropic
         // Note: code assumes blocksize of blockmap is numDims + 1 - the last entry accumulates the weight
         for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
-
-          GO global_block_id = wsElNodeID[cell][node]; // get the global id of this node
-          LO local_block_id = local_node_map->getLocalBlockID(global_block_id);
-
-          // skip the node if it is not owned by me
-          if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
-          LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(local_block_id);
+          const GO global_row = wsElNodeID[cell][node];
+          if ( ! local_node_map->isNodeGlobalElement(global_row)) continue;
 
           // accumulate 1/2 of the element width in each dimension - into each element corner
           for (int k=0; k < node_var_ndofs; ++k)
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            data[first_local_dof + node_var_offset + k] += (maxCoord[k] - minCoord[k]) / 2.0;
+            data->sumIntoGlobalValue(global_row, node_var_offset + k,
+                                     (maxCoord[k] - minCoord[k]) / 2.0);
 
           // save the weight (denominator)
-          data[first_local_dof + node_weight_offset] += 1.0;
+          data->sumIntoGlobalValue(global_row, node_weight_offset, 1.0);
 
       } // end anisotropic size field
 
       else // isotropic size field
         // Note: code assumes blocksize of blockmap is 1 + 1 = 2 - the last entry accumulates the weight
         for (int node = 0; node < l_nV; ++node) { // loop over all the "corners" of each element
-
-          GO global_block_id = wsElNodeID[cell][node]; // get the global id of this node
-          LO local_block_id = local_node_map->getLocalBlockID(global_block_id);
-
-          // skip the node if it is not owned by me
-          if(local_block_id == Teuchos::OrdinalTraits<LO>::invalid()) continue;
-          LO first_local_dof = local_node_map->getFirstLocalPointInLocalBlock(local_block_id);
+          const GO global_row = wsElNodeID[cell][node];
+          if ( ! local_node_map->isNodeGlobalElement(global_row)) continue;
 
           // save element radius, just a scalar
           for (int k=0; k < l_nD; ++k) {
 //            data[global_node][k] += ADValue(maxCoord[k] - minCoord[k]) / 2.0;
-            data[first_local_dof + node_var_offset] += (maxCoord[k] - minCoord[k]) / 2.0;
+            data->sumIntoGlobalValue(global_row, node_var_offset,
+                                     (maxCoord[k] - minCoord[k]) / 2.0);
             // save the weight (denominator)
-            data[first_local_dof + node_weight_offset] += 1.0;
+            data->sumIntoGlobalValue(global_row, node_weight_offset, 1.0);
 
           }
 
@@ -295,11 +287,11 @@ postEvaluate(typename Traits::PostEvalData workset)
     // Note: we are in postEvaluate so all PEs call this
 
     // Get the node data block container
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
-    Teuchos::ArrayRCP<ST> data = node_data->getOverlapNodeView();
+    Teuchos::RCP<Adapt::NodalDataVector> node_data =
+      this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
+    const Teuchos::RCP<Tpetra_MultiVector>& data = node_data->getOverlapNodeVector();
     Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID = workset.wsElNodeID;
-    Teuchos::RCP<const Tpetra_BlockMap> overlap_node_map = node_data->getOverlapMap();
+    Teuchos::RCP<const Tpetra_Map> overlap_node_map = node_data->getOverlapMap();
 
     int  node_var_offset;
     int  node_var_ndofs;
@@ -312,23 +304,20 @@ postEvaluate(typename Traits::PostEvalData workset)
     node_data->initializeExport();
 
     // do the export
-    node_data->exportAddNodalDataBlock();
+    node_data->exportAddNodalDataVector();
 
-    int numNodes = overlap_node_map->getNodeNumBlocks();
+    int numNodes = overlap_node_map->getNodeNumElements();
 
     // if isotropic, blocksize == 2 , if anisotropic blocksize == nDOF at node + 1
     // ndim if vector, ndim * ndim if tensor
 
     // all PEs divide the accumulated value(s) by the weights
-
-    for (LO overlap_node=0; overlap_node < numNodes; ++overlap_node){
-      LO first_local_dof = overlap_node_map->getFirstLocalPointInLocalBlock(overlap_node);
-      for (int k=0; k < node_var_ndofs; ++k)
-            data[first_local_dof + node_var_offset + k] /=
-                data[first_local_dof + node_weight_offset];
-
+    Teuchos::ArrayRCP<const ST> weights = data->getData(node_weight_offset);
+    for (int k=0; k < node_var_ndofs; ++k) {
+      Teuchos::ArrayRCP<ST> v = data->getDataNonConst(node_var_offset + k);
+      for (LO overlap_node = 0; overlap_node < numNodes; ++overlap_node)
+        v[overlap_node] /= weights[overlap_node];
     }
-
 
     // Export the data from the local to overlapped decomposition
     // Divide the overlap field through by the weights
