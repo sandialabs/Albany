@@ -167,7 +167,7 @@ saveTpetraNodalDataVector (
   Albany::NodeFieldContainer::const_iterator it = nodeContainer->find(name);
   TEUCHOS_TEST_FOR_EXCEPTION(
     it == nodeContainer->end(), std::logic_error,
-    "Error: Cannot locate nodal field " << name << " in NodalDataBlock");
+    "Error: Cannot locate nodal field " << name << " in NodalDataVector");
   (*nodeContainer)[name]->saveFieldVector(overlap_node_vec, offset);
 }
 

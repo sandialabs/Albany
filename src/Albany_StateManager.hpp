@@ -59,15 +59,6 @@ public:
 			     StateStruct::MeshFieldEntity const * fieldEntity=0,
 			     const std::string& meshPartName="");
 
-  void registerNodalBlockStateVariable(const std::string &stateName,
-			     const Teuchos::RCP<PHX::DataLayout> &dl,
-                             const std::string &ebName,
-			     const std::string &init_type="scalar",
-			     const double init_val=0.0,
-			     const bool registerOldState=false,
-			     const bool outputToExodus=true,
-			     const std::string &responseIDtoRequire="");
-
   void registerNodalVectorStateVariable(const std::string &stateName,
 			     const Teuchos::RCP<PHX::DataLayout> &dl,
                              const std::string &ebName,
@@ -109,15 +100,6 @@ public:
   //! If you want to give more control over whether or not to output to Exodus
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-			const Teuchos::RCP<PHX::DataLayout> &dummy,
-                        const std::string &ebName,
-			const std::string &init_type,
-                        const double init_val,
-                        const bool registerOldState,
-			const bool outputToExodus);
-
-  Teuchos::RCP<Teuchos::ParameterList>
-  registerNodalBlockStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
 			const Teuchos::RCP<PHX::DataLayout> &dummy,
                         const std::string &ebName,
 			const std::string &init_type,
