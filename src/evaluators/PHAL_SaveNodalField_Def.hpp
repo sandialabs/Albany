@@ -6,7 +6,7 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 
 template<typename EvalT, typename Traits>
 PHAL::SaveNodalFieldBase<EvalT, Traits>::
@@ -130,8 +130,8 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Note: we are in postEvaluate so all PEs call this
 
   // Get the node data block container
-  Teuchos::RCP<Adapt::NodalDataBlock> node_data =
-    this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataBlock();
+  Teuchos::RCP<Adapt::NodalDataVector> node_data =
+    this->pStateMgr->getStateInfoStruct()->getNodalDataBase()->getNodalDataVector();
 
   if(this->xName.length() > 0)
 

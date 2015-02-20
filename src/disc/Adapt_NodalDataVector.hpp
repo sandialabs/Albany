@@ -80,6 +80,11 @@ class NodalDataVector {
     void saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const;
     void accumulateAndSaveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv);
 
+  void saveTpetraNodalDataVector(
+    const std::string& name,
+    const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+    const int offset) const;
+
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
     LO getVecSize() { return vectorsize; }

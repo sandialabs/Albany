@@ -158,6 +158,19 @@ saveNodalDataState(const Teuchos::RCP<const Tpetra_MultiVector>& mv) const
     (*nodeContainer)[i->name]->saveFieldVector(mv, i->offset);
 }
 
+void Adapt::NodalDataVector::
+saveTpetraNodalDataVector (
+  const std::string& name,
+  const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+  const int offset) const
+{
+  Albany::NodeFieldContainer::const_iterator it = nodeContainer->find(name);
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    it == nodeContainer->end(), std::logic_error,
+    "Error: Cannot locate nodal field " << name << " in NodalDataBlock");
+  (*nodeContainer)[name]->saveFieldVector(overlap_node_vec, offset);
+}
+
 void Adapt::NodalDataVector::initializeVectors(ST value) {
   overlap_node_vec->putScalar(value);
   local_node_vec->putScalar(value);
