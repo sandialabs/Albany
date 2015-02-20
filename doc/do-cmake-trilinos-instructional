@@ -29,10 +29,8 @@ rm -f CMakeCache.txt;
 #   Block 6 provides the types and the explicit template instantiation we need.
 #   Block 7 handles Kokkos flags to set up the Serial node, which matches
 # pre-Kokkos behavior.
-#   Block 8 handles temporary behavior. Tpetra::BlockMap will be gone in a few
-# weeks; the VBR flag enables it until we've transitioned. The other flag turns
-# off deprecation warnings; Phalanx has deprecated methods I need to convert
-# Albany to stop using.
+#   Block 8 handles temporary behavior. Phalanx has deprecated methods I need to
+# convert Albany to stop using. In the meantime, suppress deprecation warnings.
 cmake \
  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
@@ -110,7 +108,6 @@ cmake \
  -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
  -D Kokkos_ENABLE_Pthread:BOOL=OFF \
 \
- -D Tpetra_ENABLE_CLASSIC_VBR:BOOL=ON \
  -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-declarations" \
 \
  ../
