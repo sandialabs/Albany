@@ -21,6 +21,7 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
     fixedBlocks = topoParams.get<Teuchos::Array<std::string> >("Fixed Blocks");
   }
 
+  entityType = topoParams.get<std::string>("Entity Type");
   
   if( topoParams.isType<int>("Topology Output Filter") )
     topologyOutputFilter = topoParams.get<int>("Topology Output Filter");
@@ -29,25 +30,31 @@ Topology::Topology(const Teuchos::ParameterList& topoParams)
   if( topoParams.isType<int>("Spatial Filter") )
     spatialFilterIndex = topoParams.get<int>("Spatial Filter");
   else spatialFilterIndex = -1;
-}
 
+ 
+  simp = Teuchos::null;
+  ramp = Teuchos::null;
 
-//**********************************************************************
-Teuchos::RCP<Topology> TopologyFactory::create(const Teuchos::ParameterList& topoParams)
-//**********************************************************************
-{
-  std::string pType = topoParams.get<std::string>("Penalization");
-  if( pType == "SIMP" )  return Teuchos::rcp(new Topology_SIMP(topoParams));
-  else
-  if( pType == "RAMP" )  return Teuchos::rcp(new Topology_RAMP(topoParams));
-  else
+  std::string penalty = topoParams.get<std::string>("Penalization");
+  if( penalty == "SIMP" ){
+    simp = Teuchos::rcp(new Simp(topoParams));
+    pType = SIMP;
+    materialValue = simp->materialValue;
+    voidValue = simp->voidValue;
+  } else 
+  if( penalty == "RAMP" ){
+    ramp = Teuchos::rcp(new Ramp(topoParams));
+    pType = RAMP;
+    materialValue = ramp->materialValue;
+    voidValue = ramp->voidValue;
+  } else
     TEUCHOS_TEST_FOR_EXCEPTION(
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Penalization type " << pType << " Unknown!" << std::endl );
+      << "Error!  Penalization type " << penalty << " Unknown!" << std::endl );
 }
 
 //**********************************************************************
-Topology_SIMP::Topology_SIMP(const Teuchos::ParameterList& topoParams) : Topology(topoParams) 
+Simp::Simp(const Teuchos::ParameterList& topoParams)
 //**********************************************************************
 {
   const Teuchos::ParameterList& simpParams = topoParams.get<Teuchos::ParameterList>("SIMP");
@@ -57,11 +64,8 @@ Topology_SIMP::Topology_SIMP(const Teuchos::ParameterList& topoParams) : Topolog
   voidValue = 0.0;
 }
 
-double Topology_SIMP::Penalize(double rho) { return pow(rho,penaltyParam);}
-double Topology_SIMP::dPenalize(double rho) { return penaltyParam*pow(rho,penaltyParam-1.0);}
-
 //**********************************************************************
-Topology_RAMP::Topology_RAMP(const Teuchos::ParameterList& topoParams) : Topology(topoParams) 
+Ramp::Ramp(const Teuchos::ParameterList& topoParams)
 //**********************************************************************
 {
   const Teuchos::ParameterList& simpParams = topoParams.get<Teuchos::ParameterList>("RAMP");
@@ -70,8 +74,5 @@ Topology_RAMP::Topology_RAMP(const Teuchos::ParameterList& topoParams) : Topolog
   materialValue = 1.0;
   voidValue = 0.0;
 }
-
-double Topology_RAMP::Penalize(double rho) { return rho/(1.0+penaltyParam*(1.0-rho)); }
-double Topology_RAMP::dPenalize(double rho) { return (1.0+penaltyParam)/pow(1.0+penaltyParam*(1.0-rho),2.0); }
 
 } // end ATO namespace

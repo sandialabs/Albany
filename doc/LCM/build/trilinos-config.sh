@@ -34,6 +34,7 @@ cmake \
  -D BoostLib_INCLUDE_DIRS:FILEPATH="/usr/include/boost" \
  -D BoostLib_LIBRARY_DIRS:FILEPATH="/usr/lib64" \
 \
+ -D Trilinos_ENABLE_CXX11:BOOL=ON \
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
  -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
  -D Trilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF \
@@ -50,7 +51,7 @@ cmake \
  -D Trilinos_ENABLE_Ifpack:BOOL=ON \
  -D Trilinos_ENABLE_Intrepid:BOOL=ON \
  -D Trilinos_ENABLE_ML:BOOL=ON \
- -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+ -D Trilinos_ENABLE_MOOCHO:BOOL=OFF \
  -D Trilinos_ENABLE_NOX:BOOL=ON \
  -D Trilinos_ENABLE_Pamgen:BOOL=ON \
  -D Trilinos_ENABLE_Phalanx:BOOL=ON \
@@ -88,13 +89,19 @@ cmake \
  -D TPL_Netcdf_INCLUDE_DIRS:PATH=/usr/include \
  -D TPL_ENABLE_HDF5:BOOL=OFF \
  -D EpetraExt_USING_HDF5:BOOL=OFF \
+ -D TPL_ENABLE_Matio:BOOL=OFF \
+ -D TPL_ENABLE_X11:BOOL=OFF \
 \
  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
  -D Trilinos_ENABLE_MueLu:BOOL=ON \
  -D Amesos2_ENABLE_KLU2:BOOL=ON \
+ -D Tpetra_ENABLE_CLASSIC_VBR:BOOL=ON \
 \
+ -D BUILD_SHARED_LIBS:BOOL=ON \
+ -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
   package_dir

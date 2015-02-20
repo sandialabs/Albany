@@ -11,6 +11,7 @@
 
 const int MAX_MESH_REGIONS = 30;
 const int MAX_POINT_CHARGES = 10;
+const int MAX_CLOUD_CHARGES = 10;
 
 template<typename EvalT, typename Traits>
 QCAD::PoissonSource<EvalT, Traits>::
@@ -30,7 +31,8 @@ PoissonSource(Teuchos::ParameterList& p,
   ionizedDopant("Ionized Dopant",dl->qp_scalar),
   conductionBand("Conduction Band",dl->qp_scalar),
   valenceBand("Valence Band",dl->qp_scalar),
-  approxQuanEDen("Approx Quantum EDensity",dl->qp_scalar)
+  approxQuanEDen("Approx Quantum EDensity",dl->qp_scalar),
+  bRealEigenvectors(false)
 {
   // Material database
   materialDB = p.get< Teuchos::RCP<QCAD::MaterialDatabase> >("MaterialDB");
@@ -214,6 +216,43 @@ PoissonSource(Teuchos::ParameterList& p,
     else break;
   }
 
+  //Add Cloud Charges (later add the charge as a Sacado param?)
+  Teuchos::RCP<Teuchos::ParameterList> clChargeValidPL =
+     	rcp(new Teuchos::ParameterList("Valid Cloud Charge Params"));
+  clChargeValidPL->set<double>("X", 0.0, "x-coordinate of point charge");
+  clChargeValidPL->set<double>("Y", 0.0, "y-coordinate of point charge");
+  clChargeValidPL->set<double>("Z", 0.0, "z-coordinate of point charge");
+  clChargeValidPL->set<double>("Amplitude", 1.0, "Amplitude of Cloud Charge");
+  clChargeValidPL->set<double>("Width", 1.0, "Gaussian Width of Cloud Charge");
+  clChargeValidPL->set<double>("Cutoff", 1.0, "Hard-Zero Cutoff for Cloud Charge");
+
+  for(int i=0; i<MAX_CLOUD_CHARGES; i++) {
+    std::string subListName = Albany::strint("Cloud Charge",i);
+    if( psList->isSublist(subListName) ) {
+
+      // Validate sublist
+      psList->sublist(subListName).validateParameters(*clChargeValidPL,0);
+
+      // Fill CloudCharge struct and add to vector (list)
+      // QCAD::PoissonSource<EvalT, Traits>::CloudCharge clCharge;
+      //   No Defaults for cloud parameters: X,Y,Z,Amplitude,Width,Cutoff
+      CloudCharge clCharge;
+      clCharge.position[0]               = psList->sublist(subListName).get<double>("X");
+      if(numDims>1) clCharge.position[1] = psList->sublist(subListName).get<double>("Y");
+      if(numDims>2) clCharge.position[2] = psList->sublist(subListName).get<double>("Z");
+      clCharge.amplitude                 = psList->sublist(subListName).get<double>("Amplitude");
+      clCharge.width                     = psList->sublist(subListName).get<double>("Width");
+      clCharge.cutoff                    = psList->sublist(subListName).get<double>("Cutoff");
+
+      // TODO sacado-ize other parameters 
+      std::stringstream ss; ss << "Cloud Charge " << i << " Amplitude";
+      this->registerSacadoParameter(ss.str(), paramLib);
+      
+      cloudCharges.push_back(clCharge);
+    }
+    else break;
+  }
+
 
   if(quantumRegionSource == "schrodinger") {
     this->registerSacadoParameter("Previous Quantum Density Mixing Factor", paramLib);
@@ -314,6 +353,12 @@ QCAD::PoissonSource<EvalT,Traits>::getValue(const std::string &n)
     for(int i=0; i<nRegions; i++)
       if( n == Albany::strint("Mesh Region Factor",i) ) return meshRegionFactors[i];
 
+    for( std::size_t i=0; i < cloudCharges.size(); ++i) {
+      std::stringstream ss; ss << "Cloud Charge " << i << " Amplitude";
+      // TODO: Add other cloud chare parameters here
+      if( n == ss.str()) return cloudCharges[i].amplitude;
+    }
+
     TEUCHOS_TEST_FOR_EXCEPT(true); 
     return factor; //dummy so all control paths return
   }
@@ -364,6 +409,10 @@ QCAD::PoissonSource<EvalT,Traits>::getValidPoissonSourceParameters() const
   for(int i=0; i<MAX_POINT_CHARGES; i++) {
     std::string subListName = Albany::strint("Point Charge",i);
     validPL->sublist(subListName, false, "Sublist defining a point charge");
+  }
+  for(int i=0; i<MAX_CLOUD_CHARGES; i++) {
+    std::string subListName = Albany::strint("Cloud Charge",i);
+    validPL->sublist(subListName, false, "Sublist defining a cloud charge");
   }
   
   return validPL;
@@ -424,6 +473,10 @@ evaluateFields_elementblocks(typename Traits::EvalData workset)
   //point charges
   if(pointCharges.size() > 0)
     source_pointcharges(workset);
+
+  //cloud charges
+  if(cloudCharges.size() > 0)
+    source_cloudcharges(workset);
 
 }
 
@@ -2021,8 +2074,29 @@ bool QCAD::PoissonSource<EvalT,Traits>::
   return true;
 }
 
+//! ----------------- Point charge functions ---------------------
 
+template<typename EvalT, typename Traits>
+void QCAD::PoissonSource<EvalT,Traits>::source_cloudcharges(typename Traits::EvalData workset)
+{
+  //! add point charge contributions
+  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for( std::size_t i=0; i < cloudCharges.size(); ++i) {
+      ScalarT cutoff2 = cloudCharges[i].cutoff * cloudCharges[i].cutoff;
+      ScalarT width2  = cloudCharges[i].width  * cloudCharges[i].width;
 
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+	ScalarT distance2 =        (cloudCharges[i].position[0] - coordVec(cell,qp,0)) * (cloudCharges[i].position[0] - coordVec(cell,qp,0));
+	if(numDims>1) distance2 += (cloudCharges[i].position[1] - coordVec(cell,qp,1)) * (cloudCharges[i].position[1] - coordVec(cell,qp,1));
+	if(numDims>2) distance2 += (cloudCharges[i].position[2] - coordVec(cell,qp,2)) * (cloudCharges[i].position[2] - coordVec(cell,qp,2));
+
+        if (distance2 <= cutoff2) {
+	  poissonSource(cell, qp) += cloudCharges[i].amplitude * exp(-distance2/(2.0*width2));
+        }
+      }
+    }
+  }
+}
 
 //! ----------------- Miscellaneous helper functions ---------------------
 

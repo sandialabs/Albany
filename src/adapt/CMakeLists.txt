@@ -9,27 +9,37 @@
 
 SET(SOURCES
     AAdapt_AbstractAdapterT.cpp
-    AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemeshT.cpp
     AAdapt_AdaptiveSolutionManagerT.cpp
     AAdapt_InitialCondition.cpp
     AAdapt_AnalyticFunction.cpp
     AAdapt_SolutionObserver.cpp
+    AAdapt_RC_DataTypes.hpp
+    AAdapt_RC_Manager.cpp
+    AAdapt_RC_Field.cpp
+    AAdapt_RC_Reader.cpp
+    AAdapt_RC_Writer.cpp
+    AAdapt_RC_Projector_impl.cpp
    )
 
 SET(HEADERS
     AAdapt_AbstractAdapterT.hpp
-    AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemeshT.hpp
     AAdapt_AdaptiveSolutionManagerT.hpp
     AAdapt_InitialCondition.hpp
     AAdapt_AnalyticFunction.hpp
     AAdapt_SolutionObserver.hpp
+    AAdapt_RC_Manager.hpp
+    AAdapt_RC_Field.hpp
+    AAdapt_RC_Reader.hpp
+    AAdapt_RC_Writer.hpp
+    AAdapt_RC_Projector_impl.hpp
    )
 
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
     AAdapt_AbstractAdapter.cpp
+    AAdapt_AdaptationFactory.cpp
     AAdapt_CopyRemesh.cpp
     AAdapt_AdaptiveSolutionManager.cpp
     AAdapt_AdaptiveModelFactory.cpp
@@ -37,6 +47,7 @@ IF (ALBANY_EPETRA)
    ) 
   SET(HEADERS ${HEADERS} 
     AAdapt_AbstractAdapter.hpp
+    AAdapt_AdaptationFactory.hpp
     AAdapt_CopyRemesh.hpp
     AAdapt_AdaptiveSolutionManager.hpp
     AAdapt_AdaptiveModelFactory.hpp

@@ -30,6 +30,14 @@ file (GLOB evaluator-headers
   "${LCM_DIR}/evaluators/*.hpp"
 )
 
+#LCM model evaluators 
+file (GLOB model-eval-sources
+  "${LCM_DIR}/*.cpp"
+)
+file (GLOB model-eval-headers
+  "${LCM_DIR}/*.hpp"
+)
+
 # LCM surface element evaluators
 file (GLOB surface-element-sources
   "${LCM_DIR}/evaluators/surface-element/*.cpp"
@@ -75,36 +83,36 @@ file (GLOB topology-headers
 set(SOURCES ${SOURCES}
   ${problem-sources}
   ${evaluator-sources}
+  ${model-eval-sources}
   ${surface-element-sources}
   ${bc-sources}
   ${models-sources}
   ${utils-sources}
   ${topology-sources}
   )
-#ifdef ALBANY_EPETRA
-list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
-list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
-list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)
-list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmPartialStress.cpp)
-#endif
-
 set(HEADERS ${HEADERS}
   ${problem-headers}
   ${evaluator-headers}
+  ${model-eval-headers}
   ${surface-element-headers}
   ${bc-headers}
   ${models-headers}
   ${utils-headers}
   ${topology-headers}
  )
-#ifdef ALBANY_EPETRA
-list(REMOVE_ITEM HEADERS ${LCM_DIR}/problems/PeridigmProblem.hpp)
-list(REMOVE_ITEM HEADERS ${LCM_DIR}/utils/PeridigmManager.hpp)
-list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce_Def.hpp)
-list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce.hpp)
-list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress_Def.hpp)
-list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
-#endif
+
+IF(NOT ALBANY_PERIDIGM)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/problems/PeridigmProblem.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/utils/PeridigmManager.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmForce.cpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/PeridigmPartialStress.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/problems/PeridigmProblem.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/utils/PeridigmManager.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
+ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}

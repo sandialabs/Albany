@@ -43,10 +43,10 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
-#include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
-#include "LCM/problems/SchwarzMultiscaleProblem.hpp"
+#ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
 #include "LCM/problems/PeridigmProblem.hpp"
+#endif
 #endif
 #include "LCM/problems/HMCProblem.hpp"
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
@@ -92,6 +92,19 @@ Albany::ProblemFactory::ProblemFactory(
   commT(commT_)
 {
 }
+
+namespace {
+// In "Mechanics 3D", extract "Mechanics".
+inline std::string getName (const std::string& method) {
+  if (method.size() < 3) return method;
+  return method.substr(0, method.size() - 3);
+}
+// In "Mechanics 3D", extract 3.
+inline int getNumDim (const std::string& method) {
+  if (method.size() < 3) return -1;
+  return static_cast<int>(method[method.size() - 2] - '0');
+}
+} // namespace
 
 Teuchos::RCP<Albany::AbstractProblem>
 Albany::ProblemFactory::create()
@@ -201,23 +214,11 @@ Albany::ProblemFactory::create()
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** LAME materials not enabled, recompile with -DENABLE_LAME or -DENABLE_LAMENT ****\n");
 #endif
   }
-  else if (method == "Mechanics 1D") {
-    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 1, commT));
+  else if (getName(method) == "Mechanics") {
+    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, getNumDim(method), rc_mgr, commT));
   }
-  else if (method == "Mechanics 2D") {
-    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "Mechanics 3D") {
-    strategy = rcp(new Albany::MechanicsProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "Elasticity 1D") {
-    strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 1));
-  }
-  else if (method == "Elasticity 2D") {
-    strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 2));
-  }
-  else if (method == "Elasticity 3D") {
-    strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, 3));
+  else if (getName(method) == "Elasticity") {
+    strategy = rcp(new Albany::ElasticityProblem(problemParams, paramLib, getNumDim(method), rc_mgr));
   }
   else if (method == "ThermoElasticity 1D") {
     strategy = rcp(new Albany::ThermoElasticityProblem(problemParams, paramLib, 1));
@@ -272,12 +273,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Total Lagrangian Plasticity with Projection 3D") {
     strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
-  }
-  else if (method == "Concurrent Multiscale 3D") {
-    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "Schwarz Multiscale 3D") {
-    strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, commT));
   }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
@@ -367,7 +362,8 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Stokes 2D" ) {
     strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ) {
+  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ||
+           method == "FELIX Stokes First Order 2D XZ" || method == "FELIX Stokes FO 2D XZ") {
     strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 2));
   }
   else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
@@ -401,6 +397,8 @@ Albany::ProblemFactory::create()
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
     strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling requires epetra and Peridigm, recompile with -DENABLE_ALBANY_EPETRA_EXE and -DENABLE_PERIDIGM ****\n");
 #endif
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling not enabled, recompile with -DENABLE_PERIDIGM ****\n");
@@ -415,4 +413,10 @@ Albany::ProblemFactory::create()
   }
 
   return strategy;
+}
+
+void Albany::ProblemFactory::setReferenceConfigurationManager(
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr_)
+{
+  rc_mgr = rc_mgr_;
 }

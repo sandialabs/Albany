@@ -17,7 +17,7 @@
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_AbstractFieldContainer.hpp"
 
-#include "Piro_NullSpaceUtils.hpp"
+#include "Albany_NullSpaceUtils.hpp"
 
 #ifdef ALBANY_CUTR
 #include "CUTR_CubitMeshMover.hpp"
@@ -57,7 +57,7 @@ class DiscretizationFactory {
     createDiscretization(unsigned int num_equations,
                          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
                          const AbstractFieldContainer::FieldContainerRequirements& req,
-                         const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes = Teuchos::null);
+                         const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
     void
     setupInternalMeshStruct(
@@ -66,7 +66,7 @@ class DiscretizationFactory {
       const AbstractFieldContainer::FieldContainerRequirements& req);
 
     Teuchos::RCP<Albany::AbstractDiscretization> createDiscretizationFromInternalMeshStruct(
-      const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes);
+      const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes);
 
 
   private:

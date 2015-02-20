@@ -14,6 +14,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputTwistT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputTwistT.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputShearT.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputShearT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 
@@ -27,5 +29,6 @@ IF(ENABLE_MESHMODEL)
     add_test(NAME ${testName}_SPR_Tpetra COMMAND ${AlbanyT.exe} inputSprT.xml)
     add_test(NAME ${testName}_Necking_SERIAL_Tpetra COMMAND ${SerialAlbanyT.exe} inputNeckingSerialT.xml)
     add_test(NAME ${testName}_Necking_Tpetra COMMAND ${AlbanyT.exe} inputNeckingT.xml)
+#    add_test(NAME ${testName}_Shear_Tpetra COMMAND ${AlbanyT.exe} inputShearT.xml)
   ENDIF()
 ENDIF()

@@ -36,13 +36,8 @@ namespace Albany {
       const Teuchos::RCP<const Application>& app,
       Teuchos::ParameterList& responseParams);
 
-#ifdef ALBANY_EPETRA
     //! Get the number of responses
     virtual unsigned int numResponses() const;
-#endif
-    
-    //! Get the number of responses
-    virtual unsigned int numResponsesT() const;
 
 #ifdef ALBANY_EPETRA
     //! Setup response function
@@ -162,8 +157,13 @@ namespace Albany {
     Teuchos::RCP<const Application> app_;
 
     Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
+#ifdef ALBANY_EPETRA
     Teuchos::RCP<Epetra_Import> solutionImporter_;
+#endif
     Teuchos::RCP<Tpetra_Import> solutionImporterT_;
+
+    class SolutionPrinter;
+    Teuchos::RCP<SolutionPrinter> sol_printer_;
 
 #ifdef ALBANY_EPETRA
     void updateSolutionImporter();

@@ -22,11 +22,13 @@ namespace LCM {
     w_grad_bf_  (p.get<std::string>("Weighted Gradient BF Name"), dl->node_qp_vector),
     residual_   (p.get<std::string>("Residual Name"), dl->node_scalar),
     have_source_          (p.get<bool>("Have Source", false)),
+    have_second_source_   (p.get<bool>("Have Second Source", false)),
     have_transient_       (p.get<bool>("Have Transient", false)),
     have_diffusion_       (p.get<bool>("Have Diffusion", false)),
     have_convection_      (p.get<bool>("Have Convection", false)),
     have_species_coupling_(p.get<bool>("Have Species Coupling", false)),
     have_stabilization_   (p.get<bool>("Have Stabilization", false)),
+    have_contact_         (p.get<bool>("Have Contact", false)),
     num_nodes_(0),
     num_pts_(0),
     num_dims_(0)
@@ -42,6 +44,13 @@ namespace LCM {
         tmp(p.get<std::string>("Source Name"), dl->qp_scalar);
       source_ = tmp;
       this->addDependentField(source_);
+    }
+
+    if (have_second_source_) {
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("Second Source Name"), dl->qp_scalar);
+      second_source_ = tmp;
+      this->addDependentField(second_source_);
     }
 
     if (have_transient_) {
@@ -84,6 +93,13 @@ namespace LCM {
       this->addDependentField(stabilization_);
     }
 
+    if (have_contact_) {
+      PHX::MDField<ScalarT,Cell,QuadPoint>
+        tmp(p.get<std::string>("M Name"), dl->qp_scalar);
+      M_operator_ = tmp;
+      this->addDependentField(M_operator_);
+    }
+
     this->addEvaluatedField(residual_);
 
     std::vector<PHX::DataLayout::size_type> dims;
@@ -113,6 +129,10 @@ namespace LCM {
       this->utils.setFieldData(source_,fm);
     }
 
+    if (have_second_source_) {
+      this->utils.setFieldData(second_source_,fm);
+    }
+
     if (have_transient_) {
       this->utils.setFieldData(transient_coeff_,fm);
       this->utils.setFieldData(scalar_dot_,fm);
@@ -132,6 +152,10 @@ namespace LCM {
 
     if (have_stabilization_) {
       this->utils.setFieldData(stabilization_,fm);
+    }
+
+    if (have_contact_) {
+      this->utils.setFieldData(M_operator_,fm);
     }
 
     this->utils.setFieldData(residual_,fm);
@@ -189,6 +213,17 @@ namespace LCM {
         for (std::size_t pt = 0; pt < num_pts_; ++pt) {
           for (std::size_t node = 0; node < num_nodes_; ++node) {
             residual_(cell,node) -= w_bf_(cell,node,pt) * source_(cell,pt);
+          }
+        }
+      }
+    }
+
+    // second source term
+    if ( have_second_source_ ) {
+      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+        for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+          for (std::size_t node = 0; node < num_nodes_; ++node) {
+            residual_(cell,node) -= w_bf_(cell,node,pt) * second_source_(cell,pt);
           }
         }
       }

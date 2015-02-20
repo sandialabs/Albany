@@ -10,6 +10,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
+#include "Albany_Memory.hpp"
 
 #include "Piro_PerformSolve.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -147,16 +148,6 @@ int main(int argc, char *argv[]) {
     // By default, request the sensitivities if not explicitly disabled
     solveParams.get("Compute Sensitivities", true);
 
-    { //exo-hack
-      int num_responses = 0;
-      try {
-        num_responses =
-          slvrfctry.getParameters().sublist("Problem").
-          sublist("Response Functions").get<int>("Number", 0);
-      } catch (...) {}
-      app->modelEvaluatorTIsCallingWriteSolutionT(num_responses != 0);
-    }
-
     Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > thyraResponses;
     Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > thyraSensitivities;
     Piro::PerformSolve(*solver, solveParams, thyraResponses, thyraSensitivities);
@@ -288,13 +279,25 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    const RCP<const Tpetra_Vector> xfinal = responses.back();
-    double mnv = xfinal->meanValue();
     // Create debug output object
     Teuchos::ParameterList &debugParams =
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+
+    const RCP<const Tpetra_Vector> xfinal = responses.back();
+    double mnv = xfinal->meanValue();
+    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
+    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
+    if (writeToCoutSoln == true) { 
+       std::cout << "xfinal: " << std::endl;
+       xfinal->describe(*out, Teuchos::VERB_EXTREME);
+    }
+
+    if (debugParams.get<bool>("Analyze Memory", false))
+      Albany::printMemoryAnalysis(std::cout, comm);
+
     if (writeToMatrixMarketSoln == true) { 
 
       //create serial map that puts the whole solution on processor 0
@@ -310,12 +313,11 @@ int main(int argc, char *argv[]) {
       //writing to MatrixMarket file
        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
     }
-    if (writeToCoutSoln == true) { 
-       std::cout << "xfinal: " << std::endl;
-       xfinal->describe(*out, Teuchos::VERB_EXTREME);
+    if (writeToMatrixMarketDistrSolnMap == true) {
+      //writing to MatrixMarket file
+      Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_distributed.mm", *xfinal);
+      Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_distributed_map.mm", *app->getDiscretization()->getMapT());
     }
-    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
-    *out << "\nNumber of Failed Comparisons: " << status << std::endl;
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;

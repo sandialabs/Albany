@@ -19,6 +19,10 @@
 #include <Shards_BasicTopologies.hpp>
 
 #include <gmi_mesh.h>
+#ifdef SCOREC_SIMMODEL
+#include <gmi_sim.h>
+#include <SimUtil.h>
+#endif
 #include <apfShape.h>
 #include <ma.h>
 #include <PCU.h>
@@ -66,21 +70,27 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   std::string mesh_file = params->get<std::string>("FMDB Input File Name");
   outputFileName = params->get<std::string>("FMDB Output File Name", "");
   outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
+  useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
 
-  compositeTet = params->get<bool>("Use Composite Tet 10", false);
+  compositeTet = false;
 
   gmi_register_mesh();
 
-  assert(!params->isParameter("Acis Model Input File Name"));
-
   std::string model_file;
-  if(params->isParameter("Parasolid Model Input File Name")){
-    model_file = params->get<std::string>("Parasolid Model Input File Name");
-    gmi_register_parasolid();
-  }
-
   if(params->isParameter("Mesh Model Input File Name"))
     model_file = params->get<std::string>("Mesh Model Input File Name");
+
+#ifdef SCOREC_SIMMODEL
+  Sim_readLicenseFile(0);
+  gmi_sim_start();
+  gmi_register_sim();
+
+  if (params->isParameter("Acis Model Input File Name"))
+    model_file = params->get<std::string>("Parasolid Model Input File Name");
+
+  if(params->isParameter("Parasolid Model Input File Name"))
+    model_file = params->get<std::string>("Parasolid Model Input File Name");
+#endif
 
   mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
   model = mesh->getModel();
@@ -178,9 +188,9 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
     for (int eb=0; eb<numEB; eb++)
     {
       std::string EB_name = sets[d][eb].stkName;
-      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(*ctd, numDim, cubatureDegree,
-                                              nsNames, ssNames, worksetSize, EB_name,
-                                              this->ebNameToIndex, this->interleavedOrdering));
+      this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
+          *ctd, numDim, cubatureDegree, nsNames, ssNames, worksetSize, EB_name,
+          this->ebNameToIndex, this->interleavedOrdering, true));
     } // for
   } // else
 
@@ -191,6 +201,10 @@ AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
   mesh->destroyNative();
   apf::destroyMesh(mesh);
   PCU_Comm_Free();
+#ifdef SCOREC_SIMMODEL
+  gmi_sim_stop();
+  Sim_unregisterAllKeys();
+#endif
 }
 
 void
@@ -351,10 +365,6 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL
      = rcp(new Teuchos::ParameterList("Valid FMDBParams"));
 
-  validPL->set<std::string>("FMDB Solution Name", "",
-      "Name of solution output vector written to output file");
-  validPL->set<std::string>("FMDB Residual Name", "",
-      "Name of residual output vector written to output file");
   validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
@@ -364,8 +374,6 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   Teuchos::Array<std::string> defaultFields;
-  validPL->set<Teuchos::Array<std::string> >("Restart Fields", defaultFields,
-      "Fields to pick up from the restart file when restarting");
   validPL->set<Teuchos::Array<std::string> >("Solution Vector Components", defaultFields,
       "Names and layouts of solution vector components");
   validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
@@ -377,23 +385,10 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");
   validPL->set<std::string>("Mesh Model Input File Name", "", "File Name for meshModel Input");
 
-  validPL->set<bool>("Periodic BC", false, "Flag to indicate periodic a mesh");
-  validPL->set<int>("Restart Index", 1, "Exodus time index to read for initial guess/condition.");
-  validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for initial guess/condition.");
-  validPL->set<bool>("Use Serial Mesh", false, "Read in a single mesh on PE 0 and rebalance");
-
-  validPL->set<int>("Number of parts", 1, "Number of parts");
-  validPL->set<int>("Number of migrations", 0, "Number of migrations");
-  validPL->set<int>("Number of individual migrations", 0, "Number of individual migrations");
   validPL->set<double>("Imbalance tolerance", 1.03, "Imbalance tolerance");
-  validPL->set<bool>("Construct pset", false, "Construct pset");
 
   // Parameters to refine the mesh after input
   validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
-  validPL->set<int>("Max Number of Resize Iterations", 0, "Max number of iteration sweeps to use during initial element resize");
-
-  validPL->set<std::string>("LB Method", "", "Method used to load balance mesh (default \"ParMETIS\")");
-  validPL->set<std::string>("LB Approach", "", "Approach used to load balance mesh (default \"PartKway\")");
 
   Teuchos::TwoDArray<std::string> defaultData;
   validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData,
@@ -406,6 +401,9 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
       "Association between geometric edge ID and node set string");
   validPL->set<Teuchos::TwoDArray<std::string> >("Side Set Associations", defaultData,
       "Association between face ID and side set string");
+
+  validPL->set<bool>("Use Nullspace Translation Only", false,
+                     "Temporary hack to get MueLu (possibly) working for us");
 
   return validPL;
 }

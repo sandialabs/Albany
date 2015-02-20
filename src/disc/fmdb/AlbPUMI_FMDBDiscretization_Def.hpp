@@ -53,7 +53,7 @@ convert (Teuchos::Array<GO>& indicesAV) {
 template<class Output>
 AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Teuchos_Comm>& commT_,
-            const Teuchos::RCP<Piro::MLRigidBodyModes>& rigidBodyModes_) :
+            const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   commT(commT_),
@@ -150,6 +150,13 @@ AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
 }
 
 template<class Output>
+Teuchos::RCP<const Tpetra_Map>
+AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMapT() const
+{
+  return overlap_node_mapT;
+}
+
+template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
 AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
 {
@@ -210,10 +217,22 @@ AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::
+setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& ircm)
+{ rcm = ircm; }
+
+template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
 AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
 {
   return sphereVolume;
+}
+
+double mean (const double* x, const int n,
+             const Teuchos::RCP<const Tpetra_Map>& map) {
+  Teuchos::ArrayView<const double> xav = Teuchos::arrayView(x, n);
+  Tpetra_Vector xv(map, xav);
+  return xv.meanValue();
 }
 
 /* DAI: this function also has to change for high-order fields */
@@ -229,56 +248,23 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
 
-  // If ML preconditioner is selected
-  if (rigidBodyModes->isMLUsed()) {
-    double *xx, *yy, *zz;
-    rigidBodyModes->getCoordArrays(&xx, &yy, &zz);
-  
-    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-      apf::Node node = nodes[i];
-      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
+  double* const coords = rigidBodyModes->getCoordArray();
+  for (std::size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
 
-      const GO node_gid = apf::getNumber(globalNumbering, node);
-      const LO node_lid = node_mapT->getLocalElement(node_gid);
-      double lcoords[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
-      if (mesh_dim > 0) {
-        xx[node_lid] = lcoords[0];
-        if (mesh_dim > 1) {
-          yy[node_lid] = lcoords[1];
-          if (mesh_dim > 2)
-            zz[node_lid] = lcoords[2];
-        }
-      }
-    }  
-  
-    rigidBodyModes->informML();
+    const GO node_gid = apf::getNumber(globalNumbering, node);
+    const LO node_lid = node_mapT->getLocalElement(node_gid);
+    double lcoords[3];
+    apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
+    for (std::size_t j = 0; j < mesh_dim; ++j)
+      coords[j*numOwnedNodes + node_lid] = lcoords[j];
   }
 
-  // If MueLu(-Tpetra) preconditioner is selected
-  else if (rigidBodyModes->isMueLuUsed()) {
-    double *xxyyzz; // make this ST?
-    rigidBodyModes->getCoordArraysMueLu(&xxyyzz);
-
-    for (std::size_t i = 0; i < nodes.getSize(); ++i) {
-      apf::Node node = nodes[i];
-      if ( ! m->isOwned(node.entity)) continue; // Skip nodes that are not local
-
-      const GO node_gid = apf::getNumber(globalNumbering, node);
-      const LO node_lid = node_mapT->getLocalElement(node_gid);
-      double lcoords[3];
-      apf::getComponents(f, nodes[i].entity, nodes[i].node, lcoords);
-      for (std::size_t j = 0; j < mesh_dim; ++j)
-        xxyyzz[j*numOwnedNodes + node_lid] = lcoords[j];
-    }
-  
-    Teuchos::ArrayView<ST>
-      xyzAV = Teuchos::arrayView(xxyyzz, numOwnedNodes*mesh_dim);
-    Teuchos::RCP<Tpetra_MultiVector> xyzMV = Teuchos::rcp(
-      new Tpetra_MultiVector(node_mapT, xyzAV, numOwnedNodes, mesh_dim));
-
-    rigidBodyModes->informMueLu(xyzMV, mapT);
-  }
+  if (fmdbMeshStruct->useNullspaceTranslationOnly)
+    rigidBodyModes->setCoordinates(node_mapT);
+  else
+    rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
 }
 
 template<class Output>
@@ -378,6 +364,14 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 }
 
 template<class Output>
+void AlbPUMI::FMDBDiscretization<Output>::
+createField(const char* name, int value_type)
+{
+  apf::createFieldOn(fmdbMeshStruct->getMesh(), name, value_type);
+  apf::zeroField(fmdbMeshStruct->getMesh()->findField(name));
+}
+
+template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
@@ -450,11 +444,12 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
   }
 
   apf::Field* f;
-  int order = fmdbMeshStruct->cubatureDegree;
   int dim = getNumDim();
-  apf::FieldShape* fs = apf::getIPShape(dim,order);
-  copyQPStatesToAPF(f,fs);
+  apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
+  copyQPStatesToAPF(f,fs,false);
+
   meshOutput.writeFile(time_label);
+
   removeQPStatesFromAPF();
 }
 
@@ -532,17 +527,6 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
       *out <<__func__<<": uninit field" << std::endl;
   }
   return solnT;
-}
-
-// In the case of mesh-adaptation problems, the solution field is
-// displacement. The previous two methods are used to reset coordinates to
-// coordinates + displacement, and then this method is used to zero
-// displacement.
-template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::zeroSolutionField()
-{
-  //amb-todo Always "solution"?
-  apf::zeroField(fmdbMeshStruct->getMesh()->findField("solution"));
 }
 
 #ifdef ALBANY_EPETRA
@@ -778,6 +762,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       buckets[bucket_counter].push_back(element);
       // save the name of the new element block
       apf::StkModel* set = findElementBlock(m, sets, block);
+      TEUCHOS_TEST_FOR_EXCEPTION(!set, std::logic_error,
+			   "Error: findElementBlock() failed on line " << __LINE__ << " of file " << __FILE__ << std::endl);
       std::string EB_name = set->stkName;
       wsEBNames[bucket_counter] = EB_name;
       bucket_counter++;
@@ -1008,23 +994,30 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
     apf::Field* f,
-    apf::FieldShape* fs)
+    apf::FieldShape* fs,
+    bool copyAll)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
     QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    if (!copyAll && !state.output)
+      continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    if (!copyAll && !state.output)
+      continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    if (!copyAll && !state.output)
+      continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
     copyQPTensorToAPF(nqp,state,f);

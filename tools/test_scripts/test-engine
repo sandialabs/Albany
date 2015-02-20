@@ -1,22 +1,43 @@
-#! /bin/bash -x
+#! /bin/bash -xe
 
-set -e
+# Should only be run by test harness!
 
-# Should only be run by Jenkins!
+# We want this script to fail if any command in a pipe fails. Without
+# this, pipes to tee hide failures.
+set -o pipefail
 
 #
-# Initial setup
+# Set up directory structure for jenkins test, blowing
+# away old build and install dirs
 #
+DIRS_TO_CLEAN=(${TRILBUILDDIR:?TRILBUILDDIR not set} \
+    ${TRILINSTALLDIR:?TRILINSTALLDIR not set} \
+    ${ALBBUILDDIR:?ALBBUILDDIR not set} \
+    ${TRILOUTDIR:?TRILOUTDIR not set} \
+    ${ALBOUTDIR:?ALBOUTDIR not set} \
+    ${DAKOUTDIR:?DAKOUTDIR not set} \
+    ${SCOROUTDIR:?SCOROUTDIR not set})
 
-DUMMY1=${WORKSPACE:?WORKSPACE not set}
-$ALBDIR/tools/test_scripts/jenkins-test-preamble
+for item in ${DIRS_TO_CLEAN[@]}
+do
+    rm -rf $item
+    mkdir -p $item
+done
 
 #
 # Do Dakota checkout
 #
-if [ ${ALBANY_NEEDS_DAKOTA:-OFF} = "ON" ]
+if [ ${TRILINOS_TRIKOTA:-OFF} = "ON" ]
 then
-    $ALBDIR/tools/checkout_scripts/dakota-checkout
+    $ALBDIR/tools/checkout_scripts/dakota-checkout 2>&1 | tee $DAKOUTDIR/checkout
+fi
+
+#
+# Do SCOREC checkout
+#
+if [ ${TRILINOS_SCOREC:-OFF} = "ON" ]
+then
+    $ALBDIR/tools/checkout_scripts/scorec-checkout 2>&1 | tee $SCOROUTDIR/checkout
 fi
 
 #
@@ -25,9 +46,9 @@ fi
 
 cd $TRILBUILDDIR
 
-$ALBDIR/tools/build_scripts/cmake_fragments/do-cmake-trilinos
+$ALBDIR/tools/build_scripts/cmake_fragments/do-cmake-trilinos 2>&1 | tee $TRILOUTDIR/cmake
 
-make -j 4 install
+make -j 4 install 2>&1 | tee $TRILOUTDIR/make
 
 #
 # Do Albany build
@@ -35,12 +56,12 @@ make -j 4 install
 
 cd $ALBBUILDDIR
 
-$ALBDIR/tools/build_scripts/cmake_fragments/do-cmake-albany
+$ALBDIR/tools/build_scripts/cmake_fragments/do-cmake-albany 2>&1 | tee $ALBOUTDIR/cmake
 
-make -j 4
+make -j 4 2>&1 | tee $ALBOUTDIR/make
 
 #
 # Run tests
 #
 
-ctest
+ctest -T Test 2>&1 | tee $ALBOUTDIR/ctest

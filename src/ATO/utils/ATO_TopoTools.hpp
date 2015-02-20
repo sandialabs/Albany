@@ -10,21 +10,24 @@
 #include "Teuchos_ParameterList.hpp"
 
 namespace ATO {
+
+class Simp;
+class Ramp;
 /** \brief Topology support utilities
 
     This class provides basic support for various penalization approaches.
 
 */
-
 class Topology 
 {
+  enum PenaltyType {SIMP, RAMP};
 
 public:
   Topology(const Teuchos::ParameterList& topoParams);
   virtual ~Topology(){};
 
-  virtual double Penalize(double rho)=0;
-  virtual double dPenalize(double rho)=0;
+  template<typename T> T Penalize(T rho);
+  template<typename T> T dPenalize(T rho);
 
   const std::string& getCentering(){return centering;}
   const std::string& getName(){return name;}
@@ -33,13 +36,20 @@ public:
   double getInitialValue(){return initValue;}
   double getMaterialValue(){return materialValue;}
   double getVoidValue(){return voidValue;}
+  std::string getEntityType(){return entityType;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
-protected:
+private:
   std::string centering;
   // this should be a vector of strings at some point since, in the
   // general case, the topology may be defined by multiple fields.
   std::string name;
+  std::string entityType;
+
+  // JR: There's probably a better way to do this.  
+  PenaltyType pType;
+  Teuchos::RCP<Simp> simp; 
+  Teuchos::RCP<Ramp> ramp; 
 
   std::vector<std::string> outputNames;
   double initValue;
@@ -51,31 +61,27 @@ protected:
   int spatialFilterIndex;
 };
 
-
-class Topology_SIMP : public Topology {
+class Simp {
  public:
-  Topology_SIMP(const Teuchos::ParameterList& topoParams);
-  double Penalize(double rho);
-  double dPenalize(double rho);
-private:
+  Simp(const Teuchos::ParameterList& topoParams);
+  template<typename T> T Penalize(T rho);
+  template<typename T> T dPenalize(T rho);
   double penaltyParam;
+  double materialValue;
+  double voidValue;
 };
 
-class Topology_RAMP : public Topology {
+class Ramp {
  public:
-  Topology_RAMP(const Teuchos::ParameterList& topoParams);
-  double Penalize(double rho);
-  double dPenalize(double rho);
-private:
+  Ramp(const Teuchos::ParameterList& topoParams);
+  template<typename T> T Penalize(T rho);
+  template<typename T> T dPenalize(T rho);
   double penaltyParam;
+  double materialValue;
+  double voidValue;
 };
-
-
-class TopologyFactory {
-public:
-  Teuchos::RCP<Topology> create(const Teuchos::ParameterList& topoParams);
-};
-
 
 }
+
+#include "ATO_TopoTools_Def.hpp"
 #endif

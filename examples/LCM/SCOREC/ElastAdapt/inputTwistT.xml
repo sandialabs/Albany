@@ -39,6 +39,7 @@
       <Parameter name="Max Number of Mesh Adapt Iterations" type="int"    value="1"/>
       <Parameter name="Error Bound"                         type="double" value="0.1"/>
       <Parameter name="State Variable"                      type="string" value="Cauchy_Stress"/>
+      <Parameter name="Reference Configuration: Update" type="bool" value="true"/>
     </ParameterList>
 
   </ParameterList>
@@ -47,8 +48,8 @@
     <Parameter name="Method"                        type="string"             value="FMDB"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/>
     <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/cylinder/cylinder.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cylinder/cylinder.smb"/>
-    <Parameter name="FMDB Output File Name"         type="string"             value="out.vtk"/>
+    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cylinder/cylinder-serial.smb"/>
+    <Parameter name="FMDB Output File Name"         type="string"             value="twist_out.vtk"/>
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{31, eb_1}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x2:{17,6, ns_bottom, ns_top}"/>
     <Parameter name="2nd Order Mesh"                type="bool"               value="false"/>
@@ -73,8 +74,8 @@
           <ParameterList name="Stepper">
             <Parameter  name="Initial Value"              type="double" value="0.0"/>
             <Parameter  name="Continuation Parameter"     type="string" value="Time"/>
-            <Parameter  name="Max Steps"                  type="int"    value="10"/>
-            <Parameter  name="Max Value"                  type="double" value="5.0"/>
+            <Parameter  name="Max Steps"                  type="int"    value="20"/>
+            <Parameter  name="Max Value"                  type="double" value="50.0"/>
             <Parameter  name="Min Value"                  type="double" value="0"/>
             <Parameter  name="Compute Eigenvalues"        type="bool"   value="0"/>
             <Parameter  name="Skip Parameter Derivative"  type="bool"   value="true"/>

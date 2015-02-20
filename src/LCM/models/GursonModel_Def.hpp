@@ -45,7 +45,7 @@ GursonModel(Teuchos::ParameterList* p,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string void_string = (*field_name_map_)["Void_Volume"];
+  std::string void_string = (*field_name_map_)["void_volume_fraction"];
 
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
@@ -82,7 +82,7 @@ GursonModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(true);
   //
-  // void volume
+  // void volume fraction
   this->num_state_variables_++;
   this->state_var_names_.push_back(void_string);
   this->state_var_layouts_.push_back(dl->qp_scalar);
@@ -110,7 +110,7 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string eqps_string = (*field_name_map_)["eqps"];
-  std::string void_string = (*field_name_map_)["Void_Volume"];
+  std::string void_string = (*field_name_map_)["void_volume_fraction"];
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];

@@ -35,6 +35,7 @@
 #endif
 #ifdef ALBANY_ATO
 #include "ATO_StiffnessObjective.hpp"
+#include "ATO_InternalEnergyResponse.hpp"
 #endif
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
@@ -53,7 +54,8 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   PHX::FieldManager<PHAL::AlbanyTraits>& fm,
   Teuchos::ParameterList& responseParams,
   Teuchos::RCP<Teuchos::ParameterList> paramsFromProblem,
-  Albany::StateManager& stateMgr)
+  Albany::StateManager& stateMgr,
+  const Albany::MeshSpecsStruct* meshSpecs)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -237,6 +239,26 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #endif
   }
 
+  else if (responseName == "Internal Energy Objective")
+  {
+#ifdef ALBANY_ATO
+#ifdef ALBANY_EPETRA
+    p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
+    RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
+      rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl));
+    fm.template registerEvaluator<EvalT>(res_ev);
+    response_tag = res_ev->getResponseFieldTag();
+    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
+#endif
+#else
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  Response function " << responseName <<
+      " not available!" << std::endl << "Albany/ATO not enabled." <<
+      std::endl);
+#endif
+  }
+
 #ifdef ALBANY_LCM
   else if (responseName == "IP to Nodal Field")
   {
@@ -245,7 +267,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     //p->set<std::string>("Stress Name", "Cauchy_Stress");
     //p->set<std::string>("Weights Name",  "Weights");
     RCP<LCM::IPtoNodalField<EvalT,Traits> > res_ev =
-      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl));
+      rcp(new LCM::IPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
@@ -255,9 +277,9 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("BF Name", "BF");
-    p->set<std::string>("Weighted BF Name",  "wBF");
-    RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev =
-      rcp(new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl));
+    p->set<std::string>("Weighted BF Name", "wBF");
+    RCP<LCM::ProjectIPtoNodalField<EvalT,Traits> > res_ev = rcp(
+      new LCM::ProjectIPtoNodalField<EvalT,Traits>(*p, dl, meshSpecs));
     fm.template registerEvaluator<EvalT>(res_ev);
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));

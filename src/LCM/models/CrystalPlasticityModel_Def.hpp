@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
+#include <boost/math/special_functions/fpclassify.hpp>
 
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
@@ -109,7 +110,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Cauchy Stress", false));
   //
   // Fp
@@ -119,7 +119,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
   // L
@@ -129,7 +128,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("identity");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  //this->state_var_output_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
   // mechanical source
@@ -212,9 +210,9 @@ computeState(typename Traits::EvalData workset,
       double dgammas[24];
       double taus[24];
 #endif
+      // compute velocity gradient
+      L.fill(Intrepid::ZEROS);
       if (num_slip_ >0) { // crystal plasticity
-        // compute velocity gradient
-        L.fill(Intrepid::ZEROS);
         for (std::size_t s(0); s < num_slip_; ++s) {
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
@@ -224,7 +222,10 @@ computeState(typename Traits::EvalData workset,
           g0   = slip_systems_[s].gamma_dot_0_;
           tauC = slip_systems_[s].tau_critical_;
           m    = slip_systems_[s].gamma_exp_;
-          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
+//          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
+//        NOTE: pow() of a negative base gives an FPE (edit by GAH)
+          ScalarT t1 = std::fabs(tau /tauC);
+          dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
           L += (dgamma* P);
 #ifdef PRINT_OUTPUT
           dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);
@@ -241,6 +242,16 @@ computeState(typename Traits::EvalData workset,
       source(cell, pt) = 0.0;
       for (std::size_t i(0); i < num_dims_; ++i) {
         for (std::size_t j(0); j < num_dims_; ++j) {
+
+	  // Check for NaN and Inf
+	  // DJL this check could/should eventually be made to run with debug builds only
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(Fp(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in CrystalPlasticityModel Fp");
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(sigma(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in CrystalPlasticityModel sigma");
+	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(L(i,j)), std::logic_error,
+				     "\n****Error, NaN detected in CrystalPlasticityModel L");
+
           plastic_deformation(cell, pt, i, j) = Fp(i, j);
           stress(cell, pt, i, j) = sigma(i, j);
           velocity_gradient(cell, pt, i, j) = L(i, j);
@@ -303,7 +314,7 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 #endif
   E_ = 0.5*( Intrepid::transpose(Fe_) * Fe_ - I_);
   S = Intrepid::dotdot(C_,E_);
-  sigma = (1.0 / Intrepid::det(F) ) * F* S * Intrepid::transpose(F);
+  sigma = (1.0 / Intrepid::det(F) ) * F * S * Intrepid::transpose(F);
 }
 //------------------------------------------------------------------------------
 }

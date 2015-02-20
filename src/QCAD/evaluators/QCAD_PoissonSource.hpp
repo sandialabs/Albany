@@ -144,6 +144,8 @@ namespace QCAD {
     bool sameSideOfPlane(const MeshScalarT* plane0, const MeshScalarT* plane1, const MeshScalarT* plane2, 
 			 const MeshScalarT* ptA, const MeshScalarT* ptB);
 
+    //! add cloud charge contributions to source field
+    void source_cloudcharges(typename Traits::EvalData workset);
 
     //! ----------------- Miscellaneous helper functions ---------------------
 
@@ -226,6 +228,10 @@ namespace QCAD {
     struct PointCharge { MeshScalarT position[3]; double charge; int iWorkset, iCell; };
     std::vector< PointCharge > pointCharges;
     std::size_t numWorksetsScannedForPtCharges;
+    
+    //! Cloud Charge parameters
+    struct CloudCharge { ScalarT position[3]; ScalarT amplitude, width, cutoff;};
+    std::vector< CloudCharge > cloudCharges;
     
     //! Schrodinger coupling
     bool bUsePredictorCorrector;

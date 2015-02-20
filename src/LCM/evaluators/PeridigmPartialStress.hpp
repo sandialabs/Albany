@@ -13,10 +13,8 @@
 #include "Phalanx_MDField.hpp"
 #include "PeridigmManager.hpp"
 
-#ifdef ALBANY_PERIDIGM
 #include <Peridigm.hpp>
 #include <Peridigm_AlbanyDiscretization.hpp>
-#endif
 
 namespace LCM {
 /** \brief Copies partial stress values from Peridigm to Albany for couplied simulations.
@@ -51,9 +49,7 @@ protected:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
 
-#ifdef ALBANY_PERIDIGM
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
-#endif
 };
 
 // Inherted classes 

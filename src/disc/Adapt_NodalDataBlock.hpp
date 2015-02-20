@@ -60,6 +60,18 @@ class NodalDataBlock {
       local_node_vec->putScalar(value);
     }
 
+    //eb-hack This interface, and the evaluator-based response functions that
+    // interact with Exodus files through this and the Vector version of this
+    // interface, need to be redesigned. There are number of problems. For
+    // example, if there are multiple element blocks, multiple redundant calls
+    // are made to these methods in preEvaluate and postEvaluate, possibly with
+    // erroneous results.
+    //   However, I want to continue to push off this task, so I'm expanding
+    // eb-hack to take care of IPtoNodalField.
+    void initEvaluateCalls();
+    int numPreEvaluateCalls();
+    int numPostEvaluateCalls();
+
     void initializeExport();
 
     void exportAddNodalDataBlock();
@@ -108,6 +120,8 @@ class NodalDataBlock {
     LO blocksize;
 
     bool mapsHaveChanged;
+
+    int num_preeval_calls, num_posteval_calls;
 
 };
 

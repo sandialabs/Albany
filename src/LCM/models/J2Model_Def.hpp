@@ -189,6 +189,9 @@ computeState(typename Traits::EvalData workset,
         int count = 0;
         dgam = 0.0;
 
+        int const
+        num_max_iter = 30;
+
         LocalNonlinearSolver<EvalT, Traits> solver;
 
         std::vector<ScalarT> F(1);
@@ -198,7 +201,7 @@ computeState(typename Traits::EvalData workset,
         F[0] = f;
         X[0] = 0.0;
         dFdX[0] = (-2. * mubar) * (1. + H / (3. * mubar));
-        while (!converged && count <= 30)
+        while (!converged && count <= num_max_iter)
         {
           count++;
           solver.solve(dFdX, X, F);
@@ -209,15 +212,16 @@ computeState(typename Traits::EvalData workset,
           dFdX[0] = -2. * mubar * (1. + dH / (3. * mubar));
 
           res = std::abs(F[0]);
-          if (res < 1.e-11 || res / Y < 1.E-11)
+          if (res < 1.e-11 || res / Y < 1.E-11 || res / f < 1.E-11)
             converged = true;
 
-          TEUCHOS_TEST_FOR_EXCEPTION(count == 30, std::runtime_error,
+          TEUCHOS_TEST_FOR_EXCEPTION(count == num_max_iter, std::runtime_error,
               std::endl <<
               "Error in return mapping, count = " <<
               count <<
               "\nres = " << res <<
-              "\nrelres = " << res/f <<
+              "\nrelres  = " << res/f <<
+              "\nrelres2 = " << res/Y <<
               "\ng = " << F[0] <<
               "\ndg = " << dFdX[0] <<
               "\nalpha = " << alpha << std::endl);

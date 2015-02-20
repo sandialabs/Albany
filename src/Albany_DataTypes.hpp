@@ -44,7 +44,6 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 #include "Tpetra_Map.hpp"
 #include "Tpetra_BlockMap.hpp"
 #include "Tpetra_CrsGraph.hpp"
-#include "Tpetra_BlockCrsGraph.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 #include "Tpetra_DistObject.hpp"
 #include "Tpetra_Operator.hpp"
@@ -56,19 +55,19 @@ typedef Sacado::Fad::DFad<MPType> MPFadType;
 
 
 //Kokkos includes
-#include "Kokkos_SerialNode.hpp"
+#include "Kokkos_DefaultNode.hpp"
 
 
 //Tpetra typedefs
 typedef double                                      ST;
 #ifdef ALBANY_64BIT_INT
-typedef long                                        GO;
+typedef long long int                               GO;
 #else
 typedef int                                         GO;
 #endif
 typedef int                                         LO;
 
-typedef Kokkos::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
+typedef KokkosClassic::DefaultNode::DefaultNodeType        KokkosNode; // Whatever is Trilinos compiled to use?
 //typedef Kokkos::SerialNode                          KokkosNode; // No threading
 //typedef Kokkos::TPINode                             KokkosNode; // custom Pthreads
 //typedef Kokkos::TBBNode                             KokkosNode; // Intel TBB
@@ -80,7 +79,6 @@ typedef Tpetra::BlockMap<LO, GO, KokkosNode>        Tpetra_BlockMap;
 typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
 typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
 typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
-typedef Tpetra::BlockCrsGraph<LO, GO, KokkosNode>   Tpetra_BlockCrsGraph;
 typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
 typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
 typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;

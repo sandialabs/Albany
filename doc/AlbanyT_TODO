@@ -40,7 +40,7 @@ This requires extending the Thyra model evaluator to work with xdotdot.
 Albany problems affected: 
 - Need to add Piro_Thyra_TrapezoidRuleSolver* to piro package of Trilinos.
 Albany problems affected: LCM/Dynamics 
-
+-  Matrix-Free in Piro is only for Epetra. It is needed for Peridigm (Dave Littlewood).
 
 Ifpack2: 
 - It appears ILU is not available in Ifpack2, just ILUT. (RILUK?)

@@ -48,13 +48,13 @@ case "$TOOL_CHAIN" in
 	export OMPI_CC=`which gcc`
 	export OMPI_CXX=`which g++`
 	export OMPI_FC=`which gfortran`
-	CMAKE_CXX_FLAGS="-ansi -Wall -pedantic -Wno-long-long"
+	CMAKE_CXX_FLAGS="-ansi -std=c++11 -Wall -pedantic -Wno-long-long"
 	;;
     clang)
 	export OMPI_CC=`which clang`
 	export OMPI_CXX=`which clang++`
 	export OMPI_FC=`which gfortran`
-	CMAKE_CXX_FLAGS="-Weverything -pedantic -Wno-long-long -Wno-documentation"
+	CMAKE_CXX_FLAGS="-Weverything -std=c++11 -pedantic -Wno-long-long -Wno-documentation"
 	;;
     *)
 	echo "Unrecognized tool chain option"
@@ -65,6 +65,13 @@ esac
 case "$BUILD_TYPE" in
     debug)
 	BUILD_STRING="DEBUG"
+	case "$TOOL_CHAIN" in
+	    gcc)
+		CMAKE_CXX_FLAGS="-ggdb $CMAKE_CXX_FLAGS"
+		;;
+	    *)
+		;;
+	esac
 	;;
     release)
 	BUILD_STRING="RELEASE"

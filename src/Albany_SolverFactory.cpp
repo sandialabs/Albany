@@ -24,7 +24,6 @@
 #include "Piro_SolverFactory.hpp"
 #include "Piro_AdaptiveSolverFactory.hpp"
 #include "Piro_NOXSolver.hpp"
-#include "Piro_NullSpaceUtils.hpp"
 #include "Piro_StratimikosUtils.hpp"
 
 #include "Stratimikos_DefaultLinearSolverBuilder.hpp"
@@ -51,6 +50,10 @@
 #include "Albany_ModelEvaluatorT.hpp"
 #ifdef ALBANY_ATO
   #include "ATO_Solver.hpp"
+#endif
+
+#ifdef ALBANY_LCM
+  #include "SchwarzMultiscale.hpp"
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
@@ -96,6 +99,26 @@ NOXObserverConstructor::getInstance(const Teuchos::RCP<Teuchos::ParameterList> &
   }
   return instance_;
 }
+
+class NOXStatelessObserverConstructor :
+    public Piro::ProviderBase<NOX::Epetra::Observer> {
+public:
+  explicit NOXStatelessObserverConstructor (
+    const Teuchos::RCP<Application> &app)
+    : factory_(app),
+      instance_(Teuchos::null)
+  {}
+
+  virtual Teuchos::RCP<NOX::Epetra::Observer> getInstance (
+    const Teuchos::RCP<Teuchos::ParameterList> &params)
+  {
+    if (Teuchos::is_null(instance_)) instance_ = factory_.createInstance();
+    return instance_;
+  }
+private:
+  NOXStatelessObserverFactory factory_;
+  Teuchos::RCP<NOX::Epetra::Observer> instance_;
+};
 
 class RythmosObserverConstructor : public Piro::ProviderBase<Rythmos::IntegrationObserverBase<double> > {
 public:
@@ -315,8 +338,11 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
-
-
+#ifdef ALBANY_LCM
+    if (solutionMethod == "Coupled Schwarz") {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Coupled Schwarz Solution Method does not work with Albany executable!  Please re-run with AlbanyT Executable. \n");
+    }
+#endif
     if (solutionMethod == "ATO Problem") {
 #ifdef ALBANY_ATO
 //IK, 10/16/14: need to convert ATO::Solver to Tpetra
@@ -372,8 +398,12 @@ Albany::SolverFactory::createAndGetAlbanyApp(
         const RCP<AAdapt::AdaptiveSolutionManager> adaptMgr = app->getAdaptSolMgr();
         piroFactory.setSource<Piro::Epetra::AdaptiveSolutionManager>(adaptMgr);
 
+        const RCP<Piro::ProviderBase<NOX::Epetra::Observer> >
+          noxStatelessObserverProvider = rcp(
+            new NOXStatelessObserverConstructor(app));
         const RCP<Piro::ProviderBase<LOCA::SaveEigenData::AbstractStrategy> > saveEigenDataProvider =
-          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(), noxObserverProvider));
+          rcp(new SaveEigenDataConstructor(piroParams->sublist("LOCA"), &app->getStateMgr(),
+                                           noxStatelessObserverProvider));
         piroFactory.setSource<LOCA::SaveEigenData::AbstractStrategy>(saveEigenDataProvider);
       }
     }
@@ -466,6 +496,51 @@ Albany::SolverFactory::createThyraSolverAndGetAlbanyApp(
 }
 #endif
 
+namespace {
+//   Problem: Instead of renaming the sublist MueLu to MueLu-Tpetra,
+// Piro::renamePreconditionerParamList caused a new empty sublist called
+// MueLu-Tpetra to be created. Because it was empty, MueLu would behave badly,
+// being given no user-set parameter values. Hence the worst-case bug was
+// occurring: the program would run, but the performance would be terrible.
+//   Analysis: Piro::renamePreconditionerParamList uses setName to change the
+// sublist MueLu to MueLu-Tpetra. That does not actually work. But I think it's
+// possible there is a bug in Teuchos::ParameterList, and setName should in fact
+// work. The implementation of setName simply sets the private variable name_ to
+// the new name, but it does not change the associated key in params_. I think
+// that, or something related, is causing the problem. If I pin down the problem
+// as a bug in Teuchos::ParameterList, then I'll submit a bug report and revert
+// the following change.
+//   (Temporary) Solution: Here I implement a version of
+// renamePreconditionerParamList that uses set and then remove to do the
+// renaming. That works, although it's probably inefficient.
+//   Followup: Once I determine the exact issue with setName, I'll either (1)
+// move this implementation to Piro or (2) submit a bug report and remove this
+// implementation once the fix is in Teuchos::ParameterList.
+void renamePreconditionerParamList(
+  const Teuchos::RCP<Teuchos::ParameterList>& stratParams, 
+  const std::string &oldname, const std::string& newname)
+{
+  if (stratParams->isType<std::string>("Preconditioner Type")) {
+    const std::string&
+      currentval = stratParams->get<std::string>("Preconditioner Type");
+    if (currentval == oldname) {
+      stratParams->set<std::string>("Preconditioner Type", newname);
+      // Does the old sublist exist?
+      if (stratParams->isSublist("Preconditioner Types") &&
+          stratParams->sublist("Preconditioner Types", true).isSublist(oldname)) {
+        Teuchos::ParameterList& ptypes =
+          stratParams->sublist("Preconditioner Types", true);
+        Teuchos::ParameterList& mlist = ptypes.sublist(oldname, true);
+        // Copy the oldname sublist to the newname sublist.
+        ptypes.set(newname, mlist);
+        // Remove the oldname sublist.
+        ptypes.remove(oldname);
+      }
+    }
+  }      
+}
+} // namespace
+
 Teuchos::RCP<Thyra::ResponseOnlyModelEvaluatorBase<ST> >
 Albany::SolverFactory::createAndGetAlbanyAppT(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -545,7 +620,72 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate ATO (topological optimization)\n");
 //#endif /* ALBANY_ATO */
 //    }
+  
+#ifdef ALBANY_LCM
+  if (solutionMethod == "Coupled Schwarz") {
+    std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl; 
+    const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, initial_guess));
+    //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
+    //files for each model).  This makes sense I think.  
+    const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+   
+    const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
+    // Create and setup the Piro solver factory
+    Piro::SolverFactory piroFactory;
+    RCP<Thyra::ModelEvaluator<ST> > coupled_model_with_solveT;
+    if (Teuchos::nonnull(coupled_model->get_W_factory())) {
+      coupled_model_with_solveT = coupled_model;
+    } 
+    else {
+      // Setup linear solver
+      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+#ifdef ALBANY_IFPACK2
+      {
+#ifdef ALBANY_64BIT_INT
+        typedef Thyra::PreconditionerFactoryBase<ST> Base;
+        typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+#else
+        typedef Thyra::PreconditionerFactoryBase<double> Base;
+        typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+#endif
 
+        linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+      }
+#endif /* ALBANY_IFPACK2 */
+#ifdef ALBANY_MUELU
+#ifdef ALBANY_64BIT_INT
+      renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+      Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
+      Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+#else
+      Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+#endif
+#endif /* ALBANY_MUELU */
+
+      linearSolverBuilder.setParameterList(stratList);
+
+      const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
+        createLinearSolveStrategy(linearSolverBuilder);
+
+      coupled_model_with_solveT =
+        rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(coupled_model, lowsFactory));
+    }
+
+    //FIXME, IKT, 2/13/15: the following needs to be replaced with the right observer for CoupledSchwarz!
+    //I think we need to write an observer that takes in coupled_model similar to QCAD::CoupledPS_NOXObserverConstructor.
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    //Will have something like: 
+    //const RCP<Piro::ObserverBase<double> > coupled_observer = rcp(new LCM::CoupledSchwarz_NOXObserverConstructor(coupled_model));
+    //Coupled observer would split up the coupled solution into individual solution vectors (one for each model/domain)
+    //and write it to its own exodus output file. 
+    //setSource is not implemented for Tpetra in Piro!! 
+    //piroFactory.setSource<NOX::Tpetra?::Observer>(coupled_observer);
+    // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
+    // FIXME?
+    std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
+    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    }
+#endif
 
   RCP<Albany::Application> app = albanyApp;
   const RCP<Thyra::ModelEvaluator<ST> > modelT =
@@ -588,9 +728,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
+    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
     Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
     Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
-    Piro::renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
 #else
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif
@@ -759,27 +899,29 @@ int Albany::SolverFactory::checkSolveTestResultsT(
   }
 
   // Repeat comparisons for sensitivities
-  Teuchos::ParameterList *sensitivityParams;
+  Teuchos::ParameterList *sensitivityParams = 0;
   std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
-  else
+  else if(testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  const int numSensTests =
-    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0) {
-    if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
-    else {
-      for (int i=0; i<numSensTests; i++) {
-        Teuchos::Array<double> testSensValues =
-          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
+  if(sensitivityParams != 0) {
+    const int numSensTests =
+      sensitivityParams->get<int>("Number of Sensitivity Comparisons",0);
+    if (numSensTests > 0) {
+      if (dgdp == NULL || numSensTests > dgdp->getGlobalLength()) failures += 10000;
+      else {
+        for (int i=0; i<numSensTests; i++) {
+          Teuchos::Array<double> testSensValues =
+            sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+          TEUCHOS_TEST_FOR_EXCEPT(dgdp->getNumVectors() != testSensValues.size());
 
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
-        for (int j=0; j<dgdp->getNumVectors(); j++) {
-          failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
-          comparisons++;
+          Teuchos::ArrayRCP<Teuchos::ArrayRCP<const double> > dgdpv = dgdp->get2dView();
+          for (int j=0; j<dgdp->getNumVectors(); j++) {
+            failures += scaledCompare(dgdpv[j][i], testSensValues[j], relTol, absTol);
+            comparisons++;
+          }
         }
       }
     }
@@ -821,25 +963,28 @@ int Albany::SolverFactory::checkSolveTestResults(
   }
 
   // Repeat comparisons for sensitivities
-  Teuchos::ParameterList *sensitivityParams;
+  Teuchos::ParameterList *sensitivityParams = 0;
   std::string sensitivity_sublist_name =
     Albany::strint("Sensitivity Comparisons", parameter_index);
   if (parameter_index == 0 && !testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = testParams;
-  else
+  else if(testParams->isSublist(sensitivity_sublist_name))
     sensitivityParams = &(testParams->sublist(sensitivity_sublist_name));
-  const int numSensTests =
-    sensitivityParams->get<int>("Number of Sensitivity Comparisons");
-  if (numSensTests > 0) {
-    if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
-    else {
-      for (int i=0; i<numSensTests; i++) {
-        Teuchos::Array<double> testSensValues =
-          sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
-        TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
-        for (int j=0; j<dgdp->NumVectors(); j++) {
-          failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
-          comparisons++;
+
+  if(sensitivityParams != 0) {
+    const int numSensTests =
+      sensitivityParams->get<int>("Number of Sensitivity Comparisons", 0);
+    if (numSensTests > 0) {
+      if (dgdp == NULL || numSensTests > dgdp->MyLength()) failures += 10000;
+      else {
+        for (int i=0; i<numSensTests; i++) {
+          Teuchos::Array<double> testSensValues =
+            sensitivityParams->get<Teuchos::Array<double> >(Albany::strint("Sensitivity Test Values",i));
+          TEUCHOS_TEST_FOR_EXCEPT(dgdp->NumVectors() != testSensValues.size());
+          for (int j=0; j<dgdp->NumVectors(); j++) {
+            failures += scaledCompare((*dgdp)[j][i], testSensValues[j], relTol, absTol);
+            comparisons++;
+          }
         }
       }
     }

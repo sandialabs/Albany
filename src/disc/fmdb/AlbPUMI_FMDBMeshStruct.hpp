@@ -95,6 +95,7 @@ namespace AlbPUMI {
 
     std::string outputFileName;
     int outputInterval;
+    bool useNullspaceTranslationOnly;
 
 private:
 
@@ -116,13 +117,6 @@ private:
     apf::StkModels sets;
 
     bool compositeTet;
-
-#ifndef SCOREC_PARASOLID
-    int gmi_register_parasolid() {
-      fprintf(stderr,"ERROR: FMDB Discretization -> Cannot find Parasolid\n");
-      exit(1);
-    }
-#endif
 
   };
 

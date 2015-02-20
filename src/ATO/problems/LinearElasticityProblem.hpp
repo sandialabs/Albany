@@ -110,9 +110,11 @@ namespace Albany {
 #include "Albany_ResponseUtilities.hpp"
 #include "Albany_EvaluatorUtils.hpp"
 
+#include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_Source.hpp"
 #include "Strain.hpp"
 #include "ATO_Stress.hpp"
+#include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
 #include "PHAL_SaveStateField.hpp"
 #include "ElasticityResid.hpp"
@@ -261,6 +263,18 @@ Albany::LinearElasticityProblem::constructEvaluators(
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  // Get distributed parameter
+  if(params->isType<Teuchos::RCP<ATO::Topology> >("Topology")){
+    Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
+    if( topology->getEntityType() == "Distributed Parameter" ){
+      RCP<ParameterList> p = rcp(new ParameterList("Distributed Parameter"));
+
+      p->set<std::string>("Parameter Name", topology->getName());
+      ev = rcp(new PHAL::GatherScalarNodalParameter<EvalT,AlbanyTraits>(*p, dl) );
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
   
   // ATO penalization
   if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
@@ -274,8 +288,12 @@ Albany::LinearElasticityProblem::constructEvaluators(
     p->set<std::string>("Unweighted Variable Name", stressName);
     p->set<std::string>("Weighted Variable Name", stressName+"_Weighted");
     p->set<std::string>("Variable Layout", "QP Tensor");
-    
-    ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
+
+    if( topology->getEntityType() == "Distributed Parameter" )
+      ev = rcp(new ATO::TopologyFieldWeighting<EvalT,AlbanyTraits>(*p,dl));
+    else
+      ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
+
     fm0.template registerEvaluator<EvalT>(ev);
   }
 

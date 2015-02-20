@@ -19,6 +19,8 @@
 #include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/CreateAdjacentEntities.hpp>
+// needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#include <stk_mesh/base/MeshUtils.hpp>
 
 // Rebalance
 #ifdef ALBANY_ZOLTAN
@@ -174,6 +176,8 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   transformType = params->get("Transform Type", "None"); //get the type of transformation of STK mesh (for FELIX problems)
   felixAlpha = params->get("FELIX alpha", 0.0);
   felixL = params->get("FELIX L", 1.0);
+
+  points_per_edge = params->get("Points Per Edge", 2); 
 
   //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
   contigIDs = params->get("Contiguous IDs", true);
@@ -473,6 +477,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
       }
     }
 
+    stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
     bulkData->modification_end();
   }
 
@@ -725,6 +730,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for FELIX problem that require tranformation of STK mesh
+  validPL->set<int>("Points Per Edge", 2, "Points per edge in enriched Aeras mesh"); 
   validPL->set<bool>("Write Coordinates to MatrixMarket", false, "Writing Coordinates to MatrixMarket File"); //for writing coordinates to matrix market file
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh
