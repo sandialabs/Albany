@@ -21,7 +21,6 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 
   topology = p.get<Teuchos::RCP<Topology> >("Topology");
   topoName = topology->getName();
-  topoCentering = topology->getCentering();
   functionIndex = p.get<int>("Function Index");
 
   std::string strLayout = p.get<std::string>("Variable Layout");
@@ -78,69 +77,39 @@ evaluateFields(typename Traits::EvalData workset)
 
   Albany::MDArray topo = (*workset.stateArrayPtr)[this->topoName];
 
-  if( topoCentering == "Element" ){
+  int numCells = dims[0];
+  int numQPs   = dims[1];
+  int numDims  = dims[2];
+  int numNodes = topo.dimension(1);
 
-    if( size == 3 ){
-      for(int cell=0; cell<dims[0]; cell++){
-        double P = topology->Penalize(functionIndex,topo(cell));
-        for(int qp=0; qp<dims[1]; qp++)
-          for(int i=0; i<dims[2]; i++)
-            weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
+  if( size == 3 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
+        for(int i=0; i<numDims; i++)
+          weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
       }
-    } else
-    if( size == 4 ){
-      for(int cell=0; cell<dims[0]; cell++){
-        double P = topology->Penalize(functionIndex,topo(cell));
-        for(int qp=0; qp<dims[1]; qp++)
-          for(int i=0; i<dims[2]; i++)
-            for(int j=0; j<dims[3]; j++)
-              weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);
-      }
-    } else {
-       TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
-         "Unexpected array dimensions in TopologyWeighting:" << size << std::endl);
     }
   } else
-
-
-  if( topoCentering == "Node" ){
-
-    int numCells = dims[0];
-    int numQPs   = dims[1];
-    int numDims  = dims[2];
-    int numNodes = topo.dimension(1);
-
-    if( size == 3 ){
-      for(int cell=0; cell<numCells; cell++){
-        for(int qp=0; qp<numQPs; qp++){
-          double topoVal = 0.0;
-          for(int node=0; node<numNodes; node++)
-            topoVal += topo(cell,node)*BF(cell,node,qp);
-          ScalarT P = topology->Penalize(functionIndex,topoVal);
-          for(int i=0; i<numDims; i++)
-            weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
-        }
+  if( size == 4 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
+        for(int i=0; i<numDims; i++)
+          for(int j=0; j<numDims; j++)
+            weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);
       }
-    } else
-    if( size == 4 ){
-      for(int cell=0; cell<numCells; cell++){
-        for(int qp=0; qp<numQPs; qp++){
-          double topoVal = 0.0;
-          for(int node=0; node<numNodes; node++)
-            topoVal += topo(cell,node)*BF(cell,node,qp);
-          ScalarT P = topology->Penalize(functionIndex,topoVal);
-          for(int i=0; i<numDims; i++)
-            for(int j=0; j<numDims; j++)
-              weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);
-        }
-      }
-    } else {
-       TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
-         "Unexpected array dimensions in TopologyWeighting:" << size << std::endl);
     }
+  } else {
+     TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
+       "Unexpected array dimensions in TopologyWeighting:" << size << std::endl);
   }
-
-
 }
 
 //**********************************************************************

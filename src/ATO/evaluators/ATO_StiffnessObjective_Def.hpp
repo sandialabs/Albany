@@ -64,20 +64,9 @@ StiffnessObjectiveBase(Teuchos::ParameterList& p,
   //! Register with state manager
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   this->pStateMgr->registerStateVariable(FName, dl->workset_scalar, dl->dummy, 
-                                         "all", "scalar", 0.0, false, true);
-  if( topology->getCentering() == "Element" ){
-    this->pStateMgr->registerStateVariable(dFdpName, dl->cell_scalar, dl->dummy, 
-                                           "all", "scalar", 0.0, false, true);
-  } else
-  if( topology->getCentering() == "Node" ){
-    this->pStateMgr->registerStateVariable(dFdpName, dl->node_scalar, dl->dummy, 
-                                           "all", "scalar", 0.0, false, true);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Unknown centering " << topology->getCentering() << "!" << std::endl 
-      << "Options are (Element, Node)" << std::endl);
-  }
+                                         "all", "scalar", 0.0, false, false);
+  this->pStateMgr->registerStateVariable(dFdpName, dl->node_scalar, dl->dummy, 
+                                         "all", "scalar", 0.0, false, false);
 
 
   this->addDependentField(qp_weights);
@@ -136,85 +125,52 @@ evaluateFields(typename Traits::EvalData workset)
 
   double internalEnergy=0.0;
 
-  if( topology->getCentering() == "Element" ){
-  
-    if( size == 3 ){
-      for(int cell=0; cell<dims[0]; cell++){
+  int numCells = dims[0];
+  int numQPs   = dims[1];
+  int numDims  = dims[2];
+  int numNodes = topo.dimension(1);
+
+  if( size == 3 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        double P = topology->Penalize(functionIndex,topoVal);
+        double dP = topology->dPenalize(functionIndex,topoVal);
         double dE = 0.0;
-        double P = topology->Penalize(functionIndex,topo(cell));
-        double dP = topology->dPenalize(functionIndex,topo(cell));
-        for(int qp=0; qp<dims[1]; qp++)
-          for(int i=0; i<dims[2]; i++)
-            dE += gradX(cell,qp,i)*workConj(cell,qp,i)*qp_weights(cell,qp);
+        for(int i=0; i<numDims; i++)
+          dE += gradX(cell,qp,i)*workConj(cell,qp,i)/2.0;
+        dE *= qp_weights(cell,qp);
         internalEnergy += P*dE;
-        dEdp(cell) = -dP*dE;
+        for(int node=0; node<numNodes; node++)
+          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
       }
-    } else
-    if( size == 4 ){
-      for(int cell=0; cell<dims[0]; cell++){
-        double dE = 0.0;
-        double P = topology->Penalize(functionIndex,topo(cell));
-        double dP = topology->dPenalize(functionIndex,topo(cell));
-        for(int qp=0; qp<dims[1]; qp++)
-          for(int i=0; i<dims[2]; i++)
-            for(int j=0; j<dims[3]; j++)
-              dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j)*qp_weights(cell,qp);
-        internalEnergy += P*dE;
-        dEdp(cell) = -dP*dE;
-      }
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
-        "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
     }
   } else
-  if( topology->getCentering() == "Node" ){
-    int numCells = dims[0];
-    int numQPs   = dims[1];
-    int numDims  = dims[2];
-    int numNodes = topo.dimension(1);
-
-    if( size == 3 ){
-      for(int cell=0; cell<numCells; cell++){
-        for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-        for(int qp=0; qp<numQPs; qp++){
-          double topoVal = 0.0;
-          for(int node=0; node<numNodes; node++)
-            topoVal += topo(cell,node)*BF(cell,node,qp);
-          double P = topology->Penalize(functionIndex,topoVal);
-          double dP = topology->dPenalize(functionIndex,topoVal);
-          double dE = 0.0;
-          for(int i=0; i<numDims; i++)
-            dE += gradX(cell,qp,i)*workConj(cell,qp,i)/2.0;
-          dE *= qp_weights(cell,qp);
-          internalEnergy += P*dE;
-          for(int node=0; node<numNodes; node++)
-            dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
-        }
+  if( size == 4 ){
+    for(int cell=0; cell<numCells; cell++){
+      for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        double P = topology->Penalize(functionIndex,topoVal);
+        double dP = topology->dPenalize(functionIndex,topoVal);
+        double dE = 0.0;
+        for(int i=0; i<numDims; i++)
+          for(int j=0; j<numDims; j++)
+            dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j)/2.0;
+        dE *= qp_weights(cell,qp);
+        internalEnergy += P*dE;
+        for(int node=0; node<numNodes; node++)
+          dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
       }
-    } else
-    if( size == 4 ){
-      for(int cell=0; cell<numCells; cell++){
-        for(int node=0; node<numNodes; node++) dEdp(cell,node) = 0.0;
-        for(int qp=0; qp<numQPs; qp++){
-          double topoVal = 0.0;
-          for(int node=0; node<numNodes; node++)
-            topoVal += topo(cell,node)*BF(cell,node,qp);
-          double P = topology->Penalize(functionIndex,topoVal);
-          double dP = topology->dPenalize(functionIndex,topoVal);
-          double dE = 0.0;
-          for(int i=0; i<numDims; i++)
-            for(int j=0; j<numDims; j++)
-              dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j)/2.0;
-          dE *= qp_weights(cell,qp);
-          internalEnergy += P*dE;
-          for(int node=0; node<numNodes; node++)
-            dEdp(cell,node) -= dP*dE*BF(cell,node,qp);
-        }
-      }
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
-        "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
     }
+  } else {
+    TEUCHOS_TEST_FOR_EXCEPTION(size<3||size>4, Teuchos::Exceptions::InvalidParameter,
+      "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
 
   F(0) += internalEnergy;

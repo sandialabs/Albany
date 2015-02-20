@@ -49,6 +49,31 @@ void ATO::Utils<EvalT,Traits>::SaveCellStateField(
     } else
 
     //
+    // QUAD POINT VECTORS
+    if(dataLayout == dl->qp_vector){
+
+      std::string cn[3] = {"x","y","z"};
+
+      // save cell average for output
+      for(int i=0; i< numDim; i++){
+        std::string varname(variableName);
+        varname += " ";
+        varname += cn[i];
+        varname += "_ave ";
+        p = stateMgr.registerStateVariable(varname,
+            dl->cell_scalar, dl->dummy, elementBlockName, "scalar",
+            0.0, false, true);
+        p->set("Field Layout", dl->qp_vector);
+        p->set("Field Name", variableName);
+        p->set("Weights Layout", dl->qp_scalar);
+        p->set("Weights Name", "Weights");
+        p->set("component i", i);
+        ev = Teuchos::rcp(new PHAL::SaveCellStateField<EvalT, PHAL::AlbanyTraits>(*p));
+        fm0.template registerEvaluator<EvalT>(ev);
+      }
+    } else
+
+    //
     // QUAD POINT TENSORS
     if(dataLayout == dl->qp_tensor){
 

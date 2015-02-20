@@ -10,7 +10,6 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
-#include "ATO_TopoTools_Def.hpp"
 
 
 template<typename EvalT, typename Traits>

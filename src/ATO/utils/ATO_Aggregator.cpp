@@ -280,21 +280,10 @@ Aggregator_Scaled::Evaluate()
   if( comm != Teuchos::null ){
     if( comm->MyPID()==0 ){
       std::cout << "************************************************************************" << std::endl;
-      std::cout << "  Aggregator: " << outputObjectiveName << " = " << gAggregated << std::endl;
+      std::cout << "  Aggregator: " << outputObjectiveName << " = " << *gAggregated << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
   }
-
-//  if(shiftToZero){
-//    double maxValue = 0.0;
-//    dgdpAggregated->MaxValue(&maxValue);
-//    if(maxValue > 0.0){
-//      double* dgdpView; dgdpAggregated->ExtractView(&dgdpView);
-//      int nVals = dgdpAggregated->MyLength();
-//      for(int i=0; i<nVals; i++)
-//        dgdpView[i] -= maxValue;
-//    }
-//  }
 }
 
 //**********************************************************************
@@ -319,19 +308,6 @@ Aggregator_DistScaled::Evaluate()
     }
   }
 
-//  std::vector<double> scale(nObjs), shift(nObjs), maxVal(nObjs), minVal(nObjs);
-//  for(int i=0; i<objectives.size(); i++){
-//    derivatives[i].value->MaxValue(&(maxVal[i]));
-//    derivatives[i].value->MinValue(&(minVal[i]));
-//    if(scaleToOne){
-//      scale[i] = (maxVal[i]-minVal[i] > 0.0) ? 1.0/(maxVal[i]-minVal[i]) : 1.0;
-//      normalize[i] = 1.0;
-//    } else scale[i] = 1.0;
-//    if(shiftToZero)
-//      shift[i] = maxVal[i];
-//    else shift[i] = 0.0;
-//  }
-
   for(int i=0; i<objectives.size(); i++){
     SubObjective& objective = objectives[i];
     SubDerivative& derivative = derivatives[i];
@@ -351,10 +327,6 @@ Aggregator_DistScaled::Evaluate()
         std::cout << "  Aggregator: Input variable " << i << std::endl;
         std::cout << "   " << objective.name << " = " << objView[0] << std::endl;
         std::cout << "   " << objective.name << " (scaled) = " << objView[0]*normalize[i] << std::endl;
-//        std::cout << "   Shift  = " << shift[i] << std::endl;
-//        std::cout << "   Scale  = " << scale[i] << std::endl;
-//        std::cout << "   Min    = " << minVal[i] << std::endl;
-//        std::cout << "   Max    = " << maxVal[i] << std::endl;
         std::cout << "   Weight = " << weights[i] << std::endl;
         std::cout << "************************************************************************" << std::endl;
       }

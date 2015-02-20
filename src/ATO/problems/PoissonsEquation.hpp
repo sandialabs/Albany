@@ -12,6 +12,7 @@
 
 #include "Albany_AbstractProblem.hpp"
 #include "ATO_OptimizationProblem.hpp"
+#include "ATO_Utils.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -110,6 +111,7 @@ namespace Albany {
 
 //#include "PHAL_Source.hpp"
 #include "ATO_ScaleVector.hpp"
+#include "ATO_TopologyFieldWeighting.hpp"
 #include "ATO_TopologyWeighting.hpp"
 #include "ATO_VectorResidual.hpp"
 #include "PHAL_SaveStateField.hpp"
@@ -163,6 +165,7 @@ Albany::PoissonsEquationProblem::constructEvaluators(
 //                              "Data Layout Usage in Mechanics problems assume vecDim = numDim");
 
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
+   ATO::Utils<EvalT, PHAL::AlbanyTraits> atoUtils(dl);
 
 
 
@@ -232,12 +235,28 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     ev = rcp(new ATO::ScaleVector<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
 
-    // state the strain in the state manager so for ATO
-    p = stateMgr.registerStateVariable(kinVarName,dl->qp_vector, dl->dummy, elementBlockName, "scalar", 0.0);
+    // state the kinetic variable in the state manager for ATO
+    p = stateMgr.registerStateVariable(kinVarName,dl->qp_vector, dl->dummy, 
+                                       elementBlockName, "scalar", 0.0, false, false);
     ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
     fm0.template registerEvaluator<EvalT>(ev);
-  }
   
+    //if(some input stuff)
+    atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName, elementBlockName, dl->qp_vector, numDim);
+  }
+
+  // Get distributed parameter
+  if(params->isType<Teuchos::RCP<ATO::Topology> >("Topology")){
+    Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
+    if( topology->getEntityType() == "Distributed Parameter" ){
+      RCP<ParameterList> p = rcp(new ParameterList("Distributed Parameter"));
+
+      p->set<std::string>("Parameter Name", topology->getName());
+      ev = rcp(new PHAL::GatherScalarNodalParameter<EvalT,AlbanyTraits>(*p, dl) );
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
+
   // ATO penalization
   if( params->isType<Teuchos::RCP<ATO::Topology> >("Topology") )
   {
@@ -246,14 +265,23 @@ Albany::PoissonsEquationProblem::constructEvaluators(
     Teuchos::RCP<ATO::Topology> topology = params->get<Teuchos::RCP<ATO::Topology> >("Topology");
     p->set<Teuchos::RCP<ATO::Topology> >("Topology",topology);
 
+    Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
+
     p->set<std::string>("BF Name", "BF");
     p->set<std::string>("Unweighted Variable Name", kinVarName);
     p->set<std::string>("Weighted Variable Name", kinVarName+"_Weighted");
     p->set<std::string>("Variable Layout", "QP Vector");
-    p->set<int>("Topology Function", params->get<int>("Topology Function"));
+    p->set<int>("Function Index", wfParams.get<int>("Flux"));
     
-    ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
+    if( topology->getEntityType() == "Distributed Parameter" )
+      ev = rcp(new ATO::TopologyFieldWeighting<EvalT,AlbanyTraits>(*p,dl));
+    else
+      ev = rcp(new ATO::TopologyWeighting<EvalT,AlbanyTraits>(*p,dl));
+
     fm0.template registerEvaluator<EvalT>(ev);
+
+    //if(some input stuff)
+    atoUtils.SaveCellStateField(fm0, stateMgr, kinVarName+"_Weighted", elementBlockName, dl->qp_vector, numDim);
   }
 
   { // Residual

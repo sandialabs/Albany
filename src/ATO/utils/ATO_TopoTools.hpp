@@ -31,7 +31,6 @@ public:
   template<typename T> T Penalize(int fIndex, T rho);
   template<typename T> T dPenalize(int fIndex, T rho);
 
-  const std::string& getCentering(){return centering;}
   const std::string& getName(){return name;}
   const std::string& getOutputNames(){return name;}
   const Teuchos::Array<std::string>& getFixedBlocks(){return fixedBlocks;}
@@ -43,7 +42,6 @@ public:
   int TopologyOutputFilter(){return topologyOutputFilter;}
   int SpatialFilterIndex(){return spatialFilterIndex;}
 private:
-  std::string centering;
   // this should be a vector of strings at some point since, in the
   // general case, the topology may be defined by multiple fields.
   std::string name;

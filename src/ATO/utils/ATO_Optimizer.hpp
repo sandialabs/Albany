@@ -50,7 +50,7 @@ class Optimizer
   Teuchos::RCP<ConvergenceTest> convergenceChecker;
   Teuchos::RCP<Topology> topology;
 
-  int    _optMaxIter;
+  int    _nIterations;
 
 };
 
@@ -127,6 +127,7 @@ class ConvergenceTest {
 
     bool isConverged( double delta_f, double delta_p, int iter, int myPID = -1);
     void initNorm(double f, double p);
+    int getMaxIterations(){return maxIterations;}
 
   private:
 

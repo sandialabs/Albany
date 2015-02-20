@@ -14,7 +14,6 @@ namespace ATO {
 Topology::Topology(const Teuchos::ParameterList& topoParams)
 //**********************************************************************
 {
-  centering = topoParams.get<std::string>("Centering");
   name      = topoParams.get<std::string>("Topology Name");
   initValue = topoParams.get<double>("Initial Value");
 
