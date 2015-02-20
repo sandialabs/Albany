@@ -68,7 +68,7 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-// #define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -268,28 +268,27 @@ Aeras::SpectralDiscretization::printConnectivity(bool printEdges) const
   if (printEdges)
     for (int rank = 0; rank < commT->getSize(); ++rank)
     {
+      commT->barrier();
       if (rank == commT->getRank())
       {
         std::cout << std::endl << "Process rank " << rank << std::endl;
-        for (size_t ibuck = 0; ibuck < enrichedEdges.size(); ++ibuck)
+        for (std::map< GO, Teuchos::ArrayRCP< GO > >::const_iterator edge =
+               enrichedEdges.begin(); edge != enrichedEdges.end(); ++edge)
         {
-          std::cout << "  Bucket " << ibuck << std::endl;
-          for (size_t iedge = 0; iedge < enrichedEdges[ibuck].size(); ++iedge)
-          {
-            int numNodes = enrichedEdges[ibuck][iedge].size();
-            std::cout << "    Edge " << iedge << ": Nodes = ";
-            for (size_t inode = 0; inode < numNodes; ++inode)
-              std::cout << enrichedEdges[ibuck][iedge][inode] << " ";
-            std::cout << std::endl;
-          }
+          Teuchos::ArrayRCP< GO > nodes = edge->second;
+          int numNodes = nodes.size();
+          std::cout << "    Edge " << edge->first << ": Nodes = ";
+          for (size_t inode = 0; inode < numNodes; ++inode)
+            std::cout << nodes[inode] << " ";
+          std::cout << std::endl;
         }
       }
-      commT->barrier();
     }
 
   else
     for (int rank = 0; rank < commT->getSize(); ++rank)
     {
+      commT->barrier();
       if (rank == commT->getRank())
       {
         std::cout << std::endl << "Process rank " << rank << std::endl;
@@ -306,8 +305,8 @@ Aeras::SpectralDiscretization::printConnectivity(bool printEdges) const
           }
         }
       }
-      commT->barrier();
     }
+  commT->barrier();
 }
 
 
@@ -976,7 +975,11 @@ void Aeras::SpectralDiscretization::enrichMesh()
   size_t np  = points_per_edge;
 #ifdef OUTPUT_TO_SCREEN
   *out << "Points per edge: " << np << std::endl;
-#endif 
+#endif
+
+  // Define the Selectors we are going to need
+  stk::mesh::Selector locally_owned   = metaData.locally_owned_part();
+  stk::mesh::Selector locally_unowned = !locally_owned;
 
   // Edges are not created by default, so we create them here
   stk::mesh::create_edges(bulkData);
@@ -986,13 +989,12 @@ void Aeras::SpectralDiscretization::enrichMesh()
   GO maxEdgeID = getMaximumID(stk::topology::EDGE_RANK);
 
   // Fill in the enriched edge array
+  enrichedEdges.clear();
   const stk::mesh::BucketVector & edgeBuckets =
     bulkData.buckets(stk::topology::EDGE_RANK);
-  enrichedEdges.resize(edgeBuckets.size());
   for (size_t ibuck = 0; ibuck < edgeBuckets.size(); ++ibuck)
   {
     stk::mesh::Bucket & edgeBucket = *edgeBuckets[ibuck];
-    enrichedEdges[ibuck].resize(edgeBucket.size());
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
@@ -1000,27 +1002,23 @@ void Aeras::SpectralDiscretization::enrichMesh()
       TEUCHOS_TEST_FOR_EXCEPTION(
         numNodes != 2,
         std::logic_error,
-        "Starting edges for enriched elements must be linear.  Edge " << edge
-        << " has " << numNodes << " nodes.");
+        "Starting edges for enriched elements must be linear.  Edge "
+        << gid(edge) << " has " << numNodes << " nodes.");
       const stk::mesh::Entity * nodes = bulkData.begin_nodes(edge);
-      enrichedEdges[ibuck][iedge].resize(np);
-      enrichedEdges[ibuck][iedge][0] = gid(nodes[0]);
+      enrichedEdges[gid(edge)].resize(np);
+      enrichedEdges[gid(edge)][0] = gid(nodes[0]);
       for (GO inode = 1; inode < np-1; ++inode)
       {
-        enrichedEdges[ibuck][iedge][inode] =
+        enrichedEdges[gid(edge)][inode] =
           maxGID + gid(edge)*(np-2) + inode;
       }
-      enrichedEdges[ibuck][iedge][np-1] = gid(nodes[1]);
-      // for (GO inode = 0; inode < np; inode++)
-      //   *out << "ibuck, iedge, inode, enrichedEdges: " << ibuck  
-      //        << ", " << iedge << ", " << inode << ", "
-      //        << enrichedEdges[ibuck][iedge][inode] << std::endl; 
+      enrichedEdges[gid(edge)][np-1] = gid(nodes[1]);
     }
   }
 
   // Fill in the enriched element array
   const stk::mesh::BucketVector & elementBuckets =
-    bulkData.buckets(stk::topology::ELEMENT_RANK);
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, locally_owned);
   wsElNodeID.resize(elementBuckets.size());
   for (size_t ibuck = 0; ibuck < elementBuckets.size(); ++ibuck)
   {
@@ -1033,15 +1031,16 @@ void Aeras::SpectralDiscretization::enrichMesh()
       TEUCHOS_TEST_FOR_EXCEPTION(
         numNodes != 4,
         std::logic_error,
-        "Starting elements for enriched elements must be linear quadrilaterals."
-        "  Element " << element << " has " << numNodes << " nodes.");
+        "Starting elements for enrichment must be linear quadrilaterals."
+        "  Element " << gid(element) << " has " << numNodes << " nodes.");
       const stk::mesh::Entity * nodes = bulkData.begin_nodes(element);
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "Proc " << commT->getRank() << ": Bucket " << ibuck
-                << ", Element " << element << " has nodes ";
+                << ", Element " << gid(element) << " has nodes ";
       for (unsigned inode = 0; inode < numNodes; ++inode)
         std::cout << gid(nodes[inode]) << " ";
       std::cout << std::endl;
+      commT->barrier();
 #endif
       // Here we allocate a new Teuchos::TwoDArray (named buffer at
       // address bufferPtr) for storing and accessing a 2D array of
@@ -1054,7 +1053,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       wsElNodeID[ibuck][ielem] =
         Teuchos::ArrayRCP<GO>(&buffer[0][0],0,np2,true);
 
-      // Copy the linear corner node IDs to the enriched element
+      // Copy the linear c orner node IDs to the enriched element
       buffer[0   ][0   ] = gid(nodes[0]);
       buffer[0   ][np-1] = gid(nodes[1]);
       buffer[np-1][np-1] = gid(nodes[2]);
@@ -1065,45 +1064,42 @@ void Aeras::SpectralDiscretization::enrichMesh()
       // tensor grid edge.  So we check the first node ID and copy
       // in the appropriate direction.
       const stk::mesh::Entity * edges = bulkData.begin_edges(element);
+
       // Edge 0
       const stk::mesh::Entity * edgeNodes = bulkData.begin_nodes(edges[0]);
+      GO edgeID = gid(edges[0]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[0] == nodes[0])
-          //buffer[0][inode] = gid(edgeNodes[inode]);
-          buffer[0][inode] = enrichedEdges[ibuck][0][inode];
+          buffer[0][inode] = enrichedEdges[edgeID][inode];
         else
-          //buffer[0][inode] = gid(edgeNodes[np-inode-1]);
-          buffer[0][inode] = enrichedEdges[ibuck][0][np-inode-1];
+          buffer[0][inode] = enrichedEdges[edgeID][np-inode-1];
+
       // Edge 1
       edgeNodes = bulkData.begin_nodes(edges[1]);
+      edgeID = gid(edges[1]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[1] == nodes[1])
-          //buffer[inode][np-1] = gid(edgeNodes[inode]);
-          buffer[inode][np-1] = enrichedEdges[ibuck][1][inode];
+          buffer[inode][np-1] = enrichedEdges[edgeID][inode];
         else
-          //buffer[inode][np-1] = gid(edgeNodes[np-inode-1]);
-          buffer[inode][np-1] = enrichedEdges[ibuck][1][np-inode-1];
+          buffer[inode][np-1] = enrichedEdges[edgeID][np-inode-1];
+
       // Edge 2
       edgeNodes = bulkData.begin_nodes(edges[2]);
-      for (unsigned inode = 1; inode < np-1; ++inode) {
+      edgeID = gid(edges[2]);
+      for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[2] == nodes[2])
-          //buffer[np-1][inode] = gid(edgeNodes[np-inode-1]);
-          buffer[np-1][inode] = enrichedEdges[ibuck][2][np-inode-1];
-        else {
-          //*out << "gid: " << gid(edgeNodes[inode]) << std::endl; 
-          //buffer[np-1][inode] = gid(edgeNodes[inode]);
-          buffer[np-1][inode] = enrichedEdges[ibuck][2][inode];
-          }
-      }
+          buffer[np-1][inode] = enrichedEdges[edgeID][np-inode-1];
+        else
+          buffer[np-1][inode] = enrichedEdges[edgeID][inode];
+
       // Edge 3
       edgeNodes = bulkData.begin_nodes(edges[3]);
+      edgeID = gid(edges[3]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[3] == nodes[3])
-          //buffer[inode][0] = gid(edgeNodes[np-inode-1]);
-          buffer[inode][0] = enrichedEdges[ibuck][3][np-inode-1];
+          buffer[inode][0] = enrichedEdges[edgeID][np-inode-1];
         else
-          //buffer[inode][0] = gid(edgeNodes[inode]);
-          buffer[inode][0] = enrichedEdges[ibuck][3][inode];
+          buffer[inode][0] = enrichedEdges[edgeID][inode];
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + (maxEdgeID+1) * (np-2) +
@@ -1116,7 +1112,6 @@ void Aeras::SpectralDiscretization::enrichMesh()
 
   // Mark locally owned edges as owned
   edgeIsOwned.clear();
-  stk::mesh::Selector locally_owned  = metaData.locally_owned_part();
   const stk::mesh::BucketVector & ownedEdgeBuckets =
     bulkData.get_buckets(stk::topology::EDGE_RANK, locally_owned);
   for (size_t ibuck = 0; ibuck < ownedEdgeBuckets.size(); ++ibuck)
@@ -1127,9 +1122,8 @@ void Aeras::SpectralDiscretization::enrichMesh()
   }
 
   // Marked locally shared edges as unowned
-  stk::mesh::Selector locally_shared = !locally_owned;
   const stk::mesh::BucketVector & sharedEdgeBuckets =
-    bulkData.get_buckets(stk::topology::EDGE_RANK, locally_shared);
+    bulkData.get_buckets(stk::topology::EDGE_RANK, locally_unowned);
   for (size_t ibuck = 0; ibuck < sharedEdgeBuckets.size(); ++ibuck)
   {
     stk::mesh::Bucket & edgeBucket = *sharedEdgeBuckets[ibuck];
@@ -1325,10 +1319,11 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      if (edgeIsOwned[gid(edge)])
+      GO edgeID = gid(edge);
+      if (edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
-          indicesT[inode++] = enrichedEdges[ibuck][iedge][lnode];
+          indicesT[inode++] = enrichedEdges[edgeID][lnode];
       }
     }
   }
@@ -1340,6 +1335,17 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
         for (size_t jj = 1; jj < np-1; ++jj)
           indicesT[inode++] = wsElNodeID[ibuck][ielem][ii*np+jj];
 
+#ifdef OUTPUT_TO_SCREEN
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    commT->barrier();
+    if (rank == commT->getRank())
+      std::cout << "P" << rank
+                << ": computeOwnedNodesAndUnknowns(), inode = " << inode
+                << ", numOwnedNodes = " << numOwnedNodes << ", indicesT = "
+                << indicesT << std::endl;
+  }
+#endif
   assert (inode == numOwnedNodes);
   // End fill indicesT
   //////////////////////////////////////////////////////////////////////
@@ -1469,20 +1475,26 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
     for (size_t iedge = 0; iedge < edgeBucket.size(); ++iedge)
     {
       stk::mesh::Entity edge = edgeBucket[iedge];
-      if (!edgeIsOwned[gid(edge)])
+      GO edgeID = gid(edge);
+      if (!edgeIsOwned[edgeID])
       {
         for (size_t lnode = 1; lnode < np-1; ++lnode)
-          overlapIndicesT[inode++] = enrichedEdges[ibuck][iedge][lnode];
+          overlapIndicesT[inode++] = enrichedEdges[edgeID][lnode];
       }
     }
   }
 
 #ifdef OUTPUT_TO_SCREEN
-  commT->barrier();
-  std::cout << "Rank " << commT->getRank() << ": inode = " << inode
-            << ", numOverlapNodes = " << numOverlapNodes << std::endl;
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    commT->barrier();
+    if (rank == commT->getRank())
+      std::cout << "P" << rank
+                << ": computeOverlapNodesAndUnknowns(), inode = " << inode
+                << ", numOwnedNodes = " << numOwnedNodes << ", indicesT = "
+                << overlapIndicesT << std::endl;
+  }
 #endif
-
   assert (inode == numOverlapNodes);
   // End fill overlapIndicesT
   //////////////////////////////////////////////////////////////////////
