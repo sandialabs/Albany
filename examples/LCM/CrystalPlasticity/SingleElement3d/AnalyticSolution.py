@@ -273,18 +273,8 @@ if __name__ == "__main__":
 
     BasisVector1, BasisVector2, BasisVector3 = ConstructBasisVectors(R_active)
 
-    #
-    # NOTE TO REESE AND JAY
-    # If you pass the passive rotation matrix into the ComputeCauchyStress() function,
-    # the results will match what Albany gives.  I don't know if this is correct or not.
-    #
-    # The only thing that the rotation tensor is used for in ComputeCauchyStress() is to
-    # rotate the elasticity tensor using what I think is the standard rule for rotating
-    # 4th-order tensors:  C'_ijkl = R_im R_jn R_ko R_lp C_mnop 
-    #
-    # As of February 18th, 2015, 9:31pm, I think we should be passing in R_active, which
-    # suggests that the Albany code is incorrect.  Confidence level = 51%.
-    #
+    # The ComputeCauchyStress() function uses R_passive to determine the components of the elasticity
+    # tesnsor, which is aligned with the crystal lattice, as seen by an observer in the global reference frame
     R_passive = Transpose(R_active)
 
     CauchyStress = ComputeCauchyStress(C11, C12, C44, R_passive, DeformationGradient)
