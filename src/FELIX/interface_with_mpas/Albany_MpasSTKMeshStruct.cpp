@@ -23,6 +23,9 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+// needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#include <stk_mesh/base/MeshUtils.hpp>
+
 #include "Albany_Utils.hpp"
 
 //Wedge
@@ -432,6 +435,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   	  }
   }
 
+  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
   bulkData->modification_end();
 }
 
@@ -675,6 +679,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	}
   }
 
+  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
   bulkData->modification_end();
 }
 

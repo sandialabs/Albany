@@ -36,7 +36,8 @@ Adapt::NodalDataBlock::NodalDataBlock(const Teuchos::RCP<Albany::NodeFieldContai
   nodeBlockLayout(nodeBlockLayout_),
   nodeBlockMap(nodeBlockMap_),
   blocksize(blocksize_),
-  mapsHaveChanged(false)
+  mapsHaveChanged(false),
+  num_preeval_calls(0), num_posteval_calls(0)
 {
 }
 
@@ -200,4 +201,14 @@ saveTpetraNodalDataVector(const std::string& name,
   (*nodeContainer)[name]->saveFieldVector(overlap_node_vec, offset);
 }
 
+void Adapt::NodalDataBlock::initEvaluateCalls () {
+  num_preeval_calls = num_posteval_calls = 0;
+}
 
+int Adapt::NodalDataBlock::numPreEvaluateCalls () {
+  return ++num_preeval_calls;
+}
+
+int Adapt::NodalDataBlock::numPostEvaluateCalls () {
+  return ++num_posteval_calls;
+}

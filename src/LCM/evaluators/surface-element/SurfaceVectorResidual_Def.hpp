@@ -129,6 +129,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   } else {
     this->utils.setFieldData(stress, fm);
   }
+
+  if (have_topmod_adaptation_)
+    this->utils.setFieldData(Cauchy_stress_, fm);
 }
 
 //----------------------------------------------------------------------------

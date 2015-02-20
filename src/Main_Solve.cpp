@@ -249,7 +249,9 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList &debugParams =
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+
 
     const RCP<const Epetra_Vector> xfinal = responses.back();
     double mnv; xfinal->MeanValue(&mnv);
@@ -274,6 +276,11 @@ int main(int argc, char *argv[]) {
 
       //writing to MatrixMarket file
       EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
+    }
+    if (writeToMatrixMarketDistrSolnMap == true) {
+      //writing to MatrixMarket file
+      EpetraExt::MultiVectorToMatrixMarketFile("xfinal_distributed.mm", *xfinal);
+      EpetraExt::BlockMapToMatrixMarketFile("xfinal_distributed_map.mm", *app->getDiscretization()->getMap());
     }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

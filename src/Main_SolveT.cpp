@@ -283,6 +283,7 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList &debugParams =
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
 
     const RCP<const Tpetra_Vector> xfinal = responses.back();
@@ -311,6 +312,11 @@ int main(int argc, char *argv[]) {
 
       //writing to MatrixMarket file
        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
+    }
+    if (writeToMatrixMarketDistrSolnMap == true) {
+      //writing to MatrixMarket file
+      Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_distributed.mm", *xfinal);
+      Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_distributed_map.mm", *app->getDiscretization()->getMapT());
     }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);

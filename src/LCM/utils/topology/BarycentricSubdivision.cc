@@ -10,6 +10,9 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Topology.h"
 
+// needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+#include <stk_mesh/base/MeshUtils.hpp>
+
 // FIXME: need to extract Topology member functions specific to
 // Barycentric subdivision and move into their own header!
 
@@ -1278,6 +1281,7 @@ void Topology::barycentricSubdivision()
   connectivity_ = connectivity_temp;
 
   // End mesh update
+  stk::mesh::fix_node_sharing_delete_on_2015_03_06(get_bulk_data());
   get_bulk_data().modification_end();
   //MEASURING TIME
   end11 = clock();
