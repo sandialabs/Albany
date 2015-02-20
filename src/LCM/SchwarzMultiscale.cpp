@@ -682,8 +682,11 @@ void
 LCM::SchwarzMultiscale::
 evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
-    {
-  //FIXME: fill in!
+{
+  //FIXME: finish filling in!
+  
+std::cout <<"DEBUG: in LCM::SchwarzMultiscale::evalModelImpl! \n"; 
+
 
   // Get the input arguments
   const Teuchos::RCP<const Tpetra_Vector> xT =
@@ -822,8 +825,8 @@ evalModelImpl(Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
 
 
   //FIXME: create coupled W matrix from array of model W matrices   
-  //Teuchos::RCP<LCM::CoupledSchwarzJacobian> W_out_coupled = Teuchos::rcp_dynamic_cast<LCM::CoupledSchwarzJacobian>(W_out, true);
-  // W_out_coupled->initialize(W_outs_crs);
+  Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled = Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
+  W_op_out_coupled->initialize(W_op_outs_crsT);
   
   // Create fT_out from fTs_out[m]
   LO counter_local = 0;
