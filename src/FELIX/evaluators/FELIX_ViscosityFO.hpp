@@ -40,10 +40,9 @@ public:
 
   ScalarT& getValue(const std::string &n); 
 
+  typedef typename PHX::Device execution_space;  
   KOKKOS_INLINE_FUNCTION
   void operator () (const int i) const;
-
-  typedef typename PHX::Device device_type;
 
 private:
  
