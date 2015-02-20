@@ -15,7 +15,6 @@
 # Set these to whatever you like
 
 
-PATH=$PATH:/usr/local/bin/
 
 SCRIPTDIR=/home/ikalash/Trilinos_Albany/nightlyAlbanyTests/
 NIGHTLYDIR=$SCRIPTDIR/Results
@@ -48,4 +47,9 @@ DAKOUTDIR=$NIGHTLYDIR/Dakota_out
 TRILINOS_BRANCH=master
 ALBANY_BRANCH=master
 
-LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64/openmpi/lib/
+
+export PATH=/home/ikalash/ap/local/bin:/home/ikalash/ap/local/lib:/home/ikalash/ap/local/lib64:/home/ikalash/ap/local/include:$PATH
+export LD_LIBRARY_PATH=/home/ikalash/ap/local/lib:/home/ikalash/ap/local/lib64:$LD_LIBRARY_PATH
+export OMPI_CXX=g++
+export OMPI_CC=gcc
+export OMPI_FC=gfortran

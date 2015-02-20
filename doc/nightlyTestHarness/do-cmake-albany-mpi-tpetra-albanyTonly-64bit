@@ -38,4 +38,4 @@ cmake \
       -D CISM_INCLUDE_DIR:FILEPATH=$CISMDIR/libdycore \
        ../
 
-#      -D CMAKE_CXX_FLAGS:STRING="-g" \
+#      -D CMAKE_CXX_FLAGS:STRING="-std=gnu++11 -g" \
