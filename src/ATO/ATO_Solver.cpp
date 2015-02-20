@@ -360,7 +360,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
 
     // save topology to nodal data for output sake
     Teuchos::RCP<Albany::NodeFieldContainer> 
-      nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
+      nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
     const Teuchos::RCP<const Teuchos_Comm>
       commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
@@ -432,7 +432,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
       ltopo[lid] = p[lid];
 
     Teuchos::RCP<Albany::NodeFieldContainer> 
-      nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
+      nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
     const Teuchos::RCP<const Teuchos_Comm>
       commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
@@ -1057,8 +1057,6 @@ ATO::SpatialFilter::buildOperator(
 {
 
   if( topology->getCentering() == "Node" ){
-
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data = app->getStateMgr().getNodalDataBlock();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();
