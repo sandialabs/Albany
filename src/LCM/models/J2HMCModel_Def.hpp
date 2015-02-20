@@ -280,20 +280,12 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
   // macro 
   ScalarT macroAlpha;
   Intrepid::Tensor<ScalarT> elTrialMacroStress(num_dims_);
-  Intrepid::Tensor<ScalarT> updMacroStress(num_dims_);
   Intrepid::Tensor<ScalarT> macroBackStress(num_dims_);
-  Intrepid::Tensor<ScalarT> updMacroBackStress(num_dims_);
 
-  Intrepid::Tensor<ScalarT> updMicroStress(num_dims_);
-  Intrepid::Tensor<ScalarT> updMicroBackStress(num_dims_);
-  Intrepid::Tensor<ScalarT> elNewMicroStress(num_dims_);
   std::vector<ScalarT> microAlpha(numMicroScales);
   std::vector<Intrepid::Tensor<ScalarT> > elTrialMicroStress(numMicroScales);
   std::vector<Intrepid::Tensor<ScalarT> > microBackStress(numMicroScales);
 
-  Intrepid::Tensor3<ScalarT> updDoubleStress(num_dims_);
-  Intrepid::Tensor3<ScalarT> updDoubleBackStress(num_dims_);
-  Intrepid::Tensor3<ScalarT> elNewDoubleStress(num_dims_);
   std::vector<ScalarT> doubleAlpha(numMicroScales);
   std::vector<Intrepid::Tensor3<ScalarT> > elTrialDoubleStress(numMicroScales);
   std::vector<Intrepid::Tensor3<ScalarT> > doubleBackStress(numMicroScales);
@@ -306,18 +298,18 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
   }
 
   // current state (i.e., state at N) is stored in the state manager:
-  std::vector< Albany::MDArray > current_microBackStress(numMicroScales);
-  std::vector< Albany::MDArray > current_doubleBackStress(numMicroScales);
-  std::vector< Albany::MDArray > current_microAlpha(numMicroScales);
-  std::vector< Albany::MDArray > current_doubleAlpha(numMicroScales);
-  Albany::MDArray current_macroBackStress = (*workset.stateArrayPtr)[current_macroBackStressName];
   Albany::MDArray current_macroAlpha = (*workset.stateArrayPtr)[current_macroAlphaName];
+  Albany::MDArray current_macroBackStress = (*workset.stateArrayPtr)[current_macroBackStressName];
+  std::vector< Albany::MDArray > current_microAlpha(numMicroScales);
+  std::vector< Albany::MDArray > current_microBackStress(numMicroScales);
+  std::vector< Albany::MDArray > current_doubleAlpha(numMicroScales);
+  std::vector< Albany::MDArray > current_doubleBackStress(numMicroScales);
 
   for(int i=0; i<numMicroScales; i++){
-    current_microBackStress[i]  = (*workset.stateArrayPtr)[current_microBackStressName[i]];
-    current_doubleBackStress[i] = (*workset.stateArrayPtr)[current_doubleBackStressName[i]];
     current_microAlpha[i]  = (*workset.stateArrayPtr)[current_microAlphaName[i]];
+    current_microBackStress[i]  = (*workset.stateArrayPtr)[current_microBackStressName[i]];
     current_doubleAlpha[i] = (*workset.stateArrayPtr)[current_doubleAlphaName[i]];
+    current_doubleBackStress[i] = (*workset.stateArrayPtr)[current_doubleBackStressName[i]];
   }
 
   ScalarT Hval, Kval;
@@ -401,90 +393,68 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
 
           solver.solve(dRdX, X, R);
 
-          
-
           iter++;
         }
 
         solver.computeFadInfo(dRdX, X, R);
 
         // update macro scale
-        if(yieldMask[0]){
-          ScalarT dGamma = X[0];
-          Intrepid::Tensor<ScalarT> returnDir = devNorm(elTrialMacroStress - macroBackStress);
-          new_macroAlpha(cell,qp) = macroAlpha + dGamma;
-          // JR: todo: create a plasticity submodel object to encapsulate this.
-          // Hval = macroKinematicHardening->H(new_macroAlpha(cell,qp));
-          Hval = macroKinematicModulus*new_macroAlpha(cell,qp);
-          updMacroBackStress = macroBackStress + sq32*dGamma*Hval*returnDir;
-          for(int i=0; i<num_dims_; i++)
-            for(int j=0; j<num_dims_; j++)
-              new_macroBackStress(cell,qp,i,j) = updMacroBackStress(i,j);
-          updMacroStress = elTrialMacroStress - dGamma * Intrepid::dotdot(macroCelastic,returnDir);
-          for(int i=0; i<num_dims_; i++)
-            for(int j=0; j<num_dims_; j++)
-              trial_macroStress(cell,qp,i,j) = updMacroStress(i,j);
-        } else {
-          new_macroAlpha(cell,qp) = current_macroAlpha(cell,qp);
-          for(std::size_t i=0; i<num_dims_; i++)
-            for(std::size_t j=0; j<num_dims_; j++)
-              new_macroBackStress(cell,qp,i,j) = current_macroBackStress(cell,qp,i,j);
-        }
+        ScalarT dGamma(0.0);
+        if(yieldMask[0]) dGamma = X[0];
+        Intrepid::Tensor<ScalarT> returnDir = devNorm(elTrialMacroStress - macroBackStress);
+        macroAlpha += dGamma;
+        // JR: todo: create a plasticity submodel object to encapsulate this.
+        // Hval = macroKinematicHardening->H(macroAlpha);
+        Hval = macroKinematicModulus*macroAlpha;
+        macroBackStress += sq32*dGamma*Hval*returnDir;
+        elTrialMacroStress -= dGamma * Intrepid::dotdot(macroCelastic,returnDir);
+        new_macroAlpha(cell,qp) = macroAlpha;
+        for(int i=0; i<num_dims_; i++)
+          for(int j=0; j<num_dims_; j++){
+            new_macroBackStress(cell,qp,i,j) = macroBackStress(i,j);
+            trial_macroStress(cell,qp,i,j) = elTrialMacroStress(i,j);
+          }
 
         // Micro scales
         for(int ims=0; ims<numMicroScales; ims++){
           // micro
           int xIndex = 2*ims+1;
-          if(yieldMask[xIndex]){
-            xIndex = yieldMap[xIndex];
-            ScalarT dGamma = X[xIndex];
+          if(yieldMask[xIndex]){ 
+            ScalarT dGamma = X[yieldMap[xIndex]];
             Intrepid::Tensor<ScalarT> returnDir = devNorm(elTrialMicroStress[ims] - microBackStress[ims]);
-            new_microAlpha[ims](cell,qp) = microAlpha[ims] + dGamma;
+            microAlpha[ims] += dGamma;
             // JR: todo: create a plasticity submodel object to encapsulate this.
-            // Hval = microKinematicHardening->H(new_microAlpha(cell,qp));
-            Hval = microKinematicModulus[ims]*new_microAlpha[ims](cell,qp);
-            updMicroBackStress = microBackStress[ims] + sq32*dGamma*Hval*returnDir;
-            for(int i=0; i<num_dims_; i++)
-              for(int j=0; j<num_dims_; j++)
-                new_microBackStress[ims](cell,qp,i,j) = updMicroBackStress(i,j);
-            updMicroStress = elTrialMicroStress[ims] - dGamma * Intrepid::dotdot(microCelastic[ims],returnDir);
-            for(int i=0; i<num_dims_; i++)
-              for(int j=0; j<num_dims_; j++)
-                trial_microStress[ims](cell,qp,i,j) = updMicroStress(i,j);
-          } else {
-            new_microAlpha[ims](cell,qp) = current_microAlpha[ims](cell,qp);
-            for(std::size_t i=0; i<num_dims_; i++)
-              for(std::size_t j=0; j<num_dims_; j++)
-                new_microBackStress[ims](cell,qp,i,j) = current_microBackStress[ims](cell,qp,i,j);
+            // Hval = microKinematicHardening->H(microAlpha[ims]);
+            Hval = microKinematicModulus[ims]*microAlpha[ims];
+            microBackStress[ims] += sq32*dGamma*Hval*returnDir;
+            elTrialMicroStress[ims] -= dGamma * Intrepid::dotdot(microCelastic[ims],returnDir);
           }
+          new_microAlpha[ims](cell,qp) = microAlpha[ims];
+          for(int i=0; i<num_dims_; i++)
+            for(int j=0; j<num_dims_; j++){
+              new_microBackStress[ims](cell,qp,i,j) = microBackStress[ims](i,j);
+              trial_microStress[ims](cell,qp,i,j) = elTrialMicroStress[ims](i,j);
+            }
 
           // double
           xIndex = 2*ims+2;
           if(yieldMask[xIndex]){
-            xIndex = yieldMap[xIndex];
-            ScalarT dGamma = X[xIndex];
+            ScalarT dGamma = X[yieldMap[xIndex]];
             Intrepid::Tensor3<ScalarT> returnDir = devNorm(elTrialDoubleStress[ims] - doubleBackStress[ims]);
-            new_doubleAlpha[ims](cell,qp) = doubleAlpha[ims] + dGamma;
+            doubleAlpha[ims] += dGamma;
             // JR: todo: create a plasticity submodel object to encapsulate this.
-            // Hval = doubleKinematicHardening->H(new_doubleAlpha(cell,qp));
-            Hval = doubleKinematicModulus[ims]*new_doubleAlpha[ims](cell,qp);
-            updDoubleBackStress = doubleBackStress[ims] + sq32*dGamma*Hval*returnDir;
-            for(int i=0; i<num_dims_; i++)
-              for(int j=0; j<num_dims_; j++)
-                for(int k=0; k<num_dims_; k++)
-                  new_doubleBackStress[ims](cell,qp,i,j,k) = updDoubleBackStress(i,j,k);
-            updDoubleStress = elTrialDoubleStress[ims] - dGamma * dotdotdot(doubleCelastic[ims],returnDir);
-            for(int i=0; i<num_dims_; i++)
-              for(int j=0; j<num_dims_; j++)
-                for(int k=0; k<num_dims_; k++)
-                trial_doubleStress[ims](cell,qp,i,j,k) = updDoubleStress(i,j,k);
-          } else {
-            new_doubleAlpha[ims](cell,qp) = current_doubleAlpha[ims](cell,qp);
-            for(std::size_t i=0; i<num_dims_; i++)
-              for(std::size_t j=0; j<num_dims_; j++)
-                for(std::size_t k=0; k<num_dims_; k++)
-                  new_doubleBackStress[ims](cell,qp,i,j,k) = current_doubleBackStress[ims](cell,qp,i,j,k);
+            // Hval = doubleKinematicHardening->H(doubleAlpha[ims]);
+            Hval = doubleKinematicModulus[ims]*doubleAlpha[ims];
+            doubleBackStress[ims] += sq32*dGamma*Hval*returnDir;
+            elTrialDoubleStress[ims] -= dGamma * dotdotdot(doubleCelastic[ims],returnDir);
           }
+          new_doubleAlpha[ims](cell,qp) = doubleAlpha[ims];
+          for(int i=0; i<num_dims_; i++)
+            for(int j=0; j<num_dims_; j++)
+              for(int k=0; k<num_dims_; k++){
+                new_doubleBackStress[ims](cell,qp,i,j,k) = doubleBackStress[ims](i,j,k);
+                trial_doubleStress[ims](cell,qp,i,j,k) = elTrialDoubleStress[ims](i,j,k);
+              }
         }
       } else {
         // macro scale
