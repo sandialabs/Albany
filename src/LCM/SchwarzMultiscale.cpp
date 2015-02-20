@@ -8,6 +8,7 @@
 #include "Albany_ModelFactory.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
+#include "Schwarz_CoupledJacobian.hpp" 
 
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
@@ -434,9 +435,8 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::create_W_op() const
 {
   std::cout << "DEBUG:  LCM::SchwarzMultizcale create_W_op() called! \n";
-   //FIXME: implement LCM::CoupledSchwarzJacobian class!  Will inherit from Tpetra_Operator
-  //Teuchos::RCP<LCM::CoupledSchwarzJacobian> W_out_coupled = Teuchos::rcp(new LCM::CoupledSchwarzJacobian(...)); 
-   //return Thyra::createLinearOp(W_out_coupled);
+  const Teuchos::RCP<Tpetra_Operator> W_out_coupled = Teuchos::rcp(new LCM::Schwarz_CoupledJacobian(disc_maps_, coupled_disc_map_, commT_)); 
+  return Thyra::createLinearOp(W_out_coupled);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
