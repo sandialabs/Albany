@@ -7,7 +7,7 @@
 #include "ATO_OptimizationProblem.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Epetra_Export.h"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 #include "ATO_TopoTools.hpp"
 
 /******************************************************************************/
@@ -103,7 +103,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
   } else 
   if( topology->getCentering() == "Node" ){
     Teuchos::RCP<const Epetra_BlockMap>
-      overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMapE();
+      overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
     for(int ws=0; ws<numWorksets; ws++){
   
       int physIndex = wsPhysIndex[ws];
@@ -326,9 +326,9 @@ ATO::OptimizationProblem::InitTopOpt()
   }
   if( topology->getCentering() == "Node" ){
     Teuchos::RCP<const Epetra_BlockMap>
-      overlapNodeMap = stateMgr->getNodalDataBlock()->getOverlapMapE();
+      overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
     Teuchos::RCP<const Epetra_BlockMap>
-      localNodeMap = stateMgr->getNodalDataBlock()->getLocalMapE();
+      localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
 
     overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
     localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));

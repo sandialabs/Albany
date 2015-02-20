@@ -16,6 +16,10 @@
 
 #include "Adapt_NodalFieldUtils.hpp"
 
+#ifdef ALBANY_ATO
+#include "Epetra_BlockMap.h"
+#endif
+
 namespace Adapt {
 
 /*!
@@ -31,28 +35,33 @@ class NodalDataVector {
                     NodeFieldSizeMap& nodeVectorMap, LO& vectorsize);
 
     //! Destructor
-    virtual ~NodalDataVector(){}
+    virtual ~NodalDataVector() {}
 
     void resizeLocalMap(const Teuchos::Array<GO>& local_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
     void resizeOverlapMap(const Teuchos::Array<GO>& overlap_nodeGIDs, const Teuchos::RCP<const Teuchos::Comm<int> >& comm_);
 
-    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i){
-             return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
-             }
-    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i){
-             return overlap_node_vec->getVectorNonConst(i)->get1dViewNonConst();
-             }
+    Teuchos::ArrayRCP<ST> getLocalNodeView(std::size_t i) {
+      return local_node_vec->getVectorNonConst(i)->get1dViewNonConst();
+    }
+    Teuchos::ArrayRCP<ST> getOverlapNodeView(std::size_t i) {
+      return overlap_node_vec->getVectorNonConst(i)->get1dViewNonConst();
+    }
 
     Teuchos::ArrayRCP<const ST> getOverlapNodeConstView(std::size_t i) const {
-             return overlap_node_vec->getVector(i)->get1dView();
-             }
+      return overlap_node_vec->getVector(i)->get1dView();
+    }
     Teuchos::ArrayRCP<const ST> getLocalNodeConstView(std::size_t i) const {
-             return local_node_vec->getVector(i)->get1dView();
-             }
+      return local_node_vec->getVector(i)->get1dView();
+    }
 
     Teuchos::RCP<const Tpetra_Map> getOverlapMap() const { return overlap_node_map; }
     Teuchos::RCP<const Tpetra_Map> getLocalMap() const { return local_node_map; }
+
+#ifdef ALBANY_ATO
+    Teuchos::RCP<const Epetra_BlockMap> getOverlapBlockMapE() const { return overlap_node_mapE; }
+    Teuchos::RCP<const Epetra_BlockMap> getLocalBlockMapE() const { return local_node_mapE; }
+#endif
 
     void initializeVectors(ST value);
 
@@ -66,7 +75,7 @@ class NodalDataVector {
 
     void getNDofsAndOffset(const std::string &stateName, int& offset, int& ndofs) const;
 
-    LO getVecSize(){ return vectorsize; }
+    LO getVecSize() { return vectorsize; }
 
   private:
 
@@ -77,6 +86,11 @@ class NodalDataVector {
 
     Teuchos::RCP<Tpetra_MultiVector> overlap_node_vec;
     Teuchos::RCP<Tpetra_MultiVector> local_node_vec;
+
+#ifdef ALBANY_ATO
+    Teuchos::RCP<const Epetra_BlockMap> overlap_node_mapE;
+    Teuchos::RCP<const Epetra_BlockMap> local_node_mapE;
+#endif
 
     Teuchos::RCP<Tpetra_Import> importer;
 
@@ -90,7 +104,6 @@ class NodalDataVector {
     bool mapsHaveChanged;
 
 };
-
 
 }
 

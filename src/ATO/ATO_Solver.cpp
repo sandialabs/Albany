@@ -20,7 +20,7 @@ Please remove when issue is resolved
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
 
@@ -173,7 +173,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     // construct epetra maps for node ids. 
     Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(_subProblems[0].app->getComm());
     Teuchos::RCP<const Epetra_BlockMap>
-      local_node_blockmap   = stateMgr.getNodalDataBlock()->getLocalMapE();
+      local_node_blockmap   = stateMgr.getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
     int num_global_elements = local_node_blockmap->NumGlobalElements();
     int num_my_elements     = local_node_blockmap->NumMyElements();
     int *global_node_ids    = new int[num_my_elements]; 
@@ -182,7 +182,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     delete [] global_node_ids;
 
     Teuchos::RCP<const Epetra_BlockMap>
-      overlap_node_blockmap = stateMgr.getNodalDataBlock()->getOverlapMapE();
+      overlap_node_blockmap = stateMgr.getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
     num_global_elements = overlap_node_blockmap->NumGlobalElements();
     num_my_elements     = overlap_node_blockmap->NumMyElements();
     global_node_ids     = new int[num_my_elements]; 
