@@ -702,10 +702,10 @@ ELSE()
 ENDIF()
 
 #amb Default to on until the merge.
-OPTION(ENABLE_KOKKOS_UNDER_DEVELOPMENT "Flag to turn on Kokkos experimental code in Albany" ON)
+OPTION(ENABLE_KOKKOS_UNDER_DEVELOPMENT "Flag to turn on Kokkos experimental code in Albany" OFF)
 IF (ENABLE_KOKKOS_UNDER_DEVELOPMENT)
   ADD_DEFINITIONS(-DALBANY_KOKKOS_UNDER_DEVELOPMENT)
-  MESSAGE("~~~~> Kokkos development     is Enabled, compiling with -DALBANY_KOKKOS_UNDER_DEVELOPMENT <~~~~")
+  MESSAGE("-- Kokkos development        is Enabled, compiling with -DALBANY_KOKKOS_UNDER_DEVELOPMENT")
   SET(ALBANY_KOKKOS_UNDER_DEVELOPMENT TRUE)
 ELSE()
   MESSAGE("-- Kokkos development        is NOT Enabled.")

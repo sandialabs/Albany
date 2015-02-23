@@ -214,6 +214,14 @@ SET(CONFIGURE_OPTIONS
   "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
   "-DTrilinos_ASSERT_MISSING_PACKAGES:BOOL=OFF"
+  "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
+  "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
+  "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL""
+  "-DPhalanx_INDEX_SIZE_TYPE:STRING="INT""
+  "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+  "-DKokkos_ENABLE_Serial:BOOL=ON"
+  "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
+  "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   )
 
 message("Configuring Trilinos repository!")
