@@ -29,8 +29,6 @@ rm -f CMakeCache.txt;
 #   Block 6 provides the types and the explicit template instantiation we need.
 #   Block 7 handles Kokkos flags to set up the Serial node, which matches
 # pre-Kokkos behavior.
-#   Block 8 handles temporary behavior. Phalanx has deprecated methods I need to
-# convert Albany to stop using. In the meantime, suppress deprecation warnings.
 cmake \
  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
@@ -103,12 +101,11 @@ cmake \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
- -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+ -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+ -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
  -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
  -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-\
- -D CMAKE_CXX_FLAGS:STRING="-Wno-deprecated-declarations" \
 \
  ../
 
