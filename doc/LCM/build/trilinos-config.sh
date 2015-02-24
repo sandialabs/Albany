@@ -95,6 +95,12 @@ cmake \
  -D Trilinos_ENABLE_Tpetra:BOOL=ON \
  -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
  -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+ -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+ -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+ -D Kokkos_ENABLE_Serial:BOOL=ON \
+ -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+ -D Kokkos_ENABLE_Pthread:BOOL=OFF \ 
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
