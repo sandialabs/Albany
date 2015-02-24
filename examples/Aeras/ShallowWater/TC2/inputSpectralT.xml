@@ -4,14 +4,12 @@
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="False"/>
-      <Parameter name="SourceType" type="string" value="None"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
     <ParameterList name="Initial Condition"> 
        <Parameter name="Function" type="string" value="Aeras ZonalFlow"/>
-       <Parameter name="Function Data" type="Array(double)"
-       value="{2.94e04}"/> <!-- put these numbers in as dimensional. -->
+       <Parameter name="Function Data" type="Array(double)" value="{2.94e04}"/> <!-- put these numbers in as dimensional. -->
     </ParameterList>
     
     <ParameterList name="Response Functions">
@@ -31,29 +29,19 @@
       <Parameter name="Parameter 1" type="string" value="Gravity"/>
     </ParameterList>
   </ParameterList>
-  <ParameterList name="Debug Output">
-     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-     <Parameter name="Write Distributed Solution and Map to MatrixMarket" type="bool" value="true"/>
-     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
-     <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
-     <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
-  </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
-    <Parameter name="Exodus Input File Name" type="string" value="shell4_sphere_24faces.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_16_quad4.g"/>
     <!--Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/-->
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Points Per Edge" type="int" value="2"/>
     <!--Parameter name="Exodus Write Interval" type="int" value="5"/-->
-    <!--Parameter name="Workset Size" type="int" value="500"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="6"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{798.369327462, 2998.16908254, 118958.023247, 2.41983072594, 178368.205521,  1.35664913983e-05}"/>   
-  <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
+    <Parameter  name="Number of Comparisons" type="int" value="4"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{798.369342526, 2998.17497676, 118958.041213, 2.48836529082}"/> 
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{0.423961575,0.0035656993}"/>

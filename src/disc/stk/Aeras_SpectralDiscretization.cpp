@@ -1636,42 +1636,36 @@ void Aeras::SpectralDiscretization::computeGraphs()
 
   stk::mesh::Selector select_owned =
     stk::mesh::Selector(metaData.locally_owned_part());
+  
+  const stk::mesh::BucketVector & buckets =
+    bulkData.get_buckets(stk::topology::ELEMENT_RANK, select_owned);
 
-  const stk::mesh::BucketVector & elementBuckets =
-    bulkData.buckets(stk::topology::ELEMENT_RANK);
-
-  stk::mesh::get_selected_entities(select_owned,
-				   elementBuckets,
-				   cells);
-
+  const int numBuckets = buckets.size();
+  
   if (commT->getRank()==0)
-    *out << "STKDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
+    *out << "SpectralDisc: " << cells.size() << " elements on Proc 0 " << std::endl;
 
   GO row, col;
   Teuchos::ArrayView<GO> colAV;
-
-  //Use wsElNodeEqID to populate the graphs
-
-  //loop over number of element buckets
-  for (size_t ibuck=0; ibuck < elementBuckets.size(); ++ibuck)
+  
+  //Populate the graphs
+  for (int b = 0; b < numBuckets; ++b)
   {
-    stk::mesh::Bucket & elementBucket = *elementBuckets[ibuck];
-    //loop over elements in bucket
-    for (size_t ielem = 0; ielem < elementBucket.size(); ++ielem)
+    stk::mesh::Bucket & buck = *buckets[b];
+    // i is the element index within bucket b
+    for (std::size_t i = 0; i < buck.size(); ++i)
     {
-      //loop over local nodes
-      for (size_t j =0; j < nodes_per_element; ++ j)
+      Teuchos::ArrayRCP< GO > node_rels = wsElNodeID[b][i];
+      for (int j = 0; j < nodes_per_element; ++j)
       {
-        //loop over equations
-        for (size_t k=0; k < neq; k++)
-        {
-          row = wsElNodeEqID[ibuck][ielem][j][k];
-          //loop over local nodes
-          for (size_t l = 0; l < nodes_per_element; l++)
-          {
-            for (size_t m = 0; m < neq; m++)
-            {
-              col = wsElNodeEqID[ibuck][ielem][l][m];
+        const GO rowNode = node_rels[j];
+        // loop over eqs
+        for (std::size_t k=0; k < neq; k++) {
+          row = getGlobalDOF(rowNode, k);
+          for (std::size_t l=0; l < nodes_per_element; l++) {
+            const GO colNode = node_rels[l];
+            for (std::size_t m=0; m < neq; m++) {
+              col = getGlobalDOF(colNode, m);
               colAV = Teuchos::arrayView(&col, 1);
               overlap_graphT->insertGlobalIndices(row, colAV);
             }
