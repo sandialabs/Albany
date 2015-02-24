@@ -88,6 +88,8 @@ evaluateFields(typename Traits::EvalData workset)
   if(workset.eigenDataPtr->eigenvectorRe != Teuchos::null) {
     if(workset.eigenDataPtr->eigenvectorIm != Teuchos::null) {
   
+      int num_dof = dl->node_vector->dimension(2);
+
       //Gather real and imaginary eigenvalues from workset Eigendata info structure
       const Epetra_MultiVector& e_r = *(workset.eigenDataPtr->eigenvectorRe);
       const Epetra_MultiVector& e_i = *(workset.eigenDataPtr->eigenvectorIm);
@@ -105,16 +107,13 @@ evaluateFields(typename Traits::EvalData workset)
 	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     
 	for(std::size_t node =0; node < this->numNodes; ++node) {
-	  int offset_eq1 = nodeID[node][0];
-	  int offset_eq2 = nodeID[node][1];
-
-	  for (std::size_t k = 0; k < numVecsToGather; ++k) {
-	    (this->eigenvector_Re[k])(cell,node,0) = (*(e_r(k)))[offset_eq1];
-	    (this->eigenvector_Im[k])(cell,node,0) = (*(e_i(k)))[offset_eq1];
-
-	    (this->eigenvector_Re[k])(cell,node,1) = (*(e_r(k)))[offset_eq2];
-	    (this->eigenvector_Im[k])(cell,node,1) = (*(e_i(k)))[offset_eq2];
-	  }
+          for(std::size_t dof = 0; dof < num_dof; ++dof) {
+	    int offset_eq = nodeID[node][dof];
+	    for (std::size_t k = 0; k < numVecsToGather; ++k) {
+	      (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
+	      (this->eigenvector_Im[k])(cell,node,dof) = (*(e_i(k)))[offset_eq];
+	    }
+          }
 	}
       }
     }
@@ -136,16 +135,14 @@ evaluateFields(typename Traits::EvalData workset)
 	const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
     
 	for(std::size_t node =0; node < this->numNodes; ++node) {
-	  int offset_eq1 = nodeID[node][0];
-	  int offset_eq2 = nodeID[node][1];
+          for(std::size_t dof = 0; dof < num_dof; ++dof) {
+	    int offset_eq = nodeID[node][dof];
 
-	  for (std::size_t k = 0; k < numVecsToGather; ++k) {
-	    (this->eigenvector_Re[k])(cell,node,0) = (*(e_r(k)))[offset_eq1];
-	    (this->eigenvector_Im[k])(cell,node,0) = 0.0;
-
-	    (this->eigenvector_Re[k])(cell,node,1) = (*(e_r(k)))[offset_eq2];
-	    (this->eigenvector_Im[k])(cell,node,1) = 0.0;
-	  }
+  	    for (std::size_t k = 0; k < numVecsToGather; ++k) {
+	      (this->eigenvector_Re[k])(cell,node,dof) = (*(e_r(k)))[offset_eq];
+	      (this->eigenvector_Im[k])(cell,node,dof) = 0.0;
+	    }
+          }
 	}
       }
     }
@@ -223,19 +220,14 @@ evaluateFields(typename Traits::EvalData workset)
         for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
   	  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
 	  for(std::size_t node =0; node < this->numNodes; ++node) {
-	    int offset_eq1 = nodeID[node][0];
-	    int offset_eq2 = nodeID[node][1];
-
-	    for (std::size_t k = 0; k < numVecsToGather; ++k) {
-              valptr = &(this->eigenvector_Re[k](cell,node,0));
-              *valptr = FadType(2, (*(e_r(k)))[offset_eq1]);
-              valptr = &(this->eigenvector_Im[k](cell,node,0));
-              *valptr = FadType(2, (*(e_r(k)))[offset_eq1]);
-
-              valptr = &(this->eigenvector_Re[k](cell,node,1));
-              *valptr = FadType(2, (*(e_r(k)))[offset_eq2]);
-              valptr = &(this->eigenvector_Im[k](cell,node,1));
-              *valptr = FadType(2, (*(e_r(k)))[offset_eq2]);
+            for(std::size_t dof = 0; dof < num_dof; ++dof) {
+	      int offset_eq = nodeID[node][dof];
+	      for (std::size_t k = 0; k < numVecsToGather; ++k) {
+                valptr = &(this->eigenvector_Re[k](cell,node,dof));
+                *valptr = FadType(2, (*(e_r(k)))[offset_eq]);
+                valptr = &(this->eigenvector_Im[k](cell,node,dof));
+                *valptr = FadType(2, (*(e_r(k)))[offset_eq]);
+              }
             }
           }
         }

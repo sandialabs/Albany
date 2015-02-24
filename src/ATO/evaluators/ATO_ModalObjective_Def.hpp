@@ -117,7 +117,7 @@ evaluateFields(typename Traits::EvalData workset)
           }
         }
         dEdp(cell) = -(dstiffness_term - dmass_term*eigval(0));
-        std::cout << "dEdp(" << cell << ") = " << dEdp(cell) << std::endl;
+//tevhack        std::cout << "dEdp(" << cell << ") = " << dEdp(cell) << std::endl;
       }
     } else {
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
