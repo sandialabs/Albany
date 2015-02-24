@@ -5,6 +5,8 @@
 //*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "PHAL_Utilities.hpp"
+#include <typeinfo>
 
 namespace PHAL {
 
@@ -62,6 +64,10 @@ ResponseFieldIntegralT(Teuchos::ParameterList& p,
     }
   }
   else if (fieldType == "Tensor") {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "local_ and global_response must have rank 2. However, this code path "
+      "makes them rank 3. Needs to be fixed.");
     field_layout = dl->qp_tensor;
     local_response_layout = dl->cell_tensor;
     global_response_layout = dl->workset_tensor;
@@ -128,7 +134,7 @@ ResponseFieldIntegralT(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
-  this->setName(field_name+" Response Field IntegralT"+PHX::TypeString<EvalT>::value);
+  this->setName(field_name+" Response Field IntegralT"+PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -162,10 +168,7 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
-
+  PHAL::set(this->global_response, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::preEvaluate(workset);
 }
@@ -174,11 +177,9 @@ preEvaluate(typename Traits::PreEvalData workset)
 template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{   
+{
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   if( ebNames.size() == 0 || 
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
@@ -198,7 +199,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	if (field_rank == 2) {
 	  s = field(cell,qp) * weights(cell,qp) * scaling;
-	  this->local_response(cell) += s;
+	  this->local_response(cell,0) += s;
 	  this->global_response(0) += s;
 	}
 	else if (field_rank == 3) {
@@ -231,13 +232,18 @@ void PHAL::ResponseFieldIntegralT<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   // Add contributions across processors
+#if 0 
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
   Teuchos::reduceAll(
     *workset.comm, *serializer, Teuchos::REDUCE_SUM,
     this->global_response.size(), &this->global_response[0], 
     &this->global_response[0]);
-
+#else
+  //amb Use a workaround for now.
+  PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
+                           this->global_response);
+#endif
   // Do global scattering
   PHAL::SeparableScatterScalarResponseT<EvalT,Traits>::postEvaluate(workset);
 }

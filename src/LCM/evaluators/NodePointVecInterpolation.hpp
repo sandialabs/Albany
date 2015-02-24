@@ -7,7 +7,7 @@
 #if !defined(LCM_NodePointVecInterpolation_hpp)
 #define LCM_NodePointVecInterpolation_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -55,13 +55,13 @@ private:
   PHX::MDField<ScalarT, Cell, Point, VecDim>
   point_value_;
 
-  std::size_t
+  int
   number_nodes_;
 
-  std::size_t
+  int
   number_points_;
 
-  std::size_t
+  int
   dimension_;
 };
 
@@ -94,24 +94,24 @@ private:
   nodal_value_;
 
   //! Basis Functions
-  PHX::MDField<RealType, Cell, Node, Point>
+  PHX::MDField<RealType, Cell, Node>
   basis_fn_;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT, Cell, Point, VecDim>
+  PHX::MDField<ScalarT, Cell, Point>
   point_value_;
 
-  std::size_t
+  int
   number_nodes_;
 
-  std::size_t
+  int
   number_points_;
 
-  std::size_t
+  int
   dimension_;
 
-  std::size_t
+  int
   offset_;
 };
 

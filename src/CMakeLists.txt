@@ -4,6 +4,13 @@
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
 
+
+INCLUDE(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_INCLUDES ${Trilinos_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_LIBRARIES ${Trilinos_LIBRARY_DIRS})
+set( CMAKE_REQUIRED_FLAGS ${Trilinos_CXX_FLAGS} )
+ 
+
 SET(SOURCES
   Albany_SolverFactory.cpp
   Albany_Utils.cpp
@@ -18,6 +25,7 @@ SET(SOURCES
   Albany_StatelessObserverImpl.cpp
   Albany_NullSpaceUtils.cpp
   Albany_Memory.cpp
+  PHAL_Utilities.cpp
   )
 
 IF (ALBANY_EPETRA)
@@ -50,6 +58,8 @@ SET(HEADERS
   PHAL_AlbanyTraits.hpp
   PHAL_Workset.hpp
   PHAL_TypeKeyMap.hpp
+  PHAL_Utilities.hpp
+  PHAL_Utilities_Def.hpp
   Albany_Application.hpp
   Albany_PiroObserverT.hpp
   Albany_StateManager.hpp

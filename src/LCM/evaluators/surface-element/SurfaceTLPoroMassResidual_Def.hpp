@@ -51,7 +51,7 @@ namespace LCM {
 
     this->addEvaluatedField(poroMassResidual);
 
-    this->setName("Surface TL Poro Mass Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface TL Poro Mass Residual"+PHX::typeAsString<EvalT>());
 
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;
@@ -164,28 +164,28 @@ namespace LCM {
       // Put back the permeability tensor to the reference configuration
       RST::inverse(F_inv, defGrad);
       RST::transpose(F_invT, F_inv);
-      FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-      FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
+       FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+       FST::scalarMultiplyDataData<ScalarT>(KJF_invT, kcPermeability, JF_invT);
       FST::tensorMultiplyDataData<ScalarT>(Kref, F_inv, KJF_invT);
       FST::tensorMultiplyDataData<ScalarT> (flux, Kref, scalarGrad); // flux_i = k I_ij p_j
     } else {
-      FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
+       FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, scalarGrad); // flux_i = kc p_i
     }
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
         int topNode = node + numPlaneNodes;
         poroMassResidual(cell, topNode)  = 0.0;
         poroMassResidual(cell, node)  = 0.0;
       }
     }
-
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+ 
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int node(0); node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
 
-        for (std::size_t pt=0; pt < numQPs; ++pt) {
+        for (int pt=0; pt < numQPs; ++pt) {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
@@ -207,13 +207,13 @@ namespace LCM {
     } // end cell loop
 
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int node(0); node < numPlaneNodes; ++node) {
 
         int topNode = node + numPlaneNodes;
 
-        for (std::size_t pt=0; pt < numQPs; ++pt) {
-          for (std::size_t dim=0; dim <numDims; ++dim){
+        for (int pt=0; pt < numQPs; ++pt) {
+          for (int dim=0; dim <numDims; ++dim){
 
             poroMassResidual(cell,node) -=  flux(cell, pt, dim)*dt*
               surface_Grad_BF(cell, node, pt, dim)*
@@ -226,6 +226,7 @@ namespace LCM {
         }
       }
     }
+
   }
   //**********************************************************************  
 }

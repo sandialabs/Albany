@@ -284,7 +284,7 @@ PoissonSource(Teuchos::ParameterList& p,
   this->addEvaluatedField(valenceBand);
   this->addEvaluatedField(approxQuanEDen);
   
-  this->setName("Poisson Source"+PHX::TypeString<EvalT>::value);
+  this->setName("Poisson Source" );
 }
 
 // **********************************************************************
@@ -486,19 +486,18 @@ template<typename EvalT, typename Traits>
 void QCAD::PoissonSource<EvalT, Traits>::
 evaluateFields_default(typename Traits::EvalData workset)
 {
-  MeshScalarT* coord;
   ScalarT charge;
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp=0; qp < numQPs; ++qp) 
     {
-      coord = &coordVec(cell,qp,0);
+      MeshScalarT coord1 = coordVec(cell,qp,1);
       const ScalarT& phi = potential(cell,qp);
 
       switch (numDims) {
       case 2:
-        if (coord[1]<0.8) charge = (coord[1]*coord[1]);
+        if (coord1<0.8) charge = (coord1*coord1);
         else charge = 3.0;
         charge *= (1.0 + exp(-phi));
         chargeDensity(cell, qp) = charge;
@@ -565,17 +564,15 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 			  << " for reference material !" << std::endl);
     }
   }  
-
-  MeshScalarT* coord;
   
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) 
   {
     for (std::size_t qp = 0; qp < numQPs; ++qp) 
     {
-      coord = &coordVec(cell,qp,0);
+      MeshScalarT coord0 = coordVec(cell,qp,0);
       
      // Silicon region
-     if ( (coord[0] > oxideWidth) && (coord[0] <= (oxideWidth + siliconWidth)) )
+     if ( (coord0 > oxideWidth) && (coord0 <= (oxideWidth + siliconWidth)) )
      {
       const std::string matName = "Silicon";
         
@@ -759,11 +756,11 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
 				     : -Nc*(this->*carrStat)( -(phi+eArgOffset) ));
       }
       
-     } // end of if ( (coord[0] > oxideWidth) ...)
+     } // end of if ( (coord0 > oxideWidth) ...)
 
 
      // Oxide region
-     else if ((coord[0] >= 0) && (coord[0] <= oxideWidth))
+     else if ((coord0 >= 0) && (coord0 <= oxideWidth))
      {
       const std::string matName = "SiliconDioxide" ;  
       double Eg = materialDB->getMaterialParam<double>(matName,"Band Gap",0.0);
@@ -855,11 +852,11 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
         artCBDensity(cell, qp) = 0.0;
       }
      
-     } // end of else if ((coord[0] >= 0) ...)
+     } // end of else if ((coord0 >= 0) ...)
      
      else 
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-	       std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
+	       std::endl << "Error!  x-coord:" << coord0 << "is outside the oxideWidth" << 
 	       " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
 
     }  // end of loop over QPs
@@ -1338,10 +1335,12 @@ source_testcoulomb(const typename Traits::EvalData workset, std::size_t cell, st
   // obtain the scaled potential
   const ScalarT& unscaled_phi = potential(cell,qp); //[myV]
   ScalarT phi = unscaled_phi / setup_info.V0; 
-  MeshScalarT* coord = &coordVec(cell,qp,0);
+  MeshScalarT coord0 = coordVec(cell,qp,0);
+  MeshScalarT coord1 = coordVec(cell,qp,1);
+  MeshScalarT coord2 = coordVec(cell,qp,2);
 
   // the scaled full RHS   Source term is x^2 + y^2 + z^2 (for debugging purposes)
-  ScalarT charge = setup_info.coulombPrefactor * ( exp(-(coord[0]*coord[0] + coord[1]*coord[1] + coord[2]*coord[2])));
+  ScalarT charge = setup_info.coulombPrefactor * ( exp(-(coord0*coord0 + coord1*coord1 + coord2*coord2)));
 
   poissonSource(cell, qp) = scaleFactor * 1.0/setup_info.Lambda2 * charge; //sign??
 

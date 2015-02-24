@@ -58,17 +58,17 @@ computeState(typename Traits::EvalData workset,
 
   ScalarT d = 2.0 * (c1_ + 2 * c2_);
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      F.fill(&defGrad(cell, pt, 0, 0));
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
+      F.fill(defGrad,cell, pt,0,0);
       C = transpose(F) * F;
       S = 2.0 * (c1_ + c2_ * Intrepid::I1(C)) * I - 2.0 * c2_ * C
           + (2.0 * c_ * J(cell, pt) * (J(cell, pt) - 1.0) - d)
               * Intrepid::inverse(C);
       sigma = (1. / J(cell, pt)) * F * S * Intrepid::transpose(F);
 
-      for (std::size_t i(0); i < num_dims_; ++i)
-        for (std::size_t j(0); j < num_dims_; ++j)
+      for (int i(0); i < num_dims_; ++i)
+        for (int j(0); j < num_dims_; ++j)
           stress(cell, pt, i, j) = sigma(i, j);
     }
   }

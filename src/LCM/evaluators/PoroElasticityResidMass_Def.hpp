@@ -140,7 +140,7 @@ namespace LCM {
       }
     }
 
-    this->setName("PoroElasticityResidMass"+PHX::TypeString<EvalT>::value);
+    this->setName("PoroElasticityResidMass"+PHX::typeAsString<EvalT>());
 
   }
 
@@ -190,15 +190,15 @@ evaluateFields(typename Traits::EvalData workset)
   case 3:
 
 	  // Pore-fluid diffusion coupling.
-	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+	  for (int cell=0; cell < workset.numCells; ++cell) {
 
-		  for (std::size_t node=0; node < numNodes; ++node) {
+		  for (int node=0; node < numNodes; ++node) {
 			  TResidual(cell,node)=0.0;
-			  for (std::size_t qp=0; qp < numQPs; ++qp) {
+			  for (int qp=0; qp < numQPs; ++qp) {
 
 				  // Transient partial saturated flow
 				  ScalarT trstrain = 0.0;
-				  for (std::size_t i(0); i < numDims; ++i){
+				  for (int i(0); i < numDims; ++i){
 					  trstrain += strainold(cell,qp,i,i);
 				  }
 				  // Volumetric Constraint Term
@@ -219,15 +219,15 @@ evaluateFields(typename Traits::EvalData workset)
 	  break;
   case 2:
 	  // Pore-fluid diffusion coupling.
-	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+	  for (int cell=0; cell < workset.numCells; ++cell) {
 
-		  for (std::size_t node=0; node < numNodes; ++node) {
+		  for (int node=0; node < numNodes; ++node) {
 			  TResidual(cell,node)=0.0;
-			  for (std::size_t qp=0; qp < numQPs; ++qp) {
+			  for (int qp=0; qp < numQPs; ++qp) {
 
 				  // Transient partial saturated flow
 				  ScalarT trstrain = 0.0;
-				  for (std::size_t i(0); i < numDims; ++i){
+				  for (int i(0); i < numDims; ++i){
 					  trstrain += strainold(cell,qp,i,i);
 				  }
 				  // Volumetric Constraint Term
@@ -246,14 +246,14 @@ evaluateFields(typename Traits::EvalData workset)
 	  break;
   case 1:
 	  // Pore-fluid diffusion coupling.
-	  	  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  		  for (std::size_t node=0; node < numNodes; ++node) {
+	  	  for (int cell=0; cell < workset.numCells; ++cell) {
+	  		  for (int node=0; node < numNodes; ++node) {
 	  			  TResidual(cell,node)=0.0;
-	  			  for (std::size_t qp=0; qp < numQPs; ++qp) {
+	  			  for (int qp=0; qp < numQPs; ++qp) {
 
 	  				  // Transient partial saturated flow
 	  				  ScalarT trstrain = 0.0;
-	  				  for (std::size_t i(0); i < numDims; ++i){
+	  				  for (int i(0); i < numDims; ++i){
 	  					  trstrain += strainold(cell,qp,i,i);
 	  				  }
 	  				  // Volumetric Constraint Term
@@ -277,17 +277,17 @@ evaluateFields(typename Traits::EvalData workset)
 
    ScalarT dt = deltaTime(0);
 
-   FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
+    FST::scalarMultiplyDataData<ScalarT> (flux, kcPermeability, TGrad); // flux_i = k I_ij p_j
 
-   for (std::size_t cell=0; cell < workset.numCells; ++cell){
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim <numDims; ++dim){
+   for (int cell=0; cell < workset.numCells; ++cell){
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim <numDims; ++dim){
     		  fluxdt(cell, qp, dim) = -flux(cell,qp,dim)*dt; // should replace the number with dt
     	  }
       }
   }
 
-  FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
+   FST::integrate<ScalarT>(TResidual, fluxdt, wGradBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   //---------------------------------------------------------------------------//
   // Stabilization Term (only 2D and 3D problem need stabilizer)
@@ -296,12 +296,12 @@ evaluateFields(typename Traits::EvalData workset)
 
   ScalarT Mp(0);  // 1/M' = 1/M + 1/(4/3G + K)
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell){
+  for (int cell=0; cell < workset.numCells; ++cell){
 
    porePbar = 0.0;
 
    vol = 0.0;
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
+   for (int qp=0; qp < numQPs; ++qp) {
 	porePbar += weights(cell,qp)*(porePressure(cell,qp)
 			                     -porePressureold(cell, qp)
 			                      );
@@ -310,17 +310,17 @@ evaluateFields(typename Traits::EvalData workset)
    }
    porePbar  /= vol;
 
-   for (std::size_t qp=0; qp < numQPs; ++qp) {
+   for (int qp=0; qp < numQPs; ++qp) {
 	   pterm(cell,qp) = porePbar;
    }
 
-   for (std::size_t node=0; node < numNodes; ++node) {
+   for (int node=0; node < numNodes; ++node) {
 	     trialPbar = 0.0;
- 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 		 for (int qp=0; qp < numQPs; ++qp) {
  			  trialPbar += wBF(cell,node,qp);
  		 }
  		 trialPbar /= vol;
- 		 for (std::size_t qp=0; qp < numQPs; ++qp) {
+ 		 for (int qp=0; qp < numQPs; ++qp) {
  		 		   tpterm(cell,node,qp) = trialPbar;
 		 }
 
@@ -328,9 +328,9 @@ evaluateFields(typename Traits::EvalData workset)
 
  }
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-	  for (std::size_t node=0; node < numNodes; ++node) {
-		  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+	  for (int node=0; node < numNodes; ++node) {
+		  for (int qp=0; qp < numQPs; ++qp) {
 
 
 			      Mp = elasticModulus(cell,qp)

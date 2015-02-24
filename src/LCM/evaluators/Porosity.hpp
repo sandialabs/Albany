@@ -7,7 +7,7 @@
 #if !defined(LCM_Porosity_hpp)
 #define LCM_Porosity_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -65,12 +65,12 @@ namespace LCM {
     ///
     /// Number of integration points
     ///
-    std::size_t numQPs;
+    int numQPs;
 
     ///
     /// Number of problem dimensions
     ///
-    std::size_t numDims;
+    int numDims;
 
     ///
     /// Container for coordinates
@@ -156,7 +156,7 @@ namespace LCM {
     ///
     /// Exponential random field
     ///
-    Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+    Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
 
     ///
     /// Values of the random variables

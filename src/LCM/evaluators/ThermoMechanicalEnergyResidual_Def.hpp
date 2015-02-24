@@ -70,7 +70,7 @@ ThermoMechanicalEnergyResidual(const Teuchos::ParameterList& p) :
   CinvTgrad.resize(worksetSize, numQPs, numDims);
   Tdot.resize(worksetSize, numQPs);
 
-  this->setName("ThermoMechanicalEnergyResidual"+PHX::TypeString<EvalT>::value);
+  this->setName("ThermoMechanicalEnergyResidual"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -115,29 +115,34 @@ evaluateFields(typename Traits::EvalData workset)
   FST::tensorMultiplyDataData<ScalarT> (CinvTgrad, Cinv, TGrad);
   FST::scalarMultiplyDataData<ScalarT> (flux, ThermalCond, CinvTgrad);
 
-  FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   FST::integrate<ScalarT>(TResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
-    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
-    FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+    for (int i=0; i<Source.dimension(0); i++) 
+       for (int j=0; j<Source.dimension(1); j++) 
+          Source(i,j) *= -1.0;
+     FST::integrate<ScalarT>(TResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 
-  for (int i=0; i<mechSource.size(); i++) mechSource[i] *= -1.0;
-  FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+ for (int i=0; i<mechSource.dimension(0); i++) 
+       for (int j=0; j<mechSource.dimension(1); j++)
+           mechSource(i,j) *= -1.0;
+    FST::integrate<ScalarT>(TResidual, mechSource, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
+
+//Irina comment: code below was commented out
   //if (workset.transientTerms && enableTransient)
-  //  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+  //   FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   //
   // compute factor
   ScalarT fac(0.0);
   if (dt > 0.0)
     fac = ( density * Cv ) / dt;
 
-  for (std::size_t cell=0; cell < workset.numCells; ++cell)
-    for (std::size_t qp=0; qp < numQPs; ++qp)
+  for (int cell=0; cell < workset.numCells; ++cell)
+    for (int qp=0; qp < numQPs; ++qp)
       Tdot(cell,qp) = fac * ( Temperature(cell,qp) - Temperature_old(cell,qp) );
-
-  FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   FST::integrate<ScalarT>(TResidual, Tdot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 
   if (print)
   {

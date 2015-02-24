@@ -7,7 +7,7 @@
 #ifndef THERMO_MECHANICAL_MOMENTUM_RESIDUAL_HPP
 #define THERMO_MECHANICAL_MOMENTUM_RESIDUAL_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -51,9 +51,9 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> Residual;
 
-  std::size_t numNodes;
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numNodes;
+  int numQPs;
+  int numDims;
 
   // Material Name
   std::string matModel;

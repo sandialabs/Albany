@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
@@ -91,7 +92,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());
 
 
   U.fieldTag().dataLayout().dimensions(dims);
@@ -150,8 +151,7 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  PHAL::set(Residual, 0.0);
 
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);

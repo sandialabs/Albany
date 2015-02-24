@@ -50,7 +50,7 @@ CahnHillWResid(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("CahnHillWResid"+PHX::TypeString<EvalT>::value);
+  this->setName("CahnHillWResid" );
 
 }
 

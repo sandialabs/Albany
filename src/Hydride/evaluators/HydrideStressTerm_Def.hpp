@@ -40,7 +40,7 @@ HydrideStressTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stressTerm);
 
-  this->setName("HydrideStressTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("HydrideStressTerm"+PHX::typeAsString<EvalT>());
 
 }
 

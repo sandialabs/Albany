@@ -4,6 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "PHAL_Utilities.hpp"
+
 namespace PHAL {
 
 //**********************************************************************
@@ -16,7 +18,7 @@ Constant<EvalT, Traits>::Constant(Teuchos::ParameterList& p) :
   this->addEvaluatedField(constant);
   
   std::string n = "Constant Provider: " + constant.fieldTag().name();
-  this->setName(n+PHX::TypeString<EvalT>::value);
+  this->setName(n + PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -26,9 +28,7 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& vm)
 {
   this->utils.setFieldData(constant,vm);
-
-  for (std::size_t i = 0; i < static_cast<std::size_t>(constant.size()); ++i)
-    constant[i] = value;
+  PHAL::set(constant, value);
 }
 
 //**********************************************************************

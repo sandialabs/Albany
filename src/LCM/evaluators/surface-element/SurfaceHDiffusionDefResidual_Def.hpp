@@ -63,7 +63,7 @@ namespace LCM {
     this->addEvaluatedField(transport_residual_);
   //  this->addEvaluatedField(transport_);
 
-    this->setName("Transport Residual"+PHX::TypeString<EvalT>::value);
+    this->setName("Transport Residual"+PHX::typeAsString<EvalT>());
 
     if (p.isType<std::string>("DefGrad Name")) {
       haveMech = true;
@@ -174,9 +174,9 @@ namespace LCM {
     // compute artifical diffusivity
 
      // for 1D this is identical to lumped mass as shown in Prevost's paper.
-     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+     for (int cell=0; cell < workset.numCells; ++cell) {
 
-       for (std::size_t pt=0; pt < numQPs; ++pt) {
+       for (int pt=0; pt < numQPs; ++pt) {
 
     	 if (dt == 0){
     		 artificalDL(cell,pt) = 0;
@@ -190,16 +190,16 @@ namespace LCM {
        }
      }
 
-     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-       for (std::size_t pt=0; pt < numQPs; ++pt) {
+     for (int cell=0; cell < workset.numCells; ++cell) {
+       for (int pt=0; pt < numQPs; ++pt) {
 
-    	  Intrepid::Tensor<ScalarT> F(numDims, &defGrad(cell, pt, 0, 0));
+    	  Intrepid::Tensor<ScalarT> F(numDims, defGrad,cell, pt,0,0);
     	  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
     	  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
-    	  Intrepid::Vector<ScalarT> C_grad_(numDims, &scalarGrad(cell, pt, 0));
+    	  Intrepid::Vector<ScalarT> C_grad_(numDims, scalarGrad,cell, pt,0);
     	  Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
-         for (std::size_t j=0; j<numDims; j++){
+         for (int j=0; j<numDims; j++){
              flux(cell,pt,j) = (1-stabilizedDL(cell,pt))*C_grad_in_ref_(j);
          }
 
@@ -207,21 +207,21 @@ namespace LCM {
      }
 
      // Initialize the residual
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t node(0); node < numPlaneNodes; ++node) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int node(0); node < numPlaneNodes; ++node) {
           int topNode = node + numPlaneNodes;
           transport_residual_(cell, node) = 0;
           transport_residual_(cell, topNode) = 0;
         }
       }
 
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-            for (std::size_t node(0); node < numPlaneNodes; ++node) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+            for (int node(0); node < numPlaneNodes; ++node) {
               int topNode = node + numPlaneNodes;
-              for (std::size_t pt=0; pt < numQPs; ++pt) {
-                   for (std::size_t dim=0; dim <numDims; ++dim){
+              for (int pt=0; pt < numQPs; ++pt) {
+                for (std::size_t dim=0; dim <numDims; ++dim){
 
-                       transport_residual_(cell, node) +=  flux(cell, pt, dim)*dt*
+                      transport_residual_(cell, node) +=  flux(cell, pt, dim)*dt*
                         	                                                       surface_Grad_BF(cell, node, pt, dim)*
                         	                                                       refArea(cell,pt);
 
@@ -233,23 +233,23 @@ namespace LCM {
         }
       }
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t node(0); node < numPlaneNodes; ++node) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int node(0); node < numPlaneNodes; ++node) {
         // initialize the residual
         int topNode = node + numPlaneNodes;
 
-        for (std::size_t pt=0; pt < numQPs; ++pt) {
+        for (int pt=0; pt < numQPs; ++pt) {
 
           // If there is no diffusion, then the residual defines only on the mid-plane value
 
             temp = 1.0/dL_(cell,pt) + artificalDL(cell,pt);
 
           // Local rate of change volumetric constraint term
-            transientTerm = refValues(node,pt)*
+             transientTerm = refValues(node,pt)*
                                           ( eff_diff_(cell,pt)*
                                           (transport_(cell, pt)-transportold(cell, pt) ))*
                                           refArea(cell,pt)*temp;
-
+               
         	transport_residual_(cell, node) +=  transientTerm;
 
         	transport_residual_(cell, topNode) += transientTerm;
@@ -266,7 +266,7 @@ namespace LCM {
             	transport_residual_(cell, topNode) +=  transientTerm;
 
             	// hydrostatic stress term
-        		for (std::size_t dim=0; dim < numDims; ++dim) {
+        		for (int dim=0; dim < numDims; ++dim) {
 
         			    transport_residual_(cell, node) -= surface_Grad_BF(cell, node, pt, dim)*
         			    						  	  	                 convection_coefficient_(cell,pt)*transport_(cell,pt)*
@@ -288,26 +288,26 @@ namespace LCM {
     ScalarT CLPbar(0);
     ScalarT vol(0);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell){
+    for (int cell=0; cell < workset.numCells; ++cell){
       CLPbar = 0.0;
       vol = 0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int qp=0; qp < numQPs; ++qp) {
         CLPbar += refArea(cell,qp)*
         		           (transport_(cell,qp) - transportold(cell, qp));
         vol  += refArea(cell,qp);
       }
       CLPbar /= vol;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int qp=0; qp < numQPs; ++qp) {
         pterm(cell,qp) = CLPbar;
       }
     }
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numPlaneNodes; ++node) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numPlaneNodes; ++node) {
 
     	  int topNode = node + numPlaneNodes;
 
-    	  for (std::size_t qp=0; qp < numQPs; ++qp) {
+    	  for (int qp=0; qp < numQPs; ++qp) {
 
     		  temp = 1.0/dL_(cell,qp) + artificalDL(cell,qp);
 

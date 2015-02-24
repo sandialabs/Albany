@@ -7,6 +7,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -65,7 +66,7 @@ Viscosity(const Teuchos::ParameterList& p,
   
   this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
 
-  this->setName("Viscosity"+PHX::TypeString<EvalT>::value);
+  this->setName("Viscosity"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

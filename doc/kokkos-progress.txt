@@ -1,0 +1,294 @@
+This file is meant to track progress on the Albany Kokkos conversion. There are
+two parallel efforts:
+  1. Demonstrate scalable speedup on one or a few problems.
+  2. Get Albany ready for the Phalanx/Sacado switch to Kokkos::View.
+This file focuses on 2.
+
+21 Jan 2015 5pm.
+  Trilinos config for SerialNode:
+
+<<<<<
+TRILINSTALLDIR=../installserial
+BOOSTDIR=/usr/local
+NETCDFDIR=/usr/local/parallel
+HDF5DIR=/usr/local/parallel
+HWLOC_PATH=/usr/local
+
+rm -f CMakeCache.txt;
+
+cmake \
+ -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
+ -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
+ -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+ -D BUILD_SHARED_LIBS:BOOL=ON \
+ -D TPL_ENABLE_MPI:BOOL=ON \
+ -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+\
+ -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
+ -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
+ -D Trilinos_ENABLE_Teuchos:BOOL=ON \
+ -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+ -D Trilinos_ENABLE_Shards:BOOL=ON \
+ -D Trilinos_ENABLE_Sacado:BOOL=ON \
+ -D Trilinos_ENABLE_Epetra:BOOL=ON \
+ -D Trilinos_ENABLE_EpetraExt:BOOL=ON \
+ -D Trilinos_ENABLE_Ifpack:BOOL=ON \
+ -D Trilinos_ENABLE_AztecOO:BOOL=ON \
+ -D Trilinos_ENABLE_Amesos:BOOL=ON \
+ -D Trilinos_ENABLE_Anasazi:BOOL=ON \
+ -D Trilinos_ENABLE_Belos:BOOL=ON \
+ -D Trilinos_ENABLE_ML:BOOL=ON \
+ -D Trilinos_ENABLE_Phalanx:BOOL=ON \
+ -D Trilinos_ENABLE_Intrepid:BOOL=ON \
+ -D Trilinos_ENABLE_NOX:BOOL=ON \
+ -D Trilinos_ENABLE_Stratimikos:BOOL=ON \
+ -D Trilinos_ENABLE_Thyra:BOOL=ON \
+ -D Trilinos_ENABLE_Rythmos:BOOL=ON \
+ -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
+ -D Trilinos_ENABLE_Stokhos:BOOL=ON \
+ -D Trilinos_ENABLE_Piro:BOOL=ON \
+ -D Trilinos_ENABLE_Teko:BOOL=ON \
+\
+ -D Trilinos_ENABLE_STKIO:BOOL=ON \
+ -D Trilinos_ENABLE_STKMesh:BOOL=ON \
+ -D TPL_ENABLE_Boost:BOOL=ON \
+ -D Boost_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+ -D Boost_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+ -D TPL_ENABLE_BoostLib:BOOL=ON \
+ -D BoostLib_INCLUDE_DIRS:FILEPATH="$BOOSTDIR/include" \
+ -D BoostLib_LIBRARY_DIRS:FILEPATH="$BOOSTDIR/lib" \
+\
+ -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+ -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+ -D TPL_ENABLE_Netcdf:BOOL=ON \
+ -D Netcdf_INCLUDE_DIRS:PATH="$NETCDFDIR/include" \
+ -D Netcdf_LIBRARY_DIRS:PATH="$NETCDFDIR/lib" \
+ -D TPL_ENABLE_HDF5:BOOL=ON \
+ -D HDF5_INCLUDE_DIRS:PATH="$HDF5DIR/include" \
+ -D HDF5_LIBRARY_DIRS:PATH="$HDF5DIR/lib" \
+\
+ -D Trilinos_ENABLE_Tpetra:BOOL=ON \
+ -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
+ -D Trilinos_ENABLE_Amesos2:BOOL=ON \
+ -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+ -D Trilinos_ENABLE_MueLu:BOOL=ON \
+ -D Amesos2_ENABLE_KLU2:BOOL=ON \
+\
+ -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF \
+ -D Tpetra_INST_FLOAT=OFF \
+ -D Tpetra_INST_INT_INT=ON \
+ -D Tpetra_INST_DOUBLE=ON \
+ -D Tpetra_INST_COMPLEX_FLOAT=OFF \
+ -D Tpetra_INST_COMPLEX_DOUBLE=OFF \
+ -D Tpetra_INST_INT_LONG=OFF \
+ -D Tpetra_INST_INT_UNSIGNED=OFF \
+ -D Tpetra_INST_INT_LONG_LONG=ON \
+\
+ -D TPL_HWLOC_LIBRARIES:PATHNAME="${HWLOC_PATH}/lib/libhwloc.so" \
+ -D TPL_HWLOC_INCLUDE_DIRS:PATHNAME="${HWLOC_PATH}/include" \
+ -D TPL_ENABLE_HWLOC:BOOL=ON \
+\
+ -D Tpetra_ENABLE_Kokkos_Refactor:BOOL=ON \
+ -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+ -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
+ -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosClassic:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
+ -D Trilinos_ENABLE_TeuchosKokkosCompat:BOOL=ON \
+ -D Trilinos_ENABLE_TeuchosKokkosComm:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosTPL:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosAlgorithms:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosMpiComm:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosExample:BOOL=OFF \
+ -D Trilinos_ENABLE_TpetraKernels:BOOL=ON \
+ -D TPL_ENABLE_CUSPARSE:STRING=OFF \
+ -D Kokkos_ENABLE_EXAMPLES:BOOL=OFF \
+ -D Kokkos_ENABLE_TESTS:BOOL=OFF \
+ -D Kokkos_ENABLE_CUDA:BOOL=OFF \
+ -D Kokkos_ENABLE_Thrust=OFF \
+ -D TPL_ENABLE_CUDA:STRING=OFF \
+\
+ ../
+>>>>>
+
+  Albany config:
+
+<<<<<
+cmake \
+-D ALBANY_TRILINOS_DIR:FILEPATH=/home/ambradl/bigcode/kokkos/Trilinos/installserial \
+-D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+-D ENABLE_DEMO_PDES=On -D ENABLE_SG_MP=OFF -DENABLE_QCAD=On -DENABLE_ASCR=OFF \
+-D ENABLE_FELIX=On -D ENABLE_LCM=On -D ENABLE_LCM_TEST_EXES:BOOL=On -D ENABLE_SCOREC:BOOL=On \
+-D ENABLE_ATO=ON -D ENABLE_AMP=ON -D ENABLE_MOR=On -D ENABLE_HYDRIDE=ON -D ENABLE_AERAS=On \
+-D ENABLE_64BIT_INT:BOOL=On -D ENABLE_CHECK_FPE:BOOL=Off -D ENABLE_KOKKOS:BOOL=Off \
+ ..
+>>>>>
+
+  These now pass:
+	126 - AnisotropicHyperelasticDamage (Failed)
+	127 - AnisotropicDamage (Failed)
+	128 - Gurson (Failed)
+	129 - Neohookean (Failed)
+These were broken because of the 4-index Intrepid::TensorBase::fill. I should
+have recorded which tests broke because of the 3- and 4-index
+Intrepid::Vector::fill bug. Sorry. Nonetheless, there were several, so we can
+view the LCM ctests as strong correctness checks of those three fill methods
+(and no others).
+
+22 Jan.
+  These tests:
+	124 - QuasiStaticElasticityMM3D_Tpetra_64 (Failed)
+	175 - MechanicsTensileTet10_STK (Failed)
+failed because the mesh uses tets, and I didn't have derivative dims working for
+other than N-D quads yet. Now I do. The breaking tests with demo PDEs and LCM
+enabled are now these:
+	 24 - SGBratu1D_Tpetra (Failed)
+	 70 - GPAM_Tpetra (Failed)
+	132 - HMC:StaticHMC_2DQuad (Failed)
+	133 - HMC:TransientHMC_2DQuad (Failed)
+  132 and 133 are failing because of DOFTensorInterpolation.
+
+  Needed (1) ScalarRefT in a few spots and (2) to cherry-pick Josh's
+rebaselining for 132. Now down to
+	 24 - SGBratu1D_Tpetra (Failed)
+	 70 - GPAM_Tpetra (Failed)
+
+  All QCAD tests pass. Evidently they don't exercise reduceAll.
+
+  All ATO and MOR tests pass.
+  
+  Merged master.
+
+  Got FELIX to build. 25/36 FELIX tests pass. These fail:
+	  1 - FELIX_FO_Dome_Ascii (Failed)
+	  2 - FELIX_FO_Dome_Restart (Failed)
+	 13 - FO_ISMIP_TestA (Failed)
+	 14 - FO_ISMIP_TestC (Failed)
+	 15 - FO_ISMIP_TestA_Tpetra (Failed)
+	 16 - FO_ISMIP_TestC_Tpetra (Failed)
+	 22 - FO_Test_Dome_interpSurf (Failed)
+	 23 - FO_GIS_Gis20km (Failed)
+	 24 - FO_GIS_GisUnstructured (Failed)
+	 25 - FO_GIS_GisRestartUnstructured (Failed)
+	 26 - FO_GIS_Gis20km_Tpetra (Failed)
+Now down to these:
+	218 - FELIX_FO_Dome_Ascii (Failed)
+	219 - FELIX_FO_Dome_Restart (Failed)
+	241 - FO_GIS_GisUnstructured (Failed)
+	242 - FO_GIS_GisRestartUnstructured (Failed)
+
+  Over all, at the end of this day, with FELIX, ATO, AMP, MOR, LCM, and demo
+PDEs enabled, we're at this:
+    96% tests passed, 10 tests failed out of 258
+    Total Test time (real) = 1299.51 sec
+    The following tests FAILED:
+	 26 - SGBratu1D_Tpetra (Failed)
+	 72 - GPAM_Tpetra (Failed)
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+	210 - ThermoElectrostatics2D (Failed)
+	211 - ThermoElectrostatics2D_Tpetra (Failed)
+	218 - FELIX_FO_Dome_Ascii (Failed)
+	219 - FELIX_FO_Dome_Restart (Failed)
+	241 - FO_GIS_GisUnstructured (Failed)
+	242 - FO_GIS_GisRestartUnstructured (Failed)
+
+23 Jan.
+  MDField<DFad>::operator[] doesn't work at the moment. In the future, it won't
+be available. Turned out that was the problem with FELIX_FO_Dome*. I rewrote
+LoadStateField::evaluateFields to fix them.
+  Still something wrong with FO_GIS_Gis*Unstructured.
+
+24 Jan.
+  Fixed the first of the two problems in FO_GIS_Gis*Unstructured. Turns out
+there was a bug in Tpetra_KokkosRefactor_MultiVector's getVector(). I did
+another small breaking example for that but fixed the problem in Albany using a
+better approach that doesn't end up using getVector.
+  FO_GIS_Gis*Unstructured uses reduceAll, and I haven't done that yet, so it's
+still broken. But at least the test doesn't hang anymore.
+  Meanwhile, GPAM_Tpetra fails because of multiple problems: operator[], and
+reduceAll. I got the failed number of comparisons down from 8 to 0, but there's
+still a seg fault, and anyway the reduceAll doesn't in fact work.
+
+25 Jan.
+  PHAL::reduceAll< MDField<ScalarT> > impl got GPAM_Tpetra going.
+  PHAL::reduceAll< ScalarT > impl + more op[] stuff got FO_GIS done.
+  Turns out the no-impl exception for ThermoElectrostatics2D was too
+conservative, so that was a 30-second easy fix.
+  Down to
+	 26 - SGBratu1D_Tpetra (Failed)
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+However,
+	113 - MechanicsWithHydrogen_SERIAL (Failed)
+	180 - MechanicsTensileTet10_STK (Failed)
+match master. I'm almost positive these two are broken because of the recent
+change LCM::Kinematics. So we've really just got this one:
+	 26 - SGBratu1D_Tpetra (Failed)
+
+26 Jan.
+  SCOREC done.
+
+27 Jan.
+  Aeras done.
+
+Important observation
+---------------------
+  FELIX tests are at 100%, yet I have no ideal whether distributed derivatives
+work.
+  ATO tests are at 100%, and yet I know there is some op[] usage and a reduceAll
+that is protected by a no-impl exception.
+  QCAD is at 100%, and yet there are no-impl exceptions in the code and a lot of
+op[] usage.
+  The basic problem is that coverage in some of the app areas is not sufficient
+to protect the code during the Kokkos conversion. To be clear, if we don't touch
+the code at all, it may break on a real problem.
+  I propose the following approach: Don't touch the code. Tell everyone that
+they should come to me (Andrew) when they run a problem and it breaks. Then I'll
+have a correctness test for my mods. Mods in most or all cases will be a matter
+of minutes.
+  I decided to do the mods for ATO because they are trivial. Even so, I don't
+like having a test for it.
+  QCAD requires somewhat extensive changes, so I think we'll have to go with
+something like I propose above. Perhaps we can get a QCAD person involved before
+the official switch.
+
+>> TODO
+
+Items without a name associated is up for grabs.
+
+x Update Kinematics functor based on recent change (Andrew or Irina)
+x reduceAll for FadType (hacked in something for now)
+x LCM
+x QCAD
+x ATO
+x MOR
+x AMP
+x Felix
+x Hydride
+x Aeras
+x SCOREC (Andrew)
+x SGBratu1D_Tpetra
+x Implement derivative dimensions cleanly (Andrew)
++ Distributed derivatives and ROL? (Andrew and Mauro)
+  . We're thinking it's OK. Mauro's in the loop, so he and I will deal with it
+    post-merge if necessary.
+x global replace to ExponentialRandomField<RealType>.
+x When all is done, strip out the amb:: debug stuff (Andrew)
+x DEBUG build nans.
+x remove Tpetra_Block*
+x switch the default for ENABLE_KOKKOS_UNDER_DEVELOPMENT
+- final decision on ScalarT references
+  x Albany has something working now
+- SG_MP (Andrew, after merge)
+  . Eric P. writes that we should skip SG_MP for now.
+- Merge master into tpetra_kokkos (Andrew)
+  x 24 Feb
+- Merge tpetra_kokkos into master (Andrew)
+- SLFad, SFad (Andrew, before or after merge)
+- Peridigm (Andrew and Dave)
+- Dakota (Andy?)

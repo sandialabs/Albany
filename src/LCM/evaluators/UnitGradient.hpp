@@ -7,7 +7,7 @@
 #if !defined(LCM_Unit_Gradient_hpp)
 #define LCM_Unit_Gradient_hpp
 
-#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_config.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_MDField.hpp>
@@ -60,12 +60,12 @@ namespace LCM {
     ///
     /// Number of integration points
     ///
-    std::size_t num_pts_;
+    int num_pts_;
 
     ///
     /// Number of spatial dimensions
     ///
-    std::size_t num_dims_;
+    int num_dims_;
   };
 }
 

@@ -52,7 +52,7 @@ NSForchheimerTerm(const Teuchos::ParameterList& p) :
   // Allocate workspace
   normV.resize(dims[0], numQPs);
 
-  this->setName("NSForchheimerTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("NSForchheimerTerm" );
 }
 
 //**********************************************************************

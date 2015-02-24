@@ -32,7 +32,7 @@ NonlinearPoissonSource(const Teuchos::ParameterList& p,
   workset_size_ = dims[0];
   num_qps_      = dims[1];
 
-  this->setName("NonlinearPoissonSource"+PHX::TypeString<EvalT>::value);
+  this->setName("NonlinearPoissonSource"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

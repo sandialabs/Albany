@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -38,7 +39,7 @@ XZHydrostatic_TracerResid(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_TracerResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_TracerResid" );
 }
 
 //**********************************************************************
@@ -60,7 +61,7 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_TracerResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  PHAL::set(Residual, 0.0);
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {

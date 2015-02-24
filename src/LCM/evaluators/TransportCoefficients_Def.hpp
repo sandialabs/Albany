@@ -84,7 +84,7 @@ namespace LCM {
     this->addEvaluatedField(convection_coefficient_);
     this->addEvaluatedField(F_mech_);
 
-    this->setName("Transport Coefficients"+PHX::TypeString<EvalT>::value);
+    this->setName("Transport Coefficients"+PHX::typeAsString<EvalT>());
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);
     worksetSize  = dims[0];
@@ -126,8 +126,8 @@ namespace LCM {
     ScalarT theta_term(0.0);
 
     // Diffusion Coefficient
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < num_pts_; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < num_pts_; ++pt) {
 
         diffusion_coefficient_(cell,pt) = pre_exponential_factor_*
           			                                                       std::exp(-1.0*Q_/
@@ -137,8 +137,8 @@ namespace LCM {
     }
 
     // Convection Coefficient
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < num_pts_; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < num_pts_; ++pt) {
 
         convection_coefficient_(cell,pt) = partial_molar_volume_*
         	                                            	diffusion_coefficient_(cell,pt)/
@@ -148,8 +148,8 @@ namespace LCM {
     }
 
     // equilibrium constant k_T = e^(W_b/RT)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < num_pts_; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < num_pts_; ++pt) {
 
       	k_eq_(cell,pt) = std::exp(trap_binding_energy_/
       			                                           ( ideal_gas_constant_ *
@@ -160,8 +160,8 @@ namespace LCM {
 
     /*
     // theta term C_T
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
         theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) / 
           ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
       }
@@ -170,8 +170,8 @@ namespace LCM {
     
     // trapped solvent
     if (have_eqps_) {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * 
                                            std::pow( 10.0, (a_ - b_ *
                                         		   std::exp( -c_ * eqps_(cell,pt) ))  );
@@ -181,8 +181,8 @@ namespace LCM {
     }
     else
     {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
           n_trap_(cell,pt) = (1.0/avogadros_num_) * std::pow( 10.0, (a_ - b_ ));
         }
       }
@@ -190,8 +190,8 @@ namespace LCM {
     
     // strain rate factor
     if (have_eqps_) {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
             theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
               ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
 
@@ -202,8 +202,8 @@ namespace LCM {
     }
     else
     {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
             theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
               ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
 
@@ -213,9 +213,9 @@ namespace LCM {
       }
     }
 
-    // trapped concentration
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    // trapped conecentration
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
           theta_term = k_eq_(cell,pt) * c_lattice_(cell,pt) /
             ( k_eq_(cell,pt) * c_lattice_(cell,pt) + n_lattice_ );
 
@@ -224,16 +224,16 @@ namespace LCM {
     }
     
     // total concentration
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
     	  total_concentration_(cell, pt) = c_trapped_(cell,pt) +
     			                                               c_lattice_(cell,pt);
       }
     }
 
     // effective diffusivity
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
         eff_diff_(cell,pt) = 1.0 + n_trap_(cell,pt) * n_lattice_ /
           (  k_eq_(cell,pt) * c_lattice_(cell,pt) * c_lattice_(cell,pt) ) /
           ( ( 1.0 + n_lattice_ / k_eq_(cell,pt) / c_lattice_(cell,pt) ) *
@@ -244,11 +244,11 @@ namespace LCM {
     // deformation gradient volumetric split for lattice concentration
     Intrepid::Tensor<ScalarT> Fmech(num_dims_);
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
-    	  Fmech.fill( &F_(cell,pt,0,0) );
-          for (std::size_t i(0); i < num_dims_; ++i) {
-            for (std::size_t j(0); j < num_dims_; ++j) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
+    	  Fmech.fill( F_,cell,pt,0,0);
+          for (int i(0); i < num_dims_; ++i) {
+            for (int j(0); j < num_dims_; ++j) {
               F_mech_(cell,pt,i,j) = Fmech(i,j);
             }
           }
@@ -257,23 +257,23 @@ namespace LCM {
     // Since Intrepid will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.
-    for (std::size_t cell=workset.numCells; cell < worksetSize; ++cell)
-      for (std::size_t qp=0; qp < num_pts_; ++qp)
-        for (std::size_t i=0; i < num_dims_; ++i)
+    for (int cell=workset.numCells; cell < worksetSize; ++cell)
+      for (int qp=0; qp < num_pts_; ++qp)
+        for (int i=0; i < num_dims_; ++i)
           F_mech_(cell,qp,i,i) = 1.0;
 
    ScalarT lambda_ =  partial_molar_volume_*n_lattice_/avogadros_num_;
    ScalarT JH(1.0);
 
    if (lattice_strain_flag_){
-	   for (std::size_t cell=0; cell < workset.numCells; ++cell)
+	   for (int cell=0; cell < workset.numCells; ++cell)
 	        {
-	          for (std::size_t qp=0; qp < num_pts_; ++qp)
+	          for (int qp=0; qp < num_pts_; ++qp)
 	          {
 	            JH = 1.0 + lambda_*(total_concentration_(cell, qp)- ref_total_concentration_);
-	            for (std::size_t i=0; i < num_dims_; ++i)
+	            for (int i=0; i < num_dims_; ++i)
 	            {
-	              for (std::size_t j=0; j < num_dims_; ++j)
+	              for (int j=0; j < num_dims_; ++j)
 	              {
 	            	  F_mech_(cell,qp,i,j) *= std::pow(JH ,-1./3. );
 	              }

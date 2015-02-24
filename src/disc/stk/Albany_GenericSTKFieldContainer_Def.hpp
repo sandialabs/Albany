@@ -144,6 +144,8 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
 
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
+      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer 
+      //         = sis->getNodalDataBlock()->getNodeContainer();
 
         if(st.entity == StateStruct::NodalDataToElemNode) {
           nodal_sis.push_back((*sis)[i]);

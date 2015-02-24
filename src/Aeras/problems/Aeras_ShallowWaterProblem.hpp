@@ -296,7 +296,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
     
   }
-
   { // Aeras Atmosphere for shallow water equations 
 
     RCP<ParameterList> p = rcp(new ParameterList("Aeras Atmosphere"));

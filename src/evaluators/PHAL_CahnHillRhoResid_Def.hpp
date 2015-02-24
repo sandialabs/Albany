@@ -54,7 +54,7 @@ CahnHillRhoResid(const Teuchos::ParameterList& p) :
 
   gamma_term.resize(worksetSize, numQPs, numDims);
 
-  this->setName("CahnHillRhoResid"+PHX::TypeString<EvalT>::value);
+  this->setName("CahnHillRhoResid" );
 
 }
 

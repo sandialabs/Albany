@@ -126,7 +126,7 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
     this->addEvaluatedField(*(it->second));
   }
 
-  this->setName("ConstitutiveModelInterface" + PHX::TypeString<EvalT>::value);
+  this->setName("ConstitutiveModelInterface" + PHX::typeAsString<EvalT>());
 }
 
 //------------------------------------------------------------------------------

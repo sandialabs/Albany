@@ -38,7 +38,7 @@ namespace HMC {
     
     this->addEvaluatedField(totalStress);
     
-    this->setName("TotalStress"+PHX::TypeString<EvalT>::value);
+    this->setName("TotalStress"+PHX::typeAsString<EvalT>());
     
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);

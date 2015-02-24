@@ -10,7 +10,7 @@
 #ifndef PHAL_GATHER_SOLUTION_HPP
 #define PHAL_GATHER_SOLUTION_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -52,15 +52,17 @@ public:
   // This function requires template specialization, in derived class below
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
 
+  Kokkos::View<int***, PHX::Device> Index;
+
 protected:
 
   typedef typename EvalT::ScalarT ScalarT;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dotdot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dot;
-  std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim> > valVec_dotdot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dot;
+  PHX::MDField<ScalarT,Cell,Node,VecDim>  valVec_dotdot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dot;
   std::vector< PHX::MDField<ScalarT,Cell,Node,VecDim,VecDim> > valTensor_dotdot;
@@ -70,6 +72,8 @@ protected:
   unsigned short int tensorRank;
   bool enableTransient;
   bool enableAcceleration;
+  
+
 };
 
 template<typename EvalT, typename Traits> class GatherSolution;
@@ -94,9 +98,64 @@ public:
   // Old constructor, still needed by BCs that use PHX Factory
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
+
+ //Kokkos:
+ struct tensorRank_2Tag{};
+ struct tensorRank_2_enableTransientTag{};
+ struct tensorRank_2_enableAccelerationTag{};
+
+ struct tensorRank_1Tag{};
+ struct tensorRank_1_enableTransientTag{};
+ struct tensorRank_1_enableAccelerationTag{};
+
+ struct tensorRank_0Tag{};
+ struct tensorRank_0_enableTransientTag{};
+ struct tensorRank_0_enableAccelerationTag{};
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_2Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_1Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_0Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
+
+
 private:
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
-  const std::size_t numFields;
+  const int numFields;
+  int numDim; 
+
+  Teuchos::ArrayRCP<const ST> xT_constView;
+  Teuchos::ArrayRCP<const ST> xdotT_constView;
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView;
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  
 };
 
 // **************************************************************
@@ -111,9 +170,58 @@ public:
                               const Teuchos::RCP<Albany::Layouts>& dl);
   GatherSolution(const Teuchos::ParameterList& p);
   void evaluateFields(typename Traits::EvalData d);
+ 
+ //Kokkos
+ struct tensorRank_2Tag{};
+ struct tensorRank_2_enableTransientTag{};
+ struct tensorRank_2_enableAccelerationTag{};
+
+ struct tensorRank_1Tag{};
+ struct tensorRank_1_enableTransientTag{};
+ struct tensorRank_1_enableAccelerationTag{};
+
+ struct tensorRank_0Tag{};
+ struct tensorRank_0_enableTransientTag{};
+ struct tensorRank_0_enableAccelerationTag{};
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2Tag> tensorRank_2Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableTransientTag> tensorRank_2_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_2_enableAccelerationTag> tensorRank_2_enableAccelerationPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1Tag> tensorRank_1Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableTransientTag> tensorRank_1_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_1_enableAccelerationTag> tensorRank_1_enableAccelerationPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0Tag> tensorRank_0Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableTransientTag> tensorRank_0_enableTransientPolicy;
+ typedef Kokkos::RangePolicy<ExecutionSpace,tensorRank_0_enableAccelerationTag> tensorRank_0_enableAccelerationPolicy;
+
+  void operator() (const tensorRank_2Tag& tag, const int& i) const;
+  void operator() (const tensorRank_2_enableTransientTag& tag, const int& i) const;
+  void operator() (const tensorRank_2_enableAccelerationTag& tag, const int& i) const;
+
+  void operator() (const tensorRank_1Tag& tag, const int& i) const;
+  void operator() (const tensorRank_1_enableTransientTag& tag, const int& i) const;
+  void operator() (const tensorRank_1_enableAccelerationTag& tag, const int& i) const;
+
+  void operator() (const tensorRank_0Tag& tag, const int& i) const;
+  void operator() (const tensorRank_0_enableTransientTag& tag, const int& i) const;
+  void operator() (const tensorRank_0_enableAccelerationTag& tag, const int& i) const;
+ 
 private:
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
-  const std::size_t numFields;
+  const int numFields;
+
+  Teuchos::ArrayRCP<const ST> xT_constView;
+  Teuchos::ArrayRCP<const ST> xdotT_constView;
+  Teuchos::ArrayRCP<const ST> xdotdotT_constView;
+  int numDim;
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+  double j_coeff;
+  double n_coeff;
+  double m_coeff;
+  bool ignore_residual;
+ 
 };
 
 
@@ -131,6 +239,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
+  typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
   const std::size_t numFields;
 };
 
@@ -202,6 +311,7 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 private:
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
+  typedef typename Kokkos::View<ScalarT*, PHX::Device>::reference_type reference_type;
   const std::size_t numFields;
 };
 
