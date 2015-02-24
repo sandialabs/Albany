@@ -298,7 +298,7 @@ int main(int argc, char *argv[]) {
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     if (writeToCoutSoln == true) { 
        std::cout << "xfinal: " << std::endl;
-       xfinal->describe(*out, Teuchos::VERB_EXTREME);
+       Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
     }
 
     if (debugParams.get<bool>("Analyze Memory", false))
@@ -312,7 +312,7 @@ int main(int argc, char *argv[]) {
      Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
  
       //create importer from parallel map to serial map and populate serial solution xfinal_serial
-      Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_map, app->getDiscretization()->getMapT())); 
+      Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(app->getDiscretization()->getMapT(), serial_map)); 
       Teuchos::RCP<Tpetra_Vector> xfinal_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
       xfinal_serial->doImport(*app->getDiscretization()->getSolutionFieldT(), *importOperator, Tpetra::INSERT);
 
