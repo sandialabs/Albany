@@ -5,7 +5,7 @@
 //*****************************************************************//
 #include <Teuchos_UnitTestHarness.hpp>
 #include <LocalNonlinearSolver.hpp>
-#include <Sacado_Kokkos.hpp>
+#include <Sacado.hpp>
 #include "PHAL_AlbanyTraits.hpp"
 
 using namespace std;

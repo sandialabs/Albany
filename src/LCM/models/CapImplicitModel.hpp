@@ -14,7 +14,7 @@
 #include "Albany_Layouts.hpp"
 #include "LCM/models/ConstitutiveModel.hpp"
 
-#include "Sacado_Kokkos.hpp"
+#include "Sacado.hpp"
 
 namespace LCM
 {

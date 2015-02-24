@@ -12,7 +12,7 @@
 //! Data Type Definitions that span the code.
 
 // Include all of our AD types
-#include "Sacado_Kokkos.hpp"
+#include "Sacado.hpp"
 #include "Sacado_MathFunctions.hpp"
 #include "Stokhos_Sacado_MathFunctions.hpp"
 #include "Sacado_ELRFad_DFad.hpp"
