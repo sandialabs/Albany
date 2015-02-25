@@ -7,7 +7,7 @@
 #ifndef MIXTURE_SPECIFIC_HEAT_HPP
 #define MIXTURE_SPECIFIC_HEAT_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -48,7 +48,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> mixtureSpecificHeat;
+  PHX::MDField<ScalarT,Cell,QuadPoint> mixtureSpecificHeat;
 
   unsigned int numQPs;
 //  unsigned int numDims;

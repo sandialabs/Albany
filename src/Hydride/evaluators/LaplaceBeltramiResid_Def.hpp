@@ -42,7 +42,7 @@ LaplaceBeltramiResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany:
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("LaplaceBeltramiResid" + PHX::TypeString<EvalT>::value);
+  this->setName("LaplaceBeltramiResid" + PHX::typeAsString<EvalT>());
 
 }
 

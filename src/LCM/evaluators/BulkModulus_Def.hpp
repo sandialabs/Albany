@@ -48,7 +48,7 @@ BulkModulus(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*bmd_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*bmd_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
@@ -82,7 +82,7 @@ BulkModulus(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(bulkModulus);
-  this->setName("Bulk Modulus"+PHX::TypeString<EvalT>::value);
+  this->setName("Bulk Modulus"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -119,8 +119,8 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   if (isThermoElastic) {
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	bulkModulus(cell,qp) -= dKdT_value * (Temperature(cell,qp) - refTemp);
       }
     }

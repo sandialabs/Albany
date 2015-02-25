@@ -18,7 +18,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -54,7 +54,7 @@ StokesL1L2Resid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("StokesL1L2Resid"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesL1L2Resid"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

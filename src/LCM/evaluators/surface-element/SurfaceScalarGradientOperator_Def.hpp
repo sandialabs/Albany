@@ -34,7 +34,7 @@ namespace LCM {
     this->addEvaluatedField(grad_val_qp);
 
 
-    this->setName("Surface Scalar Gradient Operator"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Gradient Operator"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_qp_gradient->dimensions(dims);
@@ -90,12 +90,12 @@ namespace LCM {
     Intrepid::Vector<MeshScalarT> Parent_Grad_plus(3);
     Intrepid::Vector<MeshScalarT> Parent_Grad_minor(3);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < numQPs; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid::Tensor<MeshScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt,0,0);
 
-        Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> N(3, refNormal,cell, pt,0);
 
         gBasis = Intrepid::transpose(gBasis);
 
@@ -127,8 +127,8 @@ namespace LCM {
       }
     }
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < numQPs; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < numQPs; ++pt) {
         for (int k(0); k< numDims; ++k){
           grad_val_qp(cell, pt, k) = 0;
           for (int node(0); node < numNodes; ++node) {

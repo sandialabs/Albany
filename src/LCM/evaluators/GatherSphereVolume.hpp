@@ -7,7 +7,7 @@
 #ifndef LCM_GATHER_SPHEREVOLUME_HPP
 #define LCM_GATHER_SPHEREVOLUME_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -43,8 +43,8 @@ private:
 
   PHX::MDField<RealType,Cell,Vertex> sphereVolume;
  
-  std::size_t worksetSize;
-  std::size_t numVertices;
+  int worksetSize;
+  int numVertices;
 };
 }
 

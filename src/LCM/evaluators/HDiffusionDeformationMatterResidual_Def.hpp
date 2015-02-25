@@ -117,7 +117,7 @@ namespace LCM {
     CinvTgrad_old.resize(worksetSize, numQPs, numDims);
     CinvTaugrad.resize(worksetSize, numQPs, numDims);
 
-    this->setName("HDiffusionDeformationMatterResidual"+PHX::TypeString<EvalT>::value);
+    this->setName("HDiffusionDeformationMatterResidual"+PHX::typeAsString<EvalT>());
 
   }
 
@@ -170,8 +170,8 @@ namespace LCM {
 
     // compute artifical diffusivity
     // for 1D this is identical to lumped mass as shown in Prevost's paper.
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	if (dt == 0){
     	     		 artificalDL(cell,qp) = 0;
     	} else {
@@ -187,29 +187,28 @@ namespace LCM {
     }
 
     // compute the 'material' flux
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
 
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int qp=0; qp < numQPs; ++qp) {
 
 
-  		  Intrepid::Tensor<ScalarT> F(numDims, &DefGrad(cell, qp, 0, 0));
+  		  Intrepid::Tensor<ScalarT> F(numDims, DefGrad,cell, qp,0,0);
   		  Intrepid::Tensor<ScalarT> C_tensor_ = Intrepid::t_dot(F,F);
   		  Intrepid::Tensor<ScalarT> C_inv_tensor_ = Intrepid::inverse(C_tensor_);
 
-  	      Intrepid::Vector<ScalarT> C_grad_(numDims, &CLGrad(cell, qp, 0));
+  	      Intrepid::Vector<ScalarT> C_grad_(numDims, CLGrad,cell, qp, 0);
   	      Intrepid::Vector<ScalarT> C_grad_in_ref_ = Intrepid::dot(C_inv_tensor_, C_grad_ );
 
-         for (std::size_t j=0; j<numDims; j++){
+         for (int j=0; j<numDims; j++){
         	 Hflux(cell,qp,j) = (1.0 -stabilizedDL(cell,qp))*C_grad_in_ref_(j)*dt;
         }
       }
     }
+   FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
 
-    FST::integrate<ScalarT>(TResidual, Hflux, wGradBF, Intrepid::COMP_CPP, false); // this also works
-
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int qp=0; qp < numQPs; ++qp) {
 
                    // Divide the equation by DL to avoid ill-conditioned tangent
                    temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
@@ -225,7 +224,7 @@ namespace LCM {
                                                             wBF(cell, node, qp)*temp;
 
                  // hydrostatic stress term
-                 for (std::size_t dim=0; dim < numDims; ++dim) {
+                 for (int dim=0; dim < numDims; ++dim) {
                          TResidual(cell,node) -= tauFactor(cell,qp)*Clattice(cell,qp)*
                                                                   wGradBF(cell, node, qp, dim)*
                                                                   stressGrad(cell, qp, dim)*dt*temp;
@@ -239,35 +238,35 @@ namespace LCM {
     ScalarT CLPbar(0);
     ScalarT vol(0);
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell){
+    for (int cell=0; cell < workset.numCells; ++cell){
       CLPbar = 0.0;
       vol = 0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int qp=0; qp < numQPs; ++qp) {
         CLPbar += weights(cell,qp)*
                            (Clattice(cell,qp) - Clattice_old(cell, qp)  );
         vol  += weights(cell,qp);
       }
       CLPbar /= vol;
 
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int qp=0; qp < numQPs; ++qp) {
         pterm(cell,qp) = CLPbar;
       }
 
-      for (std::size_t node=0; node < numNodes; ++node) {
+      for (int node=0; node < numNodes; ++node) {
     	  trialPbar = 0.0;
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (int qp=0; qp < numQPs; ++qp) {
           trialPbar += wBF(cell,node,qp);
         }
         trialPbar /= vol;
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (int qp=0; qp < numQPs; ++qp) {
         	tpterm(cell,node,qp) = trialPbar;
         }
       }
     }
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int node=0; node < numNodes; ++node) {
+        for (int qp=0; qp < numQPs; ++qp) {
           temp =  1.0/ ( DL(cell,qp)  + artificalDL(cell,qp)  );
           TResidual(cell,node) -=  stab_param_*Dstar(cell, qp)*temp*
                                                    (-Clattice(cell,qp) + Clattice_old(cell, qp)+pterm(cell,qp))*

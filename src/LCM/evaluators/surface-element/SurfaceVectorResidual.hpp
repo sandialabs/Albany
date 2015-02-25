@@ -7,7 +7,7 @@
 #ifndef SURFACE_VECTOR_RESIDUAL_HPP
 #define SURFACE_VECTOR_RESIDUAL_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -27,7 +27,6 @@ template<typename EvalT, typename Traits>
 class SurfaceVectorResidual: public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>
 {
-
 public:
 
   SurfaceVectorResidual(Teuchos::ParameterList& p,
@@ -60,7 +59,7 @@ private:
   //! Reference configuration normal
   PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refArea;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint> refArea;
   //! Determinant of deformation gradient
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim> detF_;
 
@@ -100,7 +99,6 @@ private:
   // Topology modification for adaptive insertion flag.
   bool have_topmod_adaptation_;
 };
-
 }
 
 #endif

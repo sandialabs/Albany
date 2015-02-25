@@ -30,7 +30,7 @@ DOFInterpolation(Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("Aeras::DOFInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFInterpolation" );
 
   TEUCHOS_TEST_FOR_EXCEPTION( (numRank!=2 && numRank!=3),
      std::logic_error,"Aeras::DOFGradInterpolation supports scalar or vector only");
@@ -58,13 +58,14 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       if (2==numRank) {
-        ScalarT& vqp = val_qp(cell,qp) = 0;
+        typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp) = 0;
         for (int node=0; node < numNodes; ++node) {
           vqp += val_node(cell, node) * BF(cell, node, qp);
         }
       } else {
         for (int level=0; level < numLevels; ++level) {
-          ScalarT& vqp = val_qp(cell,qp,level) = 0;
+          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level);
+          vqp = 0;
           for (int node=0; node < numNodes; ++node) {
             vqp += val_node(cell, node, level) * BF(cell, node, qp);
           }

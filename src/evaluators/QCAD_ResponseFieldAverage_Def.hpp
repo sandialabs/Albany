@@ -54,7 +54,7 @@ ResponseFieldAverage(Teuchos::ParameterList& p,
   this->addDependentField(weights);
   opRegion->addDependentFields(this);
 
-  this->setName(fieldName+" Response Field Average"+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+" Response Field Average" );
 
   using PHX::MDALayout;
 
@@ -149,7 +149,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-
+//Irina TOFIX reduceAll
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
+/*
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
   std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
@@ -174,6 +176,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
+*/
 }
 
 // **********************************************************************

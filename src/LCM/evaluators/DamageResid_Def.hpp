@@ -57,7 +57,7 @@ DamageResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   flux.resize(dims[0], numQPs, numDims);
 
-  this->setName("DamageResid"+PHX::TypeString<EvalT>::value);
+  this->setName("DamageResid"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -85,16 +85,16 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
+   FST::scalarMultiplyDataData<ScalarT> (flux, damageLS, damage_grad);
   RST::scale(flux,-gc);
 
-  FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
+   FST::integrate<ScalarT>(dResidual, flux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   //for (int i=0; i < source.size(); i++) source[i] *= -1.0;
-  FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+   FST::integrate<ScalarT>(dResidual, source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   
   if (workset.transientTerms && enableTransient) 
-    FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
+     FST::integrate<ScalarT>(dResidual, damage_dot, wBF, Intrepid::COMP_CPP, true); // "true" sums into
 }
 
 //**********************************************************************

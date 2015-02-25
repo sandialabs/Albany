@@ -372,8 +372,8 @@ evaluateFields(typename Traits::EvalData workset){
   if (m_num_dim == 2) {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
       for (std::size_t iqp=0; iqp<m_num_qp; iqp++) {
-        MeshScalarT *X = &coordVec(cell,iqp,0); 
-        m_source(cell, iqp) = 8.0*pi*pi*sin(2.0*pi*X[0])*cos(2.0*pi*X[1]);
+        //MeshScalarT *X = &coordVec(cell,iqp,0); 
+        m_source(cell, iqp) = 8.0*pi*pi*sin(2.0*pi*coordVec(cell,iqp,0))*cos(2.0*pi*coordVec(cell,iqp,1));
       }
     }
   }
@@ -518,7 +518,7 @@ private :
   Teuchos::ParameterList* m_source_list;
   PHX::MDField<ScalarT,Cell,Point>   m_source;
   PHX::MDField<MeshScalarT,Cell,Point,Dim> m_coordVec;
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > m_exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > m_exp_rf_kl;
   Teuchos::Array<ScalarT> m_rv;
   Teuchos::Array<MeshScalarT> m_point;
   std::string param_name_base;
@@ -541,7 +541,7 @@ TruncatedKL(Teuchos::ParameterList& p) {
     m_source_list->sublist("Truncated KL Expansion");
   
   m_exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(paramList));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(paramList));
   int num_KL = m_exp_rf_kl->stochasticDimension();
 
   param_name_base = p.get<std::string>("Source Name") + " KL Random Variable";
@@ -1092,12 +1092,12 @@ void PointSource<EvalT,Traits>::evaluateFields(typename Traits::EvalData workset
         const MeshScalarT  x  = coordVec(cell,iqp,i);
         coord.push_back(x);
       }
-      ScalarT &p_s = m_pressure_source(cell,iqp);
-      p_s = 0;
+      //ScalarT &p_s = m_pressure_source(cell,iqp);
+      m_pressure_source(cell,iqp) = 0;
       const RealType wavelet = m_wavelet->evaluateFields(time);
       for (std::size_t i=0; i<m_spatials.size(); ++i) {
         const MeshScalarT spatial = m_spatials[i]->evaluateFields(coord);
-        p_s += wavelet*spatial;
+        m_pressure_source(cell,iqp) += wavelet*spatial;
       }
     }
   }
@@ -1117,55 +1117,55 @@ Source<EvalT, Traits>::Source(Teuchos::ParameterList& p)
     Constant<EvalT,Traits>    *q = new Constant<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("ConstantSource"+PHX::TypeString<EvalT>::value);
+    this->setName("ConstantSource" );
   }
   if (Table<EvalT,Traits>::check_for_existance(source_list)) {
     Table<EvalT,Traits>    *q = new Table<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("TableSource"+PHX::TypeString<EvalT>::value);
+    this->setName("TableSource" );
   }
   if (Trigonometric<EvalT,Traits>::check_for_existance(source_list)) {
     Trigonometric<EvalT,Traits>    *q = new Trigonometric<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("TrigonometricSource"+PHX::TypeString<EvalT>::value);
+    this->setName("TrigonometricSource" );
   }
   if (TruncatedKL<EvalT,Traits>::check_for_existance(source_list)) {
     TruncatedKL<EvalT,Traits>    *q = new TruncatedKL<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("TruncatedKLSource"+PHX::TypeString<EvalT>::value);
+    this->setName("TruncatedKLSource" );
   }
   if (Quadratic<EvalT,Traits>::check_for_existance(source_list)) {
     Quadratic<EvalT,Traits>    *q = new Quadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("QuadraticSource"+PHX::TypeString<EvalT>::value);
+    this->setName("QuadraticSource" );
   }
   if (NeutronFission<EvalT,Traits>::check_for_existance(source_list)) {
     NeutronFission<EvalT,Traits>    *q = new NeutronFission<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("NeutronFissionSource"+PHX::TypeString<EvalT>::value);
+    this->setName("NeutronFissionSource" );
   }
   if (MVQuadratic<EvalT,Traits>::check_for_existance(source_list)) {
     MVQuadratic<EvalT,Traits> *q = new MVQuadratic<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("MVQuadraticSource"+PHX::TypeString<EvalT>::value);
+    this->setName("MVQuadraticSource" );
   }
   if (MVExponential<EvalT,Traits>::check_for_existance(source_list)) {
     MVExponential<EvalT,Traits> *q = new MVExponential<EvalT,Traits>(p);
     Source_Base<EvalT,Traits> *sb = q;
     m_sources.push_back(sb);
-    this->setName("MVExponentialSource"+PHX::TypeString<EvalT>::value);
+    this->setName("MVExponentialSource" );
   }
   if (PointSource<EvalT,Traits>::check_for_existance(source_list)) {
     PointSource<EvalT,Traits>       *s = new PointSource<EvalT,Traits>(source_list);
     Source_Base<EvalT,Traits> *sb = s;
     m_sources.push_back(sb);
-    this->setName("PointSource"+PHX::TypeString<EvalT>::value);
+    this->setName("PointSource" );
   }
   for (std::size_t i=0; i<m_sources.size(); ++i) {
     Source_Base<EvalT,Traits>* sb =  m_sources[i];

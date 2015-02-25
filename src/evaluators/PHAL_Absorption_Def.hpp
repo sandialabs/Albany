@@ -49,7 +49,7 @@ Absorption(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*cond_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*cond_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
@@ -68,7 +68,7 @@ Absorption(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(absorption);
-  this->setName("Absorption"+PHX::TypeString<EvalT>::value);
+  this->setName("Absorption" );
 }
 
 // **********************************************************************

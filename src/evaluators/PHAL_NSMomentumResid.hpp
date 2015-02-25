@@ -7,7 +7,7 @@
 #ifndef PHAL_NSMOMENTUMRESID_HPP
 #define PHAL_NSMOMENTUMRESID_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -51,7 +51,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> MResidual;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> MResidual;
 
   unsigned int numQPs, numDims, numNodes;
   bool enableTransient;

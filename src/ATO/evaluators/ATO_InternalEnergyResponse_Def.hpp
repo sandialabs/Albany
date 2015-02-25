@@ -11,6 +11,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
 #include "ATO_TopoTools.hpp"
+#include "PHAL_Utilities.hpp"
 
 
 template<typename EvalT, typename Traits>
@@ -83,7 +84,7 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
   this->addEvaluatedField(*stiffness_objective_tag);
   
   std::string responseID = "ATO Internal Energy";
-  this->setName(responseID + PHX::TypeString<EvalT>::value);
+  this->setName(responseID + PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -126,9 +127,7 @@ template<typename EvalT, typename Traits>
 void ATO::InternalEnergyResponse<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+  PHAL::set(this->global_response, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -141,9 +140,7 @@ void ATO::InternalEnergyResponse<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   std::vector<int> dims;
   gradX.dimensions(dims);
@@ -193,8 +190,8 @@ evaluateFields(typename Traits::EvalData workset)
       "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
 
-  this->global_response[0] += internalEnergy;
-
+  PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+  *gr += internalEnergy;
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
@@ -205,6 +202,7 @@ template<typename EvalT, typename Traits>
 void ATO::InternalEnergyResponse<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+#if 0
     // Add contributions across processors
     Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
       workset.serializerManager.template getValue<EvalT>();
@@ -216,6 +214,13 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     Teuchos::reduceAll( *workset.comm, *serializer, Teuchos::REDUCE_SUM,
       this->global_response.size(), &partial_response[0], &this->global_response[0]);
+#else
+    //amb I'm doing this for the Kokkos conversion. NB: All ctests already pass,
+    // so the mods I make to this file have not been tested.
+    //amb Deal with op[], pointers, and reduceAll.
+    PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM,
+                             this->global_response);
+#endif
 
     // Do global scattering
     PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);

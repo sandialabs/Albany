@@ -197,8 +197,8 @@ computeState(typename Traits::EvalData workset,
 
   volume_fraction_m_ = 1.0 - volume_fraction_f1_ - volume_fraction_f2_;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
       // local parameters
       mu = elastic_modulus(cell, pt)
           / (2.0 * (1.0 + poissons_ratio(cell, pt)));
@@ -206,7 +206,7 @@ computeState(typename Traits::EvalData workset,
           / (1.0 + poissons_ratio(cell, pt))
           / (1.0 - 2.0 * poissons_ratio(cell, pt));
 
-      F.fill(&def_grad(cell, pt, 0, 0));
+      F.fill(def_grad,cell, pt,0,0);
       // Right Cauchy-Green Tensor C = F^{T} * F
 
       C = Intrepid::transpose(F) * F;
@@ -252,13 +252,13 @@ computeState(typename Traits::EvalData workset,
       // Fiber orientation vectors
       //
       // fiber 1
-      for (std::size_t i = 0; i < num_dims_; ++i) {
+      for (int i = 0; i < num_dims_; ++i) {
         M1(i) = direction_f1_[i];
       }
       M1 = M1 / norm(M1);
 
       // fiber 2
-      for (std::size_t i = 0; i < num_dims_; ++i) {
+      for (int i = 0; i < num_dims_; ++i) {
         M2(i) = direction_f2_[i];
       }
       M2 = M2 / norm(M2);
@@ -329,8 +329,8 @@ computeState(typename Traits::EvalData workset,
           - damage_deriv_f2 * Intrepid::tensor(S0_f2, S0_f2);
 
       // total Cauchy stress (M, Fibers)
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) =
               volume_fraction_m_ * (1.0 - damage_m(cell, pt)) * sigma_m(i, j)
                   + volume_fraction_f1_ * (1. - damage_f1(cell, pt))
@@ -341,10 +341,10 @@ computeState(typename Traits::EvalData workset,
       }
 
       // total tangent (M, Fibers)
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
-          for (std::size_t k(0); k < num_dims_; ++k) {
-            for (std::size_t l(0); l < num_dims_; ++l) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
+          for (int k(0); k < num_dims_; ++k) {
+            for (int l(0); l < num_dims_; ++l) {
 
               tangent(cell, pt, i, j, k, l) =
                   volume_fraction_m_ * Tangent_m(i, j, k, l)

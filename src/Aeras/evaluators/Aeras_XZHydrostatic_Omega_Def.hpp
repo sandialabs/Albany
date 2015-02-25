@@ -44,7 +44,7 @@ XZHydrostatic_Omega(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(omega);
 
-  this->setName("Aeras::XZHydrostatic_Omega"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_Omega" );
 }
 
 //**********************************************************************

@@ -7,7 +7,7 @@
 #include "ATO_OptimizationProblem.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Epetra_Export.h"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 #include "ATO_TopoTools.hpp"
 
 /******************************************************************************/
@@ -320,28 +320,11 @@ ATO::OptimizationProblem::InitTopOpt()
 
   }
   Teuchos::RCP<const Epetra_BlockMap>
-      local_node_blockmap   = stateMgr->getNodalDataBlock()->getLocalMapE();
-  int num_global_elements = local_node_blockmap->NumGlobalElements();
-  int num_my_elements     = local_node_blockmap->NumMyElements();
-  int *global_node_ids    = new int[num_my_elements];
-  local_node_blockmap->MyGlobalElements(global_node_ids);
-  localMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
-  delete [] global_node_ids;
-
+    overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
   Teuchos::RCP<const Epetra_BlockMap>
-    overlap_node_blockmap = stateMgr->getNodalDataBlock()->getOverlapMapE();
-  num_global_elements = overlap_node_blockmap->NumGlobalElements();
-  num_my_elements     = overlap_node_blockmap->NumMyElements();
-  global_node_ids     = new int[num_my_elements];
-  overlap_node_blockmap->MyGlobalElements(global_node_ids);
-  overlapMap = Teuchos::rcp(new Epetra_Map(num_global_elements,num_my_elements,global_node_ids,0,*comm));
-  delete [] global_node_ids;
+    localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
 
-
-
-  overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapMap));
-  localVec   = Teuchos::rcp(new Epetra_Vector(*localMap));
-  exporter   = Teuchos::rcp(new Epetra_Export(*overlapMap, *localMap));
+  overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+  localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+  exporter   = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
 }
-
-

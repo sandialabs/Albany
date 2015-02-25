@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "PHAL_Utilities.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace AMP {
@@ -50,7 +50,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(residual_);
   
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::Device::size_type> dims;
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
   workset_size_ = dims[0];
   num_nodes_    = dims[1];
@@ -61,7 +61,7 @@ PhaseResidual(const Teuchos::ParameterList& p,
   term2_.resize(dims[0],num_qps_);
 //  term2_.initialize(0);
 
-  this->setName("PhaseResidual"+PHX::TypeString<EvalT>::value);
+  this->setName("PhaseResidual"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -93,11 +93,9 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(residual_,term1_,w_grad_bf_,Intrepid::COMP_CPP,false);
   FST::scalarMultiplyDataData<ScalarT> (term2_,rho_cp_,T_dot_);
   FST::integrate<ScalarT>(residual_,term2_,w_bf_,Intrepid::COMP_CPP,true);
-  for (int i=0; i<source_.size(); ++i)
-    source_[i] *= -1.0;
+  PHAL::scale(source_, -1.0);
   FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid::COMP_CPP,true);
-  for (int i=0; i<laser_source_.size(); ++i)
-    laser_source_[i] *= -1.0;
+  PHAL::scale(laser_source_, -1.0);
   FST::integrate<ScalarT>(residual_,laser_source_,w_bf_,Intrepid::COMP_CPP,true);  
 
 /*

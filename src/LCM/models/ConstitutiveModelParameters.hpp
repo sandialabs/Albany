@@ -7,7 +7,7 @@
 #if !defined(LCM_ConstitutiveModelParameters_hpp)
 #define LCM_ConstitutiveModelParameters_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -67,12 +67,12 @@ namespace LCM {
     ///
     /// Number of integration points
     ///
-    std::size_t num_pts_;
+    int num_pts_;
 
     ///
     /// Number of spatial dimensions
     ///
-    std::size_t num_dims_;
+    int num_dims_;
     
     ///
     /// spatial locations of integration points
@@ -126,7 +126,7 @@ namespace LCM {
     std::map<std::string, RealType> exp_param_map_;
     
     //! map of strings to exponential random fields
-    std::map<std::string, Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > > exp_rf_kl_map_;
+    std::map<std::string, Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > > exp_rf_kl_map_;
 
     //! map of strings to Arrays of values of the random variables
     std::map<std::string, Teuchos::Array<ScalarT> > rv_map_;
@@ -135,6 +135,64 @@ namespace LCM {
     const Teuchos::RCP<Albany::Layouts>& dl_;
 
     ScalarT dummy;
+
+    //Kokkos kernels
+    
+    public:
+    struct   is_constant_map_Tag{};
+    struct   no_const_map_Tag{};
+    struct   is_const_map_have_temperature_Linear_Tag{};
+    struct   is_const_map_have_temperature_Arrhenius_Tag{};
+    struct   no_const_map_have_temperature_Linear_Tag{};
+    struct   no_const_map_have_temperature_Arrhenius_Tag{};
+
+    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+    typedef Kokkos::RangePolicy<ExecutionSpace, is_constant_map_Tag>  is_const_map_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, no_const_map_Tag>  no_const_map_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, is_const_map_have_temperature_Linear_Tag>  is_const_map_have_temperature_Linear_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, is_const_map_have_temperature_Arrhenius_Tag>  is_const_map_have_temperature_Arrhenius_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, no_const_map_have_temperature_Linear_Tag>  no_const_map_have_temperature_Linear_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace, no_const_map_have_temperature_Arrhenius_Tag>  no_const_map_have_temperature_Arrhenius_Policy;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const is_constant_map_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const no_const_map_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const is_const_map_have_temperature_Linear_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const is_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const no_const_map_have_temperature_Linear_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const no_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const;
+    
+    KOKKOS_INLINE_FUNCTION
+    void compute_second_constMap(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_second_no_constMap(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_temperature_Linear(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_temperature_Arrhenius(const int cell) const;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    private:
+    typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+    std::vector<PHX::index_size_type> ddims_;
+    PHX::MDField<ScalarT,Cell,QuadPoint> second;
+    PHX::MDField<MeshScalarT,Cell,Dim> point;
+    RealType dPdT;
+    RealType ref_temp;
+    RealType pre_exp_;
+    RealType exp_param_;
+    int first;
+    ScalarT constant_value;
+    //Using raw pointers for Kokkos functors
+    Stokhos::KL::ExponentialRandomField<RealType>*  exp_rf_kl;
+    Teuchos::Array<ScalarT>* rv_map;
+#endif 
+ 
   };
 }
 

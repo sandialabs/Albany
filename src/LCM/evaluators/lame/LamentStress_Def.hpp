@@ -38,7 +38,7 @@ LamentStress(Teuchos::ParameterList& p) :
   stressName = p.get<std::string>("Stress Name")+"_old";
   this->addEvaluatedField(stressField);
 
-  this->setName("LamentStress"+PHX::TypeString<EvalT>::value);
+  this->setName("LamentStress"+PHX::typeAsString<EvalT>());
 
   // Default to getting material info form base input file (possibley overwritten later)
   lamentMaterialModelName = p.get<string>("Lame Material Model", "Elastic");
@@ -187,7 +187,7 @@ evaluateFields(typename Traits::EvalData workset)
       // and then fill data into the vectors below
 
       // new deformation gradient (the current deformation gradient as computed in the current configuration)
-      Intrepid::Tensor<ScalarT> Fnew( 3, &defGradField(cell,qp,0,0) );
+      Intrepid::Tensor<ScalarT> Fnew( 3, defGradField,cell,qp,0,0);
 
       // old deformation gradient (deformation gradient at previous load step)
       Intrepid::Tensor<ScalarT> Fold( oldDefGrad(cell,qp,0,0), oldDefGrad(cell,qp,0,1), oldDefGrad(cell,qp,0,2),

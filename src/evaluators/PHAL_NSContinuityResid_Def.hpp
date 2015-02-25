@@ -57,7 +57,7 @@ NSContinuityResid(const Teuchos::ParameterList& p) :
   // Allocate workspace
   divergence.resize(dims[0], numQPs);
 
-  this->setName("NSContinuityResid"+PHX::TypeString<EvalT>::value);
+  this->setName("NSContinuityResid" );
 }
 
 //**********************************************************************

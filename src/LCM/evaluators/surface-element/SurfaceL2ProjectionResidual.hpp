@@ -8,7 +8,7 @@
 #ifndef  SURFACE_L2_PROJECTION_RESIDUAL_HPP
 #define  SURFACE_L2_PROJECTION_RESIDUAL_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -61,13 +61,13 @@ private:
   //! Reference configuration normal
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refArea;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
   //! Cauchy Stress
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim, Dim> Cauchy_stress_;
   //! Determinant of deformation gradient
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> detF_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> detF_;
   //! Porjected hydrostatic Kirchhoff stress
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> projected_tau_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> projected_tau_;
 
 //  // weight times basis function value at integration point
 //  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;

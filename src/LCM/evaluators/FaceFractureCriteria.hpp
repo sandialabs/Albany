@@ -6,7 +6,7 @@
 #ifndef FACE_FRACTURE_CRITERIA_HPP
 #define FACE_FRACTURE_CRITERIA_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -68,7 +68,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,Face> criteriaMet;
 
     // This is in here to trick the code to run the evaluator - does absolutely nothing
-    PHX::MDField<ScalarT,Cell> temp;
+    PHX::MDField<ScalarT,Cell,QuadPoint> temp;
 
     // Face topology object
     const struct CellTopologyData_Subcell * sides;

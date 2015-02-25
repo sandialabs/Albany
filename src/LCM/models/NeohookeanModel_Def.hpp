@@ -76,8 +76,8 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor4<ScalarT> I1(Intrepid::identity_1<ScalarT>(num_dims_));
   Intrepid::Tensor4<ScalarT> I3(Intrepid::identity_3<ScalarT>(num_dims_));
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       kappa =
           elastic_modulus(cell, pt)
               / (3. * (1. - 2. * poissons_ratio(cell, pt)));
@@ -86,15 +86,15 @@ computeState(typename Traits::EvalData workset,
       Jm53 = std::pow(J(cell, pt), -5. / 3.);
       Jm23 = Jm53 * J(cell, pt);
 
-      F.fill(&def_grad(cell, pt, 0, 0));
+      F.fill(def_grad,cell, pt,0,0);
       b = F * transpose(F);
       mubar = (1.0 / 3.0) * mu * Jm23 * Intrepid::trace(b);
 
       sigma = 0.5 * kappa * (J(cell, pt) - 1. / J(cell, pt)) * I
           + mu * Jm53 * Intrepid::dev(b);
 
-      for (std::size_t i = 0; i < num_dims_; ++i) {
-        for (std::size_t j = 0; j < num_dims_; ++j) {
+      for (int i = 0; i < num_dims_; ++i) {
+        for (int j = 0; j < num_dims_; ++j) {
           stress(cell, pt, i, j) = sigma(i, j);
         }
       }
@@ -120,10 +120,10 @@ computeState(typename Traits::EvalData workset,
                 - 2.0 / 3.0 * smag
                     * (Intrepid::tensor(n, I) + Intrepid::tensor(I, n));
 
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          for (std::size_t j = 0; j < num_dims_; ++j) {
-            for (std::size_t k = 0; k < num_dims_; ++k) {
-              for (std::size_t l = 0; l < num_dims_; ++l) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
+            for (int k = 0; k < num_dims_; ++k) {
+              for (int l = 0; l < num_dims_; ++l) {
                 tangent(cell, pt, i, j, k, l) = dsigmadb(i, j, k, l);
               }
             }
@@ -134,16 +134,16 @@ computeState(typename Traits::EvalData workset,
   }
 
   if (have_temperature_) {
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        F.fill(&def_grad(cell,pt,0,0));
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
+        F.fill(def_grad,cell,pt,0,0);
         ScalarT J = Intrepid::det(F);
-        sigma.fill(&stress(cell,pt,0,0));
+        sigma.fill(stress,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
 
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          for (std::size_t j = 0; j < num_dims_; ++j) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
             stress(cell, pt, i, j) = sigma(i, j);
           }
         }

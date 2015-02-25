@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -40,7 +40,7 @@ StokesContravarientMetricTensor(const Teuchos::ParameterList& p,
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
 
-  this->setName("StokesContravarientMetricTensor"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesContravarientMetricTensor"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -67,10 +67,7 @@ evaluateFields(typename Traits::EvalData workset)
   //int containerSize = workset.numCells;
     */
   
-  // setJacobian only needs to be RealType since the data type is only
-  //  used internally for Basis Fns on reference elements, which are
-  //  not functions of coordinates. This save 18min of compile time!!!
-  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+  Intrepid::CellTools<MeshScalarT>::setJacobian(jacobian, refPoints, coordVec, *cellType);
   Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {

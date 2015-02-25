@@ -20,7 +20,7 @@ Please remove when issue is resolved
 
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
-#include "Adapt_NodalDataBlock.hpp"
+#include "Adapt_NodalDataVector.hpp"
 #include "Petra_Converters.hpp"
 #include "EpetraExt_RowMatrixOut.h"
 
@@ -164,9 +164,8 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   Albany::StateManager& stateMgr = app->getStateMgr();
 
   // construct epetra maps for node ids. 
-//  Teuchos::RCP<const Epetra_Comm> comm = Albany::createEpetraCommFromTeuchosComm(_subProblems[0].app->getComm());
   Teuchos::RCP<const Epetra_BlockMap>
-    local_node_blockmap   = stateMgr.getNodalDataBlock()->getLocalMapE();
+    local_node_blockmap   = stateMgr.getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
   int num_global_elements = local_node_blockmap->NumGlobalElements();
   int num_my_elements     = local_node_blockmap->NumMyElements();
   int *global_node_ids    = new int[num_my_elements]; 
@@ -175,7 +174,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   delete [] global_node_ids;
 
   Teuchos::RCP<const Epetra_BlockMap>
-    overlap_node_blockmap = stateMgr.getNodalDataBlock()->getOverlapMapE();
+    overlap_node_blockmap = stateMgr.getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
   num_global_elements = overlap_node_blockmap->NumGlobalElements();
   num_my_elements     = overlap_node_blockmap->NumMyElements();
   global_node_ids     = new int[num_my_elements]; 
@@ -357,7 +356,7 @@ ATO::Solver::copyTopologyIntoParameter( const double* p, SolverSubSolver& subSol
 
   // save topology to nodal data for output sake
   Teuchos::RCP<Albany::NodeFieldContainer> 
-    nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
+    nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
   const Teuchos::RCP<const Teuchos_Comm>
     commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
@@ -415,7 +414,7 @@ ATO::Solver::copyTopologyIntoStateMgr( const double* p, Albany::StateManager& st
     ltopo[lid] = p[lid];
 
   Teuchos::RCP<Albany::NodeFieldContainer> 
-    nodeContainer = stateMgr.getNodalDataBlock()->getNodeContainer();
+    nodeContainer = stateMgr.getNodalDataBase()->getNodeContainer();
 
   const Teuchos::RCP<const Teuchos_Comm>
     commT = Albany::createTeuchosCommFromEpetraComm(overlapTopoVec->Comm());
@@ -970,8 +969,6 @@ ATO::SpatialFilter::buildOperator(
              Teuchos::RCP<Epetra_Export>       exporter)
 /******************************************************************************/
 {
-
-    Teuchos::RCP<Adapt::NodalDataBlock> node_data = app->getStateMgr().getNodalDataBlock();
 
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
           wsElNodeID = app->getDiscretization()->getWsElNodeID();

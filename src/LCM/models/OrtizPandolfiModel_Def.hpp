@@ -125,16 +125,16 @@ computeState(typename Traits::EvalData workset,
   //  if (typeid(ScalarT) == typeid(RealType)) print = true;
   //  std::cout.precision(15);
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       
       //current basis vector
-      Intrepid::Vector<ScalarT> g_0(3, &basis(cell, pt, 0, 0));
-      Intrepid::Vector<ScalarT> g_1(3, &basis(cell, pt, 1, 0));
-      Intrepid::Vector<ScalarT> n(3, &basis(cell, pt, 2, 0));
+      Intrepid::Vector<ScalarT> g_0(3, basis,cell, pt, 0, 0);
+      Intrepid::Vector<ScalarT> g_1(3, basis,cell, pt, 1, 0);
+      Intrepid::Vector<ScalarT> n(3, basis,cell, pt, 2, 0);
 
       //current jump vector - move PHX::MDField into Intrepid::Vector
-      Intrepid::Vector<ScalarT> jumpPt(3, &jump(cell, pt, 0));
+      Intrepid::Vector<ScalarT> jumpPt(3, jump,cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
       Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(3));

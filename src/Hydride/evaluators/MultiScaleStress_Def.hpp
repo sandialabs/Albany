@@ -51,7 +51,7 @@ MultiScaleStressBase(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("MultiScaleStress" + PHX::TypeString<EvalT>::value);
+  this->setName("MultiScaleStress" + PHX::typeAsString<EvalT>());
 
 }
 

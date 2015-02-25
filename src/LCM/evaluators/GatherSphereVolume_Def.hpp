@@ -20,7 +20,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p,
   numVertices(0), worksetSize(0)
 {  
   this->addEvaluatedField(sphereVolume);
-  this->setName("Gather Sphere Volume"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Sphere Volume"+PHX::typeAsString<EvalT>());
 }
 
 template<typename EvalT, typename Traits>
@@ -30,7 +30,7 @@ GatherSphereVolume(const Teuchos::ParameterList& p) :
   numVertices(0), worksetSize(0)
 {
   this->addEvaluatedField(sphereVolume);
-  this->setName("Gather Sphere Volume"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Sphere Volume"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -56,15 +56,17 @@ void GatherSphereVolume<EvalT, Traits>::evaluateFields(typename Traits::EvalData
 
   TEUCHOS_TEST_FOR_EXCEPTION(wsSphereVolume.is_null(), std::logic_error, "\n****Error:  Sphere Volume field not found in GatherSphereVolume evaluator!\n");
 
-  for (std::size_t cell=0; cell < numCells; ++cell) {
-    sphereVolume(cell) = wsSphereVolume[cell];
+  for (int cell=0; cell < numCells; ++cell) {
+   for (int v=0; v<sphereVolume.dimension(1);v++)
+    sphereVolume(cell,v) = wsSphereVolume[cell,v];
   }
 
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to calculations on singular elements.
-  for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
-    sphereVolume(cell) = sphereVolume(0);
+  for (int cell=numCells; cell < worksetSize; ++cell) {
+   for (int v=0; v<sphereVolume.dimension(1);v++)
+    sphereVolume(cell,v) = sphereVolume(0,v);
   }
 }
 }
