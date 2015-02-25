@@ -13,9 +13,6 @@
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
-//string for storing name of first problem, for error checking
-std::string problem_name0;
-
 LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
@@ -36,8 +33,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   // Get names of individual model xml input files from problem parameterlist
   Teuchos::Array<std::string>
   model_filenames =
-      coupled_system_params.get<Teuchos::Array<std::string> >(
-          "Model XML Files");
+    coupled_system_params.get<Teuchos::Array<std::string> >("Model XML Files");
 
   //number of models
   num_models_ = model_filenames.size();
@@ -60,6 +56,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
   material_dbs_.resize(num_models_);
 
+  //string for storing name of first problem, for error checking
+  std::string
+  problem_name_0 = "";
+
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
   for (int m = 0; m < num_models_; ++m) {
@@ -80,25 +80,22 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     std::string &
     problem_name = problem_params_m->get("Name", "");
+
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
 
-    if (m == 0) problem_name0 = problem_params_m->get("Name", "");
+    if (m == 0) {
+      problem_name_0 = problem_params_m->get("Name", "");
+    }
 
-    if (problem_name0.compare(problem_name)) {
-      std::cerr << "\nError in LCM::CoupledSchwarz constructor: ";
-      std::cerr << "attempting go couple different models ";
-      std::cerr << problem_name0 << " and " << problem_name << "!\n\n";
-      exit(1);
-      //FIXME: the above is not a very elegant way to exit,
-      // but somehow the below line using Teuchos
-      // exceptions does not seem to work...
-      /*
-       TEUCHOS_TEST_FOR_EXCEPTION(
-       true, std::runtime_error,
-       '\n' << "Error in LCM::CoupledSchwarz constructor:  " <<
-       "attempting go couple different models " << problem_name0 << " and " <<
-       problem_name << '\n');
-       */
+    if (problem_name_0.compare(problem_name)) {
+
+      std::ostringstream msg;
+      msg << "\nError in " << __PRETTY_FUNCTION__ << "  attempting to couple ";
+      msg << "different models " << problem_name_0 << " and ";
+      msg << problem_name << ".\n";
+
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, msg.str());
+
     }
 
     std::ostringstream
@@ -152,11 +149,8 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
         apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT();
 
     solver_inargs_[m] = models_[m]->createInArgs();
-
     solver_outargs_[m] = models_[m]->createOutArgs();
-
     num_params_[m] = solver_inargs_[m].Np();
-
     num_responses_[m] = solver_outargs_[m].Ng();
 
     if (m == 0) {
@@ -164,20 +158,21 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       num_params_partial_sum_[m] = num_params_[m];
     }
     else {
-      num_responses_partial_sum_[m] = num_responses_partial_sum_[m - 1]
-          + num_responses_[m];
-      num_params_partial_sum_[m] = num_params_partial_sum_[m - 1]
-          + num_params_[m];
+      num_responses_partial_sum_[m] =
+          num_responses_partial_sum_[m - 1] + num_responses_[m];
+
+      num_params_partial_sum_[m] =
+          num_params_partial_sum_[m - 1] + num_params_[m];
     }
 
     //Does it make sense for num_params_total and num_responses_total to be
     //the sum of these values for each model?  I guess so.
     num_params_total_ += num_params_[m];
-
     num_responses_total_ += num_responses_[m];
   }
 
-  // Create sacado parameter vectors of appropriate size for use in evalModelImpl
+  // Create sacado parameter vectors of appropriate size
+  // for use in evalModelImpl
   sacado_param_vecs_.resize(num_models_);
 
   for (int m = 0; m < num_models_; ++m) {
@@ -191,7 +186,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   //created from the entries of the disc_maps array (individual maps).
   coupled_disc_map_ = createCoupledMap(disc_maps_, commT_);
 
-  std::cout << "LCM::CoupledSchwarz constructor DEBUG: created coupled map!\n";
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << ": created coupled map!\n";
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // For debug, write the coupled map to matrix market file to
