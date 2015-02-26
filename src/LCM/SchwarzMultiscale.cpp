@@ -153,17 +153,14 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     num_params_[m] = solver_inargs_[m].Np();
     num_responses_[m] = solver_outargs_[m].Ng();
 
-    if (m == 0) {
-      num_responses_partial_sum_[m] = num_responses_[m];
-      num_params_partial_sum_[m] = num_params_[m];
-    }
-    else {
-      num_responses_partial_sum_[m] =
-          num_responses_partial_sum_[m - 1] + num_responses_[m];
+    int const
+    sum_responses = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-      num_params_partial_sum_[m] =
-          num_params_partial_sum_[m - 1] + num_params_[m];
-    }
+    int const
+    sum_params = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
+
+    num_responses_partial_sum_[m] = num_responses_[m] + sum_responses;
+    num_params_partial_sum_[m] = num_params_[m] + sum_params;
 
     //Does it make sense for num_params_total and num_responses_total to be
     //the sum of these values for each model?  I guess so.
@@ -203,28 +200,24 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   // Calling allocateVectors() will set x and x_dot in nominal_values_
   allocateVectors();
 
-  //set p_init in nominal_values_
-  // TODO: Check if correct nominal values for parameters
+  // set p_init in nominal_values_
+  // TODO: Check if these are correct nominal values for parameters
   for (int l = 0; l < num_params_total_; ++l) {
-    if (l < num_params_partial_sum_[0]) {
-      nominal_values_.set_p(l, solver_inargs_[0].get_p(l));
-    }
-    else {
-      for (int m = 1; m < num_models_; ++m) {
+    for (int m = 0; m < num_models_; ++m) {
+      int const
+      lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-        bool const
-        in_range = l >= num_params_partial_sum_[m - 1] &&
-        l < num_params_partial_sum_[m];
+      int const
+      hi = num_params_partial_sum_[m];
 
-        if (in_range == true) {
-          int const
-          k = l - num_params_partial_sum_[m - 1];
-          nominal_values_.set_p(l, solver_inargs_[m].get_p(k));
-        }
+      bool const
+      in_range = lo <= l && l < hi;
+
+      if (in_range == true) {
+        nominal_values_.set_p(l, solver_inargs_[m].get_p(l - lo));
       }
     }
   }
-
   //end setting of nominal values
 
   std::cout << "Set nominal_values_! \n";
@@ -342,33 +335,36 @@ LCM::SchwarzMultiscale::get_f_space() const
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
-    {
+{
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_params_total_ < 0,
+      l >= num_params_total_ || l < 0,
       Teuchos::Exceptions::InvalidParameter,
       "\nError!  LCM::SchwarzMultiscale::get_p_space():  " <<
       "Invalid parameter index l = " << l << '\n');
 
-  if (l < num_params_partial_sum_[0]) {
-    return models_[0]->get_p_space(l);
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          l >= num_params_partial_sum_[m - 1] && l < num_params_partial_sum_[m];
-      if (in_range == true) {
-        return models_[m]->get_p_space(l - num_params_partial_sum_[m - 1]);
-      }
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+    int const
+    hi = num_params_partial_sum_[m];
+
+    bool const
+    in_range = lo <= l && l < hi;
+
+    if (in_range == true) {
+      return models_[m]->get_p_space(l - lo);
     }
   }
+
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
-    {
+{
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   TEUCHOS_TEST_FOR_EXCEPTION(
@@ -378,19 +374,22 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
       "Error!  LCM::SchwarzMultiscale::get_g_space():  " <<
       "Invalid response index l = " << l << '\n');
 
-  if (l < num_responses_partial_sum_[0]) {
-    return models_[0]->get_g_space(l);
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          l >= num_params_partial_sum_[m - 1] && l < num_params_partial_sum_[m];
-      if (in_range == true) {
-        return models_[m]->get_g_space(l - num_responses_partial_sum_[m - 1]);
-      }
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
+
+    int const
+    hi = num_responses_partial_sum_[m];
+
+    bool const
+    in_range = lo <= l && l < hi;
+
+    if (in_range == true) {
+      return models_[m]->get_g_space(l - lo);
     }
   }
+
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string> >
@@ -405,19 +404,22 @@ LCM::SchwarzMultiscale::get_p_names(int l) const
       "Error!  LCM::SchwarzMultiscale::get_p_names():  " <<
       "Invalid parameter index l = " << l << '\n');
 
-  if (l < num_params_partial_sum_[0]) {
-    return models_[0]->get_p_names(l);
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          l >= num_params_partial_sum_[m - 1] && l < num_params_partial_sum_[m];
-      if (in_range == true) {
-        return models_[m]->get_p_names(l - num_params_partial_sum_[m - 1]);
-      }
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+    int const
+    hi = num_params_partial_sum_[m];
+
+    bool const
+    in_range = lo <= l && l < hi;
+
+    if (in_range == true) {
+      return models_[m]->get_p_names(l - lo);
     }
   }
+
+  return Teuchos::null;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>

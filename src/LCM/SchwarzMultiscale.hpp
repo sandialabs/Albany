@@ -165,7 +165,8 @@ private:
   int
   num_responses_total_;
     
-  mutable Teuchos::Array<Teuchos::Array<ParamVec> >sacado_param_vecs_;
+  mutable Teuchos::Array<Teuchos::Array<ParamVec> >
+  sacado_param_vecs_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
   solver_inargs_;
