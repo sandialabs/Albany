@@ -59,7 +59,8 @@ GatherEigenDataBase(const Teuchos::ParameterList& p,
 
   }
   
-  this->setName("Gather Eigenvectors 2D"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather EigenData");
+
 }
 
 // **********************************************************************
@@ -194,8 +195,10 @@ void GatherEigenData<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 { 
 
+/*
   if(nEigenvectors == 0) return;
 
+  //typename PHAL::Ref<ScalarT>::type;
   ScalarT* valptr;
 
   if(workset.eigenDataPtr != Teuchos::null) {
@@ -260,6 +263,7 @@ evaluateFields(typename Traits::EvalData workset)
          }
       }
    }
+*/
 }
 
 }
