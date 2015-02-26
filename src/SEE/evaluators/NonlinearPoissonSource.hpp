@@ -42,7 +42,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> coord_;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
 
   PHX::MDField<ScalarT,Cell,Node> source_;
 

@@ -63,8 +63,25 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_TRI_Cn_FEM< RealType, Field_t >(deg, Intrepid::POINTTYPE_SPECTRAL) );
    }
 
-   // 2D quadrilateral elements
+   // 2D quadrilateral elements -- non spectral basis 
    else if (name == "Quadrilateral" || name == "ShellQuadrilateral")
+   {
+#ifdef ALBANY_VERBOSE
+     cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
+#endif
+     if (numNodes == 4)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM< RealType, Field_t >() );
+     else if (numNodes == 9)
+       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM< RealType, Field_t >() );
+     else
+       TEUCHOS_TEST_FOR_EXCEPTION(
+         true,
+         Teuchos::Exceptions::InvalidParameter,
+         "Albany::ProblemUtils::getIntrepidBasis quadrilateral/shellquadrilateral element with " << numNodes << " nodes is not supported");
+    }
+   // 2D quadrilateral elements -- spectral basis 
+   // FIXME: extend this logic to other element types besides quads (IKT, 2/25/15).
+   else if (name == "SpectralQuadrilateral" || name == "SpectralShellQuadrilateral")
    {
      // Compute the element degree
      int deg = (int) std::sqrt((double)numNodes);
@@ -76,12 +93,7 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
        Teuchos::Exceptions::InvalidParameter,
        "Albany::ProblemUtils::getIntrepidBasis number of nodes for quadrilateral element is not perfect square > 1");
      --deg;
-     if (deg == 1)
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C1_FEM< RealType, Field_t >() );
-     else if (deg == 2)
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_C2_FEM< RealType, Field_t >() );
-     else
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< RealType, Field_t >(deg, Intrepid::POINTTYPE_SPECTRAL) );
+     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_QUAD_Cn_FEM< RealType, Field_t >(deg, Intrepid::POINTTYPE_SPECTRAL) );
    }
 
    // 3D tetrahedron elements
