@@ -190,15 +190,15 @@ computeState(typename Traits::EvalData workset,
 
   Intrepid::Vector<ScalarT> M1(num_dims_), M2(num_dims_);
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
       // local parameters
       kappa = elastic_modulus(cell, pt)
           / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       Jm53 = std::pow(J(cell, pt), -5. / 3.);
       Jm23 = std::pow(J(cell, pt), -2. / 3.);
-      F.fill(&def_grad(cell, pt, 0, 0));
+      F.fill(def_grad,cell, pt,0,0);
 
       // compute deviatoric stress
       b = F * Intrepid::transpose(F);
@@ -228,13 +228,13 @@ computeState(typename Traits::EvalData workset,
       // Fiber orientation vectors
       //
       // fiber 1
-      for (std::size_t i = 0; i < num_dims_; ++i) {
+      for (int i = 0; i < num_dims_; ++i) {
         M1(i) = direction_f1_[i];
       }
       M1 = M1 / norm(M1);
 
       // fiber 2
-      for (std::size_t i = 0; i < num_dims_; ++i) {
+      for (int i = 0; i < num_dims_; ++i) {
         M2(i) = direction_f2_[i];
       }
       M2 = M2 / norm(M2);
@@ -278,8 +278,8 @@ computeState(typename Traits::EvalData workset,
           * (1 - std::exp(-alpha_f2 / saturation_f2_));
 
       // total Cauchy stress (M, Fibers)
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) =
               volume_fraction_m_ * (1 - damage_m(cell, pt)) * sigma_m(i, j)
                   + volume_fraction_f1_ * (1 - damage_f1(cell, pt))

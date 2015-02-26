@@ -7,7 +7,7 @@
 #ifndef AERAS_DOFLAPLACE_INTERPOLATION_LEVELS_HPP
 #define AERAS_DOFLAPLACE_INTERPOLATION_LEVELS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -45,9 +45,9 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,Level> val_node;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> val_node;
   //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Node,Dim,Dim> GradGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> GradGradBF;
 
   // Output:
   //! Values at quadrature points

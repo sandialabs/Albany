@@ -7,7 +7,7 @@
 #ifndef PHAL_NSMATERIAL_PROPERTY_HPP
 #define PHAL_NSMATERIAL_PROPERTY_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -52,7 +52,7 @@ private:
   PHX::MDField<ScalarT> sigma_a;
   PHX::MDField<ScalarT> sigma_s;
   PHX::MDField<ScalarT> mu;
-  PHX::DataLayout::size_type rank;
+  PHX::index_size_type rank;
   std::vector<PHX::DataLayout::size_type> dims;
 
   // material property types
@@ -75,7 +75,7 @@ private:
   ScalarT ref_temp;
 
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;

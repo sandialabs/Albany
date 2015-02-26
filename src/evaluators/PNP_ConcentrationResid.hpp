@@ -7,7 +7,7 @@
 #ifndef PNP_CONCENTRATIONRESID_HPP
 #define PNP_CONCENTRATIONRESID_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -47,7 +47,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PotentialGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> Concentration_dot;
-  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> ConcentrationGrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> ConcentrationGrad;
   //PHX::MDField<ScalarT,Cell,QuadPoint> Permittivity;
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiGrad;
   //PHX::MDField<ScalarT,Cell,QuadPoint,Dim> PhiFlux;

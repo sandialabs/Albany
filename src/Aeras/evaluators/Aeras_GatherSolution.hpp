@@ -7,7 +7,7 @@
 #ifndef AERAS_GATHER_SOLUTION_HPP
 #define AERAS_GATHER_SOLUTION_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -47,8 +47,8 @@ public:
   
 protected:
 
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val_dot;
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
   const int numNodes;
   const int numDims;
   const int numLevels;

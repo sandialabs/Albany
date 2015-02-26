@@ -243,7 +243,7 @@ ProjectIPtoNodalFieldBase (Teuchos::ParameterList& p,
 
   this->addDependentField(wBF);
   this->addDependentField(BF);
-  this->setName("ProjectIPtoNodalField" + PHX::TypeString<EvalT>::value);
+  this->setName("ProjectIPtoNodalField" + PHX::typeAsString<EvalT>());
 
   // Get and validate ProjectIPtoNodalField parameter list.
   Teuchos::ParameterList*

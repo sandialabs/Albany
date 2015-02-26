@@ -7,7 +7,7 @@
 #define CapImplicitModel_hpp
 
 #include <Intrepid_MiniTensor.h>
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -59,6 +59,15 @@ namespace LCM
   computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+
+  virtual
+  void
+  computeStateParallel(typename Traits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields){
+         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+ }
+
  
   private:
       

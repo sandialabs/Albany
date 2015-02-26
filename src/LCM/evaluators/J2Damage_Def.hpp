@@ -55,7 +55,7 @@ namespace LCM {
     numQPs = dims[1];
     numDims = dims[2];
     //int worksetSize = dims[0];
-    std::size_t worksetSize = dims[0];
+    int worksetSize = dims[0];
 
     this->addDependentField(defgrad);
     this->addDependentField(J);
@@ -81,7 +81,7 @@ namespace LCM {
     FpinvT.resize(worksetSize, numQPs, numDims, numDims);
     Cpinv.resize(worksetSize, numQPs, numDims, numDims);
 
-    this->setName("Stress" + PHX::TypeString<EvalT>::value);
+    this->setName("Stress" + PHX::typeAsString<EvalT>());
 
   }
 
@@ -150,12 +150,12 @@ namespace LCM {
     FST::tensorMultiplyDataData<ScalarT>(Cpinv, Fpinv, FpinvT);
 
     // std::cout << "F:\n";
-    // for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    // for (int cell=0; cell < workset.numCells; ++cell)
     // {
-    //   for (std::size_t qp=0; qp < numQPs; ++qp)
+    //   for (int qp=0; qp < numQPs; ++qp)
     //   {
-    //     for (std::size_t i=0; i < numDims; ++i)
-    //    for (std::size_t j=0; j < numDims; ++j)
+    //     for (int i=0; i < numDims; ++i)
+    //    for (int j=0; j < numDims; ++j)
     //      std::cout << Sacado::ScalarValue<ScalarT>::eval(defgrad(cell,qp,i,j)) << " ";
     //   }
     //   std::cout << std::endl;
@@ -163,12 +163,12 @@ namespace LCM {
     // std::cout << std::endl;
 
     // std::cout << "Fpold:\n";
-    // for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    // for (int cell=0; cell < workset.numCells; ++cell)
     // {
-    //   for (std::size_t qp=0; qp < numQPs; ++qp)
+    //   for (int qp=0; qp < numQPs; ++qp)
     //   {
-    //     for (std::size_t i=0; i < numDims; ++i)
-    //    for (std::size_t j=0; j < numDims; ++j)
+    //     for (int i=0; i < numDims; ++i)
+    //    for (int j=0; j < numDims; ++j)
     //      std::cout << Sacado::ScalarValue<ScalarT>::eval(Fpold(cell,qp,i,j)) << " ";
     //   }
     //   std::cout << std::endl;
@@ -176,20 +176,20 @@ namespace LCM {
     // std::cout << std::endl;
 
     // std::cout << "Cpinv:\n";
-    // for (std::size_t cell=0; cell < workset.numCells; ++cell)
+    // for (int cell=0; cell < workset.numCells; ++cell)
     // {
-    //   for (std::size_t qp=0; qp < numQPs; ++qp)
+    //   for (int qp=0; qp < numQPs; ++qp)
     //   {
-    //     for (std::size_t i=0; i < numDims; ++i)
-    //    for (std::size_t j=0; j < numDims; ++j)
+    //     for (int i=0; i < numDims; ++i)
+    //    for (int j=0; j < numDims; ++j)
     //      std::cout << Sacado::ScalarValue<ScalarT>::eval(Cpinv(cell,qp,i,j)) << " ";
     //   }
     //   std::cout << std::endl;
     // }
     // std::cout << std::endl;
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < numQPs; ++qp) {
         // local parameters
         kappa = bulkModulus(cell, qp);
         mu = shearModulus(cell, qp);
@@ -206,10 +206,10 @@ namespace LCM {
 
         be.clear();
         // Compute Trial State
-        for (std::size_t i = 0; i < numDims; ++i)
-          for (std::size_t j = 0; j < numDims; ++j)
-            for (std::size_t p = 0; p < numDims; ++p)
-              for (std::size_t q = 0; q < numDims; ++q)
+        for (int i = 0; i < numDims; ++i)
+          for (int j = 0; j < numDims; ++j)
+            for (int p = 0; p < numDims; ++p)
+              for (int q = 0; q < numDims; ++q)
                 be(i, j) += Jm23 * defgrad(cell, qp, i, p)
                     * Cpinv(cell, qp, p, q) * defgrad(cell, qp, j, q);
 
@@ -290,15 +290,15 @@ namespace LCM {
           expA = Intrepid::exp<ScalarT>(A);
 
           // std::cout << "expA: \n";
-          // for (std::size_t i=0; i < numDims; ++i)
-          //   for (std::size_t j=0; j < numDims; ++j)
+          // for (int i=0; i < numDims; ++i)
+          //   for (int j=0; j < numDims; ++j)
           //     std::cout << Sacado::ScalarValue<ScalarT>::eval(expA(i,j)) << " ";
           // std::cout << std::endl;
 
-          for (std::size_t i = 0; i < numDims; ++i) {
-            for (std::size_t j = 0; j < numDims; ++j) {
+          for (int i = 0; i < numDims; ++i) {
+            for (int j = 0; j < numDims; ++j) {
               Fp(cell, qp, i, j) = 0.0;
-              for (std::size_t p = 0; p < numDims; ++p) {
+              for (int p = 0; p < numDims; ++p) {
                 Fp(cell, qp, i, j) += expA(i, p) * Fpold(cell, qp, p, j);
               }
             }
@@ -307,8 +307,8 @@ namespace LCM {
           // set state variables to old values
           dp(cell, qp) = 0.0;
           eqps(cell, qp) = eqpsold(cell, qp);
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
+          for (int i = 0; i < numDims; ++i)
+            for (int j = 0; j < numDims; ++j)
               Fp(cell, qp, i, j) = Fpold(cell, qp, i, j);
         }
 
@@ -316,8 +316,8 @@ namespace LCM {
         p = 0.5 * kappa * (J(cell, qp) - 1 / (J(cell, qp)));
 
         // compute stress
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = s(i, j) / J(cell, qp);
             //stress(cell,qp,i,j) = s(i,j) / Je;
           }
@@ -325,8 +325,8 @@ namespace LCM {
         }
 
         // scale stress by damage
-        for (std::size_t i = 0; i < numDims; ++i)
-          for (std::size_t j = 0; j < numDims; ++j)
+        for (int i = 0; i < numDims; ++i)
+          for (int j = 0; j < numDims; ++j)
             stress(cell, qp, i, j) *= H2;
 
         // update be
@@ -346,8 +346,8 @@ namespace LCM {
           std::cout << "phi    : " << phi << std::endl;
           std::cout << "H2     : " << H2 << std::endl;
           std::cout << "stress : ";
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
+          for (int i = 0; i < numDims; ++i)
+            for (int j = 0; j < numDims; ++j)
               std::cout << stress(cell, qp, i, j) << " ";
           std::cout << std::endl;
           std::cout << "energy : " << energy(cell, qp) << std::endl;

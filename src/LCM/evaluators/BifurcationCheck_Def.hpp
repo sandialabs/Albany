@@ -32,7 +32,7 @@ namespace LCM {
     this->addEvaluatedField(ellipticity_flag_);
     this->addEvaluatedField(direction_);
 
-    this->setName("BifurcationCheck"+PHX::TypeString<EvalT>::value);
+    this->setName("BifurcationCheck"+PHX::typeAsString<EvalT>());
   }
 
   //----------------------------------------------------------------------------
@@ -55,15 +55,15 @@ namespace LCM {
     Intrepid::Tensor4<ScalarT> tangent(num_dims_);
 
     // Compute DefGrad tensor from displacement gradient
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
 
-        tangent.fill( &tangent_(cell,pt,0,0,0,0) );
+        tangent.fill( tangent_,cell,pt,0,0,0,0);
         ellipticity_flag_(cell,pt) = 0;
 
         // Intrepid::check_ellipticity(tan);
 
-        for (std::size_t i(0); i < num_dims_; ++i) {
+        for (int i(0); i < num_dims_; ++i) {
           direction_(cell,pt,i) = direction(i);
         }
       }

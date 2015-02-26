@@ -42,7 +42,7 @@ ContravariantTargetMetricTensor(const Teuchos::ParameterList& p, const Teuchos::
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
 
-  this->setName("ContravariantTargetMetricTensor"+PHX::TypeString<EvalT>::value);
+  this->setName("ContravariantTargetMetricTensor"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

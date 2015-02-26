@@ -55,7 +55,7 @@ TLPoroStress(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(porePressure);
   this->addEvaluatedField(totstress);
 
-  this->setName("TLPoroStress"+PHX::TypeString<EvalT>::value);
+  this->setName("TLPoroStress"+PHX::typeAsString<EvalT>());
 
 }
 
@@ -84,28 +84,32 @@ evaluateFields(typename Traits::EvalData workset)
 
   if (numDims == 1) {
     Intrepid::FunctionSpaceTools::scalarMultiplyDataData<ScalarT>(totstress, J, stress);
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-        	  totstress(cell, qp) = stress(cell, qp) - biotCoefficient(cell,qp)*porePressure(cell,qp);
+    for (int cell=0; cell < workset.numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
+              for (int dim=0; dim<numDims; ++ dim) {
+                  for (int j=0; j<numDims; ++ j) {
+        	    totstress(cell, qp, dim, j) = stress(cell, qp, dim, j) - biotCoefficient(cell,qp)*porePressure(cell,qp);
+                 }
+              }
           }
     }
   }
   else
     {
 
-	  RST::inverse(F_inv, defGrad);
-	  RST::transpose(F_invT, F_inv);
-	  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-	  FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
-	  FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
-	  FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
+	   RST::inverse(F_inv, defGrad);
+	   RST::transpose(F_invT, F_inv);
+	   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JpF_invT, porePressure,JF_invT);
+	   FST::scalarMultiplyDataData<ScalarT>(JBpF_invT, biotCoefficient, JpF_invT);
+  	   FST::tensorMultiplyDataData<ScalarT>(totstress, stress,JF_invT); // Cauchy to 1st PK
 
     // Compute Stress
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim<numDims; ++ dim) {
-    		  for (std::size_t j=0; j<numDims; ++ j) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim<numDims; ++ dim) {
+    		  for (int j=0; j<numDims; ++ j) {
 	         totstress(cell,qp,dim,j) -= JBpF_invT(cell,qp, dim,j);
     		  }
     	  }

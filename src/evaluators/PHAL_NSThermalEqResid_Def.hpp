@@ -91,7 +91,7 @@ NSThermalEqResid(const Teuchos::ParameterList& p) :
   flux.resize(dims[0], numQPs, numDims);
   convection.resize(dims[0], numQPs);
  
-  this->setName("NSThermalEqResid"+PHX::TypeString<EvalT>::value);
+  this->setName("NSThermalEqResid" );
 }
 
 //**********************************************************************

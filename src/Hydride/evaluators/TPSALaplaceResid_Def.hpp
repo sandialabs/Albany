@@ -31,7 +31,7 @@ TPSALaplaceResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Lay
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("LaplaceResid" + PHX::TypeString<EvalT>::value);
+  this->setName("LaplaceResid" + PHX::typeAsString<EvalT>());
 
 }
 

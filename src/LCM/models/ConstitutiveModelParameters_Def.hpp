@@ -152,7 +152,19 @@ ConstitutiveModelParameters(Teuchos::ParameterList& p,
     this->addEvaluatedField(it->second);
   }
   this->setName(
-      "Constitutive Model Parameters" + PHX::TypeString<EvalT>::value);
+      "Constitutive Model Parameters" + PHX::typeAsString<EvalT>());
+
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+    ddims_.push_back(24);
+   int num_cells=dims[0];
+    point=PHX::MDField<MeshScalarT,Cell,Dim>("point",Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(num_cells,num_dims_)));
+    point.setFieldData( PHX::KokkosViewFactory<MeshScalarT,PHX::Device>::buildView(point.fieldTag(),ddims_));
+    second=PHX::MDField<ScalarT,Cell, QuadPoint>("second",Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint>(num_cells, num_pts_)));
+    second.setFieldData(ViewFactory::buildView(second.fieldTag(), ddims_));
+#endif
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -173,28 +185,126 @@ postRegistrationSetup(typename Traits::SetupData d,
 
   if (have_temperature_) this->utils.setFieldData(temperature_, fm);
 }
+//------------------------------------------------------------------------------
+//Kokkos kernels
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_second_constMap(const int cell) const{
+        
+    for (int pt(0); pt < num_pts_; ++pt) 
+        second(cell, pt) = constant_value;
+}
 
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_second_no_constMap(const int cell) const{
+
+  for (int pt(0); pt < num_pts_; ++pt) {
+     for (int i(0); i < num_dims_; ++i)
+        point(cell,i) = Sacado::ScalarValue<MeshScalarT>::eval(coord_vec_(cell, pt, i));
+      Kokkos::abort ("ERROR (ConstitutiveModelParamaters) : Stokhos cna't be called from the Kokkos kernels");
+//is not supported in Stokhos todaym but should be fixed soon
+        //second(cell, pt) = exp_rf_kl->evaluate(point, *rv_map);
+  }
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_temperature_Arrhenius(const int cell) const{
+
+   for (int pt(0); pt < num_pts_; ++pt) {
+            second(cell, pt) = pre_exp_
+              * std::exp( -exp_param_ / temperature_(cell, pt) );
+  }
+
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+compute_temperature_Linear(const int cell) const{
+
+ for (int pt(0); pt < num_pts_; ++pt) 
+     second(cell, pt) += dPdT * (temperature_(cell, pt) - ref_temp);
+
+}
+
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const is_constant_map_Tag& tag, const int& i) const {
+  compute_second_constMap(i);
+} 
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const no_const_map_Tag& tag, const int& i) const {
+  compute_second_no_constMap(i);
+}
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const is_const_map_have_temperature_Linear_Tag& tag, const int& i) const{
+  compute_second_constMap(i);
+  compute_temperature_Linear(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const is_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const{
+  compute_second_constMap(i);
+  compute_temperature_Arrhenius(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const no_const_map_have_temperature_Linear_Tag& tag, const int& i) const{
+ compute_second_no_constMap(i);
+ compute_temperature_Linear(i);
+}
+
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void ConstitutiveModelParameters<EvalT, Traits>::
+operator() (const no_const_map_have_temperature_Arrhenius_Tag& tag, const int& i) const{
+ compute_second_no_constMap(i);
+ compute_temperature_Arrhenius(i);
+}
+#endif
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModelParameters<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
+
   typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it;
+
   for (it = field_map_.begin();
       it != field_map_.end();
       ++it) {
+    Stokhos::KL::ExponentialRandomField<RealType>*  exp_rf_kl =  exp_rf_kl_map_[it->first].get();
     ScalarT constant_value = constant_value_map_[it->first];
     if (is_constant_map_[it->first]) {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
           it->second(cell, pt) = constant_value;
         }
       }
     } else {
-      for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-        for (std::size_t pt(0); pt < num_pts_; ++pt) {
+      for (int cell(0); cell < workset.numCells; ++cell) {
+        for (int pt(0); pt < num_pts_; ++pt) {
           Teuchos::Array<MeshScalarT> point(num_dims_);
-          for (std::size_t i(0); i < num_dims_; ++i)
+          for (int i(0); i < num_dims_; ++i)
             point[i] = Sacado::ScalarValue<MeshScalarT>::eval(
                 coord_vec_(cell, pt, i));
           it->second(cell, pt) =
@@ -206,16 +316,16 @@ evaluateFields(typename Traits::EvalData workset)
       if (temp_type_map_[it->first] == "Linear" ) {
         RealType dPdT = dparam_dtemp_map_[it->first];
         RealType ref_temp = ref_temp_map_[it->first];
-        for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-          for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        for (int cell(0); cell < workset.numCells; ++cell) {
+          for (int pt(0); pt < num_pts_; ++pt) {
             it->second(cell, pt) += dPdT * (temperature_(cell, pt) - ref_temp);
           }
         }
       } else if (temp_type_map_[it->first] == "Arrhenius") {
         RealType pre_exp_ = pre_exp_map_[it->first];
         RealType exp_param_ = exp_param_map_[it->first];
-        for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-          for (std::size_t pt(0); pt < num_pts_; ++pt) {
+        for (int cell(0); cell < workset.numCells; ++cell) {
+          for (int pt(0); pt < num_pts_; ++pt) {
             it->second(cell, pt) = pre_exp_ 
               * std::exp( -exp_param_ / temperature_(cell, pt) );
           }
@@ -223,8 +333,46 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-}
 
+#else
+    typename std::map<std::string, PHX::MDField<ScalarT, Cell, QuadPoint> >::iterator it; 
+   for (it = field_map_.begin(); it != field_map_.end();    ++it) {
+
+    constant_value = constant_value_map_[it->first];
+    second=it->second;
+    exp_rf_kl = exp_rf_kl_map_[it->first].get();
+    rv_map = &rv_map_[it->first];
+
+    if (have_temperature_){
+       if (temp_type_map_[it->first] == "Linear" ) {
+         dPdT = dparam_dtemp_map_[it->first];
+         ref_temp = ref_temp_map_[it->first];
+         if (is_constant_map_[it->first]) // is_const_map_have_temperature_Linear
+            Kokkos::parallel_for(is_const_map_have_temperature_Linear_Policy(0,workset.numCells),*this);
+         else //no_const_map_have temperature_Linear
+            Kokkos::parallel_for(no_const_map_have_temperature_Linear_Policy(0,workset.numCells),*this);
+       }
+       else if (temp_type_map_[it->first] == "Arrhenius") {
+         pre_exp_ = pre_exp_map_[it->first];
+         exp_param_ = exp_param_map_[it->first];
+         if (is_constant_map_[it->first]) // is_const_map_have_temperature_Arrhenius
+           Kokkos::parallel_for(is_const_map_have_temperature_Arrhenius_Policy(0,workset.numCells),*this);
+         else // no_const_map_have temperature_Arrhenius
+           Kokkos::parallel_for(no_const_map_have_temperature_Arrhenius_Policy(0,workset.numCells),*this);
+       }
+    }
+    else{
+       if (is_constant_map_[it->first]) //is_constant_map
+          Kokkos::parallel_for(is_const_map_Policy(0,workset.numCells),*this);
+       else //no_const_map
+            TEUCHOS_TEST_FOR_EXCEPTION(!is_constant_map_[it->first], std::runtime_error,
+              std::endl <<  "Error in onstitutiveModelParameters : Stokhos functions don't have support for Kokkos yet" << std::endl;);
+          // Kokkos::parallel_for(no_const_map_Policy(0,workset.numCells),*this);
+
+    }
+   }
+#endif
+}
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 typename ConstitutiveModelParameters<EvalT, Traits>::ScalarT&
@@ -274,7 +422,7 @@ parseParameters(const std::string &n,
         (std::make_pair(n,
           pl.get<RealType>("Linear Temperature Coefficient", 0.0)));
         ref_temp_map_.insert
-        (std::make_pair(n, pl.get<RealType>("Reference Temperature", -1)));
+        (std::make_pair(n, pl.get<RealType>("Reference Temperature",0.0)));
       } else if (pl.get<std::string>("Temperature Dependence Type", "Linear")
           == "Arrhenius") {
         temp_type_map_.insert(std::make_pair(n,"Arrhenius"));
@@ -295,7 +443,7 @@ parseParameters(const std::string &n,
         insert(
         std::make_pair(n,
             Teuchos::rcp(
-                new Stokhos::KL::ExponentialRandomField<MeshScalarT>(pl))));
+                new Stokhos::KL::ExponentialRandomField<RealType>(pl))));
     int num_KL = exp_rf_kl_map_[n]->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters

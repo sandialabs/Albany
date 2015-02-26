@@ -7,7 +7,7 @@
 #if !defined(LCM_ConstitutiveModel_hpp)
 #define LCM_ConstitutiveModel_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -44,6 +44,13 @@ public:
   virtual
   void
   computeState(
+      typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+
+  virtual
+  void
+  computeStateParallel(
       typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
@@ -157,12 +164,12 @@ protected:
   ///
   /// Number of dimensions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// flag for integration point locations

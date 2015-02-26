@@ -32,7 +32,7 @@ GPAMResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(Residual);
 
 
-  this->setName("GPAMResid"+PHX::TypeString<EvalT>::value);
+  this->setName("GPAMResid" );
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

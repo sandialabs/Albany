@@ -7,7 +7,7 @@
 #if !defined(LCM_TransportResidual_hpp)
 #define LCM_TransportResidual_hpp
 
-#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_config.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_MDField.hpp>
@@ -60,7 +60,7 @@ namespace LCM {
     ///
     /// Scalar field for transport variable
     ///
-    PHX::MDField<ScalarT,Cell,QuadPoint> scalar_grad_;
+    PHX::MDField<ScalarT,Cell,QuadPoint, Dim> scalar_grad_;
 
     ///
     /// Integrations weights
@@ -133,7 +133,7 @@ namespace LCM {
     ///
     /// Data structure dimensions
     ///
-    std::size_t num_nodes_, num_pts_, num_dims_;
+    int num_nodes_, num_pts_, num_dims_;
 
     ///
     /// Scalar name

@@ -86,7 +86,7 @@ Stresses(const Teuchos::ParameterList& p) :
     this->addEvaluatedField(*(doubleStress[i]));
   }
 
-  this->setName("Stresses"+PHX::TypeString<EvalT>::value);
+  this->setName("Stresses"+PHX::typeAsString<EvalT>());
 
 }
 
@@ -138,6 +138,9 @@ evaluateFields(typename Traits::EvalData workset)
 {
 //  ScalarT C11,C33,C12,C23,C44,C66;
 
+//Irina TOFIX pointers
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "Stress:: evaluator has to be fixed for Kokkos data types");
+/*
   switch (numDims) {
   case 1:
     // Compute Stress (uniaxial strain)
@@ -254,6 +257,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
     break;
   }
+*/
 }
 //**********************************************************************
 

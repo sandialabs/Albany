@@ -25,7 +25,7 @@ Stress(const Teuchos::ParameterList& p) :
   // Pull out numQPs and numDims from a Layout
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::Device::size_type> dims;
   tensor_dl->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -33,7 +33,7 @@ Stress(const Teuchos::ParameterList& p) :
   this->addDependentField(strain);
   this->addEvaluatedField(stress);
 
-  this->setName("Stress"+PHX::TypeString<EvalT>::value);
+  this->setName("Stress"+PHX::typeAsString<EvalT>());
 
 }
 

@@ -1292,7 +1292,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
-
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
@@ -1324,6 +1323,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
+    //wsElNodeEqID_kokkos[b].resize(buck.size());
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
@@ -1503,8 +1503,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
     }
   }
+//Kopy workset to the Kokkos data
+ //wsElNodeEqID_kokkos=Kokkos::View<int****, PHX::Device>("wsElNodeEqID_kokkos",numBuckets,wsElNodeEqID[0].size(),wsElNodeEqID[0][0].size(), neq); 
 
-  for (int d=0; d<stkMeshStruct->numDim; d++) {
+
+ for (int d=0; d<stkMeshStruct->numDim; d++) {
   if (stkMeshStruct->PBCStruct.periodic[d]) {
     for (int b=0; b < numBuckets; b++) {
       for (std::size_t i=0; i < buckets[b]->size(); i++) {

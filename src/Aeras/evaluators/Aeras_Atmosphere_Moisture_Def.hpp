@@ -10,6 +10,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Aeras_Eta.hpp"
 
@@ -75,14 +76,14 @@ Atmosphere_Moisture(Teuchos::ParameterList& p,
 
   for (int i = 0; i < tracerNames.size(); ++i) {
     namesToSrc[tracerNames[i]] = tracerSrcNames[i];
-    PHX::MDField<ScalarT,Cell,QuadPoint> in   (tracerNames[i],   dl->qp_scalar_level);
-    PHX::MDField<ScalarT,Cell,QuadPoint> src(tracerSrcNames[i],  dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,QuadPoint,Level> in   (tracerNames[i],   dl->qp_scalar_level);
+    PHX::MDField<ScalarT,Cell,QuadPoint,Level> src(tracerSrcNames[i],  dl->qp_scalar_level);
     TracerIn[tracerNames[i]]     = in;
     TracerSrc[tracerSrcNames[i]] = src;
     this->addDependentField(TracerIn   [tracerNames[i]]);
     this->addEvaluatedField(TracerSrc[tracerSrcNames[i]]);
   }
-  this->setName("Aeras::Atmosphere_Moisture"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::Atmosphere_Moisture" );
 }
 
 // **********************************************************************
@@ -119,10 +120,10 @@ void Atmosphere_Moisture<EvalT, Traits>::evaluateFields(typename Traits::EvalDat
   //const double ztop = 10000.0;
   const double gravity = 9.80616;
 
-  for (int i=0; i < TempSrc.size(); ++i) TempSrc(i)=0.0;
+  PHAL::set(TempSrc, 0.0);
 
   for (int t=0; t < TracerSrc.size(); ++t)  
-    for (int i=0; i < TracerSrc[tracerSrcNames[t]].size(); ++i) TracerSrc[tracerSrcNames[t]](i)=0.0;
+    PHAL::set(TracerSrc[tracerSrcNames[t]], 0.0);
 
   if (compute_cloud_physics == true) {
 

@@ -27,7 +27,7 @@ NodePointVecInterpolation(
   this->addDependentField(basis_fn_);
   this->addEvaluatedField(point_value_);
 
-  this->setName("NodePointVecInterpolation" + PHX::TypeString<EvalT>::value);
+  this->setName("NodePointVecInterpolation" + PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type>
   dimensions;
@@ -60,15 +60,17 @@ template<typename EvalT, typename Traits>
 void NodePointVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t i = 0; i < dimension_; i++) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int i = 0; i < dimension_; i++) {
       // Zero out for node==0; then += for node = 1 to number_nodes_
-      ScalarT &
-      vpt = point_value_(cell, i);
-      vpt = nodal_value_(cell, 0, i) * basis_fn_(cell, 0);
-      for (std::size_t node = 1; node < number_nodes_; ++node) {
-        vpt += nodal_value_(cell, node, i) * basis_fn_(cell, node);
+      //ScalarT &
+      //vpt = point_value_(cell, i);
+     for (int j=0; j<point_value_.dimension(2);j++){
+      point_value_(cell, i,j) = nodal_value_(cell, 0, i) * basis_fn_(cell, 0,i);
+      for (int node = 1; node < number_nodes_; ++node) {
+        point_value_(cell, i, j) += nodal_value_(cell, node, i) * basis_fn_(cell, node,i);
       }
+     }
     }
   }
 }
@@ -90,9 +92,8 @@ NodePointVecInterpolation(
   this->addEvaluatedField(point_value_);
 
   this->setName(
-    "NodePointVecInterpolation" +
-    PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value
-  );
+    "NodePointVecInterpolation" + 
+    PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
 
   std::vector<PHX::DataLayout::size_type>
   dimensions;
@@ -133,31 +134,32 @@ evaluateFields(typename Traits::EvalData workset)
   int const
   neq = num_dof / number_nodes_;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t i = 0; i < dimension_; i++) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int i = 0; i < dimension_; i++) {
       // Zero out for node==0; then += for node = 1 to number_nodes_
-      ScalarT &
-      vpt = point_value_(cell, i);
+     // ScalarT &
+     // vpt = point_value_(cell, i);
 
-      vpt = FadType(
+      point_value_(cell, i) = FadType(
           num_dof,
           nodal_value_(cell, 0, i).val() * basis_fn_(cell, 0)
       );
 
-      vpt.fastAccessDx(offset_ + i) =
+      (point_value_(cell, i)).fastAccessDx(offset_ + i) =
           nodal_value_(cell, 0, i).fastAccessDx(offset_ + i) *
           basis_fn_(cell, 0);
 
-      for (std::size_t node = 1; node < number_nodes_; ++node) {
+      for (int node = 1; node < number_nodes_; ++node) {
 
-        vpt.val() +=
+        (point_value_(cell, i)).val() +=
             nodal_value_(cell, node, i).val() * basis_fn_(cell, node);
 
-        vpt.fastAccessDx(neq * node + offset_ + i) +=
+        (point_value_(cell, i)).fastAccessDx(neq * node + offset_ + i) +=
             nodal_value_(cell, node, i).fastAccessDx(neq * node + offset_ + i)
             *
             basis_fn_(cell, node);
       }
+
     }
   }
 }

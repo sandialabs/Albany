@@ -108,7 +108,7 @@ ThermalConductivity(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(thermalCond);
-  this->setName("Thermal Conductivity"+PHX::TypeString<EvalT>::value);
+  this->setName("Thermal Conductivity" );
 }
 
 template<typename EvalT, typename Traits>
@@ -151,7 +151,7 @@ init_KL_RF(std::string &type, Teuchos::ParameterList& sublist, Teuchos::Paramete
     this->addDependentField(coordVec);
 
     exp_rf_kl =
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(sublist));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(sublist));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters

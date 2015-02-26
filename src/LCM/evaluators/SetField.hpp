@@ -7,7 +7,7 @@
 #ifndef SETFIELD_HPP
 #define SETFIELD_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -38,7 +38,8 @@ private:
   std::string evaluatedFieldName;
 
   //! The field that will be set.
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> evaluatedField;
+ // PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> evaluatedField;
+  PHX::MDField<ScalarT> evaluatedField;
 
   //! The dimensions of the field to be set.
   std::vector<PHX::DataLayout::size_type> evaluatedFieldDimensions;

@@ -8,7 +8,7 @@
 #ifndef SURFACE_TL_PORO_MASS_RESIDUAL_HPP
 #define SURFACE_TL_PORO_MASS_RESIDUAL_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -62,7 +62,7 @@ private:
   //! Reference configuration normal
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
   //! Reference configuration area
-  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refArea;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
   //! Determinant of the surface deformation gradient
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
   //! Pore Pressure at the 2D integration point location

@@ -7,7 +7,7 @@
 #if !defined(LCM_StabilizedPressure_Residual_hpp)
 #define LCM_StabilizedPressure_Residual_hpp
 
-#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_config.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_MDField.hpp>
@@ -92,7 +92,7 @@ private:
   ///
   /// Input: Weighted Basis Functions
   ///
-  PHX::MDField<MeshScalarT, Cell, Node, QuadPoint> w_bf_;
+  PHX::MDField<MeshScalarT, Cell, Node> w_bf_;
 
   ///
   /// Input: Weighted Basis Functions
@@ -107,17 +107,17 @@ private:
   ///
   /// Number of element nodes
   ///
-  std::size_t num_nodes_;
+  int num_nodes_;
 
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// Number of spatial dimensions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Small strain flag

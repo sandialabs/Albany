@@ -7,11 +7,12 @@
 #ifndef AERAS_XZHYDROSTATIC_DENSITYWEIGHTEDVELX_HPP
 #define AERAS_XZHYDROSTATIC_DENSITYWEIGHTEDVELX_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras {
 /** \brief Density for XZHydrostatic atmospheric model
@@ -39,9 +40,9 @@ public:
 
 private:
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> density;
-  PHX::MDField<ScalarT,Cell,Node> velx;
-  PHX::MDField<ScalarT,Cell,Node> dvelx;
+  PHX::MDField<ScalarT,Cell,Node,Level> density;
+  PHX::MDField<ScalarT,Cell,Node,Level> velx;
+  PHX::MDField<ScalarT,Cell,Node,Level> dvelx;
 
   const int numNodes;
   const int numLevels;

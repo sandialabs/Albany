@@ -42,7 +42,7 @@ class AbstractSTKNodeFieldContainer : public AbstractNodeFieldContainer {
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
+buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                   const Teuchos::RCP<stk::mesh::MetaData>& metaData,
                   const bool output);
 
@@ -63,7 +63,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
     typedef typename traits_type::field_type field_type;
 
 
-    STKNodeField(const std::string& name, const std::vector<int>& dim,
+    STKNodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                  const Teuchos::RCP<stk::mesh::MetaData>& metaData,
                  const bool output = false);
 
@@ -77,7 +77,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     std::string name;      // Name of data field
     field_type *node_field;  // stk::mesh::field
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     Teuchos::RCP<stk::mesh::MetaData> metaData;
   };
 
@@ -89,7 +89,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     enum { size = 1 }; // Three array dimension tags (Node, Dim, Dim), store type T values
     typedef stk::mesh::Field<T> field_type ;
-    static field_type* createField(const std::string& name, const std::vector<int>& dim,
+    static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                                    stk::mesh::MetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
@@ -132,7 +132,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     enum { size = 2 }; // Two array dimension tags (Node, Dim), store type T values
     typedef stk::mesh::Field<T, stk::mesh::Cartesian> field_type ;
-    static field_type* createField(const std::string& name, const std::vector<int>& dim,
+    static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                                    stk::mesh::MetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);
@@ -181,7 +181,7 @@ buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 
     enum { size = 3 }; // Three array dimension tags (Node, Dim, Dim), store type T values
     typedef stk::mesh::Field<T, stk::mesh::Cartesian, stk::mesh::Cartesian> field_type ;
-    static field_type* createField(const std::string& name, const std::vector<int>& dim,
+    static field_type* createField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                                    stk::mesh::MetaData* metaData){
 
         field_type *fld = & metaData->declare_field<field_type>(stk::topology::NODE_RANK, name);

@@ -7,7 +7,7 @@
 #if !defined(LCM_BifurcationCheck_hpp)
 #define LCM_BifurcationCheck_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -57,10 +57,10 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> direction_;
 
     //! number of integration points
-    std::size_t num_pts_;
+    int num_pts_;
 
     //! number of spatial dimensions
-    std::size_t num_dims_;
+    int num_dims_;
   };
 
 }

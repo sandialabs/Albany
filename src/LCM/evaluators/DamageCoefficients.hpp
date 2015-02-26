@@ -7,7 +7,7 @@
 #if !defined(LCM_Damage_Coefficients_hpp)
 #define LCM_Damage_Coefficients_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -81,12 +81,12 @@ private:
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// Number of spatial dimesions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Damage Constants

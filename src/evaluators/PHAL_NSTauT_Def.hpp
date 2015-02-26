@@ -47,7 +47,7 @@ NSTauT(const Teuchos::ParameterList& p) :
   // Allocate workspace
   normGc.resize(dims[0], numQPs);
 
-  this->setName("NSTauT"+PHX::TypeString<EvalT>::value);
+  this->setName("NSTauT" );
 }
 
 //**********************************************************************

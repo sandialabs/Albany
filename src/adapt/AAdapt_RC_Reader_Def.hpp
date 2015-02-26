@@ -13,7 +13,7 @@ template<typename EvalT, typename Traits>
 ReaderBase<EvalT, Traits>::ReaderBase (const Teuchos::RCP<Manager>& rc_mgr)
   : rc_mgr_(rc_mgr)
 {
-  this->setName("AAdapt::rc::Reader" + PHX::TypeString<EvalT>::value);
+  this->setName("AAdapt::rc::Reader" + PHX::typeAsString<EvalT>());
   for (Manager::Field::iterator it = rc_mgr_->fieldsBegin(),
        end = rc_mgr_->fieldsEnd(); it != end; ++it) {
     fields_.push_back(

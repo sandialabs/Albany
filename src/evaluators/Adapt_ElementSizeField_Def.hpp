@@ -158,7 +158,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Get shards Array (from STK) for this workset
     Albany::MDArray data = (*workset.stateArrayPtr)[this->className + "_Cell"];
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     data.dimensions(dims);
     int size = dims.size();
 
@@ -174,7 +174,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Get shards Array (from STK) for this workset
     Albany::MDArray data = (*workset.stateArrayPtr)[this->className + "_QP"];
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     data.dimensions(dims);
     int size = dims.size();
 
