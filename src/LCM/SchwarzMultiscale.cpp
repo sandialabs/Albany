@@ -263,8 +263,8 @@ LCM::SchwarzMultiscale::createCoupledMap(
   }
   //Create global element indices array for coupled map for this processor,
   //to be used to create the coupled map.
-  GO *
-  my_global_elements = new GO[local_num_elements];
+  std::vector<GO>
+  my_global_elements(local_num_elements);
 
   LO
   counter_local = 0;
@@ -274,25 +274,25 @@ LCM::SchwarzMultiscale::createCoupledMap(
 
   for (int m = 0; m < n_maps; ++m) {
     LO
-    disc_nMyElements = maps[m]->getNodeNumElements();
+    local_num_elements_n = maps[m]->getNodeNumElements();
 
     GO
-    disc_nGlobalElements = maps[m]->getGlobalNumElements();
+    global_num_elements_n = maps[m]->getGlobalNumElements();
 
     Teuchos::ArrayView<const GO>
     disc_global_elements = maps[m]->getNodeElementList();
 
-    for (int l = 0; l < disc_nMyElements; ++l) {
+    for (int l = 0; l < local_num_elements_n; ++l) {
       my_global_elements[counter_local + l] = counter_global
           + disc_global_elements[l];
     }
-    counter_local += disc_nMyElements;
-    counter_global += disc_nGlobalElements;
+    counter_local += local_num_elements_n;
+    counter_global += global_num_elements_n;
   }
 
   Teuchos::ArrayView<GO> const
   my_global_elements_AV =
-      Teuchos::arrayView(my_global_elements, local_num_elements);
+      Teuchos::arrayView(&my_global_elements[0], local_num_elements);
 
   std::cout << "DEBUG: coupled map has " << global_num_elements;
   std::cout << " global elements.\n";
