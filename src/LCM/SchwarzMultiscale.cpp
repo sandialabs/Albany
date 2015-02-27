@@ -693,7 +693,6 @@ createOutArgsImpl() const
   result.set_Np_Ng(num_params_total_, num_responses_total_);
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
-
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
 
   result.set_W_properties(
@@ -712,32 +711,22 @@ createOutArgsImpl() const
     Thyra::ModelEvaluatorBase::DerivativeSupport
     dgdx_support;
 
-    if (i < num_responses_partial_sum_[0]) {
-      if (apps_[0]->getResponse(i)->isScalarResponse()) {
-        dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
-      }
-      else {
-        dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
-      }
-    }
-    else {
-      for (int m = 1; m < num_models_; ++m) {
-        bool const
-        in_range =
-            i >= num_responses_partial_sum_[m - 1] &&
-                i < num_responses_partial_sum_[m];
+    for (int m = 0; m < num_models_; ++m) {
+      int const
+      lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-        if (in_range) {
+      int const
+      hi = num_responses_partial_sum_[m];
 
-          int const
-          k = i - num_responses_partial_sum_[m - 1];
+      bool const
+      in_range = lo <= i && i < hi;
 
-          if (apps_[m]->getResponse(k)->isScalarResponse()) {
-            dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
-          }
-          else {
-            dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
-          }
+      if (in_range == true) {
+        if (apps_[m]->getResponse(i - lo)->isScalarResponse()) {
+          dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
+        }
+        else {
+          dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
         }
       }
     }
@@ -752,11 +741,13 @@ createOutArgsImpl() const
     //result.setSupports(
     //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
 
-    for (int l = 0; l < num_params_total_; ++l)
+    for (int l = 0; l < num_params_total_; ++l) {
       result.setSupports(
           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, l,
           Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+    }
   }
+
   return result;
 }
 
