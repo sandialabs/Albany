@@ -279,7 +279,7 @@ LCM::SchwarzMultiscale::createCoupledMap(
     GO
     global_num_elements_n = maps[m]->getGlobalNumElements();
 
-    Teuchos::ArrayView<const GO>
+    Teuchos::ArrayView<GO const>
     disc_global_elements = maps[m]->getNodeElementList();
 
     for (int l = 0; l < local_num_elements_n; ++l) {
@@ -757,30 +757,15 @@ LCM::SchwarzMultiscale::
 evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
-    {
-  //FIXME: finish filling in!
+{
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
-
-  // Get the input arguments
-  Teuchos::RCP<Tpetra_Vector const> const
-  xT = ConverterT::getConstTpetraVector(in_args.get_x());
-
-  Teuchos::RCP<Tpetra_Vector const> const
-  x_dotT =
-      Teuchos::nonnull(in_args.get_x_dot()) ?
-          ConverterT::getConstTpetraVector(in_args.get_x_dot()) :
-          Teuchos::null;
 
   //Create a Teuchos array of the xT and x_dotT for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  xTs;
+  xTs(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  x_dotTs;
-
-  xTs.resize(num_models_);
-
-  x_dotTs.resize(num_models_);
+  x_dotTs(num_models_);
 
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector const>
@@ -789,8 +774,7 @@ evalModelImpl(
     xTs[m] = Teuchos::rcp(new Tpetra_Vector(*xT_temp));
 
     Teuchos::RCP<Tpetra_Vector const>
-    x_dotT_temp =
-        Teuchos::nonnull(solver_inargs_[m].get_x_dot()) ?
+    x_dotT_temp = Teuchos::nonnull(solver_inargs_[m].get_x_dot()) ?
             ConverterT::getConstTpetraVector(solver_inargs_[m].get_x_dot()) :
             Teuchos::null;
 
@@ -802,11 +786,20 @@ evalModelImpl(
   //  Teuchos::nonnull(in_args.get_x_dotdot()) ?
   //  ConverterT::getConstTpetraVector(in_args.get_x_dotdot()) :
   //  Teuchos::null;
-  Teuchos::RCP<Tpetra_Vector const> const x_dotdotT = Teuchos::null;
+  // Get the input arguments
+  Teuchos::RCP<Tpetra_Vector const> const
+  xT = ConverterT::getConstTpetraVector(in_args.get_x());
+
+  Teuchos::RCP<Tpetra_Vector const> const
+  x_dotT = Teuchos::nonnull(in_args.get_x_dot()) ?
+      ConverterT::getConstTpetraVector(in_args.get_x_dot()) :
+      Teuchos::null;
+
+  Teuchos::RCP<Tpetra_Vector const> const
+  x_dotdotT = Teuchos::null;
 
   double const
-  alpha =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
+  alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_alpha() : 0.0;
 
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
@@ -828,33 +821,30 @@ evalModelImpl(
     Teuchos::RCP<Thyra::VectorBase<ST> const> const
     p = in_args.get_p(l);
 
+    if (Teuchos::is_null(p) == true) continue;
+
     Teuchos::RCP<Tpetra_Vector const> const
     pT = ConverterT::getConstTpetraVector(p);
 
     Teuchos::ArrayRCP<ST const> const
-    pT_constView = pT->get1dView();
+    pT_view = pT->get1dView();
 
-    if (Teuchos::nonnull(p)) {
-      if (l < num_params_partial_sum_[0]) {
-        for (unsigned int j = 0; j < sacado_param_vecs_[0][l].size(); ++j) {
-          sacado_param_vecs_[0][l][j].baseValue = pT_constView[j];
-        }
-      }
-      else {
-        for (int m = 1; m < num_models_; ++m) {
-          bool const
-          in_range = l >= num_params_partial_sum_[m - 1] &&
-              l < num_params_partial_sum_[m];
+    for (int m = 0; m < num_models_; ++m) {
+      int const
+      lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-          if (in_range == true) {
-            int const
-            k = l - num_params_partial_sum_[m - 1];
+      int const
+      hi = num_params_partial_sum_[m];
 
-            for (unsigned int j = 0; j < sacado_param_vecs_[m][k].size(); j++) {
-              sacado_param_vecs_[m][k][j].baseValue = pT_constView[j];
+      bool const
+      in_range = lo <= l && l < hi;
 
-            }
-          }
+      if (in_range == true) {
+        int const
+        k = l - lo;
+
+        for (unsigned int j = 0; j < sacado_param_vecs_[m][k].size(); j++) {
+          sacado_param_vecs_[m][k][j].baseValue = pT_view[j];
         }
       }
     }
@@ -864,53 +854,42 @@ evalModelImpl(
   // Get the output arguments
   //
   Teuchos::RCP<Tpetra_Vector> const
-  fT_out =
-      Teuchos::nonnull(out_args.get_f()) ?
-          ConverterT::getTpetraVector(out_args.get_f()) :
-          Teuchos::null;
+  fT_out = Teuchos::nonnull(out_args.get_f()) ?
+      ConverterT::getTpetraVector(out_args.get_f()) :
+      Teuchos::null;
 
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  fTs_out;
-
-  fTs_out.resize(num_models_);
+  fTs_out(num_models_);
 
   for (int m = 0; m < num_models_; ++m) {
 
     Teuchos::RCP<Tpetra_Vector const>
-    fT_out_temp =
-        Teuchos::nonnull(solver_outargs_[m].get_f()) ?
-            ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
-            Teuchos::null;
+    fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
+        ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
+        Teuchos::null;
 
     fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
   }
 
   Teuchos::RCP<Tpetra_Operator> const
-  W_op_outT =
-      Teuchos::nonnull(out_args.get_W_op()) ?
-          ConverterT::getTpetraOperator(out_args.get_W_op()) :
-          Teuchos::null;
+  W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
+      ConverterT::getTpetraOperator(out_args.get_W_op()) :
+      Teuchos::null;
 
   // Cast W to a CrsMatrix, throw an exception if this fails
   Teuchos::RCP<Tpetra_CrsMatrix> const
-  W_op_out_crsT =
-      Teuchos::nonnull(W_op_outT) ?
-          Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
-          Teuchos::null;
+  W_op_out_crsT = Teuchos::nonnull(W_op_outT) ?
+      Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
+      Teuchos::null;
 
   //
   // Compute the functions
   //
   // W matrix
   // Create Teuchos::Array of individual models' W matrices
-  Teuchos::RCP<Tpetra_Operator> const
-  W_op_outT_temp;
-
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
-  W_op_outs_crsT;
-
-  W_op_outs_crsT.resize(num_models_);
+  W_op_outs_crsT(num_models_);
 
   //get each of the models' W matrices
   for (int m = 0; m < num_models_; ++m) {
@@ -927,17 +906,11 @@ evalModelImpl(
   }
 
   Teuchos::Array<bool>
-  fs_already_computed;
-
-  fs_already_computed.resize(num_models_);
-
-  for (int m = 0; m < num_models_; ++m) {
-    fs_already_computed[m] = false;
-  }
+  fs_already_computed(num_models_, false);
 
   // W matrix for each individual model
   for (int m = 0; m < num_models_; ++m) {
-    if (Teuchos::nonnull(W_op_outs_crsT[m])) {
+    if (Teuchos::is_null(W_op_outs_crsT[m]) == false) {
       //computeGlobalJacobianT sets fTs_out[m] and W_op_outs_crsT[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
@@ -948,7 +921,7 @@ evalModelImpl(
     }
   }
 
-  //FIXME: create coupled W matrix from array of model W matrices
+  // FIXME: create coupled W matrix from array of model W matrices
   Teuchos::RCP<LCM::Schwarz_CoupledJacobian>
   W_op_out_coupled =
       Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
@@ -961,65 +934,66 @@ evalModelImpl(
 
   //get nonconst view of fT_out
   Teuchos::ArrayRCP<ST>
-  fT_out_nonconstView = fT_out->get1dViewNonConst();
+  fT_out_nonconst_view = fT_out->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
     //get const view of mth x_init & x_dot_init vector
     Teuchos::ArrayRCP<ST>
-    fT_out_nonconstView_m = fTs_out[m]->get1dViewNonConst();
+    fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
 
     for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
-      fT_out_nonconstView[counter_local + i] = fT_out_nonconstView_m[i];
+      fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
     }
     counter_local += fTs_out[m]->getLocalLength();
   }
 
-  //W prec matrix
-  //FIXME: eventually will need to hook in Teko.
+  // W prec matrix
+  // FIXME: eventually will need to hook in Teko.
 
-  //FIXME: in the following, need to check logic involving looping over num_models_ -- here we're
-  //not creating arrays to store things in for each model.
-  //TODO: understand better how evalModel is called and how g and f parameter arrays are set
-  // df/dp
+  // FIXME: in the following, need to check logic involving looping over
+  // num_models_ -- here we're not creating arrays to store things in
+  // for each model.
+  // TODO: understand better how evalModel is called and how g and f parameter
+  // arrays are set in df/dp
+
+
   for (int l = 0; l < out_args.Np(); ++l) {
-    int m_num;
     for (int m = 0; m < num_models_; ++m) {
-      int index;
-      bool const
-      in_range = l >= num_params_partial_sum_[m - 1] &&
-          l < num_params_partial_sum_[m];
 
-      if (l < num_params_partial_sum_[0]) { //m = 0 case
-        index = l;
-        m_num = 0;
-      }
-      else if (in_range == true) {
-        index = l - num_params_partial_sum_[m - 1];
-        m_num = m;
-      }
+      int const
+      lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+      int const
+      hi = num_params_partial_sum_[m];
+
+      bool const
+      in_range = lo <= l && l < hi;
+
+      if (in_range == false) continue;
+
+      int const
+      index = l - lo;
 
       Teuchos::RCP<Thyra::MultiVectorBase<ST> > const
-      dfdp_out = solver_outargs_[m_num].get_DfDp(index).getMultiVector();
+      dfdp_out = solver_outargs_[m].get_DfDp(index).getMultiVector();
 
       Teuchos::RCP<Tpetra_MultiVector> const
-      dfdp_outT =
-          Teuchos::nonnull(dfdp_out) ?
-              ConverterT::getTpetraMultiVector(dfdp_out) :
-              Teuchos::null;
+      dfdp_outT = Teuchos::nonnull(dfdp_out) ?
+          ConverterT::getTpetraMultiVector(dfdp_out) :
+          Teuchos::null;
 
       if (Teuchos::nonnull(dfdp_outT)) {
         Teuchos::RCP<ParamVec> const
-        p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m_num][index]);
+        p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][index]);
 
-        //computeGlobalTangentT sets last 3 arguments: fTs_out[m_num] and dfdp_outT
+        // computeGlobalTangentT sets last 3 arguments:
+        // fTs_out[m_num] and dfdp_outT
         apps_[m]->computeGlobalTangentT(
-            0.0, 0.0, 0.0, curr_time, false,
-            x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-            sacado_param_vecs_[m_num], p_vec.get(),
-            NULL, NULL, NULL, NULL, fTs_out[m_num].get(), NULL,
-            dfdp_outT.get());
+            0.0, 0.0, 0.0, curr_time, false, x_dotTs[m].get(), x_dotdotT.get(),
+            *xTs[m], sacado_param_vecs_[m], p_vec.get(),
+            NULL, NULL, NULL, NULL, fTs_out[m].get(), NULL, dfdp_outT.get());
 
-        fs_already_computed[m_num] = true;
+        fs_already_computed[m] = true;
       }
     }
   }
@@ -1047,26 +1021,21 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::Derivative<ST> const
     dgdxdotdotT_out;
 
-    int
-    m_num;
-
     for (int m = 0; m < num_models_; ++m) {
 
-      int
-      index;
+      int const
+      lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
+
+      int const
+      hi = num_responses_partial_sum_[m];
 
       bool const
-      in_range = j >= num_responses_partial_sum_[m - 1] &&
-          j < num_responses_partial_sum_[m];
+      in_range = lo <= j && j < hi;
 
-      if (j < num_responses_partial_sum_[0]) { //m = 0 case
-        index = j;
-        m_num = 0;
-      }
-      else if (in_range == true) {
-        index = j - num_responses_partial_sum_[m - 1];
-        m_num = m;
-      }
+      if (in_range == false) continue;
+
+      int const
+      index = j - lo;
 
       // dg/dx, dg/dxdot
       if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
@@ -1074,10 +1043,9 @@ evalModelImpl(
         dummy_derivT;
 
         //sets gT_out
-        apps_[m_num]->evaluateResponseDerivativeT(
-            index, curr_time,
-            x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-            sacado_param_vecs_[m_num], NULL,
+        apps_[m]->evaluateResponseDerivativeT(
+            index, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
+            *xTs[m], sacado_param_vecs_[m], NULL,
             gT_out.get(), dgdxT_out,
             dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
 
@@ -1092,51 +1060,48 @@ evalModelImpl(
         dgdp_out = out_args.get_DgDp(j, l).getMultiVector();
 
         Teuchos::RCP<Tpetra_MultiVector> const
-        dgdpT_out =
-            Teuchos::nonnull(dgdp_out) ?
+        dgdpT_out = Teuchos::nonnull(dgdp_out) ?
                 ConverterT::getTpetraMultiVector(dgdp_out) :
                 Teuchos::null;
 
-        int
-        index2;
+        int const
+        min = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+        int const
+        max = num_params_partial_sum_[m];
 
         bool const
-        in_range = l >= num_params_partial_sum_[m_num - 1] &&
-            l < num_params_partial_sum_[m_num];
+        l_is_in_range = min <= l && l < max;
 
-        if (l < num_params_partial_sum_[0]) { //m = 0 case
-          index2 = l;
-        }
-        else if (in_range == true) {
-          index2 = l - num_params_partial_sum_[m_num - 1];
-        }
+        if (l_is_in_range == false) continue;
 
-        if (Teuchos::nonnull(dgdpT_out)) {
+        int const
+        k = l - min;
+
+        if (Teuchos::is_null(dgdpT_out) == false) {
 
           Teuchos::RCP<ParamVec> const
-          p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m_num][index2]);
+          p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][k]);
 
           //sets gT_out, dgdpT_out
-          apps_[m_num]->evaluateResponseTangentT(
-              index, alpha, beta, omega, curr_time, false,
-              x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-              sacado_param_vecs_[m_num], p_vec.get(),
+          apps_[m]->evaluateResponseTangentT(
+              k, alpha, beta, omega, curr_time, false,
+              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+              sacado_param_vecs_[m], p_vec.get(),
               NULL, NULL, NULL, NULL, gT_out.get(), NULL,
               dgdpT_out.get());
           gT_out = Teuchos::null;
         }
       }
 
-      if (Teuchos::nonnull(gT_out)) {
+      if (Teuchos::is_null(gT_out) == false) {
         //sets gT_out
-        apps_[m_num]->evaluateResponseT(
-            index, curr_time,
-            x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-            sacado_param_vecs_[m_num], *gT_out);
+        apps_[m]->evaluateResponseT(
+            index, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
+            *xTs[m], sacado_param_vecs_[m], *gT_out);
       }
     }
   }
-
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
