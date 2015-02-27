@@ -1589,10 +1589,10 @@ void Aeras::SpectralDiscretization::computeCoords()
         {
           double x = refCoords(inode,0);
           double y = refCoords(inode,1);
-          coords[iws][ielem][inode][idim] = (c[0] * (x+1.0) * (y+1.0) -
-                                             c[1] * (x-1.0) * (y+1.0) +
-                                             c[2] * (x-1.0) * (y-1.0) -
-                                             c[3] * (x+1.0) * (y-1.0)) * 0.25;
+          coords[iws][ielem][inode][idim] = (c[0] * (x-1.0) * (y-1.0) -
+                                             c[1] * (x+1.0) * (y-1.0) +
+                                             c[2] * (x+1.0) * (y+1.0) -
+                                             c[3] * (x-1.0) * (y+1.0)) * 0.25;
         }
       }
 
