@@ -28,7 +28,9 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   ff_(p->get<RealType>("Failure Void Volume", 1.0)),
   q1_(p->get<RealType>("Yield Parameter q1", 1.0)),
   q2_(p->get<RealType>("Yield Parameter q2", 1.0)),
-  q3_(p->get<RealType>("Yield Parameter q3", 1.0))
+  q3_(p->get<RealType>("Yield Parameter q3", 1.0)),
+  alpha1_(p->get<RealType>("Hydrogen Yield Parameter", 0.0)),
+  alpha2_(p->get<RealType>("Helium Yield Parameter", 0.0))
 {
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -210,6 +212,9 @@ computeState(typename Traits::EvalData workset,
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       ScalarT Y = yield_strength(cell, pt);
+      if (have_total_concentration_) {
+        Y += alpha1_ * total_concentration_(cell,pt);
+      }
 
       // assign local state variables
       // eps_ss is a scalar internal strain measure
@@ -487,8 +492,10 @@ computeState(typename Traits::EvalData workset,
 
             // check for a sufficiently small residual
             //
-            if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
+            if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) ) {
               converged = true;
+              std::cout << "!!!CONVERGED!!!" << std::endl;
+            }
 
             // extract the sensitivities of the residuals
             //

@@ -174,6 +174,21 @@ namespace LCM {
     bool have_damage_;
 
     ///
+    /// flag to indicate we have total concentration
+    ///
+    bool have_total_concentration_;
+
+    ///
+    /// flag to indicate we total bubble density
+    ///
+    bool have_total_bubble_density_;
+
+    ///
+    /// flag to indicate we bubble volume fraction
+    ///
+    bool have_bubble_volume_fraction_;
+
+    ///
     /// flag to volume average the pressure
     ///
     bool volume_average_pressure_;
