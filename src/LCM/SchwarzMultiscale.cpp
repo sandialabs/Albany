@@ -370,8 +370,7 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= num_responses_total_ || l < 0,
       Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::get_g_space():  " <<
+      "\nError!  LCM::SchwarzMultiscale::get_g_space():  " <<
       "Invalid response index l = " << l << '\n');
 
   for (int m = 0; m < num_models_; ++m) {
@@ -400,8 +399,7 @@ LCM::SchwarzMultiscale::get_p_names(int l) const
   TEUCHOS_TEST_FOR_EXCEPTION(
       l >= num_params_total_ || l < 0,
       Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::get_p_names():  " <<
+      "\nError!  LCM::SchwarzMultiscale::get_p_names():  " <<
       "Invalid parameter index l = " << l << '\n');
 
   for (int m = 0; m < num_models_; ++m) {
@@ -465,7 +463,7 @@ LCM::SchwarzMultiscale::create_W_prec() const
   //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
   //in Thyra yet!  So problem will run for now with no
   //preconditioner...
-  const bool
+  bool const
   W_prec_not_supported = true;
 
   TEUCHOS_TEST_FOR_EXCEPT(W_prec_not_supported);
@@ -540,25 +538,25 @@ allocateVectors()
 
   //get nonconst view of coupled_x_init & coupled_x_dot_init
   Teuchos::ArrayRCP<ST>
-  coupled_x_init_nonconstView = coupled_x_init->get1dViewNonConst();
+  coupled_x_init_view = coupled_x_init->get1dViewNonConst();
 
   Teuchos::ArrayRCP<ST>
-  coupled_x_dot_init_nonconstView = coupled_x_dot_init->get1dViewNonConst();
+  coupled_x_dot_init_view = coupled_x_dot_init->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
     //get const view of mth x_init & x_dot_init vector
     Teuchos::ArrayRCP<ST const>
-    x_init_constView = x_inits[m]->get1dView();
+    x_init_const_view = x_inits[m]->get1dView();
 
     Teuchos::ArrayRCP<ST const>
-    x_dot_init_constView = x_dot_inits[m]->get1dView();
+    x_dot_init_const_view = x_dot_inits[m]->get1dView();
 
     //The following assumes x_init and x_dot_init have same length.
     //FIXME? Could have error checking to make sure.
     for (int i = 0; i < x_inits[m]->getLocalLength(); ++i) {
-      coupled_x_init_nonconstView[counter_local + i] = x_init_constView[i];
-      coupled_x_dot_init_nonconstView[counter_local + i] =
-          x_dot_init_constView[i];
+      coupled_x_init_view[counter_local + i] = x_init_const_view[i];
+      coupled_x_dot_init_view[counter_local + i] =
+          x_dot_init_const_view[i];
     }
     counter_local += x_inits[m]->getLocalLength();
   }
@@ -618,7 +616,7 @@ allocateVectors()
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_op_impl(int j) const
-    {
+{
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   TEUCHOS_TEST_FOR_EXCEPTION(
