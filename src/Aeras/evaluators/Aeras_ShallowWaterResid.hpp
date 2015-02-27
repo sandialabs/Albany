@@ -108,12 +108,10 @@ private:
   void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
 
 };
-  const int qpToNodeMap[9] = {0, 4, 1,
-      7, 8, 5,
-      3, 6, 2 };
-const int nodeToQPMap[9]  = {0, 2, 8, 6,
-    1, 5, 7, 3,
-    4 };
+// const int qpToNodeMap[9] = {0, 4, 1, 7, 8, 5, 3, 6, 2 };
+// const int nodeToQPMap[9]  = {0, 2, 8, 6, 1, 5, 7, 3, 4 };
+const int qpToNodeMap[4] = {0, 1, 3, 2 };
+const int nodeToQPMap[4] = {0, 1, 3, 2 };
 
 
 }
