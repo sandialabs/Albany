@@ -622,60 +622,59 @@ create_DgDx_op_impl(int j) const
   TEUCHOS_TEST_FOR_EXCEPTION(
       j >= num_responses_total_ || j < 0,
       Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::create_DgDx_op_impl():  " <<
+      "\nError!  LCM::SchwarzMultiscale::create_DgDx_op_impl():  " <<
       "Invalid response index j = " << j << '\n');
 
-  if (j < num_responses_partial_sum_[0]) {
-    return Thyra::createLinearOp(apps_[0]->getResponse(j)->createGradientOpT());
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          j >= num_responses_partial_sum_[m - 1] &&
-              j < num_responses_partial_sum_[m];
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-      if (in_range == true) {
-        return Thyra::createLinearOp(
-            apps_[m]->getResponse(j - num_responses_partial_sum_[m - 1])
-                ->createGradientOpT());
-      }
+    int const
+    hi = num_responses_partial_sum_[m];
+
+    bool const
+    in_range = lo <= j && j < hi;
+
+    if (in_range == true) {
+      return Thyra::createLinearOp(
+          apps_[m]->getResponse(j - lo)->createGradientOpT());
     }
   }
+
+  return Teuchos::null;
 }
 
 /// Create operator form of dg/dx_dot for distributed responses
+// FIXME: Is this correct? It seems the same as above.
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
-    {
+{
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   TEUCHOS_TEST_FOR_EXCEPTION(
       j >= num_responses_total_ || j < 0,
       Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::create_DgDx_dot_op():  " <<
+      "\nError!  LCM::SchwarzMultiscale::create_DgDx_dot_op():  " <<
       "Invalid response index j = " << j << '\n');
 
-  if (j < num_responses_partial_sum_[0]) {
-    return Thyra::createLinearOp(apps_[0]->getResponse(j)->createGradientOpT());
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          j >= num_responses_partial_sum_[m - 1] &&
-              j < num_responses_partial_sum_[m];
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-      if (in_range == true) {
-        return Thyra::createLinearOp(
-            apps_[m]->getResponse(j - num_responses_partial_sum_[m - 1])
-                ->createGradientOpT());
-      }
+    int const
+    hi = num_responses_partial_sum_[m];
+
+    bool const
+    in_range = lo <= j && j < hi;
+
+    if (in_range == true) {
+      return Thyra::createLinearOp(
+          apps_[m]->getResponse(j - lo)->createGradientOpT());
     }
   }
+
+  return Teuchos::null;
 }
 
 /// Create OutArgs
