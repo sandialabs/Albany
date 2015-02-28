@@ -494,7 +494,7 @@ computeState(typename Traits::EvalData workset,
             //
             if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) ) {
               converged = true;
-              std::cout << "!!!CONVERGED!!!" << std::endl;
+              std::cout << "!!!CONVERGED!!! in " << iter << " iterations" << std::endl;
             }
 
             // extract the sensitivities of the residuals

@@ -123,6 +123,7 @@ namespace LCM {
   void TransportCoefficients<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     ScalarT theta_term(0.0);
 
     // Diffusion Coefficient
@@ -244,9 +245,9 @@ namespace LCM {
     // deformation gradient volumetric split for lattice concentration
     Intrepid::Tensor<ScalarT> Fmech(num_dims_);
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        Fmech.fill( &F_(cell,pt,0,0) );
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
+        Fmech.fill(F_,cell,pt,0,0);
         for (std::size_t i(0); i < num_dims_; ++i) {
           for (std::size_t j(0); j < num_dims_; ++j) {
             F_mech_(cell,pt,i,j) = Fmech(i,j);
@@ -282,6 +283,7 @@ namespace LCM {
       }
     }
   }
+#endif
   //----------------------------------------------------------------------------
 }
 
