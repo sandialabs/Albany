@@ -1139,19 +1139,18 @@ LCM::SchwarzMultiscale::
 getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  validPL =
-      Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
+  list = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
 
-  validPL->sublist("Problem", false, "Problem sublist");
-  validPL->sublist("Debug Output", false, "Debug Output sublist");
-  validPL->sublist("Discretization", false, "Discretization sublist");
-  validPL->sublist("Quadrature", false, "Quadrature sublist");
-  validPL->sublist("Regression Results", false, "Regression Results sublist");
-  validPL->sublist("VTK", false, "DEPRECATED  VTK sublist");
-  validPL->sublist("Piro", false, "Piro sublist");
-  validPL->sublist("Coupled System", false, "Coupled system sublist");
+  list->sublist("Problem", false, "Problem sublist");
+  list->sublist("Debug Output", false, "Debug Output sublist");
+  list->sublist("Discretization", false, "Discretization sublist");
+  list->sublist("Quadrature", false, "Quadrature sublist");
+  list->sublist("Regression Results", false, "Regression Results sublist");
+  list->sublist("VTK", false, "DEPRECATED  VTK sublist");
+  list->sublist("Piro", false, "Piro sublist");
+  list->sublist("Coupled System", false, "Coupled system sublist");
 
-  return validPL;
+  return list;
 }
 
 //Copied from QCAD::CoupledPoissonSchrodinger
@@ -1161,21 +1160,20 @@ LCM::SchwarzMultiscale::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  validPL =
-      Teuchos::createParameterList("ValidCoupledSchwarzProblemParams");
+  list = Teuchos::createParameterList("ValidCoupledSchwarzProblemParams");
 
-  validPL->set<std::string>("Name", "", "String to designate Problem Class");
+  list->set<std::string>("Name", "", "String to designate Problem Class");
 
-  validPL->set<int>(
+  list->set<int>(
       "Phalanx Graph Visualization Detail",
       0,
       "Flag to select output of Phalanx Graph and level of detail");
 
   //FIXME: anything else to validate?
-  validPL->set<std::string>(
+  list->set<std::string>(
       "Solution Method",
       "Steady",
       "Flag for Steady, Transient, or Continuation");
 
-  return validPL;
+  return list;
 }
