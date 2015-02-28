@@ -28,6 +28,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   weighted_measure (p.get<std::string>  ("Weights Name"),   dl->qp_scalar ),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
+  lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar), 
+  theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar), 
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
   jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
   BF            (p.get<std::string>  ("BF Name"),           dl->node_qp_scalar),
@@ -42,6 +44,8 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   this->addDependentField(coordVec);
   this->addEvaluatedField(weighted_measure);
   this->addEvaluatedField(sphere_coord);
+  this->addEvaluatedField(lambda_nodal);
+  this->addEvaluatedField(theta_nodal);
   this->addEvaluatedField(jacobian_det);
   this->addEvaluatedField(jacobian_inv);
   this->addEvaluatedField(jacobian);
@@ -106,6 +110,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
   this->utils.setFieldData(weighted_measure,fm);
   this->utils.setFieldData(sphere_coord,fm);
+  this->utils.setFieldData(lambda_nodal,fm);
+  this->utils.setFieldData(theta_nodal,fm);
   this->utils.setFieldData(jacobian_det,fm);
   this->utils.setFieldData(jacobian_inv,fm);
   this->utils.setFieldData(jacobian,fm);
@@ -411,6 +417,22 @@ evaluateFields(typename Traits::EvalData workset)
     Intrepid::FieldContainer<MeshScalarT>   D2(numQPs,spatialDim,spatialDim);
     Intrepid::FieldContainer<MeshScalarT>   D3(numQPs,basisDim,spatialDim);
     
+    for (int e = 0; e<numelements;      ++e) {
+      for (int v = 0; v<numNodes;      ++v) {
+          //  phi(q,d) += coordVec(e,v,d) * val_at_cub_points(v,q);
+          //const MeshScalarT latitude  = std::asin(phi(q,2));  //theta
+          const MeshScalarT latitude  = std::asin(coordVec(e,v,2));  //theta
+
+          //MeshScalarT longitude = std::atan2(phi(q,1),phi(q,0));  //lambda
+          MeshScalarT longitude = std::atan2(coordVec(e,v,1),coordVec(e,v,0));  //lambda
+          if (std::abs(std::abs(latitude)-pi/2) < DIST_THRESHOLD) longitude = 0;
+          else if (longitude < 0) longitude += 2*pi;
+
+          lambda_nodal(e,v) = longitude;
+          theta_nodal(e,v) = latitude;
+
+      }
+    }
     
     for (int e = 0; e<numelements;      ++e) {
       phi.initialize(); 

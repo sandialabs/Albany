@@ -22,9 +22,16 @@ ShallowWaterProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   spatialDim(spatialDim_)
 {
   TEUCHOS_TEST_FOR_EXCEPTION(spatialDim!=2 && spatialDim!=3,std::logic_error,"Shallow water problem is only written for 2 or 3D.");
+  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "Shallow Water"); 
   // Set number of scalar equation per node, neq,  based on spatialDim
   if      (spatialDim==2) { modelDim=2; neq=3; } // Planar 2D problem
-  else if (spatialDim==3) { modelDim=2; neq=3; } // 2D shells embedded in 3D
+  else if (spatialDim ==3 ) { //2D shells embedded in 3D
+    if (eqnSet == "Scalar") { modelDim=2; neq=1; } 
+    else { modelDim=2; neq=3; } 
+  }
+  
+  std::cout << "eqnSet, modelDim, neq: " << eqnSet << ", " << modelDim << ", " << neq << std::endl; 
+  
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -79,8 +86,12 @@ Aeras::ShallowWaterProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
    dirichletNames[0] = "Depth";
-   dirichletNames[1] = "Vx";
-   dirichletNames[2] = "Vy";
+   if (neq > 1) {
+     dirichletNames[1] = "Vx";
+     if (neq > 2) {
+       dirichletNames[2] = "Vy";
+     }
+   }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
    dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
                                           this->params, this->paramLib);
@@ -161,6 +172,7 @@ Aeras::ShallowWaterProblem::getValidProblemParameters() const
   validPL->sublist("Shallow Water Problem", false, "");
   validPL->sublist("Aeras Surface Height", false, "");
   validPL->sublist("Aeras Shallow Water Source", false, "");
+  validPL->sublist("Equation Set", false, "");
   return validPL;
 }
 
