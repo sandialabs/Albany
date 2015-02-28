@@ -1155,6 +1155,9 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
   node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
 
+  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
+    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
+
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
   indicesT.resize(numOwnedNodes * neq);
@@ -1164,9 +1167,6 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
   mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
-
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
 #endif
 }
 
