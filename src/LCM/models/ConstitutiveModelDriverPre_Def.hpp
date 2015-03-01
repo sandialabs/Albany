@@ -40,9 +40,9 @@ ConstitutiveModelDriverPre(Teuchos::ParameterList& p,
   num_nodes_ = dims[1];
   num_pts_   = dims[2];
   num_dims_  = dims[3];
-  this->setName("ConstitutiveModelDriverPre" + PHX::TypeString<EvalT>::value);
+  this->setName("ConstitutiveModelDriverPre" + PHX::typeAsString<EvalT>());
 
-  // F0 is the total xsprescribed deformation gradient
+  // F0 is the total prescribed deformation gradient
   F0_ = computeLoading(loading_case, increment);
 }
 
@@ -76,14 +76,14 @@ evaluateFields(typename Traits::EvalData workset)
   // FIXME, I really need to figure out which components are prescribed, and
   // which will be traction free, and assign the def_grad_ only for the 
   // prescribed components
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {    
-      for (std::size_t node = 0; node < num_nodes_; ++node) {
-        for (std::size_t dim1 = 0; dim1 < num_dims_; ++dim1) {
-          for (std::size_t dim2 = 0; dim2 < num_dims_; ++dim2) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {    
+      for (int node = 0; node < num_nodes_; ++node) {
+        for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
+          for (int dim2 = 0; dim2 < num_dims_; ++dim2) {
             def_grad_(cell,pt,dim1,dim2) = solution_(cell,node,dim1,dim2);
             prescribed_def_grad_(cell,pt,dim1,dim2) = current_F(dim1,dim2);
-            F.fill(&def_grad_(cell,pt,0,0));
+            F.fill(def_grad_,cell,pt,0,0);
             j_(cell,pt) = Intrepid::det(F);
           }
         }

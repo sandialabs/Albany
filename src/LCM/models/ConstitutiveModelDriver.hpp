@@ -60,6 +60,11 @@ namespace LCM {
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> stress_;
 
     ///
+    /// prescribed deformation gradient field
+    ///
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> prescribed_def_grad_;
+
+    ///
     /// Time field
     ///
     PHX::MDField<ScalarT, Dummy> time_;

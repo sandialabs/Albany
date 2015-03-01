@@ -405,6 +405,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         new Teuchos::ParameterList("Constitutive Model Driver"));
     p->set<std::string>("Residual Name", resid_names[0]);
     p->set<std::string>("F Name", defgrad);
+    p->set<std::string>("Prescribed F Name", "Prescribed F");
     p->set<std::string>("Stress Name", cauchy); 
     Teuchos::RCP<LCM::ConstitutiveModelDriver<EvalT, PHAL::AlbanyTraits> >
     cmdEv =
