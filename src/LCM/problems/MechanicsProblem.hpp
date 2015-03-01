@@ -1299,6 +1299,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       param_list.set<bool>("Have Temperature", true);
     }
 
+    param_list.set<bool>("Have Total Concentration", false);
+    if (have_transport_ || have_transport_eq_) {
+      p->set<std::string>("Total Concentration Name", totalConcentration);
+      param_list.set<bool>("Have Total Concentration", true);
+    }
+
+    param_list.set<bool>("Have Bubble Volume Fraction", false);
+    param_list.set<bool>("Have Total Bubble Density", false);
+    if (param_list.isSublist("Tritium Coefficients")) {
+      p->set<std::string>("Bubble Volume Fraction Name", bubble_volume_fraction);
+      p->set<std::string>("Total Bubble Density Name", total_bubble_density);
+      param_list.set<bool>("Have Bubble Volume Fraction", true);
+      param_list.set<bool>("Have Total Bubble Density", true);
+    }
+
     param_list.set<Teuchos::RCP<std::map<std::string, std::string> > >(
         "Name Map",
         fnm);
@@ -2215,7 +2230,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Deformation Gradient Name", defgrad);
     p->set<std::string>("Determinant of F Name", J);
     p->set<std::string>("Temperature Name", temperature);
-    if (material_model_name == "J2") {
+    // FIXME: this creates a circular dependency between the constitutive model and transport
+    // see below
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    if (false) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -2230,9 +2248,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Mechanical Deformation Gradient Name", "Fm");
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    if (material_model_name == "J2") {
+    // FIXME: this creates a circular dependency between the constitutive model and transport
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    //if (false) {
       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-    }
+      //}
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
