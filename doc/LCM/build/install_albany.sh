@@ -64,3 +64,9 @@ for target in trilinos albany; do
    echo "!!! $dir exists !!!"
  fi
 done
+
+if [ -e Albany/src/Albany ]; then
+  echo "=== build successful ==="
+else
+  echo "!!! unsuccessful build, see logs !!!"
+fi
