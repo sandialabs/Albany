@@ -76,6 +76,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
   else if(name == "Aeras CosineBell")
       F = Teuchos::rcp(new AAdapt::AerasCosineBell(neq, numDim, data));
+  
+  else if(name == "Aeras Scalar CosineBell")
+      F = Teuchos::rcp(new AAdapt::AerasScalarCosineBell(neq, numDim, data));
 
   else if(name == "Aeras ZonalFlow") //this used to be called TestCase2.  Irina has renamed it so it can be used for test case 5 too.
       F = Teuchos::rcp(new AAdapt::AerasZonalFlow(neq, numDim, data));
@@ -800,6 +803,56 @@ void AAdapt::AerasCosineBell::compute(double* solution, const double* X) {
   solution[0] = h;
   solution[1] = u;
   solution[2] = v;
+}
+//*****************************************************************************
+AAdapt::AerasScalarCosineBell::AerasScalarCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_)
+  : spatialDim(spatialDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION( (neq!=1 || spatialDim!=3 || data.size()!=1) ,
+                             std::logic_error,
+                             "Error! Invalid call of Aeras ScalarCosineBell with " << neq
+                             << " " << spatialDim <<  " "<< data.size()<< std::endl);
+
+
+}
+void AAdapt::AerasScalarCosineBell::compute(double* solution, const double* X) {
+
+  const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+  const double cosAlpha = std::cos(data[0]);
+  const double sinAlpha = std::sin(data[0]);
+
+  const double myPi = Aeras::ShallowWaterConstants::self().pi;
+  const double u0 = 2*myPi*a/(12.*24.*3600.);
+  const double lambda_c = 1.5*myPi;
+  const double theta_c = 0;
+  const double sinTheta_c = std::sin(theta_c);
+  const double cosTheta_c = std::cos(theta_c);
+
+  const double x = X[0];
+  const double y = X[1];
+  const double z = X[2];
+
+  const double theta  = std::asin(z);
+
+  double lambda = std::atan2(y,x);
+
+  const double DIST_THRESHOLD = Aeras::ShallowWaterConstants::self().distanceThreshold;
+  if (std::abs(std::abs(theta)-myPi/2.) < DIST_THRESHOLD) lambda = 0;
+  else if (lambda < 0) lambda += 2*myPi;
+
+  const double sinTheta = std::sin(theta);
+  const double cosTheta = std::cos(theta);
+
+  const double sinLambda = std::sin(lambda);
+  const double cosLambda = std::cos(lambda);
+
+  const double R = a/3.;
+  const double h0 = 1000.;
+
+  const double r = a*std::acos(sinTheta_c*sinTheta + cosTheta_c*cosTheta*std::cos(lambda - lambda_c));
+
+  const double h = r < R ? 0.5*h0*(1 + std::cos(myPi*r/R)) : 0;
+
+  solution[0] = h;
 }
 //*****************************************************************************
 //TC2
