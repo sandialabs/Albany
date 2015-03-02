@@ -593,13 +593,9 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_op_impl(int j) const
 {
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  assert(0 <= j && j < num_responses_total_);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      j >= num_responses_total_ || j < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      "\nError!  LCM::SchwarzMultiscale::create_DgDx_op_impl():  " <<
-      "Invalid response index j = " << j << '\n');
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   for (int m = 0; m < num_models_; ++m) {
     int const
@@ -626,13 +622,9 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
 {
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  assert(0 <= j && j < num_responses_total_);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      j >= num_responses_total_ || j < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      "\nError!  LCM::SchwarzMultiscale::create_DgDx_dot_op():  " <<
-      "Invalid response index j = " << j << '\n');
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   for (int m = 0; m < num_models_; ++m) {
     int const
