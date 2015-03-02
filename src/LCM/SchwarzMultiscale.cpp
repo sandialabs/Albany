@@ -202,21 +202,18 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
   // set p_init in nominal_values_
   // TODO: Check if these are correct nominal values for parameters
-  for (int l = 0; l < num_params_total_; ++l) {
-    for (int m = 0; m < num_models_; ++m) {
-      int const
-      lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+  for (int m = 0; m < num_models_; ++m) {
 
-      int const
-      hi = num_params_partial_sum_[m];
+    int const
+    num_params_m = num_params_[m];
 
-      bool const
-      in_range = lo <= l && l < hi;
+    int const
+    offset = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-      if (in_range == true) {
-        nominal_values_.set_p(l, solver_inargs_[m].get_p(l - lo));
-      }
+    for (int l = 0; l < num_params_m; ++l) {
+      nominal_values_.set_p(l + offset, solver_inargs_[m].get_p(l));
     }
+
   }
   //end setting of nominal values
 
