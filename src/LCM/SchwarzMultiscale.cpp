@@ -87,16 +87,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       problem_name_0 = problem_params_m->get("Name", "");
     }
 
-    if (problem_name_0.compare(problem_name)) {
-
-      std::ostringstream msg;
-      msg << "\nError in " << __PRETTY_FUNCTION__ << "  attempting to couple ";
-      msg << "different models " << problem_name_0 << " and ";
-      msg << problem_name << ".\n";
-
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, msg.str());
-
-    }
+    assert(problem_name_0 == problem_name);
 
     std::ostringstream
     oss("materials");
@@ -333,13 +324,9 @@ LCM::SchwarzMultiscale::get_f_space() const
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
 {
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  assert(0 <= l && l < num_params_total_);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_params_total_ || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      "\nError!  LCM::SchwarzMultiscale::get_p_space():  " <<
-      "Invalid parameter index l = " << l << '\n');
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   for (int m = 0; m < num_models_; ++m) {
     int const
@@ -362,13 +349,9 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
 {
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  assert(0 <= l && l < num_responses_total_);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_responses_total_ || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      "\nError!  LCM::SchwarzMultiscale::get_g_space():  " <<
-      "Invalid response index l = " << l << '\n');
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   for (int m = 0; m < num_models_; ++m) {
     int const
@@ -390,14 +373,10 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 
 Teuchos::RCP<const Teuchos::Array<std::string> >
 LCM::SchwarzMultiscale::get_p_names(int l) const
-    {
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+{
+  assert(0 <= l && l < num_params_total_);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_params_total_ || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      "\nError!  LCM::SchwarzMultiscale::get_p_names():  " <<
-      "Invalid parameter index l = " << l << '\n');
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   for (int m = 0; m < num_models_; ++m) {
     int const
