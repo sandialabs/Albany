@@ -137,6 +137,33 @@ public:
   }
 
   ///
+  /// set the total concentration
+  ///
+  void
+  setTotalConcentrationField(PHX::MDField<ScalarT, Cell, QuadPoint> total_concentration)
+  {
+    total_concentration_ = total_concentration;
+  }
+
+  ///
+  /// set the total bubble density
+  ///
+  void
+  setTotalBubbleDensityField(PHX::MDField<ScalarT, Cell, QuadPoint> total_bubble_density)
+  {
+    total_bubble_density_ = total_bubble_density;
+  }
+
+  ///
+  /// set the bubble volume fraction
+  ///
+  void
+  setBubbleVolumeFractionField(PHX::MDField<ScalarT, Cell, QuadPoint> bubble_volume_fraction)
+  {
+    bubble_volume_fraction_ = bubble_volume_fraction;
+  }
+
+  ///
   /// set the Weights field
   ///
   void
@@ -195,6 +222,21 @@ protected:
   /// Bool for damage
   ///
   bool have_damage_;
+
+  ///
+  /// Bool for total concentration
+  ///
+  bool have_total_concentration_;
+
+  ///
+  /// Bool for total bubble density
+  ///
+  bool have_total_bubble_density_;
+
+  ///
+  /// Bool for bubble_volume_fraction
+  ///
+  bool have_bubble_volume_fraction_;
 
   ///
   /// optional integration point locations field

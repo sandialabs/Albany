@@ -505,7 +505,7 @@ namespace {
 // nonetheless quite suggestive: sanitize v before calling update. I do this at
 // the highest level, here, rather than in the responses.
 void sanitize_nans (const Thyra::ModelEvaluatorBase::Derivative<ST>& v) {
-  if ( ! v.isEmpty())
+  if ( ! v.isEmpty() && Teuchos::nonnull(v.getMultiVector()))
     ConverterT::getTpetraMultiVector(v.getMultiVector())->putScalar(0.0);
 }
 } // namespace

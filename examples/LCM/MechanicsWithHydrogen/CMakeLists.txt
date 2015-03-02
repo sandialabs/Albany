@@ -13,14 +13,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/2hex.g
 # 2. Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 # 3. Create the test with this name and standard executable
-IF(NOT ALBANY_PARALLEL_ONLY)
-  if (ALBANY_EPETRA) 
-    add_test(${testName}_SERIAL ${SerialAlbany.exe})
-  endif()
-  if (ALBANY_IFPACK2) 
-    add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.xml)
-  endif()
-ENDIF() 
+# FIXME - something is just wrong here.
+# IF(NOT ALBANY_PARALLEL_ONLY)
+#   if (ALBANY_EPETRA) 
+#     add_test(${testName}_SERIAL ${SerialAlbany.exe})
+#   endif()
+#   if (ALBANY_IFPACK2) 
+#     add_test(${testName}_SERIAL_Tpetra ${SerialAlbanyT.exe} inputT.xml)
+#   endif()
+# ENDIF() 
 
 # 1. Copy Input file from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputParallel.xml

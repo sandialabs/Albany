@@ -297,7 +297,6 @@ int main(int argc, char *argv[]) {
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     if (writeToCoutSoln == true) { 
-       std::cout << "xfinal: " << std::endl;
        Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
     }
 

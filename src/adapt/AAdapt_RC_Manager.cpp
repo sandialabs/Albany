@@ -577,7 +577,8 @@ void Manager::update_x (const Tpetra_Vector& soln_nol) {
 
 Teuchos::RCP<const Tpetra_Vector> Manager::
 add_x (const Teuchos::RCP<const Tpetra_Vector>& a) const {
-  Teuchos::RCP<Tpetra_Vector> c = Teuchos::rcp(new Tpetra_Vector(*a));
+  Teuchos::RCP<Tpetra_Vector>
+    c = Teuchos::rcp(new Tpetra_Vector(*a, Teuchos::Copy));
   c->update(1, *impl_->x_, 1);
   return c;
 }
