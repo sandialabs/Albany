@@ -148,11 +148,11 @@ private:
   num_responses_;
   
   Teuchos::Array<int>
-  num_responses_partial_sum_;
-  
-  Teuchos::Array<int>
   num_params_partial_sum_;
 
+  Teuchos::Array<int>
+  num_responses_partial_sum_;
+  
   //like num_param_vecs
   int
   num_params_total_;
