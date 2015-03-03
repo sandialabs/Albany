@@ -118,6 +118,7 @@
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <ParameterList name="Linear Solver">
 	    <Parameter name="Write Linear System" type="bool" value="false"/>
+            <Parameter name="Tolerance" type="double" value="1e-6"/>
 	  </ParameterList>
 	  <ParameterList name="Stratimikos Linear Solver">
 	    <ParameterList name="NOX Stratimikos Options">
@@ -138,12 +139,12 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
+		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="1"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: level-of-fill" type="int" value="0"/>
 		  </ParameterList>
 		</ParameterList>
