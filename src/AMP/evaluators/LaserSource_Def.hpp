@@ -66,7 +66,7 @@ LaserSource(Teuchos::ParameterList& p,
   ScalarT value_powder_hemispherical_reflectivity = cond_list->get("Powder Hemispherical Reflectivity Value", 1.0);
   init_constant_powder_hemispherical_reflectivity(value_powder_hemispherical_reflectivity,p);
 
-  this->setName("LaserSource"+PHX::TypeString<EvalT>::value);
+  this->setName("LaserSource"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -119,9 +119,8 @@ evaluateFields(typename Traits::EvalData workset)
   const RealType time = workset.current_time;
 
   // source function
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      MeshScalarT* X = &coord_(cell,qp,0);
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int qp = 0; qp < num_qps_; ++qp) {
       laser_source_(cell,qp) = laser_power + particle_dia;
     }
   }

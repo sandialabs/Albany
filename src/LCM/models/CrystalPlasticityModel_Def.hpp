@@ -191,15 +191,15 @@ computeState(typename Traits::EvalData workset,
   std::ofstream out("output.dat", std::fstream::app);
 #endif
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
 #ifdef PRINT_OUTPUT
 //    std::cout << ">>> cell " << cell << " point " << pt << " <<<\n";
 #endif
       // fill local tensors
-      F.fill(&def_grad(cell, pt, 0, 0));
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      F.fill(def_grad, cell, pt, 0, 0);
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           Fp(i, j) = ScalarT(previous_plastic_deformation(cell, pt, i, j));
         }
       }
@@ -213,7 +213,7 @@ computeState(typename Traits::EvalData workset,
       // compute velocity gradient
       L.fill(Intrepid::ZEROS);
       if (num_slip_ >0) { // crystal plasticity
-        for (std::size_t s(0); s < num_slip_; ++s) {
+        for (int s(0); s < num_slip_; ++s) {
           P  = slip_systems_[s].projector_; 
           // compute resolved shear stresses
           tau = Intrepid::dotdot(P,S);
@@ -240,8 +240,8 @@ computeState(typename Traits::EvalData workset,
         computeStress(F,Fp,sigma,S);
       }
       source(cell, pt) = 0.0;
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
 
 	  // Check for NaN and Inf
 	  // DJL this check could/should eventually be made to run with debug builds only
@@ -260,30 +260,30 @@ computeState(typename Traits::EvalData workset,
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
       out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
         }
       }
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
         }
       }
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
         }
       }
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
         }
       }
-      for (std::size_t s(0); s < num_slip_; ++s) {
+      for (int s(0); s < num_slip_; ++s) {
         out << std::setprecision(12) <<  dgammas[s] << " ";
       }
-      for (std::size_t s(0); s < num_slip_; ++s) {
+      for (int s(0); s < num_slip_; ++s) {
         out << std::setprecision(12) <<  taus[s] << " ";
       }
       out << "\n";
@@ -314,8 +314,7 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
 #endif
   E_ = 0.5*( Intrepid::transpose(Fe_) * Fe_ - I_);
   S = Intrepid::dotdot(C_,E_);
-  sigma = (1.0 / Intrepid::det(F) ) * F* S * Intrepid::transpose(F);
+  sigma = (1.0 / Intrepid::det(F) ) * F * S * Intrepid::transpose(F);
 }
 //------------------------------------------------------------------------------
 }
-

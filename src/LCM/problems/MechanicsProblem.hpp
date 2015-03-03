@@ -486,10 +486,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   if (material_model_name == "Linear Elastic") {
     small_strain = true;
   }
-   
+
   if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
     small_strain = true;
-   }
+  }
 
   if (material_db_->isElementBlockParam(eb_name, "Strain Flag")) {
     small_strain = true;
@@ -1181,8 +1181,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Source list exists and the mechanical source params are defined
 
-  if (have_source_ && 
-      params->sublist("Source Functions").isSublist("Mechanical Source")) { 
+  if (have_source_ &&
+      params->sublist("Source Functions").isSublist("Mechanical Source")) {
 
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList);
@@ -1194,8 +1194,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         dl_->qp_scalar);
 
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = 
-      params->sublist("Source Functions").sublist("Mechanical Source");
+    Teuchos::ParameterList& paramList =
+        params->sublist("Source Functions").sublist("Mechanical Source");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
@@ -1204,22 +1204,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Heat Source in Heat Equation
 
-  if (thermal_source_ != SOURCE_TYPE_NONE){
+  if (thermal_source_ != SOURCE_TYPE_NONE) {
 
-
-    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList);
 
     p->set<std::string>("Source Name", "Heat Source");
     p->set<std::string>("Variable Name", "Temperature");
     p->set<Teuchos::RCP<PHX::DataLayout> >(
-      "QP Scalar Data Layout",
-      dl_->qp_scalar);
+        "QP Scalar Data Layout",
+        dl_->qp_scalar);
 
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
-    if(thermal_source_ == SOURCE_TYPE_INPUT) { // Thermal source in input file
+    if (thermal_source_ == SOURCE_TYPE_INPUT) { // Thermal source in input file
 
-      Teuchos::ParameterList& paramList = params->sublist("Source Functions").sublist("Thermal Source");
+      Teuchos::ParameterList& paramList = params->sublist("Source Functions")
+          .sublist("Thermal Source");
       p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
       ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
@@ -1227,18 +1228,19 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       thermal_source_evaluated_ = true;
 
-    } else if(thermal_source_ == SOURCE_TYPE_MATERIAL){
+    } else if (thermal_source_ == SOURCE_TYPE_MATERIAL) {
 
       // There may not be a source in every element block
 
-      if(material_db_->isElementBlockSublist(eb_name, "Source Functions")){ // Thermal source in matDB
+      if (material_db_->isElementBlockSublist(eb_name, "Source Functions")) { // Thermal source in matDB
 
         Teuchos::ParameterList& srcParamList = material_db_->
-          getElementBlockSublist(eb_name, "Source Functions");
+            getElementBlockSublist(eb_name, "Source Functions");
 
-        if(srcParamList.isSublist("Thermal Source")){ 
+        if (srcParamList.isSublist("Thermal Source")) {
 
-          Teuchos::ParameterList& paramList = srcParamList.sublist("Thermal Source");
+          Teuchos::ParameterList& paramList = srcParamList.sublist(
+              "Thermal Source");
           p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
           ev = Teuchos::rcp(new PHAL::Source<EvalT, PHAL::AlbanyTraits>(*p));
@@ -1248,10 +1250,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         }
       }
     }
-    else 
+    else
 
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-         "Unrecognized thermal source specified in input file");
+          "Unrecognized thermal source specified in input file");
 
   }
 
@@ -1295,6 +1297,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (have_temperature_ || have_temperature_eq_) {
       p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
+    }
+
+    param_list.set<bool>("Have Total Concentration", false);
+    if (have_transport_ || have_transport_eq_) {
+      p->set<std::string>("Total Concentration Name", totalConcentration);
+      param_list.set<bool>("Have Total Concentration", true);
+    }
+
+    param_list.set<bool>("Have Bubble Volume Fraction", false);
+    param_list.set<bool>("Have Total Bubble Density", false);
+    if (param_list.isSublist("Tritium Coefficients")) {
+      p->set<std::string>("Bubble Volume Fraction Name", bubble_volume_fraction);
+      p->set<std::string>("Total Bubble Density Name", total_bubble_density);
+      param_list.set<bool>("Have Bubble Volume Fraction", true);
+      param_list.set<bool>("Have Total Bubble Density", true);
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string> > >(
@@ -1677,8 +1694,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         p->set<std::string>("Strain Name", "Strain");
         if (Teuchos::nonnull(rc_mgr_))
           rc_mgr_->registerField(
-            "Strain", dl_->qp_tensor, AAdapt::rc::Init::zero,
-            AAdapt::rc::Transformation::none, p);
+              "Strain", dl_->qp_tensor, AAdapt::rc::Init::zero,
+              AAdapt::rc::Transformation::none, p);
       }
 
       // set flag for return strain and velocity gradient
@@ -1713,8 +1730,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
       if (Teuchos::nonnull(rc_mgr_))
         rc_mgr_->registerField(
-          defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
-          AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
+            defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
+            AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
 
       //ev = Teuchos::rcp(new LCM::DefGrad<EvalT,PHAL::AlbanyTraits>(*p));
       ev = Teuchos::rcp(
@@ -1826,34 +1843,6 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           new LCM::MechanicsResidual<EvalT, PHAL::AlbanyTraits>(*p, dl_));
       fm0.template registerEvaluator<EvalT>(ev);
     }
-  }
-  
-  
-  if (have_mech_eq_) {
-    // convert Cauchy stress to first Piola-Kirchhoff
-    Teuchos::RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList("First PK Stress"));
-    //Input
-    p->set<std::string>("Stress Name", cauchy);
-    p->set<std::string>("DefGrad Name", defgrad);
-
-    // Effective stress theory for poromechanics problem
-    if (have_pore_pressure_eq_) {
-      p->set<bool>("Have Pore Pressure", true);
-      p->set<std::string>("Pore Pressure Name", porePressure);
-      p->set<std::string>("Biot Coefficient Name", biotCoeff);
-    }
-
-    if (small_strain) {
-      p->set<bool>("Small Strain", true);
-    }
-      
-    //Output
-    p->set<std::string>("First PK Stress Name", firstPK);
-
-    p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
-
-    ev = Teuchos::rcp(new LCM::FirstPK<EvalT, PHAL::AlbanyTraits>(*p, dl_));
-    fm0.template registerEvaluator<EvalT>(ev);
   }
 
   if (have_mech_eq_) {
@@ -2241,7 +2230,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Deformation Gradient Name", defgrad);
     p->set<std::string>("Determinant of F Name", J);
     p->set<std::string>("Temperature Name", temperature);
-    if (material_model_name == "J2") {
+    // FIXME: this creates a circular dependency between the constitutive model and transport
+    // see below
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    if (false) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -2256,9 +2248,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Mechanical Deformation Gradient Name", "Fm");
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    if (material_model_name == "J2") {
+    // FIXME: this creates a circular dependency between the constitutive model and transport
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    //if (false) {
       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-    }
+      //}
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
@@ -2404,13 +2398,15 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<Teuchos::ParameterList*>("Molar Volume", &molar_param);
 
       //Input
-      p->set<std::string>("Total Concentration Name",totalConcentration);
+      p->set<std::string>("Total Concentration Name", totalConcentration);
       p->set<std::string>("Delta Time Name", "Delta Time");
       p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
       // Output
       p->set<std::string>("He Concentration Name", he_concentration);
       p->set<std::string>("Total Bubble Density Name", total_bubble_density);
-      p->set<std::string>("Bubble Volume Fraction Name", bubble_volume_fraction);
+      p->set<std::string>(
+          "Bubble Volume Fraction Name",
+          bubble_volume_fraction);
 
       ev = Teuchos::rcp(
           new LCM::HeliumODEs<EvalT, PHAL::AlbanyTraits>(*p, dl_));
@@ -2517,18 +2513,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
   // Evaluate contact contributions
 
-  if (have_contact_){ // create the contact evaluator to fill in the
-
+  if (have_contact_) { // create the contact evaluator to fill in the
 
     Teuchos::ParameterList& paramList = params->sublist("Contact");
-    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
+        new Teuchos::ParameterList);
 
-    p->set<Teuchos::Array<std::string> >("Master Side Set Names", 
-         paramList.get<Teuchos::Array<std::string> >("Master Side Sets"));
-    p->set<Teuchos::Array<std::string> >("Slave Side Set Names", 
-         paramList.get<Teuchos::Array<std::string> >("Slave Side Sets"));
-    p->set<Teuchos::Array<std::string> >("Sideset IDs", 
-         paramList.get<Teuchos::Array<std::string> >("Contact Side Set Pair"));
+    p->set<Teuchos::Array<std::string> >("Master Side Set Names",
+        paramList.get<Teuchos::Array<std::string> >("Master Side Sets"));
+    p->set<Teuchos::Array<std::string> >("Slave Side Set Names",
+        paramList.get<Teuchos::Array<std::string> >("Slave Side Sets"));
+    p->set<Teuchos::Array<std::string> >("Sideset IDs",
+        paramList.get<Teuchos::Array<std::string> >("Contact Side Set Pair"));
 
     p->set<const Albany::MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
@@ -2537,9 +2533,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
 
     p->set<std::string>("M Name", "M");
 
-    ev = Teuchos::rcp(new LCM::MortarContact<EvalT, PHAL::AlbanyTraits>(*p, dl_));
+    ev = Teuchos::rcp(
+        new LCM::MortarContact<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-
 
   }
 
@@ -2572,14 +2568,14 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<bool>("Have Source", true);
       p->set<std::string>("Source Name", mech_source);
     }
-    
+
     // Thermal Source (internal energy generation)
     if (thermal_source_evaluated_) {
       p->set<bool>("Have Second Source", true);
       p->set<std::string>("Second Source Name", "Heat Source");
     }
 
-    if (have_contact_){ // Pass M to the heat eqn for thermal fluxes between surfaces
+    if (have_contact_) { // Pass M to the heat eqn for thermal fluxes between surfaces
       p->set<bool>("Have Contact", true);
       p->set<std::string>("M Name", "M");
     }
@@ -2927,7 +2923,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl_);
     return respUtils.constructResponses(
-      fm0, *responseList, pFromProb, stateMgr, &meshSpecs);
+        fm0, *responseList, pFromProb, stateMgr, &meshSpecs);
   }
 
   return Teuchos::null;

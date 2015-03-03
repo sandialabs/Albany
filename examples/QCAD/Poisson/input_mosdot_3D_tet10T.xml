@@ -149,7 +149,7 @@
 		      <Parameter name="Convergence Tolerance" type="double" value="1e-08" />
 		      <Parameter name="Output Style" type="int" value="1" />
 		      <Parameter name="Output Frequency" type="int" value="20" />
-		      <Parameter name="Maximum Iterations" type="int" value="200" />
+		      <Parameter name="Maximum Iterations" type="int" value="300" />
 		      <Parameter name="Verbosity" type="int" value="33" />
 		      <Parameter name="Block Size" type="int" value="1" />
 		      <Parameter name="Flexible Gmres" type="bool" value="0" />

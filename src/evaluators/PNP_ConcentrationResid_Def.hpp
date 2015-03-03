@@ -48,7 +48,7 @@ ConcentrationResid(const Teuchos::ParameterList& p,
   D[0] =  1.0;
   D[1] =  2.0;
 
-  this->setName("ConcentrationResid"+PHX::TypeString<EvalT>::value);
+  this->setName("ConcentrationResid" );
 }
 
 //**********************************************************************

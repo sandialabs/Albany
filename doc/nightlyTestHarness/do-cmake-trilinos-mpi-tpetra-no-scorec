@@ -41,12 +41,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D TPL_LAPACK_LIBRARIES:FILEPATH=/usr/lib64/atlas/liblapack.so.3 \
 \
       -D TPL_ENABLE_MPI:BOOL=ON \
-      -D MPI_BASE_DIR=/usr/local \
-      -D MPI_BIN_DIR=/usr/local/bin \
-\
-      -D CMAKE_C_COMPILER=/usr/local/bin/mpicc \
-      -D CMAKE_CXX_COMPILER=/usr/local/bin/mpicxx \
-      -D CMAKE_Fortran_COMPILER=/usr/local/bin/mpif90 \
 \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
       -D TPL_Netcdf_INCLUDE_DIRS:PATH=$NETCDF/include \
@@ -138,7 +132,8 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Stokhos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
       -D Stratimikos_ENABLE_TEUCHOS_TIME_MONITOR:BOOL=ON \
 \
-      -D Trilinos_ENABLE_CXX11:BOOL=OFF \
+      -D Trilinos_ENABLE_CXX11:BOOL=ON \
+      -D Tpetra_ENABLE_CLASSIC_VBR:BOOL=ON \
       -D MPI_EXEC=mpiexec \
        ..
 

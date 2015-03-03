@@ -48,7 +48,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
     const Teuchos::RCP<ParamLib>& param_lib,
     const int num_dims,
     const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
-    Teuchos::RCP<const Teuchos::Comm<int> >& commT) : 
+    Teuchos::RCP<const Teuchos::Comm<int> >& commT) :
     Albany::AbstractProblem(params, param_lib),
     have_source_(false),
     thermal_source_(SOURCE_TYPE_NONE),
@@ -112,7 +112,6 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       have_stab_pressure_,
       have_stab_pressure_eq_);
 
-
   // Compute number of equations
   int num_eq = 0;
   if (have_mech_eq_) num_eq += num_dims_;
@@ -123,7 +122,6 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   if (have_damage_eq_) num_eq += 1;
   if (have_stab_pressure_eq_) num_eq += 1;
   this->setNumEquations(num_eq);
-
 
   // Print out a summary of the problem
   *out << "Mechanics problem:" << '\n'
@@ -156,18 +154,19 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
   //   - the "Source Functions" list must be present in the input file,
   //   - we must have temperature and have included a temperature equation
 
-  if (have_source_ && have_temperature_ && have_temperature_eq_)
+  if (have_source_ && have_temperature_ && have_temperature_eq_) {
     // If a thermal source is specified
-    if(params->sublist("Source Functions").isSublist("Thermal Source")){
+    if (params->sublist("Source Functions").isSublist("Thermal Source")) {
 
-      Teuchos::ParameterList& thSrcPL = params->sublist("Source Functions").sublist("Thermal Source");
+      Teuchos::ParameterList& thSrcPL = params->sublist("Source Functions")
+          .sublist("Thermal Source");
 
-      if(thSrcPL.get<std::string>("Thermal Source Type", "None") == "Block Dependent"){
+      if (thSrcPL.get<std::string>("Thermal Source Type", "None")
+          == "Block Dependent") {
 
-        if(Teuchos::nonnull(material_db_))
-
+        if (Teuchos::nonnull(material_db_)) {
           thermal_source_ = SOURCE_TYPE_MATERIAL;
-
+        }
       }
       else {
 
@@ -175,7 +174,7 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
 
       }
     }
-
+  }
 
   //the following function returns the problem information required for
   //setting the rigid body modes (RBMs) for elasticity problems (in
@@ -199,8 +198,11 @@ MechanicsProblem(const Teuchos::RCP<Teuchos::ParameterList>& params,
       null_space_dim = 6;
     }
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        '\n' << "Error: " << __FILE__ << " line " << __LINE__ << ": num_dims_ set incorrectly." << '\n');
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          '\n' << "Error: " << __FILE__ << " line " << __LINE__ <<
+          ": num_dims_ set incorrectly." << '\n');
     }
   }
 

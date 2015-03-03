@@ -47,7 +47,7 @@ BiotModulus(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*elmd_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*elmd_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
@@ -93,7 +93,7 @@ BiotModulus(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(biotModulus);
-  this->setName("Biot Modulus"+PHX::TypeString<EvalT>::value);
+  this->setName("Biot Modulus"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -114,28 +114,28 @@ template<typename EvalT, typename Traits>
 void BiotModulus<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::size_t numCells = workset.numCells;
+  int numCells = workset.numCells;
 
   if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	  biotModulus(cell,qp) = constant_value;
       }
     }
   }
   else {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	Teuchos::Array<MeshScalarT> point(numDims);
-	for (std::size_t i=0; i<numDims; i++)
+	for (int i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
 			biotModulus(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }
     }
   }
   if (isPoroElastic) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	    // 1/M = (B-phi)/Ks + phi/Kf
     	    biotModulus(cell,qp) = 1/((biotCoefficient(cell,qp) - porosity(cell,qp))/GrainBulkModulus
     	    		                  + porosity(cell,qp)/FluidBulkModulus);

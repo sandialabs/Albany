@@ -56,7 +56,7 @@ DamageSource(Teuchos::ParameterList& p) :
   sourceName = p.get<std::string>("Damage Source Name")+"_old";
   damageName = p.get<std::string>("Damage Name")+"_old";
   this->addEvaluatedField(source);
-  this->setName("Damage Source"+PHX::TypeString<EvalT>::value);
+  this->setName("Damage Source"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -93,9 +93,9 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT p, triax, source_new, term;
   RealType damage_old, source_old;
 
-  for (std::size_t  cell=0; cell < workset.numCells; ++cell) 
+  for (int  cell=0; cell < workset.numCells; ++cell) 
   {
-    for (std::size_t qp=0; qp < numQPs; ++qp) 
+    for (int qp=0; qp < numQPs; ++qp) 
     {
       source_old = source_old_FC(cell,qp);
       damage_old = damage_old_FC(cell,qp);

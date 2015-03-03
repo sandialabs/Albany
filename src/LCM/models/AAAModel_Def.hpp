@@ -63,9 +63,9 @@ computeState(typename Traits::EvalData workset,
   //    scalar multiplier (mult) * mu (shear modulus)
   ScalarT kappa = mult_ * mu;
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      F.fill(&defGrad(cell, pt, 0, 0));
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
+      F.fill(defGrad,cell, pt,0,0);
       B = F * Intrepid::transpose(F);
 
       ScalarT pressure = kappa * (J(cell, pt) - 1.0);
@@ -74,8 +74,8 @@ computeState(typename Traits::EvalData workset,
       S = -pressure * Id
           + 2.0 * (alpha_ + 2.0 * beta_ * (Intrepid::I1(B) - 3.0)) * B;
 
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) = S(i, j);
         }
       }

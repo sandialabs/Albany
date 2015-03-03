@@ -25,6 +25,11 @@
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_BlockMapOut.h"
 
+#include "Phalanx_config.hpp"
+#include "Phalanx.hpp"
+
+#include "Kokkos_Core.hpp"
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 //
@@ -117,6 +122,8 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc, &argv, NULL);
 #endif
 
+  Kokkos::initialize(argc, argv);
+
 #ifdef ALBANY_CHECK_FPE
    // Catch FPEs. Follow Main_SolveT.cpp's approach to checking for floating
    // point exceptions.
@@ -165,6 +172,8 @@ int main(int argc, char *argv[]) {
 
     setupTimer.~TimeMonitor();
 
+//    PHX::InitializeKokkosDevice();
+   
     Teuchos::ParameterList &solveParams =
       slvrfctry.getAnalysisParameters().sublist("Solve", /*mustAlreadyExist =*/ false);
     // By default, request the sensitivities if not explicitly disabled
@@ -249,7 +258,9 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList &debugParams =
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
+
 
     const RCP<const Epetra_Vector> xfinal = responses.back();
     double mnv; xfinal->MeanValue(&mnv);
@@ -275,10 +286,19 @@ int main(int argc, char *argv[]) {
       //writing to MatrixMarket file
       EpetraExt::MultiVectorToMatrixMarketFile("xfinal.mm", xfinal_serial);
     }
+    if (writeToMatrixMarketDistrSolnMap == true) {
+      //writing to MatrixMarket file
+      EpetraExt::MultiVectorToMatrixMarketFile("xfinal_distributed.mm", *xfinal);
+      EpetraExt::BlockMapToMatrixMarketFile("xfinal_distributed_map.mm", *app->getDiscretization()->getMap());
+    }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
+  
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+
+  Kokkos::finalize_all();
+ 
   return status;
 }

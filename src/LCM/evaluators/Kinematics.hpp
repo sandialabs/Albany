@@ -9,7 +9,7 @@
 //#ifndef DEFGRAD_HPP
 //#define DEFGRAD_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -71,10 +71,10 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> strain_;
 
     //! number of integration points
-    std::size_t num_pts_;
+    int num_pts_;
 
     //! number of spatial dimensions
-    std::size_t num_dims_;
+    int num_dims_;
 
     //! flag to compute the weighted average of J
     bool weighted_average_;
@@ -93,6 +93,57 @@ namespace LCM {
     ///! Input, if RCU.
     AAdapt::rc::Field<2> def_grad_rc_;
 
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+   //Kokkos
+
+    public:
+    
+    struct kinematic_Tag{};
+    struct kinematic_weighted_average_Tag{};
+    struct kinematic_needs_strain_Tag{};
+    struct kinematic_weighted_average_needs_strain_Tag{};
+
+    typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_Tag> kinematic_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_weighted_average_Tag> kinematic_weighted_average_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_needs_strain_Tag> kinematic_needs_strain_Policy;
+    typedef Kokkos::RangePolicy<ExecutionSpace,kinematic_weighted_average_needs_strain_Tag> kinematic_weighted_average_needs_strain_Policy;
+
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const kinematic_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const kinematic_weighted_average_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const kinematic_needs_strain_Tag& tag, const int& i) const;
+    KOKKOS_INLINE_FUNCTION
+    void operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i) const;
+    
+    template <class ArrayT>
+    KOKKOS_INLINE_FUNCTION
+    const ArrayT  transpose(const ArrayT& A, const int cell) const;
+    
+    template <class ArrayT>
+    KOKKOS_INLINE_FUNCTION
+    const ScalarT det(const ArrayT &A, const int cell) const;
+
+    KOKKOS_INLINE_FUNCTION
+    void compute_defgrad(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_weighted_average(const int cell) const;
+    KOKKOS_INLINE_FUNCTION
+    void compute_strain(const int cell) const;
+
+    private:
+
+    typedef PHX::KokkosViewFactory<ScalarT,PHX::Device> ViewFactory;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> F;
+    std::vector<PHX::index_size_type> ddims_;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> strain;
+    PHX::MDField<ScalarT,Cell,Dim,Dim> gradu;
+    PHX::MDField<ScalarT,Dim,Dim> Itensor;
+ 
+#endif
   };
 
 }

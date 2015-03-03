@@ -33,6 +33,11 @@
 
 #include "Albany_DataTypes.hpp"
 
+#include "Phalanx_config.hpp"
+#include "Phalanx.hpp"
+
+#include "Kokkos_Core.hpp"
+
 // Global variable that denotes this is the Tpetra executable
 bool TpetraBuild = true;
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
@@ -82,6 +87,7 @@ int main(int argc, char *argv[]) {
   bool success = true;
 
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
+  Kokkos::initialize(argc, argv);
 
 #ifdef ALBANY_CHECK_FPE
 //	_mm_setcsr(_MM_MASK_MASK &~
@@ -283,6 +289,7 @@ int main(int argc, char *argv[]) {
     Teuchos::ParameterList &debugParams =
       slvrfctry.getParameters().sublist("Debug Output", true);
     bool writeToMatrixMarketSoln = debugParams.get("Write Solution to MatrixMarket", false);
+    bool writeToMatrixMarketDistrSolnMap = debugParams.get("Write Distributed Solution and Map to MatrixMarket", false);
     bool writeToCoutSoln = debugParams.get("Write Solution to Standard Output", false);
 
     const RCP<const Tpetra_Vector> xfinal = responses.back();
@@ -290,8 +297,7 @@ int main(int argc, char *argv[]) {
     *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     if (writeToCoutSoln == true) { 
-       std::cout << "xfinal: " << std::endl;
-       xfinal->describe(*out, Teuchos::VERB_EXTREME);
+       Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);
     }
 
     if (debugParams.get<bool>("Analyze Memory", false))
@@ -305,17 +311,25 @@ int main(int argc, char *argv[]) {
      Teuchos::RCP<const Tpetra_Map> serial_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
  
       //create importer from parallel map to serial map and populate serial solution xfinal_serial
-      Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_map, app->getDiscretization()->getMapT())); 
+      Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(app->getDiscretization()->getMapT(), serial_map)); 
       Teuchos::RCP<Tpetra_Vector> xfinal_serial = Teuchos::rcp(new Tpetra_Vector(serial_map)); 
       xfinal_serial->doImport(*app->getDiscretization()->getSolutionFieldT(), *importOperator, Tpetra::INSERT);
 
       //writing to MatrixMarket file
        Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal.mm", xfinal_serial);
     }
+    if (writeToMatrixMarketDistrSolnMap == true) {
+      //writing to MatrixMarket file
+      Tpetra_MatrixMarket_Writer::writeDenseFile("xfinal_distributed.mm", *xfinal);
+      Tpetra_MatrixMarket_Writer::writeMapFile("xfinal_distributed_map.mm", *app->getDiscretization()->getMapT());
+    }
   }
   TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, success);
   if (!success) status+=10000;
 
   Teuchos::TimeMonitor::summarize(*out,false,true,false/*zero timers*/);
+
+  Kokkos::finalize_all();
+
   return status;
 }

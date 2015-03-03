@@ -7,7 +7,7 @@
 #ifndef TLPOROSTRESS_HPP
 #define TLPOROSTRESS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -42,7 +42,7 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> defGrad;
   PHX::MDField<ScalarT,Cell,QuadPoint> J;
-  PHX::MDField<ScalarT,Cell,QuadPoint> stress;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> stress;
   PHX::MDField<ScalarT,Cell,QuadPoint> biotCoefficient;
   PHX::MDField<ScalarT,Cell,QuadPoint> porePressure;
 

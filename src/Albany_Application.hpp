@@ -145,16 +145,20 @@ namespace Albany {
     Teuchos::RCP<AAdapt::AdaptiveSolutionManagerT> getAdaptSolMgrT(){ return solMgrT;}
 
     //! Get parameter library
-    Teuchos::RCP<ParamLib> getParamLib();
+    Teuchos::RCP<ParamLib> getParamLib() const;
 
     //! Get distributed parameter library
-    Teuchos::RCP<DistParamLib> getDistParamLib();
+    Teuchos::RCP<DistParamLib> getDistParamLib() const;
 
     //! Get solution method
     SolutionMethod getSolutionMethod() const {return solMethod; }
 
     //! Get number of responses
     int getNumResponses() const;
+
+    int getNumEquations() const { return neq; }
+    int getSpatialDimension() const { return spatial_dimension; }
+    int getTangentDerivDimension() const { return tangent_deriv_dim; }
 
     //! Get response function
     Teuchos::RCP<AbstractResponseFunction> getResponse(int i) const;
@@ -993,7 +997,7 @@ namespace Albany {
     Teuchos::RCP<CUTR::CubitMeshMover> meshMover;
 #endif
 
-    unsigned int neq;
+    unsigned int neq, spatial_dimension, tangent_deriv_dim;
 
 #ifdef ALBANY_EPETRA
     //! Teko stuff
@@ -1062,6 +1066,15 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 #endif
+
+ 
+//  workset.wsElNodeEqID_kokkos =
+  Kokkos:: View<int***, PHX::Device> wsElNodeEqID_kokkos ("wsElNodeEqID_kokkos",workset.numCells, wsElNodeEqID[ws][0].size(), wsElNodeEqID[ws][0][0].size());
+   workset.wsElNodeEqID_kokkos=wsElNodeEqID_kokkos;
+   for (int i=0; i< workset.numCells; i++) 
+      for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
+          for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
+              workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
 
   PHAL::BuildSerializer<EvalT> bs(workset);
 }

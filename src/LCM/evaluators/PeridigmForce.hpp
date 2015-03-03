@@ -7,7 +7,7 @@
 #ifndef PERIDIGMFORCE_HPP
 #define PERIDIGMFORCE_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -51,7 +51,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
   std::vector< LCM::PeridigmManager::OutputField > outputFieldInfo;
-  std::map< std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > outputFields;
+  std::map< std::string, PHX::MDField<ScalarT> > outputFields;
 
   unsigned int numQPs;
   unsigned int numDims;

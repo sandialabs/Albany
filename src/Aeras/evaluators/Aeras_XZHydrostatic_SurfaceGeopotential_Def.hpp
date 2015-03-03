@@ -74,7 +74,7 @@ XZHydrostatic_SurfaceGeopotential(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(PhiSurf);
 
-  this->setName("Aeras::XZHydrostatic_SurfaceGeopotential"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_SurfaceGeopotential"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

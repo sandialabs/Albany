@@ -57,7 +57,7 @@ HeliumODEs(Teuchos::ParameterList& p,
   this->addEvaluatedField(bubble_volume_fraction_);
 
   this->setName(
-      "Helium ODEs" + PHX::TypeString < EvalT > ::value);
+      "Helium ODEs" + PHX::typeAsString<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);
   num_pts_ = dims[1];
@@ -238,9 +238,11 @@ evaluateFields(typename Traits::EvalData workset)
 		  }
 		  
 		  // Update global fields
+
 		  he_concentration_(cell,pt) = n1;
 		  total_bubble_density_(cell,pt) = nb;
 		  bubble_volume_fraction_(cell,pt) = sb;
+
 	  }
   }  
   

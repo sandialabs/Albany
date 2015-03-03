@@ -19,4 +19,4 @@ block 1 surface 1
 #refine surface 1 numsplit 1
 block 1 element type SHELL4
 set large exodus file on
-export genesis "cube_sphere_quad4.jou" block 1 overwrite
+export genesis "cube_sphere_quad4.g" block 1 overwrite

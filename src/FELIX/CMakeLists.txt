@@ -26,6 +26,7 @@
        problems/FELIX_StokesL1L2.cpp
    )
 
+   
 IF(ENABLE_MPAS_INTERFACE)
    SET(SOURCESMPAS 
        interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
@@ -87,7 +88,9 @@ IF (ENABLE_CISM_INTERFACE)
 ENDIF()
 
 IF(ENABLE_CISM_INTERFACE)
-  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM} ${HEADERSCISM})
+  add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM}
+              ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp 
+              ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
   set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                        ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX

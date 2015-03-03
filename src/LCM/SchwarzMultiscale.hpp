@@ -15,38 +15,36 @@ namespace LCM {
 ///
 /// \brief Definition for the SchwarzMultiscale
 ///
-class SchwarzMultiscale : public Thyra::ModelEvaluatorDefaultBase<ST> {
+class SchwarzMultiscale: public Thyra::ModelEvaluatorDefaultBase<ST> {
 
 public:
 
   /// Constructor
-      /** \brief . */
-  SchwarzMultiscale(
-	const Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >& models,
-	const Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >& params,
-        const Teuchos::RCP<const Teuchos::Comm<int> >& commT); 
+  SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
+      Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
+      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT);
 
   ///Destructor
   ~SchwarzMultiscale();
 
   /// Return solution vector map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_x_space() const;
 
   /// Return residual vector map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_f_space() const;
 
   /// Return parameter vector map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_p_space(int l) const;
 
   /// Return response function map
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   get_g_space(int j) const;
 
   /// Return array of parameter names
-  Teuchos::RCP<const Teuchos::Array<std::string> >
+  Teuchos::RCP<Teuchos::Array<std::string> const>
   get_p_names(int l) const;
 
   Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -65,7 +63,7 @@ public:
   Teuchos::RCP<Thyra::PreconditionerBase<ST> >
   create_W_prec() const;
 
-  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   get_W_factory() const;
 
   /// Create InArgs
@@ -80,10 +78,14 @@ public:
   void
   allocateVectors();
 
+  /// Create the map for the coupled solution from an array of the maps
+  /// for each invidivual model that is being coupled.
+  Teuchos::RCP<Tpetra_Map const>
+  createCoupledMap(
+      Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
+      Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
+
 protected:
-  /// Create operator form of df/dp for distributed parameters
-  Teuchos::RCP<Thyra::LinearOpBase<ST> >
-  create_DfDp_op_impl(int j) const;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
@@ -98,29 +100,79 @@ protected:
   createOutArgsImpl() const;
 
   /// Evaluate model on InArgs
-  void evalModelImpl(
+  void
+  evalModelImpl(
       Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
 private:
-  ///
+  Teuchos::RCP<Teuchos::ParameterList const>
+  getValidAppParameters() const;
+
+  Teuchos::RCP<Teuchos::ParameterList const>
+  getValidProblemParameters() const;
+
   /// RCP to matDB object
-  Teuchos::RCP<QCAD::MaterialDatabase> material_db_;
+  Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> >
+  material_dbs_;
+
+  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >
+  models_;
+
+  Teuchos::Array<Teuchos::RCP<Albany::Application> >
+  apps_;
+
+  Teuchos::RCP<Teuchos::Comm<int> const>
+  commT_;
+
+  /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
+  Thyra::ModelEvaluatorBase::InArgs<ST>
+  nominal_values_;
+
+  Thyra::ModelEvaluatorBase::InArgs<ST>
+  createInArgsImpl() const;
+
+  Teuchos::RCP<const Tpetra_Map>
+  coupled_disc_map_;
   
-  Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > models_;
-  Teuchos::Array< Teuchos::RCP<Teuchos::ParameterList> > params_;
-  Teuchos::RCP<const Teuchos::Comm<int> > commT_;
-      
-  Teuchos::Array< Teuchos::RCP<Thyra::ModelEvaluator<ST> > > solvers_;
-  int n_models_;
-  Teuchos::Array<int> num_params_;
-  Teuchos::Array<int> num_responses_;
-  int num_params_total_;
-  int num_responses_total_;
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
+  disc_maps_;
 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> > solver_inargs_; 
-  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> > solver_outargs_;
+  int
+  num_models_;
 
+  Teuchos::Array<int>
+  num_params_;
+
+  Teuchos::Array<int>
+  num_responses_;
+  
+  Teuchos::Array<int>
+  num_params_partial_sum_;
+
+  Teuchos::Array<int>
+  num_responses_partial_sum_;
+  
+  //like num_param_vecs
+  int
+  num_params_total_;
+
+  //like dist_param_vecs
+  int
+  num_dist_params_total_;
+
+  //like num_response_vecs
+  int
+  num_responses_total_;
+    
+  mutable Teuchos::Array<Teuchos::Array<ParamVec> >
+  sacado_param_vecs_;
+
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
+  solver_inargs_;
+
+  mutable Teuchos::Array<Thyra::ModelEvaluatorBase::OutArgs<ST> >
+  solver_outargs_;
 
 };
 

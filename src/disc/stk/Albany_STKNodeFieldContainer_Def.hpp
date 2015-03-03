@@ -23,7 +23,7 @@
 
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
+Albany::buildSTKNodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,
                           const Teuchos::RCP<stk::mesh::MetaData>& metaData,
                           const bool output)
 {
@@ -50,7 +50,7 @@ Albany::buildSTKNodeField(const std::string& name, const std::vector<int>& dim,
 template<typename DataType, unsigned ArrayDim, class traits>
 Albany::STKNodeField<DataType, ArrayDim, traits>::
 STKNodeField(const std::string& name_,
-             const std::vector<int>& dims_,
+             const std::vector<PHX::DataLayout::size_type>& dims_,
              const Teuchos::RCP<stk::mesh::MetaData>& metaData_,
              const bool output) :
   name(name_),
@@ -67,21 +67,6 @@ STKNodeField(const std::string& name_,
 
 #endif
 
-}
-
-template<typename DataType, unsigned ArrayDim, class traits>
-void 
-Albany::STKNodeField<DataType, ArrayDim, traits>::
-saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset)
-{
- // Iterate over the processor-visible nodes
- const stk::mesh::Selector select_owned_or_shared = metaData->locally_owned_part() | metaData->globally_shared_part();
-
- // Iterate over the overlap nodes by getting node buckets and iterating over each bucket.
- stk::mesh::BulkData& mesh = node_field->get_mesh();
- const stk::mesh::BucketVector& all_elements = mesh.get_buckets(stk::topology::NODE_RANK, select_owned_or_shared);
-
- traits_type::saveFieldData(block_mv, all_elements, node_field, offset);
 }
 
 template<typename DataType, unsigned ArrayDim, class traits>

@@ -25,7 +25,7 @@ namespace HMC {
     
     this->addEvaluatedField(strainDifference);
     
-    this->setName("StrainDifference"+PHX::TypeString<EvalT>::value);
+    this->setName("StrainDifference"+PHX::typeAsString<EvalT>());
     
     std::vector<PHX::DataLayout::size_type> dims;
     dl->qp_tensor->dimensions(dims);

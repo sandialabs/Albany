@@ -85,7 +85,6 @@ case "$SCRIPT_NAME" in
 	sed -i -e "s|ompi_fc|$OMPI_FC|g;" "$CONFIG_FILE"
 	sed -i -e "s|install_dir|$INSTALL_DIR|g;" "$CONFIG_FILE"
 	sed -i -e "s|build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
-	sed -i -e "s|cmake_cxx_flags|$CMAKE_CXX_FLAGS|g;" "$CONFIG_FILE"
 	sed -i -e "s|package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
 	./"$CONFIG_FILE"
 	echo "------------------------------------------------------------"

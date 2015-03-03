@@ -7,7 +7,7 @@
 #ifndef AERAS_XZHYDROSTATICTEMPERATURERESID_HPP
 #define AERAS_XZHYDROSTATICTEMPERATURERESID_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -57,7 +57,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdT;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> Residual;
+  PHX::MDField<ScalarT,Cell,Node,Level> Residual;
 
   ScalarT Re; // Reynolds number (demo on how to get info from input file)
 

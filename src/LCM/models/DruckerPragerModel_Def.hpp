@@ -137,8 +137,8 @@ computeState(typename Traits::EvalData workset,
   std::vector<ScalarT> R(4);
   std::vector<ScalarT> dRdX(16);
     
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       lambda = ( elastic_modulus(cell,pt) * poissons_ratio(cell,pt) ) 
         / ( ( 1 + poissons_ratio(cell,pt) ) * ( 1 - 2 * poissons_ratio(cell,pt) ) );
       mu = elastic_modulus(cell,pt) / ( 2 * ( 1 + poissons_ratio(cell,pt) ) );
@@ -151,15 +151,15 @@ computeState(typename Traits::EvalData workset,
       //sigmaN.fill( &stressold(cell,pt,0,0) );
       //epsilonN.fill( &strainold(cell,pt,0,0) );
 
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           sigmaN(i, j) = stressold(cell, pt, i, j);
           epsilonN(i, j) = strainold(cell, pt, i, j);
           //epsilon(i,j) = strain(cell,pt,i,j);
         }
       }
              
-      epsilon.fill( &strain(cell,pt,0,0) );
+      epsilon.fill( strain,cell,pt,0,0 );
       depsilon = epsilon - epsilonN;                                 
         
       alphaN = frictionold(cell,pt);
@@ -255,8 +255,8 @@ computeState(typename Traits::EvalData workset,
       eqps(cell, pt) = eq;
       friction(cell,pt) = alpha;
         
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
               stress(cell,pt,i,j) = sigma(i, j);
             }
         }      
@@ -281,7 +281,7 @@ DruckerPragerModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
   // when we initialize Xfad, we only pass in the values of X,
   // NOT the system sensitivity information
   std::vector<ScalarT> Xval(4);
-  for (std::size_t i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i) {
     Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
     Xfad[i] = DFadType(4, i, Xval[i]);
   }

@@ -73,7 +73,7 @@ ComprNSResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(Residual);
 
 
-  this->setName("ComprNSResid"+PHX::TypeString<EvalT>::value);
+  this->setName("ComprNSResid" );
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

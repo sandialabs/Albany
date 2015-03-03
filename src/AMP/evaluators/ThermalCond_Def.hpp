@@ -29,7 +29,7 @@ ThermalCond(Teuchos::ParameterList& p,
   this->addEvaluatedField(k_);
  
   Teuchos::RCP<PHX::DataLayout> scalar_dl = dl->qp_scalar;
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::Device::size_type> dims;
   scalar_dl->dimensions(dims);
   workset_size_ = dims[0];
   num_qps_      = dims[1];
@@ -49,7 +49,7 @@ ThermalCond(Teuchos::ParameterList& p,
 
   init_constant(value,p);
 
-  this->setName("ThermalCond"+PHX::TypeString<EvalT>::value);
+  this->setName("ThermalCond"+PHX::typeAsString<EvalT>());
 
 }
 
@@ -81,7 +81,6 @@ evaluateFields(typename Traits::EvalData workset)
   // specific heat function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      MeshScalarT* X = &coord_(cell,qp,0);
       k_(cell,qp) = constant_value_;
     }
   }

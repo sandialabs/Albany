@@ -76,7 +76,7 @@ namespace LCM
     //this->addEvaluatedField(hardeningModulus);
     this->addEvaluatedField(volPlasticStrain);
 
-    this->setName("Stress" + PHX::TypeString<EvalT>::value);
+    this->setName("Stress" + PHX::typeAsString<EvalT>());
 
   }
 
@@ -116,8 +116,8 @@ namespace LCM
     Albany::MDArray volPlasticStrainold =
         (*workset.stateArrayPtr)[volPlasticStrainName];
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < numQPs; ++qp) {
         // local parameters
         ScalarT lame = elasticModulus(cell, qp) * poissonsRatio(cell, qp)
             / (1.0 + poissonsRatio(cell, qp))
@@ -150,8 +150,8 @@ namespace LCM
 
         // incremental strain tensor
         Intrepid::Tensor<ScalarT> depsilon(3);
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
             strainN(i, j) = strainold(cell, qp, i, j);
           }
@@ -162,8 +162,8 @@ namespace LCM
             depsilon);
         Intrepid::Tensor<ScalarT> alphaVal(3, Intrepid::ZEROS);
 
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             sigmaVal(i, j) = sigmaVal(i, j) + stressold(cell, qp, i, j);
             alphaVal(i, j) = backStressold(cell, qp, i, j);
             sigmaN(i, j) = stressold(cell, qp, i, j);
@@ -360,8 +360,8 @@ namespace LCM
           //hardeningModulus(cell, qp) = 0.0;
 
         // stress and back stress
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = sigmaVal(i, j);
             backStress(cell, qp, i, j) = alphaVal(i, j);
           }
@@ -469,7 +469,7 @@ namespace LCM
 
     D2FadType J2 = 0.5 * Intrepid::dotdot(s, s);
 
-    D2FadType J3 = Intrepid::det(s);
+        D2FadType J3 = Intrepid::det(s);
 
     D2FadType Gamma = 1.0;
     if (psi != 0 && J2 != 0)

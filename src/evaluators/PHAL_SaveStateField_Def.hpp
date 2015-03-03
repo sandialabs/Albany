@@ -17,7 +17,7 @@ SaveStateField<EvalT, Traits>::
 SaveStateField(const Teuchos::ParameterList& p)
 {
   // States Not Saved for Generic Type, only Specializations
-  this->setName("Save State Field"+PHX::TypeString<EvalT>::value);
+  this->setName("Save State Field" );
 }
 
 // **********************************************************************
@@ -52,7 +52,7 @@ SaveStateField(const Teuchos::ParameterList& p)
   this->addEvaluatedField(*savestate_operation);
 
   this->setName("Save Field " + fieldName +" to State " + stateName
-                + PHX::TypeString<PHAL::AlbanyTraits::Residual>::value);
+                + "Residual");
 }
 
 // **********************************************************************
@@ -77,7 +77,7 @@ evaluateFields(typename Traits::EvalData workset)
            std::endl << "Error: cannot locate " << stateName << " in PHAL_SaveStateField_Def" << std::endl);
 
     Albany::MDArray sta = it->second;
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     sta.dimensions(dims);
     int size = dims.size();
 
@@ -116,6 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
       TEUCHOS_TEST_FOR_EXCEPT_MSG(size<1||size>5,
                           "Unexpected Array dimensions in SaveStateField: " << size);
     }
+
 }
 
 }

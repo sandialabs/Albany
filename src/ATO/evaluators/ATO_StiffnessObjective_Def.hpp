@@ -6,7 +6,6 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Adapt_NodalDataBlock.hpp"
 #include "ATO_TopoTools.hpp"
 
 template<typename EvalT, typename Traits>

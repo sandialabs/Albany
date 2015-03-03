@@ -189,8 +189,8 @@ computeState(typename Traits::EvalData workset,
       (*workset.stateArrayPtr)[volPlasticStrain_string + "_old"];
 
   ScalarT lame, mu, bulkModulus;
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp = 0; qp < num_pts_; ++qp) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int qp = 0; qp < num_pts_; ++qp) {
       // local parameters
       lame = elastic_modulus(cell, qp) * poissons_ratio(cell, qp)
           / (1.0 + poissons_ratio(cell, qp))
@@ -208,8 +208,8 @@ computeState(typename Traits::EvalData workset,
 
       // trial state
       Intrepid::Tensor<ScalarT> depsilon(3);
-      for (std::size_t i = 0; i < num_dims_; ++i) {
-        for (std::size_t j = 0; j < num_dims_; ++j) {
+      for (int i = 0; i < num_dims_; ++i) {
+        for (int j = 0; j < num_dims_; ++j) {
           depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
           strainN(i, j) = strainold(cell, qp, i, j);
           sigmaN(i, j) = stressold(cell, qp, i, j);
@@ -454,8 +454,8 @@ computeState(typename Traits::EvalData workset,
       } // end of plastic correction
 
       // update
-      for (std::size_t i = 0; i < num_dims_; ++i) {
-        for (std::size_t j = 0; j < num_dims_; ++j) {
+      for (int i = 0; i < num_dims_; ++i) {
+        for (int j = 0; j < num_dims_; ++j) {
           stress(cell, qp, i, j) = sigmaVal(i, j);
           backStress(cell, qp, i, j) = alphaVal(i, j);
         }
