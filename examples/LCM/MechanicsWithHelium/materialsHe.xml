@@ -44,7 +44,7 @@
 	<Parameter name="Avogadro's Number" type="double" value="6.0221413e11"/>
       </ParameterList>
 
-      <!-- Tritium Decay Parameters
+      <!-- Tritium Decay Parameters -->
       <ParameterList name="Tritium Coefficients">
         <Parameter name="Tritium Decay Constant" type="double" value="1.79e-9"/>
         <Parameter name="Helium Radius" type="double" value="2.5e-4"/>
@@ -54,7 +54,7 @@
       <ParameterList name="Molar Volume">
 	<Parameter name="Type" type="string" value="Constant"/>
 	<Parameter name="Value" type="double" value="7.116"/>
-      </ParameterList> -->
+      </ParameterList>
 
       <!-- Temperature Parameters -->
       <ParameterList name="Thermal Conductivity">

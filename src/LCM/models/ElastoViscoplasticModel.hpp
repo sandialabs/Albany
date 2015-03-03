@@ -119,6 +119,11 @@ private:
   RealType alpha1_, alpha2_;
 
   ///
+  /// flag to print convergence
+  ///
+  bool print_;
+
+  ///
   /// Compute effective void volume fraction
   ///
   template<typename T>

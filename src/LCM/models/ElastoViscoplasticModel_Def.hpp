@@ -30,7 +30,8 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   q2_(p->get<RealType>("Yield Parameter q2", 1.0)),
   q3_(p->get<RealType>("Yield Parameter q3", 1.0)),
   alpha1_(p->get<RealType>("Hydrogen Yield Parameter", 0.0)),
-  alpha2_(p->get<RealType>("Helium Yield Parameter", 0.0))
+  alpha2_(p->get<RealType>("Helium Yield Parameter", 0.0)),
+  print_(p->get<bool>("Output Convergence", false))
 {
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -494,7 +495,7 @@ computeState(typename Traits::EvalData workset,
             //
             if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) ) {
               converged = true;
-              std::cout << "!!!CONVERGED!!! in " << iter << " iterations" << std::endl;
+              if(print_) std::cout << "!!!CONVERGED!!! in " << iter << " iterations" << std::endl;
             }
 
             // extract the sensitivities of the residuals
