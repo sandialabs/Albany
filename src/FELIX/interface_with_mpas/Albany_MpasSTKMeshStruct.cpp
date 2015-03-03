@@ -23,8 +23,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-// needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
-#include <stk_mesh/base/MeshUtils.hpp>
+#include <Albany_STKNodeSharing.hpp>
 
 #include "Albany_Utils.hpp"
 
@@ -435,7 +434,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   	  }
   }
 
-  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 
@@ -679,7 +678,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	}
   }
 
-  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 
