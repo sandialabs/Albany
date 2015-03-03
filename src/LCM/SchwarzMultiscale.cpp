@@ -202,9 +202,14 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     offset = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
     for (int l = 0; l < num_params_m; ++l) {
-      nominal_values_.set_p(l + offset, solver_inargs_[m].get_p(l));
-    }
+      Teuchos::RCP<Thyra::VectorBase<ST> const>
+      p = solver_inargs_[m].get_p(l);
 
+      // Don't set it if there is nothing. Avoid null pointer.
+      if (Teuchos::is_null(p) == true) continue;
+
+      nominal_values_.set_p(l + offset, p);
+    }
   }
   //end setting of nominal values
 
@@ -785,35 +790,28 @@ evalModelImpl(
       (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_t() : 0.0;
 
-  for (int l = 0; l < in_args.Np(); ++l) {
-    Teuchos::RCP<Thyra::VectorBase<ST> const> const
-    p = in_args.get_p(l);
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    num_params_m = num_params_[m];
 
-    if (Teuchos::is_null(p) == true) continue;
+    int const
+    offset = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-    Teuchos::RCP<Tpetra_Vector const> const
-    pT = ConverterT::getConstTpetraVector(p);
+    for (int l = 0; l < num_params_m; ++l) {
+      Teuchos::RCP<Thyra::VectorBase<ST> const>
+      p = in_args.get_p(l + offset);
 
-    Teuchos::ArrayRCP<ST const> const
-    pT_view = pT->get1dView();
+      // Don't set it if there is nothing. Avoid null pointer.
+      if (Teuchos::is_null(p) == true) continue;
 
-    for (int m = 0; m < num_models_; ++m) {
-      int const
-      lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+      Teuchos::RCP<Tpetra_Vector const> const
+      pT = ConverterT::getConstTpetraVector(p);
 
-      int const
-      hi = num_params_partial_sum_[m];
+      Teuchos::ArrayRCP<ST const> const
+      pT_view = pT->get1dView();
 
-      bool const
-      in_range = lo <= l && l < hi;
-
-      if (in_range == true) {
-        int const
-        k = l - lo;
-
-        for (unsigned int j = 0; j < sacado_param_vecs_[m][k].size(); j++) {
-          sacado_param_vecs_[m][k][j].baseValue = pT_view[j];
-        }
+      for (unsigned int j = 0; j < sacado_param_vecs_[m][l].size(); j++) {
+        sacado_param_vecs_[m][l][j].baseValue = pT_view[j];
       }
     }
   }
