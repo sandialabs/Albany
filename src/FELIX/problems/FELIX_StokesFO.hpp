@@ -22,75 +22,73 @@
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
 
-namespace FELIX {
+namespace FELIX
+{
 
-  /*!
-   * \brief Abstract interface for representing a 1-D finite element
-   * problem.
-   */
-  class StokesFO : public Albany::AbstractProblem {
-  public:
-  
-    //! Default constructor
-    StokesFO(const Teuchos::RCP<Teuchos::ParameterList>& params,
-		 const Teuchos::RCP<ParamLib>& paramLib,
-		 const int numDim_);
+/*!
+ * \brief Abstract interface for representing a 1-D finite element
+ * problem.
+ */
+class StokesFO : public Albany::AbstractProblem
+{
+public:
 
-    //! Destructor
-    ~StokesFO();
+  //! Default constructor
+  StokesFO (const Teuchos::RCP<Teuchos::ParameterList>& params,
+            const Teuchos::RCP<ParamLib>& paramLib,
+            const int numDim_);
 
-    //! Return number of spatial dimensions
-    virtual int spatialDimension() const { return numDim; }
+  //! Destructor
+  ~StokesFO();
 
-    //! Build the PDE instantiations, boundary conditions, and initial solution
-    virtual void buildProblem(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-      Albany::StateManager& stateMgr);
+  //! Return number of spatial dimensions
+  virtual int spatialDimension() const { return numDim; }
 
-    // Build evaluators
-    virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-    buildEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+  //! Build the PDE instantiations, boundary conditions, and initial solution
+  virtual void buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                             Albany::StateManager& stateMgr);
 
-    //! Each problem must generate it's list of valide parameters
-    Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
+  // Build evaluators
+  virtual Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
+  buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                   const Albany::MeshSpecsStruct& meshSpecs,
+                   Albany::StateManager& stateMgr,
+                   Albany::FieldManagerChoice fmchoice,
+                   const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-  private:
+  //! Each problem must generate it's list of valide parameters
+  Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    //! Private to prohibit copying
-    StokesFO(const StokesFO&);
-    
-    //! Private to prohibit copying
-    StokesFO& operator=(const StokesFO&);
+private:
 
-  public:
+  //! Private to prohibit copying
+  StokesFO(const StokesFO&);
 
-    //! Main problem setup routine. Not directly called, but indirectly by following functions
-    template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
-    constructEvaluators(
-      PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-      const Albany::MeshSpecsStruct& meshSpecs,
-      Albany::StateManager& stateMgr,
-      Albany::FieldManagerChoice fmchoice,
-      const Teuchos::RCP<Teuchos::ParameterList>& responseList);
+  //! Private to prohibit copying
+  StokesFO& operator=(const StokesFO&);
 
-    void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
-    void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
+public:
 
-  protected:
-    int numDim;
-    double gravity;  //gravity
-    double rho;  //ice density
-    double rho_w;  //water density
-    Teuchos::RCP<Albany::Layouts> dl;
+  //! Main problem setup routine. Not directly called, but indirectly by following functions
+  template <typename EvalT> Teuchos::RCP<const PHX::FieldTag>
+  constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                       const Albany::MeshSpecsStruct& meshSpecs,
+                       Albany::StateManager& stateMgr,
+                       Albany::FieldManagerChoice fmchoice,
+                       const Teuchos::RCP<Teuchos::ParameterList>& responseList);
 
-  };
+  void constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs);
+  void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
-}
+protected:
+  int numDim;
+  double gravity;  //gravity
+  double rho;  //ice density
+  double rho_w;  //water density
+  Teuchos::RCP<Albany::Layouts> dl;
+};
+
+} // Namespace FELIX
 
 #include "Intrepid_FieldContainer.hpp"
 #include "Intrepid_DefaultCubatureFactory.hpp"
@@ -113,12 +111,11 @@ namespace FELIX {
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
-FELIX::StokesFO::constructEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fieldManagerChoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                      const Albany::MeshSpecsStruct& meshSpecs,
+                                      Albany::StateManager& stateMgr,
+                                      Albany::FieldManagerChoice fieldManagerChoice,
+                                      const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -129,31 +126,31 @@ FELIX::StokesFO::constructEvaluators(
   using std::string;
   using std::map;
   using PHAL::AlbanyTraits;
-  
+
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
   RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
-  
+
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
-  
+
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   RCP <Intrepid::Cubature<RealType> > cubature = cubFactory.create(*cellType, meshSpecs.cubatureDegree);
-  
+
   const int numQPts = cubature->getNumPoints();
   const int numVertices = cellType->getNodeCount();
   int vecDim = neq;
   std::string elementBlockName = meshSpecs.ebName;
-  
+
 #ifdef OUTPUT_TO_SCREEN
-  *out << "Field Dimensions: Workset=" << worksetSize 
+  *out << "Field Dimensions: Workset=" << worksetSize
        << ", Vertices= " << numVertices
        << ", Nodes= " << numNodes
        << ", QuadPts= " << numQPts
-       << ", Dim= " << numDim 
+       << ", Dim= " << numDim
        << ", vecDim= " << vecDim << std::endl;
 #endif
-  
+
    Albany::StateStruct::MeshFieldEntity entity;
    dl = rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim, vecDim));
    Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dl);
@@ -265,7 +262,7 @@ FELIX::StokesFO::constructEvaluators(
 
   { // FO Stokes Resid
     RCP<ParameterList> p = rcp(new ParameterList("Stokes Resid"));
-   
+
     //Input
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
@@ -274,7 +271,7 @@ FELIX::StokesFO::constructEvaluators(
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("Body Force Name", "Body Force");
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
-    
+
     Teuchos::ParameterList& paramList = params->sublist("Equation Set");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
@@ -292,19 +289,19 @@ FELIX::StokesFO::constructEvaluators(
     p->set<std::string>("Gradient QP Variable Name", "Velocity Gradient");
     p->set<std::string>("temperature Name", "temperature");
     p->set<std::string>("flow_factor Name", "flow_factor");
-    
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Viscosity");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
+
     //Output
     p->set<std::string>("FELIX Viscosity QP Variable Name", "FELIX Viscosity");
 
     ev = rcp(new FELIX::ViscosityFO<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
+
   }
-  
+
 #ifdef CISM_HAS_FELIX
   { // FELIX surface gradient from CISM
     RCP<ParameterList> p = rcp(new ParameterList("FELIX Surface Gradient"));
@@ -313,17 +310,17 @@ FELIX::StokesFO::constructEvaluators(
     p->set<std::string>("xgrad_surface_height Name", "xgrad_surface_height");
     p->set<std::string>("ygrad_surface_height Name", "ygrad_surface_height");
     p->set<std::string>("BF Name", "BF");
-    
+
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("FELIX Surface Gradient");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-  
+
     //Output
     p->set<std::string>("FELIX Surface Gradient QP Name", "FELIX Surface Gradient");
 
     ev = rcp(new FELIX::CismSurfaceGradFO<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
-    
+
   }
 #endif
 
@@ -337,13 +334,13 @@ FELIX::StokesFO::constructEvaluators(
 #endif
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("surface_height Gradient Name", "surface_height Gradient");
-    
+
     Teuchos::ParameterList& paramList = params->sublist("Body Force");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-      
-    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters"); 
+
+    Teuchos::ParameterList& physParamList = params->sublist("Physical Parameters");
     p->set<Teuchos::ParameterList*>("Physical Parameter List", &physParamList);
-    
+
     //Output
     p->set<std::string>("Body Force Name", "Body Force");
 
@@ -363,9 +360,9 @@ FELIX::StokesFO::constructEvaluators(
     fm0.requireField<EvalT>(res_tag);
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM) {
-    
+
     entity= Albany::StateStruct::NodalDataToElemNode;
- 
+
     {
       std::string stateName("surface_velocity");
       RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName,true,&entity);

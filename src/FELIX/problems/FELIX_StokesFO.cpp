@@ -15,22 +15,19 @@
 #include <string>
 
 
-FELIX::StokesFO::
-StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
-             const Teuchos::RCP<ParamLib>& paramLib_,
-             const int numDim_) :
+FELIX::StokesFO::StokesFO (const Teuchos::RCP<Teuchos::ParameterList>& params_,
+                           const Teuchos::RCP<ParamLib>& paramLib_,
+                           const int numDim_) :
   Albany::AbstractProblem(params_, paramLib_),
   numDim(numDim_)
 {
-  //Set # of PDEs per node based on the Equation Set.  
+  //Set # of PDEs per node based on the Equation Set
   //Equation Set is FELIX by default (2 dofs / node -- usual FELIX Stokes FO).
-  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX"); 
-  if (eqnSet == "FELIX") 
+  std::string eqnSet = params_->sublist("Equation Set").get<std::string>("Type", "FELIX");
+  if (eqnSet == "FELIX")
     neq = 2; //FELIX FO Stokes system is a system of 2 PDEs
-  else if (eqnSet == "Poisson" || eqnSet == "FELIX X-Z") 
+  else if (eqnSet == "Poisson" || eqnSet == "FELIX X-Z")
     neq = 1; //1 PDE/node for Poisson or FELIX X-Z physics
-
-
 
   // Set the num PDEs for the null space object to pass to ML
   this->rigidBodyModes->setNumPDEs(neq);
@@ -38,8 +35,8 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   // Need to allocate a fields in mesh database
   this->requirements.push_back("surface_height");
 #ifdef CISM_HAS_FELIX
-  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM 
-  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM 
+  this->requirements.push_back("xgrad_surface_height"); //ds/dx which can be passed from CISM
+  this->requirements.push_back("ygrad_surface_height"); //ds/dy which can be passed from CISM
 #endif
   this->requirements.push_back("temperature");
   this->requirements.push_back("basal_friction");
@@ -49,16 +46,13 @@ StokesFO( const Teuchos::RCP<Teuchos::ParameterList>& params_,
   this->requirements.push_back("surface_velocity_rms");
 }
 
-FELIX::StokesFO::
-~StokesFO()
+FELIX::StokesFO::~StokesFO()
 {
+  // Nothing to be done here
 }
 
-void
-FELIX::StokesFO::
-buildProblem(
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
-  Albany::StateManager& stateMgr)
+void FELIX::StokesFO::buildProblem (Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  meshSpecs,
+                                    Albany::StateManager& stateMgr)
 {
   using Teuchos::rcp;
 
@@ -66,38 +60,35 @@ buildProblem(
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs.size()!=1,std::logic_error,"Problem supports one Material Block");
   fm.resize(1);
   fm[0]  = rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
-  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, 
-		  Teuchos::null);
+  buildEvaluators(*fm[0], *meshSpecs[0], stateMgr, Albany::BUILD_RESID_FM, Teuchos::null);
   constructDirichletEvaluators(*meshSpecs[0]);
-  
+
   if(meshSpecs[0]->ssNames.size() > 0) // Build a sideset evaluator if sidesets are present
      constructNeumannEvaluators(meshSpecs[0]);
 }
 
 Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> >
-FELIX::StokesFO::
-buildEvaluators(
-  PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
-  const Albany::MeshSpecsStruct& meshSpecs,
-  Albany::StateManager& stateMgr,
-  Albany::FieldManagerChoice fmchoice,
-  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
+FELIX::StokesFO::buildEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
+                                  const Albany::MeshSpecsStruct& meshSpecs,
+                                  Albany::StateManager& stateMgr,
+                                  Albany::FieldManagerChoice fmchoice,
+                                  const Teuchos::RCP<Teuchos::ParameterList>& responseList)
 {
   // Call constructeEvaluators<EvalT>(*rfm[0], *meshSpecs[0], stateMgr);
   // for each EvalT in PHAL::AlbanyTraits::BEvalTypes
-  Albany::ConstructEvaluatorsOp<StokesFO> op(
-    *this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
+  Albany::ConstructEvaluatorsOp<StokesFO> op(*this, fm0, meshSpecs, stateMgr, fmchoice, responseList);
   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(op);
+
   return *op.tags;
 }
 
-void
-FELIX::StokesFO::constructDirichletEvaluators(
+void FELIX::StokesFO::constructDirichletEvaluators(
         const Albany::MeshSpecsStruct& meshSpecs)
 {
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
-   for (int i=0; i<neq; i++) {
+   for (int i=0; i<neq; i++)
+   {
      std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }
@@ -107,8 +98,7 @@ FELIX::StokesFO::constructDirichletEvaluators(
 }
 
 // Neumann BCs
-void
-FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
+void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs)
 {
 
    // Note: we only enter this function if sidesets are defined in the mesh file
@@ -118,7 +108,8 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Check to make sure that Neumann BCs are given in the input file
 
-   if(!nbcUtils.haveBCSpecified(this->params)) {
+   if (!nbcUtils.haveBCSpecified(this->params))
+   {
       return;
    }
 
@@ -136,15 +127,17 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    offsets[neq].resize(neq);
    offsets[neq][0] = 0;
 
-   if (neq>1){
+   if (neq>1)
+   {
       neumannNames[1] = "U1";
       offsets[1].resize(1);
       offsets[1][0] = 1;
       offsets[neq][1] = 1;
    }
 
-   if (neq>2){
-     neumannNames[2] = "U2";
+   if (neq>2)
+   {
+      neumannNames[2] = "U2";
       offsets[2].resize(1);
       offsets[2][0] = 2;
       offsets[neq][2] = 2;
@@ -154,7 +147,7 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(6); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
+   std::vector<std::string> condNames(7); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field, basal_non_linear
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
 
@@ -172,27 +165,25 @@ FELIX::StokesFO::constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecs
    condNames[3] = "P";
    condNames[4] = "lateral";
    condNames[5] = "basal_scalar_field";
+   condNames[6] = "basal_non_linear";
 
    nfm.resize(1); // FELIX problem only has one element block
 
    nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
-                                          condNames, offsets, dl,
-                                          this->params, this->paramLib);
-
-
+                                           condNames, offsets, dl,
+                                           this->params, this->paramLib);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-FELIX::StokesFO::getValidProblemParameters() const
+FELIX::StokesFO::getValidProblemParameters () const
 {
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    this->getGenericProblemParams("ValidStokesFOProblemParams");
+  Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidStokesFOProblemParams");
 
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
   validPL->sublist("Physical Parameters", false, "");
+
   return validPL;
 }
-
