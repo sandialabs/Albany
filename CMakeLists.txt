@@ -105,6 +105,7 @@ IF (NOT CMAKE_CXX_FLAGS)
   SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS} )
 ENDIF()
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ALBANY_CXX_FLAGS}")
+#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -DALBANY_MPI")
 
 IF(${CMAKE_CXX_COMPILER_ID} MATCHES "Intel")
   SET(USING_INTEL TRUE)
@@ -664,7 +665,7 @@ ENDIF()
 
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" ON)
+OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
 IF (ENABLE_SG_MP)
   ADD_DEFINITIONS(-DALBANY_SG_MP)
   MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
@@ -698,6 +699,17 @@ IF (ENABLE_CHECK_FPE)
 ELSE()
   MESSAGE("-- FPE checking              is NOT Enabled.")
   SET(ALBANY_CHECK_FPE FALSE)
+ENDIF()
+
+#amb Default to on until the merge.
+OPTION(ENABLE_KOKKOS_UNDER_DEVELOPMENT "Flag to turn on Kokkos experimental code in Albany" OFF)
+IF (ENABLE_KOKKOS_UNDER_DEVELOPMENT)
+  ADD_DEFINITIONS(-DALBANY_KOKKOS_UNDER_DEVELOPMENT)
+  MESSAGE("-- Kokkos development        is Enabled, compiling with -DALBANY_KOKKOS_UNDER_DEVELOPMENT")
+  SET(ALBANY_KOKKOS_UNDER_DEVELOPMENT TRUE)
+ELSE()
+  MESSAGE("-- Kokkos development        is NOT Enabled.")
+  SET(ALBANY_KOKKOS_UNDER_DEVELOPMENT FALSE)
 ENDIF()
 
 OPTION(ENABLE_ALBANY_VERBOSE "Flag to turn on verbose output" OFF)
@@ -741,6 +753,14 @@ IF (ENABLE_PERFORMANCE_TESTS)
 ELSE()
   MESSAGE("-- Performance Tests         are NOT Enabled.")
   SET(ALBANY_PERFORMANCE_TESTS FALSE)
+ENDIF()
+
+option(ENABLE_KOKKOS "Turn on Kokkos" ON)
+IF(NOT ENABLE_KOKKOS)
+  ADD_DEFINITIONS(-DNO_KOKKOS_ALBANY)
+  MESSAGE("-- Kokkos                    is NOT Enabled.")
+ELSE()
+  MESSAGE("-- Kokkos                    is Enabled.")
 ENDIF()
 
 # Add option to include Dakota restart examples in the test suite

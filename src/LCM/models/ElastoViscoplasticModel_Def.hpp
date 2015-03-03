@@ -28,7 +28,9 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   ff_(p->get<RealType>("Failure Void Volume", 1.0)),
   q1_(p->get<RealType>("Yield Parameter q1", 1.0)),
   q2_(p->get<RealType>("Yield Parameter q2", 1.0)),
-  q3_(p->get<RealType>("Yield Parameter q3", 1.0))
+  q3_(p->get<RealType>("Yield Parameter q3", 1.0)),
+  alpha1_(p->get<RealType>("Hydrogen Yield Parameter", 0.0)),
+  alpha2_(p->get<RealType>("Helium Yield Parameter", 0.0))
 {
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
@@ -204,13 +206,15 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
   Intrepid::Tensor<ScalarT> Fpn(num_dims_), Cpinv(num_dims_), Fpinv(num_dims_);
 
-
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       ScalarT bulk = elastic_modulus(cell, pt)
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       ScalarT Y = yield_strength(cell, pt);
+      if (have_total_concentration_) {
+        Y += alpha1_ * total_concentration_(cell,pt);
+      }
 
       // assign local state variables
       // eps_ss is a scalar internal strain measure
@@ -233,10 +237,10 @@ computeState(typename Traits::EvalData workset,
       if (!failed) {
         // fill local tensors
         //
-        F.fill(&def_grad_field(cell, pt, 0, 0));
+        F.fill(def_grad_field, cell, pt, 0, 0);
 
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
             Fpn(i, j) = ScalarT(Fp_field_old(cell, pt, i, j));
           }
         }
@@ -488,8 +492,10 @@ computeState(typename Traits::EvalData workset,
 
             // check for a sufficiently small residual
             //
-            if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) )
+            if ( (norm_res/max_norm < 1.e-12) || (norm_res < 1.e-12) ) {
               converged = true;
+              std::cout << "!!!CONVERGED!!! in " << iter << " iterations" << std::endl;
+            }
 
             // extract the sensitivities of the residuals
             //
@@ -583,8 +589,8 @@ computeState(typename Traits::EvalData workset,
         eqps_field(cell,pt) = eqps_field_old(cell,pt);
         kappa_field(cell,pt) = kappa_field_old(cell,pt);
         if (have_temperature_) source_field(cell, pt) = 0.0;
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
             Fp_field(cell,pt,i,j) = Fp_field_old(cell,pt,i,j);
             stress_field(cell,pt,i,j) = 0.0;
           }
@@ -593,11 +599,11 @@ computeState(typename Traits::EvalData workset,
     }
   }
   if (have_temperature_) {
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
-        F.fill(&def_grad_field(cell,pt,0,0));
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
+        F.fill(def_grad_field,cell,pt,0,0);
         ScalarT J = Intrepid::det(F);
-        sigma.fill(&stress_field(cell,pt,0,0));
+        sigma.fill(stress_field,cell,pt,0,0);
         sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
           * (temperature_(cell,pt) - ref_temperature_) * I;
         for (std::size_t i = 0; i < num_dims_; ++i) {

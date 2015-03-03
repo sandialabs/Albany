@@ -84,7 +84,7 @@ MortarContactResidualBase(const Teuchos::ParameterList& p,
   // residual vector directly. This tells PHAL to call this evaluator to satisfy this dummy field.
   this->addEvaluatedField(*mortar_projection_operation);
 
-  this->setName(fieldName+PHX::TypeString<EvalT>::value);
+  this->setName(fieldName+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

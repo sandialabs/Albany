@@ -9,6 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Epetra_Vector.h"
+#include "PHAL_Utilities.hpp"
 
 namespace LCM {
 
@@ -60,11 +61,11 @@ PeridigmForceBase(Teuchos::ParameterList& p,
     else
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** PeridigmForceBase::PeridigmForceBase() invalid output variable type.");
 
-    this->outputFields[albanyName] = PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>(albanyName, layout);
+    this->outputFields[albanyName] = PHX::MDField<ScalarT>(albanyName, layout);
     this->addEvaluatedField( this->outputFields[albanyName] );
   }
 
-  this->setName("Peridigm"+PHX::TypeString<EvalT>::value);
+  this->setName("Peridigm"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -103,14 +104,14 @@ evaluateFields(typename Traits::EvalData workset)
 
   PeridigmManager& peridigmManager = PeridigmManager::self();
 
-  for(std::size_t cell = 0; cell < workset.numCells; ++cell){
+  for(int cell = 0; cell < workset.numCells; ++cell){
     int globalNodeId = wsElNodeID[cell][0];
     this->force(cell, 0, 0) = peridigmManager.getForce(globalNodeId, 0);
     this->force(cell, 0, 1) = peridigmManager.getForce(globalNodeId, 1);
     this->force(cell, 0, 2) = peridigmManager.getForce(globalNodeId, 2);
   }
 
-  for(std::size_t cell = 0; cell < workset.numCells; ++cell){
+  for(int cell = 0; cell < workset.numCells; ++cell){
     this->residual(cell, 0, 0) = this->force(cell, 0, 0);
     this->residual(cell, 0, 1) = this->force(cell, 0, 1);
     this->residual(cell, 0, 2) = this->force(cell, 0, 2);
@@ -125,13 +126,26 @@ evaluateFields(typename Traits::EvalData workset)
     const Epetra_Vector& data = *(peridigmManager.getBlockData(blockName, peridigmName));
     const Epetra_BlockMap& map = data.Map();
 
-    for(std::size_t cell = 0; cell < workset.numCells; ++cell){
+#if 0
+    for(int cell = 0; cell < workset.numCells; ++cell){
       globalId = wsElNodeID[cell][0];
       peridigmLocalId = map.LID(globalId);
       
       for(int j=0 ; j<length ; ++j)
         this->outputFields[albanyName](cell, j) = data[length*peridigmLocalId + j];
     }
+#else
+    PHAL::MDFieldIterator<PHAL::AlbanyTraits::Residual::ScalarT>
+      it(this->outputFields[albanyName]);
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      globalId = wsElNodeID[cell][0];
+      peridigmLocalId = map.LID(globalId);
+      for (int j = 0; j < length; ++j) {
+        *it = data[length*peridigmLocalId + j];
+        ++it;
+      }
+    }
+#endif
   }
 }
 

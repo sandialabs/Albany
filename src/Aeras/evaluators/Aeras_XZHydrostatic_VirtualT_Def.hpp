@@ -55,7 +55,7 @@ XZHydrostatic_VirtualT(const Teuchos::ParameterList& p,
   
   this->addEvaluatedField(virt_t);
   this->addEvaluatedField(Cpstar);
-  this->setName("Aeras::XZHydrostatic_VirtualT"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_VirtualT"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

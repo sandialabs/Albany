@@ -48,7 +48,7 @@ MicroResidual(const Teuchos::ParameterList& p) :
   }
 
 
-  this->setName("MicroResidual"+PHX::TypeString<EvalT>::value);
+  this->setName("MicroResidual"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

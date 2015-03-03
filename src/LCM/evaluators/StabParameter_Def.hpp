@@ -113,7 +113,7 @@ StabParameter(Teuchos::ParameterList& p) :
 
 
   this->addEvaluatedField(stabParameter);
-  this->setName("Stabilization Parameter"+PHX::TypeString<EvalT>::value);
+  this->setName("Stabilization Parameter"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -137,7 +137,7 @@ template<typename EvalT, typename Traits>
 void StabParameter<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::size_t numCells = workset.numCells;
+  int numCells = workset.numCells;
 
   ScalarT L2GradT;
   ScalarT UGNparameter;
@@ -145,8 +145,8 @@ evaluateFields(typename Traits::EvalData workset)
 //  std::cout <<  "Constant? " << is_constant << endl;
 
   if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	  stabParameter(cell,qp) = constant_value;
       }
     }
@@ -155,23 +155,24 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 
     	  L2GradT = 0.0;
     	  UGNparameter = 0.0;
 
     	  		// calculate L2 norm of gradient T
-    	  		for (std::size_t dim=0; dim <numDims; ++dim){
-    	  		   		  L2GradT += TGrad(cell,qp,dim)*TGrad(cell,qp,dim);
+    	  	        for (int dim=0; dim <numDims; ++dim){
+    	  		    		 L2GradT += TGrad(cell,qp,dim)*TGrad(cell,qp,dim);
     	  		}
+
 
     	  		if (L2GradT > 0.0){
 
                     L2GradT = std::sqrt(L2GradT);
 
-    	  			for (std::size_t node=0; node < numNodes; ++node) {
-    	  				for (std::size_t dim=0; dim <numDims; ++dim){
+    	  			for (int node=0; node < numNodes; ++node) {
+    	  				for (int dim=0; dim <numDims; ++dim){
     	  					UGNparameter += std::abs(GradBF(cell, node, qp,dim)*TGrad(cell,qp,dim)/L2GradT);
 
     	  				}

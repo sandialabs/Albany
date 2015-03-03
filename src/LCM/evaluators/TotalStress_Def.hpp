@@ -38,7 +38,7 @@ TotalStress(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("TotalStress"+PHX::TypeString<EvalT>::value);
+  this->setName("TotalStress"+PHX::typeAsString<EvalT>());
 
 }
 
@@ -60,19 +60,19 @@ void TotalStress<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim<numDims; ++ dim) {
-    		  for (std::size_t j=0; j<numDims; ++ j) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim<numDims; ++ dim) {
+    		  for (int j=0; j<numDims; ++ j) {
 	              stress(cell,qp,dim,j) = effStress(cell,qp, dim,j);
     		  }
     	  }
       }
     }
 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
-    	  for (std::size_t dim=0; dim<numDims; ++ dim) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
+    	  for (int dim=0; dim<numDims; ++ dim) {
 	              stress(cell,qp,dim,dim) -= biotCoefficient(cell,qp)*
 	            		                     porePressure(cell,qp);
     	  }
@@ -83,16 +83,16 @@ evaluateFields(typename Traits::EvalData workset)
   switch (numDims) {
   case 1:
     Intrepid::FunctionSpaceTools::tensorMultiplyDataData<ScalarT>(stress, elasticModulus, strain);
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
         	  stress(cell, qp) = stress(cell, qp) - porePressure(cell,qp);
           }
     }
     break;
   case 2:
     // Compute Stress (with the plane strain assumption for now)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	lambda = ( elasticModulus(cell,qp) * poissonsRatio(cell,qp) ) / ( ( 1 + poissonsRatio(cell,qp) ) * ( 1 - 2 * poissonsRatio(cell,qp) ) );
 	mu = elasticModulus(cell,qp) / ( 2 * ( 1 + poissonsRatio(cell,qp) ) );
 	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) ) - biotCoefficient(cell,qp)*porePressure(cell,qp) ;
@@ -104,8 +104,8 @@ evaluateFields(typename Traits::EvalData workset)
     break;
   case 3:
     // Compute Stress
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	lambda = ( elasticModulus(cell,qp) * poissonsRatio(cell,qp) ) / ( ( 1 + poissonsRatio(cell,qp) ) * ( 1 - 2 * poissonsRatio(cell,qp) ) );
 	mu = elasticModulus(cell,qp) / ( 2 * ( 1 + poissonsRatio(cell,qp) ) );
 	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) )

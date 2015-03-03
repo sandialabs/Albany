@@ -7,7 +7,7 @@
 #ifndef SATURATION_MOUDULS_HPP
 #define SATURATION_MOUDULS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -44,8 +44,8 @@ public:
 
 private:
 
-  std::size_t numQPs;
-  std::size_t numDims;
+  int numQPs;
+  int numDims;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
   PHX::MDField<ScalarT,Cell,QuadPoint> satMod;
 
@@ -62,7 +62,7 @@ private:
   RealType refTemp;
 
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;

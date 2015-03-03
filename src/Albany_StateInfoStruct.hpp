@@ -79,7 +79,7 @@ typedef std::vector<StateArray> StateArrayVec;
 struct StateStruct {
 
   enum MeshFieldEntity {WorksetValue, NodalData, ElemNode, ElemData, NodalDataToElemNode, NodalDistParameter, QuadPoint};
-  typedef std::vector<int> FieldDims;
+  typedef std::vector<PHX::DataLayout::size_type> FieldDims;
 
   StateStruct (const std::string& name_, MeshFieldEntity ent): 
         name(name_), responseIDtoRequire(""), output(true), 

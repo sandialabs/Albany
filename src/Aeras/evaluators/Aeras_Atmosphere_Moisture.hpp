@@ -7,7 +7,7 @@
 #ifndef AERAS_ATMOSPHERE_MOISTURE_HPP
 #define AERAS_ATMOSPHERE_MOISTURE_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -70,8 +70,8 @@ void kessler(const int Km, const double dt_in,
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> PiDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> TempSrc;
 
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > TracerIn;
-  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint> > TracerSrc;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > TracerIn;
+  std::map<std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Level> > TracerSrc;
 
 
   const Teuchos::ArrayRCP<std::string> tracerNames;

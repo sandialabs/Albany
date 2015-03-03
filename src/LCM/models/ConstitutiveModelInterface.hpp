@@ -7,7 +7,7 @@
 #if !defined(LCM_ConstitutiveModelInterface_hpp)
 #define LCM_ConstitutiveModelInterface_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -172,6 +172,21 @@ namespace LCM {
     /// flag to indicate we have damage
     ///
     bool have_damage_;
+
+    ///
+    /// flag to indicate we have total concentration
+    ///
+    bool have_total_concentration_;
+
+    ///
+    /// flag to indicate we total bubble density
+    ///
+    bool have_total_bubble_density_;
+
+    ///
+    /// flag to indicate we bubble volume fraction
+    ///
+    bool have_bubble_volume_fraction_;
 
     ///
     /// flag to volume average the pressure

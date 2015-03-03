@@ -7,6 +7,7 @@
 SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_Stress.cpp
@@ -14,6 +15,7 @@ SET(SOURCES
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityProblem.cpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityModalProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/PoissonsEquation.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_OptimizationProblem.cpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.cpp
@@ -32,6 +34,8 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/ATO_Solver.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_StiffnessObjective.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_ModalObjective.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_InternalEnergyResponse.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_VectorResidual_Def.hpp
@@ -45,6 +49,7 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/evaluators/ATO_TopologyFieldWeighting.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityProblem.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/problems/LinearElasticityModalProblem.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/PoissonsEquation.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_OptimizationProblem.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.hpp

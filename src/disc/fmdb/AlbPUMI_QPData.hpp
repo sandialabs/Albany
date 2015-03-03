@@ -27,7 +27,7 @@ namespace AlbPUMI {
 
   public:
 
-    QPData(const std::string& name, const std::vector<int>& dim,  const bool output = false);
+    QPData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,  const bool output = false);
     ~QPData(){}
 
     //! Type of traits class being used
@@ -42,7 +42,7 @@ namespace AlbPUMI {
     const std::string name;      // Name of data field
     const bool output;           // Is field output to disk each time step (or at end of simulation)?
     std::vector<DataType> buffer;        // array storage for shards::Array
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     int nfield_dofs;                    // total number of dofs in this field
     std::size_t beginning_index;        // Buffer starting location for the next array allocation
 
@@ -56,7 +56,7 @@ namespace AlbPUMI {
 
     enum { size = 1 }; // One array dimension tags: Cell
     typedef shards::Array<T, shards::NaturalOrder, Cell> field_type ;
-    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems);
 
@@ -70,7 +70,7 @@ namespace AlbPUMI {
 
     enum { size = 2 }; // Two array dimension tags: Cell and QuadPoint
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint> field_type ;
-    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1]);
 
@@ -84,7 +84,7 @@ namespace AlbPUMI {
 
     enum { size = 3 }; // Three array dimension tags: Cell, QuadPoint, and Dim
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim> field_type ;
-    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1], dims[2]);
 
@@ -98,7 +98,7 @@ namespace AlbPUMI {
 
     enum { size = 4 }; // Four array dimension tags: Cell, QuadPoint, Dim, and Dim
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> field_type ;
-    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static Albany::MDArray buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1], dims[2], dims[3]);
 

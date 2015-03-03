@@ -33,11 +33,16 @@
     <!-- BOUNDARY CONDITIONS on node sets from the discretization which follows -->
     <ParameterList name="Dirichlet BCs">
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
+      <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF Y">
+        <Parameter name="Number of points" type="int" value="3"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 86400., 89400.}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.0, 0.1}"/>
+      </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF C" type="double" value="5.6e-4"/>
       <Parameter name="DBC on NS nodelist_2 for DOF C" type="double" value="5.6e-4"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_5 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
     <!-- PARAMETER -->
     <ParameterList name="Parameters">
@@ -82,8 +87,8 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="1500"/>         
-	<Parameter  name="Max Value" type="double" value="86400.0"/>
+	<Parameter  name="Max Steps" type="int" value="1600"/>         
+	<Parameter  name="Max Value" type="double" value="90000.0"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
 	<Parameter  name="Compute Eigenvalues" type="bool" value="0"/> 
@@ -208,11 +213,11 @@
           <Parameter name="Number of Tests" type="int" value="2"/>
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
-            <Parameter name="Number of Nonlinear Iterations" type="int" value="3"/>
+            <Parameter name="Number of Nonlinear Iterations" type="int" value="1"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="0.1"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-9"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">

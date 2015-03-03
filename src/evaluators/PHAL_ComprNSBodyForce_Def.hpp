@@ -56,7 +56,7 @@ std::cout << " numDims = " << numDims << std::endl;
 std::cout << " numQPs = " << numQPs << std::endl; 
 
 
-  this->setName("ComprNSBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("ComprNSBodyForce" );
 }
 
 //**********************************************************************
@@ -91,18 +91,17 @@ evaluateFields(typename Traits::EvalData workset)
    const double mu = 1.0/Re; 
    const double Rgas = 0.714285733; //non-dimensional gas constant
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+     for (std::size_t qp=0; qp < numQPs; ++qp) {
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       f[0] = 0.0;
-       f[1] = 2.0*exp(-2.0*time)*cos(x2pi)*(-sin(y2pi) + exp(-2.0*time)*sin(x2pi)*pi + 4.0*mu*pi*pi*sin(y2pi)) + 2.0*Rgas*pi*exp(-4.0*time)*sin(x2pi); 
-       f[2] = 2.0*exp(-2.0*time)*cos(y2pi)*(sin(x2pi) + exp(-2.0*time)*sin(y2pi)*pi - 4.0*mu*pi*pi*sin(x2pi)) + 2.0*Rgas*pi*exp(-4.0*time)*sin(y2pi); 
-       f[3] = -2.0*exp(-4.0*time)*(-2.0*cos(x2pi) - 2.0*cos(y2pi) + exp(-2.0*time)*cos(x2pi)*sin(y2pi)*sin(x2pi)*pi 
-              - exp(-2.0*time)*sin(x2pi)*cos(y2pi)*sin(y2pi)*pi) 
-              + (gamma_gas-1.0)/Rgas*4.0*mu*exp(-2.0*time)*sin(x2pi)*sin(y2pi)*pi*2.0*exp(-2.0*time)*sin(x2pi)*pi*sin(y2pi)  
-              + (gamma_gas-1.0)/Rgas*4.0*mu*exp(-2.0*time)*sin(x2pi)*pi*sin(y2pi)*2.0*exp(-2.0*time)*sin(x2pi)*pi*sin(y2pi) 
-              - gamma_gas*kappa/(Pr*Re)*4.0*exp(-4.0*time)*pi*pi*(cos(x2pi) + cos(y2pi));  
+       force(cell,qp,0) = 0.0;
+       force(cell,qp,1) = 2.0*exp(-2.0*time)*cos(x2pi)*(-sin(y2pi) + exp(-2.0*time)*sin(x2pi)*pi + 4.0*mu*pi*pi*sin(y2pi)) + 2.0*Rgas*pi*exp(-4.0*time)*sin(x2pi); 
+       force(cell,qp,2) = 2.0*exp(-2.0*time)*cos(y2pi)*(sin(x2pi) + exp(-2.0*time)*sin(y2pi)*pi - 4.0*mu*pi*pi*sin(x2pi)) + 2.0*Rgas*pi*exp(-4.0*time)*sin(y2pi); 
+       force(cell,qp,3) = -2.0*exp(-4.0*time)*(-2.0*cos(x2pi) - 2.0*cos(y2pi) + exp(-2.0*time)*cos(x2pi)*sin(y2pi)*sin(x2pi)*pi 
+                                               - exp(-2.0*time)*sin(x2pi)*cos(y2pi)*sin(y2pi)*pi) 
+         + (gamma_gas-1.0)/Rgas*4.0*mu*exp(-2.0*time)*sin(x2pi)*sin(y2pi)*pi*2.0*exp(-2.0*time)*sin(x2pi)*pi*sin(y2pi)  
+         + (gamma_gas-1.0)/Rgas*4.0*mu*exp(-2.0*time)*sin(x2pi)*pi*sin(y2pi)*2.0*exp(-2.0*time)*sin(x2pi)*pi*sin(y2pi) 
+         - gamma_gas*kappa/(Pr*Re)*4.0*exp(-4.0*time)*pi*pi*(cos(x2pi) + cos(y2pi));  
      }
    }
  }

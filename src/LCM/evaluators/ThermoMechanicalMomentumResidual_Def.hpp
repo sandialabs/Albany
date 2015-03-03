@@ -35,7 +35,7 @@ ThermoMechanicalMomentumResidual(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(Residual);
 
-  this->setName("ThermoMechanicalMomentumResidual"+PHX::TypeString<EvalT>::value);
+  this->setName("ThermoMechanicalMomentumResidual"+PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);
@@ -82,20 +82,21 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST;
   typedef Intrepid::RealSpaceTools<ScalarT> RST;
 
-  RST::inverse(F_inv, defgrad);
-  RST::transpose(F_invT, F_inv);
-  FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
-  FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+   RST::inverse(F_inv, defgrad);
+   RST::transpose(F_invT, F_inv);
+   FST::scalarMultiplyDataData<ScalarT>(JF_invT, J, F_invT);
+   FST::tensorMultiplyDataData<ScalarT>(P, stress, JF_invT);
+
+  for (int cell=0; cell < workset.numCells; ++cell) 
   {
-    for (std::size_t node=0; node < numNodes; ++node) 
+    for (int node=0; node < numNodes; ++node) 
     {
-      for (std::size_t dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
-      for (std::size_t qp=0; qp < numQPs; ++qp) 
+      for (int dim=0; dim<numDims; dim++)  Residual(cell,node,dim)=0.0;
+      for (int qp=0; qp < numQPs; ++qp) 
       {
-	for (std::size_t i=0; i<numDims; i++) 
+	for (int i=0; i<numDims; i++) 
 	{
-	  for (std::size_t j=0; j<numDims; j++) 
+	  for (int j=0; j<numDims; j++) 
 	  {
 	    Residual(cell,node,i) += P(cell, qp, i, j) * wGradBF(cell, node, qp, j);
 	  } 

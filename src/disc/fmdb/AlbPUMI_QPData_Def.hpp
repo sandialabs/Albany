@@ -10,7 +10,7 @@
 
 template<typename DataType, unsigned Dim, class traits>
 AlbPUMI::QPData<DataType, Dim, traits>::QPData(const std::string& name_,
-               const std::vector<int>& dim, const bool output_) :
+               const std::vector<PHX::DataLayout::size_type>& dim, const bool output_) :
   name(name_),
   output(output_),
   dims(dim),

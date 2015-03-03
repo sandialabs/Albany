@@ -63,7 +63,7 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2]; //# of dofs/node
 
-  this->setName("ShallowWaterSource"+PHX::TypeString<EvalT>::value);
+  this->setName("ShallowWaterSource"+PHX::typeAsString<EvalT>());
   
   myPi = Aeras::ShallowWaterConstants::self().pi;
   

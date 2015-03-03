@@ -47,7 +47,7 @@ DamageLS(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*dls_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*dls_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
@@ -64,7 +64,7 @@ DamageLS(Teuchos::ParameterList& p) :
   } 
 
   this->addEvaluatedField(damageLS);
-  this->setName("Damage Length Scale"+PHX::TypeString<EvalT>::value);
+  this->setName("Damage Length Scale"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -82,20 +82,20 @@ template<typename EvalT, typename Traits>
 void DamageLS<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::size_t numCells = workset.numCells;
+  int numCells = workset.numCells;
 
   if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	damageLS(cell,qp) = constant_value;
       }
     }
   }
   else {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	Teuchos::Array<MeshScalarT> point(numDims);
-	for (std::size_t i=0; i<numDims; i++)
+	for (int i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
 	damageLS(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }

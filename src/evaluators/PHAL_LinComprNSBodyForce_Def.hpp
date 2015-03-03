@@ -69,7 +69,7 @@ std::cout << " numDims = " << numDims << std::endl;
 std::cout << " numQPs = " << numQPs << std::endl; 
 
 
-  this->setName("LinComprNSBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("LinComprNSBodyForce" );
 }
 
 //**********************************************************************
@@ -104,14 +104,13 @@ evaluateFields(typename Traits::EvalData workset)
     const double gamma_gas = 1.4; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT x = coordVec(cell,qp,0); 
        MeshScalarT y = coordVec(cell,qp,1); 
-       f[0] = -1.0*(ubar*(y - x*sin(x)) + vbar*x + zetabar*2.0*x*(0.5-y));  
-       f[1] = -1.0*(ubar*cos(x)*y + vbar*sin(x) - zetabar*x*x);  
-       f[2] = -1.0*(gamma_gas*pbar*(y - x*sin(x) + sin(x)) + ubar*2.0*x*(0.5-y) - vbar*x*x);  
+       force(cell,qp,0) = -1.0*(ubar*(y - x*sin(x)) + vbar*x + zetabar*2.0*x*(0.5-y));
+       force(cell,qp,1) = -1.0*(ubar*cos(x)*y + vbar*sin(x) - zetabar*x*x);
+       force(cell,qp,2) = -1.0*(gamma_gas*pbar*(y - x*sin(x) + sin(x)) + ubar*2.0*x*(0.5-y) - vbar*x*x);
      }
    }
  }
@@ -125,17 +124,16 @@ evaluateFields(typename Traits::EvalData workset)
    const RealType time = workset.current_time;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        MeshScalarT x = coordVec(cell,qp,0); 
        MeshScalarT y = coordVec(cell,qp,1);
-       f[0] = -1.0*exp(-a*time)*(-a*sin(x2pi)*cos(y2pi) + ubar*2.0*pi*cos(x2pi)*cos(y2pi) 
-                                 -vbar*2.0*pi*sin(x2pi)*sin(y2pi) + 2.0*pi*zetabar*cos(x2pi)*sin(y2pi));   
-       f[1] = -1.0*exp(-a*time)*(-a*cos(x2pi)*sin(y2pi) - 2.0*pi*ubar*sin(x2pi)*sin(y2pi) 
-                                 + vbar*2.0*pi*cos(x2pi)*cos(y2pi) + 2.0*pi*zetabar*sin(x2pi)*cos(y2pi)); 
-       f[2] = -1.0*exp(-a*time)*(-a*sin(x2pi)*sin(y2pi) + gamma_gas*pbar*4.0*pi*cos(x2pi)*cos(y2pi) + 
-                                 ubar*2.0*pi*cos(x2pi)*sin(y2pi) + vbar*2.0*pi*sin(x2pi)*cos(y2pi));   
+       force(cell,qp,0) = -1.0*exp(-a*time)*(-a*sin(x2pi)*cos(y2pi) + ubar*2.0*pi*cos(x2pi)*cos(y2pi) 
+                                             -vbar*2.0*pi*sin(x2pi)*sin(y2pi) + 2.0*pi*zetabar*cos(x2pi)*sin(y2pi));   
+       force(cell,qp,1) = -1.0*exp(-a*time)*(-a*cos(x2pi)*sin(y2pi) - 2.0*pi*ubar*sin(x2pi)*sin(y2pi) 
+                                             + vbar*2.0*pi*cos(x2pi)*cos(y2pi) + 2.0*pi*zetabar*sin(x2pi)*cos(y2pi)); 
+       force(cell,qp,2) = -1.0*exp(-a*time)*(-a*sin(x2pi)*sin(y2pi) + gamma_gas*pbar*4.0*pi*cos(x2pi)*cos(y2pi) + 
+                                             ubar*2.0*pi*cos(x2pi)*sin(y2pi) + vbar*2.0*pi*sin(x2pi)*cos(y2pi));   
      }
    }
  }
@@ -144,15 +142,14 @@ evaluateFields(typename Traits::EvalData workset)
    const double tref = 1.0/347.9693;
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0); 
        MeshScalarT y = coordVec(cell,qp,1);
-       f[0] = 0.0; 
+       force(cell,qp,0) = 0.0; 
        if ((x >= 0.9) && (x <= 1.0) && (y >= 0.9) && (y <= 1.0))
-         f[1] = (1.0e-4)*cos(2.0*pi*1000*time*tref); 
+         force(cell,qp,1) = (1.0e-4)*cos(2.0*pi*1000*time*tref); 
        else 
-         f[1] = 0.0; 
-       f[2] = 0.0; 
+         force(cell,qp,1) = 0.0; 
+       force(cell,qp,2) = 0.0; 
      }
    }
 

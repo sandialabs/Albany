@@ -59,7 +59,7 @@ for target in trilinos albany; do
  dir=${target}-build-${toolchain}-${buildtype}
  if [ ! -d $dir ]; then
    echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
-   ./clean-config-build.sh trilinos gcc debug $NP >& trilinos_build.log
+   ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
  else 
    echo "!!! $dir exists !!!"
  fi

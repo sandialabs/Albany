@@ -493,6 +493,23 @@ Albany::ModelEvaluatorT::createOutArgsImpl() const
   return result;
 }
 
+namespace {
+// As of early Jan 2015, it seems there is some conflict between Thyra's use of
+// NaN to initialize certain quantities and Tpetra's v.update(alpha, x, 0)
+// implementation. In the past, 0 as the third argument seemed to trigger a code
+// path that does a set v <- alpha x rather than an accumulation v <- alpha x +
+// beta v. Hence any(isnan(v(:))) was not a problem if beta == 0. That seems not
+// to be entirely true now. For some reason, this problem occurs only in DEBUG
+// builds in the sensitivities. I have not had time to fully dissect this
+// problem to determine why the problem occurs only there, but the solution is
+// nonetheless quite suggestive: sanitize v before calling update. I do this at
+// the highest level, here, rather than in the responses.
+void sanitize_nans (const Thyra::ModelEvaluatorBase::Derivative<ST>& v) {
+  if ( ! v.isEmpty() && Teuchos::nonnull(v.getMultiVector()))
+    ConverterT::getTpetraMultiVector(v.getMultiVector())->putScalar(0.0);
+}
+} // namespace
+
 void
 Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
@@ -627,6 +644,9 @@ Albany::ModelEvaluatorT::evalModelImpl(
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotT_out = outArgsT.get_DgDx_dot(j);
     // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
     const Thyra::ModelEvaluatorBase::Derivative<ST> dgdxdotdotT_out;
+    sanitize_nans(dgdxT_out);
+    sanitize_nans(dgdxdotT_out);
+    sanitize_nans(dgdxdotdotT_out);
 
     // dg/dx, dg/dxdot
     if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {

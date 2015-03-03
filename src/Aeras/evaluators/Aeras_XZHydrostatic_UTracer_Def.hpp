@@ -32,7 +32,7 @@ XZHydrostatic_UTracer(const Teuchos::ParameterList& p,
   this->addDependentField(Tracer);
   this->addEvaluatedField(UTracer);
 
-  this->setName("Aeras::XZHydrostatic_UTracer"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_UTracer" );
 }
 
 //**********************************************************************

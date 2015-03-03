@@ -260,7 +260,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     StateStruct& st = *((*sis)[i]);
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
-    std::vector<int>& dim = st.dim;
+    std::vector<PHX::DataLayout::size_type>& dim = st.dim;
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();

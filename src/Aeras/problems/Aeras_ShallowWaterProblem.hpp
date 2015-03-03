@@ -141,8 +141,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
 
   const int numQPts     = cubature->getNumPoints();
-  const int numVertices = meshSpecs.ctd.node_count; 
-  int vecDim = spatialDim;
+  const int numVertices = meshSpecs.ctd.node_count;
+  int vecDim; 
+  if (neq == 1) vecDim = neq; 
+  else vecDim = spatialDim;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -218,6 +220,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Spherical Coord Name",       "Lat-Long");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Weights Name",          "Weights");
     p->set<string>("BF Name",          "BF");
@@ -255,6 +259,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Spherical Coord Name",       "Lat-Long");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
 
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weights Name",          "Weights");
@@ -296,7 +302,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
     
   }
-
   { // Aeras Atmosphere for shallow water equations 
 
     RCP<ParameterList> p = rcp(new ParameterList("Aeras Atmosphere"));

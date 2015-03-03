@@ -7,7 +7,7 @@
 #if !defined(LCM_Mechanics_Residual_hpp)
 #define LCM_Mechanics_Residual_hpp
 
-#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_config.hpp>
 #include <Phalanx_Evaluator_WithBaseImpl.hpp>
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_MDField.hpp>
@@ -88,17 +88,17 @@ private:
   ///
   /// Number of element nodes
   ///
-  std::size_t num_nodes_;
+  int num_nodes_;
 
   ///
   /// Number of integration points
   ///
-  std::size_t num_pts_;
+  int num_pts_;
 
   ///
   /// Number of spatial dimensions
   ///
-  std::size_t num_dims_;
+  int num_dims_;
 
   ///
   /// Body force flag
@@ -114,6 +114,39 @@ private:
   /// Dynamics flag
   ///
   bool enable_dynamics_;
+
+  //Kokkos
+  public:
+
+  struct residual_Tag{};
+  struct residual_haveBodyForce_Tag{};
+  struct residual_haveBodyForce_and_dynamic_Tag{};
+  struct residual_have_dynamic_Tag{};
+
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_Tag> residual_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_Tag> residual_haveBodyForce_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_haveBodyForce_and_dynamic_Tag> residual_haveBodyForce_and_dynamic_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,residual_have_dynamic_Tag> residual_have_dynamic_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_haveBodyForce_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_haveBodyForce_and_dynamic_Tag& tag, const int& i) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const residual_have_dynamic_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void compute_Stress(const int cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void compute_BodyForce(const int cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void compute_Acceleration(const int cell) const;
+
+
 };
 }
 

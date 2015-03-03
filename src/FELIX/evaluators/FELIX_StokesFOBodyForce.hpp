@@ -7,7 +7,7 @@
 #ifndef FELIX_STOKESFOBODYFORCE_HPP
 #define FELIX_STOKESFOBODYFORCE_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -35,7 +35,9 @@ public:
                       PHX::FieldManager<Traits>& vm);
 
   void evaluateFields(typename Traits::EvalData d);
-
+  
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
 
 private:
  

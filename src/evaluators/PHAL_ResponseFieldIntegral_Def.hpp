@@ -5,6 +5,7 @@
 //*****************************************************************//
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "PHAL_Utilities.hpp"
 
 namespace PHAL {
 
@@ -62,6 +63,10 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
     }
   }
   else if (fieldType == "Tensor") {
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "local_ and global_response must have rank 2. However, this code path "
+      "makes them rank 3. Needs to be fixed.");
     field_layout = dl->qp_tensor;
     local_response_layout = dl->cell_tensor;
     global_response_layout = dl->workset_tensor;
@@ -128,7 +133,7 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   this->addDependentField(field);
   this->addDependentField(coordVec);
   this->addDependentField(weights);
-  this->setName(field_name+" Response Field Integral"+PHX::TypeString<EvalT>::value);
+  this->setName(field_name+" Response Field Integral"+PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -162,10 +167,7 @@ template<typename EvalT, typename Traits>
 void PHAL::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
-
+  PHAL::set(this->global_response, 0.0);
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
 }
@@ -176,9 +178,7 @@ void PHAL::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {   
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   if( ebNames.size() == 0 || 
       std::find(ebNames.begin(), ebNames.end(), workset.EBName) != ebNames.end() ) {
@@ -198,7 +198,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t qp=0; qp < numQPs; ++qp) {
 	if (field_rank == 2) {
 	  s = field(cell,qp) * weights(cell,qp) * scaling;
-	  this->local_response(cell) += s;
+	  this->local_response(cell,0) += s;
 	  this->global_response(0) += s;
 	}
 	else if (field_rank == 3) {
@@ -236,6 +236,10 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
+
+//Irina TOFIX reduceAll
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
+/*
   std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
   PHX::MDField<ScalarT> partial_response(this->global_response);
   partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
@@ -247,7 +251,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
-}
+*/}
 
 // **********************************************************************
 template<typename EvalT,typename Traits>

@@ -323,6 +323,8 @@ Aeras::HydrostaticProblem::constructEvaluators(
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Spherical Coord Name",       "Lat-Long");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
     p->set<string>("Coordinate Vector Name",     "Coord Vec");
     p->set<string>("Weights Name",               "Weights");
     p->set<string>("BF Name",                    "BF");

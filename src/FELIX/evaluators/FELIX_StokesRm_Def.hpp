@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -39,7 +39,7 @@ StokesRm(const Teuchos::ParameterList& p,
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("StokesRm"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesRm"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

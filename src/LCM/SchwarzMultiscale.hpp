@@ -148,11 +148,11 @@ private:
   num_responses_;
   
   Teuchos::Array<int>
-  num_responses_partial_sum_;
-  
-  Teuchos::Array<int>
   num_params_partial_sum_;
 
+  Teuchos::Array<int>
+  num_responses_partial_sum_;
+  
   //like num_param_vecs
   int
   num_params_total_;
@@ -165,7 +165,8 @@ private:
   int
   num_responses_total_;
     
-  mutable Teuchos::Array<Teuchos::Array<ParamVec> >sacado_param_vecs_;
+  mutable Teuchos::Array<Teuchos::Array<ParamVec> >
+  sacado_param_vecs_;
 
   mutable Teuchos::Array<Thyra::ModelEvaluatorBase::InArgs<ST> >
   solver_inargs_;

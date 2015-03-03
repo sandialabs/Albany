@@ -29,7 +29,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
     
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Coordinate Vector" );
 }
 
 template<typename EvalT, typename Traits>
@@ -43,7 +43,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Coordinate Vector" );
 }
 
 // **********************************************************************
@@ -117,6 +117,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   }
 }
 // **********************************************************************
+#ifdef ALBANY_MESH_TANFAD
 template<typename Traits>
 GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p,
@@ -128,8 +129,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"
-                +PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value);
+  this->setName("Gather Coordinate Vector Tangent");
 }
 
 template<typename Traits>
@@ -143,8 +143,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"
-                +PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value);
+  this->setName("Gather Coordinate Vector  Tangent");
 }
 
 // **********************************************************************
@@ -199,4 +198,5 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif
 }

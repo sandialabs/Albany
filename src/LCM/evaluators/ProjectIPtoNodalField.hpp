@@ -85,11 +85,11 @@ protected:
   std::vector<typename EFieldLayout::Enum> ip_field_layouts_;
   std::vector<std::string> nodal_field_names_;
 
-  std::size_t num_vecs_;
-  std::size_t num_pts_;
-  std::size_t num_dims_;
-  std::size_t num_nodes_;
-  std::size_t num_vertices_;
+  int num_vecs_;
+  int num_pts_;
+  int num_dims_;
+  int num_nodes_;
+  int num_vertices_;
     
   std::vector<PHX::MDField<ScalarT> > ip_fields_;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
