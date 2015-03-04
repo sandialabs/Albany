@@ -40,9 +40,6 @@ public:
 
   ScalarT& getValue(const std::string &n); 
 
-  typedef typename PHX::Device execution_space;  
-  KOKKOS_INLINE_FUNCTION
-  void operator () (const int i) const;
 
 private:
  
@@ -70,6 +67,66 @@ private:
   enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE, FROMCISM};
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef typename PHX::Device execution_space;
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  
+  struct ViscosityFO_EXPTRIG_Tag{};
+  struct ViscosityFO_CONSTANT_Tag{};
+  struct ViscosityFO_GLENSLAW_UNIFORM_Tag{};
+  struct ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag{};
+  struct ViscosityFO_GLENSLAW_FROMFILE_Tag{};
+  struct ViscosityFO_GLENSLAW_XZ_UNIFORM_Tag{};
+  struct ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Tag{};
+  struct ViscosityFO_GLENSLAW_XZ_FROMFILE_Tag{};
+  struct ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_EXPTRIG_Tag> ViscosityFO_EXPTRIG_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_CONSTANT_Tag> ViscosityFO_CONSTANT_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_UNIFORM_Tag> ViscosityFO_GLENSLAW_UNIFORM_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag> ViscosityFO_GLENSLAW_TEMPERATUREBASED_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_FROMFILE_Tag> ViscosityFO_GLENSLAW_FROMFILE_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_XZ_UNIFORM_Tag> ViscosityFO_GLENSLAW_XZ_UNIFORM_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Tag> ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_XZ_FROMFILE_Tag> ViscosityFO_GLENSLAW_XZ_FROMFILE_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag> ViscosityFO_GLENSLAW_XZ_FROMCISM_Policy;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_EXPTRIG_Tag& tag, const int& i) const;
+  
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_CONSTANT_Tag& tag, const int& i) const;
+ 
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_UNIFORM_Tag& tag, const int& i) const;
+  
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_TEMPERATUREBASED_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_FROMFILE_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_XZ_UNIFORM_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_XZ_TEMPERATUREBASED_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_XZ_FROMFILE_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const ViscosityFO_GLENSLAW_XZ_FROMCISM_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void glenslaw (const ScalarT &flowFactorVec, const int& cell) const;
+  
+  KOKKOS_INLINE_FUNCTION
+  void glenslaw_xz (const ScalarT &flowFactorVec, const int& cell) const;
+
+#endif
  
 };
 
