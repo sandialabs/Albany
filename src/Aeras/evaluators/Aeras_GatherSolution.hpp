@@ -16,6 +16,8 @@
 
 #include "Teuchos_ParameterList.hpp"
 
+#include "Kokkos_Vector.hpp"
+
 namespace Aeras {
 /** \brief Gathers Coordinates values from the Newton coordinates vector into 
     the nodal fields of the field manager
@@ -47,8 +49,10 @@ public:
   
 protected:
 
-  std::vector< PHX::MDField<ScalarT> > val;
-  std::vector< PHX::MDField<ScalarT> > val_dot;
+//  std::vector< PHX::MDField<ScalarT> > val;
+//  std::vector< PHX::MDField<ScalarT> > val_dot;
+  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val;
+  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot;
   const int numNodes;
   const int numDims;
   const int numLevels;
