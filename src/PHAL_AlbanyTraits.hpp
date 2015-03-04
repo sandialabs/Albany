@@ -10,7 +10,8 @@
 #define PHAL_ALBANYTRAITS_HPP
 
 // mpl (Meta Programming Library) templates
-//#include "Sacado_Kokkkos.hpp"
+//#include "Sacadoi_Kokkos.hpp"
+#include "Sacado.hpp"
 #include "Sacado_mpl_vector.hpp"
 #include "Sacado_mpl_find.hpp"
 #include "boost/mpl/map.hpp"
