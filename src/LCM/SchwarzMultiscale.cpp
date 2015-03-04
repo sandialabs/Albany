@@ -203,7 +203,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     for (int l = 0; l < num_params_m; ++l) {
       Teuchos::RCP<Thyra::VectorBase<ST> const>
-      p = solver_inargs_[m].get_p(l);
+      p = models_[m]->getNominalValues().get_p(l);
 
       // Don't set it if there is nothing. Avoid null pointer.
       if (Teuchos::is_null(p) == true) continue;
@@ -742,13 +742,13 @@ evalModelImpl(
 
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector const>
-    xT_temp = ConverterT::getConstTpetraVector(solver_inargs_[m].get_x());
+    xT_temp = ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x());
 
     xTs[m] = Teuchos::rcp(new Tpetra_Vector(*xT_temp));
 
     Teuchos::RCP<Tpetra_Vector const>
-    x_dotT_temp = Teuchos::nonnull(solver_inargs_[m].get_x_dot()) ?
-            ConverterT::getConstTpetraVector(solver_inargs_[m].get_x_dot()) :
+    x_dotT_temp = Teuchos::nonnull(models_[m]->getNominalValues().get_x_dot()) ?
+            ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x_dot()) :
             Teuchos::null;
 
     x_dotTs[m] = Teuchos::rcp(new Tpetra_Vector(*x_dotT_temp));
@@ -834,8 +834,8 @@ evalModelImpl(
     fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
         ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
         Teuchos::null;
-
-    fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
+    if (fT_out_temp != Teuchos::null) 
+      fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
   }
 
   Teuchos::RCP<Tpetra_Operator> const
