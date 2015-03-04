@@ -834,8 +834,11 @@ evalModelImpl(
     fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
         ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
         Teuchos::null;
-    if (fT_out_temp != Teuchos::null) 
-      fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
+    fTs_out[m] = Teuchos::nonnull(fT_out_temp) ?
+            Teuchos::rcp(new Tpetra_Vector(*fT_out_temp)) :
+            Teuchos::null;
+    //if (fT_out_temp != Teuchos::null) 
+    //  fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
   }
 
   Teuchos::RCP<Tpetra_Operator> const
@@ -861,14 +864,15 @@ evalModelImpl(
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Operator> const
     W_op_outT_temp =
-        Teuchos::nonnull(solver_outargs_[m].get_W_op()) ?
-            ConverterT::getTpetraOperator(out_args.get_W_op()) :
+        Teuchos::nonnull(models_[m]->create_W_op()) ?
+            ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
             Teuchos::null;
 
     W_op_outs_crsT[m] =
         Teuchos::nonnull(W_op_outT_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT_temp, true) :
             Teuchos::null;
+    std::cout << "W_op_outs_crsT[m]: " << W_op_outs_crsT[m] << std::endl; 
   }
 
   Teuchos::Array<bool>
