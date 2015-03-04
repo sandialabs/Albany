@@ -17,11 +17,14 @@ LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT, 
+    const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   commT_ = commT;
+
+  solver_factory_ = solver_factory; 
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
@@ -456,7 +459,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  return Teuchos::null;
+  return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
