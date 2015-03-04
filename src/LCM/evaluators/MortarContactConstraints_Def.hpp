@@ -24,13 +24,13 @@ MortarContact<EvalT, Traits>::
 MortarContact(const Teuchos::ParameterList& p,
                               const Teuchos::RCP<Albany::Layouts>& dl) :
 
-  meshSpecs      (p.get<const Albany::MeshSpecsStruct*>("Mesh Specs Struct")),
+  meshSpecs       (p.get<const Albany::MeshSpecsStruct*>("Mesh Specs Struct")),
   masterSideNames (p.get<Teuchos::Array<std::string> >("Master Side Set Names")), 
-  slaveSideNames (p.get<Teuchos::Array<std::string> >("Slave Side Set Names")), 
-  sideSetIDs (p.get<Teuchos::Array<std::string> >("Sideset IDs")), //array of sidesets
-  coordVec       (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector), //Node coords
-  M_operator       (p.get<std::string>("M Name"), dl->qp_scalar),  //M portion of G
-  offset         (p.get<Teuchos::Array<int> >("Equation Offset"))
+  slaveSideNames  (p.get<Teuchos::Array<std::string> >("Slave Side Set Names")), 
+  sideSetIDs      (p.get<Teuchos::Array<std::string> >("Sideset IDs")), //array of sidesets
+  coordVec        (p.get<std::string>("Coordinate Vector Name"), dl->vertices_vector), //Node coords
+  M_operator      (p.get<std::string>("M Name"), dl->qp_scalar),  //M portion of G
+  offset          (p.get<Teuchos::Array<int> >("Equation Offset"))
 
 
 {
@@ -93,6 +93,7 @@ evaluateFields(typename Traits::EvalData workset)
   // workset with the slave segments that it may potentially interact with
 
   // Then, form the mortar integration space
+
 
   // No work to do
   if(workset.sideSets == Teuchos::null || 
@@ -164,6 +165,29 @@ evaluateFields(typename Traits::EvalData workset)
              neumann(cell, node, dim) = 0.0; // zero out the accumulation vector
 */
 
+      const std::vector<Albany::SideStruct>& sideSet = it->second;
+
+      // Loop over the sides that form the boundary condition
+      std::cout << "size of sideset array in workset = " << sideSet.size() << std::endl;
+      
+         for (std::size_t side=0; side < sideSet.size(); ++side) { // loop over the sides on this ws and name
+
+           // Get the data that corresponds to the side. 
+         
+           const int elem_GID = sideSet[side].elem_GID; // GID of the element that contains the master segment
+           const int elem_LID = sideSet[side].elem_LID; // LID (numbered from zero) id of the master segment on this processor
+           const int elem_side = sideSet[side].side_local_id; // which edge of the element the side is (cf. exodus manual)?
+           const int elem_block = sideSet[side].elem_ebIndex; // which  element block is the element in?
+ 
+           std::cout << "side = " << side << std::endl;
+           std::cout << "    element that owns side GID = " << elem_GID << std::endl;
+           std::cout << "    element that owns side LID = " << elem_LID << std::endl;
+           std::cout << "    side, local ID inside element = " << elem_side << std::endl;
+           std::cout << "    element block side is in = " << elem_block << std::endl << std::endl;
+
+
+         }
+      }
 
 
   // Then assemble the DOFs (flux, traction) at the slaves into the master side local elements
