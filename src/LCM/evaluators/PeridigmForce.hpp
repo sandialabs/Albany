@@ -43,7 +43,6 @@ protected:
 
   // Input:
   RealType density;
-  PHX::MDField<MeshScalarT,Cell,Vertex,Dim> sphereVolume;
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoordinates;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> currentCoordinates;
 
@@ -51,7 +50,7 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> force;
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> residual;
   std::vector< LCM::PeridigmManager::OutputField > outputFieldInfo;
-  std::map< std::string, PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > outputFields;
+  std::map< std::string, PHX::MDField<ScalarT> > outputFields;
 
   unsigned int numQPs;
   unsigned int numDims;

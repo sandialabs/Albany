@@ -43,6 +43,9 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
                            const Teuchos::RCP<Albany::Layouts>& dl):
   have_temperature_(false),
   have_damage_(false),
+  have_total_concentration_(false),
+  have_total_bubble_density_(false),
+  have_bubble_volume_fraction_(false),
   volume_average_pressure_(p.get<bool>("Volume Average Pressure", false))
 {
   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Material Parameters");
@@ -93,6 +96,33 @@ ConstitutiveModelInterface(Teuchos::ParameterList& p,
         dl->qp_scalar);
     damage_ = d;
     this->addDependentField(damage_);
+  }
+
+  // optionally deal with total concentration
+  if (p.isType<std::string>("Total Concentration Name")) {
+    have_total_concentration_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> tc(p.get<std::string>("Total Concentration Name"),
+        dl->qp_scalar);
+    total_concentration_ = tc;
+    this->addDependentField(total_concentration_);
+  }
+
+  // optionally deal with total bubble density
+  if (p.isType<std::string>("Total Bubble Density Name")) {
+    have_total_bubble_density_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> tbd(p.get<std::string>("Total Bubble Density Name"),
+        dl->qp_scalar);
+    total_bubble_density_ = tbd;
+    this->addDependentField(total_bubble_density_);
+  }
+
+  // optionally deal with bubble volume fraction
+  if (p.isType<std::string>("Bubble Volume Fraction Name")) {
+    have_bubble_volume_fraction_ = true;
+    PHX::MDField<ScalarT, Cell, QuadPoint> bvf(p.get<std::string>("Bubble Volume Fraction Name"),
+        dl->qp_scalar);
+    bubble_volume_fraction_ = bvf;
+    this->addDependentField(bubble_volume_fraction_);
   }
 
   // optional volume averaging needs integration weights and J
@@ -157,6 +187,36 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (have_temperature_) {
     this->utils.setFieldData(temperature_, fm);
     model_->setTemperatureField(temperature_);
+  }
+
+  // optionally deal with damage
+  if (have_damage_) {
+    this->utils.setFieldData(damage_, fm);
+    model_->setDamageField(damage_);
+  }
+
+  // optionally deal with total concentration
+  if (have_total_concentration_) {
+    this->utils.setFieldData(total_concentration_, fm);
+    model_->setTotalConcentrationField(total_concentration_);
+  }
+
+  // optionally deal with total bubble density
+  if (have_total_bubble_density_) {
+    this->utils.setFieldData(total_bubble_density_, fm);
+    model_->setTotalBubbleDensityField(total_bubble_density_);
+  }
+
+  // optionally deal with bubble volume fraction
+  if (have_bubble_volume_fraction_) {
+    this->utils.setFieldData(bubble_volume_fraction_, fm);
+    model_->setBubbleVolumeFractionField(bubble_volume_fraction_);
+  }
+
+  // optionally deal with damage
+  if (have_damage_) {
+    this->utils.setFieldData(damage_, fm);
+    model_->setDamageField(damage_);
   }
 
   // optionally deal with damage

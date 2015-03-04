@@ -42,6 +42,7 @@ public:
 private:
 
   const int spatialDimension;
+  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs;
 
@@ -65,6 +66,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord; 
+  PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<ScalarT,Cell,Node> theta_nodal;
   PHX::MDField<MeshScalarT,Cell,QuadPoint>     jacobian_det; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> jacobian_inv_node;

@@ -144,7 +144,7 @@
 		  <Parameter name="Overlap" type="int" value="1"/>
 		  <Parameter name="Prec Type" type="string" value="ILU"/>
 		  <ParameterList name="Ifpack Settings">
-		    <Parameter name="fact: level-of-fill" type="int" value="2"/>
+		    <Parameter name="fact: level-of-fill" type="int" value="0"/>
 		  </ParameterList>
 		</ParameterList>
 		<ParameterList name="ML">

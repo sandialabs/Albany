@@ -75,6 +75,8 @@ private:
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
+  PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<ScalarT,Cell,Node> theta_nodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> source;
 
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
@@ -108,13 +110,17 @@ private:
   void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
 
 };
-  const int qpToNodeMap[9] = {0, 4, 1,
-      7, 8, 5,
-      3, 6, 2 };
-const int nodeToQPMap[9]  = {0, 2, 8, 6,
-    1, 5, 7, 3,
-    4 };
 
+// Warning: these maps are a temporary fix, introduced by Steve Bova,
+// to use the correct node ordering for node-point quadrature.  This
+// should go away when spectral elements are fully implemented for
+// Aeras.
+const int qpToNodeMap[9] = {0, 4, 1, 7, 8, 5, 3, 6, 2};
+const int nodeToQPMap[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
+// const int qpToNodeMap[4] = {0, 1, 3, 2};
+// const int nodeToQPMap[4] = {0, 1, 3, 2};
+// const int qpToNodeMap[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+// const int nodeToQPMap[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
 }
 
