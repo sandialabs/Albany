@@ -21,10 +21,12 @@ if [ ! $error == "NONE" ]; then
 fi
 
 if [ ! -d Trilinos ]; then
-  git clone https://github.com/trilinos/trilinos.git Trilinos
+  git clone git@github.com:trilinos/trilinos.git Trilinos
+  #git clone https://github.com/trilinos/trilinos.git Trilinos
 fi
 if [ ! -d Albany ]; then
-  git clone https://github.com/gahansen/Albany.git Albany
+  git clone git@github.com:gahansen/Albany.git Albany
+  #git clone https://github.com/gahansen/Albany.git Albany
 fi
 
 cp Albany/doc/LCM/build/*.sh .
