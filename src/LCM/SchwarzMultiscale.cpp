@@ -17,11 +17,14 @@ LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT, 
+    const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   commT_ = commT;
+
+  solver_factory_ = solver_factory; 
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
@@ -456,7 +459,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  return Teuchos::null;
+  return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -872,7 +875,6 @@ evalModelImpl(
         Teuchos::nonnull(W_op_outT_temp) ?
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT_temp, true) :
             Teuchos::null;
-    std::cout << "W_op_outs_crsT[m]: " << W_op_outs_crsT[m] << std::endl; 
   }
 
   Teuchos::Array<bool>
@@ -892,29 +894,30 @@ evalModelImpl(
   }
 
   // FIXME: create coupled W matrix from array of model W matrices
-  Teuchos::RCP<LCM::Schwarz_CoupledJacobian>
-  W_op_out_coupled =
+  if (W_op_outT != Teuchos::null) { 
+    Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
       Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
-
-  W_op_out_coupled->initialize(W_op_outs_crsT);
+    W_op_out_coupled->initialize(W_op_outs_crsT);
+  }
 
   // Create fT_out from fTs_out[m]
   LO
   counter_local = 0;
 
   //get nonconst view of fT_out
-  Teuchos::ArrayRCP<ST>
-  fT_out_nonconst_view = fT_out->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_out_nonconst_view = fT_out->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
     //get const view of mth x_init & x_dot_init vector
-    Teuchos::ArrayRCP<ST>
-    fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
+    if (fTs_out[m] != Teuchos::null) {
+      Teuchos::ArrayRCP<ST>
+      fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
 
-    for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
-      fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
+      for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
+        fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
+      }
+      counter_local += fTs_out[m]->getLocalLength();
     }
-    counter_local += fTs_out[m]->getLocalLength();
   }
 
   // W prec matrix

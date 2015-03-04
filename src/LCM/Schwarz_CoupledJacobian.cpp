@@ -41,6 +41,7 @@ void LCM::Schwarz_CoupledJacobian::initialize(Teuchos::Array<Teuchos::RCP<Tpetra
     jacs_[m] = jacs[m];  
 
 #ifdef WRITE_TO_MATRIX_MARKET
+  std::cout << "In LCM::Schwarz_CoupledJacobian::initialize! \n"; 
 //write individual model jacobians to matrix market for debug
   Tpetra_MatrixMarket_Writer::writeSparseFile("Jac0.mm", jacs[0]);
   if (n_models_ > 1) 
@@ -54,7 +55,7 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
                                        Teuchos::ETransp mode,
                                        ST alpha, ST beta) const
 { 
-  std::cout << "In LCM::Schwarz_CoupledJacobian::Apply! \n" << std::endl; 
+  std::cout << "In LCM::Schwarz_CoupledJacobian::apply! \n"; 
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- initial X where we will set Y = Jac*X

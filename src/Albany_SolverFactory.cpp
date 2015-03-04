@@ -623,8 +623,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   
 #ifdef ALBANY_LCM
   if (solutionMethod == "Coupled Schwarz") {
-    std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl; 
-    const RCP<LCM::SchwarzMultiscale> coupled_model = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, initial_guess));
+
+    std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
+ 
     //IKT: We are assuming the "Piro" list will come from the main coupled Schwarz input file (not the sub-input 
     //files for each model).  This makes sense I think.  
     const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
@@ -632,44 +633,43 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
     // Create and setup the Piro solver factory
     Piro::SolverFactory piroFactory;
-    RCP<Thyra::ModelEvaluator<ST> > coupled_model_with_solveT;
-    if (Teuchos::nonnull(coupled_model->get_W_factory())) {
-      coupled_model_with_solveT = coupled_model;
-    } 
-    else {
-      // Setup linear solver
-      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
-#ifdef ALBANY_IFPACK2
-      {
-#ifdef ALBANY_64BIT_INT
-        typedef Thyra::PreconditionerFactoryBase<ST> Base;
-        typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
-#else
-        typedef Thyra::PreconditionerFactoryBase<double> Base;
-        typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
-#endif
+    // Setup linear solver
+    Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
 
-        linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
-      }
+    //FIXME: inject Teko into Stratimikos.  Will be a line something like: 
+    //Teko::addTekoToStratimikosBuilder(Stratimikos::DefaultLinearSolverBuilder & builder,
+    //                           const std::string & stratName="Teko");
+
+#ifdef ALBANY_IFPACK2
+    {
+#ifdef ALBANY_64BIT_INT
+      typedef Thyra::PreconditionerFactoryBase<ST> Base;
+      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<ST, LO, GO, KokkosNode> > Impl;
+#else
+      typedef Thyra::PreconditionerFactoryBase<double> Base;
+      typedef Thyra::Ifpack2PreconditionerFactory<Tpetra::CrsMatrix<double> > Impl;
+#endif
+      linearSolverBuilder.setPreconditioningStrategyFactory(Teuchos::abstractFactoryStd<Base, Impl>(), "Ifpack2");
+    }
 #endif /* ALBANY_IFPACK2 */
 #ifdef ALBANY_MUELU
 #ifdef ALBANY_64BIT_INT
-      renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
-      Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
-      Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
+    renamePreconditionerParamList(stratList, "MueLu", "MueLu-Tpetra");
+    Thyra::addMueLuToStratimikosBuilder(linearSolverBuilder); 
+    Stratimikos::enableMueLuTpetra<LO, GO, KokkosNode>(linearSolverBuilder, "MueLu-Tpetra");
 #else
-      Stratimikos::enableMueLuTpetra(linearSolverBuilder);
+    Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
 
-      linearSolverBuilder.setParameterList(stratList);
+    linearSolverBuilder.setParameterList(stratList);
 
-      const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
+    const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
         createLinearSolveStrategy(linearSolverBuilder);
+    
+   const RCP<LCM::SchwarzMultiscale> coupled_model_with_solveT = rcp(new LCM::SchwarzMultiscale(appParams, solverComm, 
+                                                                         initial_guess, lowsFactory));
 
-      coupled_model_with_solveT =
-        rcp(new Thyra::DefaultModelEvaluatorWithSolveFactory<ST>(coupled_model, lowsFactory));
-    }
 
     //FIXME, IKT, 2/13/15: the following needs to be replaced with the right observer for CoupledSchwarz!
     //I think we need to write an observer that takes in coupled_model similar to QCAD::CoupledPS_NOXObserverConstructor.
@@ -683,7 +683,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     // FIXME?
     std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
-    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
+    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT);
     }
 #endif
 
@@ -1169,10 +1169,9 @@ void Albany::SolverFactory::storeTestResults(
 
 int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, double absTol) const
 {
-  double diff = fabs(x1 - x2) / (0.5*fabs(x1) + 0.5*fabs(x2) + fabs(absTol));
-
-  if (diff < relTol) return 0; //pass
-  else               return 1; //fail
+  const double d = fabs(x1 - x2);
+  return (d <= 0.5*(fabs(x1) + fabs(x2))*relTol ||
+          d <= fabs(absTol)) ? 0 : 1;
 }
 
 

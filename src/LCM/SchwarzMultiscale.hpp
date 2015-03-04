@@ -22,7 +22,8 @@ public:
   /// Constructor
   SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
-      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT);
+      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT, 
+      const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory);
 
   ///Destructor
   ~SchwarzMultiscale();
@@ -164,6 +165,9 @@ private:
   //like num_response_vecs
   int
   num_responses_total_;
+
+  //for setting get_W_factory() 
+  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > solver_factory_;
     
   mutable Teuchos::Array<Teuchos::Array<ParamVec> >
   sacado_param_vecs_;
