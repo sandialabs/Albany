@@ -22,8 +22,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
-// needed for  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
-#include <stk_mesh/base/MeshUtils.hpp>
+#include <Albany_STKNodeSharing.hpp>
 
 //#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -593,7 +592,7 @@ Albany::CismSTKMeshStruct::constructMesh(
     if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
 
-  stk::mesh::fix_node_sharing_delete_on_2015_03_06(*bulkData);
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 

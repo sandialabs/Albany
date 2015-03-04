@@ -27,7 +27,7 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES relative 1.e-6 floor 0.0
+NODAL VARIABLES relative 1.e-6 floor 1.0e-9
 	disp_x     # min:               0 @ t1,n1	max:     0.044430732 @ t697,n4
 	disp_y     # min:               0 @ t1,n1	max:       0.0975039 @ t697,n3
 	disp_z     # min:               0 @ t1,n1	max:     0.044430732 @ t697,n8
@@ -39,7 +39,7 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	tauH       # min:               0 @ t1,n1	max:      0.34992093 @ t697,n7
 	tauHresid  # min:               0 @ t1,n1	max:   2.1399006e-11 @ t648,n7
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-9
 	Bubble_Volume_Fraction_1  # min:               0 @ t1,b1,e1	max:   2.4419605e-05 @ t697,b1,e1
 	Bubble_Volume_Fraction_2  # min:               0 @ t1,b1,e1	max:   2.4419605e-05 @ t697,b1,e1
 	Bubble_Volume_Fraction_3  # min:               0 @ t1,b1,e1	max:   2.4419605e-05 @ t697,b1,e1
