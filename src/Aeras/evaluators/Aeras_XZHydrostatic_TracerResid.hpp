@@ -7,7 +7,7 @@
 #ifndef AERAS_XZHYDROSTATICRESID_HPP
 #define AERAS_XZHYDROSTATICRESID_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -45,7 +45,7 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerDot;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     TracerSrc;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> UTracerDiv;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>     UTracerDiv;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>     etadotdTracer;
 
   // Output:

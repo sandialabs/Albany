@@ -73,7 +73,6 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
 
   compositeTet = false;
-  outputQPFields = params->get<bool>("Output QP Fields", false);
 
   gmi_register_mesh();
 
@@ -261,7 +260,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     StateStruct& st = *((*sis)[i]);
     if ( ! nameSet.insert(st.name).second)
       continue; //ignore duplicates
-    std::vector<int>& dim = st.dim;
+    std::vector<PHX::DataLayout::size_type>& dim = st.dim;
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
@@ -381,7 +380,6 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
   validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
-  validPL->set<bool>("Output QP Fields", false, "Whether to copy QP data to output files");
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");

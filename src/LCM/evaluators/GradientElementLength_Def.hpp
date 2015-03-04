@@ -22,7 +22,7 @@ namespace LCM {
     this->addDependentField(grad_bf_);
     this->addEvaluatedField(element_length_);
 
-    this->setName("Element Length"+PHX::TypeString<EvalT>::value);
+    this->setName("Element Length"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_qp_vector->dimensions(dims);
@@ -49,11 +49,11 @@ namespace LCM {
   {
     ScalarT scalar_h(0.0);
 
-    for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-      for (std::size_t pt(0); pt < num_pts_; ++pt) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
         scalar_h = 0.0;
-        for (std::size_t j(0); j < num_dims_; ++j) {
-          for (std::size_t node(0); node < num_nodes_; ++node) {
+        for (int j(0); j < num_dims_; ++j) {
+          for (int node(0); node < num_nodes_; ++node) {
             scalar_h +=
               std::abs(grad_bf_(cell,node,pt,j)/std::sqrt(num_dims_));
           }

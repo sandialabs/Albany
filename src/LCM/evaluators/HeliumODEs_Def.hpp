@@ -57,7 +57,7 @@ HeliumODEs(Teuchos::ParameterList& p,
   this->addEvaluatedField(bubble_volume_fraction_);
 
   this->setName(
-      "Helium ODEs" + PHX::TypeString < EvalT > ::value);
+      "Helium ODEs" + PHX::typeAsString<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_tensor->dimensions(dims);
   num_pts_ = dims[1];
@@ -109,7 +109,7 @@ evaluateFields(typename Traits::EvalData workset)
   const double twothrd = 2.0/3.0;
   const double tolerance = 1.0e-12;
   const int explicit_sub_increments = 5;
-// const int maxIterations = 20; //FIXME: Include a maximum number of iterations
+  const int maxIterations = 20; //FIXME: Include a maximum number of iterations
   
   // state old
   Albany::MDArray total_concentration_old = (*workset.stateArrayPtr)[total_concentration_name_];
@@ -198,9 +198,9 @@ evaluateFields(typename Traits::EvalData workset)
 					  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
 		      norm_residual = Intrepid::norm(residual);
 		      norm_residual_goal = tolerance*norm_residual;
-			  
+                      int iter(0);
 		      // N-R loop for implicit time integration
-		      while (norm_residual > norm_residual_goal) {
+		      while (norm_residual > norm_residual_goal && iter < maxIterations) {
 		    	  
 		    	  // calculate tangent
 		    	  tangent(0,0) = 1.0 + 2.0*dt*d*(32.0*n1*pi*he_radius_ + pow(6.0,onethrd)*
@@ -234,13 +234,16 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  residual(2) = sb - sb_old - atomic_omega/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
 		    			  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
 		    	  norm_residual = Intrepid::norm(residual);
+                          iter++;
 		      } 
 		  }
 		  
 		  // Update global fields
+
 		  he_concentration_(cell,pt) = n1;
 		  total_bubble_density_(cell,pt) = nb;
 		  bubble_volume_fraction_(cell,pt) = sb;
+
 	  }
   }  
   

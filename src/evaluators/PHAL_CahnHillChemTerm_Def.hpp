@@ -10,10 +10,9 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 
-template<typename T>
-T Sqr(T num)
-{
-    return num * num;
+template<typename ScalarT>
+inline ScalarT Sqr (const ScalarT& num) {
+  return num * num;
 }
 
 namespace PHAL {
@@ -46,7 +45,7 @@ CahnHillChemTerm(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(chemTerm);
 
-  this->setName("CahnHillChemTerm"+PHX::TypeString<EvalT>::value);
+  this->setName("CahnHillChemTerm" );
 
 }
 
@@ -74,8 +73,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (std::size_t cell=0; cell < workset.numCells; ++cell) 
     for (std::size_t qp=0; qp < numQPs; ++qp)
 
-//        chemTerm(cell, qp) = 0.25 * Sqr(Sqr(rho(cell, qp)) - Sqr(b)) - w(cell, qp);
-        chemTerm(cell, qp) = ( Sqr(rho(cell, qp)) - Sqr(b) ) * rho(cell, qp) - w(cell, qp);
+      // chemTerm(cell, qp) = 0.25 * Sqr(Sqr(rho(cell, qp)) - Sqr(b)) - w(cell, qp);
+      chemTerm(cell, qp) = ( Sqr<ScalarT>(rho(cell, qp)) - Sqr<ScalarT>(b) ) * rho(cell, qp) - w(cell, qp);
 
 }
 

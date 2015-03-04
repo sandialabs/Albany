@@ -31,7 +31,7 @@ namespace LCM{
     this->addDependentField(currentBasis);
     this->addEvaluatedField(cohesiveTraction);
 
-    this->setName("TvergaardHutchinson" + PHX::TypeString<EvalT>::value);
+    this->setName("TvergaardHutchinson" + PHX::typeAsString<EvalT>());
 
     // get dimension
     std::vector<PHX::DataLayout::size_type> dims;
@@ -59,13 +59,13 @@ namespace LCM{
   evaluateFields(typename Traits::EvalData workset)
   {
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < numQPs; ++pt) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int pt = 0; pt < numQPs; ++pt) {
 
         //current basis vector
-        Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
-        Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
-        Intrepid::Vector<ScalarT> n(3, &currentBasis(cell, pt, 2, 0));
+        Intrepid::Vector<ScalarT> g_0(3, currentBasis,cell, pt,0,0);
+        Intrepid::Vector<ScalarT> g_1(3, currentBasis,cell, pt, 1,0);
+        Intrepid::Vector<ScalarT> n(3,   currentBasis,cell, pt, 2,0);
 
         //construct orthogonal unit basis
         Intrepid::Vector<ScalarT> t_0(0,0,0), t_1(0,0,0);
@@ -80,7 +80,7 @@ namespace LCM{
         Q(0,2) = n(0);   Q(1,2) = n(1);    Q(2,2) = n(2);
 
         //global and local jump
-        Intrepid::Vector<ScalarT> jump_global(3, &jump(cell, pt, 0));
+        Intrepid::Vector<ScalarT> jump_global(3, jump,cell, pt, 0);
         Intrepid::Vector<ScalarT> jump_local(3);
         jump_local = Intrepid::dot(Intrepid::transpose(Q), jump_global);
 

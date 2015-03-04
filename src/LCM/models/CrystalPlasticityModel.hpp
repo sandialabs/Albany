@@ -7,7 +7,7 @@
 #if !defined(LCM_CrystalPlasticityModel_hpp)
 #define LCM_CrystalPlasticityModel_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -53,6 +53,15 @@ public:
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
 
+  virtual
+  void
+  computeStateParallel(typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields){
+         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+ }
+
+
 private:
 
   ///
@@ -90,7 +99,7 @@ private:
   struct SlipSystemStruct {
 
     SlipSystemStruct() {
-      //  s_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
+      // s_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
       // n_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
       // tau_critical_ = 1.0;
       // gamma_dot_0_  = 0.0;

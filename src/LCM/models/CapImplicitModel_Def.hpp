@@ -156,8 +156,8 @@ namespace LCM
       (*workset.stateArrayPtr)[volPlasticStrain_string + "_old"];
       
       
-      for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-          for (std::size_t qp = 0; qp < num_pts_; ++qp) {
+      for (int cell = 0; cell < workset.numCells; ++cell) {
+          for (int qp = 0; qp < num_pts_; ++qp) {
               // local parameters
               ScalarT lame = elastic_modulus(cell, qp) * poissons_ratio(cell, qp)
               / (1.0 + poissons_ratio(cell, qp))
@@ -190,8 +190,8 @@ namespace LCM
               
               // incremental strain tensor
               Intrepid::Tensor<ScalarT> depsilon(3);
-              for (std::size_t i = 0; i < num_dims_; ++i) {
-                  for (std::size_t j = 0; j < num_dims_; ++j) {
+              for (int i = 0; i < num_dims_; ++i) {
+                  for (int j = 0; j < num_dims_; ++j) {
                       depsilon(i, j) = strain(cell, qp, i, j) - strainold(cell, qp, i, j);
                       strainN(i, j) = strainold(cell, qp, i, j);
                   }
@@ -202,8 +202,8 @@ namespace LCM
                                                                     depsilon);
               Intrepid::Tensor<ScalarT> alphaVal(3, Intrepid::ZEROS);
               
-              for (std::size_t i = 0; i < num_dims_; ++i) {
-                  for (std::size_t j = 0; j < num_dims_; ++j) {
+              for (int i = 0; i < num_dims_; ++i) {
+                  for (int j = 0; j < num_dims_; ++j) {
                       sigmaVal(i, j) = sigmaVal(i, j) + stressold(cell, qp, i, j);
                       alphaVal(i, j) = backStressold(cell, qp, i, j);
                       sigmaN(i, j) = stressold(cell, qp, i, j);
@@ -331,8 +331,8 @@ namespace LCM
               deqps = std::sqrt(2) * Intrepid::norm(dev_plastic);
   
               // stress and back stress
-              for (std::size_t i = 0; i < num_dims_; ++i) {
-                  for (std::size_t j = 0; j < num_dims_; ++j) {
+              for (int i = 0; i < num_dims_; ++i) {
+                  for (int j = 0; j < num_dims_; ++j) {
                       stress(cell, qp, i, j) = sigmaVal(i, j);
                       backStress(cell, qp, i, j) = alphaVal(i, j);
                   }

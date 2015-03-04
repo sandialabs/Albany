@@ -11,6 +11,8 @@
 #include "Topology_FractureCriterion.h"
 #include "Topology_Utils.h"
 
+#include <Albany_STKNodeSharing.hpp>
+
 namespace LCM {
 
 //
@@ -218,6 +220,7 @@ void Topology::graphInitialization()
   get_bulk_data().modification_begin();
   removeMultiLevelRelations();
   initializeFractureState();
+  Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   get_stk_discretization().updateMesh();
 
@@ -259,6 +262,7 @@ void Topology::removeNodeRelations()
     }
   }
 
+  Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
 
   return;
@@ -398,6 +402,7 @@ void Topology::restoreElementToNodeConnectivity()
   //stk_discretization.updateMesh(stkMeshStruct_, communicator);
   stk_discretization.updateMesh();
 
+  Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
 
   return;
@@ -1107,6 +1112,7 @@ Topology::splitOpenFaces()
 
   }
 
+  Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
 
 #if defined(DEBUG_LCM_TOPOLOGY)
@@ -1173,6 +1179,7 @@ Topology::splitOpenFaces()
     ++new_id;
   }
 
+  Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
   return;
 }

@@ -39,7 +39,7 @@ Stress(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(stress);
 
-  this->setName("Stress"+PHX::TypeString<EvalT>::value);
+  this->setName("Stress"+PHX::typeAsString<EvalT>());
 
 }
 
@@ -68,8 +68,8 @@ evaluateFields(typename Traits::EvalData workset)
     break;
   case 2:
     // Compute Stress (with the plane strain assumption for now)
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	lambda = ( elasticModulus(cell,qp) * poissonsRatio(cell,qp) ) / ( ( 1 + poissonsRatio(cell,qp) ) * ( 1 - 2 * poissonsRatio(cell,qp) ) );
 	mu = elasticModulus(cell,qp) / ( 2 * ( 1 + poissonsRatio(cell,qp) ) );
 	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) );
@@ -81,8 +81,8 @@ evaluateFields(typename Traits::EvalData workset)
     break;
   case 3:
     // Compute Stress
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	lambda = ( elasticModulus(cell,qp) * poissonsRatio(cell,qp) ) / ( ( 1 + poissonsRatio(cell,qp) ) * ( 1 - 2 * poissonsRatio(cell,qp) ) );
 	mu = elasticModulus(cell,qp) / ( 2 * ( 1 + poissonsRatio(cell,qp) ) );
 	stress(cell,qp,0,0) = 2.0 * mu * ( strain(cell,qp,0,0) ) + lambda * ( strain(cell,qp,0,0) + strain(cell,qp,1,1) + strain(cell,qp,2,2) );

@@ -10,7 +10,7 @@
 #include <Sacado_ParameterRegistration.hpp>
 
 using std::string;
-using std::size_t;
+//using int;
 
 namespace LCM
 {
@@ -36,15 +36,15 @@ CMResidualFine(Teuchos::ParameterList & p,
 
   this->addEvaluatedField(residual_);
 
-  this->setName("CMResidualFine" + PHX::TypeString<EvalT>::value);
+  this->setName("CMResidualFine" + PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type>
   dims;
 
   w_grad_bf_.fieldTag().dataLayout().dimensions(dims);
-  num_nodes_ = dims[1];
-  num_pts_ = dims[2];
-  num_dims_ = dims[3];
+  int num_nodes_ = dims[1];
+  int num_pts_ = dims[2];
+  int num_dims_ = dims[3];
 
   Teuchos::RCP<ParamLib>
   paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
@@ -82,15 +82,15 @@ evaluateFields(typename Traits::EvalData workset)
   I(Intrepid::eye<ScalarT>(num_dims_));
 
   // initialize residual
-  for (size_t cell = 0; cell < workset.numCells; ++cell) {
-     for (size_t node = 0; node < num_nodes_; ++node) {
-       for (size_t dim = 0; dim < num_dims_; ++dim) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+     for (int node = 0; node < num_nodes_; ++node) {
+       for (int dim = 0; dim < num_dims_; ++dim) {
          residual_(cell, node, dim) = 0.0;
        }
      }
-     for (size_t pt = 0; pt < num_pts_; ++pt) {
-       F.fill(&def_grad_(cell, pt, 0, 0));
-       sig.fill(&stress_(cell, pt, 0, 0));
+     for (int pt = 0; pt < num_pts_; ++pt) {
+       F.fill(def_grad_,cell, pt,0,0);
+       sig.fill(stress_,cell, pt,0,0);
 
        // map Cauchy stress to 1st PK
        P = Intrepid::piola(F, sig);

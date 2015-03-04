@@ -7,7 +7,7 @@
 #ifndef FELIX_VISCOSITYFO_HPP
 #define FELIX_VISCOSITYFO_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -40,11 +40,9 @@ public:
 
   ScalarT& getValue(const std::string &n); 
 
-  template <typename DataType>
-  DataType flowRate (DataType T)
-  {
-      return (T < 263) ? 1.3e7 / exp (6.0e4 / 8.314 / T) : 6.26e22 / exp (1.39e5 / 8.314 / T);
-  }
+  typedef typename PHX::Device execution_space;  
+  KOKKOS_INLINE_FUNCTION
+  void operator () (const int i) const;
 
 private:
  
@@ -66,9 +64,9 @@ private:
   // Output:
   PHX::MDField<ScalarT,Cell,QuadPoint> mu;
 
-  unsigned int numQPs, numDims, numNodes;
+  unsigned int numQPs, numDims, numNodes, numCells;
   
-  enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW};
+  enum VISCTYPE {CONSTANT, EXPTRIG, GLENSLAW, GLENSLAW_XZ};
   enum FLOWRATETYPE {UNIFORM, TEMPERATUREBASED, FROMFILE, FROMCISM};
   VISCTYPE visc_type;
   FLOWRATETYPE flowRate_type;

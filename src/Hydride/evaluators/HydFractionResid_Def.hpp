@@ -192,7 +192,7 @@ HydFractionResid(Teuchos::ParameterList& p,
   CHZr_coef.resize(dims[0], numQPs, numDims);
   CH_time_term.resize(dims[0], numQPs, numDims);
 
-  this->setName("HydFractionResid"+PHX::TypeString<EvalT>::value);
+  this->setName("HydFractionResid"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

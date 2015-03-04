@@ -19,6 +19,8 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
+#include <Albany_STKNodeSharing.hpp>
+
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
@@ -228,6 +230,7 @@ void Albany::AsciiSTKMesh2D::setFieldAndBulkData(
           }
 	}
 
+        Albany::fix_node_sharing(*bulkData);
 	bulkData->modification_end();
 
 #ifdef ALBANY_ZOLTAN

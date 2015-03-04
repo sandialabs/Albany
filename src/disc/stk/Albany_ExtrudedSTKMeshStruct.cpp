@@ -19,6 +19,8 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include <stk_mesh/base/Selector.hpp>
 
+#include <Albany_STKNodeSharing.hpp>
+
 #ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #endif
@@ -228,7 +230,9 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   for (int i = 0; i < nodes2D.size(); ++i)
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
   
-  Teuchos::RCP<const Tpetra_Map> nodes_map = Tpetra::createNonContigMap<LO, GO> (indices(), comm);
+  Teuchos::RCP<const Tpetra_Map>
+    nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (
+      indices(), comm, KokkosClassic::Details::getNode<KokkosNode>());
   int numMyElements = (comm->getRank() == 0) ? numGlobalVertices2D : 0;
   //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm); 
   Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm)); 
@@ -639,7 +643,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       bulkData->declare_relation(side, node, j);
     }
   }
-
+  
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
 }

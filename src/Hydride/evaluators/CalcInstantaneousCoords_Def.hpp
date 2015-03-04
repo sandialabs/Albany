@@ -34,7 +34,7 @@ CalcInstantaneousCoords(const Teuchos::ParameterList& p, const Teuchos::RCP<Alba
   numQPs = dim[2];
   numDims = dim[3];
 
-  this->setName("CalcInstantaneousCoords"+PHX::TypeString<EvalT>::value);
+  this->setName("CalcInstantaneousCoords"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

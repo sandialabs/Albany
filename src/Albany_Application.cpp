@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
 #include "Albany_Application.hpp"
 #include "Albany_Utils.hpp"
 #include "AAdapt_AdaptationFactory.hpp"
@@ -21,7 +22,6 @@
 #include "Petra_Converters.hpp"
 #endif
 
-
 #include<string>
 #include "Albany_DataTypes.hpp"
 
@@ -37,6 +37,7 @@
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
+#include "PHAL_Utilities.hpp"
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
@@ -99,6 +100,32 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
 #endif
 };
 
+namespace {
+int calcTangentDerivDimension (
+  const Teuchos::RCP<Teuchos::ParameterList>& problemParams)
+{
+  Teuchos::ParameterList& parameterParams =
+    problemParams->sublist("Parameters");
+  int num_param_vecs =
+    parameterParams.get("Number of Parameter Vectors", 0);
+  bool using_old_parameter_list = false;
+  if (parameterParams.isType<int>("Number")) {
+    int numParameters = parameterParams.get<int>("Number");
+    if (numParameters > 0) {
+      num_param_vecs = 1;
+      using_old_parameter_list = true;
+    }
+  }
+  int np = 0;
+  for (int i = 0; i < num_param_vecs; ++i) {
+    Teuchos::ParameterList& pList = using_old_parameter_list ?
+      parameterParams :
+      parameterParams.sublist(Albany::strint("Parameter Vector", i));
+    np += pList.get<int>("Number");
+  }
+  return std::max(1, np);
+}
+} // namespace
 
 void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params) {
   // Create parameter libraries
@@ -153,6 +180,12 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
 
   // Validate Problem parameters against list for this specific problem
   problemParams->validateParameters(*(problem->getValidProblemParameters()),0);
+
+  try {
+    tangent_deriv_dim = calcTangentDerivDimension(problemParams);
+  } catch (...) {
+    tangent_deriv_dim = 1;
+  }
 
   // Save the solution method to be used
   std::string solutionMethod = problemParams->get("Solution Method", "Steady");
@@ -241,6 +274,9 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
+  neq = problem->numEquations();
+  spatial_dimension = problem->spatialDimension();
+
   // Construct responses
   // This really needs to happen after the discretization is created for
   // distributed responses, but currently it can't be moved because there
@@ -275,12 +311,8 @@ void Albany::Application::buildProblem()   {
         responseID, dummy);
       sfm[ps]->requireField<PHAL::AlbanyTraits::Residual>(res_response_tag);
     }
-    sfm[ps]->postRegistrationSetup("");
   }
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->endBuildingSfm();
-
-  neq = problem->numEquations();
-
 }
 
 void Albany::Application::createDiscretization() {
@@ -572,14 +604,14 @@ getInitialSolutionDotT() const
 
 RCP<ParamLib>
 Albany::Application::
-getParamLib()
+getParamLib() const
 {
   return paramLib;
 }
 
 RCP<DistParamLib>
 Albany::Application::
-getDistParamLib()
+getDistParamLib() const
 {
   return distParamLib;
 }
@@ -698,7 +730,6 @@ computeGlobalResidualImplT(
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
-
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
@@ -768,15 +799,12 @@ computeGlobalResidualImplT(
 
     PHAL::Workset workset;
 
-    if (!paramLib->isParameter("Time")) {
+    if (!paramLib->isParameter("Time"))
       loadBasicWorksetInfoT( workset, current_time );
-   }
-   else {
+    else
       loadBasicWorksetInfoT( workset,
-			    paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
-    }
-    workset.fT        = overlapped_fT;
-
+                             paramLib->getRealValue<PHAL::AlbanyTraits::Residual>("Time") );
+    workset.fT = overlapped_fT;
 
     for (int ws=0; ws < numWorksets; ws++) {
       loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
@@ -786,6 +814,7 @@ computeGlobalResidualImplT(
       if (nfm!=Teuchos::null)
          deref_nfm(nfm, wsPhysIndex, ws)->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
     }
+  // workset.wsElNodeEqID_kokkos =Kokkos:: View<int****, PHX::Device ("wsElNodeEqID_kokkos",workset. wsElNodeEqID.size(), workset. wsElNodeEqID[0].size(), workset. wsElNodeEqID[0][0].size());
   }
 
   fT->doExport(*overlapped_fT, *exporterT, Tpetra::ADD);
@@ -897,36 +926,6 @@ computeGlobalResidualT(const double current_time,
       Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT),
       p,
       Teuchos::rcpFromRef(fT));
-  
-  //Debut output
-  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
-    char name[100];  //create string for file name
-    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
-       sprintf(name, "rhs%i.mm", countRes);
-       Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
-    }
-    else {
-      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
-      }
-    }
-  }
-  Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));  
-  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { //cout residual time it arises
-       std::cout << "Global Residual #" << countRes << ": " << std::endl;
-       fT.describe(*out, Teuchos::VERB_EXTREME);
-    }
-    else {
-      if (countRes == writeToCoutRes) { //cout residual only at requested count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        fT.describe(*out, Teuchos::VERB_EXTREME);
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes++;  //increment residual counter
 }
 
 void
@@ -1194,6 +1193,34 @@ computeGlobalJacobianT(const double alpha,
   }
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+       sprintf(name, "rhs%i.mm", countRes);
+       Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+       std::cout << "Global Residual #" << countRes << ": " << std::endl;
+       fT->describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        fT->describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
+    countRes++;  //increment residual counter
 }
 
 #if ALBANY_EPETRA
@@ -1834,7 +1861,10 @@ evaluateResponseT(int response_index,
   try {
     Teuchos::RCP<Adapt::NodalDataBase>
       ndb = stateMgr.getStateInfoStruct()->getNodalDataBase();
-    if (!ndb.is_null()) ndb->getNodalDataVector()->initializeVectors(0);
+    if (!ndb.is_null()) {
+      ndb->getNodalDataVector()->initializeVectors(0);
+      ndb->getNodalDataVector()->initEvaluateCalls();
+    }
   } catch (...) { /* No nodal data vector. */ }
 
   double t = current_time;
@@ -3346,6 +3376,36 @@ evaluateStateFieldManagerT(
     Teuchos::Ptr<const Tpetra_Vector> xdotdotT,
     const Tpetra_Vector& xT)
 {
+  {
+    const std::string eval = "SFM_Jacobian";
+    if (setupSet.find(eval) == setupSet.end()) {
+      setupSet.insert(eval);
+      for (int ps = 0; ps < sfm.size(); ++ps) {
+        std::vector<PHX::index_size_type> derivative_dimensions;
+        derivative_dimensions.push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+            this, ps));
+        sfm[ps]->setKokkosExtendedDataTypeDimensions
+          <PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+        sfm[ps]->postRegistrationSetup("");
+      }
+      // visualize state field manager
+      if (stateGraphVisDetail > 0) {
+        bool detail = false; if (stateGraphVisDetail > 1) detail=true;
+        *out << "Phalanx writing graphviz file for graph of Residual fill "
+             "(detail =" << stateGraphVisDetail << ")" << std::endl;
+        *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n"
+             << std::endl;
+        for (int ps=0; ps < sfm.size(); ps++) {
+          std::stringstream pg; pg << "state_phalanx_graph_" << ps;
+          sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(
+            pg.str(),detail,detail);
+        }
+        stateGraphVisDetail = -1;
+      }
+    }
+  }
+
   Teuchos::RCP<Tpetra_Vector>& overlapped_fT = solMgrT->get_overlapped_fT();
 
   // Load connectivity map and coordinates
@@ -3357,19 +3417,6 @@ evaluateStateFieldManagerT(
   const WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeEqID.size();
-
-  // visualize state field manager
-  if (stateGraphVisDetail>0) {
-    bool detail = false; if (stateGraphVisDetail > 1) detail=true;
-    *out << "Phalanx writing graphviz file for graph of Residual fill (detail ="
-         << stateGraphVisDetail << ")"<<std::endl;
-    *out << "Process using 'dot -Tpng -O state_phalanx_graph' \n" << std::endl;
-    for (int ps=0; ps < sfm.size(); ps++) {
-      std::stringstream pg; pg << "state_phalanx_graph_" << ps;
-      sfm[ps]->writeGraphvizFile<PHAL::AlbanyTraits::Residual>(pg.str(),detail,detail);
-    }
-    stateGraphVisDetail = -1;
-  }
 
   // Scatter xT and xdotT to the overlapped distrbution
   solMgrT->scatterXT(xT, xdotT.get(), xdotdotT.get());
@@ -3452,7 +3499,8 @@ Albany::Application::getValue(const std::string& name)
 }
 
 
-void Albany::Application::postRegSetup(std::string eval)
+void Albany::Application::
+postRegSetup(std::string eval)
 {
   if (setupSet.find(eval) != setupSet.end())  return;
 
@@ -3468,22 +3516,48 @@ void Albany::Application::postRegSetup(std::string eval)
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Residual>(eval);
   }
   else if (eval=="Jacobian") {
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-    if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Jacobian>(eval);
+    }
   }
   else if (eval=="Tangent") {
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++){
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-    if (dfm!=Teuchos::null)
-      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
-    if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      if (nfm!=Teuchos::null && ps < nfm.size()) {
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+      }
+    }
+    if (dfm!=Teuchos::null){
+      //amb Need to look into this. What happens with DBCs in meshes having
+      // different element types?
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(derivative_dimensions);
+      dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::Tangent>(eval);
+      }
   }
   else if (eval=="Distributed Parameter Derivative") { //!!!
     for (int ps=0; ps < fm.size(); ps++)
@@ -3674,7 +3748,7 @@ void Albany::Application::loadBasicWorksetInfoT(
        double current_time)
 {
     workset.numEqs = neq;
-    workset.xT = solMgrT->get_overlapped_xT();
+    workset.xT        = solMgrT->get_overlapped_xT();
     workset.xdotT     = solMgrT->get_overlapped_xdotT();
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;
@@ -4091,10 +4165,10 @@ void Albany::Application::setupTangentWorksetInfoT(
 
   // Initialize
   if (params != Teuchos::null) {
-    FadType p;
+    TanFadType p;
     int num_cols_tot = param_offset + num_cols_p;
     for (unsigned int i=0; i<params->size(); i++) {
-      p = FadType(num_cols_tot, (*params)[i].baseValue);
+      p = TanFadType(num_cols_tot, (*params)[i].baseValue);
       if (VpT != Teuchos::null) {
         Teuchos::ArrayRCP<const ST> VpT_constView;
         for (int k=0; k<num_cols_p; k++) {

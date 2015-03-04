@@ -8,6 +8,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 // **********************************************************************
 // Base Class Generic Implemtation
@@ -100,7 +101,7 @@ evaluateFields(typename Traits::EvalData workset)
 
     // Loop over responses
     for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      ScalarT& val = this->local_response(cell, res);
+      typename PHAL::Ref<ScalarT>::type val = this->local_response(cell, res);
 
       // Loop over nodes in cell
       for (unsigned int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -132,9 +133,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Tpetra_Vector> g = workset.gT;
   if (g != Teuchos::null){
     const Teuchos::ArrayRCP<ST> g_nonConstView = g->get1dViewNonConst();
-    for (std::size_t res = 0; res < this->global_response.size(); res++) {
-      g_nonConstView[res] = this->global_response[res].val();
-    }
+    for (PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
+         ! gr.done(); ++gr)
+      g_nonConstView[gr.idx()] = gr.ref().val();
   }
 
   // Here we scatter the *global* response derivatives
@@ -165,6 +166,7 @@ template<typename Traits>
 void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "kokkos no impl");
   /*
   // Initialize derivatives
   Teuchos::RCP<Epetra_MultiVector> dgdx = workset.dgdx;
@@ -188,6 +190,7 @@ template<typename Traits>
 void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "kokkos no impl");
   /*
   // Here we scatter the *local* response derivative
   Teuchos::RCP<Epetra_MultiVector> dgdx = workset.overlapped_dgdx;
@@ -234,6 +237,7 @@ template<typename Traits>
 void SeparableScatterScalarResponseT<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
   /*
   // Here we scatter the *global* response
   Teuchos::RCP<Epetra_Vector> g = workset.g;

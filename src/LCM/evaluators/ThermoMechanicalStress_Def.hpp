@@ -76,7 +76,7 @@ namespace LCM {
     this->addEvaluatedField(eqps);
     this->addEvaluatedField(mechSource);
 
-    this->setName("ThermoMechanical Stress" + PHX::TypeString<EvalT>::value);
+    this->setName("ThermoMechanical Stress" + PHX::typeAsString<EvalT>());
 
   }
 
@@ -131,11 +131,11 @@ namespace LCM {
     Albany::MDArray Fpold_array = (*workset.stateArrayPtr)[fpName];
     Albany::MDArray eqpsold = (*workset.stateArrayPtr)[eqpsName];
 
-    for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t qp = 0; qp < numQPs; ++qp) {
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      for (int qp = 0; qp < numQPs; ++qp) {
         // Fill in tensors from MDArray data
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             Fpold(i, j) = Fpold_array(cell, qp, i, j);
             F(i, j) = F_array(cell, qp, i, j);
           }
@@ -169,9 +169,6 @@ namespace LCM {
         mubar = ScalarT(Intrepid::trace(be) / 3.) * mu;
         s = mu * Intrepid::dev(be);
 
-        // check for yielding
-        //smag = 0.0;
-        //if ( norm(s) > 1.e-15 )
         smag = Intrepid::norm(s);
         f = smag
             - sq23
@@ -227,16 +224,16 @@ namespace LCM {
 
           // exponential map to get Fp
           A = dgam * N;
-          expA = Intrepid::exp<ScalarT>(A);
+         expA = Intrepid::exp<ScalarT>(A);
 
           // set plastic work
           if (dt > 0.0) mechSource(cell, qp) = sq23 * dgam / dt
               * (Y + G + temperature(cell, qp) * 1.0);
 
-          for (std::size_t i = 0; i < numDims; ++i) {
-            for (std::size_t j = 0; j < numDims; ++j) {
+          for (int i = 0; i < numDims; ++i) {
+            for (int j = 0; j < numDims; ++j) {
               Fp(cell, qp, i, j) = 0.0;
-              for (std::size_t p = 0; p < numDims; ++p) {
+              for (int p = 0; p < numDims; ++p) {
                 Fp(cell, qp, i, j) += expA(i, p) * Fpold(p, j);
               }
             }
@@ -245,21 +242,21 @@ namespace LCM {
           // set state variables to old values
           //dp(cell, qp) = 0.0;
           eqps(cell, qp) = eqpsold(cell, qp);
-          for (std::size_t i = 0; i < numDims; ++i)
-            for (std::size_t j = 0; j < numDims; ++j)
+          for (int i = 0; i < numDims; ++i)
+            for (int j = 0; j < numDims; ++j)
               Fp(cell, qp, i, j) = Fpold_array(cell, qp, i, j);
         }
 
         // compute stress
-        for (std::size_t i = 0; i < numDims; ++i) {
-          for (std::size_t j = 0; j < numDims; ++j) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
             stress(cell, qp, i, j) = s(i, j) / J;
           }
           stress(cell, qp, i, i) += pressure;
         }
 
         // update be
-        be = ScalarT(1 / mu) * s +
+      be = ScalarT(1 / mu) * s +
             ScalarT(Intrepid::trace(be) / 3) * Intrepid::eye<ScalarT>(3);
 
         if (print) {

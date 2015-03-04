@@ -7,7 +7,7 @@
 #ifndef PHAL_NSTAUT_HPP
 #define PHAL_NSTAUT_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -39,7 +39,7 @@ private:
 
   // Input: 
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> V;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> ThermalCond;
+  PHX::MDField<ScalarT,Cell,QuadPoint> ThermalCond;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> Gc;
   PHX::MDField<ScalarT,Cell,QuadPoint> rho;
   PHX::MDField<ScalarT,Cell,QuadPoint> Cp;

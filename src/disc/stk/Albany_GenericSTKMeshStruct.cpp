@@ -20,6 +20,8 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/CreateAdjacentEntities.hpp>
 
+#include <Albany_STKNodeSharing.hpp>
+
 // Rebalance
 #ifdef ALBANY_ZOLTAN
 #include <percept/stk_rebalance/Rebalance.hpp>
@@ -475,6 +477,7 @@ void Albany::GenericSTKMeshStruct::computeAddlConnectivity()
       }
     }
 
+    Albany::fix_node_sharing(*bulkData);
     bulkData->modification_end();
   }
 

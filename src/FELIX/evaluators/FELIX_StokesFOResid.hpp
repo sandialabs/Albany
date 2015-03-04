@@ -7,7 +7,7 @@
 #ifndef FELIX_STOKESFORESID_HPP
 #define FELIX_STOKESFORESID_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -49,7 +49,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 
-  enum EQNTYPE {FELIX, POISSON};
+  enum EQNTYPE {FELIX, POISSON, FELIX_XZ};
   EQNTYPE eqn_type;
   
   // Output:

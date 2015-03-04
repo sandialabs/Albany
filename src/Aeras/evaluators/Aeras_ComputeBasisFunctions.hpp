@@ -7,7 +7,7 @@
 #ifndef AERAS_COMPUTEBASISFUNCTIONS_HPP
 #define AERAS_COMPUTEBASISFUNCTIONS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -42,6 +42,7 @@ public:
 private:
 
   const int spatialDimension;
+  typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   int  numVertices, numDims, numNodes, numQPs;
 
@@ -53,6 +54,7 @@ private:
   Teuchos::RCP<shards::CellTopology> cellType;
 
   // Temporary FieldContainers
+  //PHX::MDField<RealType,Node,QuadPoint>    val_at_cub_points;
   Intrepid::FieldContainer<RealType>    val_at_cub_points;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
   Intrepid::FieldContainer<RealType>    D2_at_cub_points;
@@ -64,6 +66,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint> weighted_measure;
   PHX::MDField<RealType,Cell,Node,QuadPoint> BF;
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord; 
+  PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
+  PHX::MDField<ScalarT,Cell,Node> theta_nodal;
   PHX::MDField<MeshScalarT,Cell,QuadPoint>     jacobian_det; 
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,Node,Dim,Dim> jacobian_inv_node;
@@ -71,8 +75,8 @@ private:
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradGradBF;
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> GradGradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim,Dim> wGradGradBF;
          
          
   const double earthRadius;
@@ -83,6 +87,12 @@ private:
                             const double rrearth=1) const;
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
 
+  // Kokkos
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
+  Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
+  Kokkos::View<RealType***, PHX::Device> grad_at_cub_points_CUDA;
+#endif
 };
 }
 

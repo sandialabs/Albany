@@ -60,7 +60,7 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
 
   this->addEvaluatedField(force);
 
-  this->setName("Surface Vector Residual" + PHX::TypeString<EvalT>::value);
+  this->setName("Surface Vector Residual" + PHX::typeAsString<EvalT>());
 
   // if enabled grab the cohesive tractions
   if (use_cohesive_traction_) {
@@ -129,6 +129,9 @@ postRegistrationSetup(typename Traits::SetupData d,
   } else {
     this->utils.setFieldData(stress, fm);
   }
+
+  if (have_topmod_adaptation_)
+    this->utils.setFieldData(Cauchy_stress_, fm);
 }
 
 //----------------------------------------------------------------------------
@@ -148,8 +151,8 @@ evaluateFields(typename Traits::EvalData workset)
   // 2nd-order identity tensor
   const Intrepid::Tensor<MeshScalarT> I = Intrepid::identity<MeshScalarT>(3);
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t node(0); node < numPlaneNodes; ++node) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int node(0); node < numPlaneNodes; ++node) {
 
       force(cell, node, 0) = 0.0;
       force(cell, node, 1) = 0.0;
@@ -159,17 +162,17 @@ evaluateFields(typename Traits::EvalData workset)
       force(cell, topNode, 1) = 0.0;
       force(cell, topNode, 2) = 0.0;
 
-      for (std::size_t pt(0); pt < numQPs; ++pt) {
+      for (int pt(0); pt < numQPs; ++pt) {
         // deformed bases
-        Intrepid::Vector<ScalarT> g_0(3, &currentBasis(cell, pt, 0, 0));
-        Intrepid::Vector<ScalarT> g_1(3, &currentBasis(cell, pt, 1, 0));
-        Intrepid::Vector<ScalarT> n(3, &currentBasis(cell, pt, 2, 0));
+        Intrepid::Vector<ScalarT> g_0(3, currentBasis, cell, pt, 0, 0);
+        Intrepid::Vector<ScalarT> g_1(3, currentBasis, cell, pt, 1, 0);
+        Intrepid::Vector<ScalarT> n(3, currentBasis, cell, pt, 2, 0);
         // ref bases
-        Intrepid::Vector<MeshScalarT> G0(3, &refDualBasis(cell, pt, 0, 0));
-        Intrepid::Vector<MeshScalarT> G1(3, &refDualBasis(cell, pt, 1, 0));
-        Intrepid::Vector<MeshScalarT> G2(3, &refDualBasis(cell, pt, 2, 0));
+        Intrepid::Vector<MeshScalarT> G0(3, refDualBasis, cell, pt, 0, 0);
+        Intrepid::Vector<MeshScalarT> G1(3, refDualBasis, cell, pt, 1, 0);
+        Intrepid::Vector<MeshScalarT> G2(3, refDualBasis, cell, pt, 2, 0);
         // ref normal
-        Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> N(3, refNormal, cell, pt, 0);
 
         // compute dFdx_plus_or_minus
         f_plus.clear();
@@ -177,11 +180,11 @@ evaluateFields(typename Traits::EvalData workset)
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {
-          Intrepid::Vector<ScalarT> T(3, &traction_(cell, pt, 0));
+          Intrepid::Vector<ScalarT> T(3, traction_, cell, pt, 0);
           f_plus = refValues(node, pt) * T;
           f_minus = -refValues(node, pt) * T;
         } else {
-          Intrepid::Tensor<ScalarT> P(3, &stress(cell, pt, 0, 0));
+          Intrepid::Tensor<ScalarT> P(3, stress, cell, pt, 0, 0);
 
           f_plus = refValues(node, pt) * P * N;
           f_minus = -refValues(node, pt) * P * N;

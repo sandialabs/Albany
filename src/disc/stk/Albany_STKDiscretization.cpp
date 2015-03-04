@@ -55,8 +55,8 @@ const double pi = 3.1415926535897932385;
 
 const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
 
-//uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+// Uncomment the following line if you want debug output to be printed to screen
+// #define OUTPUT_TO_SCREEN
 
 Albany::STKDiscretization::
 STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -93,6 +93,34 @@ Albany::STKDiscretization::~STKDiscretization()
   for (int i=0; i< toDelete.size(); i++) delete [] toDelete[i];
 }
 
+
+
+void
+Albany::STKDiscretization::printConnectivity() const
+{
+  commT->barrier();
+  for (int rank = 0; rank < commT->getSize(); ++rank)
+  {
+    commT->barrier();
+    if (rank == commT->getRank())
+    {
+      std::cout << std::endl << "Process rank " << rank << std::endl;
+      for (size_t ibuck = 0; ibuck < wsElNodeID.size(); ++ibuck)
+      {
+        std::cout << "  Bucket " << ibuck << std::endl;
+        for (size_t ielem = 0; ielem < wsElNodeID[ibuck].size(); ++ielem)
+        {
+          int numNodes = wsElNodeID[ibuck][ielem].size();
+          std::cout << "    Element " << ielem << ": Nodes = ";
+          for (size_t inode = 0; inode < numNodes; ++inode)
+            std::cout << wsElNodeID[ibuck][ielem][inode] << " ";
+          std::cout << std::endl;
+        }
+      }
+    }
+    commT->barrier();
+  }
+}
 
 #ifdef ALBANY_EPETRA
 Teuchos::RCP<const Epetra_Map>
@@ -222,19 +250,22 @@ Albany::STKDiscretization::getSphereVolume() const
 void
 Albany::STKDiscretization::printCoords() const
 {
-
-std::cout << "Processor " << bulkData.parallel_rank() << " has " << coords.size() << " worksets." << std::endl;
-
-       for (int ws=0; ws<coords.size(); ws++) {  //workset
-         for (int e=0; e<coords[ws].size(); e++) { //cell
-           for (int j=0; j<coords[ws][e].size(); j++) { //node
-             for (int d=0; d<stkMeshStruct->numDim; d++){  //node
-std::cout << "Coord for workset: " << ws << " element: " << e << " node: " << j << " DOF: " << d << " is: " <<
-                coords[ws][e][j][d] << std::endl;
-       } } } }
-
+  std::cout << "Processor " << bulkData.parallel_rank() << " has "
+            << coords.size() << " worksets." << std::endl;
+  for (int ws=0; ws<coords.size(); ws++)
+  {
+    for (int e=0; e<coords[ws].size(); e++)
+    {
+      for (int j=0; j<coords[ws][e].size(); j++)
+      {
+        std::cout << "Coord for workset: " << ws << " element: " << e
+                  << " node: " << j << " x, y, z: "
+                  << coords[ws][e][j][0] << ", " << coords[ws][e][j][1]
+                  << ", " << coords[ws][e][j][2] << std::endl;
+      }
+    }
+  }
 }
-
 
 const Teuchos::ArrayRCP<double>&
 Albany::STKDiscretization::getCoordinates() const
@@ -281,8 +312,6 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 //where b(x,y) and s(x,y) are curves specifying the bedrock and top surface
 //geometries respectively.
 //Currently this function is only needed for some FELIX problems.
-
-
 void
 Albany::STKDiscretization::transformMesh()
 {
@@ -430,6 +459,31 @@ Albany::STKDiscretization::transformMesh()
       x[2] = s*x[2] + b*(1.0-x[2]);
       *stk::mesh::field_data(*surfaceHeight_field, overlapnodes[i]) = s;
     }
+  }
+  else if (transformType == "FO XZ MMS") {
+   //This test case assumes the domain read in from the input file is 0 < x < 2, 0 < y < 1, where y = z
+#ifdef OUTPUT_TO_SCREEN
+    *out << "FO XZ MMS transform!" << endl;
+#endif
+    double L = stkMeshStruct->felixL;
+    //hard-coding values of parameters...  make sure these are same as in the FOStokes body force evaluator!
+    double alpha0 = 4e-5; 
+    double s0 = 2.0; 
+    double H = 1.0; 
+#ifdef OUTPUT_TO_SCREEN
+    *out << "L: " << L << endl;
+#endif
+    stkMeshStruct->PBCStruct.scale[0]*=L;
+    stk::mesh::Field<double>* surfaceHeight_field = metaData.get_field<stk::mesh::Field<double> >(stk::topology::NODE_RANK, "surface_height");
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+      x[0] = L*(x[0]-1.0);  //test case assumes domain is from [-L, L], where unscaled domain is from [0, 2]; 
+      double s = s0 - alpha0*x[0]*x[0];
+      double b = s - H;
+      //this transformation of y = [0,1] should give b(x) < y < s(x) 
+      x[1] = b*(1-x[1]) + s*x[1]; 
+      *stk::mesh::field_data(*surfaceHeight_field, overlapnodes[i]) = s;
+     }
   }
 #ifdef ALBANY_AERAS
   else if (transformType == "Aeras Schar Mountain") {
@@ -1101,6 +1155,9 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
   node_mapT = Teuchos::null; // delete existing map happens here on remesh
   node_mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
 
+  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
+    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
+
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
 
   indicesT.resize(numOwnedNodes * neq);
@@ -1110,9 +1167,6 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 
   mapT = Teuchos::null; // delete existing map happens here on remesh
   mapT = Tpetra::createNonContigMap<LO, GO>(indicesT(), commT);
-
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeLocalMap(indicesT, commT);
 #endif
 }
 
@@ -1269,7 +1323,6 @@ void Albany::STKDiscretization::computeWorksetInfo()
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=stkMeshStruct->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
-
   wsElNodeEqID.resize(numBuckets);
   wsElNodeID.resize(numBuckets);
   coords.resize(numBuckets);
@@ -1301,6 +1354,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 
     stk::mesh::Bucket& buck = *buckets[b];
     wsElNodeEqID[b].resize(buck.size());
+    //wsElNodeEqID_kokkos[b].resize(buck.size());
     wsElNodeID[b].resize(buck.size());
     coords[b].resize(buck.size());
 
@@ -1480,8 +1534,11 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
     }
   }
+//Kopy workset to the Kokkos data
+ //wsElNodeEqID_kokkos=Kokkos::View<int****, PHX::Device>("wsElNodeEqID_kokkos",numBuckets,wsElNodeEqID[0].size(),wsElNodeEqID[0][0].size(), neq); 
 
-  for (int d=0; d<stkMeshStruct->numDim; d++) {
+
+ for (int d=0; d<stkMeshStruct->numDim; d++) {
   if (stkMeshStruct->PBCStruct.periodic[d]) {
     for (int b=0; b < numBuckets; b++) {
       for (std::size_t i=0; i < buckets[b]->size(); i++) {
@@ -2552,6 +2609,12 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   computeOwnedNodesAndUnknowns();
 
+#ifdef OUTPUT_TO_SCREEN
+  //write owned maps to matrix market file for debug
+  Tpetra_MatrixMarket_Writer::writeMapFile("mapT0.mm", *mapT);
+  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT0.mm", *node_mapT);
+#endif
+
   setupMLCoords();
 
 #ifdef ALBANY_EPETRA
@@ -2565,6 +2628,9 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   computeGraphs();
 
   computeWorksetInfo();
+#ifdef OUTPUT_TO_SCREEN
+  printConnectivity();
+#endif
 
   computeNodeSets();
 
@@ -2579,5 +2645,9 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   setupNetCDFOutput();
 //meshToGraph();
 //printVertexConnectivity();
+
+#ifdef OUTPUT_TO_SCREEN
+  printCoords();
+#endif
 
 }

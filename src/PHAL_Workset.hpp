@@ -11,7 +11,7 @@
 
 #include <list>
 
-#include "Phalanx_ConfigDefs.hpp" // for std::vector
+#include "Phalanx_config.hpp" // for std::vector
 #include "Albany_DataTypes.hpp"
 #ifdef ALBANY_EPETRA
 #include "Epetra_Vector.h"
@@ -156,6 +156,7 @@ struct Workset {
   bool transpose_dist_param_deriv;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > local_Vp;
 
+  Kokkos::View<int***, PHX::Device> wsElNodeEqID_kokkos;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > >  wsElNodeEqID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >  wsElNodeID;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> >  wsCoords;

@@ -7,7 +7,7 @@
 #ifndef THERMO_MECHANICAL_ENERGY_RESIDUAL_HPP
 #define THERMO_MECHANICAL_ENERGY_RESIDUAL_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -48,7 +48,7 @@ namespace LCM {
     PHX::MDField<ScalarT,Cell,QuadPoint> Absorption;
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> F; // deformation gradient
     PHX::MDField<ScalarT,Cell,QuadPoint> mechSource; // mechanical heat source
-    PHX::MDField<ScalarT,Cell,Dummy> deltaTime; // time step
+    PHX::MDField<ScalarT,Dummy> deltaTime; // time step
     RealType density;
     RealType Cv;
 

@@ -198,6 +198,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = DOMEUQ;
       else if (betaName == "Scalar Field")
         beta_type = SCALAR_FIELD;
+      else if (betaName == "FELIX XZ MMS") 
+        beta_type = FELIX_XZ_MMS; 
 
       this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
@@ -354,7 +356,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
   // Pre-Calculate reference element quantitites
   cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
-  this->setName(name+PHX::TypeString<EvalT>::value);
+  this->setName(name);
 
 }
 
@@ -440,7 +442,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       (refPointsSide, cubPointsSide, sideDims, elem_side, *cellType);
 
     // Calculate side geometry
-    Intrepid::CellTools<RealType>::setJacobian
+    Intrepid::CellTools<MeshScalarT>::setJacobian
        (jacobianSide, refPointsSide, physPointsCell, *cellType);
 
     Intrepid::CellTools<MeshScalarT>::setJacobianDet(jacobianSide_det, jacobianSide);
@@ -458,7 +460,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
     intrepidBasis->getValues(basis_refPointsSide, refPointsSide, Intrepid::OPERATOR_VALUE);
 
     // Transform values of the basis functions
-    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<RealType>
+    Intrepid::FunctionSpaceTools::HGRADtransformVALUE<MeshScalarT>
       (trans_basis_refPointsSide, basis_refPointsSide);
 
     // Multiply with weighted measure
@@ -466,7 +468,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
       (weighted_trans_basis_refPointsSide, weighted_measure, trans_basis_refPointsSide);
 
     // Map cell (reference) cubature points to the appropriate side (elem_side) in physical space
-    Intrepid::CellTools<RealType>::mapToPhysicalFrame
+    Intrepid::CellTools<MeshScalarT>::mapToPhysicalFrame
       (physPointsSide, refPointsSide, physPointsCell, *cellType);
 
 
@@ -996,8 +998,44 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
       }
   }
  }
-
-
+ //Robin/Neumann bc for FELIX FO XZ MMS test case
+ else if (beta_type == FELIX_XZ_MMS) {
+    //parameter values are hard-coded here... 
+    MeshScalarT H = 1.0; 
+    double alpha0 = 4.0e-5; 
+    double rho_g = 910.0*9.8; 
+    double s0 = 2.0;
+    double beta0 = 1.0; //this is what is called beta in Mauro's writeup.  It is hard-coded here!
+    double A = 0.0001; //CAREFUL! A is hard-coded here, needs to match input file!! 
+    for(int cell = 0; cell < numCells; cell++) {
+      for(int pt = 0; pt < numPoints; pt++) {
+        for(int dim = 0; dim < numDOFsSet; dim++) {
+          MeshScalarT x = physPointsSide(cell,pt,0);
+          MeshScalarT z = physPointsSide(cell,pt,1);
+          MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
+          MeshScalarT phi1 = z - s; //phi1 = z-s
+          //phi2 = 4*A*alpha^3*rho^3*g^3*x
+          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;  
+          //phi3 = 4*x^3*phi1^5*phi2^2
+          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
+          //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
+          MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
+          //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
+          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
+                           + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
+          //mu = 1/2*(A*phi4^2 + A*x*phi1*phi3)^(-1/3) -- this is mu but with A factored out
+           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0); 
+           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny 
+           //              + (2*H*alpha*rho*g*x - beta0*x^2*phi2*(phi1^4 - H^4)*alpha;
+           //IK, TO DO: check signs of everything!               
+           qp_data_returned(cell, pt, dim) = beta0*dof_side(cell,pt,dim) 
+                                           + 4.0*phi4*mu*beta1*side_normals(cell,pt,0)
+                                           - 4.0*phi1*x*x*pow(phi1,3)*mu*beta2*side_normals(cell,pt,1) 
+                                           + (2.0*H*alpha0*rho_g*x - beta0*x*x*phi2*(pow(phi1,4) - pow(H,4)))*alpha; 
+        }
+      }
+  }
+ }
 }
 
 template<typename EvalT, typename Traits>
@@ -1730,7 +1768,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
   PHX::Tag<ScalarT> fieldTag(p.get<std::string>("NBC Aggregator Name"), dl);
   this->addEvaluatedField(fieldTag);
 
-  this->setName("Neumann Aggregator"+PHX::TypeString<EvalT>::value);
+  this->setName("Neumann Aggregator" );
 }
 
 //**********************************************************************

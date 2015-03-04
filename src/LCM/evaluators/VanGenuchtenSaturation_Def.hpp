@@ -47,7 +47,7 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
     this->addDependentField(coordVec);
 
     exp_rf_kl = 
-      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>(*elmd_list));
+      Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>(*elmd_list));
     int num_KL = exp_rf_kl->stochasticDimension();
 
     // Add KL random variables as Sacado-ized parameters
@@ -98,7 +98,7 @@ VanGenuchtenSaturation(Teuchos::ParameterList& p) :
   }
 
   this->addEvaluatedField(vgSaturation);
-  this->setName("Van Genuchten Saturation"+PHX::TypeString<EvalT>::value);
+  this->setName("Van Genuchten Saturation"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -120,28 +120,28 @@ evaluateFields(typename Traits::EvalData workset)
 {
 
   ScalarT tempTerm;
-  std::size_t numCells = workset.numCells;
+  int numCells = workset.numCells;
 
   if (is_constant) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	  vgSaturation(cell,qp) = constant_value;
       }
     }
   }
   else {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
 	Teuchos::Array<MeshScalarT> point(numDims);
-	for (std::size_t i=0; i<numDims; i++)
+	for (int i=0; i<numDims; i++)
 	  point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
 		  vgSaturation(cell,qp) = exp_rf_kl->evaluate(point, rv);
       }
     }
   }
   if (isPoroElastic) {
-    for (std::size_t cell=0; cell < numCells; ++cell) {
-      for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int cell=0; cell < numCells; ++cell) {
+      for (int qp=0; qp < numQPs; ++qp) {
     	  // van Genuchten equation
     	  vgSaturation(cell,qp) = 0.084 + 0.916
     			       /std::pow((1.0 + 7.0*porePressure(cell,qp)/waterUnitWeight),2.0);

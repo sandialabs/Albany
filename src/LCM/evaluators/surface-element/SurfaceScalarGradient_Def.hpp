@@ -32,7 +32,7 @@ namespace LCM {
 
     this->addEvaluatedField(scalarGrad);
 
-    this->setName("Surface Scalar Gradient"+PHX::TypeString<EvalT>::value);
+    this->setName("Surface Scalar Gradient"+PHX::typeAsString<EvalT>());
 
     std::vector<PHX::DataLayout::size_type> dims;
     dl->node_vector->dimensions(dims);
@@ -86,28 +86,28 @@ namespace LCM {
   evaluateFields(typename Traits::EvalData workset)
   {
     ScalarT midPlaneAvg;
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt=0; pt < numQPs; ++pt) {
+    for (int cell=0; cell < workset.numCells; ++cell) {
+      for (int pt=0; pt < numQPs; ++pt) {
 
-        Intrepid::Vector<MeshScalarT> G_0(3, &refDualBasis(cell, pt, 0, 0));
-        Intrepid::Vector<MeshScalarT> G_1(3, &refDualBasis(cell, pt, 1, 0));
-        Intrepid::Vector<MeshScalarT> G_2(3, &refDualBasis(cell, pt, 2, 0));
-        Intrepid::Vector<MeshScalarT> N(3, &refNormal(cell, pt, 0));
+        Intrepid::Vector<MeshScalarT> G_0(3, refDualBasis, cell, pt, 0, 0);
+        Intrepid::Vector<MeshScalarT> G_1(3, refDualBasis, cell, pt, 1, 0);
+        Intrepid::Vector<MeshScalarT> G_2(3, refDualBasis, cell, pt, 2, 0);
+        Intrepid::Vector<MeshScalarT> N(3, refNormal,cell, pt, 0);
 
         Intrepid::Vector<ScalarT> scalarGradPerpendicular(0, 0, 0);
         Intrepid::Vector<ScalarT> scalarGradParallel(0, 0, 0);
 
        // Need to inverse basis [G_0 ; G_1; G_2] and none of them should be normalized
-        Intrepid::Tensor<MeshScalarT> gBasis(3, &refDualBasis(cell, pt, 0, 0));
+        Intrepid::Tensor<MeshScalarT> gBasis(3, refDualBasis,cell, pt, 0, 0);
         Intrepid::Tensor<MeshScalarT> invRefDualBasis(3);
 
         // This map the position vector from parent to current configuration in R^3
         gBasis = Intrepid::transpose(gBasis);
        invRefDualBasis = Intrepid::inverse(gBasis);
 
-        Intrepid::Vector<MeshScalarT> invG_0(3, &invRefDualBasis(0, 0));
-        Intrepid::Vector<MeshScalarT> invG_1(3, &invRefDualBasis(1, 0));
-        Intrepid::Vector<MeshScalarT> invG_2(3, &invRefDualBasis(2, 0));
+        Intrepid::Vector<MeshScalarT> invG_0(3, &invRefDualBasis( 0, 0));
+        Intrepid::Vector<MeshScalarT> invG_1(3, &invRefDualBasis( 1, 0));
+        Intrepid::Vector<MeshScalarT> invG_2(3, &invRefDualBasis( 2, 0));
 
         // in-plane (parallel) contribution
         for (int node(0); node < numPlaneNodes; ++node) {

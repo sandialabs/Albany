@@ -22,6 +22,7 @@
 #include <stk_io/IossBridge.hpp>
 #endif
 
+#include <Albany_STKNodeSharing.hpp>
 
 //#include <stk_mesh/fem/FEMHelpers.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -591,6 +592,7 @@ Albany::CismSTKMeshStruct::constructMesh(
     if (debug_output_verbosity != 0) *out << "...done." << std::endl;
   }
 
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 

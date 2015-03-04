@@ -7,7 +7,7 @@
 #ifndef PHAL_GATHER_COORDINATEVECTOR_HPP
 #define PHAL_GATHER_COORDINATEVECTOR_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -56,7 +56,7 @@ private:
   std::size_t numDim;
 };
 
-
+#ifdef ALBANY_MESH_TANFAD
 template<typename Traits> 
 class GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits> 
                     : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -85,6 +85,7 @@ private:
   std::size_t numVertices;
   std::size_t numDim;
 };
+#endif
 }
 
 #endif

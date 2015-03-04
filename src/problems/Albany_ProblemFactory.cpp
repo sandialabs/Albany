@@ -29,6 +29,7 @@
 
 #ifdef ALBANY_ATO
 #include "ATO/problems/LinearElasticityProblem.hpp"
+#include "ATO/problems/LinearElasticityModalProblem.hpp"
 #include "ATO/problems/PoissonsEquation.hpp"
 #endif
 
@@ -43,8 +44,6 @@
 #include "LCM/problems/GradientDamageProblem.hpp"
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
-#include "LCM/problems/ConcurrentMultiscaleProblem.hpp"
-#include "LCM/problems/SchwarzMultiscaleProblem.hpp"
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
 #include "LCM/problems/PeridigmProblem.hpp"
@@ -276,12 +275,6 @@ Albany::ProblemFactory::create()
   else if (method == "Total Lagrangian Plasticity with Projection 3D") {
     strategy =   rcp(new Albany::ProjectionProblem(problemParams, paramLib, 3));
   }
-  else if (method == "Concurrent Multiscale 3D") {
-    strategy =   rcp(new Albany::ConcurrentMultiscaleProblem(problemParams, paramLib, 3, commT));
-  }
-  else if (method == "Schwarz Multiscale 3D") {
-    strategy =   rcp(new Albany::SchwarzMultiscaleProblem(problemParams, paramLib, 3, commT));
-  }
   else if (method == "GradientDamage") {
     strategy = rcp(new Albany::GradientDamageProblem(problemParams, paramLib, 3));
   }
@@ -316,6 +309,15 @@ Albany::ProblemFactory::create()
   }
   else if (method == "Poissons Equation 3D") {
     strategy = rcp(new Albany::PoissonsEquationProblem(problemParams, paramLib, 3));
+  }
+  else if (method == "LinearElasticityModal 1D") {
+    strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "LinearElasticityModal 2D") {
+    strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 2));
+  }
+  else if (method == "LinearElasticityModal 3D") {
+    strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 3));
   }
 #endif
 #ifdef ALBANY_SEE
@@ -370,7 +372,8 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Stokes 2D" ) {
     strategy = rcp(new FELIX::Stokes(problemParams, paramLib, 2));
   }
-  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ) {
+  else if (method == "FELIX Stokes First Order 2D" || method == "FELIX Stokes FO 2D" ||
+           method == "FELIX Stokes First Order 2D XZ" || method == "FELIX Stokes FO 2D XZ") {
     strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 2));
   }
   else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {

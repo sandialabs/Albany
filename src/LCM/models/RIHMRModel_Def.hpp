@@ -148,12 +148,12 @@ computeState(typename Traits::EvalData workset,
   ScalarT normR0(0.0), normR(0.0), conv(0.0);
   LocalNonlinearSolver<EvalT, Traits> solver;
 
-  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-    for (std::size_t pt = 0; pt < num_pts_; ++pt) {
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_pts_; ++pt) {
 
-      //logFp_n.fill(&logFp_old(cell, pt, std::size_t(0), std::size_t(0)) );
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      //logFp_n.fill(&logFp_old(cell, pt, int(0), int(0)) );
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           logFp_n(i, j) = static_cast<ScalarT>(logFp_old(cell, pt, i, j));
 // std::cout << "logFp_n(" << cell << ", " << pt << ", " << i << ", " << j << " ) = " << logFp_n(i, j) << std::endl;
         }
@@ -175,10 +175,10 @@ computeState(typename Traits::EvalData workset,
 
       // Compute Trial State
       be.clear();
-      for (std::size_t i = 0; i < num_dims_; ++i)
-        for (std::size_t j = 0; j < num_dims_; ++j)
-          for (std::size_t p = 0; p < num_dims_; ++p)
-            for (std::size_t q = 0; q < num_dims_; ++q)
+      for (int i = 0; i < num_dims_; ++i)
+        for (int j = 0; j < num_dims_; ++j)
+          for (int p = 0; p < num_dims_; ++p)
+            for (int q = 0; q < num_dims_; ++q)
               be(i, j) += Jm23 * def_grad(cell, pt, i, p) * Cpinv(p, q)
                   * def_grad(cell, pt, j, q);
 
@@ -251,10 +251,10 @@ computeState(typename Traits::EvalData workset,
         A = dgam * n;
         expA = Intrepid::exp<ScalarT>(A);
 
-        for (std::size_t i = 0; i < num_dims_; ++i) {
-          for (std::size_t j = 0; j < num_dims_; ++j) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
             Fp(i, j) = 0.0;
-            for (std::size_t p = 0; p < num_dims_; ++p) {
+            for (int p = 0; p < num_dims_; ++p) {
               Fp(i, j) += expA(i, p) * Fpold(p, j);
             }
           }
@@ -270,16 +270,16 @@ computeState(typename Traits::EvalData workset,
 
       // store logFp as the state variable
       logFp_n = Intrepid::log(Fp);
-      for (std::size_t i = 0; i < num_dims_; ++i)
-        for (std::size_t j = 0; j < num_dims_; ++j)
+      for (int i = 0; i < num_dims_; ++i)
+        for (int j = 0; j < num_dims_; ++j)
           logFp(cell, pt, i, j) = logFp_n(i, j);
 
       // compute pressure
       p = 0.5 * kappa * (J(cell, pt) - 1 / (J(cell, pt)));
 
       // compute stress
-      for (std::size_t i = 0; i < num_dims_; ++i) {
-        for (std::size_t j = 0; j < num_dims_; ++j) {
+      for (int i = 0; i < num_dims_; ++i) {
+        for (int j = 0; j < num_dims_; ++j) {
           stress(cell, pt, i, j) = s(i, j) / J(cell, pt);
         }
         stress(cell, pt, i, i) += p;

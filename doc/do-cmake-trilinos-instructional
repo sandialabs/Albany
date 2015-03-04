@@ -1,7 +1,9 @@
-# Instructional Trilinos configuration script for Tpetra-enabled Albany.
+# Early Nov 2014. Instructional Trilinos configuration script for Tpetra-enabled
+#                 Albany.
+# 18 Feb 2015.    Now updated for Kokkos-enabled Albany.
 
 # Modify these paths for your system.
-TRILINSTALLDIR=../install
+TRILINSTALLDIR=../install-basic
 BOOSTDIR=/usr/local
 NETCDFDIR=/usr/local/parallel
 HDF5DIR=/usr/local/parallel
@@ -21,18 +23,24 @@ rm -f CMakeCache.txt;
 #   Blocks 1-4 are for the basic old Epetra-only Albany build. If you already
 # have a Trilinos configuration script for that build, you can use it instead of
 # blocks 1-4.
-#   Block 5 has the packages required by the new Tpetra-enabled Albany.
+#   Block 5 has the packages required by the Tpetra-enabled Albany.
+#   Blocks 6-7 are new for the Kokkos-enabled Albany, though the flags have some
+# overlap with the old ones.
+#   Block 6 provides the types and the explicit template instantiation we need.
+#   Block 7 handles Kokkos flags to set up the Serial node, which matches
+# pre-Kokkos behavior.
 cmake \
  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON \
  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR} \
- -D CMAKE_BUILD_TYPE:STRING="NONE" \
+ -D CMAKE_BUILD_TYPE:STRING=RELEASE \
+ -D BUILD_SHARED_LIBS:BOOL=ON \
  -D TPL_ENABLE_MPI:BOOL=ON \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-\
  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
  -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
- -D Trilinos_ENABLE_Teuchos:BOOL=ON \
  -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
+\
+ -D Trilinos_ENABLE_Teuchos:BOOL=ON \
  -D Trilinos_ENABLE_Shards:BOOL=ON \
  -D Trilinos_ENABLE_Sacado:BOOL=ON \
  -D Trilinos_ENABLE_Epetra:BOOL=ON \
@@ -77,11 +85,30 @@ cmake \
  -D Trilinos_ENABLE_Ifpack2:BOOL=ON \
  -D Trilinos_ENABLE_Amesos2:BOOL=ON \
  -D Trilinos_ENABLE_Zoltan2:BOOL=ON \
+ -D Trilinos_ENABLE_MueLu:BOOL=ON \
+ -D Amesos2_ENABLE_KLU2:BOOL=ON \
+\
+ -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
+ -D Tpetra_INST_INT_LONG_LONG:BOOL=ON \
+ -D Tpetra_INST_INT_INT:BOOL=ON \
+ -D Tpetra_INST_DOUBLE:BOOL=ON \
+ -D Tpetra_INST_FLOAT:BOOL=OFF \
+ -D Tpetra_INST_COMPLEX_FLOAT:BOOL=OFF \
+ -D Tpetra_INST_COMPLEX_DOUBLE:BOOL=OFF \
+ -D Tpetra_INST_INT_LONG:BOOL=OFF \
+ -D Tpetra_INST_INT_UNSIGNED:BOOL=OFF \
+\
+ -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+ -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+ -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+ -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+ -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+ -D Kokkos_ENABLE_Serial:BOOL=ON \
+ -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+ -D Kokkos_ENABLE_Pthread:BOOL=OFF \
 \
  ../
 
-# Optionally enable MueLu by including the following flag:
-#   -D Trilinos_ENABLE_MueLu:BOOL=ON \
 # MueLu requires a coarse-level solver. One of the following must be provided:
 # (1) SuperLU:
 #   -D TPL_ENABLE_SuperLU:STRING=ON \
@@ -97,14 +124,15 @@ cmake \
 #   -D TPL_ENABLE_Matio:BOOL=OFF \
 #   -D TPL_ENABLE_X11:BOOL=OFF \
 
-# Options for increasing Albany s/w dev efficience:
+# Options for increasing Albany s/w dev efficiency:
 #
 # Add this line to make a shared-library build.
 #   -D BUILD_SHARED_LIBS:BOOL=ON \
 # There are two advantages to using a shared-lib build: first, link time of
 # large executables is essentially gone; second, incremental rebuilds (in a
 # debug-modify-build loop) are much faster: on average, perhaps 5x faster, and
-# often up to 20x faster.
+# often up to 20x faster. You might have to add -fPIC to the build flags for
+# TPLs to build shared libs.
 #
 # Add these lines to make a debug build.
 #   -D CMAKE_BUILD_TYPE:STRING=DEBUG \
@@ -112,8 +140,9 @@ cmake \
 # I strongly recommend doing only *shared library* debug builds, as the lib and
 # exe files for a static debug build can be huge.
 #
-# Add this line to enable explicit template instantiation (ETI). This speeds up
-# compiling certain files in Albany by a factor of >3.
+# Add this line to enable explicit template instantiation (ETI). (ETI is now
+# used in this instructional configuration.) This speeds up compiling certain
+# files in Albany by a factor of >3.
 #   -D Trilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=ON \
 # This speedup is particularly evident when doing incremental rebuilds during
 # development work.

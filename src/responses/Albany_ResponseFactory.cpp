@@ -115,6 +115,7 @@ createResponseFunction(
 	   name == "Save Nodal Fields" ||
 	   name == "Stiffness Objective" ||
 	   name == "Internal Energy Objective" ||
+	   name == "Modal Objective" ||
            name == "Linear Adjoint Solve" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT") {
@@ -138,6 +139,12 @@ createResponseFunction(
       // Skip if dealing with interface block
       //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif
+      // For these RFs, default to true for this parm.
+      //eb-todo But not yet for ProjectIPtoNodalField.
+      const char* reb_parm = "Restrict to Element Block";
+      if ( ! responseParams.isType<bool>(reb_parm) &&
+          name == "IP to Nodal Field" /* for now just this one */)
+        responseParams.set<bool>(reb_parm, true);
       responses.push_back(
         rcp(new Albany::FieldManagerResidualOnlyResponseFunction(
               app, prob, meshSpecs[i], stateMgr, responseParams)));

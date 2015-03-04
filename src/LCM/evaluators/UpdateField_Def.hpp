@@ -29,7 +29,7 @@ UpdateField(const Teuchos::ParameterList& p) :
   std::string name_Nplus1 = p.get<std::string>("Updated Field Name");
   std::string name_Inc    = p.get<std::string>("Increment Name");
   this->setName("Update " + name_N +" to " + name_Nplus1 + " by " + name_Inc
-                + PHX::TypeString<EvalT>::value);
+                + PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************
@@ -53,7 +53,7 @@ evaluateFields(typename Traits::EvalData workset)
            std::endl << "Error: cannot locate " << name_N << " in UpdateField_Def" << std::endl);
 
     Albany::MDArray state_N = it->second;
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     state_N.dimensions(dims);
     int size = dims.size();
 

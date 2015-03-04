@@ -50,6 +50,7 @@
      <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
      <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
      <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
+     <Parameter name="Write Distributed Solution and Map to MatrixMarket" type="bool" value="true"/>
      <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
      <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
      <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->

@@ -7,7 +7,7 @@
 #ifndef AERAS_XZHYDROSTATIC_VELRESID_HPP
 #define AERAS_XZHYDROSTATIC_VELRESID_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -55,7 +55,7 @@ private:
   PHX::MDField<ScalarT,Cell,QuadPoint,Dim>        density;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Level,Node> Residual;
+  PHX::MDField<ScalarT,Cell,Node,Level,Dim> Residual;
 
   const double viscosity;
   const double hyperviscosity;

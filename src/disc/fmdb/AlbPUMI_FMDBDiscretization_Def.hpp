@@ -443,17 +443,14 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
          << fmdbMeshStruct->outputFileName << std::endl;
   }
 
-  if (fmdbMeshStruct->outputQPFields) {
-    apf::Field* f;
-    int dim = getNumDim();
-    apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
-    copyQPStatesToAPF(f,fs);
-  }
+  apf::Field* f;
+  int dim = getNumDim();
+  apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
+  copyQPStatesToAPF(f,fs,false);
 
   meshOutput.writeFile(time_label);
 
-  if (fmdbMeshStruct->outputQPFields)
-    removeQPStatesFromAPF();
+  removeQPStatesFromAPF();
 }
 
 template<class Output>
@@ -765,6 +762,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
       buckets[bucket_counter].push_back(element);
       // save the name of the new element block
       apf::StkModel* set = findElementBlock(m, sets, block);
+      TEUCHOS_TEST_FOR_EXCEPTION(!set, std::logic_error,
+			   "Error: findElementBlock() failed on line " << __LINE__ << " of file " << __FILE__ << std::endl);
       std::string EB_name = set->stkName;
       wsEBNames[bucket_counter] = EB_name;
       bucket_counter++;
@@ -995,23 +994,30 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
     apf::Field* f,
-    apf::FieldShape* fs)
+    apf::FieldShape* fs,
+    bool copyAll)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
     QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    if (!copyAll && !state.output)
+      continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
     QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    if (!copyAll && !state.output)
+      continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
     QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    if (!copyAll && !state.output)
+      continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::MATRIX,fs);
     copyQPTensorToAPF(nqp,state,f);

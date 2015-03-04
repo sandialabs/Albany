@@ -7,7 +7,7 @@
 #ifndef AERAS_XZHYDROSTATIC_ETADOTPI_HPP
 #define AERAS_XZHYDROSTATIC_ETADOTPI_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -40,7 +40,7 @@ public:
 
 private:
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim>  divpivelx;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level>      divpivelx;
   PHX::MDField<ScalarT,Cell,QuadPoint>            pdotP0;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Pi;
   PHX::MDField<ScalarT,Cell,QuadPoint,Level>      Temperature;

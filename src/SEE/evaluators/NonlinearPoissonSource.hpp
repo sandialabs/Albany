@@ -7,7 +7,7 @@
 #ifndef NONLINEARPOISSONSOURCE_HPP
 #define NONLINEARPOISSONSOURCE_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -42,7 +42,7 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> coord_;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
 
   PHX::MDField<ScalarT,Cell,Node> source_;
 

@@ -43,7 +43,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 
 
   // Pull out numQPs and numDims from a Layout
-  std::vector<int> dims;
+  std::vector<PHX::Device::size_type> dims;
   layout->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -52,7 +52,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
   this->addDependentField(BF);
   this->addEvaluatedField(weightedVar);
 
-  this->setName("Topology Weighting"+PHX::TypeString<EvalT>::value);
+  this->setName("Topology Weighting"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

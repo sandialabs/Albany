@@ -45,7 +45,7 @@ LinComprNSResid(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(Residual);
 
 
-  this->setName("LinComprNSResid"+PHX::TypeString<EvalT>::value);
+  this->setName("LinComprNSResid" );
 
   std::vector<PHX::DataLayout::size_type> dims;
   wGradBF.fieldTag().dataLayout().dimensions(dims);

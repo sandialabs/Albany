@@ -23,6 +23,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <Albany_STKNodeSharing.hpp>
+
 #include "Albany_Utils.hpp"
 
 //Wedge
@@ -432,6 +434,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
   	  }
   }
 
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 
@@ -675,6 +678,7 @@ Albany::MpasSTKMeshStruct::constructMesh(
 	}
   }
 
+  Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 }
 

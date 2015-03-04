@@ -88,6 +88,9 @@ namespace Albany {
     //! Destructor
     ~STKDiscretization();
 
+    void printConnectivity() const;
+
+
 #ifdef ALBANY_EPETRA
     //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;

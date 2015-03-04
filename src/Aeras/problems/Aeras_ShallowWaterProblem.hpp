@@ -126,7 +126,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   
   RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
     intrepidBasis = Albany::getIntrepidBasis(meshSpecs.ctd);
-  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology(shards::getCellTopologyData< shards::Quadrilateral<4> >()));
+ 
+  RCP<shards::CellTopology> cellType = rcp(new shards::CellTopology (&meshSpecs.ctd));
   
   const int numNodes = intrepidBasis->getCardinality();
   const int worksetSize = meshSpecs.worksetSize;
@@ -140,8 +141,10 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
 
   const int numQPts     = cubature->getNumPoints();
-  const int numVertices = cellType->getNodeCount();
-  int vecDim = spatialDim;
+  const int numVertices = meshSpecs.ctd.node_count;
+  int vecDim; 
+  if (neq == 1) vecDim = neq; 
+  else vecDim = spatialDim;
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -213,10 +216,12 @@ Aeras::ShallowWaterProblem::constructEvaluators(
  
     p->set< RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > > 
         ("Intrepid Basis", intrepidBasis);
- 
+
     p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Spherical Coord Name",       "Lat-Long");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Weights Name",          "Weights");
     p->set<string>("BF Name",          "BF");
@@ -233,10 +238,11 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     ev = rcp(new Aeras::ComputeBasisFunctions<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
-  //Planar case: 
+  //Planar case:
+  //IK, 2/11/15: Planar case is obsolete I believe.  Should it be removed?  
   else {
-  fm0.template registerEvaluator<EvalT>
-    (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
+    fm0.template registerEvaluator<EvalT>
+      (evalUtils.constructComputeBasisFunctionsEvaluator(cellType, intrepidBasis, cubature));
   }
 
   { // ShallowWater Resid
@@ -253,6 +259,8 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Spherical Coord Name",       "Lat-Long");
+    p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
+    p->set<std::string>("Theta Coord Nodal Name", "Long Nodal");
 
     p->set<string>("Gradient BF Name",          "Grad BF");
     p->set<string>("Weights Name",          "Weights");
@@ -294,7 +302,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
     
   }
-
   { // Aeras Atmosphere for shallow water equations 
 
     RCP<ParameterList> p = rcp(new ParameterList("Aeras Atmosphere"));

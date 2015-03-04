@@ -10,6 +10,8 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Topology.h"
 
+#include <Albany_STKNodeSharing.hpp>
+
 // FIXME: need to extract Topology member functions specific to
 // Barycentric subdivision and move into their own header!
 
@@ -1278,6 +1280,7 @@ void Topology::barycentricSubdivision()
   connectivity_ = connectivity_temp;
 
   // End mesh update
+  Albany::fix_node_sharing(get_bulk_data());
   get_bulk_data().modification_end();
   //MEASURING TIME
   end11 = clock();

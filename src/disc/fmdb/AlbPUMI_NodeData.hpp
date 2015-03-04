@@ -28,8 +28,6 @@ class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer
     AbstractPUMINodeFieldContainer(){}
     virtual ~AbstractPUMINodeFieldContainer(){}
 
-    virtual void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv,
-            int offset) = 0;
     virtual void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv,
             int offset) = 0;
     virtual Albany::MDArray getMDA(const std::vector<apf::Node>& buck) = 0;
@@ -38,7 +36,7 @@ class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer
 };
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const bool output);
+buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output);
 
 
   // Helper class for NodeData
@@ -50,7 +48,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
   public:
 
-    NodeData(const std::string& name, const std::vector<int>& dim, const bool output = false);
+    NodeData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output = false);
     virtual ~NodeData(){}
 
     //! Type of traits class being used
@@ -59,7 +57,6 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
     //! Define the field type
     typedef typename traits_type::field_type field_type;
 
-    void saveFieldBlock(const Teuchos::RCP<const Tpetra_BlockMultiVector>& block_mv, int offset);
     void saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& mv, int offset);
     void resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map);
     Albany::MDArray getMDA(const std::vector<apf::Node>& buck);
@@ -69,7 +66,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
     const std::string name;      // Name of data field
     const bool output;           // Is field output to disk each time step (or at end of simulation)?
     std::vector<DataType>  buffer;        // 1D array storage -> numOwnedNodes * product of dims
-    std::vector<int> dims;
+    std::vector<PHX::DataLayout::size_type> dims;
     int nfield_dofs;                    // total number of dofs in this field
     std::size_t beginning_index;        // Buffer starting location for the next array allocation
 
@@ -85,7 +82,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
     enum { size = 1 }; // One array dimension tags: number of nodes in workset
     typedef shards::Array<T, shards::NaturalOrder, Node> field_type ;
-    static field_type buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static field_type buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems);
 
@@ -99,7 +96,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
     enum { size = 2 }; // Two array dimension tags: Nodes and vec dim
     typedef shards::Array<T, shards::NaturalOrder, Node, Dim> field_type ;
-    static field_type buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static field_type buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1]);
 
@@ -113,7 +110,7 @@ buildPUMINodeField(const std::string& name, const std::vector<int>& dim, const b
 
     enum { size = 3 }; // Three array dimension tags: Nodes, Dim and Dim
     typedef shards::Array<T, shards::NaturalOrder, Node, Dim, Dim> field_type ;
-    static field_type buildArray(T *buf, unsigned nelems, std::vector<int>& dims){
+    static field_type buildArray(T *buf, unsigned nelems, std::vector<PHX::DataLayout::size_type>& dims){
 
       return field_type(buf, nelems, dims[1], dims[2]);
 

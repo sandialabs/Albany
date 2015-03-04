@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 
@@ -28,7 +29,7 @@ DOFLaplaceInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(GradGradBF);
   this->addEvaluatedField(Laplace_val_qp);
 
-  this->setName("Aeras::DOFLaplaceInterpolationLevels"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFLaplaceInterpolationLevels"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -47,7 +48,7 @@ template<typename EvalT, typename Traits>
 void DOFLaplaceInterpolationLevels<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int i=0; i < Laplace_val_qp.size(); ++i) Laplace_val_qp(i)=0.0;
+  PHAL::set(Laplace_val_qp, 0.0);
   for (int cell=0; cell < workset.numCells; ++cell) 
     for (int qp=0; qp < numQPs; ++qp) 
       for (int level=0; level < numLevels; ++level) 

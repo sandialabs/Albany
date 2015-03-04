@@ -53,7 +53,7 @@ MortarContact(const Teuchos::ParameterList& p,
   this->addDependentField(coordVec);
   this->addEvaluatedField(M_operator);
 
-  this->setName("Mortar Contact Constraints"+PHX::TypeString<EvalT>::value);
+  this->setName("Mortar Contact Constraints"+PHX::typeAsString<EvalT>());
 }
 
 // **********************************************************************

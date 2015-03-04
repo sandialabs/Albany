@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_Layouts.hpp"
@@ -63,7 +64,7 @@ XZHydrostatic_VelResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(Residual);
 
-  this->setName("Aeras::XZHydrostatic_VelResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_VelResid" );
 }
 
 //**********************************************************************
@@ -92,7 +93,7 @@ template<typename EvalT, typename Traits>
 void XZHydrostatic_VelResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  for (int i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  PHAL::set(Residual, 0.0);
 
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int node=0; node < numNodes; ++node) {

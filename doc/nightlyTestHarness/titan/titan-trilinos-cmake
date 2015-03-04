@@ -30,6 +30,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH="$PWD/install" \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
       -D Trilinos_ENABLE_ALL_OPTIONAL_PACKAGES:BOOL=OFF \
+      -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
 \
       -D Trilinos_ENABLE_Fortran:BOOL=ON \
 \
@@ -57,7 +58,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH="$PWD/install" \
       -D Trilinos_ENABLE_Stokhos:BOOL=ON \
       -D Trilinos_ENABLE_Isorropia:BOOL=ON\
       -D Trilinos_ENABLE_Piro:BOOL=ON \
-      -D Trilinos_ENABLE_STKClassic:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
 \
       -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
@@ -66,7 +66,11 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH="$PWD/install" \
       -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \
       -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
 \
+      -D Trilinos_ENABLE_STKIO:BOOL=ON \
+      -D Trilinos_ENABLE_STKMesh:BOOL=ON \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
+      -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
+\
       -D Trilinos_ENABLE_ThreadPool:STRING="ON" \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D TPL_ENABLE_Netcdf:BOOL=ON \

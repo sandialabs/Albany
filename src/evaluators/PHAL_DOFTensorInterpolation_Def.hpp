@@ -24,7 +24,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("DOFTensorInterpolation"+PHX::typeAsString<EvalT>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -55,7 +55,7 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          ScalarT& vqp = val_qp(cell,qp,i,j);
+          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
           vqp = val_node(cell, 0, i, j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
             vqp += val_node(cell, node, i, j) * BF(cell, node, qp);
@@ -79,7 +79,7 @@ DOFTensorInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFTensorInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+  this->setName("DOFTensorInterpolation"+PHX::typeAsString<PHAL::AlbanyTraits::Jacobian>());
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -107,15 +107,14 @@ template<typename Traits>
 void DOFTensorInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  int num_dof = val_node(0,0,0,0).size();
-  int neq = num_dof / numNodes; 
-
+  const int num_dof = val_node(0,0,0,0).size();
+  const int neq = workset.wsElNodeEqID[0][0].size();
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
         for (std::size_t j=0; j<vecDim; j++) {
           // Zero out for node==0; then += for node = 1 to numNodes
-          ScalarT& vqp = val_qp(cell,qp,i,j);
+          typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,i,j);
 	  vqp = FadType(num_dof, val_node(cell, 0, i, j).val() * BF(cell, 0, qp));
           vqp.fastAccessDx(offset+i*vecDim+j) = val_node(cell, 0, i, j).fastAccessDx(offset+i*vecDim+j) * BF(cell, 0, qp);
           for (std::size_t node=1; node < numNodes; ++node) {
