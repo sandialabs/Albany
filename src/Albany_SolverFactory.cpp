@@ -1169,10 +1169,9 @@ void Albany::SolverFactory::storeTestResults(
 
 int Albany::SolverFactory::scaledCompare(double x1, double x2, double relTol, double absTol) const
 {
-  double diff = fabs(x1 - x2) / (0.5*fabs(x1) + 0.5*fabs(x2) + fabs(absTol));
-
-  if (diff < relTol) return 0; //pass
-  else               return 1; //fail
+  const double d = fabs(x1 - x2);
+  return (d <= 0.5*(fabs(x1) + fabs(x2))*relTol ||
+          d <= fabs(absTol)) ? 0 : 1;
 }
 
 
