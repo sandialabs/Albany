@@ -10,6 +10,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 
 template<typename EvalT, typename Traits>
@@ -67,7 +68,7 @@ TensorPNormResponse(Teuchos::ParameterList& p,
   this->addEvaluatedField(*objective_tag);
   
   std::string responseID = "ATO Tensor PNorm";
-  this->setName(responseID + PHX::TypeString<EvalT>::value);
+  this->setName(responseID);
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
@@ -210,16 +211,18 @@ void ATO::TensorPNormResponse<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
     // Add contributions across processors
-    Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
-      workset.serializerManager.template getValue<EvalT>();
-
-    // we cannot pass the same object for both the send and receive buffers in reduceAll call
-    std::vector<ScalarT>  partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); 
-    PHX::MDField<ScalarT> partial_response(this->global_response);
-    partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-
-    Teuchos::reduceAll( *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-      this->global_response.size(), &partial_response[0], &this->global_response[0]);
+//    Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
+//      workset.serializerManager.template getValue<EvalT>();
+//
+//    // we cannot pass the same object for both the send and receive buffers in reduceAll call
+//    std::vector<ScalarT>  partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); 
+//    PHX::MDField<ScalarT> partial_response(this->global_response);
+//    partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
+//
+//    Teuchos::reduceAll( *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+//      this->global_response.size(), &partial_response[0], &this->global_response[0]);
+//
+    PHAL::reduceAll<ScalarT>(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
     TensorPNormResponseSpec<EvalT,Traits>::postEvaluate(workset);
     

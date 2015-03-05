@@ -76,7 +76,7 @@ ComputeVolume(const double* p, double& v, double* dvdp)
         double pVal = 0.0;
         for(int node=0; node<numNodes; node++){
           int gid = wsElNodeID[ws][cell][node];
-          int lid = overlapMap->LID(gid);
+          int lid = overlapNodeMap->LID(gid);
           pVal += p[lid]*basisAtQPs[physIndex](node,qp);
         }
         elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
@@ -104,12 +104,12 @@ ComputeVolume(const double* p, double& v, double* dvdp)
           double pVal = 0.0;
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapMap->LID(gid);
+            int lid = overlapNodeMap->LID(gid);
             pVal += p[lid]*basisAtQPs[physIndex](node,qp);
           }
           for(int node=0; node<numNodes; node++){
             int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapMap->LID(gid);
+            int lid = overlapNodeMap->LID(gid);
             odvdp[lid] += topology->dPenalize(functionIndex,pVal)
                           *basisAtQPs[physIndex](node,qp)
                           *weighted_measure[ws](cell,qp);
@@ -152,14 +152,14 @@ ComputeVolume(double* p, const double* dfdp,
       double elVol = 0.0;
       for(int node=0; node<numNodes; node++){
         int gid = wsElNodeID[ws][cell][node];
-        int lid = overlapMap->LID(gid);
+        int lid = overlapNodeMap->LID(gid);
         if(dfdp[lid] < threshhold) p[lid] = 1.0;
         else p[lid] = minP;
       }
 
       for(int node=0; node<numNodes; node++){
         int gid = wsElNodeID[ws][cell][node];
-        int lid = overlapMap->LID(gid);
+        int lid = overlapNodeMap->LID(gid);
         for(int qp=0; qp<numQPs; qp++)
           elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
       }
@@ -319,10 +319,8 @@ ATO::OptimizationProblem::InitTopOpt()
     }
 
   }
-  Teuchos::RCP<const Epetra_BlockMap>
-    overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
-  Teuchos::RCP<const Epetra_BlockMap>
-    localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
+  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
+  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
 
   overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
   localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
