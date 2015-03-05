@@ -114,6 +114,15 @@ IF(NOT ALBANY_PERIDIGM)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
 ENDIF()
 
+IF(NOT ALBANY_CONTACT)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactResidual.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactResidual.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactResidual_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactConstraints.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints_Def.hpp)
+ENDIF()
+
 IF(ALBANY_LAME OR ALBANY_LAMENT)
   SET(SOURCES ${SOURCES}
     ${LCM_DIR}/utils/lame/LameUtils.cpp
