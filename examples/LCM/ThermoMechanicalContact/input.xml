@@ -20,6 +20,7 @@
        </ParameterList>
     </ParameterList>
     <ParameterList name="Contact">
+      <Parameter name="Constrained Field Names" type="Array(string)" value="{Displacement}"/>
       <Parameter name="Master Side Sets" type="Array(string)" value="{surface_1}"/>
       <Parameter name="Slave Side Sets" type="Array(string)" value="{surface_2}"/>
       <Parameter name="Contact Side Set Pair" type="Array(string)" value="{surface_1,surface_2}"/>
