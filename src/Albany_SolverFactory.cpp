@@ -38,6 +38,10 @@
 #include "Stratimikos_MueluTpetraHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
+#ifdef ALBANY_TEKO
+#include "Teko_StratimikosFactory.hpp"
+#endif
+
 #ifdef ALBANY_QCAD
 #ifdef ALBANY_EPETRA
   #include "QCAD_Solver.hpp"
@@ -636,10 +640,6 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // Setup linear solver
     Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
 
-    //FIXME: inject Teko into Stratimikos.  Will be a line something like: 
-    //Teko::addTekoToStratimikosBuilder(Stratimikos::DefaultLinearSolverBuilder & builder,
-    //                           const std::string & stratName="Teko");
-
 #ifdef ALBANY_IFPACK2
     {
 #ifdef ALBANY_64BIT_INT
@@ -662,6 +662,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
 #endif /* ALBANY_MUELU */
 
+#ifdef ALBANY_TEKO
+    Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
+#endif
     linearSolverBuilder.setParameterList(stratList);
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
@@ -735,6 +738,10 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     Stratimikos::enableMueLuTpetra(linearSolverBuilder);
 #endif
 #endif /* ALBANY_MUELU */
+   
+#ifdef ALBANY_TEKO
+    Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
+#endif
 
     linearSolverBuilder.setParameterList(stratList);
 

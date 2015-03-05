@@ -1044,22 +1044,18 @@ void Aeras::SpectralDiscretization::enrichMesh()
       std::cout << std::endl;
       commT->barrier();
 #endif
-      // Here we allocate a new Teuchos::TwoDArray (named buffer at
-      // address bufferPtr) for storing and accessing a 2D array of
-      // element nodes.  We will then construct a Teuchos::ArrayRCP
-      // pointing to the same buffer that assumes ownership of the
-      // buffer, so that it can be stored in the wsElNodeID data
-      // structure.
-      Teuchos::TwoDArray<GO> * bufferPtr = new Teuchos::TwoDArray<GO>(np,np);
-      Teuchos::TwoDArray<GO> & buffer = *bufferPtr;
-      wsElNodeID[ibuck][ielem] =
-        Teuchos::ArrayRCP<GO>(&buffer[0][0],0,np2,true);
 
-      // Copy the linear c orner node IDs to the enriched element
-      buffer[0   ][0   ] = gid(nodes[0]);
-      buffer[0   ][np-1] = gid(nodes[1]);
-      buffer[np-1][np-1] = gid(nodes[2]);
-      buffer[np-1][0   ] = gid(nodes[3]);
+      wsElNodeID[ibuck][ielem].resize(np2);
+
+      // Copy the linear corner node IDs to the enriched element
+      // buffer[0   ][0   ] = gid(nodes[0]);
+      wsElNodeID[ibuck][ielem][0                 ] = gid(nodes[0]);
+      // buffer[0   ][np-1] = gid(nodes[1]);
+      wsElNodeID[ibuck][ielem][            (np-1)] = gid(nodes[1]);
+      // buffer[np-1][np-1] = gid(nodes[2]);
+      wsElNodeID[ibuck][ielem][(np-1)*np + (np-1)] = gid(nodes[2]);
+      // buffer[np-1][0   ] = gid(nodes[3]);
+      wsElNodeID[ibuck][ielem][(np-1)*np         ] = gid(nodes[3]);
 
       // Copy the enriched edge nodes to the enriched element.  Note
       // that the enriched edge may or may not be aligned with the
@@ -1072,43 +1068,52 @@ void Aeras::SpectralDiscretization::enrichMesh()
       GO edgeID = gid(edges[0]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[0] == nodes[0])
-          buffer[0][inode] = enrichedEdges[edgeID][inode];
+          // buffer[0][inode] = enrichedEdges[edgeID][inode];
+          wsElNodeID[ibuck][ielem][inode] = enrichedEdges[edgeID][inode];
         else
-          buffer[0][inode] = enrichedEdges[edgeID][np-inode-1];
+          // buffer[0][inode] = enrichedEdges[edgeID][np-inode-1];
+          wsElNodeID[ibuck][ielem][inode] = enrichedEdges[edgeID][np-inode-1];
 
       // Edge 1
       edgeNodes = bulkData.begin_nodes(edges[1]);
       edgeID = gid(edges[1]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[1] == nodes[1])
-          buffer[inode][np-1] = enrichedEdges[edgeID][inode];
+          // buffer[inode][np-1] = enrichedEdges[edgeID][inode];
+          wsElNodeID[ibuck][ielem][inode*np + (np-1)] = enrichedEdges[edgeID][inode];
         else
-          buffer[inode][np-1] = enrichedEdges[edgeID][np-inode-1];
+          // buffer[inode][np-1] = enrichedEdges[edgeID][np-inode-1];
+          wsElNodeID[ibuck][ielem][inode*np + (np-1)] = enrichedEdges[edgeID][np-inode-1];
 
       // Edge 2
       edgeNodes = bulkData.begin_nodes(edges[2]);
       edgeID = gid(edges[2]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[2] == nodes[2])
-          buffer[np-1][inode] = enrichedEdges[edgeID][np-inode-1];
+          // buffer[np-1][inode] = enrichedEdges[edgeID][np-inode-1];
+          wsElNodeID[ibuck][ielem][(np-1)*np + inode] = enrichedEdges[edgeID][np-inode-1];
         else
-          buffer[np-1][inode] = enrichedEdges[edgeID][inode];
+          // buffer[np-1][inode] = enrichedEdges[edgeID][inode];
+          wsElNodeID[ibuck][ielem][(np-1)*np + inode] = enrichedEdges[edgeID][inode];
 
       // Edge 3
       edgeNodes = bulkData.begin_nodes(edges[3]);
       edgeID = gid(edges[3]);
       for (unsigned inode = 1; inode < np-1; ++inode)
         if (edgeNodes[3] == nodes[3])
-          buffer[inode][0] = enrichedEdges[edgeID][np-inode-1];
+          // buffer[inode][0] = enrichedEdges[edgeID][np-inode-1];
+          wsElNodeID[ibuck][ielem][inode*np] = enrichedEdges[edgeID][np-inode-1];
         else
-          buffer[inode][0] = enrichedEdges[edgeID][inode];
+          // buffer[inode][0] = enrichedEdges[edgeID][inode];
+          wsElNodeID[ibuck][ielem][inode*np] = enrichedEdges[edgeID][inode];
 
       // Create new interior nodes for the enriched element
       GO offset = maxGID + (maxEdgeID+1) * (np-2) +
         gid(element) * (np-2) * (np-2);
       for (unsigned ii = 0; ii < np-2; ++ii)
         for (unsigned jj = 0; jj < np-2; ++jj)
-          buffer[ii+1][jj+1] = offset + ii * (np-2) + jj;
+          // buffer[ii+1][jj+1] = offset + ii * (np-2) + jj;
+          wsElNodeID[ibuck][ielem][(ii+1)*np + (jj+1)] = offset + ii * (np-2) + jj;
     }
   }
 

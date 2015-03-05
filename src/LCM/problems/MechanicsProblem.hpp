@@ -2525,6 +2525,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         paramList.get<Teuchos::Array<std::string> >("Slave Side Sets"));
     p->set<Teuchos::Array<std::string> >("Sideset IDs",
         paramList.get<Teuchos::Array<std::string> >("Contact Side Set Pair"));
+    p->set<Teuchos::Array<std::string> >("Constrained Field Names",
+        paramList.get<Teuchos::Array<std::string> >("Constrained Field Names"));
 
     p->set<const Albany::MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");

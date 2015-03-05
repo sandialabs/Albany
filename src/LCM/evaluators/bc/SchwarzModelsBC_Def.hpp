@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
 //#include "AAdapt_STKAdapt.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
@@ -23,10 +21,10 @@
 namespace LCM {
 
 template <typename EvalT, typename Traits>
-SchwarzBC_Base<EvalT, Traits>::
-SchwarzBC_Base(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<EvalT, Traits>::
+SchwarzModelsBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_block_(p.get<std::string>("Coupled Block")),
+  coupled_model_(p.get<std::string>("Coupled Block")),
   disc_(Teuchos::null)
 {
 }
@@ -36,7 +34,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
 //
 template<typename EvalT, typename Traits>
 void
-SchwarzBC_Base<EvalT, Traits>::
+SchwarzModelsBC_Base<EvalT, Traits>::
 computeBCs(
     typename Traits::EvalData dirichlet_workset,
     size_t const ns_node,
@@ -67,7 +65,7 @@ computeBCs(
   coordinates = stk_discretization->getCoordinates();
 
   std::string const
-  coupled_block = this->getCoupledBlock();
+  coupled_model = this->getCoupledModel();
 
   Albany::WorksetArray<std::string>::type const &
   ws_eb_names = disc->getWsEBNames();
@@ -81,7 +79,7 @@ computeBCs(
   block_name_2_index = gms.ebNameToIndex;
 
   std::map<std::string, int>::const_iterator
-  it = block_name_2_index.find(coupled_block);
+  it = block_name_2_index.find(coupled_model);
 
   assert(it != block_name_2_index.end());
 
@@ -152,7 +150,7 @@ computeBCs(
     std::string const &
     element_block = ws_eb_names[workset];
 
-    if (element_block != coupled_block) continue;
+    if (element_block != coupled_model) continue;
 
     size_t const
     elements_per_workset = ws_el_2_nd[workset].size();
@@ -291,7 +289,7 @@ computeBCs(
   value(dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to block: " << coupled_block << '\n';
+  std::cout << "Coupling to block: " << coupled_model << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
   for (size_t i = 0; i < vertex_count; ++i) {
@@ -317,9 +315,9 @@ computeBCs(
 // Specialization: Residual
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::Residual, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+  SchwarzModelsBC_Base<PHAL::AlbanyTraits::Residual, Traits>(p)
 {
 }
 
@@ -328,7 +326,7 @@ SchwarzBC(Teuchos::ParameterList & p) :
 //
 template<typename Traits>
 void
-SchwarzBC<PHAL::AlbanyTraits::Residual, Traits>::
+SchwarzModelsBC<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   //
@@ -415,9 +413,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Jacobian
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+  SchwarzModelsBC_Base<PHAL::AlbanyTraits::Jacobian, Traits>(p)
 {
 }
 
@@ -425,7 +423,7 @@ SchwarzBC(Teuchos::ParameterList & p) :
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
 #if defined(DEBUG_LCM_SCHWARZ)
@@ -524,9 +522,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Tangent
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::Tangent, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+  SchwarzModelsBC_Base<PHAL::AlbanyTraits::Tangent, Traits>(p)
 {
 }
 
@@ -534,7 +532,7 @@ SchwarzBC(Teuchos::ParameterList & p) :
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
 #if defined(DEBUG_LCM_SCHWARZ)
@@ -617,9 +615,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: DistParamDeriv
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-  SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+  SchwarzModelsBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits>(p)
 {
 }
 
@@ -627,7 +625,7 @@ SchwarzBC(Teuchos::ParameterList & p) :
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
 
@@ -710,9 +708,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 //
 #ifdef ALBANY_SG_MP
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::SGResidual, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::SGResidual, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<PHAL::AlbanyTraits::SGResidual, Traits>(p)
 {
 }
 
@@ -720,7 +718,7 @@ SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits>(p)
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::SGResidual, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::SGResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>
@@ -768,9 +766,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Stochastic Galerkin Jacobian
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-SchwarzBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits>(p)
 {
 }
 
@@ -778,7 +776,7 @@ SchwarzBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits>(p)
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::SGJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly>
@@ -878,9 +876,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Stochastic Galerkin Tangent
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::SGTangent, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-SchwarzBC_Base<PHAL::AlbanyTraits::SGTangent, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::SGTangent, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<PHAL::AlbanyTraits::SGTangent, Traits>(p)
 {
 }
 
@@ -888,7 +886,7 @@ SchwarzBC_Base<PHAL::AlbanyTraits::SGTangent, Traits>(p)
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::SGTangent, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::SGTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>
@@ -973,9 +971,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Multi-point Residual
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::MPResidual, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-SchwarzBC_Base<PHAL::AlbanyTraits::MPResidual, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::MPResidual, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<PHAL::AlbanyTraits::MPResidual, Traits>(p)
 {
 }
 
@@ -983,7 +981,7 @@ SchwarzBC_Base<PHAL::AlbanyTraits::MPResidual, Traits>(p)
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::MPResidual, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::MPResidual, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Stokhos::ProductEpetraVector>
@@ -1031,9 +1029,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Multi-point Jacobian
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-SchwarzBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits>(p)
 {
 }
 
@@ -1041,7 +1039,7 @@ SchwarzBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits>(p)
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::MPJacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Stokhos::ProductEpetraVector>
@@ -1140,9 +1138,9 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 // Specialization: Multi-point Tangent
 //
 template<typename Traits>
-SchwarzBC<PHAL::AlbanyTraits::MPTangent, Traits>::
-SchwarzBC(Teuchos::ParameterList & p) :
-SchwarzBC_Base<PHAL::AlbanyTraits::MPTangent, Traits>(p)
+SchwarzModelsBC<PHAL::AlbanyTraits::MPTangent, Traits>::
+SchwarzModelsBC(Teuchos::ParameterList & p) :
+SchwarzModelsBC_Base<PHAL::AlbanyTraits::MPTangent, Traits>(p)
 {
 }
 
@@ -1150,7 +1148,7 @@ SchwarzBC_Base<PHAL::AlbanyTraits::MPTangent, Traits>(p)
 //
 //
 template<typename Traits>
-void SchwarzBC<PHAL::AlbanyTraits::MPTangent, Traits>::
+void SchwarzModelsBC<PHAL::AlbanyTraits::MPTangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
   Teuchos::RCP<Stokhos::ProductEpetraVector>
