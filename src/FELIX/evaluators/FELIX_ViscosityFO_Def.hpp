@@ -174,14 +174,14 @@ ViscosityFO<EvalT,Traits>::getValue(const std::string &n)
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_EXPTRIG_Tag& tag, const int& cell) const{
+void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_CONSTANT_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp)
           mu(cell,qp) = 1.0;
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_CONSTANT_Tag& tag, const int& cell) const{
+void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_EXPTRIG_Tag& tag, const int& cell) const{
   double a = 1.0; 
   for (int qp=0; qp < numQPs; ++qp) {
           MeshScalarT x = coordVec(cell,qp,0);
