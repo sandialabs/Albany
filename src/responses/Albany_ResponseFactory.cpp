@@ -116,6 +116,7 @@ createResponseFunction(
 	   name == "Stiffness Objective" ||
 	   name == "Internal Energy Objective" ||
 	   name == "Tensor PNorm Objective" ||
+	   name == "Modal Objective" ||
            name == "Linear Adjoint Solve" ||
            name == "PHAL Field Integral" ||
            name == "PHAL Field IntegralT") {

@@ -270,6 +270,7 @@ SET(SOURCES ${SOURCES}
 IF (ALBANY_EPETRA) 
   SET(SOURCES ${SOURCES} 
     evaluators/PHAL_GatherEigenvectors.cpp
+    evaluators/PHAL_GatherEigenData.cpp
     evaluators/PHAL_GatherAuxData.cpp
   )
 ENDIF() 
@@ -389,6 +390,8 @@ IF (ALBANY_EPETRA)
   SET(HEADERS ${HEADERS}
     evaluators/PHAL_GatherEigenvectors.hpp
     evaluators/PHAL_GatherEigenvectors_Def.hpp
+    evaluators/PHAL_GatherEigenData.hpp
+    evaluators/PHAL_GatherEigenData_Def.hpp
     evaluators/PHAL_ResponseFieldIntegral.hpp
     evaluators/PHAL_ResponseFieldIntegral_Def.hpp
     evaluators/PHAL_SeparableScatterScalarResponse.hpp

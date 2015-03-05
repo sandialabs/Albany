@@ -41,7 +41,7 @@
 #include "Shards_CellTopology.hpp"
 
 // Uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 namespace Aeras
 {
@@ -90,7 +90,7 @@ namespace Aeras
 
       std::ostringstream convert; //used to convert int to string  
       convert << np; 
-      std::string new_name = orig_name + '_' + convert.str();
+      std::string new_name = "Spectral" + orig_name + '_' + convert.str();
       //The following seems to be necessary b/c setting new_ctd.name = new_name.c_str() does not work. 
       char* new_name_char = new char[new_name.size() + 1]; 
       std::copy(new_name.begin(), new_name.end(), new_name_char);

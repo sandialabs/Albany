@@ -17,6 +17,7 @@ SET(SOURCES
   Albany_IossSTKMeshStruct.cpp
   Albany_AsciiSTKMesh2D.cpp
   Albany_AsciiSTKMeshStruct.cpp
+  Albany_STKNodeSharing.cpp
   )
 SET(HEADERS 
   Albany_NodalGraphUtils.hpp
@@ -38,6 +39,7 @@ SET(HEADERS
   Albany_IossSTKMeshStruct.hpp
   Albany_AsciiSTKMesh2D.hpp
   Albany_AsciiSTKMeshStruct.hpp
+  Albany_STKNodeSharing.hpp
   )
 
 #amb not yet  Albany_NodalDOFManager.hpp

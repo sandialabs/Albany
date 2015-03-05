@@ -100,16 +100,16 @@ evaluateFields(typename Traits::EvalData workset)
  // Declaring tangent, residual, norms, and increment for N-R
    Intrepid::Tensor<ScalarT> tangent(3);
    Intrepid::Vector<ScalarT> residual(3);
-   ScalarT norm_residual, norm_residual_goal;
+   ScalarT norm_residual_2, norm_residual_goal_2;
    Intrepid::Vector<ScalarT> increment(3);
 	
  // constants for computations
   const double pi = acos(-1.0);  
   const double onethrd = 1.0/3.0;
   const double twothrd = 2.0/3.0;
-  const double tolerance = 1.0e-12;
+  const double tolerance = 1.0e-12, tolerance_2 = tolerance*tolerance;
   const int explicit_sub_increments = 5;
-// const int maxIterations = 20; //FIXME: Include a maximum number of iterations
+  const int maxIterations = 20; //FIXME: Include a maximum number of iterations
   
   // state old
   Albany::MDArray total_concentration_old = (*workset.stateArrayPtr)[total_concentration_name_];
@@ -196,11 +196,11 @@ evaluateFields(typename Traits::EvalData workset)
 			  residual(1) = nb - nb_old - dt*(16.0*pi*he_radius_*d*n1*n1);
 			  residual(2) = sb - sb_old - atomic_omega/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
 					  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
-		      norm_residual = Intrepid::norm(residual);
-		      norm_residual_goal = tolerance*norm_residual;
-			  
+		      norm_residual_2 = Intrepid::norm_square(residual);
+		      norm_residual_goal_2 = tolerance_2*norm_residual_2;
+                      int iter(0);
 		      // N-R loop for implicit time integration
-		      while (norm_residual > norm_residual_goal) {
+		      while (norm_residual_2 > norm_residual_goal_2 && iter < maxIterations) {
 		    	  
 		    	  // calculate tangent
 		    	  tangent(0,0) = 1.0 + 2.0*dt*d*(32.0*n1*pi*he_radius_ + pow(6.0,onethrd)*
@@ -233,7 +233,8 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  residual(1) = nb - nb_old - dt*(16.0*pi*he_radius_*d*n1*n1);
 		    	  residual(2) = sb - sb_old - atomic_omega/eta_*dt*(32.*pi*he_radius_*d*n1*n1 +
 		    			  4.0*pi*d*n1*pow(3.0/4.0/pi,onethrd)*pow(sb,onethrd)*pow(nb,twothrd));
-		    	  norm_residual = Intrepid::norm(residual);
+		    	  norm_residual_2 = Intrepid::norm_square(residual);
+                          iter++;
 		      } 
 		  }
 		  

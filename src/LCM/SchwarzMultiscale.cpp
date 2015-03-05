@@ -13,18 +13,18 @@
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
-//string for storing name of first problem, for error checking
-std::string problem_name0;
-
 LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT, 
+    const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   commT_ = commT;
+
+  solver_factory_ = solver_factory; 
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
@@ -36,8 +36,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   // Get names of individual model xml input files from problem parameterlist
   Teuchos::Array<std::string>
   model_filenames =
-      coupled_system_params.get<Teuchos::Array<std::string> >(
-          "Model XML Files");
+    coupled_system_params.get<Teuchos::Array<std::string> >("Model XML Files");
 
   //number of models
   num_models_ = model_filenames.size();
@@ -60,6 +59,10 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
   material_dbs_.resize(num_models_);
 
+  //string for storing name of first problem, for error checking
+  std::string
+  problem_name_0 = "";
+
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
   for (int m = 0; m < num_models_; ++m) {
@@ -80,26 +83,14 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     std::string &
     problem_name = problem_params_m->get("Name", "");
+
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
 
-    if (m == 0) problem_name0 = problem_params_m->get("Name", "");
-
-    if (problem_name0.compare(problem_name)) {
-      std::cerr << "\nError in LCM::CoupledSchwarz constructor: ";
-      std::cerr << "attempting go couple different models ";
-      std::cerr << problem_name0 << " and " << problem_name << "!\n\n";
-      exit(1);
-      //FIXME: the above is not a very elegant way to exit,
-      // but somehow the below line using Teuchos
-      // exceptions does not seem to work...
-      /*
-       TEUCHOS_TEST_FOR_EXCEPTION(
-       true, std::runtime_error,
-       '\n' << "Error in LCM::CoupledSchwarz constructor:  " <<
-       "attempting go couple different models " << problem_name0 << " and " <<
-       problem_name << '\n');
-       */
+    if (m == 0) {
+      problem_name_0 = problem_params_m->get("Name", "");
     }
+
+    assert(problem_name_0 == problem_name);
 
     std::ostringstream
     oss("materials");
@@ -152,32 +143,27 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
         apps_[m]->getStateMgr().getDiscretization()->getOverlapMapT();
 
     solver_inargs_[m] = models_[m]->createInArgs();
-
     solver_outargs_[m] = models_[m]->createOutArgs();
-
     num_params_[m] = solver_inargs_[m].Np();
-
     num_responses_[m] = solver_outargs_[m].Ng();
 
-    if (m == 0) {
-      num_responses_partial_sum_[m] = num_responses_[m];
-      num_params_partial_sum_[m] = num_params_[m];
-    }
-    else {
-      num_responses_partial_sum_[m] = num_responses_partial_sum_[m - 1]
-          + num_responses_[m];
-      num_params_partial_sum_[m] = num_params_partial_sum_[m - 1]
-          + num_params_[m];
-    }
+    int const
+    sum_responses = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
+
+    int const
+    sum_params = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
+
+    num_responses_partial_sum_[m] = num_responses_[m] + sum_responses;
+    num_params_partial_sum_[m] = num_params_[m] + sum_params;
 
     //Does it make sense for num_params_total and num_responses_total to be
     //the sum of these values for each model?  I guess so.
     num_params_total_ += num_params_[m];
-
     num_responses_total_ += num_responses_[m];
   }
 
-  // Create sacado parameter vectors of appropriate size for use in evalModelImpl
+  // Create sacado parameter vectors of appropriate size
+  // for use in evalModelImpl
   sacado_param_vecs_.resize(num_models_);
 
   for (int m = 0; m < num_models_; ++m) {
@@ -191,7 +177,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   //created from the entries of the disc_maps array (individual maps).
   coupled_disc_map_ = createCoupledMap(disc_maps_, commT_);
 
-  std::cout << "LCM::CoupledSchwarz constructor DEBUG: created coupled map!\n";
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << ": created coupled map!\n";
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // For debug, write the coupled map to matrix market file to
@@ -208,28 +194,26 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   // Calling allocateVectors() will set x and x_dot in nominal_values_
   allocateVectors();
 
-  //set p_init in nominal_values_
-  // TODO: Check if correct nominal values for parameters
-  for (int l = 0; l < num_params_total_; ++l) {
-    if (l < num_params_partial_sum_[0]) {
-      nominal_values_.set_p(l, solver_inargs_[0].get_p(l));
-    }
-    else {
-      for (int m = 1; m < num_models_; ++m) {
+  // set p_init in nominal_values_
+  // TODO: Check if these are correct nominal values for parameters
+  for (int m = 0; m < num_models_; ++m) {
 
-        bool const
-        in_range = l >= num_params_partial_sum_[m - 1] &&
-        l < num_params_partial_sum_[m];
+    int const
+    num_params_m = num_params_[m];
 
-        if (in_range == true) {
-          int const
-          k = l - num_params_partial_sum_[m - 1];
-          nominal_values_.set_p(l, solver_inargs_[m].get_p(k));
-        }
-      }
+    int const
+    offset = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+    for (int l = 0; l < num_params_m; ++l) {
+      Teuchos::RCP<Thyra::VectorBase<ST> const>
+      p = models_[m]->getNominalValues().get_p(l);
+
+      // Don't set it if there is nothing. Avoid null pointer.
+      if (Teuchos::is_null(p) == true) continue;
+
+      nominal_values_.set_p(l + offset, p);
     }
   }
-
   //end setting of nominal values
 
   std::cout << "Set nominal_values_! \n";
@@ -275,8 +259,8 @@ LCM::SchwarzMultiscale::createCoupledMap(
   }
   //Create global element indices array for coupled map for this processor,
   //to be used to create the coupled map.
-  GO *
-  my_global_elements = new GO[local_num_elements];
+  std::vector<GO>
+  my_global_elements(local_num_elements);
 
   LO
   counter_local = 0;
@@ -286,25 +270,25 @@ LCM::SchwarzMultiscale::createCoupledMap(
 
   for (int m = 0; m < n_maps; ++m) {
     LO
-    disc_nMyElements = maps[m]->getNodeNumElements();
+    local_num_elements_n = maps[m]->getNodeNumElements();
 
     GO
-    disc_nGlobalElements = maps[m]->getGlobalNumElements();
+    global_num_elements_n = maps[m]->getGlobalNumElements();
 
-    Teuchos::ArrayView<const GO>
+    Teuchos::ArrayView<GO const>
     disc_global_elements = maps[m]->getNodeElementList();
 
-    for (int l = 0; l < disc_nMyElements; ++l) {
+    for (int l = 0; l < local_num_elements_n; ++l) {
       my_global_elements[counter_local + l] = counter_global
           + disc_global_elements[l];
     }
-    counter_local += disc_nMyElements;
-    counter_global += disc_nGlobalElements;
+    counter_local += local_num_elements_n;
+    counter_global += global_num_elements_n;
   }
 
   Teuchos::ArrayView<GO> const
   my_global_elements_AV =
-      Teuchos::arrayView(my_global_elements, local_num_elements);
+      Teuchos::arrayView(&my_global_elements[0], local_num_elements);
 
   std::cout << "DEBUG: coupled map has " << global_num_elements;
   std::cout << " global elements.\n";
@@ -347,82 +331,77 @@ LCM::SchwarzMultiscale::get_f_space() const
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
-    {
+{
+  assert(0 <= l && l < num_params_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_params_total_ < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      "\nError!  LCM::SchwarzMultiscale::get_p_space():  " <<
-      "Invalid parameter index l = " << l << '\n');
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-  if (l < num_params_partial_sum_[0]) {
-    return models_[0]->get_p_space(l);
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          l >= num_params_partial_sum_[m - 1] && l < num_params_partial_sum_[m];
-      if (in_range == true) {
-        return models_[m]->get_p_space(l - num_params_partial_sum_[m - 1]);
-      }
+    int const
+    hi = num_params_partial_sum_[m];
+
+    bool const
+    in_range = lo <= l && l < hi;
+
+    if (in_range == true) {
+      return models_[m]->get_p_space(l - lo);
     }
   }
+
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_g_space(int l) const
-    {
+{
+  assert(0 <= l && l < num_responses_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_responses_total_ || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::get_g_space():  " <<
-      "Invalid response index l = " << l << '\n');
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-  if (l < num_responses_partial_sum_[0]) {
-    return models_[0]->get_g_space(l);
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          l >= num_params_partial_sum_[m - 1] && l < num_params_partial_sum_[m];
-      if (in_range == true) {
-        return models_[m]->get_g_space(l - num_responses_partial_sum_[m - 1]);
-      }
+    int const
+    hi = num_responses_partial_sum_[m];
+
+    bool const
+    in_range = lo <= l && l < hi;
+
+    if (in_range == true) {
+      return models_[m]->get_g_space(l - lo);
     }
   }
+
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string> >
 LCM::SchwarzMultiscale::get_p_names(int l) const
-    {
+{
+  assert(0 <= l && l < num_params_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      l >= num_params_total_ || l < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::get_p_names():  " <<
-      "Invalid parameter index l = " << l << '\n');
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-  if (l < num_params_partial_sum_[0]) {
-    return models_[0]->get_p_names(l);
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          l >= num_params_partial_sum_[m - 1] && l < num_params_partial_sum_[m];
-      if (in_range == true) {
-        return models_[m]->get_p_names(l - num_params_partial_sum_[m - 1]);
-      }
+    int const
+    hi = num_params_partial_sum_[m];
+
+    bool const
+    in_range = lo <= l && l < hi;
+
+    if (in_range == true) {
+      return models_[m]->get_p_names(l - lo);
     }
   }
+
+  return Teuchos::null;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -468,7 +447,7 @@ LCM::SchwarzMultiscale::create_W_prec() const
   //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
   //in Thyra yet!  So problem will run for now with no
   //preconditioner...
-  const bool
+  bool const
   W_prec_not_supported = true;
 
   TEUCHOS_TEST_FOR_EXCEPT(W_prec_not_supported);
@@ -480,7 +459,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  return Teuchos::null;
+  return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -543,25 +522,25 @@ allocateVectors()
 
   //get nonconst view of coupled_x_init & coupled_x_dot_init
   Teuchos::ArrayRCP<ST>
-  coupled_x_init_nonconstView = coupled_x_init->get1dViewNonConst();
+  coupled_x_init_view = coupled_x_init->get1dViewNonConst();
 
   Teuchos::ArrayRCP<ST>
-  coupled_x_dot_init_nonconstView = coupled_x_dot_init->get1dViewNonConst();
+  coupled_x_dot_init_view = coupled_x_dot_init->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
     //get const view of mth x_init & x_dot_init vector
     Teuchos::ArrayRCP<ST const>
-    x_init_constView = x_inits[m]->get1dView();
+    x_init_const_view = x_inits[m]->get1dView();
 
     Teuchos::ArrayRCP<ST const>
-    x_dot_init_constView = x_dot_inits[m]->get1dView();
+    x_dot_init_const_view = x_dot_inits[m]->get1dView();
 
     //The following assumes x_init and x_dot_init have same length.
     //FIXME? Could have error checking to make sure.
     for (int i = 0; i < x_inits[m]->getLocalLength(); ++i) {
-      coupled_x_init_nonconstView[counter_local + i] = x_init_constView[i];
-      coupled_x_dot_init_nonconstView[counter_local + i] =
-          x_dot_init_constView[i];
+      coupled_x_init_view[counter_local + i] = x_init_const_view[i];
+      coupled_x_dot_init_view[counter_local + i] =
+          x_dot_init_const_view[i];
     }
     counter_local += x_inits[m]->getLocalLength();
   }
@@ -621,66 +600,57 @@ allocateVectors()
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_op_impl(int j) const
-    {
+{
+  assert(0 <= j && j < num_responses_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      j >= num_responses_total_ || j < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::create_DgDx_op_impl():  " <<
-      "Invalid response index j = " << j << '\n');
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-  if (j < num_responses_partial_sum_[0]) {
-    return Thyra::createLinearOp(apps_[0]->getResponse(j)->createGradientOpT());
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          j >= num_responses_partial_sum_[m - 1] &&
-              j < num_responses_partial_sum_[m];
+    int const
+    hi = num_responses_partial_sum_[m];
 
-      if (in_range == true) {
-        return Thyra::createLinearOp(
-            apps_[m]->getResponse(j - num_responses_partial_sum_[m - 1])
-                ->createGradientOpT());
-      }
+    bool const
+    in_range = lo <= j && j < hi;
+
+    if (in_range == true) {
+      return Thyra::createLinearOp(
+          apps_[m]->getResponse(j - lo)->createGradientOpT());
     }
   }
+
+  return Teuchos::null;
 }
 
 /// Create operator form of dg/dx_dot for distributed responses
+// FIXME: Is this correct? It seems the same as above.
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
-    {
+{
+  assert(0 <= j && j < num_responses_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-      j >= num_responses_total_ || j < 0,
-      Teuchos::Exceptions::InvalidParameter,
-      '\n' <<
-      "Error!  LCM::SchwarzMultiscale::create_DgDx_dot_op():  " <<
-      "Invalid response index j = " << j << '\n');
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-  if (j < num_responses_partial_sum_[0]) {
-    return Thyra::createLinearOp(apps_[0]->getResponse(j)->createGradientOpT());
-  }
-  else {
-    for (int m = 1; m < num_models_; ++m) {
-      bool const
-      in_range =
-          j >= num_responses_partial_sum_[m - 1] &&
-              j < num_responses_partial_sum_[m];
+    int const
+    hi = num_responses_partial_sum_[m];
 
-      if (in_range == true) {
-        return Thyra::createLinearOp(
-            apps_[m]->getResponse(j - num_responses_partial_sum_[m - 1])
-                ->createGradientOpT());
-      }
+    bool const
+    in_range = lo <= j && j < hi;
+
+    if (in_range == true) {
+      return Thyra::createLinearOp(
+          apps_[m]->getResponse(j - lo)->createGradientOpT());
     }
   }
+
+  return Teuchos::null;
 }
 
 /// Create OutArgs
@@ -699,7 +669,6 @@ createOutArgsImpl() const
   result.set_Np_Ng(num_params_total_, num_responses_total_);
 
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f, true);
-
   result.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op, true);
 
   result.set_W_properties(
@@ -718,32 +687,22 @@ createOutArgsImpl() const
     Thyra::ModelEvaluatorBase::DerivativeSupport
     dgdx_support;
 
-    if (i < num_responses_partial_sum_[0]) {
-      if (apps_[0]->getResponse(i)->isScalarResponse()) {
-        dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
-      }
-      else {
-        dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
-      }
-    }
-    else {
-      for (int m = 1; m < num_models_; ++m) {
-        bool const
-        in_range =
-            i >= num_responses_partial_sum_[m - 1] &&
-                i < num_responses_partial_sum_[m];
+    for (int m = 0; m < num_models_; ++m) {
+      int const
+      lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
 
-        if (in_range) {
+      int const
+      hi = num_responses_partial_sum_[m];
 
-          int const
-          k = i - num_responses_partial_sum_[m - 1];
+      bool const
+      in_range = lo <= i && i < hi;
 
-          if (apps_[m]->getResponse(k)->isScalarResponse()) {
-            dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
-          }
-          else {
-            dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
-          }
+      if (in_range == true) {
+        if (apps_[m]->getResponse(i - lo)->isScalarResponse()) {
+          dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
+        }
+        else {
+          dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
         }
       }
     }
@@ -758,11 +717,13 @@ createOutArgsImpl() const
     //result.setSupports(
     //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
 
-    for (int l = 0; l < num_params_total_; ++l)
+    for (int l = 0; l < num_params_total_; ++l) {
       result.setSupports(
           Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, l,
           Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
+    }
   }
+
   return result;
 }
 
@@ -772,41 +733,25 @@ LCM::SchwarzMultiscale::
 evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
-    {
-  //FIXME: finish filling in!
+{
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
-
-  // Get the input arguments
-  Teuchos::RCP<Tpetra_Vector const> const
-  xT = ConverterT::getConstTpetraVector(in_args.get_x());
-
-  Teuchos::RCP<Tpetra_Vector const> const
-  x_dotT =
-      Teuchos::nonnull(in_args.get_x_dot()) ?
-          ConverterT::getConstTpetraVector(in_args.get_x_dot()) :
-          Teuchos::null;
 
   //Create a Teuchos array of the xT and x_dotT for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  xTs;
+  xTs(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  x_dotTs;
-
-  xTs.resize(num_models_);
-
-  x_dotTs.resize(num_models_);
+  x_dotTs(num_models_);
 
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector const>
-    xT_temp = ConverterT::getConstTpetraVector(solver_inargs_[m].get_x());
+    xT_temp = ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x());
 
     xTs[m] = Teuchos::rcp(new Tpetra_Vector(*xT_temp));
 
     Teuchos::RCP<Tpetra_Vector const>
-    x_dotT_temp =
-        Teuchos::nonnull(solver_inargs_[m].get_x_dot()) ?
-            ConverterT::getConstTpetraVector(solver_inargs_[m].get_x_dot()) :
+    x_dotT_temp = Teuchos::nonnull(models_[m]->getNominalValues().get_x_dot()) ?
+            ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x_dot()) :
             Teuchos::null;
 
     x_dotTs[m] = Teuchos::rcp(new Tpetra_Vector(*x_dotT_temp));
@@ -817,11 +762,20 @@ evalModelImpl(
   //  Teuchos::nonnull(in_args.get_x_dotdot()) ?
   //  ConverterT::getConstTpetraVector(in_args.get_x_dotdot()) :
   //  Teuchos::null;
-  Teuchos::RCP<Tpetra_Vector const> const x_dotdotT = Teuchos::null;
+  // Get the input arguments
+  Teuchos::RCP<Tpetra_Vector const> const
+  xT = ConverterT::getConstTpetraVector(in_args.get_x());
+
+  Teuchos::RCP<Tpetra_Vector const> const
+  x_dotT = Teuchos::nonnull(in_args.get_x_dot()) ?
+      ConverterT::getConstTpetraVector(in_args.get_x_dot()) :
+      Teuchos::null;
+
+  Teuchos::RCP<Tpetra_Vector const> const
+  x_dotdotT = Teuchos::null;
 
   double const
-  alpha =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
+  alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_alpha() : 0.0;
 
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
@@ -839,38 +793,28 @@ evalModelImpl(
       (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_t() : 0.0;
 
-  for (int l = 0; l < in_args.Np(); ++l) {
-    Teuchos::RCP<Thyra::VectorBase<ST> const> const
-    p = in_args.get_p(l);
+  for (int m = 0; m < num_models_; ++m) {
+    int const
+    num_params_m = num_params_[m];
 
-    Teuchos::RCP<Tpetra_Vector const> const
-    pT = ConverterT::getConstTpetraVector(p);
+    int const
+    offset = m > 0 ? num_params_partial_sum_[m - 1] : 0;
 
-    Teuchos::ArrayRCP<ST const> const
-    pT_constView = pT->get1dView();
+    for (int l = 0; l < num_params_m; ++l) {
+      Teuchos::RCP<Thyra::VectorBase<ST> const>
+      p = in_args.get_p(l + offset);
 
-    if (Teuchos::nonnull(p)) {
-      if (l < num_params_partial_sum_[0]) {
-        for (unsigned int j = 0; j < sacado_param_vecs_[0][l].size(); ++j) {
-          sacado_param_vecs_[0][l][j].baseValue = pT_constView[j];
-        }
-      }
-      else {
-        for (int m = 1; m < num_models_; ++m) {
-          bool const
-          in_range = l >= num_params_partial_sum_[m - 1] &&
-              l < num_params_partial_sum_[m];
+      // Don't set it if there is nothing. Avoid null pointer.
+      if (Teuchos::is_null(p) == true) continue;
 
-          if (in_range == true) {
-            int const
-            k = l - num_params_partial_sum_[m - 1];
+      Teuchos::RCP<Tpetra_Vector const> const
+      pT = ConverterT::getConstTpetraVector(p);
 
-            for (unsigned int j = 0; j < sacado_param_vecs_[m][k].size(); j++) {
-              sacado_param_vecs_[m][k][j].baseValue = pT_constView[j];
+      Teuchos::ArrayRCP<ST const> const
+      pT_view = pT->get1dView();
 
-            }
-          }
-        }
+      for (unsigned int j = 0; j < sacado_param_vecs_[m][l].size(); j++) {
+        sacado_param_vecs_[m][l][j].baseValue = pT_view[j];
       }
     }
   }
@@ -879,60 +823,46 @@ evalModelImpl(
   // Get the output arguments
   //
   Teuchos::RCP<Tpetra_Vector> const
-  fT_out =
-      Teuchos::nonnull(out_args.get_f()) ?
-          ConverterT::getTpetraVector(out_args.get_f()) :
-          Teuchos::null;
+  fT_out = Teuchos::nonnull(out_args.get_f()) ?
+      ConverterT::getTpetraVector(out_args.get_f()) :
+      Teuchos::null;
 
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  fTs_out;
-
-  fTs_out.resize(num_models_);
+  fTs_out(num_models_);
 
   for (int m = 0; m < num_models_; ++m) {
 
     Teuchos::RCP<Tpetra_Vector const>
-    fT_out_temp =
-        Teuchos::nonnull(solver_outargs_[m].get_f()) ?
-            ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
+    fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
+        ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
+        Teuchos::null;
+    fTs_out[m] = Teuchos::nonnull(fT_out_temp) ?
+            Teuchos::rcp(new Tpetra_Vector(*fT_out_temp)) :
             Teuchos::null;
-
-    fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
+    //if (fT_out_temp != Teuchos::null) 
+    //  fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
   }
 
   Teuchos::RCP<Tpetra_Operator> const
-  W_op_outT =
-      Teuchos::nonnull(out_args.get_W_op()) ?
-          ConverterT::getTpetraOperator(out_args.get_W_op()) :
-          Teuchos::null;
-
-  // Cast W to a CrsMatrix, throw an exception if this fails
-  Teuchos::RCP<Tpetra_CrsMatrix> const
-  W_op_out_crsT =
-      Teuchos::nonnull(W_op_outT) ?
-          Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
-          Teuchos::null;
+  W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
+      ConverterT::getTpetraOperator(out_args.get_W_op()) :
+      Teuchos::null;
 
   //
   // Compute the functions
   //
   // W matrix
   // Create Teuchos::Array of individual models' W matrices
-  Teuchos::RCP<Tpetra_Operator> const
-  W_op_outT_temp;
-
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
-  W_op_outs_crsT;
-
-  W_op_outs_crsT.resize(num_models_);
+  W_op_outs_crsT(num_models_);
 
   //get each of the models' W matrices
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Operator> const
     W_op_outT_temp =
-        Teuchos::nonnull(solver_outargs_[m].get_W_op()) ?
-            ConverterT::getTpetraOperator(out_args.get_W_op()) :
+        Teuchos::nonnull(models_[m]->create_W_op()) ?
+            ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
             Teuchos::null;
 
     W_op_outs_crsT[m] =
@@ -942,17 +872,11 @@ evalModelImpl(
   }
 
   Teuchos::Array<bool>
-  fs_already_computed;
-
-  fs_already_computed.resize(num_models_);
-
-  for (int m = 0; m < num_models_; ++m) {
-    fs_already_computed[m] = false;
-  }
+  fs_already_computed(num_models_, false);
 
   // W matrix for each individual model
   for (int m = 0; m < num_models_; ++m) {
-    if (Teuchos::nonnull(W_op_outs_crsT[m])) {
+    if (Teuchos::is_null(W_op_outs_crsT[m]) == false) {
       //computeGlobalJacobianT sets fTs_out[m] and W_op_outs_crsT[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
@@ -963,78 +887,80 @@ evalModelImpl(
     }
   }
 
-  //FIXME: create coupled W matrix from array of model W matrices
-  Teuchos::RCP<LCM::Schwarz_CoupledJacobian>
-  W_op_out_coupled =
+  // FIXME: create coupled W matrix from array of model W matrices
+  if (W_op_outT != Teuchos::null) {
+    Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
       Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
-
-  W_op_out_coupled->initialize(W_op_outs_crsT);
+    W_op_out_coupled->initialize(W_op_outs_crsT);
+  }
 
   // Create fT_out from fTs_out[m]
   LO
   counter_local = 0;
 
   //get nonconst view of fT_out
-  Teuchos::ArrayRCP<ST>
-  fT_out_nonconstView = fT_out->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_out_nonconst_view = fT_out->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
     //get const view of mth x_init & x_dot_init vector
-    Teuchos::ArrayRCP<ST>
-    fT_out_nonconstView_m = fTs_out[m]->get1dViewNonConst();
+    if (fTs_out[m] != Teuchos::null) {
+      Teuchos::ArrayRCP<ST>
+      fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
 
-    for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
-      fT_out_nonconstView[counter_local + i] = fT_out_nonconstView_m[i];
+      for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
+        fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
+      }
+      counter_local += fTs_out[m]->getLocalLength();
     }
-    counter_local += fTs_out[m]->getLocalLength();
   }
 
-  //W prec matrix
-  //FIXME: eventually will need to hook in Teko.
+  // W prec matrix
+  // FIXME: eventually will need to hook in Teko.
 
-  //FIXME: in the following, need to check logic involving looping over num_models_ -- here we're
-  //not creating arrays to store things in for each model.
-  //TODO: understand better how evalModel is called and how g and f parameter arrays are set
-  // df/dp
+  // FIXME: in the following, need to check logic involving looping over
+  // num_models_ -- here we're not creating arrays to store things in
+  // for each model.
+  // TODO: understand better how evalModel is called and how g and f parameter
+  // arrays are set in df/dp
+
+
   for (int l = 0; l < out_args.Np(); ++l) {
-    int m_num;
     for (int m = 0; m < num_models_; ++m) {
-      int index;
-      bool const
-      in_range = l >= num_params_partial_sum_[m - 1] &&
-          l < num_params_partial_sum_[m];
 
-      if (l < num_params_partial_sum_[0]) { //m = 0 case
-        index = l;
-        m_num = 0;
-      }
-      else if (in_range == true) {
-        index = l - num_params_partial_sum_[m - 1];
-        m_num = m;
-      }
+      int const
+      lo = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+      int const
+      hi = num_params_partial_sum_[m];
+
+      bool const
+      in_range = lo <= l && l < hi;
+
+      if (in_range == false) continue;
+
+      int const
+      index = l - lo;
 
       Teuchos::RCP<Thyra::MultiVectorBase<ST> > const
-      dfdp_out = solver_outargs_[m_num].get_DfDp(index).getMultiVector();
+      dfdp_out = solver_outargs_[m].get_DfDp(index).getMultiVector();
 
       Teuchos::RCP<Tpetra_MultiVector> const
-      dfdp_outT =
-          Teuchos::nonnull(dfdp_out) ?
-              ConverterT::getTpetraMultiVector(dfdp_out) :
-              Teuchos::null;
+      dfdp_outT = Teuchos::nonnull(dfdp_out) ?
+          ConverterT::getTpetraMultiVector(dfdp_out) :
+          Teuchos::null;
 
       if (Teuchos::nonnull(dfdp_outT)) {
         Teuchos::RCP<ParamVec> const
-        p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m_num][index]);
+        p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][index]);
 
-        //computeGlobalTangentT sets last 3 arguments: fTs_out[m_num] and dfdp_outT
+        // computeGlobalTangentT sets last 3 arguments:
+        // fTs_out[m_num] and dfdp_outT
         apps_[m]->computeGlobalTangentT(
-            0.0, 0.0, 0.0, curr_time, false,
-            x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-            sacado_param_vecs_[m_num], p_vec.get(),
-            NULL, NULL, NULL, NULL, fTs_out[m_num].get(), NULL,
-            dfdp_outT.get());
+            0.0, 0.0, 0.0, curr_time, false, x_dotTs[m].get(), x_dotdotT.get(),
+            *xTs[m], sacado_param_vecs_[m], p_vec.get(),
+            NULL, NULL, NULL, NULL, fTs_out[m].get(), NULL, dfdp_outT.get());
 
-        fs_already_computed[m_num] = true;
+        fs_already_computed[m] = true;
       }
     }
   }
@@ -1062,26 +988,21 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::Derivative<ST> const
     dgdxdotdotT_out;
 
-    int
-    m_num;
-
     for (int m = 0; m < num_models_; ++m) {
 
-      int
-      index;
+      int const
+      lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
+
+      int const
+      hi = num_responses_partial_sum_[m];
 
       bool const
-      in_range = j >= num_responses_partial_sum_[m - 1] &&
-          j < num_responses_partial_sum_[m];
+      in_range = lo <= j && j < hi;
 
-      if (j < num_responses_partial_sum_[0]) { //m = 0 case
-        index = j;
-        m_num = 0;
-      }
-      else if (in_range == true) {
-        index = j - num_responses_partial_sum_[m - 1];
-        m_num = m;
-      }
+      if (in_range == false) continue;
+
+      int const
+      index = j - lo;
 
       // dg/dx, dg/dxdot
       if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
@@ -1089,10 +1010,9 @@ evalModelImpl(
         dummy_derivT;
 
         //sets gT_out
-        apps_[m_num]->evaluateResponseDerivativeT(
-            index, curr_time,
-            x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-            sacado_param_vecs_[m_num], NULL,
+        apps_[m]->evaluateResponseDerivativeT(
+            index, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
+            *xTs[m], sacado_param_vecs_[m], NULL,
             gT_out.get(), dgdxT_out,
             dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
 
@@ -1107,51 +1027,48 @@ evalModelImpl(
         dgdp_out = out_args.get_DgDp(j, l).getMultiVector();
 
         Teuchos::RCP<Tpetra_MultiVector> const
-        dgdpT_out =
-            Teuchos::nonnull(dgdp_out) ?
+        dgdpT_out = Teuchos::nonnull(dgdp_out) ?
                 ConverterT::getTpetraMultiVector(dgdp_out) :
                 Teuchos::null;
 
-        int
-        index2;
+        int const
+        min = m > 0 ? num_params_partial_sum_[m - 1] : 0;
+
+        int const
+        max = num_params_partial_sum_[m];
 
         bool const
-        in_range = l >= num_params_partial_sum_[m_num - 1] &&
-            l < num_params_partial_sum_[m_num];
+        l_is_in_range = min <= l && l < max;
 
-        if (l < num_params_partial_sum_[0]) { //m = 0 case
-          index2 = l;
-        }
-        else if (in_range == true) {
-          index2 = l - num_params_partial_sum_[m_num - 1];
-        }
+        if (l_is_in_range == false) continue;
 
-        if (Teuchos::nonnull(dgdpT_out)) {
+        int const
+        k = l - min;
+
+        if (Teuchos::is_null(dgdpT_out) == false) {
 
           Teuchos::RCP<ParamVec> const
-          p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m_num][index2]);
+          p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][k]);
 
           //sets gT_out, dgdpT_out
-          apps_[m_num]->evaluateResponseTangentT(
-              index, alpha, beta, omega, curr_time, false,
-              x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-              sacado_param_vecs_[m_num], p_vec.get(),
+          apps_[m]->evaluateResponseTangentT(
+              k, alpha, beta, omega, curr_time, false,
+              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+              sacado_param_vecs_[m], p_vec.get(),
               NULL, NULL, NULL, NULL, gT_out.get(), NULL,
               dgdpT_out.get());
           gT_out = Teuchos::null;
         }
       }
 
-      if (Teuchos::nonnull(gT_out)) {
+      if (Teuchos::is_null(gT_out) == false) {
         //sets gT_out
-        apps_[m_num]->evaluateResponseT(
-            index, curr_time,
-            x_dotTs[m_num].get(), x_dotdotT.get(), *xTs[m_num],
-            sacado_param_vecs_[m_num], *gT_out);
+        apps_[m]->evaluateResponseT(
+            index, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
+            *xTs[m], sacado_param_vecs_[m], *gT_out);
       }
     }
   }
-
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -1189,19 +1106,18 @@ LCM::SchwarzMultiscale::
 getValidAppParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  validPL =
-      Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
+  list = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));
 
-  validPL->sublist("Problem", false, "Problem sublist");
-  validPL->sublist("Debug Output", false, "Debug Output sublist");
-  validPL->sublist("Discretization", false, "Discretization sublist");
-  validPL->sublist("Quadrature", false, "Quadrature sublist");
-  validPL->sublist("Regression Results", false, "Regression Results sublist");
-  validPL->sublist("VTK", false, "DEPRECATED  VTK sublist");
-  validPL->sublist("Piro", false, "Piro sublist");
-  validPL->sublist("Coupled System", false, "Coupled system sublist");
+  list->sublist("Problem", false, "Problem sublist");
+  list->sublist("Debug Output", false, "Debug Output sublist");
+  list->sublist("Discretization", false, "Discretization sublist");
+  list->sublist("Quadrature", false, "Quadrature sublist");
+  list->sublist("Regression Results", false, "Regression Results sublist");
+  list->sublist("VTK", false, "DEPRECATED  VTK sublist");
+  list->sublist("Piro", false, "Piro sublist");
+  list->sublist("Coupled System", false, "Coupled system sublist");
 
-  return validPL;
+  return list;
 }
 
 //Copied from QCAD::CoupledPoissonSchrodinger
@@ -1211,21 +1127,20 @@ LCM::SchwarzMultiscale::
 getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList>
-  validPL =
-      Teuchos::createParameterList("ValidCoupledSchwarzProblemParams");
+  list = Teuchos::createParameterList("ValidCoupledSchwarzProblemParams");
 
-  validPL->set<std::string>("Name", "", "String to designate Problem Class");
+  list->set<std::string>("Name", "", "String to designate Problem Class");
 
-  validPL->set<int>(
+  list->set<int>(
       "Phalanx Graph Visualization Detail",
       0,
       "Flag to select output of Phalanx Graph and level of detail");
 
   //FIXME: anything else to validate?
-  validPL->set<std::string>(
+  list->set<std::string>(
       "Solution Method",
       "Steady",
       "Flag for Steady, Transient, or Continuation");
 
-  return validPL;
+  return list;
 }

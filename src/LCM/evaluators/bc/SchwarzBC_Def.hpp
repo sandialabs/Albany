@@ -52,8 +52,11 @@ computeBCs(
   Albany::STKDiscretization *
   stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
 
-  Teuchos::RCP<const Tpetra_Vector> solutionT = stk_discretization->getSolutionFieldT();
-  Teuchos::ArrayRCP<const ST> solutionT_constView = solutionT->get1dView();
+  Teuchos::RCP<const Tpetra_Vector>
+  solution = stk_discretization->getSolutionFieldT();
+
+  Teuchos::ArrayRCP<const ST>
+  solution_view = solution->get1dView();
 
   Albany::GenericSTKMeshStruct &
   gms = dynamic_cast<Albany::GenericSTKMeshStruct &>(
@@ -167,7 +170,7 @@ computeBCs(
         element_vertices[node].fill(pcoord);
 
         for (size_t i = 0; i < dimension; ++i) {
-          element_solution[node](i) = solutionT_constView[dimension * node_id + i];
+          element_solution[node](i) = solution_view[dimension * node_id + i];
         }
       }
 

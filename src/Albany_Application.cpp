@@ -730,7 +730,6 @@ computeGlobalResidualImplT(
     const Teuchos::RCP<Tpetra_Vector>& fT)
 {
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Residual");
-
   postRegSetup("Residual");
 
   // Load connectivity map and coordinates
@@ -927,36 +926,6 @@ computeGlobalResidualT(const double current_time,
       Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT),
       p,
       Teuchos::rcpFromRef(fT));
-  
-  //Debut output
-  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
-    char name[100];  //create string for file name
-    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
-       sprintf(name, "rhs%i.mm", countRes);
-       Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
-    }
-    else {
-      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
-      }
-    }
-  }
-  Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));  
-  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { //cout residual time it arises
-       std::cout << "Global Residual #" << countRes << ": " << std::endl;
-       fT.describe(*out, Teuchos::VERB_EXTREME);
-    }
-    else {
-      if (countRes == writeToCoutRes) { //cout residual only at requested count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        fT.describe(*out, Teuchos::VERB_EXTREME);
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes++;  //increment residual counter
 }
 
 void
@@ -1224,6 +1193,34 @@ computeGlobalJacobianT(const double alpha,
   }
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+       sprintf(name, "rhs%i.mm", countRes);
+       Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+       std::cout << "Global Residual #" << countRes << ": " << std::endl;
+       fT->describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        fT->describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
+    countRes++;  //increment residual counter
 }
 
 #if ALBANY_EPETRA

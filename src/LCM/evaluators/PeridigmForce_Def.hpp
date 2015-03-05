@@ -9,6 +9,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Epetra_Vector.h"
+#include "PHAL_Utilities.hpp"
 
 namespace LCM {
 
@@ -18,7 +19,6 @@ PeridigmForceBase<EvalT, Traits>::
 PeridigmForceBase(Teuchos::ParameterList& p,
                   const Teuchos::RCP<Albany::Layouts>& dataLayout) :
   density              (p.get<RealType>    ("Density", 1.0)),
-  sphereVolume         (p.get<std::string> ("Sphere Volume Name"),         dataLayout->node_scalar),
   referenceCoordinates (p.get<std::string> ("Reference Coordinates Name"), dataLayout->vertices_vector),
   currentCoordinates   (p.get<std::string> ("Current Coordinates Name"),   dataLayout->node_vector),
   force                (p.get<std::string> ("Force Name"),                 dataLayout->node_vector),
@@ -30,7 +30,6 @@ PeridigmForceBase(Teuchos::ParameterList& p,
   numQPs  = 1;
   numDims = 3;
 
-  this->addDependentField(sphereVolume);
   this->addDependentField(referenceCoordinates);
   this->addDependentField(currentCoordinates);
 
@@ -60,7 +59,7 @@ PeridigmForceBase(Teuchos::ParameterList& p,
     else
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** PeridigmForceBase::PeridigmForceBase() invalid output variable type.");
 
-    this->outputFields[albanyName] = PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim>(albanyName, layout);
+    this->outputFields[albanyName] = PHX::MDField<ScalarT>(albanyName, layout);
     this->addEvaluatedField( this->outputFields[albanyName] );
   }
 
@@ -73,7 +72,6 @@ void PeridigmForceBase<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(sphereVolume, fm);
   this->utils.setFieldData(referenceCoordinates, fm);
   this->utils.setFieldData(currentCoordinates, fm);
   this->utils.setFieldData(force, fm);
@@ -125,6 +123,7 @@ evaluateFields(typename Traits::EvalData workset)
     const Epetra_Vector& data = *(peridigmManager.getBlockData(blockName, peridigmName));
     const Epetra_BlockMap& map = data.Map();
 
+#if 0
     for(int cell = 0; cell < workset.numCells; ++cell){
       globalId = wsElNodeID[cell][0];
       peridigmLocalId = map.LID(globalId);
@@ -132,6 +131,18 @@ evaluateFields(typename Traits::EvalData workset)
       for(int j=0 ; j<length ; ++j)
         this->outputFields[albanyName](cell, j) = data[length*peridigmLocalId + j];
     }
+#else
+    PHAL::MDFieldIterator<PHAL::AlbanyTraits::Residual::ScalarT>
+      it(this->outputFields[albanyName]);
+    for (int cell = 0; cell < workset.numCells; ++cell) {
+      globalId = wsElNodeID[cell][0];
+      peridigmLocalId = map.LID(globalId);
+      for (int j = 0; j < length; ++j) {
+        *it = data[length*peridigmLocalId + j];
+        ++it;
+      }
+    }
+#endif
   }
 }
 

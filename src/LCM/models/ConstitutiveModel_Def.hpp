@@ -21,7 +21,10 @@ ConstitutiveModel(Teuchos::ParameterList* p,
     compute_tangent_(false),
     need_integration_pt_locations_(false),
     have_temperature_(false),
-    have_damage_(false)
+    have_damage_(false),
+    have_total_concentration_(false),
+    have_total_bubble_density_(false),
+    have_bubble_volume_fraction_(false)
 {
   // extract number of integration points and dimensions
   std::vector<PHX::DataLayout::size_type> dims;
@@ -44,6 +47,24 @@ ConstitutiveModel(Teuchos::ParameterList* p,
   if (p->isType<bool>("Have Damage")) {
     if (p->get<bool>("Have Damage")) {
       have_damage_ = true;
+    }
+  }
+
+  if (p->isType<bool>("Have Total Concentration")) {
+    if (p->get<bool>("Have Total Concentration")) {
+      have_total_concentration_ = true;
+    }
+  }
+
+  if (p->isType<bool>("Have Total Bubble Density")) {
+    if (p->get<bool>("Have Total Bubble Density")) {
+      have_total_bubble_density_ = true;
+    }
+  }
+
+  if (p->isType<bool>("Have Bubble Volume Fraction")) {
+    if (p->get<bool>("Have Bubble Volume Fraction")) {
+      have_bubble_volume_fraction_ = true;
     }
   }
 }

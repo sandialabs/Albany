@@ -237,6 +237,17 @@ ELSE()
   SET(ALBANY_IFPACK2 FALSE)
 ENDIF()
 
+# set optional dependency on Teko, for preconditioning
+LIST(FIND Trilinos_PACKAGE_LIST Teko Teko_List_ID)
+IF (Teko_List_ID GREATER -1)
+  ADD_DEFINITIONS(-DALBANY_TEKO)
+  MESSAGE("-- Looking for Teko:            Found, compiling with -DALBANY_TEKO")
+  SET(ALBANY_TEKO TRUE)
+ELSE()
+  MESSAGE("-- Looking for Teko:            NOT found.")
+  SET(ALBANY_TEKO FALSE)
+ENDIF()
+
 # set optional dependency on MueLu, for preconditioning
 LIST(FIND Trilinos_PACKAGE_LIST MueLu MueLu_List_ID)
 IF (MueLu_List_ID GREATER -1)
@@ -665,7 +676,7 @@ ENDIF()
 
 # Set optional build of StochasticGalerkin and MultiPoint types
 # These are required for embedded UQ, but slow compilation considerably
-OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" ON)
+OPTION(ENABLE_SG_MP "Flag to turn on SG_MP StochasticGalerkin and MP Code" OFF)
 IF (ENABLE_SG_MP)
   ADD_DEFINITIONS(-DALBANY_SG_MP)
   MESSAGE("-- SG_MP     is Enabled, compiling with -DALBANY_SG_MP")
