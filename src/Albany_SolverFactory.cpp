@@ -38,7 +38,9 @@
 #include "Stratimikos_MueluTpetraHelpers.hpp"
 #endif /* ALBANY_MUELU */
 
+#ifdef ALBANY_TEKO
 #include "Teko_StratimikosFactory.hpp"
+#endif
 
 #ifdef ALBANY_QCAD
 #ifdef ALBANY_EPETRA
