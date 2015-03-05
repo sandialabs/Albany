@@ -93,6 +93,16 @@ public:
   GatherSolution(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
+
+  Teuchos::ArrayRCP<const ST> xT_constView;
+  Teuchos::ArrayRCP<const ST> xdotT_constView;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  typedef typename PHX::Device execution_space;
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const int &cell) const;
+#endif
 };
 
 // **************************************************************
@@ -107,6 +117,35 @@ public:
   GatherSolution(const Teuchos::ParameterList& p,
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
+
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Teuchos::ArrayRCP<const ST> xT_constView;
+  Teuchos::ArrayRCP<const ST> xdotT_constView;
+
+  bool ignore_residual;
+  double j_coeff, m_coeff;
+
+  struct GatherSolution_Tag{};
+  struct GatherSolution_transientTerms_Tag{};
+  
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+  typedef typename PHX::Device execution_space;
+  Kokkos::View<int***, PHX::Device> wsID_kokkos;
+
+  typedef Kokkos::RangePolicy<ExecutionSpace,GatherSolution_Tag> GatherSolution_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace,GatherSolution_transientTerms_Tag> GatherSolution_transientTerms_Policy; 
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GatherSolution_Tag &tag, const int &cell) const;
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const GatherSolution_transientTerms_Tag &tag, const int &cell) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void gather_solution(const int &cell, const int &node, const int &neq, const int &num_dof, const int &firstunk) const;
+  KOKKOS_INLINE_FUNCTION
+  void gather_solution_transientTerms(const int &cell, const int &node, const int &neq, const int &num_dof, const int &firstunk) const;
+
+#endif
 };
 
 
