@@ -24,7 +24,7 @@
 namespace LCM {
 
 //
-// \brief Torsion BC Dirichlet evaluator
+// \brief Schwarz for models BC Dirichlet evaluator
 //
 
 //
@@ -55,15 +55,15 @@ public:
   getDiscretization() const {return disc_;}
 
   void
-  setCoupledBlock(std::string const & cb) {coupled_block_ = cb;}
+  setCoupledModel(std::string const & cm) {coupled_model_ = cm;}
 
   std::string
-  getCoupledBlock() const {return coupled_block_;}
+  getCoupledModel() const {return coupled_model_;}
 
 protected:
 
   std::string
-  coupled_block_;
+  coupled_model_;
 
   Discretization
   disc_;

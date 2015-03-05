@@ -26,7 +26,7 @@
 namespace LCM {
 
 //
-// \brief Torsion BC Dirichlet evaluator
+// \brief Schwarz for blocks BC Dirichlet evaluator
 //
 
 //

@@ -24,7 +24,7 @@ template <typename EvalT, typename Traits>
 SchwarzModelsBC_Base<EvalT, Traits>::
 SchwarzModelsBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_block_(p.get<std::string>("Coupled Block")),
+  coupled_model_(p.get<std::string>("Coupled Block")),
   disc_(Teuchos::null)
 {
 }
@@ -50,8 +50,11 @@ computeBCs(
   Albany::STKDiscretization *
   stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
 
-  Teuchos::RCP<const Tpetra_Vector> solutionT = stk_discretization->getSolutionFieldT();
-  Teuchos::ArrayRCP<const ST> solutionT_constView = solutionT->get1dView();
+  Teuchos::RCP<const Tpetra_Vector>
+  solution = stk_discretization->getSolutionFieldT();
+
+  Teuchos::ArrayRCP<const ST>
+  solution_view = solution->get1dView();
 
   Albany::GenericSTKMeshStruct &
   gms = dynamic_cast<Albany::GenericSTKMeshStruct &>(
@@ -62,7 +65,7 @@ computeBCs(
   coordinates = stk_discretization->getCoordinates();
 
   std::string const
-  coupled_block = this->getCoupledBlock();
+  coupled_model = this->getCoupledModel();
 
   Albany::WorksetArray<std::string>::type const &
   ws_eb_names = disc->getWsEBNames();
@@ -76,7 +79,7 @@ computeBCs(
   block_name_2_index = gms.ebNameToIndex;
 
   std::map<std::string, int>::const_iterator
-  it = block_name_2_index.find(coupled_block);
+  it = block_name_2_index.find(coupled_model);
 
   assert(it != block_name_2_index.end());
 
@@ -147,7 +150,7 @@ computeBCs(
     std::string const &
     element_block = ws_eb_names[workset];
 
-    if (element_block != coupled_block) continue;
+    if (element_block != coupled_model) continue;
 
     size_t const
     elements_per_workset = ws_el_2_nd[workset].size();
@@ -165,7 +168,7 @@ computeBCs(
         element_vertices[node].fill(pcoord);
 
         for (size_t i = 0; i < dimension; ++i) {
-          element_solution[node](i) = solutionT_constView[dimension * node_id + i];
+          element_solution[node](i) = solution_view[dimension * node_id + i];
         }
       }
 
@@ -286,7 +289,7 @@ computeBCs(
   value(dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to block: " << coupled_block << '\n';
+  std::cout << "Coupling to block: " << coupled_model << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
   for (size_t i = 0; i < vertex_count; ++i) {
