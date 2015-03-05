@@ -849,12 +849,6 @@ evalModelImpl(
       ConverterT::getTpetraOperator(out_args.get_W_op()) :
       Teuchos::null;
 
-  // Cast W to a CrsMatrix, throw an exception if this fails
-  Teuchos::RCP<Tpetra_CrsMatrix> const
-  W_op_out_crsT = Teuchos::nonnull(W_op_outT) ?
-      Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
-      Teuchos::null;
-
   //
   // Compute the functions
   //
@@ -894,7 +888,7 @@ evalModelImpl(
   }
 
   // FIXME: create coupled W matrix from array of model W matrices
-  if (W_op_outT != Teuchos::null) { 
+  if (W_op_outT != Teuchos::null) {
     Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
       Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
     W_op_out_coupled->initialize(W_op_outs_crsT);

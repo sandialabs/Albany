@@ -4,10 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
-#if !defined(LCM_SchwarzBC_hpp)
-#define LCM_SchwarzBC_hpp
+#if !defined(LCM_SchwarzModelsBC_hpp)
+#define LCM_SchwarzModelsBC_hpp
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -26,21 +24,21 @@
 namespace LCM {
 
 //
-// \brief Schwarz for blocks BC Dirichlet evaluator
+// \brief Schwarz for models BC Dirichlet evaluator
 //
 
 //
 // Specialization of the DirichletBase class
 //
-template<typename EvalT, typename Traits> class SchwarzBC;
+template<typename EvalT, typename Traits> class SchwarzModelsBC;
 
 template <typename EvalT, typename Traits>
-class SchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
+class SchwarzModelsBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
 
-  SchwarzBC_Base(Teuchos::ParameterList & p);
+  SchwarzModelsBC_Base(Teuchos::ParameterList & p);
 
   void
   computeBCs(
@@ -57,15 +55,15 @@ public:
   getDiscretization() const {return disc_;}
 
   void
-  setCoupledBlock(std::string const & cb) {coupled_block_ = cb;}
+  setCoupledModel(std::string const & cm) {coupled_model_ = cm;}
 
   std::string
-  getCoupledBlock() const {return coupled_block_;}
+  getCoupledModel() const {return coupled_model_;}
 
 protected:
 
   std::string
-  coupled_block_;
+  coupled_model_;
 
   Discretization
   disc_;
@@ -75,10 +73,10 @@ protected:
 // Residual
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::Residual,Traits>
-  : public SchwarzBC_Base<PHAL::AlbanyTraits::Residual, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::Residual,Traits>
+  : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::Residual, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -87,10 +85,10 @@ public:
 // Jacobian
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::Jacobian,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::Jacobian, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::Jacobian,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::Jacobian, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::Jacobian::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -99,10 +97,10 @@ public:
 // Tangent
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::Tangent,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::Tangent, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::Tangent,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::Tangent, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::Tangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -111,10 +109,10 @@ public:
 // Distributed Parameter Derivative
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::DistParamDeriv,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::DistParamDeriv::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -124,10 +122,10 @@ public:
 //
 #ifdef ALBANY_SG_MP
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::SGResidual,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::SGResidual,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::SGResidual, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::SGResidual::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -136,10 +134,10 @@ public:
 // Stochastic Galerkin Jacobian
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::SGJacobian,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::SGJacobian,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::SGJacobian, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::SGJacobian::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -148,10 +146,10 @@ public:
 // Stochastic Galerkin Tangent
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::SGTangent,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::SGTangent,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::SGTangent, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::SGTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -160,10 +158,10 @@ public:
 // Multi-point Residual
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::MPResidual,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::MPResidual,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::MPResidual, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::MPResidual::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -172,10 +170,10 @@ public:
 // Multi-point Jacobian
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::MPJacobian,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::MPJacobian,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::MPJacobian, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::MPJacobian::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -184,10 +182,10 @@ public:
 // Multi-point Tangent
 //
 template<typename Traits>
-class SchwarzBC<PHAL::AlbanyTraits::MPTangent,Traits>
-   : public SchwarzBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
+class SchwarzModelsBC<PHAL::AlbanyTraits::MPTangent,Traits>
+   : public SchwarzModelsBC_Base<PHAL::AlbanyTraits::MPTangent, Traits> {
 public:
-  SchwarzBC(Teuchos::ParameterList & p);
+  SchwarzModelsBC(Teuchos::ParameterList & p);
   typedef typename PHAL::AlbanyTraits::MPTangent::ScalarT ScalarT;
   void evaluateFields(typename Traits::EvalData d);
 };
@@ -196,4 +194,4 @@ public:
 
 }
 
-#endif // LCM_SchwarzBC_hpp
+#endif // LCM_SchwarzModelsBC_hpp
