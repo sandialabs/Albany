@@ -185,7 +185,9 @@ evaluateFields(typename Traits::EvalData workset)
 
           ScalarT DMD2CL  = +cos(RLAT0)*cos(RLON-TMSHFT-RLON0)*TMPRY;
 
-          ScalarT PSIB    = (C == -1.0) ? 0.0 : ALFA*exp(-SIGMA*((1.0-C )/(1.0+C )));
+          ScalarT PSIB; 
+          if (C == -1) PSIB = 0.0; 
+          else PSIB = ALFA*exp(-SIGMA*((1.0-C )/(1.0+C )));
 
           ScalarT TMP1    = 2.0*SIGMA*PSIB /((1.0 + C )*(1.0 + C));
         
