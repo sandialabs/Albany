@@ -197,14 +197,13 @@ evaluateFields(typename Traits::EvalData workset)
   typedef Intrepid::FunctionSpaceTools FST; 
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+  // Initialize residual to 0.0
   Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
+
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-      Residual(cell,node,0)=0.0;
-      Residual(cell,node,1)=0.0;
-      }
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         ScalarT mu = muFELIX(cell,qp);
         ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
