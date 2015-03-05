@@ -196,9 +196,8 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST; 
 
-//  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
