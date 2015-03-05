@@ -903,7 +903,6 @@ evalModelImpl(
   if (fT_out != Teuchos::null)  fT_out->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
-    //get const view of mth x_init & x_dot_init vector
     if (fTs_out[m] != Teuchos::null) {
       Teuchos::ArrayRCP<ST>
       fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
@@ -915,8 +914,22 @@ evalModelImpl(
     }
   }
 
-  // W prec matrix
-  // FIXME: eventually will need to hook in Teko.
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug
+  if (fTs_out[0] != Teuchos::null)
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f0.mm",
+      *(fTs_out[0]));
+  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) 
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f1.mm",
+      *(fTs_out[1]));
+  if (fT_out != Teuchos::null) 
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f_coupled.mm",
+      *fT_out);
+#endif
+
 
   // FIXME: in the following, need to check logic involving looping over
   // num_models_ -- here we're not creating arrays to store things in
@@ -966,7 +979,6 @@ evalModelImpl(
     }
   }
 
-  //FIXME: create fT_out from fTs_out
 
   // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {
