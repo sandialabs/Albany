@@ -66,9 +66,10 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint> M_operator; // This evaluator creates M and D, not sure what they look like yet
                                                    // so put in a placeholder
 
-  const Teuchos::Array<std::string> masterSideNames;
-  const Teuchos::Array<std::string> slaveSideNames;
-  const Teuchos::Array<std::string> sideSetIDs;
+  const Teuchos::Array<std::string> masterSideNames;   // master (non-mortar) side names
+  const Teuchos::Array<std::string> slaveSideNames;    // slave (mortar) side names
+  const Teuchos::Array<std::string> sideSetIDs;        // sideset ids
+  const Teuchos::Array<std::string> constrainedFields; // names of fields to be constrained
   const Albany::MeshSpecsStruct* meshSpecs;
   Teuchos::Array<int> offset;
 
