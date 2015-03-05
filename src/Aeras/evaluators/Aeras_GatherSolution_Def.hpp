@@ -382,7 +382,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::RCP<const Tpetra_Vector>    xT = workset.xT;
   const Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   //get const view of xT and xdotT   
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
