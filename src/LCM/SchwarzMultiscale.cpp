@@ -899,7 +899,8 @@ evalModelImpl(
   counter_local = 0;
 
   //get nonconst view of fT_out
-  Teuchos::ArrayRCP<ST> fT_out_nonconst_view = fT_out->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_out_nonconst_view; 
+  if (fT_out != Teuchos::null)  fT_out->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
     //get const view of mth x_init & x_dot_init vector
