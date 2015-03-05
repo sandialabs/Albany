@@ -135,7 +135,7 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Teko"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Teko">
 		   <Parameter name="Inverse Type" type="string" value="Belos"/>

@@ -660,9 +660,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
 #endif /* ALBANY_MUELU */
 
-//FIXME?  put ALBANY_TEKO ifdef? 
+#ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
-  
+#endif
     linearSolverBuilder.setParameterList(stratList);
 
     const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
@@ -737,8 +737,9 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 #endif
 #endif /* ALBANY_MUELU */
    
-//FIXME? Add ALBANY_TEKO ifdef  
+#ifdef ALBANY_TEKO
     Teko::addTekoToStratimikosBuilder(linearSolverBuilder, "Teko");
+#endif
 
     linearSolverBuilder.setParameterList(stratList);
 
