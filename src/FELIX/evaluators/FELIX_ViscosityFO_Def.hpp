@@ -128,7 +128,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
 
   this->addDependentField(Ugrad);
-  this->addDependentField(coordVec);
+  if (visc_type == EXPTRIG) this->addDependentField(coordVec);
   this->addEvaluatedField(mu);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -153,7 +153,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(mu,fm); 
-  this->utils.setFieldData(coordVec,fm); 
+  if (visc_type == EXPTRIG) this->utils.setFieldData(coordVec,fm); 
   if (flowRate_type == TEMPERATUREBASED)
 	  this->utils.setFieldData(temperature,fm);
   if (flowRate_type == FROMFILE || flowRate_type == FROMCISM)
