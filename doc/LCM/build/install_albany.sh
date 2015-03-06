@@ -67,7 +67,7 @@ for target in trilinos albany; do
  fi
 done
 
-if [ -e Albany/src/Albany ]; then
+if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
   echo "=== build successful ==="
 else
   echo "!!! unsuccessful build, see logs !!!"
