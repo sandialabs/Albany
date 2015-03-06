@@ -63,6 +63,7 @@ namespace ATO {
     Albany::StateManager* pStateMgr;
 
     Teuchos::RCP<Topology> topology;
+    int functionIndex;
 
   };
 
@@ -71,6 +72,7 @@ class ModalObjective
    : public ModalObjectiveBase<EvalT, Traits> {
 
    using ModalObjectiveBase<EvalT,Traits>::topology;
+   using ModalObjectiveBase<EvalT,Traits>::functionIndex;
    using ModalObjectiveBase<EvalT,Traits>::dFdpName;
    using ModalObjectiveBase<EvalT,Traits>::FName;
    using ModalObjectiveBase<EvalT,Traits>::className;
@@ -106,6 +108,7 @@ class ModalObjective<PHAL::AlbanyTraits::Residual,Traits>
    : public ModalObjectiveBase<PHAL::AlbanyTraits::Residual, Traits> {
 
    using ModalObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topology;
+   using ModalObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::functionIndex;
    using ModalObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpName;
    using ModalObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::FName;
    using ModalObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::className;

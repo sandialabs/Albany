@@ -15,7 +15,7 @@ ATO::OptimizationProblem::
 OptimizationProblem( const Teuchos::RCP<Teuchos::ParameterList>& _params,
                      const Teuchos::RCP<ParamLib>& _paramLib,
                      const int _numDim) :
-Albany::AbstractProblem(_params, _paramLib, _numDim) {}
+Albany::AbstractProblem(_params, _paramLib, _numDim){}
 /******************************************************************************/
 
 
@@ -63,99 +63,112 @@ ComputeVolume(const double* p, double& v, double* dvdp)
   int numWorksets = wsElNodeID.size();
 
 
-  if( topology->getCentering() == "Element" ){
-    int wsOffset = 0;
-    for(int ws=0; ws<numWorksets; ws++){
-  
-      int physIndex = wsPhysIndex[ws];
-  
-      int numCells = weighted_measure[ws].dimension(0);
-      int numQPs   = weighted_measure[ws].dimension(1);
-      
-      for(int cell=0; cell<numCells; cell++){
-        double elVol = 0.0;
-        for(int qp=0; qp<numQPs; qp++)
-          elVol += weighted_measure[ws](cell,qp);
-        localv += elVol*p[wsOffset+cell];
-      }
-      wsOffset += numCells;
-    }
-    comm->SumAll(&localv, &v, 1);
+  for(int ws=0; ws<numWorksets; ws++){
 
-    if( dvdp != NULL ){
-      int wsOffset = 0;
-      for(int ws=0; ws<numWorksets; ws++){
+    int physIndex = wsPhysIndex[ws];
+    int numNodes  = basisAtQPs[physIndex].dimension(0);
+    int numCells  = weighted_measure[ws].dimension(0);
+    int numQPs    = weighted_measure[ws].dimension(1);
     
-        int physIndex = wsPhysIndex[ws];
-    
-        int numCells = weighted_measure[ws].dimension(0);
-        int numQPs   = weighted_measure[ws].dimension(1);
-        
-        for(int cell=0; cell<numCells; cell++){
-          double elVol = 0.0;
-          for(int qp=0; qp<numQPs; qp++)
-            elVol += weighted_measure[ws](cell,qp);
-          dvdp[wsOffset+cell] = elVol;
+    for(int cell=0; cell<numCells; cell++){
+      double elVol = 0.0;
+      for(int qp=0; qp<numQPs; qp++){
+        double pVal = 0.0;
+        for(int node=0; node<numNodes; node++){
+          int gid = wsElNodeID[ws][cell][node];
+          int lid = overlapNodeMap->LID(gid);
+          pVal += p[lid]*basisAtQPs[physIndex](node,qp);
         }
-        wsOffset += numCells;
+        elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
       }
+      localv += elVol;
     }
-  } else 
-  if( topology->getCentering() == "Node" ){
-    Teuchos::RCP<const Epetra_BlockMap>
-      overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
+  }
+  comm->SumAll(&localv, &v, 1);
+
+  if( dvdp != NULL ){
+    localVec->PutScalar(0.0);
+    overlapVec->PutScalar(0.0);
+    double* odvdp; overlapVec->ExtractView(&odvdp);
+
     for(int ws=0; ws<numWorksets; ws++){
-  
+
       int physIndex = wsPhysIndex[ws];
       int numNodes  = basisAtQPs[physIndex].dimension(0);
       int numCells  = weighted_measure[ws].dimension(0);
       int numQPs    = weighted_measure[ws].dimension(1);
-      
+    
       for(int cell=0; cell<numCells; cell++){
         double elVol = 0.0;
-        for(int node=0; node<numNodes; node++)
-          for(int qp=0; qp<numQPs; qp++){
-            int gid = wsElNodeID[ws][cell][node];
-            int lid = overlapNodeMap->LID(gid);
-            elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
-          }
-        localv += elVol;
-      }
-    }
-    comm->SumAll(&localv, &v, 1);
-
-    if( dvdp != NULL ){
-      localVec->PutScalar(0.0);
-      overlapVec->PutScalar(0.0);
-      double* odvdp; overlapVec->ExtractView(&odvdp);
-
-      for(int ws=0; ws<numWorksets; ws++){
-  
-        int physIndex = wsPhysIndex[ws];
-        int numNodes  = basisAtQPs[physIndex].dimension(0);
-        int numCells  = weighted_measure[ws].dimension(0);
-        int numQPs    = weighted_measure[ws].dimension(1);
-      
-        for(int cell=0; cell<numCells; cell++){
+        for(int qp=0; qp<numQPs; qp++){
+          double pVal = 0.0;
           for(int node=0; node<numNodes; node++){
-            double elVol = 0.0;
             int gid = wsElNodeID[ws][cell][node];
             int lid = overlapNodeMap->LID(gid);
-            for(int qp=0; qp<numQPs; qp++){
-              elVol += basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
-            }
-            odvdp[lid] += elVol;
+            pVal += p[lid]*basisAtQPs[physIndex](node,qp);
+          }
+          for(int node=0; node<numNodes; node++){
+            int gid = wsElNodeID[ws][cell][node];
+            int lid = overlapNodeMap->LID(gid);
+            odvdp[lid] += topology->dPenalize(functionIndex,pVal)
+                          *basisAtQPs[physIndex](node,qp)
+                          *weighted_measure[ws](cell,qp);
           }
         }
       }
-      localVec->Export(*overlapVec, *exporter, Add);
-      int numLocalNodes = localVec->MyLength();
-      double* lvec; localVec->ExtractView(&lvec);
-      std::memcpy((void*)dvdp, (void*)lvec, numLocalNodes*sizeof(double));
+    }
+    localVec->Export(*overlapVec, *exporter, Add);
+    int numLocalNodes = localVec->MyLength();
+    double* lvec; localVec->ExtractView(&lvec);
+    std::memcpy((void*)dvdp, (void*)lvec, numLocalNodes*sizeof(double));
+  }
+}
+
+
+/******************************************************************************/
+void
+ATO::OptimizationProblem::
+ComputeVolume(double* p, const double* dfdp, 
+              double& v, double threshhold, double minP)
+/******************************************************************************/
+{
+  double localv = 0.0;
+
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+    wsElNodeID = disc->getWsElNodeID();
+  const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
+
+  int numWorksets = wsElNodeID.size();
+
+
+  for(int ws=0; ws<numWorksets; ws++){
+
+    int physIndex = wsPhysIndex[ws];
+    int numNodes  = basisAtQPs[physIndex].dimension(0);
+    int numCells  = weighted_measure[ws].dimension(0);
+    int numQPs    = weighted_measure[ws].dimension(1);
+    
+    for(int cell=0; cell<numCells; cell++){
+      double elVol = 0.0;
+      for(int node=0; node<numNodes; node++){
+        int gid = wsElNodeID[ws][cell][node];
+        int lid = overlapNodeMap->LID(gid);
+        if(dfdp[lid] < threshhold) p[lid] = 1.0;
+        else p[lid] = minP;
+      }
+
+      for(int node=0; node<numNodes; node++){
+        int gid = wsElNodeID[ws][cell][node];
+        int lid = overlapNodeMap->LID(gid);
+        for(int qp=0; qp<numQPs; qp++)
+          elVol += p[lid]*basisAtQPs[physIndex](node,qp)*weighted_measure[ws](cell,qp);
+      }
+      localv += elVol;
     }
   }
-
+  comm->SumAll(&localv, &v, 1);
 }
+
 
 /******************************************************************************/
 void
@@ -169,6 +182,11 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
 
   topology = params->get<Teuchos::RCP<Topology> >("Topology");
   double initValue = topology->getInitialValue();
+
+  const Teuchos::ParameterList& wfParams = params->sublist("Apply Topology Weight Functions");
+  if( wfParams.isType<int>("Volume") ){
+    functionIndex = wfParams.get<int>("Volume");
+  } else functionIndex = 0;
 
   Teuchos::ParameterList& aggParams = params->get<Teuchos::ParameterList>("Objective Aggregator");
   std::string derName = aggParams.get<std::string>("dFdTopology Name");
@@ -212,40 +230,25 @@ setupTopOpt( Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >  _meshSpe
     stateMgr->registerStateVariable(objName, dl->workset_scalar, meshSpecs[i]->ebName, 
                                    "scalar", 0.0, /*registerOldState=*/ false, true);
 
-    if( topology->getCentering() == "Element" ){
-      if( topology->getEntityType() == "State Variable" ){
-        stateMgr->registerStateVariable(topology->getName(), dl->cell_scalar, meshSpecs[i]->ebName, 
-                                       "scalar", initValue, /*registerOldState=*/ false, true);
-        stateMgr->registerStateVariable(derName, dl->cell_scalar, meshSpecs[i]->ebName, 
-                                       "scalar", initValue, /*registerOldState=*/ false, true);
-      } else
-      if( topology->getEntityType() == "Distributed Parameter" ){
-        TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
-          "Error!  In ATO::OptimizationProblem setup:  " << 
-          "Entity Type = Distributed Parameter not supported for Element centering" << std::endl);
-      }
-    } else
-    if( topology->getCentering() == "Node" ){
-      stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
-                                     "scalar", initValue, /*registerOldState=*/ false, false);
-      stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
+    stateMgr->registerStateVariable(derName, dl->node_scalar, meshSpecs[i]->ebName, 
+                                   "scalar", initValue, /*registerOldState=*/ false, false);
+    stateMgr->registerStateVariable(topology->getName()+"_node", dl->node_node_scalar, "all",
+                                   "scalar", initValue, /*registerOldState=*/ false, true);
+
+    if( topology->TopologyOutputFilter() >= 0 )
+      stateMgr->registerStateVariable(topology->getName()+"_node_filtered", dl->node_node_scalar, "all",
                                      "scalar", initValue, /*registerOldState=*/ false, true);
 
-      if( topology->TopologyOutputFilter() >= 0 )
-        stateMgr->registerStateVariable(topology->getName()+"_node_filtered", dl->node_node_scalar, "all",
-                                       "scalar", initValue, /*registerOldState=*/ false, true);
-
-      if( topology->getEntityType() == "State Variable" ){
-        stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, meshSpecs[i]->ebName, 
-                                       "scalar", initValue, /*registerOldState=*/ false, false);
-      } else if( topology->getEntityType() == "Distributed Parameter" ){
-        Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
-        stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, "all", true, &entity, "");
-      } 
-      else {
-        TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
-          "Error!  In ATO::OptimizationProblem setup:  Entity Type not recognized" << std::endl);
-      }
+    if( topology->getEntityType() == "State Variable" ){
+      stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, meshSpecs[i]->ebName, 
+                                     "scalar", initValue, /*registerOldState=*/ false, false);
+    } else if( topology->getEntityType() == "Distributed Parameter" ){
+      Albany::StateStruct::MeshFieldEntity entity = Albany::StateStruct::NodalDistParameter;
+      stateMgr->registerStateVariable(topology->getName(), dl->node_scalar, "all", true, &entity, "");
+    } 
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION( true, Teuchos::Exceptions::InvalidParameter, std::endl <<
+        "Error!  In ATO::OptimizationProblem setup:  Entity Type not recognized" << std::endl);
     }
   }
 }
@@ -307,35 +310,19 @@ ATO::OptimizationProblem::InitTopOpt()
     if( find(fixedBlocks.begin(), fixedBlocks.end(), wsEBNames[ws]) != fixedBlocks.end() ){
       double matVal = topology->getMaterialValue();
       Albany::MDArray& wsTopo = dest[ws][topology->getName()];
-      if( topology->getCentering() == "Node" ){
-        int numCells = wsTopo.dimension(0);
-        int numNodes = wsTopo.dimension(1);
-        for(int cell=0; cell<numCells; cell++)
-          for(int node=0; node<numNodes; node++){
-            wsTopo(cell,node) = matVal;
-          }
-      } else
-      if( topology->getCentering() == "Element" ){
-        int wsSize = wsTopo.size();
-        for(int i=0; i<wsSize; i++)
-          wsTopo(i) = matVal;
-      }
-     
+      int numCells = wsTopo.dimension(0);
+      int numNodes = wsTopo.dimension(1);
+      for(int cell=0; cell<numCells; cell++)
+        for(int node=0; node<numNodes; node++){
+          wsTopo(cell,node) = matVal;
+        }
     }
 
   }
-  if( topology->getCentering() == "Node" ){
-    Teuchos::RCP<const Epetra_BlockMap>
-      overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
-    Teuchos::RCP<const Epetra_BlockMap>
-      localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
+  overlapNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getOverlapBlockMapE();
+  localNodeMap = stateMgr->getNodalDataBase()->getNodalDataVector()->getLocalBlockMapE();
 
-    overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
-    localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
-    exporter   = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
-  }
-
- 
+  overlapVec = Teuchos::rcp(new Epetra_Vector(*overlapNodeMap));
+  localVec   = Teuchos::rcp(new Epetra_Vector(*localNodeMap));
+  exporter   = Teuchos::rcp(new Epetra_Export(*overlapNodeMap, *localNodeMap));
 }
-
-

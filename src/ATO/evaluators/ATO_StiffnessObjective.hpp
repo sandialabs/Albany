@@ -62,6 +62,7 @@ namespace ATO {
     Albany::StateManager* pStateMgr;
 
     Teuchos::RCP<Topology> topology;
+    int functionIndex;
 
   };
 
@@ -70,6 +71,7 @@ class StiffnessObjective
    : public StiffnessObjectiveBase<EvalT, Traits> {
 
    using StiffnessObjectiveBase<EvalT,Traits>::topology;
+   using StiffnessObjectiveBase<EvalT,Traits>::functionIndex;
    using StiffnessObjectiveBase<EvalT,Traits>::dFdpName;
    using StiffnessObjectiveBase<EvalT,Traits>::FName;
    using StiffnessObjectiveBase<EvalT,Traits>::className;
@@ -103,6 +105,7 @@ class StiffnessObjective<PHAL::AlbanyTraits::Residual,Traits>
    : public StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits> {
 
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::topology;
+   using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::functionIndex;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::dFdpName;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::FName;
    using StiffnessObjectiveBase<PHAL::AlbanyTraits::Residual, Traits>::className;
