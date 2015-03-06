@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "ATO_Optimizer.hpp"
+#include "ATO_Pareto_Optimizer.hpp"
 #include "Teuchos_TestForException.hpp"
 #include "ATO_Solver.hpp"
 
@@ -29,6 +30,9 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
 
   if( optPackage == "OC"  )  return Teuchos::rcp(new Optimizer_OC(optimizerParams));
 
+  else
+  if( optPackage == "Pareto"  )  return Teuchos::rcp(new Optimizer_Pareto(optimizerParams));
+
 #ifdef ATO_USES_NLOPT
   else
   if( optPackage == "NLopt"  )  return Teuchos::rcp(new Optimizer_NLopt(optimizerParams));
@@ -43,7 +47,8 @@ OptimizerFactory::create(const Teuchos::ParameterList& optimizerParams)
       true, Teuchos::Exceptions::InvalidParameter, std::endl 
       << "Error!  Optimization package: " << optPackage << " Unknown!" << std::endl 
       << "Valid options are\n"
-      << "/t OC ... optimiality criterion\n"
+      << "/t OC ... optimality criterion\n"
+      << "/t Pareto ... pareto optimization\n"
 
 #ifdef ATO_USES_NLOPT
       << "/t NLopt ... NLOPT library\n" 
@@ -63,6 +68,8 @@ Optimizer::Optimizer(const Teuchos::ParameterList& optimizerParams)
 
   solverInterface = NULL;
   comm = Teuchos::null;
+
+  topology = optimizerParams.get<Teuchos::RCP<Topology> >("Topology");
 
   if( optimizerParams.isType<Teuchos::ParameterList>("Convergence Tests") ){
     const Teuchos::ParameterList& 
@@ -87,7 +94,6 @@ Optimizer(optimizerParams)
 
   _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
   _volMaxIter    = optimizerParams.get<int>("Volume Enforcement Maximum Iterations");
-  _minDensity    = optimizerParams.get<double>("Minimum Density");
   _initLambda    = optimizerParams.get<double>("Volume Multiplier Initial Guess");
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _moveLimit     = optimizerParams.get<double>("Move Limiter");
@@ -106,12 +112,9 @@ Optimizer(optimizerParams)
   f_last = 0.0;
   opt = NULL;
 
-  _minDensity    = optimizerParams.get<double>("Minimum Density");
   _volConstraint = optimizerParams.get<double>("Volume Fraction Constraint");
   _optMethod     = optimizerParams.get<std::string>("Method");
-  _volConvTol    = optimizerParams.get<double>("Volume Enforcement Convergence Tolerance");
-  _optConvTol    = optimizerParams.get<double>("Optimization Convergence Tolerance");
-  _optMaxIter    = optimizerParams.get<int>("Optimization Maximum Iterations");
+  _nIterations = 0;
 }
 #endif //ATO_USES_NLOPT
 
@@ -196,7 +199,7 @@ Optimizer_OC::Initialize()
   p_last = new double[numOptDofs];
   dfdp   = new double[numOptDofs];
 
-  std::fill_n(p,      numOptDofs, _volConstraint);
+  std::fill_n(p,      numOptDofs, topology->getInitialValue());
   std::fill_n(p_last, numOptDofs, 0.0);
   std::fill_n(dfdp,   numOptDofs, 0.0);
 
@@ -229,7 +232,8 @@ Optimizer_OC::Optimize()
       std::cout << "Status: Objective = " << f << std::endl;
     }
 
-    double delta_f = f-f_last;
+    double delta_f, ldelta_f = f-f_last;
+    comm->SumAll(&ldelta_f, &delta_f, 1);
     double delta_p = computeDiffNorm(p, p_last, numOptDofs, /*result to cout*/ false);
 
     optimization_converged = convergenceChecker->isConverged(delta_f, delta_p, iter, comm->MyPID());
@@ -276,12 +280,17 @@ ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPI
       converged = ( find(results.begin(),results.end(),true) != results.end() );
     }
     if(writeToCout){
-      if(converged)
-        std::cout << "Converged!" << std::endl;
-      else
+      if(converged){
+        if( iter < minIterations )
+          std::cout << "Converged, but continuing because min iterations not reached." << std::endl;
+        else 
+          std::cout << "Converged!" << std::endl;
+      } else
         std::cout << "Not converged." << std::endl;
       std::cout << "************************************************************************" << std::endl;
     }
+
+    if( iter < minIterations ) converged = false;
 
     // check iteration limit
     if( iter >= maxIterations && !converged ){
@@ -302,6 +311,10 @@ ConvergenceTest::isConverged( double delta_f, double delta_p, int iter, int myPI
 ConvergenceTest::ConvergenceTest(const Teuchos::ParameterList& convParams)
 /******************************************************************************/
 {
+
+  if( convParams.isType<int>("Minimum Iterations") )
+    minIterations = convParams.get<int>("Minimum Iterations");
+  else minIterations = 0;
 
   if( convParams.isType<int>("Maximum Iterations") ){
     maxIterations = convParams.get<int>("Maximum Iterations");
@@ -422,7 +435,10 @@ Optimizer_OC::computeUpdatedTopology()
 {
 
   // find multiplier that enforces volume constraint
-  const double maxDensity = 1.0;
+  const Teuchos::Array<double>& bounds = topology->getBounds();
+  const double minDensity = bounds[0];
+  const double maxDensity = bounds[1];
+  const double offset = minDensity - 0.01*(maxDensity-minDensity);
   double vmid, v1=0.0;
   double v2=_initLambda;
   int niters=0;
@@ -444,12 +460,12 @@ Optimizer_OC::computeUpdatedTopology()
     for(int i=0; i<numOptDofs; i++) {
       double be = -dfdp[i]/vmid;
       double p_old = p_last[i];
-      double p_new = p_old*pow(be,_stabExponent);
+      double p_new = (p_old-offset)*pow(be,_stabExponent)+offset;
       // limit change
       double dval = p_new - p_old;
       if( fabs(dval) > _moveLimit) p_new = p_old+fabs(dval)/dval*_moveLimit;
       // enforce limits
-      if( p_new < _minDensity ) p_new = _minDensity;
+      if( p_new < minDensity ) p_new = minDensity;
       if( p_new > maxDensity ) p_new = maxDensity;
       p[i] = p_new;
     }
@@ -477,10 +493,12 @@ Optimizer_NLopt::Initialize()
     Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error! NLopt package doesn't work in parallel.  Use OC package." << std::endl);
   TEUCHOS_TEST_FOR_EXCEPT ( (comm->NumProc() != 1) );
- 
-  
 
   numOptDofs = solverInterface->GetNumOptDofs();
+ 
+  const Teuchos::Array<double>& bounds = topology->getBounds();
+  const double minDensity = bounds[0];
+  const double maxDensity = bounds[1];
   
   if( _optMethod == "MMA" )
     opt = nlopt_create(NLOPT_LD_MMA, numOptDofs);
@@ -495,15 +513,15 @@ Optimizer_NLopt::Initialize()
 
   
   // set bounds
-  nlopt_set_lower_bounds1(opt, _minDensity);
-  nlopt_set_upper_bounds1(opt, 1.0);
+  nlopt_set_lower_bounds1(opt, minDensity);
+  nlopt_set_upper_bounds1(opt, maxDensity);
 
   // set objective function
   nlopt_set_min_objective(opt, this->evaluate, this);
   
   // set stop criteria
-  nlopt_set_xtol_rel(opt, _optConvTol);
-  nlopt_set_maxeval(opt, _optMaxIter);
+  nlopt_set_xtol_rel(opt, 1e-9);  // don't converge based on this.  I.e., use convergenceChecker.
+  nlopt_set_maxeval(opt, convergenceChecker->getMaxIterations());
 
   // set volume constraint
   nlopt_add_inequality_constraint(opt, this->constraint, this, _volConvTol*_optVolume);
@@ -511,7 +529,7 @@ Optimizer_NLopt::Initialize()
   p      = new double[numOptDofs];
   p_last = new double[numOptDofs];
 
-  std::fill_n(p,      numOptDofs, _volConstraint);
+  std::fill_n(p,      numOptDofs, topology->getInitialValue());
   std::fill_n(p_last, numOptDofs, 0.0);
 
   solverInterface->ComputeVolume(_optVolume);
@@ -524,6 +542,12 @@ void
 Optimizer_NLopt::Optimize()
 /******************************************************************************/
 {
+  double f_init = 0.0;
+  double* dfdp_init = new double[numOptDofs];
+  solverInterface->ComputeObjective(p, f_init, dfdp_init);
+  delete [] dfdp_init;
+  double pnorm = computeNorm(p, numOptDofs);
+  convergenceChecker->initNorm(f_init, pnorm);
 
   double minf;
   int errorcode = nlopt_optimize(opt, p, &minf);
@@ -549,22 +573,28 @@ double
 Optimizer_NLopt::evaluate_backend( unsigned int n, const double* x, double* grad )
 /******************************************************************************/
 {
-  double delta_p = computeDiffNorm(x, p_last, numOptDofs, /*result to cout*/ true);
-  if( delta_p < _optConvTol ){
-    nlopt_set_force_stop(opt, ATO_XTOL_REACHED);
-    nlopt_force_stop(opt);
-  }
 
   f_last = f;
+  std::memcpy((void*)p_last, (void*)x, numOptDofs*sizeof(double));
+
   solverInterface->ComputeObjective(x, f, grad);
 
-  std::memcpy((void*)p_last, (void*)x, numOptDofs*sizeof(double));
 
   if(comm->MyPID()==0){
     std::cout << "************************************************************************" << std::endl;
     std::cout << "  Optimizer:  objective value is: " << f << std::endl;
     std::cout << "************************************************************************" << std::endl;
   }
+
+  double delta_f, ldelta_f = f-f_last;
+  comm->SumAll(&ldelta_f, &delta_f, 1);
+  double delta_p = computeDiffNorm(x, p_last, numOptDofs, /*result to cout*/ false);
+
+  if( convergenceChecker->isConverged(delta_f, delta_p, _nIterations , comm->MyPID()) ){
+    nlopt_set_force_stop(opt, ATO_XTOL_REACHED);
+    nlopt_force_stop(opt);
+  }
+  _nIterations++;
 
   return f;
 }

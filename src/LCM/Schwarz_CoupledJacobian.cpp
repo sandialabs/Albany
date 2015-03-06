@@ -63,7 +63,7 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
 #endif
 
   //FIXME: fill in!
-    // Jacobian Matrix is (for e.g., 3 domaian coupling):
+    // Jacobian Matrix is (for e.g., 3 domain coupling):
     //
     //                   x1                        x2                              x3           ....
     //          | ------------------------------------------------------------------------------------------|
@@ -83,6 +83,13 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
     //      :
     
     // Do multiplication block-wise
+    //
+    if (n_models_ == 1) {
+      jacs_[0]->apply(X, Y); 
+    }
+    else 
+      std::cout << "WARNING: LCM::Schwarz_CoupledJacbian::apply() method only implemented for 1 model right now! \n"; 
+      
   
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- final solution Y (after all the operations to set Y = Jac*X

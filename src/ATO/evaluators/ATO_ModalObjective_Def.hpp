@@ -30,19 +30,16 @@ ModalObjectiveBase(Teuchos::ParameterList& p,
   FName = responseParams->get<std::string>("Response Name");
   dFdpName = responseParams->get<std::string>("Response Derivative Name");
 
+  if(responseParams->isType<int>("Penalty Function")){
+    functionIndex = responseParams->get<int>("Penalty Function");
+  } else functionIndex = 0;
+
   //! Register with state manager
   this->pStateMgr = p.get< Albany::StateManager* >("State Manager Ptr");
   this->pStateMgr->registerStateVariable(FName, dl->workset_scalar, dl->dummy, 
                                          "all", "scalar", 0.0, false, true);
-  if( topology->getCentering() == "Element" ){
-    this->pStateMgr->registerStateVariable(dFdpName, dl->cell_scalar, dl->dummy, 
-                                           "all", "scalar", 0.0, false, true);
-  } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Unknown centering " << topology->getCentering() << "!" << std::endl 
-      << "Options are (Element)" << std::endl);
-  }
+  this->pStateMgr->registerStateVariable(dFdpName, dl->node_scalar, dl->dummy, 
+                                         "all", "scalar", 0.0, false, true);
 
   this->addDependentField(qp_weights);
   this->addDependentField(val_qp);
@@ -100,64 +97,59 @@ evaluateFields(typename Traits::EvalData workset)
   gradX.dimensions(dims);
   int size = dims.size();
 
-  if( topology->getCentering() == "Element" ){
+  int numCells = dims[0];
+  int numQPs = dims[1];
+  int numDims = dims[2];
+  int numNodes = topo.dimension(1);
 
-    if( size == 4 ){
-      for(int cell=0; cell<dims[0]; cell++){
+  if( size == 4 ){
+    for(int cell=0; cell<numCells; cell++){
+      double dE = 0.0;
+      double dmass_term = 0.;
+      double dstiffness_term = 0.;
+      for(int qp=0; qp<numQPs; qp++){
+        double topoVal = 0.0;
+        for(int node=0; node<numNodes; node++)
+          topoVal += topo(cell,node)*BF(cell,node,qp);
+        double P = topology->Penalize(functionIndex,topoVal);
+        double dP = topology->dPenalize(functionIndex,topoVal);
         double dE = 0.0;
         double dmass_term = 0.;
         double dstiffness_term = 0.;
-        double P = topology->Penalize(topo(cell));
-        double dP = topology->dPenalize(topo(cell));
-        for(int qp=0; qp<dims[1]; qp++) {
-          for(int i=0; i<dims[2]; i++) {
-            dmass_term += val_qp(cell,qp,i)*val_qp(cell,qp,i) * qp_weights(cell,qp);
-            for(int j=0; j<dims[3]; j++)
-              dstiffness_term += dP*gradX(cell,qp,i,j)*workConj(cell,qp,i,j)*qp_weights(cell,qp);
-          }
+        for(int i=0; i<numDims; i++) {
+          dmass_term += val_qp(cell,qp,i)*val_qp(cell,qp,i) * qp_weights(cell,qp);
+          for(int j=0; j<numDims; j++)
+            dstiffness_term += dP*gradX(cell,qp,i,j)*workConj(cell,qp,i,j)*qp_weights(cell,qp);
         }
-        dEdp(cell) = -(dstiffness_term - dmass_term*eigval(0));
-//tevhack        std::cout << "dEdp(" << cell << ") = " << dEdp(cell) << std::endl;
+        for(int node=0; node<numNodes; node++)
+        dEdp(cell,node) = -(dstiffness_term - dmass_term*eigval(0))*BF(cell,node,qp);
       }
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-        "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
+//tevhack        std::cout << "dEdp(" << cell << ") = " << dEdp(cell) << std::endl;
     }
   } else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Unknown centering " << topology->getCentering() << "!" << std::endl 
-      << "Options are (Element)" << std::endl
-    );
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
 
 /*
-  if( topology->getCentering() == "Element" ){
-  
-    if( size == 3 ){
-      for(int cell=0; cell<dims[0]; cell++){
-        double dE = 0.0;
-        double P = topology->Penalize(topo(cell));
-        for(int qp=0; qp<dims[1]; qp++) {
-          for(int i=0; i<dims[2]; i++) {
-            dE += val_qp(cell,qp,i) * val_qp(cell,qp,i);
-          }
+  if( size == 3 ){
+    for(int cell=0; cell<numCells; cell++){
+      double dE = 0.0;
+      double P = topology->Penalize(topo(cell));
+      for(int qp=0; qp<numQPs; qp++) {
+        for(int i=0; i<numDims; i++) {
+          dE += val_qp(cell,qp,i) * val_qp(cell,qp,i);
         }
-        dEdp(cell) = dE/P;
-        std::cout << "dEdp(" << cell << ") = " << dEdp(cell) << std::endl;
+        for(int node=0; node<numNodes; node++)
+          dEdp(cell,node) = dE/P*BF(cell,node,qp);
       }
-    } else {
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        true, 
-        Teuchos::Exceptions::InvalidParameter,
-        "Unexpected array dimensions in ModalObjective:" << size << std::endl
-      );
+      std::cout << "dEdp(" << cell << ") = " << dEdp(cell) << std::endl;
     }
   } else {
     TEUCHOS_TEST_FOR_EXCEPTION(
-      true, Teuchos::Exceptions::InvalidParameter, std::endl 
-      << "Error!  Unknown centering " << topology->getCentering() << "!" << std::endl 
-      << "Options are (Element)" << std::endl
+      true, 
+      Teuchos::Exceptions::InvalidParameter,
+      "Unexpected array dimensions in ModalObjective:" << size << std::endl
     );
   }
 */

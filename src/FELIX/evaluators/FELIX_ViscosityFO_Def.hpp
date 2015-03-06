@@ -128,7 +128,7 @@ ViscosityFO(const Teuchos::ParameterList& p,
             p.get<std::string>("Coordinate Vector Name"),dl->qp_gradient);
 
   this->addDependentField(Ugrad);
-  this->addDependentField(coordVec);
+  if (visc_type == EXPTRIG) this->addDependentField(coordVec);
   this->addEvaluatedField(mu);
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -153,7 +153,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(Ugrad,fm);
   this->utils.setFieldData(mu,fm); 
-  this->utils.setFieldData(coordVec,fm); 
+  if (visc_type == EXPTRIG) this->utils.setFieldData(coordVec,fm); 
   if (flowRate_type == TEMPERATUREBASED)
 	  this->utils.setFieldData(temperature,fm);
   if (flowRate_type == FROMFILE || flowRate_type == FROMCISM)
@@ -174,14 +174,14 @@ ViscosityFO<EvalT,Traits>::getValue(const std::string &n)
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_EXPTRIG_Tag& tag, const int& cell) const{
+void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_CONSTANT_Tag& tag, const int& cell) const{
   for (int qp=0; qp < numQPs; ++qp)
           mu(cell,qp) = 1.0;
 }
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
-void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_CONSTANT_Tag& tag, const int& cell) const{
+void ViscosityFO<EvalT, Traits>::operator () (const ViscosityFO_EXPTRIG_Tag& tag, const int& cell) const{
   double a = 1.0; 
   for (int qp=0; qp < numQPs; ++qp) {
           MeshScalarT x = coordVec(cell,qp,0);
