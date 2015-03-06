@@ -72,3 +72,19 @@ if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
 else
   echo "!!! unsuccessful build, see logs !!!"
 fi
+
+echo "to ensure proper git behavior as a developer/commiter add the following to your .gitconfig:"
+echo " \
+[branch]
+        autosetuprebase = always
+[color]
+        ui = true
+[core]
+        whitespace = -trailing-space,-space-before-tab
+        preloadingindex = true
+        preloadindex = true
+
+[branch \"master\"]
+        rebase = true
+"
+
