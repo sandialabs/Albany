@@ -134,7 +134,7 @@ ComputeVolume(double* p, const double* dfdp,
 {
   double localv = 0.0;
 
-  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > >::type&
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     wsElNodeID = disc->getWsElNodeID();
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
