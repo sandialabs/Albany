@@ -77,7 +77,10 @@ protected:
   std::vector<std::string> lameMaterialModelStateVariableNames;
 
   // Vector of the fields corresponding to the LAME material model state variables
-  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > lameMaterialModelStateVariableFields;
+  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > lameMaterialModelStateVariableFields;
+
+  // Work space
+  PHX::MDField<RealType,Cell,QuadPoint,Dim,Dim> stressFieldRealType, defGradFieldRealType;
 };
 
 // Inherted classes 
