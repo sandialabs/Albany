@@ -235,6 +235,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -255,6 +256,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -278,6 +280,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -298,6 +301,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
