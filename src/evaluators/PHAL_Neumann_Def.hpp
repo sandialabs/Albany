@@ -1003,6 +1003,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
     //parameter values are hard-coded here... 
     MeshScalarT H = 1.0; 
     double alpha0 = 4.0e-5; 
+    double beta0 = 1;
     double rho_g = 910.0*9.8; 
     double s0 = 2.0;
     double A = 1e-4; //CAREFUL! A is hard-coded here, needs to match input file!!
@@ -1018,7 +1019,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           //phi3 = 4*x^3*phi1^5*phi2^2
           MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
           //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
-          MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
+          MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
           //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
           MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
                            + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
@@ -1029,7 +1030,7 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           qp_data_returned(cell, pt, dim) = beta*dof_side(cell,pt,dim)
                                            + 4.0*phi4*mu*alpha*side_normals(cell,pt,0)
                                            + 4.0*phi2*x*x*pow(phi1,3)*mu*beta1*side_normals(cell,pt,1)
-                                           - (2.0*H*alpha0*rho_g*x - beta*x*x*phi2*(pow(phi1,4) - pow(H,4)))*beta2;
+                                           - (2.0*H*alpha0*rho_g*x - beta0*x*x*phi2*(pow(phi1,4) - pow(H,4)))*beta2;
         }
       }
   }
