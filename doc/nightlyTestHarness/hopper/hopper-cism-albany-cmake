@@ -16,8 +16,8 @@ rm -rf ./CMakeFiles
 echo
 echo "Doing CMake Configuration step"
 
-TRILINSTALLDIR=/global/homes/i/ikalash/Trilinos2/cism-build2/install
-ALBINSTALLDIR=/global/homes/i/ikalash/Albany_temporary_tpetra_newSTK/cism-build2/install
+TRILINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Trilinos/build/install
+ALBINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Albany/cism-build/install
 
 cmake \
   -D CISM_MPI_MODE:BOOL=ON \
