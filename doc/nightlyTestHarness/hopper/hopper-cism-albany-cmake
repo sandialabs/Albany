@@ -17,7 +17,7 @@ echo
 echo "Doing CMake Configuration step"
 
 TRILINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Trilinos/build/install
-ALBINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Albany/cism-build/install
+ALBINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Albany/build_cism/install
 
 cmake \
   -D CISM_MPI_MODE:BOOL=ON \
