@@ -57,6 +57,7 @@ namespace LCM {
 
     this->setName("Kinematics"+PHX::typeAsString<EvalT>());
 
+    std::cout << "amb: weighted_average_ " << weighted_average_ << std::endl;
     if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
       this->addDependentField(def_grad_rc_());
     if (needs_strain_ && strain_rc_.init(p, p.get<std::string>("Strain Name")))
@@ -328,6 +329,28 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
 }
 #endif
 //----------------------------------------------------------------------------
+template<typename EvalT, typename Traits>
+void Kinematics<EvalT, Traits>::
+check_det (typename Traits::EvalData workset, int cell, int pt) {
+  Intrepid::Tensor<ScalarT> F(num_dims_);
+  F.fill(def_grad_, cell, pt, 0, 0);
+  j_(cell, pt) = Intrepid::det(F);
+  if (pt == 0 && j_(cell, pt) < 1e-16) {
+    const Teuchos::ArrayRCP<GO>& gid = workset.wsElNodeID[cell];
+    std::cout << "amb: incr Kinematics j_ " << j_(cell,pt) << " " << cell
+              << " " << pt << "\nF_incr = [" << F << "];\n";
+    for (int i = 0; i < gid.size(); ++i) std::cout << " " << gid[i];
+    std::cout << "\n";
+#if 0
+    for (int d = 0; d < 3; ++d) {
+      for (int i = 0; i < gid.size(); ++i)
+        std::cout << " " << u_(cell,i,d);
+      std::cout << "\n";
+    }
+#endif
+  }
+}
+
   template<typename EvalT, typename Traits>
   void Kinematics<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
@@ -335,6 +358,8 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     Intrepid::Tensor<ScalarT> F(num_dims_), strain(num_dims_), gradu(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+
+    bool wrote_F_incr = false, wrote_F = false;
 
     // Compute DefGrad tensor from displacement gradient
     if ( ! def_grad_rc_) {
@@ -351,17 +376,29 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
         }
       }
     } else {
-      for (int cell(0); cell < workset.numCells; ++cell)
-        for (int pt(0); pt < num_pts_; ++pt) {
+      /* Define
+       *     u[n,n-1] = x[n] - x[n-1]
+       *     U = u[n,0]
+       *     F[n,k] = dx[n]/dx[k].
+       * We need to compute
+       *     F[n,0] = dx[n]/dx[0] = du[n,0]/dx[0] + dx[0]/dx[0] = dU/dx + I.
+       * We have
+       *     grad_u_ = du[n,n-1]/dx[n-1] = dx[n]/dx[n-1] - dx[n-1]/dx[n-1]
+       *             = F[n,n-1] - I.
+       *     def_grad_rc_ = F[n-1,0].
+       * So compute
+       *     F[n,n-1] = I + gradu
+       *     F[n,0] = F[n,n-1] F[n-1,0].
+       */
+      for (int cell = 0; cell < workset.numCells; ++cell)
+        for (int pt = 0; pt < num_pts_; ++pt) {
           gradu.fill(grad_u_,cell,pt,0,0);
           F = I + gradu;
-          for (int i(0); i < num_dims_; ++i)
-            for (int j(0); j < num_dims_; ++j)
+          for (int i = 0; i < num_dims_; ++i)
+            for (int j = 0; j < num_dims_; ++j)
               def_grad_(cell,pt,i,j) = F(i,j);
-        }
-      def_grad_rc_.multiplyInto<ScalarT>(def_grad_);
-      for (int cell(0); cell < workset.numCells; ++cell)
-        for (int pt(0); pt < num_pts_; ++pt) {
+          check_det(workset, cell, pt);
+          def_grad_rc_.multiplyInto<ScalarT>(def_grad_, cell, pt);
           F.fill(def_grad_,cell,pt,0,0);
           j_(cell,pt) = Intrepid::det(F);
         }
@@ -395,18 +432,34 @@ operator() (const kinematic_weighted_average_needs_strain_Tag& tag, const int& i
     }
 
     if (needs_strain_) {
-      for (int cell(0); cell < workset.numCells; ++cell) {
-        for (int pt(0); pt < num_pts_; ++pt) {
-          gradu.fill(grad_u_,cell,pt,0,0);
-          strain = 0.5 * (gradu + Intrepid::transpose(gradu));
-          for (int i(0); i < num_dims_; ++i) {
-            for (int j(0); j < num_dims_; ++j) {
-              strain_(cell,pt,i,j) = strain(i,j);
+      if ( ! strain_rc_) {
+        for (int cell(0); cell < workset.numCells; ++cell) {
+          for (int pt(0); pt < num_pts_; ++pt) {
+            gradu.fill(grad_u_,cell,pt,0,0);
+            strain = 0.5 * (gradu + Intrepid::transpose(gradu));
+            for (int i(0); i < num_dims_; ++i) {
+              for (int j(0); j < num_dims_; ++j) {
+                strain_(cell,pt,i,j) = strain(i,j);
+              }
             }
           }
         }
+      } else {
+        /* We need
+         *     dU/dx[0] = dx[n]/dx[0] - dx[0]/dx[0] = F[n,0] - I.
+         *     strain = 1/2 (dU/dx[0] + dU/dx[0]^T).
+         * Above, we already computed F[n,0], so this is easy.
+         */
+        for (int cell = 0; cell < workset.numCells; ++cell)
+          for (int pt = 0; pt < num_pts_; ++pt) {
+            F.fill(def_grad_, cell, pt, 0, 0);
+            gradu = F - I;
+            strain = 0.5 * (gradu + Intrepid::transpose(gradu));
+            for (int i = 0; i < num_dims_; ++i)
+              for (int j = 0; j < num_dims_; ++j)
+                strain_(cell, pt, i, j) = strain(i, j);
+          }
       }
-      if (strain_rc_) strain_rc_.addTo<ScalarT>(strain_);
     }
  #else
 
