@@ -57,7 +57,6 @@ namespace LCM {
 
     this->setName("Kinematics"+PHX::typeAsString<EvalT>());
 
-    std::cout << "amb: weighted_average_ " << weighted_average_ << std::endl;
     if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
       this->addDependentField(def_grad_rc_());
     if (needs_strain_ && strain_rc_.init(p, p.get<std::string>("Strain Name")))
@@ -358,8 +357,6 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     Intrepid::Tensor<ScalarT> F(num_dims_), strain(num_dims_), gradu(num_dims_);
     Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
-
-    bool wrote_F_incr = false, wrote_F = false;
 
     // Compute DefGrad tensor from displacement gradient
     if ( ! def_grad_rc_) {
