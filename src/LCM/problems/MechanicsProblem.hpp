@@ -404,8 +404,10 @@ protected:
 // Damage equation specific evaluators
 #include "StabilizedPressureResidual.hpp"
 
+#ifdef ALBANY_CONTACT
 // Contact evaluator
 #include "MortarContactConstraints.hpp"
+#endif
 
 //------------------------------------------------------------------------------
 template<typename EvalT>
@@ -1835,7 +1837,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
-
+      if (Teuchos::nonnull(rc_mgr_)) {
+        p->set<std::string>("DefGrad Name", defgrad);
+        rc_mgr_->registerField(
+          defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
+          AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
+      }
       p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       //Output
       p->set<std::string>("Residual Name", "Displacement Residual");
@@ -2514,7 +2521,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Evaluate contact contributions
 
   if (have_contact_) { // create the contact evaluator to fill in the
-
+#ifdef ALBANY_CONTACT
     Teuchos::ParameterList& paramList = params->sublist("Contact");
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList);
@@ -2525,6 +2532,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         paramList.get<Teuchos::Array<std::string> >("Slave Side Sets"));
     p->set<Teuchos::Array<std::string> >("Sideset IDs",
         paramList.get<Teuchos::Array<std::string> >("Contact Side Set Pair"));
+    p->set<Teuchos::Array<std::string> >("Constrained Field Names",
+        paramList.get<Teuchos::Array<std::string> >("Constrained Field Names"));
 
     p->set<const Albany::MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
@@ -2536,7 +2545,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = Teuchos::rcp(
         new LCM::MortarContact<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-
+#else // ! defined ALBANY_CONTACT
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "A contact problem is being created, but ALBANY_CONTACT is not defined. "
+      "Use the flag -D ENABLE_CONTACT:BOOL=ON in your Albany configuration.");
+#endif // ALBANY_CONTACT
   }
 
   // Transport of the temperature field

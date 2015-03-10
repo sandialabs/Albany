@@ -98,7 +98,7 @@
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="0"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
 		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>

@@ -17,11 +17,14 @@ LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT, 
+    const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   commT_ = commT;
+
+  solver_factory_ = solver_factory; 
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
@@ -203,7 +206,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     for (int l = 0; l < num_params_m; ++l) {
       Teuchos::RCP<Thyra::VectorBase<ST> const>
-      p = solver_inargs_[m].get_p(l);
+      p = models_[m]->getNominalValues().get_p(l);
 
       // Don't set it if there is nothing. Avoid null pointer.
       if (Teuchos::is_null(p) == true) continue;
@@ -456,7 +459,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  return Teuchos::null;
+  return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -742,13 +745,13 @@ evalModelImpl(
 
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector const>
-    xT_temp = ConverterT::getConstTpetraVector(solver_inargs_[m].get_x());
+    xT_temp = ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x());
 
     xTs[m] = Teuchos::rcp(new Tpetra_Vector(*xT_temp));
 
     Teuchos::RCP<Tpetra_Vector const>
-    x_dotT_temp = Teuchos::nonnull(solver_inargs_[m].get_x_dot()) ?
-            ConverterT::getConstTpetraVector(solver_inargs_[m].get_x_dot()) :
+    x_dotT_temp = Teuchos::nonnull(models_[m]->getNominalValues().get_x_dot()) ?
+            ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x_dot()) :
             Teuchos::null;
 
     x_dotTs[m] = Teuchos::rcp(new Tpetra_Vector(*x_dotT_temp));
@@ -834,19 +837,16 @@ evalModelImpl(
     fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
         ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
         Teuchos::null;
-
-    fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
+    fTs_out[m] = Teuchos::nonnull(fT_out_temp) ?
+            Teuchos::rcp(new Tpetra_Vector(*fT_out_temp)) :
+            Teuchos::null;
+    //if (fT_out_temp != Teuchos::null) 
+    //  fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
   }
 
   Teuchos::RCP<Tpetra_Operator> const
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
       ConverterT::getTpetraOperator(out_args.get_W_op()) :
-      Teuchos::null;
-
-  // Cast W to a CrsMatrix, throw an exception if this fails
-  Teuchos::RCP<Tpetra_CrsMatrix> const
-  W_op_out_crsT = Teuchos::nonnull(W_op_outT) ?
-      Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
       Teuchos::null;
 
   //
@@ -861,8 +861,8 @@ evalModelImpl(
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Operator> const
     W_op_outT_temp =
-        Teuchos::nonnull(solver_outargs_[m].get_W_op()) ?
-            ConverterT::getTpetraOperator(out_args.get_W_op()) :
+        Teuchos::nonnull(models_[m]->create_W_op()) ?
+            ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
             Teuchos::null;
 
     W_op_outs_crsT[m] =
@@ -888,33 +888,48 @@ evalModelImpl(
   }
 
   // FIXME: create coupled W matrix from array of model W matrices
-  Teuchos::RCP<LCM::Schwarz_CoupledJacobian>
-  W_op_out_coupled =
+  if (W_op_outT != Teuchos::null) {
+    Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
       Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
-
-  W_op_out_coupled->initialize(W_op_outs_crsT);
+    W_op_out_coupled->initialize(W_op_outs_crsT);
+  }
 
   // Create fT_out from fTs_out[m]
   LO
   counter_local = 0;
 
   //get nonconst view of fT_out
-  Teuchos::ArrayRCP<ST>
-  fT_out_nonconst_view = fT_out->get1dViewNonConst();
+  Teuchos::ArrayRCP<ST> fT_out_nonconst_view; 
+  if (fT_out != Teuchos::null)  fT_out->get1dViewNonConst();
 
   for (int m = 0; m < num_models_; ++m) {
-    //get const view of mth x_init & x_dot_init vector
-    Teuchos::ArrayRCP<ST>
-    fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
+    if (fTs_out[m] != Teuchos::null) {
+      Teuchos::ArrayRCP<ST>
+      fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
 
-    for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
-      fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
+      for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
+        fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
+      }
+      counter_local += fTs_out[m]->getLocalLength();
     }
-    counter_local += fTs_out[m]->getLocalLength();
   }
 
-  // W prec matrix
-  // FIXME: eventually will need to hook in Teko.
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug
+  if (fTs_out[0] != Teuchos::null)
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f0.mm",
+      *(fTs_out[0]));
+  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) 
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f1.mm",
+      *(fTs_out[1]));
+  if (fT_out != Teuchos::null) 
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f_coupled.mm",
+      *fT_out);
+#endif
+
 
   // FIXME: in the following, need to check logic involving looping over
   // num_models_ -- here we're not creating arrays to store things in
@@ -964,7 +979,6 @@ evalModelImpl(
     }
   }
 
-  //FIXME: create fT_out from fTs_out
 
   // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {

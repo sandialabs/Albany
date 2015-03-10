@@ -88,7 +88,7 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="10000"/>         
+	<Parameter  name="Max Steps" type="int" value="1000"/>         
 	<Parameter  name="Max Value" type="double" value="34.036e6"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>    
 	<!-- Compute eigenvalues of the global stiffness -->
@@ -104,9 +104,9 @@
        <Parameter name="Method" type="string" value="Adaptive"/>      
        <Parameter name="Initial Step Size" type="double" value="100.0"/>
        <Parameter name="Max Step Size" type="double" value="50000.0"/>
-       <Parameter name="Min Step Size" type="double" value="100.0"/>
+       <Parameter name="Min Step Size" type="double" value="1.0"/>
        <Parameter name="Failed Step Reduction Factor" type="double" value="0.5"/>
-       <Parameter name="Successful Step Increase Factor" type="double" value="1.01"/>
+       <Parameter name="Successful Step Increase Factor" type="double" value="1.1"/>
       </ParameterList>
     </ParameterList>
     <!-- BEGIN SOLVER CONTROLS. IN GENERAL, The defaults need not be changed. -->
@@ -154,12 +154,12 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="Ifpack2"/>
 	      <ParameterList name="Preconditioner Types">
-		<ParameterList name="Ifpack">
+		<ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="2"/>
-		  <Parameter name="Prec Type" type="string" value="ILU"/>
-		  <ParameterList name="Ifpack Settings">
+		  <Parameter name="Prec Type" type="string" value="ILUT"/>
+		  <ParameterList name="Ifpack2 Settings">
 		    <Parameter name="fact: drop tolerance" type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill" type="double" value="1"/>
 		    <Parameter name="fact: level-of-fill" type="int" value="1"/>
@@ -189,7 +189,7 @@
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
-	<Parameter name="Output Information" type="int" value="0"/>
+	<Parameter name="Output Information" type="int" value="103"/>
 	<Parameter name="Output Precision" type="int" value="3"/>
 	<Parameter name="Output Processor" type="int" value="0"/>
       </ParameterList>
@@ -218,7 +218,7 @@
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-9"/>
+            <Parameter name="Tolerance" type="double" value="1.0e-8"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">

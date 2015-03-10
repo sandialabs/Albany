@@ -196,24 +196,14 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST; 
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+
+  // Initialize residual to 0.0
   Kokkos::deep_copy(Residual.get_kokkos_view(), ScalarT(0.0));
 
-//std::cout << Residual (30,1,1) <<std::endl;
-//  for (std::size_t cell=0; cell < workset.numCells; ++cell){
-//    for (std::size_t node=0; node < numNodes; ++node){
-//       Residual(cell,node,0)=ScalarT(0.0);
-//       Residual(cell,node,1)=ScalarT(0.0);
-//    }
-//  
-//std::cout << Residual (30,1,1) <<std::endl;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-      Residual(cell,node,0)=0.0;
-      Residual(cell,node,1)=0.0;
-      }
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         ScalarT mu = muFELIX(cell,qp);
         ScalarT strs00 = 2.0*mu*(2.0*Ugrad(cell,qp,0,0) + Ugrad(cell,qp,1,1));
@@ -269,9 +259,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              //z dimension is treated as 2nd dimension
-             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) = f1
+             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) - f1 0
              Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
-                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1); 
+                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1)+force(cell,qp,0)*wBF(cell,node,qp);
           }
        }
      } 
@@ -291,14 +281,6 @@ evaluateFields(typename Traits::EvalData workset)
   if (numDims == 3) { //3D case
     if (eqn_type == FELIX) {
     Kokkos::parallel_for ( workset.numCells, StokesFOResid_3D_FELIX < ScalarT, PHX::Device, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim>, PHX::MDField<ScalarT,Cell,QuadPoint>, PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> > (Residual, wGradBF, force, Ugrad, muFELIX, wBF, numNodes, numQPs));
-
-// for (std::size_t cell=0; cell < workset.numCells; ++cell)  
-//      for (std::size_t node=0; node < numNodes; ++node)  
-//          for (int j=0; j<2; j++)
-// {//           std::cout <<cell << "  " << node << "  " << j<< "   "<< Residual(cell, node,j) <<"     " << muFELIX(cell, node)<< "   "<< Ugrad(cell, node,j,0) <<std::endl;
-//            std::cout <<cell << "  " << node << "  " << j<< "     " << force(cell, node,j)<< "   "<< wBF(cell, node,j)<<"   "<< wGradBF(cell, node,j,0) <<std::endl;
-//}//           std::cout <<cell << "  " << node << "  " << j<< "     " << Residual(cell, node,0)<<std::endl;
-
   }
     else if (eqn_type == POISSON) { 
     }

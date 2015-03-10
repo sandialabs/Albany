@@ -3,7 +3,7 @@
 //#define WRITE_TO_MATRIX_MARKET 
 
 //uncomment the following if you want to exclude procs with 0 elements from solve.
-//#define REDUCED_COMM
+#define REDUCED_COMM
 
 #include <iostream>
 #include <fstream>

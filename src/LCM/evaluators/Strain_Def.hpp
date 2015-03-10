@@ -29,9 +29,6 @@ namespace LCM {
     dl->qp_tensor->dimensions(dims);
     numQPs  = dims[1];
     numDims = dims[2];
-
-    if (strain_rc.init(p, p.get<std::string>("Strain Name")))
-      this->addDependentField(strain_rc());
   }
 
   //----------------------------------------------------------------------------
@@ -42,7 +39,6 @@ namespace LCM {
   {
     this->utils.setFieldData(strain,fm);
     this->utils.setFieldData(GradU,fm);
-    if (strain_rc) this->utils.setFieldData(strain_rc(),fm);
   }
 
   //----------------------------------------------------------------------------
@@ -60,8 +56,6 @@ namespace LCM {
         }
       }
     }
-
-    if (strain_rc) strain_rc.addTo<ScalarT>(strain);
   }
   //----------------------------------------------------------------------------
 }

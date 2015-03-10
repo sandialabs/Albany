@@ -168,12 +168,10 @@ int main(int argc, char *argv[]) {
     *out << "Finished eval of first model: Params, Responses "
       << std::setprecision(12) << std::endl;
 
-    Teuchos::RCP<Teuchos::ParameterList> problemParams = app->getProblemPL();
 
-    Teuchos::ParameterList& parameterParams =
-       problemParams->sublist("Parameters");
-    Teuchos::ParameterList& responseParams =
-      problemParams->sublist("Response Functions");
+    Teuchos::ParameterList& parameterParams = slvrfctry.getParameters().sublist("Problem").sublist("Parameters");
+    Teuchos::ParameterList& responseParams = slvrfctry.getParameters().sublist("Problem").sublist("Response Functions");
+
 
     int num_param_vecs =
        parameterParams.get("Number of Parameter Vectors", 0);

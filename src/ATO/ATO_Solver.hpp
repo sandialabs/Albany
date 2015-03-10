@@ -63,8 +63,11 @@ namespace ATO {
 
   class OptInterface {
   public:
-    virtual void ComputeObjective(const double* p, double& f, double* dfdp=NULL)=0;
     virtual void ComputeConstraint(double* p, double& c, double* dcdp=NULL)=0;
+
+    virtual void ComputeObjective(const double* p, double& g, double* dgdp=NULL)=0;
+    virtual void ComputeVolume(double* p, const double* dgdp,
+                               double& v, double threshhold, double minP=0.0)=0;
     virtual void ComputeVolume(const double* p, double& v, double* dvdp=NULL)=0;
     virtual void ComputeVolume(double& v)=0;
     virtual int GetNumOptDofs()=0;
@@ -90,8 +93,12 @@ namespace ATO {
     //pure virtual from EpetraExt::ModelEvaluator
     void evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const;
 
-    void ComputeObjective(const double* p, double& f, double* dfdp=NULL);
     void ComputeConstraint(double* p, double& c, double* dcdp=NULL);
+
+    void ComputeObjective(const double* p, double& g, double* dgdp=NULL);
+
+    void ComputeVolume(double* p, const double* dgdp, 
+                       double& v, double threshhold, double minP=0.0);
     void ComputeVolume(const double* p, double& v, double* dvdp=NULL);
     void ComputeVolume(double& v);
     int GetNumOptDofs();
@@ -137,8 +144,10 @@ namespace ATO {
     Teuchos::RCP<Epetra_Vector> overlapTopoVec;
     Teuchos::RCP<Epetra_Vector> topoVec;
 
-    Teuchos::RCP<Epetra_Vector> overlapdfdpVec;
-    Teuchos::RCP<Epetra_Vector> dfdpVec;
+    Teuchos::RCP<Epetra_Vector> overlapdgdpVec;
+    Teuchos::RCP<Epetra_Vector> dgdpVec;
+
+    Teuchos::RCP<double> gValue;
 
     Teuchos::RCP<Epetra_Import> importer;
     Teuchos::RCP<Epetra_Export> exporter;
@@ -150,7 +159,7 @@ namespace ATO {
     // methods
     void copyTopologyIntoStateMgr(const double* p, Albany::StateManager& stateMgr );
     void copyTopologyIntoParameter(const double* p, SolverSubSolver& sub);
-    void copyObjectiveFromStateMgr( double& f, double* dfdp );
+    void copyObjectiveFromStateMgr( double& g, double* dgdp );
     void zeroSet();
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
     Teuchos::RCP<Teuchos::ParameterList> 

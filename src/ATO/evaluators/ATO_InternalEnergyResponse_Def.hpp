@@ -68,6 +68,10 @@ InternalEnergyResponse(Teuchos::ParameterList& p,
 
   topo = PHX::MDField<ScalarT,Cell,Node>(topology->getName(),dl->node_scalar);
 
+  if(responseParams->isType<int>("Penalty Function")){
+    functionIndex = responseParams->get<int>("Penalty Function");
+  } else functionIndex = 0;
+
   this->addDependentField(qp_weights);
   this->addDependentField(BF);
   this->addDependentField(gradX);
@@ -156,12 +160,12 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-        ScalarT P = topology->Penalize(topoVal);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
         for(int i=0; i<numDims; i++)
-          dE += gradX(cell,qp,i)*workConj(cell,qp,i);
+          dE += gradX(cell,qp,i)*workConj(cell,qp,i)/2.0;
         dE *= qp_weights(cell,qp);
         internalEnergy += P*dE;
-        this->local_response(cell,0) += P*dE/2.0;
+        this->local_response(cell,0) += P*dE;
       }
     }
   } else
@@ -172,13 +176,13 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-        ScalarT P = topology->Penalize(topoVal);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
         for(int i=0; i<numDims; i++)
           for(int j=0; j<numDims; j++)
-            dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j);
+            dE += gradX(cell,qp,i,j)*workConj(cell,qp,i,j)/2.0;
         dE *= qp_weights(cell,qp);
         internalEnergy += P*dE;
-        this->local_response(cell,0) += P*dE/2.0;
+        this->local_response(cell,0) += P*dE;
       }
     }
   } else {
@@ -186,9 +190,8 @@ evaluateFields(typename Traits::EvalData workset)
       "Unexpected array dimensions in StiffnessObjective:" << size << std::endl);
   }
 
-  //this->global_response[0] = internalEnergy/2.0;
   PHAL::MDFieldIterator<ScalarT> gr(this->global_response);
-  *gr = internalEnergy/2.0;
+  *gr += internalEnergy;
 
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);

@@ -7,6 +7,13 @@
       <Parameter name="material" type="string" value="21-6-9" />
       <Parameter name="Weighted Volume Average J" type="bool" value="true" />
       <Parameter name="Volume Average Pressure" type="bool" value="true" />
+
+      <Parameter name="Output Trapped_Concentration" type="bool" value="true"/>
+      <Parameter name="Output Total_Concentration" type="bool" value="true"/>
+      <Parameter name="Output He_Concentration" type="bool" value="true"/>
+      <Parameter name="Output Total_Bubble_Density" type="bool" value="true"/>
+      <Parameter name="Output Bubble_Volume_Fraction" type="bool" value="true"/>
+
     </ParameterList>
   </ParameterList>
   
@@ -37,11 +44,17 @@
 	<Parameter name="Avogadro's Number" type="double" value="6.0221413e11"/>
       </ParameterList>
 
-      <!-- Tritium Parameters -->
+      <!-- Tritium Decay Parameters
+      <ParameterList name="Tritium Coefficients">
+        <Parameter name="Tritium Decay Constant" type="double" value="1.79e-9"/>
+        <Parameter name="Helium Radius" type="double" value="2.5e-4"/>
+        <Parameter name="Atoms Per Cluster" type="double" value="10"/>
+        <Parameter name="Evaluate HeliumODEs" type="bool" value="true"/>
+      </ParameterList>
       <ParameterList name="Molar Volume">
 	<Parameter name="Type" type="string" value="Constant"/>
 	<Parameter name="Value" type="double" value="7.116"/>
-      </ParameterList>
+      </ParameterList> -->
 
       <!-- Temperature Parameters -->
       <ParameterList name="Thermal Conductivity">

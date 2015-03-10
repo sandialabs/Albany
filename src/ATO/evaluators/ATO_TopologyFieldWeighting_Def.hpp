@@ -21,6 +21,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 {
 
   topology = p.get<Teuchos::RCP<Topology> >("Topology");
+  functionIndex = p.get<int>("Function Index");
   topoName = topology->getName();
   TEUCHOS_TEST_FOR_EXCEPTION(
     topology->getEntityType() != "Distributed Parameter",
@@ -97,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-        ScalarT P = topology->Penalize(topoVal);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
         for(int i=0; i<numDims; i++)
           weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
       }
@@ -109,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-        ScalarT P = topology->Penalize(topoVal);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
         for(int i=0; i<numDims; i++)
           for(int j=0; j<numDims; j++)
             weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);

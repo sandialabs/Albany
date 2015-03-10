@@ -41,6 +41,7 @@ void LCM::Schwarz_CoupledJacobian::initialize(Teuchos::Array<Teuchos::RCP<Tpetra
     jacs_[m] = jacs[m];  
 
 #ifdef WRITE_TO_MATRIX_MARKET
+  std::cout << "In LCM::Schwarz_CoupledJacobian::initialize! \n"; 
 //write individual model jacobians to matrix market for debug
   Tpetra_MatrixMarket_Writer::writeSparseFile("Jac0.mm", jacs[0]);
   if (n_models_ > 1) 
@@ -54,7 +55,7 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
                                        Teuchos::ETransp mode,
                                        ST alpha, ST beta) const
 { 
-  std::cout << "In LCM::Schwarz_CoupledJacobian::Apply! \n" << std::endl; 
+  std::cout << "In LCM::Schwarz_CoupledJacobian::apply! \n"; 
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- initial X where we will set Y = Jac*X
@@ -62,7 +63,7 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
 #endif
 
   //FIXME: fill in!
-    // Jacobian Matrix is (for e.g., 3 domaian coupling):
+    // Jacobian Matrix is (for e.g., 3 domain coupling):
     //
     //                   x1                        x2                              x3           ....
     //          | ------------------------------------------------------------------------------------------|
@@ -82,6 +83,13 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
     //      :
     
     // Do multiplication block-wise
+    //
+    if (n_models_ == 1) {
+      jacs_[0]->apply(X, Y); 
+    }
+    else 
+      std::cout << "WARNING: LCM::Schwarz_CoupledJacbian::apply() method only implemented for 1 model right now! \n"; 
+      
   
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- final solution Y (after all the operations to set Y = Jac*X

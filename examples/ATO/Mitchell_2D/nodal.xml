@@ -17,20 +17,25 @@
       <Parameter name="Weighting" type="string" value="Uniform"/>
     </ParameterList>
 
+    <ParameterList name="Spatial Filters">
+      <Parameter name="Number of Filters" type="int" value="1" />
+      <ParameterList name="Filter 0">
+        <Parameter name="Filter Radius" type="double" value="0.075" />
+      </ParameterList>
+    </ParameterList>
 
     <ParameterList name="Topological Optimization">
       <Parameter name="Package" type="string" value="OC" />
       <Parameter name="Stabilization Parameter" type="double" value="0.5" />
-      <Parameter name="Move Limiter" type="double" value="0.2" />
+      <Parameter name="Move Limiter" type="double" value="0.5" />
       <ParameterList name="Convergence Tests">
-        <Parameter name="Maximum Iterations" type="int" value="10" />
+        <Parameter name="Maximum Iterations" type="int" value="25" />
         <Parameter name="Combo Type" type="string" value="OR"/>
         <Parameter name="Relative Topology Change" type="double" value="5e-3" />
-        <Parameter name="Relative Objective Change" type="double" value="5e-3" />
+        <Parameter name="Relative Objective Change" type="double" value="1e-4" />
       </ParameterList>
       <Parameter name="Volume Enforcement Maximum Iterations" type="int" value="120" />
       <Parameter name="Volume Enforcement Convergence Tolerance" type="double" value="1e-6" />
-      <Parameter name="Minimum Density" type="double" value="0.05" />
       <Parameter name="Objective Name" type="string" value="F" />
       <Parameter name="Volume Multiplier Initial Guess" type="double" value="1e5" />
       <Parameter name="Volume Fraction Constraint" type="double" value="0.5" />
@@ -44,16 +49,19 @@
           are computed from.  There is only one topology.  This block is available
           to the responses and is added to each physics parameter list by the ATO_Solver.
       -->
-      <Parameter name="Centering" type="string" value="Node" />
       <Parameter name="Topology Name" type="string" value="Rho" />
       <Parameter name="Entity Type" type="string" value="State Variable" />
-      <Parameter name="Penalization" type="string" value="SIMP" />
-      <Parameter name="Update Algorithm" type="string" value="OC" />
+      <Parameter name="Bounds" type="Array(double)" value="{0.0,1.0}" />
       <Parameter name="Initial Value" type="double" value="0.5" />
-      <ParameterList name="SIMP">
-        <Parameter name="Penalization Parameter" type="double" value="3.0" />
+      <ParameterList name="Functions">
+        <Parameter name="Number of Functions" type="int" value="1" />
+        <ParameterList name="Function 0">
+          <Parameter name="Function Type" type="string" value="SIMP" />
+          <Parameter name="Minimum" type="double" value="0.001" />
+          <Parameter name="Penalization Parameter" type="double" value="3.0" />
+        </ParameterList>
       </ParameterList>
-      <Parameter name="Filter Radius" type="double" value="1." />
+      <Parameter name="Spatial Filter" type="int" value="0" />
     </ParameterList>
 
     <ParameterList name="Physics Problem 0">    
@@ -70,6 +78,9 @@
         <Parameter name="NBC on SS surface_1 for DOF sig_y set dudn" type="Array(double)" value="{4.5}"/>
       </ParameterList>
 
+      <ParameterList name="Apply Topology Weight Functions">
+        <Parameter name="Stress" type="int" value="0" />
+      </ParameterList>
 
       <Parameter name="Elastic Modulus" type="double" value="1e9"/>
       <Parameter name="Poissons Ratio" type="double" value="0.33"/>
@@ -81,9 +92,9 @@
           You can define as many of these as you like.
       -->
       <ParameterList name="Response Functions">
-        <Parameter name="Number" type="int" value="1"/>
-        <Parameter name="Response 0" type="string" value="Stiffness Objective" />
-        <ParameterList name="ResponseParams 0">
+        <Parameter name="Number of Response Vectors" type="int" value="1"/>
+        <ParameterList name="Response Vector 0">
+          <Parameter name="Name" type="string" value="Stiffness Objective" />
           <Parameter name="Gradient Field Name" type="string" value="Strain" />
           <Parameter name="Gradient Field Layout" type="string" value="QP Tensor" />
           <Parameter name="Work Conjugate Name" type="string" value="Stress" />
