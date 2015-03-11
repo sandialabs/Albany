@@ -80,11 +80,17 @@ public:
   allocateVectors();
 
   /// Create the map for the coupled solution from an array of the maps
-  /// for each invidivual model that is being coupled.
+  /// for each individual model that is being coupled.
   Teuchos::RCP<Tpetra_Map const>
   createCoupledMap(
       Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
+
+  //Take in a combined vector for a coupled model 
+  //and separates into into individual subvectors for each submodel.
+  //These are stored in a Teuchos::Array of Tpetra_Vectors.
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > 
+  separateCoupledVector( const Teuchos::RCP<Tpetra_Vector>& combined_vector) const;
 
 protected:
 

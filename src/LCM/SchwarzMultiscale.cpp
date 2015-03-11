@@ -231,6 +231,39 @@ LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
 }
 
+//LCM::SchwarzMultiscale::separateCoupledVector 
+//takes in a combined vector for a coupled model 
+//and separates into into individual subvectors for each submodel.
+//These are stored in a Teuchos::Array of Tpetra_Vectors.
+Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > 
+LCM::SchwarzMultiscale::separateCoupledVector(
+    const Teuchos::RCP<Tpetra_Vector>& combined_vector) const
+{
+  //IK, 3/11/15, FIXME: 
+  //This function  has only been implemented for 1 domain!  Needs to be implemented 
+  //for the general case.  The logic should be close to what's commented out below.
+  //Also: need to convert this to Thyra to make use of Thyra's composite vector capabilities.
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
+  if (num_models_ == 1) 
+    vecs[0] = combined_vector;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "LCM::SchwarzMultiscale::separateCoupledVector not implemented for > 1 domain! \n");
+  /*Teuchos::ArrayRCP<const ST> combined_vector_view = combined_vector->get1dView();
+  std::vector<ST> data; 
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
+  LO counter_local = 0;
+  for (int m = 0; m < num_models_; m++) {
+    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
+    data.resize(disc_local_elements_m);
+    for (int i=0; i<disc_local_elements_m; i++) data[i] = combined_vector_view[counter_local + i];
+    Teuchos::ArrayView<ST> dataAV = Teuchos::arrayViewFromVector(data); 
+    vecs[m] = Teuchos::rcp(new Tpetra_Vector(disc_maps_[m], dataAV));  
+    counter_local += disc_local_elements_m; 
+  } */
+  return vecs; 
+}
+
+
 Teuchos::RCP<const Tpetra_Map>
 LCM::SchwarzMultiscale::createCoupledMap(
     Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
@@ -827,22 +860,10 @@ evalModelImpl(
       ConverterT::getTpetraVector(out_args.get_f()) :
       Teuchos::null;
 
-  //Create a Teuchos array of the fT_out for each model.
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  fTs_out(num_models_);
-
-  for (int m = 0; m < num_models_; ++m) {
-
-    Teuchos::RCP<Tpetra_Vector const>
-    fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
-        ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
-        Teuchos::null;
-    fTs_out[m] = Teuchos::nonnull(fT_out_temp) ?
-            Teuchos::rcp(new Tpetra_Vector(*fT_out_temp)) :
-            Teuchos::null;
-    //if (fT_out_temp != Teuchos::null) 
-    //  fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
-  }
+  //Warning: the following has only been implemented for 1 model! 
+  //IKT, 3/11/15
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out = separateCoupledVector(fT_out); 
+  
 
   Teuchos::RCP<Tpetra_Operator> const
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
@@ -857,22 +878,24 @@ evalModelImpl(
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
   W_op_outs_crsT(num_models_);
 
-  //get each of the models' W matrices
-  for (int m = 0; m < num_models_; ++m) {
-    Teuchos::RCP<Tpetra_Operator> const
-    W_op_outT_temp =
-        Teuchos::nonnull(models_[m]->create_W_op()) ?
-            ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
-            Teuchos::null;
+  if (W_op_outT != Teuchos::null) { 
 
-    W_op_outs_crsT[m] =
-        Teuchos::nonnull(W_op_outT_temp) ?
-            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT_temp, true) :
+    //get each of the models' W matrices
+    for (int m = 0; m < num_models_; ++m) {
+      Teuchos::RCP<Tpetra_Operator> const
+      W_op_outT_temp =
+          Teuchos::nonnull(models_[m]->create_W_op()) ?
+              ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
+              Teuchos::null;
+
+      W_op_outs_crsT[m] =
+          Teuchos::nonnull(W_op_outT_temp) ?
+          Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT_temp, true) :
             Teuchos::null;
+    }
   }
 
-  Teuchos::Array<bool>
-  fs_already_computed(num_models_, false);
+  Teuchos::Array<bool> fs_already_computed(num_models_, false);
 
   // W matrix for each individual model
   for (int m = 0; m < num_models_; ++m) {
@@ -887,31 +910,12 @@ evalModelImpl(
     }
   }
 
+ 
   // FIXME: create coupled W matrix from array of model W matrices
   if (W_op_outT != Teuchos::null) {
     Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
       Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
     W_op_out_coupled->initialize(W_op_outs_crsT);
-  }
-
-  // Create fT_out from fTs_out[m]
-  LO
-  counter_local = 0;
-
-  //get nonconst view of fT_out
-  Teuchos::ArrayRCP<ST> fT_out_nonconst_view; 
-  if (fT_out != Teuchos::null)  fT_out->get1dViewNonConst();
-
-  for (int m = 0; m < num_models_; ++m) {
-    if (fTs_out[m] != Teuchos::null) {
-      Teuchos::ArrayRCP<ST>
-      fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
-
-      for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
-        fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
-      }
-      counter_local += fTs_out[m]->getLocalLength();
-    }
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -924,10 +928,6 @@ evalModelImpl(
     Tpetra_MatrixMarket_Writer::writeDenseFile(
       "f1.mm",
       *(fTs_out[1]));
-  if (fT_out != Teuchos::null) 
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "f_coupled.mm",
-      *fT_out);
 #endif
 
 

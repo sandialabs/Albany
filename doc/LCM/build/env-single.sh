@@ -94,3 +94,7 @@ TEST_LOG="$LCM_DIR/$PREFIX-test.log"
 HOST=`hostname`
 FROM="name@address"
 TO="name@address"
+# Set directory flags so that the appropriate shared objects and executables
+# can be found.
+PATH="$INSTALL_DIR/bin:$PATH"
+LD_LIBRARY_PATH="$INSTALL_DIR/lib:$LD_LIBRARY_PATH"
