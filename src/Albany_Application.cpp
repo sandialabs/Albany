@@ -1194,7 +1194,7 @@ computeGlobalJacobianT(const double alpha,
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
   //Debut output
-  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+  if (writeToMatrixMarketRes != 0 && fT != NULL) { //If requesting writing to MatrixMarket of residual...
     char name[100];  //create string for file name
     if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
        sprintf(name, "rhs%i.mm", countRes);
@@ -1207,7 +1207,7 @@ computeGlobalJacobianT(const double alpha,
       }
     }
   }
-  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+  if (writeToCoutRes != 0 && fT != NULL) { //If requesting writing of residual to cout...
     if (writeToCoutRes == -1) { //cout residual time it arises
        std::cout << "Global Residual #" << countRes << ": " << std::endl;
        fT->describe(*out, Teuchos::VERB_EXTREME);
