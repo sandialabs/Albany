@@ -1,0 +1,18 @@
+
+reset
+
+create brick x 1.0 y 1.0 z 1.0
+move volume 1 x 0.5 y 0.5 z 0.5
+volume all size 1.0
+block 1 volume 1
+mesh volume all
+nodeset 1 node 1 # (1, 0, 1)
+nodeset 2 node 2 # (1, 1, 1)
+nodeset 3 node 3 # (0, 1, 1)
+nodeset 4 node 4 # (0, 0, 1)
+nodeset 5 node 5 # (1, 1, 0)
+nodeset 6 node 6 # (1, 0, 0)
+nodeset 7 node 7 # (0, 0, 0)
+nodeset 8 node 8 # (0, 1, 0)
+
+export genesis 'SingleSlipPlaneOffKilterLoading.g' overwrite
