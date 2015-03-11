@@ -53,6 +53,7 @@ namespace LCM {
   {
     Intrepid::Vector<ScalarT> direction(1.0, 0.0, 0.0);
     Intrepid::Tensor4<ScalarT> tangent(num_dims_);
+    bool ellipticity_flag(0);
 
     // Compute DefGrad tensor from displacement gradient
     for (int cell(0); cell < workset.numCells; ++cell) {
@@ -61,7 +62,11 @@ namespace LCM {
         tangent.fill( tangent_,cell,pt,0,0,0,0);
         ellipticity_flag_(cell,pt) = 0;
 
-        // Intrepid::check_ellipticity(tan);
+        ellipticity_flag = false;
+        //boost::tie(ellipticity_flag, direction) 
+         // = Intrepid::check_strong_ellipticity(tangent);
+
+        ellipticity_flag_(cell,pt) = ellipticity_flag;
 
         for (int i(0); i < num_dims_; ++i) {
           direction_(cell,pt,i) = direction(i);
