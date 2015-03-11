@@ -581,24 +581,23 @@ evaluateFields(typename Traits::EvalData workset)
 
     for (std::size_t node = 0; node < this->numNodes; ++node) {
       for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
-          valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
-                    this->tensorRank == 1 ? this->valVec(cell,node,eq) :
-                    this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+        typename PHAL::Ref<ScalarT>::type valref = (
+            this->tensorRank == 0 ? this->val[eq] (cell, node) :
+            this->tensorRank == 1 ? this->valVec (cell, node, eq) :
+            this->valTensor[0] (cell, node, eq / numDim, eq % numDim));
 
         const LO row = nodeID[node][this->offset + eq];
 
-        if (Teuchos::nonnull(fT))
-          fT->sumIntoLocalValue(row, valptr.val());
+        if (Teuchos::nonnull (fT))
+          fT->sumIntoLocalValue (row, valref.val ());
 
-	if (Teuchos::nonnull(JVT))
-	  for (int col=0; col<workset.num_cols_x; col++)
-	    JVT->sumIntoLocalValue(row, col, valptr.dx(col));
+        if (Teuchos::nonnull (JVT))
+          for (int col = 0; col < workset.num_cols_x; col++)
+            JVT->sumIntoLocalValue (row, col, valref.dx (col));
 
-	if (Teuchos::nonnull(fpT)) 
-	  for (int col=0; col<workset.num_cols_p; col++)
-	    fpT->sumIntoLocalValue(row, col,
-                                   valptr.dx(col + workset.param_offset));
+        if (Teuchos::nonnull (fpT))
+          for (int col = 0; col < workset.num_cols_p; col++)
+            fpT->sumIntoLocalValue (row, col, valref.dx (col + workset.param_offset));
       }
     }
   }
@@ -625,14 +624,9 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_MultiVector> fpVT = workset.fpVT;
   bool trans = workset.transpose_dist_param_deriv;
   int num_cols = workset.VpT->getNumVectors();
-  ScalarT *valptr;
 
-  int numDim=0;
-  if(this->tensorRank==2)
-    numDim = this->valTensor[0].dimension(2);
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX
-/*
+  int numDim= (this->tensorRank==2) ? this->valTensor[0].dimension(2) : 0;
+
   if (trans) {
     const Albany::IDArray&  wsElDofs = workset.distParamLib->get(workset.dist_param_deriv_name)->workset_elem_dofs()[workset.wsIndex];
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
@@ -644,13 +638,11 @@ evaluateFields(typename Traits::EvalData workset)
           double val = 0.0;
           for (std::size_t node = 0; node < this->numNodes; ++node) {
             for (std::size_t eq = 0; eq < numFields; eq++) {
-              if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-              else
-              if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-              else
-              if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
-
-              val += valptr->dx(i)*local_Vp[node*numFields+eq][col];
+              typename PHAL::Ref<ScalarT>::type
+                        valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                                  this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                                  this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+              val += valref.dx(i)*local_Vp[node*numFields+eq][col];
             }
           }
           const LO row = wsElDofs((int)cell,i,0);
@@ -659,11 +651,8 @@ evaluateFields(typename Traits::EvalData workset)
         }
       }
     }
-
   }
-
   else {
-
     for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
       const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID =
         workset.wsElNodeEqID[cell];
@@ -673,25 +662,21 @@ evaluateFields(typename Traits::EvalData workset)
 
       for (std::size_t node = 0; node < this->numNodes; ++node) {
         for (std::size_t eq = 0; eq < numFields; eq++) {
-          if (this->tensorRank == 0) valptr = &(this->val[eq])(cell,node);
-          else
-          if (this->tensorRank == 1) valptr = &((this->valVec)(cell,node,eq));
-          else
-          if (this->tensorRank == 2) valptr = &(this->valTensor[0])(cell,node, eq/numDim, eq%numDim);
-
+          typename PHAL::Ref<ScalarT>::type
+                    valref = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                              this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                              this->valTensor[0](cell,node, eq/numDim, eq%numDim));
           const int row = nodeID[node][this->offset + eq];
           for (int col=0; col<num_cols; col++) {
             double val = 0.0;
             for (int i=0; i<num_deriv; ++i)
-              val += valptr->dx(i)*local_Vp[i][col];
+              val += valref.dx(i)*local_Vp[i][col];
             fpVT->sumIntoLocalValue(row, col, val);
           }
         }
       }
     }
-
   }
-*/
 }
 
 // **********************************************************************
