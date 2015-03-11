@@ -58,10 +58,10 @@ namespace Albany {
     Teuchos::RCP<const Epetra_Vector> get_p_init(int l) const;
 
     //! Return parameters lower bounds
-    virtual Teuchos::RefCountPtr<const Epetra_Vector> get_p_lower_bounds(int l) const;
+    virtual Teuchos::RCP<const Epetra_Vector> get_p_lower_bounds(int l) const;
 
     //! Return parameters upper bounds
-    virtual Teuchos::RefCountPtr<const Epetra_Vector> get_p_upper_bounds(int l) const;
+    virtual Teuchos::RCP<const Epetra_Vector> get_p_upper_bounds(int l) const;
     
     //! Create W = alpha*M + beta*J + omega*N matrix
     Teuchos::RCP<Epetra_Operator> create_W() const;
