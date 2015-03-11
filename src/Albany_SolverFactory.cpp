@@ -1283,6 +1283,7 @@ Albany::SolverFactory::getValidRegressionResultsParameters() const
     validPL->set<Array<double> >(
        Albany::strint("Sensitivity Test Values",i), ta,
        Albany::strint("Array of regression values for Sensitivities w.r.t parameter",i));
+    validPL->sublist(Albany::strint("Sensitivity Comparisons",i), false, "Sensitivity Comparisons sublist");
   }
 
   validPL->set<int>("Number of Dakota Comparisons", 0,
