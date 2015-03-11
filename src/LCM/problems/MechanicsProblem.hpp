@@ -1837,7 +1837,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
       p->set<std::string>("Weighted BF Name", "wBF");
       p->set<std::string>("Acceleration Name", "Acceleration");
-
+      if (Teuchos::nonnull(rc_mgr_)) {
+        p->set<std::string>("DefGrad Name", defgrad);
+        rc_mgr_->registerField(
+          defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
+          AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
+      }
       p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
       //Output
       p->set<std::string>("Residual Name", "Displacement Residual");

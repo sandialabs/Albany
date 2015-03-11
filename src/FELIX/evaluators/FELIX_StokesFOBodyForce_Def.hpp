@@ -292,7 +292,7 @@ evaluateFields(typename Traits::EvalData workset)
    double alpha0 = 4e-5; //renamed alpha alpha0 to prevent conflict with other alpha
    double s0 = 2.0; 
    double H = 1.0; 
-   double beta = 1.0; 
+   double beta = 1.0;
    //IK, 2/4/15, WARNING: I think the source term has been derived assuming n = 3, even 
    //though in theory n is a free parameter...
    //TO DO: check sign!
@@ -318,7 +318,7 @@ evaluateFields(typename Traits::EvalData workset)
        //f = 16/3*A*mu^4*(-2*phi4^2*phi5 + 24*phi3*phi4*(phi1+2*alpha*x^2) - 6*x^3*phi1^2*phi2*phi3 
        //                 -18*x^2*phi1^2*phi2*phi4^2 - 6*x*phi1*phi3*phi5); 
        force(cell,qp,0) = 16.0/3.0*A*pow(muqp, 4)*(-2.0*phi4*phi4*phi5 + 24.0*phi3*phi4*(phi1 + 2.0*alpha0*x*x)
-                                       -6.0*x*x*x*phi1*phi1*phi2*phi3 - 18.0*x*x*phi1*phi1*phi2*phi4*phi4
+                                       -6.0*x*x*x*phi1*phi1*phi1*phi2*phi3 - 18.0*x*x*phi1*phi1*phi2*phi4*phi4
                                        -6.0*x*phi1*phi3*phi5); 
      }
    }

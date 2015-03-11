@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include <Intrepid_MiniTensor.h>
 #include <Intrepid_MiniTensor_Mechanics.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
@@ -60,6 +61,8 @@ MechanicsResidual(Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib =
       p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
+
+  if (def_grad_rc_.init(p, "F")) this->addDependentField(def_grad_rc_());
 }
 
 //------------------------------------------------------------------------------
@@ -78,6 +81,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   if (enable_dynamics_) {
     this->utils.setFieldData(acceleration_, fm);
   }
+  if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(), fm);
 }
 
 // ***************************************************************************
@@ -179,27 +183,54 @@ template<typename EvalT, typename Traits>
 void MechanicsResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  //std::cout.precision(15);
-  // initilize Tensors
-  // Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
-  // Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-  // for large deformation, map Cauchy stress to 1st PK stress
   for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int node = 0; node < num_nodes_; ++node) {
-      for (int dim = 0; dim < num_dims_; ++dim) {
-        residual_(cell, node, dim) = typename EvalT::ScalarT(0.0);
-      }
-    }
-    for (int pt = 0; pt < num_pts_; ++pt) {
-      for (int node = 0; node < num_nodes_; ++node) {
-        for (int i = 0; i < num_dims_; ++i) {
-          for (int j = 0; j < num_dims_; ++j) {
-            residual_(cell, node, i) +=
-              stress_(cell, pt, i, j) * w_grad_bf_(cell, node, pt, j);
+    for (int node = 0; node < num_nodes_; ++node)
+      for (int dim = 0; dim < num_dims_; ++dim)
+        residual_(cell, node, dim) = ScalarT(0);
+    if (def_grad_rc_) {
+      /* The calculation in Kinematics already gives us stress with respect to
+       * x[0]. Now we need the weighted basis function gradient to also be
+       * w.r.t. x[0].
+       *   w_grad_bf_ is
+       *     f det(dx[n-1]/dr) dw/dx[n-1],
+       * where f is the quadrature weight, r is the element reference
+       * coordinates, and the det gives the volume change relative to the
+       * reference element, We need
+       *     f det(dx[0]/dr) dw/dx[0].
+       * First,
+       *     dw/dx[0] = dw/dx[n-1] F[n-1,0],
+       * which is w_grad_bf_ times def_grad_rc_. Second,
+       *     det(dx[0]/dr) = det(dx[0]/dx[n-1] dx[n-1]/dr)
+       *       = det(dx[0]/dx[n-1]) det(dx[n-1]/dr)
+       *       = det(dx[n-1]/dr) / det(F[n-1,0]).
+       */
+      for (int pt = 0; pt < num_pts_; ++pt) {
+        Intrepid::Tensor<RealType> F(num_dims_);
+        F.fill(def_grad_rc_(), cell, pt, 0, 0);
+        const RealType F_det = Intrepid::det(F);
+        for (int node = 0; node < num_nodes_; ++node) {
+          MeshScalarT w[3];
+          for (int k = 0; k < num_dims_; ++k) {
+            w[k] = MeshScalarT(0);
+            for (int i = 0; i < num_dims_; ++i)
+              w[k] += (w_grad_bf_(cell, node, pt, i) *
+                       def_grad_rc_()(cell, pt, i, k));
+            w[k] /= F_det;
           }
+          for (int i = 0; i < num_dims_; ++i)
+            for (int j = 0; j < num_dims_; ++j)
+              residual_(cell, node, i) += stress_(cell, pt, i, j) * w[j];
         }
       }
+    } else {
+      for (int pt = 0; pt < num_pts_; ++pt)
+        for (int node = 0; node < num_nodes_; ++node) {
+          for (int i = 0; i < num_dims_; ++i)
+            for (int j = 0; j < num_dims_; ++j)
+              residual_(cell, node, i) +=
+                stress_(cell, pt, i, j) * w_grad_bf_(cell, node, pt, j);
+        }
     }
   }
 

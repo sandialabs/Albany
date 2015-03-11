@@ -13,6 +13,7 @@
 #include <Phalanx_MDField.hpp>
 #include <Sacado_ParameterAccessor.hpp>
 #include "Albany_Layouts.hpp"
+#include "AAdapt_RC_Field.hpp"
 
 namespace LCM
 {
@@ -115,8 +116,12 @@ private:
   ///
   bool enable_dynamics_;
 
-  //Kokkos
-  public:
+  ///
+  /// Input, if RCU.
+  ///
+  AAdapt::rc::Field<2> def_grad_rc_;
+
+public: // Kokkos
 
   struct residual_Tag{};
   struct residual_haveBodyForce_Tag{};
@@ -145,7 +150,6 @@ private:
   void compute_BodyForce(const int cell) const;
   KOKKOS_INLINE_FUNCTION
   void compute_Acceleration(const int cell) const;
-
 
 };
 }

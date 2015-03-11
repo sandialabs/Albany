@@ -259,9 +259,9 @@ evaluateFields(typename Traits::EvalData workset)
       for (std::size_t node=0; node < numNodes; ++node) {
           for (std::size_t qp=0; qp < numQPs; ++qp) {
              //z dimension is treated as 2nd dimension
-             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) = f1
+             //PDEs is: -d/dx(4*mu*du/dx) - d/dz(mu*du/dz) - f1 0
              Residual(cell,node,0) += 4.0*muFELIX(cell,qp)*Ugrad(cell,qp,0,0)*wGradBF(cell,node,qp,0)
-                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1); 
+                                   + muFELIX(cell,qp)*Ugrad(cell,qp,0,1)*wGradBF(cell,node,qp,1)+force(cell,qp,0)*wBF(cell,node,qp);
           }
        }
      } 

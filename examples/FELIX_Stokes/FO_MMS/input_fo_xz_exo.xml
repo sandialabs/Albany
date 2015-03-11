@@ -6,10 +6,10 @@
     <ParameterList name="Neumann BCs">     
          <!--sideset2 corresponds to bed-->
          <!--input string is (beta, alpha, beta1, beta2, beta3)-->
-         <Parameter name="NBC on SS SideSet0 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 0.0, 0.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet1 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 0.0, 0.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet2 for DOF U0 set basal" type="Array(double)" value="{1.0, 1.0, 1.0, 1.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet3 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 1.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset0 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset1 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset2 for DOF U0 set basal" type="Array(double)" value="{1.0, 1.0, 1.0, 1.0, 0.0}"/>
+         <Parameter name="NBC on SS sideset3 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 1.0, 0.0, 0.0}"/>
          <Parameter name="BetaXY" type="string" value="FELIX XZ MMS"/>
     </ParameterList>
     <ParameterList name="Parameters">
@@ -59,14 +59,12 @@
      <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="40"/>
-    <Parameter name="2D Elements" type="int" value="10"/>
-    <Parameter name="1D Scale" type="double" value="2"/>
-    <Parameter name="2D Scale" type="double" value="1"/>
     <Parameter name="FELIX L" type="double" value="50.0"/>
-    <Parameter name="Method" type="string" value="STK2D"/>
+    <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Transform Type" type="string" value="FO XZ MMS"/>
+    <Parameter name="Exodus Input File Name" type="string" value="/home/ikalash/Desktop/papers/felixfo_gmd/xz_test/quad9_exo/rectangle_quad9.exo"/>
     <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_xz_out.exo"/>
+    <Parameter name="Write Coordinates to MatrixMarket" type="bool" value="1"/>
   </ParameterList>
   <!--ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
@@ -117,7 +115,7 @@
 	</ParameterList>
 	<ParameterList name="Test 1">
 	  <Parameter name="Test Type" type="string" value="MaxIters"/>
-	  <Parameter name="Maximum Iterations" type="int" value="10"/>
+	  <Parameter name="Maximum Iterations" type="int" value="100"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Direction">
@@ -146,10 +144,10 @@
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
-	      <Parameter name="Preconditioner Type" type="string" value="Ifpack"/>
+	      <Parameter name="Preconditioner Type" type="string" value="ML"/>
 	      <ParameterList name="Preconditioner Types">
 		<ParameterList name="Ifpack">
-		  <Parameter name="Overlap" type="int" value="1"/>
+		  <Parameter name="Overlap" type="int" value="0"/>
 		  <Parameter name="Prec Type" type="string" value="ILU"/>
 		  <ParameterList name="Ifpack Settings">
 		    <Parameter name="fact: level-of-fill" type="int" value="0"/>

@@ -92,6 +92,8 @@ namespace LCM {
     AAdapt::rc::Field<2> strain_rc_;
     ///! Input, if RCU.
     AAdapt::rc::Field<2> def_grad_rc_;
+    // For debugging.
+    void check_det(typename Traits::EvalData d, int cell, int pt);
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
    //Kokkos

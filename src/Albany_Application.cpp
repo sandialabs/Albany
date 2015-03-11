@@ -1194,7 +1194,7 @@ computeGlobalJacobianT(const double alpha,
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
   //Debut output
-  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+  if (writeToMatrixMarketRes != 0 && fT != NULL) { //If requesting writing to MatrixMarket of residual...
     char name[100];  //create string for file name
     if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
        sprintf(name, "rhs%i.mm", countRes);
@@ -1207,7 +1207,7 @@ computeGlobalJacobianT(const double alpha,
       }
     }
   }
-  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+  if (writeToCoutRes != 0 && fT != NULL) { //If requesting writing of residual to cout...
     if (writeToCoutRes == -1) { //cout residual time it arises
        std::cout << "Global Residual #" << countRes << ": " << std::endl;
        fT->describe(*out, Teuchos::VERB_EXTREME);
@@ -3560,13 +3560,28 @@ postRegSetup(std::string eval)
       }
   }
   else if (eval=="Distributed Parameter Derivative") { //!!!
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++) {
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
-    if (dfm!=Teuchos::null)
+    }
+    if (dfm!=Teuchos::null) {
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+    }
     if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      for (int ps=0; ps < nfm.size(); ps++) {
+        std::vector<PHX::index_size_type> derivative_dimensions;
+        derivative_dimensions.push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, ps));
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+      }
   }
 #ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {

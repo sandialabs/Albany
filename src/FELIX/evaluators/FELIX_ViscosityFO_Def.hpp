@@ -442,7 +442,7 @@ evaluateFields(typename Traits::EvalData workset)
             for (std::size_t qp=0; qp < numQPs; ++qp) {
               typename PHAL::Ref<ScalarT>::type u00 = Ugrad(cell,qp,0,0); //epsilon_xx
               epsilonEqpSq = u00*u00; //epsilon_xx^2
-              epsilonEqpSq += 0.25*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1))*(Ugrad(cell,qp,0,0) + Ugrad(cell,qp,0,1)); //+0.25*epsilon_xz^2
+              epsilonEqpSq += 0.25*Ugrad(cell,qp,0,1)*Ugrad(cell,qp,0,1); //+0.25*epsilon_xz^2
               epsilonEqpSq += ff; //add regularization "fudge factor" 
               mu(cell,qp) = flowFactorVec[cell]*pow(epsilonEqpSq,  power); //non-linear viscosity, given by Glen's law  
             }

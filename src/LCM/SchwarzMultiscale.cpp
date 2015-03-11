@@ -979,6 +979,30 @@ evalModelImpl(
     }
   }
 
+  // f
+  for (int m = 0; m < num_models_; ++m) {
+    if (apps_[m]->is_adjoint) {
+      const Thyra::ModelEvaluatorBase::Derivative<ST> f_derivT(
+          solver_outargs_[m].get_f(),
+          Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
+
+      const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+
+      const int response_index = 0; // need to add capability for sending this in
+      apps_[m]->evaluateResponseDerivativeT(
+            response_index, curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+            sacado_param_vecs_[m], NULL,
+            NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
+     } 
+     else {
+       if (Teuchos::nonnull(fTs_out[m]) && !fs_already_computed[m]) {
+         apps_[m]->computeGlobalResidualT(
+            curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+            sacado_param_vecs_[m], *fTs_out[m]);
+       }
+     }
+   }
+
 
   // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {
