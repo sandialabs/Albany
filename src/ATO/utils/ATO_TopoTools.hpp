@@ -35,8 +35,9 @@ public:
   const std::string& getOutputNames(){return name;}
   const Teuchos::Array<std::string>& getFixedBlocks(){return fixedBlocks;}
   double getInitialValue(){return initValue;}
-  double getMaterialValue(){return materialValue;}
   double getVoidValue(){return voidValue;}
+  double getInterfaceValue(){return interfaceValue;}
+  double getMaterialValue(){return materialValue;}
   const Teuchos::Array<double> getBounds(){return bounds;}
   std::string getEntityType(){return entityType;}
   int TopologyOutputFilter(){return topologyOutputFilter;}
@@ -61,6 +62,7 @@ private:
 
   std::vector<std::string> outputNames;
   double initValue;
+  double interfaceValue;
   double materialValue;
   Teuchos::Array<double> bounds;
   double voidValue;

@@ -9,6 +9,10 @@
 #include "Epetra_Export.h"
 #include "Adapt_NodalDataVector.hpp"
 #include "ATO_TopoTools.hpp"
+#include "ATO_Integrator.hpp"
+#include <functional>
+
+#include <sstream>
 
 /******************************************************************************/
 ATO::OptimizationProblem::
@@ -57,33 +61,54 @@ ComputeVolume(const double* p, double& v, double* dvdp)
   double localv = 0.0;
 
   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-    wsElNodeID = disc->getWsElNodeID();
+        wsElNodeID = disc->getWsElNodeID();
+  const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
+        coords = disc->getCoords();
   const Albany::WorksetArray<int>::type& wsPhysIndex = disc->getWsPhysIndex();
 
   int numWorksets = wsElNodeID.size();
 
+  Intrepid::FieldContainer<double> coordCon;
+  Intrepid::FieldContainer<double> topoVals;
+  std::vector<double> weights;
+  std::vector<std::vector<double> > refPoints;
 
+  std::stringstream mStream;
+  mStream << "Measure vals: ";
   for(int ws=0; ws<numWorksets; ws++){
 
     int physIndex = wsPhysIndex[ws];
     int numNodes  = basisAtQPs[physIndex].dimension(0);
     int numCells  = weighted_measure[ws].dimension(0);
-    int numQPs    = weighted_measure[ws].dimension(1);
+    int numDims   = cubatures[physIndex]->getDimension();
+
+    Integrator<double> myDicer(cellTypes[physIndex]);
+
+    coordCon.resize(numNodes, numDims);
+    topoVals.resize(numNodes);
     
+
     for(int cell=0; cell<numCells; cell++){
-      double elVol = 0.0;
-      for(int qp=0; qp<numQPs; qp++){
-        double pVal = 0.0;
-        for(int node=0; node<numNodes; node++){
-          int gid = wsElNodeID[ws][cell][node];
-          int lid = overlapNodeMap->LID(gid);
-          pVal += p[lid]*basisAtQPs[physIndex](node,qp);
-        }
-        elVol += topology->Penalize(functionIndex,pVal)*weighted_measure[ws](cell,qp);
+      for(int node=0; node<numNodes; node++){
+        for(int dim=0; dim<numDims; dim++)
+          coordCon(node,dim) = coords[ws][cell][node][dim];
+        int gid = wsElNodeID[ws][cell][node];
+        int lid = overlapNodeMap->LID(gid);
+        topoVals(node) = p[lid];
       }
-      localv += elVol;
+
+      double weight=0.0;
+      ATO::Integrator<double>::Positive positive;
+      myDicer.getMeasure(weight, coordCon, topoVals, topology->getInterfaceValue(), positive);
+      localv += weight;
+
+      mStream << weight << " ";
     }
   }
+  std::cout << mStream.str() << std::endl;
+
+
+
   comm->SumAll(&localv, &v, 1);
 
   if( dvdp != NULL ){

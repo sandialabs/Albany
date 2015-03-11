@@ -60,6 +60,9 @@ SET(HEADERS
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/PoissonsEquation.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/problems/ATO_OptimizationProblem.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_TopoTools_Def.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator.hpp
+  ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Integrator_Def.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Aggregator.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Optimizer.hpp
   ${CMAKE_SOURCE_DIR}/src/ATO/utils/ATO_Pareto_Optimizer.hpp
