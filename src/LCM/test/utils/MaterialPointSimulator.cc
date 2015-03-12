@@ -239,6 +239,11 @@ int main(int ac, char* av[])
   fieldManager.registerEvaluator<Residual>(setFieldDT);
   stateFieldManager.registerEvaluator<Residual>(setFieldDT);
 
+  // check if the material wants the tangent to be computed
+  bool check_stability;
+  check_stability = mpsParams.get<bool>("Check Stability", false);
+  paramList.set<bool>("Compute Tangent", check_stability);
+
   //---------------------------------------------------------------------------
   std::cout << "// Constitutive Model Parameters"
             << std::endl;
@@ -299,10 +304,6 @@ int main(int ac, char* av[])
   //---------------------------------------------------------------------------
   std::cout << "// Bifurcation Check Evaluator"
             << std::endl;
-
-  // check if the material wants the tangent to be checked
-  bool check_stability;
-  check_stability = mpsParams.get<bool>("Check Stability", false);
 
   if (check_stability) {
     Teuchos::ParameterList bcPL;
