@@ -7,9 +7,13 @@
 #include "Schwarz_CoupledJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
-#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
+
+int c3 = 0; 
+int c4 = 0; 
 
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps, 
 					   Teuchos::RCP<const Tpetra_Map> coupled_disc_map, 
@@ -42,8 +46,11 @@ void LCM::Schwarz_CoupledJacobian::initialize(Teuchos::Array<Teuchos::RCP<Tpetra
 
 #ifdef WRITE_TO_MATRIX_MARKET
   std::cout << "In LCM::Schwarz_CoupledJacobian::initialize! \n"; 
+  char name[100];  //create string for file name
+  sprintf(name, "Jac0_%i.mm", c3);
 //write individual model jacobians to matrix market for debug
-  Tpetra_MatrixMarket_Writer::writeSparseFile("Jac0.mm", jacs[0]);
+  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
+  c3++; 
   if (n_models_ > 1) 
     Tpetra_MatrixMarket_Writer::writeSparseFile("Jac1.mm", jacs[1]);
 #endif
@@ -59,7 +66,9 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- initial X where we will set Y = Jac*X
-  Tpetra_MatrixMarket_Writer::writeDenseFile("X.mm", X);
+  char name[100];  //create string for file name
+  sprintf(name, "X_%i.mm", c4);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif
 
   //FIXME: fill in!
@@ -84,6 +93,12 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
     
     // Do multiplication block-wise
     //
+    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+   /* Albany::printTpetraVector(*out << "\nX:\n", X.getVector(0));
+    std::cout << "Jacobian:" << std::endl;
+    jacs_[0]->describe(*out, Teuchos::VERB_HIGH);
+    Albany::printTpetraVector(*out << "\nY:\n", Y.getVector(0));
+    */
     if (n_models_ == 1) {
       jacs_[0]->apply(X, Y); 
     }
@@ -93,7 +108,9 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
   
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- final solution Y (after all the operations to set Y = Jac*X
-  Tpetra_MatrixMarket_Writer::writeDenseFile("Y.mm", Y);
+  sprintf(name, "Y_%i.mm", c4);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
+  c4++; 
 #endif
 }
 
