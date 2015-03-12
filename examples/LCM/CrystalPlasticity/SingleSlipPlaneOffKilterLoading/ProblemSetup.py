@@ -60,8 +60,9 @@ if __name__ == "__main__":
     print "flow."
 
     F11 = 1.01
-    PoissonsRatio = 0.33
-    F22 = F33 = 1.0 - PoissonsRatio * (F11 - 1.0)
+#    PoissonsRatio = 0.3
+#    F22 = F33 = 1.0 - PoissonsRatio * (F11 - 1.0)
+    F22 = F33 = 1.0/sqrt(F11)
 
     DeformationGradient = [[F11, 0.0, 0.0],
                            [0.0, F22, 0.0],

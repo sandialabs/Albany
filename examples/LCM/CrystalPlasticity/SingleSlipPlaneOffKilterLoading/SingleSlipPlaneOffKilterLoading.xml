@@ -11,47 +11,47 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00989395323504}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00988069491933}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00118286772616}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00133075374386}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.0033}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00496280979001}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.0110768209612}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.0112114486632}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00201108550888}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00351275096548}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.0033}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00496280979001}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_3 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00118286772616}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00133075374386}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_3 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00319395323504}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00484350470934}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_3 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.0033}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00496280979001}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
@@ -66,17 +66,17 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.0033}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00496280979001}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_5 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.0110768209612}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.0112114486632}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_5 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00201108550888}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00351275096548}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_5 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
@@ -86,12 +86,12 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_6 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00989395323504}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00988069491933}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_6 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00118286772616}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00133075374386}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_6 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
@@ -116,12 +116,12 @@
       <ParameterList name="Time Dependent DBC on NS nodelist_8 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00118286772616}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.00133075374386}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_8 for DOF Y">
         <Parameter name="Number of points" type="int" value="2"/>
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00319395323504}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, -0.00484350470934}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_8 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>

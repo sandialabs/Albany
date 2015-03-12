@@ -26,15 +26,15 @@
         <Parameter name="C44" type="double" value="75.4"/>
 
         <!-- The basis vectors were generated with ProblemSetup.py -->
-
+<!--
         <Parameter name="Basis Vector 1" type="Array(double)" value="{0.996005300702,0.0892941262031,0.0}"/>
         <Parameter name="Basis Vector 2" type="Array(double)" value="{-0.0892941262031,0.996005300702,0.0}"/>
         <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
-<!--
+-->
         <Parameter name="Basis Vector 1" type="Array(double)" value="{0.996005300702,-0.0892941262031,0.0}"/>
         <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0892941262031,0.996005300702,0.0}"/>
         <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
--->
+
       </ParameterList>
 
       <!-- Crystal Plasticity Slip System -->
