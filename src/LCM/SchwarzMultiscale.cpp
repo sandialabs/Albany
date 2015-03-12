@@ -914,10 +914,28 @@ evalModelImpl(
  
   // FIXME: create coupled W matrix from array of model W matrices
   if (W_op_outT != Teuchos::null) {
+   //**
     Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
-      Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
+         Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
     W_op_out_coupled->initialize(W_op_outs_crsT);
+    //**
+    //FIXME:create boundary operators 
+    //for (int i = 0; i < num_models_; ++i) {
+    //  for (int j = 0; j < num_models_; ++j) {
+    //    //Check if have this term?  Put into Teuchos array?  
+    //    Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> W_op_out_boundary =
+    //       Teuchos::rcp(new LCM::Schwarz_BoundaryJacobian(commT_));
+    //    W_op_out_boundary->initialize(); //FIXME: initialize will have arugments!
+    //  }
+    //}
   }
+  //FIXME: 
+  //Create Schwarz_CoupledJacobian object of type Thyra::LinearOpBase<ScalarT> (FIXME: implement class)
+  //Constructor will take in W_op_outs_crsT and array of boundary Jacobian operators 
+  //(Teuchos::Array<Tpetra_CrsMatrix> and Teuchos::Array<Tpetra_Operator> respectively)
+  //Call getJacobianOperator method, analogous to getThyraMatrix in panzer 
+  //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
+  //This will replace above cretion of coupled Jacobian b/w **. 
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug
