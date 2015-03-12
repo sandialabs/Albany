@@ -13,6 +13,9 @@
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
+int c = 0; 
+int c2 = 0; 
+
 LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
@@ -580,14 +583,12 @@ allocateVectors()
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug
+  char name[100];  //create string for file name
+  sprintf(name, "x_init0_%i.mm", c);
   Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "x_init0.mm",
+      name,
       *(x_inits[0]));
-
-  Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "x_dot_init0.mm",
-      *(x_dot_inits[0]));
-
+  c++; 
   if (num_models_ > 1) {
     Tpetra_MatrixMarket_Writer::writeDenseFile(
         "x_init1.mm",
@@ -920,10 +921,14 @@ evalModelImpl(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug
-  if (fTs_out[0] != Teuchos::null)
+  char name[100];  //create string for file name
+  sprintf(name, "f0_%i.mm", c2);
+  if (fTs_out[0] != Teuchos::null) {
     Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "f0.mm",
+      name,
       *(fTs_out[0]));
+    c2++; 
+  }
   if (num_models_ > 1 && fTs_out[1] != Teuchos::null) 
     Tpetra_MatrixMarket_Writer::writeDenseFile(
       "f1.mm",
