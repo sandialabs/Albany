@@ -60,7 +60,8 @@ if __name__ == "__main__":
     print "flow."
 
     F11 = 1.01
-    F22 = F33 = sqrt(1.0/F11)
+    PoissonsRatio = 0.33
+    F22 = F33 = 1.0 - PoissonsRatio * (F11 - 1.0)
 
     DeformationGradient = [[F11, 0.0, 0.0],
                            [0.0, F22, 0.0],
@@ -72,7 +73,11 @@ if __name__ == "__main__":
 
     R_active = ConstructActiveRotationTensor(Bunge_Euler_phi1, Bunge_Euler_Phi, Bunge_Euler_phi2)
 
-    BasisVector1, BasisVector2, BasisVector3 = ConstructBasisVectors(R_active)
+    R_passive = [[R_active[0][0], R_active[1][0], R_active[2][0]],
+                 [R_active[0][1], R_active[1][1], R_active[2][1]],
+                 [R_active[0][2], R_active[1][2], R_active[2][2]]]
+
+    BasisVector1, BasisVector2, BasisVector3 = ConstructBasisVectors(R_passive) # DJL:  WHY IS THIS NOT R_active ??
 
     Temp = [[0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0],
