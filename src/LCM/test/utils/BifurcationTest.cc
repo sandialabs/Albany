@@ -100,7 +100,7 @@ stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
   y_min = -10.0;
 
   double const
-  y_max = 10;
+  y_max = 10.0;
 
   Intrepid::Index const
   x_num_points = 256;
@@ -115,14 +115,14 @@ stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
   stereo_max(x_max, y_max);
 
   Intrepid::Vector<Intrepid::Index, 2> const
-  stereo_num_points(x_num_points, x_num_points);
+  stereo_num_points(x_num_points, y_num_points);
 
   // Build the parametric grid with the specified parameters.
   Intrepid::ParametricGrid<double, 2>
   stereo_grid(stereo_min, stereo_max, stereo_num_points);
 
   // Build a stereographic parametrization for this elasticity.
-  Intrepid::SphericalParametrization<double, 3>
+  Intrepid::StereographicParametrization<double, 3>
   stereo_param(CC);
 
   // Traverse the grid with the parametrization.
@@ -140,6 +140,79 @@ stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
   std::cout << "Maximum: " << stereo_param.get_maximum();
   std::cout << " at " << stereo_param.get_arg_maximum() << '\n';
   std::cout << "Normal: " << stereo_param.get_normal_maximum() << '\n';
+
+  return;
+}
+
+//
+// Projective parametrization sweep
+//
+void
+projective_sweep(Intrepid::Tensor4<double, 3> const & CC)
+{
+  // Build a grid to sample the parametrization.
+  // The projective parametrization has three parameters.
+  // Set the limits and the density of sampling
+  // points for each parameter in vectors.
+  double const
+  x_min = -1.0;
+
+  double const
+  x_max = 1.0;
+
+  double const
+  y_min = -1.0;
+
+  double const
+  y_max = 1.0;
+
+  double const
+  z_min = -1.0;
+
+  double const
+  z_max = 1.0;
+
+  Intrepid::Index const
+  x_num_points = 64;
+
+  Intrepid::Index const
+  y_num_points = 64;
+
+  Intrepid::Index const
+  z_num_points = 64;
+
+  Intrepid::Vector<double, 3> const
+  project_min(x_min, y_min, z_min);
+
+  Intrepid::Vector<double, 3> const
+  project_max(x_max, y_max, z_max);
+
+  Intrepid::Vector<Intrepid::Index, 3> const
+  project_num_points(x_num_points, y_num_points, z_num_points);
+
+  // Build the parametric grid with the specified parameters.
+  Intrepid::ParametricGrid<double, 3>
+  project_grid(project_min, project_max, project_num_points);
+
+  // Build a projective parametrization for this elasticity.
+  Intrepid::ProjectiveParametrization<double, 3>
+  project_param(CC);
+
+  // Traverse the grid with the parametrization.
+  project_grid.traverse(project_param);
+
+  // Query the parametrization for the minimum and maximum found on the grid.
+  std::cout << "\n*** PROJECTIVE PARAMETRIZATION ***\n";
+
+  std::cout << std::scientific << std::setprecision(16);
+
+  std::cout << "Minimum: " << project_param.get_minimum();
+  std::cout << " at " << project_param.get_arg_minimum() << '\n';
+  std::cout << "Normal: " << project_param.get_normal_minimum() << '\n';
+
+  std::cout << "Maximum: " << project_param.get_maximum();
+  std::cout << " at " << project_param.get_arg_maximum() << '\n';
+  std::cout << "Normal: " << project_param.get_normal_maximum() << '\n';
 
   return;
 }
@@ -179,6 +252,8 @@ int main(int ac, char* av[])
   spherical_sweep(CC);
 
   stereographic_sweep(CC);
+
+  projective_sweep(CC);
 
   return 0;
 
