@@ -2239,8 +2239,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Temperature Name", temperature);
     // FIXME: this creates a circular dependency between the constitutive model and transport
     // see below
-    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
-    if (false) {
+    if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -2249,6 +2248,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         "Average J Stabilization Parameter",
         volume_average_stabilization_param);
 
+    p->set<Teuchos::RCP<std::map<std::string, std::string> > >("Name Map",fnm);
+
     //Output
     p->set<std::string>("Trapped Concentration Name", trappedConcentration);
     p->set<std::string>("Total Concentration Name", totalConcentration);
@@ -2256,10 +2257,9 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
     // FIXME: this creates a circular dependency between the constitutive model and transport
-    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
-    //if (false) {
+    if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-      //}
+    }
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
