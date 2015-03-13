@@ -7,6 +7,7 @@
 #include "Schwarz_CoupledJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
