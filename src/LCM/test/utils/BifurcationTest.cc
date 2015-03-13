@@ -97,9 +97,11 @@ int main(int ac, char* av[])
 
   std::cout << "Minimum: " << sphere_param.get_minimum();
   std::cout << " at " << sphere_param.get_arg_minimum() << '\n';
+  std::cout << "Normal: " << sphere_param.get_normal_minimum() << '\n';
 
   std::cout << "Maximum: " << sphere_param.get_maximum();
   std::cout << " at " << sphere_param.get_arg_maximum() << '\n';
+  std::cout << "Normal: " << sphere_param.get_normal_maximum() << '\n';
 
   return 0;
 
