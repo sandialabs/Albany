@@ -264,6 +264,7 @@ namespace LCM {
         }
       }
     }
+
     // Since Intrepid will later perform calculations on the entire workset size
     // and not just the used portion, we must fill the excess with reasonable
     // values. Leaving this out leads to inversion of 0 tensors.

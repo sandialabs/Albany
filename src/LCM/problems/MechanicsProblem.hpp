@@ -1154,12 +1154,18 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
               eb_name,
               "Output IP" + transport);
 
+    RealType ic(0.0);
+    if (material_db_->isElementBlockParam(eb_name, "Initial Concentration")) {
+      ic = material_db_->
+        getElementBlockParam<double>(eb_name, "Initial Concentration");
+    }
+
     p = stateMgr.registerStateVariable(transport,
         dl_->qp_scalar,
         dl_->dummy,
         eb_name,
         "scalar",
-        38.7, // JTO: What sort of Magic is 38.7 !?!
+        ic,
         true,
         output_flag);
     ev = Teuchos::rcp(new PHAL::SaveStateField<EvalT, PHAL::AlbanyTraits>(*p));
