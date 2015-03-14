@@ -1,10 +1,12 @@
 //$ mex -largeArrayDims CXXFLAGS="\$CXXFLAGS -fopenmp -Wall -O3"
 //$ -I. LDFLAGS="\$LDFLAGS -fopenmp -llapack -lmwblas" vtkmex.cpp
 
+#include <vector>
 #include <iostream>
 #include <algorithm>
-#include "mexutil.hpp"
-using namespace mexutil;
+
+// -----------------------------------------------------------------------------
+// Topology.
 
 class IntArrayList {
 public:
@@ -14,6 +16,7 @@ public:
   void resize (const int m) { v_.resize(m*n_); }
   void push_back (const int* a) { v_.insert(v_.end(), a, a + n_); }
   int* operator() (int i) { return &v_[0] + n_*i; }
+  int* operator[] (int i) { return &v_[0] + n_*i; }
   const int* operator() (int i) const { return &v_[0] + n_*i; }
   size_t size () const { return v_.size() / n_; }
 private:
@@ -127,6 +130,87 @@ Edges get_unique_edges (const IntArrayList& polys, const IntArrayList& pis) {
   }
   return edges;
 }
+
+// -----------------------------------------------------------------------------
+// Geometry.
+
+template<int _d> struct Dimensional { enum { dim = _d }; };
+template<int _d> struct Point : public Dimensional<_d> { double d[_d]; };
+template<int _d> struct Vector : public Dimensional<_d> { double d[_d]; };
+template<int _d> struct LineSeg : public Dimensional<_d> { Point<_d> p[2]; };
+template<int _d> struct Tri : public Dimensional<_d> { Point<_d> p[3]; };
+template<int _d> struct Plane : public Dimensional<_d> { Vector<_d> n; };
+
+template<int _d> inline void scale (double x[_d], const double a)
+{ for (int i = 0; i < _d; ++i) x[i] *= a; }
+
+template<int _d> inline void
+subtract (const double x[_d], const double y[_d], double z[_d])
+{ for (int i = 0; i < _d; ++i) z[i] = x[i] - y[i]; }
+template<typename PointT1, typename PointT2> inline void
+subtract (const PointT1& x, const PointT1& y, PointT2& z)
+{ subtract(x.d, y.d, z.d); }
+
+template<int _d> inline double dot (const double x[_d], const double y[_d]) {
+  double a = 0;
+  for (int i = 0; i < _d; ++i) a += x[i]*y[i];
+  return a;
+}
+template<int _d> inline double dot (const Vector<_d>& x, const Vector<_d>& y)
+{ return dot(x.d, y.d); }
+template<int _d> inline double norm2 (const double x[_d])
+{ return dot<_d>(x, x); }
+
+// c = a x b
+inline void cross (const double a[3], const double b[3], double c[3]) {
+  c[0] = a[1]*b[2] - a[2]*b[1];
+  c[1] = a[2]*b[0] - a[0]*b[2];
+  c[2] = a[0]*b[1] - a[1]*b[0];
+}
+inline void cross (const Vector<3>& a, const Vector<3>& b, Vector<3>& c)
+{ cross(a.d, b.d, c.d); }
+
+template<int _d> inline void normalize (Vector<_d>& v)
+{ scale(v, 1/sqrt(norm2(v))); }
+
+template<int _d> inline double dist2 (const Point<_d>& x, const Point<_d>& y) {
+  double a = 0;
+  for (int i = 0; i < _d; ++i) {
+    const double d = x.d[i] - y.d[i];
+    a += d*d;
+  }
+  return a;
+}
+
+double dist2 (const Point<3>& p, const LineSeg<3>& ls) {
+
+}
+inline double dist2 (const LineSeg<3>& ls, const Point<3>& p)
+{ return dist2(p, ls); }
+
+double dist2 (const Point<3>& p, const Tri<3>& t) {
+
+}
+inline double dist2 (const Tri<3>& t, const Point<3>& p) { return dist2(p, t); }
+
+double dist2 (const Point<3>& p, const Plane<3>& plane) {
+
+}
+inline double dist2 (const Plane<3>& plane, const Point<3>& p)
+{ return dist2(p, plane); }
+
+template<int _d> inline void init_Plane (const Vector<_d>& v, Plane<_d>& p)
+{ p.n = v; normalize(p.n); }
+
+template<int _d> inline void
+init_Vector (const Point<_d>& from, const Point<_d>& to, Vector<_d>& v)
+{ subtract(to, from, v.d); }
+
+// -----------------------------------------------------------------------------
+// Mex.
+
+#include "mexutil.hpp"
+using namespace mexutil;
 
 void convert (const ConstDenseMexMat& mp, IntArrayList& p) {
   p.resize(mp.m);
