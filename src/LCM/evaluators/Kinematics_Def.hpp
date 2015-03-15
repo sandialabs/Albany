@@ -373,20 +373,6 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
         }
       }
     } else {
-      /* Define
-       *     u[n,n-1] = x[n] - x[n-1]
-       *     U = u[n,0]
-       *     F[n,k] = dx[n]/dx[k].
-       * We need to compute
-       *     F[n,0] = dx[n]/dx[0] = du[n,0]/dx[0] + dx[0]/dx[0] = dU/dx + I.
-       * We have
-       *     grad_u_ = du[n,n-1]/dx[n-1] = dx[n]/dx[n-1] - dx[n-1]/dx[n-1]
-       *             = F[n,n-1] - I.
-       *     def_grad_rc_ = F[n-1,0].
-       * So compute
-       *     F[n,n-1] = I + gradu
-       *     F[n,0] = F[n,n-1] F[n-1,0].
-       */
       for (int cell = 0; cell < workset.numCells; ++cell)
         for (int pt = 0; pt < num_pts_; ++pt) {
           gradu.fill(grad_u_,cell,pt,0,0);
@@ -395,6 +381,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
             for (int j = 0; j < num_dims_; ++j)
               def_grad_(cell,pt,i,j) = F(i,j);
           check_det(workset, cell, pt);
+          // F[n,0] = F[n,n-1] F[n-1,0].
           def_grad_rc_.multiplyInto<ScalarT>(def_grad_, cell, pt);
           F.fill(def_grad_,cell,pt,0,0);
           j_(cell,pt) = Intrepid::det(F);
@@ -442,15 +429,12 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
           }
         }
       } else {
-        /* We need
-         *     dU/dx[0] = dx[n]/dx[0] - dx[0]/dx[0] = F[n,0] - I.
-         *     strain = 1/2 (dU/dx[0] + dU/dx[0]^T).
-         * Above, we already computed F[n,0], so this is easy.
-         */
         for (int cell = 0; cell < workset.numCells; ++cell)
           for (int pt = 0; pt < num_pts_; ++pt) {
             F.fill(def_grad_, cell, pt, 0, 0);
             gradu = F - I;
+            // dU/dx[0] = dx[n]/dx[0] - dx[0]/dx[0] = F[n,0] - I.
+            // strain = 1/2 (dU/dx[0] + dU/dx[0]^T).
             strain = 0.5 * (gradu + Intrepid::transpose(gradu));
             for (int i = 0; i < num_dims_; ++i)
               for (int j = 0; j < num_dims_; ++j)

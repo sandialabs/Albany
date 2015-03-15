@@ -31,12 +31,12 @@ def compute_principal_stresses(stress):
     I2 = s11*s22 + s22*s33 + s33*s11 - s12*s12 - s23*s23 - s31*s31
     I3 = s11*s22*s33 - s11*s23*s23 - s22*s31*s31 - s33*s12*s12 + 2.0*s12*s23*s31
     denominator = 2.0*math.pow(I1*I1 - 3.0*I2, 3.0/2.0)
-
-#    print s11, s22, s33, s12, s23, s31, "denom", denominator
-    
     if math.fabs(denominator) > 1.0e-30:
         acos_arg = (2.0*I1*I1*I1 - 9.0*I1*I2 + 27.0*I3) / denominator
-        print acos_arg
+        if acos_arg < -1:
+            acos_arg = -1
+        if acos_arg > 1:
+            acos_arg = 1
         phi = (1.0/3.0) * math.acos(acos_arg)
         sigma_1 = I1/3.0 + (2.0/3.0)*math.sqrt(I1*I1 - 3.0*I2)*math.cos(phi)
         sigma_2 = I1/3.0 + (2.0/3.0)*math.sqrt(I1*I1 - 3.0*I2)*math.cos(phi + 2.0*math.pi/3.0)

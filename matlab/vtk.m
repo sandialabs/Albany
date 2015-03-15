@@ -21,24 +21,28 @@ function ds = read_vtks (fn_base, nbrs, o)
   pr('\n');
 end
 
-function draw (ds, o)
+function h = draw (ds, o)
   iso;
   o = so(o, 'lines', 1);
   o = so(o, 'fld', 'xd');
   o = so(o, 'skin', 1);
-  o = so(o, 'bb', repmat([-inf inf], 3, 1));
+  o = so(o, 'clr', []);
+  o = so(o, 'bb', []);
   if (~iscell(ds)) ds = {ds}; end
   pats = '.ovx+*<p';
   clrs = 'grcywmb';
   for (i = 1:numel(ds))
     pat = select(pats, i);
-    clr = select(clrs, i);
+    if (isempty(o.clr)) clr = select(clrs, i); else clr = o.clr; end
     c = ds{i}.c;
-    if (o.skin) c = get_skin(c); end
+    if (o.skin) c = get_skin(c); end;
     [x y z] = get_lines(ds{i}.(o.fld), c);
     lns = {x, y, z};
-    if (any(~isinf(o.bb(:)))) lns = bb_cull_lines(o.bb, lns); end
-    set(line(lns{1}, lns{2}, lns{3}), 'color', clr);
+    if (~isempty(o.bb) && any(~isinf(o.bb(:))))
+      lns = bb_cull_lines(o.bb, lns);
+    end
+    h = line(lns{1}, lns{2}, lns{3});
+    set(h, 'color', clr);
   end
   xlabel('x'); ylabel('y'); zlabel('z');
   axis equal; axis tight; hold off; view(3);
@@ -121,7 +125,7 @@ function d = read_vtk (fn, o)
   name = '';
   for (i = 1:da_n)
     chunk = raw(da_beg(i) : da_end(i));
-    k = strfind(chunk(1:100), 10); k = k(1); % \n
+    k = strfind(chunk(1:min(numel(chunk), 100)), 10); k = k(1); % \n
     name = regexp(chunk(1:k), 'Name="([^"]*)"', 'tokens'); name = name{1}{1};
     ndim = regexp(chunk(1:k), 'NumberOfComponents="([^"]*)"', 'tokens');
     have_noc = ~isempty(ndim);
