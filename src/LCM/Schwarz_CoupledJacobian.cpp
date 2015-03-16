@@ -13,8 +13,8 @@
 
 //#define WRITE_TO_MATRIX_MARKET
 
-int c3 = 0; 
-int c4 = 0; 
+static int c3 = 0; 
+static int c4 = 0; 
 
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps, 
 					   Teuchos::RCP<const Tpetra_Map> coupled_disc_map, 

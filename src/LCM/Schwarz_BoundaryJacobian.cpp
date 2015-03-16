@@ -12,8 +12,8 @@
 
 //#define WRITE_TO_MATRIX_MARKET
 
-int c3 = 0; 
-int c4 = 0; 
+static int c3 = 0; 
+static int c4 = 0; 
 
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
