@@ -30,7 +30,7 @@ namespace rc {
  * So compute
  *     F[n,n-1] = I + du[n,n-1]/dx[n-1]
  *     F[n,0] = F[n,n-1] F[n-1,0].
- * This uses \c multiplyInto.
+ * This uses multiplyInto.
  *   Second, we need to compute something like strain w.r.t. x[0]:
  *     dU/dx[0] = dx[n]/dx[0] - dx[0]/dx[0] = F[n,0] - I.
  *     strain = 1/2 (dU/dx[0] + dU/dx[0]^T).
@@ -38,15 +38,15 @@ namespace rc {
  * weighted basis function gradient to also be w.r.t. x[0]. w_grad_bf_ is
  *     f det(dx[n-1]/dr) dw/dx[n-1],
  * where f is the quadrature weight, r is the element reference coordinates, and
- * the det gives the volume change relative to the reference element, We need
+ * the det gives the volume change relative to the reference element. We need
  *     f det(dx[0]/dr) dw/dx[0].
  * One factor is given by
  *     dw/dx[0] = dw/dx[n-1] F[n-1,0],
  * which is w_grad_bf_ times def_grad_rc_. The other is
  *     det(dx[0]/dr) = det(dx[0]/dx[n-1] dx[n-1]/dr)
- *       = det(dx[0]/dx[n-1]) det(dx[n-1]/dr)
- *       = det(dx[n-1]/dr) / det(F[n-1,0]).
- * This third calculation is performed by \c transformWeightedGradientBF.
+ *                   = det(dx[0]/dx[n-1]) det(dx[n-1]/dr)
+ *                   = det(dx[n-1]/dr) / det(F[n-1,0]).
+ * This third calculation is performed by transformWeightedGradientBF.
  */
 template<int rank> class Field {
 public:
