@@ -7,13 +7,14 @@
 #include "Schwarz_CoupledJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
 //#define WRITE_TO_MATRIX_MARKET
 
-int c3 = 0; 
-int c4 = 0; 
+static int c3 = 0; 
+static int c4 = 0; 
 
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps, 
 					   Teuchos::RCP<const Tpetra_Map> coupled_disc_map, 
@@ -93,7 +94,6 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
     
     // Do multiplication block-wise
     //
-    Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
    /* Albany::printTpetraVector(*out << "\nX:\n", X.getVector(0));
     std::cout << "Jacobian:" << std::endl;
     jacs_[0]->describe(*out, Teuchos::VERB_HIGH);

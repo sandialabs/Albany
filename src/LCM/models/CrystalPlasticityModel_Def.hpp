@@ -26,10 +26,12 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
   slip_systems_.resize(num_slip_);
+
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp constructor\n";
   std::cout << ">>> parameter list:\n" << *p << std::endl;
 #endif
+
   Teuchos::ParameterList e_list = p->sublist("Crystal Elasticity");
   // assuming cubic symmetry
   c11_ = e_list.get<RealType>("C11");
@@ -54,11 +56,19 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       norm += b_temp[j]*b_temp[j];
     }
 // NOTE check zero, rh system
+// Filling columns of transformation with basis vectors
+// We are forming R^{T} which is equivalent to the direction cosine matrix
     norm = 1./std::sqrt(norm);
     for (int j = 0; j < num_dims_; ++j) {
-      orientation_(i,j) = b_temp[j]*norm;
+      orientation_(j,i) = b_temp[j]*norm;
     }
   }
+
+// print rotation tensor employed for transformations
+#ifdef PRINT_DEBUG
+  std::cout << ">>> orientation_ :\n" << orientation_ << std::endl;
+#endif
+
   // rotate elastic tensor and slip systems to match given orientation
   C_ = Intrepid::kronecker(orientation_,C);
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
@@ -70,7 +80,18 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
     slip_systems_[num_ss].n_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &n_temp[0]));
 
+    // print each slip direction and slip normal after transformation
+    #ifdef PRINT_DEBUG
+      std::cout << ">>> slip direction " << num_ss + 1 << ": " << slip_systems_[num_ss].s_ << std::endl;
+      std::cout << ">>> slip normal " << num_ss + 1 << ": " << slip_systems_[num_ss].n_ << std::endl;
+    #endif
+
     slip_systems_[num_ss].projector_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
+
+    // print projector
+    #ifdef PRINT_DEBUG
+      std::cout << ">>> projector_ " << num_ss + 1 << ": " << slip_systems_[num_ss].projector_ << std::endl;
+    #endif
 
     slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
