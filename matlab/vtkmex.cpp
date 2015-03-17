@@ -90,7 +90,7 @@ inline std::vector<EdgeSignature> get_all_edgesigs (const Tris& tris) {
 }
 
 inline std::vector<TriSignature> get_all_trisigs (const Tets& tets) {
-  const Int idxs[4][3] = {{0,1,2}, {0,1,3}, {1,2,3}, {2,0,3}};
+  const Int idxs[4][3] = {{1,0,2}, {3,0,1}, {3,1,2}, {3,2,0}};
   std::vector<TriSignature> tss;
   for (size_t itet = 0, k = 0; itet < tets.size(); ++itet) {
     const Int* tet = tets(itet);
@@ -420,7 +420,7 @@ void dist (const Vertices& ps, const Tris& tris, const Vertices& xs,
       const Real bv_dist = tris_wd[it].bv_dist(p);
       if (bv_dist >= std::abs(min_dist)) continue;
       const Real sd = signed_dist(p, tris_wd[it]);
-      if (std::abs(sd) < min_dist) {
+      if (std::abs(sd) < std::abs(min_dist)) {
         min_dist = sd;
         min_idx = it;
       }

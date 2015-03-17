@@ -81,7 +81,7 @@ function stris = get_skin (tets)
   for (k = 1:ntet)
     is = 4*(k-1)+1 : 4*k;
     tet = tets(k,:);
-    tris(is,:) = tet([1 2 3; 1 2 4; 2 3 4; 3 1 4]);
+    tris(is,:) = tet([2 1 3; 4 1 2; 4 2 3; 4 3 1]);
   end
   % Determine the triangle indices of tris belonging to the skin.
   tris_sorted = sort(tris, 2);
@@ -100,10 +100,29 @@ function stris = get_skin (tets)
   stris = tris(sis,:);
 end
 
-function h = draw_skin (x, stris)
-  [x y z] = get_lines(x, stris);
-  h = line(x, y, z);
-  set(h, 'color', 'g');
+function h = patch_skin (x, stris, v_verts)
+% Draw skin triangles using patches, with coloring based on vertex values.
+  assert(size(x,1) == numel(v_verts));
+  n = size(stris,1);
+  h = patch(reshape(x(stris.',1), 3, n), reshape(x(stris.',2), 3, n), ...
+            reshape(x(stris.',3), 3, n), v_verts(stris.'));
+  xlabel('x'); ylabel('y'); zlabel('z');
+  axis equal; axis tight;
+end
+
+function h = draw_skin (x, stris, o)
+% Draw skin triangles as lines.
+  iso;
+  o = so(o, 'clr', 'g');
+  % On my platform, triangle patches are faster than the equivalent lines.
+  if (0)
+    [x y z] = get_lines(x, stris);
+    h = line(x, y, z);
+  else
+    h = patch_skin(x, stris, zeros(size(x,1),1));
+    set(h, 'facealpha', 0);
+    set(h, 'edgecolor', o.clr);
+  end
   xlabel('x'); ylabel('y'); zlabel('z');
   axis equal; axis tight;
 end
