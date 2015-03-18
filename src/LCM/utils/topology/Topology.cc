@@ -862,6 +862,19 @@ Topology::splitOpenFaces()
     }
   }
 
+#if defined(DEBUG_LCM_TOPOLOGY)
+  {
+    std::string const
+    file_name = LCM::parallelize_string("before") + ".dot";
+
+    outputToGraphviz(file_name);
+
+    std::string const
+    boundary_filename = LCM::parallelize_string("before") + ".vtk";
+    outputBoundary(boundary_filename);
+  }
+#endif // DEBUG_LCM_TOPOLOGY
+
   bulk_data.modification_begin();
 
   // Iterate over open points and fracture them.
@@ -905,8 +918,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name = "graph-pre-segment-" + entity_string(get_topology(), point) +
-        ".dot";
+      file_name = LCM::parallelize_string("graph-pre-segment-" +
+          entity_string(get_topology(), point)) + ".dot";
 
       outputToGraphviz(file_name);
     }
@@ -947,8 +960,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name = "graph-pre-clone-" +
-        entity_string(get_topology(), segment) + ".dot";
+        file_name = LCM::parallelize_string("graph-pre-clone-" +
+        entity_string(get_topology(), segment)) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1017,8 +1030,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name = "graph-pre-split-" +
-          entity_string(get_topology(), segment) + ".dot";
+        file_name = LCM::parallelize_string("graph-pre-split-" +
+          entity_string(get_topology(), segment)) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1033,8 +1046,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name = "graph-post-split-" +
-          entity_string(get_topology(), segment) + ".dot";
+        file_name = LCM::parallelize_string("graph-post-split-" +
+          entity_string(get_topology(), segment)) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1075,8 +1088,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name = "graph-pre-split-" + entity_string(get_topology(), point) +
-        ".dot";
+      file_name = LCM::parallelize_string("graph-pre-split-" +
+          entity_string(get_topology(), point)) +".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1092,8 +1105,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name = "graph-post-split-" + entity_string(get_topology(), point) +
-        ".dot";
+      file_name = LCM::parallelize_string("graph-post-split-" +
+          entity_string(get_topology(), point)) + ".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1116,12 +1129,12 @@ Topology::splitOpenFaces()
   bulk_data.modification_end();
 
 #if defined(DEBUG_LCM_TOPOLOGY)
-    {
-      std::string const
-      file_name = "graph-pre-surface-elements.dot";
+  {
+    std::string const
+    file_name = LCM::parallelize_string("graph-pre-surface-elements.dot");
 
-      outputToGraphviz(file_name);
-    }
+    outputToGraphviz(file_name);
+  }
 #endif // DEBUG_LCM_TOPOLOGY
 
   bulk_data.modification_begin();
@@ -1181,6 +1194,20 @@ Topology::splitOpenFaces()
 
   Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
+
+#if defined(DEBUG_LCM_TOPOLOGY)
+  {
+    std::string const
+    file_name = LCM::parallelize_string("after") + ".dot";
+
+    outputToGraphviz(file_name);
+
+    std::string const
+    boundary_filename = LCM::parallelize_string("after") + ".vtk";
+    outputBoundary(boundary_filename);
+  }
+#endif // DEBUG_LCM_TOPOLOGY
+
   return;
 }
 

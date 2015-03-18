@@ -7,7 +7,8 @@
 #include <Intrepid_MiniTensor.h>
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
-//#include <typeinfo>
+
+#define PRINT_DEBUG
 
 namespace LCM
 {
@@ -21,12 +22,12 @@ namespace LCM
 template<typename EvalT, typename Traits>
 OrtizPandolfiModel<EvalT, Traits>::
 OrtizPandolfiModel(Teuchos::ParameterList* p,
-                const Teuchos::RCP<Albany::Layouts>& dl) :
-  LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
-  delta_c(p->get<RealType>("delta_c", 1.0)),
-  sigma_c(p->get<RealType>("sigma_c", 1.0)),
-  beta(p->get<RealType>("beta", 1.0)),
-  stiff_c(p->get<RealType>("stiff_c", 1.0))
+    const Teuchos::RCP<Albany::Layouts>& dl) :
+    LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
+    delta_c(p->get<RealType>("delta_c", 1.0)),
+    sigma_c(p->get<RealType>("sigma_c", 1.0)),
+    beta(p->get<RealType>("beta", 1.0)),
+    stiff_c(p->get<RealType>("stiff_c", 1.0))
 {
 
   // define the dependent fields
@@ -34,8 +35,10 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair("Current Basis", dl->qp_tensor));
 
   // define the evaluated fields
-  this->eval_field_map_.insert(std::make_pair("Cohesive_Traction", dl->qp_vector));
-  this->eval_field_map_.insert(std::make_pair("Normal_Traction", dl->qp_scalar));
+  this->eval_field_map_.insert(
+      std::make_pair("Cohesive_Traction", dl->qp_vector));
+  this->eval_field_map_.insert(
+      std::make_pair("Normal_Traction", dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Shear_Traction", dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Normal_Jump", dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Shear_Jump", dl->qp_scalar));
@@ -50,7 +53,8 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Cohesive Traction", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Cohesive Traction", false));
   //
   // normal traction
   this->num_state_variables_++;
@@ -59,7 +63,8 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Normal Traction", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Normal Traction", false));
   //
   // shear traction
   this->num_state_variables_++;
@@ -68,7 +73,8 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Shear Traction", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Shear Traction", false));
   //
   // normal jump
   this->num_state_variables_++;
@@ -77,7 +83,8 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Normal Jump", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Normal Jump", false));
   //
   // shear jump
   this->num_state_variables_++;
@@ -86,7 +93,8 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Shear Jump", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Shear Jump", false));
   //
   // max jump
   this->num_state_variables_++;
@@ -95,7 +103,8 @@ OrtizPandolfiModel(Teuchos::ParameterList* p,
   this->state_var_init_types_.push_back("scalar");
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output Max Jump", false));
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output Max Jump", false));
   //
 }
 //------------------------------------------------------------------------------
@@ -112,118 +121,142 @@ computeState(typename Traits::EvalData workset,
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> traction = *eval_fields["Cohesive_Traction"];
-  PHX::MDField<ScalarT> tractionNormal = *eval_fields["Normal_Traction"];
-  PHX::MDField<ScalarT> tractionShear = *eval_fields["Shear_Traction"];
-  PHX::MDField<ScalarT> jumpNormal = *eval_fields["Normal_Jump"];
-  PHX::MDField<ScalarT> jumpShear = *eval_fields["Shear_Jump"];
-  PHX::MDField<ScalarT> jumpMax = *eval_fields["Max_Jump"];
+  PHX::MDField<ScalarT> traction_normal = *eval_fields["Normal_Traction"];
+  PHX::MDField<ScalarT> traction_shear = *eval_fields["Shear_Traction"];
+  PHX::MDField<ScalarT> jump_normal = *eval_fields["Normal_Jump"];
+  PHX::MDField<ScalarT> jump_shear = *eval_fields["Shear_Jump"];
+  PHX::MDField<ScalarT> jump_max = *eval_fields["Max_Jump"];
 
   // get state variable
-  Albany::MDArray jumpMaxOld = (*workset.stateArrayPtr)["Max_Jump_old"];
+  Albany::MDArray jump_max_old = (*workset.stateArrayPtr)["Max_Jump_old"];
 
-  //bool print = false;
-  //  if (typeid(ScalarT) == typeid(RealType)) print = true;
-  //  std::cout.precision(15);
+  bool print_debug = false;
+#if defined(PRINT_DEBUG)
+  if (typeid(ScalarT) == typeid(RealType)) {
+    print_debug = true;
+  }
+  std::cout.precision(15);
+#endif
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-      
+
       //current basis vector
-      Intrepid::Vector<ScalarT> g_0(3, basis,cell, pt, 0, 0);
-      Intrepid::Vector<ScalarT> g_1(3, basis,cell, pt, 1, 0);
-      Intrepid::Vector<ScalarT> n(3, basis,cell, pt, 2, 0);
+      Intrepid::Vector<ScalarT> g_0(3, basis, cell, pt, 0, 0);
+      Intrepid::Vector<ScalarT> g_1(3, basis, cell, pt, 1, 0);
+      Intrepid::Vector<ScalarT> n(3, basis, cell, pt, 2, 0);
 
       //current jump vector - move PHX::MDField into Intrepid::Vector
-      Intrepid::Vector<ScalarT> jumpPt(3, jump,cell, pt, 0);
+      Intrepid::Vector<ScalarT> jump_pt(3, jump, cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
       Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(3));
-      Intrepid::Tensor<ScalarT> Fn(Intrepid::bun(n,n));
+      Intrepid::Tensor<ScalarT> Fn(Intrepid::bun(n, n));
 
       // define components of the jump
-      // jumpN is the normal component
-      // jumpS is the shear component
-      // jumpM is the maximum effective jump from prior converged iteration
-      // vecJumpS is the shear vector
-
-      ScalarT jumpN, jumpS, jumpM;
-      Intrepid::Vector<ScalarT> vecJumpS(3);
-
-      jumpM = jumpMaxOld(cell,pt);
-      jumpN = Intrepid::dot(jumpPt,n);
-      vecJumpS = Intrepid::dot(I - Fn,jumpPt);
-      jumpS = sqrt(Intrepid::dot(vecJumpS,vecJumpS));
+      // jump_n is the normal component
+      // jump_s is the shear component
+      // jump_m is the maximum effective jump from prior converged iteration
+      // vec_jump_s is the shear vector
+      ScalarT jump_m = jump_max_old(cell, pt);
+      ScalarT jump_n = Intrepid::dot(jump_pt, n);
+      Intrepid::Vector<ScalarT> vec_jump_s = Intrepid::dot(I - Fn, jump_pt);
+      ScalarT jump_s = sqrt(Intrepid::dot(vec_jump_s, vec_jump_s));
 
       // define the effective jump
       // for intepenetration, only employ shear component
 
-      ScalarT jumpEff;
-      if (jumpN >= 0.0)
-          jumpEff = sqrt(beta*beta*jumpS*jumpS + jumpN*jumpN);
-      else
-    	  jumpEff = beta*jumpS;
+      ScalarT jump_eff;
+      if (jump_n >= 0.0) {
+        jump_eff = sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
+      }
+      else {
+        jump_eff = beta * jump_s;
+      }
 
       // Debugging - print kinematics
-      //if (print) {
-      //        std::cout << "jump for cell " << cell << " integration point " << pt << std::endl;
-      //        std::cout << jumpPt << std::endl;
-      //        std::cout << "normal jump for cell " << cell << " integration point " << pt << std::endl;
-      //        std::cout << jumpN << std::endl;
-      //        std::cout << "shear jump for cell " << cell << " integration point " << pt << std::endl;
-      //        std::cout << jumpS << std::endl;
-      //        std::cout << "effective jump for cell " << cell << " integration point " << pt << std::endl;
-      //        std::cout << jumpEff << std::endl;
-      //     }
-
+      if (print_debug) {
+        std::cout << "jump for cell " << cell << " integration point " << pt
+            << '\n';
+        std::cout << jump_pt << '\n';
+        std::cout << "normal jump for cell " << cell << " integration point "
+            << pt << '\n';
+        std::cout << jump_n << '\n';
+        std::cout << "shear jump for cell " << cell << " integration point "
+            << pt << '\n';
+        std::cout << jump_s << '\n';
+        std::cout << "effective jump for cell " << cell << " integration point "
+            << pt << '\n';
+        std::cout << jump_eff << '\n';
+      }
 
       // define the constitutive response through an effective traction
 
-      ScalarT tEff;
-      if (jumpEff < jumpM && jumpEff < delta_c) // linear unloading toward origin
-          tEff = sigma_c/jumpM*(1.0 - jumpM/delta_c)*jumpEff;
-      else if (jumpEff >= jumpM && jumpEff <= delta_c) // linear unloading toward delta_c
-          tEff = sigma_c*(1.0 - jumpEff/delta_c);
-      else  // completely unloaded
-    	  tEff = 0.0;
+      ScalarT t_eff;
+      if (jump_eff < jump_m && jump_eff < delta_c) {
+        // linear unloading toward origin
+        t_eff = sigma_c / jump_m * (1.0 - jump_m / delta_c) * jump_eff;
+      }
+      else if (jump_eff >= jump_m && jump_eff <= delta_c) {
+        // linear unloading toward delta_c
+        t_eff = sigma_c * (1.0 - jump_eff / delta_c);
+      }
+      else {
+        // completely unloaded
+        t_eff = 0.0;
+      }
 
       // calculate the global traction
       // penalize interpentration through stiff_c
-      Intrepid::Vector<ScalarT> tVec(3);
-      if (jumpN == 0.0 & jumpEff == 0.0)        // no interpenetration, no effective jump
-    	  tVec = 0.0*n;
-      else if (jumpN < 0.0 && jumpEff == 0.0)   // interpenetration, no effective jump
-          tVec = stiff_c*jumpN*n;
-      else if (jumpN < 0.0 && jumpEff > 0.0)    //  interpenetration, effective jump
-    	  tVec = tEff/jumpEff*beta*beta*vecJumpS + stiff_c*jumpN*n;
-      else
-          tVec = tEff/jumpEff*(beta*beta*vecJumpS + jumpN*n);
+      Intrepid::Vector<ScalarT> t_vec(3);
+      if (jump_n == 0.0 & jump_eff == 0.0) {
+        // no interpenetration, no effective jump
+        t_vec = 0.0 * n;
+      }
+      else if (jump_n < 0.0 && jump_eff == 0.0) {
+        // interpenetration, no effective jump
+        t_vec = stiff_c * jump_n * n;
+      }
+      else if (jump_n < 0.0 && jump_eff > 0.0) {
+        //  interpenetration, effective jump
+        t_vec = t_eff / jump_eff * beta * beta * vec_jump_s
+            + stiff_c * jump_n * n;
+      }
+      else {
+        t_vec = t_eff / jump_eff * (beta * beta * vec_jump_s + jump_n * n);
+      }
 
-      // Debugging - print tractions
-      //      if (print) {
-      //              std::cout << "traction for cell " << cell << " integration point " << pt << std::endl;
-      //              std::cout << tVec << std::endl;
-      //              std::cout << "effective traction for cell " << cell << " integration point " << pt << std::endl;
-      //              std::cout << tEff << std::endl;
-      //           }
+      // Debugging - debug_print tractions
+      if (print_debug) {
+        std::cout << "traction for cell " << cell << " integration point " << pt
+            << '\n';
+        std::cout << t_vec << '\n';
+        std::cout << "effective traction for cell " << cell
+            << " integration point " << pt << '\n';
+        std::cout << t_eff << '\n';
+      }
 
       // update global traction
-      traction(cell,pt,0) = tVec(0);
-      traction(cell,pt,1) = tVec(1);
-      traction(cell,pt,2) = tVec(2);
+      traction(cell, pt, 0) = t_vec(0);
+      traction(cell, pt, 1) = t_vec(1);
+      traction(cell, pt, 2) = t_vec(2);
 
       // update state variables 
-      if (jumpN < 0.0)
-          tractionNormal(cell,pt) = stiff_c*jumpN;
-      else
-          tractionNormal(cell,pt) = tEff*jumpN/jumpEff;
+      if (jump_n < 0.0) {
+        traction_normal(cell, pt) = stiff_c * jump_n;
+      }
+      else {
+        traction_normal(cell, pt) = t_eff * jump_n / jump_eff;
+      }
 
-      tractionShear(cell,pt) = tEff*jumpS/jumpEff*beta*beta;
-      jumpNormal(cell,pt) = jumpN;
-      jumpShear(cell,pt) = jumpS;
+      traction_shear(cell, pt) = t_eff * jump_s / jump_eff * beta * beta;
+      jump_normal(cell, pt) = jump_n;
+      jump_shear(cell, pt) = jump_s;
 
-      // only true state variable is jumpMax
-      if (jumpEff > jumpM)
-          jumpMax(cell,pt) = jumpEff;
+      // only true state variable is jump_max
+      if (jump_eff > jump_m) {
+        jump_max(cell, pt) = jump_eff;
+      }
 
     }
   }
