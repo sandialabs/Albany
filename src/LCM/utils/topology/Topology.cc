@@ -838,20 +838,87 @@ Topology::createSurfaceElementConnectivity(
   }
 
   stk::mesh::EntityVector
-  top = getBoundaryEntityNodes(face_top);
+  nodes_top = getBoundaryEntityNodes(face_top);
+
+  EntityVectorIndex const
+  num_top = nodes_top.size();
 
   stk::mesh::EntityVector
-  bottom = getBoundaryEntityNodes(face_bottom);
+  nodes_bottom = getBoundaryEntityNodes(face_bottom);
+
+  EntityVectorIndex const
+  num_bottom = nodes_bottom.size();
+
+  assert(num_top == num_bottom);
 
   stk::mesh::EntityVector
-  both;
+  reordered;
 
-  both.reserve(top.size() + bottom.size());
+  // Ensure that the order of the bottom nodes is the same as the top ones.
+  VectorFieldType &
+  coordinates = *(get_stk_mesh_struct()->getCoordinatesField());
 
-  both.insert(both.end(), top.begin(), top.end());
-  both.insert(both.end(), bottom.rbegin(), bottom.rend());
+  size_t const
+  dimension = get_space_dimension();
 
-  return both;
+  for (EntityVectorIndex i = 0; i < num_top; ++i) {
+    stk::mesh::Entity
+    node_top = nodes_top[i];
+
+    double const * const
+    p_top = stk::mesh::field_data(coordinates, node_top);
+
+    Intrepid::Vector<double>
+    X(dimension);
+
+    for (size_t n = 0; n < dimension; ++n) {
+      X(n) = p_top[n];
+    }
+
+    bool
+    found = false;
+
+    for (EntityVectorIndex j = 0; j < num_bottom; ++j) {
+      stk::mesh::Entity
+      node_bottom = nodes_bottom[j];
+
+      double const * const
+      p_bottom = stk::mesh::field_data(coordinates, node_bottom);
+
+      Intrepid::Vector<double>
+      Y(dimension);
+
+      for (size_t n = 0; n < dimension; ++n) {
+        Y(n) = p_bottom[n];
+      }
+
+      if (X == Y) {
+        reordered.push_back(node_bottom);
+        found = true;
+        break;
+      }
+
+    }
+
+    if (found == false) {
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << '\n';
+      std::cerr << "Nodes on top and bottom faces do not match.";
+      std::cerr << '\n';
+      exit(1);
+    }
+
+  }
+
+  stk::mesh::EntityVector
+  nodes;
+
+  nodes.reserve(nodes_top.size() + nodes_bottom.size());
+
+  nodes.insert(nodes.end(), nodes_top.begin(), nodes_top.end());
+  nodes.insert(nodes.end(), reordered.begin(), reordered.end());
+
+  return nodes;
 }
 
 //
