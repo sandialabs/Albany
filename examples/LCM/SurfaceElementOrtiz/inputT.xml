@@ -17,8 +17,8 @@
       <!-- Uniaxial Extension Boundary Conditions on a Cube -->
       <ParameterList name="Time Dependent DBC on NS nodelist_6 for DOF Y">
         <Parameter name="Number of points" type="int" value="3"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.2,  0.4, 0.6, 1.0, 2.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.01, -0.01, 0.01, 0.101, 0.11}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.2, 0.4, 0.6, 1.0, 2.0}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.01, -0.01, 0.01, 0.10, 0.15}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
@@ -51,16 +51,6 @@
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
-  <!-- RGRESSION comparison of the RESPONSE FUNCTION declared above-->
-  <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="0"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0110403259752}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-7"/>
-    <Parameter name="Number of Sensitivity Comparisons" type="int" value="0"/>
-    <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.16666666, 0.16666666, 0.33333333, 0.33333333}"/>
-    <Parameter name="Number of Dakota Comparisons" type="int" value="0"/>
-    <Parameter  name="Dakota Test Values" type="Array(double)" value="{ 1.0, 1.0}"/>
-  </ParameterList>
 
   <ParameterList name="Piro">
     <!-- LOCA is used for stability analysis, continuation -->
@@ -77,9 +67,9 @@
 	<!-- Repeat the boundary condition (just one) that is to be loaded -->
 	<Parameter  name="Continuation Parameter" type="string" value="Time"/>
 	<!-- The number of steps in the problem -->
-	<Parameter  name="Max Steps" type="int" value="110"/>         
+	<Parameter  name="Max Steps" type="int" value="5000"/>         
 	<!-- Final value of the parameter, here it is a Dirichlet BC on displacement -->
-	<Parameter  name="Max Value" type="double" value="1.1"/>
+	<Parameter  name="Max Value" type="double" value="1.5"/>
         <Parameter  name="Return Failed on Reaching Max Steps" type="bool" value="0"/>
 	<!-- Initial value of the parameter, here it is a Dirichlet BC on displacement -->
 	<Parameter  name="Min Value" type="double" value="0.0"/>    

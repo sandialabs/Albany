@@ -8,7 +8,7 @@
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
-#define PRINT_DEBUG
+//#define PRINT_DEBUG
 
 namespace LCM
 {
@@ -242,14 +242,15 @@ computeState(typename Traits::EvalData workset,
       traction(cell, pt, 2) = t_vec(2);
 
       // update state variables 
-      if (jump_n < 0.0) {
-        traction_normal(cell, pt) = stiff_c * jump_n;
-      }
-      else {
-        traction_normal(cell, pt) = t_eff * jump_n / jump_eff;
-      }
 
-      traction_shear(cell, pt) = t_eff * jump_s / jump_eff * beta * beta;
+      // Calculate normal and shear components of global traction
+      ScalarT traction_n = Intrepid::dot(t_vec, n);
+      Intrepid::Vector<ScalarT> vec_traction_s = Intrepid::dot(I - Fn, jump_pt);
+      ScalarT traction_s = sqrt(Intrepid::dot(vec_traction_s, vec_traction_s));
+      traction_normal(cell, pt) = traction_n;
+      traction_shear(cell, pt) = traction_s;
+
+      // Populate jump_normal and jump_shear
       jump_normal(cell, pt) = jump_n;
       jump_shear(cell, pt) = jump_s;
 
