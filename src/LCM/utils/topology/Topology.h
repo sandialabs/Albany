@@ -851,6 +851,12 @@ public:
     return topologies_[rank];
   }
 
+  ///
+  /// Compute normal using first 3 nodes of boundary entity.
+  ///
+  Intrepid::Vector<double>
+  get_normal(stk::mesh::Entity boundary_entity);
+
 private:
   ///
   /// \brief Create Albany discretization

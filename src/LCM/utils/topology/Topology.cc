@@ -746,6 +746,72 @@ Topology::getBoundary()
   return connectivity;
 }
 
+///
+/// Compute normal using first 3 nodes of boundary entity.
+///
+Intrepid::Vector<double>
+Topology::get_normal(stk::mesh::Entity boundary_entity)
+{
+  shards::CellTopology const
+  cell_topology = get_cell_topology();
+
+  stk::mesh::EntityRank const
+  boundary_rank = get_bulk_data().entity_rank(boundary_entity);
+
+  stk::mesh::ConnectivityOrdinal const *
+  ords = get_bulk_data().begin_element_ordinals(boundary_entity);
+
+  EdgeId const
+  face_order = ords[0];
+
+  RelationVectorIndex const
+  num_corner_nodes = cell_topology.getVertexCount(boundary_rank, face_order);
+
+  assert(num_corner_nodes > 3);
+
+  size_t const
+  dimension = get_space_dimension();
+
+  std::vector<Intrepid::Vector<double> >
+  nodal_coords(num_corner_nodes);
+
+  stk::mesh::EntityVector
+  nodes = getBoundaryEntityNodes(boundary_entity);
+
+  VectorFieldType &
+  coordinates = *(get_stk_mesh_struct()->getCoordinatesField());
+
+  for (EntityVectorIndex i = 0; i < num_corner_nodes; ++i) {
+
+    stk::mesh::Entity
+    node = nodes[i];
+
+    double const * const
+    pointer_coordinates = stk::mesh::field_data(coordinates, node);
+
+    Intrepid::Vector<double> &
+    X = nodal_coords[i];
+
+    X.set_dimension(dimension);
+
+    for (size_t j = 0; j < dimension; ++j) {
+      X(j) = pointer_coordinates[j];
+    }
+
+  }
+
+  Intrepid::Vector<double> const
+  v1 = nodal_coords[1] - nodal_coords[0];
+
+  Intrepid::Vector<double> const
+  v2 = nodal_coords[2] - nodal_coords[0];
+
+  Intrepid::Vector<double>
+  normal = Intrepid::unit(Intrepid::cross(v1, v2));
+
+  return normal;
+}
+
 //
 // Create cohesive connectivity
 //
@@ -754,6 +820,7 @@ Topology::createSurfaceElementConnectivity(
     stk::mesh::Entity face_top,
     stk::mesh::Entity face_bottom)
 {
+  // Check first if normals point in the same direction, just in case.
   stk::mesh::EntityVector
   top = getBoundaryEntityNodes(face_top);
 
