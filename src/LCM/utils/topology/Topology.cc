@@ -767,7 +767,7 @@ Topology::get_normal(stk::mesh::Entity boundary_entity)
   RelationVectorIndex const
   num_corner_nodes = cell_topology.getVertexCount(boundary_rank, face_order);
 
-  assert(num_corner_nodes > 3);
+  assert(num_corner_nodes >= 3);
 
   size_t const
   dimension = get_space_dimension();
@@ -821,6 +821,22 @@ Topology::createSurfaceElementConnectivity(
     stk::mesh::Entity face_bottom)
 {
   // Check first if normals point in the same direction, just in case.
+  Intrepid::Vector<double> const
+  normal_top = get_normal(face_top);
+
+  Intrepid::Vector<double> const
+  normal_bottom = get_normal(face_bottom);
+
+  if (Intrepid::dot(normal_top, normal_bottom) > 0.0) {
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Face normals have the same instead of opposite directions:\n";
+    std::cerr << "Normal top    :" << normal_top << '\n';
+    std::cerr << "Normal bottom :" << normal_bottom << '\n';
+    std::cerr << '\n';
+    exit(1);
+  }
+
   stk::mesh::EntityVector
   top = getBoundaryEntityNodes(face_top);
 
