@@ -29,8 +29,7 @@ if [ ! -d Albany ]; then
   #git clone https://github.com/gahansen/Albany.git Albany
 fi
 
-cp Albany/doc/LCM/build/*.sh .
-chmod +x *.sh
+ln -sf Albany/doc/LCM/build/*.sh .
 ln -sf build.sh clean.sh
 ln -sf build.sh config.sh
 ln -sf build.sh test.sh
