@@ -300,6 +300,7 @@ operator()(const ScatterRank0_no_adjoint_Tag& tag, const int& cell) const
 
 
 template<typename Traits>
+KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 {
@@ -339,6 +340,7 @@ operator()(const ScatterRank1_is_adjoint_Tag& tag, const int& cell) const
 }
 
 template<typename Traits>
+KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 {
@@ -377,6 +379,7 @@ operator()(const ScatterRank1_no_adjoint_Tag& tag, const int& cell) const
 }
 
 template<typename Traits>
+KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 {
@@ -414,6 +417,7 @@ operator()(const ScatterRank2_is_adjoint_Tag& tag, const int& cell) const
 }
 
 template<typename Traits>
+KOKKOS_INLINE_FUNCTION
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian,Traits>::
 operator()(const ScatterRank2_no_adjoint_Tag& tag, const int& cell) const
 {
