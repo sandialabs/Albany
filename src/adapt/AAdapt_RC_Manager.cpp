@@ -3,9 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#include "/home/ambradl/bigcode/amb.hpp"
 
 #include <Intrepid_MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
+
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
 #include "AAdapt_RC_DataTypes_impl.hpp"
@@ -14,10 +16,10 @@
 #include "AAdapt_RC_Projector_impl.hpp"
 #include "AAdapt_RC_Manager.hpp"
 
-#define pr(msg) std::cout << "amb: (rc) " << msg << std::endl;
-//#define pr(msg)
+//#define pr(msg) std::cout << "amb: (rc) " << msg << std::endl;
+#define pr(msg) lpr(0,msg)
 #define amb_do_transform
-//#define amb_do_check
+#define amb_do_check
 
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)
@@ -39,7 +41,6 @@ std::string Manager::Field::get_g_name (const int g_field_idx) const {
 }
 
 namespace {
-
 void read (const Albany::MDArray& mda, PHX::MDField<RealType>& f) {
   switch (f.rank()) {
   case 2:
@@ -72,10 +73,8 @@ void write (Albany::MDArray& mda, const MDArray& f) {
       mda(cell, qp, i0) = f(cell, qp, i0);
     break;
   case 4:
-    loop(f, cell, 0) loop(f, qp, 1) loop(f, i0, 2) loop(f, i1, 3) {
-      if (f(cell, qp, i0, i1) != 0)
-        mda(cell, qp, i0, i1) = f(cell, qp, i0, i1);
-    }
+    loop(f, cell, 0) loop(f, qp, 1) loop(f, i0, 2) loop(f, i1, 3)
+      mda(cell, qp, i0, i1) = f(cell, qp, i0, i1);
     break;
   default:
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -185,11 +184,11 @@ void calc_right_polar_LieR_LieS_G2g (
 {
   c.ok_numbers("F", F);
   RS = Intrepid::polar_right(F);
-  if (c.first())
+  if (c.first() ||
+      ! (c.ok_numbers("R", RS.first) && c.ok_numbers("S", RS.second) &&
+         c.is_rotation("R", RS.first) && c.is_symmetric("S", RS.second)))
     pr("F = [\n" << F << "];\nR = [\n" << RS.first << "];\nS = [\n"
-       << RS.second << "];");
-  c.ok_numbers("R", RS.first); c.ok_numbers("S", RS.second);
-  c.is_rotation("R", RS.first); c.is_symmetric("S", RS.second);
+       << RS.second << "];");    
   RS.first = Intrepid::log_rotation(RS.first);
   c.ok_numbers("r", RS.first); c.is_antisymmetric("r", RS.first);
   RS.second = Intrepid::log_sym(RS.second);
@@ -221,28 +220,27 @@ class Projector {
 
   Teuchos::RCP<const Tpetra_Map> node_map_, ol_node_map_;
   Teuchos::RCP<Tpetra_CrsMatrix> M_;
+  Teuchos::RCP<Tpetra_Export> export_;
+  Teuchos::RCP<Tpetra_Operator> P_;
   // M_ persists over multiple state field manager evaluations if the mesh is
   // not adapted after every LOCA step. Indicate whether this part of M_ has
   // already been filled.
   std::vector<bool> filled_;
-
-  bool is_filled (int wi) {
-    if (filled_.size() <= wi)
-      filled_.insert(filled_.end(), wi - filled_.size() + 1, false);
-    return filled_[wi];
-  }
 
 public:
   Projector () { pr("Projector ctor\n"); }
 
   void init (const Teuchos::RCP<const Tpetra_Map>& node_map,
              const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
-    pr("Projector::init");
-    node_map_ = node_map.create_weak();
-    ol_node_map_ = ol_node_map.create_weak();
+    pr("Projector::init nodes " << node_map->getGlobalNumElements() << " "
+       << ol_node_map->getGlobalNumElements());
+    node_map_ = node_map;
+    ol_node_map_ = ol_node_map;
     const size_t max_num_entries = 27; // Enough for first-order hex.
     M_ = Teuchos::rcp(
       new Tpetra_CrsMatrix(ol_node_map_, ol_node_map_, max_num_entries));
+    export_ = Teuchos::null;
+    P_ = Teuchos::null;
     filled_.clear();
   }
 
@@ -252,13 +250,13 @@ public:
     filled_[workset.wsIndex] = true;
     if (workset.wsIndex == 0) pr("Projector::fillMassMatrix");
 
-    const size_type num_nodes = bf.dimension(1), num_qp = bf.dimension(2);
+    const size_type num_node = bf.dimension(1), num_qp = bf.dimension(2);
     for (unsigned int cell = 0; cell < workset.numCells; ++cell)
-      for (size_type rnode = 0; rnode < num_nodes; ++rnode) {
+      for (size_type rnode = 0; rnode < num_node; ++rnode) {
         const GO row = workset.wsElNodeID[cell][rnode];
         Teuchos::Array<GO> cols;
         Teuchos::Array<ST> vals;
-        for (size_type cnode = 0; cnode < num_nodes; ++cnode) {
+        for (size_type cnode = 0; cnode < num_node; ++cnode) {
           const GO col = workset.wsElNodeID[cell][cnode];
           cols.push_back(col);
           ST v = 0;
@@ -274,28 +272,131 @@ public:
                 const PHAL::Workset& workset, const BasisField& bf,
                 const BasisField& wbf) {
     if (workset.wsIndex == 0) pr("Projector::fillRhs " << f.name);
+    const int
+      rank = f.layout->rank() - 2,
+      num_node = bf.dimension(1), num_qp = bf.dimension(2),
+      ndim = rank >= 1 ? f_G_qp.dimension(2) : 1;
 
+    if (f.data_->mv[0].is_null()) {
+      const int ncol = rank == 0 ? 1 : rank == 1 ? ndim : ndim*ndim;
+      for (int i = 0; i < f.num_g_fields; ++i)
+        f.data_->mv[i] = Teuchos::rcp(
+          new Tpetra_MultiVector(ol_node_map_, ncol, true));
+    }
+    
+    for (int cell = 0; cell < (int) workset.numCells; ++cell)
+      for (int node = 0; node < num_node; ++node) {
+        const GO row = workset.wsElNodeID[cell][node];
+        for (int qp = 0; qp < num_qp; ++qp) {
+          switch (rank) {
+          case 0:
+          case 1:
+            TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "!impl");
+            break;
+          case 2: {
+            TEUCHOS_TEST_FOR_EXCEPTION(
+              f.data_->transformation != Transformation::none,
+              std::logic_error, "!impl");
+            //todo For other than 'none', use MiniTensor rather than the raw
+            // f_G_qp.
+            for (int i = 0, col = 0; i < ndim; ++i)
+              for (int j = 0; j < ndim; ++j, ++col)
+                f.data_->mv[0]->sumIntoGlobalValue(
+                  row, col, f_G_qp(cell, node, i, j) * bf(cell, node, qp));
+          } break;
+          default:
+            std::stringstream ss;
+            ss << "invalid rank: " << f.name << " with rank " << rank;
+            TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+          }
+        }
+      }
   }
 
   void project (Manager::Field& f) {
     pr("Projector::project " << f.name);
     if ( ! M_->isFillComplete()) {
-      pr("Projector::project: doing fillComplete stuff");
+      // Export M_ so it has nonoverlapping rows and cols.
       M_->fillComplete();
-      // Remap.
-
+      export_ = Teuchos::rcp(new Tpetra_Export(ol_node_map_, node_map_));
+      Teuchos::RCP<Tpetra_CrsMatrix> M = Teuchos::rcp(
+        new Tpetra_CrsMatrix(node_map_, M_->getGlobalMaxNumRowEntries()));
+      M->doExport(*M_, *export_, Tpetra::ADD);
+      M->fillComplete();
+      M_ = M;
     }
-
+    Teuchos::RCP<Tpetra_MultiVector> x[2];
+    for (int fi = 0; fi < f.num_g_fields; ++fi) {
+      const int nrhs = f.data_->mv[fi]->getNumVectors();
+      // Export the rhs to the same row map.
+      Teuchos::RCP<Tpetra_MultiVector>
+        b = Teuchos::rcp(new Tpetra_MultiVector(M_->getRangeMap(), nrhs));
+      b->doExport(*f.data_->mv[fi], *export_, Tpetra::ADD);
+      // Create x[fi] in M_ x[fi] = b[fi]. As a side effect, initialize P_ if
+      // necessary.
+      Teuchos::ParameterList pl;
+      pl.set("Maximum Iterations", 1000);
+      pl.set("Convergence Tolerance", 1e-12);
+      pl.set("Output Frequency", 10);
+      pl.set("Output Style", 1);
+      pl.set("Verbosity", 33);
+      x[fi] = solve(M_, P_, b, pl); // in AAdapt_RC_Projector_impl
+      // Import (reverse mode) to the overlapping MV.
+      f.data_->mv[0]->doImport(*x[fi], *export_, Tpetra::ADD);
+    }
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      f.data_->transformation != Transformation::none,
+      std::logic_error, "!impl");
   }
 
   void interp (const Manager::Field& f, const PHAL::Workset& workset,
                const BasisField& bf, const BasisField& wbf,
                Albany::MDArray& mda1, Albany::MDArray& mda2) {
     if (workset.wsIndex == 0) pr("Projector::interp " << f.name);
+    const int
+      rank = f.layout->rank() - 2,
+      num_node = bf.dimension(1), num_qp = bf.dimension(2),
+      ndim = rank >= 1 ? mda1.dimension(2) : 1;
 
+    for (int cell = 0; cell < (int) workset.numCells; ++cell)
+      for (int qp = 0; qp < num_qp; ++qp) {
+        switch (rank) {
+        case 0:
+        case 1:
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "!impl");
+          break;
+        case 2: {
+          TEUCHOS_TEST_FOR_EXCEPTION(
+            f.data_->transformation != Transformation::none,
+            std::logic_error, "!impl");
+          for (int i = 0; i < ndim; ++i)
+            for (int j = 0; j < ndim; ++j)
+              mda1(cell, qp, i, j) = 0;
+          for (int node = 0; node < num_node; ++node) {
+            const GO grow = workset.wsElNodeID[cell][node];
+            const LO row = ol_node_map_->getLocalElement(grow);
+            for (int i = 0, col = 0; i < ndim; ++i)
+              for (int j = 0; j < ndim; ++j, ++col)
+                mda1(cell, qp, i, j) +=
+                  f.data_->mv[0]->getVector(col)->get1dView()[row] *
+                  bf(cell, node, qp);
+          }
+        } break;
+        default:
+          std::stringstream ss;
+          ss << "invalid rank: " << f.name << " with rank " << rank;
+          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+        }
+      }
+  }
+
+private:
+  bool is_filled (int wi) {
+    if (filled_.size() <= wi)
+      filled_.insert(filled_.end(), wi - filled_.size() + 1, false);
+    return filled_[wi];
   }
 };
-
 } // namespace
 
 struct Manager::Impl {
@@ -325,6 +426,8 @@ public:
     const Init::Enum init_G, /*const*/ Transformation::Enum transformation,
     const Teuchos::RCP<Teuchos::ParameterList>& p)
   {
+    if ( ! amb::Options::get()->params()->get<bool>("dotransform", true))
+      transformation = Transformation::none;
 #ifndef amb_do_transform
     transformation = Transformation::none;
 #endif
@@ -340,6 +443,7 @@ public:
     fields_.push_back(f);
     f->name = name;
     f->layout = dl;
+    f->num_g_fields = transformation == Transformation::none ? 1 : 2;
     f->data_ = Teuchos::rcp(new Field::Data());
     f->data_->transformation = transformation;
 
@@ -363,8 +467,8 @@ public:
     // and provisional fields.
     pr("beginAdapt: write final");
     if (proj_.is_null())
-      for (Map::const_iterator it = field_map_.begin();
-           it != field_map_.end(); ++it)
+      for (Map::const_iterator it = field_map_.begin(); it != field_map_.end();
+           ++it)
         for (WsIdx wi = 0; wi < is_g_.size(); ++wi)
           transformStateArray(it->first, wi, Direction::G2g);
     else
@@ -413,8 +517,7 @@ public:
         f->data_->mv[i] = Teuchos::null;
   }
 
-  void readQpField (PHX::MDField<RealType>& f,
-                    const PHAL::Workset& workset) {
+  void readQpField (PHX::MDField<RealType>& f, const PHAL::Workset& workset) {
     if (workset.wsIndex == 0) pr("readQpField " << f.fieldTag().name());
     // At startup, is_g_.size() is 0. We also initialized fields to their G, not
     // g, values.
@@ -499,7 +602,7 @@ private:
       if (dir == Direction::G2g) {
         // Copy from the provisional to the primary field.
         Albany::MDArray& mda1 = getMDArray(name_rc, wi);
-        Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
+        const Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
         write(mda1, mda2);
       } else {
         // In the g -> G direction, the values are already in the primary field,

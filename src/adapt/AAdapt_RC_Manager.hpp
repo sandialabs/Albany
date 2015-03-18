@@ -116,8 +116,7 @@ public:
     int num_g_fields;
     //! Get decorated name for i'th g component field.
     std::string get_g_name (const int i) const;
-  private:
-    friend class Manager;
+    // Opaque internal data for use by the implementation.
     struct Data;
     Teuchos::RCP<Data> data_;
   };
