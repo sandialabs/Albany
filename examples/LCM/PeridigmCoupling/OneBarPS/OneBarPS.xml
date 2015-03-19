@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
-    <Parameter name="MaterialDB Filename" type="string" value="OneBarPDMaterials.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="OneBarPSMaterials.xml"/>
     <ParameterList name="Peridigm Parameters">
 
       <ParameterList name="Discretization">
@@ -9,25 +9,30 @@
       </ParameterList>
       <ParameterList name="Materials">
 	    <ParameterList name="My Elastic Material">
-	      <Parameter name="Material Model" type="string" value="Elastic"/>
-	      <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
+	      <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
 	      <Parameter name="Density" type="double" value="7800.0"/>
 	      <Parameter name="Bulk Modulus" type="double" value="130.0e9"/>
 	      <Parameter name="Shear Modulus" type="double" value="78.0e9"/>
+	      <Parameter name="Hourglass Coefficient" type="double" value="0.02"/>
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Blocks">
 	    <ParameterList name="My Group of Blocks">
 	      <Parameter name="Block Names" type="string" value="block_1"/>
 	      <Parameter name="Material" type="string" value="My Elastic Material"/>
-          <Parameter name="Horizon" type="double" value="0.5025"/>
+              <Parameter name="Horizon" type="double" value="0.376875"/>
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
+        <Parameter name="Output Filename" type="string" value="OneBarPS_PeridigmResults"/>
+        <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
-          <Parameter name="Dilatation" type="bool" value="true"/>
-          <Parameter name="Weighted_Volume" type="bool" value="true"/>
+          <Parameter name="Cauchy_Stress" type="bool" value="true"/>
+          <Parameter name="Partial_Stress" type="bool" value="true"/>
           <Parameter name="Radius" type="bool" value="true"/>
+          <Parameter name="Volume" type="bool" value="true"/>
+          <Parameter name="Displacement" type="bool" value="true"/>
+          <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
         </ParameterList>
       </ParameterList>
 
@@ -35,8 +40,8 @@
     <Parameter name="Solution Method" type="string" value="Steady"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Dirichlet BCs">
-      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.04"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="-0.015"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.015"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_4 for DOF Z" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
@@ -45,8 +50,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="OneBarPD.sphere.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OneBarPDMatrixFree.e"/>
+    <Parameter name="Exodus Input File Name" type="string" value="OneBarPS.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="OneBarPS.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
@@ -58,8 +63,9 @@
          The Matrix-Free Perturbation is lambda in the equation for determination of the probe length epsilon
          epsilon = lambda( norm(x) + lambda )
          For our problems, x is the displacement vector.
-    -->
+
     <Parameter name="Matrix-Free Perturbation" type="double" value="1.0e-3"/>
+    -->
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
@@ -104,7 +110,7 @@
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations" type="int" value="1000"/>
+		      <Parameter name="Maximum Iterations" type="int" value="2000"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
 		      <Parameter name="Num Blocks" type="int" value="1000"/>
 		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
@@ -129,6 +135,9 @@
       </ParameterList>
       <ParameterList name="Line Search">
 	    <Parameter name="Method" type="string" value="Full Step"/>
+	    <ParameterList name="Full Step">
+	        <Parameter name="Full Step" type="double" value="1"/>
+	    </ParameterList>
       </ParameterList>
       <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
       <ParameterList name="Printing">
@@ -144,11 +153,11 @@
 	      <Parameter name="Test Type" type="string" value="NormF"/>
 	      <Parameter name="Norm Type" type="string" value="Two Norm"/>
 	      <Parameter name="Scale Type" type="string" value="Scaled"/>
-	      <Parameter name="Tolerance" type="double" value="1e-6"/>
+	      <Parameter name="Tolerance" type="double" value="1e-5"/>
 	    </ParameterList>
 	    <ParameterList name="Test 1">
 	      <Parameter name="Test Type" type="string" value="MaxIters"/>
-	      <Parameter name="Maximum Iterations" type="int" value="15"/>
+	      <Parameter name="Maximum Iterations" type="int" value="20"/>
 	    </ParameterList>
 	    <ParameterList name="Test 2">
 	      <Parameter name="Test Type" type="string" value="FiniteValue"/>
