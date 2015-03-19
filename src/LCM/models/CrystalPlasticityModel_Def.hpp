@@ -26,6 +26,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
   slip_systems_.resize(num_slip_);
+  TEUCHOS_TEST_FOR_EXCEPTION(num_slip_ > 12, std::logic_error,
+	"\n****Error, can only handle 12 slip systems CrystalPlasticityModel");
 
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp constructor\n";
@@ -119,10 +121,10 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
-  this->eval_field_map_.insert(std::make_pair(gammas_string, dl->qp_vector));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
+  this->eval_field_map_.insert(std::make_pair(gammas_string, dl->qp_list12));
 
   // define the state variables
   //
