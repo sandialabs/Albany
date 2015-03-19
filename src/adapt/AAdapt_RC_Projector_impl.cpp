@@ -26,7 +26,7 @@ solve (const Teuchos::RCP<const Tpetra_CrsMatrix>& A,
 
   const int nrhs = b->getNumVectors();
   Teuchos::RCP<Tpetra_MultiVector> x = Teuchos::rcp(
-    new Tpetra_MultiVector(A->getDomainMap(), nrhs));
+    new Tpetra_MultiVector(A->getDomainMap(), nrhs, true));
     
   if (P.is_null()) {
     Teuchos::ParameterList pl;

@@ -269,12 +269,11 @@ public:
   }
 
   void fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
-                const PHAL::Workset& workset, const BasisField& bf,
-                const BasisField& wbf) {
+                const PHAL::Workset& workset, const BasisField& wbf) {
     if (workset.wsIndex == 0) pr("Projector::fillRhs " << f.name);
     const int
       rank = f.layout->rank() - 2,
-      num_node = bf.dimension(1), num_qp = bf.dimension(2),
+      num_node = wbf.dimension(1), num_qp = wbf.dimension(2),
       ndim = rank >= 1 ? f_G_qp.dimension(2) : 1;
 
     if (f.data_->mv[0].is_null()) {
@@ -302,7 +301,7 @@ public:
             for (int i = 0, col = 0; i < ndim; ++i)
               for (int j = 0; j < ndim; ++j, ++col)
                 f.data_->mv[0]->sumIntoGlobalValue(
-                  row, col, f_G_qp(cell, node, i, j) * bf(cell, node, qp));
+                  row, col, f_G_qp(cell, qp, i, j) * wbf(cell, node, qp));
           } break;
           default:
             std::stringstream ss;
@@ -330,11 +329,12 @@ public:
       const int nrhs = f.data_->mv[fi]->getNumVectors();
       // Export the rhs to the same row map.
       Teuchos::RCP<Tpetra_MultiVector>
-        b = Teuchos::rcp(new Tpetra_MultiVector(M_->getRangeMap(), nrhs));
+        b = Teuchos::rcp(new Tpetra_MultiVector(M_->getRangeMap(), nrhs, true));
       b->doExport(*f.data_->mv[fi], *export_, Tpetra::ADD);
       // Create x[fi] in M_ x[fi] = b[fi]. As a side effect, initialize P_ if
       // necessary.
       Teuchos::ParameterList pl;
+      pl.set("Block Size", 1); // Could be nrhs.
       pl.set("Maximum Iterations", 1000);
       pl.set("Convergence Tolerance", 1e-12);
       pl.set("Output Frequency", 10);
@@ -342,7 +342,12 @@ public:
       pl.set("Verbosity", 33);
       x[fi] = solve(M_, P_, b, pl); // in AAdapt_RC_Projector_impl
       // Import (reverse mode) to the overlapping MV.
-      f.data_->mv[0]->doImport(*x[fi], *export_, Tpetra::ADD);
+      f.data_->mv[fi]->putScalar(0);
+      f.data_->mv[fi]->doImport(*x[fi], *export_, Tpetra::ADD);
+      amb::write_CrsMatrix("M", *M_);
+      amb::write_MultiVector("b", *b);
+      amb::write_MultiVector("x", *x[fi]);
+      amb::write_MultiVector("mv", *f.data_->mv[fi]);
     }
     TEUCHOS_TEST_FOR_EXCEPTION(
       f.data_->transformation != Transformation::none,
@@ -350,8 +355,8 @@ public:
   }
 
   void interp (const Manager::Field& f, const PHAL::Workset& workset,
-               const BasisField& bf, const BasisField& wbf,
-               Albany::MDArray& mda1, Albany::MDArray& mda2) {
+               const BasisField& bf, Albany::MDArray& mda1,
+               Albany::MDArray& mda2) {
     if (workset.wsIndex == 0) pr("Projector::interp " << f.name);
     const int
       rank = f.layout->rank() - 2,
@@ -388,6 +393,15 @@ public:
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
         }
       }
+#if 0
+    pr("bf:");
+    for (int cell = 0; cell < (int) workset.numCells; ++cell)
+      for (int qp = 0; qp < num_qp; ++qp) {
+        for (int node = 0; node < num_node; ++node)
+          std::cout << " " << bf(cell, node, qp);
+        std::cout << "\n";
+      }
+#endif
   }
 
 private:
@@ -483,7 +497,17 @@ public:
        << state_mgr_->getStateArrays().elemStateArrays.size());
     is_g_.clear();
     is_g_.resize(state_mgr_->getStateArrays().elemStateArrays.size(), true);
-    if (Teuchos::nonnull(proj_)) proj_->init(node_map, ol_node_map);
+    if (Teuchos::nonnull(proj_)) {
+      proj_->init(node_map, ol_node_map);
+      for (Map::iterator it = field_map_.begin(); it != field_map_.end();
+           ++it) {
+        Field& f = *it->second;
+        for (int i = 0; i < f.num_g_fields; ++i)
+          f.data_->mv[i] = Teuchos::rcp(
+            new Tpetra_MultiVector(ol_node_map, f.data_->mv[i]->getNumVectors(),
+                                   true));
+      }
+    }
   }
 
   void initProjector (const Teuchos::RCP<const Tpetra_Map>& node_map,
@@ -491,10 +515,8 @@ public:
     if (Teuchos::nonnull(proj_)) proj_->init(node_map, ol_node_map);
   }
 
-  void interpQpField (
-    PHX::MDField<RealType>& f_G_qp, const PHAL::Workset& workset,
-    const BasisField& bf, const BasisField& wbf)
-  {
+  void interpQpField (PHX::MDField<RealType>& f_G_qp,
+                      const PHAL::Workset& workset, const BasisField& bf) {
     if (proj_.is_null()) return;
     if (is_g_.empty()) {
       // Special case at startup.
@@ -505,7 +527,7 @@ public:
     // Interpolate g at NP to g at QP.
     const std::string name_rc = f_G_qp.fieldTag().name();
     const Teuchos::RCP<Field>& f = field_map_[name_rc];
-    proj_->interp(*f, workset, bf, wbf, getMDArray(name_rc, workset.wsIndex),
+    proj_->interp(*f, workset, bf, getMDArray(name_rc, workset.wsIndex),
                   getMDArray(name_rc + "_1", workset.wsIndex));
     // Transform g -> G at QP.
     transformStateArray(name_rc, workset.wsIndex, Direction::g2G);
@@ -539,10 +561,26 @@ public:
     }
     // Read from the primary field.
     read(getMDArray(f.fieldTag().name(), workset.wsIndex), f);
+#if 0
+    {
+      const int rank = 2, num_node = f.dimension(1),
+        num_qp = f.dimension(2), ndim = 3;
+      const Albany::MDArray&
+        mda1 = getMDArray(f.fieldTag().name(), workset.wsIndex);
+      prc(f.fieldTag().name()); prc(workset.wsIndex);
+      for (int cell = 0; cell < (int) workset.numCells; ++cell)
+        for (int qp = 0; qp < num_qp; ++qp) {
+          for (int i = 0; i < ndim; ++i)
+            for (int j = 0; j < ndim; ++j)
+              std::cout << " " << mda1(cell, qp, i, j);
+          std::cout << "\n";
+        }
+    }
+#endif
   }
   void writeQpField (
     const PHX::MDField<RealType>& f, const PHAL::Workset& workset,
-    const BasisField& bf, const BasisField& wbf)
+    const BasisField& wbf)
   {
     if (workset.wsIndex == 0)
       pr("writeQpField (provisional) " << f.fieldTag().name());
@@ -550,7 +588,7 @@ public:
     if (proj_.is_null()) {
       // Write to the provisional field.
       write(getMDArray(name_rc + "_1", workset.wsIndex), f);
-    } else proj_->fillRhs(f, *field_map_[name_rc], workset, bf, wbf);
+    } else proj_->fillRhs(f, *field_map_[name_rc], workset, wbf);
   }
 
   Manager::Field::iterator fieldsBegin () { return fields_.begin(); }
@@ -560,6 +598,16 @@ public:
     building_sfm_ = value;
   }
   bool building_sfm () const { return building_sfm_; }
+
+  void set_evaluating_sfm (const bool before) {
+    if (before && Teuchos::nonnull(proj_)) {
+      // Zero the nodal values in prep for fillRhs.
+      for (Field::iterator it = fields_.begin(); it != fields_.end(); ++it)
+        for (int i = 0; i < (*it)->num_g_fields; ++i)
+          if (Teuchos::nonnull((*it)->data_->mv[i]))
+            (*it)->data_->mv[i]->putScalar(0);
+    }
+  }
 
   Transformation::Enum get_transformation (const std::string& name_rc) {
     return field_map_[name_rc]->data_->transformation;
@@ -736,12 +784,11 @@ void Manager::registerField (
 // interp if projection is used. In contrast, only Writer<Residual> is used, so
 // it does both the (optional) projection and write.
 void Manager::
-beginQpInterp (const PHAL::Workset& workset, const BasisField& bf,
-               const BasisField& wbf) { /* Do nothing. */ }
+beginQpInterp () { /* Do nothing. */ }
 void Manager::
 interpQpField (PHX::MDField<RealType>& f, const PHAL::Workset& workset,
-               const BasisField& bf, const BasisField& wbf) {
-  impl_->interpQpField(f, workset, bf, wbf);
+               const BasisField& bf) {
+  impl_->interpQpField(f, workset, bf);
 }
 void Manager::endQpInterp () { /* Do nothing. */ }
 
@@ -757,8 +804,8 @@ beginQpWrite (const PHAL::Workset& workset, const BasisField& bf,
 }
 void Manager::
 writeQpField (const PHX::MDField<RealType>& f, const PHAL::Workset& workset,
-              const BasisField& bf, const BasisField& wbf) {
-  impl_->writeQpField(f, workset, bf, wbf);
+              const BasisField& wbf) {
+  impl_->writeQpField(f, workset, wbf);
 }
 void Manager::endQpWrite () { /* Do nothing. */ }
 
@@ -777,6 +824,9 @@ Manager::Field::iterator Manager::fieldsEnd ()
 void Manager::beginBuildingSfm () { impl_->set_building_sfm(true); }
 void Manager::endBuildingSfm () { impl_->set_building_sfm(false); }
 
+void Manager::beginEvaluatingSfm () { impl_->set_evaluating_sfm(true); }
+void Manager::endEvaluatingSfm () { impl_->set_evaluating_sfm(false); }
+
 void Manager::beginAdapt () { impl_->beginAdapt(); }
 void Manager::endAdapt (const Teuchos::RCP<const Tpetra_Map>& node_map,
                         const Teuchos::RCP<const Tpetra_Map>& ol_node_map)
@@ -785,9 +835,8 @@ void Manager::initProjector (const Teuchos::RCP<const Tpetra_Map>& node_map,
                              const Teuchos::RCP<const Tpetra_Map>& ol_node_map)
 { impl_->initProjector(node_map, ol_node_map); }
 
-bool Manager::usingProjection () const {
-  return Teuchos::nonnull(impl_->proj_);
-}
+bool Manager::usingProjection () const
+{ return Teuchos::nonnull(impl_->proj_); }
 
 Manager::Manager (const Teuchos::RCP<Albany::StateManager>& state_mgr,
                   const bool use_projection)
