@@ -7,6 +7,7 @@ BUILD_TYPE=$3
 NUM_PROCS=$4
 LCM_DIR=`pwd`
 TRILINOS="trilinos"
+INTEL_DIR=/opt/intel
 
 
 if [ -z "$PACKAGE" ]; then
@@ -15,7 +16,7 @@ if [ -z "$PACKAGE" ]; then
 fi
 
 if [ -z "$TOOL_CHAIN" ]; then
-    echo "Specify tool chain [gcc|clang]"
+    echo "Specify tool chain [gcc|clang|intel]"
     exit 1
 fi
 
@@ -54,6 +55,12 @@ case "$TOOL_CHAIN" in
 	export OMPI_CXX=`which clang++`
 	export OMPI_FC=`which gfortran`
 	;;
+    intel)
+	source $INTEL_DIR/bin/compilervars.sh intel64
+	export OMPI_CC=`which icc`
+	export OMPI_CXX=`which icpc`
+	export OMPI_FC=`which ifort`
+	;;
     *)
 	echo "Unrecognized tool chain option"
 	exit 1
@@ -68,12 +75,24 @@ case "$BUILD_TYPE" in
 		;;
 	    clang)
 		;;
+	    intel)
+		;;
 	    *)
 		;;
 	esac
 	;;
     release)
 	BUILD_STRING="RELEASE"
+	case "$TOOL_CHAIN" in
+	    gcc)
+		;;
+	    clang)
+		;;
+	    intel)
+		;;
+	    *)
+		;;
+	esac
 	;;
     *)
 	echo "Unrecognized build type option"
