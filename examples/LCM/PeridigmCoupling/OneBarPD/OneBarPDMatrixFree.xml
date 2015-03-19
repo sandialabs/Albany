@@ -48,6 +48,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="OneBarPD.sphere.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="OneBarPDMatrixFree.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
+    <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
   </ParameterList>

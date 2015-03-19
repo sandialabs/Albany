@@ -778,20 +778,11 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_PERIDIGM 
 #ifdef ALBANY_EPETRA
-
-//   xT
-//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
-//   return initial_x_dot;
-
-
-
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
 #endif
 #endif
-
 
   // Set data in Workset struct, and perform fill via field manager
   {
