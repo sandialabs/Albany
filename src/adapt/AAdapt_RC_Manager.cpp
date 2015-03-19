@@ -86,13 +86,13 @@ void write (Albany::MDArray& mda, const MDArray& f) {
 class Checker {
 private:
   typedef Intrepid::Tensor<RealType> Tensor;
-  int wi_, cell_, qp_;
+  int wi_, cell_, qp_, node_;
   void display (const std::string& name, const Tensor& a,
                 const std::string& msg) {
     std::stringstream ss;
     const int rank = Teuchos::DefaultComm<int>::getComm()->getRank();
-    ss << "amb: Checker: On rank " << rank << " with (wi, cell, qp) = ("
-       << wi_ << ", " << cell_ << ", " << qp_ << "), " << name
+    ss << "amb: Checker: On rank " << rank << " with (wi, cell, qp, node) = ("
+       << wi_ << ", " << cell_ << ", " << qp_ << ", " << node_ << "), " << name
        << " gave the following message: " << msg << std::endl << name
        << " = [" << a << "];" << std::endl;
     std::cout << ss.str();
@@ -103,7 +103,8 @@ private:
                          std::max(std::abs(a), std::abs(b)));
   }
 public:
-  Checker (int wi, int cell, int qp) : wi_(wi), cell_(cell), qp_(qp) {}
+  Checker (int wi, int cell, int qp, int node = 0)
+    : wi_(wi), cell_(cell), qp_(qp), node_(node) {}
 #define loopa(i, dim) for (Intrepid::Index i = 0; i < a.get_dimension(); ++i)
   bool ok_numbers (const std::string& name, const Tensor& a) {
     loopa(i, 0) loopa(j, 1) {
@@ -115,7 +116,8 @@ public:
     }
     return true;
   }
-  bool first () const { return wi_ == 0 && cell_ == 0 && qp_ == 0; }
+  bool first () const
+    { return wi_ == 0 && cell_ == 0 && qp_ == 0 && node_ == 0; }
   bool is_rotation (const std::string& name, const Tensor& a) {
     const double det = Intrepid::det(a);
     if (std::abs(det - 1) >= 1e-10) {
@@ -153,7 +155,7 @@ public:
 class Checker {
   typedef Intrepid::Tensor<RealType> Tensor;
 public:
-  Checker (int wi, int cell, int qp) {}
+  Checker (int wi, int cell, int qp, int node = 0) {}
   bool first () const { return false; }
 #define empty(s) bool s (const std::string&, const Tensor&) { return true; }
   empty(ok_numbers) empty(is_rotation) empty(is_symmetric)
@@ -178,23 +180,24 @@ symmetrize (Intrepid::Tensor<RealType>& a) {
 struct Direction { enum Enum { g2G, G2g }; };
 
 void calc_right_polar_LieR_LieS_G2g (
-  const Intrepid::Tensor<RealType>& F,
-  std::pair< Intrepid::Tensor<RealType>, Intrepid::Tensor<RealType> >& RS,
+  const Intrepid::Tensor<RealType>& F, Intrepid::Tensor<RealType> RS[2],
   Checker& c)
 {
   c.ok_numbers("F", F);
-  RS = Intrepid::polar_right(F);
+  { std::pair< Intrepid::Tensor<RealType>, Intrepid::Tensor<RealType> >
+      RSpair = Intrepid::polar_right(F);
+    RS[0] = RSpair.first; RS[1] = RSpair.second; }
   if (c.first() ||
-      ! (c.ok_numbers("R", RS.first) && c.ok_numbers("S", RS.second) &&
-         c.is_rotation("R", RS.first) && c.is_symmetric("S", RS.second)))
-    pr("F = [\n" << F << "];\nR = [\n" << RS.first << "];\nS = [\n"
-       << RS.second << "];");    
-  RS.first = Intrepid::log_rotation(RS.first);
-  c.ok_numbers("r", RS.first); c.is_antisymmetric("r", RS.first);
-  RS.second = Intrepid::log_sym(RS.second);
-  symmetrize(RS.second);
-  c.ok_numbers("s", RS.second); c.is_symmetric("s write", RS.second);
-  if (c.first()) pr("r =\n" << RS.first << " s =\n" << RS.second);
+      ! (c.ok_numbers("R", RS[0]) && c.ok_numbers("S", RS[1]) &&
+         c.is_rotation("R", RS[0]) && c.is_symmetric("S", RS[1])))
+    pr("F = [\n" << F << "];\nR = [\n" << RS[0] << "];\nS = [\n"
+       << RS[1] << "];");    
+  RS[0] = Intrepid::log_rotation(RS[0]);
+  c.ok_numbers("r", RS[0]); c.is_antisymmetric("r", RS[0]);
+  RS[1] = Intrepid::log_sym(RS[1]);
+  symmetrize(RS[1]);
+  c.ok_numbers("s", RS[1]); c.is_symmetric("s write", RS[1]);
+  if (c.first()) pr("r =\n" << RS[0] << " s =\n" << RS[1]);
 }
 
 void calc_right_polar_LieR_LieS_g2G (
@@ -236,7 +239,7 @@ public:
        << ol_node_map->getGlobalNumElements());
     node_map_ = node_map;
     ol_node_map_ = ol_node_map;
-    const size_t max_num_entries = 27; // Enough for first-order hex.
+    const int max_num_entries = 27; // Enough for first-order hex.
     M_ = Teuchos::rcp(
       new Tpetra_CrsMatrix(ol_node_map_, ol_node_map_, max_num_entries));
     export_ = Teuchos::null;
@@ -278,30 +281,43 @@ public:
 
     if (f.data_->mv[0].is_null()) {
       const int ncol = rank == 0 ? 1 : rank == 1 ? ndim : ndim*ndim;
-      for (int i = 0; i < f.num_g_fields; ++i)
-        f.data_->mv[i] = Teuchos::rcp(
+      for (int fi = 0; fi < f.num_g_fields; ++fi)
+        f.data_->mv[fi] = Teuchos::rcp(
           new Tpetra_MultiVector(ol_node_map_, ncol, true));
     }
     
+    const Transformation::Enum transformation = f.data_->transformation;
     for (int cell = 0; cell < (int) workset.numCells; ++cell)
       for (int node = 0; node < num_node; ++node) {
         const GO row = workset.wsElNodeID[cell][node];
         for (int qp = 0; qp < num_qp; ++qp) {
+          Checker c(workset.wsIndex, cell, qp);
           switch (rank) {
           case 0:
           case 1:
             TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "!impl");
             break;
           case 2: {
-            TEUCHOS_TEST_FOR_EXCEPTION(
-              f.data_->transformation != Transformation::none,
-              std::logic_error, "!impl");
-            //todo For other than 'none', use MiniTensor rather than the raw
-            // f_G_qp.
-            for (int i = 0, col = 0; i < ndim; ++i)
-              for (int j = 0; j < ndim; ++j, ++col)
-                f.data_->mv[0]->sumIntoGlobalValue(
-                  row, col, f_G_qp(cell, qp, i, j) * wbf(cell, node, qp));
+            switch (transformation) {
+            case Transformation::none: {
+              for (int i = 0, col = 0; i < ndim; ++i)
+                for (int j = 0; j < ndim; ++j, ++col)
+                  f.data_->mv[0]->sumIntoGlobalValue(
+                    row, col, f_G_qp(cell, qp, i, j) * wbf(cell, node, qp));
+            } break;
+            case Transformation::right_polar_LieR_LieS: {
+              Intrepid::Tensor<RealType> F(ndim);
+              loop(f_G_qp, i, 2) loop(f_G_qp, j, 3)
+                F(i, j) = f_G_qp(cell, qp, i, j);
+              Intrepid::Tensor<RealType> RS[2];
+              calc_right_polar_LieR_LieS_G2g(F, RS, c);
+              for (int fi = 0; fi < f.num_g_fields; ++fi) {
+                for (int i = 0, col = 0; i < ndim; ++i)
+                  for (int j = 0; j < ndim; ++j, ++col)
+                    f.data_->mv[fi]->sumIntoGlobalValue(
+                      row, col, RS[fi](i, j) * wbf(cell, node, qp));
+              }
+            }}
           } break;
           default:
             std::stringstream ss;
@@ -344,14 +360,13 @@ public:
       // Import (reverse mode) to the overlapping MV.
       f.data_->mv[fi]->putScalar(0);
       f.data_->mv[fi]->doImport(*x[fi], *export_, Tpetra::ADD);
+#if 0
       amb::write_CrsMatrix("M", *M_);
       amb::write_MultiVector("b", *b);
       amb::write_MultiVector("x", *x[fi]);
       amb::write_MultiVector("mv", *f.data_->mv[fi]);
+#endif
     }
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      f.data_->transformation != Transformation::none,
-      std::logic_error, "!impl");
   }
 
   void interp (const Manager::Field& f, const PHAL::Workset& workset,
@@ -363,6 +378,9 @@ public:
       num_node = bf.dimension(1), num_qp = bf.dimension(2),
       ndim = rank >= 1 ? mda1.dimension(2) : 1;
 
+    Albany::MDArray* mdas[2]; mdas[0] = &mda1; mdas[2] = &mda2;
+    const int nmv = f.num_g_fields;
+
     for (int cell = 0; cell < (int) workset.numCells; ++cell)
       for (int qp = 0; qp < num_qp; ++qp) {
         switch (rank) {
@@ -371,9 +389,6 @@ public:
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "!impl");
           break;
         case 2: {
-          TEUCHOS_TEST_FOR_EXCEPTION(
-            f.data_->transformation != Transformation::none,
-            std::logic_error, "!impl");
           for (int i = 0; i < ndim; ++i)
             for (int j = 0; j < ndim; ++j)
               mda1(cell, qp, i, j) = 0;
@@ -382,9 +397,10 @@ public:
             const LO row = ol_node_map_->getLocalElement(grow);
             for (int i = 0, col = 0; i < ndim; ++i)
               for (int j = 0; j < ndim; ++j, ++col)
-                mda1(cell, qp, i, j) +=
-                  f.data_->mv[0]->getVector(col)->get1dView()[row] *
-                  bf(cell, node, qp);
+                for (int fi = 0; fi < nmv; ++fi)
+                  (*mdas[fi])(cell, qp, i, j) +=
+                    f.data_->mv[fi]->getVector(col)->get1dView()[row] *
+                    bf(cell, node, qp);
           }
         } break;
         default:
@@ -427,7 +443,7 @@ private:
   Map field_map_;
   std::vector< Teuchos::RCP<Field> > fields_;
   bool building_sfm_;
-  std::vector<bool> is_g_;
+  std::vector<short> is_g_;
 
 public:
   Impl (const Teuchos::RCP<Albany::StateManager>& state_mgr,
@@ -495,8 +511,7 @@ public:
                  const Teuchos::RCP<const Tpetra_Map>& ol_node_map) {
     pr("is_g_.size() was " << is_g_.size() << " and now will be "
        << state_mgr_->getStateArrays().elemStateArrays.size());
-    is_g_.clear();
-    is_g_.resize(state_mgr_->getStateArrays().elemStateArrays.size(), true);
+    init_g(state_mgr_->getStateArrays().elemStateArrays.size(), true);
     if (Teuchos::nonnull(proj_)) {
       proj_->init(node_map, ol_node_map);
       for (Map::iterator it = field_map_.begin(); it != field_map_.end();
@@ -520,10 +535,10 @@ public:
     if (proj_.is_null()) return;
     if (is_g_.empty()) {
       // Special case at startup.
-      is_g_.resize(state_mgr_->getStateArrays().elemStateArrays.size(), false);
+      init_g(state_mgr_->getStateArrays().elemStateArrays.size(), false);
       return;
     }
-    if ( ! is_g_[workset.wsIndex]) return;
+    if ( ! is_g(workset.wsIndex)) return;
     // Interpolate g at NP to g at QP.
     const std::string name_rc = f_G_qp.fieldTag().name();
     const Teuchos::RCP<Field>& f = field_map_[name_rc];
@@ -531,7 +546,7 @@ public:
                   getMDArray(name_rc + "_1", workset.wsIndex));
     // Transform g -> G at QP.
     transformStateArray(name_rc, workset.wsIndex, Direction::g2G);
-    is_g_[workset.wsIndex] = false;
+    set_G(workset.wsIndex);
     // If this is the last workset, we're done interpolating, so release the
     // memory.
     if (workset.wsIndex == is_g_.size() - 1)
@@ -544,19 +559,19 @@ public:
     // At startup, is_g_.size() is 0. We also initialized fields to their G, not
     // g, values.
     if (is_g_.empty())
-      is_g_.resize(state_mgr_->getStateArrays().elemStateArrays.size(), false);
+      init_g(state_mgr_->getStateArrays().elemStateArrays.size(), false);
     if (proj_.is_null()) {
-      if (is_g_[workset.wsIndex]) {
+      if (is_g(workset.wsIndex)) {
         // If this is the first read after an RCU, transform g -> G.
         transformStateArray(f.fieldTag().name(), workset.wsIndex,
                             Direction::g2G);
-        is_g_[workset.wsIndex] = false;
+        set_G(workset.wsIndex);
       }
     } else {
       // The most obvious reason this exception could be thrown is because
       // EvalT=Jacobian is run before Residual, which I think should not happen.
       TEUCHOS_TEST_FOR_EXCEPTION(
-        is_g_[workset.wsIndex], std::logic_error,
+        is_g(workset.wsIndex), std::logic_error,
         "If usingProjection(), then readQpField should always see G, not g.");
     }
     // Read from the primary field.
@@ -638,6 +653,13 @@ private:
     return it->second;
   }
 
+  void init_g (const int n, const bool is_g) {
+    is_g_.clear();
+    is_g_.resize(n, is_g ? 0 : fields_.size());
+  }
+  bool is_g (const int ws_idx) const { return is_g_[ws_idx] < fields_.size(); }
+  void set_G (const int ws_idx) { ++is_g_[ws_idx]; }
+
   void transformStateArray (const std::string& name_rc, const WsIdx wi,
                             const Direction::Enum dir) {
     if (wi == 0) pr("transform " << name_rc);
@@ -667,13 +689,12 @@ private:
           // Copy mda2 (provisional) -> local.
           Intrepid::Tensor<RealType> F(mda1.dimension(2));
           loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
-          std::pair< Intrepid::Tensor<RealType>, Intrepid::Tensor<RealType> >
-            RS;
+          Intrepid::Tensor<RealType> RS[2];
           calc_right_polar_LieR_LieS_G2g(F, RS, c);
           // Copy local -> mda1, mda2.
           loop(mda1, i, 2) loop(mda1, j, 3) {
-            mda1(cell, qp, i, j) = RS.first(i, j);
-            mda2(cell, qp, i, j) = RS.second(i, j);
+            mda1(cell, qp, i, j) = RS[0](i, j);
+            mda2(cell, qp, i, j) = RS[1](i, j);
           }
         } else {
           // Copy mda1,2 -> local.
