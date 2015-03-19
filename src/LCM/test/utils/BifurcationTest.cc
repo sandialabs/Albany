@@ -282,6 +282,79 @@ tangent_sweep(Intrepid::Tensor4<double, 3> const & CC)
 }
 
 //
+// Cartesian parametrization sweep
+//
+void
+cartesian_sweep(Intrepid::Tensor4<double, 3> const & CC)
+{
+  // Build a grid to sample the parametrization.
+  // The cartesian parametrization has three parameters.
+  // Set the limits and the density of sampling
+  // points for each parameter in vectors.
+  double const
+  x_min = -1.0;
+
+  double const
+  x_max = 1.0;
+
+  double const
+  y_min = -1.0;
+
+  double const
+  y_max = 1.0;
+
+  double const
+  z_min = -1.0;
+
+  double const
+  z_max = 1.0;
+
+  Intrepid::Index const
+  x_num_points = 256;
+
+  Intrepid::Index const
+  y_num_points = 256;
+
+  Intrepid::Index const
+  z_num_points = 2;
+
+  Intrepid::Vector<double, 3> const
+  cartesian_min(x_min, y_min, z_min);
+
+  Intrepid::Vector<double, 3> const
+  cartesian_max(x_max, y_max, z_max);
+
+  Intrepid::Vector<Intrepid::Index, 3> const
+  cartesian_num_points(x_num_points, y_num_points, z_num_points);
+
+  // Build the parametric grid with the specified parameters.
+  Intrepid::ParametricGrid<double, 3>
+  cartesian_grid(cartesian_min, cartesian_max, cartesian_num_points);
+
+  // Build a projective parametrization for this elasticity.
+  Intrepid::ProjectiveParametrization<double, 3>
+  cartesian_param(CC);
+
+  // Traverse the grid with the parametrization.
+  cartesian_grid.traverse(cartesian_param);
+
+  // Query the parametrization for the minimum and maximum found on the grid.
+  std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
+
+  std::cout << std::scientific << std::setprecision(16);
+
+  std::cout << "Minimum: " << cartesian_param.get_minimum();
+  std::cout << " at " << cartesian_param.get_arg_minimum() << '\n';
+  std::cout << "Normal: " << cartesian_param.get_normal_minimum() << '\n';
+
+  std::cout << "Maximum: " << cartesian_param.get_maximum();
+  std::cout << " at " << cartesian_param.get_arg_maximum() << '\n';
+  std::cout << "Normal: " << cartesian_param.get_normal_maximum() << '\n';
+
+  return;
+}
+
+//
 // Simple tests for parametrizations of the bifurcation tensor.
 //
 int main(int ac, char* av[])
@@ -320,6 +393,8 @@ int main(int ac, char* av[])
   projective_sweep(CC);
 
   tangent_sweep(CC);
+
+  cartesian_sweep(CC);
 
   return 0;
 
