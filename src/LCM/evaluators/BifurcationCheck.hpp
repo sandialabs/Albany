@@ -7,6 +7,7 @@
 #if !defined(LCM_BifurcationCheck_hpp)
 #define LCM_BifurcationCheck_hpp
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -61,6 +62,26 @@ namespace LCM {
 
     //! number of spatial dimensions
     int num_dims_;
+    
+        
+    ///
+    /// Spherical parametrization sweep
+    ///
+    bool
+    spherical_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+
+    ///
+    /// Stereographic parametrization sweep
+    ///
+    bool
+    stereographic_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+    
+    ///
+    /// Projective parametrization sweep
+    ///
+    bool
+    projective_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);        
+                
   };
 
 }
