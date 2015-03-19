@@ -218,6 +218,70 @@ projective_sweep(Intrepid::Tensor4<double, 3> const & CC)
 }
 
 //
+// Tangent parametrization sweep
+//
+void
+tangent_sweep(Intrepid::Tensor4<double, 3> const & CC)
+{
+  // Build a grid to sample the parametrization.
+  // The tangent parametrization has two parameters.
+  // Set the limits and the density of sampling
+  // points for each parameter in vectors.
+  double const
+  x_min = -1.0;
+
+  double const
+  x_max = 1.0;
+
+  double const
+  y_min = -1.0;
+
+  double const
+  y_max = 1.0;
+
+  Intrepid::Index const
+  x_num_points = 256;
+
+  Intrepid::Index const
+  y_num_points = 256;
+
+  Intrepid::Vector<double, 2> const
+  tangent_min(x_min, y_min);
+
+  Intrepid::Vector<double, 2> const
+  tangent_max(x_max, y_max);
+
+  Intrepid::Vector<Intrepid::Index, 2> const
+  tangent_num_points(x_num_points, y_num_points);
+
+  // Build the parametric grid with the specified parameters.
+  Intrepid::ParametricGrid<double, 2>
+  tangent_grid(tangent_min, tangent_max, tangent_num_points);
+
+  // Build a projective parametrization for this elasticity.
+  Intrepid::TangentParametrization<double, 3>
+  tangent_param(CC);
+
+  // Traverse the grid with the parametrization.
+  tangent_grid.traverse(tangent_param);
+
+  // Query the parametrization for the minimum and maximum found on the grid.
+  std::cout << "\n*** TANGENT PARAMETRIZATION ***\n";
+
+  std::cout << std::scientific << std::setprecision(16);
+
+  std::cout << "Minimum: " << tangent_param.get_minimum();
+  std::cout << " at " << tangent_param.get_arg_minimum() << '\n';
+  std::cout << "Normal: " << tangent_param.get_normal_minimum() << '\n';
+
+  std::cout << "Maximum: " << tangent_param.get_maximum();
+  std::cout << " at " << tangent_param.get_arg_maximum() << '\n';
+  std::cout << "Normal: " << tangent_param.get_normal_maximum() << '\n';
+
+  return;
+}
+
+//
 // Simple tests for parametrizations of the bifurcation tensor.
 //
 int main(int ac, char* av[])
@@ -254,6 +318,8 @@ int main(int ac, char* av[])
   stereographic_sweep(CC);
 
   projective_sweep(CC);
+
+  tangent_sweep(CC);
 
   return 0;
 
