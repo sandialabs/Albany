@@ -102,6 +102,16 @@ void anlzCoords (
   dispExtremum<mymax>(x, dim, "max", Teuchos::REDUCE_MAX);
 }
 
+void writeMesh (
+  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
+{
+  static int ncalls = 0;
+  std::stringstream ss;
+  ss << "mesh_" << ncalls << ".vtk";
+  ++ncalls;
+  pumi_disc->writeMeshDebug(ss.str());
+}
+
 // Helper struct for updateCoordinates. Keep track of data relevant to update
 // coordinates and restore the original state in the case of error.
 struct CoordState {

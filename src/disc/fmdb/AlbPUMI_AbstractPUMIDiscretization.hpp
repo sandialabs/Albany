@@ -52,7 +52,7 @@ namespace AlbPUMI {
                           int offset = 0, int nentries = -1) const = 0;
 
     //amb-dbg
-    virtual void writedbg (const std::string& filename) {}
+    virtual void writeMeshDebug (const std::string& filename) {}
   };
 
 }

@@ -440,7 +440,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
   apf::Field* f;
   int dim = getNumDim();
   apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
-  copyQPStatesToAPF(f,fs,true);//false);
+  copyQPStatesToAPF(f,fs,false);
 
   meshOutput.writeFile(time_label);
 
@@ -448,7 +448,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
 }
 
 template<class Output> void AlbPUMI::FMDBDiscretization<Output>::
-writedbg (const std::string& filename) {
+writeMeshDebug (const std::string& filename) {
   apf::Field* f;
   apf::FieldShape* fs = apf::getIPShape(getNumDim(),
                                         fmdbMeshStruct->cubatureDegree);
@@ -1247,7 +1247,6 @@ AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
-  std::cout << "amb: updateMesh\n";
 
   computeOwnedNodesAndUnknowns();
   computeOverlapNodesAndUnknowns();

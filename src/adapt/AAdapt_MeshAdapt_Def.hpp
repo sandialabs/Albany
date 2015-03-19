@@ -3,7 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#include "/home/ambradl/bigcode/amb.hpp"
 
 #include "AAdapt_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -74,7 +73,6 @@ void AAdapt::MeshAdapt<SizeField>::initRcMgr () {
          it != end; ++it) {
       const int value_type = getValueType(*(*it)->layout);
       for (int i = 0; i < (*it)->num_g_fields; ++i) {
-        pr("creating field " << (*it)->get_g_name(i).c_str() << " with value_type " << value_type);
         pumi_discretization->createField(
           (*it)->get_g_name(i).c_str(), value_type);
       }
@@ -258,13 +256,10 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
   bool success;
   if (rc_mgr.is_null()) {
     // Old method. No reference configuration updating.
-    static int amb_dbg_cnt = 0;
-    if (amb_dbg_cnt++ < adapt_params_->get<int>("amb: adapt", 10000000)) {
-      beforeAdapt();
-      adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
-                    min_part_density, callback);
-      afterAdapt();
-    }
+    beforeAdapt();
+    adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
+                  min_part_density, callback);
+    afterAdapt();
     success = true;
   } else {
     amb_dbg_ap = adapt_params_;
@@ -272,7 +267,6 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
   }
 
   al::anlzCoords(pumi_discretization);
-  pr("writeMesh");
   al::writeMesh(pumi_discretization);
   return success;
 }
@@ -360,13 +354,10 @@ adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
     }
     if (alpha == 0) { success = false; break; }
 
-    static int amb_dbg_cnt = 0;
-    if (amb_dbg_cnt++ < amb_dbg_ap->get<int>("amb: adapt", 10000000)) {
-      beforeAdapt();
-      adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
-                    min_part_density, callback);
-      afterAdapt();
-    }
+    beforeAdapt();
+    adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
+                  min_part_density, callback);
+    afterAdapt();
 
     // Resize x.
     rc_mgr->get_x() = Teuchos::rcp(

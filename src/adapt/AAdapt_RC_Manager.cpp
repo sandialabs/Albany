@@ -3,7 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+
+//#define DEBUG
+#ifdef DEBUG
 #include "/home/ambradl/bigcode/amb.hpp"
+#endif
 
 #include <Intrepid_MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
@@ -16,10 +20,13 @@
 #include "AAdapt_RC_Projector_impl.hpp"
 #include "AAdapt_RC_Manager.hpp"
 
-//#define pr(msg) std::cout << "amb: (rc) " << msg << std::endl;
-#define pr(msg) lpr(0,msg)
-#define amb_do_transform
+#ifdef DEBUG
 #define amb_do_check
+#define pr(msg) lpr(0,msg)
+//#define pr(msg) std::cout << "amb: (rc) " << msg << std::endl;
+#else
+#define pr(msg)
+#endif
 
 #define loop(a, i, dim)                                                 \
   for (PHX::MDField<RealType>::size_type i = 0; i < a.dimension(dim); ++i)
@@ -360,7 +367,7 @@ public:
       // Import (reverse mode) to the overlapping MV.
       f.data_->mv[fi]->putScalar(0);
       f.data_->mv[fi]->doImport(*x[fi], *export_, Tpetra::ADD);
-#if 0
+#ifdef DEBUG
       amb::write_CrsMatrix("M", *M_);
       amb::write_MultiVector("b", *b);
       amb::write_MultiVector("x", *x[fi]);
@@ -378,7 +385,7 @@ public:
       num_node = bf.dimension(1), num_qp = bf.dimension(2),
       ndim = rank >= 1 ? mda1.dimension(2) : 1;
 
-    Albany::MDArray* mdas[2]; mdas[0] = &mda1; mdas[2] = &mda2;
+    Albany::MDArray* mdas[2]; mdas[0] = &mda1; mdas[1] = &mda2;
     const int nmv = f.num_g_fields;
 
     for (int cell = 0; cell < (int) workset.numCells; ++cell)
@@ -409,7 +416,7 @@ public:
           TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
         }
       }
-#if 0
+#ifdef DEBUG
     pr("bf:");
     for (int cell = 0; cell < (int) workset.numCells; ++cell)
       for (int qp = 0; qp < num_qp; ++qp) {
@@ -442,25 +449,21 @@ private:
   Teuchos::RCP<Albany::StateManager> state_mgr_;
   Map field_map_;
   std::vector< Teuchos::RCP<Field> > fields_;
-  bool building_sfm_;
+  bool building_sfm_, transform_;
   std::vector<short> is_g_;
 
 public:
   Impl (const Teuchos::RCP<Albany::StateManager>& state_mgr,
-        const bool use_projection)
+        const bool use_projection, const bool do_transform)
     : state_mgr_(state_mgr)
-  { init(use_projection); }
-
+  { init(use_projection, do_transform); }
+  
   void registerField (
     const std::string& name, const Teuchos::RCP<PHX::DataLayout>& dl,
-    const Init::Enum init_G, /*const*/ Transformation::Enum transformation,
+    const Init::Enum init_G, Transformation::Enum transformation,
     const Teuchos::RCP<Teuchos::ParameterList>& p)
   {
-    if ( ! amb::Options::get()->params()->get<bool>("dotransform", true))
-      transformation = Transformation::none;
-#ifndef amb_do_transform
-    transformation = Transformation::none;
-#endif
+    if ( ! transform_) transformation = Transformation::none;
 
     const std::string name_rc = decorate(name);
     p->set<std::string>(name_rc + " Name", name_rc);
@@ -576,7 +579,7 @@ public:
     }
     // Read from the primary field.
     read(getMDArray(f.fieldTag().name(), workset.wsIndex), f);
-#if 0
+#ifdef DEBUG
     {
       const int rank = 2, num_node = f.dimension(1),
         num_qp = f.dimension(2), ndim = 3;
@@ -629,7 +632,8 @@ public:
   }
 
 private:
-  void init (const bool use_projection) {
+  void init (const bool use_projection, const bool do_transform) {
+    transform_ = do_transform;
     building_sfm_ = false;
     if (use_projection) proj_ = Teuchos::rcp(new Projector());
   }
@@ -722,7 +726,9 @@ create (const Teuchos::RCP<Albany::StateManager>& state_mgr,
   if (adapt_params.get<bool>("Reference Configuration: Update", false)) {
     const bool use_projection = adapt_params.get<bool>(
       "Reference Configuration: Project", false);
-    return Teuchos::rcp(new Manager(state_mgr, use_projection));
+    const bool do_transform = adapt_params.get<bool>(
+      "Reference Configuration: Transform", false);
+    return Teuchos::rcp(new Manager(state_mgr, use_projection, do_transform));
   }
   else return Teuchos::null;
 }
@@ -860,8 +866,8 @@ bool Manager::usingProjection () const
 { return Teuchos::nonnull(impl_->proj_); }
 
 Manager::Manager (const Teuchos::RCP<Albany::StateManager>& state_mgr,
-                  const bool use_projection)
-  : impl_(Teuchos::rcp(new Impl(state_mgr, use_projection)))
+                  const bool use_projection, const bool do_transform)
+  : impl_(Teuchos::rcp(new Impl(state_mgr, use_projection, do_transform)))
 {}
 
 #define eti_fn(EvalT)                                   \

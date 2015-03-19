@@ -95,7 +95,7 @@ template<class Output>
     //! Print coords for debugging
     void printCoords() const;
 
-   //! Get number of spatial dimensions
+    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }
 
     virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return commT; }
@@ -116,8 +116,7 @@ template<class Output>
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
 
-  //amb-dbg
-  virtual void writedbg (const std::string& filename);
+    virtual void writeMeshDebug (const std::string& filename);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 

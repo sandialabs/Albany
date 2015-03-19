@@ -172,7 +172,7 @@ private:
   Teuchos::RCP<Impl> impl_;
 
   Manager(const Teuchos::RCP<Albany::StateManager>& state_mgr,
-          const bool use_projection);
+          const bool use_projection, const bool do_transform);
 };
 
 } // namespace rc
