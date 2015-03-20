@@ -39,7 +39,7 @@ class NeumannBase :
 
 public:
 
-  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, BASAL_NON_LINEAR, TRACTION, LATERAL};
+  enum NEU_TYPE {COORD, NORMAL, INTJUMP, PRESS, ROBIN, BASAL, BASAL_SCALAR_FIELD, TRACTION, LATERAL};
   enum SIDE_TYPE {OTHER, LINE, TRI, QUAD}; // to calculate areas for pressure bc
 
   typedef typename EvalT::ScalarT ScalarT;
@@ -69,8 +69,6 @@ protected:
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
   enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
-  enum NON_LIN_TYPE {LINEAR,POWER_LAW,REGULARIZED_COULOMB};
-  NON_LIN_TYPE non_lin_type;
 
   //The following are for the lateral BC
   double g;
@@ -139,17 +137,6 @@ protected:
                                 const shards::CellTopology & celltopo,
                                 const int cellDims,
                                 int local_side_id);
-
-#ifdef ALBANY_FELIX
-  // Nonlinear friction
-  void calc_dudn_basal_non_linear (Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                                   const Intrepid::FieldContainer<ScalarT>& dofOnSideVec,
-                                   const Intrepid::FieldContainer<ScalarT>& dofNormOnSide,
-                                   const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-                                   const shards::CellTopology & celltopo,
-                                   const int cellDims,
-                                   int local_side_id);
-#endif
 
   //Lateral bc
   void calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
