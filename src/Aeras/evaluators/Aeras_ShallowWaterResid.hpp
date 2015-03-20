@@ -144,6 +144,10 @@ public:
 
  PHX::MDField<ScalarT,Node, Dim> vcontra;
 
+ Kokkos::View<int*, PHX::Device> nodeToQPMap_Kokkos;
+
+ double a, myPi;
+
  KOKKOS_INLINE_FUNCTION
  void divergence(const PHX::MDField<ScalarT,Node, Dim>  & fieldAtNodes,
       const int cell) const;

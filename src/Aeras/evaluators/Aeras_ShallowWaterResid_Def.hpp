@@ -178,6 +178,10 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
  vcontra=PHX::MDField<ScalarT,Node,Dim>("vcontra",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
  vcontra.setFieldData(ViewFactory::buildView(vcontra.fieldTag(),ddims_));
+
+nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",9);
+for (int i=0; i<9; i++)
+ nodeToQPMap_Kokkos(i)=nodeToQPMap[i];
 #endif
 }
 
@@ -282,8 +286,8 @@ operator() (const ShallowWaterResid_VecDim1_Tag& tag, const int& cell) const{
       double alpha = 1.5707963; //FIXME: have alpha be read from parameter list!  Here it's hard-coded to pi/2;  
       double cosAlpha = std::cos(alpha);
       double sinAlpha = std::sin(alpha);
-      double a = Aeras::ShallowWaterConstants::self().earthRadius;
-      double myPi = Aeras::ShallowWaterConstants::self().pi;
+     // a = Aeras::ShallowWaterConstants::self().earthRadius;
+     // double myPi = Aeras::ShallowWaterConstants::self().pi;
       double u0 = 2*myPi*a/(12.*24.*3600.);
       for (int node=0; node < numNodes; ++node) {
         ScalarT surfaceHeight = UNodal(cell,node,0);
@@ -329,7 +333,7 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH
  get_coriolis(cell);
 
       for (int node=0; node < numNodes; ++node) {
-        ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap[node]);
+        ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
         ScalarT ulambda = UNodal(cell, node,1);
         ScalarT utheta  = UNodal(cell, node,2);
         kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
@@ -380,7 +384,7 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Ta
  get_coriolis(cell);
 
       for (int node=0; node < numNodes; ++node) {
-        ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap[node]);
+        ScalarT depth = UNodal(cell,node,0) + mountainHeight(cell, nodeToQPMap_Kokkos[node]);
         ScalarT ulambda = UNodal(cell, node,1);
         ScalarT utheta  = UNodal(cell, node,2);
         kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
@@ -448,7 +452,7 @@ KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::fill_nodal_metrics(const int &cell) const {
 
   for (size_t v = 0; v < numNodes; ++v) {
-    int qp = nodeToQPMap[v];
+    int qp = nodeToQPMap_Kokkos[v];
 
     for (size_t b1 = 0; b1 < 2; ++b1) {
       for (size_t b2 = 0; b2 < 2; ++b2) {
@@ -704,7 +708,9 @@ evaluateFields(typename Traits::EvalData workset)
   }
   }
 #else
-
+jlkjlkjl
+a = Aeras::ShallowWaterConstants::self().earthRadius;
+myPi = Aeras::ShallowWaterConstants::self().pi;
 
 if ( vecDim == 3) {
   if (usePrescribedVelocity) {
