@@ -214,7 +214,8 @@ Subgraph::vertexFromEntity(stk::mesh::Entity entity)
 // Add a vertex in the subgraph.
 //
 Vertex
-Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
+Subgraph::addVertex(
+    stk::mesh::EntityRank vertex_rank)
 {
   get_topology().increase_highest_id(vertex_rank);
 
@@ -230,8 +231,7 @@ Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
   stk::mesh::EntityId
   high_id = high_id_from_low_id(dimension, parallel_rank, vertex_rank, low_id);
 
-  stk::mesh::PartVector
-  add_parts;
+  stk::mesh::PartVector add_parts;
 
   stk::mesh::Entity
   entity = get_bulk_data().declare_entity(vertex_rank, high_id, add_parts);
