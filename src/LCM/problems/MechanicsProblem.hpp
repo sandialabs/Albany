@@ -1698,13 +1698,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           volume_average_stabilization_param);
 
       // strain
-      if (small_strain) {
+      if (small_strain)
         p->set<std::string>("Strain Name", "Strain");
-        if (Teuchos::nonnull(rc_mgr_))
-          rc_mgr_->registerField(
-              "Strain", dl_->qp_tensor, AAdapt::rc::Init::zero,
-              AAdapt::rc::Transformation::none, p);
-      }
 
       // set flag for return strain and velocity gradient
       bool have_velocity_gradient(false);
@@ -1736,10 +1731,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
           "QP Scalar Data Layout",
           dl_->qp_scalar);
 
-      if (Teuchos::nonnull(rc_mgr_))
+      if (Teuchos::nonnull(rc_mgr_)) {
         rc_mgr_->registerField(
             defgrad, dl_->qp_tensor, AAdapt::rc::Init::identity,
             AAdapt::rc::Transformation::right_polar_LieR_LieS, p);
+        p->set<std::string>("Displacement Name", "Displacement");
+      }
 
       //ev = Teuchos::rcp(new LCM::DefGrad<EvalT,PHAL::AlbanyTraits>(*p));
       ev = Teuchos::rcp(

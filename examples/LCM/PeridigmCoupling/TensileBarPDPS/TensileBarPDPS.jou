@@ -1,0 +1,24 @@
+
+reset
+create brick x 1.0 y 0.5 z 0.5
+volume all size {0.5/4}
+mesh volume all
+block 1 volume 1
+export genesis 'PD_Block.g' overwrite
+
+reset
+create brick x 1.0 y 0.5 z 0.5
+volume 1 move x 1.0 y 0.0 z 0.0
+volume 1 copy move x -2.0 y 0.0 z 0.0
+volume all size {0.5/2}
+mesh volume all
+block 2 volume 1 2
+nodeset 1 surface 10  # left face
+nodeset 2 curve 21    # left side z axis
+nodeset 3 curve 19    # left side y axis
+nodeset 4 surface 6   # right face
+nodeset 5 curve 10    # right size z axis
+nodeset 6 curve 5     # right size y axis
+nodeset 7 surface 12  # left side PS-PD interface
+nodeset 8 surface 4   # right side PS-PD interface
+export genesis 'PS_Block.g' overwrite

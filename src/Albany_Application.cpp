@@ -3421,10 +3421,12 @@ evaluateStateFieldManagerT(
   workset.fT = overlapped_fT;
 
   // Perform fill via field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginEvaluatingSfm();
   for (int ws=0; ws < numWorksets; ws++) {
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endEvaluatingSfm();
 }
 
 void Albany::Application::registerShapeParameters()

@@ -273,24 +273,9 @@ computeState(typename Traits::EvalData workset,
         tangent_m = (1.0 - damage_m(cell, pt)) * tangent_m
           - damage_deriv_m * Intrepid::tensor(S0_m, S0_m);
 
-        // initialize tangentA to zero
-        // there is an simpler way to do this!
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            for (int p(0); p < num_dims_; ++p) {
-              for (int q(0); q < num_dims_; ++q) {
-
-                tangentA_m(i,j,p,q) = 0.0;
-  
-              }
-            }
-          }
-        }
-
-        tangentA_m.fill(0.0);
-
         // convert tangent_m to tangentA 
         // tangentA is w.r.t. the deformation gradient
+        tangentA_m.fill(0.0);
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             for (int p(0); p < num_dims_; ++p) {
@@ -397,24 +382,11 @@ computeState(typename Traits::EvalData workset,
           - damage_deriv_f1 * Intrepid::tensor(S0_f1, S0_f1);
         tangent_f2 = (1.0 - damage_f2(cell, pt)) * tangent_f2
           - damage_deriv_f2 * Intrepid::tensor(S0_f2, S0_f2);
-        
-        // initialize tangentA to zero
-        // there should be an simpler way to do this!
-        for (int i(0); i < num_dims_; ++i) {
-          for (int j(0); j < num_dims_; ++j) {
-            for (int p(0); p < num_dims_; ++p) {
-              for (int q(0); q < num_dims_; ++q) {
-
-                tangentA_f1(i,j,p,q) = 0.0;
-                tangentA_f2(i,j,p,q) = 0.0;
-
-              }
-            }
-          }
-        }  
 
         // convert tangent_m to tangentA 
         // tangentA is w.r.t. the deformation gradient
+        tangentA_f1.fill(0.0);
+        tangentA_f2.fill(0.0);
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             for (int p(0); p < num_dims_; ++p) {
@@ -461,18 +433,18 @@ computeState(typename Traits::EvalData workset,
           for (int j(0); j < num_dims_; ++j) {
             for (int k(0); k < num_dims_; ++k) {
               for (int l(0); l < num_dims_; ++l) {
-                tangent(cell, pt, i, j, k, l) =
-                  volume_fraction_m_ * tangentA_m(i, j, k, l)
-                  + volume_fraction_f1_ * tangentA_f1(i, j, k, l)
-                  + volume_fraction_f2_ * tangentA_f2(i, j, k, l);
+                // std::cout << "Using Tangent w.r.t. the deformation gradient" << std::endl;
+                //tangent(cell, pt, i, j, k, l) =
+                  //volume_fraction_m_ * tangentA_m(i, j, k, l)
+                  //+ volume_fraction_f1_ * tangentA_f1(i, j, k, l)
+                  //+ volume_fraction_f2_ * tangentA_f2(i, j, k, l);
 
                   //for debugging, use tangent w.r.t. right Cauchy-Green tensor
-                  //tangent(cell, pt, i, j, k, l) =
-                  //volume_fraction_m_ * tangent_m(i, j, k, l)
-                  //+ volume_fraction_f1_ * tangent_f1(i, j, k, l)
-                  //+ volume_fraction_f2_ * tangent_f2(i, j, k, l);
-
-
+                  //std::cout << "Using Tangent w.r.t. the right Cauchy-Green tensor" << std::endl;
+                  tangent(cell, pt, i, j, k, l) =
+                  volume_fraction_m_ * tangent_m(i, j, k, l)
+                    + volume_fraction_f1_ * tangent_f1(i, j, k, l)
+                    + volume_fraction_f2_ * tangent_f2(i, j, k, l);
               }//l
             }//k
           }//j

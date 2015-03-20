@@ -116,8 +116,7 @@ public:
     int num_g_fields;
     //! Get decorated name for i'th g component field.
     std::string get_g_name (const int i) const;
-  private:
-    friend class Manager;
+    // Opaque internal data for use by the implementation.
     struct Data;
     Teuchos::RCP<Data> data_;
   };
@@ -127,10 +126,9 @@ public:
 
   typedef PHX::MDField<RealType,Cell,Node,QuadPoint> BasisField;
   //! Reader<EvalT> uses these methods to load the data.
-  void beginQpInterp(const PHAL::Workset& workset,
-                     const BasisField& bf, const BasisField& wbf);
+  void beginQpInterp();
   void interpQpField(PHX::MDField<RealType>& f, const PHAL::Workset& workset,
-                     const BasisField& bf, const BasisField& wbf);
+                     const BasisField& bf);
   void endQpInterp();
   void readQpField(PHX::MDField<RealType>& f,
                    const PHAL::Workset& workset);
@@ -138,8 +136,7 @@ public:
   void beginQpWrite(const PHAL::Workset& workset,
                     const BasisField& bf, const BasisField& wbf);
   void writeQpField(const PHX::MDField<RealType>& f,
-                    const PHAL::Workset& workset, const BasisField& bf,
-                    const BasisField& wbf);
+                    const PHAL::Workset& workset, const BasisField& wbf);
   void endQpWrite();
   //! MeshAdapt uses this method to read and write nodal data from the mesh
   // database before and after adaptation.
@@ -157,6 +154,10 @@ public:
   void beginBuildingSfm();
   //! Albany is done building the state field manager.
   void endBuildingSfm();
+  //! Albany is evaluating the state field manager.
+  void beginEvaluatingSfm();
+  //! Albany is done evaluating the state field manager.
+  void endEvaluatingSfm();
   //! The mesh is about to adapt.
   void beginAdapt();
   //! The mesh was just adapted. The maps are needed only if usingProjection().
@@ -171,7 +172,7 @@ private:
   Teuchos::RCP<Impl> impl_;
 
   Manager(const Teuchos::RCP<Albany::StateManager>& state_mgr,
-          const bool use_projection);
+          const bool use_projection, const bool do_transform);
 };
 
 } // namespace rc

@@ -21,7 +21,8 @@ if [ ! $error == "NONE" ]; then
 fi
 
 if [ ! -d Trilinos ]; then
-  git clone git@github.com:trilinos/trilinos.git Trilinos
+  #git clone git@github.com:trilinos/trilinos.git Trilinos
+  git clone software.sandia.gov:/space/git/Trilinos Trilinos
   #git clone https://github.com/trilinos/trilinos.git Trilinos
 fi
 if [ ! -d Albany ]; then

@@ -95,7 +95,7 @@ template<class Output>
     //! Print coords for debugging
     void printCoords() const;
 
-   //! Get number of spatial dimensions
+    //! Get number of spatial dimensions
     int getNumDim() const { return fmdbMeshStruct->numDim; }
 
     virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return commT; }
@@ -115,6 +115,8 @@ template<class Output>
     void writeSolutionT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToMeshDatabaseT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
     void writeSolutionToFileT(const Tpetra_Vector& soln, const double time, const bool overlapped = false);
+
+    virtual void writeMeshDebug (const std::string& filename);
 
     Teuchos::RCP<Tpetra_Vector> getSolutionFieldT(bool overlapped=false) const;
 
@@ -154,27 +156,24 @@ template<class Output>
 
     // this is called with both LO's and GO's to compute a dof number
     // based on a node number and an equation number
-    GO getDOF(const GO inode, const int eq) const
+    GO getDOF(const GO inode, const int entry, int nentries=-1) const
     {
-      if (interleavedOrdering) return inode*neq + eq;
-      else  return inode + numOwnedNodes*eq;
+      if (interleavedOrdering) {
+        if (nentries == -1) nentries = neq;
+        return inode*nentries + entry;
+      }
+      else return inode + numOwnedNodes*entry;
     }
 
     // Copy field data from Tpetra_Vector to APF
-    void setField(
-        const char* name,
-        const ST* data,
-        bool overlapped,
-        int offset = 0);
+    void setField(const char* name, const ST* data, bool overlapped,
+                  int offset = 0, int nentries = -1);
     void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
         const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
-    void getField(
-        const char* name,
-        ST* dataT,
-        bool overlapped,
-        int offset = 0) const;
+    void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
+                  int nentries = -1) const;
     void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
         ST* dataT, bool overlapped) const;
 

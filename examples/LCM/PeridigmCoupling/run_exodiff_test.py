@@ -39,18 +39,29 @@ def runtest(albany_command, xml_file_name):
     if return_code != 0:
         result = return_code
 
-    # run exodiff
+    # run exodiff on Albany output file
     command = ["./exodiff", "-stat", "-f", \
-                   base_name+".exodiff", \
-                   base_name+".gold.e", \
-                   base_name+".e"]
+               base_name+".exodiff", \
+               base_name+".gold.e", \
+               base_name+".e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
+    # run exodiff on Peridigm output file, if any
+    if os.path.exists(base_name+"_PeridigmResults.exodiff"):
+        command = ["./exodiff", "-stat", "-f", \
+                   base_name+"_PeridigmResults.exodiff", \
+                   base_name+"_PeridigmResults.gold.e", \
+                   base_name+"_PeridigmResults.e"]
+        p = Popen(command, stdout=logfile, stderr=logfile)
+        return_code = p.wait()
+        if return_code != 0:
+            result = return_code
+
     logfile.close()
-        
+
     return result
 
 if __name__ == "__main__":
