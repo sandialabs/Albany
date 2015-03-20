@@ -13,8 +13,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPD.sphere.g
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPD.sphere.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPD.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPD.gold.e COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPD_PeridigmResults.gold.e
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPD_PeridigmResults.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPD.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPD.exodiff COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPD_PeridigmResults.exodiff
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPD_PeridigmResults.exodiff COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)

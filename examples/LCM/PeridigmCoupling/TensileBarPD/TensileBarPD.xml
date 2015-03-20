@@ -24,10 +24,15 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
+        <Parameter name="Output Filename" type="string" value="TensileBarPD_PeridigmResults"/>
+        <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
+          <Parameter name="Displacement" type="bool" value="true"/>
+          <Parameter name="Force" type="bool" value="true"/>
           <Parameter name="Dilatation" type="bool" value="true"/>
           <Parameter name="Weighted_Volume" type="bool" value="true"/>
           <Parameter name="Radius" type="bool" value="true"/>
+          <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
         </ParameterList>
       </ParameterList>
 
