@@ -9,6 +9,7 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Schwarz_BoundaryJacobian.hpp" 
 
 namespace LCM {
 
@@ -145,7 +146,11 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
 
+  //Teuchos array holding main diagonal jacobians (non-coupled models)
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
+
+  //Teuchos array holding off-diagonal jacobians (coupling ones)
+  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary_;
 
   int
   num_models_;

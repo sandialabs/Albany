@@ -33,10 +33,10 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 
 //getThyraCoupledJacobian method is similar analogous to getThyraMatrix in panzer 
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
-//FIXME: add off-diagonal Jacobians to argument list, and corresponding index array
 Teuchos::RCP<Thyra::LinearOpBase<ST> > 
 LCM::Schwarz_CoupledJacobian::
-getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs) const 
+getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs, 
+                        Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary) const 
 {
    // get the block dimension
    std::size_t blockDim = jacs.size(); 

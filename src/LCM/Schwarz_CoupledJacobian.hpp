@@ -21,6 +21,7 @@
 
 #include "Thyra_BlockedLinearOpBase.hpp"
 #include <Thyra_PhysicallyBlockedLinearOpBase.hpp>
+#include "Schwarz_BoundaryJacobian.hpp"
 
 namespace LCM {
 
@@ -34,7 +35,8 @@ namespace LCM {
 
     ~Schwarz_CoupledJacobian();
      
-    Teuchos::RCP<Thyra::LinearOpBase<ST> > getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs) const; 
+    Teuchos::RCP<Thyra::LinearOpBase<ST> > getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs, 
+                                                                   Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> >jacs_boundary) const; 
 
   private:
 
