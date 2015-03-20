@@ -13,7 +13,13 @@ file.].
 6.) Eventually we'll want to put an ifdef to suppress all the debug
 output [TBD].
 
-7.) Debug null pointer in SchwarzMultiscale model evaluator class. 
+
+---------------------Debug TODOs------------------------
+
+1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain 
+(why is ||F|| not changing?) 
+
+2.) Test code on 2 decoupled domains (after 1.) is done) 
 
 ---------------------Development TODOs------------------------
 
@@ -21,12 +27,11 @@ output [TBD].
 LCM::SchwarzMultiscale class, if necessary.  It appears to be handled
 in general already in other parts of the code. [TBD?]
 
-4.) Implement Schwarz_CoupledJacobian "apply" method, which takes a
-vector X, and forms a vector Y, where Y = Jac*X, with Jac = the
-coupled Jacbian matrix.
+2.) Implement Schwarz_BoundaryJacobian class to create / apply boundary 
+Jacobians as Tpetra_Operators.  Resulting Teuchos Array of Tpetra_Operators
+will be passed to Schwarz_CoupledJacobian class. [Alejandro]
 
-11.) Finish implementation of evalModelImpl in
-SchwarzMultiscale.cpp. [TBD]
+3.) Implement separateCoupledVector for the general (> 1) domain case [TBD]
 
 
 ------------------Questions/Comments/Notes-----------------------------

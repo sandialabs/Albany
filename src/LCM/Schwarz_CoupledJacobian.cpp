@@ -23,6 +23,7 @@ using Thyra::PhysicallyBlockedLinearOpBase;
 
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
+  std::cout << __PRETTY_FUNCTION__ << "\n"; 
   commT_ = commT;
   blockedOp_ = Thyra::defaultBlockedLinearOp<ST>();
 }
@@ -38,6 +39,7 @@ LCM::Schwarz_CoupledJacobian::
 getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs, 
                         Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary) const 
 {
+  std::cout << __PRETTY_FUNCTION__ << "\n"; 
    // get the block dimension
    std::size_t blockDim = jacs.size(); 
 
