@@ -147,7 +147,7 @@ void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::Mes
 
    // Construct BC evaluators for all possible names of conditions
    // Should only specify flux vector components (dCdx, dCdy, dCdz), or dCdn, not both
-   std::vector<std::string> condNames(7); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field, basal_non_linear
+   std::vector<std::string> condNames(7); //(dCdx, dCdy, dCdz), dCdn, basal, P, lateral, basal_scalar_field
    Teuchos::ArrayRCP<std::string> dof_names(1);
      dof_names[0] = "Velocity";
 
@@ -165,13 +165,16 @@ void FELIX::StokesFO::constructNeumannEvaluators (const Teuchos::RCP<Albany::Mes
    condNames[3] = "P";
    condNames[4] = "lateral";
    condNames[5] = "basal_scalar_field";
-   condNames[6] = "basal_non_linear";
+
+   std::vector< Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> > > extra_evaluators;
+   ConstructBasalEvaluatorOp constructor(*this,extra_evaluators);
+   boost::mpl::for_each<PHAL::AlbanyTraits::BEvalTypes>(constructor);
 
    nfm.resize(1); // FELIX problem only has one element block
 
    nfm[0] = nbcUtils.constructBCEvaluators(meshSpecs, neumannNames, dof_names, true, 0,
                                            condNames, offsets, dl,
-                                           this->params, this->paramLib);
+                                           this->params, this->paramLib, extra_evaluators);
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
@@ -180,6 +183,7 @@ FELIX::StokesFO::getValidProblemParameters () const
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidStokesFOProblemParams");
 
   validPL->sublist("FELIX Viscosity", false, "");
+  validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("FELIX Surface Gradient", false, "");
   validPL->sublist("Equation Set", false, "");
   validPL->sublist("Body Force", false, "");
@@ -187,3 +191,6 @@ FELIX::StokesFO::getValidProblemParameters () const
 
   return validPL;
 }
+
+// Instantiating the homotopy parameter holder class
+PHAL_INSTANTIATE_TEMPLATE_CLASS(FELIX::HomotopyParamValue)
