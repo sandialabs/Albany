@@ -10,4 +10,4 @@ nodeset 3 curve 9  # left size z axis
 nodeset 4 curve 7  # left side y axis
 nodeset 5 curve 10 # right size z axis
 nodeset 6 curve 5  # right size y axis
-export genesis 'OneBarPS.g' overwrite
+export genesis 'TensileBarPS.g' overwrite

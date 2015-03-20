@@ -1,7 +1,7 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Peridigm Code Coupling"/>
-    <Parameter name="MaterialDB Filename" type="string" value="OneBarPSMaterials.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="TensileBarPSMaterials.xml"/>
     <ParameterList name="Peridigm Parameters">
 
       <ParameterList name="Discretization">
@@ -24,7 +24,7 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-        <Parameter name="Output Filename" type="string" value="OneBarPS_PeridigmResults"/>
+        <Parameter name="Output Filename" type="string" value="TensileBarPS_PeridigmResults"/>
         <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Cauchy_Stress" type="bool" value="true"/>
@@ -50,8 +50,8 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="OneBarPS.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="OneBarPS.e"/>
+    <Parameter name="Exodus Input File Name" type="string" value="TensileBarPS.g"/>
+    <Parameter name="Exodus Output File Name" type="string" value="TensileBarPS.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
