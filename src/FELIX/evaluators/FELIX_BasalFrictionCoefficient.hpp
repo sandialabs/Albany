@@ -49,6 +49,9 @@ public:
 private:
 
   ScalarT* homotopyParam;
+#ifdef OUTPUT_TO_SCREEN
+  ScalarT printedH;
+#endif
 
   double getScalarTValue (const ScalarT& s);
 

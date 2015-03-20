@@ -82,7 +82,7 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   {
     beta_type = REGULARIZED_COULOMB;
 
-    L = beta_list->get("Regularization parameter",1e-4);
+    L = beta_list->get("Regularization Parameter",1e-4);
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
             << "      beta = mu*N* [ |u|/(|u| + L*N^n) ]^(1/n) * 1/|u| \n\n"
@@ -214,6 +214,9 @@ template<typename EvalT,typename Traits>
 void BasalFrictionCoefficient<EvalT,Traits>::setHomotopyParamPtr(ScalarT* h)
 {
     homotopyParam = h;
+#ifdef OUTPUT_TO_SCREEN
+    printedH = -1234.56789;
+#endif
 }
 
 //**********************************************************************
@@ -312,6 +315,15 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 template<typename EvalT, typename Traits>
 void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+#ifdef OUTPUT_TO_SCREEN
+    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+    if (printedH!=*homotopyParam)
+    {
+        *output << "h = " << *homotopyParam << "\n";
+        printedH = *homotopyParam;
+    }
+#endif
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     ScalarT u_norm;
 
