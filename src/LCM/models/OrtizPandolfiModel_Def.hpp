@@ -161,14 +161,23 @@ computeState(typename Traits::EvalData workset,
       ScalarT jump_m = jump_max_old(cell, pt);
       ScalarT jump_n = Intrepid::dot(jump_pt, n);
       Intrepid::Vector<ScalarT> vec_jump_s = Intrepid::dot(I - Fn, jump_pt);
-      ScalarT jump_s = sqrt(Intrepid::dot(vec_jump_s, vec_jump_s));
+      // Be careful regarding Sacado and sqrt()
+      ScalarT jump_s2 = Intrepid::dot(vec_jump_s, vec_jump_s);
+      ScalarT jump_s = 0.0;
+      if (jump_s2 > 0.0) {
+	    jump_s = std::sqrt(jump_s2);
+      }
 
       // define the effective jump
       // for intepenetration, only employ shear component
 
-      ScalarT jump_eff;
+      ScalarT jump_eff = 0.0;
       if (jump_n >= 0.0) {
-        jump_eff = sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
+        // Be careful regarding Sacado and sqrt()
+    	ScalarT jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
+        if (jump_eff2 > 0.0) {
+        jump_eff = std::sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
+        }
       }
       else {
         jump_eff = beta * jump_s;
@@ -246,7 +255,12 @@ computeState(typename Traits::EvalData workset,
       // Calculate normal and shear components of global traction
       ScalarT traction_n = Intrepid::dot(t_vec, n);
       Intrepid::Vector<ScalarT> vec_traction_s = Intrepid::dot(I - Fn, jump_pt);
-      ScalarT traction_s = sqrt(Intrepid::dot(vec_traction_s, vec_traction_s));
+      // Be careful regarding Sacado and sqrt()
+      ScalarT traction_s2 = Intrepid::dot(vec_traction_s, vec_traction_s);
+      ScalarT traction_s = 0.0;
+        if (traction_s2 > 0.0) {
+    	  traction_s = std::sqrt(traction_s2);
+        }
       traction_normal(cell, pt) = traction_n;
       traction_shear(cell, pt) = traction_s;
 
