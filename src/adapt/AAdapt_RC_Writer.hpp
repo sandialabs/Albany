@@ -3,6 +3,7 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
+#define AMBDEBUG
 
 #ifndef AADAPT_RC_WRITER
 #define AADAPT_RC_WRITER
@@ -60,6 +61,10 @@ private:
   Teuchos::RCP<Manager> rc_mgr_;
   FieldsVector fields_;
   PHX::MDField<RealType,Cell,Node,QuadPoint> bf_, wbf_;
+#ifdef AMBDEBUG
+  struct InterpTestData;
+  Teuchos::RCP<InterpTestData> itd_;
+#endif
 };
 
 } // namespace rc
