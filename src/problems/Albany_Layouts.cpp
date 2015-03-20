@@ -34,7 +34,6 @@ Albany::Layouts::Layouts (int worksetSize, int  numVertices,
 
   node_vector = rcp(new MDALayout<Cell,Node,Dim>(worksetSize,numNodes,vecDim));
   qp_vector   = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,vecDim));
-  qp_list12   = rcp(new MDALayout<Cell,QuadPoint,Dim>(worksetSize,numQPts,12));
   cell_vector   = rcp(new MDALayout<Cell,Dim>(worksetSize,vecDim));
   face_vector   = rcp(new MDALayout<Cell,Face,Dim>(worksetSize,numFace,vecDim));
 
