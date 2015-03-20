@@ -56,6 +56,8 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   model_problem_params(num_models_);
 
   disc_maps_.resize(num_models_);
+  
+  jacs_.resize(num_models_);
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_overlap_maps(num_models_);
@@ -124,6 +126,12 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     model_factory(model_app_params[m], apps_[m]);
 
     models_[m] = model_factory.createT();
+    Teuchos::RCP<Tpetra_Operator> const jac_temp = Teuchos::nonnull(models_[m]->create_W_op()) ?
+              ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
+              Teuchos::null;
+
+    jacs_[m] = Teuchos::nonnull(jac_temp) ? Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
+            Teuchos::null;
   }
 
   std::cout << "Finished creating Albany apps and models!\n";
@@ -469,10 +477,16 @@ LCM::SchwarzMultiscale::create_W_op() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  Teuchos::RCP<Tpetra_Operator> const
+  /*Teuchos::RCP<Tpetra_Operator> const
   W_out_coupled = Teuchos::rcp(
       new LCM::Schwarz_CoupledJacobian(disc_maps_, coupled_disc_map_, commT_));
-  return Thyra::createLinearOp(W_out_coupled);
+  return Thyra::createLinearOp(W_out_coupled);*/
+  /*const Teuchos::RCP<Tpetra_Operator> W =
+   Teuchos::rcp(new Tpetra_CrsMatrix(apps_[0]->getJacobianGraphT()));
+  return Thyra::createLinearOp(W);
+  */
+  LCM::Schwarz_CoupledJacobian csJac(commT_); 
+  return csJac.getThyraCoupledJacobian(jacs_); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
@@ -866,46 +880,24 @@ evalModelImpl(
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out = separateCoupledVector(fT_out); 
   
 
-  Teuchos::RCP<Tpetra_Operator> const
+  Teuchos::RCP<Thyra::LinearOpBase<ST> >
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
-      ConverterT::getTpetraOperator(out_args.get_W_op()) :
+      out_args.get_W_op() :
       Teuchos::null;
-
+  
   //
   // Compute the functions
-  //
-  // W matrix
-  // Create Teuchos::Array of individual models' W matrices
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
-  W_op_outs_crsT(num_models_);
-
-  if (W_op_outT != Teuchos::null) { 
-
-    //get each of the models' W matrices
-    for (int m = 0; m < num_models_; ++m) {
-      Teuchos::RCP<Tpetra_Operator> const
-      W_op_outT_temp =
-          Teuchos::nonnull(models_[m]->create_W_op()) ?
-              ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
-              Teuchos::null;
-
-      W_op_outs_crsT[m] =
-          Teuchos::nonnull(W_op_outT_temp) ?
-          Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT_temp, true) :
-            Teuchos::null;
-    }
-  }
 
   Teuchos::Array<bool> fs_already_computed(num_models_, false);
 
   // W matrix for each individual model
   for (int m = 0; m < num_models_; ++m) {
-    if (Teuchos::is_null(W_op_outs_crsT[m]) == false) {
-      //computeGlobalJacobianT sets fTs_out[m] and W_op_outs_crsT[m]
+    if (Teuchos::is_null(jacs_[m]) == false) {
+      //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
           x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-          sacado_param_vecs_[m], fTs_out[m].get(), *W_op_outs_crsT[m]);
+          sacado_param_vecs_[m], fTs_out[m].get(), *jacs_[m]);
 
       fs_already_computed[m] = true;
     }
@@ -914,28 +906,20 @@ evalModelImpl(
  
   // FIXME: create coupled W matrix from array of model W matrices
   if (W_op_outT != Teuchos::null) {
-   //**
-    Teuchos::RCP<LCM::Schwarz_CoupledJacobian> W_op_out_coupled =
-         Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
-    W_op_out_coupled->initialize(W_op_outs_crsT);
-    //**
     //FIXME:create boundary operators 
     //for (int i = 0; i < num_models_; ++i) {
     //  for (int j = 0; j < num_models_; ++j) {
     //    //Check if have this term?  Put into Teuchos array?  
-    //    Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> W_op_out_boundary =
+    //    Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> jacs_boundary =
     //       Teuchos::rcp(new LCM::Schwarz_BoundaryJacobian(commT_));
-    //    W_op_out_boundary->initialize(); //FIXME: initialize will have arugments!
+    //    jacs_boundary->initialize(); //FIXME: initialize will have arugments!
     //  }
     //}
+
+    LCM::Schwarz_CoupledJacobian csJac(commT_); 
+    //FIXME: add boundary operators array to coupled Jacobian parameter list 
+    W_op_outT = csJac.getThyraCoupledJacobian(jacs_); 
   }
-  //FIXME: 
-  //Create Schwarz_CoupledJacobian object of type Thyra::LinearOpBase<ScalarT> (FIXME: implement class)
-  //Constructor will take in W_op_outs_crsT and array of boundary Jacobian operators 
-  //(Teuchos::Array<Tpetra_CrsMatrix> and Teuchos::Array<Tpetra_Operator> respectively)
-  //Call getJacobianOperator method, analogous to getThyraMatrix in panzer 
-  //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
-  //This will replace above cretion of coupled Jacobian b/w **. 
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug

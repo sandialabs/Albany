@@ -145,6 +145,8 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
 
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
+
   int
   num_models_;
 
