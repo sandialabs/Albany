@@ -13,7 +13,7 @@
 
 //#include "Tpetra_LocalMap.h"
 
-//#define WRITE_TO_MATRIX_MARKET
+#define WRITE_TO_MATRIX_MARKET
 
 static int c3 = 0; 
 static int c4 = 0; 
@@ -40,9 +40,18 @@ getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs,
                         Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary) const 
 {
   std::cout << __PRETTY_FUNCTION__ << "\n"; 
-   // get the block dimension
-   std::size_t blockDim = jacs.size(); 
+  std::size_t blockDim = jacs.size(); 
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  char name[100];  //create string for file name
+  sprintf(name, "Jac0_%i.mm", c3);
+//write individual model jacobians to matrix market for debug
+  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
+  c3++; 
+  if (blockDim > 1) 
+    Tpetra_MatrixMarket_Writer::writeSparseFile("Jac1.mm", jacs[1]);
+#endif
+   // get the block dimension
    // this operator will be square
    blockedOp_->beginBlockFill(blockDim,blockDim);
 
