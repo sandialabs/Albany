@@ -6,7 +6,8 @@
 # FELIX
 
 
-  SET(SOURCES 
+  SET(SOURCES
+       evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
@@ -26,16 +27,16 @@
        problems/FELIX_StokesL1L2.cpp
    )
 
-   
+
 IF(ENABLE_MPAS_INTERFACE)
-   SET(SOURCESMPAS 
+   SET(SOURCESMPAS
        interface_with_mpas/Albany_MpasSTKMeshStruct.cpp
        interface_with_mpas/Interface.cpp
    )
-ENDIF()   
-   
-IF(ENABLE_CISM_INTERFACE) 
-   SET(SOURCESCISM 
+ENDIF()
+
+IF(ENABLE_CISM_INTERFACE)
+   SET(SOURCESCISM
        interface_with_cism/Albany_CismSTKMeshStruct.cpp
        interface_with_cism/felix_driver.cpp
        evaluators/FELIX_CismSurfaceGradFO.cpp
@@ -43,6 +44,8 @@ IF(ENABLE_CISM_INTERFACE)
 ENDIF()
 
   SET(HEADERS
+       evaluators/FELIX_BasalFrictionCoefficient.hpp
+       evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
@@ -71,14 +74,14 @@ ENDIF()
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp
   )
-  
+
 
 IF(ENABLE_MPAS_INTERFACE)
-  SET(HEADERSMPAS 
+  SET(HEADERSMPAS
        interface_with_mpas/Interface.hpp
   )
 ENDIF()
-  
+
 IF (ENABLE_CISM_INTERFACE)
   SET(HEADERSCISM
        interface_with_cism/felix_driver.H
@@ -89,14 +92,14 @@ ENDIF()
 
 IF(ENABLE_CISM_INTERFACE)
   add_library(cismInterface ${Albany_LIBRARY_TYPE} ${SOURCESCISM}
-              ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp 
+              ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.cpp
               ${HEADERSCISM} ${CISM_INCLUDE_DIR}/DyCoreToGlimmer.H)
   set_target_properties(cismInterface PROPERTIES PUBLIC_HEADER "${HEADERSCISM}")
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
                        ${CISM_INCLUDE_DIR} ${CISM_INCLUDE_DIR}/FELIX
-                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
+                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
                        ${Albany_SOURCE_DIR}/src/problems
-                       ${Albany_SOURCE_DIR}/src/FELIX/interface_with_cism ${Albany_SOURCE_DIR}/src/responses 
+                       ${Albany_SOURCE_DIR}/src/FELIX/interface_with_cism ${Albany_SOURCE_DIR}/src/responses
                        ./problems ./evaluators
                       )
   IF (INSTALL_ALBANY)
@@ -105,10 +108,10 @@ IF(ENABLE_CISM_INTERFACE)
       ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
       PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
   ENDIF()
-ELSE() 
+ELSE()
   include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
-                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators 
-                       ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses 
+                       ${Albany_SOURCE_DIR}/src ${Albany_SOURCE_DIR}/src/evaluators
+                       ${Albany_SOURCE_DIR}/src/problems ${Albany_SOURCE_DIR}/src/responses
                        ./problems ./evaluators
                       )
 ENDIF()
