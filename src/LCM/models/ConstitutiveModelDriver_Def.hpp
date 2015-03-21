@@ -52,27 +52,26 @@ template<typename EvalT, typename Traits>
 void ConstitutiveModelDriver<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+  bool print = false;
+  if (typeid(ScalarT) == typeid(RealType)) print = true;
+  std::cout.precision(15);
+
   std::cout << "ConstitutiveModelDriver<EvalT, Traits>::evaluateFields" << std::endl;
   Intrepid::Tensor<ScalarT> F(num_dims_), P(num_dims_), sig(num_dims_);
 
   Intrepid::Tensor<ScalarT> F0(num_dims_), P0(num_dims_);
 
-  std::cout << "numCells: " << workset.numCells << std::endl;
-  std::cout << "num_pts_: " << num_pts_ << std::endl;
-  std::cout << "num_dims_: " << num_dims_ << std::endl;
-  std::cout << "num_nodes_: " << num_nodes_ << std::endl;
-
   for (int cell = 0; cell < workset.numCells; ++cell) {
-    std::cout << "cell: " << cell << std::endl;
     for (int pt = 0; pt < num_pts_; ++pt) {
-      std::cout << "pt: " << pt << std::endl;
       F0.fill(prescribed_def_grad_,cell,pt,0,0);
       F.fill(def_grad_,cell,pt,0,0);
-      std::cout << "F: \n" << F << std::endl;
       sig.fill(stress_,cell,pt,0,0);
-      std::cout << "sig: \n" << sig << std::endl;
       P = Intrepid::piola(F,sig);
-      std::cout << "P: \n" << P << std::endl;
+      if (print) {
+        std::cout << "F: \n" << F << std::endl;
+        std::cout << "P: \n" << P << std::endl;
+        std::cout << "sig: \n" << sig << std::endl;
+      }
       for (int node = 0; node < num_nodes_; ++node) {
         for (int dim1 = 0; dim1 < num_dims_; ++dim1) {
           for (int dim2 = 0; dim2 < num_dims_; ++dim2) {
