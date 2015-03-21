@@ -91,16 +91,16 @@ stereographic_sweep(Intrepid::Tensor4<double, 3> const & CC)
   // Set the limits and the density of sampling
   // points for each parameter in vectors.
   double const
-  x_min = -10.0;
+  x_min = -1.0;
 
   double const
-  x_max = 10.0;
+  x_max = 1.0;
 
   double const
-  y_min = -10.0;
+  y_min = -1.0;
 
   double const
-  y_max = 10.0;
+  y_max = 1.0;
 
   Intrepid::Index const
   x_num_points = 256;
@@ -258,7 +258,7 @@ tangent_sweep(Intrepid::Tensor4<double, 3> const & CC)
   Intrepid::ParametricGrid<double, 2>
   tangent_grid(tangent_min, tangent_max, tangent_num_points);
 
-  // Build a projective parametrization for this elasticity.
+  // Build a tangent parametrization for this elasticity.
   Intrepid::TangentParametrization<double, 3>
   tangent_param(CC);
 
@@ -310,13 +310,13 @@ cartesian_sweep(Intrepid::Tensor4<double, 3> const & CC)
   z_max = 1.0;
 
   Intrepid::Index const
-  x_num_points = 256;
+  x_num_points = 64;
 
   Intrepid::Index const
-  y_num_points = 256;
+  y_num_points = 64;
 
   Intrepid::Index const
-  z_num_points = 2;
+  z_num_points = 64;
 
   Intrepid::Vector<double, 3> const
   cartesian_min(x_min, y_min, z_min);
@@ -332,7 +332,7 @@ cartesian_sweep(Intrepid::Tensor4<double, 3> const & CC)
   cartesian_grid(cartesian_min, cartesian_max, cartesian_num_points);
 
   // Build a projective parametrization for this elasticity.
-  Intrepid::ProjectiveParametrization<double, 3>
+  Intrepid::CartesianParametrization<double, 3>
   cartesian_param(CC);
 
   // Traverse the grid with the parametrization.
