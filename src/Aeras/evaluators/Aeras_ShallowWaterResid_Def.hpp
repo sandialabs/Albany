@@ -433,18 +433,21 @@ void ShallowWaterResid<EvalT,Traits>::divergence(const PHX::MDField<ScalarT,Node
   }
 
 
-  for (std::size_t qp=0; qp < numQPs; ++qp) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-
-      div_hU(qp) +=   vcontra(node, 0)*grad_at_cub_points(node, qp,0)
-                  + vcontra(node, 1)*grad_at_cub_points(node, qp,1);
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node=0; node < numNodes; ++node) {
+//      ScalarT tempAdd =vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
+//                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
+ //     Kokkos::atomic_fetch_add(&div_hU(qp), tempAdd);
+      div_hU(qp) +=   vcontra(node, 0)*grad_at_cub_points_Kokkos(node, qp,0)
+                  + vcontra(node, 1)*grad_at_cub_points_Kokkos(node, qp,1);
     }
 
   }
 
-  for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int qp=0; qp < numQPs; ++qp) {
     div_hU(qp) = div_hU(qp)/jacobian_det(cell,qp);
   }
+
 }
 
 template<typename EvalT,typename Traits>
@@ -708,7 +711,6 @@ evaluateFields(typename Traits::EvalData workset)
   }
   }
 #else
-jlkjlkjl
 a = Aeras::ShallowWaterConstants::self().earthRadius;
 myPi = Aeras::ShallowWaterConstants::self().pi;
 
