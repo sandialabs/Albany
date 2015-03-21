@@ -136,11 +136,7 @@ Albany::PeridigmProblem::constructEvaluators(
    const int worksetSize = meshSpecs.worksetSize;
 
    // Read information from material database
-
-   // If the user did not supply a material data base, assume that the simulation
-   // is a pure peridynamics simulation
-   std::string materialModelName("Peridynamics");
-   // If the user did supply a material data base, query the material model name
+   std::string materialModelName("Material Model Name Not Loaded from Material Database");
    if(!materialDataBase.is_null()){
      materialModelName = materialDataBase->getElementBlockSublist(elementBlockName, "Material Model").get<std::string>("Model Name");
      TEUCHOS_TEST_FOR_EXCEPTION(materialModelName.length() == 0,

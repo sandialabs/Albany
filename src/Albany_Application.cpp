@@ -778,20 +778,11 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_PERIDIGM 
 #ifdef ALBANY_EPETRA
-
-//   xT
-//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
-//   return initial_x_dot;
-
-
-
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
 #endif
 #endif
-
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -3430,10 +3421,12 @@ evaluateStateFieldManagerT(
   workset.fT = overlapped_fT;
 
   // Perform fill via field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginEvaluatingSfm();
   for (int ws=0; ws < numWorksets; ws++) {
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endEvaluatingSfm();
 }
 
 void Albany::Application::registerShapeParameters()

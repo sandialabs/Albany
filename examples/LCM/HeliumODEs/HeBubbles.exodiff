@@ -32,22 +32,14 @@ NODAL VARIABLES relative 1.e-6 floor 0.0
 	disp_y     # min:               0 @ t1,n1	max:             0.1 @ t1491,n2
 	disp_z     # min:               0 @ t1,n1	max:     0.045667599 @ t1491,n1
 	CL         # min:         0.00056 @ t1,n1	max:         0.00056 @ t1,n1
-	CLresid    # min:   1.3565895e-21 @ t2,n6	max:   2.2115591e-05 @ t1491,n2
-	force_x    # min:               0 @ t1,n1	max:   1.6968974e-10 @ t1442,n8
-	force_y    # min:               0 @ t1,n1	max:      0.20309403 @ t1491,n5
-	force_z    # min:               0 @ t1,n1	max:   1.6968974e-10 @ t1442,n1
 	tauH       # min:               0 @ t1,n1	max:      0.29787124 @ t1491,n6
-	tauHresid  # min:               0 @ t1,n1	max:   2.3753495e-11 @ t1442,n2
+	force_x    relative 1.e-6 floor 1.e-9 # min:               0 @ t1,n1       max:   1.6968974e-10 @ t1442,n8
+	force_y    relative 1.e-6 floor 1.e-9 # min:               0 @ t1,n1       max:      0.20309403 @ t1491,n5
+	force_z    relative 1.e-6 floor 1.e-9 # min:               0 @ t1,n1       max:   1.6968974e-10 @ t1442,n1
+	tauH       relative 1.e-6 floor 1.e-9 # min:               0 @ t1,n1       max:      0.29787124 @ t1491,n6
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
-	Bubble_Volume_Fraction_1  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_2  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_3  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_4  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_5  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_6  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_7  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
-	Bubble_Volume_Fraction_8  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+# Element floor set for the Cauchy_Stress
+ELEMENT VARIABLES relative 1.e-6 floor 1.e-10
 	Cauchy_Stress_01          # min:               0 @ t1,b1,e1	max:   6.7781011e-10 @ t1442,b1,e1
 	Cauchy_Stress_02          # min:               0 @ t1,b1,e1	max:   4.6922136e-15 @ t1484,b1,e1
 	Cauchy_Stress_03          # min:               0 @ t1,b1,e1	max:   4.7422341e-15 @ t1491,b1,e1
@@ -120,6 +112,14 @@ ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	Cauchy_Stress_70          # min:               0 @ t1,b1,e1	max:   6.8569113e-15 @ t1483,b1,e1
 	Cauchy_Stress_71          # min:               0 @ t1,b1,e1	max:   3.9884838e-15 @ t1483,b1,e1
 	Cauchy_Stress_72          # min:               0 @ t1,b1,e1	max:   6.7781011e-10 @ t1442,b1,e1
+	Bubble_Volume_Fraction_1  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_2  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_3  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_4  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_5  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_6  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_7  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
+	Bubble_Volume_Fraction_8  # min:               0 @ t1,b1,e1	max:   6.3988931e-08 @ t1491,b1,e1
 	eqps_1                    # min:               0 @ t1,b1,e1	max:      0.09076742 @ t1491,b1,e1
 	eqps_2                    # min:               0 @ t1,b1,e1	max:      0.09076742 @ t1491,b1,e1
 	eqps_3                    # min:               0 @ t1,b1,e1	max:      0.09076742 @ t1491,b1,e1

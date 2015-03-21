@@ -32,14 +32,12 @@ NODAL VARIABLES relative 1.e-6 floor 1.e-9
 	disp_y     # min:               0 @ t1,n1	max:      0.29167755 @ t102,n3
 	disp_z     # min:               0 @ t1,n1	max:      0.29167755 @ t102,n4
 	CL         # min:   0.00042417508 @ t101,n8	max:          0.0005 @ t1,n1
-	CLresid    # min:   1.8185579e-51 @ t102,n6	max:     7.48088e-17 @ t1,n2
 	force_x    # min:               0 @ t1,n1	max:      0.25919527 @ t30,n7
 	force_y    # min:               0 @ t1,n1	max:   3.1465196e-14 @ t98,n2
 	force_z    # min:               0 @ t1,n1	max:   3.0978775e-14 @ t98,n3
 	tauH       # min:               0 @ t1,n1	max:      0.56361274 @ t101,n5
-	tauHresid  # min:               0 @ t1,n1	max:   1.0600771e-14 @ t98,n6
 
-ELEMENT VARIABLES relative 1.e-6 floor 0.0
+ELEMENT VARIABLES relative 1.e-6 floor 1.0e-10
 	Cauchy_Stress_01         # min:               0 @ t1,b1,e1	max:       1.6850137 @ t101,b1,e1
 	Cauchy_Stress_02         # min:               0 @ t1,b1,e1	max:   4.0375038e-15 @ t47,b1,e1
 	Cauchy_Stress_03         # min:               0 @ t1,b1,e1	max:   8.2650087e-15 @ t102,b1,e1

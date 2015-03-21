@@ -59,8 +59,11 @@ namespace LCM {
 
     if (def_grad_rc_.init(p, p.get<std::string>("DefGrad Name")))
       this->addDependentField(def_grad_rc_());
-    if (needs_strain_ && strain_rc_.init(p, p.get<std::string>("Strain Name")))
-      this->addDependentField(strain_rc_());
+    if (def_grad_rc_) {
+      u_ = PHX::MDField<ScalarT,Cell,Vertex,Dim>(
+        p.get<std::string>("Displacement Name"), dl->node_vector);
+      this->addDependentField(u_);
+    }
 
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     //Allocationg additional data for Kokkos functors
@@ -99,7 +102,7 @@ namespace LCM {
     if (needs_strain_) this->utils.setFieldData(strain_,fm);
     if (needs_vel_grad_) this->utils.setFieldData(vel_grad_,fm);
     if (def_grad_rc_) this->utils.setFieldData(def_grad_rc_(),fm);
-    if (strain_rc_) this->utils.setFieldData(strain_rc_(),fm);
+    if (def_grad_rc_) this->utils.setFieldData(u_,fm);
   }
 
 //----------------------------------------------------------------------------
@@ -335,17 +338,28 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
   F.fill(def_grad_, cell, pt, 0, 0);
   j_(cell, pt) = Intrepid::det(F);
   if (pt == 0 && j_(cell, pt) < 1e-16) {
+    std::cout << "amb: (neg det) rcu Kinematics check_det " << j_(cell,pt)
+              << " " << cell << " " << pt << "\nF_incr = [" << F << "];\n";
     const Teuchos::ArrayRCP<GO>& gid = workset.wsElNodeID[cell];
-    std::cout << "amb: incr Kinematics j_ " << j_(cell,pt) << " " << cell
-              << " " << pt << "\nF_incr = [" << F << "];\n";
-    for (int i = 0; i < gid.size(); ++i) std::cout << " " << gid[i];
-    std::cout << "\n";
+    std::cout << "gid_matlab = [";
+    for (int i = 0; i < gid.size(); ++i) std::cout << " " << gid[i]+1;
+    std::cout << "];\n";
 #if 0
-    for (int d = 0; d < 3; ++d) {
-      for (int i = 0; i < gid.size(); ++i)
+    // PHX::MDField<ScalarT,Cell,Vertex,Dim> u_;
+    std::cout << "u_tet = [";
+    for (int i = 0; i < gid.size(); ++i) {
+      for (int d = 0; d < 3; ++d)
         std::cout << " " << u_(cell,i,d);
       std::cout << "\n";
     }
+    std::cout << "];\nu_all = [";
+    Teuchos::ArrayRCP<const ST> u_data = workset.xT->get1dView();
+    for (int cell = 0; cell < u_data.size() / 3; ++cell) {
+      for (int d = 0; d < 3; ++d)
+        std::cout << " " << u_data[3*cell + d];
+      std::cout << "\n";
+    }
+    std::cout << "];\n";
 #endif
   }
 }
@@ -416,7 +430,7 @@ check_det (typename Traits::EvalData workset, int cell, int pt) {
     }
 
     if (needs_strain_) {
-      if ( ! strain_rc_) {
+      if ( ! def_grad_rc_) {
         for (int cell(0); cell < workset.numCells; ++cell) {
           for (int pt(0); pt < num_pts_; ++pt) {
             gradu.fill(grad_u_,cell,pt,0,0);

@@ -68,16 +68,17 @@ void AAdapt::MeshAdapt<SizeField>::initRcMgr () {
   //rc-todo Generalize to Albany::AbstractDiscretization.
   pumi_discretization->createField("x_accum", apf::VECTOR);
   if (rc_mgr->usingProjection()) {
-    rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
-                          pumi_discretization->getOverlapNodeMapT());
     for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
            end = rc_mgr->fieldsEnd();
          it != end; ++it) {
       const int value_type = getValueType(*(*it)->layout);
-      for (int i = 0; i < (*it)->num_g_fields; ++i)
+      for (int i = 0; i < (*it)->num_g_fields; ++i) {
         pumi_discretization->createField(
           (*it)->get_g_name(i).c_str(), value_type);
+      }
     }
+    rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
+                          pumi_discretization->getOverlapNodeMapT());
   }
 }
 
@@ -220,6 +221,8 @@ struct AdaptCallbackOf : public Parma_GroupCode
 namespace al {
 void anlzCoords(
   const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc);
+void writeMesh(
+  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc);
 double findAlpha(
   const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
@@ -232,6 +235,8 @@ double findAlpha(
 
 void adaptShrunken(apf::Mesh2* m, double min_part_density,
                    Parma_GroupCode& callback);
+
+static Teuchos::RCP<Teuchos::ParameterList> amb_dbg_ap;
 
 template<class SizeField>
 bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
@@ -256,10 +261,13 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
                   min_part_density, callback);
     afterAdapt();
     success = true;
-  } else
+  } else {
+    amb_dbg_ap = adapt_params_;
     success = adaptMeshWithRc(min_part_density, callback);
+  }
 
   al::anlzCoords(pumi_discretization);
+  al::writeMesh(pumi_discretization);
   return success;
 }
 
@@ -267,28 +275,58 @@ template<class SizeField>
 bool AAdapt::MeshAdapt<SizeField>::
 adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
   const bool overlapped = true;
+
   rc_mgr->beginAdapt();
-  if (rc_mgr->usingProjection())
+
+  if (rc_mgr->usingProjection()) {
+    // Give PUMI the nodal data.
     for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
            end = rc_mgr->fieldsEnd();
          it != end; ++it)
-      for (int i = 0; i < (*it)->num_g_fields; ++i)
-        pumi_discretization->setField(
-          (*it)->get_g_name(i).c_str(),
-          &rc_mgr->getNodalField(**it, i, overlapped)->get1dView()[0],
-          overlapped);
+      for (int i = 0; i < (*it)->num_g_fields; ++i) {
+        const Teuchos::RCP<Tpetra_MultiVector>&
+          mv = rc_mgr->getNodalField(**it, i, overlapped);
+        const std::size_t n = mv->getLocalLength();
+        const int ncol = mv->getNumVectors();
+        Teuchos::Array<double> data(n * ncol);
+        // non-interleaved -> interleaved ordering.
+        //rcu-todo Figure out these ordering details. What sets the ordering
+        // requirements? Can we changed by field at runtime?
+        for (int c = 0; c < ncol; ++c) {
+          Teuchos::ArrayRCP<RealType>
+            v = mv->getVectorNonConst(c)->getDataNonConst();
+          for (size_t k = 0; k < n; ++k) data[ncol*k + c] = v[k];
+        }
+        pumi_discretization->setField((*it)->get_g_name(i).c_str(), &data[0],
+                                      overlapped, 0, ncol);
+      }
+  }
+
   const bool success = adaptMeshLoop(min_part_density, callback);
   rc_mgr->endAdapt(pumi_discretization->getNodeMapT(),
                    pumi_discretization->getOverlapNodeMapT());
-  if (rc_mgr->usingProjection())
+
+  if (rc_mgr->usingProjection()) {
+    // Get the nodal data from PUMI.
     for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
            end = rc_mgr->fieldsEnd();
          it != end; ++it)
-      for (int i = 0; i < (*it)->num_g_fields; ++i)
-        pumi_discretization->getField(
-          (*it)->get_g_name(i).c_str(),
-          &rc_mgr->getNodalField(**it, i, overlapped)->get1dViewNonConst()[0],
-          overlapped);
+      for (int i = 0; i < (*it)->num_g_fields; ++i) {
+        const Teuchos::RCP<Tpetra_MultiVector>&
+          mv = rc_mgr->getNodalField(**it, i, overlapped);
+        const std::size_t n = mv->getLocalLength();
+        const int ncol = mv->getNumVectors();
+        Teuchos::Array<double> data(n * ncol);
+        pumi_discretization->getField((*it)->get_g_name(i).c_str(), &data[0],
+                                      overlapped, 0, ncol);
+        for (int c = 0; c < ncol; ++c) {
+          Teuchos::ArrayRCP<RealType>
+            v = mv->getVectorNonConst(c)->getDataNonConst();
+          for (size_t k = 0; k < n; ++k) v[k] = data[ncol*k + c];
+        }
+      }
+  }
+
   return success;
 }
 

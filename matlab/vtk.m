@@ -56,6 +56,7 @@ function myplot3 (d, fld, pat)
 end
 
 function h = draw_elems (x, c, eis)
+  if (nargin < 3) eis = 1:size(c,1); end
   [x y z] = get_lines(x, c, eis);
   h = line(x, y, z);
   set(h, 'color', 'g');
