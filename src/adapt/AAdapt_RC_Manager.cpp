@@ -16,6 +16,7 @@
 #include "AAdapt_RC_Manager.hpp"
 
 #ifdef AMBDEBUG
+//#define amb_test_projector
 //#define amb_do_check
 #define pr(msg) lpr(0,msg)
 //#define pr(msg) std::cerr << "amb: (rc) " << msg << std::endl;
@@ -44,18 +45,20 @@ std::string Manager::Field::get_g_name (const int g_field_idx) const {
 }
 
 namespace {
+// f.dimension(0) in general can be larger than mda.dimension(0) because of the
+// way workset data vs bucket data are allocated.
 void read (const Albany::MDArray& mda, PHX::MDField<RealType>& f) {
   switch (f.rank()) {
   case 2:
-    loop(f, cell, 0) loop(f, qp, 1)
+    loop(mda, cell, 0) loop(f, qp, 1)
       f(cell, qp) = mda(cell, qp);
     break;
   case 3:
-    loop(f, cell, 0) loop(f, qp, 1) loop(f, i0, 2)
+    loop(mda, cell, 0) loop(f, qp, 1) loop(f, i0, 2)
       f(cell, qp, i0) = mda(cell, qp, i0);
     break;
   case 4:
-    loop(f, cell, 0) loop(f, qp, 1) loop(f, i0, 2) loop(f, i1, 3)
+    loop(mda, cell, 0) loop(f, qp, 1) loop(f, i0, 2) loop(f, i1, 3)
       f(cell, qp, i0, i1) = mda(cell, qp, i0, i1);
     break;
   default:
@@ -68,15 +71,15 @@ template<typename MDArray>
 void write (Albany::MDArray& mda, const MDArray& f) {
   switch (f.rank()) {
   case 2:
-    loop(f, cell, 0) loop(f, qp, 1)
+    loop(mda, cell, 0) loop(f, qp, 1)
       mda(cell, qp) = f(cell, qp);
     break;
   case 3:
-    loop(f, cell, 0) loop(f, qp, 1) loop(f, i0, 2)
+    loop(mda, cell, 0) loop(f, qp, 1) loop(f, i0, 2)
       mda(cell, qp, i0) = f(cell, qp, i0);
     break;
   case 4:
-    loop(f, cell, 0) loop(f, qp, 1) loop(f, i0, 2) loop(f, i1, 3)
+    loop(mda, cell, 0) loop(f, qp, 1) loop(f, i0, 2) loop(f, i1, 3)
       mda(cell, qp, i0, i1) = f(cell, qp, i0, i1);
     break;
   default:
@@ -319,7 +322,6 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
                 const BasisField& wbf) {
   if (is_filled(workset.wsIndex)) return;
   filled_[workset.wsIndex] = true;
-  if (workset.wsIndex == 0) pr("Projector::fillMassMatrix");
 
   const size_type num_node = bf.dimension(1), num_qp = bf.dimension(2);
   for (unsigned int cell = 0; cell < workset.numCells; ++cell)
@@ -342,7 +344,6 @@ fillMassMatrix (const PHAL::Workset& workset, const BasisField& bf,
 void Projector::
 fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
          const PHAL::Workset& workset, const BasisField& wbf) {
-  if (workset.wsIndex == 0) pr("Projector::fillRhs " << f.name);
   const int
     rank = f.layout->rank() - 2,
     num_node = wbf.dimension(1), num_qp = wbf.dimension(2),
@@ -399,7 +400,6 @@ fillRhs (const PHX::MDField<RealType>& f_G_qp, Manager::Field& f,
 }
 
 void Projector::project (Manager::Field& f) {
-  pr("Projector::project " << f.name);
   if ( ! M_->isFillComplete()) {
     // Export M_ so it has nonoverlapping rows and cols.
     M_->fillComplete();
@@ -443,7 +443,6 @@ void Projector::
 interp (const Manager::Field& f, const PHAL::Workset& workset,
         const BasisField& bf, Albany::MDArray& mda1,
         Albany::MDArray& mda2) {
-  if (workset.wsIndex == 0) pr("Projector::interp " << f.name);
   const int
     rank = f.layout->rank() - 2,
     num_node = bf.dimension(1), num_qp = bf.dimension(2),
@@ -870,7 +869,7 @@ testProjector (const PHAL::Workset& workset,
                const BasisField& bf, const BasisField& wbf,
                const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
                const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp) {
-#ifdef AMBDEBUG
+#if defined AMBDEBUG and defined amb_test_projector
   if (impl_->numWorksets() == 1)
     testing::testProjector(*impl_->proj_, workset, bf, wbf, coord_vert,
                            coord_qp);
@@ -920,11 +919,15 @@ aadapt_rc_apply_to_all_eval_types(eti_fn)
 
 namespace {
 namespace testing {
-// Some random deformation gradient tensors with det(F) > 0 for use in testing.
-/* pr('{'); for (i = 1:3)
+typedef Intrepid::Tensor<RealType> Tensor;
+
+// Some deformation gradient tensors with det(F) > 0 for use in testing.
+/*
+   pr('{'); for (i = 1:3)
    pr('{'); for (j = 1:3) pr('%22.15e',F(i,j)); if (j < 3) pr(', '); end; end
    pr('}'); if (i < 3) pr(','); else pr('}'); end; pr('\n');
-   end */
+   end
+*/
 static const double Fs[3][3][3] = {
   {{-7.382752820294219e-01, -1.759182226321058e+00,  1.417301043170359e+00},
    { 7.999093048231801e-01,  5.295155264305610e-01, -3.075207765325406e-02},
@@ -977,7 +980,6 @@ Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
   TEUCHOS_ASSERT(in01(p[0]) && in01(p[1]) && in01(p[2]));
 #undef in01
 #define lpij for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
-  typedef Intrepid::Tensor<RealType> Tensor;
   Tensor r(3), s(3);
   lpij r(i,j) = s(i,j) = 0;
   for (int k = 0; k < 3; ++k) {
@@ -987,7 +989,11 @@ Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
     RS.first = Intrepid::log_rotation(RS.first);
     RS.second = Intrepid::log_sym(RS.second);
     symmetrize(RS.second);
-    r += p[k]*RS.first;
+    // Right now, we are not doing anything to handle phase wrapping in r =
+    // logm(R). That means that projection with Lie transformation does not work
+    // in general right now. But test the correctness of the projector in the
+    // case that no phase wrap occurs. Here I do that by using only one F's r.
+    if (k == 0) r += p[k]*RS.first;
     s += p[k]*RS.second;
   }
   const Tensor R = Intrepid::exp_skew_symmetric(r);
@@ -996,6 +1002,10 @@ Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
 #undef lpij
 }
 
+// This tests whether q == interp(M \ b(q)). q is a linear function of space and
+// that lives on the integration points. M is the mass matrix. b(q) is the
+// integral over each element. q* = M \ b(q) is the L_2 projection onto the
+// nodal points. interp(q*) is the interpolation back to the integration points.
 void testProjector (
   const Projector& pc, const PHAL::Workset& workset,
   const Manager::BasisField& bf, const Manager::BasisField& wbf,
@@ -1131,7 +1141,6 @@ void testProjector (
 }
 } // namespace testing
 } // namespace
-
 } // namespace rc
 } // namespace AAdapt
 

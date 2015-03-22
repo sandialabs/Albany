@@ -6,7 +6,7 @@
 #ifndef AADAPT_RC_MANAGER
 #define AADAPT_RC_MANAGER
 
-#define AMBDEBUG
+//#define AMBDEBUG
 #ifdef AMBDEBUG
 #include "/home/ambradl/bigcode/amb.hpp"
 #endif
