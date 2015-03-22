@@ -215,7 +215,7 @@ computeState(typename Traits::EvalData workset,
     for (int pt = 0; pt < num_pts_; ++pt) {
       
       // for debugging
-      std::cout << "AnisotropicModel compute_tangent_=" << compute_tangent_ << std::endl;
+      //std::cout << "AnisotropicModel compute_tangent_=" << compute_tangent_ << std::endl;
 
       // local parameters
       mu = elastic_modulus(cell, pt)
@@ -284,7 +284,7 @@ computeState(typename Traits::EvalData workset,
                 for (int k(0); k < num_dims_; ++k){
                  for (int n(0); n < num_dims_; ++n){
                    tangentA_m(i,j,p,q) = tangentA_m(i,j,p,q)
-                     + F(i,k) * tangent_m(k,j,q,n) * F(p,n);
+                     + F(i,k) * tangent_m(k,j,n,q) * F(p,n);
                  }
                 }
               
@@ -394,12 +394,12 @@ computeState(typename Traits::EvalData workset,
 		
                 for (int k(0); k < num_dims_; ++k){
                  for (int n(0); n < num_dims_; ++n){
+                   
                    tangentA_f1(i,j,p,q) = tangentA_f1(i,j,p,q)
-                     + F(i,k) * tangent_f1(k,j,q,n) * F(p,n);
+                     + F(i,k) * tangent_f1(k,j,n,q) * F(p,n);
 
                    tangentA_f2(i,j,p,q) = tangentA_f2(i,j,p,q)
-                     + F(i,k) * tangent_f2(k,j,q,n) * F(p,n);
-
+                     + F(i,k) * tangent_f2(k,j,n,q) * F(p,n);
                  }
                 }
 
@@ -433,18 +433,19 @@ computeState(typename Traits::EvalData workset,
           for (int j(0); j < num_dims_; ++j) {
             for (int k(0); k < num_dims_; ++k) {
               for (int l(0); l < num_dims_; ++l) {
-                // std::cout << "Using Tangent w.r.t. the deformation gradient" << std::endl;
-                //tangent(cell, pt, i, j, k, l) =
-                  //volume_fraction_m_ * tangentA_m(i, j, k, l)
-                  //+ volume_fraction_f1_ * tangentA_f1(i, j, k, l)
-                  //+ volume_fraction_f2_ * tangentA_f2(i, j, k, l);
+                // std::cout << "Tangent w.r.t. the deformation gradient" 
+                // << std::endl;
+                tangent(cell, pt, i, j, k, l) =
+                  volume_fraction_m_ * tangentA_m(i, j, k, l)
+                  + volume_fraction_f1_ * tangentA_f1(i, j, k, l)
+                  + volume_fraction_f2_ * tangentA_f2(i, j, k, l);
 
-                  //for debugging, use tangent w.r.t. right Cauchy-Green tensor
-                  //std::cout << "Using Tangent w.r.t. the right Cauchy-Green tensor" << std::endl;
-                  tangent(cell, pt, i, j, k, l) =
-                  volume_fraction_m_ * tangent_m(i, j, k, l)
-                    + volume_fraction_f1_ * tangent_f1(i, j, k, l)
-                    + volume_fraction_f2_ * tangent_f2(i, j, k, l);
+                  //std::cout << "Tangent w.r.t. the right Cauchy-Green tensor" 
+                  // << std::endl;
+                 // tangent(cell, pt, i, j, k, l) =
+                  //volume_fraction_m_ * tangent_m(i, j, k, l)
+                   // + volume_fraction_f1_ * tangent_f1(i, j, k, l)
+                   // + volume_fraction_f2_ * tangent_f2(i, j, k, l);
               }//l
             }//k
           }//j
