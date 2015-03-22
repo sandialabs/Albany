@@ -279,7 +279,9 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
   }
 
   al::anlzCoords(pumi_discretization);
+#ifdef AMBDEBUG
   al::writeMesh(pumi_discretization);
+#endif
   return success;
 }
 
