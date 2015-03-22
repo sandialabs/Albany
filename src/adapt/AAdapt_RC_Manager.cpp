@@ -4,11 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#define AMBDEBUG
-#ifdef AMBDEBUG
-#include "/home/ambradl/bigcode/amb.hpp"
-#endif
-
 #include <Intrepid_MiniTensor.h>
 #include <Phalanx_FieldManager.hpp>
 
@@ -21,9 +16,10 @@
 #include "AAdapt_RC_Manager.hpp"
 
 #ifdef AMBDEBUG
-#define amb_do_check
+//#define amb_do_check
 #define pr(msg) lpr(0,msg)
-//#define pr(msg) std::cout << "amb: (rc) " << msg << std::endl;
+//#define pr(msg) std::cerr << "amb: (rc) " << msg << std::endl;
+//#define prc(msg) pr(#msg << " | " << (msg))
 #else
 #define pr(msg)
 #endif
@@ -171,7 +167,7 @@ public:
 };    
 #endif // amb_do_check
 
-static Intrepid::Tensor<RealType>&
+Intrepid::Tensor<RealType>&
 symmetrize (Intrepid::Tensor<RealType>& a) {
   const Intrepid::Index dim = a.get_dimension();
   if (dim > 1) {
@@ -204,7 +200,7 @@ void calc_right_polar_LieR_LieS_G2g (
   RS[1] = Intrepid::log_sym(RS[1]);
   symmetrize(RS[1]);
   c.ok_numbers("s", RS[1]); c.is_symmetric("s write", RS[1]);
-  if (c.first()) pr("r =\n" << RS[0] << " s =\n" << RS[1]);
+  if (c.first()) pr("r =[\n" << RS[0] << "];\ns =[\n" << RS[1] << "];");
 }
 
 void calc_right_polar_LieR_LieS_g2G (
@@ -222,6 +218,51 @@ void calc_right_polar_LieR_LieS_g2G (
   R = Intrepid::dot(R, S);
   c.ok_numbers("F", R);
   if (c.first()) pr("F = [\n" << R << "];");
+}
+
+void transformStateArray (const unsigned int wi, const Direction::Enum dir,
+                          const Transformation::Enum transformation,
+                          Albany::MDArray& mda1, Albany::MDArray& mda2) {
+  switch (transformation) {
+  case Transformation::none: {
+    if (wi == 0) pr("none " << (dir == Direction::g2G));
+    if (dir == Direction::G2g) {
+      // Copy from the provisional to the primary field.
+      write(mda1, mda2);
+    } else {
+      // In the g -> G direction, the values are already in the primary field,
+      // so there's nothing to do.
+    }
+  } break;
+  case Transformation::right_polar_LieR_LieS: {
+    if (wi == 0) pr("right_polar_LieR_LieS " << Direction::g2G);
+    loop(mda1, cell, 0) loop(mda1, qp, 1) {
+      Checker c(wi, cell, qp);
+      if (dir == Direction::G2g) {
+        // Copy mda2 (provisional) -> local.
+        Intrepid::Tensor<RealType> F(mda1.dimension(2));
+        loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
+        Intrepid::Tensor<RealType> RS[2];
+        calc_right_polar_LieR_LieS_G2g(F, RS, c);
+        // Copy local -> mda1, mda2.
+        loop(mda1, i, 2) loop(mda1, j, 3) {
+          mda1(cell, qp, i, j) = RS[0](i, j);
+          mda2(cell, qp, i, j) = RS[1](i, j);
+        }
+      } else {
+        // Copy mda1,2 -> local.
+        Intrepid::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
+        loop(mda1, i, 2) loop(mda1, j, 3) {
+          R(i, j) = mda1(cell, qp, i, j);
+          S(i, j) = mda2(cell, qp, i, j);
+        }
+        calc_right_polar_LieR_LieS_g2G(R, S, c);
+        // Copy local -> mda1. mda2 is unused after g -> G.
+        loop(mda1, i, 2) loop(mda1, j, 3) mda1(cell, qp, i, j) = R(i, j);
+      }
+    }
+  } break;
+  }    
 }
 
 class Projector {
@@ -249,6 +290,11 @@ public:
   void interp(const Manager::Field& f, const PHAL::Workset& workset,
               const BasisField& bf, Albany::MDArray& mda1,
               Albany::MDArray& mda2);
+  // For testing.
+  const Teuchos::RCP<const Tpetra_Map>& get_node_map () const
+    { return node_map_; }
+  const Teuchos::RCP<const Tpetra_Map>& get_ol_node_map () const
+    { return ol_node_map_; }
 private:
   bool is_filled(int wi);
 };
@@ -379,12 +425,12 @@ void Projector::project (Manager::Field& f) {
     pl.set("Convergence Tolerance", 1e-12);
     pl.set("Output Frequency", 10);
     pl.set("Output Style", 1);
-    pl.set("Verbosity", 33);
+    pl.set("Verbosity", 0);//33);
     x[fi] = solve(M_, P_, b, pl); // in AAdapt_RC_Projector_impl
     // Import (reverse mode) to the overlapping MV.
     f.data_->mv[fi]->putScalar(0);
     f.data_->mv[fi]->doImport(*x[fi], *export_, Tpetra::ADD);
-#ifdef AMBDEBUG
+#if 0
     amb::write_CrsMatrix("M", *M_);
     amb::write_MultiVector("b", *b);
     amb::write_MultiVector("x", *x[fi]);
@@ -452,15 +498,11 @@ bool Projector::is_filled (int wi) {
 }
 
 namespace testing {
-// Works only in the case of one workset.
-void testProjector (
-  const PHAL::Workset& workset,
+void testProjector(
+  const Projector& pc, const PHAL::Workset& workset,
   const Manager::BasisField& bf, const Manager::BasisField& wbf,
-  const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
-  const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp)
-{
-  
-}
+  const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+  const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp);
 } // namespace testing
 } // namespace
 
@@ -608,12 +650,11 @@ public:
     // Read from the primary field.
     read(getMDArray(f.fieldTag().name(), workset.wsIndex), f);
 #if 0
-    {
+    { pr("mda1:");
       const int rank = 2, num_node = f.dimension(1),
         num_qp = f.dimension(2), ndim = 3;
       const Albany::MDArray&
         mda1 = getMDArray(f.fieldTag().name(), workset.wsIndex);
-      prc(f.fieldTag().name()); prc(workset.wsIndex);
       for (int cell = 0; cell < (int) workset.numCells; ++cell)
         for (int qp = 0; qp < num_qp; ++qp) {
           for (int i = 0; i < ndim; ++i)
@@ -624,10 +665,9 @@ public:
     }
 #endif
   }
-  void writeQpField (
-    const PHX::MDField<RealType>& f, const PHAL::Workset& workset,
-    const BasisField& wbf)
-  {
+
+  void writeQpField (const PHX::MDField<RealType>& f,
+                     const PHAL::Workset& workset, const BasisField& wbf) {
     if (workset.wsIndex == 0)
       pr("writeQpField (provisional) " << f.fieldTag().name());
     const std::string name_rc = decorate(f.fieldTag().name());
@@ -658,6 +698,8 @@ public:
   Transformation::Enum get_transformation (const std::string& name_rc) {
     return field_map_[name_rc]->data_->transformation;
   }
+
+  int numWorksets () const { return is_g_.size(); }
 
 private:
   void init (const bool use_projection, const bool do_transform) {
@@ -698,50 +740,9 @@ private:
     // Name decoration coordinates with registerField's calls to
     // registerStateVariable.
     const Transformation::Enum transformation = get_transformation(name_rc);
-    switch (transformation) {
-    case Transformation::none: {
-      if (wi == 0) pr("none " << (dir == Direction::g2G));
-      if (dir == Direction::G2g) {
-        // Copy from the provisional to the primary field.
-        Albany::MDArray& mda1 = getMDArray(name_rc, wi);
-        const Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
-        write(mda1, mda2);
-      } else {
-        // In the g -> G direction, the values are already in the primary field,
-        // so there's nothing to do.
-      }
-    } break;
-    case Transformation::right_polar_LieR_LieS: {
-      if (wi == 0) pr("right_polar_LieR_LieS " << (dir == Direction::g2G));
-      Albany::MDArray& mda1 = getMDArray(name_rc, wi);
-      Albany::MDArray& mda2 = getMDArray(name_rc + "_1", wi);
-      loop(mda1, cell, 0) loop(mda1, qp, 1) {
-        Checker c(wi, cell, qp);
-        if (dir == Direction::G2g) {
-          // Copy mda2 (provisional) -> local.
-          Intrepid::Tensor<RealType> F(mda1.dimension(2));
-          loop(mda2, i, 2) loop(mda2, j, 3) F(i, j) = mda2(cell, qp, i, j);
-          Intrepid::Tensor<RealType> RS[2];
-          calc_right_polar_LieR_LieS_G2g(F, RS, c);
-          // Copy local -> mda1, mda2.
-          loop(mda1, i, 2) loop(mda1, j, 3) {
-            mda1(cell, qp, i, j) = RS[0](i, j);
-            mda2(cell, qp, i, j) = RS[1](i, j);
-          }
-        } else {
-          // Copy mda1,2 -> local.
-          Intrepid::Tensor<RealType> R(mda1.dimension(2)), S(mda2.dimension(2));
-          loop(mda1, i, 2) loop(mda1, j, 3) {
-            R(i, j) = mda1(cell, qp, i, j);
-            S(i, j) = mda2(cell, qp, i, j);
-          }
-          calc_right_polar_LieR_LieS_g2G(R, S, c);
-          // Copy local -> mda1. mda2 is unused after g -> G.
-          loop(mda1, i, 2) loop(mda1, j, 3) mda1(cell, qp, i, j) = R(i, j);
-        }
-      }
-    } break;
-    }
+    AAdapt::rc::transformStateArray(
+      wi, dir, transformation, getMDArray(name_rc, wi),
+      getMDArray(name_rc + "_1", wi));
   }
 };
 
@@ -869,7 +870,11 @@ testProjector (const PHAL::Workset& workset,
                const BasisField& bf, const BasisField& wbf,
                const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
                const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp) {
-  testing::testProjector(workset, bf, wbf, coord_vert, coord_qp);
+#ifdef AMBDEBUG
+  if (impl_->numWorksets() == 1)
+    testing::testProjector(*impl_->proj_, workset, bf, wbf, coord_vert,
+                           coord_qp);
+#endif
 }
 
 const Teuchos::RCP<Tpetra_MultiVector>& Manager::
@@ -912,6 +917,220 @@ Manager::Manager (const Teuchos::RCP<Albany::StateManager>& state_mgr,
     const Teuchos::RCP<Albany::Layouts>& dl);
 aadapt_rc_apply_to_all_eval_types(eti_fn)
 #undef eti_fn
+
+namespace {
+namespace testing {
+// Some random deformation gradient tensors with det(F) > 0 for use in testing.
+/* pr('{'); for (i = 1:3)
+   pr('{'); for (j = 1:3) pr('%22.15e',F(i,j)); if (j < 3) pr(', '); end; end
+   pr('}'); if (i < 3) pr(','); else pr('}'); end; pr('\n');
+   end */
+static const double Fs[3][3][3] = {
+  {{-7.382752820294219e-01, -1.759182226321058e+00,  1.417301043170359e+00},
+   { 7.999093048231801e-01,  5.295155264305610e-01, -3.075207765325406e-02},
+   { 6.283454283198379e-02,  4.117063384659416e-01, -1.243061703605918e-01}},
+  {{ 4.929646496030746e-01, -1.672547330507927e+00,  1.374629761307942e-01},
+   { 9.785301515971359e-01,  8.608882413324722e-01,  6.315167262108045e-01},
+   {-5.339914726510328e-01, -1.559378791976819e+00,  1.242404824706601e-01}},
+  {{ 1.968477583454205e+00,  1.805729439108956e+00, -2.759426722073080e-01},
+   { 7.787416415696722e-01, -5.361220317998502e-03,  1.838993634875665e-01},
+   {-1.072168271881842e-02,  3.771872253769205e-01, -9.553540517889956e-01}}};
+
+// Some sample functions. Only the constant and linear ones should be
+// interpolated exactly.
+double eval_f (const double x, const double y, const double z, int ivec) {
+  static const double R = 0.15, H = 0.005;
+  switch (ivec + 1) {
+  case 1: return 2;
+  case 2: return 1.5*x + 2*y + 3*z;
+  case 3: return x*x + y*y + z;
+  case 4: return x*x*x - x*x*y + x*y*y - y*y*y;
+  case 5: return cos(2*M_PI*x/R) + sin(2*M_PI*y/R) + z;
+  case 6: return x*x*x*x;
+  case 7: return x*x - y*y + x*y + z;
+  case 8: return x*x;
+  case 9: return x*x*x;
+  }
+}
+
+// Axis-aligned bounding box on the vertices.
+void getBoundingBox (const PHX::MDField<RealType, Cell, Vertex, Dim>& vs,
+                     RealType lo[3], RealType hi[3]) {
+  bool first = true;
+  for (int cell = 0; cell < vs.dimension(0); ++cell)
+    for (int iv = 0; iv < vs.dimension(1); ++iv) {
+      for (int id = 0; id < vs.dimension(2); ++id) {
+        const RealType v = vs(cell, iv, id);
+        if (first) lo[id] = hi[id] = v;
+        else {
+          lo[id] = std::min(lo[id], v);
+          hi[id] = std::max(hi[id], v);
+        }
+      }
+      first = false;
+    }
+}
+
+// F field.
+Intrepid::Tensor<RealType> eval_F (const RealType p[3]) {
+#define in01(u) (0 <= (u) && (u) <= 1)
+  TEUCHOS_ASSERT(in01(p[0]) && in01(p[1]) && in01(p[2]));
+#undef in01
+#define lpij for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
+  typedef Intrepid::Tensor<RealType> Tensor;
+  Tensor r(3), s(3);
+  lpij r(i,j) = s(i,j) = 0;
+  for (int k = 0; k < 3; ++k) {
+    Tensor F(3);
+    lpij F(i,j) = Fs[k][i][j];
+    std::pair<Tensor, Tensor> RS = Intrepid::polar_right(F);
+    RS.first = Intrepid::log_rotation(RS.first);
+    RS.second = Intrepid::log_sym(RS.second);
+    symmetrize(RS.second);
+    r += p[k]*RS.first;
+    s += p[k]*RS.second;
+  }
+  const Tensor R = Intrepid::exp_skew_symmetric(r);
+  Tensor S = Intrepid::exp(s); symmetrize(S);
+  return Intrepid::dot(R, S);
+#undef lpij
+}
+
+void testProjector (
+  const Projector& pc, const PHAL::Workset& workset,
+  const Manager::BasisField& bf, const Manager::BasisField& wbf,
+  const PHX::MDField<RealType, Cell, Vertex, Dim>& coord_vert,
+  const PHX::MDField<RealType, Cell, QuadPoint, Dim>& coord_qp)
+{
+  // Works only in the case of one workset.
+  TEUCHOS_ASSERT(workset.wsIndex == 0);
+  const unsigned int wi = 0;
+
+  // Set up the data containers.
+  typedef PHX::MDALayout<Cell, QuadPoint, Dim, Dim> Layout;
+  Teuchos::RCP<Layout> layout = Teuchos::rcp(
+    new Layout(workset.numCells, coord_qp.dimension(1),
+               coord_qp.dimension(2), coord_qp.dimension(2)));
+  PHX::MDField<RealType> f_mdf = PHX::MDField<RealType>("f_mdf", layout);
+  f_mdf.setFieldData(
+    PHX::KokkosViewFactory<RealType, PHX::Device>::buildView(f_mdf.fieldTag()));
+    
+  std::vector<Albany::MDArray> mda;
+  std::vector<double> mda_data[2];
+  for (int i = 0; i < 2; ++i) {
+    typedef Albany::MDArray::size_type size_t;
+    mda_data[i].resize(f_mdf.dimension(0) * f_mdf.dimension(1) *
+                       f_mdf.dimension(2) * f_mdf.dimension(3));
+    shards::Array<RealType, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> a;
+    a.assign(&mda_data[i][0], (size_t) f_mdf.dimension(0),
+             (size_t) f_mdf.dimension(1), (size_t) f_mdf.dimension(2),
+             (size_t) f_mdf.dimension(3));
+    mda.push_back(a);
+  }
+
+  Projector p;
+  p.init(pc.get_node_map(), pc.get_ol_node_map());
+
+  // M.
+  p.fillMassMatrix(workset, bf, wbf);
+    
+  for (int test = 0; test < 2; ++test) {
+    Manager::Field f;
+    f.name = "";
+    f.layout = layout;
+    f.data_ = Teuchos::rcp(new Manager::Field::Data());
+
+    // b.
+    if (test == 0) {
+      f.data_->transformation = Transformation::none;
+      f.num_g_fields = 1;
+      loop(f_mdf, cell, 0) loop(f_mdf, qp, 1)
+        for (int i = 0, k = 0; i < f_mdf.dimension(2); ++i)
+          for (int j = 0; j < f_mdf.dimension(3); ++j, ++k)
+            f_mdf(cell, qp, i, j) = eval_f(
+              coord_qp(cell, qp, 0), coord_qp(cell, qp, 1),
+              coord_qp(cell, qp, 2), k);
+    } else {
+      f.data_->transformation = Transformation::right_polar_LieR_LieS;
+      f.num_g_fields = 2;
+      RealType lo[3], hi[3];
+      getBoundingBox(coord_vert, lo, hi);
+      loop(f_mdf, cell, 0) loop(f_mdf, qp, 1) {
+        RealType p[3];
+        for (int k = 0; k < 3; ++k)
+          p[k] = (coord_qp(cell, qp, k) - lo[k])/(hi[k] - lo[k]);
+        const Intrepid::Tensor<RealType> F = eval_F(p);
+        loop(f_mdf, i, 2) loop(f_mdf, j, 3) f_mdf(cell, qp, i, j) = F(i, j);
+      }
+    }
+    p.fillRhs(f_mdf, f, workset, wbf);
+
+    // Solve M x = b.
+    p.project(f);
+
+    if (test == 0) { // Compare with true values at NP.
+      const int ncol = 9, nverts = pc.get_node_map()->getGlobalNumElements();
+      std::vector<RealType> f_true(ncol * nverts); {
+        std::vector<bool> evaled(nverts, false);
+        loop(f_mdf, cell, 0) loop(coord_vert, node, 1) {
+          const GO gid = workset.wsElNodeID[cell][node];
+          const LO lid = pc.get_node_map()->getLocalElement(gid);
+          if ( ! evaled[lid]) {
+            for (int k = 0; k < ncol; ++k)
+              f_true[ncol*lid + k] = eval_f(
+                coord_vert(cell, node, 0), coord_vert(cell, node, 1),
+                coord_vert(cell, node, 2), k);
+            evaled[lid] = true;
+          }
+        }
+      }
+      double err1[9], errmax[9], scale[9];
+      for (int k = 0; k < ncol; ++k) { err1[k] = errmax[k] = scale[k] = 0; }
+      for (int iv = 0; iv < nverts; ++iv)
+        for (int k = 0; k < ncol; ++k) {
+          const double d = std::abs(
+            f.data_->mv[0]->getVector(k)->getData()[iv] - f_true[ncol*iv + k]);
+        err1[k] += d;
+        errmax[k] = std::max(errmax[k], d);
+        scale[k] = std::max(scale[k], std::abs(f_true[ncol*iv + k]));
+      }
+      printf("err np (test %d):", test);
+      const int n = f_mdf.dimension(0) * f_mdf.dimension(1);
+      for (int k = 0; k < 9; ++k)
+        printf(" %1.2e %1.2e (%1.2e)", err1[k]/(n*scale[k]), errmax[k]/scale[k],
+               scale[k]);
+      std::cout << "\n";
+    }
+
+    // Interpolate to IP.
+    p.interp(f, workset, bf, mda[0], mda[1]);
+    transformStateArray(wi, Direction::g2G, f.data_->transformation, mda[0],
+                        mda[1]);
+
+    
+    { // Compare with true values at IP.
+      double err1[9], errmax[9], scale[9];
+      for (int k = 0; k < 9; ++k) { err1[k] = errmax[k] = scale[k] = 0; }
+      loop(f_mdf, cell, 0) loop(f_mdf, qp, 1)
+        for (int i = 0, k = 0; i < f_mdf.dimension(2); ++i)
+          for (int j = 0; j < f_mdf.dimension(3); ++j, ++k) {
+            const double d = std::abs(mda[0]((int) cell, (int) qp, i, j) -
+                                      f_mdf(cell, qp, i, j));
+            err1[k] += d;
+            errmax[k] = std::max(errmax[k], d);
+            scale[k] = std::max(scale[k], std::abs(f_mdf(cell, qp, i, j)));
+          }
+      printf("err ip (test %d):", test);
+      const int n = f_mdf.dimension(0) * f_mdf.dimension(1);
+      for (int k = 0; k < 9; ++k)
+        printf(" %1.2e %1.2e (%1.2e)", err1[k]/(n*scale[k]), errmax[k]/scale[k],
+               scale[k]);
+      std::cout << "\n";
+    }
+  }
+}
+} // namespace testing
+} // namespace
 
 } // namespace rc
 } // namespace AAdapt

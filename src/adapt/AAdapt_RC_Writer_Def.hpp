@@ -3,9 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifdef AMBDEBUG
-#include "/home/ambradl/bigcode/amb.hpp"
-#endif
 
 #include "AAdapt_RC_Manager.hpp"
 

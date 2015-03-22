@@ -3,10 +3,6 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#define AMBDEBUG
-#ifdef AMBDEBUG
-#include "/home/ambradl/bigcode/amb.hpp"
-#endif
 
 #include "AAdapt_MeshAdapt.hpp"
 #include "Teuchos_TimeMonitor.hpp"
@@ -242,7 +238,7 @@ bool correctnessTestSkip () {
 #else
   static int cnt = 0;
   if ( ! amb::Options::get()->params()->isType<int>("nadapt")) return false;
-  if (++cnt > amb::Options::get()->params()->get<int>("nadapt")) return true;
+  return ++cnt > amb::Options::get()->params()->get<int>("nadapt");
 #endif
 }
 } // namespace al
