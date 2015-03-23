@@ -900,7 +900,7 @@ evalModelImpl(
 
   // W matrix for each individual model
   for (int m = 0; m < num_models_; ++m) {
-    if (Teuchos::is_null(jacs_[m]) == false) {
+    if (Teuchos::nonnull(W_op_outT)) {
       //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
