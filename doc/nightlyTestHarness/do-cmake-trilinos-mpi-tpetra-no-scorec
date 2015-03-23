@@ -93,6 +93,7 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$BUILD_DIR/install \
       -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
       -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
+      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MOOCHO:BOOL=ON \
