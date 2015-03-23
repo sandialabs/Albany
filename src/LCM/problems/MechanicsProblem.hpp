@@ -404,8 +404,10 @@ protected:
 // Damage equation specific evaluators
 #include "StabilizedPressureResidual.hpp"
 
+#ifdef ALBANY_CONTACT
 // Contact evaluator
 #include "MortarContactConstraints.hpp"
+#endif
 
 //------------------------------------------------------------------------------
 template<typename EvalT>
@@ -1297,6 +1299,21 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     if (have_temperature_ || have_temperature_eq_) {
       p->set<std::string>("Temperature Name", temperature);
       param_list.set<bool>("Have Temperature", true);
+    }
+
+    param_list.set<bool>("Have Total Concentration", false);
+    if (have_transport_ || have_transport_eq_) {
+      p->set<std::string>("Total Concentration Name", totalConcentration);
+      param_list.set<bool>("Have Total Concentration", true);
+    }
+
+    param_list.set<bool>("Have Bubble Volume Fraction", false);
+    param_list.set<bool>("Have Total Bubble Density", false);
+    if (param_list.isSublist("Tritium Coefficients")) {
+      p->set<std::string>("Bubble Volume Fraction Name", bubble_volume_fraction);
+      p->set<std::string>("Total Bubble Density Name", total_bubble_density);
+      param_list.set<bool>("Have Bubble Volume Fraction", true);
+      param_list.set<bool>("Have Total Bubble Density", true);
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string> > >(
@@ -2215,7 +2232,10 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Deformation Gradient Name", defgrad);
     p->set<std::string>("Determinant of F Name", J);
     p->set<std::string>("Temperature Name", temperature);
-    if (material_model_name == "J2") {
+    // FIXME: this creates a circular dependency between the constitutive model and transport
+    // see below
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    if (false) {
       p->set<std::string>("Equivalent Plastic Strain Name", eqps);
     }
 
@@ -2230,9 +2250,11 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<std::string>("Mechanical Deformation Gradient Name", "Fm");
     p->set<std::string>("Effective Diffusivity Name", effectiveDiffusivity);
     p->set<std::string>("Trapped Solvent Name", trappedSolvent);
-    if (material_model_name == "J2") {
+    // FIXME: this creates a circular dependency between the constitutive model and transport
+    //if (material_model_name == "J2" || material_model_name == "Elasto Viscoplastic") {
+    //if (false) {
       p->set<std::string>("Strain Rate Factor Name", strainRateFactor);
-    }
+      //}
     p->set<std::string>("Diffusion Coefficient Name", diffusionCoefficient);
     p->set<std::string>("Tau Contribution Name", convectionCoefficient);
     p->set<std::string>("Concentration Equilibrium Parameter Name",
@@ -2494,7 +2516,7 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   // Evaluate contact contributions
 
   if (have_contact_) { // create the contact evaluator to fill in the
-
+#ifdef ALBANY_CONTACT
     Teuchos::ParameterList& paramList = params->sublist("Contact");
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(
         new Teuchos::ParameterList);
@@ -2505,6 +2527,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
         paramList.get<Teuchos::Array<std::string> >("Slave Side Sets"));
     p->set<Teuchos::Array<std::string> >("Sideset IDs",
         paramList.get<Teuchos::Array<std::string> >("Contact Side Set Pair"));
+    p->set<Teuchos::Array<std::string> >("Constrained Field Names",
+        paramList.get<Teuchos::Array<std::string> >("Constrained Field Names"));
 
     p->set<const Albany::MeshSpecsStruct*>("Mesh Specs Struct", &meshSpecs);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
@@ -2516,7 +2540,12 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     ev = Teuchos::rcp(
         new LCM::MortarContact<EvalT, PHAL::AlbanyTraits>(*p, dl_));
     fm0.template registerEvaluator<EvalT>(ev);
-
+#else // ! defined ALBANY_CONTACT
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      true, std::logic_error,
+      "A contact problem is being created, but ALBANY_CONTACT is not defined. "
+      "Use the flag -D ENABLE_CONTACT:BOOL=ON in your Albany configuration.");
+#endif // ALBANY_CONTACT
   }
 
   // Transport of the temperature field

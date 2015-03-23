@@ -27,7 +27,7 @@ DOFInterpolationLevels(Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("Aeras::DOFInterpolationLevels"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::DOFInterpolationLevels"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -52,7 +52,8 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell=0; cell < workset.numCells; ++cell) {
     for (int qp=0; qp < numQPs; ++qp) {
       for (int level=0; level < numLevels; ++level) {
-        ScalarT& vqp = val_qp(cell,qp,level) = 0;
+        typename PHAL::Ref<ScalarT>::type vqp = val_qp(cell,qp,level);
+        vqp = 0;
         for (int node=0; node < numNodes; ++node) {
           vqp += val_node(cell, node, level) * BF(cell, node, qp);
         }

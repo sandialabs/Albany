@@ -52,16 +52,17 @@ namespace LCM {
     //! Returns the Tpetra_Map object associated with the range of this operator.
     virtual Teuchos::RCP<const Tpetra_Map> getRangeMap() const { return range_map_; }
     
+    
   private:
 
     Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps_;
     Teuchos::RCP<const Tpetra_Map> domain_map_, range_map_;
     Teuchos::RCP<const Teuchos_Comm> commT_;
+    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
     bool b_use_transpose_;
     bool b_initialized_;
     int n_models_; 
 
-    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
 
   };
 

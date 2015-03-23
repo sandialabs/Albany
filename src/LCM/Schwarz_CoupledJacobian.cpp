@@ -9,6 +9,8 @@
 #include "Teuchos_TestForException.hpp"
 //#include "Tpetra_LocalMap.h"
 
+#define WRITE_TO_MATRIX_MARKET
+
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(Teuchos::Array<Teuchos::RCP<const Tpetra_Map> > disc_maps, 
 					   Teuchos::RCP<const Tpetra_Map> coupled_disc_map, 
 					   const Teuchos::RCP<const Teuchos_Comm>& commT)
@@ -31,10 +33,20 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 //! Initialize the operator with everything needed to apply it
 void LCM::Schwarz_CoupledJacobian::initialize(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs) 
 {
+  //FIXME: add parameter list argument, member parameters for specifying boundary conditions.
+  //These can be stored in an array of Tpetra_CrsMatrices like the jacobians.
   // Set member variables
-  /*jacs_.resize(n_models_); 
+  jacs_.resize(n_models_); 
   for (int m=0; m<n_models_; m++)
-    jacs_[m] = Teuchos::rcp(new Tpetra_CrsMatrix(*jacs[m]));  */
+    jacs_[m] = jacs[m];  
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  std::cout << "In LCM::Schwarz_CoupledJacobian::initialize! \n"; 
+//write individual model jacobians to matrix market for debug
+  Tpetra_MatrixMarket_Writer::writeSparseFile("Jac0.mm", jacs[0]);
+  if (n_models_ > 1) 
+    Tpetra_MatrixMarket_Writer::writeSparseFile("Jac1.mm", jacs[1]);
+#endif
 }
 
 
@@ -43,38 +55,46 @@ void LCM::Schwarz_CoupledJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mul
                                        Teuchos::ETransp mode,
                                        ST alpha, ST beta) const
 { 
-  std::cout << "In LCM::Schwarz_CoupledJacobian::Apply! \n" << std::endl; 
+  std::cout << "In LCM::Schwarz_CoupledJacobian::apply! \n"; 
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug -- initial X where we will set Y = Jac*X
+  Tpetra_MatrixMarket_Writer::writeDenseFile("X.mm", X);
+#endif
 
   //FIXME: fill in!
-    // Jacobian Matrix is:
+    // Jacobian Matrix is (for e.g., 3 domain coupling):
     //
-    //                   Phi                    Psi[i]                            -Eval[i]
+    //                   x1                        x2                              x3           ....
     //          | ------------------------------------------------------------------------------------------|
     //          |                      |                             |                                      |
-    // Poisson  |    Jac_poisson       |   M*diag(dn/d{Psi[i](x)})   |        -M*col(dn/dEval[i])           |
-    //          |                      |                             |                                      |
-    //          | ------------------------------------------------------------------------------------------|
-    //          |                      |                             |                                      |
-    // Schro[j] |  M*diag(-Psi[j](x))  | delta(i,j)*[ H-Eval[i]*M ]  |        delta(i,j)*M*Psi[i](x)        |    
+    //      x1  |        Jac1          |           ??                |             ??                       |
     //          |                      |                             |                                      |
     //          | ------------------------------------------------------------------------------------------|
     //          |                      |                             |                                      |
-    // Norm[j]  |    0                 | -delta(i,j)*(M+M^T)*Psi[i]  |                   0                  |
+    //      x2  |         ??           |           Jac2              |             ??                       |    
     //          |                      |                             |                                      |
     //          | ------------------------------------------------------------------------------------------|
-    //
-    //
-    //   Where:
-    //       n = quantum density function which depends on dimension
+    //          |                      |                             |                                      |
+    //      x3  |         ??           |           ??                |            Jac3                      |
+    //          |                      |                             |                                      |
+    //          | ------------------------------------------------------------------------------------------|
+    //      :
+    //      :
     
-    // Scratch:  val = sum_ij x_i * M_ij * x_j
-    //         dval/dx_k = sum_j!=k M_kj * x_j + sum_i!=k x_i * M_ik + 2* M_kk * x_k
-    //                   = sum_i (M_ki + M_ik) * x_i
-    //                   = sum_i (M + M^T)_ki * x_i  == k-th el of (M + M^T)*x
-    //   So d(x*M*x)/dx = (M+M^T)*x in matrix form
-
     // Do multiplication block-wise
+    //
+    if (n_models_ == 1) {
+      jacs_[0]->apply(X, Y); 
+    }
+    else 
+      std::cout << "WARNING: LCM::Schwarz_CoupledJacbian::apply() method only implemented for 1 model right now! \n"; 
+      
   
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug -- final solution Y (after all the operations to set Y = Jac*X
+  Tpetra_MatrixMarket_Writer::writeDenseFile("Y.mm", Y);
+#endif
 }
 
 

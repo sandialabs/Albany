@@ -7,7 +7,7 @@
 #ifndef MORTAR_CONTACT_CONSTRAINTS_HPP
 #define MORTAR_CONTACT_CONSTRAINTS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -15,6 +15,9 @@
 #include "Albany_Layouts.hpp"
 
 #include "Teuchos_ParameterList.hpp"
+
+// Moertel-specific 
+#include "mrtr_interface.H"
 
 namespace LCM {
 /** \brief This class implements the Mortar contact algorithm. Here is the overall sketch of how things work:
@@ -63,13 +66,23 @@ protected:
   PHX::MDField<ScalarT,Cell,QuadPoint> M_operator; // This evaluator creates M and D, not sure what they look like yet
                                                    // so put in a placeholder
 
-  const Teuchos::Array<std::string> masterSideNames;
-  const Teuchos::Array<std::string> slaveSideNames;
-  const Teuchos::Array<std::string> sideSetIDs;
+  const Teuchos::Array<std::string> masterSideNames;   // master (non-mortar) side names
+  const Teuchos::Array<std::string> slaveSideNames;    // slave (mortar) side names
+  const Teuchos::Array<std::string> sideSetIDs;        // sideset ids
+  const Teuchos::Array<std::string> constrainedFields; // names of fields to be constrained
   const Albany::MeshSpecsStruct* meshSpecs;
+  Teuchos::Array<int> offset;
+
+
+  // Moertel-specific library data
+  Teuchos::RCP<MOERTEL::Interface> _moertelInterface;
 
 //! Coordinate vector at vertices
   PHX::MDField<MeshScalarT,Cell,Vertex,Dim> coordVec;
+
+//! Temporary containers
+  Intrepid::FieldContainer<MeshScalarT> physPointsCell;
+
 
 
 };

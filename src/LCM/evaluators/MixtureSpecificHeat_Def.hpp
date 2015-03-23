@@ -39,7 +39,7 @@ MixtureSpecificHeat(const Teuchos::ParameterList& p) :
 
   this->addEvaluatedField(mixtureSpecificHeat);
 
-  this->setName("Mixture Specific Heat"+PHX::TypeString<EvalT>::value);
+  this->setName("Mixture Specific Heat"+PHX::typeAsString<EvalT>());
 
   Teuchos::RCP<PHX::DataLayout> scalar_dl =
     p.get< Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
@@ -69,8 +69,8 @@ void MixtureSpecificHeat<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Compute Strain tensor from displacement gradient
-  for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
         mixtureSpecificHeat(cell,qp) = (J(cell,qp)-porosity(cell,qp))
         		                           *gammaSkeleton(cell,qp)*densitySkeleton(cell,qp) +

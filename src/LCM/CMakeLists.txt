@@ -3,7 +3,7 @@
 ##    This Software is released under the BSD license detailed     //
 ##    in the file "license.txt" in the top-level Albany directory  //
 ##*****************************************************************//
-
+#
 # LCM DIR
 SET(LCM_DIR ${Albany_SOURCE_DIR}/src/LCM)
 
@@ -112,6 +112,15 @@ IF(NOT ALBANY_PERIDIGM)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmForce.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress_Def.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/PeridigmPartialStress.hpp)
+ENDIF()
+
+IF(NOT ALBANY_CONTACT)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactResidual.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactResidual.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactResidual_Def.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactConstraints.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints_Def.hpp)
 ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)

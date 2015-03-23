@@ -53,7 +53,7 @@ namespace LCM {
       this->addDependentField(coordVec);
 
       exp_rf_kl = 
-        Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<MeshScalarT>
+        Teuchos::rcp(new Stokhos::KL::ExponentialRandomField<RealType>
                      (*porosity_list));
       int num_KL = exp_rf_kl->stochasticDimension();
 
@@ -166,7 +166,7 @@ namespace LCM {
 
 
     this->addEvaluatedField(porosity);
-    this->setName("Porosity"+PHX::TypeString<EvalT>::value);
+    this->setName("Porosity"+PHX::typeAsString<EvalT>());
   }
 
   //----------------------------------------------------------------------------
@@ -192,22 +192,22 @@ namespace LCM {
   void Porosity<EvalT, Traits>::
   evaluateFields(typename Traits::EvalData workset)
   {
-    std::size_t numCells = workset.numCells;
+    int numCells = workset.numCells;
 
     ScalarT temp;
 
     if (is_constant) {
-      for (std::size_t cell=0; cell < numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int cell=0; cell < numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
     	  porosity(cell,qp) = constant_value;
         }
       }
     }
     else {
-      for (std::size_t cell=0; cell < numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int cell=0; cell < numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
           Teuchos::Array<MeshScalarT> point(numDims);
-          for (std::size_t i=0; i<numDims; i++)
+          for (int i=0; i<numDims; i++)
             point[i] = Sacado::ScalarValue<MeshScalarT>::eval(coordVec(cell,qp,i));
           porosity(cell,qp) = exp_rf_kl->evaluate(point, rv);
         }
@@ -219,15 +219,15 @@ namespace LCM {
 
 
       if ( hasStrain ) {
-        for (std::size_t cell=0; cell < numCells; ++cell) {
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (int cell=0; cell < numCells; ++cell) {
+          for (int qp=0; qp < numQPs; ++qp) {
 
             // small deformation; only valid for small porosity changes
             porosity(cell,qp) = initialPorosityValue;
 
             Teuchos::Array<MeshScalarT> point(numDims);
 
-            for (std::size_t i=0; i<numDims; i++) {
+            for (int i=0; i<numDims; i++) {
               porosity(cell,qp) = initialPorosityValue + biotCoefficient(cell,qp)*strain(cell,qp,i,i)
                 + porePressure(cell,qp)
                 *(biotCoefficient(cell,qp)-initialPorosityValue)/GrainBulkModulus;
@@ -248,8 +248,8 @@ namespace LCM {
           }
         }
       } else if ( hasJ )
-      for (std::size_t cell=0; cell < numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int cell=0; cell < numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
           if (hasTemp == false){
         	porosity(cell,qp) = initialPorosityValue*std::exp(
         			            GrainBulkModulus/(porePressure(cell,qp) + GrainBulkModulus)*
@@ -277,13 +277,13 @@ namespace LCM {
         }
       }        
     } else {
-      for (std::size_t cell=0; cell < numCells; ++cell) {
-        for (std::size_t qp=0; qp < numQPs; ++qp) {
+      for (int cell=0; cell < numCells; ++cell) {
+        for (int qp=0; qp < numQPs; ++qp) {
           porosity(cell,qp) = initialPorosityValue;
           /*
           if ( hasStrain ) {
             Teuchos::Array<MeshScalarT> point(numDims);
-            for (std::size_t i=0; i<numDims; i++) {
+            for (int i=0; i<numDims; i++) {
               porosity(cell,qp) += strain(cell,qp,i,i);
             }
           }

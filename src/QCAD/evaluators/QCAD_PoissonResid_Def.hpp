@@ -35,7 +35,7 @@ PoissonResid(const Teuchos::ParameterList& p,
   this->addEvaluatedField(PhiResidual);
   this->addEvaluatedField(PhiFlux);
 
-  this->setName("PoissonResid"+PHX::TypeString<EvalT>::value);
+  this->setName( "PoissonResid" + PHX::typeAsString<EvalT>() );
 }
 
 //**********************************************************************
@@ -68,7 +68,9 @@ evaluateFields(typename Traits::EvalData workset)
   FST::integrate<ScalarT>(PhiResidual, PhiFlux, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 
   if (haveSource) {
-    for (int i=0; i<Source.size(); i++) Source[i] *= -1.0;
+    for (int i=0; i<Source.dimension(0); i++)
+      for (int j=0; j<Source.dimension(1); j++)
+        Source(i,j) *= -1.0;
     FST::integrate<ScalarT>(PhiResidual, Source, wBF, Intrepid::COMP_CPP, true); // "true" sums into
   }
 }

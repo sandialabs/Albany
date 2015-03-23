@@ -147,6 +147,7 @@ Albany::PoissonsEquationProblem::getValidProblemParameters() const
   validPL->set<Teuchos::RCP<ATO::Topology> >("Topology", emptyTopo);
   validPL->sublist("Topology Parameters", false, "");
   validPL->sublist("Objective Aggregator", false, "");
+  validPL->sublist("Apply Topology Weight Functions", false, "");
 
   return validPL;
 }

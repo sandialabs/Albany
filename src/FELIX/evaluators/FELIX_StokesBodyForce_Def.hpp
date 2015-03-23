@@ -6,6 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -382,7 +383,7 @@ StokesBodyForce(const Teuchos::ParameterList& p,
       gravity[numDims-1] = -1.0;
     }
   }
-  this->setName("StokesBodyForce"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesBodyForce"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -425,15 +426,17 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == POLY) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
-       MeshScalarT* X = &coordVec(cell,qp,0);
-       ScalarT& muqp = muFELIX(cell,qp);
-       f[0] =  40.0*muqp*(2.0*X[1]*X[1] - 3.0*X[1]+1.0)*X[1]*(6.0*X[0]*X[0] -6.0*X[0] + 1.0)
-              + 120*muqp*(X[0]-1.0)*(X[0]-1.0)*X[0]*X[0]*(2.0*X[1]-1.0) 
+       //Irina Debug for Phalanx
+       //ScalarT* f = &force(cell,qp,0);
+       MeshScalarT X0 = coordVec(cell,qp,0);
+       MeshScalarT X1 = coordVec(cell,qp,1);
+       ScalarT muqp = muFELIX(cell,qp);
+       force(cell,qp,0) =  40.0*muqp*(2.0*X1*X1 - 3.0*X1+1.0)*X1*(6.0*X0*X0 -6.0*X0 + 1.0)
+              + 120*muqp*(X0-1.0)*(X0-1.0)*X0*X0*(2.0*X1-1.0) 
               + 10.0*muqp;      
-       f[1] = - 120.0*muqp*(1.0-X[1])*(1.0-X[1])*X[1]*X[1]*(2.0*X[0]-1.0)
-              - 40.0*muqp*(2.0*X[0]*X[0] - 3.0*X[0] + 1.0)*X[0]*(6.0*X[1]*X[1] - 6.0*X[1] + 1.0)
-              - 5*muqp*X[1];
+       force(cell,qp,1) = - 120.0*muqp*(1.0-X1)*(1.0-X1)*X1*X1*(2.0*X0-1.0)
+              - 40.0*muqp*(2.0*X0*X0 - 3.0*X0 + 1.0)*X0*(6.0*X1*X1 - 6.0*X1 + 1.0)
+              - 5*muqp*X1;
      }
    }
  }
@@ -442,26 +445,28 @@ evaluateFields(typename Traits::EvalData workset)
    double xphase=0.0, yphase=0.0; // Expose as parameters for verification
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       ScalarT& muqp = muFELIX(cell,qp);
+       ScalarT muqp = muFELIX(cell,qp);
 
-       f[0] = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
-       f[1] = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
+       force(cell,qp,0) = -4.0*muqp*pi*(2*pi-1)*sin(x2pi + xphase)*sin(y2pi + yphase);
+       force(cell,qp,1) = -4.0*muqp*pi*(2*pi+1)*cos(x2pi + xphase)*cos(y2pi + yphase);
      }
    }
  }
  else if (bf_type == FULLSTOKESBASAL) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-     for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+     for (std::size_t qp=0; qp < numQPs; ++qp) {   
+       //Irina Debug   
+      // ScalarT* f = &force(cell,qp,0);
        MeshScalarT x = coordVec(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       ScalarT& muqp = muFELIX(cell,qp);
-       f[0] = -2.0*pi*sin(y2pi)*(-1.0*muqp*exp(x) + cos(x2pi) + 4.0*muqp*pi*pi*exp(x));
-       f[1] = -1.0*cos(y2pi)*(4.0*muqp*pi*pi*exp(x) - muqp*exp(x)  + 2.0*pi*sin(x2pi)); 
+       ScalarT muqp = muFELIX(cell,qp);
+       force(cell,qp,0) = -2.0*pi*sin(y2pi)*(-1.0*muqp*exp(x) + cos(x2pi) + 4.0*muqp*pi*pi*exp(x));
+       force(cell,qp,1) = -1.0*cos(y2pi)*(4.0*muqp*pi*pi*exp(x) - muqp*exp(x)  + 2.0*pi*sin(x2pi)); 
      }
    }
  }
@@ -472,7 +477,8 @@ evaluateFields(typename Traits::EvalData workset)
    //cout << "muqp force: " << endl; 
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
        //MeshScalarT muqp = x2pi*y2pi + r;
@@ -487,9 +493,9 @@ evaluateFields(typename Traits::EvalData workset)
        //cout.precision(10);
        //if (cell == 10)  
        //   cout << muqp << endl; 
-       f[0] = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0) 
+       force(cell,qp,0) = -8.0*pi*pi*sin(x2pi + xphase)*cos(y2pi + yphase)*(muqp - 1.0) 
             + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dudx + dmuargtdy*dudy);
-       f[1] = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0) 
+       force(cell,qp,1) = 8.0*pi*pi*cos(x2pi + xphase)*sin(y2pi + yphase)*(muqp + 1.0) 
             + 0.5*pow(A, -1.0/n)*(1.0/n - 1.0)*pow(muargt, 1.0/n - 2.0)*(dmuargtdx*dvdx + dmuargtdy*dvdy);
      }
    }
@@ -497,29 +503,34 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == POLYSACADO) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
-       MeshScalarT& x = coordVec(cell,qp,0);
-       MeshScalarT& y = coordVec(cell,qp,1);
-       ScalarT X = x; ScalarT Y = y; 
+      //Irina Debug
+      //  ScalarT* f = &force(cell,qp,0);
+       //MeshScalarT& x = coordVec(cell,qp,0);
+       //MeshScalarT& y = coordVec(cell,qp,1);
+       ScalarT X = coordVec(cell,qp,0);
+       ScalarT Y = coordVec(cell,qp,1); 
        int num_deriv = 2; 
        Sacado::Fad::DFad<ScalarT> xfad(num_deriv, 0, X); 
        Sacado::Fad::DFad<ScalarT> yfad(num_deriv, 1, Y); 
        Sacado::Fad::DFad<ScalarT> tau11fad = tau112d(xfad, yfad); 
        Sacado::Fad::DFad<ScalarT> tau12fad = tau122d(xfad, yfad); 
        Sacado::Fad::DFad<ScalarT> tau22fad = tau222d(xfad, yfad); 
-       f[0] = 1.0*(tau11fad.dx(0) + tau12fad.dx(1)); 
-       f[1] = 1.0*(tau12fad.dx(0) + tau22fad.dx(1));
+       force(cell,qp,0) = 1.0*(tau11fad.dx(0) + tau12fad.dx(1)); 
+       force(cell,qp,1) = 1.0*(tau12fad.dx(0) + tau22fad.dx(1));
      }
    }
  }
  else if (bf_type == TESTAMMF) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
-       MeshScalarT& x = coordVec(cell,qp,0);
-       MeshScalarT& y = coordVec(cell,qp,1);
-       MeshScalarT& z = coordVec(cell,qp,2);
-       ScalarT X = x; ScalarT Y = y; ScalarT Z = z; 
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
+       //MeshScalarT& x = coordVec(cell,qp,0);
+       //MeshScalarT& y = coordVec(cell,qp,1);
+       //MeshScalarT& z = coordVec(cell,qp,2);
+       ScalarT X = coordVec(cell,qp,0); 
+       ScalarT Y = coordVec(cell,qp,1); 
+       ScalarT Z = coordVec(cell,qp,3); 
        int num_deriv = 3; 
        Sacado::Fad::DFad<ScalarT> xfad(num_deriv, 0, X); 
        Sacado::Fad::DFad<ScalarT> yfad(num_deriv, 1, Y); 
@@ -530,9 +541,9 @@ evaluateFields(typename Traits::EvalData workset)
        Sacado::Fad::DFad<ScalarT> tau22fad = tau22(xfad, yfad, zfad); 
        Sacado::Fad::DFad<ScalarT> tau23fad = tau23(xfad, yfad, zfad); 
        Sacado::Fad::DFad<ScalarT> tau33fad = tau33(xfad, yfad, zfad); 
-       f[0] = tau11fad.dx(0) + tau12fad.dx(1) + tau13fad.dx(2);  
-       f[1] = tau12fad.dx(0) + tau22fad.dx(1) + tau23fad.dx(2); 
-       f[2] = tau13fad.dx(0) + tau23fad.dx(1) + tau33fad.dx(2) + rho*g; 
+       force(cell,qp,0) = tau11fad.dx(0) + tau12fad.dx(1) + tau13fad.dx(2);  
+       force(cell,qp,1) = tau12fad.dx(0) + tau22fad.dx(1) + tau23fad.dx(2); 
+       force(cell,qp,2) = tau13fad.dx(0) + tau23fad.dx(1) + tau33fad.dx(2) + rho*g; 
      }
    }
  }
@@ -540,11 +551,15 @@ evaluateFields(typename Traits::EvalData workset)
  else if (bf_type == SINCOSZ) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
      for (std::size_t qp=0; qp < numQPs; ++qp) {      
-       ScalarT* f = &force(cell,qp,0);
+       //Irina Debug
+       //ScalarT* f = &force(cell,qp,0);
        MeshScalarT x2pi = 2.0*pi*coordVec(cell,qp,0);
        MeshScalarT y2pi = 2.0*pi*coordVec(cell,qp,1);
-       MeshScalarT& z = coordVec(cell,qp,2);
-       ScalarT& muqp = muFELIX(cell,qp);
+       //Irina Debug
+       //MeshScalarT& z = coordVec(cell,qp,2);
+       //ScalarT& muqp = muFELIX(cell,qp);
+       MeshScalarT z = coordVec(cell,qp,2);
+       ScalarT muqp = muFELIX(cell,qp);
 
        /*ScalarT t1 = muqp*z*(1-z)*(1-2*z);
        ScalarT t2 = muqp*(1-6*z+6*z*z);
@@ -559,9 +574,9 @@ evaluateFields(typename Traits::EvalData workset)
        ScalarT t3 = muqp*z*z*(1.0-z)*(1.0-z); 
        ScalarT t4 = muqp*(1.0-6.0*z+6.0*z*z); 
      
-       f[0] = (-8.0*pi*pi*t1 + t2 + 4.0*pi*pi*z)*sin(x2pi)*sin(y2pi); 
-       f[1] = (8.0*pi*pi*t1 - t2 - 4.0*pi*pi*z)*cos(x2pi)*cos(y2pi); 
-       f[2] = (16.0*pi*pi*pi*t3 - 4.0*pi*t4 - 2.0*pi)*cos(x2pi)*sin(y2pi); 
+       force(cell,qp,0) = (-8.0*pi*pi*t1 + t2 + 4.0*pi*pi*z)*sin(x2pi)*sin(y2pi); 
+       force(cell,qp,1) = (8.0*pi*pi*t1 - t2 - 4.0*pi*pi*z)*cos(x2pi)*cos(y2pi); 
+       force(cell,qp,2) = (16.0*pi*pi*pi*t3 - 4.0*pi*t4 - 2.0*pi)*cos(x2pi)*sin(y2pi); 
      }
    }
  }

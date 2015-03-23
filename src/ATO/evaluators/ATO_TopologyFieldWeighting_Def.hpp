@@ -21,6 +21,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 {
 
   topology = p.get<Teuchos::RCP<Topology> >("Topology");
+  functionIndex = p.get<int>("Function Index");
   topoName = topology->getName();
   TEUCHOS_TEST_FOR_EXCEPTION(
     topology->getEntityType() != "Distributed Parameter",
@@ -50,7 +51,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
 
 
   // Pull out numQPs and numDims from a Layout
-  std::vector<int> dims;
+  std::vector<PHX::Device::size_type> dims;
   layout->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
@@ -60,7 +61,7 @@ BF(p.get<std::string> ("BF Name"), dl->node_qp_scalar)
   this->addDependentField(topo);
   this->addEvaluatedField(weightedVar);
 
-  this->setName("Topology Weighting"+PHX::TypeString<EvalT>::value);
+  this->setName("Topology Weighting"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -97,7 +98,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-        ScalarT P = topology->Penalize(topoVal);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
         for(int i=0; i<numDims; i++)
           weightedVar(cell,qp,i) = P*unWeightedVar(cell,qp,i);
       }
@@ -109,7 +110,7 @@ evaluateFields(typename Traits::EvalData workset)
         ScalarT topoVal = 0.0;
         for(int node=0; node<numNodes; node++)
           topoVal += topo(cell,node)*BF(cell,node,qp);
-        ScalarT P = topology->Penalize(topoVal);
+        ScalarT P = topology->Penalize(functionIndex,topoVal);
         for(int i=0; i<numDims; i++)
           for(int j=0; j<numDims; j++)
             weightedVar(cell,qp,i,j) = P*unWeightedVar(cell,qp,i,j);

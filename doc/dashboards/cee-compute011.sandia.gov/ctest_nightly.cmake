@@ -199,6 +199,11 @@ IF(CTEST_DO_SUBMIT)
   endif()
 ENDIF()
 
+IF(count LESS 0)
+	message(FATAL_ERROR "Cannot update Trilinos!")
+endif()
+
+
 #
 # Update the SCOREC repo
 #
@@ -222,6 +227,10 @@ IF(CTEST_DO_SUBMIT)
   endif()
 ENDIF()
 
+IF(count LESS 0)
+	message(FATAL_ERROR "Cannot update Trilinos!")
+endif()
+
 #
 # Update Albany 
 #
@@ -243,6 +252,10 @@ IF(CTEST_DO_SUBMIT)
 	message(FATAL_ERROR "Cannot update Albany repository!")
   endif()
 ENDIF()
+
+IF(count LESS 0)
+	message(FATAL_ERROR "Cannot update Trilinos!")
+endif()
 
 ENDIF()
 
@@ -372,6 +385,15 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DTrilinos_ENABLE_STKTransfer:BOOL=ON"
   "-DTrilinos_ENABLE_STKUnit_tests:BOOL=OFF"
   "-DTrilinos_ENABLE_STKDoc_tests:BOOL=OFF"
+#
+  "-DTrilinos_ENABLE_Kokkos:BOOL=ON"
+  "-DTrilinos_ENABLE_KokkosCore:BOOL=ON"
+  "-DPhalanx_KOKKOS_DEVICE_TYPE:STRING=SERIAL"
+  "-DPhalanx_INDEX_SIZE_TYPE:STRING=INT"
+  "-DPhalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF"
+  "-DKokkos_ENABLE_Serial:BOOL=ON"
+  "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
+  "-DKokkos_ENABLE_Pthread:BOOL=OFF"
   )
 
 IF(BUILD_TRILINOS)
@@ -409,19 +431,19 @@ CTEST_CONFIGURE(
           RETURN_VALUE HAD_ERROR
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Trilinos/SCOREC configure results!")
   endif()
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
+endif()
 
 #
 # SCOREC tools build inside Trilinos
@@ -444,19 +466,23 @@ CTEST_BUILD(
           NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit SCOREC build results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build SCOREC!")
 endif()
 
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  HAD_ERROR
-  )
-
-  if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot submit SCOREC build results!")
-  endif()
-ENDIF()
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+	message(FATAL_ERROR "Encountered build errors in SCOREC build. Exiting!")
+endif()
 
 #
 # Trilinos
@@ -479,20 +505,24 @@ CTEST_BUILD(
           APPEND
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Trilinos!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Trilinos/SCOREC build results!")
   endif()
 
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Trilinos!")
+endif()
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+	message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
+endif()
 
 ENDIF()
 
@@ -512,14 +542,14 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
   "-DENABLE_HYDRIDE:BOOL=ON"
   "-DENABLE_SCOREC:BOOL=ON"
-  "-DENABLE_SG_MP:BOOL=ON"
+  "-DENABLE_SG_MP:BOOL=OFF"
   "-DENABLE_FELIX:BOOL=ON"
   "-DENABLE_AERAS:BOOL=ON"
   "-DENABLE_QCAD:BOOL=ON"
   "-DENABLE_MOR:BOOL=ON"
   "-DENABLE_ATO:BOOL=ON"
   "-DENABLE_SEE:BOOL=ON"
-  "-DENABLE_ASCR:BOOL=ON"
+  "-DENABLE_ASCR:BOOL=OFF"
   "-DENABLE_CHECK_FPE:BOOL=ON"
    )
  
@@ -535,19 +565,19 @@ CTEST_CONFIGURE(
           APPEND
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany build!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany configure results!")
   endif()
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure Albany build!")
+endif()
 
 #
 # Build Albany
@@ -565,19 +595,23 @@ CTEST_BUILD(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+	message(FATAL_ERROR "Cannot submit Albany build results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Albany!")
 endif()
 
-IF(CTEST_DO_SUBMIT)
-  CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  HAD_ERROR
-  )
-
-  if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot submit Albany build results!")
-  endif()
-ENDIF()
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+	message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+endif()
 
 #
 # Run Albany tests
@@ -589,17 +623,22 @@ CTEST_TEST(
 #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
 #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
               #NUMBER_FAILED  TEST_NUM_FAILED
+               RETURN_VALUE  HAD_ERROR
 )
 
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Test
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany test results!")
   endif()
 ENDIF()
+
+#if(HAD_ERROR)
+#	message(FATAL_ERROR "Some Albany tests failed.")
+#endif()
 
 ENDIF()
 
@@ -647,19 +686,19 @@ CTEST_CONFIGURE(
 
 #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany 64 bit build!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany 64 bit configure results!")
   endif()
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure Albany 64 bit build!")
+endif()
 
 #
 # Build Albany 64 bit
@@ -677,20 +716,23 @@ CTEST_BUILD(
           APPEND
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany 64 bit!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany 64 bit build results!")
   endif()
 ENDIF()
 
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Albany 64 bit!")
+endif()
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+	message(FATAL_ERROR "Encountered build errors in Albany 64 bit build. Exiting!")
+endif()
 #
 # Run Albany 64 bit tests
 #
@@ -760,19 +802,19 @@ CTEST_CONFIGURE(
           RETURN_VALUE HAD_ERROR
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure TrilinosClang++11 build!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit TrilinosClang++11 configure results!")
   endif()
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure TrilinosClang++11 build!")
+endif()
 
 #SET(CTEST_BUILD_TARGET all)
 SET(CTEST_BUILD_TARGET install)
@@ -786,20 +828,24 @@ CTEST_BUILD(
           APPEND
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Trilinos with Clang!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit TrilinoClang++11 build results!")
   endif()
 
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Trilinos with Clang!")
+endif()
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+	message(FATAL_ERROR "Encountered build errors in Trilinos Clang build. Exiting!")
+endif()
 
 ENDIF()
 
@@ -847,19 +893,19 @@ CTEST_CONFIGURE(
 
 #CTEST_READ_CUSTOM_FILES("${CTEST_BINARY_DIRECTORY}/AlbanyT64")
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure Albany 64 bit Clang build!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Configure
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany 64 bit Clang configure results!")
   endif()
 ENDIF()
+
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot configure Albany 64 bit Clang build!")
+endif()
 
 #
 # Build Clang Albany 64 bit
@@ -877,20 +923,23 @@ CTEST_BUILD(
           APPEND
 )
 
-if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany 64 bit with Clang!")
-endif()
-
 IF(CTEST_DO_SUBMIT)
   CTEST_SUBMIT(PARTS Build
-               RETURN_VALUE  HAD_ERROR
+               RETURN_VALUE  S_HAD_ERROR
   )
 
-  if(HAD_ERROR)
+  if(S_HAD_ERROR)
 	message(FATAL_ERROR "Cannot submit Albany 64 bit Clang build results!")
   endif()
 ENDIF()
 
+if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Albany 64 bit with Clang!")
+endif()
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+	message(FATAL_ERROR "Encountered build errors in Albany 64 bit Clang build. Exiting!")
+endif()
 #
 # Run Clang Albany 64 bit tests
 #

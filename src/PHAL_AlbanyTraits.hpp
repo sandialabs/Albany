@@ -9,8 +9,6 @@
 #ifndef PHAL_ALBANYTRAITS_HPP
 #define PHAL_ALBANYTRAITS_HPP
 
-// mpl (Meta Programming Library) templates
-//#include "Sacado.hpp"
 #include "Sacado_mpl_vector.hpp"
 #include "Sacado_mpl_find.hpp"
 #include "boost/mpl/map.hpp"
@@ -21,9 +19,7 @@
 #include "Phalanx_Traits_Base.hpp"
 
 // Include User Data Types
-#include "Phalanx_ConfigDefs.hpp"
-#include "Phalanx_Allocator_Contiguous.hpp"
-#include "Phalanx_Allocator_New.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
 #include "Albany_DataTypes.hpp"
@@ -32,32 +28,58 @@
 //! PHalanx-ALbany Code base: templated evaluators for Sacado AD
 namespace PHAL {
 
+  typedef PHX::Device::size_type size_type;
+
   // Forward declaration since Workset needs AlbanyTraits
   struct Workset;
+
+  // From a ScalarT, determine the ScalarRefT.
+  template<typename T> struct Ref {
+    typedef T& type;
+  };
+  template<typename T> struct RefKokkos {
+    typedef typename Kokkos::View<T*, PHX::Device>::reference_type type;
+  };
+  template<> struct Ref<FadType> : RefKokkos<FadType> {};
+#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
+  template<> struct Ref<TanFadType> : RefKokkos<TanFadType> {};
+#endif
+#ifdef ALBANY_SG_MP
+  template<> struct Ref<SGFadType> : RefKokkos<SGFadType> {};
+  template<> struct Ref<MPFadType> : RefKokkos<MPFadType> {};
+#endif
 
   struct AlbanyTraits : public PHX::TraitsBase {
 
     // ******************************************************************
     // *** Evaluation Types
     //   * ScalarT is for quantities that depend on solution/params
-    //   * MeshScalarT  is for quantities that depend on mesh coords only
+    //   * MeshScalarT is for quantities that depend on mesh coords only
     // ******************************************************************
-    struct Residual   { typedef RealType  ScalarT; typedef RealType MeshScalarT; };
-    struct Jacobian   { typedef FadType   ScalarT; typedef RealType MeshScalarT; };
-    struct Tangent    { typedef TanFadType   ScalarT;
-                        typedef TanFadType   MeshScalarT; };  // Use this for shape opt
-                        //typedef RealType MeshScalarT; }; // Uncomment for no shape opt
+    template<typename ScalarT_, typename MeshScalarT_>
+    struct EvaluationType {
+      typedef ScalarT_ ScalarT;
+      typedef MeshScalarT_ MeshScalarT;
+    };
 
-    struct DistParamDeriv { typedef TanFadType   ScalarT;
-                            typedef RealType      MeshScalarT; };
+    struct Residual : EvaluationType<RealType, RealType> {};
+    struct Jacobian : EvaluationType<FadType,  RealType> {};
+    struct Tangent  : EvaluationType<TanFadType,
+#ifdef ALBANY_MESH_TANFAD
+                                     TanFadType // Use this for shape opt
+#else
+                                     RealType // Uncomment for no shape opt
+#endif
+                                     > {};
+    struct DistParamDeriv : EvaluationType<TanFadType, RealType> {};
 
 #ifdef ALBANY_SG_MP
-    struct SGResidual { typedef SGType    ScalarT; typedef RealType MeshScalarT; };
-    struct SGJacobian { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
-    struct SGTangent  { typedef SGFadType ScalarT; typedef RealType MeshScalarT; };
-    struct MPResidual { typedef MPType    ScalarT; typedef RealType MeshScalarT; };
-    struct MPJacobian { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
-    struct MPTangent  { typedef MPFadType ScalarT; typedef RealType MeshScalarT; };
+    struct SGResidual : EvaluationType<SGType,    RealType> {};
+    struct SGJacobian : EvaluationType<SGFadType, RealType> {};
+    struct SGTangent  : EvaluationType<SGFadType, RealType> {};
+    struct MPResidual : EvaluationType<MPType,    RealType> {};
+    struct MPJacobian : EvaluationType<MPFadType, RealType> {};
+    struct MPTangent  : EvaluationType<MPFadType, RealType> {};
 #endif //ALBANY_SG_MP
 
 #ifdef ALBANY_SG_MP
@@ -139,7 +161,7 @@ namespace PHAL {
     // ******************************************************************
     // *** Allocator Type
     // ******************************************************************
-    typedef PHX::NewAllocator Allocator;
+ //   typedef PHX::NewAllocator Allocator;
     //typedef PHX::ContiguousAllocator<RealType> Allocator;
 
     // ******************************************************************
@@ -164,65 +186,37 @@ namespace PHAL {
 
 namespace PHX {
   // Evaluation Types
-  template<> struct TypeString<PHAL::AlbanyTraits::Residual>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Residual>()
+  { return "<Residual>"; }
 
-  template<> struct TypeString<PHAL::AlbanyTraits::Jacobian>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Jacobian>()
+  { return "<Jacobian>"; }
 
-  template<> struct TypeString<PHAL::AlbanyTraits::Tangent>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::Tangent>()
+  { return "<Tangent>"; }
 
-  template<> struct TypeString<PHAL::AlbanyTraits::DistParamDeriv>
-  { static const std::string value; };
-
-#ifdef ALBANY_SG_MP
-  template<> struct TypeString<PHAL::AlbanyTraits::SGResidual>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::SGJacobian>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::SGTangent>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::MPResidual>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::MPJacobian>
-  { static const std::string value; };
-
-  template<> struct TypeString<PHAL::AlbanyTraits::MPTangent>
-  { static const std::string value; };
-#endif //ALBANY_SG_MP
-
-  // Data Types
-  template<> struct TypeString<RealType>
-  { static const std::string value; };
-
-  template<> struct TypeString<FadType >
-  { static const std::string value; };
-
-#ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
-// This is necessary iff TanFadType is different from FadType
-  template<> struct TypeString<TanFadType >
-  { static const std::string value; };
-#endif
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::DistParamDeriv>()
+  { return "<DistParamDeriv>"; }
 
 #ifdef ALBANY_SG_MP
-  template<> struct TypeString<SGType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGResidual>()
+  { return "<SGResidual>"; }
 
-  template<> struct TypeString<SGFadType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGJacobian>()
+  { return "<SGJacobian>"; }
 
-  template<> struct TypeString<MPType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::SGTangent>()
+  { return "<SGTangent>"; }
 
-  template<> struct TypeString<MPFadType>
-  { static const std::string value; };
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPResidual>()
+  { return "<MPResidual>"; }
+
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPJacobian>()
+  { return "<MPJacobian>"; }
+
+  template<> inline std::string typeAsString<PHAL::AlbanyTraits::MPTangent>()
+  { return "<MPTangent>"; }
 #endif //ALBANY_SG_MP
-
 }
 
 // Define macro for explicit template instantiation

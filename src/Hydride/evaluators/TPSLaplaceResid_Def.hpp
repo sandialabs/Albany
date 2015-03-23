@@ -44,7 +44,7 @@ TPSLaplaceResid(const Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layo
   cubature->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("LaplaceResid" + PHX::TypeString<EvalT>::value);
+  this->setName("LaplaceResid" + PHX::typeAsString<EvalT>());
 
 }
 

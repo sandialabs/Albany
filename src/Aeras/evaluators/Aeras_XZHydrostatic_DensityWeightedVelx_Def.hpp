@@ -31,7 +31,7 @@ XZHydrostatic_DensityWeightedVelx(const Teuchos::ParameterList& p,
   this->addDependentField(velx);
 
   this->addEvaluatedField(dvelx);
-  this->setName("Aeras::XZHydrostatic_Density"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::XZHydrostatic_Density" );
 }
 
 //**********************************************************************

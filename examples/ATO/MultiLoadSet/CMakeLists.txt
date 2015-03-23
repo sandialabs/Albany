@@ -1,8 +1,6 @@
 # 
 # 1. Copy input file from source to binary dir
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/element_oc.xml ${CMAKE_CURRENT_BINARY_DIR}/element_oc.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_oc.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal_oc.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/element_nlopt.xml ${CMAKE_CURRENT_BINARY_DIR}/element_nlopt.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/nodal_nlopt.xml ${CMAKE_CURRENT_BINARY_DIR}/nodal_nlopt.xml COPYONLY)
 # 2. Copy mesh files from source to binary dir
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mitchell.gen     ${CMAKE_CURRENT_BINARY_DIR}/mitchell.gen COPYONLY)

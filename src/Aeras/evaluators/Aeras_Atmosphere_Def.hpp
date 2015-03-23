@@ -47,7 +47,7 @@ Atmosphere(Teuchos::ParameterList& p,
   this->addEvaluatedField(ResidualOut);
   this->addEvaluatedField(tracersOld);
   this->addEvaluatedField(tracersNew);
-  this->setName("Aeras::Atmosphere"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::Atmosphere");
 }
 
 // **********************************************************************

@@ -9,6 +9,7 @@
 #include "Teuchos_RCP.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
@@ -39,6 +40,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   //og not used
   //GradBF        (p.get<std::string>  ("Gradient BF Name"),  dl->node_qp_gradient),
   sphere_coord  (p.get<std::string>  ("Spherical Coord Name"), dl->qp_gradient ),
+  lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar), 
+  theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar), 
   gravity (Aeras::ShallowWaterConstants::self().gravity),
   Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.))
 {
@@ -64,6 +67,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   //this->addDependentField(GradBF);
   this->addDependentField(mountainHeight);
   this->addDependentField(sphere_coord);
+  this->addDependentField(lambda_nodal);
+  this->addDependentField(theta_nodal);
   this->addDependentField(source);
 
   this->addDependentField(weighted_measure);
@@ -91,7 +96,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
 
-  this->setName("Aeras::ShallowWaterResid"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::ShallowWaterResid"+PHX::typeAsString<EvalT>());
 
 
   U.fieldTag().dataLayout().dimensions(dims);
@@ -134,6 +139,8 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(mountainHeight,fm);
 
   this->utils.setFieldData(sphere_coord,fm);
+  this->utils.setFieldData(lambda_nodal,fm);
+  this->utils.setFieldData(theta_nodal,fm);
   this->utils.setFieldData(source,fm);
 
   this->utils.setFieldData(weighted_measure, fm);
@@ -150,8 +157,7 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-
-  for (std::size_t i=0; i < Residual.size(); ++i) Residual(i)=0.0;
+  PHAL::set(Residual, 0.0);
 
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);
@@ -188,12 +194,36 @@ evaluateFields(typename Traits::EvalData workset)
     surf.initialize();
     hgradNodes.initialize();
 
+    if (vecDim == 3) {
     for (std::size_t node=0; node < numNodes; ++node) {
       ScalarT surfaceHeight = UNodal(cell,node,0);
       ScalarT ulambda = UNodal(cell, node,1);
       ScalarT utheta  = UNodal(cell, node,2);
       huAtNodes(node,0) = surfaceHeight*ulambda;
       huAtNodes(node,1) = surfaceHeight*utheta;
+    }
+    }
+    else if (vecDim == 1) { //scalar PDE case
+      const double alpha = 1.5707963; //FIXME: have alpha be read from parameter list!  Here it's hard-coded to pi/2;  
+      const double cosAlpha = std::cos(alpha);  
+      const double sinAlpha = std::sin(alpha);
+      const double a = Aeras::ShallowWaterConstants::self().earthRadius;
+      const double myPi = Aeras::ShallowWaterConstants::self().pi;
+      const double u0 = 2*myPi*a/(12.*24.*3600.);
+      for (std::size_t node=0; node < numNodes; ++node) {
+        ScalarT surfaceHeight = UNodal(cell,node,0);
+        //Set ulambda, utheta at nodes from sphere_coord_nodal
+        ScalarT lambda = lambda_nodal(cell, node);
+        ScalarT theta = theta_nodal(cell, node);
+        ScalarT sinLambda = std::sin(lambda);
+        ScalarT cosLambda = std::cos(lambda);
+        ScalarT sinTheta = std::sin(theta);
+        ScalarT cosTheta = std::cos(theta);
+        ScalarT ulambda = u0*(cosTheta*cosAlpha + sinTheta*cosLambda*sinAlpha);
+        ScalarT utheta = -u0*(sinLambda*sinAlpha);
+        huAtNodes(node,0) = surfaceHeight*ulambda;
+        huAtNodes(node,1) = surfaceHeight*utheta;
+      }
     }
     
     for (std::size_t node=0; node < numNodes; ++node) {
@@ -220,6 +250,7 @@ evaluateFields(typename Traits::EvalData workset)
   }
 
 
+  if ( vecDim == 3) {
   // Velocity Equations
   if (usePrescribedVelocity) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -313,6 +344,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+  }
 }
 
 //**********************************************************************
@@ -348,7 +380,7 @@ ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid::FieldContainer<Scala
     vcontra(node, 0 ) = nodal_det_j(node)*(
         jinv00*fieldAtNodes(node, 0) + jinv01*fieldAtNodes(node, 1) );
     vcontra(node, 1 ) = nodal_det_j(node)*(
-        jinv10*fieldAtNodes(node, 0) + jinv11*fieldAtNodes(node, 1) );
+        jinv10*fieldAtNodes(node, 0)+ jinv11*fieldAtNodes(node, 1) );
   }
 
 

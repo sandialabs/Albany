@@ -17,6 +17,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
+#include "Phalanx_TypeStrings.hpp"
 #include "Sacado_ParameterRegistration.hpp" 
 
 #include "Intrepid_FunctionSpaceTools.hpp"
@@ -51,9 +52,9 @@ EpsilonL1L2(const Teuchos::ParameterList& p,
 
   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library"); 
   
-  this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);
+   this->registerSacadoParameter("Glen's Law Homotopy Parameter", paramLib);  
+  this->setName("EpsilonL1L2"+PHX::typeAsString<EvalT>());
  
-  this->setName("EpsilonL1L2"+PHX::TypeString<EvalT>::value);
 }
 
 //**********************************************************************

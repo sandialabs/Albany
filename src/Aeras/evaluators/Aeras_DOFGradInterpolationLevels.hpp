@@ -7,12 +7,13 @@
 #ifndef AERAS_DOFGRAD_INTERPOLATION_LEVELS_HPP
 #define AERAS_DOFGRAD_INTERPOLATION_LEVELS_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 
 #include "Aeras_Layouts.hpp"
+#include "Aeras_Dimension.hpp"
 
 namespace Aeras {
 /** \brief Finite Element Interpolation Evaluator
@@ -43,13 +44,13 @@ private:
 
   // Input:
   //! Values at nodes
-  PHX::MDField<ScalarT,Cell,Node,Node> val_node;
+  PHX::MDField<ScalarT,Cell,Node,Level> val_node;
   //! Basis Functions
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Node,Dim> GradBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
 
   // Output:
   //! Values at quadrature points
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> grad_val_qp;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Level,Dim> grad_val_qp;
 
   const int numNodes;
   const int numDims;

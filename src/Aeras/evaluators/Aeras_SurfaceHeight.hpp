@@ -7,7 +7,7 @@
 #ifndef AERAS_SURFACEHEIGHT_HPP
 #define AERAS_SURFACEHEIGHT_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -59,6 +59,24 @@ private:
 
   enum SURFHEIGHTTYPE {NONE, MOUNTAIN};
   SURFHEIGHTTYPE hs_type;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+  struct SurfaceHeight_Tag{};
+  struct SurfaceHeight_MOUNTAIN_Tag{};
+
+  typedef Kokkos::RangePolicy<ExecutionSpace, SurfaceHeight_Tag> SurfaceHeight_Policy;
+  typedef Kokkos::RangePolicy<ExecutionSpace, SurfaceHeight_MOUNTAIN_Tag> SurfaceHeight_MOUNTAIN_Policy;
+  
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const SurfaceHeight_Tag& tag, const int& i) const;
+
+  KOKKOS_INLINE_FUNCTION
+  void operator() (const SurfaceHeight_MOUNTAIN_Tag& tag, const int& i) const;
+
+
+#endif
  
 };
 

@@ -7,7 +7,7 @@
 #if !defined(LCM_ElastoViscoplasticModel_hpp)
 #define LCM_ElastoViscoplasticModel_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -38,6 +38,12 @@ public:
   using ConstitutiveModel<EvalT, Traits>::heat_capacity_;
   using ConstitutiveModel<EvalT, Traits>::density_;
   using ConstitutiveModel<EvalT, Traits>::temperature_;
+  using ConstitutiveModel<EvalT, Traits>::have_total_concentration_;
+  using ConstitutiveModel<EvalT, Traits>::have_total_bubble_density_;
+  using ConstitutiveModel<EvalT, Traits>::have_bubble_volume_fraction_;
+  using ConstitutiveModel<EvalT, Traits>::total_concentration_;
+  using ConstitutiveModel<EvalT, Traits>::total_bubble_density_;
+  using ConstitutiveModel<EvalT, Traits>::bubble_volume_fraction_;
 
   ///
   /// Constructor
@@ -60,6 +66,15 @@ public:
   computeState(typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields);
+
+  virtual
+  void
+  computeStateParallel(typename Traits::EvalData workset,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields){
+         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+ }
+
 
 private:
 
@@ -94,12 +109,22 @@ private:
   RealType fc_, ff_;
 
   ///
-  /// Yield Parameters
+  /// Gurson yield surface parameters
   ///
   RealType q1_, q2_, q3_;
 
   ///
-  /// Compute Yield Function
+  /// Hydrogen and Helium yield surface parameters
+  ///
+  RealType alpha1_, alpha2_;
+
+  ///
+  /// flag to print convergence
+  ///
+  bool print_;
+
+  ///
+  /// Compute effective void volume fraction
   ///
   template<typename T>
   T

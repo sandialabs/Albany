@@ -50,7 +50,7 @@ HydrideWResid(const Teuchos::ParameterList& p) :
   numQPs  = dims[2];
   numDims = dims[3];
 
-  this->setName("HydrideWResid"+PHX::TypeString<EvalT>::value);
+  this->setName("HydrideWResid"+PHX::typeAsString<EvalT>());
 
 }
 

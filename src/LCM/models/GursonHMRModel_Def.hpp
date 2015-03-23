@@ -178,8 +178,8 @@ computeState(typename Traits::EvalData workset,
   ScalarT norm_residual0(0.0), norm_residual(0.0), relative_residual(0.0);
   LocalNonlinearSolver<EvalT, Traits> solver;
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
+    for (int pt(0); pt < num_pts_; ++pt) {
       kappa = elastic_modulus(cell, pt)
           / (3.0 * (1.0 - 2.0 * poissons_ratio(cell, pt)));
       mu = elastic_modulus(cell, pt)
@@ -189,10 +189,10 @@ computeState(typename Traits::EvalData workset,
       Rd = recovery_modulus(cell, pt);
 
       // fill local tensors
-      F.fill(&def_grad(cell, pt, 0, 0));
-      //Fpn.fill( &Fpold(cell,pt,std::size_t(0),std::size_t(0)) );
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      F.fill(def_grad,cell, pt,0,0);
+      //Fpn.fill( &Fpold(cell,pt,int(0),int(0)) );
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           Fpn(i, j) = static_cast<ScalarT>(Fp_old(cell, pt, i, j));
         }
       }
@@ -309,10 +309,10 @@ computeState(typename Traits::EvalData workset,
 
         expA = Intrepid::exp(dgam * dPhi);
 
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = 0.0;
-            for (std::size_t k(0); k < num_dims_; ++k) {
+            for (int k(0); k < num_dims_; ++k) {
               Fp(cell, pt, i, j) += expA(i, k) * Fpn(k, j);
             }
           }
@@ -331,8 +331,8 @@ computeState(typename Traits::EvalData workset,
         isoHardening(cell, pt) = isoHardening_old(cell, pt);
         void_volume(cell, pt) = void_volume_old(cell, pt);
 
-        for (std::size_t i(0); i < num_dims_; ++i) {
-          for (std::size_t j(0); j < num_dims_; ++j) {
+        for (int i(0); i < num_dims_; ++i) {
+          for (int j(0); j < num_dims_; ++j) {
             Fp(cell, pt, i, j) = Fp_old(cell, pt, i, j);
           }
         }
@@ -342,8 +342,8 @@ computeState(typename Traits::EvalData workset,
       // compute Cauchy stress tensor
       // note that p also has to be divided by J
       // because the one computed from return mapping is the Kirchhoff pressure
-      for (std::size_t i(0); i < num_dims_; ++i) {
-        for (std::size_t j(0); j < num_dims_; ++j) {
+      for (int i(0); i < num_dims_; ++i) {
+        for (int j(0); j < num_dims_; ++j) {
           stress(cell, pt, i, j) = s(i, j) / J(cell, pt);
         }
         stress(cell, pt, i, i) += p / J(cell, pt);
@@ -422,7 +422,7 @@ GursonHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
   // when we initialize Xfad, we only pass in the values of X,
   // NOT the system sensitivity information
   std::vector<ScalarT> Xval(4);
-  for (std::size_t i = 0; i < 4; ++i) {
+  for (int i = 0; i < 4; ++i) {
     Xval[i] = Sacado::ScalarValue<ScalarT>::eval(X[i]);
     Xfad[i] = DFadType(4, i, Xval[i]);
   }
@@ -464,8 +464,8 @@ GursonHMRModel<EvalT, Traits>::ResidualJacobian(std::vector<ScalarT> & X,
 
   // valid for assumption Ntr = N;
   Intrepid::Tensor<DFadType> sfad(num_dims_);
-  for (std::size_t i = 0; i < num_dims_; ++i) {
-    for (std::size_t j = 0; j < num_dims_; ++j) {
+  for (int i = 0; i < num_dims_; ++i) {
+    for (int j = 0; j < num_dims_; ++j) {
       sfad(i, j) = factor * s(i, j);
     }
   }

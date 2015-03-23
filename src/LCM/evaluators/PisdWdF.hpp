@@ -7,7 +7,7 @@
 #ifndef PISDWDF_HPP
 #define PISDWDF_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -55,7 +55,7 @@ private:
   unsigned int numDims;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> P;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> P;
 };
 }
 

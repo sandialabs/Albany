@@ -259,6 +259,18 @@ computeState(typename Traits::EvalData workset,
 
 }
 
+/******************************************************************************/
+template<typename EvalT, typename Traits>
+void J2HMCModel<EvalT, Traits>::
+computeStateParallel(typename Traits::EvalData workset,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+    std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+/******************************************************************************/
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument,
+     ">>> ERROR (J2HMCModel): computeStateParallel not implemented");
+}
+
 
 /******************************************************************************/
 template<typename EvalT, typename Traits>
@@ -325,7 +337,7 @@ void J2HMCModel<EvalT, Traits>::radialReturn( typename Traits::EvalData workset,
     for (std::size_t qp=0; qp < num_pts_; ++qp) {
 
       macroAlpha = current_macroAlpha(cell,qp);
-      elTrialMacroStress.fill( &trial_macroStress(cell,qp,0,0) );
+      elTrialMacroStress.fill(trial_macroStress,(int)cell,(int)qp,0,0);
       for(std::size_t i=0; i<num_dims_; i++)
         for(std::size_t j=0; j<num_dims_; j++)
           macroBackStress(i,j) = current_macroBackStress(cell,qp,i,j);
@@ -855,9 +867,9 @@ computeTrialState( typename Traits::EvalData workset,
     // Compute Stress (plane strain)
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < num_pts_; ++qp) {
-        ScalarT &de1 = delta_macroStrain(cell,qp,0,0), 
-                &de2 = delta_macroStrain(cell,qp,1,1), 
-                &de3 = delta_macroStrain(cell,qp,0,1);
+        const ScalarT &de1 = delta_macroStrain(cell,qp,0,0), 
+                      &de2 = delta_macroStrain(cell,qp,1,1), 
+                      &de3 = delta_macroStrain(cell,qp,0,1);
         ScalarT s1(current_macroStress(cell,qp,zero,zero)),
                 s2(current_macroStress(cell,qp,one ,one )), 
                 s3(current_macroStress(cell,qp,zero,one ));
@@ -874,10 +886,10 @@ computeTrialState( typename Traits::EvalData workset,
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
-          ScalarT& de1 = dsd(cell,qp,0,0), 
-                   de2 = dsd(cell,qp,1,1), 
-                   de3 = dsd(cell,qp,0,1), 
-                   de4 = dsd(cell,qp,1,0);
+          const ScalarT &de1 = dsd(cell,qp,0,0), 
+                        &de2 = dsd(cell,qp,1,1), 
+                        &de3 = dsd(cell,qp,0,1), 
+                        &de4 = dsd(cell,qp,1,0);
           ScalarT s1(current_microStress[i](cell,qp,zero,zero)),
                   s2(current_microStress[i](cell,qp,one ,one )), 
                   s3(current_microStress[i](cell,qp,zero,one )),
@@ -897,10 +909,10 @@ computeTrialState( typename Traits::EvalData workset,
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
           for (std::size_t k=0; k < num_dims_; ++k) {
-            ScalarT& de1 = dmsg(cell,qp,0,0,k), 
-                     de2 = dmsg(cell,qp,1,1,k),
-                     de3 = dmsg(cell,qp,0,1,k), 
-                     de4 = dmsg(cell,qp,1,0,k);
+            const ScalarT &de1 = dmsg(cell,qp,0,0,k), 
+                          &de2 = dmsg(cell,qp,1,1,k),
+                          &de3 = dmsg(cell,qp,0,1,k), 
+                          &de4 = dmsg(cell,qp,1,0,k);
             ScalarT ds1(current_doubleStress[i](cell,qp,zero,zero,k)),
                     ds2(current_doubleStress[i](cell,qp,one ,one ,k)), 
                     ds3(current_doubleStress[i](cell,qp,zero,one ,k)),
@@ -918,12 +930,12 @@ computeTrialState( typename Traits::EvalData workset,
     // Compute Stress
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t qp=0; qp < num_pts_; ++qp) {
-        ScalarT &de1 = delta_macroStrain(cell,qp,0,0), 
-                &de2 = delta_macroStrain(cell,qp,1,1),
-                &de3 = delta_macroStrain(cell,qp,2,2),
-                &de4 = delta_macroStrain(cell,qp,1,2),
-                &de5 = delta_macroStrain(cell,qp,0,2), 
-                &de6 = delta_macroStrain(cell,qp,0,1);
+        const ScalarT &de1 = delta_macroStrain(cell,qp,0,0), 
+                      &de2 = delta_macroStrain(cell,qp,1,1),
+                      &de3 = delta_macroStrain(cell,qp,2,2),
+                      &de4 = delta_macroStrain(cell,qp,1,2),
+                      &de5 = delta_macroStrain(cell,qp,0,2), 
+                      &de6 = delta_macroStrain(cell,qp,0,1);
         ScalarT cms1(current_macroStress(cell,qp,zero,zero)), 
                 cms2(current_macroStress(cell,qp,one ,one )), 
                 cms3(current_macroStress(cell,qp,two ,two )),
@@ -948,9 +960,9 @@ computeTrialState( typename Traits::EvalData workset,
       ScalarT beta = betaParameter[i];
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
-          ScalarT& de1 = dsd(cell,qp,0,0), de2 = dsd(cell,qp,1,1), de3 = dsd(cell,qp,2,2);
-          ScalarT& de4 = dsd(cell,qp,1,2), de5 = dsd(cell,qp,0,2), de6 = dsd(cell,qp,0,1);
-          ScalarT& de7 = dsd(cell,qp,2,1), de8 = dsd(cell,qp,2,0), de9 = dsd(cell,qp,1,0);
+          const ScalarT &de1 = dsd(cell,qp,0,0),&de2 = dsd(cell,qp,1,1),&de3 = dsd(cell,qp,2,2);
+          const ScalarT &de4 = dsd(cell,qp,1,2),&de5 = dsd(cell,qp,0,2),&de6 = dsd(cell,qp,0,1);
+          const ScalarT &de7 = dsd(cell,qp,2,1),&de8 = dsd(cell,qp,2,0),&de9 = dsd(cell,qp,1,0);
           ScalarT cms1(current_microStress[i](cell,qp,zero,zero)), 
                   cms2(current_microStress[i](cell,qp,one ,one )), 
                   cms3(current_microStress[i](cell,qp,two ,two )),
@@ -980,9 +992,9 @@ computeTrialState( typename Traits::EvalData workset,
       for (std::size_t cell=0; cell < numCells; ++cell) {
         for (std::size_t qp=0; qp < num_pts_; ++qp) {
           for (std::size_t k=0; k < num_dims_; ++k) {
-            ScalarT& de1 = dmsg(cell,qp,0,0,k), de2 = dmsg(cell,qp,1,1,k), de3 = dmsg(cell,qp,2,2,k);
-            ScalarT& de4 = dmsg(cell,qp,1,2,k), de5 = dmsg(cell,qp,0,2,k), de6 = dmsg(cell,qp,0,1,k);
-            ScalarT& de7 = dmsg(cell,qp,2,1,k), de8 = dmsg(cell,qp,2,0,k), de9 = dmsg(cell,qp,1,0,k);
+            const ScalarT &de1 = dmsg(cell,qp,0,0,k),&de2 = dmsg(cell,qp,1,1,k),&de3 = dmsg(cell,qp,2,2,k);
+            const ScalarT &de4 = dmsg(cell,qp,1,2,k),&de5 = dmsg(cell,qp,0,2,k),&de6 = dmsg(cell,qp,0,1,k);
+            const ScalarT &de7 = dmsg(cell,qp,2,1,k),&de8 = dmsg(cell,qp,2,0,k),&de9 = dmsg(cell,qp,1,0,k);
             ScalarT cds1(current_doubleStress[i](cell,qp,zero,zero,k)), 
                     cds2(current_doubleStress[i](cell,qp,one ,one ,k)), 
                     cds3(current_doubleStress[i](cell,qp,two ,two ,k)),
@@ -1072,22 +1084,22 @@ computeVolumeAverage(typename Traits::EvalData workset,
 
   ScalarT volume, pbar, p;
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
     volume = pbar = 0.0;
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      sig.fill(&stress(cell,pt,0,0));
+    for (int pt(0); pt < num_pts_; ++pt) {
+      sig.fill(stress,cell,pt,0,0);
       pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
       volume += weights_(cell,pt);
     }
 
     pbar /= volume;
 
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      sig.fill(&stress(cell,pt,0,0));
+    for (int pt(0); pt < num_pts_; ++pt) {
+      sig.fill(stress,cell,pt,0,0);
       p = (1./num_dims_) * Intrepid::trace(sig);
       sig += (pbar - p)*I;
 
-      for (std::size_t i = 0; i < num_dims_; ++i) {
+      for (int i = 0; i < num_dims_; ++i) {
         stress(cell,pt,i,i) = sig(i,i);
       }
     }

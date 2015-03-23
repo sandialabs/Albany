@@ -8,7 +8,7 @@
 #ifndef PHAL_ABSORPTION_HPP
 #define PHAL_ABSORPTION_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -59,7 +59,7 @@ private:
   ScalarT constant_value;
 
   //! Exponential random field
-  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<MeshScalarT> > exp_rf_kl;
+  Teuchos::RCP< Stokhos::KL::ExponentialRandomField<RealType> > exp_rf_kl;
 
   //! Values of the random variables
   Teuchos::Array<ScalarT> rv;

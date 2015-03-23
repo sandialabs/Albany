@@ -63,7 +63,7 @@ ShallowWaterSource(const Teuchos::ParameterList& p,
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2]; //# of dofs/node
 
-  this->setName("ShallowWaterSource"+PHX::TypeString<EvalT>::value);
+  this->setName("ShallowWaterSource"+PHX::typeAsString<EvalT>());
   
   myPi = Aeras::ShallowWaterConstants::self().pi;
   
@@ -185,9 +185,10 @@ evaluateFields(typename Traits::EvalData workset)
 
           ScalarT DMD2CL  = +cos(RLAT0)*cos(RLON-TMSHFT-RLON0)*TMPRY;
 
-        //cond, potential singularity
-          ScalarT PSIB    = ALFA*exp(-SIGMA*((1.0-C )/(1.0+C )));
-        //cond, potential singularity
+          ScalarT PSIB; 
+          if (C == -1) PSIB = 0.0; 
+          else PSIB = ALFA*exp(-SIGMA*((1.0-C )/(1.0+C )));
+
           ScalarT TMP1    = 2.0*SIGMA*PSIB /((1.0 + C )*(1.0 + C));
         
           ScalarT TMP2    = (SIGMA - (1.0 + C ))/((1.0 + C )*(1.0 + C));

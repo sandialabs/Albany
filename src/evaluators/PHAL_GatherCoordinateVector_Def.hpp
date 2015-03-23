@@ -29,7 +29,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
     
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Coordinate Vector" );
 }
 
 template<typename EvalT, typename Traits>
@@ -43,7 +43,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"+PHX::TypeString<EvalT>::value);
+  this->setName("Gather Coordinate Vector" );
 }
 
 // **********************************************************************
@@ -68,6 +68,7 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
   unsigned int numCells = workset.numCells;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > wsCoords = workset.wsCoords;
 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if( dispVecName.is_null() ){
     for (std::size_t cell=0; cell < numCells; ++cell) {
       for (std::size_t node = 0; node < numVertices; ++node) {
@@ -115,8 +116,58 @@ void GatherCoordinateVector<EvalT, Traits>::evaluateFields(typename Traits::Eval
       }
     }
   }
+#else
+ typedef Kokkos::View<MeshScalarT***,PHX::Device> view_type;
+ typedef typename view_type::HostMirror host_view_type;
+  
+ host_view_type coordVecHost = Kokkos::create_mirror_view (coordVec.get_kokkos_view());
+
+  if( dispVecName.is_null() ){
+    for (std::size_t cell=0; cell < numCells; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) {
+          coordVecHost(cell,node,eq) = wsCoords[cell][node][eq];
+        }
+      }
+    }
+
+    for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) {
+          coordVecHost(cell,node,eq) = coordVecHost(0,node,eq);
+        }
+      }
+    }
+  } else {
+    Albany::StateArray::const_iterator it;
+    it = workset.stateArrayPtr->find(*dispVecName);
+
+    TEUCHOS_TEST_FOR_EXCEPTION((it == workset.stateArrayPtr->end()), std::logic_error,
+           std::endl << "Error: cannot locate " << *dispVecName << " in PHAL_GatherCoordinateVector_Def" << std::endl);
+
+    Albany::MDArray dVec = it->second;
+
+    for (std::size_t cell=0; cell < numCells; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) {
+          coordVecHost(cell,node,eq) = wsCoords[cell][node][eq] + dVec(cell,node,eq);
+        }
+      }
+    }
+   for (std::size_t cell=numCells; cell < worksetSize; ++cell) {
+      for (std::size_t node = 0; node < numVertices; ++node) {
+        for (std::size_t eq=0; eq < numDim; ++eq) {
+          coordVecHost(cell,node,eq) = coordVecHost(0,node,eq) + dVec(cell,node,eq);
+        }
+      }
+    }
+  } 
+  Kokkos::deep_copy (coordVec.get_kokkos_view(), coordVecHost);
+
+#endif
 }
 // **********************************************************************
+#ifdef ALBANY_MESH_TANFAD
 template<typename Traits>
 GatherCoordinateVector<PHAL::AlbanyTraits::Tangent, Traits>::
 GatherCoordinateVector(const Teuchos::ParameterList& p,
@@ -128,8 +179,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"
-                +PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value);
+  this->setName("Gather Coordinate Vector Tangent");
 }
 
 template<typename Traits>
@@ -143,8 +193,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p) :
   else periodic = false;
 
   this->addEvaluatedField(coordVec);
-  this->setName("Gather Coordinate Vector"
-                +PHX::TypeString<PHAL::AlbanyTraits::Tangent>::value);
+  this->setName("Gather Coordinate Vector  Tangent");
 }
 
 // **********************************************************************
@@ -199,4 +248,5 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 }
+#endif
 }

@@ -47,7 +47,7 @@ NonlinearPoissonAdjoint(const Teuchos::ParameterList& p,
   num_qps_      = dims[2];
   num_dims_     = dims[3];
 
-  this->setName("NonlinearPoissonAdjoint"+PHX::TypeString<EvalT>::value);
+  this->setName("NonlinearPoissonAdjoint"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

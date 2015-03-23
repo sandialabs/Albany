@@ -21,7 +21,10 @@ ConstitutiveModel(Teuchos::ParameterList* p,
     compute_tangent_(false),
     need_integration_pt_locations_(false),
     have_temperature_(false),
-    have_damage_(false)
+    have_damage_(false),
+    have_total_concentration_(false),
+    have_total_bubble_density_(false),
+    have_bubble_volume_fraction_(false)
 {
   // extract number of integration points and dimensions
   std::vector<PHX::DataLayout::size_type> dims;
@@ -46,7 +49,152 @@ ConstitutiveModel(Teuchos::ParameterList* p,
       have_damage_ = true;
     }
   }
+
+  if (p->isType<bool>("Have Total Concentration")) {
+    if (p->get<bool>("Have Total Concentration")) {
+      have_total_concentration_ = true;
+    }
+  }
+
+  if (p->isType<bool>("Have Total Bubble Density")) {
+    if (p->get<bool>("Have Total Bubble Density")) {
+      have_total_bubble_density_ = true;
+    }
+  }
+
+  if (p->isType<bool>("Have Bubble Volume Fraction")) {
+    if (p->get<bool>("Have Bubble Volume Fraction")) {
+      have_bubble_volume_fraction_ = true;
+    }
+  }
 }
+//------------------------------------------------------------------------------
+////Kokkos Kernel for computeVolumeAverage
+template < typename ScalarT, class ArrayStress, class ArrayWeights, class ArrayJ >
+class computeVolumeAverageKernel {
+ ArrayStress stress;
+ const ArrayWeights weights_;
+ const ArrayJ j_;
+ int num_pts_, num_dims_; 
+
+
+ public:
+ typedef PHX::Device device_type;
+
+ computeVolumeAverageKernel( ArrayStress &stress_,
+                             const ArrayWeights &weights,
+                             const ArrayJ &j,
+                             const int num_pts,
+                             const int num_dims)
+                           : stress(stress_)
+                           , weights_(weights)
+                           , j_(j)
+                           , num_pts_(num_pts)
+                           , num_dims_(num_dims){}
+ 
+ KOKKOS_INLINE_FUNCTION
+ void operator () (const int cell) const
+ {
+#ifndef PHX_KOKKOS_DEVICE_TYPE_CUDA
+    ScalarT volume, pbar, p;
+    Intrepid::Tensor<ScalarT> sig(num_dims_);
+    Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
+
+    volume = pbar = 0.0;
+
+    for (int pt(0); pt < num_pts_; ++pt) {
+
+     for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig(i,j)=stress(cell,pt,i,j);
+
+      pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
+      volume += weights_(cell,pt) * j_(cell,pt);
+    }
+
+    pbar /= volume;
+
+    for (int pt(0); pt < num_pts_; ++pt) {
+ 
+     for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig(i,j)=stress(cell,pt,i,j);     
+
+      p = (1./num_dims_) * Intrepid::trace(sig);
+      sig += (pbar - p)*I;
+
+      for (int i = 0; i < num_dims_; ++i) {
+        stress(cell,pt,i,i) = sig(i,i);
+      }
+    }
+#else
+  ScalarT volume, pbar, p;
+    ScalarT sig[3][3];
+    ScalarT I[3][3];
+ 
+    ScalarT trace_sig=0.0;   
+
+    if (num_dims_>3) 
+          Kokkos::abort( "Error: ConstitutiveModel::computeVolumeAverage: size of temorary array is smaller then it should be"); 
+ 
+   for (int i=0; i<num_dims_; i++){
+      for (int j=0; j<num_dims_; j++){
+        I[i][j]=ScalarT(0.0);  
+        if (i==j)
+           I[i][j]=ScalarT(1.0);
+      }
+   }
+
+    volume =0.0;
+     pbar = 0.0;
+
+    for (int pt(0); pt < num_pts_; ++pt) {
+
+     for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig[i][j]=stress(cell,pt,i,j);
+
+      trace_sig=0.0;
+
+     for (int i = 0; i < num_dims_; ++i) {
+        trace_sig += sig[i][i];
+
+
+      pbar += weights_(cell,pt) * (1./num_dims_) * trace_sig;
+      volume += weights_(cell,pt) * j_(cell,pt);
+    }
+   }
+
+    pbar /= volume;
+
+    for (int pt(0); pt < num_pts_; ++pt) {
+ 
+     for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig[i][j]=stress(cell,pt,i,j);     
+      
+      
+      trace_sig=0.0;
+
+      for (int i = 0; i < num_dims_; ++i) {
+        trace_sig += sig[i][i];
+
+      p = (1./num_dims_) * trace_sig;
+     
+      for (int i = 0; i < num_dims_; ++i)
+       for (int j = 0; j < num_dims_; ++j)
+         sig[i][j]+=(pbar - p)*I[i][j];
+      //sig += (pbar - p)*I;
+
+      for (int i = 0; i < num_dims_; ++i) {
+        stress(cell,pt,i,i) = sig[i][i];
+      }
+    }
+
+ }
+#endif
+}
+};
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void ConstitutiveModel<EvalT, Traits>::
@@ -54,34 +202,38 @@ computeVolumeAverage(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
-  Intrepid::Tensor<ScalarT> sig(num_dims_);
-  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
   std::string cauchy = (*field_name_map_)["Cauchy_Stress"];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy];
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  Intrepid::Tensor<ScalarT> sig(num_dims_);
+  Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(num_dims_));
 
   ScalarT volume, pbar, p;
 
-  for (std::size_t cell(0); cell < workset.numCells; ++cell) {
+  for (int cell(0); cell < workset.numCells; ++cell) {
     volume = pbar = 0.0;
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      sig.fill(&stress(cell,pt,0,0));
+    for (int pt(0); pt < num_pts_; ++pt) {
+      sig.fill(stress,cell,pt,0,0);
       pbar += weights_(cell,pt) * (1./num_dims_) * Intrepid::trace(sig);
       volume += weights_(cell,pt) * j_(cell,pt);
     }
 
     pbar /= volume;
 
-    for (std::size_t pt(0); pt < num_pts_; ++pt) {
-      sig.fill(&stress(cell,pt,0,0));
+    for (int pt(0); pt < num_pts_; ++pt) {
+      sig.fill(stress,cell,pt,0,0);
       p = (1./num_dims_) * Intrepid::trace(sig);
       sig += (pbar - p)*I;
 
-      for (std::size_t i = 0; i < num_dims_; ++i) {
+      for (int i = 0; i < num_dims_; ++i) {
         stress(cell,pt,i,i) = sig(i,i);
       }
     }
   }
+#else
+  Kokkos::parallel_for(workset.numCells, computeVolumeAverageKernel<ScalarT, PHX::MDField<ScalarT>, PHX::MDField<MeshScalarT, Cell, QuadPoint>, PHX::MDField<ScalarT, Cell, QuadPoint> >(stress, weights_, j_, num_pts_, num_dims_));
+#endif
 }
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>

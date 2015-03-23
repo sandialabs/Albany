@@ -21,10 +21,12 @@ if [ ! $error == "NONE" ]; then
 fi
 
 if [ ! -d Trilinos ]; then
-  git clone https://github.com/trilinos/trilinos.git Trilinos
+  git clone git@github.com:trilinos/trilinos.git Trilinos
+  #git clone https://github.com/trilinos/trilinos.git Trilinos
 fi
 if [ ! -d Albany ]; then
-  git clone https://github.com/gahansen/Albany.git Albany
+  git clone git@github.com:gahansen/Albany.git Albany
+  #git clone https://github.com/gahansen/Albany.git Albany
 fi
 
 cp Albany/doc/LCM/build/*.sh .
@@ -59,8 +61,30 @@ for target in trilinos albany; do
  dir=${target}-build-${toolchain}-${buildtype}
  if [ ! -d $dir ]; then
    echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
-   ./clean-config-build.sh trilinos gcc debug $NP >& trilinos_build.log
+   ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
  else 
    echo "!!! $dir exists !!!"
  fi
 done
+
+if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
+  echo "=== build successful ==="
+else
+  echo "!!! unsuccessful build, see logs !!!"
+fi
+
+echo "to ensure proper git behavior as a developer/commiter add the following to your .gitconfig:"
+echo " \
+[branch]
+        autosetuprebase = always
+[color]
+        ui = true
+[core]
+        whitespace = -trailing-space,-space-before-tab
+        preloadingindex = true
+        preloadindex = true
+
+[branch \"master\"]
+        rebase = true
+"
+

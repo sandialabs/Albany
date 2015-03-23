@@ -341,6 +341,8 @@ Albany::EvaluatorUtils<EvalT,Traits>::constructComputeBasisFunctionsEvaluator(
     // Outputs: BF, weightBF, Grad BF, weighted-Grad BF, all in physical space
     p->set<string>("Weights Name",          "Weights");
     p->set<string>("Jacobian Det Name",          "Jacobian Det");
+    p->set<string>("Jacobian Name",          "Jacobian");
+    p->set<string>("Jacobian Inv Name",          "Jacobian Inv");
     p->set<string>("BF Name",          "BF");
     p->set<string>("Weighted BF Name", "wBF");
  

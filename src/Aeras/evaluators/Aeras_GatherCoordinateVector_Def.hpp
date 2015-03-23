@@ -20,7 +20,7 @@ GatherCoordinateVector(const Teuchos::ParameterList& p,
   numNodes(0), numCoords(0), worksetSize(0)
 {  
   this->addEvaluatedField(coordVec);
-  this->setName("Aeras::GatherCoordinateVector"+PHX::TypeString<EvalT>::value);
+  this->setName("Aeras::GatherCoordinateVector" );
 }
 
 // **********************************************************************

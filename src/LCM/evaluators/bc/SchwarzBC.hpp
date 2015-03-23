@@ -9,7 +9,7 @@
 #if !defined(LCM_SchwarzBC_hpp)
 #define LCM_SchwarzBC_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -26,7 +26,7 @@
 namespace LCM {
 
 //
-// \brief Torsion BC Dirichlet evaluator
+// \brief Schwarz for blocks BC Dirichlet evaluator
 //
 
 //

@@ -7,7 +7,7 @@
 #ifndef AERAS_GATHER_RESIDUAL_HPP
 #define AERAS_GATHER_RESIDUAL_HPP
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
@@ -44,7 +44,7 @@ public:
   
 protected:
   Teuchos::RCP<PHX::FieldTag> scatter_operation;
-  std::vector< PHX::MDField<ScalarT,Cell,Node> > val;
+  std::vector< PHX::MDField<ScalarT> > val;
   const int numNodes;
   const int numDims;
   const int numLevels;

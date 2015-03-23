@@ -8,11 +8,12 @@
 #define ATO_Optimizer_HPP
 
 #include "Albany_StateManager.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "ATO_TopoTools.hpp"
 
 #include <string>
 #include <vector>
 
-#include "Teuchos_ParameterList.hpp"
 
 #ifdef ATO_USES_NLOPT
 #include "nlopt.h"
@@ -47,8 +48,9 @@ class Optimizer
   Teuchos::RCP<const Epetra_Comm> comm;
 
   Teuchos::RCP<ConvergenceTest> convergenceChecker;
+  Teuchos::RCP<Topology> topology;
 
-  int    _optMaxIter;
+  int    _nIterations;
 
 };
 
@@ -71,7 +73,6 @@ class Optimizer_OC : public Optimizer {
 
   double _volConvTol;
   double _volMaxIter;
-  double _minDensity;
   double _initLambda;
   double _moveLimit;
   double _stabExponent;
@@ -126,10 +127,12 @@ class ConvergenceTest {
 
     bool isConverged( double delta_f, double delta_p, int iter, int myPID = -1);
     void initNorm(double f, double p);
+    int getMaxIterations(){return maxIterations;}
 
   private:
 
     int maxIterations;
+    int minIterations;
 
     enum ComboType {AND, OR};
 

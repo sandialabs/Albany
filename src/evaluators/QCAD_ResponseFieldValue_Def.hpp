@@ -51,7 +51,7 @@ postEvaluate(typename Traits::PostEvalData workset)
 
     // Loop over responses
     for (int res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->global_response(this->field_components[res]);
+     // ScalarT& val = this->global_response(this->field_components[res]);
 
       // Loop over nodes in cell
       for (int node_dof=0; node_dof<numNodes; node_dof++) {
@@ -67,7 +67,7 @@ postEvaluate(typename Traits::PostEvalData workset)
           int dof = nodeID[node_dof][eq_dof];
 
           // Set dg/dx
-          overlapped_dgT->replaceLocalValue(dof, res, val.dx(deriv));
+          overlapped_dgT->replaceLocalValue(dof, res, (this->global_response(this->field_components[res])).dx(deriv));
 
         } // column equations
       } // column nodes
@@ -383,7 +383,7 @@ ResponseFieldValue(Teuchos::ParameterList& p,
     true, Teuchos::Exceptions::InvalidParameter, std::endl
     << "Error!  Invalid operation type " << operation << std::endl);
 
-  this->setName(opFieldName+" Response Field Value"+PHX::TypeString<EvalT>::value);
+  this->setName(opFieldName+" Response Field Value" );
 
   // Setup scatter evaluator
   std::string global_response_name =
@@ -535,9 +535,11 @@ postEvaluate(typename Traits::PostEvalData workset)
     workset.serializerManager.template getValue<EvalT>();
 
   // Compute contributions across processors
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, reductType, 1,
-    &this->global_response[indexToMax], &max);
+//Irina TOFIX reduceAll
+TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
+//  Teuchos::reduceAll<int, ScalarT>(
+//    *workset.comm, *serializer, reductType, 1,
+//    &this->global_response[indexToMax], &max);
 
   int procToBcast;
   if( this->global_response[indexToMax] == max )
@@ -545,11 +547,13 @@ postEvaluate(typename Traits::PostEvalData workset)
   else procToBcast = -1;
 
   int winner;
-  Teuchos::reduceAll(
-    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
-  Teuchos::broadcast(
-    *workset.comm, *serializer, winner, this->global_response.size(),
-    &this->global_response[0]);
+
+//Irina TOFIX reduceAll
+//  Teuchos::reduceAll(
+//    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
+//  Teuchos::broadcast<int, ScalarT>(
+//    *workset.comm, *serializer, winner, this->global_response.size(),
+//    &this->global_response[0]);
 
   // Do global scattering
   if (workset.comm->getRank() == winner)

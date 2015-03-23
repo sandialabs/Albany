@@ -32,7 +32,7 @@ NonlinearPoissonSource(const Teuchos::ParameterList& p,
   workset_size_ = dims[0];
   num_qps_      = dims[1];
 
-  this->setName("NonlinearPoissonSource"+PHX::TypeString<EvalT>::value);
+  this->setName("NonlinearPoissonSource"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************
@@ -55,9 +55,8 @@ evaluateFields(typename Traits::EvalData workset)
   // source function
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
     for (std::size_t qp = 0; qp < num_qps_; ++qp) {
-      MeshScalarT* X = &coord_(cell,qp,0);
       source_(cell,qp) =
-        -2.0 * X[0];
+        -2.0 * coord_(cell,qp,0);
     }
   }
 

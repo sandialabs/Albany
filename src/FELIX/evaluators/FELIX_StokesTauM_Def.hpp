@@ -6,7 +6,7 @@
 
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
-
+#include "Phalanx_TypeStrings.hpp"
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace FELIX {
@@ -43,7 +43,7 @@ StokesTauM(const Teuchos::ParameterList& p,
   // Allocate workspace
   normGc.resize(dims[0], numQPs);
 
-  this->setName("StokesTauM"+PHX::TypeString<EvalT>::value);
+  this->setName("StokesTauM"+PHX::typeAsString<EvalT>());
 }
 
 //**********************************************************************

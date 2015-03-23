@@ -24,7 +24,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFVecInterpolation"+PHX::TypeString<EvalT>::value);
+  this->setName("DOFVecInterpolation" );
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -44,25 +44,68 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(val_qp,fm);
 }
+//**********************************************************************
+//Kokkos kernel for Residual
+template <class DeviceType, class MDFieldType1, class MDFieldType2, class MDFieldType3 >
+class VecInterpolation {
+ MDFieldType1  BF_;
+ MDFieldType2  val_node_;
+ MDFieldType3 U_;
+ const int numQPs_;
+ const int numNodes_;
+ const int vecDims_;
+
+ public:
+ typedef DeviceType device_type;
+
+ VecInterpolation ( MDFieldType1  &BF,
+                    MDFieldType2  &val_node,
+                    MDFieldType3 &U,
+                    int numQPs,
+                    int numNodes,
+                    int vecDims)
+  : BF_(BF)
+  , val_node_(val_node)
+  , U_(U)
+  , numQPs_(numQPs)
+  , numNodes_(numNodes)
+  , vecDims_(vecDims){}
+
+ KOKKOS_INLINE_FUNCTION
+ void operator () (const int i) const
+ {
+   for (int qp=0; qp < numQPs_; ++qp) {
+      for (int vec=0; vec<vecDims_; vec++) {
+      U_(i,qp,vec) = val_node_(i, 0, vec) * BF_(i, 0, qp);
+        for (int node=1; node < numNodes_; ++node) {
+        U_(i,qp,vec) += val_node_(i, node, vec) * BF_(i, node, qp);
+        }
+      }
+    }
+   }
+};
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void DOFVecInterpolation<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
         // Zero out for node==0; then += for node = 1 to numNodes
-        ScalarT& vqp = val_qp(cell,qp,i);
-        vqp = val_node(cell, 0, i) * BF(cell, 0, qp);
+        val_qp(cell,qp,i) = val_node(cell, 0, i) * BF(cell, 0, qp);
         for (std::size_t node=1; node < numNodes; ++node) {
-          vqp += val_node(cell, node, i) * BF(cell, node, qp);
+          val_qp(cell,qp,i) += val_node(cell, node, i) * BF(cell, node, qp);
         } 
       } 
     } 
   }
 //  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+#else
+   Kokkos::parallel_for ( workset.numCells,  VecInterpolation <  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numQPs, numNodes, vecDim));
+#endif
 }
 
 //**********************************************************************
@@ -78,7 +121,7 @@ DOFVecInterpolation(const Teuchos::ParameterList& p,
   this->addDependentField(BF);
   this->addEvaluatedField(val_qp);
 
-  this->setName("DOFVecInterpolation"+PHX::TypeString<PHAL::AlbanyTraits::Jacobian>::value);
+  this->setName("DOFVecInterpolation Jacobian");
   std::vector<PHX::DataLayout::size_type> dims;
   BF.fieldTag().dataLayout().dimensions(dims);
   numNodes = dims[1];
@@ -100,6 +143,55 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(BF,fm);
   this->utils.setFieldData(val_qp,fm);
 }
+//**********************************************************************
+//Kokkos kernel for Jacobian
+template <typename FadType, class Device, class MDFieldType, class MDFieldTypeFad1, class MDFieldTypeFad2>
+class VecInterpolationJacob {
+ MDFieldType  BF_;
+ MDFieldTypeFad1  val_node_;
+ MDFieldTypeFad2 U_;
+ const int numNodes_;
+ const int numQPs_;
+ const int vecDims_;
+ const int num_dof_;
+ const int offset_; 
+
+ public:
+ typedef Device device_type;
+
+ VecInterpolationJacob ( MDFieldType  &BF,
+                         MDFieldTypeFad1  &val_node,
+                         MDFieldTypeFad2 &U,
+                         int numNodes,
+                         int numQPs,
+                         int vecDims,
+                         int num_dof,
+                         int offset)
+  : BF_(BF)
+  , val_node_(val_node)
+  , U_(U)
+  , numNodes_(numNodes)
+  , numQPs_(numQPs)
+  , vecDims_(vecDims)
+  , num_dof_(num_dof)
+  , offset_(offset){}
+
+ KOKKOS_INLINE_FUNCTION
+ void operator () (const int i) const
+ {
+   const int neq = num_dof_ / numNodes_;
+   for (int qp=0; qp < numQPs_; ++qp) {
+      for (int vec=0; vec<vecDims_; vec++) {
+           U_(i,qp,vec) = FadType(num_dof_, val_node_(i, 0, vec).val() * BF_(i, 0, qp));
+          (U_(i,qp,vec)).fastAccessDx(offset_+vec) = val_node_(i, 0, vec).fastAccessDx(offset_+vec) * BF_(i, 0, qp);
+           for (int node=1; node < numNodes_; ++node) {
+            (U_(i,qp,vec)).val() += val_node_(i, node, vec).val() * BF_(i, node, qp);
+            (U_(i,qp,vec)).fastAccessDx(neq*node+offset_+vec) += val_node_(i, node, vec).fastAccessDx(neq*node+offset_+vec) * BF_(i, node, qp);
+           }
+      }
+    }
+   }
+};
 
 //**********************************************************************
 template<typename Traits>
@@ -107,22 +199,26 @@ void DOFVecInterpolation<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   int num_dof = val_node(0,0,0).size();
-  int neq = num_dof / numNodes; 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  const int neq = workset.wsElNodeEqID[0][0].size();
 
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
     for (std::size_t qp=0; qp < numQPs; ++qp) {
       for (std::size_t i=0; i<vecDim; i++) {
         // Zero out for node==0; then += for node = 1 to numNodes
-        ScalarT& vqp = val_qp(cell,qp,i);
-	vqp = FadType(num_dof, val_node(cell, 0, i).val() * BF(cell, 0, qp));
-        vqp.fastAccessDx(offset+i) = val_node(cell, 0, i).fastAccessDx(offset+i) * BF(cell, 0, qp);
+	val_qp(cell,qp,i) = FadType(num_dof, val_node(cell, 0, i).val() * BF(cell, 0, qp));
+        (val_qp(cell,qp,i)).fastAccessDx(offset+i) = val_node(cell, 0, i).fastAccessDx(offset+i) * BF(cell, 0, qp);
         for (std::size_t node=1; node < numNodes; ++node) {
-          vqp.val() += val_node(cell, node, i).val() * BF(cell, node, qp);
-          vqp.fastAccessDx(neq*node+offset+i) += val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * BF(cell, node, qp);
+          (val_qp(cell,qp,i)).val() += val_node(cell, node, i).val() * BF(cell, node, qp);
+          (val_qp(cell,qp,i)).fastAccessDx(neq*node+offset+i) += val_node(cell, node, i).fastAccessDx(neq*node+offset+i) * BF(cell, node, qp);
         } 
       } 
     } 
   }
-//  Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+//Intrepid::FunctionSpaceTools::evaluate<ScalarT>(val_qp, val_node, BF);
+#else
+  Kokkos::parallel_for ( workset.numCells,  VecInterpolationJacob <FadType,  PHX::Device,  PHX::MDField<RealType,Cell,Node,QuadPoint>, PHX::MDField<ScalarT,Cell,Node,VecDim>, PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> >(BF, val_node, val_qp, numNodes, numQPs, vecDim, num_dof, offset));
+#endif
+
 }
 }

@@ -17,7 +17,7 @@ SaveCellStateField<EvalT, Traits>::
 SaveCellStateField(const Teuchos::ParameterList& p)
 {
   // States Not Saved for Generic Type, only Specializations
-  this->setName("Save Cell State Field"+PHX::TypeString<EvalT>::value);
+  this->setName("Save Cell State Field");
 }
 
 // **********************************************************************
@@ -59,8 +59,7 @@ SaveCellStateField(const Teuchos::ParameterList& p) :
   this->addDependentField(field);
   this->addEvaluatedField(*savestate_operation);
 
-  this->setName("Save Field " + fieldName +" to Cell State " + stateName
-                + PHX::TypeString<PHAL::AlbanyTraits::Residual>::value);
+  this->setName("Save Field " + fieldName +" to Cell State " + stateName + "Residual");
 }
 
 // **********************************************************************

@@ -71,7 +71,7 @@ SchrodingerResid(const Teuchos::ParameterList& p,
 
   this->addEvaluatedField(psiResidual);
   
-  this->setName("SchrodingerResid"+PHX::TypeString<EvalT>::value);
+  this->setName( "SchrodingerResid" + PHX::typeAsString<EvalT>() );
 }
 
 
@@ -116,7 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
         { 
           for (std::size_t qp = 0; qp < numQPs; ++qp) 
           {
-            invEffMass = hbar2_over_2m0 * getInvEffMass1DMosCap(&coordVec(cell,qp,0));
+            invEffMass = hbar2_over_2m0 * getInvEffMass1DMosCap(coordVec(cell,qp,0));
             for (std::size_t dim = 0; dim < numDims; ++dim)
               psiGradWithMass(cell,qp,dim) = invEffMass * psiGrad(cell,qp,dim);
           }  
@@ -195,7 +195,7 @@ evaluateFields(typename Traits::EvalData workset)
       { 
         for (std::size_t qp = 0; qp < numQPs; ++qp) 
         {
-          invEffMass = hbar2_over_2m0 * getInvEffMassFiniteWall(&coordVec(cell,qp,0));
+          invEffMass = hbar2_over_2m0 * getInvEffMassFiniteWall(coordVec,cell,qp);
           for (std::size_t dim = 0; dim < numDims; ++dim)
             psiGradWithMass(cell,qp,dim) = invEffMass * psiGrad(cell,qp,dim);
         }  
@@ -282,14 +282,16 @@ evaluateFields(typename Traits::EvalData workset)
 
 // **********************************************************************
 template<typename EvalT, typename Traits> double
-QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMassFiniteWall(const MeshScalarT* coord)
+QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMassFiniteWall(
+  const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> & coord,
+  const int cell, const int qp )
 {
   double effMass; 
   switch (numDims) 
   {
     case 1:  // 1D
     {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) )
+      if ( (coord(cell,qp,0) >= barrWidth) && (coord(cell,qp,0) <= (barrWidth+wellWidth)) )
         effMass = wellEffMass;  // well
       else
         effMass = barrEffMass;  // barrier
@@ -297,8 +299,8 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMassFiniteWall(const MeshScalarT
     }
     case 2:  // 2D
     {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
-         (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) )
+      if ( (coord(cell,qp,0) >= barrWidth) && (coord(cell,qp,0) <= (barrWidth+wellWidth)) &&
+         (coord(cell,qp,1) >= barrWidth) && (coord(cell,qp,1) <= (barrWidth+wellWidth)) )
         effMass = wellEffMass;  
       else
         effMass = barrEffMass;
@@ -306,9 +308,9 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMassFiniteWall(const MeshScalarT
     }
     case 3:  // 3D
     {
-      if ( (coord[0] >= barrWidth) && (coord[0] <= (barrWidth+wellWidth)) &&
-         (coord[1] >= barrWidth) && (coord[1] <= (barrWidth+wellWidth)) && 
-         (coord[2] >= barrWidth) && (coord[2] <= (barrWidth+wellWidth)) )
+      if ( (coord(cell,qp,0) >= barrWidth) && (coord(cell,qp,0) <= (barrWidth+wellWidth)) &&
+         (coord(cell,qp,1) >= barrWidth) && (coord(cell,qp,1) <= (barrWidth+wellWidth)) && 
+         (coord(cell,qp,2) >= barrWidth) && (coord(cell,qp,2) <= (barrWidth+wellWidth)) )
          
         effMass = wellEffMass;   
       else
@@ -328,22 +330,22 @@ QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMassFiniteWall(const MeshScalarT
 
 // **********************************************************************
 template<typename EvalT, typename Traits> double
-QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass1DMosCap(const MeshScalarT* coord)
+QCAD::SchrodingerResid<EvalT, Traits>::getInvEffMass1DMosCap(const MeshScalarT coord0)
 {
   double effMass; 
   
   // Oxide region
-  if ((coord[0] >= 0) && (coord[0] <= oxideWidth))  
+  if ((coord0 >= 0) && (coord0 <= oxideWidth))  
     effMass = materialDB->getMaterialParam<double>("SiliconDioxide","Longitudinal Electron Effective Mass",1.0);
     
   // Silicon region
-  else if ((coord[0] > oxideWidth) && (coord[0] <= oxideWidth+siliconWidth))  
+  else if ((coord0 > oxideWidth) && (coord0 <= oxideWidth+siliconWidth))  
     effMass = materialDB->getMaterialParam<double>("Silicon","Longitudinal Electron Effective Mass",1.0);
    
   else
   {
    TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameter,
-	     std::endl << "Error!  x-coord:" << coord[0] << "is outside the oxideWidth" << 
+	     std::endl << "Error!  x-coord:" << coord0 << "is outside the oxideWidth" << 
 	     " + siliconWidth range: " << oxideWidth + siliconWidth << "!"<< std::endl);
   }
   

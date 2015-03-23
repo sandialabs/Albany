@@ -57,7 +57,7 @@ HydrideCResid(const Teuchos::ParameterList& p) :
 
   gamma_term.resize(worksetSize, numQPs, numDims);
 
-  this->setName("HydrideCResid"+PHX::TypeString<EvalT>::value);
+  this->setName("HydrideCResid"+PHX::typeAsString<EvalT>());
 
 }
 
