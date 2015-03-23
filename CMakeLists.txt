@@ -95,6 +95,11 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE STATIC)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
+IF(NOT BUILD_SHARED_LIBS) 
+  MESSAGE("-- Building Albany with static libraries")
+ENDIF(NOT BUILD_SHARED_LIBS)
+  
+
 # End of setup and error checking
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
