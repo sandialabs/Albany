@@ -95,9 +95,10 @@ ELSE(Trilinos_BUILD_SHARED_LIBS)
   SET(Albany_LIBRARY_TYPE STATIC)
 ENDIF(Trilinos_BUILD_SHARED_LIBS)
 
-IF(NOT BUILD_SHARED_LIBS) 
-  MESSAGE("-- Building Albany with static libraries")
-ENDIF(NOT BUILD_SHARED_LIBS)
+OPTION(Albany_BUILD_STATIC_EXE "Flag to turn on building of static executables in Albany" OFF)
+IF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE)) 
+  MESSAGE("-- Building Albany with static executables")
+ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
   
 
 # End of setup and error checking
