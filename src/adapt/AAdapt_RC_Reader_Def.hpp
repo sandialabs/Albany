@@ -78,11 +78,11 @@ evaluateFields (typename Traits::EvalData workset) {
   // EvalT other than Residual, for otherwise the interpolated values won't be
   // available.
   if (this->rc_mgr_->usingProjection()) {
-    this->rc_mgr_->beginQpInterp(workset, bf_, wbf_);
+    this->rc_mgr_->beginQpInterp();
     for (typename ReaderBase<PHAL::AlbanyTraits::Residual, Traits>::
            FieldsIterator it = this->fields_.begin();
          it != this->fields_.end(); ++it)
-      this->rc_mgr_->interpQpField(*it, workset, bf_, wbf_);
+      this->rc_mgr_->interpQpField(*it, workset, bf_);
     this->rc_mgr_->endQpInterp();
   }
   ReaderBase<PHAL::AlbanyTraits::Residual, Traits>::evaluateFields(workset);

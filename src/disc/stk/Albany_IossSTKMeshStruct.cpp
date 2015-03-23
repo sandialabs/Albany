@@ -99,6 +99,8 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   // Create input mesh 
 
   mesh_data->set_rank_name_vector(entity_rank_names);
+  mesh_data->set_sideset_face_creation_behavior(stk::io::StkMeshIoBroker::STK_IO_SIDESET_FACE_CREATION_CLASSIC);
+  //StkMeshIoBroker::set_sideset_face_creation_behavior(stk::io::StkMeshIoBroker::STK_IO_SIDESET_FACE_CREATION_CLASSIC);
   std::string mesh_type;
   std::string file_name;
   if (!usePamgen) {

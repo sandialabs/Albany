@@ -200,6 +200,7 @@ IF (LCM_TEST_EXES)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(NodeUpdate test/utils/NodeUpdate.cc)
   add_executable(PartitionTest test/utils/PartitionTest.cc)
+  add_executable(BifurcationTest test/utils/BifurcationTest.cc)
   add_executable(Subdivision test/utils/Subdivision.cc)
   add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cc)
   add_executable(MinSurfaceOutput test/utils/MinSurfaceOutput.cc)
@@ -235,6 +236,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -255,6 +257,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -278,6 +281,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -298,6 +302,7 @@ IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_MultiSTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_OrdinarySTKFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_TmplSTKMeshStruct.cpp
+    	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeSharing.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKDiscretization.cpp
     	  ${Albany_SOURCE_DIR}/src/disc/stk/Albany_STKNodeFieldContainer.cpp
     	  ${Albany_SOURCE_DIR}/src/problems/QCAD_MaterialDatabase.cpp
@@ -342,6 +347,7 @@ IF (LCM_TEST_EXES)
   target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(BifurcationTest ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(MinSurfaceMPS ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(MinSurfaceOutput ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})

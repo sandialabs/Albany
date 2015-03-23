@@ -8,7 +8,6 @@ fi
 # Trilinos configuration script
 
 cmake \
- -D CMAKE_BUILD_TYPE:STRING="build_type" \
  -D ALBANY_TRILINOS_DIR:FILEPATH=install_dir \
  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
  -D ENABLE_LCM:BOOL=ON \

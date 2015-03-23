@@ -233,22 +233,26 @@ int main(int argc, char *argv[]) {
           for (int j=0; j<num_p; j++) {
             const RCP<const Epetra_MultiVector> dgdp = sensitivities[i][j];
             if (Teuchos::nonnull(dgdp)) {
-              if(j < num_param_vecs)
+              if(j < num_param_vecs) {
                 dgdp->Print(*out << "\nSensitivities (" << i << "," << j << "): \n");
+                status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
+              }
               else {
+                const Epetra_Map serial_map(-1, 1, 0, dgdp.get()->Comm());
+                Epetra_MultiVector norms(serial_map,dgdp->NumVectors());
               //  RCP<Albany::ScalarResponseFunction> response = rcp_dynamic_cast<Albany::ScalarResponseFunction>(app->getResponse(i));
                // int numResponses = response->numResponses();
                 *out << "\nSensitivities (" << i << "," << j  << ") for Distributed Parameters:  (two-norm)\n";
                 *out << "    ";
                 for(int ir=0; ir<dgdp->NumVectors(); ++ir) {
                   (*dgdp)(ir)->Norm2(&norm2);
+                  (*norms(ir))[0] = norm2;
                   *out << "    " << norm2;
                 }
                 *out << "\n" << std::endl;
+                status += slvrfctry.checkSolveTestResults(i, j, g.get(), &norms);
               }
             }
-
-            status += slvrfctry.checkSolveTestResults(i, j, g.get(), dgdp.get());
           }
         }
       }

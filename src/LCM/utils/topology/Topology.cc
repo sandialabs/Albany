@@ -746,6 +746,72 @@ Topology::getBoundary()
   return connectivity;
 }
 
+///
+/// Compute normal using first 3 nodes of boundary entity.
+///
+Intrepid::Vector<double>
+Topology::get_normal(stk::mesh::Entity boundary_entity)
+{
+  shards::CellTopology const
+  cell_topology = get_cell_topology();
+
+  stk::mesh::EntityRank const
+  boundary_rank = get_bulk_data().entity_rank(boundary_entity);
+
+  stk::mesh::ConnectivityOrdinal const *
+  ords = get_bulk_data().begin_element_ordinals(boundary_entity);
+
+  EdgeId const
+  face_order = ords[0];
+
+  RelationVectorIndex const
+  num_corner_nodes = cell_topology.getVertexCount(boundary_rank, face_order);
+
+  assert(num_corner_nodes >= 3);
+
+  size_t const
+  dimension = get_space_dimension();
+
+  std::vector<Intrepid::Vector<double> >
+  nodal_coords(num_corner_nodes);
+
+  stk::mesh::EntityVector
+  nodes = getBoundaryEntityNodes(boundary_entity);
+
+  VectorFieldType &
+  coordinates = *(get_stk_mesh_struct()->getCoordinatesField());
+
+  for (EntityVectorIndex i = 0; i < num_corner_nodes; ++i) {
+
+    stk::mesh::Entity
+    node = nodes[i];
+
+    double const * const
+    pointer_coordinates = stk::mesh::field_data(coordinates, node);
+
+    Intrepid::Vector<double> &
+    X = nodal_coords[i];
+
+    X.set_dimension(dimension);
+
+    for (size_t j = 0; j < dimension; ++j) {
+      X(j) = pointer_coordinates[j];
+    }
+
+  }
+
+  Intrepid::Vector<double> const
+  v1 = nodal_coords[1] - nodal_coords[0];
+
+  Intrepid::Vector<double> const
+  v2 = nodal_coords[2] - nodal_coords[0];
+
+  Intrepid::Vector<double>
+  normal = Intrepid::unit(Intrepid::cross(v1, v2));
+
+  return normal;
+}
+
 //
 // Create cohesive connectivity
 //
@@ -754,21 +820,105 @@ Topology::createSurfaceElementConnectivity(
     stk::mesh::Entity face_top,
     stk::mesh::Entity face_bottom)
 {
-  stk::mesh::EntityVector
-  top = getBoundaryEntityNodes(face_top);
+  // Check first if normals point in the same direction, just in case.
+  Intrepid::Vector<double> const
+  normal_top = get_normal(face_top);
+
+  Intrepid::Vector<double> const
+  normal_bottom = get_normal(face_bottom);
+
+  if (Intrepid::dot(normal_top, normal_bottom) > 0.0) {
+    std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+    std::cerr << '\n';
+    std::cerr << "Face normals have the same instead of opposite directions:\n";
+    std::cerr << "Normal top    :" << normal_top << '\n';
+    std::cerr << "Normal bottom :" << normal_bottom << '\n';
+    std::cerr << '\n';
+    exit(1);
+  }
 
   stk::mesh::EntityVector
-  bottom = getBoundaryEntityNodes(face_bottom);
+  nodes_top = getBoundaryEntityNodes(face_top);
+
+  EntityVectorIndex const
+  num_top = nodes_top.size();
 
   stk::mesh::EntityVector
-  both;
+  nodes_bottom = getBoundaryEntityNodes(face_bottom);
 
-  both.reserve(top.size() + bottom.size());
+  EntityVectorIndex const
+  num_bottom = nodes_bottom.size();
 
-  both.insert(both.end(), top.begin(), top.end());
-  both.insert(both.end(), bottom.rbegin(), bottom.rend());
+  assert(num_top == num_bottom);
 
-  return both;
+  stk::mesh::EntityVector
+  reordered;
+
+  // Ensure that the order of the bottom nodes is the same as the top ones.
+  VectorFieldType &
+  coordinates = *(get_stk_mesh_struct()->getCoordinatesField());
+
+  size_t const
+  dimension = get_space_dimension();
+
+  for (EntityVectorIndex i = 0; i < num_top; ++i) {
+    stk::mesh::Entity
+    node_top = nodes_top[i];
+
+    double const * const
+    p_top = stk::mesh::field_data(coordinates, node_top);
+
+    Intrepid::Vector<double>
+    X(dimension);
+
+    for (size_t n = 0; n < dimension; ++n) {
+      X(n) = p_top[n];
+    }
+
+    bool
+    found = false;
+
+    for (EntityVectorIndex j = 0; j < num_bottom; ++j) {
+      stk::mesh::Entity
+      node_bottom = nodes_bottom[j];
+
+      double const * const
+      p_bottom = stk::mesh::field_data(coordinates, node_bottom);
+
+      Intrepid::Vector<double>
+      Y(dimension);
+
+      for (size_t n = 0; n < dimension; ++n) {
+        Y(n) = p_bottom[n];
+      }
+
+      if (X == Y) {
+        reordered.push_back(node_bottom);
+        found = true;
+        break;
+      }
+
+    }
+
+    if (found == false) {
+      std::cerr << "ERROR: " << __PRETTY_FUNCTION__;
+      std::cerr << '\n';
+      std::cerr << "Nodes on top and bottom faces do not match.";
+      std::cerr << '\n';
+      exit(1);
+    }
+
+  }
+
+  stk::mesh::EntityVector
+  nodes;
+
+  nodes.reserve(nodes_top.size() + nodes_bottom.size());
+
+  nodes.insert(nodes.end(), nodes_top.begin(), nodes_top.end());
+  nodes.insert(nodes.end(), reordered.begin(), reordered.end());
+
+  return nodes;
 }
 
 //
@@ -862,6 +1012,19 @@ Topology::splitOpenFaces()
     }
   }
 
+#if defined(DEBUG_LCM_TOPOLOGY)
+  {
+    std::string const
+    file_name = LCM::parallelize_string("before") + ".dot";
+
+    outputToGraphviz(file_name);
+
+    std::string const
+    boundary_filename = LCM::parallelize_string("before") + ".vtk";
+    outputBoundary(boundary_filename);
+  }
+#endif // DEBUG_LCM_TOPOLOGY
+
   bulk_data.modification_begin();
 
   // Iterate over open points and fracture them.
@@ -905,8 +1068,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name = "graph-pre-segment-" + entity_string(get_topology(), point) +
-        ".dot";
+      file_name = LCM::parallelize_string("graph-pre-segment-" +
+          entity_string(get_topology(), point)) + ".dot";
 
       outputToGraphviz(file_name);
     }
@@ -947,8 +1110,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name = "graph-pre-clone-" +
-        entity_string(get_topology(), segment) + ".dot";
+        file_name = LCM::parallelize_string("graph-pre-clone-" +
+        entity_string(get_topology(), segment)) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1017,8 +1180,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name = "graph-pre-split-" +
-          entity_string(get_topology(), segment) + ".dot";
+        file_name = LCM::parallelize_string("graph-pre-split-" +
+          entity_string(get_topology(), segment)) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1033,8 +1196,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
       {
         std::string const
-        file_name = "graph-post-split-" +
-          entity_string(get_topology(), segment) + ".dot";
+        file_name = LCM::parallelize_string("graph-post-split-" +
+          entity_string(get_topology(), segment)) + ".dot";
 
         outputToGraphviz(file_name);
         segment_star.outputToGraphviz("sub" + file_name);
@@ -1075,8 +1238,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name = "graph-pre-split-" + entity_string(get_topology(), point) +
-        ".dot";
+      file_name = LCM::parallelize_string("graph-pre-split-" +
+          entity_string(get_topology(), point)) +".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1092,8 +1255,8 @@ Topology::splitOpenFaces()
 #if defined(DEBUG_LCM_TOPOLOGY)
     {
       std::string const
-      file_name = "graph-post-split-" + entity_string(get_topology(), point) +
-        ".dot";
+      file_name = LCM::parallelize_string("graph-post-split-" +
+          entity_string(get_topology(), point)) + ".dot";
 
       outputToGraphviz(file_name);
       point_star.outputToGraphviz("sub" + file_name);
@@ -1116,12 +1279,12 @@ Topology::splitOpenFaces()
   bulk_data.modification_end();
 
 #if defined(DEBUG_LCM_TOPOLOGY)
-    {
-      std::string const
-      file_name = "graph-pre-surface-elements.dot";
+  {
+    std::string const
+    file_name = LCM::parallelize_string("graph-pre-surface-elements.dot");
 
-      outputToGraphviz(file_name);
-    }
+    outputToGraphviz(file_name);
+  }
 #endif // DEBUG_LCM_TOPOLOGY
 
   bulk_data.modification_begin();
@@ -1181,6 +1344,20 @@ Topology::splitOpenFaces()
 
   Albany::fix_node_sharing(bulk_data);
   bulk_data.modification_end();
+
+#if defined(DEBUG_LCM_TOPOLOGY)
+  {
+    std::string const
+    file_name = LCM::parallelize_string("after") + ".dot";
+
+    outputToGraphviz(file_name);
+
+    std::string const
+    boundary_filename = LCM::parallelize_string("after") + ".vtk";
+    outputBoundary(boundary_filename);
+  }
+#endif // DEBUG_LCM_TOPOLOGY
+
   return;
 }
 

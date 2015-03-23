@@ -57,7 +57,7 @@ protected:
   std::vector<std::string> lamentMaterialModelStateVariableNames;
 
   // Vector of the fields corresponding to the LAMENT material model state variables
-  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> > lamentMaterialModelStateVariableFields;
+  std::vector< PHX::MDField<ScalarT,Cell,QuadPoint> > lamentMaterialModelStateVariableFields;
 };
 
 }

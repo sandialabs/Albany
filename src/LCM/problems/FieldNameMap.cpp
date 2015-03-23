@@ -37,6 +37,8 @@ namespace LCM {
     name_map->insert( std::make_pair("F","F") );
     name_map->insert( std::make_pair("J","J") );
     name_map->insert( std::make_pair("Velocity_Gradient","Velocity_Gradient") );
+    // Crystal-plasticity model
+    name_map->insert( std::make_pair("gammas","gammas") );
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );

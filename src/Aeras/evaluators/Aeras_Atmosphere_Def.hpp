@@ -69,11 +69,36 @@ void Atmosphere<EvalT, Traits>::postRegistrationSetup(typename Traits::SetupData
   numNodes = dims[1];
   numCoords = dims[2];
 }
+// **********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//Kokkos kernels
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Atmosphere<EvalT, Traits>::
+operator() (const Atmosphere_Tag& tag, const int& cell) const{
 
+  for (int node=0; node < numNodes; ++node) {
+      ResidualOut(cell,node,0) = ResidualIn(cell,node,0);
+      ResidualOut(cell,node,1) = ResidualIn(cell,node,1);
+      ResidualOut(cell,node,2) = ResidualIn(cell,node,2);
+    }
+
+  for (int node = 0; node < numNodes; ++node) {
+      for (int t=0; t < numTracers; ++t) {
+        for (int l=1; l < numLevels-1; ++l) {
+          tracersNew(cell,node,t,l) = tracersOld(cell,node,t,l);
+        }
+      }
+    }
+
+}
+
+#endif
 // **********************************************************************
 template<typename EvalT, typename Traits>
 void Atmosphere<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset)
 { 
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   unsigned int numCells = workset.numCells;
 
   for (std::size_t cell=0; cell < numCells; ++cell) {
@@ -97,5 +122,10 @@ void Atmosphere<EvalT, Traits>::evaluateFields(typename Traits::EvalData workset
   }
   // Copy New to Old for next iteration.
   tracersOld = tracersNew;
+#else
+   
+   Kokkos::parallel_for(Atmosphere_Policy(0,workset.numCells),*this);
+#endif
+
 }
 }

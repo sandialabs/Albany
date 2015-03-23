@@ -283,10 +283,7 @@ AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::setField(
-    const char* name,
-    const ST* data,
-    bool overlapped,
-    int offset)
+  const char* name, const ST* data, bool overlapped, int offset, int nentries)
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::Field* f = m->findField(name);
@@ -300,7 +297,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(
       if ( ! m->isOwned(node.entity)) continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    int firstDOF = getDOF(node_lid,offset);
+    int firstDOF = getDOF(node_lid,offset,nentries);
     apf::setComponents(f,node.entity,node.node,&(data[firstDOF]));
   }
   if ( ! overlapped)
@@ -324,10 +321,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string
 
 template<class Output>
 void AlbPUMI::FMDBDiscretization<Output>::getField(
-    const char* name,
-    ST* data,
-    bool overlapped,
-    int offset) const
+  const char* name, ST* data, bool overlapped, int offset, int nentries) const
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::Field* f = m->findField(name);
@@ -342,7 +336,7 @@ void AlbPUMI::FMDBDiscretization<Output>::getField(
         continue;
       node_lid = node_mapT->getLocalElement(node_gid);
     }
-    int firstDOF = getDOF(node_lid,offset);
+    int firstDOF = getDOF(node_lid,offset,nentries);
     apf::getComponents(f,node.entity,node.node,&(data[firstDOF]));
   }
 }
@@ -450,6 +444,16 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
 
   meshOutput.writeFile(time_label);
 
+  removeQPStatesFromAPF();
+}
+
+template<class Output> void AlbPUMI::FMDBDiscretization<Output>::
+writeMeshDebug (const std::string& filename) {
+  apf::Field* f;
+  apf::FieldShape* fs = apf::getIPShape(getNumDim(),
+                                        fmdbMeshStruct->cubatureDegree);
+  copyQPStatesToAPF(f, fs, true);
+  apf::writeVtkFiles(filename.c_str(), getFMDBMeshStruct()->getMesh());
   removeQPStatesFromAPF();
 }
 

@@ -1,3 +1,2 @@
 MAILTO=""
 00 00 * * * /projects/AppComp/nightly/cee-compute011/nightly_cron_script.sh
-
