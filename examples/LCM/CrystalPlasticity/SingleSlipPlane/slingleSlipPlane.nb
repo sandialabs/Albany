@@ -1,0 +1,630 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     21268,        621]
+NotebookOptionsPosition[     19344,        547]
+NotebookOutlinePosition[     19758,        565]
+CellTagsIndexPosition[     19715,        562]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Testing singleSlipPlane.xml", "Title",
+ CellChangeTimes->{{3.6361189492461967`*^9, 3.636118963678875*^9}}],
+
+Cell["\<\
+The goal of this test is to examine slip planes that are both parallel and at \
+some angle (45 degrees) to the loading. In this notebook, we examine slip \
+along a plane that is rotated to the global axes. We seek to determine if the \
+character of Fp is aligned with our implementation. We recently found a bug \
+in the transformation matrix (orientation) in the crystal plasticity \
+implementation. This notebook verifies the current implementation for the \
+character of Fp.
+
+<ParameterList name=\[CloseCurlyDoubleQuote]Forty Five Degree Rotated Lattice\
+\[CloseCurlyDoubleQuote]>
+
+      <ParameterList name=\[CloseCurlyDoubleQuote]Material Model\
+\[CloseCurlyDoubleQuote]>
+        <Parameter name=\[CloseCurlyDoubleQuote]Model Name\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]string\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]CrystalPlasticity\
+\[CloseCurlyDoubleQuote]/>
+      </ParameterList>
+
+      <!-- Crystal Elasticity moduli and orientation -->
+      <ParameterList name=\[CloseCurlyDoubleQuote]Crystal Elasticity\
+\[CloseCurlyDoubleQuote]>
+        <Parameter name=\[CloseCurlyDoubleQuote]C11\[CloseCurlyDoubleQuote] \
+type=\[CloseCurlyDoubleQuote]double\[CloseCurlyDoubleQuote] value=\
+\[CloseCurlyDoubleQuote]168.4\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]C12\[CloseCurlyDoubleQuote] \
+type=\[CloseCurlyDoubleQuote]double\[CloseCurlyDoubleQuote] value=\
+\[CloseCurlyDoubleQuote]121.4\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]C44\[CloseCurlyDoubleQuote] \
+type=\[CloseCurlyDoubleQuote]double\[CloseCurlyDoubleQuote] value=\
+\[CloseCurlyDoubleQuote]75.4\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Basis Vector 1\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]Array(double)\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]{ 0.707106781186548, \
+0.707106781186548, 0.0}\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Basis Vector 2\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]Array(double)\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]{-0.707106781186548, \
+0.707106781186548, 0.0}\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Basis Vector 3\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]Array(double)\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]{ 0.0,               \
+0.0,               1.0}\[CloseCurlyDoubleQuote]/>
+      </ParameterList>
+
+      <!-- Crystal Plasticity Slip System -->
+      <Parameter name=\[CloseCurlyDoubleQuote]Number of Slip Systems\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]int\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]1\
+\[CloseCurlyDoubleQuote]/>
+      <ParameterList name=\[CloseCurlyDoubleQuote]Slip System 1\
+\[CloseCurlyDoubleQuote]>
+        <Parameter name=\[CloseCurlyDoubleQuote]Slip Direction\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]Array(double)\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]{1.0, 0.0, 0.0}\
+\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Slip Normal\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]Array(double)\
+\[CloseCurlyDoubleQuote]    value=\[CloseCurlyDoubleQuote]{0.0, 1.0, 0.0}\
+\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Tau Critical\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]double\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]0.6\
+\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Gamma Dot\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]double\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]1.0\
+\[CloseCurlyDoubleQuote]/>
+        <Parameter name=\[CloseCurlyDoubleQuote]Gamma Exponent\
+\[CloseCurlyDoubleQuote] type=\[CloseCurlyDoubleQuote]double\
+\[CloseCurlyDoubleQuote] value=\[CloseCurlyDoubleQuote]1.0\
+\[CloseCurlyDoubleQuote]/>
+      </ParameterList>\
+\>", "Text",
+ CellChangeTimes->{{3.63611897049667*^9, 3.636119037134677*^9}, {
+  3.636119106848078*^9, 3.6361193524250603`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell["State basis for material coordinate system", "Section",
+ CellChangeTimes->{{3.636115656444985*^9, 3.63611566587757*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"basis", " ", "=", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"1", "/", 
+        RowBox[{"Sqrt", "[", "2", "]"}]}], ",", 
+       RowBox[{"1", "/", 
+        RowBox[{"Sqrt", "[", "2", "]"}]}], ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"-", "1"}], "/", 
+        RowBox[{"Sqrt", "[", "2", "]"}]}], ",", 
+       RowBox[{"1", "/", 
+        RowBox[{"Sqrt", "[", "2", "]"}]}], ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0", ",", "1"}], "}"}]}], "}"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"MatrixForm", "[", "basis", "]"}]}], "Input",
+ CellChangeTimes->{{3.635784340407304*^9, 3.63578435781531*^9}, {
+  3.635784457588296*^9, 3.635784500330946*^9}, {3.6357845565701323`*^9, 
+  3.635784557065155*^9}, {3.635789784140518*^9, 3.6357898296984463`*^9}, {
+  3.6361157939188967`*^9, 3.6361157985727787`*^9}, {3.636116105443042*^9, 
+  3.636116106067108*^9}}],
+
+Cell[BoxData[
+ TagBox[
+  RowBox[{"(", "\[NoBreak]", GridBox[{
+     {
+      FractionBox["1", 
+       SqrtBox["2"]], 
+      FractionBox["1", 
+       SqrtBox["2"]], "0"},
+     {
+      RowBox[{"-", 
+       FractionBox["1", 
+        SqrtBox["2"]]}], 
+      FractionBox["1", 
+       SqrtBox["2"]], "0"},
+     {"0", "0", "1"}
+    },
+    GridBoxAlignment->{
+     "Columns" -> {{Center}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+      "RowsIndexed" -> {}},
+    GridBoxSpacings->{"Columns" -> {
+        Offset[0.27999999999999997`], {
+         Offset[0.7]}, 
+        Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+        Offset[0.2], {
+         Offset[0.4]}, 
+        Offset[0.2]}, "RowsIndexed" -> {}}], "\[NoBreak]", ")"}],
+  Function[BoxForm`e$, 
+   MatrixForm[BoxForm`e$]]]], "Output",
+ CellChangeTimes->{3.635789830484313*^9, 3.636115799113171*^9, 
+  3.636116106806777*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Derive direction cosine matrix for coordinate transformations\
+\>", "Section",
+ CellChangeTimes->{{3.63611567454386*^9, 3.636115699865148*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"orientation", " ", "=", " ", 
+   RowBox[{"Transpose", "[", "basis", "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"MatrixForm", "[", "orientation", "]"}]}], "Input",
+ CellChangeTimes->{{3.6357898374565477`*^9, 3.635789860216152*^9}}],
+
+Cell[BoxData[
+ TagBox[
+  RowBox[{"(", "\[NoBreak]", GridBox[{
+     {
+      FractionBox["1", 
+       SqrtBox["2"]], 
+      RowBox[{"-", 
+       FractionBox["1", 
+        SqrtBox["2"]]}], "0"},
+     {
+      FractionBox["1", 
+       SqrtBox["2"]], 
+      FractionBox["1", 
+       SqrtBox["2"]], "0"},
+     {"0", "0", "1"}
+    },
+    GridBoxAlignment->{
+     "Columns" -> {{Center}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+      "RowsIndexed" -> {}},
+    GridBoxSpacings->{"Columns" -> {
+        Offset[0.27999999999999997`], {
+         Offset[0.7]}, 
+        Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+        Offset[0.2], {
+         Offset[0.4]}, 
+        Offset[0.2]}, "RowsIndexed" -> {}}], "\[NoBreak]", ")"}],
+  Function[BoxForm`e$, 
+   MatrixForm[BoxForm`e$]]]], "Output",
+ CellChangeTimes->{{3.635789847348274*^9, 3.635789860660206*^9}, 
+   3.6361158045958767`*^9, 3.63611610886032*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Transform slip and normal directions to global coordinate system\
+\>", "Section",
+ CellChangeTimes->{{3.63611572098882*^9, 3.636115740973625*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{"slipdirectionGlobal", " ", "=", " ", 
+  RowBox[{"orientation", " ", ".", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", "1", "}"}], ",", 
+     RowBox[{"{", "0", "}"}], ",", 
+     RowBox[{"{", "0", "}"}]}], "}"}]}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"slipnormalGlobal", " ", "=", " ", 
+   RowBox[{"orientation", " ", ".", " ", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", "0", "}"}], ",", 
+      RowBox[{"{", "1", "}"}], ",", 
+      RowBox[{"{", "0", "}"}]}], "}"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"MatrixForm", "[", "slipdirectionGlobal", 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"MatrixForm", "[", "slipnormalGlobal", "]"}]}], "Input",
+ CellChangeTimes->{{3.6357898885624933`*^9, 3.635789987508301*^9}, {
+   3.635790034022601*^9, 3.635790036266567*^9}, {3.635790093410112*^9, 
+   3.635790152246921*^9}, {3.6357901977299633`*^9, 3.63579023102853*^9}, {
+   3.63579232958016*^9, 3.635792330369482*^9}, {3.636115705443233*^9, 
+   3.636115713141172*^9}, 3.6361157466677637`*^9, {3.636115809095271*^9, 
+   3.636115844770842*^9}, 3.63611602149758*^9}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    FractionBox["1", 
+     SqrtBox["2"]], "}"}], ",", 
+   RowBox[{"{", 
+    FractionBox["1", 
+     SqrtBox["2"]], "}"}], ",", 
+   RowBox[{"{", "0", "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{{3.63611582726954*^9, 3.636115845237455*^9}, 
+   3.636116022038638*^9, 3.636116110926087*^9}],
+
+Cell[BoxData[
+ TagBox[
+  RowBox[{"(", "\[NoBreak]", GridBox[{
+     {
+      FractionBox["1", 
+       SqrtBox["2"]]},
+     {
+      FractionBox["1", 
+       SqrtBox["2"]]},
+     {"0"}
+    },
+    GridBoxAlignment->{
+     "Columns" -> {{Center}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+      "RowsIndexed" -> {}},
+    GridBoxSpacings->{"Columns" -> {
+        Offset[0.27999999999999997`], {
+         Offset[0.7]}, 
+        Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+        Offset[0.2], {
+         Offset[0.4]}, 
+        Offset[0.2]}, "RowsIndexed" -> {}}], "\[NoBreak]", ")"}],
+  Function[BoxForm`e$, 
+   MatrixForm[BoxForm`e$]]]], "Output",
+ CellChangeTimes->{{3.63611582726954*^9, 3.636115845237455*^9}, 
+   3.636116022038638*^9, 3.6361161109293547`*^9}],
+
+Cell[BoxData[
+ TagBox[
+  RowBox[{"(", "\[NoBreak]", GridBox[{
+     {
+      RowBox[{"-", 
+       FractionBox["1", 
+        SqrtBox["2"]]}]},
+     {
+      FractionBox["1", 
+       SqrtBox["2"]]},
+     {"0"}
+    },
+    GridBoxAlignment->{
+     "Columns" -> {{Center}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+      "RowsIndexed" -> {}},
+    GridBoxSpacings->{"Columns" -> {
+        Offset[0.27999999999999997`], {
+         Offset[0.7]}, 
+        Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+        Offset[0.2], {
+         Offset[0.4]}, 
+        Offset[0.2]}, "RowsIndexed" -> {}}], "\[NoBreak]", ")"}],
+  Function[BoxForm`e$, 
+   MatrixForm[BoxForm`e$]]]], "Output",
+ CellChangeTimes->{{3.63611582726954*^9, 3.636115845237455*^9}, 
+   3.636116022038638*^9, 3.636116110932304*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Create Schmid tensor", "Section",
+ CellChangeTimes->{{3.636115755920566*^9, 3.636115768736586*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"projection", " ", "=", 
+   RowBox[{"Outer", "[", 
+    RowBox[{"Times", ",", 
+     RowBox[{
+      RowBox[{"Transpose", "[", "slipdirectionGlobal", "]"}], "[", 
+      RowBox[{"[", "1", "]"}], "]"}], ",", 
+     RowBox[{
+      RowBox[{"Transpose", "[", "slipnormalGlobal", "]"}], "[", 
+      RowBox[{"[", "1", "]"}], "]"}]}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"MatrixForm", "[", "projection", "]"}]}], "Input",
+ CellChangeTimes->{{3.6357898885624933`*^9, 3.635789987508301*^9}, {
+  3.635790034022601*^9, 3.635790036266567*^9}, {3.635790093410112*^9, 
+  3.635790152246921*^9}, {3.6357901977299633`*^9, 3.63579023102853*^9}, {
+  3.63579232958016*^9, 3.635792330369482*^9}, {3.636115705443233*^9, 
+  3.636115713141172*^9}, {3.636115885861971*^9, 3.636115900031671*^9}, {
+  3.636115950146565*^9, 3.636115955121624*^9}, {3.636115996435721*^9, 
+  3.63611600338275*^9}, {3.6361160783565807`*^9, 3.636116083051546*^9}, {
+  3.636116177687525*^9, 3.636116178057152*^9}}],
+
+Cell[BoxData[
+ TagBox[
+  RowBox[{"(", "\[NoBreak]", GridBox[{
+     {
+      RowBox[{"-", 
+       FractionBox["1", "2"]}], 
+      FractionBox["1", "2"], "0"},
+     {
+      RowBox[{"-", 
+       FractionBox["1", "2"]}], 
+      FractionBox["1", "2"], "0"},
+     {"0", "0", "0"}
+    },
+    GridBoxAlignment->{
+     "Columns" -> {{Center}}, "ColumnsIndexed" -> {}, "Rows" -> {{Baseline}}, 
+      "RowsIndexed" -> {}},
+    GridBoxSpacings->{"Columns" -> {
+        Offset[0.27999999999999997`], {
+         Offset[0.7]}, 
+        Offset[0.27999999999999997`]}, "ColumnsIndexed" -> {}, "Rows" -> {
+        Offset[0.2], {
+         Offset[0.4]}, 
+        Offset[0.2]}, "RowsIndexed" -> {}}], "\[NoBreak]", ")"}],
+  Function[BoxForm`e$, 
+   MatrixForm[BoxForm`e$]]]], "Output",
+ CellChangeTimes->{
+  3.6357899210051928`*^9, 3.6357899736958437`*^9, 3.6357901218945436`*^9, 
+   3.6357901526931343`*^9, {3.6357902099024267`*^9, 3.635790231489285*^9}, 
+   3.635792330883422*^9, 3.6361159007351837`*^9, 3.636116006825554*^9, 
+   3.63611608359979*^9, 3.636116123270599*^9, 3.636116179681477*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Define velocity gradient Lp_{n+1}", "Section",
+ CellChangeTimes->{{3.636116743658478*^9, 3.636116750585844*^9}, {
+  3.636117194121257*^9, 3.636117197154028*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Lpnplus1", " ", "=", " ", 
+  RowBox[{"gammaDot", "*", "projection"}]}]], "Input",
+ CellChangeTimes->{{3.6361167587833548`*^9, 3.6361168320779133`*^9}, {
+  3.636116894374782*^9, 3.636116900266634*^9}, {3.636116935628626*^9, 
+  3.636116935838599*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", 
+      FractionBox["gammaDot", "2"]}], ",", 
+     FractionBox["gammaDot", "2"], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", 
+      FractionBox["gammaDot", "2"]}], ",", 
+     FractionBox["gammaDot", "2"], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"0", ",", "0", ",", "0"}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{3.636116789793144*^9, 3.636116837999879*^9, 
+  3.636116901190708*^9, 3.636116936706259*^9, 3.63611699997303*^9, 
+  3.636117071336665*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Find Fp_{n+1} through exponential map, Fp_{n} = Identity", "Section",
+ CellChangeTimes->{{3.636116716031857*^9, 3.636116725303093*^9}, {
+  3.636117201050562*^9, 3.636117213707531*^9}}],
+
+Cell["This is the form of Fp. ", "Text",
+ CellChangeTimes->{{3.6361174050010138`*^9, 3.6361174122168617`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Fpnplus1", " ", "=", " ", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"MatrixExp", "[", 
+     RowBox[{"\[CapitalDelta]t", "*", "Lpnplus1"}], "]"}], " ", ".", " ", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"1", ",", "0", ",", "0"}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"0", ",", "1", ",", "0"}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"0", ",", "0", ",", "1"}], "}"}]}], "}"}]}], " ", "/.", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"\[CapitalDelta]t", "*", "gammaDot"}], " ", "\[Rule]", " ", 
+     "\[CapitalDelta]\[Gamma]"}], "}"}]}]}]], "Input",
+ CellChangeTimes->{{3.636116669411125*^9, 3.6361166880119467`*^9}, {
+  3.636116847215077*^9, 3.636116860734631*^9}, {3.636116908136538*^9, 
+  3.636117182116485*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"1", "-", 
+      FractionBox["\[CapitalDelta]\[Gamma]", "2"]}], ",", 
+     FractionBox["\[CapitalDelta]\[Gamma]", "2"], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", 
+      FractionBox["\[CapitalDelta]\[Gamma]", "2"]}], ",", 
+     RowBox[{"1", "+", 
+      FractionBox["\[CapitalDelta]\[Gamma]", "2"]}], ",", "0"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"0", ",", "0", ",", "1"}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.636116688553294*^9, 3.6361169512473097`*^9, {3.636116988899475*^9, 
+   3.636117004761634*^9}, {3.636117058470402*^9, 3.636117138418666*^9}, 
+   3.636117182825782*^9}]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Results from LCM", "Section",
+ CellChangeTimes->{{3.636117466072069*^9, 3.636117468678815*^9}}],
+
+Cell["\<\
+Given the resulting Fpnplus1 from the entire simulation, we can determine if \
+the derived Fp is consistent with the implementation. Because there is only \
+one slip system, we can assume that that the load will not be shed to other \
+slip systems. Consequently, we can do this in a single increment. Because the \
+norm of the difference is machine precision, we have confidence. \
+\>", "Text",
+ CellChangeTimes->{{3.636118651294278*^9, 3.636118803421626*^9}, {
+  3.636119397071035*^9, 3.6361194286166553`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FpLCM", " ", "=", " ", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"1.010351560423953", ",", 
+       RowBox[{"-", "0.01035156042395333"}], ",", "0"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0.01035156042395335", ",", "0.9896484395760466", ",", "0"}], 
+      "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"0", ",", "0", ",", "1"}], "}"}]}], "}"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.636117474011942*^9, 3.6361175454718447`*^9}, {
+  3.636118469234164*^9, 3.636118584342914*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"deltaGammaEval", " ", "=", " ", 
+   RowBox[{
+    RowBox[{"Solve", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{
+        RowBox[{"Fpnplus1", "[", 
+         RowBox[{"[", 
+          RowBox[{"1", ",", "1"}], "]"}], "]"}], " ", "-", " ", 
+        RowBox[{"FpLCM", "[", 
+         RowBox[{"[", 
+          RowBox[{"1", ",", "1"}], "]"}], "]"}]}], " ", "\[Equal]", "0"}], 
+      ",", " ", "\[CapitalDelta]\[Gamma]"}], "]"}], "[", 
+    RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Fpnplus1Eval", " ", "=", " ", 
+   RowBox[{"Fpnplus1", " ", "/.", " ", "deltaGammaEval"}]}], " ", 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.6361175605545588`*^9, 3.636117625952382*^9}, {
+  3.636117659636813*^9, 3.636117667660636*^9}, {3.6361186131873703`*^9, 
+  3.636118618730239*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Norm", "[", 
+  RowBox[{"Fpnplus1Eval", " ", "-", " ", "FpLCM"}], "]"}]], "Input",
+ CellChangeTimes->{{3.636117675581787*^9, 3.636117694631619*^9}, {
+  3.636118601737297*^9, 3.636118640662601*^9}}],
+
+Cell[BoxData["5.268793484635817`*^-16"], "Output",
+ CellChangeTimes->{
+  3.636117695304344*^9, 3.636118594396905*^9, {3.63611863202309*^9, 
+   3.6361186411035347`*^9}}]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1089, 888},
+WindowMargins->{{Automatic, 690}, {160, Automatic}},
+PrintingCopies->1,
+PrintingPageRange->{1, Automatic},
+FrontEndVersion->"10.0 for Mac OS X x86 (32-bit, 64-bit Kernel) (December 4, \
+2014)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 112, 1, 92, "Title"],
+Cell[695, 25, 4098, 76, 562, "Text"],
+Cell[CellGroupData[{
+Cell[4818, 105, 126, 1, 64, "Section"],
+Cell[CellGroupData[{
+Cell[4969, 110, 1001, 26, 46, "Input"],
+Cell[5973, 138, 898, 29, 94, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[6920, 173, 153, 3, 64, "Section"],
+Cell[CellGroupData[{
+Cell[7098, 180, 272, 5, 46, "Input"],
+Cell[7373, 187, 924, 29, 94, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8346, 222, 156, 3, 64, "Section"],
+Cell[CellGroupData[{
+Cell[8527, 229, 1111, 24, 80, "Input"],
+Cell[9641, 255, 344, 11, 52, "Output"],
+Cell[9988, 268, 786, 24, 94, "Output"],
+Cell[10777, 294, 808, 25, 94, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11634, 325, 105, 1, 64, "Section"],
+Cell[CellGroupData[{
+Cell[11764, 330, 1007, 19, 46, "Input"],
+Cell[12774, 351, 1075, 29, 90, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[13898, 386, 167, 2, 64, "Section"],
+Cell[CellGroupData[{
+Cell[14090, 392, 273, 5, 28, "Input"],
+Cell[14366, 399, 585, 17, 46, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[15000, 422, 190, 2, 64, "Section"],
+Cell[15193, 426, 110, 1, 30, "Text"],
+Cell[CellGroupData[{
+Cell[15328, 431, 783, 20, 28, "Input"],
+Cell[16114, 453, 711, 19, 46, "Output"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[16874, 478, 101, 1, 64, "Section"],
+Cell[16978, 481, 521, 8, 68, "Text"],
+Cell[17502, 491, 545, 14, 28, "Input"],
+Cell[18050, 507, 838, 22, 46, "Input"],
+Cell[CellGroupData[{
+Cell[18913, 533, 220, 4, 28, "Input"],
+Cell[19136, 539, 168, 3, 32, "Output"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
