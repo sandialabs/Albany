@@ -13,15 +13,21 @@
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
+int c = 0; 
+int c2 = 0; 
+
 LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::RCP<Teuchos::Comm<int> const> const & commT,
-    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT)
+    Teuchos::RCP<Tpetra_Vector const> const & initial_guessT, 
+    const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
   commT_ = commT;
+
+  solver_factory_ = solver_factory; 
 
   //IK, 2/11/15: I am assuming for now we don't have any distributed parameters.
   num_dist_params_total_ = 0;
@@ -50,6 +56,12 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   model_problem_params(num_models_);
 
   disc_maps_.resize(num_models_);
+  
+  jacs_.resize(num_models_);
+
+  //FIXME: jacs_boundary_ will be smaller than num_models_*num_models in practice 
+  int num_models2 = num_models_*num_models_; 
+  jacs_boundary_.resize(num_models2); 
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_overlap_maps(num_models_);
@@ -118,6 +130,24 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     model_factory(model_app_params[m], apps_[m]);
 
     models_[m] = model_factory.createT();
+
+    //create array of individual model jacobians
+    Teuchos::RCP<Tpetra_Operator> const jac_temp = Teuchos::nonnull(models_[m]->create_W_op()) ?
+              ConverterT::getTpetraOperator(models_[m]->create_W_op()) :
+              Teuchos::null;
+
+    jacs_[m] = Teuchos::nonnull(jac_temp) ? Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(jac_temp, true) :
+            Teuchos::null;
+  }
+  
+  //Initialize each entry of jacs_boundary_ 
+  //FIXME: the loops don't need to go through num_models_*num_models_
+  //FIXME: allocate array(s) of indeces identifying where entries of jacs_boundary_ will go
+  for (int i = 0; i < num_models_; ++i) {
+    for (int j = 0; j < num_models_; ++j) {
+    //Check if have this term?  Put into Teuchos array?  
+      jacs_boundary_[i*num_models_ + j] = Teuchos::rcp(new LCM::Schwarz_BoundaryJacobian(commT_));
+    }
   }
 
   std::cout << "Finished creating Albany apps and models!\n";
@@ -203,7 +233,7 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
     for (int l = 0; l < num_params_m; ++l) {
       Teuchos::RCP<Thyra::VectorBase<ST> const>
-      p = solver_inargs_[m].get_p(l);
+      p = models_[m]->getNominalValues().get_p(l);
 
       // Don't set it if there is nothing. Avoid null pointer.
       if (Teuchos::is_null(p) == true) continue;
@@ -227,6 +257,39 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
 }
+
+//LCM::SchwarzMultiscale::separateCoupledVector 
+//takes in a combined vector for a coupled model 
+//and separates into into individual subvectors for each submodel.
+//These are stored in a Teuchos::Array of Tpetra_Vectors.
+Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > 
+LCM::SchwarzMultiscale::separateCoupledVector(
+    const Teuchos::RCP<Tpetra_Vector>& combined_vector) const
+{
+  //IK, 3/11/15, FIXME: 
+  //This function  has only been implemented for 1 domain!  Needs to be implemented 
+  //for the general case.  The logic should be close to what's commented out below.
+  //Also: need to convert this to Thyra to make use of Thyra's composite vector capabilities.
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
+  if (num_models_ == 1) 
+    vecs[0] = combined_vector;
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "LCM::SchwarzMultiscale::separateCoupledVector not implemented for > 1 domain! \n");
+  /*Teuchos::ArrayRCP<const ST> combined_vector_view = combined_vector->get1dView();
+  std::vector<ST> data; 
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
+  LO counter_local = 0;
+  for (int m = 0; m < num_models_; m++) {
+    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
+    data.resize(disc_local_elements_m);
+    for (int i=0; i<disc_local_elements_m; i++) data[i] = combined_vector_view[counter_local + i];
+    Teuchos::ArrayView<ST> dataAV = Teuchos::arrayViewFromVector(data); 
+    vecs[m] = Teuchos::rcp(new Tpetra_Vector(disc_maps_[m], dataAV));  
+    counter_local += disc_local_elements_m; 
+  } */
+  return vecs; 
+}
+
 
 Teuchos::RCP<const Tpetra_Map>
 LCM::SchwarzMultiscale::createCoupledMap(
@@ -430,10 +493,8 @@ LCM::SchwarzMultiscale::create_W_op() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  Teuchos::RCP<Tpetra_Operator> const
-  W_out_coupled = Teuchos::rcp(
-      new LCM::Schwarz_CoupledJacobian(disc_maps_, coupled_disc_map_, commT_));
-  return Thyra::createLinearOp(W_out_coupled);
+  LCM::Schwarz_CoupledJacobian csJac(commT_); 
+  return csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
@@ -456,7 +517,7 @@ LCM::SchwarzMultiscale::get_W_factory() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  return Teuchos::null;
+  return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -544,14 +605,12 @@ allocateVectors()
 
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug
+  char name[100];  //create string for file name
+  sprintf(name, "x_init0_%i.mm", c);
   Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "x_init0.mm",
+      name,
       *(x_inits[0]));
-
-  Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "x_dot_init0.mm",
-      *(x_dot_inits[0]));
-
+  c++; 
   if (num_models_ > 1) {
     Tpetra_MatrixMarket_Writer::writeDenseFile(
         "x_init1.mm",
@@ -742,13 +801,13 @@ evalModelImpl(
 
   for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector const>
-    xT_temp = ConverterT::getConstTpetraVector(solver_inargs_[m].get_x());
+    xT_temp = ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x());
 
     xTs[m] = Teuchos::rcp(new Tpetra_Vector(*xT_temp));
 
     Teuchos::RCP<Tpetra_Vector const>
-    x_dotT_temp = Teuchos::nonnull(solver_inargs_[m].get_x_dot()) ?
-            ConverterT::getConstTpetraVector(solver_inargs_[m].get_x_dot()) :
+    x_dotT_temp = Teuchos::nonnull(models_[m]->getNominalValues().get_x_dot()) ?
+            ConverterT::getConstTpetraVector(models_[m]->getNominalValues().get_x_dot()) :
             Teuchos::null;
 
     x_dotTs[m] = Teuchos::rcp(new Tpetra_Vector(*x_dotT_temp));
@@ -824,97 +883,63 @@ evalModelImpl(
       ConverterT::getTpetraVector(out_args.get_f()) :
       Teuchos::null;
 
-  //Create a Teuchos array of the fT_out for each model.
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >
-  fTs_out(num_models_);
+  //Warning: the following has only been implemented for 1 model! 
+  //IKT, 3/11/15
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out = separateCoupledVector(fT_out); 
+  
 
-  for (int m = 0; m < num_models_; ++m) {
-
-    Teuchos::RCP<Tpetra_Vector const>
-    fT_out_temp = Teuchos::nonnull(solver_outargs_[m].get_f()) ?
-        ConverterT::getTpetraVector(solver_outargs_[m].get_f()) :
-        Teuchos::null;
-
-    fTs_out[m] = Teuchos::rcp(new Tpetra_Vector(*fT_out_temp));
-  }
-
-  Teuchos::RCP<Tpetra_Operator> const
+  Teuchos::RCP<Thyra::LinearOpBase<ST> >
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
-      ConverterT::getTpetraOperator(out_args.get_W_op()) :
+      out_args.get_W_op() :
       Teuchos::null;
-
-  // Cast W to a CrsMatrix, throw an exception if this fails
-  Teuchos::RCP<Tpetra_CrsMatrix> const
-  W_op_out_crsT = Teuchos::nonnull(W_op_outT) ?
-      Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
-      Teuchos::null;
-
+  
   //
   // Compute the functions
-  //
-  // W matrix
-  // Create Teuchos::Array of individual models' W matrices
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
-  W_op_outs_crsT(num_models_);
 
-  //get each of the models' W matrices
-  for (int m = 0; m < num_models_; ++m) {
-    Teuchos::RCP<Tpetra_Operator> const
-    W_op_outT_temp =
-        Teuchos::nonnull(solver_outargs_[m].get_W_op()) ?
-            ConverterT::getTpetraOperator(out_args.get_W_op()) :
-            Teuchos::null;
-
-    W_op_outs_crsT[m] =
-        Teuchos::nonnull(W_op_outT_temp) ?
-            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT_temp, true) :
-            Teuchos::null;
-  }
-
-  Teuchos::Array<bool>
-  fs_already_computed(num_models_, false);
+  Teuchos::Array<bool> fs_already_computed(num_models_, false);
 
   // W matrix for each individual model
   for (int m = 0; m < num_models_; ++m) {
-    if (Teuchos::is_null(W_op_outs_crsT[m]) == false) {
-      //computeGlobalJacobianT sets fTs_out[m] and W_op_outs_crsT[m]
+    if (Teuchos::is_null(jacs_[m]) == false) {
+      //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
       apps_[m]->computeGlobalJacobianT(
           alpha, beta, omega, curr_time,
           x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-          sacado_param_vecs_[m], fTs_out[m].get(), *W_op_outs_crsT[m]);
+          sacado_param_vecs_[m], fTs_out[m].get(), *jacs_[m]);
 
       fs_already_computed[m] = true;
     }
   }
 
+ 
   // FIXME: create coupled W matrix from array of model W matrices
-  Teuchos::RCP<LCM::Schwarz_CoupledJacobian>
-  W_op_out_coupled =
-      Teuchos::rcp_dynamic_cast<LCM::Schwarz_CoupledJacobian>(W_op_outT, true);
-
-  W_op_out_coupled->initialize(W_op_outs_crsT);
-
-  // Create fT_out from fTs_out[m]
-  LO
-  counter_local = 0;
-
-  //get nonconst view of fT_out
-  Teuchos::ArrayRCP<ST>
-  fT_out_nonconst_view = fT_out->get1dViewNonConst();
-
-  for (int m = 0; m < num_models_; ++m) {
-    //get const view of mth x_init & x_dot_init vector
-    Teuchos::ArrayRCP<ST>
-    fT_out_nonconst_view_m = fTs_out[m]->get1dViewNonConst();
-
-    for (int i = 0; i < fTs_out[m]->getLocalLength(); ++i) {
-      fT_out_nonconst_view[counter_local + i] = fT_out_nonconst_view_m[i];
+  if (W_op_outT != Teuchos::null) {
+    //FIXME: create boundary operators 
+    for (int i = 0; i < jacs_boundary_.size(); ++i) {
+        jacs_boundary_[i]->initialize(); //FIXME: initialize will have arguments (index array?)!
     }
-    counter_local += fTs_out[m]->getLocalLength();
+
+    LCM::Schwarz_CoupledJacobian csJac(commT_); 
+    //FIXME: add boundary operators array to coupled Jacobian parameter list 
+    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_); 
   }
 
-  // W prec matrix
-  // FIXME: eventually will need to hook in Teko.
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug
+  char name[100];  //create string for file name
+  sprintf(name, "f0_%i.mm", c2);
+  if (fTs_out[0] != Teuchos::null) {
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      name,
+      *(fTs_out[0]));
+    c2++; 
+  }
+  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) 
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      "f1.mm",
+      *(fTs_out[1]));
+#endif
+
 
   // FIXME: in the following, need to check logic involving looping over
   // num_models_ -- here we're not creating arrays to store things in
@@ -964,7 +989,30 @@ evalModelImpl(
     }
   }
 
-  //FIXME: create fT_out from fTs_out
+  // f
+  for (int m = 0; m < num_models_; ++m) {
+    if (apps_[m]->is_adjoint) {
+      const Thyra::ModelEvaluatorBase::Derivative<ST> f_derivT(
+          solver_outargs_[m].get_f(),
+          Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW);
+
+      const Thyra::ModelEvaluatorBase::Derivative<ST> dummy_derivT;
+
+      const int response_index = 0; // need to add capability for sending this in
+      apps_[m]->evaluateResponseDerivativeT(
+            response_index, curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+            sacado_param_vecs_[m], NULL,
+            NULL, f_derivT, dummy_derivT, dummy_derivT, dummy_derivT);
+     } 
+     else {
+       if (Teuchos::nonnull(fTs_out[m]) && !fs_already_computed[m]) {
+         apps_[m]->computeGlobalResidualT(
+            curr_time, x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
+            sacado_param_vecs_[m], *fTs_out[m]);
+       }
+     }
+   }
+
 
   // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {

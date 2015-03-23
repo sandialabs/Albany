@@ -55,6 +55,7 @@ namespace ATO
     Albany::StateManager* pStateMgr;
 
     Teuchos::RCP<Topology> topology;
+    int functionIndex;
 
   };
 	

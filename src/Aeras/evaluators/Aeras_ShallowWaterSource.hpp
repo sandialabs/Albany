@@ -76,10 +76,29 @@ private:
   ScalarT SIGMA;
   ScalarT NPWR;
           
-  ScalarT dbubf(const ScalarT lat);
-  ScalarT bubfnc(const ScalarT lat);
-  ScalarT d2bubf(const ScalarT lat);
           
+  KOKKOS_INLINE_FUNCTION
+  ScalarT dbubf(const ScalarT lat) const;
+  KOKKOS_INLINE_FUNCTION
+  ScalarT bubfnc(const ScalarT lat) const;
+  KOKKOS_INLINE_FUNCTION
+  ScalarT d2bubf(const ScalarT lat) const;
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+public:
+
+ ScalarT A;
+ RealType time; 
+
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct ShallowWaterSource_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterSource_Tag> ShallowWaterSource_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const ShallowWaterSource_Tag& tag, const int& cell) const;
+
+
+#endif
           
 };
   

@@ -115,6 +115,7 @@ createResponseFunction(
 	   name == "Save Nodal Fields" ||
 	   name == "Stiffness Objective" ||
 	   name == "Internal Energy Objective" ||
+	   name == "Tensor PNorm Objective" ||
 	   name == "Modal Objective" ||
            name == "Linear Adjoint Solve" ||
            name == "PHAL Field Integral" ||

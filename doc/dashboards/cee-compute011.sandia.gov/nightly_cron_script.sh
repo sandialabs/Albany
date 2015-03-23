@@ -1,11 +1,5 @@
 #!/bin/sh
 
-# Crontab entry
-#
-# Run at midnight every day
-#
-# 00 00 * * * /ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov/nightly_cron_script.sh
-
 cd /projects/AppComp/nightly/cee-compute011
 
 export LIBRARY_PATH=/sierra/sntools/SDK/compilers/intel/composer_xe_2015.1.133/mkl/lib/intel64:/sierra/sntools/SDK/compilers/intel/composerxe-2011.13.367/tbb/lib/intel64/cc4.1.0_libc2.4_kernel2.6.16.21
@@ -21,6 +15,10 @@ now=$(date +"%m_%d_%Y-%H_%M")
 #LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
 LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_log.txt
 
-eval "env  TEST_DIRECTORY=/projects/AppComp/nightly/cee-compute011 SCRIPT_DIRECTORY=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/cee-compute011.sandia.gov /projects/albany/bin/ctest -VV -S /projects/AppComp/nightly/cee-compute011/ctest_nightly.cmake" > $LOG_FILE 2>&1
+eval "env  TEST_DIRECTORY=/projects/AppComp/nightly/cee-compute011 SCRIPT_DIRECTORY=/projects/AppComp/nightly/cee-compute011 /projects/albany/bin/ctest -VV -S /projects/AppComp/nightly/cee-compute011/ctest_nightly.cmake" > $LOG_FILE 2>&1
 
-
+# Copy a basic installation to /projects/albany for those who like a nightly
+# build.
+cp -r build/TrilinosInstall/* /projects/albany/trilinos/nightly/;
+chmod -R a+X /projects/albany/trilinos/nightly;
+chmod -R a+r /projects/albany/trilinos/nightly;

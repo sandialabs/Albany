@@ -26,10 +26,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
   slip_systems_.resize(num_slip_);
+//  TEUCHOS_TEST_FOR_EXCEPTION(num_slip_ > 12, std::logic_error, "\n****Error, can only handle 12 slip systems CrystalPlasticityModel");
+
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp constructor\n";
   std::cout << ">>> parameter list:\n" << *p << std::endl;
 #endif
+
   Teuchos::ParameterList e_list = p->sublist("Crystal Elasticity");
   // assuming cubic symmetry
   c11_ = e_list.get<RealType>("C11");
@@ -54,11 +57,19 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       norm += b_temp[j]*b_temp[j];
     }
 // NOTE check zero, rh system
+// Filling columns of transformation with basis vectors
+// We are forming R^{T} which is equivalent to the direction cosine matrix
     norm = 1./std::sqrt(norm);
     for (int j = 0; j < num_dims_; ++j) {
-      orientation_(i,j) = b_temp[j]*norm;
+      orientation_(j,i) = b_temp[j]*norm;
     }
   }
+
+// print rotation tensor employed for transformations
+#ifdef PRINT_DEBUG
+  std::cout << ">>> orientation_ :\n" << orientation_ << std::endl;
+#endif
+
   // rotate elastic tensor and slip systems to match given orientation
   C_ = Intrepid::kronecker(orientation_,C);
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
@@ -70,11 +81,23 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
     slip_systems_[num_ss].n_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &n_temp[0]));
 
+    // print each slip direction and slip normal after transformation
+    #ifdef PRINT_DEBUG
+      std::cout << ">>> slip direction " << num_ss + 1 << ": " << slip_systems_[num_ss].s_ << std::endl;
+      std::cout << ">>> slip normal " << num_ss + 1 << ": " << slip_systems_[num_ss].n_ << std::endl;
+    #endif
+
     slip_systems_[num_ss].projector_ = Intrepid::dyad(slip_systems_[num_ss].s_, slip_systems_[num_ss].n_);
+
+    // print projector
+    #ifdef PRINT_DEBUG
+      std::cout << ">>> projector_ " << num_ss + 1 << ": " << slip_systems_[num_ss].projector_ << std::endl;
+    #endif
 
     slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponent");
+    slip_systems_[num_ss].H_         = ss_list.get<RealType>("Hardening",0);
   }
 #ifdef PRINT_DEBUG
   std::cout << "<<< done with parameter list\n";
@@ -83,6 +106,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
+  //std::string gammas_string = (*field_name_map_)["gammas"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"]; 
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -93,13 +117,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
-
   // define the evaluated fields
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
+//  this->eval_field_map_.insert(std::make_pair(gammas_string, dl->qp_list12));
 
   // define the state variables
   //
@@ -121,6 +145,17 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
+  // gammas
+#if 0
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(gammas_string);
+  this->state_var_layouts_.push_back(dl->qp_list12);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(true);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output gammas", false));
+#endif
+  //
   // L
   this->num_state_variables_++;
   this->state_var_names_.push_back(L_string);
@@ -130,7 +165,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output L", false));
   //
-  // mechanical source
+  // mechanical source (body force)
   this->num_state_variables_++;
   this->state_var_names_.push_back(source_string);
   this->state_var_layouts_.push_back(dl->qp_scalar);
@@ -156,6 +191,7 @@ computeState(typename Traits::EvalData workset,
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
+  //std::string gammas_string = (*field_name_map_)["gammas"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
@@ -169,6 +205,7 @@ computeState(typename Traits::EvalData workset,
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
+  //PHX::MDField<ScalarT> slips  = *eval_fields[gammas_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
@@ -176,8 +213,8 @@ computeState(typename Traits::EvalData workset,
   // get state variables
   Albany::MDArray previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
 
-  ScalarT tau, dgamma;
-  ScalarT g0, tauC, m;
+  ScalarT tau, gamma, dgamma;
+  ScalarT g0, tauC, m, H;
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
   Intrepid::Tensor<ScalarT> Fp_temp(num_dims_);
@@ -222,10 +259,12 @@ computeState(typename Traits::EvalData workset,
           g0   = slip_systems_[s].gamma_dot_0_;
           tauC = slip_systems_[s].tau_critical_;
           m    = slip_systems_[s].gamma_exp_;
-//          dgamma = dt*g0*std::fabs(std::pow(tau/tauC,m))*sign;
-//        NOTE: pow() of a negative base gives an FPE (edit by GAH)
-          ScalarT t1 = std::fabs(tau /tauC);
+          H    = slip_systems_[s].H_;
+//        gamma = slips(cell, pt, s);
+          gamma = 0.;
+          ScalarT t1 = std::fabs(tau /(tauC+H*gamma));
           dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
+//        slips(cell, pt, s) += dgamma;
           L += (dgamma* P);
 #ifdef PRINT_OUTPUT
           dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);

@@ -104,6 +104,7 @@ private:
       // tau_critical_ = 1.0;
       // gamma_dot_0_  = 0.0;
       // gamma_exp_    = 0.0;
+      // H_            = 0.0;
     }
 
     // slip system vectors
@@ -113,7 +114,7 @@ private:
     Intrepid::Tensor<RealType> projector_;
 
     // flow rule parameters
-    RealType tau_critical_, gamma_dot_0_, gamma_exp_;
+    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_;
   };
 
   ///

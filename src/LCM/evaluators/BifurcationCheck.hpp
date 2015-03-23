@@ -7,6 +7,7 @@
 #if !defined(LCM_BifurcationCheck_hpp)
 #define LCM_BifurcationCheck_hpp
 
+#include <Intrepid_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
@@ -55,12 +56,47 @@ namespace LCM {
 
     //! Output: instability direction
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim> direction_;
+    
+    //! Output: minimum of acoustic tensor
+    PHX::MDField<ScalarT,Cell,QuadPoint> min_detA_;
 
     //! number of integration points
     int num_pts_;
 
     //! number of spatial dimensions
     int num_dims_;
+    
+        
+    ///
+    /// Spherical parametrization sweep
+    ///
+    ScalarT
+    spherical_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+
+    ///
+    /// Stereographic parametrization sweep
+    ///
+    ScalarT
+    stereographic_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+    
+    ///
+    /// Projective parametrization sweep
+    ///
+    ScalarT
+    projective_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);
+    
+    ///
+    /// Tangent parametrization sweep
+    ///
+    ScalarT
+    tangent_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);     
+    
+    ///
+    /// Cartesian parametrization sweep
+    ///
+    ScalarT
+    cartesian_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent);        
+                
   };
 
 }

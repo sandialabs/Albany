@@ -18,8 +18,8 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
-  //amb No idea. Need to ask Mauro.
-  return app->getDistParamLib()->size();
+  //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
+  return ms->ctd.node_count;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (

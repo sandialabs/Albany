@@ -9,6 +9,7 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Schwarz_BoundaryJacobian.hpp" 
 
 namespace LCM {
 
@@ -22,7 +23,8 @@ public:
   /// Constructor
   SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
-      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT);
+      Teuchos::RCP<Tpetra_Vector const > const & initial_guessT, 
+      const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory);
 
   ///Destructor
   ~SchwarzMultiscale();
@@ -79,11 +81,17 @@ public:
   allocateVectors();
 
   /// Create the map for the coupled solution from an array of the maps
-  /// for each invidivual model that is being coupled.
+  /// for each individual model that is being coupled.
   Teuchos::RCP<Tpetra_Map const>
   createCoupledMap(
       Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
+
+  //Take in a combined vector for a coupled model 
+  //and separates into into individual subvectors for each submodel.
+  //These are stored in a Teuchos::Array of Tpetra_Vectors.
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > 
+  separateCoupledVector( const Teuchos::RCP<Tpetra_Vector>& combined_vector) const;
 
 protected:
 
@@ -138,6 +146,12 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
 
+  //Teuchos array holding main diagonal jacobians (non-coupled models)
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
+
+  //Teuchos array holding off-diagonal jacobians (coupling ones)
+  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary_;
+
   int
   num_models_;
 
@@ -164,6 +178,9 @@ private:
   //like num_response_vecs
   int
   num_responses_total_;
+
+  //for setting get_W_factory() 
+  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > solver_factory_;
     
   mutable Teuchos::Array<Teuchos::Array<ParamVec> >
   sacado_param_vecs_;

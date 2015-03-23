@@ -77,7 +77,8 @@ public:
   ///  to the maps localGlobalVertexMap and globalLocalVertexMap.
   ///
   Vertex
-  addVertex(stk::mesh::EntityRank vertex_rank);
+  addVertex(
+      stk::mesh::EntityRank vertex_rank);
 
   ///
   /// \brief Remove vertex in subgraph

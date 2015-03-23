@@ -76,7 +76,7 @@ LamentStress(Teuchos::ParameterList& p) :
   // Declare the state variables as evaluated fields (type is always double)
   Teuchos::RCP<PHX::DataLayout> dataLayout = p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout");
   for(unsigned int i=0 ; i<lamentMaterialModelStateVariableNames.size() ; ++i){
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> lamentMaterialModelStateVariableField(lamentMaterialModelStateVariableNames[i], dataLayout);
+    PHX::MDField<ScalarT,Cell,QuadPoint> lamentMaterialModelStateVariableField(lamentMaterialModelStateVariableNames[i], dataLayout);
     this->addEvaluatedField(lamentMaterialModelStateVariableField);
     lamentMaterialModelStateVariableFields.push_back(lamentMaterialModelStateVariableField);
   }

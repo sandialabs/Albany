@@ -6,10 +6,10 @@
     <ParameterList name="Neumann BCs">     
          <!--sideset2 corresponds to bed-->
          <!--input string is (beta, alpha, beta1, beta2, beta3)-->
-         <Parameter name="NBC on SS SideSet0 for DOF U0 set basal" type="Array(double)" value="{0.0, 0.0, 1.0, 1.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet1 for DOF U0 set basal" type="Array(double)" value="{0.0, 0.0, 1.0, 1.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet2 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 1.0, 1.0, 0.0}"/>
-         <Parameter name="NBC on SS SideSet3 for DOF U0 set basal" type="Array(double)" value="{0.0, 0.0, 1.0, 1.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet0 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet1 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 0.0, 0.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet2 for DOF U0 set basal" type="Array(double)" value="{1.0, 1.0, 1.0, 1.0, 0.0}"/>
+         <Parameter name="NBC on SS SideSet3 for DOF U0 set basal" type="Array(double)" value="{0.0, 1.0, 1.0, 0.0, 0.0}"/>
          <Parameter name="BetaXY" type="string" value="FELIX XZ MMS"/>
     </ParameterList>
     <ParameterList name="Parameters">
@@ -27,8 +27,9 @@
     </ParameterList>
     <ParameterList name="Body Force">
       <Parameter name="Type" type="string" value="FO_XZ_MMS"/>
+      <Parameter name="Glen's Law A" type="double" value="1e-4"/>
     </ParameterList>
-    <ParameterList name="Response Functions">
+    <!--ParameterList name="Response Functions">
       <Parameter name="Number" type="int" value="5"/>
       <Parameter name="Response 0" type="string" value="Solution Max Value"/>
       <ParameterList name="ResponseParams 0">
@@ -51,15 +52,15 @@
         <Parameter name="Num Equations" type="int" value="4" />
       </ParameterList>
       <Parameter name="Response 4" type="string" value="Solution Average"/>
-    </ParameterList>
+    </ParameterList-->
   </ParameterList>
   <ParameterList name="Debug Output">
      <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
+     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="1D Elements" type="int" value="20"/>
-    <Parameter name="2D Elements" type="int" value="20"/>
+    <Parameter name="1D Elements" type="int" value="40"/>
+    <Parameter name="2D Elements" type="int" value="10"/>
     <Parameter name="1D Scale" type="double" value="2"/>
     <Parameter name="2D Scale" type="double" value="1"/>
     <Parameter name="FELIX L" type="double" value="50.0"/>
@@ -67,13 +68,13 @@
     <Parameter name="Transform Type" type="string" value="FO XZ MMS"/>
     <Parameter name="Exodus Output File Name" type="string" value="felix_stokes_fo_xz_out.exo"/>
   </ParameterList>
-  <ParameterList name="Regression Results">
+  <!--ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="5"/>
     <Parameter  name="Test Values" type="Array(double)" value="{3.71828184801, 0.954522160234, 3.71828184923, 1.00364399367, 0.890345824317}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-4"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
     <Parameter  name="Sensitivity Test Values 0" type="Array(double)" value="{ 0.208812026834, 0.243439246662, 0.0545756230981}"/>
-  </ParameterList>
+  </ParameterList-->
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
       <ParameterList name="Bifurcation"/>

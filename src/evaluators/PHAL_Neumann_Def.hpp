@@ -220,11 +220,11 @@ NeumannBase(const Teuchos::ParameterList& p) :
            p.get<Teuchos::RCP<PHX::DataLayout> >("DOF Data Layout"));
        dofVec = tmp;
 #ifdef ALBANY_FELIX
-       beta_field = PHX::MDField<ScalarT,Cell,Node>(
+      beta_field = PHX::MDField<ScalarT,Cell,Node>(
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
-       this->addDependentField(beta_field);
+      this->addDependentField(beta_field);
 #endif
-       this->addDependentField(dofVec);
+      this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
 
@@ -419,7 +419,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
   Intrepid::FieldContainer<ScalarT> betaOnSide(1,numQPsSide);
   Intrepid::FieldContainer<ScalarT> thicknessOnSide(1,numQPsSide);
   Intrepid::FieldContainer<ScalarT> elevationOnSide(1,numQPsSide);
-  Intrepid::FieldContainer<ScalarT> dofNormOnSide(1,numQPsSide);
 
   // Loop over the sides that form the boundary condition
 
@@ -1000,13 +999,13 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
  }
  //Robin/Neumann bc for FELIX FO XZ MMS test case
  else if (beta_type == FELIX_XZ_MMS) {
-    //parameter values are hard-coded here...
-    MeshScalarT H = 1.0;
-    double alpha0 = 4.0e-5;
-    double rho_g = 910.0*9.8;
+    //parameter values are hard-coded here... 
+    MeshScalarT H = 1.0; 
+    double alpha0 = 4.0e-5; 
+    double beta0 = 1;
+    double rho_g = 910.0*9.8; 
     double s0 = 2.0;
-    double beta0 = 1.0; //this is what is called beta in Mauro's writeup.  It is hard-coded here!
-    double A = 0.0001; //CAREFUL! A is hard-coded here, needs to match input file!!
+    double A = 1e-4; //CAREFUL! A is hard-coded here, needs to match input file!!
     for(int cell = 0; cell < numCells; cell++) {
       for(int pt = 0; pt < numPoints; pt++) {
         for(int dim = 0; dim < numDOFsSet; dim++) {
@@ -1027,11 +1026,10 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
            MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0);
            // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny
            //              + (2*H*alpha*rho*g*x - beta0*x^2*phi2*(phi1^4 - H^4)*alpha;
-           //IK, TO DO: check signs of everything!
-           qp_data_returned(cell, pt, dim) = beta0*dof_side(cell,pt,dim)
-                                           + 4.0*phi4*mu*beta1*side_normals(cell,pt,0)
-                                           - 4.0*phi1*x*x*pow(phi1,3)*mu*beta2*side_normals(cell,pt,1)
-                                           + (2.0*H*alpha0*rho_g*x - beta0*x*x*phi2*(pow(phi1,4) - pow(H,4)))*alpha;
+          qp_data_returned(cell, pt, dim) = beta*dof_side(cell,pt,dim)
+                                           + 4.0*phi4*mu*alpha*side_normals(cell,pt,0)
+                                           + 4.0*phi2*x*x*pow(phi1,3)*mu*beta1*side_normals(cell,pt,1)
+                                           - (2.0*H*alpha0*rho_g*x - beta0*x*x*phi2*(pow(phi1,4) - pow(H,4)))*beta2;
         }
       }
   }
