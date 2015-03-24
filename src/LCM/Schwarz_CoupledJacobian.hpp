@@ -42,7 +42,6 @@ namespace LCM {
 
     Teuchos::RCP<const Teuchos_Comm> commT_;
   
-    Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST> > blockedOp_; 
 
 
   };

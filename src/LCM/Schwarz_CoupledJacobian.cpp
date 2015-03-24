@@ -13,6 +13,10 @@
 
 //#include "Tpetra_LocalMap.h"
 
+using Teuchos::getFancyOStream;
+using Teuchos::rcpFromRef;
+
+
 #define WRITE_TO_MATRIX_MARKET
 
 static int c3 = 0; 
@@ -25,7 +29,6 @@ LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(const Teuchos::RCP<const T
 {
   std::cout << __PRETTY_FUNCTION__ << "\n"; 
   commT_ = commT;
-  blockedOp_ = Thyra::defaultBlockedLinearOp<ST>();
 }
 
 LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
@@ -40,37 +43,42 @@ getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs,
                         Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary) const 
 {
   std::cout << __PRETTY_FUNCTION__ << "\n"; 
-  std::size_t blockDim = jacs.size(); 
+  std::size_t block_dim = jacs.size(); 
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];  //create string for file name
   sprintf(name, "Jac0_%i.mm", c3);
 //write individual model jacobians to matrix market for debug
   Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
+  if (block_dim > 1) {
+    sprintf(name, "Jac1_%i.mm", c3);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[1]);
+  }
   c3++; 
-  if (blockDim > 1) 
-    Tpetra_MatrixMarket_Writer::writeSparseFile("Jac1_%i.mm", jacs[1]);
 #endif
    // get the block dimension
    // this operator will be square
-   blockedOp_->beginBlockFill(blockDim,blockDim);
+   Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST> > blocked_op = Thyra::defaultBlockedLinearOp<ST>();
+   blocked_op->beginBlockFill(block_dim,block_dim);
 
    // loop over each block
-   for(std::size_t i=0;i<blockDim;i++) {
-     for(std::size_t j=0;j<blockDim;j++) {
+   for(std::size_t i=0;i<block_dim;i++) {
+     for(std::size_t j=0;j<block_dim;j++) {
         // build (i,j) block matrix and add it to blocked operator
         if (i == j) { //diagonal blocks
           Teuchos::RCP<Thyra::LinearOpBase<ST> > block = Thyra::createLinearOp<ST,LO,GO,KokkosNode>(jacs[i]);
-          blockedOp_->setNonconstBlock(i,j,block);
+          blocked_op->setNonconstBlock(i,j,block);
         }
         //FIXME: add off-diagonal blocks
      }
    }
 
    // all done
-   blockedOp_->endBlockFill();
-
-   return blockedOp_;
+   blocked_op->endBlockFill();
+   Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
+   std::cout << "blocked_op: " << std::endl; 
+   blocked_op->describe(*out, Teuchos::VERB_HIGH);
+   return blocked_op;
 }
 
 

@@ -12,10 +12,6 @@
 #include "Tpetra_KokkosRefactor_MultiVector_decl.hpp"
 
 
-typedef typename Kokkos::Details::ArithTraits<ST>::val_type impl_scalar_type;
-typedef KokkosNode execution_space;
-typedef Kokkos::DualView<impl_scalar_type**, Kokkos::LayoutLeft, typename execution_space::execution_space> dual_view_type;
-
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
@@ -273,28 +269,12 @@ LCM::SchwarzMultiscale::separateCoupledVectorConst(
     const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
     Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const
 {
-  //IK, 3/11/15, FIXME: 
-  //This function  has only been implemented for 1 domain!  Needs to be implemented 
-  //for the general case.  The logic should be close to what's commented out below.
-  //Also: need to convert this to Thyra to make use of Thyra's composite vector capabilities.
-  //dual_view_type dview = combined_vector->getDualView(); 
   LO counter_local = 0;
   for (int m = 0; m < num_models_; m++) {
     int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
     vecs[m] = combined_vector->offsetView(disc_maps_[m], counter_local);
     counter_local += disc_local_elements_m;
   } 
-  /*Teuchos::ArrayRCP<const ST> combined_vector_view = combined_vector->get1dView();
-  std::vector<ST> data; 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
-  for (int m = 0; m < num_models_; m++) {
-    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
-    data.resize(disc_local_elements_m);
-    for (int i=0; i<disc_local_elements_m; i++) data[i] = combined_vector_view[counter_local + i];
-    Teuchos::ArrayView<ST> dataAV = Teuchos::arrayViewFromVector(data); 
-    vecs[m] = Teuchos::rcp(new Tpetra_Vector(disc_maps_[m], dataAV));  
-    counter_local += disc_local_elements_m; 
-  } */
 }
 
 void 
@@ -302,30 +282,14 @@ LCM::SchwarzMultiscale::separateCoupledVectorNonConst(
     const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
     Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const
 {
-  //IK, 3/11/15, FIXME: 
-  //This function  has only been implemented for 1 domain!  Needs to be implemented 
-  //for the general case.  The logic should be close to what's commented out below.
-  //Also: need to convert this to Thyra to make use of Thyra's composite vector capabilities.
-  //dual_view_type dview = combined_vector->getDualView(); 
   LO counter_local = 0;
   for (int m = 0; m < num_models_; m++) {
     int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
     vecs[m] = combined_vector->offsetViewNonConst(disc_maps_[m], counter_local);
     counter_local += disc_local_elements_m;
   } 
-  /*if (num_models_ == 1)
-    vecs[0] = combined_vector->offsetViewNonConst(disc_maps_[0], 0);
-    //Teuchos::rcp(new Tpetra_Vector(disc_maps_[0], dview)); 
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "LCM::SchwarzMultiscale::separateCoupledVector not implemented for > 1 domain! \n");
-  */
-  /*Teuchos::ArrayRCP<const ST> combined_vector_view = combined_vector->get1dView();
-  std::vector<ST> data; 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
-  LO counter_local = 0;
-  for (int m = 0; m < num_models_; m++) {
-*/
 }
+
 Teuchos::RCP<const Tpetra_Map>
 LCM::SchwarzMultiscale::createCoupledMap(
     Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
@@ -954,10 +918,12 @@ evalModelImpl(
       *(fTs_out[0]));
     c2++; 
   }
-  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) 
+  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) { 
+    sprintf(name, "f1_%i.mm", c2);
     Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "f1.mm",
+      name,
       *(fTs_out[1]));
+  }
 #endif
 
 
