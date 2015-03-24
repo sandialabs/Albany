@@ -173,7 +173,7 @@ struct Workset {
 #ifdef ALBANY_LCM
   // Needed for Schwarz coupling
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-  Teuchos::Array<Teuchos::RCP<Albany::Application> > apps;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps;
 #endif
 
   Albany::StateArray* stateArrayPtr;

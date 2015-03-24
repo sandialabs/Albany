@@ -827,6 +827,7 @@ computeGlobalResidualImplT(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
 #endif
 
     // FillType template argument used to specialize Sacado
