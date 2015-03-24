@@ -60,6 +60,10 @@ public:
   std::string
   getCoupledModel() const {return coupled_model_;}
 
+  int
+  nameToIndex(std::string const & name) const
+  {return std::atoi(name.c_str());}
+
 protected:
 
   std::string

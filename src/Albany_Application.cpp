@@ -1045,8 +1045,11 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -1546,8 +1549,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -2105,8 +2111,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -2289,8 +2298,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -2563,8 +2575,11 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
@@ -2787,8 +2802,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -2970,8 +2988,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -3250,8 +3271,11 @@ computeGlobalMPTangent(
     workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
   }
