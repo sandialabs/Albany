@@ -269,23 +269,24 @@ LCM::SchwarzMultiscale::~SchwarzMultiscale()
 //and separates into into individual subvectors for each submodel.
 //These are stored in a Teuchos::Array of Tpetra_Vectors.
 void 
-LCM::SchwarzMultiscale::separateCoupledVector(
+LCM::SchwarzMultiscale::separateCoupledVectorConst(
     const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const
+    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const
 {
   //IK, 3/11/15, FIXME: 
   //This function  has only been implemented for 1 domain!  Needs to be implemented 
   //for the general case.  The logic should be close to what's commented out below.
   //Also: need to convert this to Thyra to make use of Thyra's composite vector capabilities.
-  dual_view_type dview = combined_vector->getDualView(); 
-  if (num_models_ == 1)
-    vecs[0] = Teuchos::rcp(new Tpetra_Vector(disc_maps_[0], dview)); 
-  else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "LCM::SchwarzMultiscale::separateCoupledVector not implemented for > 1 domain! \n");
+  //dual_view_type dview = combined_vector->getDualView(); 
+  LO counter_local = 0;
+  for (int m = 0; m < num_models_; m++) {
+    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
+    vecs[m] = combined_vector->offsetView(disc_maps_[m], counter_local);
+    counter_local += disc_local_elements_m;
+  } 
   /*Teuchos::ArrayRCP<const ST> combined_vector_view = combined_vector->get1dView();
   std::vector<ST> data; 
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
-  LO counter_local = 0;
   for (int m = 0; m < num_models_; m++) {
     int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
     data.resize(disc_local_elements_m);
@@ -296,7 +297,35 @@ LCM::SchwarzMultiscale::separateCoupledVector(
   } */
 }
 
-
+void 
+LCM::SchwarzMultiscale::separateCoupledVectorNonConst(
+    const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
+    Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const
+{
+  //IK, 3/11/15, FIXME: 
+  //This function  has only been implemented for 1 domain!  Needs to be implemented 
+  //for the general case.  The logic should be close to what's commented out below.
+  //Also: need to convert this to Thyra to make use of Thyra's composite vector capabilities.
+  //dual_view_type dview = combined_vector->getDualView(); 
+  LO counter_local = 0;
+  for (int m = 0; m < num_models_; m++) {
+    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
+    vecs[m] = combined_vector->offsetViewNonConst(disc_maps_[m], counter_local);
+    counter_local += disc_local_elements_m;
+  } 
+  /*if (num_models_ == 1)
+    vecs[0] = combined_vector->offsetViewNonConst(disc_maps_[0], 0);
+    //Teuchos::rcp(new Tpetra_Vector(disc_maps_[0], dview)); 
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "LCM::SchwarzMultiscale::separateCoupledVector not implemented for > 1 domain! \n");
+  */
+  /*Teuchos::ArrayRCP<const ST> combined_vector_view = combined_vector->get1dView();
+  std::vector<ST> data; 
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > vecs(num_models_); 
+  LO counter_local = 0;
+  for (int m = 0; m < num_models_; m++) {
+*/
+}
 Teuchos::RCP<const Tpetra_Map>
 LCM::SchwarzMultiscale::createCoupledMap(
     Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
@@ -816,11 +845,11 @@ evalModelImpl(
   x_dotdotT = Teuchos::null;
 
   //Create a Teuchos array of the xT and x_dotT for each model.
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > xTs(num_models_);
-  if (xT != Teuchos::null) separateCoupledVector(xT, xTs); 
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > xTs(num_models_);
+  if (xT != Teuchos::null) separateCoupledVectorConst(xT, xTs); 
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >  x_dotTs(num_models_);
-  if (x_dotT != Teuchos::null) separateCoupledVector(x_dotT, x_dotTs);  
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >  x_dotTs(num_models_);
+  if (x_dotT != Teuchos::null) separateCoupledVectorConst(x_dotT, x_dotTs);  
 
   double const
   alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
@@ -877,7 +906,7 @@ evalModelImpl(
   
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out(num_models_);
-  if (fT_out != Teuchos::null) separateCoupledVector(fT_out, fTs_out); 
+  if (fT_out != Teuchos::null) separateCoupledVectorNonConst(fT_out, fTs_out); 
 
 
   Teuchos::RCP<Thyra::LinearOpBase<ST> >

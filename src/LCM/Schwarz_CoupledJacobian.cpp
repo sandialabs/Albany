@@ -49,7 +49,7 @@ getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs,
   Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
   c3++; 
   if (blockDim > 1) 
-    Tpetra_MatrixMarket_Writer::writeSparseFile("Jac1.mm", jacs[1]);
+    Tpetra_MatrixMarket_Writer::writeSparseFile("Jac1_%i.mm", jacs[1]);
 #endif
    // get the block dimension
    // this operator will be square

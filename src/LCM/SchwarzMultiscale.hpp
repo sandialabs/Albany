@@ -90,7 +90,10 @@ public:
   //Take in a combined vector for a coupled model 
   //and separates into into individual subvectors for each submodel.
   //These are stored in a Teuchos::Array of Tpetra_Vectors.
-  void separateCoupledVector( const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
+  void separateCoupledVectorConst( const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
+                              Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const;
+  
+  void separateCoupledVectorNonConst( const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
                               Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const;
 
 protected:
