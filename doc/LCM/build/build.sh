@@ -148,7 +148,7 @@ case "$SCRIPT_NAME" in
 		cd "$BUILD_DIR"
 		echo "TESTING $PACKAGE_STRING ..."
 		echo "------------------------------------------------------------"
-		ctest --timeout 300 . | tee "$TEST_LOG"
+		ctest -j $NUM_PROCS --timeout 300 . | tee "$TEST_LOG"
 		;;
 	    *)
 		echo "Unrecognized package option"
