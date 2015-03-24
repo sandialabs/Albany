@@ -85,9 +85,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     Teuchos::ParameterList &
     app_params_m = solver_factory.getParameters();
 
-    // Add pointer to application array for later use in Schwarz BC.
-    app_params_m.set("Application Array", apps_);
-
     model_app_params[m] = Teuchos::rcp(&(app_params_m), false);
 
     Teuchos::RCP<Teuchos::ParameterList>
@@ -129,6 +126,9 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     // Or can it be null?
     apps_[m] = Teuchos::rcp(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
+
+    // Add application array for later use in Schwarz BC.
+    apps_[m]->setCoupledApplications(apps_);
 
     //Create model evaluator
     Albany::ModelFactory
