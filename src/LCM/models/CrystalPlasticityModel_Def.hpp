@@ -12,6 +12,7 @@
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
+#define CP_HARDENING
 #include <typeinfo>
 #include <Sacado_Traits.hpp>
 namespace LCM
@@ -26,7 +27,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     num_slip_(p->get<int>("Number of Slip Systems", 0))
 {
   slip_systems_.resize(num_slip_);
-//  TEUCHOS_TEST_FOR_EXCEPTION(num_slip_ > 12, std::logic_error, "\n****Error, can only handle 12 slip systems CrystalPlasticityModel");
 
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp constructor\n";
@@ -106,7 +106,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
-  //std::string gammas_string = (*field_name_map_)["gammas"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"]; 
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -123,7 +122,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
-//  this->eval_field_map_.insert(std::make_pair(gammas_string, dl->qp_list12));
 
   // define the state variables
   //
@@ -145,17 +143,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(true);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Fp", false));
   //
-  // gammas
-#if 0
-  this->num_state_variables_++;
-  this->state_var_names_.push_back(gammas_string);
-  this->state_var_layouts_.push_back(dl->qp_list12);
-  this->state_var_init_types_.push_back("scalar");
-  this->state_var_init_values_.push_back(0.0);
-  this->state_var_old_state_flags_.push_back(true);
-  this->state_var_output_flags_.push_back(p->get<bool>("Output gammas", false));
-#endif
-  //
   // L
   this->num_state_variables_++;
   this->state_var_names_.push_back(L_string);
@@ -173,6 +160,22 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_init_values_.push_back(0.0);
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
+  //
+  // gammas
+#ifdef CP_HARDENING
+  for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
+    std::string g = Albany::strint("gamma_", num_ss+1);
+    std::string gamma_string = (*field_name_map_)[g];
+    this->eval_field_map_.insert(std::make_pair(gamma_string, dl->qp_scalar));
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(gamma_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(true);
+    this->state_var_output_flags_.push_back(p->get<bool>("Output "+gamma_string , false));
+  }
+#endif
 
 #ifdef PRINT_DEBUG
   std::cout << "<<< done in cp constructor\n";
@@ -191,7 +194,6 @@ computeState(typename Traits::EvalData workset,
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
-  //std::string gammas_string = (*field_name_map_)["gammas"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
@@ -205,10 +207,18 @@ computeState(typename Traits::EvalData workset,
   // extract evaluated MDFields
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
-  //PHX::MDField<ScalarT> slips  = *eval_fields[gammas_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
+#ifdef CP_HARDENING
+  std::vector<PHX::MDField<ScalarT> * > slips(num_slip_);
+  for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
+    std::string g = Albany::strint("gamma_", num_ss+1);
+    std::string gamma_string = (*field_name_map_)[g];
+    PHX::MDField<ScalarT> s  = *eval_fields[gamma_string];
+    slips.push_back(&s);
+  }
+#endif
 
   // get state variables
   Albany::MDArray previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
@@ -260,11 +270,17 @@ computeState(typename Traits::EvalData workset,
           tauC = slip_systems_[s].tau_critical_;
           m    = slip_systems_[s].gamma_exp_;
           H    = slip_systems_[s].H_;
-//        gamma = slips(cell, pt, s);
+#ifdef CP_HARDENING
+          PHX::MDField<ScalarT> slip  = *(slips[s]);
+          gamma = slip(cell, pt);
+#else
           gamma = 0.;
+#endif
           ScalarT t1 = std::fabs(tau /(tauC+H*gamma));
           dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
-//        slips(cell, pt, s) += dgamma;
+#ifdef CP_HARDENING
+          slip(cell, pt) += dgamma;
+#endif
           L += (dgamma* P);
 #ifdef PRINT_OUTPUT
           dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);
