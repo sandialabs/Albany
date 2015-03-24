@@ -16,10 +16,13 @@ output [TBD].
 
 ---------------------Debug TODOs------------------------
 
-1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain 
-(why is ||F|| not changing?) 
+1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain
+with LOCA (NOX works) (why is ||F|| not changing?) [Irina]
 
-2.) Test code on 2 decoupled domains (after 1.) is done) 
+2.) Test code on 2 decoupled domains. [Irina]
+
+3.) Get code to work when sum (# of parameters) in model input files is not 
+equal to # of parameters in coupled input files. [Irina]
 
 ---------------------Development TODOs------------------------
 
@@ -31,7 +34,7 @@ in general already in other parts of the code. [TBD?]
 Jacobians as Tpetra_Operators.  Resulting Teuchos Array of Tpetra_Operators
 will be passed to Schwarz_CoupledJacobian class. [Alejandro]
 
-3.) Implement separateCoupledVector for the general (> 1) domain case [TBD]
+3.) Implement separateCoupledVector for the general (> 1) domain case [Irina]
 
 
 ------------------Questions/Comments/Notes-----------------------------

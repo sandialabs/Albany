@@ -24,7 +24,7 @@ template <typename EvalT, typename Traits>
 SchwarzModelsBC_Base<EvalT, Traits>::
 SchwarzModelsBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_model_(p.get<std::string>("Coupled Block")),
+  coupled_model_(p.get<std::string>("Coupled Model")),
   disc_(Teuchos::null)
 {
 }

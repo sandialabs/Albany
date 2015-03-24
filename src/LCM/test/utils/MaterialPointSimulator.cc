@@ -245,8 +245,8 @@ int main(int ac, char* av[])
   paramList.set<bool>("Compute Tangent", check_stability);
 
   //---------------------------------------------------------------------------
-  std::cout << "// Constitutive Model Parameters"
-            << std::endl;
+  //std::cout << "// Constitutive Model Parameters"
+            //<< std::endl;
   Teuchos::ParameterList cmpPL;
   paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >(
       "Name Map",
@@ -263,8 +263,8 @@ int main(int ac, char* av[])
   stateFieldManager.registerEvaluator<Residual>(CMP);
 
   //---------------------------------------------------------------------------
-  std::cout << "// Constitutive Model Interface Evaluator"
-            << std::endl;
+  //std::cout << "// Constitutive Model Interface Evaluator"
+           // << std::endl;
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   if (have_temperature) {
@@ -311,6 +311,7 @@ int main(int ac, char* av[])
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
+    bcPL.set<std::string>("Min detA Name", "Min detA");
     Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = Teuchos::rcp(
         new LCM::BifurcationCheck<Residual, Traits>(bcPL, dl));
     fieldManager.registerEvaluator<Residual>(BC);
@@ -343,11 +344,26 @@ int main(int ac, char* av[])
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
+    
+    // register min(det(A))
+    p = stateMgr.registerStateVariable(
+        "Min detA",
+        dl->qp_scalar,
+        dl->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        false,
+        true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+    fieldManager.registerEvaluator<Residual>(ev);
+    stateFieldManager.registerEvaluator<Residual>(ev);    
+    
   }
 
   //---------------------------------------------------------------------------
-  std::cout << "// register deformation gradient"
-            << std::endl;
+  //std::cout << "// register deformation gradient"
+           // << std::endl;
   p = stateMgr.registerStateVariable(
       "F",
       dl->qp_tensor,
@@ -363,11 +379,11 @@ int main(int ac, char* av[])
   //---------------------------------------------------------------------------
   //
   Traits::SetupData setupData = "Test String";
-  std::cout << "Calling postRegistrationSetup" << std::endl;
+  //std::cout << "Calling postRegistrationSetup" << std::endl;
   fieldManager.postRegistrationSetup(setupData);
 
-  std::cout << "// set the required fields for the state manager"
-            << std::endl;
+  //std::cout << "// set the required fields for the state manager"
+            //<< std::endl;
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
       new PHX::MDALayout<Dummy>(0));
   std::vector<std::string> responseIDs = stateMgr.getResidResponseIDsToRequire(
@@ -383,7 +399,7 @@ int main(int ac, char* av[])
   }
   stateFieldManager.postRegistrationSetup("");
 
-  std::cout << "Process using 'dot -Tpng -O <name>'\n";
+  //std::cout << "Process using 'dot -Tpng -O <name>'\n";
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
@@ -475,10 +491,10 @@ int main(int ac, char* av[])
   //
   for (int istep(0); istep <= number_steps; ++istep) {
 
-    std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
+    //std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
     // alpha \in [0,1]
     double alpha = double(istep) / number_steps;
-    std::cout << "alpha: " << alpha << std::endl;
+    //std::cout << "alpha: " << alpha << std::endl;
     Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
     Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
 
@@ -525,7 +541,7 @@ int main(int ac, char* av[])
     }
 
     // Call the state field manager
-    std::cout << "+++ calling the stateFieldManager\n";
+    //std::cout << "+++ calling the stateFieldManager\n";
     stateFieldManager.preEvaluate<Residual>(workset);
     stateFieldManager.evaluateFields<Residual>(workset);
     stateFieldManager.postEvaluate<Residual>(workset);
