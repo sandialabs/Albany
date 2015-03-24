@@ -81,10 +81,6 @@ SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
 SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
 SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )
 
-IF (CMAKE_Fortran_COMPILER) # Enable Fortran if it is enabled in Trilinos.
-  ENABLE_LANGUAGE(Fortran)
-ENDIF()
-
 # Build Albany as shared libraries if Trilinos was compiled that way
 
 IF(Trilinos_BUILD_SHARED_LIBS)
@@ -100,6 +96,13 @@ ENDIF(Trilinos_BUILD_SHARED_LIBS)
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
 
 PROJECT(Albany)
+
+set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
+
+IF (CMAKE_Fortran_COMPILER AND ALBANY_ENABLE_FORTRAN) # Enable Fortran if it is enabled in Trilinos.
+  ENABLE_LANGUAGE(Fortran)
+ENDIF()
+
 
 IF (NOT CMAKE_CXX_FLAGS)
   SET(CMAKE_CXX_FLAGS ${Trilinos_CXX_COMPILER_FLAGS} )
