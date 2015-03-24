@@ -11,6 +11,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPSMaterials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPSMaterials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g.4.0
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.g.4.0 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g.4.1
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.g.4.1 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g.4.2
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.g.4.2 COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.g.4.3
+               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.g.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPDPS.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS_PeridigmResults.gold.e
@@ -22,5 +30,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS_PeridigmResults.exodif
 
 # Add the tests
 if(ALBANY_IFPACK2)
-add_test(PeridigmCoupling_TensileBarPDPS_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" TensileBarPDPS.xml)
+add_test(PeridigmCoupling_TensileBarPDPS_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" TensileBarPDPS.xml)
+#add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.xml)
 endif()
