@@ -211,12 +211,11 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
 #ifdef CP_HARDENING
-  std::vector<PHX::MDField<ScalarT> * > slips(num_slip_);
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips;
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     std::string g = Albany::strint("gamma_", num_ss+1);
     std::string gamma_string = (*field_name_map_)[g];
-    PHX::MDField<ScalarT> s  = *eval_fields[gamma_string];
-    slips.push_back(&s);
+    slips.push_back(eval_fields[gamma_string]);
   }
 #endif
 
