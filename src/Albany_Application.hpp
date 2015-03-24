@@ -867,6 +867,12 @@ namespace Albany {
 #endif
 #endif
 
+#ifdef ALBANY_LCM
+  // Needed for coupled Schwarz
+  public:
+  private:
+#endif
+
   protected:
 
 #ifdef ALBANY_EPETRA

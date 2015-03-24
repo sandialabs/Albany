@@ -130,7 +130,7 @@ private:
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >
   models_;
 
-  Teuchos::Array<Teuchos::RCP<Albany::Application> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   apps_;
 
   Teuchos::RCP<Teuchos::Comm<int> const>
