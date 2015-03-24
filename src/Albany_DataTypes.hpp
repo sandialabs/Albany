@@ -26,8 +26,8 @@
 #include "Sacado_ETV_Vector.hpp"
 
 //amb Need to move to configuration.
-#define ALBANY_SFAD_SIZE 16
-#define ALBANY_SLFAD_SIZE 16
+#define ALBANY_SFAD_SIZE 27
+#define ALBANY_SLFAD_SIZE 27
 
 //#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
