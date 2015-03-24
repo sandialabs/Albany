@@ -137,6 +137,9 @@ struct EdgeLessThan
   }
 };
 
+stk::mesh::Entity const
+INVALID_ENTITY = {stk::mesh::Entity::Entity_t::InvalidEntity};
+
 // Forward declarations
 class Topology;
 

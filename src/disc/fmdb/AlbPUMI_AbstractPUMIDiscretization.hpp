@@ -43,12 +43,16 @@ namespace AlbPUMI {
     //! Create a new field having a name and a value_type of apf::SCALAR,
     //! apf::VECTOR, or apf::MATRIX.
     virtual void createField(const char* name, int value_type) = 0;
-    //! Copy field data to APF.
+    //! Copy field data to APF. nentries is the number of values at each field
+    //! point.
     virtual void setField(const char* name, const ST* data, bool overlapped,
-                          int offset = 0) = 0;
+                          int offset = 0, int nentries = -1) = 0;
     //! Copy field data from APF.
     virtual void getField(const char* name, ST* dataT, bool overlapped,
-                          int offset = 0) const = 0;
+                          int offset = 0, int nentries = -1) const = 0;
+
+    //amb-dbg
+    virtual void writeMeshDebug (const std::string& filename) {}
   };
 
 }

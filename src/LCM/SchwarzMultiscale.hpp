@@ -9,6 +9,7 @@
 
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
+#include "Schwarz_BoundaryJacobian.hpp" 
 
 namespace LCM {
 
@@ -80,11 +81,20 @@ public:
   allocateVectors();
 
   /// Create the map for the coupled solution from an array of the maps
-  /// for each invidivual model that is being coupled.
+  /// for each individual model that is being coupled.
   Teuchos::RCP<Tpetra_Map const>
   createCoupledMap(
       Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
       Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
+
+  //Take in a combined vector for a coupled model 
+  //and separates into into individual subvectors for each submodel.
+  //These are stored in a Teuchos::Array of Tpetra_Vectors.
+  void separateCoupledVectorConst( const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
+                              Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const;
+  
+  void separateCoupledVectorNonConst( const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
+                              Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const;
 
 protected:
 
@@ -120,7 +130,7 @@ private:
   Teuchos::Array<Teuchos::RCP<Thyra::ModelEvaluator<ST> > >
   models_;
 
-  Teuchos::Array<Teuchos::RCP<Albany::Application> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   apps_;
 
   Teuchos::RCP<Teuchos::Comm<int> const>
@@ -138,6 +148,12 @@ private:
   
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
+
+  //Teuchos array holding main diagonal jacobians (non-coupled models)
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
+
+  //Teuchos array holding off-diagonal jacobians (coupling ones)
+  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary_;
 
   int
   num_models_;

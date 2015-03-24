@@ -68,7 +68,6 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access volume field.\n\n");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
@@ -174,8 +173,9 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
   for(int i=0 ; i<numPartialStressIds ; i++){
     int peridigmGlobalId = minPeridigmPartialStressId + i;
+    int localId = static_cast<int>(peridigmNodeGlobalIds.size());
     peridigmNodeGlobalIds.push_back(peridigmGlobalId);
-    peridigmNodeGlobalIdToLocalId[peridigmGlobalId] = -1;
+    peridigmNodeGlobalIdToLocalId[peridigmGlobalId] = localId;
   }
 
   peridigmPartialStressId = minPeridigmPartialStressId;
@@ -206,15 +206,6 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     hasPeridynamics = true;
   }
 
-  // Create the owned maps
-//   Epetra_BlockMap oneDimensionalMap(-1, globalIds.size(), &globalIds[0], 1, 0, *epetraComm);
-//   Epetra_BlockMap threeDimensionalMap(-1, globalIds.size(), &globalIds[0], 3, 0, *epetraComm);
-
-  // Create Epetra_Vectors for the initial positions, volumes, and block_ids
-//   Teuchos::RCP<Epetra_Vector> initialX = Teuchos::rcp(new Epetra_Vector(threeDimensionalMap));
-//   Teuchos::RCP<Epetra_Vector> cellVolume = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
-//   Teuchos::RCP<Epetra_Vector> blockId = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
-
   std::vector<double> initialX(3*peridigmNodeGlobalIds.size());
   std::vector<double> cellVolume(peridigmNodeGlobalIds.size());
   std::vector<int> blockId(peridigmNodeGlobalIds.size());
@@ -239,6 +230,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
       materialModelName = materialDataBase->getElementBlockSublist(blockName, "Material Model").get<std::string>("Model Name");
 
     if(materialModelName == "Peridynamics"){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::initialize(), unable to access volume field.\n\n");
       for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++){
 	int numNodes = bulkData->num_nodes(elementsInElementBlock[iElement]);
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodes != 1, "\n\n**** Error in PeridigmManager::initialize(), \"Peridynamics\" material model may be assigned only to sphere elements.\n\n");
@@ -287,25 +279,22 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
       // Create data structures for passing information to/from Intrepid.
 
-      // \todo I think these can all just be Intrepid::FieldContainer<RealType> and that what's below is overkill
+      typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
 
       // Physical points, which are the physical (x, y, z) values of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
-      Teuchos::ArrayRCP<RealType> physPointsMem = Teuchos::arcp<RealType>(physPointsLayout->size());
-      physPoints.setFieldData(physPointsMem);
+      physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
 
       // Reference points, which are the natural coordinates of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
-      Teuchos::ArrayRCP<RealType> refPointsMem = Teuchos::arcp<RealType>(refPointsLayout->size());
-      refPoints.setFieldData(refPointsMem);
+      refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
 
       // Cell workset, which is the set of nodes for the given element
       Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, numDim));
       PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
-      Teuchos::ArrayRCP<RealType> cellWorksetMem = Teuchos::arcp<RealType>(cellWorksetLayout->size());
-      cellWorkset.setFieldData(cellWorksetMem);
+      cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
 
       // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
@@ -354,7 +343,6 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	  initialX[localId*3]   = physPoints(0, qp, 0);
 	  initialX[localId*3+1] = physPoints(0, qp, 1);
 	  initialX[localId*3+2] = physPoints(0, qp, 2);
-
 	  partialStressElement.peridigmGlobalIds.push_back(globalId);
 	}
 
@@ -379,7 +367,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
                                                                                                             &cellVolume[0],
                                                                                                             &blockId[0]));
 
-  // Create a Peridigm object DJL DEBUGGING
+  // Create a Peridigm object
   peridigm = Teuchos::rcp<PeridigmNS::Peridigm>(new PeridigmNS::Peridigm(*mpiComm->getRawMpiComm(),
 									 peridigmParams,
 									 peridynamicDiscretization));
@@ -452,7 +440,6 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       // Can probably store things by block and use worksets to compute things in one big call.
 
       // Create data structures for passing information to/from Intrepid.
-
       shards::CellTopology cellTopology(&it->cellTopologyData);
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
       Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
@@ -468,23 +455,22 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       quadratureRefWeights.resize(numQuadPoints);
       cubature->getCubature(quadratureRefPoints, quadratureRefWeights);
 
+      typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
+
       // Physical points, which are the physical (x, y, z) values of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
-      Teuchos::ArrayRCP<RealType> physPointsMem = Teuchos::arcp<RealType>(physPointsLayout->size());
-      physPoints.setFieldData(physPointsMem);
+      physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
 
       // Reference points, which are the natural coordinates of the quadrature points
       Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
       PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
-      Teuchos::ArrayRCP<RealType> refPointsMem = Teuchos::arcp<RealType>(refPointsLayout->size());
-      refPoints.setFieldData(refPointsMem);
+      refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
 
       // Cell workset, which is the set of nodes for the given element
       Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodes, numDim));
       PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
-      Teuchos::ArrayRCP<RealType> cellWorksetMem = Teuchos::arcp<RealType>(cellWorksetLayout->size());
-      cellWorkset.setFieldData(cellWorksetMem);
+      cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
 
       // Copy the reference points from the Intrepid::FieldContainer to a PHX::MDField
       for(int qp=0 ; qp<numQuadPoints ; ++qp){
@@ -496,12 +482,13 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       int numNodesInElement = bulkData->num_nodes(it->albanyElement);
       const stk::mesh::Entity* node = bulkData->begin_nodes(it->albanyElement);
       Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanySolutionVector->getData();
+
       for(int i=0 ; i<numNodesInElement ; i++){
-	int globalAlbanyNodeId = bulkData->identifier(node[i]); // DJL DEBUGGING any chance this should be -1?
+	int globalAlbanyNodeId = bulkData->identifier(node[i]) - 1;
 	int albanyCurrentDisplacementIndex = albanyMap->getLocalElement(3*globalAlbanyNodeId);
 	cellWorkset(0, i, 0) = it->albanyNodeInitialPositions[3*i]   + albanyCurrentDisplacement[albanyCurrentDisplacementIndex];
-	cellWorkset(0, i, 1) = it->albanyNodeInitialPositions[3*i+1] + albanyCurrentDisplacement[albanyCurrentDisplacementIndex+1];
-	cellWorkset(0, i, 2) = it->albanyNodeInitialPositions[3*i+2] + albanyCurrentDisplacement[albanyCurrentDisplacementIndex+2];
+	cellWorkset(0, i, 1) = it->albanyNodeInitialPositions[3*i+1] + albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 1];
+	cellWorkset(0, i, 2) = it->albanyNodeInitialPositions[3*i+2] + albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 2];
       }
 
       // Determine the global (x,y,z) coordinates of the quadrature points
@@ -547,13 +534,13 @@ void LCM::PeridigmManager::evaluateInternalForce()
     peridigm->computeInternalForce();
 }
 
-double LCM::PeridigmManager::getForce(int globalId, int dof)
+double LCM::PeridigmManager::getForce(int globalAlbanyNodeId, int dof)
 {
   double force(0.0);
 
   if(hasPeridynamics){
     Epetra_Vector& peridigmForce = *(peridigm->getForce());
-    int peridigmLocalId = peridigmForce.Map().LID(globalId);
+    int peridigmLocalId = peridigmForce.Map().LID(globalAlbanyNodeId);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getForce(), invalid global id.\n\n");
     force = peridigmForce[3*peridigmLocalId + dof];
 

@@ -778,20 +778,11 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_PERIDIGM 
 #ifdef ALBANY_EPETRA
-
-//   xT
-//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
-//   return initial_x_dot;
-
-
-
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
 #endif
 #endif
-
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -833,8 +824,11 @@ computeGlobalResidualImplT(
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -1051,8 +1045,11 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -1552,8 +1549,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -2111,8 +2111,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -2295,8 +2298,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -2569,8 +2575,11 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
@@ -2793,8 +2802,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -2976,8 +2988,11 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -3256,8 +3271,11 @@ computeGlobalMPTangent(
     workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps = coupled_apps_;
+#endif
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
   }
@@ -3430,10 +3448,12 @@ evaluateStateFieldManagerT(
   workset.fT = overlapped_fT;
 
   // Perform fill via field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginEvaluatingSfm();
   for (int ws=0; ws < numWorksets; ws++) {
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endEvaluatingSfm();
 }
 
 void Albany::Application::registerShapeParameters()
@@ -3560,13 +3580,28 @@ postRegSetup(std::string eval)
       }
   }
   else if (eval=="Distributed Parameter Derivative") { //!!!
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++) {
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
-    if (dfm!=Teuchos::null)
+    }
+    if (dfm!=Teuchos::null) {
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+    }
     if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      for (int ps=0; ps < nfm.size(); ps++) {
+        std::vector<PHX::index_size_type> derivative_dimensions;
+        derivative_dimensions.push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, ps));
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+      }
   }
 #ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {

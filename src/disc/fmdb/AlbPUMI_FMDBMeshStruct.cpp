@@ -389,6 +389,7 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
 
   // Parameters to refine the mesh after input
   validPL->set<double>("Resize Input Mesh Element Size", 1.0, "Resize mesh element to this size at input");
+  validPL->set<int>("Max Number of Mesh Adapt Iterations", 1);
 
   Teuchos::TwoDArray<std::string> defaultData;
   validPL->set<Teuchos::TwoDArray<std::string> >("Element Block Associations", defaultData,

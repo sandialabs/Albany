@@ -26,8 +26,8 @@
 #include "Sacado_ETV_Vector.hpp"
 
 //amb Need to move to configuration.
-#define ALBANY_SFAD_SIZE 16
-#define ALBANY_SLFAD_SIZE 16
+#define ALBANY_SFAD_SIZE 27
+#define ALBANY_SLFAD_SIZE 27
 
 //#define ALBANY_FAST_FELIX
 // Typedef AD types to standard names
@@ -90,7 +90,7 @@ typedef Tpetra::Export<LO, GO, KokkosNode>          Tpetra_Export;
 typedef Tpetra::Import<LO, GO, KokkosNode>          Tpetra_Import;
 typedef Tpetra::CrsGraph<LO, GO, KokkosNode>        Tpetra_CrsGraph;
 typedef Tpetra::CrsMatrix<ST, LO, GO, KokkosNode>   Tpetra_CrsMatrix;
-typedef Tpetra_CrsMatrix::k_local_matrix_type  Tpetra_LocalMatrixType ;
+//typedef Tpetra_CrsMatrix::k_local_matrix_type  Tpetra_LocalMatrixType ;
 typedef Tpetra::Operator<ST, LO, GO, KokkosNode>    Tpetra_Operator;
 typedef Tpetra::Vector<ST, LO, GO, KokkosNode>      Tpetra_Vector;
 typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;

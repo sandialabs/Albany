@@ -189,35 +189,14 @@ evaluateFields(typename Traits::EvalData workset)
       for (int dim = 0; dim < num_dims_; ++dim)
         residual_(cell, node, dim) = ScalarT(0);
     if (def_grad_rc_) {
-      /* The calculation in Kinematics already gives us stress with respect to
-       * x[0]. Now we need the weighted basis function gradient to also be
-       * w.r.t. x[0].
-       *   w_grad_bf_ is
-       *     f det(dx[n-1]/dr) dw/dx[n-1],
-       * where f is the quadrature weight, r is the element reference
-       * coordinates, and the det gives the volume change relative to the
-       * reference element, We need
-       *     f det(dx[0]/dr) dw/dx[0].
-       * First,
-       *     dw/dx[0] = dw/dx[n-1] F[n-1,0],
-       * which is w_grad_bf_ times def_grad_rc_. Second,
-       *     det(dx[0]/dr) = det(dx[0]/dx[n-1] dx[n-1]/dr)
-       *       = det(dx[0]/dx[n-1]) det(dx[n-1]/dr)
-       *       = det(dx[n-1]/dr) / det(F[n-1,0]).
-       */
       for (int pt = 0; pt < num_pts_; ++pt) {
         Intrepid::Tensor<RealType> F(num_dims_);
         F.fill(def_grad_rc_(), cell, pt, 0, 0);
         const RealType F_det = Intrepid::det(F);
         for (int node = 0; node < num_nodes_; ++node) {
           MeshScalarT w[3];
-          for (int k = 0; k < num_dims_; ++k) {
-            w[k] = MeshScalarT(0);
-            for (int i = 0; i < num_dims_; ++i)
-              w[k] += (w_grad_bf_(cell, node, pt, i) *
-                       def_grad_rc_()(cell, pt, i, k));
-            w[k] /= F_det;
-          }
+          AAdapt::rc::transformWeightedGradientBF(
+            def_grad_rc_, F_det, w_grad_bf_, cell, pt, node, w);
           for (int i = 0; i < num_dims_; ++i)
             for (int j = 0; j < num_dims_; ++j)
               residual_(cell, node, i) += stress_(cell, pt, i, j) * w[j];
