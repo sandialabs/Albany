@@ -65,7 +65,7 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 
     power = beta_list->get("Power Law Exponent",1.0);
     TEUCHOS_TEST_FOR_EXCEPTION(power<-1.0, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Power Law Exponent\" must be greater than -1.\n");
+        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Power Law Exponent\" must be greater than (or equal to) -1.\n");
 
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (power law):\n\n"
@@ -231,7 +231,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
     {
         case UNIFORM:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -249,7 +249,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 
         case POWER_LAW:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -267,7 +267,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
         }
         case REGULARIZED_COULOMB:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -286,7 +286,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
         }
         case PIECEWISE_LINEAR:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -331,7 +331,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
     {
         case UNIFORM:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -353,7 +353,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
 
         case POWER_LAW:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -374,7 +374,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
         }
         case REGULARIZED_COULOMB:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
@@ -397,7 +397,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
         }
         case PIECEWISE_LINEAR:
         {
-            ScalarT ff = pow(10.0, -20.0*(*homotopyParam));
+            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
             if (*homotopyParam==0)
                 ff = 0;
 
