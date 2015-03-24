@@ -870,8 +870,18 @@ namespace Albany {
 #ifdef ALBANY_LCM
   // Needed for coupled Schwarz
   public:
+    void
+    setCoupledApplications(
+        Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > & ca)
+    {coupled_apps_ = ca;}
+
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+    getCoupledApplications() {return coupled_apps_;}
+
   private:
-#endif
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+    coupled_apps_;
+#endif //ALBANY_LCM
 
   protected:
 
