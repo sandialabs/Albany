@@ -27,7 +27,7 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    size_t      len      = name.find("_");
    if (len != std::string::npos) name = name.substr(0,len);
 
- #define ALBANY_VERBOSE
+// #define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
    cout << "CellTopology is " << name << " with nodes " << numNodes << "  dim " << numDim << endl;
    cout << "FullCellTopology name is " << ctd.name << endl;

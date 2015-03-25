@@ -50,6 +50,7 @@ private:
   PHX::MDField<ScalarT,Cell,Node,VecDim> UNodal;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
+  Teuchos::RCP<shards::CellTopology> cellType;
 
   PHX::MDField<ScalarT,Cell,QuadPoint> mountainHeight;
 
@@ -110,6 +111,9 @@ private:
   void fill_nodal_metrics(std::size_t cell);
 
   void get_coriolis(std::size_t cell, Intrepid::FieldContainer<ScalarT>  & coriolis);
+
+  std::vector<LO> qpToNodeMap; 
+  std::vector<LO> nodeToQPMap; 
 
 #else
 public:
@@ -200,8 +204,8 @@ public:
 // to use the correct node ordering for node-point quadrature.  This
 // should go away when spectral elements are fully implemented for
 // Aeras.
-const int qpToNodeMap[9] = {0, 4, 1, 7, 8, 5, 3, 6, 2};
-const int nodeToQPMap[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
+//const int qpToNodeMap[9] = {0, 4, 1, 7, 8, 5, 3, 6, 2};
+//const int nodeToQPMap[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
 // const int qpToNodeMap[4] = {0, 1, 3, 2};
 // const int nodeToQPMap[4] = {0, 1, 3, 2};
 // const int qpToNodeMap[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};

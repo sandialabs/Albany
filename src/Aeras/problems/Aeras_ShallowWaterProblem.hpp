@@ -249,6 +249,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Resid"));
    
     //Input
+    p->set<RCP<shards::CellTopology> >("Cell Type", cellType);
     p->set<std::string>("Weighted BF Name", "wBF");
     p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
     p->set<std::string>("QP Variable Name", dof_names[0]);
