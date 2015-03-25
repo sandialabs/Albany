@@ -279,7 +279,7 @@ computeState(typename Traits::EvalData workset,
 #else
           gamma = 0.;
 #endif
-          ScalarT t1 = std::fabs(tau /(tauC+H*gamma));
+          ScalarT t1 = std::fabs(tau /(tauC+H*std::fabs(gamma)));
           dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
 #ifdef CP_HARDENING
           slip(cell, pt) += dgamma;
