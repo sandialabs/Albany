@@ -43,10 +43,14 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  coupled_apps = dirichlet_workset.apps;
+
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = Teuchos::null;
+
   Teuchos::RCP<Albany::AbstractDiscretization>
   disc = dirichlet_workset.disc;
-
-  assert(disc != Teuchos::null);
 
   Albany::STKDiscretization *
   stk_disc = static_cast<Albany::STKDiscretization *>(disc.get());
@@ -60,29 +64,40 @@ computeBCs(
   const Teuchos::ArrayRCP<double> &
   coordinates = stk_disc->getCoordinates();
 
-  std::string const
-  coupled_app_name = this->getCoupledAppName();
+  auto const
+  num_coupled_apps = coupled_apps.size();
 
-  int const
-  coupled_app_index = appIndexFromName(coupled_app_name);
+  bool const
+  self_coupled = num_coupled_apps == 0;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
-  coupled_apps = dirichlet_workset.apps;
+  if (self_coupled == true) {
 
-  if (coupled_app_index >= coupled_apps.size()) {
-    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
-    std::cerr << "Application index out of range: " << coupled_app_index;
-    std::cerr << '\n';
-    std::cerr << "Number of coupled applications: " << coupled_apps.size();
-    std::cerr << '\n';
-    exit(1);
+    // Mainly just for testing the Schwarz BC
+    coupled_disc = disc;
+
+  } else {
+
+    std::string const
+    coupled_app_name = this->getCoupledAppName();
+
+    int const
+    coupled_app_index = appIndexFromName(coupled_app_name);
+
+    if (coupled_app_index >= coupled_apps.size()) {
+      std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+      std::cerr << "Application index out of range: " << coupled_app_index;
+      std::cerr << '\n';
+      std::cerr << "Number of coupled applications: " << coupled_apps.size();
+      std::cerr << '\n';
+      exit(1);
+    }
+
+    Teuchos::RCP<Albany::Application>
+    coupled_app = coupled_apps[coupled_app_index];
+
+    coupled_disc = coupled_app->getDiscretization();
+
   }
-
-  Teuchos::RCP<Albany::Application>
-  coupled_app = coupled_apps[coupled_app_index];
-
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  coupled_disc = coupled_app->getDiscretization();
 
   Albany::STKDiscretization *
   coupled_stk_disc =
