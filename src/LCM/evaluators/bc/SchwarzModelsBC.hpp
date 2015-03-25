@@ -55,19 +55,19 @@ public:
   getDiscretization() const {return disc_;}
 
   void
-  setCoupledModel(std::string const & cm) {coupled_model_ = cm;}
+  setCoupledAppName(std::string const & can) {coupled_app_name_ = can;}
 
   std::string
-  getCoupledModel() const {return coupled_model_;}
+  getCoupledAppName() const {return coupled_app_name_;}
 
   int
-  nameToIndex(std::string const & name) const
+  appIndexFromName(std::string const & name) const
   {return std::atoi(name.c_str());}
 
 protected:
 
   std::string
-  coupled_model_;
+  coupled_app_name_;
 
   Discretization
   disc_;

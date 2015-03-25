@@ -24,7 +24,7 @@ template <typename EvalT, typename Traits>
 SchwarzModelsBC_Base<EvalT, Traits>::
 SchwarzModelsBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_model_(p.get<std::string>("Coupled Model")),
+  coupled_app_name_(p.get<std::string>("Coupled Application")),
   disc_(Teuchos::null)
 {
 }
@@ -65,7 +65,10 @@ computeBCs(
   coordinates = stk_discretization->getCoordinates();
 
   std::string const
-  coupled_model = this->getCoupledModel();
+  coupled_app_name = this->getCoupledAppName();
+
+  int const
+  coupled_app_index = appIndexFromName(coupled_app_name);
 
   Albany::WorksetArray<std::string>::type const &
   ws_eb_names = disc->getWsEBNames();
@@ -79,7 +82,7 @@ computeBCs(
   block_name_2_index = gms.ebNameToIndex;
 
   std::map<std::string, int>::const_iterator
-  it = block_name_2_index.find(coupled_model);
+  it = block_name_2_index.find(coupled_app_name);
 
   assert(it != block_name_2_index.end());
 
@@ -150,7 +153,7 @@ computeBCs(
     std::string const &
     element_block = ws_eb_names[workset];
 
-    if (element_block != coupled_model) continue;
+    if (element_block != coupled_app_name) continue;
 
     size_t const
     elements_per_workset = ws_el_2_nd[workset].size();
@@ -289,7 +292,7 @@ computeBCs(
   value(dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to block: " << coupled_model << '\n';
+  std::cout << "Coupling to block: " << coupled_app_name << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
   for (size_t i = 0; i < vertex_count; ++i) {
