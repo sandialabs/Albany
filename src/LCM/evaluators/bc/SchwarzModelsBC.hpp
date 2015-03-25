@@ -64,10 +64,19 @@ public:
   appIndexFromName(std::string const & name) const
   {return std::atoi(name.c_str());}
 
+  void
+  setCoupledBlockName(std::string const & cbn) {coupled_block_name_ = cbn;}
+
+  std::string
+  getCoupledBlockName() const {return coupled_block_name_;}
+
 protected:
 
   std::string
   coupled_app_name_;
+
+  std::string
+  coupled_block_name_;
 
   Discretization
   disc_;
