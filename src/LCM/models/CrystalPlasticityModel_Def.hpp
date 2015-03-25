@@ -212,10 +212,12 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
 #ifdef CP_HARDENING
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips;
+  std::vector<Albany::MDArray * > previous_slips;
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     std::string g = Albany::strint("gamma_", num_ss+1);
     std::string gamma_string = (*field_name_map_)[g];
     slips.push_back(eval_fields[gamma_string]);
+    previous_slips.push_back(&((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
 #endif
 
@@ -271,11 +273,13 @@ computeState(typename Traits::EvalData workset,
           H    = slip_systems_[s].H_;
 #ifdef CP_HARDENING
           PHX::MDField<ScalarT> slip  = *(slips[s]);
+          Albany::MDArray previous_slip  = *(previous_slips[s]);
+          slip(cell,pt) = previous_slip(cell,pt);
           gamma = slip(cell, pt);
 #else
           gamma = 0.;
 #endif
-          ScalarT t1 = std::fabs(tau /(tauC+H*gamma));
+          ScalarT t1 = std::fabs(tau /(tauC+H*std::fabs(gamma)));
           dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
 #ifdef CP_HARDENING
           slip(cell, pt) += dgamma;

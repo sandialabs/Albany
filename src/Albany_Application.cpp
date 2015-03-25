@@ -1754,6 +1754,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
     workset.fpVT = fpVT;
     workset.Vp_bcT = V_bc_ncT;
     workset.transpose_dist_param_deriv = trans;
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.disc = disc;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time =
@@ -1816,7 +1818,9 @@ applyGlobalDistParamDerivImplT(const double current_time,
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Distributed Parameter Derivative Export");
   // Assemble global df/dp*V
   if (trans) {
+    Tpetra_MultiVector temp(*fpVT,Teuchos::Copy);
     distParamLib->get(dist_param_name)->export_add(*fpVT, *overlapped_fpVT);
+    fpVT->update(1.0, temp, 1.0); //fpTV += temp;
   }
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);

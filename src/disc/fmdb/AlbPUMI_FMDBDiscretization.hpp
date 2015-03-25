@@ -232,15 +232,34 @@ template<class Output>
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "AlbPUMI:FMDBDiscretization: getMap(field_name) not implemented yet");
     }
+
+    //! Get field node map
+    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getNodeMap(field_name) not implemented yet");
+    }
+
     //! Get field overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "AlbPUMI:FMDBDiscretization: getOverlapMap(field_name) not implemented yet");
     }
+
+    //! Get field overlapped node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getOverlapNodeMap(field_name) not implemented yet");
+    }
+
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "AlbPUMI:FMDBDiscretization: getElNodeElID(field_name) not implemented yet");
+    }
+    //! Get Dof Manager of field field_name
+    const NodalDOFManager& getDOFManager(const std::string& field_name) const {
+      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+          "AlbPUMI:FMDBDiscretization: getDOFManager(field_name) not implemented yet");
     }
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {

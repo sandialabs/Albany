@@ -162,8 +162,18 @@ Albany::STKDiscretization::getMap(const std::string& field_name) const {
 }
 
 Teuchos::RCP<const Epetra_Map>
+Albany::STKDiscretization::getNodeMap(const std::string& field_name) const {
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).node_map;
+}
+
+Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getOverlapMap(const std::string& field_name) const {
   return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_map;
+}
+
+Teuchos::RCP<const Epetra_Map>
+Albany::STKDiscretization::getOverlapNodeMap(const std::string& field_name) const {
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_node_map;
 }
 
 Teuchos::RCP<const Epetra_CrsGraph>
@@ -1891,12 +1901,14 @@ void Albany::STKDiscretization::computeNodeSets()
 				      nodes );
 
     nodeSets[ns->first].resize(nodes.size());
+    nodeSetGIDs[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
     *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       GO node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
+      nodeSetGIDs[ns->first][i] = node_gid;
       nodeSets[ns->first][i].resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
       nodeSetCoords[ns->first][i] = stk::mesh::field_data(*coordinates_field, nodes[i]);
