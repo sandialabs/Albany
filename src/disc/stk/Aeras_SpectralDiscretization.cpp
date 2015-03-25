@@ -374,7 +374,7 @@ Aeras::SpectralDiscretization::transformMesh()
     *out << "Cube Sphere!" << endl;
 #endif
     const int numDim = stkMeshStruct->numDim;
-    for (int i=0; i < numOverlapNodes; i++)  {
+    for (int i=0; i < numOverlapNodesSTK; i++)  {
       double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
       double r = 0.0; 
       for (int n=0; n<numDim; n++) 
@@ -1417,6 +1417,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   stk::mesh::get_selected_entities(select_unowned,
 				   bulkData.buckets(stk::topology::NODE_RANK),
 				   unownedNodes);
+  numOverlapNodesSTK = unownedNodes.size(); 
   numOverlapNodes += unownedNodes.size();
 #ifdef OUTPUT_TO_SCREEN
   for (int rank = 0; rank < commT->getSize(); ++rank)
