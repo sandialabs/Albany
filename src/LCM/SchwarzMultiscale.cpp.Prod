@@ -599,11 +599,7 @@ allocateVectors()
   Teuchos::RCP<Thyra::DefaultProductVector<ST> >xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs_AV);   
   Teuchos::RCP<Thyra::DefaultProductVector<ST> >x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs_AV);   
  
-  //nominal_values_.set_x(xT_prod_vec);  
-
-  Teuchos::RCP<Thyra::VectorBase<ST> > x_nom = Thyra::createMember(getThyraDomainSpace());
-  Thyra::assign(x_nom.ptr(),0.0);
-  nominal_values_.set_x(x_nom);
+  nominal_values_.set_x(xT_prod_vec);  
 
   nominal_values_.set_x_dot(x_dotT_prod_vec);  
 
