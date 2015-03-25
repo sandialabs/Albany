@@ -613,6 +613,7 @@ namespace Aeras
     //! Number of elements on this processor
     int numOwnedNodes;
     int numOverlapNodes;
+    int numOverlapNodesSTK; //# overlap nodes in original (linear) STK mesh read in before enrichment 
     GO numGlobalNodes;
 
     // Needed to pass coordinates to ML.
