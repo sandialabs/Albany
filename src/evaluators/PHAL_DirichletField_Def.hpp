@@ -41,6 +41,11 @@ void
 DirichletField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
+#ifdef ALBANY_EPETRA
+  const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
+  Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
+  const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
+#endif
   Teuchos::RCP<Tpetra_Vector> pvecT = dirichletWorkset.distParamLib->get(this->field_name)->vector();
   Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
@@ -48,15 +53,16 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
-        !(pvecT->getMap()->isSameAs(*xT->getMap())),
-        Teuchos::Exceptions::InvalidParameter,
-        "Vector associated to field \"" << this->field_name << "\" should have the same map as the solution" << std::endl);
-
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
+#ifdef ALBANY_EPETRA
+      GO node_gid = nsNodesGIDs[inode];
+      int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
+      fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
+#else
       fT_nonconstView[lunk] = xT_constView[lunk] - pT[lunk];
+#endif
   }
 }
 
@@ -74,6 +80,11 @@ template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
+#ifdef ALBANY_EPETRA
+  const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
+  Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
+  const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
+#endif
   Teuchos::RCP<Tpetra_Vector> pvecT = dirichletWorkset.distParamLib->get(this->field_name)->vector();
   Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
   Teuchos::RCP<Tpetra_Vector> fT = dirichletWorkset.fT;
@@ -108,7 +119,15 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
       jacT->replaceLocalValues(lunk, index(), value()); 
       
-      if (fillResid) fT_nonconstView[lunk] = xT_constView[lunk] - pT[lunk];
+      if (fillResid) {
+#ifdef ALBANY_EPETRA
+        GO node_gid = nsNodesGIDs[inode];
+        int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
+        fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
+#else
+        fT_nonconstView[lunk] = xT_constView[lunk] - pT[lunk];
+#endif
+      }
   }
 }
 
@@ -125,6 +144,12 @@ DirichletField(Teuchos::ParameterList& p) :
 template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
+
+#ifdef ALBANY_EPETRA
+  const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
+  Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
+  const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
+#endif
 
   Teuchos::RCP<Tpetra_Vector> pvecT = dirichletWorkset.distParamLib->get(this->field_name)->vector();
   Teuchos::ArrayRCP<const ST> pT = pvecT->get1dView();
@@ -147,7 +172,13 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     int lunk = nsNodes[inode][this->offset];
 
     if (fT != Teuchos::null) { 
+#ifdef ALBANY_EPETRA
+      GO node_gid = nsNodesGIDs[inode];
+      int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
+      fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
+#else
       fT_nonconstView[lunk] = xT_constView[lunk] - pT[lunk];
+#endif
     }
     
     if (JVT != Teuchos::null) {
@@ -183,6 +214,7 @@ template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
+  bool isFieldParameter =  dirichletWorkset.dist_param_deriv_name == this->field_name;
   Teuchos::RCP<Tpetra_MultiVector> fpVT = dirichletWorkset.fpVT;
   //non-const view of fpVT
   Teuchos::ArrayRCP<ST> fpVT_nonconstView;
@@ -197,26 +229,71 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     Teuchos::RCP<Tpetra_MultiVector> VpT = dirichletWorkset.Vp_bcT;
     //non-const view of VpT
     Teuchos::ArrayRCP<ST> VpT_nonconstView;
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
+    if(isFieldParameter) {
+#ifdef ALBANY_EPETRA
+      const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
+      Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
+      const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
+#endif
+      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+        int lunk = nsNodes[inode][this->offset];
+#ifdef ALBANY_EPETRA
+        GO node_gid = nsNodesGIDs[inode];
+        int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
+#else
+        int lfield = lunk;
+#endif
+        for (int col=0; col<num_cols; ++col) {
+          VpT_nonconstView = VpT->getDataNonConst(col);
+          fpVT_nonconstView = fpVT->getDataNonConst(col);
+          fpVT_nonconstView[lfield] -= VpT_nonconstView[lunk];
+          VpT_nonconstView[lunk] = 0.0;
+         }
+      }
+    }
+    else {
+      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+        int lunk = nsNodes[inode][this->offset];
 
-      for (int col=0; col<num_cols; ++col) {
-        //(*Vp)[col][lunk] = 0.0;
-        VpT_nonconstView = VpT->getDataNonConst(col); 
-        VpT_nonconstView[lunk] = 0.0; 
-       }
+        for (int col=0; col<num_cols; ++col) {
+          VpT_nonconstView = VpT->getDataNonConst(col);
+          VpT_nonconstView[lunk] = 0.0;
+         }
+      }
     }
   }
 
   // for (df/dp)*V we zero out corresponding entries in df/dp
   else {
-    for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
-      int lunk = nsNodes[inode][this->offset];
+    if(isFieldParameter) {
+#ifdef ALBANY_EPETRA
+      const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
+      Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
+      const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
+#endif
+      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+        int lunk = nsNodes[inode][this->offset];
+#ifdef ALBANY_EPETRA
+        GO node_gid = nsNodesGIDs[inode];
+        int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
+#else
+        int lfield = lunk;
+#endif
+        for (int col=0; col<num_cols; ++col) {
+          //(*fpV)[col][lunk] = 0.0;
+          fpVT_nonconstView = fpVT->getDataNonConst(col);
+          fpVT_nonconstView[lunk] = -double(col == lfield);
+        }
+      }
+    }
+    else {
+      for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
+        int lunk = nsNodes[inode][this->offset];
 
-      for (int col=0; col<num_cols; ++col) {
-        //(*fpV)[col][lunk] = 0.0;
-        fpVT_nonconstView = fpVT->getDataNonConst(col); 
-        fpVT_nonconstView[lunk] = 0.0; 
+        for (int col=0; col<num_cols; ++col) {
+          fpVT_nonconstView = fpVT->getDataNonConst(col);
+          fpVT_nonconstView[lunk] = 0.0;
+        }
       }
     }
   }
