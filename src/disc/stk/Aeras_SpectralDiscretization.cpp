@@ -367,6 +367,23 @@ Aeras::SpectralDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
+  else if (transformType == "Cube Sphere") { //This works in Aeras_SpectralDiscretization (only transform) [IKT, 3/25/15]
+  //This form takes a mesh of a square / cube and transforms it into a mesh of a circle/sphere
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Cube Sphere!" << endl;
+#endif
+    const int numDim = stkMeshStruct->numDim;
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+      double r = 0.0; 
+      for (int n=0; n<numDim; n++) 
+        r += x[n]*x[n]; 
+      r = sqrt(r);
+      for (int n=0; n<numDim; n++) 
+      //FIXME: there could be division by 0 here! 
+        x[n] = x[n]/r;  
+    }
+  }
   else if (transformType == "Aeras Schar Mountain")
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: transformMesh() is not implemented yet in Aeras::SpectralDiscretiation!" << std::endl);

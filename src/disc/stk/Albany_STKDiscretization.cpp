@@ -320,6 +320,23 @@ Albany::STKDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
+  else if (transformType == "Cube Sphere") {
+  //This form takes a mesh of a square / cube and transforms it into a mesh of a circle/sphere
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Cube Sphere!" << endl;
+#endif
+    const int numDim = stkMeshStruct->numDim;
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+      double r = 0.0; 
+      for (int n=0; n<numDim; n++) 
+        r += x[n]*x[n]; 
+      r = sqrt(r);
+      for (int n=0; n<numDim; n++) 
+      //FIXME: there could be division by 0 here! 
+        x[n] = x[n]/r;  
+    }
+  }
   else if (transformType == "ISMIP-HOM Test A") {
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;
