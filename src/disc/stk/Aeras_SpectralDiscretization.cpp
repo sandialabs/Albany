@@ -358,7 +358,8 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 // transformMesh() as this is for now an Aeras-only class.  The
 // setting of the schar mountain transformation needs to be fixed to
 // use the new (enriched) nodes rather than the nodes pulled from STK.
-// This is not critical -- Schar Mountain transformation only called for XZ Hydrostatic equations.
+// This is not critical -- Schar Mountain transformation only called for XZ Hydrostatic equations. 
+//
 void
 Aeras::SpectralDiscretization::transformMesh()
 {
