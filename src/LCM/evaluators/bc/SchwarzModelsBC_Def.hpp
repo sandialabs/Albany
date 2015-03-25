@@ -69,6 +69,15 @@ computeBCs(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   coupled_apps = dirichlet_workset.apps;
 
+  if (coupled_app_index >= coupled_apps.size()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Application index out of range: " << coupled_app_index;
+    std::cerr << '\n';
+    std::cerr << "Number of coupled applications: " << coupled_apps.size();
+    std::cerr << '\n';
+    exit(1);
+  }
+
   Teuchos::RCP<Albany::Application>
   coupled_app = coupled_apps[coupled_app_index];
 
@@ -94,13 +103,17 @@ computeBCs(
   std::map<std::string, int> const &
   coupled_block_name_2_index = coupled_gms.ebNameToIndex;
 
-  std::map<std::string, int>::const_iterator
-  it = coupled_block_name_2_index.find(coupled_app_name);
-
-  assert(it != coupled_block_name_2_index.end());
-
   std::string const
   coupled_block_name = this->getCoupledBlockName();
+
+  std::map<std::string, int>::const_iterator
+  it = coupled_block_name_2_index.find(coupled_block_name);
+
+  if (it == coupled_block_name_2_index.end()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    exit(1);
+  }
 
   int const
   coupled_block_index = it->second;
@@ -199,7 +212,7 @@ computeBCs(
       switch (coupled_element_type) {
 
       default:
-        std::cerr << "ERROR: " << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
         std::cerr << "Unknown element type: " << coupled_element_type << '\n';
         exit(1);
         break;
