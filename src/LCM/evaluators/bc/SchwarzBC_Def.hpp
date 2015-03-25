@@ -67,7 +67,7 @@ computeBCs(
   coordinates = stk_discretization->getCoordinates();
 
   std::string const
-  coupled_block = this->getCoupledBlock();
+  coupled_block_name = this->getCoupledBlock();
 
   Albany::WorksetArray<std::string>::type const &
   ws_eb_names = disc->getWsEBNames();
@@ -81,9 +81,13 @@ computeBCs(
   block_name_2_index = gms.ebNameToIndex;
 
   std::map<std::string, int>::const_iterator
-  it = block_name_2_index.find(coupled_block);
+  it = block_name_2_index.find(coupled_block_name);
 
-  assert(it != block_name_2_index.end());
+  if (it == block_name_2_index.end()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    exit(1);
+  }
 
   int const
   index_block = it->second;
@@ -152,7 +156,7 @@ computeBCs(
     std::string const &
     element_block = ws_eb_names[workset];
 
-    if (element_block != coupled_block) continue;
+    if (element_block != coupled_block_name) continue;
 
     size_t const
     elements_per_workset = ws_el_2_nd[workset].size();
@@ -180,7 +184,7 @@ computeBCs(
       switch (element_type) {
 
       default:
-        std::cerr << "ERROR: " << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
         std::cerr << "Unknown element type: " << element_type << '\n';
         exit(1);
         break;
@@ -291,7 +295,7 @@ computeBCs(
   value(dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to block: " << coupled_block << '\n';
+  std::cout << "Coupling to block: " << coupled_block_name << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
   for (size_t i = 0; i < vertex_count; ++i) {
