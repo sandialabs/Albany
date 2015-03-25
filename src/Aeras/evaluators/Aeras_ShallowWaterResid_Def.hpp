@@ -265,9 +265,9 @@ compute_Residual0(const int& cell) const{
       gradient<ScalarT>(surf, cell, hgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
     }
 
-    for (std::size_t qp=0; qp < numQPs; ++qp) {
+    for (int qp=0; qp < numQPs; ++qp) {
 
-      for (std::size_t node=0; node < numNodes; ++node) {
+      for (int node=0; node < numNodes; ++node) {
 
         Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
                               +  div_hU(qp)*wBF(cell, node, qp)
@@ -282,6 +282,12 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim1_Tag& tag, const int& cell) const{
+ 
+   for (int node=0; node < numNodes; ++node){
+      Residual(cell,node,0)=0.0;
+      Residual(cell,node,1)=0.0;
+      Residual(cell,node,2)=0.0;
+   }
 
       double alpha = 1.5707963; //FIXME: have alpha be read from parameter list!  Here it's hard-coded to pi/2;  
       double cosAlpha = std::cos(alpha);
@@ -312,6 +318,12 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const{
+   for (int node=0; node < numNodes; ++node){
+      Residual(cell,node,0)=0.0;
+      Residual(cell,node,1)=0.0;
+      Residual(cell,node,2)=0.0;
+   }
+   
  compute_huAtNodes_vecDim3(cell); 
  compute_Residual0(cell);
 
@@ -327,6 +339,13 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag& tag, const int& cell) const{
+
+  for (int node=0; node < numNodes; ++node){
+      Residual(cell,node,0)=0.0;
+      Residual(cell,node,1)=0.0;
+      Residual(cell,node,2)=0.0;
+   }
+
  compute_huAtNodes_vecDim3(cell);
  compute_Residual0(cell);
 
@@ -378,6 +397,13 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT, Traits>::
 operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag& tag, const int& cell) const{
+
+ for (int node=0; node < numNodes; ++node){
+      Residual(cell,node,0)=0.0;
+      Residual(cell,node,1)=0.0;
+      Residual(cell,node,2)=0.0;
+   }
+
  compute_huAtNodes_vecDim3(cell);
  compute_Residual0(cell);
 
@@ -521,9 +547,10 @@ template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  PHAL::set(Residual, 0.0);
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  PHAL::set(Residual, 0.0);
+
   Intrepid::FieldContainer<ScalarT>  huAtNodes(numNodes,2);
   Intrepid::FieldContainer<ScalarT>  div_hU(numQPs);
   Intrepid::FieldContainer<ScalarT>  kineticEnergyAtNodes(numNodes);

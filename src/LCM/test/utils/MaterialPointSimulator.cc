@@ -163,6 +163,24 @@ int main(int ac, char* av[])
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
 
   //---------------------------------------------------------------------------
+  // Small strain tensor
+  // initially set the strain tensor to zeros
+
+  Teuchos::ArrayRCP<ScalarT> strain(9);
+  for (int i(0); i < 9; ++i)
+    strain[i] = 0.0;
+
+  // SetField evaluator, which will be used to manually assign a value
+  // to the strain field
+  Teuchos::ParameterList setStrainP("SetFieldStrain");
+  setStrainP.set<std::string>("Evaluated Field Name", "Strain");
+  setStrainP.set<Teuchos::RCP<PHX::DataLayout> >(
+      "Evaluated Field Data Layout",
+      dl->qp_tensor);
+  setStrainP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", strain);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldStrain = Teuchos::rcp(
+      new LCM::SetField<Residual, Traits>(setStrainP));
+  //---------------------------------------------------------------------------
   // Instantiate a field manager
   PHX::FieldManager<Traits> fieldManager;
 
@@ -172,10 +190,12 @@ int main(int ac, char* av[])
   // Register the evaluators with the field manager
   fieldManager.registerEvaluator<Residual>(setFieldDefGrad);
   fieldManager.registerEvaluator<Residual>(setFieldDetDefGrad);
+  fieldManager.registerEvaluator<Residual>(setFieldStrain);
 
   // Register the evaluators with the state field manager
   stateFieldManager.registerEvaluator<Residual>(setFieldDefGrad);
   stateFieldManager.registerEvaluator<Residual>(setFieldDetDefGrad);
+  stateFieldManager.registerEvaluator<Residual>(setFieldStrain);
 
   // Instantiate a state manager
   Albany::StateManager stateMgr;
@@ -377,6 +397,21 @@ int main(int ac, char* av[])
   fieldManager.registerEvaluator<Residual>(ev);
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
+  //std::cout << "// register small strain tensor"
+           // << std::endl;
+  p = stateMgr.registerStateVariable(
+      "Strain",
+      dl->qp_tensor,
+      dl->dummy,
+      element_block_name,
+      "scalar",
+      0.0,
+      false,
+      true);
+  ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+  fieldManager.registerEvaluator<Residual>(ev);
+  stateFieldManager.registerEvaluator<Residual>(ev);
+  //---------------------------------------------------------------------------
   //
   Traits::SetupData setupData = "Test String";
   //std::cout << "Calling postRegistrationSetup" << std::endl;
@@ -484,7 +519,7 @@ int main(int ac, char* av[])
   Intrepid::Tensor<ScalarT> log_F_tensor = Intrepid::log(F_tensor);
 
   std::cout << "F\n" << F_tensor << std::endl;
-  std::cout << "log F\n" << log_F_tensor << std::endl;
+  //std::cout << "log F\n" << log_F_tensor << std::endl;
 
   //
   // Setup loading scenario and instantiate evaluatFields
@@ -498,7 +533,7 @@ int main(int ac, char* av[])
     Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
     Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
 
-    std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
+    //std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
     std::cout << "current F\n" << current_F << std::endl;
 
     for (int i = 0; i < 3; ++i) {
@@ -509,6 +544,19 @@ int main(int ac, char* av[])
 
     // jacobian
     detdefgrad[0] = Intrepid::det(current_F);
+
+    // small strain tensor
+    Intrepid::Tensor<ScalarT> current_strain;
+    current_strain = 0.5 * (current_F + Intrepid::transpose(current_F)) 
+      - Intrepid::eye<ScalarT>(3);
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        strain[3 * i + j] = current_strain(i, j);
+      }
+    }
+
+    //std::cout << "current strain\n" << current_strain << std::endl;
 
     // Call the evaluators, evaluateFields() is the function that
     // computes stress based on deformation gradient

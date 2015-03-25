@@ -133,6 +133,11 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 operator() (const ComputeBasisFunctions_Tag& tag, const int& cell) const
 {
+  for(int nodes = 0; nodes < numNodes; nodes++) 
+        for(int pt = 0; pt < numQPs; pt++) 
+           for( int dim = 0; dim < numDims; dim++) 
+              GradBF(cell, nodes,pt,dim) =0.0;
+ 
    compute_jacobian(cell);
    compute_jacobian_inv(cell);
    compute_jacobian_det(cell);
@@ -147,7 +152,14 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 operator() (const ComputeBasisFunctions_basisDim_Tag& tag, const int& cell) const
-{ 
+{
+
+  for(int nodes = 0; nodes < numNodes; nodes++)
+        for(int pt = 0; pt < numQPs; pt++)
+           for( int dim = 0; dim < numDims; dim++)
+              GradBF(cell, nodes,pt,dim) =0.0;
+
+ 
    compute_jacobian(cell); 
    compute_jacobian_inv(cell);
    compute_jacobian_det(cell);
@@ -161,6 +173,13 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 operator() (const ComputeBasisFunctions_no_Jacobian_Tag& tag, const int& cell) const
 {
+
+  for(int nodes = 0; nodes < numNodes; nodes++)
+        for(int pt = 0; pt < numQPs; pt++)
+           for( int dim = 0; dim < numDims; dim++)
+              GradBF(cell, nodes,pt,dim) =0.0;
+
+
    compute_jacobian_inv(cell);
    compute_jacobian_det(cell);
    computeCellMeasure(cell);
@@ -175,6 +194,13 @@ KOKKOS_INLINE_FUNCTION
 void ComputeBasisFunctions<EvalT, Traits>::
 operator() (const ComputeBasisFunctions_no_Jacobian_basisDim_Tag& tag, const int& cell) const
 {
+
+  for(int nodes = 0; nodes < numNodes; nodes++)
+        for(int pt = 0; pt < numQPs; pt++)
+           for( int dim = 0; dim < numDims; dim++)
+              GradBF(cell, nodes,pt,dim) =0.0;
+
+
    compute_jacobian_inv(cell);
    compute_jacobian_det(cell);
    computeCellMeasure(cell);
@@ -747,7 +773,7 @@ evaluateFields(typename Traits::EvalData workset)
  D2   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D2", numQPs,spatialDim,spatialDim);
  D3   =  Kokkos::View<MeshScalarT***, PHX::Device> ("D3", numQPs,basisDim,spatialDim);
 
- PHAL::set(GradGradBF, 0.0);
+// PHAL::set(GradGradBF, 0.0);
 
  if (spatialDim==basisDim) {
  //Check that we don't have a higher order spectral element.  The node_count is based on 

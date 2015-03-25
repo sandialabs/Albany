@@ -1078,7 +1078,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       edgeNodes = bulkData.begin_nodes(edges[1]);
       edgeID = gid(edges[1]);
       for (unsigned inode = 1; inode < np-1; ++inode)
-        if (edgeNodes[1] == nodes[1])
+        if (edgeNodes[0] == nodes[1])
           // buffer[inode][np-1] = enrichedEdges[edgeID][inode];
           wsElNodeID[ibuck][ielem][inode*np + (np-1)] = enrichedEdges[edgeID][inode];
         else
@@ -1089,7 +1089,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       edgeNodes = bulkData.begin_nodes(edges[2]);
       edgeID = gid(edges[2]);
       for (unsigned inode = 1; inode < np-1; ++inode)
-        if (edgeNodes[2] == nodes[2])
+        if (edgeNodes[0] == nodes[2])
           // buffer[np-1][inode] = enrichedEdges[edgeID][np-inode-1];
           wsElNodeID[ibuck][ielem][(np-1)*np + inode] = enrichedEdges[edgeID][np-inode-1];
         else
@@ -1100,7 +1100,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       edgeNodes = bulkData.begin_nodes(edges[3]);
       edgeID = gid(edges[3]);
       for (unsigned inode = 1; inode < np-1; ++inode)
-        if (edgeNodes[3] == nodes[3])
+        if (edgeNodes[0] == nodes[3])
           // buffer[inode][0] = enrichedEdges[edgeID][np-inode-1];
           wsElNodeID[ibuck][ielem][inode*np] = enrichedEdges[edgeID][np-inode-1];
         else

@@ -127,6 +127,9 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
     apps_[m] = Teuchos::rcp(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
 
+    // Add application array for later use in Schwarz BC.
+    apps_[m]->setCoupledApplications(apps_);
+
     //Create model evaluator
     Albany::ModelFactory
     model_factory(model_app_params[m], apps_[m]);
