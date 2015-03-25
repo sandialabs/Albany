@@ -154,16 +154,6 @@ namespace LCM {
     std::cout << sphere_param.get_minimum() 
     << "  " << sphere_param.get_normal_minimum() << std::endl;
 
-    //std::cout << std::scientific << std::setprecision(16);
-
-    //std::cout << "Minimum: " << sphere_param.get_minimum();
-    //std::cout << " at " << sphere_param.get_arg_minimum() << '\n';
-    //std::cout << "Normal: " << sphere_param.get_normal_minimum() << '\n';
-
-    //std::cout << "Maximum: " << sphere_param.get_maximum();
-    //std::cout << " at " << sphere_param.get_arg_maximum() << '\n';
-    //std::cout << "Normal: " << sphere_param.get_normal_maximum() << '\n';
-     
     ScalarT min_detA = sphere_param.get_minimum();
     
     return min_detA; 
@@ -218,16 +208,6 @@ namespace LCM {
     std::cout << "\n*** STEREOGRAPHIC PARAMETRIZATION ***\n";
     std::cout << stereographic_param.get_minimum() 
     << "  " << stereographic_param.get_normal_minimum() << std::endl;
-    
-    //std::cout << std::scientific << std::setprecision(16);
-
-    //std::cout << "Minimum: " << stereographic_param.get_minimum();
-    //std::cout << " at " << stereographic_param.get_arg_minimum() << '\n';
-    //std::cout << "Normal: " << stereographic_param.get_normal_minimum() << '\n';
-
-    //std::cout << "Maximum: " << stereographic_param.get_maximum();
-    //std::cout << " at " << stereographic_param.get_arg_maximum() << '\n';
-    //std::cout << "Normal: " << stereographic_param.get_normal_maximum() << '\n';
 
     ScalarT min_detA = stereographic_param.get_minimum();
     
@@ -291,16 +271,6 @@ namespace LCM {
     std::cout << "\n*** PROJECTIVE PARAMETRIZATION ***\n";
     std::cout << projective_param.get_minimum() 
     << "  " << projective_param.get_normal_minimum() << std::endl;
-    
-    //std::cout << std::scientific << std::setprecision(16);
-
-    //std::cout << "Minimum: " << projective_param.get_minimum();
-    //std::cout << " at " << projective_param.get_arg_minimum() << '\n';
-    //std::cout << "Normal: " << projective_param.get_normal_minimum() << '\n';
-
-    //std::cout << "Maximum: " << projective_param.get_maximum();
-    //std::cout << " at " << projective_param.get_arg_maximum() << '\n';
-    //std::cout << "Normal: " << pprojective_param.get_normal_maximum() << '\n';
 
     ScalarT min_detA = projective_param.get_minimum();
     
@@ -318,7 +288,7 @@ namespace LCM {
     x_max = 1.0;
 
     ScalarT const
-    y_min = 1.0;
+    y_min = -1.0;
 
     ScalarT const
     y_max = 1.0;
@@ -354,16 +324,6 @@ namespace LCM {
     std::cout << tangent_param.get_minimum() 
     << "  " << tangent_param.get_normal_minimum() << std::endl;
 
-    //std::cout << std::scientific << std::setprecision(16);
-
-    //std::cout << "Minimum: " << tangent_param.get_minimum();
-    //std::cout << " at " << tangent_param.get_arg_minimum() << '\n';
-    //std::cout << "Normal: " << tangent_param.get_normal_minimum() << '\n';
-
-    //std::cout << "Maximum: " << tangent_param.get_maximum();
-    //std::cout << " at " << tangent_param.get_arg_maximum() << '\n';
-    //std::cout << "Normal: " << tangent_param.get_normal_maximum() << '\n';
-    
     ScalarT min_detA = tangent_param.get_minimum();
     
     return min_detA;     
@@ -425,17 +385,7 @@ namespace LCM {
     
     std::cout << cartesian_param.get_minimum() 
     << "  " << cartesian_param.get_normal_minimum() << std::endl;
-    
-   // std::cout << std::scientific << std::setprecision(16);
 
-   // std::cout << "Minimum: " << cartesian_param.get_minimum();
-   // std::cout << " at " << cartesian_param.get_arg_minimum() << '\n';
-   // std::cout << "Normal: " << cartesian_param.get_normal_minimum() << '\n';
-
-   // std::cout << "Maximum: " << cartesian_param.get_maximum();
-   // std::cout << " at " << cartesian_param.get_arg_maximum() << '\n';
-   // std::cout << "Normal: " << cartesian_param.get_normal_maximum() << '\n';
-  
     ScalarT min_detA = cartesian_param.get_minimum();
     
     return min_detA;   
