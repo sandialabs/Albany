@@ -20,14 +20,16 @@
 \section{Introduction}
 This document describes the necessary steps to install Albany/LCM and
 Trilinos on a machine with Fedora Linux. The procedures described
-herein were tested using Fedora 20.
+herein were tested using Fedora 21.
 
 If you want a shortcut obtain the script \verb+install_albany.sh+
 (stored in \verb+Albany/doc/LCM/build+) and then try:
-\\ \verb+./install_albany+ \\ which will install and build Trilinos
-and Albany in your current directory.  If the script does not complete
-it will tell you why and with help from this document you will be able
-to complete the install.
+\begin{verbatim}
+./install_albany
+\end{verbatim}
+This will install and build Trilinos and Albany in the current
+directory.  If the script does not complete it will tell you why and
+with help from this document you will be able to complete the install.
 
 \section{Required packages}
 After installing Fedora, the following packages should be installed
@@ -105,10 +107,17 @@ Change directory to the newly created one:
 cd LCM
 \end{verbatim}
 
-Now, check out the latest version of Trilinos:
+Now, check out the latest version of Trilinos. If you have an account on
+\verb+software.sandia.gov+, then use:
+\begin{verbatim}
+git clone software.sandia.gov:/space/git/Trilinos Trilinos
+\end{verbatim}
+Otherwise clone with:
 \begin{verbatim}
 git clone git@github.com:trilinos/trilinos.git Trilinos
 \end{verbatim}
+This last public Trilinos repository is a few days behind the one at
+\verb+software.sandia.gov+ which for most purposes will not be an issue.
 
 Finally, check out the latest version of Albany:
 \begin{verbatim}
@@ -167,7 +176,8 @@ ln -s build.sh clean-config-build-test.sh
 ln -s build.sh config-build.sh
 ln -s build.sh config-build-test.sh
 \end{verbatim}
-There is also a script \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
+There is also a script
+\verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
 that will create the appropriate symbolic links. 
 
 \section{Environment variables}
@@ -240,11 +250,11 @@ you commit changes.
 
 In addition, within LCM we strongly encourage you to follow the C++
 Google style guide that can be found at
-\verb+http://google-styleguide.googlecode.com/svn/trunk/cppguide.html+. This
-style is somewhat different to what is currently used in the rest of
-Albany, but we believe that the Google style helps the developer more
-in that it advocates more style differentiation between the different
-syntactic elements of C++. This in turn makes reading code easier and
-helps to avoid coding errors.
+\verb+http://google-styleguide.googlecode.com/svn/trunk/cppguide.html+.
+This style is somewhat different to what is currently used in the rest
+of Albany, but we believe that the Google style helps the developer
+more in that it advocates more style differentiation between the
+different syntactic elements of C++. This in turn makes reading code
+easier and helps to avoid coding errors.
 
 \end{document}
