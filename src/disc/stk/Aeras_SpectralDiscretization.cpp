@@ -192,7 +192,6 @@ Aeras::SpectralDiscretization::getOverlapJacobianGraphT() const
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getNodeMap() const
 {
-  //dp-remove Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   return node_map;
 }
 
@@ -200,6 +199,20 @@ Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getOverlapNodeMap() const
 {
   return overlap_node_map;
+}
+
+Teuchos::RCP<const Epetra_Map>
+Aeras::SpectralDiscretization::getNodeMap(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Epetra_Map>
+Aeras::SpectralDiscretization::getOverlapNodeMap(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
 }
 #endif
 
