@@ -1,3 +1,8 @@
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube_quad4_24eles.g
+               ${CMAKE_CURRENT_BINARY_DIR}/cube_quad4_24eles.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cube_quad4_6eles.g
+               ${CMAKE_CURRENT_BINARY_DIR}/cube_quad4_6eles.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_16_quad4.g
                ${CMAKE_CURRENT_BINARY_DIR}/uniform_16_quad4.g COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/uniform_16_quad4.g.4.0
