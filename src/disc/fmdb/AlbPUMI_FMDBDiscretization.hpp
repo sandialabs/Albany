@@ -68,6 +68,8 @@ template<class Output>
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::NodeSetList& getNodeSets() const { return nodeSets; };
     const Albany::NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
+    // not used; just completing concrete impl
+    const Albany::NodeSetGIDsList& getNodeSetGIDs() const { return nodeSetGIDs; };
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
     const Albany::SideSetList& getSideSets(const int workset) const { return sideSets[workset]; };
@@ -257,7 +259,7 @@ template<class Output>
           "AlbPUMI:FMDBDiscretization: getElNodeElID(field_name) not implemented yet");
     }
     //! Get Dof Manager of field field_name
-    const NodalDOFManager& getDOFManager(const std::string& field_name) const {
+    const Albany::NodalDOFManager& getDOFManager(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
           "AlbPUMI:FMDBDiscretization: getDOFManager(field_name) not implemented yet");
     }
@@ -377,6 +379,7 @@ template<class Output>
 
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;
+    Albany::NodeSetGIDsList nodeSetGIDs; // not used
     Albany::NodeSetCoordList nodeSetCoords;
 
     //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)
@@ -428,6 +431,7 @@ template<class Output>
 
     // Mesh adaptation stuff.
     Teuchos::RCP<AAdapt::rc::Manager> rcm;
+
   };
 
 }
