@@ -17,7 +17,6 @@
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
 #include "LCM/evaluators/Time.hpp"
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
-#include "LCM/evaluators/bc/SchwarzModelsBC.hpp"
 #include "LCM/evaluators/bc/TorsionBC.hpp"
 #endif
 #ifdef ALBANY_QCAD
@@ -68,10 +67,9 @@ namespace PHAL {
     static const int id_time                           =  7; // Only for LCM probs
     static const int id_torsion_bc                     =  8; // Only for LCM probs
     static const int id_schwarz_bc                     =  9; // Only for LCM probs
-    static const int id_schwarz_models_bc              = 10; // Only for LCM probs
 
 #ifdef ALBANY_LCM
-    typedef boost::mpl::vector11<
+    typedef boost::mpl::vector10<
 #else
       typedef boost::mpl::vector5<
 #endif
@@ -90,8 +88,7 @@ namespace PHAL {
         LCM::TimeDepBC<_, Traits>,                //  6
         LCM::Time<_, Traits>,                     //  7
         LCM::TorsionBC<_, Traits>,                //  8
-        LCM::SchwarzBC<_, Traits>,                //  9
-        LCM::SchwarzModelsBC<_, Traits>           // 10
+        LCM::SchwarzBC<_, Traits>                 //  9
 #endif
         > EvaluatorTypes;
 };
