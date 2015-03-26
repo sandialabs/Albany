@@ -4,7 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
 #ifndef AADAPT_MESHADAPT_HPP
 #define AADAPT_MESHADAPT_HPP
 

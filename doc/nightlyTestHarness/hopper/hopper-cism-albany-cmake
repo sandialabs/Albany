@@ -41,6 +41,7 @@ cmake \
 \
   -D CMAKE_CXX_FLAGS:STRING="-O2 -static" \
   -D BUILD_SHARED_LIBS:BOOL=OFF \
+  -D CISM_STATIC_LINKING:BOOL=ON \
   -D CISM_Fortran_FLAGS="-ffree-line-length-none" \
   -D CISM_GNU:BOOL=ON \
   ../..

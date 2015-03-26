@@ -92,24 +92,28 @@ operator() (const ScatterResid_Tag& tag, const int& cell) const{
     for (int node = 0; node < this->numNodes; ++node) {
       int n = 0, eq = 0;
       for (int j = eq; j < eq+this->numNodeVar; ++j, ++n) {
-        fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node);
+         Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node));
+        //fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node);
       }
       eq += this->numNodeVar;
       for (int level = 0; level < this->numLevels; level++) {
         for (int j = eq; j < eq+this->numVectorLevelVar; ++j) {
           for (int dim = 0; dim < this->numDims; ++dim, ++n) {
-            fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level,dim);
+              Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node,level,dim));
+            //fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level,dim);
           }
         }
         for (int j = eq+this->numVectorLevelVar;
                  j < eq+this->numVectorLevelVar + this->numScalarLevelVar; ++j, ++n) {
-          fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level);
+                Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node,level));
+               //   fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level);
         }
       }
       eq += this->numVectorLevelVar + this->numScalarLevelVar;
       for (int level = 0; level < this->numLevels; ++level) {
         for (int j = eq; j < eq+this->numTracerVar; ++j, ++n) {
-          fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level);
+            Kokkos::atomic_fetch_add(&fT_nonconstView[Index(cell,node,n)], (this->val[j])(cell,node,level));
+             //fT_nonconstView[Index(cell,node,n)] += (this->val[j])(cell,node,level);
         }
       }
       eq += this->numTracerVar;

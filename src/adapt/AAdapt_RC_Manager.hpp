@@ -6,6 +6,11 @@
 #ifndef AADAPT_RC_MANAGER
 #define AADAPT_RC_MANAGER
 
+//#define AMBDEBUG
+#ifdef AMBDEBUG
+#include "/home/ambradl/bigcode/amb.hpp"
+#endif
+
 #include "Albany_DataTypes.hpp"
 #include "AAdapt_RC_DataTypes.hpp"
 
@@ -138,6 +143,10 @@ public:
   void writeQpField(const PHX::MDField<RealType>& f,
                     const PHAL::Workset& workset, const BasisField& wbf);
   void endQpWrite();
+  void testProjector(const PHAL::Workset& workset,
+                     const BasisField& bf, const BasisField& wbf,
+                     const PHX::MDField<RealType,Cell,Vertex,Dim>& coord_vert,
+                     const PHX::MDField<RealType,Cell,QuadPoint,Dim>& coord_qp);
   //! MeshAdapt uses this method to read and write nodal data from the mesh
   // database before and after adaptation.
   const Teuchos::RCP<Tpetra_MultiVector>& getNodalField(

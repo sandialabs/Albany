@@ -32,7 +32,7 @@ namespace PHAL {
 
 
 template<typename EvalT, typename Traits>
-class NeumannBase : 
+class NeumannBase :
     public PHX::EvaluatorWithBaseImpl<Traits>,
     public PHX::EvaluatorDerived<EvalT, Traits>,
     public Sacado::ParameterAccessor<EvalT, SPL_Traits> {
@@ -63,17 +63,17 @@ protected:
   Teuchos::Array<int> offset;
   int numDOFsSet;
 
-  //The following are for the basal BC 
+  //The following are for the basal BC
   std::string betaName; //name of function betaXY to be used
-  double L;           //length scale for ISMIP-HOM Test cases 
+  double L;           //length scale for ISMIP-HOM Test cases
   MeshScalarT betaXY; //function of x and y to multiply scalar values of beta read from input file
   enum BETAXY_NAME {CONSTANT, EXPTRIG, ISMIP_HOM_TEST_C, ISMIP_HOM_TEST_D, CONFINEDSHELF, CIRCULARSHELF, DOMEUQ, SCALAR_FIELD, LATERAL_BACKPRESSURE, FELIX_XZ_MMS};
   BETAXY_NAME beta_type;
- 
-  //The following are for the lateral BC 
-  double g; 
-  double rho; 
-  double rho_w;  
+
+  //The following are for the lateral BC
+  double g;
+  double rho;
+  double rho_w;
 
  // Should only specify flux vector components (dudx, dudy, dudz), dudn, or pressure P
 
@@ -87,15 +87,15 @@ protected:
                           ScalarT scale = 1.0);
 
   // robin (also uses flux scaling)
-  void calc_dudn_robin(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-                          const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
-   		          const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-                          const shards::CellTopology & celltopo,
-                          const int cellDims,
-                          int local_side_id,
-		          ScalarT scale,
-		          const ScalarT* robin_param_values);
+  void calc_dudn_robin (Intrepid::FieldContainer<ScalarT> & qp_data_returned,
+                        const Intrepid::FieldContainer<MeshScalarT>& phys_side_cub_points,
+                        const Intrepid::FieldContainer<ScalarT>& dof_side,
+                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                        const shards::CellTopology & celltopo,
+                        const int cellDims,
+                        int local_side_id,
+                        ScalarT scale,
+                        const ScalarT* robin_param_values);
 
    // (dudx, dudy, dudz)
   void calc_gradu_dotn_const(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
@@ -120,28 +120,29 @@ protected:
                           const shards::CellTopology & celltopo,
                           const int cellDims,
                           int local_side_id);
-   
+
   //Basal bc
   void calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		       const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-   		       const Intrepid::FieldContainer<ScalarT>& dof_side,
+               const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+               const Intrepid::FieldContainer<ScalarT>& dof_side,
                        const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                        const shards::CellTopology & celltopo,
                        const int cellDims,
                        int local_side_id);
 
   void calc_dudn_basal_scalar_field(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-   		                    const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
-   		                    const Intrepid::FieldContainer<ScalarT>& dof_side,
-                          	    const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
-	                            const shards::CellTopology & celltopo,
-          	                    const int cellDims,
-                   	            int local_side_id);
-  //Lateral bc 
+                            const Intrepid::FieldContainer<ScalarT>& basalFriction_side,
+                            const Intrepid::FieldContainer<ScalarT>& dof_side,
+                                const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
+                                const shards::CellTopology & celltopo,
+                                const int cellDims,
+                                int local_side_id);
+
+  //Lateral bc
   void calc_dudn_lateral(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
-     		         const Intrepid::FieldContainer<ScalarT>& thickness_side,
-     		         const Intrepid::FieldContainer<ScalarT>& elevation_side,
-     		         const Intrepid::FieldContainer<ScalarT>& dof_side,
+                     const Intrepid::FieldContainer<ScalarT>& thickness_side,
+                     const Intrepid::FieldContainer<ScalarT>& elevation_side,
+                     const Intrepid::FieldContainer<ScalarT>& dof_side,
                          const Intrepid::FieldContainer<MeshScalarT>& jacobian_side_refcell,
                          const shards::CellTopology & celltopo,
                          const int cellDims,
@@ -156,6 +157,7 @@ protected:
   PHX::MDField<ScalarT,Cell,Node> dof;
   PHX::MDField<ScalarT,Cell,Node,VecDim> dofVec;
   PHX::MDField<ScalarT,Cell,Node> beta_field;
+  PHX::MDField<ScalarT,Cell,Node> roughness_field;
   PHX::MDField<ScalarT,Cell,Node> thickness_field;
   PHX::MDField<ScalarT,Cell,Node> elevation_field;
   Teuchos::RCP<shards::CellTopology> cellType;
@@ -186,7 +188,7 @@ protected:
 
   Intrepid::FieldContainer<ScalarT> dofCellVec;
   Intrepid::FieldContainer<ScalarT> dofSideVec;
-  
+
   Intrepid::FieldContainer<ScalarT> data;
 
   // Output:
@@ -217,7 +219,7 @@ template<typename EvalT, typename Traits> class Neumann;
 
 
 // **************************************************************
-// Residual 
+// Residual
 // **************************************************************
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::Residual,Traits>
@@ -269,7 +271,7 @@ private:
 };
 
 // **************************************************************
-// Stochastic Galerkin Residual 
+// Stochastic Galerkin Residual
 // **************************************************************
 #ifdef ALBANY_SG_MP
 template<typename Traits>
@@ -309,7 +311,7 @@ private:
 };
 
 // **************************************************************
-// Multi-point Residual 
+// Multi-point Residual
 // **************************************************************
 template<typename Traits>
 class Neumann<PHAL::AlbanyTraits::MPResidual,Traits>
@@ -363,12 +365,12 @@ private:
   typedef typename EvalT::ScalarT ScalarT;
 
 public:
-  
+
   NeumannAggregator(const Teuchos::ParameterList& p);
-  
+
   void postRegistrationSetup(typename Traits::SetupData d,
                              PHX::FieldManager<Traits>& vm) {};
-  
+
   void evaluateFields(typename Traits::EvalData d) {};
 
 };

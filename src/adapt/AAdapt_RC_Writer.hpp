@@ -60,6 +60,9 @@ private:
   Teuchos::RCP<Manager> rc_mgr_;
   FieldsVector fields_;
   PHX::MDField<RealType,Cell,Node,QuadPoint> bf_, wbf_;
+  // For correctness testing the projector.
+  struct InterpTestData;
+  Teuchos::RCP<InterpTestData> itd_;
 };
 
 } // namespace rc

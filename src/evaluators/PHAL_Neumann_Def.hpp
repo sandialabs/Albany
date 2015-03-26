@@ -38,7 +38,7 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
   // The input.xml argument for the above string
   inputConditions = p.get< std::string >("Neumann Input Conditions");
- 
+
   // The DOF offsets are contained in the Equation Offset array. The length of this array are the
   // number of DOFs we will set each call
   numDOFsSet = offset.size();
@@ -198,8 +198,8 @@ NeumannBase(const Teuchos::ParameterList& p) :
         beta_type = DOMEUQ;
       else if (betaName == "Scalar Field")
         beta_type = SCALAR_FIELD;
-      else if (betaName == "FELIX XZ MMS") 
-        beta_type = FELIX_XZ_MMS; 
+      else if (betaName == "FELIX XZ MMS")
+        beta_type = FELIX_XZ_MMS;
 
       this->addDependentField(dofVec);
 #ifdef ALBANY_FELIX
@@ -243,10 +243,10 @@ NeumannBase(const Teuchos::ParameterList& p) :
 
       int numInputs = inputValues.size(); //number of arguments user entered at command line.
 
-      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1. 
-      for (int i = numInputs; i < 5; i++) 
+      //The following is for backward compatibility: the lateral BC used to have 5 inputs, now really it has 1.
+      for (int i = numInputs; i < 5; i++)
         robin_vals[i] = 0.0;
-        
+
       //The following should really go to 1 but above backward compatibility line keeps this at length 5.
       for(int i = 0; i < 5; i++) {
         std::stringstream ss; ss << name << "[" << i << "]";
@@ -514,7 +514,8 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
         //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
     }
 #ifdef ALBANY_FELIX
-    else if(bc_type == LATERAL) {
+    else if(bc_type == LATERAL)
+    {
           Intrepid::FieldContainer<ScalarT> thicknessOnCell(1, numNodes);
           Intrepid::FieldContainer<ScalarT> elevationOnCell(1, numNodes);
           for (std::size_t node=0; node < numNodes; ++node)
@@ -547,7 +548,7 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
           // Get dof at cubature points of appropriate side (see DOFVecInterpolation evaluator)
           //Intrepid::FunctionSpaceTools::
         //evaluate<ScalarT>(dofSide, dofCell, trans_basis_refPointsSide);
-        }
+    }
 #endif
   // Transform the given BC data to the physical space QPs in each side (elem_side)
 
@@ -591,7 +592,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 #endif
          break;
 
-
       case LATERAL:
 
 #ifdef ALBANY_FELIX
@@ -621,7 +621,6 @@ evaluateNeumannContribution(typename Traits::EvalData workset)
 
 
   }
-
 }
 
 template<typename EvalT, typename Traits>
@@ -1015,17 +1014,17 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
           MeshScalarT s = s0 - alpha0*x*x;  //s = s0-alpha*x^2
           MeshScalarT phi1 = z - s; //phi1 = z-s
           //phi2 = 4*A*alpha^3*rho^3*g^3*x
-          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;  
+          MeshScalarT phi2 = 4.0*A*pow(alpha0*rho_g, 3)*x;
           //phi3 = 4*x^3*phi1^5*phi2^2
-          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2; 
+          MeshScalarT phi3 = 4.0*x*x*x*pow(phi1,5)*phi2*phi2;
           //phi4 = 8*alpha*x^3*phi1^3*phi2 - (2*H*alpha*rho*g)/beta + 3*x*phi2*(phi1^4-H^4)
           MeshScalarT phi4 = 8.0*alpha0*pow(x,3)*pow(phi1,3)*phi2 - 2.0*H*alpha0*rho_g/beta0 + 3.0*x*phi2*(pow(phi1,4) - pow(H,4));
           //phi5 = 56*alpha*x^2*phi1^3*phi2 + 48*alpha^2*x^4*phi1^2*phi2 + 6*phi2*(phi1^4-H^4
-          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2 
-                           + 6.0*phi2*(pow(phi1,4) - pow(H,4)); 
+          MeshScalarT phi5 = 56.0*alpha0*x*x*pow(phi1,3)*phi2 + 48.0*alpha0*alpha0*pow(x,4)*phi1*phi1*phi2
+                           + 6.0*phi2*(pow(phi1,4) - pow(H,4));
           //mu = 1/2*(A*phi4^2 + A*x*phi1*phi3)^(-1/3) -- this is mu but with A factored out
-           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0); 
-           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny 
+           MeshScalarT mu = 0.5*pow(A*phi4*phi4 + A*x*phi1*phi3, -1.0/3.0);
+           // d(stress)/dn = beta0*u + 4*phi4*mutilde*beta1*nx - 4*phi2*x^2*phi1^3*mutilde*beta2*ny
            //              + (2*H*alpha*rho*g*x - beta0*x^2*phi2*(phi1^4 - H^4)*alpha;
           qp_data_returned(cell, pt, dim) = beta*dof_side(cell,pt,dim)
                                            + 4.0*phi4*mu*alpha*side_normals(cell,pt,0)
@@ -1229,7 +1228,7 @@ evaluateFields(typename Traits::EvalData workset)
 
             // Global column
             colT[0] =  nodeID[node_col][eq_col];
-            value[0] = valptr->fastAccessDx(lcol);   
+            value[0] = valptr->fastAccessDx(lcol);
             if (workset.is_adjoint) {
               // Sum Jacobian transposed
               JacT->sumIntoLocalValues(colT[0], rowT(), value());
@@ -1264,7 +1263,7 @@ evaluateFields(typename Traits::EvalData workset)
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_MultiVector> JVT = workset.JVT;
   Teuchos::RCP<Tpetra_MultiVector> fpT = workset.fpT;
-  
+
    ScalarT *valptr;
 
   // Fill the local "neumann" array with cell contributions
@@ -1757,7 +1756,7 @@ NeumannAggregator(const Teuchos::ParameterList& p)
 {
   Teuchos::RCP<PHX::DataLayout> dl =  p.get< Teuchos::RCP<PHX::DataLayout> >("Data Layout");
 
-  std::vector<std::string>& nbcs = *(p.get<std::vector<std::string>* >("NBC Names"));
+  const std::vector<std::string>& nbcs = *p.get<Teuchos::RCP<std::vector<std::string> > >("NBC Names");
 
   for (unsigned int i=0; i<nbcs.size(); i++) {
     PHX::Tag<ScalarT> fieldTag(nbcs[i], dl);

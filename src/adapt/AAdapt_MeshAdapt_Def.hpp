@@ -231,6 +231,16 @@ double findAlpha(
   // Max number of iterations before failure is declared. Must be >=
   // n_iterations_if_found.
   const int n_iterations_to_fail);
+
+bool correctnessTestSkip () {
+#ifndef AMBDEBUG
+  return false;
+#else
+  static int cnt = 0;
+  if ( ! amb::Options::get()->params()->isType<int>("nadapt")) return false;
+  return ++cnt > amb::Options::get()->params()->get<int>("nadapt");
+#endif
+}
 } // namespace al
 
 void adaptShrunken(apf::Mesh2* m, double min_part_density,
@@ -256,10 +266,12 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
   bool success;
   if (rc_mgr.is_null()) {
     // Old method. No reference configuration updating.
-    beforeAdapt();
-    adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
-                  min_part_density, callback);
-    afterAdapt();
+    if ( ! al::correctnessTestSkip()) {
+      beforeAdapt();
+      adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
+                    min_part_density, callback);
+      afterAdapt();
+    }
     success = true;
   } else {
     amb_dbg_ap = adapt_params_;
@@ -267,7 +279,9 @@ bool AAdapt::MeshAdapt<SizeField>::adaptMesh(
   }
 
   al::anlzCoords(pumi_discretization);
+#ifdef AMBDEBUG
   al::writeMesh(pumi_discretization);
+#endif
   return success;
 }
 
@@ -354,10 +368,12 @@ adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
     }
     if (alpha == 0) { success = false; break; }
 
-    beforeAdapt();
-    adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
-                  min_part_density, callback);
-    afterAdapt();
+    if ( ! al::correctnessTestSkip()) {
+      beforeAdapt();
+      adaptShrunken(pumi_discretization->getFMDBMeshStruct()->getMesh(),
+                    min_part_density, callback);
+      afterAdapt();
+    }
 
     // Resize x.
     rc_mgr->get_x() = Teuchos::rcp(
