@@ -18,6 +18,8 @@
 int c = 0; 
 int c2 = 0; 
 
+typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode> ThyraVector;
+
 LCM::
 SchwarzMultiscale::
 SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
@@ -367,29 +369,44 @@ Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_x_space() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
-  Teuchos::RCP<Tpetra_Map const>
-  map = Teuchos::rcp(new (Tpetra_Map const)(*coupled_disc_map_));
-
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  coupled_x_space = Thyra::createVectorSpace<ST>(map);
-
-  return coupled_x_space;
+  return getThyraDomainSpace(); 
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_f_space() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
-  Teuchos::RCP<Tpetra_Map const>
-  map = Teuchos::rcp(new (Tpetra_Map const)(*coupled_disc_map_));
-
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  coupled_f_space = Thyra::createVectorSpace<ST>(map);
-
-  return coupled_f_space;
+  return getThyraRangeSpace(); 
 }
+
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+LCM::SchwarzMultiscale::getThyraRangeSpace() const 
+{
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+   if(range_space_ == Teuchos::null) {
+      // loop over all vectors and build the vector space
+      std::vector<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > vsArray;
+      for(std::size_t i=0;i<num_models_;i++)
+        vsArray.push_back(Thyra::createVectorSpace<ST,LO,GO,KokkosNode>(disc_maps_[i]));
+        range_space_ = Thyra::productVectorSpace<ST>(vsArray);
+   }
+   return range_space_;
+}
+
+Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+LCM::SchwarzMultiscale::getThyraDomainSpace() const 
+{
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+   if(domain_space_ == Teuchos::null) {
+      // loop over all vectors and build the vector space
+      std::vector<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > vsArray;
+      for(std::size_t i=0;i<num_models_;i++)
+        vsArray.push_back(Thyra::createVectorSpace<ST,LO,GO,KokkosNode>(disc_maps_[i]));
+        domain_space_ = Thyra::productVectorSpace<ST>(vsArray);
+   }
+   return domain_space_;
+}
+
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
 LCM::SchwarzMultiscale::get_p_space(int l) const
@@ -549,108 +566,29 @@ allocateVectors()
   //In this function, we create and set x_init and x_dot_init in
   //nominal_values_ for the coupled model.
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  
+  Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > spaces(num_models_); 
+  for (int m=0; m<num_models_;m++) 
+    spaces[m] =  Thyra::createVectorSpace<ST>(disc_maps_[m]);
+  Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> >space = Thyra::productVectorSpace<ST>(spaces); 
 
-  //Create Teuchos::Arrays of hte x_init and x_dot init Tpetra_Vectors
-  //for each of the models
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> >
-  x_inits(num_models_);
-
-  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> >
-  x_dot_inits(num_models_);
-
-  //Populate the arrays with the x_init and x_dot_init for each model.
-  for (int m = 0; m < num_models_; ++m) {
-    x_inits[m] = apps_[m]->getInitialSolutionT();
-    x_dot_inits[m] = apps_[m]->getInitialSolutionDotT();
+  std::vector<Teuchos::RCP<Thyra::VectorBase<ST> > > xT_vecs;
+  std::vector<Teuchos::RCP<Thyra::VectorBase<ST> > > x_dotT_vecs;
+  xT_vecs.resize(num_models_);
+  x_dotT_vecs.resize(num_models_); 
+  for (int m=0; m < num_models_; m++) {
+    Teuchos::RCP<Tpetra_Vector> xT_vec = Teuchos::rcp(new Tpetra_Vector(*apps_[m]->getInitialSolutionT()));
+    Teuchos::RCP<Tpetra_Vector> x_dotT_vec = Teuchos::rcp(new Tpetra_Vector(*apps_[m]->getInitialSolutionDotT()));
+    xT_vecs[m] = Thyra::createVector(xT_vec, spaces[m]);
+    x_dotT_vecs[m] = Thyra::createVector(x_dotT_vec, spaces[m]);
   }
-
-  // Create Tpetra objects to be wrapped in Thyra for coupled model
-  //FIXME: implement by concatenating individual x_inits
-  Teuchos::RCP<Tpetra_Vector>
-  coupled_x_init = Teuchos::rcp(new Tpetra_Vector(coupled_disc_map_));
-
-  //FIXME: implement by concatenating individual x_dot_inits
-  Teuchos::RCP<Tpetra_Vector>
-  coupled_x_dot_init = Teuchos::rcp(new Tpetra_Vector(coupled_disc_map_));
-
-  //initialize coupled vecs to all 0s
-  coupled_x_init->putScalar(0.0);
-  coupled_x_dot_init->putScalar(0.0);
-
-  LO
-  counter_local = 0;
-
-  //get nonconst view of coupled_x_init & coupled_x_dot_init
-  Teuchos::ArrayRCP<ST>
-  coupled_x_init_view = coupled_x_init->get1dViewNonConst();
-
-  Teuchos::ArrayRCP<ST>
-  coupled_x_dot_init_view = coupled_x_dot_init->get1dViewNonConst();
-
-  for (int m = 0; m < num_models_; ++m) {
-    //get const view of mth x_init & x_dot_init vector
-    Teuchos::ArrayRCP<ST const>
-    x_init_const_view = x_inits[m]->get1dView();
-
-    Teuchos::ArrayRCP<ST const>
-    x_dot_init_const_view = x_dot_inits[m]->get1dView();
-
-    //The following assumes x_init and x_dot_init have same length.
-    //FIXME? Could have error checking to make sure.
-    for (int i = 0; i < x_inits[m]->getLocalLength(); ++i) {
-      coupled_x_init_view[counter_local + i] = x_init_const_view[i];
-      coupled_x_dot_init_view[counter_local + i] =
-          x_dot_init_const_view[i];
-    }
-    counter_local += x_inits[m]->getLocalLength();
-  }
-
-#ifdef WRITE_TO_MATRIX_MARKET
-  //writing to MatrixMarket file for debug
-  char name[100];  //create string for file name
-  sprintf(name, "x_init0_%i.mm", c);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(
-      name,
-      *(x_inits[0]));
-  c++; 
-  if (num_models_ > 1) {
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-        "x_init1.mm",
-        *(x_inits[1]));
-
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-        "x_dot_init1.mm",
-        *(x_dot_inits[1]));
-  }
-
-  Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "coupled_x_init.mm",
-      *coupled_x_init);
-
-  Tpetra_MatrixMarket_Writer::writeDenseFile(
-      "coupled_x_dot_init.mm",
-      *coupled_x_dot_init);
-#endif
-
-  Teuchos::RCP<Tpetra_Map const>
-  map = Teuchos::rcp(new (Tpetra_Map const)(*coupled_disc_map_));
-
-  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
-  coupled_x_space = Thyra::createVectorSpace<ST>(map);
-
-  // Create non-const versions of xT_init and x_dotT_init
-  Teuchos::RCP<Tpetra_Vector> const
-  coupled_x_init_nonconst = Teuchos::rcp(new Tpetra_Vector(*coupled_x_init));
-
-  Teuchos::RCP<Tpetra_Vector> const
-  coupled_x_dot_init_nonconst =
-      Teuchos::rcp(new Tpetra_Vector(*coupled_x_dot_init));
-
-  nominal_values_.set_x(
-      Thyra::createVector(coupled_x_init_nonconst, coupled_x_space));
-
-  nominal_values_.set_x_dot(
-      Thyra::createVector(coupled_x_dot_init_nonconst, coupled_x_space));
+  Teuchos::ArrayView<const Teuchos::RCP<Thyra::VectorBase<ST> > > xT_vecs_AV = Teuchos::arrayViewFromVector(xT_vecs); 
+  Teuchos::ArrayView<const Teuchos::RCP<Thyra::VectorBase<ST> > > x_dotT_vecs_AV = Teuchos::arrayViewFromVector(x_dotT_vecs); 
+  Teuchos::RCP<Thyra::DefaultProductVector<ST> >xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs_AV);   
+  Teuchos::RCP<Thyra::DefaultProductVector<ST> >x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs_AV);   
+ 
+  nominal_values_.set_x(xT_prod_vec);  
+  nominal_values_.set_x_dot(x_dotT_prod_vec);  
 
 }
 
@@ -794,30 +732,33 @@ evalModelImpl(
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
 
-  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  //const Teuchos::RCP<const Tpetra_Vector> x_dotdotT =
-  //  Teuchos::nonnull(in_args.get_x_dotdot()) ?
-  //  ConverterT::getConstTpetraVector(in_args.get_x_dotdot()) :
-  //  Teuchos::null;
-  // Get the input arguments
-  Teuchos::RCP<Tpetra_Vector const> const
-  xT = ConverterT::getConstTpetraVector(in_args.get_x());
+  //Get xT and x_dotT from in_args
+  Teuchos::RCP<const Thyra::ProductVectorBase<ST> > xT = 
+           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(in_args.get_x(),true);
 
-  Teuchos::RCP<Tpetra_Vector const> const
-  x_dotT = Teuchos::nonnull(in_args.get_x_dot()) ?
-      ConverterT::getConstTpetraVector(in_args.get_x_dot()) :
-      Teuchos::null;
+  Teuchos::RCP<const Thyra::ProductVectorBase<ST> > x_dotT =
+           Teuchos::nonnull(in_args.get_x_dot()) ? 
+           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(in_args.get_x_dot(),true) :
+           Teuchos::null; 
+  
 
-  Teuchos::RCP<Tpetra_Vector const> const
-  x_dotdotT = Teuchos::null;
-
-  //Create a Teuchos array of the xT and x_dotT for each model.
+  //Create a Teuchos array of the xT and x_dotT for each model, casting to Tpetra_Vector 
   Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > xTs(num_models_);
-  if (xT != Teuchos::null) separateCoupledVectorConst(xT, xTs); 
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > x_dotTs(num_models_);
+  for(int m=0; m<num_models_; m++) {
+      //Get each Tpetra vector
+      xTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(xT->getVectorBlock(m),true)->getConstTpetraVector();
+   }
+  if (x_dotT != Teuchos::null) {
+    for(int m=0; m<num_models_; m++) {
+       //Get each Tpetra vector
+      x_dotTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(x_dotT->getVectorBlock(m),true)->getConstTpetraVector();
+     }
+  }
 
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >  x_dotTs(num_models_);
-  if (x_dotT != Teuchos::null) separateCoupledVectorConst(x_dotT, x_dotTs);  
-
+  // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
+  const Teuchos::RCP<const Tpetra_Vector> x_dotdotT = Teuchos::null;
+   
   double const
   alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_alpha() : 0.0;
@@ -866,14 +807,19 @@ evalModelImpl(
   //
   // Get the output arguments
   //
-  Teuchos::RCP<Tpetra_Vector> const
-  fT_out = Teuchos::nonnull(out_args.get_f()) ?
-      ConverterT::getTpetraVector(out_args.get_f()) :
-      Teuchos::null;
-  
+  Teuchos::RCP<Thyra::ProductVectorBase<ST> > fT_out = 
+          Teuchos::nonnull(out_args.get_f()) ?
+         Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> >(out_args.get_f(),true) : 
+          Teuchos::null;
+
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out(num_models_);
-  if (fT_out != Teuchos::null) separateCoupledVectorNonConst(fT_out, fTs_out); 
+  if (fT_out != Teuchos::null) {
+    for(int m=0; m<num_models_; m++) {
+       //Get each Tpetra vector
+      fTs_out[m] = Teuchos::rcp_dynamic_cast<ThyraVector>(fT_out->getNonconstVectorBlock(m),true)->getTpetraVector();
+     }
+  }
 
 
   Teuchos::RCP<Thyra::LinearOpBase<ST> >

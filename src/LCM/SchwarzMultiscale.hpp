@@ -95,8 +95,17 @@ public:
   
   void separateCoupledVectorNonConst( const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
                               Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const;
+  
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > getThyraRangeSpace() const; 
+  
+  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > getThyraDomainSpace() const; 
+
 
 protected:
+
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> > range_space_;
+  
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> > domain_space_;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
