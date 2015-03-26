@@ -11,6 +11,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Schwarz_BoundaryJacobian.hpp" 
 #include "Thyra_DefaultProductVector_decl.hpp"
+#include "Thyra_DefaultProductVectorSpace_decl.hpp"
 
 namespace LCM {
 
