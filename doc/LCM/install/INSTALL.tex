@@ -22,10 +22,12 @@ This document describes the necessary steps to install Albany/LCM and
 Trilinos on a machine with Fedora Linux. The procedures described
 herein were tested using Fedora 20.
 
-If you want a shortcut obtain the script \verb+install_albany.sh+ (stored in \verb+Albany/doc/LCM/build+) and then try: \\
-\verb+./install_albany+ \\
-which will install and build Trilinos and Albany in your current directory. 
-If the script does not complete it will tell you why and with help from this document you will be able to complete the install.
+If you want a shortcut obtain the script \verb+install_albany.sh+
+(stored in \verb+Albany/doc/LCM/build+) and then try:
+\\ \verb+./install_albany+ \\ which will install and build Trilinos
+and Albany in your current directory.  If the script does not complete
+it will tell you why and with help from this document you will be able
+to complete the install.
 
 \section{Required packages}
 After installing Fedora, the following packages should be installed
@@ -105,12 +107,12 @@ cd LCM
 
 Now, check out the latest version of Trilinos:
 \begin{verbatim}
-git clone https://github.com/trilinos/trilinos.git Trilinos
+git clone git@github.com:trilinos/trilinos.git Trilinos
 \end{verbatim}
 
 Finally, check out the latest version of Albany:
 \begin{verbatim}
-git clone https://github.com/gahansen/Albany.git Albany
+git clone git@github.com:gahansen/Albany.git Albany
 \end{verbatim}
 
 At this point, the directory structure should look like this:
@@ -122,9 +124,9 @@ LCM
 
 \section{Installation scripts}
 Create symbolic links to the installation scripts inside the directory
-\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+ directory. If you
-intend to modify these scripts, it is better to copy them. The necessary scripts
-are:
+\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+
+directory. If you intend to modify these scripts, it is better to copy
+them. The necessary scripts are:
 \begin{verbatim}
 albany-config.sh
 build-all.sh
@@ -135,10 +137,11 @@ trilinos-config.sh
 \end{verbatim}
 
 Once this is done, go to the top-level \verb+LCM+ directory, open the
-\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they match your
-environment. If you do not want to tinker with any of this, just change the
-email addresses for tests reports at the end of \verb+env-single.sh+ and make
-sure all the scripts are executable and read only:
+\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they
+match your environment. If you do not want to tinker with any of this,
+just change the email addresses for tests reports at the end of
+\verb+env-single.sh+ and make sure all the scripts are executable and
+read only:
 \begin{verbatim}
 cd ~/LCM
 chmod +x *.sh
