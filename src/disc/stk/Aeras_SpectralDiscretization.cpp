@@ -373,16 +373,20 @@ Aeras::SpectralDiscretization::transformMesh()
 #ifdef OUTPUT_TO_SCREEN
     *out << "Cube Sphere!" << endl;
 #endif
-    const int numDim = stkMeshStruct->numDim;
-    for (int i=0; i < numOverlapNodesSTK; i++)  {
-      double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
-      double r = 0.0; 
-      for (int n=0; n<numDim; n++) 
-        r += x[n]*x[n]; 
-      r = sqrt(r);
-      for (int n=0; n<numDim; n++) 
-      //FIXME: there could be division by 0 here! 
-        x[n] = x[n]/r;  
+    const int numDim  = stkMeshStruct->numDim;
+    for (int ws = 0; ws < coords.size(); ws++) { //workset
+      for (int e = 0; e < coords[ws].size(); e++) {  // cell
+        for (int j = 0; j < coords[ws][e].size(); j++)  {// node
+          double r = 0.0; 
+          for (int n=0; n<numDim; n++) //dimensions  
+             r += coords[ws][e][j][n]*coords[ws][e][j][n]; 
+          r = sqrt(r);
+          for (int n=0; n<numDim; n++) { //dimensions
+            //FIXME: there could be division by 0 here! 
+            coords[ws][e][j][n] = coords[ws][e][j][n]/r;  
+          }
+        }
+      }
     }
   }
   else if (transformType == "Aeras Schar Mountain")
@@ -1417,7 +1421,6 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   stk::mesh::get_selected_entities(select_unowned,
 				   bulkData.buckets(stk::topology::NODE_RANK),
 				   unownedNodes);
-  numOverlapNodesSTK = unownedNodes.size(); 
   numOverlapNodes += unownedNodes.size();
 #ifdef OUTPUT_TO_SCREEN
   for (int rank = 0; rank < commT->getSize(); ++rank)
@@ -3200,11 +3203,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
-  // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
-  // enriched coordinates This function is not critical and only
-  // called for XZ hydrostatic equations.
-  transformMesh();
-
   computeWorksetInfo();
 
   // IKT, 2/16/15: moving computeGraphs() to after
@@ -3214,6 +3212,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
   computeCoords();
+
+  // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
+  // enriched coordinates This function is not critical and only
+  // called for XZ hydrostatic equations.
+  transformMesh();
 
  // IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN
