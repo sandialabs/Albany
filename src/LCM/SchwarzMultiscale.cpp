@@ -17,7 +17,6 @@
 int c = 0; 
 int c2 = 0; 
 
-typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode> ThyraVector;
 
 LCM::
 SchwarzMultiscale::
