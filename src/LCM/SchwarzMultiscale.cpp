@@ -9,7 +9,6 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
-#include "Tpetra_KokkosRefactor_MultiVector_decl.hpp"
 
 
 //uncomment the following to write stuff out to matrix market to debug
