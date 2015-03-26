@@ -205,19 +205,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
   std::cout << "Total # parameters, responses: " << num_params_total_;
   std::cout << ", " << num_responses_total_ << '\n';
 
-  //Create ccoupled_disc_map, a map for the entire coupled ME solution,
-  //created from the entries of the disc_maps array (individual maps).
-  coupled_disc_map_ = createCoupledMap(disc_maps_, commT_);
-
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << ": created coupled map!\n";
-
-#ifdef WRITE_TO_MATRIX_MARKET
-  // For debug, write the coupled map to matrix market file to
-  // look at in vi or matlab
-  Tpetra_MatrixMarket_Writer::writeMapFile(
-      "coupled_disc_map.mm",
-      *coupled_disc_map_);
-#endif
 
   // Setup nominal values
   nominal_values_ = this->createInArgsImpl();
@@ -261,105 +248,6 @@ SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
 
 LCM::SchwarzMultiscale::~SchwarzMultiscale()
 {
-}
-
-//LCM::SchwarzMultiscale::separateCoupledVector 
-//takes in a combined vector for a coupled model 
-//and separates into into individual subvectors for each submodel.
-//These are stored in a Teuchos::Array of Tpetra_Vectors.
-void 
-LCM::SchwarzMultiscale::separateCoupledVectorConst(
-    const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const
-{
-  LO counter_local = 0;
-  for (int m = 0; m < num_models_; m++) {
-    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
-    vecs[m] = combined_vector->offsetView(disc_maps_[m], counter_local);
-    counter_local += disc_local_elements_m;
-  } 
-}
-
-void 
-LCM::SchwarzMultiscale::separateCoupledVectorNonConst(
-    const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
-    Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const
-{
-  LO counter_local = 0;
-  for (int m = 0; m < num_models_; m++) {
-    int disc_local_elements_m = disc_maps_[m]->getNodeNumElements();
-    vecs[m] = combined_vector->offsetViewNonConst(disc_maps_[m], counter_local);
-    counter_local += disc_local_elements_m;
-  } 
-}
-
-Teuchos::RCP<const Tpetra_Map>
-LCM::SchwarzMultiscale::createCoupledMap(
-    Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
-    Teuchos::RCP<Teuchos::Comm<int> const> const & commT)
-{
-  int
-  n_maps = maps.size();
-
-  std::cout << "DEBUG: LCM::SchwarzMultiscale::createCoupledMap, # maps: ";
-  std::cout << n_maps << '\n';
-
-  // Figure out how many local and global elements are in the
-  // coupled map by summing these quantities over each model's map.
-  LO
-  local_num_elements = 0;
-
-  GO
-  global_num_elements = 0;
-
-  for (int m = 0; m < n_maps; ++m) {
-    local_num_elements += maps[m]->getNodeNumElements();
-    global_num_elements += maps[m]->getGlobalNumElements();
-
-    std::cout << "DEBUG: map #" << m << " has ";
-    std::cout << maps[m]->getGlobalNumElements() << " global elements.\n";
-  }
-  //Create global element indices array for coupled map for this processor,
-  //to be used to create the coupled map.
-  std::vector<GO>
-  my_global_elements(local_num_elements);
-
-  LO
-  counter_local = 0;
-
-  GO
-  counter_global = 0;
-
-  for (int m = 0; m < n_maps; ++m) {
-    LO
-    local_num_elements_n = maps[m]->getNodeNumElements();
-
-    GO
-    global_num_elements_n = maps[m]->getGlobalNumElements();
-
-    Teuchos::ArrayView<GO const>
-    disc_global_elements = maps[m]->getNodeElementList();
-
-    for (int l = 0; l < local_num_elements_n; ++l) {
-      my_global_elements[counter_local + l] = counter_global
-          + disc_global_elements[l];
-    }
-    counter_local += local_num_elements_n;
-    counter_global += global_num_elements_n;
-  }
-
-  Teuchos::ArrayView<GO> const
-  my_global_elements_AV =
-      Teuchos::arrayView(&my_global_elements[0], local_num_elements);
-
-  std::cout << "DEBUG: coupled map has " << global_num_elements;
-  std::cout << " global elements.\n";
-
-  Teuchos::RCP<Tpetra_Map const>
-  coupled_map = Teuchos::rcp(
-      new Tpetra_Map(global_num_elements, my_global_elements_AV, 0, commT_));
-
-  return coupled_map;
 }
 
 // Overridden from Thyra::ModelEvaluator<ST>
@@ -855,23 +743,6 @@ evalModelImpl(
     W_op_outT = csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_); 
   }
 
-#ifdef WRITE_TO_MATRIX_MARKET
-  //writing to MatrixMarket file for debug
-  char name[100];  //create string for file name
-  sprintf(name, "f0_%i.mm", c2);
-  if (fTs_out[0] != Teuchos::null) {
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-      name,
-      *(fTs_out[0]));
-    c2++; 
-  }
-  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) { 
-    sprintf(name, "f1_%i.mm", c2);
-    Tpetra_MatrixMarket_Writer::writeDenseFile(
-      name,
-      *(fTs_out[1]));
-  }
-#endif
 
 
   // FIXME: in the following, need to check logic involving looping over
@@ -946,6 +817,29 @@ evalModelImpl(
      }
    }
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  //writing to MatrixMarket file for debug
+  char name[100];  //create string for file name
+  sprintf(name, "f0_%i.mm", c2);
+  if (fTs_out[0] != Teuchos::null) {
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      name,
+      *(fTs_out[0]));
+  }
+  if (num_models_ > 1 && fTs_out[1] != Teuchos::null) { 
+    sprintf(name, "f1_%i.mm", c2);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(
+      name,
+      *(fTs_out[1]));
+  }
+  sprintf(name, "x0_%i.mm", c2);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name,*(xTs[0]));
+  if (num_models_ > 1) {
+    sprintf(name, "x1_%i.mm", c2);
+    Tpetra_MatrixMarket_Writer::writeDenseFile(name,*(xTs[1]));
+  }
+  c2++; 
+#endif
 
   // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {

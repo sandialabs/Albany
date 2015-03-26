@@ -82,22 +82,6 @@ public:
   void
   allocateVectors();
 
-  /// Create the map for the coupled solution from an array of the maps
-  /// for each individual model that is being coupled.
-  Teuchos::RCP<Tpetra_Map const>
-  createCoupledMap(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
-      Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
-
-  //Take in a combined vector for a coupled model 
-  //and separates into into individual subvectors for each submodel.
-  //These are stored in a Teuchos::Array of Tpetra_Vectors.
-  void separateCoupledVectorConst( const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
-                              Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const;
-  
-  void separateCoupledVectorNonConst( const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
-                              Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const;
-  
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > getThyraRangeSpace() const; 
   
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > getThyraDomainSpace() const; 
@@ -154,8 +138,6 @@ private:
   Thyra::ModelEvaluatorBase::InArgs<ST>
   createInArgsImpl() const;
 
-  Teuchos::RCP<const Tpetra_Map>
-  coupled_disc_map_;
   
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
