@@ -197,7 +197,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   std::cout << "  number of Peridigm partial stress material points: " << numPartialStressIds << std::endl;
   std::cout << "\n---- PeridigmManager ----\n";
 
-  // Bail if there are no sphere elements
+  // Bail if there are no sphere elements or partial stress elements
   if(peridynamicsBlocks.size() == 0 && peridynamicPartialStressBlocks.size() == 0){
     hasPeridynamics = false;
     return;
@@ -307,12 +307,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 	int numNodesInElement = bulkData->num_nodes(elementsInElementBlock[iElement]);
 	TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodesInElement != numNodes, "\n\n**** Error in PeridigmManager::initialize(),bulkData->num_nodes() != numNodes.\n\n");
 	const stk::mesh::Entity* node = bulkData->begin_nodes(elementsInElementBlock[iElement]);
-	int index = 0;
 	for(int i=0 ; i<numNodes ; i++){
 	  double* coordinates = stk::mesh::field_data(*coordinatesField, node[i]);
 	  for(int dof=0 ; dof<3 ; ++dof)
-	    cellWorkset(0, index, dof) = coordinates[dof];
-	  index += 1;
+	    cellWorkset(0, i, dof) = coordinates[dof];
 	}
 
 	// Determine the global (x,y,z) coordinates of the quadrature points
@@ -556,12 +554,14 @@ void LCM::PeridigmManager::getPartialStress(std::string blockName, int worksetIn
     int globalElementId = worksetLocalIdToGlobalId[worksetIndex][worksetLocalElementId];
     std::vector<int>& peridigmGlobalIds = albanyPartialStressElementGlobalIdToPeridigmGlobalIds[globalElementId];
     Teuchos::RCP<const Epetra_Vector> data = peridigm->getBlockData(blockName, "Partial_Stress");
+    //Teuchos::RCP<const Epetra_Vector> displacement = peridigm->getBlockData(blockName, "Displacement");
     for(unsigned int i=0 ; i<peridigmGlobalIds.size() ; ++i){
       int peridigmLocalId = data->Map().LID(peridigmGlobalIds[i]);
       TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::getPartialStress(), invalid global id.\n");
       for(int j=0 ; j<9 ; ++j){
 	partialStressValues[i][j] = (*data)[9*peridigmLocalId + j];
       }
+      //std::cout << "DJL DEBUGGING albany global id " << globalElementId << ", peridigm global ids " << peridigmGlobalIds[0] << ", " << peridigmGlobalIds[1] << ", " << peridigmGlobalIds[2] << ", "  << peridigmGlobalIds[3] << ", "  << peridigmGlobalIds[4] << ", "  << peridigmGlobalIds[5] << ", "  << peridigmGlobalIds[6] << ", "  << peridigmGlobalIds[7] << ", partial stress " << partialStressValues[i][0] << ", displacement " << (*displacement)[3*peridigmLocalId] << ", " <<  (*displacement)[3*peridigmLocalId+1] << ", " << (*displacement)[3*peridigmLocalId+2] << ", " << std::endl;
     }
   }
 }
