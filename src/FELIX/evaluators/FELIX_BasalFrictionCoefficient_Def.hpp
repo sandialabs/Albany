@@ -22,7 +22,6 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   u_grid      (NULL),
   u_grid_h    (NULL),
   beta_coeffs (NULL),
-  velocity    (p.get<std::string> ("Velocity Name"), dl->node_vector),
   beta        (p.get<std::string> ("FELIX Basal Friction Coefficient Name"), dl->node_scalar),
   beta_type   (FROM_FILE)
 {
@@ -35,8 +34,8 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   std::string betaType = (beta_list->isParameter("Type") ? beta_list->get<std::string>("Type") : "From File");
 
   mu    = beta_list->get("Coulomb Friction Coefficient",1.0);
-  N     = beta_list->get("Effective Water Pressure",0.1);
-  n     = static_cast<int>(p.isParameter("Glen's Law n") ? p.get<double>("Glen's Law n") : 3);
+  rho   = beta_list->get("Ice Density",990);
+  g     = beta_list->get("Gravity Acceleration",9.8);
 
   if (betaType == "From File")
   {
@@ -48,58 +47,66 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     beta_given = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Given Beta Field Name"), dl->node_scalar);
     this->addDependentField (beta_given);
   }
-  else if (betaType == "Uniform")
+  else if (betaType == "Hydrostatic")
   {
 #ifdef OUTPUT_TO_SCREEN
-    *output << "Uniform and constant beta:\n\n"
-            << "      beta = mu*N\n\n"
-            << "  with\n"
-            << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - N  (Effective Water Pressure): " << N << "\n";
+    *output << "Hydrostatic beta:\n\n"
+            << "      beta = mu*rho*g*H\n\n"
+            << "  with H being the ice thickness, and\n"
+            << "    - mu  (Coulomb Friction Coefficient): " << mu << "\n"
+            << "    - rho (Ice Density): " << rho << "\n"
+            << "    - g (Gravity Acceleration): " << g << "\n";
 #endif
-    beta_type = UNIFORM;
+
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    beta_type = HYDROSTATIC;
   }
   else if (betaType == "Power Law")
   {
     beta_type = POWER_LAW;
 
-    power = beta_list->get("Power Law Exponent",1.0);
+    power = beta_list->get("Power Exponent",1.0);
     TEUCHOS_TEST_FOR_EXCEPTION(power<-1.0, Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Power Law Exponent\" must be greater than (or equal to) -1.\n");
+        std::endl << "Error in FELIX::BasalFrictionCoefficient: \"Power Exponent\" must be greater than (or equal to) -1.\n");
 
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (power law):\n\n"
-            << "      beta = mu*N*|u|^p \n\n"
-            << "  with\n"
+            << "      beta = mu*rho*g*H * |u|^p \n\n"
+            << "  with H being the ice thickness, u the ice velocity, and\n"
             << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - N  (Effective Water Pressure): " << N << "\n"
-            << "    - p  (Power Law Exponent): " << power << "\n";
+            << "    - rho (Ice Density): " << rho << "\n"
+            << "    - g (Gravity Acceleration): " << g << "\n"
+            << "    - p  (Power Exponent): " << power << "\n";
 #endif
 
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
     this->addDependentField (velocity);
   }
   else if (betaType == "Regularized Coulomb")
   {
     beta_type = REGULARIZED_COULOMB;
 
+    power = beta_list->get("Power Exponent",1.0);
     L = beta_list->get("Regularization Parameter",1e-4);
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (regularized coulomb law):\n\n"
-            << "      beta = mu*N* [ |u|/(|u| + L*N^n) ]^(1/n) * 1/|u| \n\n"
-            << "  with\n"
+            << "      beta = mu*rho*g*H * |u|^{p-1} / [|u| + L*N^(1/p)]^p\n\n"
+            << "  with H being the ice thickness, u the ice velocity, and\n"
             << "    - mu (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - N  (Effective Water Pressure): " << N << "\n"
+            << "    - rho (Ice Density): " << rho << "\n"
+            << "    - g (Gravity Acceleration): " << g << "\n"
             << "    - L  (Regularization Parameter): " << L << "\n"
-            << "    - n  (Glen's Law n): " << n << "\n";
+            << "    - p  (Power Exponent): " << power << "\n";
 #endif
 
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
     this->addDependentField (velocity);
   }
   else if (betaType == "Piecewise Linear")
   {
     beta_type = PIECEWISE_LINEAR;
-
-    this->addDependentField (velocity);
 
     Teuchos::ParameterList& pw_params = beta_list->sublist("Piecewise Linear Parameters");
 
@@ -115,10 +122,11 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
     }
 #ifdef OUTPUT_TO_SCREEN
     *output << "Velocity-dependent beta (piecewise linear FE):\n\n"
-            << "      beta = mu*N * [sum_i c_i*phi_i(|u|)] \n\n"
-            << "  with\n"
+            << "      beta = mu*rho*g*H * [sum_i c_i*phi_i(|u|)] \n\n"
+            << "  with H being the ice thickness, u the ice velocity, and\n"
             << "    - mu  (Coulomb Friction Coefficient): " << mu << "\n"
-            << "    - N   (Effective Water Pressure): " << N << "\n"
+            << "    - rho (Ice Density): " << rho << "\n"
+            << "    - g (Gravity Acceleration): " << g << "\n"
             << "    - c_i (Values): [" << beta_coeffs[0];
     for (int i(1); i<nb_pts; ++i)
         *output << " " << beta_coeffs[i];
@@ -164,6 +172,10 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
         *output << "]\n";
 #endif
     }
+
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
+    this->addDependentField (velocity);
   }
   else
   {
@@ -229,23 +241,20 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 
     switch (beta_type)
     {
-        case UNIFORM:
-        {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
-
-            for (int node=0; node < numNodes; ++node)
-            {
-                beta(i,node) = mu*N + ff;
-            }
-            break;
-        }
         case FROM_FILE:
             for (int node=0; node < numNodes; ++node)
                 beta(i,node) = beta_given(i,node);
 
             break;
+
+        case HYDROSTATIC:
+        {
+            for (int node=0; node < numNodes; ++node)
+            {
+                beta(i,node) = mu*rho*g*thickness(i,node);
+            }
+            break;
+        }
 
         case POWER_LAW:
         {
@@ -261,7 +270,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
                     u_norm += std::pow(velocity(i,node,dim),2);
                 u_norm = std::sqrt(u_norm + ff);
 
-                beta(i,node) = mu * N * std::pow(u_norm, power) + ff;
+                beta(i,node) = mu*rho*g*thickness(i,node) * std::pow(u_norm, power);
             }
             break;
         }
@@ -271,7 +280,6 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
             if (*homotopyParam==0)
                 ff = 0;
 
-            double inv_n = 1./n;
             for (int node=0; node < numNodes; ++node)
             {
                 // Computing |u|
@@ -280,7 +288,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
                     u_norm += std::pow(velocity(i,node,dim),2);
                 u_norm = std::sqrt (u_norm + ff);
 
-                beta(i,node) = mu*N * std::pow (u_norm / (u_norm + L*std::pow(N,n)), inv_n) / u_norm + ff;
+                beta(i,node) = mu*rho*g*thickness(i,node) * std::pow (u_norm, power-1) / std::pow( std::pow(u_norm,*homotopyParam) + L*std::pow(N,1./power), power);
             }
             break;
         }
@@ -303,7 +311,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
                 where = std::lower_bound(u_grid,u_grid+nb_pts,u_norm) - u_grid;
                 xi = (u_norm - u_grid[where]) / u_grid_h[where];
 
-                beta(i,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1] + ff;
+                beta(i,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1];
             }
             break;
         }
@@ -329,27 +337,24 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
 
     switch (beta_type)
     {
-        case UNIFORM:
-        {
-            ScalarT ff = pow(10.0, -10.0*(*homotopyParam));
-            if (*homotopyParam==0)
-                ff = 0;
-
-            for (int cell=0; cell<workset.numCells; ++cell)
-            {
-                for (int node=0; node < numNodes; ++node)
-                {
-                    beta(cell,node) = mu*N + ff;
-                }
-            }
-            break;
-        }
         case FROM_FILE:
             for (int cell=0; cell<workset.numCells; ++cell)
                 for (int node=0; node < numNodes; ++node)
                     beta(cell,node) = beta_given(cell,node);
 
             break;
+
+        case HYDROSTATIC:
+        {
+            for (int cell=0; cell<workset.numCells; ++cell)
+            {
+                for (int node=0; node < numNodes; ++node)
+                {
+                    beta(cell,node) = mu*rho*g*thickness(cell,node);
+                }
+            }
+            break;
+        }
 
         case POWER_LAW:
         {
@@ -367,7 +372,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
                         u_norm += std::pow(velocity(cell,node,dim),2);
                     u_norm = std::sqrt (u_norm + ff);
 
-                    beta(cell,node) = mu*N * std::pow (u_norm, power) + ff;
+                    beta(cell,node) = mu*rho*g*thickness(cell,node) * std::pow (u_norm, power);
                 }
             }
             break;
@@ -378,7 +383,6 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
             if (*homotopyParam==0)
                 ff = 0;
 
-            double inv_n = 1./n;
             for (int cell=0; cell<workset.numCells; ++cell)
             {
                 for (int node=0; node < numNodes; ++node)
@@ -389,8 +393,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
                         u_norm += std::pow(velocity(cell,node,dim),2);
                     u_norm = std::sqrt(u_norm + ff);
 
-                    // Note: the first half_eps is just for safety in case the user tries L=0...
-                    beta(cell,node) = mu * N * std::pow (u_norm / (u_norm + L*std::pow(N,n)), inv_n) / u_norm + ff;
+                    beta(cell,node) = mu*rho*g*thickness(cell,node) * std::pow (u_norm,power-1) / std::pow(u_norm + L*std::pow(N,1./power), power);
                 }
             }
             break;
@@ -415,7 +418,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
 
                     where = std::lower_bound(u_grid,u_grid+nb_pts,getScalarTValue(u_norm)) - u_grid;
                     xi = (u_norm - u_grid[where]) / u_grid_h[where];
-                    beta(cell,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1] + ff;
+                    beta(cell,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1];
                 }
             }
             break;

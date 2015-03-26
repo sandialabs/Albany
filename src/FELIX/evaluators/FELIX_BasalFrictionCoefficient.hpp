@@ -55,10 +55,10 @@ private:
 
   // Coefficients for computing beta (if not given)
   double mu;    // Coulomb friction coefficient
-  double N;     // Effective pressure
-  int    n;     // Glen's law exponent
+  double rho;   // Ice density
+  double g;     // Gravity acceleration
   double L;     // Roughness of the bed (for REGULARIZED_COULOMB only)
-  double power; // Exponent (for POWER_LAW only)
+  double power; // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
 
   // Data to compute beta in case beta(|u|) is a piecewise linear function of |u|
   int      nb_pts;
@@ -69,13 +69,14 @@ private:
   // Input:
   PHX::MDField<ScalarT,Cell,Node,Dim> velocity;
   PHX::MDField<ScalarT,Cell,Node>     beta_given;
+  PHX::MDField<ScalarT,Cell,Node>     thickness;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> beta;
 
   unsigned int numDims, numNodes, numCells;
 
-  enum BETA_TYPE {FROM_FILE, UNIFORM, POWER_LAW, REGULARIZED_COULOMB, PIECEWISE_LINEAR};
+  enum BETA_TYPE {FROM_FILE, HYDROSTATIC, POWER_LAW, REGULARIZED_COULOMB, PIECEWISE_LINEAR};
   BETA_TYPE beta_type;
 };
 

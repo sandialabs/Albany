@@ -439,10 +439,15 @@ FELIX::StokesFO::buildBasalFrictionCoefficientEvaluator ()
 {
     Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
 
-    //Input
+    //Input fields
     p->set<std::string>("Velocity Name", "Velocity");
     p->set<std::string>("Given Beta Field Name", "basal_friction");
-    p->set<double>("Glen's Law n", this->params->sublist("FELIX Viscosity").get<double>("Glen's Law n"));
+    p->set<std::string>("Ice Thickness Name", "thickness");
+
+    //Input physics parameters
+    Teuchos::ParameterList& physics = this->params->sublist("FELIX Physics");
+    p->set<double> ("Ice Density", physics.get("Ice Density",910));
+    p->set<double> ("Gravity Acceleration", physics.get("Gravity Acceleration", 9.8));
 
     Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
