@@ -19,8 +19,10 @@ using Teuchos::rcpFromRef;
 
 #define WRITE_TO_MATRIX_MARKET
 
-static int c3 = 0; 
-static int c4 = 0; 
+#ifdef WRITE_TO_MATRIX_MARKET
+static int
+mm_counter = 0;
+#endif // WRITE_TO_MATRIX_MARKET
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
@@ -47,15 +49,15 @@ getThyraCoupledJacobian(Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >jacs,
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];  //create string for file name
-  sprintf(name, "Jac0_%i.mm", c3);
+  sprintf(name, "Jac0_%i.mm", mm_counter);
 //write individual model jacobians to matrix market for debug
   Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
   if (block_dim > 1) {
-    sprintf(name, "Jac1_%i.mm", c3);
+    sprintf(name, "Jac1_%i.mm", mm_counter);
     Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[1]);
   }
-  c3++; 
-#endif
+  mm_counter++;
+#endif // WRITE_TO_MATRIX_MARKET
    // get the block dimension
    // this operator will be square
    Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST> > blocked_op = Thyra::defaultBlockedLinearOp<ST>();
