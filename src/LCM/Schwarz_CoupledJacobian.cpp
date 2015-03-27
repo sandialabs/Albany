@@ -25,7 +25,7 @@ static int c4 = 0;
 using Thyra::PhysicallyBlockedLinearOpBase;
 
 
-LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(const Teuchos::RCP<const Teuchos_Comm>& commT)
+LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(Teuchos::RCP<Teuchos_Comm const> const & commT)
 {
   std::cout << __PRETTY_FUNCTION__ << "\n"; 
   commT_ = commT;

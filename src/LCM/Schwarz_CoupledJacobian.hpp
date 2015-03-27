@@ -31,7 +31,7 @@ namespace LCM {
 
   class Schwarz_CoupledJacobian { 
   public:
-    Schwarz_CoupledJacobian(const Teuchos::RCP<const Teuchos_Comm>& comm);
+    Schwarz_CoupledJacobian(Teuchos::RCP<Teuchos_Comm const> const & comm);
 
     ~Schwarz_CoupledJacobian();
      
@@ -40,7 +40,7 @@ namespace LCM {
 
   private:
 
-    Teuchos::RCP<const Teuchos_Comm> commT_;
+    Teuchos::RCP<Teuchos_Comm const> commT_;
   
 
 
