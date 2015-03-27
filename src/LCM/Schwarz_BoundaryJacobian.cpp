@@ -10,10 +10,12 @@
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
-//#define WRITE_TO_MATRIX_MARKET
+#define WRITE_TO_MATRIX_MARKET
 
-static int c3 = 0; 
-static int c4 = 0; 
+#ifdef WRITE_TO_MATRIX_MARKET
+static
+int mm_counter = 0;
+#endif // WRITE_TO_MATRIX_MARKET
 
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(const Teuchos::RCP<const Teuchos_Comm>& commT)
 {
@@ -48,19 +50,19 @@ void LCM::Schwarz_BoundaryJacobian::apply(const Tpetra_MultiVector& X, Tpetra_Mu
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- initial X where we will set Y = Jac*X
   char name[100];  //create string for file name
-  sprintf(name, "X_%i.mm", c4);
+  sprintf(name, "X_%i.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
-#endif
+#endif  // WRITE_TO_MATRIX_MARKET
 
   //FIXME: fill in!
       
   
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug -- final solution Y (after all the operations to set Y = Jac*X
-  sprintf(name, "Y_%i.mm", c4);
+  sprintf(name, "Y_%i.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
-  c4++; 
-#endif
+  ++mm_counter;
+#endif  // WRITE_TO_MATRIX_MARKET
 }
 
 
