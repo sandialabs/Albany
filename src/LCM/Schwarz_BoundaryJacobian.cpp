@@ -13,11 +13,12 @@
 #define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-static
-int mm_counter = 0;
+static int
+mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(const Teuchos::RCP<const Teuchos_Comm>& commT)
+LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
+    Teuchos::RCP<Teuchos_Comm const> const & commT)
 {
   commT_ = commT;
   b_use_transpose_ = false;

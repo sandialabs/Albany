@@ -13,8 +13,10 @@
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
-static int
-mm_counter = 0;
+#ifdef WRITE_TO_MATRIX_MARKET
+static
+int mm_counter = 0;
+#endif // WRITE_TO_MATRIX_MARKET
 
 LCM::
 SchwarzMultiscale::
