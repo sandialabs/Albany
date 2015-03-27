@@ -19,10 +19,12 @@ output [TBD].
 1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain
 with LOCA (NOX works) (why is ||F|| not changing?) [Irina]
 
-2.) Test code on 2 decoupled domains. [Irina]
+2.) Thyra<->Tpetra casts/conversions in Main_SolveT.cpp for responses / printing 
+of solution.  Will need to write ThyraProductVector specialization 
+but not sure how to do this for the general case [ask Andy].
 
-3.) Get code to work when sum (# of parameters) in model input files is not 
-equal to # of parameters in coupled input files. [Irina]
+3.) Fix memory leak issues that show up after solve? 
+
 
 ---------------------Development TODOs------------------------
 
