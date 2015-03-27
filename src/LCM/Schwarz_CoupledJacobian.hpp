@@ -20,7 +20,7 @@
 #include "Teuchos_RCP.hpp"
 
 #include "Thyra_BlockedLinearOpBase.hpp"
-#include <Thyra_PhysicallyBlockedLinearOpBase.hpp>
+#include "Thyra_PhysicallyBlockedLinearOpBase.hpp"
 #include "Schwarz_BoundaryJacobian.hpp"
 
 namespace LCM {
