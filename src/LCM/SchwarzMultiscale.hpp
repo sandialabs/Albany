@@ -26,7 +26,8 @@ public:
   SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
       Teuchos::RCP<Tpetra_Vector const > const & initial_guessT, 
-      const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory);
+      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const > const &
+      solver_factory);
 
   ///Destructor
   ~SchwarzMultiscale();
@@ -143,10 +144,12 @@ private:
   disc_maps_;
 
   //Teuchos array holding main diagonal jacobians (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
+  jacs_;
 
   //Teuchos array holding off-diagonal jacobians (coupling ones)
-  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary_;
+  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> >
+  jacs_boundary_;
 
   int
   num_models_;
@@ -176,7 +179,8 @@ private:
   num_responses_total_;
 
   //for setting get_W_factory() 
-  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > solver_factory_;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
+  solver_factory_;
     
   mutable Teuchos::Array<Teuchos::Array<ParamVec> >
   sacado_param_vecs_;
