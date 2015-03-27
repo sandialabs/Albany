@@ -418,14 +418,10 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
-  // Skip this write unless the proper interval has been reached
-  if (outputInterval++ % fmdbMeshStruct->outputInterval)
-    return;
+  // Skip this write unless the proper interval has been reached.
+  if (outputInterval++ % fmdbMeshStruct->outputInterval) return;
 
-  outputInterval = 0;
-
-  if (fmdbMeshStruct->outputFileName.empty())
-    return;
+  if (fmdbMeshStruct->outputFileName.empty()) return;
 
   double time_label = monotonicTimeLabel(time_value);
   int out_step = 0;
