@@ -10,8 +10,8 @@
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Schwarz_BoundaryJacobian.hpp" 
-#include "Thyra_DefaultProductVector_decl.hpp"
-#include "Thyra_DefaultProductVectorSpace_decl.hpp"
+#include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
 
 namespace LCM {
 
