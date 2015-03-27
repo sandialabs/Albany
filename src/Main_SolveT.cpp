@@ -20,6 +20,8 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_FancyOStream.hpp"
+#include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
 
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
