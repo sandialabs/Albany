@@ -1148,7 +1148,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       for (unsigned ii = 0; ii < np-2; ++ii)
         for (unsigned jj = 0; jj < np-2; ++jj)
           // buffer[ii+1][jj+1] = offset + ii * (np-2) + jj;
-          wsElNodeID[ibuck][ielem][(ii+1)*np + (jj+1)] = offset + ii * (np-2) + jj;
+          wsElNodeID[ibuck][ielem][(ii+1)*np + (jj+1)] = offset + ii * (np-2) + jj - 1;
     }
   }
 
