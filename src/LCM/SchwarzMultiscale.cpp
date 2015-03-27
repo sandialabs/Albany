@@ -14,9 +14,8 @@
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
 
-int c = 0; 
-int c2 = 0; 
-
+static int
+mm_counter = 0;
 
 LCM::
 SchwarzMultiscale::
@@ -820,25 +819,25 @@ evalModelImpl(
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug
   char name[100];  //create string for file name
-  sprintf(name, "f0_%i.mm", c2);
+  sprintf(name, "f0_%i.mm", mm_counter);
   if (fTs_out[0] != Teuchos::null) {
     Tpetra_MatrixMarket_Writer::writeDenseFile(
       name,
       *(fTs_out[0]));
   }
   if (num_models_ > 1 && fTs_out[1] != Teuchos::null) { 
-    sprintf(name, "f1_%i.mm", c2);
+    sprintf(name, "f1_%i.mm", mm_counter);
     Tpetra_MatrixMarket_Writer::writeDenseFile(
       name,
       *(fTs_out[1]));
   }
-  sprintf(name, "x0_%i.mm", c2);
+  sprintf(name, "x0_%i.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name,*(xTs[0]));
   if (num_models_ > 1) {
-    sprintf(name, "x1_%i.mm", c2);
+    sprintf(name, "x1_%i.mm", mm_counter);
     Tpetra_MatrixMarket_Writer::writeDenseFile(name,*(xTs[1]));
   }
-  c2++; 
+  mm_counter++;
 #endif
 
   // Response functions
