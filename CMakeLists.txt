@@ -718,9 +718,16 @@ MESSAGE("\nMiscellaneous Albany Options:")
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_FAST_FELIX "Flag to turn on Code Optimization for FELIX that
 may break other physics" OFF)
-IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
+OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
+may break other physics" OFF)
+
+SET(SLFAD_SIZE 27 CACHE INT "set Sacado SLFad size")
+
+IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
+  ADD_DEFINITIONS(-DALBANY_SLFAD_SIZE=${SLFAD_SIZE})
   MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
+  MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
 
