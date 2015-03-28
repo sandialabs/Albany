@@ -148,6 +148,8 @@ public:
 
  PHX::MDField<ScalarT,Node, Dim> vcontra;
 
+ std::vector<LO> qpToNodeMap;
+ std::vector<LO> nodeToQPMap;
  Kokkos::View<int*, PHX::Device> nodeToQPMap_Kokkos;
 
  double a, myPi;
