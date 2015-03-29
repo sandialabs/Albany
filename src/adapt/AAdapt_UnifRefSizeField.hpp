@@ -11,10 +11,11 @@
 #include "AlbPUMI_AbstractPUMIDiscretization.hpp"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
+#include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class UnifRefSizeField : public ma::IsotropicFunction {
+class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
     UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
@@ -24,13 +25,13 @@ class UnifRefSizeField : public ma::IsotropicFunction {
     double getValue(ma::Entity* v);
 
     void setParams(double element_size, double err_bound,
-		   const std::string state_var_name);
+		   const std::string& state_var_name);
 
     void computeError();
 
-    void copyInputFields() {};
-    void freeInputFields() {};
-    void freeSizeField() {};
+    void copyInputFields() {}
+    void freeInputFields() {}
+    void freeSizeField() {}
 
   private:
 

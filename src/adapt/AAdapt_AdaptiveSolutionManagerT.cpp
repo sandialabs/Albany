@@ -127,45 +127,30 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 #endif
 
 #if 0
-#if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
-
-  else if(method == "Random") {
+# if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
+  else if (method == "Random") {
     strategy = rcp(new AAdapt::RandomFracture(adaptParams_,
             param_lib_,
             state_mgr_,
             epetra_comm_));
   }
-
-#endif
+# endif
 #endif
 #ifdef ALBANY_SCOREC
   // RCP needs to be non-owned because otherwise there is an RCP circle.
-  else if(method == "RPI Unif Size") {
-    adapter_ = Teuchos::rcp(new AAdapt::MeshAdaptT<AAdapt::UnifSizeField>(
-      adaptParams_, paramLib_, stateMgr_, rc_mgr, commT_));
-  }
-  else if(method == "RPI UnifRef Size") {
-    adapter_ = Teuchos::rcp(new AAdapt::MeshAdaptT<AAdapt::UnifRefSizeField>(
-      adaptParams_, paramLib_, stateMgr_, rc_mgr, commT_));
-  }
-# ifdef SCOREC_SPR
-  else if(method == "RPI SPR Size") {
-    adapter_ = Teuchos::rcp(new AAdapt::MeshAdaptT<AAdapt::SPRSizeField>(
-      adaptParams_, paramLib_, stateMgr_, rc_mgr, commT_));
-  }
-# endif
+  else if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
+           method == "RPI SPR Size")
+    adapter_ = Teuchos::rcp(
+      new AAdapt::MeshAdaptT(adaptParams_, paramLib_, stateMgr_, rc_mgr,
+                             commT_));
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
-
-  else if(method == "Unif Size") {
-
+  else if (method == "Unif Size") {
     adapter_ = Teuchos::rcp(new AAdapt::STKAdaptT<AAdapt::STKUnifRefineField>(adaptParams_,
             paramLib_,
             stateMgr_,
             commT_));
-
   }
-
 #endif
 
   else {
