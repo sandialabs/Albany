@@ -26,6 +26,8 @@
 */
 
 #include <cassert>
+#include <cstdlib>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -51,6 +53,7 @@ void xml () {
     test = 0,
     rcu = 0,
     parallel = 0;
+  double step_factor = 1;
   int bc_type;
   for (int i = 0; i < me2xml::argc; ++i) {
     const std::string v = me2xml::argv[i];
@@ -71,6 +74,10 @@ void xml () {
     check(rcu);
     check(test);
     check(parallel);
+    else if (v == "stepfactor") {
+      step_factor = atof(me2xml::argv[i+1]);
+      ++i;
+    }
   }
   if (refine0) { adapt = true; uniform = true; resize0 = true; }
   if (bcrot) bc_type = 2; else if (bccon) bc_type = 1;
@@ -78,7 +85,8 @@ void xml () {
   else bc_type = 0;
   const int max_steps = test ? 80 : 400;
   const int nadapt = refine0 ? 0 : 2*max_steps;
-  const double step_size = 0.1;
+  const double step_size = 0.1*step_factor;
+  const int write_interval = std::max(1, (int) std::ceil(1/step_factor));
   const double target_element_size = (test ? 2 : fine ? 0.5 : 1)*0.1;
   std::cout << "\n";
   prp(elastic);
@@ -224,6 +232,7 @@ void xml () {
       p("FMDB Input File Name",
         std::string("../../meshes/cube/cube") + (quad ? "-quad" : "") + (parallel ? "" : "-serial") + ".smb");
       p("FMDB Output File Name", outfn);
+      p("FMDB Write Interval", write_interval);
       p("Element Block Associations", "TwoDArray(string)", "2x1:{95, eb_1}");
       p("Node Set Associations", "TwoDArray(string)", "2x4:{85, 83, 43, 81, ns_1, ns_2, ns_3, ns_4}");
       p("2nd Order Mesh", quad);

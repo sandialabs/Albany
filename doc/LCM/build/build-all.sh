@@ -42,9 +42,9 @@ case "$SCRIPT_NAME" in
 	;;
 esac
 
-for PACKAGE in $PACKAGES; do
-    for TOOL_CHAIN in $TOOL_CHAINS; do
-	for BUILD_TYPE in $BUILD_TYPES; do
+for TOOL_CHAIN in $TOOL_CHAINS; do
+    for BUILD_TYPE in $BUILD_TYPES; do
+	for PACKAGE in $PACKAGES; do
 	    "$COMMAND" "$PACKAGE" "$TOOL_CHAIN" "$BUILD_TYPE" "$NUM_PROCS"
 	done
     done
