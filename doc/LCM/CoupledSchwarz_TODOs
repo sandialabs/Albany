@@ -25,18 +25,7 @@ input file \neq Number of parameters in individual files (and same for responses
 
 3.) Fix memory leak issues that show up after solve.
 
-4.) Is Ifpack2 supposed to work as preconditioner for Thyra block operator?  The following 
-exception is thrown 
-
-p=0: *** Caught standard std::exception of type 'std::logic_error' :
-
- /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results2/Trilinos/build/install/lib/cmake/Trilinos/../../../include/Thyra_Ifpack2PreconditionerFactory_def.hpp:122:
-
- Throw number = 2
-
- Throw test that evaluated to true: !(this->isCompatible(*fwdOpSrc))
-
-5.) Implement thyra product vector / space versions of responses / parameters / sensitivities. [Irina]
+4.) Implement thyra product vector / space versions of responses / parameters / sensitivities. [Irina]
 
 
 
@@ -56,12 +45,7 @@ will be passed to Schwarz_CoupledJacobian class. [Alejandro]
 
 ------------------Questions/Comments/Notes-----------------------------
 
-1.) create_W_prec() is not implemented in Thyra.  This means we will
-not have a preconditioner at the beginning.
-
-2.) get_W_factory() is not needed -- just returns null.
-
-4.) initial_guess, passed to the LCM::CoupledSchwarz constructor, is
+1.) initial_guess, passed to the LCM::CoupledSchwarz constructor, is
 used to create the Albany_Application object for each model.  There,
 it's used to set the initial condition (AAdapt:InitialContitionsT).
 It's used to set x_init and x_dot_init, part of nominal_values
@@ -84,7 +68,7 @@ the mesh output routines (like separateCombinedVector in QCAD?).
 multiplies and getting submatrices/vectors for coupled model.  Is
 Tpetra_Operator Jacobian class OK, or should this be Thyra?
 
------------------Notes from emails with Andy---------------------------------------
+-----------------Notes from emails with Andy/Eric Cyr---------------------------------------
 
 1.) The CouplePS_NOXObserver takes a single vector for the fully
 coupled problem and breaks it into separate vectors for output. The
@@ -110,3 +94,12 @@ to call it that way.
 views of others, and a matrix from views of sub-matrices. This will
 make everything much cleaner if we can figure out the syntax.  Talk to
 Roger Pawlowski, Roscoe Bartless, Eric Cyr.
+
+5.) One cannot select Ifpack2 or MueLu on its own as the preconditioner for a 
+thyra block operator system.  Basically the Ifpack2 Stratimikos code expects a 
+Thyra operator that wraps a Tpetra operator. Another layer of indirection and 
+it will have problems. In this case you have a 1x1 DefaultBlockLinearOp wrapping 
+a Thyra::TpetraLinearOp wrapping a Tpetra::Operator. This is 
+already to much to handle.  Eric Cyr has written code that recurses to the “concrete” 
+(meaning Epetra or Tpetra) matrix type and then uses that operator. 
+This can be done, but its not clear its desirable. 
