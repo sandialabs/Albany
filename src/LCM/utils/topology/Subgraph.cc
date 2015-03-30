@@ -745,9 +745,12 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
   std::vector<Vertex>
   split_vertices(num_components - 1);
 
+  stk::mesh::Entity
+  articulation_entity = entityFromVertex(articulation_vertex);
+
   for (std::vector<Vertex>::size_type i = 0; i < split_vertices.size(); ++i) {
     Vertex
-    split_vertex = addVertex(articulation_rank);
+    split_vertex = addVertex(articulation_rank, articulation_entity);
 
     split_vertices[i] = split_vertex;
   }
