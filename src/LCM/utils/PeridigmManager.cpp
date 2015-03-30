@@ -1,6 +1,7 @@
 /*! \file PeridigmManager.cpp */
 
 #include "PeridigmManager.hpp"
+#include "Peridigm_ProximitySearch.hpp"
 #include "Albany_Utils.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldBase.hpp>
@@ -76,10 +77,6 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   // Select element mesh entities that match the selector
   std::vector<stk::mesh::Entity> elements;
   stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elements);
-
-  // Select node mesh entities that match the selector
-  std::vector<stk::mesh::Entity> nodes;
-  stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::NODE_RANK), nodes);
 
   // List of blocks for peridynamics, partial stress, and standard FEM
   std::vector<std::string> peridynamicsBlocks, peridynamicPartialStressBlocks, classicalContinuumMechanicsBlocks;
@@ -212,8 +209,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   std::cout << "\n  max Albany element id: " << maxAlbanyElementId << std::endl;
   std::cout << "  max Albany node id: " << maxAlbanyNodeId << std::endl;
   std::cout << "  min Peridigm partial stress id: " << minPeridigmPartialStressId << std::endl;
-  std::cout << "  number of Peridigm partial stress material points: " << numPartialStressIds << std::endl;
-  std::cout << "\n---- PeridigmManager ----\n";
+  std::cout << "  number of Peridigm partial stress material points: " << numPartialStressIds << "\n" << std::endl;
 
   // Bail if there are no sphere elements or partial stress elements
   if(peridynamicsBlocks.size() == 0 && peridynamicPartialStressBlocks.size() == 0){
@@ -405,6 +401,135 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     vector<int>& peridigmGlobalIds = partialStressElements[i].peridigmGlobalIds;
     albanyPartialStressElementGlobalIdToPeridigmGlobalIds[albanyGlobalElementId] = peridigmGlobalIds;
   }
+
+  //overlappingElementSearch();
+}
+
+void LCM::PeridigmManager::overlappingElementSearch()
+{
+  // ---- Determine the largest element dimension in the model ----
+
+  double largestElementDimension = 0.0;
+
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), unable to access coordinates field.\n\n");
+
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+
+  // Create a selector to select everything in the universal part that is either locally owned or globally shared
+  stk::mesh::Selector selector = 
+    stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
+
+  // Select element mesh entities that match the selector
+  std::vector<stk::mesh::Entity> elements;
+  stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elements);
+
+  for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+    int numNodes = bulkData->num_nodes(elements[iElem]);
+    // skip sphere elements, consider only solid elements
+    if(numNodes > 1){
+      const stk::mesh::Entity* nodes = bulkData->begin_nodes(elements[iElem]);
+      for(int i=0 ; i<numNodes ; ++i){
+	for(int j=i+1 ; j<numNodes ; ++j){
+	  double* pt1 = stk::mesh::field_data(*coordinatesField, nodes[i]);
+	  double* pt2 = stk::mesh::field_data(*coordinatesField, nodes[j]);
+	  double distanceSquared = (pt1[0]-pt2[0])*(pt1[0]-pt2[0]) + (pt1[1]-pt2[1])*(pt1[1]-pt2[1]) + (pt1[2]-pt2[2])*(pt1[2]-pt2[2]);
+	  if(distanceSquared > largestElementDimension){
+	    largestElementDimension = distanceSquared;
+	  }
+	}
+      }
+    }
+  }
+  largestElementDimension = std::sqrt(largestElementDimension);
+
+  vector<double> localDoubleVal(1), globalDoubleVal(1);
+  localDoubleVal[0] = largestElementDimension;
+  Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_MAX, 1, &localDoubleVal[0], &globalDoubleVal[0]);
+  largestElementDimension = globalDoubleVal[0];
+
+  double proximitySearchRadius = 1.1 * largestElementDimension;
+
+  // ---- Call the Peridigm proximity search routine ----
+
+  selector = stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) );
+  std::vector<stk::mesh::Entity> nodes;
+  stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::NODE_RANK), nodes);
+  std::vector<double> proximitySearchCoords(3*nodes.size());
+  std::vector<double> proximitySearchRadii(nodes.size());
+  std::vector<int> globalIds(nodes.size());
+  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
+
+    double* coord = stk::mesh::field_data(*coordinatesField, nodes[iNode]);
+    proximitySearchCoords[iNode*3]   = coord[0];
+    proximitySearchCoords[iNode*3+1] = coord[1];
+    proximitySearchCoords[iNode*3+2] = coord[2];
+
+    bool isPeridynamicSphere(false);
+    int numElementAttachedToNode = bulkData->num_elements(nodes[iNode]);
+    if(numElementAttachedToNode == 1){
+      const stk::mesh::Entity* elems = bulkData->begin_elements(nodes[iNode]);
+      int numNodeInElement = bulkData->num_nodes(elems[0]);
+      if(numNodeInElement == 1){
+	isPeridynamicSphere = true;
+      }
+    }
+    if(isPeridynamicSphere){
+      proximitySearchRadii[iNode] = proximitySearchRadius;
+    }
+    else{
+      proximitySearchRadii[iNode] = 0.0;
+    }
+
+    globalIds[iNode] = bulkData->identifier(nodes[iNode]) - 1;
+  }
+
+  const Teuchos::MpiComm<int>* mpiCommWrapper = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiCommWrapper == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
+  MPI_Comm mpiComm = static_cast<MPI_Comm>(*mpiCommWrapper->getRawMpiComm());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to dynamically cast comm object to MPI_Comm.\n");
+  Epetra_MpiComm epetraComm(mpiComm);
+  Epetra_BlockMap epetraOneDimensionalMap(-1,
+					  static_cast<int>( nodes.size() ),
+					  &globalIds[0],
+					  1,
+					  0,
+					  epetraComm);
+  Epetra_BlockMap epetraThreeDimensionalMap(-1,
+					    static_cast<int>( nodes.size() ),
+					    &globalIds[0],
+					    3,
+					    0,
+					    epetraComm);
+
+  // Input for proximity search routine
+  Teuchos::RCP<Epetra_Vector> epetraProximitySearchCoords = Teuchos::rcp(new Epetra_Vector(epetraThreeDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> epetraProximitySearchRadii = Teuchos::rcp(new Epetra_Vector(epetraOneDimensionalMap));
+  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
+    (*epetraProximitySearchCoords)[3*iNode] = proximitySearchCoords[3*iNode];
+    (*epetraProximitySearchCoords)[3*iNode+1] = proximitySearchCoords[3*iNode+1];
+    (*epetraProximitySearchCoords)[3*iNode+2] = proximitySearchCoords[3*iNode+2];
+    (*epetraProximitySearchRadii)[iNode] = proximitySearchRadii[iNode];
+  }
+
+  // Output from proximity search routine
+  Teuchos::RCP<Epetra_BlockMap> overlapMap;
+  int neighborListSize(0);
+  int* neighborList(0);
+
+  PeridigmNS::ProximitySearch::GlobalProximitySearch(epetraProximitySearchCoords,
+						     epetraProximitySearchRadii,
+						     overlapMap,
+						     neighborListSize,
+						     neighborList);
+
+  // LOTS LEFT TO DO HERE...
+
+  std::cout << "\n-- Overlapping Element Search --" << std::endl;
+  std::cout << "  largest element dimension: " << largestElementDimension << std::endl;
+  std::cout << "  proximity search radius: " << proximitySearchRadius << "\n" << std::endl;
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
