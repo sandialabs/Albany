@@ -8,7 +8,7 @@
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
-//#define PRINT_DEBUG
+#define PRINT_DEBUG
 
 namespace LCM
 {
@@ -116,16 +116,16 @@ computeState(typename Traits::EvalData workset,
 {
 
   // extract dependent MDFields
-  PHX::MDField<ScalarT> jump = *dep_fields["Vector Jump"];
-  PHX::MDField<ScalarT> basis = *dep_fields["Current Basis"];
+  PHX::MDField<ScalarT> mdf_jump = *dep_fields["Vector Jump"];
+  PHX::MDField<ScalarT> mdf_basis = *dep_fields["Current Basis"];
 
   // extract evaluated MDFields
-  PHX::MDField<ScalarT> traction = *eval_fields["Cohesive_Traction"];
-  PHX::MDField<ScalarT> traction_normal = *eval_fields["Normal_Traction"];
-  PHX::MDField<ScalarT> traction_shear = *eval_fields["Shear_Traction"];
-  PHX::MDField<ScalarT> jump_normal = *eval_fields["Normal_Jump"];
-  PHX::MDField<ScalarT> jump_shear = *eval_fields["Shear_Jump"];
-  PHX::MDField<ScalarT> jump_max = *eval_fields["Max_Jump"];
+  PHX::MDField<ScalarT> mdf_traction = *eval_fields["Cohesive_Traction"];
+  PHX::MDField<ScalarT> mdf_traction_normal = *eval_fields["Normal_Traction"];
+  PHX::MDField<ScalarT> mdf_traction_shear = *eval_fields["Shear_Traction"];
+  PHX::MDField<ScalarT> mdf_jump_normal = *eval_fields["Normal_Jump"];
+  PHX::MDField<ScalarT> mdf_jump_shear = *eval_fields["Shear_Jump"];
+  PHX::MDField<ScalarT> mdf_jump_max = *eval_fields["Max_Jump"];
 
   // get state variable
   Albany::MDArray jump_max_old = (*workset.stateArrayPtr)["Max_Jump_old"];
@@ -142,12 +142,12 @@ computeState(typename Traits::EvalData workset,
     for (int pt(0); pt < num_pts_; ++pt) {
 
       //current basis vector
-      Intrepid::Vector<ScalarT> g_0(3, basis, cell, pt, 0, 0);
-      Intrepid::Vector<ScalarT> g_1(3, basis, cell, pt, 1, 0);
-      Intrepid::Vector<ScalarT> n(3, basis, cell, pt, 2, 0);
+      Intrepid::Vector<ScalarT> g_0(3, mdf_basis, cell, pt, 0, 0);
+      Intrepid::Vector<ScalarT> g_1(3, mdf_basis, cell, pt, 1, 0);
+      Intrepid::Vector<ScalarT> n(3, mdf_basis, cell, pt, 2, 0);
 
       //current jump vector - move PHX::MDField into Intrepid::Vector
-      Intrepid::Vector<ScalarT> jump_pt(3, jump, cell, pt, 0);
+      Intrepid::Vector<ScalarT> jump_pt(3, mdf_jump, cell, pt, 0);
 
       //construct Identity tensor (2nd order) and tensor product of normal
       Intrepid::Tensor<ScalarT> I(Intrepid::eye<ScalarT>(3));
@@ -216,7 +216,7 @@ computeState(typename Traits::EvalData workset,
       }
 
       // calculate the global traction
-      // penalize interpentration through stiff_c
+      // penalize interpenetration through stiff_c
       Intrepid::Vector<ScalarT> t_vec(3);
       if (jump_n == 0.0 & jump_eff == 0.0) {
         // no interpenetration, no effective jump
@@ -246,9 +246,9 @@ computeState(typename Traits::EvalData workset,
       }
 
       // update global traction
-      traction(cell, pt, 0) = t_vec(0);
-      traction(cell, pt, 1) = t_vec(1);
-      traction(cell, pt, 2) = t_vec(2);
+      mdf_traction(cell, pt, 0) = t_vec(0);
+      mdf_traction(cell, pt, 1) = t_vec(1);
+      mdf_traction(cell, pt, 2) = t_vec(2);
 
       // update state variables 
 
@@ -261,16 +261,16 @@ computeState(typename Traits::EvalData workset,
       if (traction_s2 > 0.0) {
         traction_s = std::sqrt(traction_s2);
       }
-      traction_normal(cell, pt) = traction_n;
-      traction_shear(cell, pt) = traction_s;
+      mdf_traction_normal(cell, pt) = traction_n;
+      mdf_traction_shear(cell, pt) = traction_s;
 
-      // Populate jump_normal and jump_shear
-      jump_normal(cell, pt) = jump_n;
-      jump_shear(cell, pt) = jump_s;
+      // Populate mdf_jump_normal and mdf_jump_shear
+      mdf_jump_normal(cell, pt) = jump_n;
+      mdf_jump_shear(cell, pt) = jump_s;
 
-      // only true state variable is jump_max
+      // only true state variable is mdf_jump_max
       if (jump_eff > jump_m) {
-        jump_max(cell, pt) = jump_eff;
+        mdf_jump_max(cell, pt) = jump_eff;
       }
 
     }
