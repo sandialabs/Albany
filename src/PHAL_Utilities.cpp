@@ -6,7 +6,9 @@ namespace PHAL {
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
+  //IKT, debug hack
   return app->getNumEquations() * ms->ctd.node_count;
+  //return 9; 
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
@@ -25,8 +27,10 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->returnMeshSpecs(); 
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, mesh_specs[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
