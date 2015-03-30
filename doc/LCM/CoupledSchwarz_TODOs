@@ -19,11 +19,26 @@ output [TBD].
 1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain
 with LOCA (NOX works) (why is ||F|| not changing?) [Irina]
 
-2.) Thyra<->Tpetra casts/conversions in Main_SolveT.cpp for responses / printing 
-of solution.  Will need to write ThyraProductVector specialization 
-but not sure how to do this for the general case [ask Andy].
+2.) Add check so that it's possible to run problem where Number of parameters in coupled 
+input file \neq Number of parameters in individual files (and same for responses / sensitivities). 
+[Irina]
 
-3.) Fix memory leak issues that show up after solve? 
+3.) Fix memory leak issues that show up after solve.
+
+4.) Is Ifpack2 supposed to work as preconditioner for Thyra block operator?  The following 
+exception is thrown 
+
+p=0: *** Caught standard std::exception of type 'std::logic_error' :
+
+ /home/ikalash/Trilinos_Albany/nightlyAlbanyTests/Results2/Trilinos/build/install/lib/cmake/Trilinos/../../../include/Thyra_Ifpack2PreconditionerFactory_def.hpp:122:
+
+ Throw number = 2
+
+ Throw test that evaluated to true: !(this->isCompatible(*fwdOpSrc))
+
+5.) Implement thyra product vector / space versions of responses / parameters / sensitivities. [Irina]
+
+
 
 
 ---------------------Development TODOs------------------------
