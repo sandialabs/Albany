@@ -304,7 +304,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
    } // ---- End Peridynamics Evaluators ----
 
-   // --------- Option 2:  Classical Elasticity ---------   
+   // --------- Option 2:  Peridynamic Partial Stress ---------
 
    else if(materialModelName == "Peridynamic Partial Stress"){
 
