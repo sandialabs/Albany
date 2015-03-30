@@ -25,7 +25,7 @@
 		 type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Z">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.02}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.3.0}"/>
       </ParameterList>
     </ParameterList>
     
@@ -94,7 +94,7 @@
 	<!-- The number of steps in the problem -->
 	<Parameter  name="Max Steps" type="int" value="1000"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-	<Parameter  name="Max Value" type="double" value="1.0"/>
+	<Parameter  name="Max Value" type="double" value="2.0"/>
 	<Parameter  name="Return Failed on Reaching Max Steps"
 		    type="bool" value="0"/>
 	<Parameter name="Hit Continuation Bound" type="bool" value="0"/>

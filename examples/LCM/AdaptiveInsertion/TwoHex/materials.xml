@@ -39,7 +39,7 @@
         <Parameter name="Model Name" type="string" value="Ortiz Pandolfi"/>
       </ParameterList>
  
-      <Parameter name="delta_c" type="double" value="2.0"/>
+      <Parameter name="delta_c" type="double" value="0.2"/>
       <Parameter name="sigma_c" type="double" value="100.0e06"/>
       <Parameter name="beta" type="double" value="1.0"/>
       <Parameter name="stiff_c" type="double" value="70e9"/>
