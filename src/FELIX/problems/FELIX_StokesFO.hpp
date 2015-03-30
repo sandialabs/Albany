@@ -442,7 +442,7 @@ FELIX::StokesFO::buildBasalFrictionCoefficientEvaluator ()
     //Input fields
     p->set<std::string>("Velocity Name", "Velocity");
     p->set<std::string>("Given Beta Field Name", "basal_friction");
-    p->set<std::string>("Ice Thickness Name", "thickness");
+    p->set<std::string>("thickness Field Name", "thickness");
 
     //Input physics parameters
     Teuchos::ParameterList& physics = this->params->sublist("FELIX Physics");

@@ -36,6 +36,7 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
   mu    = beta_list->get("Coulomb Friction Coefficient",1.0);
   rho   = beta_list->get("Ice Density",990);
   g     = beta_list->get("Gravity Acceleration",9.8);
+  alpha = beta_list->get("Water Pressure Fraction",0.5);
 
   if (betaType == "From File")
   {
@@ -58,7 +59,8 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
             << "    - g (Gravity Acceleration): " << g << "\n";
 #endif
 
-    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("thickness Field Name"), dl->node_scalar);
+    this->addDependentField (thickness);
     beta_type = HYDROSTATIC;
   }
   else if (betaType == "Power Law")
@@ -79,8 +81,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
             << "    - p  (Power Exponent): " << power << "\n";
 #endif
 
-    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("thickness Field Name"), dl->node_scalar);
     velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
+    this->addDependentField (thickness);
     this->addDependentField (velocity);
   }
   else if (betaType == "Regularized Coulomb")
@@ -100,8 +103,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
             << "    - p  (Power Exponent): " << power << "\n";
 #endif
 
-    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
+    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("thickness Field Name"), dl->node_scalar);
     velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
+    this->addDependentField (thickness);
     this->addDependentField (velocity);
   }
   else if (betaType == "Piecewise Linear")
@@ -173,7 +177,6 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
     }
 
-    thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Ice Thickness Name"), dl->node_scalar);
     velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
     this->addDependentField (velocity);
   }
@@ -215,6 +218,7 @@ postRegistrationSetup (typename Traits::SetupData d,
         break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
+        this->utils.setFieldData(thickness,fm);
     case PIECEWISE_LINEAR:
         this->utils.setFieldData(velocity,fm);
   }
@@ -288,7 +292,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
                     u_norm += std::pow(velocity(i,node,dim),2);
                 u_norm = std::sqrt (u_norm + ff);
 
-                beta(i,node) = mu*rho*g*thickness(i,node) * std::pow (u_norm, power-1) / std::pow( std::pow(u_norm,*homotopyParam) + L*std::pow(N,1./power), power);
+                beta(i,node) = mu*(1-alpha)*rho*g*thickness(i,node) * std::pow (u_norm, power-1)
+                             / std::pow( std::pow(u_norm,*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(i,node),1./power), power);
             }
             break;
         }
@@ -393,7 +398,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
                         u_norm += std::pow(velocity(cell,node,dim),2);
                     u_norm = std::sqrt(u_norm + ff);
 
-                    beta(cell,node) = mu*rho*g*thickness(cell,node) * std::pow (u_norm,power-1) / std::pow(u_norm + L*std::pow(N,1./power), power);
+                    beta(cell,node) = mu*(1-alpha)*rho*g*thickness(cell,node) * std::pow (u_norm, power-1)
+                                 / std::pow( std::pow(u_norm,*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(cell,node),1./power), power);
                 }
             }
             break;

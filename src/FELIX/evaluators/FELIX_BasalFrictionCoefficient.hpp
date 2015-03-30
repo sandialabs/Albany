@@ -59,6 +59,7 @@ private:
   double g;     // Gravity acceleration
   double L;     // Roughness of the bed (for REGULARIZED_COULOMB only)
   double power; // Exponent (for POWER_LAW and REGULARIZED COULOMB only)
+  double alpha; // Water pressure p_w as a fraction of rho*g*H. This is a way to compute N = rho*g*H-p_w
 
   // Data to compute beta in case beta(|u|) is a piecewise linear function of |u|
   int      nb_pts;

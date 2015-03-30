@@ -224,6 +224,9 @@ NeumannBase(const Teuchos::ParameterList& p) :
                     p.get<std::string>("Beta Field Name"), dl->node_scalar);
       this->addDependentField(beta_field);
 #endif
+      thickness_field = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string>("thickness Field Name"), dl->node_scalar);
+
+      this->addDependentField(thickness_field);
       this->addDependentField(dofVec);
   }
   else if(inputConditions == "lateral"){ // Basal boundary condition for FELIX
@@ -373,6 +376,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   {
     this->utils.setFieldData(dofVec,fm);
     this->utils.setFieldData(beta_field,fm);
+    this->utils.setFieldData(thickness_field,fm);
   }
   else if(inputConditions == "lateral")
   {
@@ -999,11 +1003,11 @@ calc_dudn_basal(Intrepid::FieldContainer<ScalarT> & qp_data_returned,
  }
  //Robin/Neumann bc for FELIX FO XZ MMS test case
  else if (beta_type == FELIX_XZ_MMS) {
-    //parameter values are hard-coded here... 
-    MeshScalarT H = 1.0; 
-    double alpha0 = 4.0e-5; 
+    //parameter values are hard-coded here...
+    MeshScalarT H = 1.0;
+    double alpha0 = 4.0e-5;
     double beta0 = 1;
-    double rho_g = 910.0*9.8; 
+    double rho_g = 910.0*9.8;
     double s0 = 2.0;
     double A = 1e-4; //CAREFUL! A is hard-coded here, needs to match input file!!
     for(int cell = 0; cell < numCells; cell++) {

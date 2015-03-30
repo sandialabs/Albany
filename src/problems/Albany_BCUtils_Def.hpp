@@ -567,6 +567,7 @@ void Albany::BCUtils<Albany::NeumannTraits>::buildEvaluatorsList (std::map<std::
             p->set<std::string>("Beta Field Name", "beta_field");
             p->set<std::string> ("DOF Name", dof_names[0]);
             p->set<bool> ("Vector Field", isVectorField);
+            p->set<std::string>("thickness Field Name", "thickness");
             if (isVectorField)
                 p->set< RCP<DataLayout> >("DOF Data Layout", dl->node_vector);
             else
