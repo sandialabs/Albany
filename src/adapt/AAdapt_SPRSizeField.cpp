@@ -38,7 +38,7 @@ AAdapt::SPRSizeField::computeError() {
 
 void
 AAdapt::SPRSizeField::setParams(double element_size, double err_bound,
-			    const std::string state_var_name) {
+			    const std::string& state_var_name) {
 
   sv_name = state_var_name;
   rel_err = err_bound;

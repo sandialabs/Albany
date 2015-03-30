@@ -52,6 +52,9 @@ public:
                   Teuchos::RCP<Albany::AbstractDiscretization> disc,
 		  const Teuchos::RCP<const Teuchos_Comm>& comm);
 
+  //! Identify the overlapping solid element for each peridynamic sphere element (applies only to overlapping discretizations).
+  void overlappingElementSearch();
+
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
 
@@ -108,7 +111,7 @@ private:
 
   std::vector<int> peridigmNodeGlobalIds;
 
-  std::map<int,int> peridigmNodeGlobalIdToLocalId;
+  std::map<int,int> peridigmGlobalIdToPeridigmLocalId;
 
   std::vector<int> sphereElementGlobalNodeIds;
 
