@@ -165,7 +165,7 @@ computeState(typename Traits::EvalData workset,
       ScalarT jump_s2 = Intrepid::dot(vec_jump_s, vec_jump_s);
       ScalarT jump_s = 0.0;
       if (jump_s2 > 0.0) {
-	    jump_s = std::sqrt(jump_s2);
+        jump_s = std::sqrt(jump_s2);
       }
 
       // define the effective jump
@@ -174,9 +174,9 @@ computeState(typename Traits::EvalData workset,
       ScalarT jump_eff = 0.0;
       if (jump_n >= 0.0) {
         // Be careful regarding Sacado and sqrt()
-    	ScalarT jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
+        ScalarT jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
         if (jump_eff2 > 0.0) {
-        jump_eff = std::sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
+          jump_eff = std::sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
         }
       }
       else {
@@ -258,9 +258,9 @@ computeState(typename Traits::EvalData workset,
       // Be careful regarding Sacado and sqrt()
       ScalarT traction_s2 = Intrepid::dot(vec_traction_s, vec_traction_s);
       ScalarT traction_s = 0.0;
-        if (traction_s2 > 0.0) {
-    	  traction_s = std::sqrt(traction_s2);
-        }
+      if (traction_s2 > 0.0) {
+        traction_s = std::sqrt(traction_s2);
+      }
       traction_normal(cell, pt) = traction_n;
       traction_shear(cell, pt) = traction_s;
 
