@@ -11,10 +11,11 @@
 #include "AlbPUMI_FMDBDiscretization.hpp"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
+#include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class SPRSizeField : public ma::IsotropicFunction {
+class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
     SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
@@ -26,7 +27,7 @@ class SPRSizeField : public ma::IsotropicFunction {
     int getCubatureDegree(int num_qp);
 
     void setParams(double element_size, double err_bound,
-        const std::string state_var_name);
+        const std::string& state_var_name);
 
     void computeError();
 

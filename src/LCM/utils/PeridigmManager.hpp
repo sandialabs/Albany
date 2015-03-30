@@ -108,7 +108,7 @@ private:
 
   std::vector<int> peridigmNodeGlobalIds;
 
-  std::map<int,int> peridigmNodeGlobalIdToLocalId;
+  std::map<int,int> peridigmGlobalIdToPeridigmLocalId;
 
   std::vector<int> sphereElementGlobalNodeIds;
 

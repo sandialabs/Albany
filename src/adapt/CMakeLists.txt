@@ -138,8 +138,8 @@ SET(SOURCES ${SOURCES}
    )
 
 SET(HEADERS ${HEADERS}
+    AAdapt_MeshSizeField.hpp
     AAdapt_MeshAdapt.hpp
-    AAdapt_MeshAdapt_Def.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
    )
