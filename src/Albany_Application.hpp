@@ -752,7 +752,7 @@ namespace Albany {
                 const double& alpha, const double& beta, const double& omega);
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > 
-    returnMeshSpecs() const {return meshSpecs; } 
+    getEnrichedMeshSpecs() const {return meshSpecs; } 
  
     //! Routine to load common nodeset info into workset
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
