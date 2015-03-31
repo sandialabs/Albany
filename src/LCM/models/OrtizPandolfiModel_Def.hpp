@@ -8,7 +8,7 @@
 #include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 
-#define PRINT_DEBUG
+//#define PRINT_DEBUG
 
 namespace LCM
 {
