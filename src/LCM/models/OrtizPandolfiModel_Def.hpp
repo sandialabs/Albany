@@ -162,7 +162,9 @@ computeState(typename Traits::EvalData workset,
       ScalarT jump_n = Intrepid::dot(jump_pt, n);
       Intrepid::Vector<ScalarT> vec_jump_s = Intrepid::dot(I - Fn, jump_pt);
       // Be careful regarding Sacado and sqrt()
-      ScalarT jump_s2 = Intrepid::dot(vec_jump_s, vec_jump_s);
+      ScalarT const
+      jump_s2 = Intrepid::dot(vec_jump_s, vec_jump_s);
+
       ScalarT jump_s = 0.0;
       if (jump_s2 > 0.0) {
         jump_s = std::sqrt(jump_s2);
@@ -171,12 +173,18 @@ computeState(typename Traits::EvalData workset,
       // define the effective jump
       // for intepenetration, only employ shear component
 
-      ScalarT jump_eff = 0.0;
+      ScalarT
+      jump_eff = 0.0;
+
       if (jump_n >= 0.0) {
         // Be careful regarding Sacado and sqrt()
-        ScalarT jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
+        ScalarT const
+        jump_eff2 = beta * beta * jump_s * jump_s + jump_n * jump_n;
+
         if (jump_eff2 > 0.0) {
-          jump_eff = std::sqrt(beta * beta * jump_s * jump_s + jump_n * jump_n);
+          jump_eff = std::sqrt(jump_eff2);
+        } else {
+          jump_eff = 0.0;
         }
       }
       else {
@@ -185,75 +193,76 @@ computeState(typename Traits::EvalData workset,
 
       // Debugging - print kinematics
       if (print_debug) {
-        std::cout << "jump for cell " << cell << " integration point " << pt
-            << '\n';
-        std::cout << jump_pt << '\n';
-        std::cout << "normal jump for cell " << cell << " integration point "
-            << pt << '\n';
-        std::cout << jump_n << '\n';
-        std::cout << "shear jump for cell " << cell << " integration point "
-            << pt << '\n';
-        std::cout << jump_s << '\n';
-        std::cout << "effective jump for cell " << cell << " integration point "
-            << pt << '\n';
-        std::cout << jump_eff << '\n';
+        std::cout << "CELL: " << cell << ", INTEGRATION POINT: " << pt << '\n';
+        std::cout << "d    : " << jump_pt << '\n';
+        std::cout << "d_n  : " << jump_n << '\n';
+        std::cout << "d_s  : " << jump_s << '\n';
+        std::cout << "d_eff: " << jump_eff << '\n';
       }
 
       // define the constitutive response through an effective traction
 
       ScalarT t_eff;
-      if (jump_eff < jump_m && jump_eff < delta_c) {
-        // linear unloading toward origin
-        t_eff = sigma_c / jump_m * (1.0 - jump_m / delta_c) * jump_eff;
-      }
-      else if (jump_eff >= jump_m && jump_eff <= delta_c) {
-        // linear unloading toward delta_c
-        t_eff = sigma_c * (1.0 - jump_eff / delta_c);
-      }
-      else {
+
+      if (jump_eff >= delta_c) {
         // completely unloaded
         t_eff = 0.0;
+      } else {
+
+        if (jump_eff >= jump_m) {
+          // linear unloading toward delta_c
+          t_eff = sigma_c * (1.0 - jump_eff / delta_c);
+        } else {
+          // linear unloading toward origin
+          t_eff = sigma_c * (jump_eff / jump_m - jump_eff / delta_c);
+
+        }
+
       }
 
       // calculate the global traction
       // penalize interpenetration through stiff_c
-      Intrepid::Vector<ScalarT> t_vec(3);
-      if (jump_n == 0.0 & jump_eff == 0.0) {
-        // no interpenetration, no effective jump
-        t_vec = 0.0 * n;
+
+      // Normal traction
+      Intrepid::Vector<ScalarT>
+      traction_normal(3, Intrepid::ZEROS);
+
+      if (jump_n > 0.0) {
+
+        assert(jump_eff > 0.0);
+        traction_normal = t_eff / jump_eff * jump_n * n;
+
+      } else {
+        // Interpenetration
+        traction_normal = stiff_c * jump_n * n;
       }
-      else if (jump_n < 0.0 && jump_eff == 0.0) {
-        // interpenetration, no effective jump
-        t_vec = stiff_c * jump_n * n;
+
+      // Shear traction
+      Intrepid::Vector<ScalarT>
+      traction_shear(3, Intrepid::ZEROS);
+
+      if (jump_eff > 0.0) {
+        traction_shear = t_eff / jump_eff * beta * beta * vec_jump_s;
       }
-      else if (jump_n < 0.0 && jump_eff > 0.0) {
-        //  interpenetration, effective jump
-        t_vec = t_eff / jump_eff * beta * beta * vec_jump_s
-            + stiff_c * jump_n * n;
-      }
-      else {
-        t_vec = t_eff / jump_eff * (beta * beta * vec_jump_s + jump_n * n);
-      }
+
+      Intrepid::Vector<ScalarT>
+      traction_vector = traction_normal + traction_shear;
 
       // Debugging - debug_print tractions
       if (print_debug) {
-        std::cout << "traction for cell " << cell << " integration point " << pt
-            << '\n';
-        std::cout << t_vec << '\n';
-        std::cout << "effective traction for cell " << cell
-            << " integration point " << pt << '\n';
-        std::cout << t_eff << '\n';
+        std::cout << "t    : " << traction_vector << '\n';
+        std::cout << "t_eff: " << t_eff << '\n';
       }
 
       // update global traction
-      mdf_traction(cell, pt, 0) = t_vec(0);
-      mdf_traction(cell, pt, 1) = t_vec(1);
-      mdf_traction(cell, pt, 2) = t_vec(2);
+      mdf_traction(cell, pt, 0) = traction_vector(0);
+      mdf_traction(cell, pt, 1) = traction_vector(1);
+      mdf_traction(cell, pt, 2) = traction_vector(2);
 
       // update state variables 
 
       // Calculate normal and shear components of global traction
-      ScalarT traction_n = Intrepid::dot(t_vec, n);
+      ScalarT traction_n = Intrepid::dot(traction_vector, n);
       Intrepid::Vector<ScalarT> vec_traction_s = Intrepid::dot(I - Fn, jump_pt);
       // Be careful regarding Sacado and sqrt()
       ScalarT traction_s2 = Intrepid::dot(vec_traction_s, vec_traction_s);
