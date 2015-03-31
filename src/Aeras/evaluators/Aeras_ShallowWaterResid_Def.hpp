@@ -85,16 +85,11 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
        nodeToQPMap[0] = 0; nodeToQPMap[1] = 1; 
        nodeToQPMap[2] = 3; nodeToQPMap[3] = 2;  
     }
-    else if (nNodes == 9) {
+    else {
       for(int i=0; i<nNodes; i++) {
         qpToNodeMap[i] = i; 
         nodeToQPMap[i] = i; 
       }
-    }
-    else {
-       TEUCHOS_TEST_FOR_EXCEPTION(true,
-         Teuchos::Exceptions::InvalidParameter,"Aeras::ShallowWaterResid: qpToNodeMap and nodeToQPMap " << 
-         "not implemented for spectral quadrilateral/shellquadrilateral element with " << nNodes << ".");
     }
   }
   //Isoparametric quads
