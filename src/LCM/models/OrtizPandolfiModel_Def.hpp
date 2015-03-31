@@ -171,8 +171,9 @@ computeState(typename Traits::EvalData workset,
       }
 
       // define the effective jump
-      // for intepenetration, only employ shear component
+      // for interpenetration, only employ shear component
 
+      // Default no effective jump.
       ScalarT
       jump_eff = 0.0;
 
@@ -183,8 +184,6 @@ computeState(typename Traits::EvalData workset,
 
         if (jump_eff2 > 0.0) {
           jump_eff = std::sqrt(jump_eff2);
-        } else {
-          jump_eff = 0.0;
         }
       }
       else {
@@ -193,7 +192,7 @@ computeState(typename Traits::EvalData workset,
 
       // Debugging - print kinematics
       if (print_debug) {
-        std::cout << "CELL: " << cell << ", INTEGRATION POINT: " << pt << '\n';
+        std::cout << "--- KINEMATICS CELL: " << cell << ", IP: " << pt << '\n';
         std::cout << "d    : " << jump_pt << '\n';
         std::cout << "d_n  : " << jump_n << '\n';
         std::cout << "d_s  : " << jump_s << '\n';
@@ -202,12 +201,11 @@ computeState(typename Traits::EvalData workset,
 
       // define the constitutive response through an effective traction
 
-      ScalarT t_eff;
+      // Default completely unloaded
+      ScalarT
+      t_eff = 0.0;
 
-      if (jump_eff >= delta_c) {
-        // completely unloaded
-        t_eff = 0.0;
-      } else {
+      if (jump_eff < delta_c) {
 
         if (jump_eff >= jump_m) {
           // linear unloading toward delta_c
@@ -223,21 +221,33 @@ computeState(typename Traits::EvalData workset,
       // calculate the global traction
       // penalize interpenetration through stiff_c
 
-      // Normal traction
+      // Normal traction, default to zero.
       Intrepid::Vector<ScalarT>
       traction_normal(3, Intrepid::ZEROS);
 
-      if (jump_n > 0.0) {
+      if (jump_n >= 0.0) {
 
-        assert(jump_eff > 0.0);
-        traction_normal = t_eff / jump_eff * jump_n * n;
+        assert(jump_eff >= 0.0);
+
+        if (jump_n > 0.0) {
+          assert(jump_eff > 0.0);
+          traction_normal = t_eff / jump_eff * jump_n * n;
+        } else {
+          // FIXME: Assume that if there is no jump whatever (initial state)
+          // the initial traction will all be in the normal direction.
+          // Could pass on traction information from insertion criterion
+          // to determine a better direction and avoid a big residual at
+          // insertion but not sure it will have a big effect in the end
+          // on the solver.
+          traction_normal = t_eff * n;
+        }
 
       } else {
         // Interpenetration
         traction_normal = stiff_c * jump_n * n;
       }
 
-      // Shear traction
+      // Shear traction, default to zero.
       Intrepid::Vector<ScalarT>
       traction_shear(3, Intrepid::ZEROS);
 
@@ -250,6 +260,7 @@ computeState(typename Traits::EvalData workset,
 
       // Debugging - debug_print tractions
       if (print_debug) {
+        std::cout << "--- TRACTION CELL: " << cell << ", IP: " << pt << '\n';
         std::cout << "t    : " << traction_vector << '\n';
         std::cout << "t_eff: " << t_eff << '\n';
       }
