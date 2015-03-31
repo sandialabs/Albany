@@ -732,6 +732,8 @@ namespace Albany {
 
   public:
 
+
+   
     //! Routine to get workset (bucket) size info needed by all Evaluation types
     template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
@@ -749,6 +751,9 @@ namespace Albany {
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta, const double& omega);
 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > 
+    returnMeshSpecs() const {return meshSpecs; } 
+ 
     //! Routine to load common nodeset info into workset
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
 

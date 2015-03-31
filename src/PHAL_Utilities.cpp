@@ -25,8 +25,10 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->returnMeshSpecs(); 
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, mesh_specs[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (

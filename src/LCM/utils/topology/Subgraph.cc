@@ -232,7 +232,8 @@ Subgraph::addVertex(
   stk::mesh::EntityId
   high_id = high_id_from_low_id(dimension, parallel_rank, vertex_rank, low_id);
 
-  stk::mesh::PartVector add_parts;
+  stk::mesh::PartVector
+  add_parts;
 
   // If the entity passed is a node, propagate parts to new entities.
   bool const
@@ -243,15 +244,32 @@ Subgraph::addVertex(
     std::map<std::string, stk::mesh::Part*> &
     ns_parts = get_stk_mesh_struct()->nsPartVec;
 
+    stk::mesh::Selector
+    select_local = stk::mesh::Selector(get_meta_data().locally_owned_part());
+
     for (auto it = ns_parts.begin(); it != ns_parts.end(); ++it) {
       stk::mesh::Part &
       ns_part = *(it->second);
 
-      bool const
-      is_local_ns = get_topology().is_local_entity(entity) &&
-        get_topology().is_in_part(ns_part, entity);
+      stk::mesh::Selector
+      select_in_nodeset = stk::mesh::Selector(ns_part);
 
-      if (is_local_ns == true) {
+      stk::mesh::Selector
+      select_local_in_nodeset = select_local & select_in_nodeset;
+
+      std::vector<stk::mesh::Entity>
+      ns_nodes;
+
+      stk::mesh::get_selected_entities(
+          select_local_in_nodeset,
+          get_bulk_data().buckets(stk::topology::NODE_RANK),
+          ns_nodes);
+
+      bool const
+      is_local_and_in_nodeset =
+          std::find(ns_nodes.begin(), ns_nodes.end(), entity) != ns_nodes.end();
+
+      if (is_local_and_in_nodeset == true) {
         add_parts.push_back(&ns_part);
       }
 
@@ -745,9 +763,12 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
   std::vector<Vertex>
   split_vertices(num_components - 1);
 
+  stk::mesh::Entity
+  articulation_entity = entityFromVertex(articulation_vertex);
+
   for (std::vector<Vertex>::size_type i = 0; i < split_vertices.size(); ++i) {
     Vertex
-    split_vertex = addVertex(articulation_rank);
+    split_vertex = addVertex(articulation_rank, articulation_entity);
 
     split_vertices[i] = split_vertex;
   }
