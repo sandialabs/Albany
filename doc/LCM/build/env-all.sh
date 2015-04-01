@@ -6,5 +6,7 @@ LCM_DIR=`pwd`
 
 # trilinos required before albany
 PACKAGES="trilinos albany"
-TOOL_CHAINS="gcc clang intel"
-BUILD_TYPES="debug release"
+#TOOL_CHAINS="gcc clang intel"
+#BUILD_TYPES="debug release"
+TOOL_CHAINS="gcc"
+BUILD_TYPES="debug"

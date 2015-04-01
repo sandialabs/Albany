@@ -4,6 +4,10 @@ source ./env-single.sh
 
 cd "$LCM_DIR"
 
+if [ -f "$STATUS_LOG" ]; then
+    rm "$STATUS_LOG" -f
+fi
+		
 case "$SCRIPT_NAME" in
     build.sh)
 	;;
@@ -122,6 +126,7 @@ case "$SCRIPT_NAME" in
 			echo "*** MAKE INSTALL COMMAND FAILED ***"
 			exit 1
 		    fi
+		    echo SUCCESS > "$STATUS_LOG" 
 		fi
 		;;
 	    albany)
@@ -131,6 +136,7 @@ case "$SCRIPT_NAME" in
 		    echo "*** MAKE COMMAND FAILED ***"
 		    exit 1
 		fi
+		echo SUCCESS > "$STATUS_LOG" 
 		;;
 	    *)
 		echo "Unrecognized package option"
