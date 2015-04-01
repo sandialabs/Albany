@@ -42,6 +42,8 @@ case "$SCRIPT_NAME" in
 	;;
 esac
 
+# Packages in innermost loop so that test results are resported as soon
+# as they are available.
 for TOOL_CHAIN in $TOOL_CHAINS; do
     for BUILD_TYPE in $BUILD_TYPES; do
 	for PACKAGE in $PACKAGES; do
