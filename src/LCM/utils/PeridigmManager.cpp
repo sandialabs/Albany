@@ -52,8 +52,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   stk::mesh::PartVector stkElementBlocks;
   for(stk::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
     stk::mesh::Part* const part = *it;
-    if(!stk::mesh::is_auto_declared_part(*part) && 
-       part->primary_entity_rank() == stk::topology::ELEMENT_RANK){
+    if(!stk::mesh::is_auto_declared_part(*part) && part->primary_entity_rank() == stk::topology::ELEMENT_RANK){
       stkElementBlocks.push_back(part);
       partCellTopologyData[part->name()] = *metaData->get_cell_topology(*part).getCellTopologyData();
     }
@@ -407,98 +406,87 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
 void LCM::PeridigmManager::overlappingElementSearch()
 {
-  // ---- Determine the largest element dimension in the model ----
-
-  double largestElementDimension = 0.0;
-
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), unable to access coordinates field.\n\n");
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), unable to access volume field (volume field is expected because it is assumed that thre are sphere elements in the simulation).\n\n");
 
-  // Create a selector to select everything in the universal part that is either locally owned or globally shared
-  stk::mesh::Selector selector = 
+  // Create a selector to select everything in the universal part that is locally owned
+  stk::mesh::Selector selector =
     stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
 
   // Select element mesh entities that match the selector
   std::vector<stk::mesh::Entity> elements;
   stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elements);
 
+  // Collect data for the proximity search
+  std::vector<double> proximitySearchCoords(3*elements.size(), 0.0);
+  std::vector<double> proximitySearchRadii(elements.size(), 0.0);
+  std::vector<int> globalIds(elements.size());
+  std::vector<int> isSphere(elements.size());
+
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+    globalIds[iElem] = bulkData->identifier(elements[iElem]) - 1;
     int numNodes = bulkData->num_nodes(elements[iElem]);
-    // skip sphere elements, consider only solid elements
-    if(numNodes > 1){
-      const stk::mesh::Entity* nodes = bulkData->begin_nodes(elements[iElem]);
+    const stk::mesh::Entity* nodes = bulkData->begin_nodes(elements[iElem]);
+    if(numNodes == 1){
+      // If the element is a sphere element, include its node in the search and set the search radius to a small number
+      double* coord = stk::mesh::field_data(*coordinatesField, nodes[0]);
+      double* volume = stk::mesh::field_data(*volumeField, elements[iElem]);
+      for(int dof=0 ; dof<3 ; ++dof){
+	proximitySearchCoords[3*iElem+dof] = coord[dof];
+	// DJL there is a bug in the proximity search, it doesn't work properly in parallel if the radius is set to 0.0.
+	// So, set it to some small number, like a 1/1000 times the cube root of the volume.
+	proximitySearchRadii[iElem] = 0.001 * std::cbrt(volume[0]);
+	isSphere[iElem] = 1;
+      }
+    }
+
+    else{
+      // If the element is not a sphere element, use its barycenter in the proximity search and set
+      // the search radius to be slightly larger than the largest element dimension
+      double radiusMultiplier = 1.1;
+      double largestElementDimensionSquared = 0.0;
       for(int i=0 ; i<numNodes ; ++i){
+	double* pt1 = stk::mesh::field_data(*coordinatesField, nodes[i]);
+	for(int dof=0 ; dof<3 ; ++dof){
+	  proximitySearchCoords[3*iElem+dof] += pt1[dof];
+	}
 	for(int j=i+1 ; j<numNodes ; ++j){
-	  double* pt1 = stk::mesh::field_data(*coordinatesField, nodes[i]);
 	  double* pt2 = stk::mesh::field_data(*coordinatesField, nodes[j]);
 	  double distanceSquared = (pt1[0]-pt2[0])*(pt1[0]-pt2[0]) + (pt1[1]-pt2[1])*(pt1[1]-pt2[1]) + (pt1[2]-pt2[2])*(pt1[2]-pt2[2]);
-	  if(distanceSquared > largestElementDimension){
-	    largestElementDimension = distanceSquared;
+	  if(distanceSquared > largestElementDimensionSquared){
+	    largestElementDimensionSquared = distanceSquared;
 	  }
 	}
       }
-    }
-  }
-  largestElementDimension = std::sqrt(largestElementDimension);
-
-  vector<double> localDoubleVal(1), globalDoubleVal(1);
-  localDoubleVal[0] = largestElementDimension;
-  Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_MAX, 1, &localDoubleVal[0], &globalDoubleVal[0]);
-  largestElementDimension = globalDoubleVal[0];
-
-  double proximitySearchRadius = 1.1 * largestElementDimension;
-
-  // ---- Call the Peridigm proximity search routine ----
-
-  selector = stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) );
-  std::vector<stk::mesh::Entity> nodes;
-  stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::NODE_RANK), nodes);
-  std::vector<double> proximitySearchCoords(3*nodes.size());
-  std::vector<double> proximitySearchRadii(nodes.size());
-  std::vector<int> globalIds(nodes.size());
-  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
-
-    double* coord = stk::mesh::field_data(*coordinatesField, nodes[iNode]);
-    proximitySearchCoords[iNode*3]   = coord[0];
-    proximitySearchCoords[iNode*3+1] = coord[1];
-    proximitySearchCoords[iNode*3+2] = coord[2];
-
-    bool isPeridynamicSphere(false);
-    int numElementAttachedToNode = bulkData->num_elements(nodes[iNode]);
-    if(numElementAttachedToNode == 1){
-      const stk::mesh::Entity* elems = bulkData->begin_elements(nodes[iNode]);
-      int numNodeInElement = bulkData->num_nodes(elems[0]);
-      if(numNodeInElement == 1){
-	isPeridynamicSphere = true;
+      for(int dof=0 ; dof<3 ; dof++){
+	proximitySearchCoords[3*iElem+dof] /= numNodes;
       }
+      proximitySearchRadii[iElem] = radiusMultiplier * std::sqrt(largestElementDimensionSquared);
+      isSphere[iElem] = 0;
     }
-    if(isPeridynamicSphere){
-      proximitySearchRadii[iNode] = proximitySearchRadius;
-    }
-    else{
-      proximitySearchRadii[iNode] = 0.0;
-    }
-
-    globalIds[iNode] = bulkData->identifier(nodes[iNode]) - 1;
   }
 
+  // Optain a Epetra_MpiComm object using a Teuchos_Comm
   const Teuchos::MpiComm<int>* mpiCommWrapper = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
   TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiCommWrapper == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
   MPI_Comm mpiComm = static_cast<MPI_Comm>(*mpiCommWrapper->getRawMpiComm());
   TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to dynamically cast comm object to MPI_Comm.\n");
   Epetra_MpiComm epetraComm(mpiComm);
+
+  // Create Epetra_BlockMaps for the Peridigm proximity search
   Epetra_BlockMap epetraOneDimensionalMap(-1,
-					  static_cast<int>( nodes.size() ),
+					  static_cast<int>( elements.size() ),
 					  &globalIds[0],
 					  1,
 					  0,
 					  epetraComm);
   Epetra_BlockMap epetraThreeDimensionalMap(-1,
-					    static_cast<int>( nodes.size() ),
+					    static_cast<int>( elements.size() ),
 					    &globalIds[0],
 					    3,
 					    0,
@@ -507,29 +495,165 @@ void LCM::PeridigmManager::overlappingElementSearch()
   // Input for proximity search routine
   Teuchos::RCP<Epetra_Vector> epetraProximitySearchCoords = Teuchos::rcp(new Epetra_Vector(epetraThreeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> epetraProximitySearchRadii = Teuchos::rcp(new Epetra_Vector(epetraOneDimensionalMap));
-  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
-    (*epetraProximitySearchCoords)[3*iNode] = proximitySearchCoords[3*iNode];
-    (*epetraProximitySearchCoords)[3*iNode+1] = proximitySearchCoords[3*iNode+1];
-    (*epetraProximitySearchCoords)[3*iNode+2] = proximitySearchCoords[3*iNode+2];
-    (*epetraProximitySearchRadii)[iNode] = proximitySearchRadii[iNode];
+  for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+    for(int dof=0 ; dof<3 ; dof++){
+      (*epetraProximitySearchCoords)[3*iElem+dof] = proximitySearchCoords[3*iElem+dof];
+    }
+    (*epetraProximitySearchRadii)[iElem] = proximitySearchRadii[iElem];
   }
 
   // Output from proximity search routine
-  Teuchos::RCP<Epetra_BlockMap> overlapMap;
+  Teuchos::RCP<Epetra_BlockMap> epetraOneDimensionalOverlapMap;
   int neighborListSize(0);
   int* neighborList(0);
 
+  // Call the Peridigm proximity search routine
   PeridigmNS::ProximitySearch::GlobalProximitySearch(epetraProximitySearchCoords,
 						     epetraProximitySearchRadii,
-						     overlapMap,
+						     epetraOneDimensionalOverlapMap,
 						     neighborListSize,
 						     neighborList);
 
-  // LOTS LEFT TO DO HERE...
+  // Create a three-dimensional version of the overlap map
+  Epetra_BlockMap epetraThreeDimensionalOverlapMap(epetraOneDimensionalOverlapMap->NumGlobalElements(),
+						   epetraOneDimensionalOverlapMap->NumMyElements(),
+						   epetraOneDimensionalOverlapMap->MyGlobalElements(),
+						   3,
+						   0,
+						   epetraComm);
+
+  // To determine which peridynamic nodes are within a given on-processor element, we need to ghost
+  // the coordinates of each potential node and determine if that node is associated with a sphere element
+  Teuchos::RCP<Epetra_Vector> epetraIsSphere = Teuchos::rcp(new Epetra_Vector(epetraOneDimensionalMap));
+  for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+    (*epetraIsSphere)[iElem] = static_cast<double>(isSphere[iElem]);
+  }
+
+  // Bring all necessary off-processor data onto this processor
+  Epetra_Vector epetraOverlapCoords(epetraThreeDimensionalOverlapMap);
+  Epetra_Vector epetraOverlapIsSphere(*epetraOneDimensionalOverlapMap);
+  Epetra_Import threeDimensionalImporter(epetraThreeDimensionalOverlapMap, epetraThreeDimensionalMap);
+  Epetra_Import oneDimensionalImporter(*epetraOneDimensionalOverlapMap, epetraOneDimensionalMap);
+  int coordsImportErrorCode = epetraOverlapCoords.Import(*epetraProximitySearchCoords, threeDimensionalImporter, Insert);
+  int isSphereImportErrorCode = epetraOverlapIsSphere.Import(*epetraIsSphere, oneDimensionalImporter, Insert);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordsImportErrorCode != 0 || isSphereImportErrorCode != 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), import operation failed!\n\n");
+
+  // Store the cell topology for each on-processor element
+  std::map<int, CellTopologyData> albanyGlobalElementIdToCellTopolotyData;
+  const stk::mesh::PartVector& stkParts = metaData->get_parts();
+  for(stk::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
+    stk::mesh::Part* const part = *it;
+    if(!stk::mesh::is_auto_declared_part(*part) && part->primary_entity_rank() == stk::topology::ELEMENT_RANK){
+      const CellTopologyData& cellTopologyData = *metaData->get_cell_topology(*part).getCellTopologyData();
+      stk::mesh::Selector selector = stk::mesh::Selector( *part ) & stk::mesh::Selector( metaData->locally_owned_part() );
+      std::vector<stk::mesh::Entity> elementsInPart;
+      stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), elementsInPart);
+      for(unsigned int iElem=0 ; iElem<elementsInPart.size() ; ++iElem){
+	int globalId = bulkData->identifier(elementsInPart[iElem]) - 1;
+	albanyGlobalElementIdToCellTopolotyData[globalId] = cellTopologyData;
+      }
+    }
+  }
+
+  // All sphere elements that could possibly be within an on-processor solid element are now available
+  // on processor.  Some other points have been ghosted as well (barycenters of solid elements); they
+  // will be ignored as we check for peridynamic nodes within each on-processor solid element.
+
+  // After identifying all the peridynamic nodes that lie within an on-processor solid element, a set
+  // of Epetra_Vectors will be created for use with ghosting operations downstream.  Initially, data
+  // for construction of the Epetra_Vectors will be stored in stl containers
+  std::vector<int> peridynamicNodeGlobalIds;
+  std::map<int, int> peridynamicNodeOverlappingElement;
+
+  // Loop over all the on-processor nodes and check to see if any of the peridynamic nodes identified
+  // by the proximity search are within the element
+  int neighborhoodListIndex = 0;
+  typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
+  int numberOfOverlappingPeridynamicNodes = 0;
+  for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+
+    // Get the elements nodes and cell topology
+    int numNodesInElement = bulkData->num_nodes(elements[iElem]);
+    const stk::mesh::Entity* nodesInElement = bulkData->begin_nodes(elements[iElem]);
+    int globalElementId = bulkData->identifier(elements[iElem]) - 1;
+    std::map<int, CellTopologyData>::iterator it = albanyGlobalElementIdToCellTopolotyData.find(globalElementId);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(it == albanyGlobalElementIdToCellTopolotyData.end(), "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to find cell topology.\n\n");
+    const CellTopologyData& cellTopologyData = it->second;
+    shards::CellTopology cellTopology(&cellTopologyData);
+
+    // The neighbors are the nodes that might be within the element
+    int numNeighbors = neighborList[neighborhoodListIndex++];
+
+    for(int iNeighbor=0 ; iNeighbor<numNeighbors ; iNeighbor++){
+
+      int neighborIndex = neighborList[neighborhoodListIndex++];
+      int neighborIsSphere = epetraOverlapIsSphere[neighborIndex];
+
+      // If the neighbor is a peridynamic sphere element, check to see if it's within the solid element
+      if(neighborIsSphere){
+
+	std::vector<double> neighborCoords(3);
+	for(int dof=0 ; dof<3 ; dof++){
+	  neighborCoords[dof] = epetraOverlapCoords[3*neighborIndex+dof];
+	}
+
+	// We're interested in a single point in a single element in a three-dimensional simulation
+	int numCells = 1;
+	int numQuadPoints = 1;
+	int numDim = 3;
+
+	// Physical points, which are the physical (x, y, z) values of the peridynamic node (pay no attention to the "quadrature point" descriptor)
+	Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+	PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
+	physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
+
+	// Reference points, which are the natural coordinates of the quadrature points
+	Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+	PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
+	refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
+
+	// Cell workset, which is the set of nodes for the given element
+	Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodesInElement, numDim));
+	PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
+	cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
+
+	for(int dof=0 ; dof<3 ; dof++){
+	  physPoints(0, 0, dof) = neighborCoords[dof];
+	}
+
+	for(int i=0 ; i<numNodesInElement ; i++){
+	  double* coordinates = stk::mesh::field_data(*coordinatesField, nodesInElement[i]);
+	  for(int dof=0 ; dof<3 ; dof++){
+	    cellWorkset(0, i, dof) = coordinates[dof];
+	  }
+	}
+
+	// ---- DJL THIS IS COMMENTED OUT PENDING AN INTREPID FIX FOR KOKKOS VIEWS
+
+// 	Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology);
+
+// 	std::vector<RealType> point(3);
+//        	for(int dof=0 ; dof<3 ; dof++){
+// 	  point[dof] = refPoints(0, 0, dof);
+// 	}
+
+// 	int inElement = Intrepid::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
+
+// 	if(inElement){
+// 	  numberOfOverlappingPeridynamicNodes += 1;
+// 	}
+      }
+    }
+  }
+
+  // As a sanity check, determine the total number of overlapping peridynamic nodes
+  vector<int> localVal(1), globalVal(1);
+  localVal[0] = numberOfOverlappingPeridynamicNodes;
+  Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localVal[0], &globalVal[0]);
+  numberOfOverlappingPeridynamicNodes = globalVal[0];
 
   std::cout << "\n-- Overlapping Element Search --" << std::endl;
-  std::cout << "  largest element dimension: " << largestElementDimension << std::endl;
-  std::cout << "  proximity search radius: " << proximitySearchRadius << "\n" << std::endl;
+  std::cout << "  number of peridynamic nodes in overlap region: " << numberOfOverlappingPeridynamicNodes << std::endl;
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
