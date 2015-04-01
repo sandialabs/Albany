@@ -111,8 +111,8 @@ BUILD_LOG="$LCM_DIR/$PREFIX-build.log"
 ERROR_LOG="$LCM_DIR/$PREFIX-error.log"
 TEST_LOG="$LCM_DIR/$PREFIX-test.log"
 HOST=`hostname`
-FROM="name@address"
-TO="name@address"
+FROM="amota@sandia.gov"
+TO="albany-regression@software.sandia.gov"
 # Set directory flags so that the appropriate shared objects and executables
 # can be found.
 PATH="$INSTALL_DIR/bin:$PATH"
