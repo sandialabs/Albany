@@ -112,7 +112,7 @@ public:
       PHX::MDField<MeshScalarT, Cell, QuadPoint> area);
 
 private:
-  unsigned int numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
+  unsigned int num_dims_, num_nodes_, numQPs, numPlaneNodes, numPlaneDims;
 
   bool needCurrentBasis;
 

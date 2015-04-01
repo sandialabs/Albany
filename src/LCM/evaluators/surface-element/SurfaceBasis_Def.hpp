@@ -63,12 +63,12 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   dl->node_vector->dimensions(dims);
 
   int containerSize = dims[0];
-  numNodes = dims[1];
-  numPlaneNodes = numNodes / 2;
+  num_nodes_ = dims[1];
+  numPlaneNodes = num_nodes_ / 2;
 
   numQPs = cubature->getNumPoints();
   numPlaneDims = cubature->getDimension();
-  numDims = numPlaneDims + 1;
+  num_dims_ = numPlaneDims + 1;
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Basis" << '\n';
@@ -86,8 +86,8 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   refWeights.resize(numQPs);
 
   // temp space for midplane coords
-  refMidplaneCoords.resize(containerSize, numPlaneNodes, numDims);
-  currentMidplaneCoords.resize(containerSize, numPlaneNodes, numDims);
+  refMidplaneCoords.resize(containerSize, numPlaneNodes, num_dims_);
+  currentMidplaneCoords.resize(containerSize, numPlaneNodes, num_dims_);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -157,7 +157,7 @@ void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
     // compute the mid-plane coordinates
     for (int node(0); node < numPlaneNodes; ++node) {
       int topNode = node + numPlaneNodes;
-      for (int dim(0); dim < numDims; ++dim) {
+      for (int dim(0); dim < num_dims_; ++dim) {
         midplaneCoords(cell, node, dim) = 0.5
             * (coords(cell, node, dim) + coords(cell, topNode, dim));
       }
@@ -174,7 +174,7 @@ void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
     // compute the mid-plane coordinates
     for (int node(0); node < numPlaneNodes; ++node) {
       int topNode = node + numPlaneNodes;
-      for (int dim(0); dim < numDims; ++dim) {
+      for (int dim(0); dim < num_dims_; ++dim) {
         midplaneCoords(cell, node, dim) = 0.5
             * (coords(cell, node, dim) + coords(cell, topNode, dim));
       }
