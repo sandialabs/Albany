@@ -21,7 +21,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
     cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
+    intrepid_basis_(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
         Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     refBasis(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     refArea(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
@@ -86,13 +86,13 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   refWeights.resize(num_qps_);
 
   // temp space for midplane coords
-  refMidplaneCoords.resize(containerSize, num_surf_nodes_, num_dims_);
-  currentMidplaneCoords.resize(containerSize, num_surf_nodes_, num_dims_);
+  ref_midplane_coords_.resize(containerSize, num_surf_nodes_, num_dims_);
+  current_midplane_coords_.resize(containerSize, num_surf_nodes_, num_dims_);
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+  intrepid_basis_->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
   this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
 }
@@ -122,14 +122,14 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
   for (int cell(0); cell < workset.numCells; ++cell) {
     // for the reference geometry
     // compute the mid-plane coordinates
-    computeReferenceMidplaneCoords(reference_coords_, refMidplaneCoords);
+    computeReferenceMidplaneCoords(reference_coords_, ref_midplane_coords_);
 
     // compute basis vectors
-    computeReferenceBaseVectors(refMidplaneCoords, refBasis);
+    computeReferenceBaseVectors(ref_midplane_coords_, refBasis);
 
     // compute the dual
     computeDualBaseVectors(
-        refMidplaneCoords,
+        ref_midplane_coords_,
         refBasis,
         refNormal,
         refDualBasis);
@@ -140,10 +140,10 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     if (need_current_basis_) {
       // for the current configuration
       // compute the mid-plane coordinates
-      computeCurrentMidplaneCoords(currentCoords, currentMidplaneCoords);
+      computeCurrentMidplaneCoords(currentCoords, current_midplane_coords_);
 
       // compute base vectors
-      computeCurrentBaseVectors(currentMidplaneCoords, currentBasis);
+      computeCurrentBaseVectors(current_midplane_coords_, currentBasis);
     }
   }
 }

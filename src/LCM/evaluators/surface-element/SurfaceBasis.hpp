@@ -134,17 +134,19 @@ private:
   /// Input: Finite element basis for the midplane
   ///
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-  intrepidBasis;
+  intrepid_basis_;
 
   ///
   /// Local FieldContainer to store the reference midplaneCoords
   ///
-  Intrepid::FieldContainer<MeshScalarT> refMidplaneCoords;
+  Intrepid::FieldContainer<MeshScalarT>
+  ref_midplane_coords_;
 
   ///
   /// Local FieldContainer to store the current midplaneCoords
   ///
-  Intrepid::FieldContainer<ScalarT> currentMidplaneCoords;
+  Intrepid::FieldContainer<ScalarT>
+  current_midplane_coords_;
 
   ///
   /// Output: Reference basis
