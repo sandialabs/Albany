@@ -112,19 +112,23 @@ public:
       PHX::MDField<MeshScalarT, Cell, QuadPoint> area);
 
 private:
-  unsigned int num_dims_, num_nodes_, num_qps_, num_surf_nodes_, num_surf_dims_;
+  unsigned int
+  num_dims_, num_nodes_, num_qps_, num_surf_nodes_, num_surf_dims_;
 
-  bool needCurrentBasis;
+  bool
+  need_current_basis_;
 
   ///
   /// Input: Cordinates in the reference configuration
   ///
-  PHX::MDField<MeshScalarT, Cell, Vertex, Dim> referenceCoords;
+  PHX::MDField<MeshScalarT, Cell, Vertex, Dim>
+  reference_coords_;
 
   ///
   /// Input: Numerical integration rule
   ///
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid::Cubature<RealType> >
+  cubature_;
 
   ///
   /// Input: Finite element basis for the midplane

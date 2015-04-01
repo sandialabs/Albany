@@ -16,11 +16,11 @@ template<typename EvalT, typename Traits>
 SurfaceBasis<EvalT, Traits>::SurfaceBasis(
     const Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
-    needCurrentBasis(false),
-    referenceCoords(
+    need_current_basis_(false),
+    reference_coords_(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
-    cubature(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
         Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     refBasis(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
@@ -30,7 +30,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
         dl->qp_tensor),
     refNormal(p.get<std::string>("Reference Normal Name"), dl->qp_vector)
 {
-  this->addDependentField(referenceCoords);
+  this->addDependentField(reference_coords_);
   this->addEvaluatedField(refBasis);
   this->addEvaluatedField(refArea);
   this->addEvaluatedField(refDualBasis);
@@ -40,7 +40,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   // compute and return the current basis
   // needed for the localization element, but not uncoupled transport
   if (p.isType<std::string>("Current Coordinates Name")) {
-    needCurrentBasis = true;
+    need_current_basis_ = true;
 
     // grab the current coords
     PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(
@@ -66,8 +66,8 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   num_nodes_ = dims[1];
   num_surf_nodes_ = num_nodes_ / 2;
 
-  num_qps_ = cubature->getNumPoints();
-  num_surf_dims_ = cubature->getDimension();
+  num_qps_ = cubature_->getNumPoints();
+  num_surf_dims_ = cubature_->getDimension();
   num_dims_ = num_surf_dims_ + 1;
 
 #ifdef ALBANY_VERBOSE
@@ -75,8 +75,8 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   std::cout << " numPlaneNodes: " << num_surf_nodes_ << '\n';
   std::cout << " numPlaneDims: " << num_surf_dims_ << '\n';
   std::cout << " numQPs: " << num_qps_ << '\n';
-  std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << '\n';
-  std::cout << " cubature->getDimension(): " << cubature->getDimension() << '\n';
+  std::cout << " cubature->getNumPoints(): " << cubature_->getNumPoints() << '\n';
+  std::cout << " cubature->getDimension(): " << cubature_->getDimension() << '\n';
 #endif
 
   // Allocate Temporary FieldContainers
@@ -90,7 +90,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   currentMidplaneCoords.resize(containerSize, num_surf_nodes_, num_dims_);
 
   // Pre-Calculate reference element quantitites
-  cubature->getCubature(refPoints, refWeights);
+  cubature_->getCubature(refPoints, refWeights);
   intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
   intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
@@ -103,12 +103,12 @@ void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(referenceCoords, fm);
+  this->utils.setFieldData(reference_coords_, fm);
   this->utils.setFieldData(refArea, fm);
   this->utils.setFieldData(refDualBasis, fm);
   this->utils.setFieldData(refNormal, fm);
   this->utils.setFieldData(refBasis, fm);
-  if (needCurrentBasis) {
+  if (need_current_basis_) {
     this->utils.setFieldData(currentCoords, fm);
     this->utils.setFieldData(currentBasis, fm);
   }
@@ -122,7 +122,7 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
   for (int cell(0); cell < workset.numCells; ++cell) {
     // for the reference geometry
     // compute the mid-plane coordinates
-    computeReferenceMidplaneCoords(referenceCoords, refMidplaneCoords);
+    computeReferenceMidplaneCoords(reference_coords_, refMidplaneCoords);
 
     // compute basis vectors
     computeReferenceBaseVectors(refMidplaneCoords, refBasis);
@@ -137,7 +137,7 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     // compute the Jacobian
     computeJacobian(refBasis, refDualBasis, refArea);
 
-    if (needCurrentBasis) {
+    if (need_current_basis_) {
       // for the current configuration
       // compute the mid-plane coordinates
       computeCurrentMidplaneCoords(currentCoords, currentMidplaneCoords);
