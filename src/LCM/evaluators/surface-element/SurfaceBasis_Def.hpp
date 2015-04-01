@@ -64,30 +64,30 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 
   int containerSize = dims[0];
   num_nodes_ = dims[1];
-  numPlaneNodes = num_nodes_ / 2;
+  num_surf_nodes_ = num_nodes_ / 2;
 
   num_qps_ = cubature->getNumPoints();
-  numPlaneDims = cubature->getDimension();
-  num_dims_ = numPlaneDims + 1;
+  num_surf_dims_ = cubature->getDimension();
+  num_dims_ = num_surf_dims_ + 1;
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Basis" << '\n';
-  std::cout << " numPlaneNodes: " << numPlaneNodes << '\n';
-  std::cout << " numPlaneDims: " << numPlaneDims << '\n';
+  std::cout << " numPlaneNodes: " << num_surf_nodes_ << '\n';
+  std::cout << " numPlaneDims: " << num_surf_dims_ << '\n';
   std::cout << " numQPs: " << num_qps_ << '\n';
   std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << '\n';
   std::cout << " cubature->getDimension(): " << cubature->getDimension() << '\n';
 #endif
 
   // Allocate Temporary FieldContainers
-  refValues.resize(numPlaneNodes, num_qps_);
-  refGrads.resize(numPlaneNodes, num_qps_, numPlaneDims);
-  refPoints.resize(num_qps_, numPlaneDims);
+  refValues.resize(num_surf_nodes_, num_qps_);
+  refGrads.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
+  refPoints.resize(num_qps_, num_surf_dims_);
   refWeights.resize(num_qps_);
 
   // temp space for midplane coords
-  refMidplaneCoords.resize(containerSize, numPlaneNodes, num_dims_);
-  currentMidplaneCoords.resize(containerSize, numPlaneNodes, num_dims_);
+  refMidplaneCoords.resize(containerSize, num_surf_nodes_, num_dims_);
+  currentMidplaneCoords.resize(containerSize, num_surf_nodes_, num_dims_);
 
   // Pre-Calculate reference element quantitites
   cubature->getCubature(refPoints, refWeights);
@@ -155,8 +155,8 @@ void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
-    for (int node(0); node < numPlaneNodes; ++node) {
-      int topNode = node + numPlaneNodes;
+    for (int node(0); node < num_surf_nodes_; ++node) {
+      int topNode = node + num_surf_nodes_;
       for (int dim(0); dim < num_dims_; ++dim) {
         midplaneCoords(cell, node, dim) = 0.5
             * (coords(cell, node, dim) + coords(cell, topNode, dim));
@@ -172,8 +172,8 @@ void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
-    for (int node(0); node < numPlaneNodes; ++node) {
-      int topNode = node + numPlaneNodes;
+    for (int node(0); node < num_surf_nodes_; ++node) {
+      int topNode = node + num_surf_nodes_;
       for (int dim(0); dim < num_dims_; ++dim) {
         midplaneCoords(cell, node, dim) = 0.5
             * (coords(cell, node, dim) + coords(cell, topNode, dim));
@@ -189,8 +189,8 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(numPlaneNodes);
-    for (int node(0); node < numPlaneNodes; ++node)
+    std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(num_surf_nodes_);
+    for (int node(0); node < num_surf_nodes_; ++node)
       midplaneNodes[node] = Intrepid::Vector<MeshScalarT>(
           3,
           midplaneCoords,
@@ -204,7 +204,7 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
       g_0.clear();
       g_1.clear();
       g_2.clear();
-      for (int node(0); node < numPlaneNodes; ++node) {
+      for (int node(0); node < num_surf_nodes_; ++node) {
         g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
         g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
       }
@@ -230,8 +230,8 @@ computeCurrentBaseVectors(const SFC & midplaneCoords,
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(numPlaneNodes);
-    for (int node(0); node < numPlaneNodes; ++node)
+    std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(num_surf_nodes_);
+    for (int node(0); node < num_surf_nodes_; ++node)
       midplaneNodes[node] = Intrepid::Vector<ScalarT>(
           3,
           midplaneCoords,
@@ -245,7 +245,7 @@ computeCurrentBaseVectors(const SFC & midplaneCoords,
       g_0.clear();
       g_1.clear();
       g_2.clear();
-      for (int node(0); node < numPlaneNodes; ++node) {
+      for (int node(0); node < num_surf_nodes_; ++node) {
         g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
         g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
       }
