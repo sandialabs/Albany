@@ -66,7 +66,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   num_nodes_ = dims[1];
   numPlaneNodes = num_nodes_ / 2;
 
-  numQPs = cubature->getNumPoints();
+  num_qps_ = cubature->getNumPoints();
   numPlaneDims = cubature->getDimension();
   num_dims_ = numPlaneDims + 1;
 
@@ -74,16 +74,16 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   std::cout << "in Surface Basis" << '\n';
   std::cout << " numPlaneNodes: " << numPlaneNodes << '\n';
   std::cout << " numPlaneDims: " << numPlaneDims << '\n';
-  std::cout << " numQPs: " << numQPs << '\n';
+  std::cout << " numQPs: " << num_qps_ << '\n';
   std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << '\n';
   std::cout << " cubature->getDimension(): " << cubature->getDimension() << '\n';
 #endif
 
   // Allocate Temporary FieldContainers
-  refValues.resize(numPlaneNodes, numQPs);
-  refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-  refPoints.resize(numQPs, numPlaneDims);
-  refWeights.resize(numQPs);
+  refValues.resize(numPlaneNodes, num_qps_);
+  refGrads.resize(numPlaneNodes, num_qps_, numPlaneDims);
+  refPoints.resize(num_qps_, numPlaneDims);
+  refWeights.resize(num_qps_);
 
   // temp space for midplane coords
   refMidplaneCoords.resize(containerSize, numPlaneNodes, num_dims_);
@@ -200,7 +200,7 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
 
     Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
     //compute the base vectors
-    for (int pt(0); pt < numQPs; ++pt) {
+    for (int pt(0); pt < num_qps_; ++pt) {
       g_0.clear();
       g_1.clear();
       g_2.clear();
@@ -241,7 +241,7 @@ computeCurrentBaseVectors(const SFC & midplaneCoords,
 
     Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
     //compute the base vectors
-    for (int pt(0); pt < numQPs; ++pt) {
+    for (int pt(0); pt < num_qps_; ++pt) {
       g_0.clear();
       g_1.clear();
       g_2.clear();
@@ -280,7 +280,7 @@ void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
       g1(0, 0, 0), g2(0, 0, 0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
-    for (int pt(0); pt < numQPs; ++pt) {
+    for (int pt(0); pt < num_qps_; ++pt) {
       g_0 = Intrepid::Vector<MeshScalarT>(3, basis, cell, pt, 0, 0);
       g_1 = Intrepid::Vector<MeshScalarT>(3, basis, cell, pt, 1, 0);
       g_2 = Intrepid::Vector<MeshScalarT>(3, basis, cell, pt, 2, 0);
@@ -315,7 +315,7 @@ void SurfaceBasis<EvalT, Traits>::computeJacobian(
   const int worksetSize = basis.dimension(0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
-    for (int pt(0); pt < numQPs; ++pt) {
+    for (int pt(0); pt < num_qps_; ++pt) {
       Intrepid::Tensor<MeshScalarT> dPhiInv(3, dualBasis, cell, pt, 0, 0);
       Intrepid::Tensor<MeshScalarT> dPhi(3, basis, cell, pt, 0, 0);
       Intrepid::Vector<MeshScalarT> G_2(3, basis, cell, pt, 2, 0);
