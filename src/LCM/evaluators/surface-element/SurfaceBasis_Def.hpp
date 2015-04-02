@@ -78,9 +78,9 @@ SurfaceBasis(
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Basis" << '\n';
-  std::cout << " numPlaneNodes: " << num_surf_nodes_ << '\n';
-  std::cout << " numPlaneDims: " << num_surf_dims_ << '\n';
-  std::cout << " numQPs: " << num_qps_ << '\n';
+  std::cout << " num_surf_nodes_: " << num_surf_nodes_ << '\n';
+  std::cout << " num_surf_dims_: " << num_surf_dims_ << '\n';
+  std::cout << " num_qps_: " << num_qps_ << '\n';
   std::cout << " cubature->getNumPoints(): ";
   std::cout << cubature_->getNumPoints() << '\n';
   std::cout << " cubature->getDimension(): ";

@@ -46,7 +46,7 @@ public:
   ///
   void
   postRegistrationSetup(typename Traits::SetupData d,
-      PHX::FieldManager<Traits>& vm);
+      PHX::FieldManager<Traits> & vm);
 
   ///
   /// Implementation of physics
