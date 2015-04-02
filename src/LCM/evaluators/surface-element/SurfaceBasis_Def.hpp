@@ -137,7 +137,7 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     computeReferenceMidplaneCoords(reference_coords_, ref_midplane_coords_);
 
     // compute basis vectors
-    computeReferenceBaseVectors(ref_midplane_coords_, ref_basis_);
+    computeReferenceBasisVectors(ref_midplane_coords_, ref_basis_);
 
     // compute the dual
     computeDualBaseVectors(
@@ -166,15 +166,18 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
     PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
-    MFC & midplaneCoords)
+    MFC & midplane_coords)
 {
-  for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
+  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
     for (int node(0); node < num_surf_nodes_; ++node) {
-      int topNode = node + num_surf_nodes_;
+
+      int
+      top_node = node + num_surf_nodes_;
+
       for (int dim(0); dim < num_dims_; ++dim) {
-        midplaneCoords(cell, node, dim) = 0.5
-            * (coords(cell, node, dim) + coords(cell, topNode, dim));
+        midplane_coords(cell, node, dim) =
+            0.5 * (coords(cell, node, dim) + coords(cell, top_node, dim));
       }
     }
   }
@@ -186,15 +189,18 @@ void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
     PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
-    SFC & midplaneCoords)
+    SFC & midplane_coords)
 {
-  for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
+  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
     for (int node(0); node < num_surf_nodes_; ++node) {
-      int topNode = node + num_surf_nodes_;
+
+      int
+      top_node = node + num_surf_nodes_;
+
       for (int dim(0); dim < num_dims_; ++dim) {
-        midplaneCoords(cell, node, dim) = 0.5
-            * (coords(cell, node, dim) + coords(cell, topNode, dim));
+        midplane_coords(cell, node, dim) =
+            0.5 * (coords(cell, node, dim) + coords(cell, top_node, dim));
       }
     }
   }
@@ -205,25 +211,29 @@ void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
-computeReferenceBaseVectors(MFC const & midplaneCoords,
+computeReferenceBasisVectors(MFC const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis)
 {
-  for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
+  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(num_surf_nodes_);
-    for (int node(0); node < num_surf_nodes_; ++node)
-      midplaneNodes[node] =
-          Intrepid::Vector<MeshScalarT>(3, midplaneCoords, cell, node, 0);
+    std::vector<Intrepid::Vector<MeshScalarT> >
+    midplane_nodes(num_surf_nodes_);
 
-    Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+    for (int node(0); node < num_surf_nodes_; ++node)
+      midplane_nodes[node] =
+          Intrepid::Vector<MeshScalarT>(3, midplane_coords, cell, node, 0);
+
+    Intrepid::Vector<MeshScalarT>
+    g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+
     //compute the base vectors
     for (int pt(0); pt < num_qps_; ++pt) {
       g_0.clear();
       g_1.clear();
       g_2.clear();
       for (int node(0); node < num_surf_nodes_; ++node) {
-        g_0 += ref_grads_(node, pt, 0) * midplaneNodes[node];
-        g_1 += ref_grads_(node, pt, 1) * midplaneNodes[node];
+        g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
+        g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
       }
       g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
 
@@ -245,29 +255,27 @@ computeReferenceBaseVectors(MFC const & midplaneCoords,
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
-computeCurrentBaseVectors(SFC const & midplaneCoords,
+computeCurrentBaseVectors(SFC const & midplane_coords,
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
 {
-  for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
+  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<ScalarT> > midplaneNodes(num_surf_nodes_);
+    std::vector<Intrepid::Vector<ScalarT> > midplane_nodes(num_surf_nodes_);
     for (int node(0); node < num_surf_nodes_; ++node)
-      midplaneNodes[node] = Intrepid::Vector<ScalarT>(
-          3,
-          midplaneCoords,
-          cell,
-          node,
-          0);
+      midplane_nodes[node] =
+          Intrepid::Vector<ScalarT>(3, midplane_coords, cell, node, 0);
 
-    Intrepid::Vector<ScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+    Intrepid::Vector<ScalarT>
+    g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+
     //compute the base vectors
     for (int pt(0); pt < num_qps_; ++pt) {
       g_0.clear();
       g_1.clear();
       g_2.clear();
       for (int node(0); node < num_surf_nodes_; ++node) {
-        g_0 += ref_grads_(node, pt, 0) * midplaneNodes[node];
-        g_1 += ref_grads_(node, pt, 1) * midplaneNodes[node];
+        g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
+        g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
       }
       g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
 
@@ -289,12 +297,12 @@ computeCurrentBaseVectors(SFC const & midplaneCoords,
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
-    MFC const & midplaneCoords,
+    MFC const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis)
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis)
 {
-  int worksetSize = midplaneCoords.dimension(0);
+  int worksetSize = midplane_coords.dimension(0);
 
   Intrepid::Vector<MeshScalarT>
   g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
@@ -316,15 +324,15 @@ void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
       g1 = cross(g_0, g_2) / dot(g_1, cross(g_0, g_2));
       g2 = cross(g_0, g_1) / dot(g_2, cross(g_0, g_1));
 
-      dualBasis(cell, pt, 0, 0) = g0(0);
-      dualBasis(cell, pt, 0, 1) = g0(1);
-      dualBasis(cell, pt, 0, 2) = g0(2);
-      dualBasis(cell, pt, 1, 0) = g1(0);
-      dualBasis(cell, pt, 1, 1) = g1(1);
-      dualBasis(cell, pt, 1, 2) = g1(2);
-      dualBasis(cell, pt, 2, 0) = g2(0);
-      dualBasis(cell, pt, 2, 1) = g2(1);
-      dualBasis(cell, pt, 2, 2) = g2(2);
+      dual_basis(cell, pt, 0, 0) = g0(0);
+      dual_basis(cell, pt, 0, 1) = g0(1);
+      dual_basis(cell, pt, 0, 2) = g0(2);
+      dual_basis(cell, pt, 1, 0) = g1(0);
+      dual_basis(cell, pt, 1, 1) = g1(1);
+      dual_basis(cell, pt, 1, 2) = g1(2);
+      dual_basis(cell, pt, 2, 0) = g2(0);
+      dual_basis(cell, pt, 2, 1) = g2(1);
+      dual_basis(cell, pt, 2, 2) = g2(2);
     }
   }
 }
@@ -335,14 +343,14 @@ void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeJacobian(
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dualBasis,
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint> area)
 {
   const int worksetSize = basis.dimension(0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {
-      Intrepid::Tensor<MeshScalarT> dPhiInv(3, dualBasis, cell, pt, 0, 0);
+      Intrepid::Tensor<MeshScalarT> dPhiInv(3, dual_basis, cell, pt, 0, 0);
       Intrepid::Tensor<MeshScalarT> dPhi(3, basis, cell, pt, 0, 0);
       Intrepid::Vector<MeshScalarT> G_2(3, basis, cell, pt, 2, 0);
       MeshScalarT j0 = Intrepid::det(dPhi);

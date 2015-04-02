@@ -60,7 +60,7 @@ public:
   /// \param midplane_coords
   ///
   void computeReferenceMidplaneCoords(
-      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const ref_coords,
+      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
       MFC & midplane_coords);
 
   ///
@@ -69,7 +69,7 @@ public:
   /// \param midplane_coords
   ///
   void computeCurrentMidplaneCoords(
-      PHX::MDField<ScalarT, Cell, Vertex, Dim> const current_coords,
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
       SFC & midplane_coords);
 
   ///
@@ -77,7 +77,7 @@ public:
   /// \param midplane_coords
   /// \param basis
   ///
-  void computeReferenceBaseVectors(MFC const & midplane_coords,
+  void computeReferenceBasisVectors(MFC const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
