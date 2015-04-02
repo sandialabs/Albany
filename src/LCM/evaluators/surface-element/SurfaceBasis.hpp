@@ -46,20 +46,34 @@ public:
   ///
   /// Phalanx method to allocate space
   ///
-  void postRegistrationSetup(typename Traits::SetupData d,
+  void
+  postRegistrationSetup(typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
 
   ///
   /// Implementation of physics
   ///
-  void evaluateFields(typename Traits::EvalData d);
+  void
+  evaluateFields(typename Traits::EvalData d);
+
+  ///
+  /// Takes given coordinates and computes the corresponding midplane
+  /// \param refCoords
+  /// \param midplane_coords
+  ///
+  template<typename FCT>
+  void
+  computeMidplaneCoords(
+      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
+      FCT & midplane_coords);
 
   ///
   /// Takes the reference coordinates and computes the midplane
   /// \param refCoords
   /// \param midplane_coords
   ///
-  void computeReferenceMidplaneCoords(
+  void
+  computeReferenceMidplaneCoords(
       PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
       MFC & midplane_coords);
 
@@ -68,16 +82,28 @@ public:
   /// \param current_coords
   /// \param midplane_coords
   ///
-  void computeCurrentMidplaneCoords(
+  void
+  computeCurrentMidplaneCoords(
       PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
       SFC & midplane_coords);
+
+  ///
+  /// Computes basis from the reference midplane
+  /// \param midplane_coords
+  /// \param basis
+  ///
+  template<typename FCT>
+  void
+  computeBasisVectors(FCT const & midplane_coords,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
   /// Computes Reference configuration Bases from the reference midplane
   /// \param midplane_coords
   /// \param basis
   ///
-  void computeReferenceBasisVectors(MFC const & midplane_coords,
+  void
+  computeReferenceBasisVectors(MFC const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
@@ -85,7 +111,8 @@ public:
   /// \param midplane_coords
   /// \param basis
   ///
-  void computeCurrentBasisVectors(SFC const & midplane_coords,
+  void
+  computeCurrentBasisVectors(SFC const & midplane_coords,
       PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
@@ -95,7 +122,8 @@ public:
   /// \param normal
   /// \param dual_basis
   ///
-  void computeDualBasisVectors(MFC const & midplane_coords,
+  void
+  computeDualBasisVectors(MFC const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
@@ -106,7 +134,8 @@ public:
   /// \param dual_basis
   /// \param area
   ///
-  void computeJacobian(
+  void
+  computeJacobian(
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint> area);
