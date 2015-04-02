@@ -10,7 +10,6 @@
 
 #include "AAdapt_TopologyModificationT.hpp"
 #include "LCM/utils/topology/Topology_FractureCriterion.h"
-#include <boost/foreach.hpp>
 
 namespace AAdapt {
 

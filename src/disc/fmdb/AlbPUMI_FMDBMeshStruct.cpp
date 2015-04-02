@@ -7,9 +7,6 @@
 
 #include <iostream>
 
-#include <boost/mpi/exception.hpp>
-#include <boost/mpi/collectives/all_gather.hpp>
-#include <boost/mpi/collectives/all_reduce.hpp>
 #include "AlbPUMI_FMDBMeshStruct.hpp"
 
 #include "Teuchos_VerboseObject.hpp"

@@ -10,9 +10,6 @@
 
 #include "Albany_Utils.hpp"
 
-#include <boost/mpi/collectives.hpp>
-#include <boost/mpi/collectives/all_reduce.hpp>
-
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
   mesh(disc->getFMDBMeshStruct()->getMesh()),
   commT(disc->getComm()) {
