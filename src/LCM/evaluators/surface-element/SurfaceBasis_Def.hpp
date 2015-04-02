@@ -114,7 +114,7 @@ void
 SurfaceBasis<EvalT, Traits>::
 postRegistrationSetup(
     typename Traits::SetupData d,
-    PHX::FieldManager<Traits>& fm)
+    PHX::FieldManager<Traits> & fm)
 {
   this->utils.setFieldData(reference_coords_, fm);
   this->utils.setFieldData(ref_area_, fm);
@@ -206,23 +206,23 @@ computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
     std::vector<Intrepid::Vector<ST> >
     midplane_nodes(num_surf_nodes_);
 
-    for (int node(0); node < num_surf_nodes_; ++node)
+    for (int node(0); node < num_surf_nodes_; ++node) {
       midplane_nodes[node] =
           Intrepid::Vector<ST>(3, midplane_coords, cell, node, 0);
+    }
 
     Intrepid::Vector<ST>
     g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
     //compute the base vectors
     for (int pt(0); pt < num_qps_; ++pt) {
-      g_0.clear();
-      g_1.clear();
-      g_2.clear();
+      g_0.fill(Intrepid::ZEROS);
+      g_1.fill(Intrepid::ZEROS);
       for (int node(0); node < num_surf_nodes_; ++node) {
         g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
         g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
       }
-      g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
+      g_2 = Intrepid::unit(Intrepid::cross(g_0, g_1));
 
       basis(cell, pt, 0, 0) = g_0(0);
       basis(cell, pt, 0, 1) = g_0(1);
