@@ -177,19 +177,19 @@ private:
   /// Optional Input: Coordinates in the current configuration
   ///
   PHX::MDField<ScalarT, Cell, Vertex, Dim>
-  currentCoords;
+  current_coords_;
 
   ///
   /// Optional Output: Current basis
   ///
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
-  currentBasis;
+  current_basis_;
 
   ///
   /// Reference Cell FieldContainer for basis values
   ///
   Intrepid::FieldContainer<RealType>
-  refValues;
+  ref_values_;
 
   ///
   /// Reference Cell FieldContainer for basis gradients

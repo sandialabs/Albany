@@ -46,16 +46,16 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
     PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(
         p.get<std::string>("Current Coordinates Name"),
         dl->node_vector);
-    currentCoords = tmp;
+    current_coords_ = tmp;
 
     // set up the current basis
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> tmp2(
         p.get<std::string>("Current Basis Name"),
         dl->qp_tensor);
-    currentBasis = tmp2;
+    current_basis_ = tmp2;
 
-    this->addDependentField(currentCoords);
-    this->addEvaluatedField(currentBasis);
+    this->addDependentField(current_coords_);
+    this->addEvaluatedField(current_basis_);
   }
 
   // Get Dimensions
@@ -80,7 +80,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 #endif
 
   // Allocate Temporary FieldContainers
-  refValues.resize(num_surf_nodes_, num_qps_);
+  ref_values_.resize(num_surf_nodes_, num_qps_);
   refGrads.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
   refPoints.resize(num_qps_, num_surf_dims_);
   refWeights.resize(num_qps_);
@@ -91,7 +91,7 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(refPoints, refWeights);
-  intrepid_basis_->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_values_, refPoints, Intrepid::OPERATOR_VALUE);
   intrepid_basis_->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 
   this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
@@ -109,8 +109,8 @@ void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(ref_normal_, fm);
   this->utils.setFieldData(ref_basis_, fm);
   if (need_current_basis_) {
-    this->utils.setFieldData(currentCoords, fm);
-    this->utils.setFieldData(currentBasis, fm);
+    this->utils.setFieldData(current_coords_, fm);
+    this->utils.setFieldData(current_basis_, fm);
   }
 }
 
@@ -140,10 +140,10 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     if (need_current_basis_) {
       // for the current configuration
       // compute the mid-plane coordinates
-      computeCurrentMidplaneCoords(currentCoords, current_midplane_coords_);
+      computeCurrentMidplaneCoords(current_coords_, current_midplane_coords_);
 
       // compute base vectors
-      computeCurrentBaseVectors(current_midplane_coords_, currentBasis);
+      computeCurrentBaseVectors(current_midplane_coords_, current_basis_);
     }
   }
 }
