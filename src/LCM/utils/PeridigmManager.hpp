@@ -44,6 +44,15 @@ public:
     }
   };
 
+  //! Data structure for Optimization-Based Coupling
+  struct OBCDataPoint {
+    double initialCoords[3];
+    double currentCoords[3];
+    int peridigmGlobalId;
+    stk::mesh::Entity albanyElement;
+    CellTopologyData cellTopologyData;
+  };
+
   //! Singleton.
   static PeridigmManager & self();
 
@@ -53,7 +62,10 @@ public:
 		  const Teuchos::RCP<const Teuchos_Comm>& comm);
 
   //! Identify the overlapping solid element for each peridynamic sphere element (applies only to overlapping discretizations).
-  void overlappingElementSearch();
+  void obcOverlappingElementSearch();
+
+  //! Evaluate the functional for optimization-based coupling
+  double obcEvaluateFunctional(const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
 
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
@@ -97,6 +109,8 @@ private:
 
   bool hasPeridynamics;
 
+  bool enableOptimizationBasedCoupling;
+
   double previousTime;
   double currentTime;
   double timeStep;
@@ -118,6 +132,10 @@ private:
   std::map< int, std::vector<int> > worksetLocalIdToGlobalId;
 
   std::map< int, std::vector<int> > albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
+
+  std::vector<OBCDataPoint> obcDataPoints;
+
+  Teuchos::RCP<Epetra_Vector> obcPeridynamicNodeCurrentCoords;
 
   int cubatureDegree;
 

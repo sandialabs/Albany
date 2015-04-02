@@ -14,7 +14,7 @@ LCM::PeridigmManager& LCM::PeridigmManager::self() {
   return peridigmManager;
 }
 
-LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
+LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), enableOptimizationBasedCoupling(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)
 {}
 
 void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
@@ -31,6 +31,10 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   Teuchos::ParameterList& problemParams = params->sublist("Problem");
   Teuchos::ParameterList& discretizationParams = params->sublist("Discretization");
   cubatureDegree = discretizationParams.get<int>("Cubature Degree", 2);
+
+  if(peridigmParams->isSublist("Optimization Based Coupling")){
+    enableOptimizationBasedCoupling = true;
+  }
 
   // Read the material data base file, if any
   Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
@@ -208,7 +212,13 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
   std::cout << "\n  max Albany element id: " << maxAlbanyElementId << std::endl;
   std::cout << "  max Albany node id: " << maxAlbanyNodeId << std::endl;
   std::cout << "  min Peridigm partial stress id: " << minPeridigmPartialStressId << std::endl;
-  std::cout << "  number of Peridigm partial stress material points: " << numPartialStressIds << "\n" << std::endl;
+  std::cout << "  number of Peridigm partial stress material points: " << numPartialStressIds << std::endl;
+  if(enableOptimizationBasedCoupling){
+    std::cout << "  enable optimization-based coupling: true\n" << std::endl;
+  }
+  else{
+    std::cout << "  enable optimization-based coupling: false\n" << std::endl;
+  }
 
   // Bail if there are no sphere elements or partial stress elements
   if(peridynamicsBlocks.size() == 0 && peridynamicPartialStressBlocks.size() == 0){
@@ -401,18 +411,20 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     albanyPartialStressElementGlobalIdToPeridigmGlobalIds[albanyGlobalElementId] = peridigmGlobalIds;
   }
 
-  //overlappingElementSearch();
+  if(enableOptimizationBasedCoupling){
+    obcOverlappingElementSearch();
+  }
 }
 
-void LCM::PeridigmManager::overlappingElementSearch()
+void LCM::PeridigmManager::obcOverlappingElementSearch()
 {
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), unable to access coordinates field.\n\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
 
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* volumeField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::ELEMENT_RANK, "volume");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), unable to access volume field (volume field is expected because it is assumed that thre are sphere elements in the simulation).\n\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(volumeField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access volume field (volume field is expected because it is assumed that thre are sphere elements in the simulation).\n\n");
 
   // Create a selector to select everything in the universal part that is locally owned
   stk::mesh::Selector selector =
@@ -473,9 +485,9 @@ void LCM::PeridigmManager::overlappingElementSearch()
 
   // Optain a Epetra_MpiComm object using a Teuchos_Comm
   const Teuchos::MpiComm<int>* mpiCommWrapper = dynamic_cast<const Teuchos::MpiComm<int>* >(teuchosComm.get());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiCommWrapper == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiCommWrapper == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), failed to dynamically cast comm object to Teuchos::MpiComm<int>.\n");
   MPI_Comm mpiComm = static_cast<MPI_Comm>(*mpiCommWrapper->getRawMpiComm());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to dynamically cast comm object to MPI_Comm.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(mpiComm == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), failed to dynamically cast comm object to MPI_Comm.\n");
   Epetra_MpiComm epetraComm(mpiComm);
 
   // Create Epetra_BlockMaps for the Peridigm proximity search
@@ -536,7 +548,7 @@ void LCM::PeridigmManager::overlappingElementSearch()
   Epetra_Import oneDimensionalImporter(*epetraOneDimensionalOverlapMap, epetraOneDimensionalMap);
   int coordsImportErrorCode = epetraOverlapCoords.Import(*epetraProximitySearchCoords, threeDimensionalImporter, Insert);
   int isSphereImportErrorCode = epetraOverlapIsSphere.Import(*epetraIsSphere, oneDimensionalImporter, Insert);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordsImportErrorCode != 0 || isSphereImportErrorCode != 0, "\n\n**** Error in PeridigmManager::overlappingElementSearch(), import operation failed!\n\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordsImportErrorCode != 0 || isSphereImportErrorCode != 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), import operation failed!\n\n");
 
   // Store the cell topology for each on-processor element
   std::map<int, CellTopologyData> albanyGlobalElementIdToCellTopolotyData;
@@ -569,7 +581,6 @@ void LCM::PeridigmManager::overlappingElementSearch()
   // by the proximity search are within the element
   int neighborhoodListIndex = 0;
   typedef PHX::KokkosViewFactory<RealType, PHX::Device> ViewFactory;
-  int numberOfOverlappingPeridynamicNodes = 0;
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
 
     // Get the elements nodes and cell topology
@@ -577,83 +588,165 @@ void LCM::PeridigmManager::overlappingElementSearch()
     const stk::mesh::Entity* nodesInElement = bulkData->begin_nodes(elements[iElem]);
     int globalElementId = bulkData->identifier(elements[iElem]) - 1;
     std::map<int, CellTopologyData>::iterator it = albanyGlobalElementIdToCellTopolotyData.find(globalElementId);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(it == albanyGlobalElementIdToCellTopolotyData.end(), "\n\n**** Error in PeridigmManager::overlappingElementSearch(), failed to find cell topology.\n\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(it == albanyGlobalElementIdToCellTopolotyData.end(), "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), failed to find cell topology.\n\n");
     const CellTopologyData& cellTopologyData = it->second;
     shards::CellTopology cellTopology(&cellTopologyData);
 
     // The neighbors are the nodes that might be within the element
     int numNeighbors = neighborList[neighborhoodListIndex++];
 
-    for(int iNeighbor=0 ; iNeighbor<numNeighbors ; iNeighbor++){
+    // Skip peridynamic nodes
+    if(numNodesInElement == 1){
+      neighborhoodListIndex += numNeighbors;
+    }
+    else{
 
-      int neighborIndex = neighborList[neighborhoodListIndex++];
-      int neighborIsSphere = epetraOverlapIsSphere[neighborIndex];
+      for(int iNeighbor=0 ; iNeighbor<numNeighbors ; iNeighbor++){
 
-      // If the neighbor is a peridynamic sphere element, check to see if it's within the solid element
-      if(neighborIsSphere){
+	int neighborIndex = neighborList[neighborhoodListIndex++];
+	int neighborIsSphere = epetraOverlapIsSphere[neighborIndex];
 
-	std::vector<double> neighborCoords(3);
-	for(int dof=0 ; dof<3 ; dof++){
-	  neighborCoords[dof] = epetraOverlapCoords[3*neighborIndex+dof];
-	}
+	// If the neighbor is a peridynamic sphere element, check to see if it's within the solid element
+	if(neighborIsSphere){
 
-	// We're interested in a single point in a single element in a three-dimensional simulation
-	int numCells = 1;
-	int numQuadPoints = 1;
-	int numDim = 3;
-
-	// Physical points, which are the physical (x, y, z) values of the peridynamic node (pay no attention to the "quadrature point" descriptor)
-	Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
-	PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
-	physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
-
-	// Reference points, which are the natural coordinates of the quadrature points
-	Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
-	PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
-	refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
-
-	// Cell workset, which is the set of nodes for the given element
-	Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodesInElement, numDim));
-	PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
-	cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
-
-	for(int dof=0 ; dof<3 ; dof++){
-	  physPoints(0, 0, dof) = neighborCoords[dof];
-	}
-
-	for(int i=0 ; i<numNodesInElement ; i++){
-	  double* coordinates = stk::mesh::field_data(*coordinatesField, nodesInElement[i]);
+	  std::vector<double> neighborCoords(3);
 	  for(int dof=0 ; dof<3 ; dof++){
-	    cellWorkset(0, i, dof) = coordinates[dof];
+	    neighborCoords[dof] = epetraOverlapCoords[3*neighborIndex+dof];
+	  }
+
+	  // We're interested in a single point in a single element in a three-dimensional simulation
+	  int numCells = 1;
+	  int numQuadPoints = 1;
+	  int numDim = 3;
+
+	  // Physical points, which are the physical (x, y, z) values of the peridynamic node (pay no attention to the "quadrature point" descriptor)
+	  Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+	  PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
+	  physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
+
+	  // Reference points, which are the natural coordinates of the quadrature points
+	  Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+	  PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
+	  refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
+
+	  // Cell workset, which is the set of nodes for the given element
+	  Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodesInElement, numDim));
+	  PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
+	  cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
+
+	  for(int dof=0 ; dof<3 ; dof++){
+	    physPoints(0, 0, dof) = neighborCoords[dof];
+	  }
+
+	  for(int i=0 ; i<numNodesInElement ; i++){
+	    double* coordinates = stk::mesh::field_data(*coordinatesField, nodesInElement[i]);
+	    for(int dof=0 ; dof<3 ; dof++){
+	      cellWorkset(0, i, dof) = coordinates[dof];
+	    }
+	  }
+
+	  Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology);
+
+	  std::vector<RealType> point(3);
+	  for(int dof=0 ; dof<3 ; dof++){
+	    point[dof] = refPoints(0, 0, dof);
+	  }
+
+	  int inElement = Intrepid::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
+
+	  if(inElement){
+
+	    OBCDataPoint dataPoint;
+	    for(int dof=0 ; dof<3 ; dof++){
+	      dataPoint.initialCoords[dof] = neighborCoords[dof];
+	      dataPoint.currentCoords[dof] = 0.0;
+	    }
+	    dataPoint.peridigmGlobalId = epetraOverlapIsSphere.Map().GID(neighborIndex);
+	    dataPoint.albanyElement = elements[iElem];
+	    dataPoint.cellTopologyData = cellTopologyData;
+	    obcDataPoints.push_back(dataPoint);
 	  }
 	}
-
-	// ---- DJL THIS IS COMMENTED OUT PENDING AN INTREPID FIX FOR KOKKOS VIEWS
-
-// 	Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology);
-
-// 	std::vector<RealType> point(3);
-//        	for(int dof=0 ; dof<3 ; dof++){
-// 	  point[dof] = refPoints(0, 0, dof);
-// 	}
-
-// 	int inElement = Intrepid::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
-
-// 	if(inElement){
-// 	  numberOfOverlappingPeridynamicNodes += 1;
-// 	}
       }
     }
   }
 
+  // Create an Epetra_Vector for importing the displacements of the peridynamic nodes
+  std::vector<int> tempGlobalIds(obcDataPoints.size());
+  for(unsigned int i=0 ; i<obcDataPoints.size() ; i++){
+    tempGlobalIds[i] = obcDataPoints[i].peridigmGlobalId;
+  }
+
+  Epetra_BlockMap epetraTempMap(-1,
+				static_cast<int>( tempGlobalIds.size() ),
+				&tempGlobalIds[0],
+				3,
+				0,
+				epetraComm);
+
+  obcPeridynamicNodeCurrentCoords = Teuchos::rcp(new Epetra_Vector(epetraTempMap));
+
   // As a sanity check, determine the total number of overlapping peridynamic nodes
   vector<int> localVal(1), globalVal(1);
-  localVal[0] = numberOfOverlappingPeridynamicNodes;
+  localVal[0] = static_cast<int>(obcDataPoints.size());
   Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localVal[0], &globalVal[0]);
-  numberOfOverlappingPeridynamicNodes = globalVal[0];
+  int numberOfOverlappingPeridynamicNodes = globalVal[0];
 
   std::cout << "\n-- Overlapping Element Search --" << std::endl;
   std::cout << "  number of peridynamic nodes in overlap region: " << numberOfOverlappingPeridynamicNodes << std::endl;
+}
+
+double LCM::PeridigmManager::obcEvaluateFunctional(const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
+{
+  if(!enableOptimizationBasedCoupling){
+    return 0.0;
+  }
+
+  // Set up access to the current displacements of the nodes in the solid elements
+  Teuchos::ArrayRCP<const ST> albanyCurrentDisplacements = albanySolutionVector->getData();
+  const Teuchos::RCP<const Tpetra_Map> albanyMap = albanySolutionVector->getMap();
+  Tpetra_Map::local_ordinal_type albanyLocalId;
+
+  // Load the current displacements into the obcDataPoints data structures
+  Epetra_Vector& peridigmCurrentPositions = *(peridigm->getY());
+  Epetra_Import overlapCurrentCoordsImporter(obcPeridynamicNodeCurrentCoords->Map(), peridigmCurrentPositions.Map());
+  int err = obcPeridynamicNodeCurrentCoords->Import(peridigmCurrentPositions, overlapCurrentCoordsImporter, Insert);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), import operation failed!\n\n");
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
+    int localId = obcPeridynamicNodeCurrentCoords->Map().LID(obcDataPoints[iEvalPt].peridigmGlobalId);
+    for(int dof=0 ; dof<3 ; dof++){
+      obcDataPoints[iEvalPt].currentCoords[dof] = (*obcPeridynamicNodeCurrentCoords)[3*localId+dof];
+    }
+  }
+
+  // Compute the difference in displacements at each peridynamic node
+  Epetra_Vector displacementDiff(obcPeridynamicNodeCurrentCoords->Map());
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
+
+    // NEED TO APPLY INTREPID TOOLS HERE TO PROPERLY EVALUATE THE DISPLACEMENT
+    int numNodes = bulkData->num_nodes(obcDataPoints[iEvalPt].albanyElement);
+    const stk::mesh::Entity* nodes = bulkData->begin_nodes(obcDataPoints[iEvalPt].albanyElement);
+
+    // DJL temp hack until I figure out the Intrepid tools
+    int globalNodeId = bulkData->identifier(nodes[0]) - 1;
+    albanyLocalId = albanyMap->getLocalElement(3*globalNodeId);
+    std::vector<double> albanyDisplacement(3);
+    for(int dof=0 ; dof<3 ; dof++){
+      albanyDisplacement[dof] = albanyCurrentDisplacements[albanyLocalId+dof];
+    }
+    // DJL end temp hack
+
+    for(int dof=0 ; dof<3 ; dof++){
+      displacementDiff[3*iEvalPt+dof] = albanyDisplacement[dof] - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
+    }
+  }
+
+  double functionalValue(0.0);
+  displacementDiff.Norm2(&functionalValue);
+
+  std::cout << "DJL DEBUGGING obcFunctional " << functionalValue << std::endl;
+
+  return functionalValue;
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
