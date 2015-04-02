@@ -15,7 +15,8 @@ namespace LCM {
 //
 //
 template<typename EvalT, typename Traits>
-SurfaceBasis<EvalT, Traits>::SurfaceBasis(
+SurfaceBasis<EvalT, Traits>::
+SurfaceBasis(
     Teuchos::ParameterList const & p,
     Teuchos::RCP<Albany::Layouts> const & dl) :
     need_current_basis_(false),
@@ -110,7 +111,8 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 //
 template<typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
+SurfaceBasis<EvalT, Traits>::
+postRegistrationSetup(
     typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
@@ -136,10 +138,10 @@ SurfaceBasis<EvalT, Traits>::evaluateFields(
   for (int cell(0); cell < workset.numCells; ++cell) {
     // for the reference geometry
     // compute the mid-plane coordinates
-    computeReferenceMidplaneCoords(reference_coords_, ref_midplane_coords_);
+    computeMidplaneCoords(reference_coords_, ref_midplane_coords_);
 
     // compute basis vectors
-    computeReferenceBasisVectors(ref_midplane_coords_, ref_basis_);
+    computeBasisVectors(ref_midplane_coords_, ref_basis_);
 
     // compute the dual
     computeDualBasisVectors(
@@ -154,10 +156,10 @@ SurfaceBasis<EvalT, Traits>::evaluateFields(
     if (need_current_basis_) {
       // for the current configuration
       // compute the mid-plane coordinates
-      computeCurrentMidplaneCoords(current_coords_, current_midplane_coords_);
+      computeMidplaneCoords(current_coords_, current_midplane_coords_);
 
       // compute base vectors
-      computeCurrentBasisVectors(current_midplane_coords_, current_basis_);
+      computeBasisVectors(current_midplane_coords_, current_basis_);
     }
   }
 }
@@ -166,11 +168,12 @@ SurfaceBasis<EvalT, Traits>::evaluateFields(
 //
 //
 template<typename EvalT, typename Traits>
-template<typename FCT>
+template<typename ST>
 void
-SurfaceBasis<EvalT, Traits>::computeMidplaneCoords(
-    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
-    FCT & midplane_coords)
+SurfaceBasis<EvalT, Traits>::
+computeMidplaneCoords(
+    PHX::MDField<ST, Cell, Vertex, Dim> const coords,
+    Intrepid::FieldContainer<ST> & midplane_coords)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
@@ -192,7 +195,8 @@ SurfaceBasis<EvalT, Traits>::computeMidplaneCoords(
 //
 template<typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
+SurfaceBasis<EvalT, Traits>::
+computeReferenceMidplaneCoords(
     PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
     MFC & midplane_coords)
 {
@@ -216,7 +220,8 @@ SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
 //
 template<typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
+SurfaceBasis<EvalT, Traits>::
+computeCurrentMidplaneCoords(
     PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
     SFC & midplane_coords)
 {
@@ -239,22 +244,22 @@ SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
 //
 //
 template<typename EvalT, typename Traits>
-template<typename FCT>
+template<typename ST>
 void
 SurfaceBasis<EvalT, Traits>::
-computeBasisVectors(FCT const & midplane_coords,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis)
+computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
+    PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // get the midplane coordinates
-    std::vector<Intrepid::Vector<MeshScalarT> >
+    std::vector<Intrepid::Vector<ST> >
     midplane_nodes(num_surf_nodes_);
 
     for (int node(0); node < num_surf_nodes_; ++node)
       midplane_nodes[node] =
-          Intrepid::Vector<MeshScalarT>(3, midplane_coords, cell, node, 0);
+          Intrepid::Vector<ST>(3, midplane_coords, cell, node, 0);
 
-    Intrepid::Vector<MeshScalarT>
+    Intrepid::Vector<ST>
     g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
 
     //compute the base vectors
@@ -374,7 +379,8 @@ computeCurrentBasisVectors(SFC const & midplane_coords,
 //
 template<typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::computeDualBasisVectors(
+SurfaceBasis<EvalT, Traits>::
+computeDualBasisVectors(
     MFC const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
@@ -420,7 +426,8 @@ SurfaceBasis<EvalT, Traits>::computeDualBasisVectors(
 //
 template<typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::computeJacobian(
+SurfaceBasis<EvalT, Traits>::
+computeJacobian(
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint> area)

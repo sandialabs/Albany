@@ -61,11 +61,11 @@ public:
   /// \param refCoords
   /// \param midplane_coords
   ///
-  template<typename FCT>
+  template<typename ST>
   void
   computeMidplaneCoords(
-      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
-      FCT & midplane_coords);
+      PHX::MDField<ST, Cell, Vertex, Dim> const coords,
+      Intrepid::FieldContainer<ST> & midplane_coords);
 
   ///
   /// Takes the reference coordinates and computes the midplane
@@ -92,10 +92,10 @@ public:
   /// \param midplane_coords
   /// \param basis
   ///
-  template<typename FCT>
+  template<typename ST>
   void
-  computeBasisVectors(FCT const & midplane_coords,
-      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis);
+  computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
+      PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
   /// Computes Reference configuration Bases from the reference midplane
