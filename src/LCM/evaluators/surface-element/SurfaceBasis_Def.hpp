@@ -11,7 +11,9 @@
 
 namespace LCM {
 
-//----------------------------------------------------------------------
+//
+//
+//
 template<typename EvalT, typename Traits>
 SurfaceBasis<EvalT, Traits>::SurfaceBasis(
     const Teuchos::ParameterList& p,
@@ -76,8 +78,10 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   std::cout << " numPlaneNodes: " << num_surf_nodes_ << '\n';
   std::cout << " numPlaneDims: " << num_surf_dims_ << '\n';
   std::cout << " numQPs: " << num_qps_ << '\n';
-  std::cout << " cubature->getNumPoints(): " << cubature_->getNumPoints() << '\n';
-  std::cout << " cubature->getDimension(): " << cubature_->getDimension() << '\n';
+  std::cout << " cubature->getNumPoints(): ";
+  std::cout << cubature_->getNumPoints() << '\n';
+  std::cout << " cubature->getDimension(): ";
+  std::cout << cubature_->getDimension() << '\n';
 #endif
 
   // Allocate Temporary FieldContainers
@@ -92,13 +96,16 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
-  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
   intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 
   this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
 }
 
-//----------------------------------------------------------------------
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
     typename Traits::SetupData d,
@@ -115,7 +122,9 @@ void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
   }
 }
 
-//----------------------------------------------------------------------
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
@@ -148,7 +157,10 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     }
   }
 }
-//----------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
     PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coords,
@@ -165,7 +177,10 @@ void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
     }
   }
 }
-//----------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
     PHX::MDField<ScalarT, Cell, Vertex, Dim> coords,
@@ -182,7 +197,10 @@ void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
     }
   }
 }
-//----------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
 computeReferenceBaseVectors(const MFC & midplaneCoords,
@@ -223,7 +241,10 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
     }
   }
 }
-//----------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
 computeCurrentBaseVectors(const SFC & midplaneCoords,
@@ -264,7 +285,10 @@ computeCurrentBaseVectors(const SFC & midplaneCoords,
     }
   }
 }
-//----------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
     const MFC & midplaneCoords,
@@ -274,11 +298,11 @@ void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
 {
   int worksetSize = midplaneCoords.dimension(0);
 
-  Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0), g0(
-      0,
-      0,
-      0),
-      g1(0, 0, 0), g2(0, 0, 0);
+  Intrepid::Vector<MeshScalarT>
+  g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
+
+  Intrepid::Vector<MeshScalarT>
+  g0(0, 0, 0), g1(0, 0, 0), g2(0, 0, 0);
 
   for (int cell(0); cell < worksetSize; ++cell) {
     for (int pt(0); pt < num_qps_; ++pt) {
@@ -306,7 +330,10 @@ void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
     }
   }
 }
-//----------------------------------------------------------------------
+
+//
+//
+//
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeJacobian(
     const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
@@ -331,5 +358,5 @@ void SurfaceBasis<EvalT, Traits>::computeJacobian(
   }
 
 }
-//----------------------------------------------------------------------
+
 }//namespace LCM
