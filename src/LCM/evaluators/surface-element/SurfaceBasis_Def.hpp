@@ -46,13 +46,15 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
     need_current_basis_ = true;
 
     // grab the current coords
-    PHX::MDField<ScalarT, Cell, Vertex, Dim> tmp(
+    PHX::MDField<ScalarT, Cell, Vertex, Dim>
+    tmp(
         p.get<std::string>("Current Coordinates Name"),
         dl->node_vector);
     current_coords_ = tmp;
 
     // set up the current basis
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> tmp2(
+    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+    tmp2(
         p.get<std::string>("Current Basis Name"),
         dl->qp_tensor);
     current_basis_ = tmp2;
@@ -62,10 +64,14 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   }
 
   // Get Dimensions
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::DataLayout::size_type>
+  dims;
+
   dl->node_vector->dimensions(dims);
 
-  int containerSize = dims[0];
+  int
+  container_size = dims[0];
+
   num_nodes_ = dims[1];
   num_surf_nodes_ = num_nodes_ / 2;
 
@@ -91,8 +97,8 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   ref_weights_.resize(num_qps_);
 
   // temp space for midplane coords
-  ref_midplane_coords_.resize(containerSize, num_surf_nodes_, num_dims_);
-  current_midplane_coords_.resize(containerSize, num_surf_nodes_, num_dims_);
+  ref_midplane_coords_.resize(container_size, num_surf_nodes_, num_dims_);
+  current_midplane_coords_.resize(container_size, num_surf_nodes_, num_dims_);
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
