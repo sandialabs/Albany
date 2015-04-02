@@ -40,8 +40,8 @@ public:
   /// \param[in] p Teuchos::ParameterList
   /// \param[in] dl RCP to Albany::Layout
   ///
-  SurfaceBasis(const Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  SurfaceBasis(Teuchos::ParameterList const & p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   ///
   /// Phalanx method to allocate space
@@ -60,7 +60,7 @@ public:
   /// \param midplaneCoords
   ///
   void computeReferenceMidplaneCoords(
-      const PHX::MDField<MeshScalarT, Cell, Vertex, Dim> refCoords,
+      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const refCoords,
       MFC & midplaneCoords);
 
   ///
@@ -69,7 +69,7 @@ public:
   /// \param midplaneCoords
   ///
   void computeCurrentMidplaneCoords(
-      const PHX::MDField<ScalarT, Cell, Vertex, Dim> currentCoords,
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> const currentCoords,
       SFC & midplaneCoords);
 
   ///

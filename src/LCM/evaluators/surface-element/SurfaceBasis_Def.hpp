@@ -16,8 +16,8 @@ namespace LCM {
 //
 template<typename EvalT, typename Traits>
 SurfaceBasis<EvalT, Traits>::SurfaceBasis(
-    const Teuchos::ParameterList& p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
+    Teuchos::ParameterList const & p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
     need_current_basis_(false),
     reference_coords_(
         p.get<std::string>("Reference Coordinates Name"),
@@ -42,22 +42,18 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
   // if current coordinates are being passed in,
   // compute and return the current basis
   // needed for the localization element, but not uncoupled transport
-  if (p.isType<std::string>("Current Coordinates Name")) {
+  if (p.isType<std::string>("Current Coordinates Name") == true) {
     need_current_basis_ = true;
 
     // grab the current coords
-    PHX::MDField<ScalarT, Cell, Vertex, Dim>
-    tmp(
+    current_coords_ =  PHX::MDField<ScalarT, Cell, Vertex, Dim>(
         p.get<std::string>("Current Coordinates Name"),
         dl->node_vector);
-    current_coords_ = tmp;
 
     // set up the current basis
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
-    tmp2(
+    current_basis_ =  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>(
         p.get<std::string>("Current Basis Name"),
         dl->qp_tensor);
-    current_basis_ = tmp2;
 
     this->addDependentField(current_coords_);
     this->addEvaluatedField(current_basis_);
@@ -122,7 +118,7 @@ void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
   this->utils.setFieldData(ref_dual_basis_, fm);
   this->utils.setFieldData(ref_normal_, fm);
   this->utils.setFieldData(ref_basis_, fm);
-  if (need_current_basis_) {
+  if (need_current_basis_ == true) {
     this->utils.setFieldData(current_coords_, fm);
     this->utils.setFieldData(current_basis_, fm);
   }
@@ -169,7 +165,7 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
-    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> coords,
+    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
     MFC & midplaneCoords)
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -189,7 +185,7 @@ void SurfaceBasis<EvalT, Traits>::computeReferenceMidplaneCoords(
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
-    PHX::MDField<ScalarT, Cell, Vertex, Dim> coords,
+    PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
     SFC & midplaneCoords)
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -216,12 +212,8 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
     // get the midplane coordinates
     std::vector<Intrepid::Vector<MeshScalarT> > midplaneNodes(num_surf_nodes_);
     for (int node(0); node < num_surf_nodes_; ++node)
-      midplaneNodes[node] = Intrepid::Vector<MeshScalarT>(
-          3,
-          midplaneCoords,
-          cell,
-          node,
-          0);
+      midplaneNodes[node] =
+          Intrepid::Vector<MeshScalarT>(3, midplaneCoords, cell, node, 0);
 
     Intrepid::Vector<MeshScalarT> g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
     //compute the base vectors
