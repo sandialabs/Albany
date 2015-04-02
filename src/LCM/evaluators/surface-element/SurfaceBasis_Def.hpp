@@ -267,9 +267,13 @@ computeDualBasisVectors(
       normal(cell, pt, 1) = g_2(1);
       normal(cell, pt, 2) = g_2(2);
 
-      g0 = cross(g_1, g_2) / dot(g_0, cross(g_1, g_2));
-      g1 = cross(g_0, g_2) / dot(g_1, cross(g_0, g_2));
-      g2 = cross(g_0, g_1) / dot(g_2, cross(g_0, g_1));
+      g0 = Intrepid::cross(g_1, g_2);
+      g1 = Intrepid::cross(g_0, g_2);
+      g2 = Intrepid::cross(g_0, g_1);
+
+      g0 = g0 / dot(g_0, g0);
+      g1 = g1 / dot(g_1, g1);
+      g2 = g2 / dot(g_2, g2);
 
       dual_basis(cell, pt, 0, 0) = g0(0);
       dual_basis(cell, pt, 0, 1) = g0(1);
