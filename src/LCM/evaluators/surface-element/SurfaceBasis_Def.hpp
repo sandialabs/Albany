@@ -23,18 +23,18 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
     cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
     intrepid_basis_(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
         Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
-    refBasis(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
-    refArea(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
-    refDualBasis(
+    ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
+    ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
+    ref_dual_basis_(
         p.get<std::string>("Reference Dual Basis Name"),
         dl->qp_tensor),
-    refNormal(p.get<std::string>("Reference Normal Name"), dl->qp_vector)
+    ref_normal_(p.get<std::string>("Reference Normal Name"), dl->qp_vector)
 {
   this->addDependentField(reference_coords_);
-  this->addEvaluatedField(refBasis);
-  this->addEvaluatedField(refArea);
-  this->addEvaluatedField(refDualBasis);
-  this->addEvaluatedField(refNormal);
+  this->addEvaluatedField(ref_basis_);
+  this->addEvaluatedField(ref_area_);
+  this->addEvaluatedField(ref_dual_basis_);
+  this->addEvaluatedField(ref_normal_);
 
   // if current coordinates are being passed in,
   // compute and return the current basis
@@ -104,10 +104,10 @@ void SurfaceBasis<EvalT, Traits>::postRegistrationSetup(
     PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(reference_coords_, fm);
-  this->utils.setFieldData(refArea, fm);
-  this->utils.setFieldData(refDualBasis, fm);
-  this->utils.setFieldData(refNormal, fm);
-  this->utils.setFieldData(refBasis, fm);
+  this->utils.setFieldData(ref_area_, fm);
+  this->utils.setFieldData(ref_dual_basis_, fm);
+  this->utils.setFieldData(ref_normal_, fm);
+  this->utils.setFieldData(ref_basis_, fm);
   if (need_current_basis_) {
     this->utils.setFieldData(currentCoords, fm);
     this->utils.setFieldData(currentBasis, fm);
@@ -125,17 +125,17 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     computeReferenceMidplaneCoords(reference_coords_, ref_midplane_coords_);
 
     // compute basis vectors
-    computeReferenceBaseVectors(ref_midplane_coords_, refBasis);
+    computeReferenceBaseVectors(ref_midplane_coords_, ref_basis_);
 
     // compute the dual
     computeDualBaseVectors(
         ref_midplane_coords_,
-        refBasis,
-        refNormal,
-        refDualBasis);
+        ref_basis_,
+        ref_normal_,
+        ref_dual_basis_);
 
     // compute the Jacobian
-    computeJacobian(refBasis, refDualBasis, refArea);
+    computeJacobian(ref_basis_, ref_dual_basis_, ref_area_);
 
     if (need_current_basis_) {
       // for the current configuration

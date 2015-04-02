@@ -151,54 +151,64 @@ private:
   ///
   /// Output: Reference basis
   ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refBasis;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>
+  ref_basis_;
 
   ///
   /// Output: Reference integration area
   ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint> refArea;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint>
+  ref_area_;
 
   ///
   /// Output: Reference dual basis
   ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> refDualBasis;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>
+  ref_dual_basis_;
 
   ///
   /// Output: Reference normal
   ///
-  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> refNormal;
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
+  ref_normal_;
 
   // if we need to compute the current bases (for mechanics)
   ///
   /// Optional Input: Coordinates in the current configuration
   ///
-  PHX::MDField<ScalarT, Cell, Vertex, Dim> currentCoords;
+  PHX::MDField<ScalarT, Cell, Vertex, Dim>
+  currentCoords;
 
   ///
   /// Optional Output: Current basis
   ///
-  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> currentBasis;
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+  currentBasis;
 
   ///
   /// Reference Cell FieldContainer for basis values
   ///
-  Intrepid::FieldContainer<RealType> refValues;
+  Intrepid::FieldContainer<RealType>
+  refValues;
 
   ///
   /// Reference Cell FieldContainer for basis gradients
   ///
-  Intrepid::FieldContainer<RealType> refGrads;
+  Intrepid::FieldContainer<RealType>
+  refGrads;
 
   ///
   /// Reference Cell FieldContainer for integration point locations
   ///
-  Intrepid::FieldContainer<RealType> refPoints;
+  Intrepid::FieldContainer<RealType>
+  refPoints;
 
   ///
   /// Reference Cell FieldContainer for integration weights
   ///
-  Intrepid::FieldContainer<RealType> refWeights;
+  Intrepid::FieldContainer<RealType>
+  refWeights;
 };
 }
 
-#endif
+#endif // SURFACE_BASIS_HPP
