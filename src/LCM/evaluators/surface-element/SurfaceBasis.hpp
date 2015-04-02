@@ -195,19 +195,19 @@ private:
   /// Reference Cell FieldContainer for basis gradients
   ///
   Intrepid::FieldContainer<RealType>
-  refGrads;
+  ref_grads_;
 
   ///
   /// Reference Cell FieldContainer for integration point locations
   ///
   Intrepid::FieldContainer<RealType>
-  refPoints;
+  ref_points_;
 
   ///
   /// Reference Cell FieldContainer for integration weights
   ///
   Intrepid::FieldContainer<RealType>
-  refWeights;
+  ref_weights_;
 };
 }
 

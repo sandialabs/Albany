@@ -21,7 +21,8 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
         p.get<std::string>("Reference Coordinates Name"),
         dl->vertices_vector),
     cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepid_basis_(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
+    intrepid_basis_(
+        p.get<Teuchos::RCP<Intrepid::Basis<RealType,
         Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     ref_basis_(p.get<std::string>("Reference Basis Name"), dl->qp_tensor),
     ref_area_(p.get<std::string>("Reference Area Name"), dl->qp_scalar),
@@ -81,18 +82,18 @@ SurfaceBasis<EvalT, Traits>::SurfaceBasis(
 
   // Allocate Temporary FieldContainers
   ref_values_.resize(num_surf_nodes_, num_qps_);
-  refGrads.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
-  refPoints.resize(num_qps_, num_surf_dims_);
-  refWeights.resize(num_qps_);
+  ref_grads_.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
+  ref_points_.resize(num_qps_, num_surf_dims_);
+  ref_weights_.resize(num_qps_);
 
   // temp space for midplane coords
   ref_midplane_coords_.resize(containerSize, num_surf_nodes_, num_dims_);
   current_midplane_coords_.resize(containerSize, num_surf_nodes_, num_dims_);
 
   // Pre-Calculate reference element quantitites
-  cubature_->getCubature(refPoints, refWeights);
-  intrepid_basis_->getValues(ref_values_, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 
   this->setName("SurfaceBasis" + PHX::typeAsString<EvalT>());
 }
@@ -205,8 +206,8 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
       g_1.clear();
       g_2.clear();
       for (int node(0); node < num_surf_nodes_; ++node) {
-        g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
-        g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
+        g_0 += ref_grads_(node, pt, 0) * midplaneNodes[node];
+        g_1 += ref_grads_(node, pt, 1) * midplaneNodes[node];
       }
       g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
 
@@ -246,8 +247,8 @@ computeCurrentBaseVectors(const SFC & midplaneCoords,
       g_1.clear();
       g_2.clear();
       for (int node(0); node < num_surf_nodes_; ++node) {
-        g_0 += refGrads(node, pt, 0) * midplaneNodes[node];
-        g_1 += refGrads(node, pt, 1) * midplaneNodes[node];
+        g_0 += ref_grads_(node, pt, 0) * midplaneNodes[node];
+        g_1 += ref_grads_(node, pt, 1) * midplaneNodes[node];
       }
       g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
 
@@ -325,7 +326,7 @@ void SurfaceBasis<EvalT, Traits>::computeJacobian(
               Intrepid::dot(
                   Intrepid::dot(G_2, Intrepid::transpose(dPhiInv) * dPhiInv),
                   G_2));
-      area(cell, pt) = jacobian * refWeights(pt);
+      area(cell, pt) = jacobian * ref_weights_(pt);
     }
   }
 
