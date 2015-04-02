@@ -132,7 +132,8 @@ postRegistrationSetup(
 //
 template<typename EvalT, typename Traits>
 void
-SurfaceBasis<EvalT, Traits>::evaluateFields(
+SurfaceBasis<EvalT, Traits>::
+evaluateFields(
     typename Traits::EvalData workset)
 {
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -174,56 +175,6 @@ SurfaceBasis<EvalT, Traits>::
 computeMidplaneCoords(
     PHX::MDField<ST, Cell, Vertex, Dim> const coords,
     Intrepid::FieldContainer<ST> & midplane_coords)
-{
-  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
-    // compute the mid-plane coordinates
-    for (int node(0); node < num_surf_nodes_; ++node) {
-
-      int
-      top_node = node + num_surf_nodes_;
-
-      for (int dim(0); dim < num_dims_; ++dim) {
-        midplane_coords(cell, node, dim) =
-            0.5 * (coords(cell, node, dim) + coords(cell, top_node, dim));
-      }
-    }
-  }
-}
-
-//
-//
-//
-template<typename EvalT, typename Traits>
-void
-SurfaceBasis<EvalT, Traits>::
-computeReferenceMidplaneCoords(
-    PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
-    MFC & midplane_coords)
-{
-  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
-    // compute the mid-plane coordinates
-    for (int node(0); node < num_surf_nodes_; ++node) {
-
-      int
-      top_node = node + num_surf_nodes_;
-
-      for (int dim(0); dim < num_dims_; ++dim) {
-        midplane_coords(cell, node, dim) =
-            0.5 * (coords(cell, node, dim) + coords(cell, top_node, dim));
-      }
-    }
-  }
-}
-
-//
-//
-//
-template<typename EvalT, typename Traits>
-void
-SurfaceBasis<EvalT, Traits>::
-computeCurrentMidplaneCoords(
-    PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
-    SFC & midplane_coords)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
     // compute the mid-plane coordinates
@@ -292,96 +243,8 @@ computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
 template<typename EvalT, typename Traits>
 void
 SurfaceBasis<EvalT, Traits>::
-computeReferenceBasisVectors(MFC const & midplane_coords,
-    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis)
-{
-  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
-    // get the midplane coordinates
-    std::vector<Intrepid::Vector<MeshScalarT> >
-    midplane_nodes(num_surf_nodes_);
-
-    for (int node(0); node < num_surf_nodes_; ++node)
-      midplane_nodes[node] =
-          Intrepid::Vector<MeshScalarT>(3, midplane_coords, cell, node, 0);
-
-    Intrepid::Vector<MeshScalarT>
-    g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
-
-    //compute the base vectors
-    for (int pt(0); pt < num_qps_; ++pt) {
-      g_0.clear();
-      g_1.clear();
-      g_2.clear();
-      for (int node(0); node < num_surf_nodes_; ++node) {
-        g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
-        g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
-      }
-      g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
-
-      basis(cell, pt, 0, 0) = g_0(0);
-      basis(cell, pt, 0, 1) = g_0(1);
-      basis(cell, pt, 0, 2) = g_0(2);
-      basis(cell, pt, 1, 0) = g_1(0);
-      basis(cell, pt, 1, 1) = g_1(1);
-      basis(cell, pt, 1, 2) = g_1(2);
-      basis(cell, pt, 2, 0) = g_2(0);
-      basis(cell, pt, 2, 1) = g_2(1);
-      basis(cell, pt, 2, 2) = g_2(2);
-    }
-  }
-}
-
-//
-//
-//
-template<typename EvalT, typename Traits>
-void
-SurfaceBasis<EvalT, Traits>::
-computeCurrentBasisVectors(SFC const & midplane_coords,
-    PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
-{
-  for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
-    // get the midplane coordinates
-    std::vector<Intrepid::Vector<ScalarT> > midplane_nodes(num_surf_nodes_);
-    for (int node(0); node < num_surf_nodes_; ++node)
-      midplane_nodes[node] =
-          Intrepid::Vector<ScalarT>(3, midplane_coords, cell, node, 0);
-
-    Intrepid::Vector<ScalarT>
-    g_0(0, 0, 0), g_1(0, 0, 0), g_2(0, 0, 0);
-
-    //compute the base vectors
-    for (int pt(0); pt < num_qps_; ++pt) {
-      g_0.clear();
-      g_1.clear();
-      g_2.clear();
-      for (int node(0); node < num_surf_nodes_; ++node) {
-        g_0 += ref_grads_(node, pt, 0) * midplane_nodes[node];
-        g_1 += ref_grads_(node, pt, 1) * midplane_nodes[node];
-      }
-      g_2 = cross(g_0, g_1) / norm(cross(g_0, g_1));
-
-      basis(cell, pt, 0, 0) = g_0(0);
-      basis(cell, pt, 0, 1) = g_0(1);
-      basis(cell, pt, 0, 2) = g_0(2);
-      basis(cell, pt, 1, 0) = g_1(0);
-      basis(cell, pt, 1, 1) = g_1(1);
-      basis(cell, pt, 1, 2) = g_1(2);
-      basis(cell, pt, 2, 0) = g_2(0);
-      basis(cell, pt, 2, 1) = g_2(1);
-      basis(cell, pt, 2, 2) = g_2(2);
-    }
-  }
-}
-
-//
-//
-//
-template<typename EvalT, typename Traits>
-void
-SurfaceBasis<EvalT, Traits>::
 computeDualBasisVectors(
-    MFC const & midplane_coords,
+    Intrepid::FieldContainer<MeshScalarT> const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis)

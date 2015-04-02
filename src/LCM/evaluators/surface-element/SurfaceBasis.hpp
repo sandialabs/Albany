@@ -32,8 +32,6 @@ class SurfaceBasis: public PHX::EvaluatorWithBaseImpl<Traits>,
 public:
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
-  typedef Intrepid::FieldContainer<ScalarT> SFC;
-  typedef Intrepid::FieldContainer<MeshScalarT> MFC;
 
   ///
   /// Constructor
@@ -68,26 +66,6 @@ public:
       Intrepid::FieldContainer<ST> & midplane_coords);
 
   ///
-  /// Takes the reference coordinates and computes the midplane
-  /// \param refCoords
-  /// \param midplane_coords
-  ///
-  void
-  computeReferenceMidplaneCoords(
-      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const coords,
-      MFC & midplane_coords);
-
-  ///
-  /// Takes the current coordinates and computes the midplane
-  /// \param current_coords
-  /// \param midplane_coords
-  ///
-  void
-  computeCurrentMidplaneCoords(
-      PHX::MDField<ScalarT, Cell, Vertex, Dim> const coords,
-      SFC & midplane_coords);
-
-  ///
   /// Computes basis from the reference midplane
   /// \param midplane_coords
   /// \param basis
@@ -98,24 +76,6 @@ public:
       PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
-  /// Computes Reference configuration Bases from the reference midplane
-  /// \param midplane_coords
-  /// \param basis
-  ///
-  void
-  computeReferenceBasisVectors(MFC const & midplane_coords,
-      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis);
-
-  ///
-  /// Computes current configuration Bases from the current midplane
-  /// \param midplane_coords
-  /// \param basis
-  ///
-  void
-  computeCurrentBasisVectors(SFC const & midplane_coords,
-      PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis);
-
-  ///
   /// Computes the Dual from the midplane and reference bases
   /// \param midplane_coords
   /// \param basis
@@ -123,7 +83,8 @@ public:
   /// \param dual_basis
   ///
   void
-  computeDualBasisVectors(MFC const & midplane_coords,
+  computeDualBasisVectors(
+      Intrepid::FieldContainer<MeshScalarT> const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
