@@ -85,7 +85,7 @@ public:
   /// \param midplane_coords
   /// \param basis
   ///
-  void computeCurrentBaseVectors(SFC const & midplane_coords,
+  void computeCurrentBasisVectors(SFC const & midplane_coords,
       PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
@@ -95,7 +95,7 @@ public:
   /// \param normal
   /// \param dual_basis
   ///
-  void computeDualBaseVectors(MFC const & midplane_coords,
+  void computeDualBasisVectors(MFC const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);

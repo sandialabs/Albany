@@ -140,7 +140,7 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
     computeReferenceBasisVectors(ref_midplane_coords_, ref_basis_);
 
     // compute the dual
-    computeDualBaseVectors(
+    computeDualBasisVectors(
         ref_midplane_coords_,
         ref_basis_,
         ref_normal_,
@@ -155,7 +155,7 @@ void SurfaceBasis<EvalT, Traits>::evaluateFields(
       computeCurrentMidplaneCoords(current_coords_, current_midplane_coords_);
 
       // compute base vectors
-      computeCurrentBaseVectors(current_midplane_coords_, current_basis_);
+      computeCurrentBasisVectors(current_midplane_coords_, current_basis_);
     }
   }
 }
@@ -255,7 +255,7 @@ computeReferenceBasisVectors(MFC const & midplane_coords,
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
-computeCurrentBaseVectors(SFC const & midplane_coords,
+computeCurrentBasisVectors(SFC const & midplane_coords,
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplane_coords.dimension(0); ++cell) {
@@ -296,7 +296,7 @@ computeCurrentBaseVectors(SFC const & midplane_coords,
 //
 //
 template<typename EvalT, typename Traits>
-void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
+void SurfaceBasis<EvalT, Traits>::computeDualBasisVectors(
     MFC const & midplane_coords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
