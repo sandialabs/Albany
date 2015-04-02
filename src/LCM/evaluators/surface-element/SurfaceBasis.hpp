@@ -57,58 +57,58 @@ public:
   ///
   /// Takes the reference coordinates and computes the midplane
   /// \param refCoords
-  /// \param midplaneCoords
+  /// \param midplane_coords
   ///
   void computeReferenceMidplaneCoords(
-      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const refCoords,
-      MFC & midplaneCoords);
+      PHX::MDField<MeshScalarT, Cell, Vertex, Dim> const ref_coords,
+      MFC & midplane_coords);
 
   ///
   /// Takes the current coordinates and computes the midplane
-  /// \param currentCoords
-  /// \param midplaneCoords
+  /// \param current_coords
+  /// \param midplane_coords
   ///
   void computeCurrentMidplaneCoords(
-      PHX::MDField<ScalarT, Cell, Vertex, Dim> const currentCoords,
-      SFC & midplaneCoords);
+      PHX::MDField<ScalarT, Cell, Vertex, Dim> const current_coords,
+      SFC & midplane_coords);
 
   ///
   /// Computes Reference configuration Bases from the reference midplane
-  /// \param midplaneCoords
+  /// \param midplane_coords
   /// \param basis
   ///
-  void computeReferenceBaseVectors(const MFC & midplaneCoords,
+  void computeReferenceBaseVectors(MFC const & midplane_coords,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
   /// Computes current configuration Bases from the current midplane
-  /// \param midplaneCoords
+  /// \param midplane_coords
   /// \param basis
   ///
-  void computeCurrentBaseVectors(const SFC & midplaneCoords,
+  void computeCurrentBaseVectors(SFC const & midplane_coords,
       PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis);
 
   ///
   /// Computes the Dual from the midplane and reference bases
-  /// \param midplaneCoords
+  /// \param midplane_coords
   /// \param basis
   /// \param normal
-  /// \param dualBasis
+  /// \param dual_basis
   ///
-  void computeDualBaseVectors(const MFC & midplaneCoords,
-      const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
+  void computeDualBaseVectors(MFC const & midplane_coords,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
-      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis);
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
 
   ///
   /// Computes the jacobian mapping - da/dA
   /// \param basis
-  /// \param dualBasis
+  /// \param dual_basis
   /// \param area
   ///
   void computeJacobian(
-      const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
-      const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
       PHX::MDField<MeshScalarT, Cell, QuadPoint> area);
 
 private:
@@ -137,13 +137,13 @@ private:
   intrepid_basis_;
 
   ///
-  /// Local FieldContainer to store the reference midplaneCoords
+  /// Local FieldContainer to store the reference midplane_coords
   ///
   Intrepid::FieldContainer<MeshScalarT>
   ref_midplane_coords_;
 
   ///
-  /// Local FieldContainer to store the current midplaneCoords
+  /// Local FieldContainer to store the current midplane_coords
   ///
   Intrepid::FieldContainer<ScalarT>
   current_midplane_coords_;

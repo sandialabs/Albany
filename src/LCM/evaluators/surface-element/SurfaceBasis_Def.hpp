@@ -205,7 +205,7 @@ void SurfaceBasis<EvalT, Traits>::computeCurrentMidplaneCoords(
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
-computeReferenceBaseVectors(const MFC & midplaneCoords,
+computeReferenceBaseVectors(MFC const & midplaneCoords,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -245,7 +245,7 @@ computeReferenceBaseVectors(const MFC & midplaneCoords,
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::
-computeCurrentBaseVectors(const SFC & midplaneCoords,
+computeCurrentBaseVectors(SFC const & midplaneCoords,
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim> basis)
 {
   for (int cell(0); cell < midplaneCoords.dimension(0); ++cell) {
@@ -289,8 +289,8 @@ computeCurrentBaseVectors(const SFC & midplaneCoords,
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
-    const MFC & midplaneCoords,
-    const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
+    MFC const & midplaneCoords,
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
     PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis)
 {
@@ -334,8 +334,8 @@ void SurfaceBasis<EvalT, Traits>::computeDualBaseVectors(
 //
 template<typename EvalT, typename Traits>
 void SurfaceBasis<EvalT, Traits>::computeJacobian(
-    const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> basis,
-    const PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dualBasis,
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
+    PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dualBasis,
     PHX::MDField<MeshScalarT, Cell, QuadPoint> area)
 {
   const int worksetSize = basis.dimension(0);
