@@ -7,12 +7,11 @@
 #ifndef ALBANY_PUMIVTK_HPP
 #define ALBANY_PUMIVTK_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_PUMIOutput.hpp"
 
 namespace Albany {
 
-class PUMIVtk {
+class PUMIVtk : public PUMIOutput {
 
   public:
 

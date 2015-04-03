@@ -19,8 +19,6 @@
 
 #include "Albany_AbstractPUMIDiscretization.hpp"
 #include "Albany_PUMIMeshStruct.hpp"
-#include "Albany_PUMIVtk.hpp"
-#include "Albany_PUMIExodus.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 #ifdef ALBANY_EPETRA
@@ -30,8 +28,9 @@
 
 namespace Albany {
 
-template<class Output>
-  class PUMIDiscretization : public AbstractPUMIDiscretization {
+class PUMIOutput;
+
+class PUMIDiscretization : public AbstractPUMIDiscretization {
   public:
 
     //! Constructor
@@ -182,7 +181,7 @@ template<class Output>
     void createField(const char* name, int value_type);
 
     // Rename exodus output file when the problem is resized
-    void reNameExodusOutput(const std::string& str){ meshOutput.setFileName(str);}
+    void reNameExodusOutput(const std::string& str);
 
     /* DAI: old Epetra functions still used by parts of Albany/Trilinos
        Remove when we get to full Tpetra */
@@ -334,7 +333,7 @@ template<class Output>
   protected:
 
     //! Output object
-    Output meshOutput;
+    PUMIOutput* meshOutput;
 
     //! Stk Mesh Objects
 
@@ -435,15 +434,5 @@ template<class Output>
   };
 
 }
-
-// Define macro for explicit template instantiation
-#define PUMI_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
-  template class name<Albany::PUMIVtk>;
-#define PUMI_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name) \
-  template class name<Albany::PUMIExodus>;
-
-#define PUMI_INSTANTIATE_TEMPLATE_CLASS(name) \
-  PUMI_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
-  PUMI_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name)
 
 #endif // ALBANY_PUMIDISCRETIZATION_HPP

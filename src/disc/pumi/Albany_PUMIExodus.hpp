@@ -8,12 +8,11 @@
 #ifndef ALBANY_PUMIEXODUS_HPP
 #define ALBANY_PUMIEXODUS_HPP
 
-#include "Teuchos_RCP.hpp"
-#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_PUMIOutput.hpp"
 
 namespace Albany {
 
-class PUMIExodus {
+class PUMIExodus : public PUMIOutput {
 
   public:
 

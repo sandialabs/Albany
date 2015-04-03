@@ -382,16 +382,9 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       }
       break;
 #ifdef ALBANY_SCOREC
-
-      case Albany::AbstractMeshStruct::PUMI_VTK_MS: {
+      case Albany::AbstractMeshStruct::PUMI_MS: {
         Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::PUMIDiscretization<Albany::PUMIVtk>(ms, commT, rigidBodyModes));
-      }
-      break;
-
-      case Albany::AbstractMeshStruct::PUMI_EXODUS_MS: {
-        Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
-        return Teuchos::rcp(new Albany::PUMIDiscretization<Albany::PUMIExodus>(ms, commT, rigidBodyModes));
+        return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
       }
       break;
 #endif

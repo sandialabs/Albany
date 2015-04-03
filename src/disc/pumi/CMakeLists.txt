@@ -13,18 +13,16 @@
     Albany_PUMINodeData.cpp
     Albany_PUMIVtk.cpp
     Albany_PUMIExodus.cpp
+    Albany_PUMIOutput.cpp
     )
   SET(HEADERS
     Albany_AbstractPUMIDiscretization.hpp
     Albany_PUMIMeshStruct.hpp
     Albany_PUMIDiscretization.hpp
-    Albany_PUMIDiscretization_Def.hpp
     Albany_PUMIQPData.hpp
     Albany_PUMIQPData_Def.hpp
     Albany_PUMINodeData.hpp
     Albany_PUMINodeData_Def.hpp
-    Albany_PUMIVtk.hpp
-    Albany_PUMIExodus.hpp
     )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}

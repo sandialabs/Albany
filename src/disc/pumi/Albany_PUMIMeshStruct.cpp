@@ -321,10 +321,7 @@ Albany::PUMIMeshStruct::getMeshSpecs()
 Albany::AbstractMeshStruct::msType
 Albany::PUMIMeshStruct::meshSpecsType()
 {
-  if(outputFileName.find("exo") != std::string::npos)
-    return PUMI_EXODUS_MS;
-  else
-    return PUMI_VTK_MS;
+  return PUMI_MS;
 }
 
 int Albany::PUMIMeshStruct::computeWorksetSize(const int worksetSizeMax,
