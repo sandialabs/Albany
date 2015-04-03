@@ -13,8 +13,8 @@ namespace LCM {
 //**********************************************************************
   template<typename EvalT, typename Traits>
   SurfaceVectorJump<EvalT, Traits>::
-  SurfaceVectorJump(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl) :
+  SurfaceVectorJump(const Teuchos::ParameterList & p,
+                    const Teuchos::RCP<Albany::Layouts> & dl) :
       cubature     (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
       intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
       vector       (p.get<std::string>("Vector Name"),dl->node_vector),
@@ -61,7 +61,7 @@ namespace LCM {
   //**********************************************************************
   template<typename EvalT, typename Traits>
   void SurfaceVectorJump<EvalT, Traits>::postRegistrationSetup(
-      typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
+      typename Traits::SetupData d, PHX::FieldManager<Traits> & fm)
   {
     this->utils.setFieldData(vector, fm);
     this->utils.setFieldData(jump, fm);

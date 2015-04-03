@@ -29,11 +29,11 @@ class SurfaceVectorJump : public PHX::EvaluatorWithBaseImpl<Traits>,
 
 public:
 
-  SurfaceVectorJump(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl);
+  SurfaceVectorJump(const Teuchos::ParameterList & p,
+                    const Teuchos::RCP<Albany::Layouts> & dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits> & vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
