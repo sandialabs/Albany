@@ -138,7 +138,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
     } // end QuadPoint
     // Single scalar at center of the workset
     else if(dim.size() == 1 && st.entity == StateStruct::WorksetValue) { // A single value that applies over the entire workset (time)
-      scalarValue_states.push_back(st.name);
+      scalarValue_states.push_back(&st.name); // Just save a pointer to the name allocated in st
     } // End scalar at center of element
     else if((st.entity == StateStruct::NodalData) ||(st.entity == StateStruct::NodalDataToElemNode) || (st.entity == StateStruct::NodalDistParameter)) { // Data at the node points
 

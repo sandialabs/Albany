@@ -1605,12 +1605,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
   }
 
   typedef Albany::AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarState QPScalarState ;
+  typedef Albany::AbstractSTKFieldContainer::QPScalarState QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState QPTensorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensor3State QPTensor3State;
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState ;
+  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState;
   typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
   typedef Albany::AbstractSTKFieldContainer::TensorState TensorState;
 
@@ -1642,13 +1642,13 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
-    for (QPTensorState::iterator qpts = qptensor_states.begin();
-              qpts != qptensor_states.end(); ++qpts){
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
+    for (QPTensorState::iterator qptsa = qptensor_states.begin();
+              qptsa != qptensor_states.end(); ++qptsa){
+      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qptsa, buck);
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       MDArray ar = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qptsa)->name()] = ar;
     }
     for (QPTensor3State::iterator qpts = qptensor3_states.begin();
               qpts != qptensor3_states.end(); ++qpts){
@@ -1658,15 +1658,16 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-    for (ScalarValueState::iterator svs = scalarValue_states.begin();
-              svs != scalarValue_states.end(); ++svs){
+//    for (ScalarValueState::iterator svs = scalarValue_states.begin();
+//              svs != scalarValue_states.end(); ++svs){
+    for (int i = 0; i < scalarValue_states.size(); i++){
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*svs], size);
+      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*scalarValue_states[i]], size);
       MDArray ar = array;
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
 //std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
+      stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;
     }
   }
 

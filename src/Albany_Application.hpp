@@ -56,7 +56,9 @@
 #include "EpetraExt_MultiComm.h"
 
 #include "LOCA_Epetra_Group.H"
+#ifdef ALBANY_TEKO
 #include "Teko_InverseLibrary.hpp"
+#endif
 #endif
 
 #ifdef ALBANY_MOR
@@ -717,7 +719,7 @@ namespace Albany {
     //! Private to prohibit copying
     Application& operator=(const Application&);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
     //! Call to Teko to build strided block operator
     Teuchos::RCP<Epetra_Operator> buildWrappedOperator(
                            const Teuchos::RCP<Epetra_Operator>& Jac,
@@ -1020,7 +1022,7 @@ namespace Albany {
 
     unsigned int neq, spatial_dimension, tangent_deriv_dim;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;
     Teuchos::RCP<Teko::InverseFactory> inverseFac;

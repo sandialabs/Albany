@@ -31,9 +31,11 @@
   #include "STKMeshData.hpp"
 #endif
 
+#ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
 #ifdef ALBANY_EPETRA
 #include "Teko_StridedEpetraOperator.hpp"
+#endif
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
@@ -223,8 +225,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   determinePiroSolver(params);
 
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
+#ifdef ALBANY_TEKO
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
+#endif
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -539,11 +543,11 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
-#if ALBANY_EPETRA
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
 {
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
    //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
    inverseLib = Teko::InverseLibrary::buildFromParameterList(tekoParams->sublist("Inverse Factory Library"));
    inverseLib->PrintAvailableInverses(*out);
@@ -565,6 +569,9 @@ getPreconditioner()
    TEUCHOS_ASSERT(neq==sum);
 
    return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
+#else
+   return Teuchos::null; 
+#endif
 }
 
 RCP<const Epetra_Vector>
@@ -575,7 +582,6 @@ getInitialSolution() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionT(), *initial_x, comm);
   return initial_x;
 }
-#endif
 
 RCP<const Tpetra_Vector>
 Albany::Application::
@@ -1221,12 +1227,12 @@ computeGlobalJacobianT(const double alpha,
     countRes++;  //increment residual counter
 }
 
-#if ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
                             const RCP<Epetra_Operator>& prec)
 {
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
   *out << "Computing WPrec by Teko" << std::endl;
@@ -1238,8 +1244,8 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
 
   wrappedJac = buildWrappedOperator(jac, wrappedJac);
   blockPrec->rebuildInverseOperator(wrappedJac);
-}
 #endif
+}
 
 void
 Albany::Application::
@@ -3696,7 +3702,7 @@ postRegSetup(std::string eval)
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
 RCP<Epetra_Operator>
 Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
                                           const RCP<Epetra_Operator>& wrapInput,
