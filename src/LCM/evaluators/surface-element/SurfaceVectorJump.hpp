@@ -45,11 +45,11 @@ private:
   // Input:
   //! Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> >
-  cubature;
+  cubature_;
 
   //! Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-  intrepidBasis;
+  intrepid_basis_;
 
   //! Vector to take the jump of
   PHX::MDField<ScalarT, Cell, Vertex, Dim>
@@ -57,7 +57,7 @@ private:
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType>
-  refValues;
+  ref_values_;
 
   Intrepid::FieldContainer<RealType>
   refGrads;

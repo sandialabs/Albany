@@ -15,8 +15,8 @@ template<typename EvalT, typename Traits>
 SurfaceVectorJump<EvalT, Traits>::
 SurfaceVectorJump(const Teuchos::ParameterList & p,
     const Teuchos::RCP<Albany::Layouts> & dl) :
-    cubature(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepidBasis(
+    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+    intrepid_basis_(
         p
             .get<
                 Teuchos::RCP<
@@ -37,7 +37,7 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
   numNodes = dims[1];
   numDims = dims[2];
 
-  numQPs = cubature->getNumPoints();
+  numQPs = cubature_->getNumPoints();
 
   numPlaneNodes = numNodes / 2;
   numPlaneDims = numDims - 1;
@@ -47,20 +47,20 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
   std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
   std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
   std::cout << " numQPs: " << numQPs << std::endl;
-  std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
-  std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
+  std::cout << " cubature->getNumPoints(): " << cubature_->getNumPoints() << std::endl;
+  std::cout << " cubature->getDimension(): " << cubature_->getDimension() << std::endl;
 #endif
 
   // Allocate Temporary FieldContainers
-  refValues.resize(numPlaneNodes, numQPs);
+  ref_values_.resize(numPlaneNodes, numQPs);
   refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
   refPoints.resize(numQPs, numPlaneDims);
   refWeights.resize(numQPs);
 
   // Pre-Calculate reference element quantitites
-  cubature->getCubature(refPoints, refWeights);
-  intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+  cubature_->getCubature(refPoints, refWeights);
+  intrepid_basis_->getValues(ref_values_, refPoints, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -86,13 +86,13 @@ void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
       for (int node = 0; node < numPlaneNodes; ++node) {
         int topNode = node + numPlaneNodes;
         vecA += Intrepid::Vector<ScalarT>(
-            refValues(node, pt) * vector(cell, node, 0),
-            refValues(node, pt) * vector(cell, node, 1),
-            refValues(node, pt) * vector(cell, node, 2));
+            ref_values_(node, pt) * vector(cell, node, 0),
+            ref_values_(node, pt) * vector(cell, node, 1),
+            ref_values_(node, pt) * vector(cell, node, 2));
         vecB += Intrepid::Vector<ScalarT>(
-            refValues(node, pt) * vector(cell, topNode, 0),
-            refValues(node, pt) * vector(cell, topNode, 1),
-            refValues(node, pt) * vector(cell, topNode, 2));
+            ref_values_(node, pt) * vector(cell, topNode, 0),
+            ref_values_(node, pt) * vector(cell, topNode, 1),
+            ref_values_(node, pt) * vector(cell, topNode, 2));
       }
       vecJump = vecB - vecA;
       jump(cell, pt, 0) = vecJump(0);
