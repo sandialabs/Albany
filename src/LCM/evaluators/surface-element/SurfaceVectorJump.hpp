@@ -76,19 +76,19 @@ private:
   workset_size_;
 
   unsigned int
-  numNodes;
+  num_nodes_;
 
   unsigned int
-  numQPs;
+  num_qps_;
 
   unsigned int
-  numDims;
+  num_dims_;
 
   unsigned int
-  numPlaneNodes;
+  num_plane_nodes_;
 
   unsigned int
-  numPlaneDims;
+  num_plane_dims_;
 };
 }
 

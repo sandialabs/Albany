@@ -34,28 +34,28 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
   workset_size_ = dims[0];
-  numNodes = dims[1];
-  numDims = dims[2];
+  num_nodes_ = dims[1];
+  num_dims_ = dims[2];
 
-  numQPs = cubature_->getNumPoints();
+  num_qps_ = cubature_->getNumPoints();
 
-  numPlaneNodes = numNodes / 2;
-  numPlaneDims = numDims - 1;
+  num_plane_nodes_ = num_nodes_ / 2;
+  num_plane_dims_ = num_dims_ - 1;
 
 #ifdef ALBANY_VERBOSE
   std::cout << "in Surface Vector Jump" << std::endl;
-  std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
-  std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
-  std::cout << " numQPs: " << numQPs << std::endl;
+  std::cout << " numPlaneNodes: " << num_plane_nodes_ << std::endl;
+  std::cout << " numPlaneDims: " << num_plane_dims_ << std::endl;
+  std::cout << " numQPs: " << num_qps_ << std::endl;
   std::cout << " cubature->getNumPoints(): " << cubature_->getNumPoints() << std::endl;
   std::cout << " cubature->getDimension(): " << cubature_->getDimension() << std::endl;
 #endif
 
   // Allocate Temporary FieldContainers
-  ref_values_.resize(numPlaneNodes, numQPs);
-  ref_grads_.resize(numPlaneNodes, numQPs, numPlaneDims);
-  ref_points_.resize(numQPs, numPlaneDims);
-  ref_weights_.resize(numQPs);
+  ref_values_.resize(num_plane_nodes_, num_qps_);
+  ref_grads_.resize(num_plane_nodes_, num_qps_, num_plane_dims_);
+  ref_points_.resize(num_qps_, num_plane_dims_);
+  ref_weights_.resize(num_qps_);
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
@@ -80,11 +80,11 @@ void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
   Intrepid::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int pt = 0; pt < numQPs; ++pt) {
+    for (int pt = 0; pt < num_qps_; ++pt) {
       vecA.clear();
       vecB.clear();
-      for (int node = 0; node < numPlaneNodes; ++node) {
-        int topNode = node + numPlaneNodes;
+      for (int node = 0; node < num_plane_nodes_; ++node) {
+        int topNode = node + num_plane_nodes_;
         vecA += Intrepid::Vector<ScalarT>(
             ref_values_(node, pt) * vector_(cell, node, 0),
             ref_values_(node, pt) * vector_(cell, node, 1),
