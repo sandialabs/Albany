@@ -16,11 +16,8 @@ SurfaceVectorJump<EvalT, Traits>::
 SurfaceVectorJump(const Teuchos::ParameterList & p,
     const Teuchos::RCP<Albany::Layouts> & dl) :
     cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
-    intrepid_basis_(
-        p
-            .get<
-                Teuchos::RCP<
-                    Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >(
+    intrepid_basis_(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
+        Intrepid::FieldContainer<RealType> > > >(
             "Intrepid Basis")),
     vector_(p.get<std::string>("Vector Name"), dl->node_vector),
     jump_(p.get<std::string>("Vector Jump Name"), dl->qp_vector)
@@ -43,12 +40,14 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
   num_plane_dims_ = num_dims_ - 1;
 
 #ifdef ALBANY_VERBOSE
-  std::cout << "in Surface Vector Jump" << std::endl;
-  std::cout << " numPlaneNodes: " << num_plane_nodes_ << std::endl;
-  std::cout << " numPlaneDims: " << num_plane_dims_ << std::endl;
-  std::cout << " numQPs: " << num_qps_ << std::endl;
-  std::cout << " cubature->getNumPoints(): " << cubature_->getNumPoints() << std::endl;
-  std::cout << " cubature->getDimension(): " << cubature_->getDimension() << std::endl;
+  std::cout << "in Surface Vector Jump" << '\n';
+  std::cout << " num_plane_nodes_: " << num_plane_nodes_ << '\n';
+  std::cout << " num_plane_dims_: " << num_plane_dims_ << '\n';
+  std::cout << " num_qps_: " << num_qps_ << '\n';
+  std::cout << " cubature_->getNumPoints(): ";
+  std::cout << cubature_->getNumPoints() << '\n';
+  std::cout << " cubature_->getDimension(): ";
+  std::cout << cubature_->getDimension() << '\n';
 #endif
 
   // Allocate Temporary FieldContainers
@@ -59,7 +58,10 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
-  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(
+      ref_values_,
+      ref_points_,
+      Intrepid::OPERATOR_VALUE);
   intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 }
 
@@ -77,12 +79,13 @@ template<typename EvalT, typename Traits>
 void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
     typename Traits::EvalData workset)
 {
-  Intrepid::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
+  Intrepid::Vector<ScalarT>
+  vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
 
   for (int cell = 0; cell < workset.numCells; ++cell) {
     for (int pt = 0; pt < num_qps_; ++pt) {
-      vecA.clear();
-      vecB.clear();
+      vecA.fill(Intrepid::ZEROS);
+      vecB.fill(Intrepid::ZEROS);
       for (int node = 0; node < num_plane_nodes_; ++node) {
         int topNode = node + num_plane_nodes_;
         vecA += Intrepid::Vector<ScalarT>(
