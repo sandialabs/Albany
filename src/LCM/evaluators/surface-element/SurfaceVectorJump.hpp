@@ -53,24 +53,24 @@ private:
 
   //! Vector to take the jump of
   PHX::MDField<ScalarT, Cell, Vertex, Dim>
-  vector;
+  vector_;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType>
   ref_values_;
 
   Intrepid::FieldContainer<RealType>
-  refGrads;
+  ref_grads_;
 
   Intrepid::FieldContainer<RealType>
-  refPoints;
+  ref_points_;
 
   Intrepid::FieldContainer<RealType>
-  refWeights;
+  ref_weights_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
-  jump;
+  jump_;
 
   unsigned int
   worksetSize;
