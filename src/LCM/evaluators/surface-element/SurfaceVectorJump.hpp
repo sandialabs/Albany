@@ -73,7 +73,7 @@ private:
   jump_;
 
   unsigned int
-  worksetSize;
+  workset_size_;
 
   unsigned int
   numNodes;

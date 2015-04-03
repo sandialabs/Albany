@@ -33,7 +33,7 @@ SurfaceVectorJump(const Teuchos::ParameterList & p,
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
-  worksetSize = dims[0];
+  workset_size_ = dims[0];
   numNodes = dims[1];
   numDims = dims[2];
 
