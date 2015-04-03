@@ -702,6 +702,10 @@ double LCM::PeridigmManager::obcEvaluateFunctional(const Teuchos::RCP<const Tpet
     return 0.0;
   }
 
+  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField =
+    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
+
   // Set up access to the current displacements of the nodes in the solid elements
   Teuchos::ArrayRCP<const ST> albanyCurrentDisplacements = albanySolutionVector->getData();
   const Teuchos::RCP<const Tpetra_Map> albanyMap = albanySolutionVector->getMap();
@@ -719,25 +723,60 @@ double LCM::PeridigmManager::obcEvaluateFunctional(const Teuchos::RCP<const Tpet
     }
   }
 
+  // We're interested in a single point in a single element in a three-dimensional simulation
+  int numPoints = 1;
+  int numDim = 3;
+
+  Intrepid::FieldContainer<RealType> physPoints;
+  physPoints.resize(numPoints, numDim);
+
+  Intrepid::FieldContainer<RealType> refPoints;
+  refPoints.resize(numPoints, numDim);
+
+  Intrepid::FieldContainer<RealType> values;
+  values.resize(numPoints, numDim);
+
   // Compute the difference in displacements at each peridynamic node
   Epetra_Vector displacementDiff(obcPeridynamicNodeCurrentCoords->Map());
   for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
 
-    // NEED TO APPLY INTREPID TOOLS HERE TO PROPERLY EVALUATE THE DISPLACEMENT
     int numNodes = bulkData->num_nodes(obcDataPoints[iEvalPt].albanyElement);
     const stk::mesh::Entity* nodes = bulkData->begin_nodes(obcDataPoints[iEvalPt].albanyElement);
 
-    // DJL temp hack until I figure out the Intrepid tools
-    int globalNodeId = bulkData->identifier(nodes[0]) - 1;
-    albanyLocalId = albanyMap->getLocalElement(3*globalNodeId);
-    std::vector<double> albanyDisplacement(3);
-    for(int dof=0 ; dof<3 ; dof++){
-      albanyDisplacement[dof] = albanyCurrentDisplacements[albanyLocalId+dof];
-    }
-    // DJL end temp hack
+    Intrepid::FieldContainer<RealType> nodalValues;
+    nodalValues.resize(numNodes, numDim);
+
+    Intrepid::FieldContainer<RealType> basisValues;
+    basisValues.resize(numNodes);
 
     for(int dof=0 ; dof<3 ; dof++){
-      displacementDiff[3*iEvalPt+dof] = albanyDisplacement[dof] - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
+      physPoints(0, dof) = obcDataPoints[iEvalPt].initialCoords[dof];
+    }
+
+    for(int i=0 ; i<numNodes ; i++){
+      double* coordinates = stk::mesh::field_data(*coordinatesField, nodes[i]);
+      for(int dof=0 ; dof<3 ; dof++){
+	nodalValues(i, dof) = coordinates[dof];
+      }
+    }
+
+    // Get the natural coordinates of the point in the reference element
+    shards::CellTopology cellTopology(&obcDataPoints[iEvalPt].cellTopologyData);
+    Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, nodalValues, cellTopology);
+
+    // Get the values of the basis functions at the point
+    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(obcDataPoints[iEvalPt].cellTopologyData);
+    intrepidBasis->getValues(basisValues, refPoints, Intrepid::OPERATOR_VALUE);
+
+    // WHAT IS THIS FOR OUR PARTICULAR CASE?
+    //Intrepid::FunctionSpaceTools::HGRADtransformVALUE
+
+    Intrepid::FunctionSpaceTools::evaluate<RealType>(values, nodalValues, basisValues);
+
+    // Record the difference between the Albany displacement at the point (which was just computed using Intrepid) and
+    // the Peridigm displacement at the point
+    for(int dof=0 ; dof<3 ; dof++){
+      displacementDiff[3*iEvalPt+dof] = values(0,dof) - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
     }
   }
 
