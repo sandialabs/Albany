@@ -2134,12 +2134,12 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
          svs != scalarValue_states.end(); ++svs)
     {
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*svs], size);
+      shards::Array<double, shards::NaturalOrder, Cell> array(&time[**svs], size);
       Albany::MDArray ar = array;
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
-      // std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
+      // std::cout << "SV Name: " << **svs << " address : " << &array << std::endl;
+      stateArrays.elemStateArrays[b][**svs] = ar;
     }
   }
 
