@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
 #include "Teuchos_VerboseObject.hpp"
 #include "Albany_Utils.hpp"
@@ -56,7 +56,7 @@ static void loadSets(
   }
 }
 
-AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
+Albany::PUMIMeshStruct::PUMIMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
 		  const Teuchos::RCP<const Teuchos_Comm>& commT) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
@@ -193,7 +193,7 @@ AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
 
 }
 
-AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
+Albany::PUMIMeshStruct::~PUMIMeshStruct()
 {
   mesh->destroyNative();
   apf::destroyMesh(mesh);
@@ -205,7 +205,7 @@ AlbPUMI::FMDBMeshStruct::~FMDBMeshStruct()
 }
 
 void
-AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
+Albany::PUMIMeshStruct::setFieldAndBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const unsigned int neq_,
@@ -216,7 +216,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 
   using Albany::StateStruct;
 
-  // Set the number of equation present per node. Needed by AlbPUMI_FMDBDiscretization.
+  // Set the number of equation present per node. Needed by Albany_PUMIDiscretization.
 
   neq = neq_;
 
@@ -261,22 +261,22 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
     if(st.entity == StateStruct::NodalData) { // Data at the node points
        const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
-        (*nodeContainer)[st.name] = AlbPUMI::buildPUMINodeField(st.name, dim, st.output);
+        (*nodeContainer)[st.name] = Albany::buildPUMINodeField(st.name, dim, st.output);
     }
     else if (dim.size() == 2) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
-        qpscalar_states.push_back(Teuchos::rcp(new QPData<double, 2>(st.name, dim, st.output)));
+        qpscalar_states.push_back(Teuchos::rcp(new PUMIQPData<double, 2>(st.name, dim, st.output)));
     }
     else if (dim.size() == 3) {
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
-        qpvector_states.push_back(Teuchos::rcp(new QPData<double, 3>(st.name, dim, st.output)));
+        qpvector_states.push_back(Teuchos::rcp(new PUMIQPData<double, 3>(st.name, dim, st.output)));
     }
     else if (dim.size() == 4){
       if(st.entity == StateStruct::QuadPoint || st.entity == StateStruct::ElemNode)
-        qptensor_states.push_back(Teuchos::rcp(new QPData<double, 4>(st.name, dim, st.output)));
+        qptensor_states.push_back(Teuchos::rcp(new PUMIQPData<double, 4>(st.name, dim, st.output)));
     }
     else if ( dim.size() == 1 && st.entity == Albany::StateStruct::WorksetValue)
-      scalarValue_states.push_back(Teuchos::rcp(new QPData<double, 1>(st.name, dim, st.output)));
+      scalarValue_states.push_back(Teuchos::rcp(new PUMIQPData<double, 1>(st.name, dim, st.output)));
     else TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "dim.size() < 2 || dim.size()>4 || " <<
          "st.entity != Albany::StateStruct::QuadPoint || " <<
          "st.entity != Albany::StateStruct::ElemNode || " <<
@@ -285,7 +285,7 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
 }
 
 void
-AlbPUMI::FMDBMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
+Albany::PUMIMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
 { // user is breaking up or renaming solution & residual fields
 
   TEUCHOS_TEST_FOR_EXCEPTION((fieldLayout.size() % 2), std::logic_error,
@@ -310,7 +310,7 @@ AlbPUMI::FMDBMeshStruct::splitFields(Teuchos::Array<std::string> fieldLayout)
 }
 
 Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >&
-AlbPUMI::FMDBMeshStruct::getMeshSpecs()
+Albany::PUMIMeshStruct::getMeshSpecs()
 {
   TEUCHOS_TEST_FOR_EXCEPTION(meshSpecs==Teuchos::null,
        std::logic_error,
@@ -319,15 +319,15 @@ AlbPUMI::FMDBMeshStruct::getMeshSpecs()
 }
 
 Albany::AbstractMeshStruct::msType
-AlbPUMI::FMDBMeshStruct::meshSpecsType()
+Albany::PUMIMeshStruct::meshSpecsType()
 {
   if(outputFileName.find("exo") != std::string::npos)
-    return FMDB_EXODUS_MS;
+    return PUMI_EXODUS_MS;
   else
-    return FMDB_VTK_MS;
+    return PUMI_VTK_MS;
 }
 
-int AlbPUMI::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
+int Albany::PUMIMeshStruct::computeWorksetSize(const int worksetSizeMax,
                                                      const int ebSizeMax) const
 {
   // Resize workset size down to maximum number in an element block
@@ -340,12 +340,12 @@ int AlbPUMI::FMDBMeshStruct::computeWorksetSize(const int worksetSizeMax,
 }
 
 void
-AlbPUMI::FMDBMeshStruct::loadSolutionFieldHistory(int step)
+Albany::PUMIMeshStruct::loadSolutionFieldHistory(int step)
 {
   TEUCHOS_TEST_FOR_EXCEPT(step < 0 || step >= solutionFieldHistoryDepth);
 }
 
-void AlbPUMI::FMDBMeshStruct::setupMeshBlkInfo()
+void Albany::PUMIMeshStruct::setupMeshBlkInfo()
 {
    int nBlocks = this->meshSpecs.size();
    for(int i = 0; i < nBlocks; i++){
@@ -356,11 +356,11 @@ void AlbPUMI::FMDBMeshStruct::setupMeshBlkInfo()
 }
 
 Teuchos::RCP<const Teuchos::ParameterList>
-AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
+Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 {
 
   Teuchos::RCP<Teuchos::ParameterList> validPL
-     = rcp(new Teuchos::ParameterList("Valid FMDBParams"));
+     = rcp(new Teuchos::ParameterList("Valid PUMIParams"));
 
   validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
@@ -375,8 +375,8 @@ AlbPUMI::FMDBMeshStruct::getValidDiscretizationParameters() const
       "Names and layouts of solution vector components");
   validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
 
-  validPL->set<std::string>("FMDB Input File Name", "", "File Name For FMDB Mesh Input");
-  validPL->set<std::string>("FMDB Output File Name", "", "File Name For FMDB Mesh Output");
+  validPL->set<std::string>("FMDB Input File Name", "", "File Name For PUMI Mesh Input");
+  validPL->set<std::string>("FMDB Output File Name", "", "File Name For PUMI Mesh Output");
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");

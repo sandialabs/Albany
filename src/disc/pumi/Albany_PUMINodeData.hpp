@@ -6,8 +6,8 @@
 
 //IK, 9/12/14: no Epetra!
 
-#ifndef ALBPUMI_NODEDATA_HPP
-#define ALBPUMI_NODEDATA_HPP
+#ifndef ALBANY_PUMINODEDATA_HPP
+#define ALBANY_PUMINODEDATA_HPP
 
 
 #include "Teuchos_RCP.hpp"
@@ -19,7 +19,7 @@
 
 #include <apfNumbering.h>
 
-namespace AlbPUMI {
+namespace Albany {
 
 class AbstractPUMINodeFieldContainer : public Albany::AbstractNodeFieldContainer {
 
@@ -39,17 +39,17 @@ Teuchos::RCP<Albany::AbstractNodeFieldContainer>
 buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output);
 
 
-  // Helper class for NodeData
+  // Helper class for PUMINodeData
   template<typename DataType, unsigned ArrayDim>
-  struct NodeData_Traits { };
+  struct PUMINodeData_Traits { };
 
-  template<typename DataType, unsigned ArrayDim, class traits = NodeData_Traits<DataType, ArrayDim> >
-  class NodeData : public AbstractPUMINodeFieldContainer {
+  template<typename DataType, unsigned ArrayDim, class traits = PUMINodeData_Traits<DataType, ArrayDim> >
+  class PUMINodeData : public AbstractPUMINodeFieldContainer {
 
   public:
 
-    NodeData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output = false);
-    virtual ~NodeData(){}
+    PUMINodeData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output = false);
+    virtual ~PUMINodeData(){}
 
     //! Type of traits class being used
     typedef traits traits_type;
@@ -78,7 +78,7 @@ buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::s
 
   // NodeScalar
   template <typename T>
-  struct NodeData_Traits<T, 1> {
+  struct PUMINodeData_Traits<T, 1> {
 
     enum { size = 1 }; // One array dimension tags: number of nodes in workset
     typedef shards::Array<T, shards::NaturalOrder, Node> field_type ;
@@ -92,7 +92,7 @@ buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::s
 
   // NodeVector
   template <typename T>
-  struct NodeData_Traits<T, 2> {
+  struct PUMINodeData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags: Nodes and vec dim
     typedef shards::Array<T, shards::NaturalOrder, Node, Dim> field_type ;
@@ -106,7 +106,7 @@ buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::s
 
   // NodeTensor
   template <typename T>
-  struct NodeData_Traits<T, 3> {
+  struct PUMINodeData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags: Nodes, Dim and Dim
     typedef shards::Array<T, shards::NaturalOrder, Node, Dim, Dim> field_type ;
@@ -121,16 +121,16 @@ buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::s
 }
 
 // Define macro for explicit template instantiation
-#define NODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, type) \
+#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, type) \
   template class name<type, 1>;
-#define NODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, type) \
+#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, type) \
   template class name<type, 2>;
-#define NODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, type) \
+#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, type) \
   template class name<type, 3>;
 
-#define NODEDATA_INSTANTIATE_TEMPLATE_CLASS(name) \
-  NODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, double) \
-  NODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, double) \
-  NODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, double)
+#define PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS(name) \
+  PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_SCAL(name, double) \
+  PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_VEC(name, double) \
+  PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS_TENS(name, double)
 
 #endif

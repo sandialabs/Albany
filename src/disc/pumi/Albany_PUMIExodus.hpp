@@ -5,21 +5,21 @@
 //*****************************************************************//
 
 
-#ifndef FMDB_EXODUS_HPP
-#define FMDB_EXODUS_HPP
+#ifndef ALBANY_PUMIEXODUS_HPP
+#define ALBANY_PUMIEXODUS_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
-namespace AlbPUMI {
+namespace Albany {
 
-class FMDBExodus {
+class PUMIExodus {
 
   public:
 
-    FMDBExodus(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& comm_);
+    PUMIExodus(PUMIMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
-    ~FMDBExodus();
+    ~PUMIExodus();
 
     void write(const char* filename, const double time);
     void writeFile(const double time);

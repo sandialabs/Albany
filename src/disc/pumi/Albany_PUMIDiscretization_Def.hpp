@@ -12,7 +12,7 @@
 
 #include "Albany_Utils.hpp"
 #include "Petra_Converters.hpp"
-#include "AlbPUMI_FMDBDiscretization.hpp"
+#include "Albany_PUMIDiscretization.hpp"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -51,7 +51,7 @@ convert (Teuchos::Array<GO>& indicesAV) {
 #endif // ALBANY_EPETRA
 
 template<class Output>
-AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct_,
+Albany::PUMIDiscretization<Output>::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct_,
             const Teuchos::RCP<const Teuchos_Comm>& commT_,
             const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -72,7 +72,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
 
   // Initialize the mesh and all data structures
   bool shouldTransferIPData = false;
-  AlbPUMI::FMDBDiscretization<Output>::updateMesh(shouldTransferIPData);
+  Albany::PUMIDiscretization<Output>::updateMesh(shouldTransferIPData);
 
   Teuchos::Array<std::string> layout = fmdbMeshStruct->solVectorLayout;
   int index;
@@ -99,7 +99,7 @@ AlbPUMI::FMDBDiscretization<Output>::FMDBDiscretization(Teuchos::RCP<AlbPUMI::FM
 }
 
 template<class Output>
-AlbPUMI::FMDBDiscretization<Output>::~FMDBDiscretization()
+Albany::PUMIDiscretization<Output>::~PUMIDiscretization()
 {
   apf::destroyGlobalNumbering(globalNumbering);
   apf::destroyGlobalNumbering(elementNumbering);
@@ -107,14 +107,14 @@ AlbPUMI::FMDBDiscretization<Output>::~FMDBDiscretization()
 
 template<class Output>
 Teuchos::RCP<const Tpetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getMapT() const
+Albany::PUMIDiscretization<Output>::getMapT() const
 {
   return mapT;
 }
 
 template<class Output>
 Teuchos::RCP<const Tpetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapMapT() const
+Albany::PUMIDiscretization<Output>::getOverlapMapT() const
 {
   return overlap_mapT;
 }
@@ -122,7 +122,7 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapMapT() const
 #ifdef ALBANY_EPETRA
 template<class Output>
 Teuchos::RCP<const Epetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
+Albany::PUMIDiscretization<Output>::getOverlapNodeMap() const
 {
   return Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
 }
@@ -130,56 +130,56 @@ AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMap() const
 
 template<class Output>
 Teuchos::RCP<const Tpetra_CrsGraph>
-AlbPUMI::FMDBDiscretization<Output>::getJacobianGraphT() const
+Albany::PUMIDiscretization<Output>::getJacobianGraphT() const
 {
   return graphT;
 }
 
 template<class Output>
 Teuchos::RCP<const Tpetra_CrsGraph>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapJacobianGraphT() const
+Albany::PUMIDiscretization<Output>::getOverlapJacobianGraphT() const
 {
   return overlap_graphT;
 }
 
 template<class Output>
 Teuchos::RCP<const Tpetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getNodeMapT() const
+Albany::PUMIDiscretization<Output>::getNodeMapT() const
 {
   return node_mapT;
 }
 
 template<class Output>
 Teuchos::RCP<const Tpetra_Map>
-AlbPUMI::FMDBDiscretization<Output>::getOverlapNodeMapT() const
+Albany::PUMIDiscretization<Output>::getOverlapNodeMapT() const
 {
   return overlap_node_mapT;
 }
 
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<LO> > > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getWsElNodeEqID() const
+Albany::PUMIDiscretization<Output>::getWsElNodeEqID() const
 {
   return wsElNodeEqID;
 }
 
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getWsElNodeID() const
+Albany::PUMIDiscretization<Output>::getWsElNodeID() const
 {
   return wsElNodeID;
 }
 
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type&
-AlbPUMI::FMDBDiscretization<Output>::getCoords() const
+Albany::PUMIDiscretization<Output>::getCoords() const
 {
   return coords;
 }
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::printCoords() const
+Albany::PUMIDiscretization<Output>::printCoords() const
 {
   int mesh_dim = fmdbMeshStruct->getMesh()->getDimension();
 
@@ -197,7 +197,7 @@ AlbPUMI::FMDBDiscretization<Output>::printCoords() const
 
 template<class Output>
 const Teuchos::ArrayRCP<double>&
-AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
+Albany::PUMIDiscretization<Output>::getCoordinates() const
 {
   coordinates.resize(3 * numOverlapNodes);
   apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
@@ -208,7 +208,7 @@ AlbPUMI::FMDBDiscretization<Output>::getCoordinates() const
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
+Albany::PUMIDiscretization<Output>::setCoordinates(
     const Teuchos::ArrayRCP<const double>& c)
 {
   apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
@@ -217,13 +217,13 @@ AlbPUMI::FMDBDiscretization<Output>::setCoordinates(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::
+void Albany::PUMIDiscretization<Output>::
 setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& ircm)
 { rcm = ircm; }
 
 template<class Output>
 const Albany::WorksetArray<Teuchos::ArrayRCP<double> >::type&
-AlbPUMI::FMDBDiscretization<Output>::getSphereVolume() const
+Albany::PUMIDiscretization<Output>::getSphereVolume() const
 {
   return sphereVolume;
 }
@@ -237,7 +237,7 @@ double mean (const double* x, const int n,
 
 /* DAI: this function also has to change for high-order fields */
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
+void Albany::PUMIDiscretization<Output>::setupMLCoords()
 {
   if (rigidBodyModes.is_null()) return;
   if (!rigidBodyModes->isMLUsed() && !rigidBodyModes->isMueLuUsed()) return;
@@ -269,20 +269,20 @@ void AlbPUMI::FMDBDiscretization<Output>::setupMLCoords()
 
 template<class Output>
 const Albany::WorksetArray<std::string>::type&
-AlbPUMI::FMDBDiscretization<Output>::getWsEBNames() const
+Albany::PUMIDiscretization<Output>::getWsEBNames() const
 {
   return wsEBNames;
 }
 
 template<class Output>
 const Albany::WorksetArray<int>::type&
-AlbPUMI::FMDBDiscretization<Output>::getWsPhysIndex() const
+Albany::PUMIDiscretization<Output>::getWsPhysIndex() const
 {
   return wsPhysIndex;
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setField(
+void Albany::PUMIDiscretization<Output>::setField(
   const char* name, const ST* data, bool overlapped, int offset, int nentries)
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
@@ -305,7 +305,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setField(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string> names,
+void Albany::PUMIDiscretization<Output>::setSplitFields(std::vector<std::string> names,
     std::vector<int> indices, const ST* data, bool overlapped)
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
@@ -320,7 +320,7 @@ void AlbPUMI::FMDBDiscretization<Output>::setSplitFields(std::vector<std::string
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::getField(
+void Albany::PUMIDiscretization<Output>::getField(
   const char* name, ST* data, bool overlapped, int offset, int nentries) const
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
@@ -342,7 +342,7 @@ void AlbPUMI::FMDBDiscretization<Output>::getField(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string> names,
+void Albany::PUMIDiscretization<Output>::getSplitFields(std::vector<std::string> names,
    std::vector<int> indices, ST* data, bool overlapped) const
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
@@ -358,7 +358,7 @@ void AlbPUMI::FMDBDiscretization<Output>::getSplitFields(std::vector<std::string
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::
+void Albany::PUMIDiscretization<Output>::
 createField(const char* name, int value_type)
 {
   apf::createFieldOn(fmdbMeshStruct->getMesh(), name, value_type);
@@ -366,7 +366,7 @@ createField(const char* name, int value_type)
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(
+void Albany::PUMIDiscretization<Output>::writeSolutionT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
@@ -375,7 +375,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolutionT(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToMeshDatabaseT(
+void Albany::PUMIDiscretization<Output>::writeSolutionToMeshDatabaseT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
@@ -383,7 +383,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToMeshDatabaseT(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToFileT(
+void Albany::PUMIDiscretization<Output>::writeSolutionToFileT(
   const Tpetra_Vector& solnT, const double time_value, const bool overlapped)
 {
   Teuchos::ArrayRCP<const ST> data = solnT.get1dView();
@@ -392,7 +392,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolutionToFileT(
 
 #ifdef ALBANY_EPETRA
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
+void Albany::PUMIDiscretization<Output>::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
   writeAnySolutionToMeshDatabase(&(soln[0]),time_value,overlapped);
@@ -401,7 +401,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeSolution(const Epetra_Vector& sol
 #endif
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToMeshDatabase(
+void Albany::PUMIDiscretization<Output>::writeAnySolutionToMeshDatabase(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
@@ -414,7 +414,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToMeshDatabase(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
+void Albany::PUMIDiscretization<Output>::writeAnySolutionToFile(
       const ST* soln, const double time_value,
       const bool overlapped)
 {
@@ -427,7 +427,7 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
   int out_step = 0;
 
   if (mapT->getComm()->getRank()==0) {
-    *out << "AlbPUMI::FMDBDiscretization::writeSolution: writing time " << time_value;
+    *out << "Albany::PUMIDiscretization::writeSolution: writing time " << time_value;
     if (time_label != time_value) *out << " with label " << time_label;
     *out << " to index " << out_step << " in file "
          << fmdbMeshStruct->outputFileName << std::endl;
@@ -443,19 +443,19 @@ void AlbPUMI::FMDBDiscretization<Output>::writeAnySolutionToFile(
   removeQPStatesFromAPF();
 }
 
-template<class Output> void AlbPUMI::FMDBDiscretization<Output>::
+template<class Output> void Albany::PUMIDiscretization<Output>::
 writeMeshDebug (const std::string& filename) {
   apf::Field* f;
   apf::FieldShape* fs = apf::getIPShape(getNumDim(),
                                         fmdbMeshStruct->cubatureDegree);
   copyQPStatesToAPF(f, fs, true);
-  apf::writeVtkFiles(filename.c_str(), getFMDBMeshStruct()->getMesh());
+  apf::writeVtkFiles(filename.c_str(), getPUMIMeshStruct()->getMesh());
   removeQPStatesFromAPF();
 }
 
 template<class Output>
 double
-AlbPUMI::FMDBDiscretization<Output>::monotonicTimeLabel(const double time)
+Albany::PUMIDiscretization<Output>::monotonicTimeLabel(const double time)
 {
   // If increasing, then all is good
   if (time > previous_time_label) {
@@ -482,7 +482,7 @@ AlbPUMI::FMDBDiscretization<Output>::monotonicTimeLabel(const double time)
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& residualT)
+Albany::PUMIDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& residualT)
 {
   Teuchos::ArrayRCP<const ST> data = residualT.get1dView();
   if (solNames.size() == 0)
@@ -496,7 +496,7 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualFieldT(const Tpetra_Vector& resi
 #ifdef ALBANY_EPETRA
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
+Albany::PUMIDiscretization<Output>::setResidualField(const Epetra_Vector& residual)
 {
   if (solNames.size() == 0)
     this->setField("residual",&(residual[0]),/*overlapped=*/false);
@@ -509,7 +509,7 @@ AlbPUMI::FMDBDiscretization<Output>::setResidualField(const Epetra_Vector& resid
 
 template<class Output>
 Teuchos::RCP<Tpetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
+Albany::PUMIDiscretization<Output>::getSolutionFieldT(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Tpetra_Vector> solnT = Teuchos::rcp(
@@ -532,7 +532,7 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionFieldT(bool overlapped) const
 #ifdef ALBANY_EPETRA
 template<class Output>
 Teuchos::RCP<Epetra_Vector>
-AlbPUMI::FMDBDiscretization<Output>::getSolutionField(bool overlapped) const
+Albany::PUMIDiscretization<Output>::getSolutionField(bool overlapped) const
 {
   // Copy soln vector into solution field, one node at a time
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(
@@ -552,7 +552,7 @@ AlbPUMI::FMDBDiscretization<Output>::getSolutionField(bool overlapped) const
 #endif
 
 template<class Output>
-int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
+int Albany::PUMIDiscretization<Output>::nonzeroesPerRow(const int neq) const
 {
   int numDim = getNumDim();
 
@@ -565,13 +565,13 @@ int AlbPUMI::FMDBDiscretization<Output>::nonzeroesPerRow(const int neq) const
   case 2: estNonzeroesPerRow=9*neq; break;
   case 3: estNonzeroesPerRow=27*neq; break;
   default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-			      "FMDBDiscretization:  Bad numDim"<< numDim);
+			      "PUMIDiscretization:  Bad numDim"<< numDim);
   }
   return estNonzeroesPerRow;
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
+void Albany::PUMIDiscretization<Output>::computeOwnedNodesAndUnknowns()
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
@@ -602,7 +602,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOwnedNodesAndUnknowns()
 }
 
 template <class Output>
-void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
+void Albany::PUMIDiscretization<Output>::computeOverlapNodesAndUnknowns()
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::Numbering* overlap = m->findNumbering("overlap");
@@ -630,7 +630,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeOverlapNodesAndUnknowns()
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::computeGraphs()
+void Albany::PUMIDiscretization<Output>::computeGraphs()
 {
 
   apf::Mesh* m = fmdbMeshStruct->getMesh();
@@ -716,7 +716,7 @@ static apf::StkModel* findElementBlock(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
+void Albany::PUMIDiscretization<Output>::computeWorksetInfo()
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   int numDim = m->getDimension();
@@ -724,8 +724,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
 
 /*
- * Note: Max workset size is given in input file, or set to a default in AlbPUMI_FMDBMeshStruct.cpp
- * The workset size is set in AlbPUMI_FMDBMeshStruct.cpp to be the maximum number in an element block if
+ * Note: Max workset size is given in input file, or set to a default in Albany_PUMIMeshStruct.cpp
+ * The workset size is set in Albany_PUMIMeshStruct.cpp to be the maximum number in an element block if
  * the element block size < Max workset size.
  * STK bucket size is set to the workset size. We will "chunk" the elements into worksets here.
  */
@@ -835,7 +835,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
         const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
 
         TEUCHOS_TEST_FOR_EXCEPTION(node_lid<0, std::logic_error,
-			   "FMDB_Disc: node_lid out of range " << node_lid << std::endl);
+			   "PUMI_Disc: node_lid out of range " << node_lid << std::endl);
 
         coords[b][i][j] = &coordinates[node_lid * 3];
         wsElNodeEqID[b][i][j].resize(neq);
@@ -920,8 +920,8 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
     // Loop over all the node field containers
     for (Albany::NodeFieldContainer::iterator nfs = node_states->begin();
                 nfs != node_states->end(); ++nfs){
-      Teuchos::RCP<AlbPUMI::AbstractPUMINodeFieldContainer> nodeContainer =
-             Teuchos::rcp_dynamic_cast<AlbPUMI::AbstractPUMINodeFieldContainer>((*nfs).second);
+      Teuchos::RCP<Albany::AbstractPUMINodeFieldContainer> nodeContainer =
+             Teuchos::rcp_dynamic_cast<Albany::AbstractPUMINodeFieldContainer>((*nfs).second);
 
       // resize the container to hold all the owned node's data
       nodeContainer->resize(node_mapT);
@@ -936,9 +936,9 @@ void AlbPUMI::FMDBDiscretization<Output>::computeWorksetInfo()
 }
 
 template <class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
+void Albany::PUMIDiscretization<Output>::copyQPTensorToAPF(
     unsigned nqp,
-    QPData<double, 4>& state,
+    PUMIQPData<double, 4>& state,
     apf::Field* f)
 {
   for (std::size_t b=0; b < buckets.size(); ++b) {
@@ -957,9 +957,9 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorToAPF(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarToAPF(
+void Albany::PUMIDiscretization<Output>::copyQPScalarToAPF(
     unsigned nqp,
-    QPData<double, 2>& state,
+    PUMIQPData<double, 2>& state,
     apf::Field* f)
 {
   for (std::size_t b=0; b < buckets.size(); ++b) {
@@ -972,9 +972,9 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarToAPF(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
+void Albany::PUMIDiscretization<Output>::copyQPVectorToAPF(
     unsigned nqp,
-    QPData<double, 3>& state,
+    PUMIQPData<double, 3>& state,
     apf::Field* f)
 {
   for (std::size_t b=0; b < buckets.size(); ++b) {
@@ -992,14 +992,14 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorToAPF(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
+void Albany::PUMIDiscretization<Output>::copyQPStatesToAPF(
     apf::Field* f,
     apf::FieldShape* fs,
     bool copyAll)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    PUMIQPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
     if (!copyAll && !state.output)
       continue;
     int nqp = state.dims[1];
@@ -1007,7 +1007,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
     copyQPScalarToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    PUMIQPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     if (!copyAll && !state.output)
       continue;
     int nqp = state.dims[1];
@@ -1015,7 +1015,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
     copyQPVectorToAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    PUMIQPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     if (!copyAll && !state.output)
       continue;
     int nqp = state.dims[1];
@@ -1025,27 +1025,27 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesToAPF(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::removeQPStatesFromAPF()
+void Albany::PUMIDiscretization<Output>::removeQPStatesFromAPF()
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    PUMIQPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    PUMIQPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    PUMIQPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
 }
 
  template<class Output>
- void AlbPUMI::FMDBDiscretization<Output>::copyQPScalarFromAPF(
+ void Albany::PUMIDiscretization<Output>::copyQPScalarFromAPF(
      unsigned nqp,
-     QPData<double, 2>& state,
+     PUMIQPData<double, 2>& state,
      apf::Field* f)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
@@ -1060,9 +1060,9 @@ void AlbPUMI::FMDBDiscretization<Output>::removeQPStatesFromAPF()
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorFromAPF(
+void Albany::PUMIDiscretization<Output>::copyQPVectorFromAPF(
     unsigned nqp,
-    QPData<double, 3>& state,
+    PUMIQPData<double, 3>& state,
     apf::Field* f)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
@@ -1081,9 +1081,9 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPVectorFromAPF(
 }
 
 template <class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorFromAPF(
+void Albany::PUMIDiscretization<Output>::copyQPTensorFromAPF(
     unsigned nqp,
-    QPData<double, 4>& state,
+    PUMIQPData<double, 4>& state,
     apf::Field* f)
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
@@ -1104,24 +1104,24 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPTensorFromAPF(
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesFromAPF()
+void Albany::PUMIDiscretization<Output>::copyQPStatesFromAPF()
 {
   apf::Mesh2* m = fmdbMeshStruct->getMesh();
   apf::Field* f;
   for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    QPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+    PUMIQPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
     copyQPScalarFromAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    QPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+    PUMIQPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
     copyQPVectorFromAPF(nqp,state,f);
   }
   for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    QPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+    PUMIQPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
     copyQPTensorFromAPF(nqp,state,f);
@@ -1129,7 +1129,7 @@ void AlbPUMI::FMDBDiscretization<Output>::copyQPStatesFromAPF()
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
+void Albany::PUMIDiscretization<Output>::computeSideSets()
 {
   apf::Mesh* m = fmdbMeshStruct->getMesh();
   apf::StkModels& sets = fmdbMeshStruct->getSets();
@@ -1160,7 +1160,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
 
       // we are not yet considering non-manifold side sets !
       TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
-		   "FMDBDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
+		   "PUMIDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
 
       apf::MeshEntity* elem = side_elems.e[0];
 
@@ -1192,7 +1192,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeSideSets()
 }
 
 template<class Output>
-void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
+void Albany::PUMIDiscretization<Output>::computeNodeSets()
 {
   // Make sure all the maps are allocated
   for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin();
@@ -1239,7 +1239,7 @@ void AlbPUMI::FMDBDiscretization<Output>::computeNodeSets()
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
+Albany::PUMIDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 {
   // This function is called both to initialize the mesh at the beginning of the simulation
   // and then each time the mesh is adapted (called from AAdapt_MeshAdapt_Def.hpp - afterAdapt())
@@ -1259,7 +1259,7 @@ AlbPUMI::FMDBDiscretization<Output>::updateMesh(bool shouldTransferIPData)
 
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::attachQPData() {
+Albany::PUMIDiscretization<Output>::attachQPData() {
   apf::Field* f;
   int order = fmdbMeshStruct->cubatureDegree;
   int dim = fmdbMeshStruct->getMesh()->getDimension();
@@ -1268,6 +1268,6 @@ AlbPUMI::FMDBDiscretization<Output>::attachQPData() {
 }
 template<class Output>
 void
-AlbPUMI::FMDBDiscretization<Output>::detachQPData() {
+Albany::PUMIDiscretization<Output>::detachQPData() {
   removeQPStatesFromAPF();
 }

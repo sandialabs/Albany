@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 
-#include "AlbPUMI_FMDBExodus.hpp"
+#include "Albany_PUMIExodus.hpp"
 
 #include <stk_mesh/base/MetaData.hpp>
 #include <stk_mesh/base/BulkData.hpp>
@@ -20,8 +20,8 @@
 #include <Albany_Utils.hpp>
 #include <Teuchos_RCP.hpp>
 
-AlbPUMI::FMDBExodus::
-FMDBExodus(FMDBMeshStruct& meshStruct,
+Albany::PUMIExodus::
+PUMIExodus(PUMIMeshStruct& meshStruct,
            const Teuchos::RCP<const Teuchos_Comm>& comm_)
   : mesh(meshStruct.getMesh()),
     sets_p(meshStruct.getSets()),
@@ -30,8 +30,8 @@ FMDBExodus(FMDBMeshStruct& meshStruct,
 {
 }
 
-AlbPUMI::FMDBExodus::
-~FMDBExodus()
+Albany::PUMIExodus::
+~PUMIExodus()
 {
 }
 
@@ -54,7 +54,7 @@ void define_output_fields(stk::io::StkMeshIoBroker& mesh_data,
 }
 
 void
-AlbPUMI::FMDBExodus::
+Albany::PUMIExodus::
 write(const char* filename, const double time_val)
 {
 #ifdef ALBANY_SEACAS
@@ -84,12 +84,12 @@ write(const char* filename, const double time_val)
 #else
   *Teuchos::VerboseObjectBase::getDefaultOStream()
     << "WARNING: exodus output requested but SEACAS not compiled in:"
-    << " disabling exodus output in AlbPUMI_FMDBExodus.cpp" << std::endl;
+    << " disabling exodus output in Albany_PUMIExodus.cpp" << std::endl;
 #endif
 }
 
 void
-AlbPUMI::FMDBExodus::
+Albany::PUMIExodus::
 writeFile(const double time_val)
 {
   write(outputFileName.c_str(),time_val);

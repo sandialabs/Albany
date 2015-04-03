@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AlbPUMI_FMDBDiscretization.hpp"
-#include "AlbPUMI_FMDBDiscretization_Def.hpp"
+#include "Albany_PUMINodeData.hpp"
+#include "Albany_PUMINodeData_Def.hpp"
 
-FMDB_INSTANTIATE_TEMPLATE_CLASS(AlbPUMI::FMDBDiscretization)
+PUMINODEDATA_INSTANTIATE_TEMPLATE_CLASS(Albany::PUMINodeData)
 

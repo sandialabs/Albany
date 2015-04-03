@@ -5,8 +5,8 @@
 //*****************************************************************//
 
 
-#ifndef ALBPUMI_FMDBDISCRETIZATION_HPP
-#define ALBPUMI_FMDBDISCRETIZATION_HPP
+#ifndef ALBANY_PUMIDISCRETIZATION_HPP
+#define ALBANY_PUMIDISCRETIZATION_HPP
 
 #include <vector>
 #include <fstream>
@@ -17,10 +17,10 @@
 #include "Epetra_Comm.h"
 #endif
 
-#include "AlbPUMI_AbstractPUMIDiscretization.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
-#include "AlbPUMI_FMDBVtk.hpp"
-#include "AlbPUMI_FMDBExodus.hpp"
+#include "Albany_AbstractPUMIDiscretization.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_PUMIVtk.hpp"
+#include "Albany_PUMIExodus.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
 #ifdef ALBANY_EPETRA
@@ -28,21 +28,21 @@
 #include "Epetra_Vector.h"
 #endif
 
-namespace AlbPUMI {
+namespace Albany {
 
 template<class Output>
-  class FMDBDiscretization : public AbstractPUMIDiscretization {
+  class PUMIDiscretization : public AbstractPUMIDiscretization {
   public:
 
     //! Constructor
-    FMDBDiscretization(
-       Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct,
+    PUMIDiscretization(
+       Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
 
     //! Destructor
-    ~FMDBDiscretization();
+    ~PUMIDiscretization();
 
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
@@ -125,7 +125,7 @@ template<class Output>
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
     // Retrieve mesh struct
-    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
+    Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return fmdbMeshStruct;}
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return fmdbMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
@@ -134,7 +134,7 @@ template<class Output>
     //! If restarting, convenience function to return restart data time
     double restartDataTime() const {return fmdbMeshStruct->restartDataTime;}
 
-    //! FMDB does not support MOR
+    //! PUMI does not support MOR
     virtual bool supportsMOR() const { return false; }
 
     apf::GlobalNumbering* getAPFGlobalNumbering() {return elementNumbering;}
@@ -152,8 +152,8 @@ template<class Output>
     void getOwned_xyz(double **x, double **y, double **z, double **rbm,
                       int& nNodes, int numPDEs, int numScalar, int nullSpaceDim);
 
-    // Function that transforms an FMDB mesh of a unit cube (for FELIX problems)
-    // not supported in FMDB now
+    // Function that transforms an PUMI mesh of a unit cube (for FELIX problems)
+    // not supported in PUMI now
     void transformMesh(){}
 
     // this is called with both LO's and GO's to compute a dof number
@@ -232,89 +232,89 @@ template<class Output>
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getMap(field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getMap(field_name) not implemented yet");
     }
 
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getNodeMap(field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getNodeMap(field_name) not implemented yet");
     }
 
     //! Get field overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getOverlapMap(field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getOverlapMap(field_name) not implemented yet");
     }
 
     //! Get field overlapped node map
     Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getOverlapNodeMap(field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getOverlapNodeMap(field_name) not implemented yet");
     }
 
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getElNodeElID(field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getElNodeElID(field_name) not implemented yet");
     }
     //! Get Dof Manager of field field_name
     const Albany::NodalDOFManager& getDOFManager(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getDOFManager(field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getDOFManager(field_name) not implemented yet");
     }
     //! Get field vector from mesh database
     virtual void getField(Epetra_Vector &field_vector, const std::string& field_name) const  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getField(field_vector, field_name) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getField(field_vector, field_name) not implemented yet");
     }
     //! Set the field vector into mesh database
     virtual void setField(const Epetra_Vector &field_vector, const std::string& field_name, bool overlapped)  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
+          "AlbPUMI:PUMIDiscretization: setField(field_vector, field_name, overlapped) not implemented yet");
     }
 #endif
     //! Get nodal parameters state info struct
     virtual const Albany::StateInfoStruct& getNodalParameterSIS() const  {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "AlbPUMI:FMDBDiscretization: getNodalParameterSIS() not implemented yet");
+          "AlbPUMI:PUMIDiscretization: getNodalParameterSIS() not implemented yet");
     }
 
   private:
 
     //! Private to prohibit copying
-    FMDBDiscretization(const FMDBDiscretization&);
+    PUMIDiscretization(const PUMIDiscretization&);
 
     //! Private to prohibit copying
-    FMDBDiscretization& operator=(const FMDBDiscretization&);
+    PUMIDiscretization& operator=(const PUMIDiscretization&);
 
     int nonzeroesPerRow(const int neq) const;
     double monotonicTimeLabel(const double time);
 
-    //! Process FMDB mesh for Owned nodal quantitites
+    //! Process PUMI mesh for Owned nodal quantitites
     void computeOwnedNodesAndUnknowns();
-    //! Process FMDB mesh for Overlap nodal quantitites
+    //! Process PUMI mesh for Overlap nodal quantitites
     void computeOverlapNodesAndUnknowns();
-    //! Process FMDB mesh for CRS Graphs
+    //! Process PUMI mesh for CRS Graphs
     void computeGraphs();
-    //! Process FMDB mesh for Workset/Bucket Info
+    //! Process PUMI mesh for Workset/Bucket Info
     void computeWorksetInfo();
-    //! Process FMDB mesh for NodeSets
+    //! Process PUMI mesh for NodeSets
     void computeNodeSets();
-    //! Process FMDB mesh for SideSets
+    //! Process PUMI mesh for SideSets
     void computeSideSets();
 
-    //! Transfer QPData to APF
-    void copyQPScalarToAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
-    void copyQPVectorToAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
-    void copyQPTensorToAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
+    //! Transfer PUMIQPData to APF
+    void copyQPScalarToAPF(unsigned nqp, PUMIQPData<double, 2>& state, apf::Field* f);
+    void copyQPVectorToAPF(unsigned nqp, PUMIQPData<double, 3>& state, apf::Field* f);
+    void copyQPTensorToAPF(unsigned nqp, PUMIQPData<double, 4>& state, apf::Field* f);
     void copyQPStatesToAPF(apf::Field* f, apf::FieldShape* fs, bool copyAll = true);
     void removeQPStatesFromAPF();
 
-    //! Transfer QP Fields from APF to QPData
-    void copyQPScalarFromAPF(unsigned nqp, QPData<double, 2>& state, apf::Field* f);
-    void copyQPVectorFromAPF(unsigned nqp, QPData<double, 3>& state, apf::Field* f);
-    void copyQPTensorFromAPF(unsigned nqp, QPData<double, 4>& state, apf::Field* f);
+    //! Transfer QP Fields from APF to PUMIQPData
+    void copyQPScalarFromAPF(unsigned nqp, PUMIQPData<double, 2>& state, apf::Field* f);
+    void copyQPVectorFromAPF(unsigned nqp, PUMIQPData<double, 3>& state, apf::Field* f);
+    void copyQPTensorFromAPF(unsigned nqp, PUMIQPData<double, 4>& state, apf::Field* f);
     void copyQPStatesFromAPF();
 
     // ! Split Solution fields
@@ -414,7 +414,7 @@ template<class Output>
     int numOverlapNodes;
     long numGlobalNodes;
 
-    Teuchos::RCP<AlbPUMI::FMDBMeshStruct> fmdbMeshStruct;
+    Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct;
 
     bool interleavedOrdering;
 
@@ -437,13 +437,13 @@ template<class Output>
 }
 
 // Define macro for explicit template instantiation
-#define FMDB_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
-  template class name<AlbPUMI::FMDBVtk>;
-#define FMDB_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name) \
-  template class name<AlbPUMI::FMDBExodus>;
+#define PUMI_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
+  template class name<Albany::PUMIVtk>;
+#define PUMI_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name) \
+  template class name<Albany::PUMIExodus>;
 
-#define FMDB_INSTANTIATE_TEMPLATE_CLASS(name) \
-  FMDB_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
-  FMDB_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name)
+#define PUMI_INSTANTIATE_TEMPLATE_CLASS(name) \
+  PUMI_INSTANTIATE_TEMPLATE_CLASS_VTK(name) \
+  PUMI_INSTANTIATE_TEMPLATE_CLASS_EXODUS(name)
 
-#endif // ALBANY_FMDBDISCRETIZATION_HPP
+#endif // ALBANY_PUMIDISCRETIZATION_HPP

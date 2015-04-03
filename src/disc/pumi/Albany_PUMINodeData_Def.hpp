@@ -6,23 +6,23 @@
 
 //IK, 9/12/14: no Epetra!
 
-#include "AlbPUMI_NodeData.hpp"
+#include "Albany_PUMINodeData.hpp"
 
 Teuchos::RCP<Albany::AbstractNodeFieldContainer>
-AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output){
+Albany::buildPUMINodeField(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim, const bool output){
 
   switch(dim.size()){
 
   case 1: // scalar
-    return Teuchos::rcp(new NodeData<double, 1>(name, dim, output));
+    return Teuchos::rcp(new PUMINodeData<double, 1>(name, dim, output));
     break;
 
   case 2: // vector
-    return Teuchos::rcp(new NodeData<double, 2>(name, dim, output));
+    return Teuchos::rcp(new PUMINodeData<double, 2>(name, dim, output));
     break;
 
   case 3: // tensor
-    return Teuchos::rcp(new NodeData<double, 3>(name, dim, output));
+    return Teuchos::rcp(new PUMINodeData<double, 3>(name, dim, output));
     break;
 
   default:
@@ -32,7 +32,7 @@ AlbPUMI::buildPUMINodeField(const std::string& name, const std::vector<PHX::Data
 
 
 template<typename DataType, unsigned ArrayDim, class traits>
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_,
+Albany::PUMINodeData<DataType, ArrayDim, traits>::PUMINodeData(const std::string& name_,
                                 const std::vector<PHX::DataLayout::size_type>& dim, const bool output_) :
   name(name_),
   output(output_),
@@ -49,7 +49,7 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::NodeData(const std::string& name_
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map_){
+Albany::PUMINodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<const Tpetra_Map>& local_node_map_){
 
   local_node_map = local_node_map_;
   std::size_t total_size = local_node_map->getNodeNumElements() * nfield_dofs;
@@ -61,7 +61,7 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::resize(const Teuchos::RCP<const T
 
 template<typename DataType, unsigned ArrayDim, class traits>
 Albany::MDArray
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<apf::Node>& buck){
+Albany::PUMINodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<apf::Node>& buck){
 
   unsigned numNodes = buck.size(); // Total size starts at the number of nodes in the workset
 
@@ -75,7 +75,7 @@ AlbPUMI::NodeData<DataType, ArrayDim, traits>::getMDA(const std::vector<apf::Nod
 
 template<typename DataType, unsigned ArrayDim, class traits>
 void
-AlbPUMI::NodeData<DataType, ArrayDim, traits>::saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
+Albany::PUMINodeData<DataType, ArrayDim, traits>::saveFieldVector(const Teuchos::RCP<const Tpetra_MultiVector>& overlap_node_vec,
      int offset){
 
 

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AlbPUMI_NodeData.hpp"
-#include "AlbPUMI_NodeData_Def.hpp"
+#include "Albany_PUMIQPData.hpp"
+#include "Albany_PUMIQPData_Def.hpp"
 
-NODEDATA_INSTANTIATE_TEMPLATE_CLASS(AlbPUMI::NodeData)
+PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS(Albany::PUMIQPData)
 

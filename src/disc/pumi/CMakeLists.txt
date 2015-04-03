@@ -4,37 +4,37 @@
 #    in the file "license.txt" in the top-level Albany directory  //
 #*****************************************************************//
 
-# SCOREC FMDB
+# SCOREC PUMI
 
   SET(SOURCES
-    AlbPUMI_FMDBMeshStruct.cpp
-    AlbPUMI_FMDBDiscretization.cpp
-    AlbPUMI_QPData.cpp
-    AlbPUMI_NodeData.cpp
-    AlbPUMI_FMDBVtk.cpp
-    AlbPUMI_FMDBExodus.cpp
+    Albany_PUMIMeshStruct.cpp
+    Albany_PUMIDiscretization.cpp
+    Albany_PUMIQPData.cpp
+    Albany_PUMINodeData.cpp
+    Albany_PUMIVtk.cpp
+    Albany_PUMIExodus.cpp
     )
   SET(HEADERS
-    AlbPUMI_AbstractPUMIDiscretization.hpp
-    AlbPUMI_FMDBMeshStruct.hpp
-    AlbPUMI_FMDBDiscretization.hpp
-    AlbPUMI_FMDBDiscretization_Def.hpp
-    AlbPUMI_QPData.hpp
-    AlbPUMI_QPData_Def.hpp
-    AlbPUMI_NodeData.hpp
-    AlbPUMI_NodeData_Def.hpp
-    AlbPUMI_FMDBVtk.hpp
-    AlbPUMI_FMDBExodus.hpp
+    Albany_AbstractPUMIDiscretization.hpp
+    Albany_PUMIMeshStruct.hpp
+    Albany_PUMIDiscretization.hpp
+    Albany_PUMIDiscretization_Def.hpp
+    Albany_PUMIQPData.hpp
+    Albany_PUMIQPData_Def.hpp
+    Albany_PUMINodeData.hpp
+    Albany_PUMINodeData_Def.hpp
+    Albany_PUMIVtk.hpp
+    Albany_PUMIExodus.hpp
     )
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src
   )
 
-add_library(fmdb ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+add_library(pumi ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
 
 IF (INSTALL_ALBANY)
-  install(TARGETS fmdb EXPORT albany-export
+  install(TARGETS pumi EXPORT albany-export
     LIBRARY DESTINATION "${LIB_INSTALL_DIR}/"
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}/"
     PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")

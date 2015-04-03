@@ -6,8 +6,8 @@
 
 //IK, 9/12/14: no Epetra!
 
-#ifndef ALBPUMI_QPDATA_HPP
-#define ALBPUMI_QPDATA_HPP
+#ifndef ALBANY_PUMIQPDATA_HPP
+#define ALBANY_PUMIQPDATA_HPP
 
 
 #include "Teuchos_RCP.hpp"
@@ -16,19 +16,19 @@
 #include "PHAL_Dimension.hpp"
 #include "Albany_StateInfoStruct.hpp"
 
-namespace AlbPUMI {
+namespace Albany {
 
-  // Helper class for QPData
+  // Helper class for PUMIQPData
   template<typename DataType, unsigned Dim>
-  struct QPData_Traits { };
+  struct PUMIQPData_Traits { };
 
-  template<typename DataType, unsigned Dim, class traits = QPData_Traits<DataType, Dim> >
-  class QPData {
+  template<typename DataType, unsigned Dim, class traits = PUMIQPData_Traits<DataType, Dim> >
+  class PUMIQPData {
 
   public:
 
-    QPData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,  const bool output = false);
-    ~QPData(){}
+    PUMIQPData(const std::string& name, const std::vector<PHX::DataLayout::size_type>& dim,  const bool output = false);
+    ~PUMIQPData(){}
 
     //! Type of traits class being used
     typedef traits traits_type;
@@ -52,7 +52,7 @@ namespace AlbPUMI {
 
   // Scalar value
   template <typename T>
-  struct QPData_Traits<T, 1> {
+  struct PUMIQPData_Traits<T, 1> {
 
     enum { size = 1 }; // One array dimension tags: Cell
     typedef shards::Array<T, shards::NaturalOrder, Cell> field_type ;
@@ -66,7 +66,7 @@ namespace AlbPUMI {
 
   // QPScalar
   template <typename T>
-  struct QPData_Traits<T, 2> {
+  struct PUMIQPData_Traits<T, 2> {
 
     enum { size = 2 }; // Two array dimension tags: Cell and QuadPoint
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint> field_type ;
@@ -80,7 +80,7 @@ namespace AlbPUMI {
 
   // QPVector
   template <typename T>
-  struct QPData_Traits<T, 3> {
+  struct PUMIQPData_Traits<T, 3> {
 
     enum { size = 3 }; // Three array dimension tags: Cell, QuadPoint, and Dim
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim> field_type ;
@@ -94,7 +94,7 @@ namespace AlbPUMI {
 
   // QPTensor
   template <typename T>
-  struct QPData_Traits<T, 4> {
+  struct PUMIQPData_Traits<T, 4> {
 
     enum { size = 4 }; // Four array dimension tags: Cell, QuadPoint, Dim, and Dim
     typedef shards::Array<T, shards::NaturalOrder, Cell, QuadPoint, Dim, Dim> field_type ;
@@ -110,19 +110,19 @@ namespace AlbPUMI {
 }
 
 // Define macro for explicit template instantiation
-#define QPDATA_INSTANTIATE_TEMPLATE_CLASS_1D(type, name) \
+#define PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_1D(type, name) \
   template class name<type, 1>;
-#define QPDATA_INSTANTIATE_TEMPLATE_CLASS_2D(type, name) \
+#define PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_2D(type, name) \
   template class name<type, 2>;
-#define QPDATA_INSTANTIATE_TEMPLATE_CLASS_3D(type, name) \
+#define PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_3D(type, name) \
   template class name<type, 3>;
-#define QPDATA_INSTANTIATE_TEMPLATE_CLASS_4D(type, name) \
+#define PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_4D(type, name) \
   template class name<type, 4>;
 
-#define QPDATA_INSTANTIATE_TEMPLATE_CLASS(name) \
-  QPDATA_INSTANTIATE_TEMPLATE_CLASS_1D(double, name) \
-  QPDATA_INSTANTIATE_TEMPLATE_CLASS_2D(double, name) \
-  QPDATA_INSTANTIATE_TEMPLATE_CLASS_3D(double, name) \
-  QPDATA_INSTANTIATE_TEMPLATE_CLASS_4D(double, name)
+#define PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS(name) \
+  PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_1D(double, name) \
+  PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_2D(double, name) \
+  PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_3D(double, name) \
+  PUMIQPDATA_INSTANTIATE_TEMPLATE_CLASS_4D(double, name)
 
 #endif

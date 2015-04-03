@@ -4,21 +4,21 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FMDB_VTK_HPP
-#define FMDB_VTK_HPP
+#ifndef ALBANY_PUMIVTK_HPP
+#define ALBANY_PUMIVTK_HPP
 
 #include "Teuchos_RCP.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
-namespace AlbPUMI {
+namespace Albany {
 
-class FMDBVtk {
+class PUMIVtk {
 
   public:
 
-    FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_);
+    PUMIVtk(PUMIMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_);
 
-    ~FMDBVtk();
+    ~PUMIVtk();
 
     void writeFile(const double time);
     void setFileName(const std::string& fname){ outputFileName = fname; }

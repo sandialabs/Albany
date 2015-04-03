@@ -6,10 +6,10 @@
 
 //IK, 9/12/14: no Epetra
 
-#include "AlbPUMI_QPData.hpp"
+#include "Albany_PUMIQPData.hpp"
 
 template<typename DataType, unsigned Dim, class traits>
-AlbPUMI::QPData<DataType, Dim, traits>::QPData(const std::string& name_,
+Albany::PUMIQPData<DataType, Dim, traits>::PUMIQPData(const std::string& name_,
                const std::vector<PHX::DataLayout::size_type>& dim, const bool output_) :
   name(name_),
   output(output_),
@@ -26,7 +26,7 @@ AlbPUMI::QPData<DataType, Dim, traits>::QPData(const std::string& name_,
 
 template<typename DataType, unsigned Dim, class traits>
 void
-AlbPUMI::QPData<DataType, Dim, traits>::reAllocateBuffer(const std::size_t nelems){
+Albany::PUMIQPData<DataType, Dim, traits>::reAllocateBuffer(const std::size_t nelems){
 
   std::size_t total_size = nelems * nfield_dofs;
 
@@ -40,7 +40,7 @@ AlbPUMI::QPData<DataType, Dim, traits>::reAllocateBuffer(const std::size_t nelem
 
 template<typename DataType, unsigned Dim, class traits>
 Albany::MDArray
-AlbPUMI::QPData<DataType, Dim, traits>::getMDA(const std::size_t nelems){
+Albany::PUMIQPData<DataType, Dim, traits>::getMDA(const std::size_t nelems){
 
   unsigned total_size = nelems * nfield_dofs;
 

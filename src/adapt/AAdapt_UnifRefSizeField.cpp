@@ -6,12 +6,12 @@
 
 
 #include "AAdapt_UnifRefSizeField.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
 #include "Albany_Utils.hpp"
 
-AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
-  mesh(disc->getFMDBMeshStruct()->getMesh()),
+AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
+  mesh(disc->getPUMIMeshStruct()->getMesh()),
   commT(disc->getComm()) {
   initialAverageEdgeLength = ma::getAverageEdgeLength(mesh);
 }

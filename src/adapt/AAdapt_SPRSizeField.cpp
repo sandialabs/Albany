@@ -6,18 +6,18 @@
 
 
 #include "AAdapt_SPRSizeField.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
 #include <spr.h>
 #include <apfShape.h>
 
-AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
   commT(disc->getComm()),
-  mesh(disc->getFMDBMeshStruct()->getMesh()),
+  mesh(disc->getPUMIMeshStruct()->getMesh()),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),
-  cub_degree(disc->getFMDBMeshStruct()->cubatureDegree),
+  cub_degree(disc->getPUMIMeshStruct()->cubatureDegree),
   pumi_disc(disc) {
 }
 

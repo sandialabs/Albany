@@ -28,8 +28,8 @@
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
 #ifdef ALBANY_SCOREC
-#include "AlbPUMI_FMDBDiscretization.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIDiscretization.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 #endif
 #ifdef ALBANY_CATALYST
 #include "Albany_Catalyst_Decorator.hpp"
@@ -269,7 +269,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 
   else if(method == "FMDB") {
 #ifdef ALBANY_SCOREC
-    meshStruct = Teuchos::rcp(new AlbPUMI::FMDBMeshStruct(discParams, commT));
+    meshStruct = Teuchos::rcp(new Albany::PUMIMeshStruct(discParams, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(method == "FMDB",
                                Teuchos::Exceptions::InvalidParameter,
@@ -383,15 +383,15 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       break;
 #ifdef ALBANY_SCOREC
 
-      case Albany::AbstractMeshStruct::FMDB_VTK_MS: {
-        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-        return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBVtk>(ms, commT, rigidBodyModes));
+      case Albany::AbstractMeshStruct::PUMI_VTK_MS: {
+        Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::PUMIDiscretization<Albany::PUMIVtk>(ms, commT, rigidBodyModes));
       }
       break;
 
-      case Albany::AbstractMeshStruct::FMDB_EXODUS_MS: {
-        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-        return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBExodus>(ms, commT, rigidBodyModes));
+      case Albany::AbstractMeshStruct::PUMI_EXODUS_MS: {
+        Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::PUMIDiscretization<Albany::PUMIExodus>(ms, commT, rigidBodyModes));
       }
       break;
 #endif

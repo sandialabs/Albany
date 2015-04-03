@@ -5,12 +5,12 @@
 //*****************************************************************//
 
 
-#ifndef ALBPUMI_FMDBMESHSTRUCT_HPP
-#define ALBPUMI_FMDBMESHSTRUCT_HPP
+#ifndef ALBANY_PUMIMESHSTRUCT_HPP
+#define ALBANY_PUMIMESHSTRUCT_HPP
 
 #include "Albany_AbstractMeshStruct.hpp"
-#include "AlbPUMI_QPData.hpp"
-#include "AlbPUMI_NodeData.hpp"
+#include "Albany_PUMIQPData.hpp"
+#include "Albany_PUMINodeData.hpp"
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
@@ -24,17 +24,17 @@
 #include <apfSTK.h>
 #include <gmi.h>
 
-namespace AlbPUMI {
+namespace Albany {
 
-  class FMDBMeshStruct : public Albany::AbstractMeshStruct {
+  class PUMIMeshStruct : public Albany::AbstractMeshStruct {
 
   public:
 
-    FMDBMeshStruct(
+    PUMIMeshStruct(
                   const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-    ~FMDBMeshStruct();
+    ~PUMIMeshStruct();
 
     void setFieldAndBulkData(
                   const Teuchos::RCP<const Teuchos_Comm>& commT,
@@ -48,10 +48,10 @@ namespace AlbPUMI {
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >& getMeshSpecs();
 
-    std::vector<Teuchos::RCP<QPData<double, 1> > > scalarValue_states;
-    std::vector<Teuchos::RCP<QPData<double, 2> > > qpscalar_states;
-    std::vector<Teuchos::RCP<QPData<double, 3> > > qpvector_states;
-    std::vector<Teuchos::RCP<QPData<double, 4> > > qptensor_states;
+    std::vector<Teuchos::RCP<PUMIQPData<double, 1> > > scalarValue_states;
+    std::vector<Teuchos::RCP<PUMIQPData<double, 2> > > qpscalar_states;
+    std::vector<Teuchos::RCP<PUMIQPData<double, 3> > > qpvector_states;
+    std::vector<Teuchos::RCP<PUMIQPData<double, 4> > > qptensor_states;
 
     std::vector<std::string> nsNames;
     std::vector<std::string> ssNames;
@@ -70,7 +70,7 @@ namespace AlbPUMI {
     const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const
         { return meshDynamicData; }
 
-    //! Process FMDB mesh for element block specific info
+    //! Process PUMI mesh for element block specific info
     void setupMeshBlkInfo();
 
     bool hasRestartSolution;

@@ -6,9 +6,9 @@
 
 
 #include "AAdapt_UnifSizeField.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
-AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc) :
+AAdapt::UnifSizeField::UnifSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
   commT(disc->getComm()) {
 }
 

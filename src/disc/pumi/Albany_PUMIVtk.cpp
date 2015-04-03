@@ -4,10 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "AlbPUMI_FMDBVtk.hpp"
+#include "Albany_PUMIVtk.hpp"
 
-AlbPUMI::FMDBVtk::
-FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_) :
+Albany::PUMIVtk::
+PUMIVtk(PUMIMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& commT_) :
   commT(commT_),
   doCollection(false),
   mesh(meshStruct.getMesh()),
@@ -40,8 +40,8 @@ FMDBVtk(FMDBMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& comm
 
 }
 
-AlbPUMI::FMDBVtk::
-~FMDBVtk() {
+Albany::PUMIVtk::
+~PUMIVtk() {
 
   if(doCollection && (commT->getRank() == 0)){ // Only PE 0 writes the collection file
 
@@ -54,7 +54,7 @@ AlbPUMI::FMDBVtk::
 }
 
 void
-AlbPUMI::FMDBVtk::
+Albany::PUMIVtk::
 writeFile(const double time_value){
   if(doCollection){
     if(commT->getRank() == 0){ // Only PE 0 writes the collection file

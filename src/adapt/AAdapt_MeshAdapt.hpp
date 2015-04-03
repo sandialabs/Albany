@@ -12,8 +12,8 @@
 
 #include "AAdapt_AbstractAdapter.hpp"
 #include "AAdapt_AbstractAdapterT.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
-#include "AlbPUMI_AbstractPUMIDiscretization.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
+#include "Albany_AbstractPUMIDiscretization.hpp"
 
 #include "Phalanx.hpp"
 #include "PHAL_Workset.hpp"
@@ -56,7 +56,7 @@ private:
   int remeshFileIndex;
 
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-  Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_discretization;
+  Teuchos::RCP<Albany::AbstractPUMIDiscretization> pumi_discretization;
 
   apf::Mesh2* mesh;
 

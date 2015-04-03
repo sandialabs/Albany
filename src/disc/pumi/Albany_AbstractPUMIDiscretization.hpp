@@ -6,13 +6,13 @@
 
 
 
-#ifndef ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
-#define ALBPUMI_ABSTRACTPUMIDISCRETIZATION_HPP
+#ifndef ALBANY_ABSTRACTPUMIDISCRETIZATION_HPP
+#define ALBANY_ABSTRACTPUMIDISCRETIZATION_HPP
 
 #include "Albany_AbstractDiscretization.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 
-namespace AlbPUMI {
+namespace Albany {
 
   class AbstractPUMIDiscretization : public Albany::AbstractDiscretization {
   public:
@@ -21,7 +21,7 @@ namespace AlbPUMI {
     virtual ~AbstractPUMIDiscretization(){}
 
     // Retrieve mesh struct
-    virtual Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() = 0;
+    virtual Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() = 0;
 
     virtual apf::GlobalNumbering* getAPFGlobalNumbering() = 0;
 
