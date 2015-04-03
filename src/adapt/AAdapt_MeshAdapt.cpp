@@ -161,9 +161,8 @@ void AAdapt::MeshAdapt::initAdapt(
   // If the mesh adapt loop is run, we have to transfer state for SPR.
   if (Teuchos::nonnull(rc_mgr)) should_transfer_ip_data = true;
 
-  szField->setParams(adapt_params_->get<double>("Target Element Size", 0.1),
-		     adapt_params_->get<double>("Error Bound", 0.01),
-		     adapt_params_->get<std::string>("State Variable", ""));
+  szField->setParams(adapt_params_);
+
 }
 
 void AAdapt::MeshAdapt::beforeAdapt()

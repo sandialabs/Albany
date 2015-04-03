@@ -37,11 +37,11 @@ AAdapt::SPRSizeField::computeError() {
 
 
 void
-AAdapt::SPRSizeField::setParams(double element_size, double err_bound,
-			    const std::string& state_var_name) {
+AAdapt::SPRSizeField::setParams(
+    const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  sv_name = state_var_name;
-  rel_err = err_bound;
+  rel_err = p->get<double>("Error Bound", 0.01);
+  sv_name = p->get<std::string>("State Variable", "");
   std::vector<int> dims;
   esa[0][sv_name].dimensions(dims);
   num_qp = dims[1];

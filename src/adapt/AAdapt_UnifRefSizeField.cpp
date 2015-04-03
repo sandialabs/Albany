@@ -25,10 +25,10 @@ AAdapt::UnifRefSizeField::computeError() {
 }
 
 void
-AAdapt::UnifRefSizeField::setParams(double element_size, double err_bound,
-				    const std::string& state_var_name) {
+AAdapt::UnifRefSizeField::setParams(
+    const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  elem_size = element_size;
+  elem_size = p->get<double>("Target Element Size", 0.1);
 
 }
 

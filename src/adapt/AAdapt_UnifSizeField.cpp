@@ -22,9 +22,9 @@ AAdapt::UnifSizeField::computeError() {
 
 
 void
-AAdapt::UnifSizeField::setParams(double element_size, double err_bound,
-				 const std::string& state_var_name) {
-  elem_size = element_size;
+AAdapt::UnifSizeField::setParams(
+    const Teuchos::RCP<Teuchos::ParameterList>& p) {
+  elem_size = p->get<double>("Target Element Size", 0.1);
 }
 
 double AAdapt::UnifSizeField::getValue(ma::Entity* v) {

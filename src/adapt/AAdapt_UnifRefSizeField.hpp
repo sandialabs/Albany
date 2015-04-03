@@ -24,8 +24,7 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     double getValue(ma::Entity* v);
 
-    void setParams(double element_size, double err_bound,
-		   const std::string& state_var_name);
+    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
     void computeError();
 

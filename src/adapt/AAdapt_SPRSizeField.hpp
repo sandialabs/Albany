@@ -26,8 +26,7 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     int getCubatureDegree(int num_qp);
 
-    void setParams(double element_size, double err_bound,
-        const std::string& state_var_name);
+    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
     void computeError();
 

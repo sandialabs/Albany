@@ -12,8 +12,8 @@ namespace AAdapt {
  *         addition to those in ma::SizeField.
  */
 struct MeshSizeField {
-  virtual void setParams(double element_size, double err_bound,
-                         const std::string& state_var_name) = 0;
+  virtual void setParams(
+      const Teuchos::RCP<Teuchos::ParameterList>& p) = 0;
   virtual void computeError() = 0;
   virtual void copyInputFields() = 0;
   virtual void freeInputFields() = 0;
