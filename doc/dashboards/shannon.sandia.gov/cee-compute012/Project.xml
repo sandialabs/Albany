@@ -1,0 +1,6 @@
+<Project name="Albany">
+  <SubProject name="Trilinos_CUVM">
+  </SubProject>
+  <SubProject name="Albany_CUVM">
+  </SubProject>
+</Project>

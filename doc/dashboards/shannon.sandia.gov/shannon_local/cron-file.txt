@@ -1,0 +1,4 @@
+MAILTO=""
+# Note: Shannon runs UTC time, so start the nightly at 0700 UTC (midnight local if we are MDT)
+00 07 * * * /home/gahanse/Codes/WorkingAlb/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
+
