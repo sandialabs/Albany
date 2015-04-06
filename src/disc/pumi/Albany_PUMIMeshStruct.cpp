@@ -90,8 +90,12 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 #endif
 
   mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
-  model = mesh->getModel();
 
+  bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
+  if (isQuadMesh)
+    apf::changeMeshShape(mesh, apf::getLagrange(2), false);
+
+  model = mesh->getModel();
   mesh->verify();
 
   int d = mesh->getDimension();
@@ -100,10 +104,6 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   loadSets(params, sets, "Edge Node Set Associations",   1,     0);
   loadSets(params, sets, "Vertex Node Set Associations", 0,     0);
   loadSets(params, sets, "Side Set Associations",        d - 1, d - 1);
-
-  bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
-  if (isQuadMesh)
-    assert(mesh->getShape() == apf::getLagrange(2));
 
   // Resize mesh after input if indicated in the input file
   // User has indicated a desired element size in input file
