@@ -299,7 +299,7 @@ Albany::STKDiscretization::getCoordinates() const
 }
 
 // These methods were added to support mesh adaptation, which is currently
-// limited to FMDBDiscretization.
+// limited to PUMIDiscretization.
 void Albany::STKDiscretization::
 setCoordinates(const Teuchos::ArrayRCP<const double>& c)
 {

@@ -362,7 +362,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_EPETRA
   try {
-    //dp-todo getNodalParameterSIS() needs to be implemented in FMDB. Until
+    //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
     // Create Distributed parameters and initialize them with data stored in the mesh.
     const Albany::StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();

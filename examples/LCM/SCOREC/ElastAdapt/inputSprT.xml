@@ -37,11 +37,11 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Method"                        type="string"             value="FMDB"/>
+    <Parameter name="Method"                        type="string"             value="PUMI"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/> 
     <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/bar/bar.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/bar/bar.smb"/>
-    <Parameter name="FMDB Output File Name"         type="string"             value="out.vtk"/>
+    <Parameter name="PUMI Input File Name"          type="string"             value="../meshes/bar/bar.smb"/>
+    <Parameter name="PUMI Output File Name"         type="string"             value="out.vtk"/>
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{115, eb_1}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x4:{97, 101, 51, 95, ns_1, ns_2, ns_3, ns_4}"/>
     <Parameter name="2nd Order Mesh"                type="bool"               value="false"/>

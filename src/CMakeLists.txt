@@ -590,7 +590,7 @@ set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Trilinos_TPL_INCLUDE_DIRS}
-                     ${ALBANY_FMDB_INCLUDE_DIRS}
+                     ${ALBANY_PUMI_INCLUDE_DIRS}
                      ./
                      ./evaluators
                      ./problems
@@ -628,8 +628,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/utils
                     )
 
-link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
-  ${FMDB_LIBRARY_DIR})
+link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 IF ( ENABLE_NLopt )
   include_directories (${NLopt_INCLUDE_DIR})
@@ -685,11 +684,11 @@ ENDIF()
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/pumi)
-  include_directories (${ALBANY_FMDB_INCLUDE_DIRS})
+  SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
+  include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
 ELSE()
   set(SCOREC_LIB )
-  SET(ALBANY_FMDB_INCLUDE_DIRS )
+  SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
 # Catalyst CoProcessing

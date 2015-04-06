@@ -634,7 +634,7 @@ ELSE()
   #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
-# Set optional dependency on SCOREC FMDB,  optional adaptivity
+# Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)

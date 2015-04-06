@@ -21,10 +21,10 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="FMDB Input File Name" type="string" value="../meshes/twoLayers.smb"/>
+    <Parameter name="Method" type="string" value="PUMI"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/twoLayers.smb"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/twoLayers.dmg"/>
-    <Parameter name="FMDB Output File Name" type="string" value="out.vtk"/>
+    <Parameter name="PUMI Output File Name" type="string" value="out.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{95,899, Upper_Region,Lower_Region}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x2:{893,1, Bottom_Surface,Top_Surface}"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>

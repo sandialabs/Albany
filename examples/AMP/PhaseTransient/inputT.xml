@@ -30,10 +30,10 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="FMDB"/>
+    <Parameter name="Method" type="string" value="PUMI"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/twoLayers.dmg"/>
-    <Parameter name="FMDB Input File Name" type="string" value="../meshes/twoLayers.smb"/>
-    <Parameter name="FMDB Output File Name" type="string" value="TransientN.vtk"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/twoLayers.smb"/>
+    <Parameter name="PUMI Output File Name" type="string" value="TransientN.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{95,899, Upper_Region,Lower_Region}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x1:{893, Bottom_Surface}"/>
     <Parameter name="Side Set Associations" type="TwoDArray(string)" value="2x9:{1, 79,81,83,85, 886,881,876,871 ,Top_Surface, Upper_1,Upper_2,Upper_3,Upper_4, Lower_1,Lower_2,Lower_3,Lower_4}"/>

@@ -50,7 +50,7 @@ set(INCLUDE_DIRS
   ${SEE_DIR}/problems
   ${SEE_DIR}/evaluators
   ${SEE_DIR}/responses
-  ${ALBANY_FMDB_INCLUDE_DIRS} 
+  ${ALBANY_PUMI_INCLUDE_DIRS} 
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 

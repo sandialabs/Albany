@@ -50,11 +50,11 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="FMDB"/>
+    <Parameter name="Method" type="string" value="PUMI"/>
     <Parameter name="Workset Size" type="int" value="50"/> <!-- Sets the number of elements per workset -->
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/necking/necking.dmg"/>
-    <Parameter name="FMDB Input File Name" type="string" value="../meshes/necking/necking-serial.smb"/>
-    <Parameter name="FMDB Output File Name" type="string" value="necking_serial_outputT.vtk"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/necking/necking-serial.smb"/>
+    <Parameter name="PUMI Output File Name" type="string" value="necking_serial_outputT.vtk"/>
     <!-- Associate Parasolid region number with element block name -->
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x2:{ 74, 345, element_block_1, element_block_2}"/>
     <!-- Associate Parasolid face number with node set name -->    

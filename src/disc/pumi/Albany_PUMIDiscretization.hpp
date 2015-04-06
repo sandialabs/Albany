@@ -35,7 +35,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     //! Constructor
     PUMIDiscretization(
-       Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct,
+       Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
 
@@ -97,7 +97,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
     void printCoords() const;
 
     //! Get number of spatial dimensions
-    int getNumDim() const { return fmdbMeshStruct->numDim; }
+    int getNumDim() const { return pumiMeshStruct->numDim; }
 
     virtual Teuchos::RCP<const Teuchos_Comm> getComm() const { return commT; }
 
@@ -124,14 +124,14 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
     void setResidualFieldT(const Tpetra_Vector& residualT);
 
     // Retrieve mesh struct
-    Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return fmdbMeshStruct;}
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return fmdbMeshStruct;}
+    Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return pumiMeshStruct;}
+    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return pumiMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
+    bool hasRestartSolution() const {return pumiMeshStruct->hasRestartSolution;}
 
     //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return fmdbMeshStruct->restartDataTime;}
+    double restartDataTime() const {return pumiMeshStruct->restartDataTime;}
 
     //! PUMI does not support MOR
     virtual bool supportsMOR() const { return false; }
@@ -413,7 +413,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
     int numOverlapNodes;
     long numGlobalNodes;
 
-    Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct;
+    Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct;
 
     bool interleavedOrdering;
 
