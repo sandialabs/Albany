@@ -16,6 +16,7 @@
 #include "Tpetra_Import.hpp"
 
 #include "Albany_DataTypes.hpp"
+#include "Albany_Application.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -28,7 +29,9 @@ namespace LCM {
 
 class Schwarz_BoundaryJacobian: public Tpetra_Operator {
 public:
-  Schwarz_BoundaryJacobian(Teuchos::RCP<Teuchos_Comm const> const & comm);
+  Schwarz_BoundaryJacobian(
+      Teuchos::RCP<Teuchos_Comm const> const & comm,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca);
 
   ~Schwarz_BoundaryJacobian();
 
@@ -62,6 +65,9 @@ public:
   }
 
 private:
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  coupled_apps_;
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;

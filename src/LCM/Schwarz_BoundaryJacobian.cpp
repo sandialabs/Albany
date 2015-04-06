@@ -18,8 +18,10 @@ mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
-    Teuchos::RCP<Teuchos_Comm const> const & commT) :
-        commT_(commT), b_use_transpose_(false), b_initialized_(false),
+    Teuchos::RCP<Teuchos_Comm const> const & comm,
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca) :
+        coupled_apps_(ca),
+        commT_(comm), b_use_transpose_(false), b_initialized_(false),
         n_models_(0)
 {
   return;
