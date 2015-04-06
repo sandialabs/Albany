@@ -36,7 +36,7 @@
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Points Per Edge" type="int" value="3"/>
-    <Parameter name="Workset Size" type="int" value="1536"/>
+    <Parameter name="Workset Size" type="int" value="-1"/>
     <!--Parameter name="Exodus Write Interval" type="int" value="5"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
