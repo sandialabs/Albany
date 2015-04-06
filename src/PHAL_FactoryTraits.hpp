@@ -20,6 +20,7 @@
 #include "LCM/evaluators/bc/SchwarzBC.hpp"
 #endif
 #include "LCM/evaluators/bc/TorsionBC.hpp"
+#include "LCM/evaluators/bc/PDNeighborFitBC.hpp"
 #endif
 #ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
@@ -36,7 +37,6 @@
 #include "PHAL_GatherScalarNodalParameter.hpp"
 #include "PHAL_DirichletCoordinateFunction.hpp"
 #include "PHAL_DirichletField.hpp"
-
 
 #include "boost/mpl/vector/vector50.hpp"
 #include "boost/mpl/placeholders.hpp"
@@ -69,11 +69,12 @@ namespace PHAL {
     static const int id_time                           =  7; // Only for LCM probs
     static const int id_torsion_bc                     =  8; // Only for LCM probs
     static const int id_schwarz_bc                     =  9; // Only for LCM probs
+    static const int id_pd_neigh_fit_bc                = 10; // Only for LCM-Peridigm coupling
 
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
-    typedef boost::mpl::vector10<
+    typedef boost::mpl::vector11<
 #elif defined(ALBANY_LCM)
-    typedef boost::mpl::vector9<
+    typedef boost::mpl::vector10<
 #else
       typedef boost::mpl::vector5<
 #endif
@@ -96,6 +97,7 @@ namespace PHAL {
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
         LCM::SchwarzBC<_, Traits>                 //  9
+        LCM::PDNeighborFitBC<_, Traits>           //  10
 #endif
         > EvaluatorTypes;
 };
