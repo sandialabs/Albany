@@ -54,8 +54,8 @@ private:
   ScalarT constant_value_;
   void init_constant(ScalarT value, Teuchos::ParameterList& p);
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> coord_;
-  PHX::MDField<ScalarT,Cell,Node> rho_cp_;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> rho_cp_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;

@@ -543,11 +543,12 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
+#ifdef ALBANY_EPETRA
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
 {
-#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
+#if defined(ALBANY_TEKO)
    //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
    inverseLib = Teko::InverseLibrary::buildFromParameterList(tekoParams->sublist("Inverse Factory Library"));
    inverseLib->PrintAvailableInverses(*out);
@@ -582,6 +583,7 @@ getInitialSolution() const
   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionT(), *initial_x, comm);
   return initial_x;
 }
+#endif
 
 RCP<const Tpetra_Vector>
 Albany::Application::
@@ -1227,12 +1229,13 @@ computeGlobalJacobianT(const double alpha,
     countRes++;  //increment residual counter
 }
 
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
                             const RCP<Epetra_Operator>& prec)
 {
-#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
+#if defined(ALBANY_TEKO)
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
   *out << "Computing WPrec by Teko" << std::endl;
@@ -1246,6 +1249,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
   blockPrec->rebuildInverseOperator(wrappedJac);
 #endif
 }
+#endif
 
 void
 Albany::Application::

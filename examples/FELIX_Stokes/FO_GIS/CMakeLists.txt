@@ -48,3 +48,5 @@ IF(ALBANY_STK_PERCEPT AND ALBANY_EPETRA)
 add_test(${testName}_Gis20km_refine ${Albany8.exe} input_fo_gis20km_refine.xml)
 ENDIF()
 
+#salloc -n 4 -n 4 -p pbatch
+#mpirun -np 4 ../../../build/src/Albany input_fo_gis20km.xml
