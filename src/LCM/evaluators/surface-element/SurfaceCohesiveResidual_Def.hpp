@@ -94,11 +94,14 @@ evaluateFields(typename Traits::EvalData workset)
 
         // refValues(numPlaneNodes, numQPs) = shape function
         // refArea(numCells, numQPs) = |Jacobian|*weight
-        f_plus(0) += cohesive_traction_(cell, pt, 0) * ref_values_(bottom_node, pt)
+        f_plus(0) += cohesive_traction_(cell, pt, 0)
+            * ref_values_(bottom_node, pt)
             * ref_area_(cell, pt);
-        f_plus(1) += cohesive_traction_(cell, pt, 1) * ref_values_(bottom_node, pt)
+        f_plus(1) += cohesive_traction_(cell, pt, 1)
+            * ref_values_(bottom_node, pt)
             * ref_area_(cell, pt);
-        f_plus(2) += cohesive_traction_(cell, pt, 2) * ref_values_(bottom_node, pt)
+        f_plus(2) += cohesive_traction_(cell, pt, 2)
+            * ref_values_(bottom_node, pt)
             * ref_area_(cell, pt);
 
       } // end of pt loop
