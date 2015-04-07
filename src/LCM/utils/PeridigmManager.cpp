@@ -696,7 +696,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   std::cout << "  number of peridynamic nodes in overlap region: " << numberOfOverlappingPeridynamicNodes << std::endl;
 }
 
-double LCM::PeridigmManager::obcEvaluateFunctional(const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
+double LCM::PeridigmManager::obcEvaluateFunctional()
 {
   if(!enableOptimizationBasedCoupling){
     return 0.0;
@@ -788,9 +788,11 @@ double LCM::PeridigmManager::obcEvaluateFunctional(const Teuchos::RCP<const Tpet
   return functionalValue;
 }
 
-void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
+void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector_)
 {
   if(hasPeridynamics){
+
+    albanySolutionVector = albanySolutionVector_;
 
     currentTime = time;
     timeStep = currentTime - previousTime;
