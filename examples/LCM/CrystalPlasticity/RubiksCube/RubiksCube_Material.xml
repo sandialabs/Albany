@@ -121,7 +121,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 2 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -155,7 +155,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 3 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -189,7 +189,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 4 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -223,7 +223,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 5 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -257,7 +257,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 6 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -291,7 +291,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 7 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -324,41 +324,7 @@
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
 
     </ParameterList>
-    <ParameterList name="Block 1 Material">
-
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
-      </ParameterList>
-
-      <!-- Crystal Elasticity moduli and orientation -->
-      <ParameterList name="Crystal Elasticity">
-        <Parameter name="C11" type="double" value="168.4"/>
-        <Parameter name="C12" type="double" value="121.4"/>
-        <Parameter name="C44" type="double" value="75.4"/>
-        <Parameter name="Basis Vector 1" type="Array(double)" value="{1.0,0.0,0.0}"/>
-        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0,1.0,0.0}"/>
-        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
-      </ParameterList>
-
-      <!-- Crystal Plasticity Slip System -->
-      <Parameter name="Number of Slip Systems" type="int" value="1"/>
-      <ParameterList name="Slip System 1">
-        <Parameter name="Slip Direction" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
-        <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
-        <Parameter name="Tau Critical" type="double" value="0.6"/>
-        <Parameter name="Gamma Dot" type="double" value="1.0"/>
-        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
-      </ParameterList>
-
-      <!-- Specify output to Exodus -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output L" type="bool" value="true"/>
-      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
-
-    </ParameterList>
-
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 8 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -392,7 +358,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 9 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -426,7 +392,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 10 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -460,7 +426,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 11 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -494,7 +460,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 12 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -528,7 +494,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 13 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -562,7 +528,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 14 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -596,7 +562,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 15 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -630,7 +596,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 16 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -664,7 +630,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 17 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -698,7 +664,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 18 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -732,7 +698,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 19 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -766,7 +732,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 20 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -800,7 +766,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 21 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -834,42 +800,7 @@
 
     </ParameterList>
 
-
-    <ParameterList name="Block 1 Material">
-
-      <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
-      </ParameterList>
-
-      <!-- Crystal Elasticity moduli and orientation -->
-      <ParameterList name="Crystal Elasticity">
-        <Parameter name="C11" type="double" value="168.4"/>
-        <Parameter name="C12" type="double" value="121.4"/>
-        <Parameter name="C44" type="double" value="75.4"/>
-        <Parameter name="Basis Vector 1" type="Array(double)" value="{1.0,0.0,0.0}"/>
-        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0,1.0,0.0}"/>
-        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
-      </ParameterList>
-
-      <!-- Crystal Plasticity Slip System -->
-      <Parameter name="Number of Slip Systems" type="int" value="1"/>
-      <ParameterList name="Slip System 1">
-        <Parameter name="Slip Direction" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
-        <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
-        <Parameter name="Tau Critical" type="double" value="0.6"/>
-        <Parameter name="Gamma Dot" type="double" value="1.0"/>
-        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
-      </ParameterList>
-
-      <!-- Specify output to Exodus -->
-      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output L" type="bool" value="true"/>
-      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
-
-    </ParameterList>
-
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 22 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -903,7 +834,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 23 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -937,7 +868,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 24 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -971,7 +902,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 25 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -1005,7 +936,7 @@
 
     </ParameterList>
 
-    <ParameterList name="Block 1 Material">
+    <ParameterList name="Block 26 Material">
 
       <ParameterList name="Material Model"> 
         <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
@@ -1038,6 +969,38 @@
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
 
     </ParameterList>
+
+    <ParameterList name="Block 27 Material">
+
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name" type="string" value="CrystalPlasticity"/>
+      </ParameterList>
+
+      <!-- Crystal Elasticity moduli and orientation -->
+      <ParameterList name="Crystal Elasticity">
+        <Parameter name="C11" type="double" value="168.4"/>
+        <Parameter name="C12" type="double" value="121.4"/>
+        <Parameter name="C44" type="double" value="75.4"/>
+        <Parameter name="Basis Vector 1" type="Array(double)" value="{1.0,0.0,0.0}"/>
+        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0,1.0,0.0}"/>
+        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
+      </ParameterList>
+
+      <!-- Crystal Plasticity Slip System -->
+      <Parameter name="Number of Slip Systems" type="int" value="1"/>
+      <ParameterList name="Slip System 1">
+        <Parameter name="Slip Direction" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
+        <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
+        <Parameter name="Tau Critical" type="double" value="0.6"/>
+        <Parameter name="Gamma Dot" type="double" value="1.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
+      </ParameterList>
+
+      <!-- Specify output to Exodus -->
+      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+      <Parameter name="Output Fp" type="bool" value="true"/>
+      <Parameter name="Output L" type="bool" value="true"/>
+      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
 
     </ParameterList>
 
