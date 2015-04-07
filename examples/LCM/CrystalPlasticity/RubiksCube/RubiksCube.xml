@@ -24,17 +24,11 @@
       <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
-<!-- DO WE NEED THIS?
-    <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="1"/>
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
-    </ParameterList>
--->
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="RubiksCube_Mesh1.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="RubiksCube.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Mesh1.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>

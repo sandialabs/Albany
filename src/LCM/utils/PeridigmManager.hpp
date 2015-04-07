@@ -65,7 +65,7 @@ public:
   void obcOverlappingElementSearch();
 
   //! Evaluate the functional for optimization-based coupling
-  double obcEvaluateFunctional(const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
+  double obcEvaluateFunctional();
 
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
@@ -138,6 +138,8 @@ private:
   Teuchos::RCP<Epetra_Vector> obcPeridynamicNodeCurrentCoords;
 
   int cubatureDegree;
+
+  Teuchos::RCP<const Tpetra_Vector> albanySolutionVector;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();
