@@ -23,13 +23,13 @@ SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
             Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")),
     ref_area_(
         p.get<std::string>("Reference Area Name"), dl->qp_scalar),
-    cohesiveTraction(
+    cohesive_traction_(
         p.get<std::string>("Cohesive Traction Name"), dl->qp_vector),
     force(
         p.get<std::string>("Surface Cohesive Residual Name"), dl->node_vector)
 {
   this->addDependentField(ref_area_);
-  this->addDependentField(cohesiveTraction);
+  this->addDependentField(cohesive_traction_);
 
   this->addEvaluatedField(force);
 
@@ -49,15 +49,15 @@ SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
   numPlaneDims = numDims - 1;
 
   // Allocate Temporary FieldContainers
-  refValues.resize(numPlaneNodes, numQPs);
-  refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-  refPoints.resize(numQPs, numPlaneDims);
+  ref_values_.resize(numPlaneNodes, numQPs);
+  ref_grads_.resize(numPlaneNodes, numQPs, numPlaneDims);
+  ref_points_.resize(numQPs, numPlaneDims);
   refWeights.resize(numQPs);
 
   // Pre-Calculate reference element quantitites
-  cubature_->getCubature(refPoints, refWeights);
-  intrepid_basis_->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
+  cubature_->getCubature(ref_points_, refWeights);
+  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -66,7 +66,7 @@ void SurfaceCohesiveResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(cohesiveTraction, fm);
+  this->utils.setFieldData(cohesive_traction_, fm);
   this->utils.setFieldData(ref_area_, fm);
   this->utils.setFieldData(force, fm);
 }
@@ -90,11 +90,11 @@ evaluateFields(typename Traits::EvalData workset)
 
         // refValues(numPlaneNodes, numQPs) = shape function
         // refArea(numCells, numQPs) = |Jacobian|*weight
-        f_plus(0) += cohesiveTraction(cell, pt, 0) * refValues(node, pt)
+        f_plus(0) += cohesive_traction_(cell, pt, 0) * ref_values_(node, pt)
             * ref_area_(cell, pt);
-        f_plus(1) += cohesiveTraction(cell, pt, 1) * refValues(node, pt)
+        f_plus(1) += cohesive_traction_(cell, pt, 1) * ref_values_(node, pt)
             * ref_area_(cell, pt);
-        f_plus(2) += cohesiveTraction(cell, pt, 2) * refValues(node, pt)
+        f_plus(2) += cohesive_traction_(cell, pt, 2) * ref_values_(node, pt)
             * ref_area_(cell, pt);
 
         // output for debug, I'll keep it for now until the implementation fully verified

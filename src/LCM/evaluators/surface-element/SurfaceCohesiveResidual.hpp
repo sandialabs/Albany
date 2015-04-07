@@ -56,17 +56,17 @@ private:
 
   // Traction vector based on cohesive-separation law
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
-  cohesiveTraction;
+  cohesive_traction_;
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType>
-  refValues;
+  ref_values_;
 
   Intrepid::FieldContainer<RealType>
-  refGrads;
+  ref_grads_;
 
   Intrepid::FieldContainer<RealType>
-  refPoints;
+  ref_points_;
 
   Intrepid::FieldContainer<RealType>
   refWeights;
