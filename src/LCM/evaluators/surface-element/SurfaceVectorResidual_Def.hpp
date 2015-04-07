@@ -16,8 +16,8 @@ namespace LCM {
 //----------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 SurfaceVectorResidual<EvalT, Traits>::
-SurfaceVectorResidual(Teuchos::ParameterList& p,
-    const Teuchos::RCP<Albany::Layouts>& dl) :
+SurfaceVectorResidual(Teuchos::ParameterList & p,
+    Teuchos::RCP<Albany::Layouts> const & dl) :
     thickness
     (p.get<double>("thickness")),
 
@@ -118,7 +118,7 @@ SurfaceVectorResidual(Teuchos::ParameterList& p,
 template<typename EvalT, typename Traits>
 void SurfaceVectorResidual<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
-    PHX::FieldManager<Traits>& fm)
+    PHX::FieldManager<Traits> & fm)
 {
   this->utils.setFieldData(currentBasis, fm);
   this->utils.setFieldData(refDualBasis, fm);

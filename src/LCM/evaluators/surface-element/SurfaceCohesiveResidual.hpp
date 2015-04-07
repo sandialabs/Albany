@@ -17,23 +17,22 @@
 #include "Albany_Layouts.hpp"
 
 namespace LCM {
-/** \brief
-
-    Compute the residual forces on a surface based on cohesive traction
-
-**/
+///
+///    Compute the residual forces on a surface based on cohesive traction
+///
 
 template<typename EvalT, typename Traits>
-class SurfaceCohesiveResidual : public PHX::EvaluatorWithBaseImpl<Traits>,
-                              public PHX::EvaluatorDerived<EvalT, Traits>  {
+class SurfaceCohesiveResidual :
+    public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
-                        const Teuchos::RCP<Albany::Layouts>& dl);
+  SurfaceCohesiveResidual(Teuchos::ParameterList const & p,
+                        Teuchos::RCP<Albany::Layouts> const & dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits>& vm);
+			     PHX::FieldManager<Traits> & vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -44,20 +43,34 @@ private:
 
   // Input:
   // Numerical integration rule
-  Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
+  Teuchos::RCP<Intrepid::Cubature<RealType> >
+  cubature;
+
   // Finite element basis for the midplane
-  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+  intrepidBasis;
+
   // Reference area
-  PHX::MDField<ScalarT,Cell,QuadPoint> refArea;
+  PHX::MDField<ScalarT,Cell,QuadPoint>
+  refArea;
+
   // Traction vector based on cohesive-separation law
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> cohesiveTraction;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>
+  cohesiveTraction;
 
 
-  //! Reference Cell FieldContainers
-  Intrepid::FieldContainer<RealType> refValues;
-  Intrepid::FieldContainer<RealType> refGrads;
-  Intrepid::FieldContainer<RealType> refPoints;
-  Intrepid::FieldContainer<RealType> refWeights;
+  // Reference Cell FieldContainers
+  Intrepid::FieldContainer<RealType>
+  refValues;
+
+  Intrepid::FieldContainer<RealType>
+  refGrads;
+
+  Intrepid::FieldContainer<RealType>
+  refPoints;
+
+  Intrepid::FieldContainer<RealType>
+  refWeights;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,Dim> force;

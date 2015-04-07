@@ -29,8 +29,8 @@ class SurfaceVectorResidual: public PHX::EvaluatorWithBaseImpl<Traits>,
 {
 public:
 
-  SurfaceVectorResidual(Teuchos::ParameterList& p,
-      const Teuchos::RCP<Albany::Layouts>& dl);
+  SurfaceVectorResidual(Teuchos::ParameterList & p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
       PHX::FieldManager<Traits>& vm);
