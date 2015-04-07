@@ -88,10 +88,10 @@ private:
   ref_grads_;
 
   Intrepid::FieldContainer<RealType>
-  refPoints;
+  ref_points_;
 
   Intrepid::FieldContainer<RealType>
-  refWeights;
+  ref_weights_;
 
   /// Optional Cohesive Traction
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
@@ -99,11 +99,11 @@ private:
 
   /// Cauchy Stress
   PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
-  Cauchy_stress_;
+  cauchy_stress_;
 
   // Output:
   PHX::MDField<ScalarT, Cell, Node, Dim>
-  force;
+  force_;
 
   unsigned int
   worksetSize;

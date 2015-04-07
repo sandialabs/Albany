@@ -43,7 +43,7 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
     ref_area_
     (p.get<std::string>("Reference Area Name"), dl->qp_scalar),
 
-    force
+    force_
     (p.get<std::string>("Surface Vector Residual Name"), dl->node_vector),
 
     use_cohesive_traction_
@@ -60,7 +60,7 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
   this->addDependentField(ref_normal_);
   this->addDependentField(ref_area_);
 
-  this->addEvaluatedField(force);
+  this->addEvaluatedField(force_);
 
   this->setName("Surface Vector Residual" + PHX::typeAsString<EvalT>());
 
@@ -86,9 +86,9 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
     PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
     sigma(p.get<std::string>("Cauchy Stress Name"), dl->qp_tensor);
 
-    Cauchy_stress_ = sigma;
+    cauchy_stress_ = sigma;
 
-    this->addEvaluatedField(Cauchy_stress_);
+    this->addEvaluatedField(cauchy_stress_);
   }
 
   std::vector<PHX::DataLayout::size_type> dims;
@@ -105,13 +105,13 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
   // Allocate Temporary FieldContainers
   ref_values_.resize(numPlaneNodes, numQPs);
   ref_grads_.resize(numPlaneNodes, numQPs, numPlaneDims);
-  refPoints.resize(numQPs, numPlaneDims);
-  refWeights.resize(numQPs);
+  ref_points_.resize(numQPs, numPlaneDims);
+  ref_weights_.resize(numQPs);
 
   // Pre-Calculate reference element quantitites
-  cubature_->getCubature(refPoints, refWeights);
-  intrepid_basis_->getValues(ref_values_, refPoints, Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(ref_grads_, refPoints, Intrepid::OPERATOR_GRAD);
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 }
 
 //----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(ref_dual_basis_, fm);
   this->utils.setFieldData(ref_normal_, fm);
   this->utils.setFieldData(ref_area_, fm);
-  this->utils.setFieldData(force, fm);
+  this->utils.setFieldData(force_, fm);
 
   if (use_cohesive_traction_) {
     this->utils.setFieldData(traction_, fm);
@@ -133,7 +133,7 @@ postRegistrationSetup(typename Traits::SetupData d,
   }
 
   if (have_topmod_adaptation_)
-    this->utils.setFieldData(Cauchy_stress_, fm);
+    this->utils.setFieldData(cauchy_stress_, fm);
 }
 
 //----------------------------------------------------------------------------
@@ -156,13 +156,13 @@ evaluateFields(typename Traits::EvalData workset)
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int node(0); node < numPlaneNodes; ++node) {
 
-      force(cell, node, 0) = 0.0;
-      force(cell, node, 1) = 0.0;
-      force(cell, node, 2) = 0.0;
+      force_(cell, node, 0) = 0.0;
+      force_(cell, node, 1) = 0.0;
+      force_(cell, node, 2) = 0.0;
       int topNode = node + numPlaneNodes;
-      force(cell, topNode, 0) = 0.0;
-      force(cell, topNode, 1) = 0.0;
-      force(cell, topNode, 2) = 0.0;
+      force_(cell, topNode, 0) = 0.0;
+      force_(cell, topNode, 1) = 0.0;
+      force_(cell, topNode, 2) = 0.0;
 
       for (int pt(0); pt < numQPs; ++pt) {
         // deformed bases
@@ -231,25 +231,25 @@ evaluateFields(typename Traits::EvalData workset)
         }
 
         // area (Reference) = |Jacobian| * weights
-        force(cell, topNode, 0) += f_plus(0) * ref_area_(cell, pt);
-        force(cell, topNode, 1) += f_plus(1) * ref_area_(cell, pt);
-        force(cell, topNode, 2) += f_plus(2) * ref_area_(cell, pt);
+        force_(cell, topNode, 0) += f_plus(0) * ref_area_(cell, pt);
+        force_(cell, topNode, 1) += f_plus(1) * ref_area_(cell, pt);
+        force_(cell, topNode, 2) += f_plus(2) * ref_area_(cell, pt);
 
-        force(cell, node, 0) += f_minus(0) * ref_area_(cell, pt);
-        force(cell, node, 1) += f_minus(1) * ref_area_(cell, pt);
-        force(cell, node, 2) += f_minus(2) * ref_area_(cell, pt);
+        force_(cell, node, 0) += f_minus(0) * ref_area_(cell, pt);
+        force_(cell, node, 1) += f_minus(1) * ref_area_(cell, pt);
+        force_(cell, node, 2) += f_minus(2) * ref_area_(cell, pt);
 
       } // end of pt
 
 #if defined(PRINT_DEBUG)
       std::cout << "\nCELL: " << cell << " TOP NODE: " << topNode;
       std::cout << " BOTTOM NODE: " << node << '\n';
-      std::cout << "force(0) +:" << force(cell, topNode, 0) << '\n';
-      std::cout << "force(1) +:" << force(cell, topNode, 1) << '\n';
-      std::cout << "force(2) +:" << force(cell, topNode, 2) << '\n';
-      std::cout << "force(0) -:" << force(cell, node, 0) << '\n';
-      std::cout << "force(1) -:" << force(cell, node, 1) << '\n';
-      std::cout << "force(2) -:" << force(cell, node, 2) << '\n';
+      std::cout << "force(0) +:" << force_(cell, topNode, 0) << '\n';
+      std::cout << "force(1) +:" << force_(cell, topNode, 1) << '\n';
+      std::cout << "force(2) +:" << force_(cell, topNode, 2) << '\n';
+      std::cout << "force(0) -:" << force_(cell, node, 0) << '\n';
+      std::cout << "force(1) -:" << force_(cell, node, 1) << '\n';
+      std::cout << "force(2) -:" << force_(cell, node, 2) << '\n';
 #endif //PRINT_DEBUG
 
     } // end of numPlaneNodes
@@ -262,10 +262,10 @@ evaluateFields(typename Traits::EvalData workset)
         for (int i = 0; i < numDims; ++i) {
           for (int j = 0; j < numDims; ++j) {
             if (use_cohesive_traction_) {
-              Cauchy_stress_(cell, pt, i, j) =
+              cauchy_stress_(cell, pt, i, j) =
                   traction_(cell, pt, i) * ref_normal_(cell, pt, j);
             } else {
-              Cauchy_stress_(cell, pt, i, j) = stress_(cell, pt, i, j);
+              cauchy_stress_(cell, pt, i, j) = stress_(cell, pt, i, j);
             }
           }
         }
