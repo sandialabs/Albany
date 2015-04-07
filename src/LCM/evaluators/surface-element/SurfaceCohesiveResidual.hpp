@@ -69,17 +69,29 @@ private:
   ref_points_;
 
   Intrepid::FieldContainer<RealType>
-  refWeights;
+  ref_weights_;
 
   // Output:
-  PHX::MDField<ScalarT, Cell, Node, Dim> force;
+  PHX::MDField<ScalarT, Cell, Node, Dim>
+  force_;
 
-  unsigned int worksetSize;
-  unsigned int numNodes;
-  unsigned int numQPs;
-  unsigned int numDims;
-  unsigned int numPlaneNodes;
-  unsigned int numPlaneDims;
+  unsigned int
+  workset_size_;
+
+  unsigned int
+  num_nodes_;
+
+  unsigned int
+  num_qps_;
+
+  unsigned int
+  num_dims_;
+
+  unsigned int
+  num_surf_nodes_;
+
+  unsigned int
+  num_surf_dims_;
 };
 }
 

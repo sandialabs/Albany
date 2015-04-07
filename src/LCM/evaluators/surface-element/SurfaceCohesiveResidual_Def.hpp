@@ -25,39 +25,42 @@ SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
         p.get<std::string>("Reference Area Name"), dl->qp_scalar),
     cohesive_traction_(
         p.get<std::string>("Cohesive Traction Name"), dl->qp_vector),
-    force(
+    force_(
         p.get<std::string>("Surface Cohesive Residual Name"), dl->node_vector)
 {
   this->addDependentField(ref_area_);
   this->addDependentField(cohesive_traction_);
 
-  this->addEvaluatedField(force);
+  this->addEvaluatedField(force_);
 
   this->setName("Surface Cohesive Residual" + PHX::typeAsString<EvalT>());
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
-  worksetSize = dims[0];
-  numNodes = dims[1];
-  numDims = dims[2];
+  workset_size_ = dims[0];
+  num_nodes_ = dims[1];
+  num_dims_ = dims[2];
 
   dl->qp_vector->dimensions(dims);
 
-  numQPs = cubature_->getNumPoints();
+  num_qps_ = cubature_->getNumPoints();
 
-  numPlaneNodes = numNodes / 2;
-  numPlaneDims = numDims - 1;
+  num_surf_nodes_ = num_nodes_ / 2;
+  num_surf_dims_ = num_dims_ - 1;
 
   // Allocate Temporary FieldContainers
-  ref_values_.resize(numPlaneNodes, numQPs);
-  ref_grads_.resize(numPlaneNodes, numQPs, numPlaneDims);
-  ref_points_.resize(numQPs, numPlaneDims);
-  refWeights.resize(numQPs);
+  ref_values_.resize(num_surf_nodes_, num_qps_);
+  ref_grads_.resize(num_surf_nodes_, num_qps_, num_surf_dims_);
+  ref_points_.resize(num_qps_, num_surf_dims_);
+  ref_weights_.resize(num_qps_);
 
   // Pre-Calculate reference element quantitites
-  cubature_->getCubature(ref_points_, refWeights);
-  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+
+  intrepid_basis_->getValues(
+      ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 }
 
 //**********************************************************************
@@ -68,7 +71,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(cohesive_traction_, fm);
   this->utils.setFieldData(ref_area_, fm);
-  this->utils.setFieldData(force, fm);
+  this->utils.setFieldData(force_, fm);
 }
 
 //**********************************************************************
@@ -79,14 +82,14 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::Vector<ScalarT> f_plus(0, 0, 0);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
-    for (int node(0); node < numPlaneNodes; ++node) {
+    for (int node(0); node < num_surf_nodes_; ++node) {
 
-      int topNode = node + numPlaneNodes;
+      int topNode = node + num_surf_nodes_;
 
       // initialize force vector
       f_plus.clear();
 
-      for (int pt(0); pt < numQPs; ++pt) {
+      for (int pt(0); pt < num_qps_; ++pt) {
 
         // refValues(numPlaneNodes, numQPs) = shape function
         // refArea(numCells, numQPs) = |Jacobian|*weight
@@ -97,20 +100,15 @@ evaluateFields(typename Traits::EvalData workset)
         f_plus(2) += cohesive_traction_(cell, pt, 2) * ref_values_(node, pt)
             * ref_area_(cell, pt);
 
-        // output for debug, I'll keep it for now until the implementation fully verified
-        // Q.Chen
-        //std::cout << "refValues " << Sacado::ScalarValue<ScalarT>::eval(refValues(node,pt)) << std::endl;
-        //std::cout << "refArea " << Sacado::ScalarValue<ScalarT>::eval(refArea(cell,pt)) << std::endl;
-
       } // end of pt loop
 
-      force(cell, node, 0) = -f_plus(0);
-      force(cell, node, 1) = -f_plus(1);
-      force(cell, node, 2) = -f_plus(2);
+      force_(cell, node, 0) = -f_plus(0);
+      force_(cell, node, 1) = -f_plus(1);
+      force_(cell, node, 2) = -f_plus(2);
 
-      force(cell, topNode, 0) = f_plus(0);
-      force(cell, topNode, 1) = f_plus(1);
-      force(cell, topNode, 2) = f_plus(2);
+      force_(cell, topNode, 0) = f_plus(0);
+      force_(cell, topNode, 1) = f_plus(1);
+      force_(cell, topNode, 2) = f_plus(2);
 
     } // end of planeNode loop
   } // end of cell loop
