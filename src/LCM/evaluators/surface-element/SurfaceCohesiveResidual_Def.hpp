@@ -35,7 +35,9 @@ SurfaceCohesiveResidual(const Teuchos::ParameterList& p,
 
   this->setName("Surface Cohesive Residual" + PHX::typeAsString<EvalT>());
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::DataLayout::size_type>
+  dims;
+
   dl->node_vector->dimensions(dims);
   workset_size_ = dims[0];
   num_nodes_ = dims[1];

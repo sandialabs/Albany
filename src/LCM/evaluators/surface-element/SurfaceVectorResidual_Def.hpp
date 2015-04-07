@@ -91,27 +91,32 @@ SurfaceVectorResidual(Teuchos::ParameterList & p,
     this->addEvaluatedField(cauchy_stress_);
   }
 
-  std::vector<PHX::DataLayout::size_type> dims;
+  std::vector<PHX::DataLayout::size_type>
+  dims;
+
   dl->node_vector->dimensions(dims);
-  worksetSize = dims[0];
-  numNodes = dims[1];
-  numDims = dims[2];
+  workset_size_ = dims[0];
+  num_nodes_ = dims[1];
+  num_dims_ = dims[2];
 
-  numQPs = cubature_->getNumPoints();
+  num_qps_ = cubature_->getNumPoints();
 
-  numPlaneNodes = numNodes / 2;
-  numPlaneDims = numDims - 1;
+  num_surf_nodes_ = num_nodes_ / 2;
+  num_plane_dims_ = num_dims_ - 1;
 
   // Allocate Temporary FieldContainers
-  ref_values_.resize(numPlaneNodes, numQPs);
-  ref_grads_.resize(numPlaneNodes, numQPs, numPlaneDims);
-  ref_points_.resize(numQPs, numPlaneDims);
-  ref_weights_.resize(numQPs);
+  ref_values_.resize(num_surf_nodes_, num_qps_);
+  ref_grads_.resize(num_surf_nodes_, num_qps_, num_plane_dims_);
+  ref_points_.resize(num_qps_, num_plane_dims_);
+  ref_weights_.resize(num_qps_);
 
   // Pre-Calculate reference element quantitites
   cubature_->getCubature(ref_points_, ref_weights_);
-  intrepid_basis_->getValues(ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
-  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
+  intrepid_basis_->getValues(
+      ref_values_, ref_points_, Intrepid::OPERATOR_VALUE);
+
+  intrepid_basis_->getValues(
+      ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
 }
 
 //----------------------------------------------------------------------------
@@ -142,29 +147,36 @@ void SurfaceVectorResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // define and initialize tensors/vectors
-  Intrepid::Vector<ScalarT> f_plus(0, 0, 0), f_minus(0, 0, 0);
-  ScalarT dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
+  Intrepid::Vector<ScalarT>
+  f_plus(0, 0, 0), f_minus(0, 0, 0);
 
-  // manually fill the permutation tensor
+  ScalarT
+  dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
+
+  // manually fill the permutation symbol
   Intrepid::Tensor3<MeshScalarT> e(3, Intrepid::ZEROS);
   e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
   e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
 
   // 2nd-order identity tensor
-  const Intrepid::Tensor<MeshScalarT> I = Intrepid::identity<MeshScalarT>(3);
+  const Intrepid::Tensor<MeshScalarT>
+  I = Intrepid::identity<MeshScalarT>(3);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
-    for (int node(0); node < numPlaneNodes; ++node) {
+    for (int bottom_node(0); bottom_node < num_surf_nodes_; ++bottom_node) {
 
-      force_(cell, node, 0) = 0.0;
-      force_(cell, node, 1) = 0.0;
-      force_(cell, node, 2) = 0.0;
-      int topNode = node + numPlaneNodes;
-      force_(cell, topNode, 0) = 0.0;
-      force_(cell, topNode, 1) = 0.0;
-      force_(cell, topNode, 2) = 0.0;
+      force_(cell, bottom_node, 0) = 0.0;
+      force_(cell, bottom_node, 1) = 0.0;
+      force_(cell, bottom_node, 2) = 0.0;
 
-      for (int pt(0); pt < numQPs; ++pt) {
+      int
+      top_node = bottom_node + num_surf_nodes_;
+
+      force_(cell, top_node, 0) = 0.0;
+      force_(cell, top_node, 1) = 0.0;
+      force_(cell, top_node, 2) = 0.0;
+
+      for (int pt(0); pt < num_qps_; ++pt) {
         // deformed bases
         Intrepid::Vector<ScalarT> g_0(3, current_basis_, cell, pt, 0, 0);
         Intrepid::Vector<ScalarT> g_1(3, current_basis_, cell, pt, 1, 0);
@@ -177,37 +189,38 @@ evaluateFields(typename Traits::EvalData workset)
         Intrepid::Vector<MeshScalarT> N(3, ref_normal_, cell, pt, 0);
 
         // compute dFdx_plus_or_minus
-        f_plus.clear();
-        f_minus.clear();
+        f_plus.fill(Intrepid::ZEROS);
+        f_minus.fill(Intrepid::ZEROS);
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {
           Intrepid::Vector<ScalarT> T(3, traction_, cell, pt, 0);
-          f_plus = ref_values_(node, pt) * T;
-          f_minus = -ref_values_(node, pt) * T;
+          f_plus = ref_values_(bottom_node, pt) * T;
+          f_minus = -ref_values_(bottom_node, pt) * T;
         } else {
           Intrepid::Tensor<ScalarT> P(3, stress_, cell, pt, 0, 0);
 
-          f_plus = ref_values_(node, pt) * P * N;
-          f_minus = -ref_values_(node, pt) * P * N;
+          f_plus = ref_values_(bottom_node, pt) * P * N;
+          f_minus = -ref_values_(bottom_node, pt) * P * N;
 
           if (compute_membrane_forces_) {
-            for (int m(0); m < numDims; ++m) {
-              for (int i(0); i < numDims; ++i) {
-                for (int L(0); L < numDims; ++L) {
+            for (int m(0); m < num_dims_; ++m) {
+              for (int i(0); i < num_dims_; ++i) {
+                for (int L(0); L < num_dims_; ++L) {
 
                   // tmp1 = (1/2) * delta * lambda_{,alpha} * G^{alpha L}
-                  tmp1 = 0.5 * I(m, i) * (ref_grads_(node, pt, 0) * G0(L) +
-                      ref_grads_(node, pt, 1) * G1(L));
+                  tmp1 = 0.5 * I(m, i)
+                      * (ref_grads_(bottom_node, pt, 0) * G0(L) +
+                          ref_grads_(bottom_node, pt, 1) * G1(L));
 
                   // tmp2 = (1/2) * dndxbar * G^{3}
                   dndxbar = 0.0;
-                  for (int r(0); r < numDims; ++r) {
-                    for (int s(0); s < numDims; ++s) {
+                  for (int r(0); r < num_dims_; ++r) {
+                    for (int s(0); s < num_dims_; ++s) {
                       //dndxbar(m, i) += e(i, r, s)
                       dndxbar += e(i, r, s)
-                          * (g_1(r) * ref_grads_(node, pt, 0) -
-                              g_0(r) * ref_grads_(node, pt, 1))
+                          * (g_1(r) * ref_grads_(bottom_node, pt, 0) -
+                              g_0(r) * ref_grads_(bottom_node, pt, 1))
                           * (I(m, s) - n(m) * n(s)) /
                           Intrepid::norm(Intrepid::cross(g_0, g_1));
                     }
@@ -231,25 +244,25 @@ evaluateFields(typename Traits::EvalData workset)
         }
 
         // area (Reference) = |Jacobian| * weights
-        force_(cell, topNode, 0) += f_plus(0) * ref_area_(cell, pt);
-        force_(cell, topNode, 1) += f_plus(1) * ref_area_(cell, pt);
-        force_(cell, topNode, 2) += f_plus(2) * ref_area_(cell, pt);
+        force_(cell, top_node, 0) += f_plus(0) * ref_area_(cell, pt);
+        force_(cell, top_node, 1) += f_plus(1) * ref_area_(cell, pt);
+        force_(cell, top_node, 2) += f_plus(2) * ref_area_(cell, pt);
 
-        force_(cell, node, 0) += f_minus(0) * ref_area_(cell, pt);
-        force_(cell, node, 1) += f_minus(1) * ref_area_(cell, pt);
-        force_(cell, node, 2) += f_minus(2) * ref_area_(cell, pt);
+        force_(cell, bottom_node, 0) += f_minus(0) * ref_area_(cell, pt);
+        force_(cell, bottom_node, 1) += f_minus(1) * ref_area_(cell, pt);
+        force_(cell, bottom_node, 2) += f_minus(2) * ref_area_(cell, pt);
 
       } // end of pt
 
 #if defined(PRINT_DEBUG)
-      std::cout << "\nCELL: " << cell << " TOP NODE: " << topNode;
-      std::cout << " BOTTOM NODE: " << node << '\n';
-      std::cout << "force(0) +:" << force_(cell, topNode, 0) << '\n';
-      std::cout << "force(1) +:" << force_(cell, topNode, 1) << '\n';
-      std::cout << "force(2) +:" << force_(cell, topNode, 2) << '\n';
-      std::cout << "force(0) -:" << force_(cell, node, 0) << '\n';
-      std::cout << "force(1) -:" << force_(cell, node, 1) << '\n';
-      std::cout << "force(2) -:" << force_(cell, node, 2) << '\n';
+      std::cout << "\nCELL: " << cell << " TOP NODE: " << top_node;
+      std::cout << " BOTTOM NODE: " << bottom_node << '\n';
+      std::cout << "force(0) +:" << force_(cell, top_node, 0) << '\n';
+      std::cout << "force(1) +:" << force_(cell, top_node, 1) << '\n';
+      std::cout << "force(2) +:" << force_(cell, top_node, 2) << '\n';
+      std::cout << "force(0) -:" << force_(cell, bottom_node, 0) << '\n';
+      std::cout << "force(1) -:" << force_(cell, bottom_node, 1) << '\n';
+      std::cout << "force(2) -:" << force_(cell, bottom_node, 2) << '\n';
 #endif //PRINT_DEBUG
 
     } // end of numPlaneNodes
@@ -258,9 +271,9 @@ evaluateFields(typename Traits::EvalData workset)
   // This is here just to satisfy projection operators from QPs to nodes
   if (have_topmod_adaptation_ == true) {
     for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
-      for (std::size_t pt = 0; pt < numQPs; ++pt) {
-        for (int i = 0; i < numDims; ++i) {
-          for (int j = 0; j < numDims; ++j) {
+      for (std::size_t pt = 0; pt < num_qps_; ++pt) {
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
             if (use_cohesive_traction_) {
               cauchy_stress_(cell, pt, i, j) =
                   traction_(cell, pt, i) * ref_normal_(cell, pt, j);
