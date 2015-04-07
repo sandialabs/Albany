@@ -691,7 +691,10 @@ evalModelImpl(
       if (Teuchos::is_null(pT) == true) continue;
       for (int m = 0; m < num_models_; ++m) {
         ParamVec &sacado_param_vector = sacado_param_vecs_[m][l];
-        Teuchos::RCP<const Tpetra_Vector> pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(pT->getVectorBlock(m),
+        //IKT FIXME: the following is somewhat of a hack: we get the 0th block of p b/c with all the parameters 
+        //read from the master file, all the blocks are the same.  The code does not work if 0 is replaced by m: 
+        //only the first vector in the Thyra Product MultiVec is correct.  Why...? 
+        Teuchos::RCP<const Tpetra_Vector> pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(pT->getVectorBlock(0),
                     true)->getConstTpetraVector();
         Teuchos::ArrayRCP<const ST> pTm_constView = pTm->get1dView(); 
         for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {

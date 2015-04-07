@@ -12,10 +12,9 @@ output [TBD].
 8.) Put logic to copy Response parameter list from "master" to individual model 
 ones, similar to what is done for "Parameters" [Irina]. 
 
----------------------Debug TODOs------------------------
+9.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to be Teuchos::Array?).
 
-1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain
-with LOCA on > 1 domain [Irina]
+---------------------Debug TODOs------------------------
 
 2.) Get responses working. [Irina]
 
