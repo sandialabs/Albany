@@ -79,36 +79,37 @@ template<typename EvalT, typename Traits>
 void SurfaceCohesiveResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  Intrepid::Vector<ScalarT> f_plus(0, 0, 0);
+  Intrepid::Vector<ScalarT>
+  f_plus(0, 0, 0);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
-    for (int node(0); node < num_surf_nodes_; ++node) {
+    for (int bottom_node(0); bottom_node < num_surf_nodes_; ++bottom_node) {
 
-      int topNode = node + num_surf_nodes_;
+      int top_node = bottom_node + num_surf_nodes_;
 
       // initialize force vector
-      f_plus.clear();
+      f_plus.fill(Intrepid::ZEROS);
 
       for (int pt(0); pt < num_qps_; ++pt) {
 
         // refValues(numPlaneNodes, numQPs) = shape function
         // refArea(numCells, numQPs) = |Jacobian|*weight
-        f_plus(0) += cohesive_traction_(cell, pt, 0) * ref_values_(node, pt)
+        f_plus(0) += cohesive_traction_(cell, pt, 0) * ref_values_(bottom_node, pt)
             * ref_area_(cell, pt);
-        f_plus(1) += cohesive_traction_(cell, pt, 1) * ref_values_(node, pt)
+        f_plus(1) += cohesive_traction_(cell, pt, 1) * ref_values_(bottom_node, pt)
             * ref_area_(cell, pt);
-        f_plus(2) += cohesive_traction_(cell, pt, 2) * ref_values_(node, pt)
+        f_plus(2) += cohesive_traction_(cell, pt, 2) * ref_values_(bottom_node, pt)
             * ref_area_(cell, pt);
 
       } // end of pt loop
 
-      force_(cell, node, 0) = -f_plus(0);
-      force_(cell, node, 1) = -f_plus(1);
-      force_(cell, node, 2) = -f_plus(2);
+      force_(cell, bottom_node, 0) = -f_plus(0);
+      force_(cell, bottom_node, 1) = -f_plus(1);
+      force_(cell, bottom_node, 2) = -f_plus(2);
 
-      force_(cell, topNode, 0) = f_plus(0);
-      force_(cell, topNode, 1) = f_plus(1);
-      force_(cell, topNode, 2) = f_plus(2);
+      force_(cell, top_node, 0) = f_plus(0);
+      force_(cell, top_node, 1) = f_plus(1);
+      force_(cell, top_node, 2) = f_plus(2);
 
     } // end of planeNode loop
   } // end of cell loop
