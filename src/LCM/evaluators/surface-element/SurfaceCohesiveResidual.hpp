@@ -22,17 +22,17 @@ namespace LCM {
 ///
 
 template<typename EvalT, typename Traits>
-class SurfaceCohesiveResidual :
+class SurfaceCohesiveResidual:
     public PHX::EvaluatorWithBaseImpl<Traits>,
-    public PHX::EvaluatorDerived<EvalT, Traits>  {
+    public PHX::EvaluatorDerived<EvalT, Traits> {
 
 public:
 
   SurfaceCohesiveResidual(Teuchos::ParameterList const & p,
-                        Teuchos::RCP<Albany::Layouts> const & dl);
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
-			     PHX::FieldManager<Traits> & vm);
+      PHX::FieldManager<Traits> & vm);
 
   void evaluateFields(typename Traits::EvalData d);
 
@@ -44,20 +44,19 @@ private:
   // Input:
   // Numerical integration rule
   Teuchos::RCP<Intrepid::Cubature<RealType> >
-  cubature;
+  cubature_;
 
   // Finite element basis for the midplane
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
-  intrepidBasis;
+  intrepid_basis_;
 
   // Reference area
-  PHX::MDField<ScalarT,Cell,QuadPoint>
-  refArea;
+  PHX::MDField<ScalarT, Cell, QuadPoint>
+  ref_area_;
 
   // Traction vector based on cohesive-separation law
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim>
   cohesiveTraction;
-
 
   // Reference Cell FieldContainers
   Intrepid::FieldContainer<RealType>
@@ -73,7 +72,7 @@ private:
   refWeights;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,Dim> force;
+  PHX::MDField<ScalarT, Cell, Node, Dim> force;
 
   unsigned int worksetSize;
   unsigned int numNodes;
