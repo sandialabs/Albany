@@ -267,11 +267,11 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 #endif
   }
 
-  else if(method == "FMDB") {
+  else if(method == "PUMI") {
 #ifdef ALBANY_SCOREC
     meshStruct = Teuchos::rcp(new Albany::PUMIMeshStruct(discParams, commT));
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "FMDB",
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
                                Teuchos::Exceptions::InvalidParameter,
                                "Error: Discretization method " << method
                                << " requested, but not compiled in" << std::endl);
@@ -282,7 +282,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
-                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Ioss Aeras, Exodus, Exodus Aeras, Cubit, FMDB, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Ioss Aeras, Exodus, Exodus Aeras, Cubit, PUMI, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
   }
 
 #ifdef ALBANY_LCM

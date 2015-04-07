@@ -32,7 +32,3 @@ if (ALBANY_MUELU_EXAMPLES)
   endif ()
 endif()
 ENDIF()
-
-#IF(ALBANY_SCOREC)
-#  add_test(${testName}_FMDB ${Albany.exe} NotchedTensileTet10FMDB.xml)
-#ENDIF()

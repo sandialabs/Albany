@@ -35,10 +35,10 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
 
   pumi_discretization = Teuchos::rcp_dynamic_cast<Albany::AbstractPUMIDiscretization>(disc);
 
-  Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct =
+  Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
     pumi_discretization->getPUMIMeshStruct();
 
-  mesh = fmdbMeshStruct->getMesh();
+  mesh = pumiMeshStruct->getMesh();
 
   const std::string& method = params_->get("Method", "");
   if (method == "RPI Unif Size")
@@ -55,7 +55,7 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
   // Save the initial output file name
-  base_exo_filename = fmdbMeshStruct->outputFileName;
+  base_exo_filename = pumiMeshStruct->outputFileName;
 
   adaptation_method = params_->get<std::string>("Method");
 

@@ -161,7 +161,7 @@ SchwarzMultiscale(
     for (int j = 0; j < num_models_; ++j) {
       //Check if have this term?  Put into Teuchos array?
       jacs_boundary_[i * num_models_ + j] = Teuchos::rcp(
-          new LCM::Schwarz_BoundaryJacobian(commT_));
+          new LCM::Schwarz_BoundaryJacobian(commT_, apps_));
     }
   }
 

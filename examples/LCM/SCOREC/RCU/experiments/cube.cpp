@@ -226,13 +226,13 @@ void xml () {
       } // Adaptation
     } // Problem
     { pl a("Discretization");
-      p("Method", "FMDB");
+      p("Method", "PUMI");
       p("Workset Size", 500000);
       p("Mesh Model Input File Name", std::string("../../meshes/cube/cube") + (quad ? "-quad" : "") + ".dmg");
-      p("FMDB Input File Name",
+      p("PUMI Input File Name",
         std::string("../../meshes/cube/cube") + (quad ? "-quad" : "") + (parallel ? "" : "-serial") + ".smb");
-      p("FMDB Output File Name", outfn);
-      p("FMDB Write Interval", write_interval);
+      p("PUMI Output File Name", outfn);
+      p("PUMI Write Interval", write_interval);
       p("Element Block Associations", "TwoDArray(string)", "2x1:{95, eb_1}");
       p("Node Set Associations", "TwoDArray(string)", "2x4:{85, 83, 43, 81, ns_1, ns_2, ns_3, ns_4}");
       p("2nd Order Mesh", quad);

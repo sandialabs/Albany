@@ -37,11 +37,11 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Method"                        type="string"             value="FMDB"/>
+    <Parameter name="Method"                        type="string"             value="PUMI"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/>
     <Parameter name="Mesh Model Input File Name"    type="string"             value="pencil.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="pencil.smb"/>
-    <Parameter name="FMDB Output File Name"         type="string"             value="pencil_out.vtk"/>
+    <Parameter name="PUMI Input File Name"          type="string"             value="pencil.smb"/>
+    <Parameter name="PUMI Output File Name"         type="string"             value="pencil_out.vtk"/>
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x4:{1, 2, 3, 4, plate, surroundings, wire, surroundings}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x2:{6, 2, wire_top, plate_outer}"/>
     <Parameter name="2nd Order Mesh"                type="bool"               value="false"/>

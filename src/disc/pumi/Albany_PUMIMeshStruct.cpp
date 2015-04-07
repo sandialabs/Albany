@@ -64,9 +64,9 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   PCU_Comm_Init();
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  std::string mesh_file = params->get<std::string>("FMDB Input File Name");
-  outputFileName = params->get<std::string>("FMDB Output File Name", "");
-  outputInterval = params->get<int>("FMDB Write Interval", 1); // write every time step default
+  std::string mesh_file = params->get<std::string>("PUMI Input File Name");
+  outputFileName = params->get<std::string>("PUMI Output File Name", "");
+  outputInterval = params->get<int>("PUMI Write Interval", 1); // write every time step default
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
 
   compositeTet = false;
@@ -359,7 +359,7 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   Teuchos::RCP<Teuchos::ParameterList> validPL
      = rcp(new Teuchos::ParameterList("Valid PUMIParams"));
 
-  validPL->set<int>("FMDB Write Interval", 3, "Step interval to write solution data to output file");
+  validPL->set<int>("PUMI Write Interval", 3, "Step interval to write solution data to output file");
   validPL->set<std::string>("Method", "",
     "The discretization method, parsed in the Discretization Factory");
   validPL->set<int>("Cubature Degree", 3, "Integration order sent to Intrepid");
@@ -372,8 +372,8 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
       "Names and layouts of solution vector components");
   validPL->set<bool>("2nd Order Mesh", false, "Flag to indicate 2nd order Lagrange shape functions");
 
-  validPL->set<std::string>("FMDB Input File Name", "", "File Name For PUMI Mesh Input");
-  validPL->set<std::string>("FMDB Output File Name", "", "File Name For PUMI Mesh Output");
+  validPL->set<std::string>("PUMI Input File Name", "", "File Name For PUMI Mesh Input");
+  validPL->set<std::string>("PUMI Output File Name", "", "File Name For PUMI Mesh Output");
 
   validPL->set<std::string>("Acis Model Input File Name", "", "File Name For ACIS Model Input");
   validPL->set<std::string>("Parasolid Model Input File Name", "", "File Name For PARASOLID Model Input");

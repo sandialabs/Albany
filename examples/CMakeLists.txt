@@ -113,7 +113,7 @@ endif()
   ENDIF()
 
   IF(ALBANY_SCOREC)
-    add_subdirectory(Heat3DFMDB)
+    add_subdirectory(Heat3DPUMI)
   ENDIF()
 
 # DEMO PDES ###############

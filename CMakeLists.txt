@@ -634,7 +634,7 @@ ELSE()
   #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
-# Set optional dependency on SCOREC FMDB,  optional adaptivity
+# Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
@@ -839,6 +839,13 @@ if (ENABLE_KERNELGETMEMORYSIZE)
   add_definitions(-DALBANY_HAVE_KERNELGETMEMORYSIZE)
   message("-- Memory: Kernel_GetMemorySize() is Enabled.")
 endif()
+
+# Mesh database tools.
+OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
+IF (ENABLE_MESHDB_TOOLS)
+  MESSAGE("-- Mesh database tools       are Enabled.")
+  SET(ALBANY_MESHDB_TOOLS TRUE)
+ENDIF()
 
 IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")

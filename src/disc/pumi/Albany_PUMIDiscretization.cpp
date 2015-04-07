@@ -51,19 +51,19 @@ convert (Teuchos::Array<GO>& indicesAV) {
 } // namespace
 #endif // ALBANY_EPETRA
 
-Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStruct> fmdbMeshStruct_,
+Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct_,
             const Teuchos::RCP<const Teuchos_Comm>& commT_,
             const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
   previous_time_label(-1.0e32),
   commT(commT_),
   rigidBodyModes(rigidBodyModes_),
-  neq(fmdbMeshStruct_->neq),
-  fmdbMeshStruct(fmdbMeshStruct_),
-  interleavedOrdering(fmdbMeshStruct_->interleavedOrdering),
+  neq(pumiMeshStruct_->neq),
+  pumiMeshStruct(pumiMeshStruct_),
+  interleavedOrdering(pumiMeshStruct_->interleavedOrdering),
   outputInterval(0)
 {
-  meshOutput = PUMIOutput::create(*fmdbMeshStruct_, commT_);
+  meshOutput = PUMIOutput::create(*pumiMeshStruct_, commT_);
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
@@ -74,7 +74,7 @@ Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStru
   bool shouldTransferIPData = false;
   Albany::PUMIDiscretization::updateMesh(shouldTransferIPData);
 
-  Teuchos::Array<std::string> layout = fmdbMeshStruct->solVectorLayout;
+  Teuchos::Array<std::string> layout = pumiMeshStruct->solVectorLayout;
   int index;
 
   for (std::size_t i=0; i < layout.size(); i+=2) {
@@ -93,9 +93,9 @@ Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStru
   // zero the residual field for Rhythmos
   if (solNames.size())
     for (size_t i = 0; i < solNames.size(); ++i)
-      apf::zeroField(fmdbMeshStruct->getMesh()->findField(solNames[i].c_str()));
+      apf::zeroField(pumiMeshStruct->getMesh()->findField(solNames[i].c_str()));
   else
-    apf::zeroField(fmdbMeshStruct->getMesh()->findField("residual"));
+    apf::zeroField(pumiMeshStruct->getMesh()->findField("residual"));
 }
 
 Albany::PUMIDiscretization::~PUMIDiscretization()
@@ -170,7 +170,7 @@ Albany::PUMIDiscretization::getCoords() const
 void
 Albany::PUMIDiscretization::printCoords() const
 {
-  int mesh_dim = fmdbMeshStruct->getMesh()->getDimension();
+  int mesh_dim = pumiMeshStruct->getMesh()->getDimension();
 
   std::cout << "Processor " << PCU_Comm_Self() << " has " << coords.size()
       << " worksets." << std::endl;
@@ -188,7 +188,7 @@ const Teuchos::ArrayRCP<double>&
 Albany::PUMIDiscretization::getCoordinates() const
 {
   coordinates.resize(3 * numOverlapNodes);
-  apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
+  apf::Field* f = pumiMeshStruct->getMesh()->getCoordinateField();
   for (size_t i=0; i < nodes.getSize(); ++i)
     apf::getComponents(f,nodes[i].entity,nodes[i].node,&(coordinates[3*i]));
   return coordinates;
@@ -198,7 +198,7 @@ void
 Albany::PUMIDiscretization::setCoordinates(
     const Teuchos::ArrayRCP<const double>& c)
 {
-  apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
+  apf::Field* f = pumiMeshStruct->getMesh()->getCoordinateField();
   for (size_t i=0; i < nodes.getSize(); ++i)
     apf::setComponents(f,nodes[i].entity,nodes[i].node,&(c[3*i]));
 }
@@ -229,8 +229,8 @@ void Albany::PUMIDiscretization::setupMLCoords()
   // get mesh dimension and part handle
   const int mesh_dim = getNumDim();
   rigidBodyModes->resize(mesh_dim, numOwnedNodes);
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
-  apf::Field* f = fmdbMeshStruct->getMesh()->getCoordinateField();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
+  apf::Field* f = pumiMeshStruct->getMesh()->getCoordinateField();
 
   double* const coords = rigidBodyModes->getCoordArray();
   for (std::size_t i = 0; i < nodes.getSize(); ++i) {
@@ -245,7 +245,7 @@ void Albany::PUMIDiscretization::setupMLCoords()
       coords[j*numOwnedNodes + node_lid] = lcoords[j];
   }
 
-  if (fmdbMeshStruct->useNullspaceTranslationOnly)
+  if (pumiMeshStruct->useNullspaceTranslationOnly)
     rigidBodyModes->setCoordinates(node_mapT);
   else
     rigidBodyModes->setCoordinatesAndNullspace(node_mapT, mapT);
@@ -266,7 +266,7 @@ Albany::PUMIDiscretization::getWsPhysIndex() const
 void Albany::PUMIDiscretization::setField(
   const char* name, const ST* data, bool overlapped, int offset, int nentries)
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   apf::Field* f = m->findField(name);
   for (size_t i=0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
@@ -288,7 +288,7 @@ void Albany::PUMIDiscretization::setField(
 void Albany::PUMIDiscretization::setSplitFields(std::vector<std::string> names,
     std::vector<int> indices, const ST* data, bool overlapped)
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   int offset = 0;
   int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i) {
@@ -302,7 +302,7 @@ void Albany::PUMIDiscretization::setSplitFields(std::vector<std::string> names,
 void Albany::PUMIDiscretization::getField(
   const char* name, ST* data, bool overlapped, int offset, int nentries) const
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   apf::Field* f = m->findField(name);
   for (size_t i=0; i < nodes.getSize(); ++i) {
     apf::Node node = nodes[i];
@@ -323,7 +323,7 @@ void Albany::PUMIDiscretization::getField(
 void Albany::PUMIDiscretization::getSplitFields(std::vector<std::string> names,
    std::vector<int> indices, ST* data, bool overlapped) const
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   int offset = 0;
   int indexSum = 0;
   for (std::size_t i=0; i < names.size(); ++i) {
@@ -338,8 +338,8 @@ void Albany::PUMIDiscretization::getSplitFields(std::vector<std::string> names,
 void Albany::PUMIDiscretization::
 createField(const char* name, int value_type)
 {
-  apf::createFieldOn(fmdbMeshStruct->getMesh(), name, value_type);
-  apf::zeroField(fmdbMeshStruct->getMesh()->findField(name));
+  apf::createFieldOn(pumiMeshStruct->getMesh(), name, value_type);
+  apf::zeroField(pumiMeshStruct->getMesh()->findField(name));
 }
 
 void Albany::PUMIDiscretization::reNameExodusOutput(
@@ -388,7 +388,7 @@ void Albany::PUMIDiscretization::writeAnySolutionToMeshDatabase(
   else
     this->setSplitFields(solNames,solIndex,soln,overlapped);
 
-  fmdbMeshStruct->solutionInitialized = true;
+  pumiMeshStruct->solutionInitialized = true;
 }
 
 void Albany::PUMIDiscretization::writeAnySolutionToFile(
@@ -396,9 +396,9 @@ void Albany::PUMIDiscretization::writeAnySolutionToFile(
       const bool overlapped)
 {
   // Skip this write unless the proper interval has been reached.
-  if (outputInterval++ % fmdbMeshStruct->outputInterval) return;
+  if (outputInterval++ % pumiMeshStruct->outputInterval) return;
 
-  if (fmdbMeshStruct->outputFileName.empty()) return;
+  if (pumiMeshStruct->outputFileName.empty()) return;
 
   double time_label = monotonicTimeLabel(time_value);
   int out_step = 0;
@@ -407,12 +407,12 @@ void Albany::PUMIDiscretization::writeAnySolutionToFile(
     *out << "Albany::PUMIDiscretization::writeSolution: writing time " << time_value;
     if (time_label != time_value) *out << " with label " << time_label;
     *out << " to index " << out_step << " in file "
-         << fmdbMeshStruct->outputFileName << std::endl;
+         << pumiMeshStruct->outputFileName << std::endl;
   }
 
   apf::Field* f;
   int dim = getNumDim();
-  apf::FieldShape* fs = apf::getIPShape(dim, fmdbMeshStruct->cubatureDegree);
+  apf::FieldShape* fs = apf::getIPShape(dim, pumiMeshStruct->cubatureDegree);
   copyQPStatesToAPF(f,fs,false);
 
   meshOutput->writeFile(time_label);
@@ -424,7 +424,7 @@ void
 Albany::PUMIDiscretization::writeMeshDebug (const std::string& filename) {
   apf::Field* f;
   apf::FieldShape* fs = apf::getIPShape(getNumDim(),
-                                        fmdbMeshStruct->cubatureDegree);
+                                        pumiMeshStruct->cubatureDegree);
   copyQPStatesToAPF(f, fs, true);
   apf::writeVtkFiles(filename.c_str(), getPUMIMeshStruct()->getMesh());
   removeQPStatesFromAPF();
@@ -465,7 +465,7 @@ Albany::PUMIDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
   else
     this->setSplitFields(resNames,solIndex,&(data[0]),/*overlapped=*/false);
 
-  fmdbMeshStruct->residualInitialized = true;
+  pumiMeshStruct->residualInitialized = true;
 }
 
 #ifdef ALBANY_EPETRA
@@ -477,7 +477,7 @@ Albany::PUMIDiscretization::setResidualField(const Epetra_Vector& residual)
   else
     this->setSplitFields(resNames,solIndex,&(residual[0]),/*overlapped=*/false);
 
-  fmdbMeshStruct->residualInitialized = true;
+  pumiMeshStruct->residualInitialized = true;
 }
 #endif
 
@@ -490,7 +490,7 @@ Albany::PUMIDiscretization::getSolutionFieldT(bool overlapped) const
   {
     Teuchos::ArrayRCP<ST> data = solnT->get1dViewNonConst();
 
-    if (fmdbMeshStruct->solutionInitialized) {
+    if (pumiMeshStruct->solutionInitialized) {
       if (solNames.size() == 0)
         this->getField("solution",&(data[0]),overlapped);
       else
@@ -510,7 +510,7 @@ Albany::PUMIDiscretization::getSolutionField(bool overlapped) const
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(
     new Epetra_Vector(overlapped ? *overlap_map : *map));
 
-  if (fmdbMeshStruct->solutionInitialized) {
+  if (pumiMeshStruct->solutionInitialized) {
     if (solNames.size() == 0)
       this->getField("solution",&((*soln)[0]),overlapped);
     else
@@ -543,7 +543,7 @@ int Albany::PUMIDiscretization::nonzeroesPerRow(const int neq) const
 
 void Albany::PUMIDiscretization::computeOwnedNodesAndUnknowns()
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   if (globalNumbering) apf::destroyGlobalNumbering(globalNumbering);
   globalNumbering = apf::makeGlobal(apf::numberOwnedNodes(m,"owned"));
   apf::DynamicArray<apf::Node> ownedNodes;
@@ -555,8 +555,8 @@ void Albany::PUMIDiscretization::computeOwnedNodesAndUnknowns()
     indices[i] = apf::getNumber(globalNumbering,ownedNodes[i]);
   node_mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
   numGlobalNodes = node_mapT->getMaxAllGlobalIndex() + 1;
-  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
-    fmdbMeshStruct->nodal_data_base->resizeLocalMap(indices, commT);
+  if(Teuchos::nonnull(pumiMeshStruct->nodal_data_base))
+    pumiMeshStruct->nodal_data_base->resizeLocalMap(indices, commT);
   indices.resize(numOwnedNodes*neq);
   for (int i=0; i < numOwnedNodes; ++i)
     for (int j=0; j < neq; ++j) {
@@ -573,7 +573,7 @@ void Albany::PUMIDiscretization::computeOwnedNodesAndUnknowns()
 
 void Albany::PUMIDiscretization::computeOverlapNodesAndUnknowns()
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   apf::Numbering* overlap = m->findNumbering("overlap");
   if (overlap) apf::destroyNumbering(overlap);
   overlap = apf::numberOverlapNodes(m,"overlap");
@@ -594,14 +594,14 @@ void Albany::PUMIDiscretization::computeOverlapNodesAndUnknowns()
     new Epetra_Map(-1, dofIndices.size(), convert(dofIndices)->getRawPtr(), 0,
                    *comm));
 #endif
-  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base))
-    fmdbMeshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
+  if(Teuchos::nonnull(pumiMeshStruct->nodal_data_base))
+    pumiMeshStruct->nodal_data_base->resizeOverlapMap(nodeIndices, commT);
 }
 
 void Albany::PUMIDiscretization::computeGraphs()
 {
 
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   int numDim = m->getDimension();
   std::vector<apf::MeshEntity*> cells;
   std::vector<int> n_nodes_in_elem;
@@ -685,7 +685,7 @@ static apf::StkModel* findElementBlock(
 
 void Albany::PUMIDiscretization::computeWorksetInfo()
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   int numDim = m->getDimension();
   if (elementNumbering) apf::destroyGlobalNumbering(elementNumbering);
   elementNumbering = apf::makeGlobal(apf::numberElements(m,"element"));
@@ -705,10 +705,10 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
 
   std::map<apf::ModelEntity*, int> bucketMap;
   std::map<apf::ModelEntity*, int>::iterator buck_it;
-  apf::StkModels& sets = fmdbMeshStruct->getSets();
+  apf::StkModels& sets = pumiMeshStruct->getSets();
   int bucket_counter = 0;
 
-  int worksetSize = fmdbMeshStruct->worksetSize;
+  int worksetSize = pumiMeshStruct->worksetSize;
 
   // iterate over all elements
   apf::MeshIterator* it = m->begin(numDim);
@@ -745,10 +745,10 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
 
   wsPhysIndex.resize(numBuckets);
 
-  if (fmdbMeshStruct->allElementBlocksHaveSamePhysics)
+  if (pumiMeshStruct->allElementBlocksHaveSamePhysics)
     for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=0;
   else
-    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=fmdbMeshStruct->ebNameToIndex[wsEBNames[i]];
+    for (int i=0; i<numBuckets; i++) wsPhysIndex[i]=pumiMeshStruct->ebNameToIndex[wsEBNames[i]];
 
   // Fill  wsElNodeEqID(workset, el_LID, local node, Eq) => unk_LID
 
@@ -823,16 +823,16 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
 
   std::size_t numElementsAccessed = numBuckets * worksetSize;
 
-  for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++)
-      fmdbMeshStruct->qpscalar_states[i]->reAllocateBuffer(numElementsAccessed);
-  for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++)
-      fmdbMeshStruct->qpvector_states[i]->reAllocateBuffer(numElementsAccessed);
-  for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++)
-      fmdbMeshStruct->qptensor_states[i]->reAllocateBuffer(numElementsAccessed);
-  for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++)
+  for (std::size_t i=0; i<pumiMeshStruct->qpscalar_states.size(); i++)
+      pumiMeshStruct->qpscalar_states[i]->reAllocateBuffer(numElementsAccessed);
+  for (std::size_t i=0; i<pumiMeshStruct->qpvector_states.size(); i++)
+      pumiMeshStruct->qpvector_states[i]->reAllocateBuffer(numElementsAccessed);
+  for (std::size_t i=0; i<pumiMeshStruct->qptensor_states.size(); i++)
+      pumiMeshStruct->qptensor_states[i]->reAllocateBuffer(numElementsAccessed);
+  for (std::size_t i=0; i<pumiMeshStruct->scalarValue_states.size(); i++)
       // special case : need to store one double value that represents all the elements in the workset (time)
       // numBuckets are the number of worksets
-      fmdbMeshStruct->scalarValue_states[i]->reAllocateBuffer(numBuckets);
+      pumiMeshStruct->scalarValue_states[i]->reAllocateBuffer(numBuckets);
 
   // Pull out pointers to shards::Arrays for every bucket, for every state
 
@@ -842,24 +842,24 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
 
   for (std::size_t b=0; b < buckets.size(); b++) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
-    for (std::size_t i=0; i<fmdbMeshStruct->qpscalar_states.size(); i++)
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpscalar_states[i]->name] =
-                 fmdbMeshStruct->qpscalar_states[i]->getMDA(buck.size());
-    for (std::size_t i=0; i<fmdbMeshStruct->qpvector_states.size(); i++)
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qpvector_states[i]->name] =
-                 fmdbMeshStruct->qpvector_states[i]->getMDA(buck.size());
-    for (std::size_t i=0; i<fmdbMeshStruct->qptensor_states.size(); i++)
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->qptensor_states[i]->name] =
-                 fmdbMeshStruct->qptensor_states[i]->getMDA(buck.size());
-    for (std::size_t i=0; i<fmdbMeshStruct->scalarValue_states.size(); i++)
-      stateArrays.elemStateArrays[b][fmdbMeshStruct->scalarValue_states[i]->name] =
-                 fmdbMeshStruct->scalarValue_states[i]->getMDA(1);
+    for (std::size_t i=0; i<pumiMeshStruct->qpscalar_states.size(); i++)
+      stateArrays.elemStateArrays[b][pumiMeshStruct->qpscalar_states[i]->name] =
+                 pumiMeshStruct->qpscalar_states[i]->getMDA(buck.size());
+    for (std::size_t i=0; i<pumiMeshStruct->qpvector_states.size(); i++)
+      stateArrays.elemStateArrays[b][pumiMeshStruct->qpvector_states[i]->name] =
+                 pumiMeshStruct->qpvector_states[i]->getMDA(buck.size());
+    for (std::size_t i=0; i<pumiMeshStruct->qptensor_states.size(); i++)
+      stateArrays.elemStateArrays[b][pumiMeshStruct->qptensor_states[i]->name] =
+                 pumiMeshStruct->qptensor_states[i]->getMDA(buck.size());
+    for (std::size_t i=0; i<pumiMeshStruct->scalarValue_states.size(); i++)
+      stateArrays.elemStateArrays[b][pumiMeshStruct->scalarValue_states[i]->name] =
+                 pumiMeshStruct->scalarValue_states[i]->getMDA(1);
   }
 
 // Process node data sets if present
 
-  if(Teuchos::nonnull(fmdbMeshStruct->nodal_data_base) &&
-    fmdbMeshStruct->nodal_data_base->isNodeDataPresent()) {
+  if(Teuchos::nonnull(pumiMeshStruct->nodal_data_base) &&
+    pumiMeshStruct->nodal_data_base->isNodeDataPresent()) {
 
     std::vector< std::vector<apf::Node> > nbuckets; // bucket of nodes
     int numNodeBuckets =  (int)ceil((double)numOwnedNodes / (double)worksetSize);
@@ -880,7 +880,7 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
         }
       }
 
-    Teuchos::RCP<Albany::NodeFieldContainer> node_states = fmdbMeshStruct->nodal_data_base->getNodeContainer();
+    Teuchos::RCP<Albany::NodeFieldContainer> node_states = pumiMeshStruct->nodal_data_base->getNodeContainer();
 
     stateArrays.nodeStateArrays.resize(numNodeBuckets);
 
@@ -960,25 +960,25 @@ void Albany::PUMIDiscretization::copyQPStatesToAPF(
     apf::FieldShape* fs,
     bool copyAll)
 {
-  apf::Mesh2* m = fmdbMeshStruct->getMesh();
-  for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+  apf::Mesh2* m = pumiMeshStruct->getMesh();
+  for (std::size_t i=0; i < pumiMeshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(pumiMeshStruct->qpscalar_states[i]);
     if (!copyAll && !state.output)
       continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::SCALAR,fs);
     copyQPScalarToAPF(nqp,state,f);
   }
-  for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(pumiMeshStruct->qpvector_states[i]);
     if (!copyAll && !state.output)
       continue;
     int nqp = state.dims[1];
     f = apf::createField(m,state.name.c_str(),apf::VECTOR,fs);
     copyQPVectorToAPF(nqp,state,f);
   }
-  for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(pumiMeshStruct->qptensor_states[i]);
     if (!copyAll && !state.output)
       continue;
     int nqp = state.dims[1];
@@ -989,17 +989,17 @@ void Albany::PUMIDiscretization::copyQPStatesToAPF(
 
 void Albany::PUMIDiscretization::removeQPStatesFromAPF()
 {
-  apf::Mesh2* m = fmdbMeshStruct->getMesh();
-  for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+  apf::Mesh2* m = pumiMeshStruct->getMesh();
+  for (std::size_t i=0; i < pumiMeshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(pumiMeshStruct->qpscalar_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
-  for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(pumiMeshStruct->qpvector_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
-  for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(pumiMeshStruct->qptensor_states[i]);
     apf::destroyField(m->findField(state.name.c_str()));
   }
 }
@@ -1009,7 +1009,7 @@ void Albany::PUMIDiscretization::copyQPScalarFromAPF(
     PUMIQPData<double, 2>& state,
     apf::Field* f)
 {
-  apf::Mesh2* m = fmdbMeshStruct->getMesh();
+  apf::Mesh2* m = pumiMeshStruct->getMesh();
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
@@ -1025,7 +1025,7 @@ void Albany::PUMIDiscretization::copyQPVectorFromAPF(
     PUMIQPData<double, 3>& state,
     apf::Field* f)
 {
-  apf::Mesh2* m = fmdbMeshStruct->getMesh();
+  apf::Mesh2* m = pumiMeshStruct->getMesh();
   for (std::size_t b=0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
@@ -1045,7 +1045,7 @@ void Albany::PUMIDiscretization::copyQPTensorFromAPF(
     PUMIQPData<double, 4>& state,
     apf::Field* f)
 {
-  apf::Mesh2* m = fmdbMeshStruct->getMesh();
+  apf::Mesh2* m = pumiMeshStruct->getMesh();
   for (std::size_t b = 0; b < buckets.size(); ++b) {
     std::vector<apf::MeshEntity*>& buck = buckets[b];
     Albany::MDArray& ar = stateArrays.elemStateArrays[b][state.name];
@@ -1064,22 +1064,22 @@ void Albany::PUMIDiscretization::copyQPTensorFromAPF(
 
 void Albany::PUMIDiscretization::copyQPStatesFromAPF()
 {
-  apf::Mesh2* m = fmdbMeshStruct->getMesh();
+  apf::Mesh2* m = pumiMeshStruct->getMesh();
   apf::Field* f;
-  for (std::size_t i=0; i < fmdbMeshStruct->qpscalar_states.size(); ++i) {
-    PUMIQPData<double, 2>& state = *(fmdbMeshStruct->qpscalar_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qpscalar_states.size(); ++i) {
+    PUMIQPData<double, 2>& state = *(pumiMeshStruct->qpscalar_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
     copyQPScalarFromAPF(nqp,state,f);
   }
-  for (std::size_t i=0; i < fmdbMeshStruct->qpvector_states.size(); ++i) {
-    PUMIQPData<double, 3>& state = *(fmdbMeshStruct->qpvector_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qpvector_states.size(); ++i) {
+    PUMIQPData<double, 3>& state = *(pumiMeshStruct->qpvector_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
     copyQPVectorFromAPF(nqp,state,f);
   }
-  for (std::size_t i=0; i < fmdbMeshStruct->qptensor_states.size(); ++i) {
-    PUMIQPData<double, 4>& state = *(fmdbMeshStruct->qptensor_states[i]);
+  for (std::size_t i=0; i < pumiMeshStruct->qptensor_states.size(); ++i) {
+    PUMIQPData<double, 4>& state = *(pumiMeshStruct->qptensor_states[i]);
     int nqp = state.dims[1];
     f = m->findField(state.name.c_str());
     copyQPTensorFromAPF(nqp,state,f);
@@ -1088,8 +1088,8 @@ void Albany::PUMIDiscretization::copyQPStatesFromAPF()
 
 void Albany::PUMIDiscretization::computeSideSets()
 {
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
-  apf::StkModels& sets = fmdbMeshStruct->getSets();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
+  apf::StkModels& sets = pumiMeshStruct->getSets();
 
   // need a sideset list per workset
   int num_buckets = wsEBNames.size();
@@ -1128,7 +1128,7 @@ void Albany::PUMIDiscretization::computeSideSets()
       sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
       int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
       sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
-      sstruct.elem_ebIndex = fmdbMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
+      sstruct.elem_ebIndex = pumiMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
 
       sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
 
@@ -1151,16 +1151,16 @@ void Albany::PUMIDiscretization::computeSideSets()
 void Albany::PUMIDiscretization::computeNodeSets()
 {
   // Make sure all the maps are allocated
-  for (std::vector<std::string>::iterator ns_iter = fmdbMeshStruct->nsNames.begin();
-        ns_iter != fmdbMeshStruct->nsNames.end(); ++ns_iter )
+  for (std::vector<std::string>::iterator ns_iter = pumiMeshStruct->nsNames.begin();
+        ns_iter != pumiMeshStruct->nsNames.end(); ++ns_iter )
   { // Iterate over Node Sets
     nodeSets[*ns_iter].resize(0);
     nodeSetCoords[*ns_iter].resize(0);
     nodeset_node_coords[*ns_iter].resize(0);
   }
   //grab the node set geometric objects
-  apf::StkModels sets = fmdbMeshStruct->getSets();
-  apf::Mesh* m = fmdbMeshStruct->getMesh();
+  apf::StkModels sets = pumiMeshStruct->getSets();
+  apf::Mesh* m = pumiMeshStruct->getMesh();
   int mesh_dim = m->getDimension();
   for (size_t i = 0; i < sets[0].getSize(); ++i)
   {
@@ -1215,8 +1215,8 @@ Albany::PUMIDiscretization::updateMesh(bool shouldTransferIPData)
 void
 Albany::PUMIDiscretization::attachQPData() {
   apf::Field* f;
-  int order = fmdbMeshStruct->cubatureDegree;
-  int dim = fmdbMeshStruct->getMesh()->getDimension();
+  int order = pumiMeshStruct->cubatureDegree;
+  int dim = pumiMeshStruct->getMesh()->getDimension();
   apf::FieldShape* fs = apf::getVoronoiShape(dim,order);
   copyQPStatesToAPF(f,fs);
 }

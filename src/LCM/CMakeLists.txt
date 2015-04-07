@@ -169,7 +169,7 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
-  ${ALBANY_FMDB_INCLUDE_DIRS}
+  ${ALBANY_PUMI_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 

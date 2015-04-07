@@ -9,6 +9,8 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 
+//#define PRINT_DEBUG
+
 namespace LCM {
 
 //----------------------------------------------------------------------------
@@ -238,6 +240,18 @@ evaluateFields(typename Traits::EvalData workset)
         force(cell, node, 2) += f_minus(2) * refArea(cell, pt);
 
       } // end of pt
+
+#if defined(PRINT_DEBUG)
+      std::cout << "\nCELL: " << cell << " TOP NODE: " << topNode;
+      std::cout << " BOTTOM NODE: " << node << '\n';
+      std::cout << "force(0) +:" << force(cell, topNode, 0) << '\n';
+      std::cout << "force(1) +:" << force(cell, topNode, 1) << '\n';
+      std::cout << "force(2) +:" << force(cell, topNode, 2) << '\n';
+      std::cout << "force(0) -:" << force(cell, node, 0) << '\n';
+      std::cout << "force(1) -:" << force(cell, node, 1) << '\n';
+      std::cout << "force(2) -:" << force(cell, node, 2) << '\n';
+#endif //PRINT_DEBUG
+
     } // end of numPlaneNodes
   } // end of cell
 
