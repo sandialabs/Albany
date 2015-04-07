@@ -840,6 +840,13 @@ if (ENABLE_KERNELGETMEMORYSIZE)
   message("-- Memory: Kernel_GetMemorySize() is Enabled.")
 endif()
 
+# Mesh database tools.
+OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
+IF (ENABLE_MESHDB_TOOLS)
+  MESSAGE("-- Mesh database tools       are Enabled.")
+  SET(ALBANY_MESHDB_TOOLS TRUE)
+ENDIF()
+
 IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))

@@ -749,6 +749,11 @@ ENDIF()
 add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
+IF (ALBANY_MESHDB_TOOLS)
+  add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
+ENDIF()
+
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
