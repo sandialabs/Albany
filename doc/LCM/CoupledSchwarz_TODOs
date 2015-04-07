@@ -4,12 +4,6 @@
 4.) Change variable/function names to comply with C++ coding standards
 [Alejandro] Mostly done in SchwarzMultiscale.*.
 
-5.) Further down the line, we'll want to clean up the input files to
-remove stuff that's not read in (e.g., the coupled one won't have a
-discretization section probably) [TBD -- I suggest we hold off on this
-for now until we decide definitively what'll be read in from what
-file.].
-
 6.) Eventually we'll want to put an ifdef to suppress all the debug
 output [TBD].
 
