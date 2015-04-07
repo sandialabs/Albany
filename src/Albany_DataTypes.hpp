@@ -95,6 +95,7 @@ typedef Tpetra::MultiVector<ST, LO, GO, KokkosNode> Tpetra_MultiVector;
 typedef Thyra::TpetraOperatorVectorExtraction<ST, LO, GO, KokkosNode> ConverterT;
 typedef Tpetra::MatrixMarket::Writer<Tpetra_CrsMatrix> Tpetra_MatrixMarket_Writer;
 typedef Thyra::TpetraVector<ST,LO,GO,KokkosNode> ThyraVector;
+typedef Thyra::TpetraMultiVector<ST,LO,GO,KokkosNode> ThyraMultiVector;
 
 
 // Include ScalarParameterLibrary to specialize its traits
