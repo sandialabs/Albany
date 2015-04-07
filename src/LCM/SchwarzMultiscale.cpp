@@ -127,8 +127,6 @@ SchwarzMultiscale(
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
     //create application for mth model
-    //FIXME: initial_guessT needs to be made the right one for the mth model!
-    // Or can it be null?
     apps_[m] = Teuchos::rcp(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
 
@@ -548,30 +546,12 @@ create_DgDx_op_impl(int j) const
 {
   assert(0 <= j && j < num_responses_total_);
 
-  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
   //FIX ME: re-implement using product vectors! 
-  /*for (int m = 0; m < num_models_; ++m) {
-    int const
-    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
-
-    int const
-    hi = num_responses_partial_sum_[m];
-
-    bool const
-    in_range = lo <= j && j < hi;
-
-    if (in_range == true) {
-      return Thyra::createLinearOp(
-          apps_[m]->getResponse(j - lo)->createGradientOpT());
-    }
-  }*/
-
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   return Teuchos::null;
 }
 
 /// Create operator form of dg/dx_dot for distributed responses
-// FIXME: Is this correct? It seems the same as above.
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
@@ -580,23 +560,6 @@ create_DgDx_dot_op_impl(int j) const
 
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   //FIXME: re-implement using product vectors!
-  /*
-  for (int m = 0; m < num_models_; ++m) {
-    int const
-    lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
-
-    int const
-    hi = num_responses_partial_sum_[m];
-
-    bool const
-    in_range = lo <= j && j < hi;
-
-    if (in_range == true) {
-      return Thyra::createLinearOp(
-          apps_[m]->getResponse(j - lo)->createGradientOpT());
-    }
-  }*/
-
   return Teuchos::null;
 }
 
@@ -624,54 +587,15 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
 
+ //FIXME: re-implement sensitivities stuff given that we have parameters now!
+ //Add DgDx, DgDp, etc.
+ /*
   for (int l = 0; l < num_params_total_; ++l) {
     result.setSupports(
         Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, l,
         Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
-  }
-
- //FIXME: re-implement!
-/*
-  for (int i = 0; i < num_responses_total_; ++i) {
-    Thyra::ModelEvaluatorBase::DerivativeSupport
-    dgdx_support;
-
-    for (int m = 0; m < num_models_; ++m) {
-      int const
-      lo = m > 0 ? num_responses_partial_sum_[m - 1] : 0;
-
-      int const
-      hi = num_responses_partial_sum_[m];
-
-      bool const
-      in_range = lo <= i && i < hi;
-
-      if (in_range == true) {
-        if (apps_[m]->getResponse(i - lo)->isScalarResponse()) {
-          dgdx_support = Thyra::ModelEvaluatorBase::DERIV_TRANS_MV_BY_ROW;
-        }
-        else {
-          dgdx_support = Thyra::ModelEvaluatorBase::DERIV_LINEAR_OP;
-        }
-      }
-    }
-
-    result.setSupports(
-        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx, i, dgdx_support);
-
-    result.setSupports(
-        Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dot, i, dgdx_support);
-
-    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-    //result.setSupports(
-    //    Thyra::ModelEvaluatorBase::OUT_ARG_DgDx_dotdot, i, dgdx_support);
-
-    for (int l = 0; l < num_params_total_; ++l) {
-      result.setSupports(
-          Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, i, l,
-          Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
-    }
-  }*/
+  } 
+  */
 
   return result;
 }
@@ -825,7 +749,9 @@ evalModelImpl(
   // TODO: understand better how evalModel is called and how g and f parameter
   // arrays are set in df/dp
 
+  //FIXME: implement dfdp given that we're working with product vectors now.
   //df/dp
+  /*
   for (int l = 0; l < out_args.Np(); ++l) {
      Teuchos::RCP<Thyra::ProductMultiVectorBase<ST> > const dfdp_outT =
       Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> >(
@@ -854,6 +780,7 @@ evalModelImpl(
         }
       }
     }
+  */
 
   // f
   for (int m = 0; m < num_models_; ++m) {
@@ -906,7 +833,9 @@ evalModelImpl(
   mm_counter++;
 #endif
 
-  // Response functions
+//Responses / sensitivities
+//FIXME: need to implement DgDx, DgDp, etc for sensitivity analysis! 
+// Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {
 
     Teuchos::RCP<Thyra::ProductVectorBase<ST> > gT_out =
@@ -915,71 +844,18 @@ evalModelImpl(
               out_args.get_g(j), true) :
           Teuchos::null;
     
-    Thyra::ModelEvaluatorBase::Derivative<ST> const
-    dgdxT_out = out_args.get_DgDx(j);
-
-    Thyra::ModelEvaluatorBase::Derivative<ST> const
-    dgdxdotT_out = out_args.get_DgDx_dot(j);
-
-    // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-    Thyra::ModelEvaluatorBase::Derivative<ST> const
-    dgdxdotdotT_out;
-
-    
     for (int m = 0; m < num_models_; m++) {
       //Get each Tpetra vector
       Teuchos::RCP<Tpetra_Vector> gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
                 gT_out->getNonconstVectorBlock(m),
                 true)->getTpetraVector();
 
-      // dg/dx, dg/dxdot
-      if (!dgdxT_out.isEmpty() || !dgdxdotT_out.isEmpty()) {
-        Thyra::ModelEvaluatorBase::Derivative<ST> const
-        dummy_derivT;
-
-        //sets gT_out
-        apps_[m]->evaluateResponseDerivativeT(
-            j, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
-            *xTs[m], sacado_param_vecs_[m], NULL,
-            gT_out_m.get(), dgdxT_out,
-            dgdxdotT_out, dgdxdotdotT_out, dummy_derivT);
-
-        // Set gT_out to null to indicate that g_out was evaluated.
-        gT_out = Teuchos::null;
-      }
-
-      // dg/dp
       for (int l = 0; l < out_args.Np(); ++l) {
-
-        Teuchos::RCP<Thyra::ProductMultiVectorBase<ST> > const dgdpT_out =
-        Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> >(
-          out_args.get_DgDp(j,l).getMultiVector(),
-          true);
-
-
-        if (Teuchos::is_null(dgdpT_out) == false) {
-          Teuchos::RCP<ParamVec> const
-              p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][l]);
-          for (int n=0; n < num_models_; n++) {
-            Teuchos::RCP<Tpetra_MultiVector> dgdpT_out_n = Teuchos::rcp_dynamic_cast<ThyraMultiVector>(
-              dgdpT_out->getNonconstMultiVectorBlock(n), true)->getTpetraMultiVector();
- 
-            //sets gT_out, dgdpT_out
-            apps_[m]->evaluateResponseTangentT(
-              l, alpha, beta, omega, curr_time, false,
-              x_dotTs[m].get(), x_dotdotT.get(), *xTs[m],
-              sacado_param_vecs_[m], p_vec.get(),
-              NULL, NULL, NULL, NULL, gT_out_m.get(), NULL,
-              dgdpT_out_n.get());
-            gT_out = Teuchos::null;
-          }
-        }
-
         if (Teuchos::is_null(gT_out) == false) {
           //sets gT_out
           apps_[m]->evaluateResponseT(
-            l, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
-            *xTs[m], sacado_param_vecs_[m], *gT_out_m);
+              l, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
+              *xTs[m], sacado_param_vecs_[m], *gT_out_m);
         }
       }
     }

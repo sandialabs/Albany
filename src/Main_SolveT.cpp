@@ -125,7 +125,6 @@ void tpetraFromThyraProdVec(
            Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(*it,true) :
            Teuchos::null;
       if (r_prod != Teuchos::null) {
-        //FIXME!  r_vec should be all the product vectors concatenated not just the first one
         Teuchos::RCP<const Thyra::ProductVectorSpaceBase<ST> > prod_space  = r_prod->productSpace();
         int nProdVecs = prod_space->numBlocks(); 
         //create Teuchos array of spaces / vectors, to be populated from the product vector
@@ -134,12 +133,9 @@ void tpetraFromThyraProdVec(
           rs[i] =  ConverterT::getConstTpetraVector(r_prod->getVectorBlock(i)); 
         }
         Teuchos::RCP<Tpetra_Vector> r_vec = createCombinedTpetraVector(rs); 
-        //Teuchos::RCP<const Tpetra_Vector> r_vec = 
-        //     Teuchos::rcp_dynamic_cast<const ThyraVector>(r_prod->getVectorBlock(0),true)->getConstTpetraVector();
         responses.push_back(r_vec);
       }
     }
-
   sensitivities.clear();
   sensitivities.reserve(thyraSensitivities.size());
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
@@ -388,9 +384,20 @@ int main(int argc, char *argv[]) {
 
     const Thyra::ModelEvaluatorBase::InArgs<double> nominal = solver->getNominalValues();
 
-    for (int i=0; i<num_p; i++) {
-      Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],
-           ConverterT::getConstTpetraVector(nominal.get_p(i)));
+    //Check if parameters are product vectors or regular vectors
+    Teuchos::RCP<const Thyra::ProductVectorBase<ST> > p_prod;
+    if (num_p > 0) { 
+       p_prod =  Teuchos::nonnull(nominal.get_p(0)) ?
+                        Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(nominal.get_p(0),false) :
+                        Teuchos::null;
+      //If p_prod is not product vector, print out parameter vector by converting thyra vector to tpetra vector
+      if (p_prod == Teuchos::null) {
+        for (int i=0; i<num_p; i++) {
+          Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],
+             ConverterT::getConstTpetraVector(nominal.get_p(i)));
+        }
+      }
+      //FIXME: implementing printing of parameters when you have thyra vectors!
     }
 
     for (int i=0; i<num_g-1; i++) {
