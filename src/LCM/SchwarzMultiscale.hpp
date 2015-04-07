@@ -113,12 +113,16 @@ protected:
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
 private:
+
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidAppParameters() const;
 
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidProblemParameters() const;
 
+  //! List of free parameter names
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > param_names_;
+  
   /// RCP to matDB object
   Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> >
   material_dbs_;
@@ -154,18 +158,6 @@ private:
   int
   num_models_;
 
-  Teuchos::Array<int>
-  num_params_;
-
-  Teuchos::Array<int>
-  num_responses_;
-  
-  Teuchos::Array<int>
-  num_params_partial_sum_;
-
-  Teuchos::Array<int>
-  num_responses_partial_sum_;
-  
   //like num_param_vecs
   int
   num_params_total_;
@@ -182,6 +174,7 @@ private:
   Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
   solver_factory_;
     
+  //! Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec> >
   sacado_param_vecs_;
 
