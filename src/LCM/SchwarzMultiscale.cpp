@@ -9,6 +9,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_VerboseObject.hpp"
 #include "Schwarz_CoupledJacobian.hpp"
+#include <sstream>
 
 //uncomment the following to write stuff out to matrix market to debug
 #define WRITE_TO_MATRIX_MARKET
@@ -51,6 +52,45 @@ SchwarzMultiscale(
 
   std::cout << "DEBUG: num_models_: " << num_models_ << '\n';
 
+  //----------------Parameters------------------------
+  //Get "Problem" parameter list
+  Teuchos::ParameterList & problem_params = app_params->sublist("Problem"); 
+  //Get "Parameters" parameter sublist 
+  Teuchos::ParameterList & parameter_params = problem_params.sublist("Parameters"); 
+  num_params_total_ = parameter_params.get("Number of Parameter Vectors", 0);
+  bool using_old_parameter_list = false;
+  if (parameter_params.isType<int>("Number")) {
+    int num_parameters = parameter_params.get<int>("Number");
+    if (num_parameters > 0) {
+      num_params_total_ = 1;
+      using_old_parameter_list = true;
+    }
+  }
+  std::cout << "Number of parameter vectors = " << num_params_total_ << std::endl;
+
+  //Get parameter names
+  param_names_.resize(num_params_total_);
+  for (int l = 0; l < num_params_total_; ++l) {
+    const Teuchos::ParameterList* p_list = using_old_parameter_list ?
+                                           &parameter_params :
+                                           &(parameter_params.sublist(Albany::strint("Parameter Vector", l)));
+
+    const int num_parameters = p_list->get<int>("Number");
+    TEUCHOS_TEST_FOR_EXCEPTION(
+      num_parameters == 0,
+      Teuchos::Exceptions::InvalidParameter,
+      std::endl << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
+      "Parameter vector " << l << " has zero parameters!" << std::endl);
+    param_names_[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+    for (int k = 0; k < num_parameters; ++k) {
+      (*param_names_[l])[k] =
+        p_list->get<std::string>(Albany::strint("Parameter", k));
+    }
+    std::cout << "Number of parameters in parameter vector "
+      << l << " = " << num_parameters << std::endl;
+  }
+  
+  //---------------End Parameters---------------------
 
   apps_.resize(num_models_);
   models_.resize(num_models_);
@@ -78,6 +118,7 @@ SchwarzMultiscale(
   //string for storing name of first problem, for error checking
   std::string
   problem_name_0 = "";
+    
 
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
@@ -94,6 +135,13 @@ SchwarzMultiscale(
 
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
+
+    //Overwrite Parameter sublist for individual models, if they are provided, to set them 
+    //to the parameters specified in the "master" coupled input file. 
+    Teuchos::ParameterList &param_params_m = problem_params_m->sublist("Parameters", false);    
+    if (param_params_m.isSublist("Parameters")) 
+       param_params_m.setParameters(parameter_params); 
+    param_params_m.setParametersNotAlreadySet(parameter_params); 
 
     model_problem_params[m] = problem_params_m;
 
@@ -182,42 +230,6 @@ SchwarzMultiscale(
 
   
   //----------------Parameters------------------------
-  //Get "Problem" parameter list
-  Teuchos::ParameterList & problem_params = app_params->sublist("Problem"); 
-  //Get "Parameters" parameter sublist 
-  Teuchos::ParameterList & parameter_params = problem_params.sublist("Parameters"); 
-  num_params_total_ = parameter_params.get("Number of Parameter Vectors", 0);
-  bool using_old_parameter_list = false;
-  if (parameter_params.isType<int>("Number")) {
-    int num_parameters = parameter_params.get<int>("Number");
-    if (num_parameters > 0) {
-      num_params_total_ = 1;
-      using_old_parameter_list = true;
-    }
-  }
-  std::cout << "Number of parameter vectors = " << num_params_total_ << std::endl;
-
-  //Get parameter names
-  param_names_.resize(num_params_total_);
-  for (int l = 0; l < num_params_total_; ++l) {
-    const Teuchos::ParameterList* p_list = using_old_parameter_list ?
-                                           &parameter_params :
-                                           &(parameter_params.sublist(Albany::strint("Parameter Vector", l)));
-
-    const int num_parameters = p_list->get<int>("Number");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      num_parameters == 0,
-      Teuchos::Exceptions::InvalidParameter,
-      std::endl << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
-      "Parameter vector " << l << " has zero parameters!" << std::endl);
-    param_names_[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
-    for (int k = 0; k < num_parameters; ++k) {
-      (*param_names_[l])[k] =
-        p_list->get<std::string>(Albany::strint("Parameter", k));
-    }
-    std::cout << "Number of parameters in parameter vector "
-      << l << " = " << num_parameters << std::endl;
-  }
   // Create sacado parameter vectors of appropriate size
   // for use in evalModelImpl
   sacado_param_vecs_.resize(num_models_);

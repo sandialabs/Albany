@@ -13,22 +13,23 @@ file.].
 6.) Eventually we'll want to put an ifdef to suppress all the debug
 output [TBD].
 
+7.) Printing of param vec for ThyraProductVector in Main_SolveT.cpp [Irina].
+
+8.) Put logic to copy Response parameter list from "master" to individual model 
+ones, similar to what is done for "Parameters" [Irina]. 
 
 ---------------------Debug TODOs------------------------
 
 1.) Debug evalModelImpl in LCM::SchwarzMultiScale class on 1 domain
-with LOCA (NOX works) (why is ||F|| not changing?) [Irina]
+with LOCA on > 1 domain [Irina]
 
-2.) Add check so that it's possible to run problem where Number of parameters in coupled 
-input file \neq Number of parameters in individual files (and same for responses / sensitivities). 
-[Irina]
+2.) Get responses working. [Irina]
 
 3.) Fix memory leak issues that show up after solve.
 
 4.) Implement thyra product vector / space versions of responses / parameters / sensitivities. [Irina]
 
-
-
+5.) Issue reading in materials.xml when it's not in input file [Alejandro].
 
 ---------------------Development TODOs------------------------
 
@@ -40,7 +41,8 @@ in general already in other parts of the code. [TBD?]
 Jacobians as Tpetra_Operators.  Resulting Teuchos Array of Tpetra_Operators
 will be passed to Schwarz_CoupledJacobian class. [Alejandro]
 
-3.) Implement separateCoupledVector for the general (> 1) domain case [Irina]
+3.) Sensitivities [how to define DfDp, DgDp, DgDx, etc. when 
+we have Thyra Product Vectors?  Is this supported?]
 
 
 ------------------Questions/Comments/Notes-----------------------------
@@ -50,6 +52,8 @@ used to create the Albany_Application object for each model.  There,
 it's used to set the initial condition (AAdapt:InitialContitionsT).
 It's used to set x_init and x_dot_init, part of nominal_values
 (get_x_init and get_x_dot_init for the EpetraExt Model Evaluator).
+
+2.) How will we handle multi-proc runs? [Ray has asked]
 
 ----------------Development Planning TODOs----------------------------------------
 
