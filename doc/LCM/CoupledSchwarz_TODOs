@@ -16,11 +16,9 @@ ones, similar to what is done for "Parameters" [Irina].
 
 ---------------------Debug TODOs------------------------
 
-2.) Get responses working. [Irina]
+2.) Get responses working for > 1 model. [Irina]
 
 3.) Fix memory leak issues that show up after solve.
-
-4.) Implement thyra product vector / space versions of responses / parameters / sensitivities. [Irina]
 
 5.) Issue reading in materials.xml when it's not in input file [Alejandro].
 
@@ -37,6 +35,7 @@ will be passed to Schwarz_CoupledJacobian class. [Alejandro]
 3.) Sensitivities [how to define DfDp, DgDp, DgDx, etc. when 
 we have Thyra Product Vectors?  Is this supported?]
 
+4.) Implement observer [Irina].
 
 ------------------Questions/Comments/Notes-----------------------------
 
