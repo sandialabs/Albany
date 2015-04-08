@@ -24,7 +24,7 @@ template <typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_app_name_(p.get<std::string>("Coupled Application")),
+  coupled_app_name_(p.get<std::string>("Coupled Application", "0")),
   coupled_block_name_(p.get<std::string>("Coupled Block")),
   disc_(Teuchos::null)
 {
