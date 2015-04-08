@@ -153,13 +153,8 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT
   dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
-  // manually fill the permutation symbol
-  Intrepid::Tensor3<MeshScalarT> e(3, Intrepid::ZEROS);
-  e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
-  e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
-
   // 2nd-order identity tensor
-  const Intrepid::Tensor<MeshScalarT>
+  Intrepid::Tensor<MeshScalarT> const
   I = Intrepid::identity<MeshScalarT>(3);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -194,11 +189,16 @@ evaluateFields(typename Traits::EvalData workset)
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {
-          Intrepid::Vector<ScalarT> T(3, traction_, cell, pt, 0);
+
+          Intrepid::Vector<ScalarT>
+          T(3, traction_, cell, pt, 0);
+
           f_plus = ref_values_(bottom_node, pt) * T;
           f_minus = -ref_values_(bottom_node, pt) * T;
         } else {
-          Intrepid::Tensor<ScalarT> P(3, stress_, cell, pt, 0, 0);
+
+          Intrepid::Tensor<ScalarT>
+          P(3, stress_, cell, pt, 0, 0);
 
           f_plus = ref_values_(bottom_node, pt) * P * N;
           f_minus = -ref_values_(bottom_node, pt) * P * N;
@@ -217,8 +217,8 @@ evaluateFields(typename Traits::EvalData workset)
                   dndxbar = 0.0;
                   for (int r(0); r < num_dims_; ++r) {
                     for (int s(0); s < num_dims_; ++s) {
-                      //dndxbar(m, i) += e(i, r, s)
-                      dndxbar += e(i, r, s)
+
+                      dndxbar += Intrepid::levi_civita<MeshScalarT>(i, r, s)
                           * (g_1(r) * ref_grads_(bottom_node, pt, 0) -
                               g_0(r) * ref_grads_(bottom_node, pt, 1))
                           * (I(m, s) - n(m) * n(s)) /
