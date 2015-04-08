@@ -111,8 +111,11 @@ void tpetraFromThyraProdVec(
   Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > &responses,
   Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > > &sensitivities)
 {
+  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   responses.clear();
   responses.reserve(thyraResponses.size());
+  if (thyraResponses.size() > 0) 
+    *out << "WARNING: For Thyra::ProductVectorBase, only first model response is printed! \n"; 
   typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > ThyraResponseArray;
   for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
       it_end = thyraResponses.end(),
@@ -125,8 +128,10 @@ void tpetraFromThyraProdVec(
            Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(*it,true) :
            Teuchos::null;
       if (r_prod != Teuchos::null) {
-        Teuchos::RCP<const Thyra::ProductVectorSpaceBase<ST> > prod_space  = r_prod->productSpace();
-        int nProdVecs = prod_space->numBlocks(); 
+        //FIXME: right now we print only 1st model response!  productSpace()->numBlocks()
+        //does not work for some reason.  Need to figure out why
+        const int nProdVecs = 1; 
+        //const int nProdVecs = r_prod->productSpace()->numBlocks(); 
         //create Teuchos array of spaces / vectors, to be populated from the product vector
         Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > rs(nProdVecs); 
         for (int i=0; i<nProdVecs; i++) {
@@ -138,35 +143,31 @@ void tpetraFromThyraProdVec(
     }
   sensitivities.clear();
   sensitivities.reserve(thyraSensitivities.size());
-  Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
-  if (thyraSensitivities.size() > 1) 
-    *out << "WARNING: For Thyra::ProductVectorBase, only first model sensitivity is printed right now. \n"; 
+  if (thyraSensitivities.size() > 0) 
+    *out << "WARNING: For Thyra::ProductVectorBase, sensitivities are not yet supported! \n"; 
   typedef Teuchos::Array<Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<ST> > > > ThyraSensitivityArray;
   for (ThyraSensitivityArray::const_iterator it_begin = thyraSensitivities.begin(),
-      it_end = thyraSensitivities.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) {
-    ThyraSensitivityArray::const_reference sens_thyra = *it;
-    Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > sens;
-    sens.reserve(sens_thyra.size());
-    for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
+    it_end = thyraSensitivities.end(),
+    it = it_begin;
+    it != it_end;
+    ++it) {
+      ThyraSensitivityArray::const_reference sens_thyra = *it;
+      Teuchos::Array<Teuchos::RCP<const Tpetra_MultiVector> > sens;
+      sens.reserve(sens_thyra.size());
+      for (ThyraSensitivityArray::value_type::const_iterator jt = sens_thyra.begin(),
         jt_end = sens_thyra.end();
         jt != jt_end;
         ++jt) {
-        Teuchos::RCP<const Thyra::ProductVectorBase<ST> > s_prod =
-           Teuchos::nonnull(*jt) ?
-           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(*jt,true) :
-           Teuchos::null;
-        if (s_prod != Teuchos::null) {
-          //FIXME!  s_vec should be all the product vectors concatenated not just the first one
-          Teuchos::RCP<const Tpetra_Vector> s_vec = 
-             Teuchos::rcp_dynamic_cast<const ThyraVector>(s_prod->getVectorBlock(0),true)->getConstTpetraVector();
+          Teuchos::RCP<const Thyra::ProductVectorBase<ST> > s_prod =
+          Teuchos::nonnull(*jt) ?
+          Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(*jt,true) :
+          Teuchos::null;
+          //FIXME: ultimately we'll need to change this to set the sensitivity vector
+          Teuchos::RCP<const Tpetra_Vector> s_vec = Teuchos::null; 
           sens.push_back(s_vec);
         }
-    }
-    sensitivities.push_back(sens);
-  }
+     sensitivities.push_back(sens);
+   }
 }
 
 
@@ -402,6 +403,7 @@ int main(int argc, char *argv[]) {
 
     for (int i=0; i<num_g-1; i++) {
       const RCP<const Tpetra_Vector> g = responses[i];
+      std::cout << "g size: " << g->getGlobalLength() << std::endl; 
       bool is_scalar = true;
 
       if (app != Teuchos::null)
@@ -409,23 +411,28 @@ int main(int argc, char *argv[]) {
 
       if (is_scalar) {
 
-        if(response_names[i] != Teuchos::null)
-          Albany::printTpetraVector(*out << "\nResponse vector " << i << ":\n", *response_names[i], g);
-        else
-          Albany::printTpetraVector(*out << "\nResponse vector " << i << ":\n", g);
+        if(response_names[i] != Teuchos::null) {
+          *out << "\n Response vector " << i << ": " << *response_names[i] << "\n"; 
+          Albany::printTpetraVector(*out, g);
+        }
+        else {
+          *out << "\n Response vector " << i << ":\n"; 
+          Albany::printTpetraVector(*out, g);
+        }
 
         if (num_p == 0) {
           // Just calculate regression data
           status += slvrfctry.checkSolveTestResultsT(i, 0, g.get(), NULL);
-        } else {
-          for (int j=0; j<num_p; j++) {
-            const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
-            if (Teuchos::nonnull(dgdp)) {
-
-              Albany::printTpetraVector(*out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
-
+        } 
+        else {
+          if (sensitivities[0][0] != Teuchos::null) {
+            for (int j=0; j<num_p; j++) {
+              const RCP<const Tpetra_MultiVector> dgdp = sensitivities[i][j];
+              if (Teuchos::nonnull(dgdp)) {
+                Albany::printTpetraVector(*out << "\nSensitivities (" << i << "," << j << "):!\n", dgdp);
+              }
+              status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
             }
-            status += slvrfctry.checkSolveTestResultsT(i, j, g.get(), dgdp.get());
           }
         }
       }
@@ -440,7 +447,7 @@ int main(int argc, char *argv[]) {
 
     const RCP<const Tpetra_Vector> xfinal = responses.back();
     double mnv = xfinal->meanValue();
-    *out << "Main_Solve: MeanValue of final solution " << mnv << std::endl;
+    *out << "\nMain_Solve: MeanValue of final solution " << mnv << std::endl;
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     if (writeToCoutSoln == true) { 
        Albany::printTpetraVector(*out << "\nxfinal:\n", xfinal);

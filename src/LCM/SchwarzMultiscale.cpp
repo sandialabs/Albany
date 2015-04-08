@@ -859,14 +859,14 @@ evalModelImpl(
               out_args.get_g(j), true) :
           Teuchos::null;
     
-    for (int m = 0; m < num_models_; m++) {
-      //Get each Tpetra vector
-      Teuchos::RCP<Tpetra_Vector> gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
-                gT_out->getNonconstVectorBlock(m),
-                true)->getTpetraVector();
+    if (Teuchos::is_null(gT_out) == false) {
+      for (int m = 0; m < num_models_; m++) {
+        //Get each Tpetra vector
+        Teuchos::RCP<Tpetra_Vector> gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
+                  gT_out->getNonconstVectorBlock(m),
+                  true)->getTpetraVector();
 
-      for (int l = 0; l < out_args.Np(); ++l) {
-        if (Teuchos::is_null(gT_out) == false) {
+        for (int l = 0; l < out_args.Np(); ++l) {
           //sets gT_out
           apps_[m]->evaluateResponseT(
               l, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
