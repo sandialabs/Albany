@@ -128,10 +128,9 @@ void tpetraFromThyraProdVec(
            Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(*it,true) :
            Teuchos::null;
       if (r_prod != Teuchos::null) {
-        //FIXME: right now we print only 1st model response!  productSpace()->numBlocks()
-        //does not work for some reason.  Need to figure out why
-        const int nProdVecs = 1; 
-        //const int nProdVecs = r_prod->productSpace()->numBlocks(); 
+        //productSpace()->numBlocks() when we have responses and >1 model does not work for some reason.  
+        //Need to figure out why!
+        const int nProdVecs = r_prod->productSpace()->numBlocks(); 
         //create Teuchos array of spaces / vectors, to be populated from the product vector
         Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > rs(nProdVecs); 
         for (int i=0; i<nProdVecs; i++) {

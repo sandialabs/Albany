@@ -91,6 +91,46 @@ SchwarzMultiscale(
   }
   
   //---------------End Parameters---------------------
+  //----------------Responses------------------------
+  //Get "Response functions" parameter sublist
+  Teuchos::ParameterList & response_params = problem_params.sublist("Response Functions");
+  num_responses_total_ = response_params.get("Number of Response Vectors", 0);
+  bool using_old_response_list = false;
+  if (response_params.isType<int>("Number")) {
+    int num_parameters = response_params.get<int>("Number");
+    if (num_parameters > 0) {
+      num_responses_total_ = 1;
+      using_old_response_list = true;
+    }
+  }
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > response_names;
+  response_names.resize(num_responses_total_);
+  for (int l = 0; l < num_responses_total_; ++l) {
+    const Teuchos::ParameterList* p_list =
+      using_old_response_list ?
+      &response_params :
+      &(response_params.sublist(Albany::strint("Response Vector", l)));
+
+    bool number_exists = p_list->getEntryPtr("Number");
+
+    if (number_exists){
+      const int num_parameters = p_list->get<int>("Number");
+      TEUCHOS_TEST_FOR_EXCEPTION(
+        num_parameters == 0,
+        Teuchos::Exceptions::InvalidParameter,
+        std::endl << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
+        "Response vector " << l << " has zero parameters!" << std::endl);
+
+      response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+      for (int k = 0; k < num_parameters; ++k) {
+        (*response_names[l])[k] =
+          p_list->get<std::string>(Albany::strint("Response", k));
+      }
+    }
+  }
+  std::cout << "Number of response vectors = " << num_responses_total_ << std::endl;
+   
+  //----------- end Responses-----------------------
 
   apps_.resize(num_models_);
   models_.resize(num_models_);
@@ -136,12 +176,23 @@ SchwarzMultiscale(
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
 
-    //Overwrite Parameter sublist for individual models, if they are provided, to set them 
+    //Overwrite Parameter sublists for individual models, if they are provided, to set them 
     //to the parameters specified in the "master" coupled input file. 
     Teuchos::ParameterList &param_params_m = problem_params_m->sublist("Parameters", false);    
     if (param_params_m.isSublist("Parameters")) 
        param_params_m.setParameters(parameter_params); 
     param_params_m.setParametersNotAlreadySet(parameter_params); 
+    
+    //Overwrite Responses sublists for individual models, if they are provided, to set them 
+    //to the parameters specified in the "master" coupled input file. 
+    Teuchos::ParameterList &response_params_m = problem_params_m->sublist("Response Functions", false);    
+    if (response_params_m.isSublist("Response Functions")) 
+       response_params_m.setParameters(response_params); 
+    response_params_m.setParametersNotAlreadySet(response_params); 
+
+    Teuchos::ParameterList& response_params_m2 = Teuchos::sublist(model_app_params[m], "Problem")->sublist("Response Functions", false);
+    std::cout << "m, # responses global: " << m << ", " << response_params.get<int>("Number") << std::endl; 
+    std::cout << "m, # responses: " << m << ", " << response_params_m2.get<int>("Number") << std::endl; 
 
     model_problem_params[m] = problem_params_m;
 
@@ -260,46 +311,6 @@ SchwarzMultiscale(
 
   //----------- end Parameters-----------------------
 
-  //----------------Responses------------------------
-  //Get "Response functions" parameter sublist
-  Teuchos::ParameterList & response_params = problem_params.sublist("Response Functions");
-  num_responses_total_ = response_params.get("Number of Response Vectors", 0);
-  bool using_old_response_list = false;
-  if (response_params.isType<int>("Number")) {
-    int num_parameters = response_params.get<int>("Number");
-    if (num_parameters > 0) {
-      num_responses_total_ = 1;
-      using_old_response_list = true;
-    }
-  }
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > response_names;
-  response_names.resize(num_responses_total_);
-  for (int l = 0; l < num_responses_total_; ++l) {
-    const Teuchos::ParameterList* p_list =
-      using_old_response_list ?
-      &response_params :
-      &(response_params.sublist(Albany::strint("Response Vector", l)));
-
-    bool number_exists = p_list->getEntryPtr("Number");
-
-    if (number_exists){
-      const int num_parameters = p_list->get<int>("Number");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        num_parameters == 0,
-        Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
-        "Response vector " << l << " has zero parameters!" << std::endl);
-
-      response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
-      for (int k = 0; k < num_parameters; ++k) {
-        (*response_names[l])[k] =
-          p_list->get<std::string>(Albany::strint("Response", k));
-      }
-    }
-  }
-  std::cout << "Number of response vectors = " << num_responses_total_ << std::endl;
-   
-  //----------- end Responses-----------------------
 
   //------------------Setup nominal values----------------
   nominal_values_ = this->createInArgsImpl();
