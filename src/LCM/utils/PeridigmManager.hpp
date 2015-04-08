@@ -95,6 +95,9 @@ public:
   //! Get the list of peridynamics variables that will be written to Exodus.
   std::vector<OutputField> getOutputFields();
 
+  //! Set Dirichlet Fields;
+  void setDirichletFields(Teuchos::RCP<Albany::AbstractDiscretization> disc);
+
 private:
 
   // Peridigm objects
