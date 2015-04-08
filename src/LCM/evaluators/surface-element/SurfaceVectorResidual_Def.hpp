@@ -154,7 +154,7 @@ evaluateFields(typename Traits::EvalData workset)
   dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
   // 2nd-order identity tensor
-  const Intrepid::Tensor<MeshScalarT>
+  Intrepid::Tensor<MeshScalarT> const
   I = Intrepid::identity<MeshScalarT>(3);
 
   for (int cell(0); cell < workset.numCells; ++cell) {
@@ -189,11 +189,16 @@ evaluateFields(typename Traits::EvalData workset)
 
         // h * P * dFperpdx --> +/- \lambda * P * N
         if (use_cohesive_traction_) {
-          Intrepid::Vector<ScalarT> T(3, traction_, cell, pt, 0);
+
+          Intrepid::Vector<ScalarT>
+          T(3, traction_, cell, pt, 0);
+
           f_plus = ref_values_(bottom_node, pt) * T;
           f_minus = -ref_values_(bottom_node, pt) * T;
         } else {
-          Intrepid::Tensor<ScalarT> P(3, stress_, cell, pt, 0, 0);
+
+          Intrepid::Tensor<ScalarT>
+          P(3, stress_, cell, pt, 0, 0);
 
           f_plus = ref_values_(bottom_node, pt) * P * N;
           f_minus = -ref_values_(bottom_node, pt) * P * N;
