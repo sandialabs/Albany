@@ -94,7 +94,7 @@
 	<!-- The number of steps in the problem -->
 	<Parameter  name="Max Steps" type="int" value="1000"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-	<Parameter  name="Max Value" type="double" value="2.0"/>
+	<Parameter  name="Max Value" type="double" value="1.0"/>
 	<Parameter  name="Return Failed on Reaching Max Steps"
 		    type="bool" value="0"/>
 	<Parameter name="Hit Continuation Bound" type="bool" value="0"/>
