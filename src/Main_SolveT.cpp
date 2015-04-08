@@ -402,7 +402,6 @@ int main(int argc, char *argv[]) {
 
     for (int i=0; i<num_g-1; i++) {
       const RCP<const Tpetra_Vector> g = responses[i];
-      std::cout << "g size: " << g->getGlobalLength() << std::endl; 
       bool is_scalar = true;
 
       if (app != Teuchos::null)
