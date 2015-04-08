@@ -789,7 +789,6 @@ computeGlobalResidualImplT(
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
-  double obcFunctional = peridigmManager.obcEvaluateFunctional();
 #endif
 #endif
 

@@ -764,6 +764,12 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
     shards::CellTopology cellTopology(&obcDataPoints[iEvalPt].cellTopologyData);
     Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, nodalValues, cellTopology);
 
+    // DEBUGGING
+    for(int dof=0 ; dof<3 ; dof++){
+      std::cout << "DJL DEBUGGING " << physPoints(0, dof) << ", " << refPoints(0, dof) << std::endl;
+    }
+    // end DEBUGGING
+
     // Get the values of the basis functions at the point
     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(obcDataPoints[iEvalPt].cellTopologyData);
     intrepidBasis->getValues(basisValues, refPoints, Intrepid::OPERATOR_VALUE);
@@ -782,8 +788,6 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
 
   double functionalValue(0.0);
   displacementDiff.Norm2(&functionalValue);
-
-  std::cout << "DJL DEBUGGING obcFunctional " << functionalValue << std::endl;
 
   return functionalValue;
 }
