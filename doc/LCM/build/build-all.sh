@@ -44,14 +44,14 @@ esac
 
 WIKI_TEMPLATE="LCM-Status:-Last-known-commits-that-work.md"
 STATUS_LOG="albany-gcc-debug-status.log"
-# Packages in innermost loop so that test results are resported as soon
+# Packages in innermost loop so that test results are reported as soon
 # as they are available.
 for TOOL_CHAIN in $TOOL_CHAINS; do
     for BUILD_TYPE in $BUILD_TYPES; do
 	for PACKAGE in $PACKAGES; do
 	    "$COMMAND" "$PACKAGE" "$TOOL_CHAIN" "$BUILD_TYPE" "$NUM_PROCS"
 	done
-	# Update wiki only after compiling Albany with gcc debug.
+	# Update wiki after compiling Albany with gcc debug only.
 	case "$PACKAGE" in
 	    albany)
 		case "$BUILD_TYPE" in
