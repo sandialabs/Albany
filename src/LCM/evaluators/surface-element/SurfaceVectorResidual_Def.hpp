@@ -153,11 +153,6 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT
   dgapdxN, tmp1, tmp2, dndxbar, dFdx_plus, dFdx_minus;
 
-  // manually fill the permutation symbol
-  Intrepid::Tensor3<MeshScalarT> e(3, Intrepid::ZEROS);
-  e(0, 1, 2) = e(1, 2, 0) = e(2, 0, 1) = 1.0;
-  e(0, 2, 1) = e(1, 0, 2) = e(2, 1, 0) = -1.0;
-
   // 2nd-order identity tensor
   const Intrepid::Tensor<MeshScalarT>
   I = Intrepid::identity<MeshScalarT>(3);
@@ -217,8 +212,8 @@ evaluateFields(typename Traits::EvalData workset)
                   dndxbar = 0.0;
                   for (int r(0); r < num_dims_; ++r) {
                     for (int s(0); s < num_dims_; ++s) {
-                      //dndxbar(m, i) += e(i, r, s)
-                      dndxbar += e(i, r, s)
+
+                      dndxbar += Intrepid::levi_civita<MeshScalarT>(i, r, s)
                           * (g_1(r) * ref_grads_(bottom_node, pt, 0) -
                               g_0(r) * ref_grads_(bottom_node, pt, 1))
                           * (I(m, s) - n(m) * n(s)) /
