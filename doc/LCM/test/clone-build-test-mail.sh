@@ -34,7 +34,7 @@ if [ -d "Albany.wiki" ]; then
 fi
 git clone git@github.com:gahansen/Albany.wiki.git
 
-TRY_WIKI="1"
+WIKI="1"
 
 ./clean-config-build-test-mail-all.sh
 

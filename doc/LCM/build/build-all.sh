@@ -59,7 +59,7 @@ for TOOL_CHAIN in $TOOL_CHAINS; do
 			case "$TOOL_CHAIN" in
 			    gcc)
 				cd "$LCM_DIR"
-				if [ -f "$STATUS_LOG" && "$TRY_WIKI"=="1" ]; then
+				if [[ -f "$STATUS_LOG" && "$WIKI"=="1" ]]; then
 				    SRC="Albany/doc/LCM/test/$WIKI_TEMPLATE"
 				    DEST="$LCM_DIR/Albany.wiki/$WIKI_TEMPLATE"
 				    cp -p "$SRC" "$DEST"
