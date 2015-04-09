@@ -77,7 +77,7 @@ SchwarzMultiscale(
     }
   }
 
-  std::cout << "Number of parameter vectors = " << num_params_total_ << std::endl;
+  std::cout << "Number of parameter vectors = " << num_params_total_ << '\n';
 
   //Get parameter names
   param_names_.resize(num_params_total_);
@@ -90,15 +90,15 @@ SchwarzMultiscale(
     TEUCHOS_TEST_FOR_EXCEPTION(
       num_parameters == 0,
       Teuchos::Exceptions::InvalidParameter,
-      std::endl << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
-      "Parameter vector " << l << " has zero parameters!" << std::endl);
+      '\n' << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
+      "Parameter vector " << l << " has zero parameters!" << '\n');
     param_names_[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
     for (int k = 0; k < num_parameters; ++k) {
       (*param_names_[l])[k] =
         p_list->get<std::string>(Albany::strint("Parameter", k));
     }
     std::cout << "Number of parameters in parameter vector "
-      << l << " = " << num_parameters << std::endl;
+      << l << " = " << num_parameters << '\n';
   }
   
   //---------------End Parameters---------------------
@@ -129,8 +129,8 @@ SchwarzMultiscale(
       TEUCHOS_TEST_FOR_EXCEPTION(
         num_parameters == 0,
         Teuchos::Exceptions::InvalidParameter,
-        std::endl << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
-        "Response vector " << l << " has zero parameters!" << std::endl);
+        '\n' << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
+        "Response vector " << l << " has zero parameters!" << '\n');
 
       response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
       for (int k = 0; k < num_parameters; ++k) {
@@ -139,7 +139,7 @@ SchwarzMultiscale(
       }
     }
   }
-  std::cout << "Number of response vectors = " << num_responses_total_ << std::endl;
+  std::cout << "Number of response vectors = " << num_responses_total_ << '\n';
    
   //----------- end Responses-----------------------
 
@@ -202,8 +202,8 @@ SchwarzMultiscale(
     response_params_m.setParametersNotAlreadySet(response_params); 
 
     Teuchos::ParameterList& response_params_m2 = Teuchos::sublist(model_app_params[m], "Problem")->sublist("Response Functions", false);
-    std::cout << "m, # responses global: " << m << ", " << response_params.get<int>("Number") << std::endl; 
-    std::cout << "m, # responses: " << m << ", " << response_params_m2.get<int>("Number") << std::endl; 
+    std::cout << "m, # responses global: " << m << ", " << response_params.get<int>("Number") << '\n';
+    std::cout << "m, # responses: " << m << ", " << response_params_m2.get<int>("Number") << '\n';
 
     model_problem_params[m] = problem_params_m;
 
@@ -309,11 +309,11 @@ SchwarzMultiscale(
          *(param_names_[l]), sacado_param_vecs_[m][l]);
        }
        catch (const std::logic_error& le) {
-         std::cout << "Error: exception thrown from ParamLib fillVector in file " << __FILE__ << " line " << __LINE__ << std::endl;
+         std::cout << "Error: exception thrown from ParamLib fillVector in file " << __FILE__ << " line " << __LINE__ << '\n';
          std::cout << "This is probably due to something incorrect in the \"Parameters\" list in the input file, one of the lines:"
-                   << std::endl;
+                   << '\n';
          for (int k = 0; k < param_names_[l]->size(); ++k)
-           std::cout << "      " << (*param_names_[l])[k] << std::endl;
+           std::cout << "      " << (*param_names_[l])[k] << '\n';
 
          throw le; // rethrow to shut things down
        }

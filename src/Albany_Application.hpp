@@ -883,11 +883,23 @@ namespace Albany {
     {coupled_apps_ = ca;}
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
-    getCoupledApplications() {return coupled_apps_;}
+    getCoupledApplications()
+    {return coupled_apps_;}
+
+    void
+    setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>> & anim)
+    {app_name_index_map_ = anim;}
+
+    Teuchos::RCP<std::map<std::string, int>>
+    setAppNameIndexMap()
+    {return app_name_index_map_;}
 
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
     coupled_apps_;
+
+    Teuchos::RCP<std::map<std::string, int>>
+    app_name_index_map_;
 #endif //ALBANY_LCM
 
   protected:
