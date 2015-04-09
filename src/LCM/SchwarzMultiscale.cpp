@@ -106,33 +106,43 @@ SchwarzMultiscale(
   //---------------End Parameters---------------------
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
-  Teuchos::ParameterList & response_params = problem_params.sublist("Response Functions");
+  Teuchos::ParameterList &
+  response_params = problem_params.sublist("Response Functions");
+
   num_responses_total_ = response_params.get("Number of Response Vectors", 0);
-  bool using_old_response_list = false;
-  if (response_params.isType<int>("Number")) {
-    int num_parameters = response_params.get<int>("Number");
+
+  bool
+  using_old_response_list = false;
+
+  if (response_params.isType<int>("Number") == true) {
+    int
+    num_parameters = response_params.get<int>("Number");
+
     if (num_parameters > 0) {
       num_responses_total_ = 1;
       using_old_response_list = true;
     }
   }
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > response_names;
+
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >
+  response_names;
+
   response_names.resize(num_responses_total_);
+
   for (int l = 0; l < num_responses_total_; ++l) {
-    const Teuchos::ParameterList* p_list =
-      using_old_response_list ?
-      &response_params :
-      &(response_params.sublist(Albany::strint("Response Vector", l)));
+    Teuchos::ParameterList const *
+    p_list = using_old_response_list ?
+      & response_params :
+      & (response_params.sublist(Albany::strint("Response Vector", l)));
 
-    bool number_exists = p_list->getEntryPtr("Number");
+    bool
+    number_exists = p_list->getEntryPtr("Number");
 
-    if (number_exists){
-      const int num_parameters = p_list->get<int>("Number");
-      TEUCHOS_TEST_FOR_EXCEPTION(
-        num_parameters == 0,
-        Teuchos::Exceptions::InvalidParameter,
-        '\n' << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
-        "Response vector " << l << " has zero parameters!" << '\n');
+    if (number_exists == true){
+      const int
+      num_parameters = p_list->get<int>("Number");
+
+      assert(num_parameters > 0);
 
       response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
       for (int k = 0; k < num_parameters; ++k) {
