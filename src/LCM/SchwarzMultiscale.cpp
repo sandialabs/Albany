@@ -82,17 +82,19 @@ SchwarzMultiscale(
   //Get parameter names
   param_names_.resize(num_params_total_);
   for (int l = 0; l < num_params_total_; ++l) {
-    const Teuchos::ParameterList* p_list = using_old_parameter_list ?
-                                           &parameter_params :
-                                           &(parameter_params.sublist(Albany::strint("Parameter Vector", l)));
+    const Teuchos::ParameterList *
+    p_list = using_old_parameter_list ?
+        & parameter_params :
+        & (parameter_params.sublist(Albany::strint("Parameter Vector", l)));
 
-    const int num_parameters = p_list->get<int>("Number");
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      num_parameters == 0,
-      Teuchos::Exceptions::InvalidParameter,
-      '\n' << "Error!  In LCM::SchwarzMultiscale constructor:  " <<
-      "Parameter vector " << l << " has zero parameters!" << '\n');
-    param_names_[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+    const int
+    num_parameters = p_list->get<int>("Number");
+
+    assert(num_parameters > 0);
+
+    param_names_[l] =
+        Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+
     for (int k = 0; k < num_parameters; ++k) {
       (*param_names_[l])[k] =
         p_list->get<std::string>(Albany::strint("Parameter", k));
