@@ -412,6 +412,35 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     albanyPartialStressElementGlobalIdToPeridigmGlobalIds[albanyGlobalElementId] = peridigmGlobalIds;
   }
 
+  // Create an overlap version of the Albany solution vector
+  selector = stk::mesh::Selector( metaData->universal_part() ) & stk::mesh::Selector( metaData->locally_owned_part() );
+  std::vector<stk::mesh::Entity> locallyOwnedElements;
+  stk::mesh::get_selected_entities(selector, bulkData->buckets(stk::topology::ELEMENT_RANK), locallyOwnedElements);
+  std::set<int> overlapGlobalNodeIds;
+  for(unsigned int iElem=0 ; iElem<locallyOwnedElements.size() ; ++iElem){
+    int numNodes = bulkData->num_nodes(locallyOwnedElements[iElem]);
+    const stk::mesh::Entity* nodes = bulkData->begin_nodes(locallyOwnedElements[iElem]);
+    for(int iNode=0 ; iNode<numNodes ; iNode++){
+      int globalNodeId = bulkData->identifier(nodes[iNode]) - 1;
+      overlapGlobalNodeIds.insert(globalNodeId);
+    }
+  }
+  Teuchos::ArrayRCP<int> nodeIds(3*overlapGlobalNodeIds.size());
+  int index=0;
+  for(std::set<int>::iterator it=overlapGlobalNodeIds.begin() ; it!=overlapGlobalNodeIds.end() ; it++){
+    int globalId = *it;
+    nodeIds[index++] = 3*globalId;
+    nodeIds[index++] = 3*globalId + 1;
+    nodeIds[index++] = 3*globalId + 2;
+  }
+
+  Teuchos::RCP<Tpetra_Map> tpetraMap = Teuchos::rcp(new Tpetra_Map(Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid(),
+								   nodeIds(),
+								   0,
+								   teuchosComm));
+
+  albanyOverlapSolutionVector = Teuchos::rcp(new Tpetra_Vector(tpetraMap));
+
   if(enableOptimizationBasedCoupling){
     obcOverlappingElementSearch();
   }
@@ -703,8 +732,8 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
   }
 
   // Set up access to the current displacements of the nodes in the solid elements
-  Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanySolutionVector->getData();
-  const Teuchos::RCP<const Tpetra_Map> albanyMap = albanySolutionVector->getMap();
+  Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
+  const Teuchos::RCP<const Tpetra_Map> albanyMap = albanyOverlapSolutionVector->getMap();
 
   // Load the current displacements into the obcDataPoints data structures
   Epetra_Vector& peridigmCurrentPositions = *(peridigm->getY());
@@ -744,12 +773,11 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
     cellWorkset.resize(numCells, numNodes, numDim);
     for(int i=0 ; i<numNodes ; i++){
       int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
-      int albanyCurrentDisplacementIndex = albanyMap->getLocalElement(3*globalAlbanyNodeId);
-      // DJL:  This may not work in parallel because nodes may not be on processor
-      //       Do we need an overlap map?
-      cellWorkset(0, i, 0) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex];
-      cellWorkset(0, i, 1) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 1];
-      cellWorkset(0, i, 2) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 2];
+      Tpetra_Map::local_ordinal_type albanyLocalId = albanyMap->getLocalElement(3*globalAlbanyNodeId);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(albanyLocalId == Teuchos::OrdinalTraits<LO>::invalid(), "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), invalid Albany local id.\n\n");
+      cellWorkset(0, i, 0) = albanyCurrentDisplacement[albanyLocalId];
+      cellWorkset(0, i, 1) = albanyCurrentDisplacement[albanyLocalId + 1];
+      cellWorkset(0, i, 2) = albanyCurrentDisplacement[albanyLocalId + 2];
     }
 
     shards::CellTopology cellTopology(&obcDataPoints[iEvalPt].cellTopologyData);
@@ -782,11 +810,12 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
   return functionalValue;
 }
 
-void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector_)
+void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
 {
   if(hasPeridynamics){
 
-    albanySolutionVector = albanySolutionVector_;
+    Tpetra_Import tpetraImport(albanySolutionVector->getMap(), albanyOverlapSolutionVector->getMap());
+    albanyOverlapSolutionVector->doImport(*albanySolutionVector, tpetraImport, Tpetra::INSERT);
 
     currentTime = time;
     timeStep = currentTime - previousTime;
@@ -802,8 +831,8 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
     Epetra_Vector& peridigmVelocities = *(peridigm->getV());
 
     // Peridynamic elements (sphere elements)
-    Teuchos::ArrayRCP<const ST> albanyCurrentDisplacements = albanySolutionVector->getData();
-    const Teuchos::RCP<const Tpetra_Map> albanyMap = albanySolutionVector->getMap();
+    Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
+    const Teuchos::RCP<const Tpetra_Map> albanyMap = albanyOverlapSolutionVector->getMap();
     Tpetra_Map::local_ordinal_type albanyLocalId;
     const Epetra_BlockMap& peridigmMap = peridigmCurrentPositions.Map();
     int peridigmLocalId, globalId;
@@ -814,9 +843,9 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       TEUCHOS_TEST_FOR_EXCEPT_MSG(peridigmLocalId == -1, "\n\n**** Error in PeridigmManager::setCurrentTimeAndDisplacement(), invalid Peridigm local id.\n\n");
       albanyLocalId = albanyMap->getLocalElement(3*globalId);
       TEUCHOS_TEST_FOR_EXCEPT_MSG(albanyLocalId == Teuchos::OrdinalTraits<LO>::invalid(), "\n\n**** Error in PeridigmManager::setCurrentTimeAndDisplacement(), invalid Albany local id.\n\n");
-      peridigmDisplacements[3*peridigmLocalId]   = albanyCurrentDisplacements[albanyLocalId];
-      peridigmDisplacements[3*peridigmLocalId+1] = albanyCurrentDisplacements[albanyLocalId+1];
-      peridigmDisplacements[3*peridigmLocalId+2] = albanyCurrentDisplacements[albanyLocalId+2];
+      peridigmDisplacements[3*peridigmLocalId]   = albanyCurrentDisplacement[albanyLocalId];
+      peridigmDisplacements[3*peridigmLocalId+1] = albanyCurrentDisplacement[albanyLocalId+1];
+      peridigmDisplacements[3*peridigmLocalId+2] = albanyCurrentDisplacement[albanyLocalId+2];
       peridigmCurrentPositions[3*peridigmLocalId]   = peridigmReferencePositions[3*peridigmLocalId] + peridigmDisplacements[3*peridigmLocalId];
       peridigmCurrentPositions[3*peridigmLocalId+1] = peridigmReferencePositions[3*peridigmLocalId+1] + peridigmDisplacements[3*peridigmLocalId+1];
       peridigmCurrentPositions[3*peridigmLocalId+2] = peridigmReferencePositions[3*peridigmLocalId+2] + peridigmDisplacements[3*peridigmLocalId+2];
@@ -832,7 +861,6 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
       // \todo This is brutal, need to store these data structures instead of re-creating them every time for every element.
       // Can probably store things by block and use worksets to compute things in one big call.
 
-      // Create data structures for passing information to/from Intrepid.
       shards::CellTopology cellTopology(&it->cellTopologyData);
       Intrepid::DefaultCubatureFactory<RealType> cubFactory;
       Teuchos::RCP<Intrepid::Cubature<RealType> > cubature = cubFactory.create(cellTopology, cubatureDegree);
@@ -874,14 +902,15 @@ void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuc
 
       int numNodesInElement = bulkData->num_nodes(it->albanyElement);
       const stk::mesh::Entity* node = bulkData->begin_nodes(it->albanyElement);
-      Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanySolutionVector->getData();
+      Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
 
       for(int i=0 ; i<numNodesInElement ; i++){
 	int globalAlbanyNodeId = bulkData->identifier(node[i]) - 1;
-	int albanyCurrentDisplacementIndex = albanyMap->getLocalElement(3*globalAlbanyNodeId);
-	cellWorkset(0, i, 0) = it->albanyNodeInitialPositions[3*i]   + albanyCurrentDisplacement[albanyCurrentDisplacementIndex];
-	cellWorkset(0, i, 1) = it->albanyNodeInitialPositions[3*i+1] + albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 1];
-	cellWorkset(0, i, 2) = it->albanyNodeInitialPositions[3*i+2] + albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 2];
+	Tpetra_Map::local_ordinal_type albanyLocalId = albanyMap->getLocalElement(3*globalAlbanyNodeId);
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(albanyLocalId == Teuchos::OrdinalTraits<LO>::invalid(), "\n\n**** Error in PeridigmManager::setCurrentTimeAndDisplacement(), invalid Albany local id.\n\n");
+	cellWorkset(0, i, 0) = it->albanyNodeInitialPositions[3*i]   + albanyCurrentDisplacement[albanyLocalId];
+	cellWorkset(0, i, 1) = it->albanyNodeInitialPositions[3*i+1] + albanyCurrentDisplacement[albanyLocalId + 1];
+	cellWorkset(0, i, 2) = it->albanyNodeInitialPositions[3*i+2] + albanyCurrentDisplacement[albanyLocalId + 2];
       }
 
       // Determine the global (x,y,z) coordinates of the quadrature points

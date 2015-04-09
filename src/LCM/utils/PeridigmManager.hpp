@@ -143,7 +143,7 @@ private:
 
   int cubatureDegree;
 
-  Teuchos::RCP<const Tpetra_Vector> albanySolutionVector;
+  Teuchos::RCP<Tpetra_Vector> albanyOverlapSolutionVector;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();
