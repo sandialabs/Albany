@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8)
 
-SET(CTEST_TEST_TYPE Nightly)
+#SET(CTEST_TEST_TYPE Nightly)
 
-#SET(CTEST_TEST_TYPE Experimental)
+SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
 SET(DOWNLOAD_TRILINOS TRUE)
-SET(DOWNLOAD_ALBANY FALSE)
+SET(DOWNLOAD_ALBANY TRUE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
 SET(CLEAN_BUILD TRUE)
@@ -52,7 +52,8 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
-SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
+SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
+SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
 
 IF (CLEAN_BUILD)
 
@@ -92,6 +93,21 @@ if(NOT EXISTS "${TRILINOS_HOME}")
    message(STATUS "res: ${HAD_ERROR}")
    if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot clone Trilinos repository!")
+   endif()
+endif()
+
+if(NOT EXISTS "${TRILINOS_HOME}/SCOREC")
+  EXECUTE_PROCESS(COMMAND "${CTEST_GIT_COMMAND}"
+    clone ${SCOREC_REPOSITORY_LOCATION} ${TRILINOS_HOME}/SCOREC
+    OUTPUT_VARIABLE _out
+    ERROR_VARIABLE _err
+    RESULT_VARIABLE HAD_ERROR)
+
+   message(STATUS "out: ${_out}")
+   message(STATUS "err: ${_err}")
+   message(STATUS "res: ${HAD_ERROR}")
+   if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot checkout SCOREC repository!")
    endif()
 endif()
 
@@ -155,6 +171,16 @@ if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Update.xml")
   EXECUTE_PROCESS( COMMAND cp Update.xml Update_Trilinos.xml
                  WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
                )
+endif()
+
+# Get the SCOREC tools
+
+set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+CTEST_UPDATE(SOURCE "${TRILINOS_HOME}/SCOREC" RETURN_VALUE count)
+message("Found ${count} changed files")
+
+IF(count LESS 0)
+        message(FATAL_ERROR "Cannot update SCOREC tools!")
 endif()
 
 ENDIF()
@@ -350,44 +376,53 @@ endif()
 
 ENDIF()
 
-IF (BUILD_MINICONTACT)
+IF (BUILD_ALBANY)
 
-# Configure the MiniContact build 
-# Builds everything!
+# Configure the ALBANY build 
 #
 ####################################################################################################################
 
-SET_PROPERTY (GLOBAL PROPERTY SubProject miniContact_CUDA)
-SET_PROPERTY (GLOBAL PROPERTY Label miniContact_CUDA)
+SET_PROPERTY (GLOBAL PROPERTY SubProject Albany_CUVM)
+SET_PROPERTY (GLOBAL PROPERTY Label Albany_CUVM)
 
 SET(CONFIGURE_OPTIONS
-  "-DTrilinos_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-  "-DSEACAS_BINARY_DIR:PATH=/home/gahanse/trilinos/host_seacas/bin"
-  "-DACME_KOKKOS_DEVICE:STRING=cuda"
-  "-DACME_RUNOPTS:STRING=srun"
-  "-DACME_NONGPU_MAXTHREADS:INTEGER=8"
-  "-DPERFORMANCE_TESTS:BOOL=ON"
-  "-DACTIVATE_AND_TIME_KOKKOS:BOOL=ON"
+  "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+  "-DENABLE_LCM:BOOL=ON"
+  "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
+  "-DENABLE_HYDRIDE:BOOL=OFF"
+  "-DENABLE_SCOREC:BOOL=ON"
+  "-DENABLE_SG_MP:BOOL=OFF"
+  "-DENABLE_FELIX:BOOL=ON"
+  "-DENABLE_AERAS:BOOL=OFF"
+  "-DENABLE_QCAD:BOOL=OFF"
+  "-DENABLE_MOR:BOOL=OFF"
+  "-DENABLE_ATO:BOOL=ON"
+  "-DENABLE_SEE:BOOL=ON"
+  "-DENABLE_ASCR:BOOL=OFF"
+  "-DENABLE_CHECK_FPE:BOOL=OFF"
+  "-DENABLE_LAME:BOOL=OFF"
+  "-DENABLE_ALBANY_EPETRA_EXE:BOOL=ON"
+  "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
    )
  
-if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/MiniContact")
-  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/MiniContact)
+if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
+  FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
 endif()
 
 CTEST_CONFIGURE(
-          BUILD "${CTEST_BINARY_DIRECTORY}/MiniContact"
-          SOURCE "${CTEST_SOURCE_DIRECTORY}/MiniContact"
+          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+          SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
           OPTIONS "${CONFIGURE_OPTIONS}"
           RETURN_VALUE HAD_ERROR
           APPEND
 )
 
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot configure MiniContact build!")
+	message(FATAL_ERROR "Cannot configure Albany build!")
 endif()
 
 #
-# Build MiniContact
+# Build Albany
 #
 ###################################################################################################################
 
@@ -396,7 +431,7 @@ SET(CTEST_BUILD_TARGET all)
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
-          BUILD "${CTEST_BINARY_DIRECTORY}/MiniContact"
+          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
           RETURN_VALUE  HAD_ERROR
           NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
           APPEND
@@ -406,13 +441,17 @@ if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Albany!")
 endif()
 
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+endif()
+
 #
-# Run MiniContact tests
+# Run Albany tests
 #
 ##################################################################################################################
 
 CTEST_TEST(
-              BUILD "${CTEST_BINARY_DIRECTORY}/MiniContact"
+              BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
 #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
 #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
               #NUMBER_FAILED  TEST_NUM_FAILED
