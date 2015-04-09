@@ -44,7 +44,7 @@ computeBCs(
     ScalarT & z_val)
 {
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
-  coupled_apps = dirichlet_workset.apps;
+  coupled_apps = dirichlet_workset.apps_;
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   coupled_disc = Teuchos::null;
