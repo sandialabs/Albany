@@ -535,11 +535,11 @@ postEvaluate(typename Traits::PostEvalData workset)
     workset.serializerManager.template getValue<EvalT>();
 
   // Compute contributions across processors
-//Irina TOFIX reduceAll
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
-//  Teuchos::reduceAll<int, ScalarT>(
-//    *workset.comm, *serializer, reductType, 1,
-//    &this->global_response[indexToMax], &max);
+  //Irina TOFIX reduceAll
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll on a single global_response component and broadcast are not supported yet)");
+  //  Teuchos::reduceAll<int, ScalarT>(
+  //    *workset.comm, *serializer, reductType, 1,
+  //    &this->global_response[indexToMax], &max);
 
   int procToBcast;
   if( this->global_response[indexToMax] == max )
@@ -548,12 +548,12 @@ TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data ty
 
   int winner;
 
-//Irina TOFIX reduceAll
-//  Teuchos::reduceAll(
-//    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
-//  Teuchos::broadcast<int, ScalarT>(
-//    *workset.comm, *serializer, winner, this->global_response.size(),
-//    &this->global_response[0]);
+  //Irina TOFIX reduceAll
+  //  Teuchos::reduceAll(
+  //    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
+  //  Teuchos::broadcast<int, ScalarT>(
+  //    *workset.comm, *serializer, winner, this->global_response.size(),
+  //    &this->global_response[0]);
 
   // Do global scattering
   if (workset.comm->getRank() == winner)

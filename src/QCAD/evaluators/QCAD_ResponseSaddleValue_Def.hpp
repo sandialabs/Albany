@@ -10,6 +10,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
+#include "PHAL_Utilities.hpp"
 
 
 template<typename EvalT, typename Traits>
@@ -158,9 +159,7 @@ void QCAD::ResponseSaddleValue<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   const int MAX_DIMS = 3;
   ScalarT fieldVal, retFieldVal, cellVol, cellArea;
@@ -302,6 +301,7 @@ postEvaluate(typename Traits::PostEvalData workset)
     Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
       workset.serializerManager.template getValue<EvalT>();
 
+    #if 0
     // we cannot pass the same object for both the send and receive buffers in reduceAll call
     // creating a copy of the global_response, not a view
     TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Transition of this "
@@ -310,10 +310,14 @@ postEvaluate(typename Traits::PostEvalData workset)
     PHX::MDField<ScalarT> partial_response(this->global_response);
     partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
 
-//Drake FIXME    Teuchos::reduceAll(
-//Drake FIXME      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-//Drake FIXME      this->global_response.size(), &partial_response[0],
-//Drake FIXME      &this->global_response[0]);
+    //Drake FIXME    Teuchos::reduceAll(
+    //Drake FIXME      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+    //Drake FIXME      this->global_response.size(), &partial_response[0],
+    //Drake FIXME      &this->global_response[0]);
+
+    #else
+    PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+    #endif
 
     // Copy in position of saddle point here (no derivative info yet)
     const double* pt = svResponseFn->getSaddlePointPosition();
