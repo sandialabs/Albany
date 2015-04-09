@@ -24,7 +24,7 @@
 	    </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-        <Parameter name="Output Filename" type="string" value="TensileBarPS_PeridigmResults"/>
+<!--        <Parameter name="Output Filename" type="string" value="TensileBarPS_PeridigmResults"/> -->
         <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Cauchy_Stress" type="bool" value="true"/>

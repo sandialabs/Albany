@@ -1,7 +1,7 @@
 
-# Create a symbolic link for exodiff
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-                ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
+# Create a symbolic link for exodiff and epu
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE_CURRENT_BINARY_DIR}/epu)
 
 # Copy Input files from source to binary dir
 
@@ -31,5 +31,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS_PeridigmResults.exodif
 # Add the tests
 if(ALBANY_IFPACK2)
 add_test(PeridigmCoupling_TensileBarPDPS_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" TensileBarPDPS.xml)
-#add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.xml)
+add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.xml)
 endif()
