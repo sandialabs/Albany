@@ -366,21 +366,37 @@ SchwarzMultiscale(
   // Calling allocateVectors() will set x and x_dot in nominal_values_
   allocateVectors();
 
-  // set p_init in nominal_values_ -- create product vector that concatenates parameters from each model.
+  // set p_init in nominal_values_ --
+  // create product vector that concatenates parameters from each model.
   // TODO: Check if these are correct nominal values for parameters
-    
-  for (int l=0; l < num_params_total_; ++l) {
-    Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > p_spaces(
-        num_models_);
-    for (int m = 0; m < num_models_; m++)
+
+  for (int l = 0; l < num_params_total_; ++l) {
+
+    Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+    p_spaces(num_models_);
+
+    for (int m = 0; m < num_models_; m++) {
       p_spaces[m] = models_[m]->get_p_space(l);
-    Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> > p_space = Thyra::productVectorSpace<ST>(p_spaces);
-    std::vector<Teuchos::RCP<const Thyra::VectorBase<ST> > > p_vecs(num_models_);
-    for (int m = 0; m < num_models_; m++) 
-      p_vecs[m] = models_[m]->getNominalValues().get_p(l); 
-    Teuchos::ArrayView<const Teuchos::RCP<const Thyra::VectorBase<ST> > > p_vecs_AV = Teuchos::arrayViewFromVector(p_vecs);
-    Teuchos::RCP<Thyra::DefaultProductVector<ST> > p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs_AV);
-    if (Teuchos::is_null(p_prod_vec) == true) continue; 
+    }
+
+    Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
+    p_space = Thyra::productVectorSpace<ST>(p_spaces);
+
+    std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const> >
+    p_vecs(num_models_);
+    
+    for (int m = 0; m < num_models_; m++) {
+      p_vecs[m] = models_[m]->getNominalValues().get_p(l);
+    }
+
+    Teuchos::ArrayView<Teuchos::RCP<Thyra::VectorBase<ST> const> const>
+    p_vecs_AV = Teuchos::arrayViewFromVector(p_vecs);
+
+    Teuchos::RCP<Thyra::DefaultProductVector<ST> >
+    p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs_AV);
+
+    if (Teuchos::is_null(p_prod_vec) == true) continue;
+
     nominal_values_.set_p(l, p_prod_vec);
   }
 
