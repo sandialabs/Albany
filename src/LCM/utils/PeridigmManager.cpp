@@ -1013,6 +1013,29 @@ void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
   }
 }
 
+void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscretization> disc){
+  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
+  Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
+   VectorFieldType* dirichletField = stkDisc->getSTKMetaData().get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
+   if (dirichletField == NULL)
+     return;
+   const std::string& meshPart = "nodelist_2"; //TODO: make this general
+   Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
+   if(it != disc->getNodeSetGIDs().end()) {
+     const std::vector<GO>& nsNodesGIDs = it->second;
+     for(int i=0; i<nsNodesGIDs.size(); ++i) {
+       GO gId = nsNodesGIDs[i];
+       stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
+       double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
+       double* dirichletData = stk::mesh::field_data(*dirichletField, node);
+       //set dirichletData as any function of the coordinates;
+       dirichletData[0]= 0.04;
+       dirichletData[1]= 0;
+       dirichletData[2]= 0; // coord[0] + 3*coord[1];
+     }
+   }
+}
+
 std::vector<LCM::PeridigmManager::OutputField> LCM::PeridigmManager::getOutputFields()
 {
   return outputFields;

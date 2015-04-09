@@ -360,6 +360,13 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       commT));
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+  LCM::PeridigmManager::self().setDirichletFields(disc);
+#endif
+#endif
+
+
 #ifdef ALBANY_EPETRA
   try {
     //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
