@@ -842,7 +842,7 @@ computeGlobalResidualImplT(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -1064,7 +1064,7 @@ computeGlobalJacobianImplT(const double alpha,
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -1571,7 +1571,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -2138,7 +2138,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -2326,7 +2326,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -2604,7 +2604,7 @@ computeGlobalSGTangent(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -2832,7 +2832,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -3019,7 +3019,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
@@ -3303,7 +3303,7 @@ computeGlobalMPTangent(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps_ = coupled_apps_;
+    workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 

@@ -880,11 +880,11 @@ namespace Albany {
     void
     setCoupledApplications(
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > & ca)
-    {coupled_apps_ = ca;}
+    {apps_ = ca;}
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
     getCoupledApplications() const
-    {return coupled_apps_;}
+    {return apps_;}
 
     void
     setAppIndex(int const i)
@@ -904,7 +904,7 @@ namespace Albany {
 
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
-    coupled_apps_;
+    apps_;
 
     int
     app_index_;
