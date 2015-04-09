@@ -878,12 +878,12 @@ namespace Albany {
   // Needed for coupled Schwarz
   public:
     void
-    setCoupledApplications(
+    setApplications(
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > & ca)
     {apps_ = ca;}
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
-    getCoupledApplications() const
+    getApplications() const
     {return apps_;}
 
     void
