@@ -883,7 +883,7 @@ namespace Albany {
     {coupled_apps_ = ca;}
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
-    getCoupledApplications()
+    getCoupledApplications() const
     {return coupled_apps_;}
 
     void
@@ -891,7 +891,7 @@ namespace Albany {
     {app_index_ = i;}
 
     int
-    getAppIndex()
+    getAppIndex() const
     {return app_index_;}
 
     void
@@ -899,7 +899,7 @@ namespace Albany {
     {app_name_index_map_ = anim;}
 
     Teuchos::RCP<std::map<std::string, int>>
-    getAppNameIndexMap()
+    getAppNameIndexMap() const
     {return app_name_index_map_;}
 
   private:
