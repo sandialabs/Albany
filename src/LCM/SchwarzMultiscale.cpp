@@ -375,7 +375,7 @@ SchwarzMultiscale(
     Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
     p_spaces(num_models_);
 
-    for (int m = 0; m < num_models_; m++) {
+    for (int m = 0; m < num_models_; ++m) {
       p_spaces[m] = models_[m]->get_p_space(l);
     }
 
@@ -385,7 +385,7 @@ SchwarzMultiscale(
     std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const> >
     p_vecs(num_models_);
     
-    for (int m = 0; m < num_models_; m++) {
+    for (int m = 0; m < num_models_; ++m) {
       p_vecs[m] = models_[m]->getNominalValues().get_p(l);
     }
 
@@ -432,58 +432,83 @@ LCM::SchwarzMultiscale::get_f_space() const
   return getThyraRangeSpace();
 }
 
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::getThyraRangeSpace() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+
   if (range_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
-    std::vector<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > vs_array;
-    for (std::size_t m = 0; m < num_models_; m++)
+    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+    vs_array;
+
+    for (std::size_t m = 0; m < num_models_; ++m) {
       vs_array.push_back(
           Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
+    }
+
     range_space_ = Thyra::productVectorSpace<ST>(vs_array);
   }
   return range_space_;
 }
 
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::getThyraDomainSpace() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+
   if (domain_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
-    std::vector<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > vs_array;
-    for (std::size_t m = 0; m < num_models_; m++)
+    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+    vs_array;
+
+    for (std::size_t m = 0; m < num_models_; ++m) {
       vs_array.push_back(
           Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
+    }
+
     domain_space_ = Thyra::productVectorSpace<ST>(vs_array);
   }
   return domain_space_;
 }
 
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_p_space(int l) const
 {
   assert(0 <= l && l < num_params_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  std::vector<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > vs_array; 
-  //create product space for lth parameter by concatenating lth parameter from all the models.
-  for (std::size_t m = 0; m < num_models_; m++) 
-    vs_array.push_back(models_[m]->get_p_space(l)); 
+
+  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+  vs_array;
+
+  // create product space for lth parameter by concatenating lth parameter
+  // from all the models.
+  for (std::size_t m = 0; m < num_models_; ++m) {
+    vs_array.push_back(models_[m]->get_p_space(l));
+  }
+
   return Thyra::productVectorSpace<ST>(vs_array); 
 }
 
-Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_g_space(int l) const
 {
   assert(0 <= l && l < num_responses_total_);
+
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  std::vector<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > vs_array;
-  //create product space for lth response by concatenating lth response from all the models.
-  for (std::size_t m = 0; m < num_models_; m++)
+
+  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+  vs_array;
+
+  // create product space for lth response by concatenating lth response
+  // from all the models.
+  for (std::size_t m = 0; m < num_models_; ++m) {
     vs_array.push_back(
-          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(apps_[m]->getResponse(l)->responseMapT()));
+          Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+              apps_[m]->getResponse(l)->responseMapT()));
+  }
+
   return Thyra::productVectorSpace<ST>(vs_array);
 
 }
@@ -580,9 +605,9 @@ allocateVectors()
   //nominal_values_ for the coupled model.
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 
-  Teuchos::Array<Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > > spaces(
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> > spaces(
       num_models_);
-  for (int m = 0; m < num_models_; m++)
+  for (int m = 0; m < num_models_; ++m)
     spaces[m] = Thyra::createVectorSpace<ST>(disc_maps_[m]);
   Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> >
   space = Thyra::productVectorSpace<ST>(spaces);
@@ -596,7 +621,7 @@ allocateVectors()
   xT_vecs.resize(num_models_);
   x_dotT_vecs.resize(num_models_);
 
-  for (int m = 0; m < num_models_; m++) {
+  for (int m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector>
     xT_vec = Teuchos::rcp(new Tpetra_Vector(*apps_[m]->getInitialSolutionT()));
 
@@ -710,20 +735,20 @@ evalModelImpl(
 
   // Create a Teuchos array of the xT and x_dotT for each model,
   // casting to Tpetra_Vector
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> >
   xTs(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >
+  Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> >
   x_dotTs(num_models_);
 
-  for (int m = 0; m < num_models_; m++) {
+  for (int m = 0; m < num_models_; ++m) {
     //Get each Tpetra vector
     xTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
         xT->getVectorBlock(m),
         true)->getConstTpetraVector();
   }
   if (x_dotT != Teuchos::null) {
-    for (int m = 0; m < num_models_; m++) {
+    for (int m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
       x_dotTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
           x_dotT->getVectorBlock(m),
@@ -764,13 +789,20 @@ evalModelImpl(
       // Don't set it if there is nothing. Avoid null pointer.
       if (Teuchos::is_null(pT) == true) continue;
       for (int m = 0; m < num_models_; ++m) {
-        ParamVec &sacado_param_vector = sacado_param_vecs_[m][l];
-        //IKT FIXME: the following is somewhat of a hack: we get the 0th block of p b/c with all the parameters 
-        //read from the master file, all the blocks are the same.  The code does not work if 0 is replaced by m: 
-        //only the first vector in the Thyra Product MultiVec is correct.  Why...? 
-        Teuchos::RCP<const Tpetra_Vector> pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(pT->getVectorBlock(0),
-                    true)->getConstTpetraVector();
-        Teuchos::ArrayRCP<const ST> pTm_constView = pTm->get1dView(); 
+        ParamVec &
+        sacado_param_vector = sacado_param_vecs_[m][l];
+
+        // IKT FIXME: the following is somewhat of a hack:
+        // we get the 0th block of p b/c with all the parameters
+        // read from the master file, all the blocks are the same.
+        // The code does not work if 0 is replaced by m:
+        // only the first vector in the Thyra Product MultiVec is correct.
+        // Why...?
+        Teuchos::RCP<Tpetra_Vector const>
+        pTm = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+            pT->getVectorBlock(0), true)->getConstTpetraVector();
+
+        Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
         for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {
           sacado_param_vector[k].baseValue = pTm_constView[k];
       }
@@ -789,7 +821,7 @@ evalModelImpl(
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out(num_models_);
   if (fT_out != Teuchos::null) {
-    for (int m = 0; m < num_models_; m++) {
+    for (int m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
       fTs_out[m] = Teuchos::rcp_dynamic_cast<ThyraVector>(
           fT_out->getNonconstVectorBlock(m),
@@ -799,8 +831,8 @@ evalModelImpl(
 
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
   W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
-                                                      out_args.get_W_op() :
-                                                      Teuchos::null;
+      out_args.get_W_op() :
+      Teuchos::null;
 
   // Compute the functions
 
@@ -851,12 +883,14 @@ evalModelImpl(
      // dfdp_outT = out_args.get_DfDp(l).getMultiVector();
 
      if (dfdp_outT != Teuchos::null) {
-       for (int m = 0; m < num_models_; m++) {
+       for (int m = 0; m < num_models_; ++m) {
          //Get each Tpetra MultiVector of dfdp for each model
-         Teuchos::RCP<Tpetra_MultiVector> dfdp_outT_m = Teuchos::rcp_dynamic_cast<ThyraMultiVector>(
-                                   dfdp_outT->getNonconstMultiVectorBlock(m),
-                                   true)->getTpetraMultiVector();
-         Teuchos::RCP<ParamVec> const p_vec = Teuchos::rcpFromRef(sacado_param_vecs_[m][l]);
+         Teuchos::RCP<Tpetra_MultiVector> dfdp_outT_m =
+         Teuchos::rcp_dynamic_cast<ThyraMultiVector>(
+           dfdp_outT->getNonconstMultiVectorBlock(m),
+           true)->getTpetraMultiVector();
+         Teuchos::RCP<ParamVec> const p_vec =
+         Teuchos::rcpFromRef(sacado_param_vecs_[m][l]);
 
          // computeGlobalTangentT sets last 3 arguments:
          // fTs_out[m_num] and dfdp_outT
@@ -927,16 +961,17 @@ evalModelImpl(
 // Response functions
   for (int j = 0; j < out_args.Ng(); ++j) {
 
-    Teuchos::RCP<Thyra::ProductVectorBase<ST> > gT_out =
-      Teuchos::nonnull(out_args.get_g(j)) ?
+    Teuchos::RCP<Thyra::ProductVectorBase<ST> >
+    gT_out = Teuchos::nonnull(out_args.get_g(j)) ?
           Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> >(
               out_args.get_g(j), true) :
           Teuchos::null;
     
     if (Teuchos::is_null(gT_out) == false) {
-      for (int m = 0; m < num_models_; m++) {
+      for (int m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector
-        Teuchos::RCP<Tpetra_Vector> gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        Teuchos::RCP<Tpetra_Vector>
+        gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
                   gT_out->getNonconstVectorBlock(m),
                   true)->getTpetraVector();
 
