@@ -75,11 +75,17 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
+    // Obtain and normalize slip directions. Miller indices need to be normalized.
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
-    slip_systems_[num_ss].s_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &s_temp[0]));
+    Intrepid::Vector<RealType> s_temp_normalized(num_dims_,&s_temp[0]);
+    s_temp_normalized = Intrepid::unit(s_temp_normalized);
+    slip_systems_[num_ss].s_ = orientation_*s_temp_normalized;
 
+    // Obtain and normal slip normals. Miller indices need to be normalized.
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
-    slip_systems_[num_ss].n_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &n_temp[0]));
+    Intrepid::Vector<RealType> n_temp_normalized(num_dims_,&n_temp[0]);
+    n_temp_normalized = Intrepid::unit(n_temp_normalized);
+    slip_systems_[num_ss].n_ = orientation_*n_temp_normalized;
 
     // print each slip direction and slip normal after transformation
     #ifdef PRINT_DEBUG
