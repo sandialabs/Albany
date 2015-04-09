@@ -8,6 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 #include "PHAL_Dimension.hpp"
+#include <boost/math/special_functions/fpclassify.hpp>
 
 LCM::PeridigmManager& LCM::PeridigmManager::self() {
   static PeridigmManager peridigmManager;
@@ -615,51 +616,92 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	  }
 
 	  // We're interested in a single point in a single element in a three-dimensional simulation
-	  int numCells = 1;
+ 	  int numCells = 1;
 	  int numQuadPoints = 1;
 	  int numDim = 3;
 
 	  // Physical points, which are the physical (x, y, z) values of the peridynamic node (pay no attention to the "quadrature point" descriptor)
-	  Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
-	  PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
-	  physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
+// 	  Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > physPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+// 	  PHX::MDField<RealType, Cell, QuadPoint, Dim> physPoints("Physical Points", physPointsLayout);
+// 	  physPoints.setFieldData(ViewFactory::buildView(physPoints.fieldTag()));
+	  Intrepid::FieldContainer<RealType> physPoints;
+	  physPoints.resize(numCells, numQuadPoints, numDim);
 
 	  // Reference points, which are the natural coordinates of the quadrature points
-	  Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
-	  PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
-	  refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
+// 	  Teuchos::RCP< PHX::MDALayout<Cell, QuadPoint, Dim> > refPointsLayout = Teuchos::rcp(new PHX::MDALayout<Cell, QuadPoint, Dim>(numCells, numQuadPoints, numDim));
+// 	  PHX::MDField<RealType, Cell, QuadPoint, Dim> refPoints("Reference Points", refPointsLayout);
+// 	  refPoints.setFieldData(ViewFactory::buildView(refPoints.fieldTag()));
+	  Intrepid::FieldContainer<RealType> refPoints;
+	  refPoints.resize(numCells, numQuadPoints, numDim);
 
 	  // Cell workset, which is the set of nodes for the given element
-	  Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodesInElement, numDim));
-	  PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
-	  cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
+// 	  Teuchos::RCP< PHX::MDALayout<Cell, Node, Dim> > cellWorksetLayout = Teuchos::rcp(new PHX::MDALayout<Cell, Node, Dim>(numCells, numNodesInElement, numDim));
+// 	  PHX::MDField<RealType, Cell, Node, Dim> cellWorkset("Cell Workset", cellWorksetLayout);
+// 	  cellWorkset.setFieldData(ViewFactory::buildView(cellWorkset.fieldTag()));
+	  Intrepid::FieldContainer<RealType> cellWorkset;
+	  cellWorkset.resize(numCells, numNodesInElement, numDim);
 
-	  for(int dof=0 ; dof<3 ; dof++){
-	    physPoints(0, 0, dof) = neighborCoords[dof];
-	  }
+ 	  for(int dof=0 ; dof<3 ; dof++){
+ 	    physPoints(0, 0, dof) = neighborCoords[dof];
+ 	  }
 
-	  for(int i=0 ; i<numNodesInElement ; i++){
-	    double* coordinates = stk::mesh::field_data(*coordinatesField, nodesInElement[i]);
+ 	  for(int i=0 ; i<numNodesInElement ; i++){
+ 	    double* coordinates = stk::mesh::field_data(*coordinatesField, nodesInElement[i]);
+ 	    for(int dof=0 ; dof<3 ; dof++){
+ 	      cellWorkset(0, i, dof) = coordinates[dof];
+ 	    }
+ 	  }
+
+	  // DJL DEBUGGING
+// 	  bool shouldBeInElement(false);
+// 	  double xMin(1.0e10), xMax(-1.0e10), yMin(1.0e10), yMax(-1.0e10), zMin(1.0e10), zMax(-1.0e10);
+// 	  for(int i=0 ; i<8 ; i++){
+// 	    if( cellWorkset(0,i,0) < xMin ) xMin = cellWorkset(0,i,0);
+// 	    if( cellWorkset(0,i,0) > xMax ) xMax = cellWorkset(0,i,0);
+// 	    if( cellWorkset(0,i,1) < yMin ) yMin = cellWorkset(0,i,1);
+// 	    if( cellWorkset(0,i,1) > yMax ) yMax = cellWorkset(0,i,1);
+// 	    if( cellWorkset(0,i,2) < zMin ) zMin = cellWorkset(0,i,2);
+// 	    if( cellWorkset(0,i,2) > zMax ) zMax = cellWorkset(0,i,2);
+// 	  }
+// 	  if(physPoints(0,0,0) > xMin && physPoints(0,0,0) < xMax && physPoints(0,0,1) > yMin && physPoints(0,0,1) < yMax && physPoints(0,0,2) > zMin && physPoints(0,0,2) < zMax)
+// 	    shouldBeInElement = true;
+	  // end DJL DEBUGGING
+
+	  Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology, -1);
+
+	  int inElement;
+// 	  if(!boost::math::isfinite(refPoints(0,0)) || !boost::math::isfinite(refPoints(0,1)) || !boost::math::isfinite(refPoints(0,2))){
+// 	    inElement = false;
+// 	  }
+// 	  else{
+	    std::vector<RealType> point(3);
 	    for(int dof=0 ; dof<3 ; dof++){
-	      cellWorkset(0, i, dof) = coordinates[dof];
+	      point[dof] = refPoints(0, 0, dof);
 	    }
-	  }
+	    inElement = Intrepid::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
+// 	  }
 
-	  Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, cellWorkset, cellTopology);
+	    if(inElement){
 
-	  std::vector<RealType> point(3);
-	  for(int dof=0 ; dof<3 ; dof++){
-	    point[dof] = refPoints(0, 0, dof);
-	  }
+// 	    std::cout << "DJL DEBUGGING Albany inElement " << inElement << ", shouldBeInElement " << shouldBeInElement << ", physPoints " 
+// 		      << physPoints(0,0) << ", " << physPoints(0,0,1) << ", " << physPoints(0,0,2)
+// 		      << ", cellWorkset #1 " << cellWorkset(0,0,0) << ", " << cellWorkset(0,0,1) << ", " << cellWorkset(0,0,2)
+// 		      << ", cellWorkset #2 " << cellWorkset(0,1,0) << ", " << cellWorkset(0,1,1) << ", " << cellWorkset(0,1,2)
+// 		      << ", cellWorkset #3 " << cellWorkset(0,2,0) << ", " << cellWorkset(0,2,1) << ", " << cellWorkset(0,2,2)
+// 		      << ", cellWorkset #4 " << cellWorkset(0,3,0) << ", " << cellWorkset(0,3,1) << ", " << cellWorkset(0,3,2)
+// 		      << ", cellWorkset #5 " << cellWorkset(0,4,0) << ", " << cellWorkset(0,4,1) << ", " << cellWorkset(0,4,2)
+// 		      << ", cellWorkset #6 " << cellWorkset(0,5,0) << ", " << cellWorkset(0,5,1) << ", " << cellWorkset(0,5,2)
+// 		      << ", cellWorkset #7 " << cellWorkset(0,6,0) << ", " << cellWorkset(0,6,1) << ", " << cellWorkset(0,6,2)
+// 		      << ", cellWorkset #8 " << cellWorkset(0,7,0) << ", " << cellWorkset(0,7,1) << ", " << cellWorkset(0,7,2) << std::endl;
 
-	  int inElement = Intrepid::CellTools<RealType>::checkPointInclusion(&point[0], numDim, cellTopology);
+// 	  std::cout << "DJL DEBUGGING Albany refPoints " << refPoints(0,0,0) << ", " << refPoints(0,0,1) << ", " << refPoints(0,0,2) << std::endl;
 
-	  if(inElement){
 
 	    OBCDataPoint dataPoint;
 	    for(int dof=0 ; dof<3 ; dof++){
 	      dataPoint.initialCoords[dof] = neighborCoords[dof];
 	      dataPoint.currentCoords[dof] = 0.0;
+	      dataPoint.naturalCoords[dof] = point[dof];
 	    }
 	    dataPoint.peridigmGlobalId = epetraOverlapIsSphere.Map().GID(neighborIndex);
 	    dataPoint.albanyElement = elements[iElem];
@@ -702,14 +744,13 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
     return 0.0;
   }
 
-  stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField =
-    metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
+//   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField =
+//     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
+//   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
 
   // Set up access to the current displacements of the nodes in the solid elements
-  Teuchos::ArrayRCP<const ST> albanyCurrentDisplacements = albanySolutionVector->getData();
+  Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanySolutionVector->getData();
   const Teuchos::RCP<const Tpetra_Map> albanyMap = albanySolutionVector->getMap();
-  Tpetra_Map::local_ordinal_type albanyLocalId;
 
   // Load the current displacements into the obcDataPoints data structures
   Epetra_Vector& peridigmCurrentPositions = *(peridigm->getY());
@@ -724,66 +765,127 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
   }
 
   // We're interested in a single point in a single element in a three-dimensional simulation
+  int numCells = 1;
   int numPoints = 1;
   int numDim = 3;
 
   Intrepid::FieldContainer<RealType> physPoints;
-  physPoints.resize(numPoints, numDim);
+  physPoints.resize(numCells, numPoints, numDim);
 
   Intrepid::FieldContainer<RealType> refPoints;
-  refPoints.resize(numPoints, numDim);
-
-  Intrepid::FieldContainer<RealType> values;
-  values.resize(numPoints, numDim);
+  refPoints.resize(numCells, numPoints, numDim);
 
   // Compute the difference in displacements at each peridynamic node
   Epetra_Vector displacementDiff(obcPeridynamicNodeCurrentCoords->Map());
   for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
 
+    for(int dof=0 ; dof<3 ; dof++){
+      refPoints(0, 0, dof) = obcDataPoints[iEvalPt].naturalCoords[dof];
+    }
+
     int numNodes = bulkData->num_nodes(obcDataPoints[iEvalPt].albanyElement);
     const stk::mesh::Entity* nodes = bulkData->begin_nodes(obcDataPoints[iEvalPt].albanyElement);
 
-    Intrepid::FieldContainer<RealType> nodalValues;
-    nodalValues.resize(numNodes, numDim);
-
-    Intrepid::FieldContainer<RealType> basisValues;
-    basisValues.resize(numNodes);
-
-    for(int dof=0 ; dof<3 ; dof++){
-      physPoints(0, dof) = obcDataPoints[iEvalPt].initialCoords[dof];
-    }
-
+    Intrepid::FieldContainer<RealType> cellWorkset;
+    cellWorkset.resize(numCells, numNodes, numDim);
     for(int i=0 ; i<numNodes ; i++){
-      double* coordinates = stk::mesh::field_data(*coordinatesField, nodes[i]);
-      for(int dof=0 ; dof<3 ; dof++){
-	nodalValues(i, dof) = coordinates[dof];
-      }
+      int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
+      int albanyCurrentDisplacementIndex = albanyMap->getLocalElement(3*globalAlbanyNodeId);
+      cellWorkset(0, i, 0) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex];
+      cellWorkset(0, i, 1) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 1];
+      cellWorkset(0, i, 2) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 2];
     }
 
-    // Get the natural coordinates of the point in the reference element
     shards::CellTopology cellTopology(&obcDataPoints[iEvalPt].cellTopologyData);
-    Intrepid::CellTools<RealType>::mapToReferenceFrame(refPoints, physPoints, nodalValues, cellTopology);
 
-    // DEBUGGING
-    for(int dof=0 ; dof<3 ; dof++){
-      std::cout << "DJL DEBUGGING " << physPoints(0, dof) << ", " << refPoints(0, dof) << std::endl;
-    }
-    // end DEBUGGING
-
-    // Get the values of the basis functions at the point
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(obcDataPoints[iEvalPt].cellTopologyData);
-    intrepidBasis->getValues(basisValues, refPoints, Intrepid::OPERATOR_VALUE);
-
-    // WHAT IS THIS FOR OUR PARTICULAR CASE?
-    //Intrepid::FunctionSpaceTools::HGRADtransformVALUE
-
-    Intrepid::FunctionSpaceTools::evaluate<RealType>(values, nodalValues, basisValues);
+    Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
     // Record the difference between the Albany displacement at the point (which was just computed using Intrepid) and
     // the Peridigm displacement at the point
     for(int dof=0 ; dof<3 ; dof++){
-      displacementDiff[3*iEvalPt+dof] = values(0,dof) - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
+      displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
     }
+
+
+
+
+
+
+
+
+//     Intrepid::FieldContainer<RealType> basisValues;
+//     basisValues.resize(numPoints, numNodes);
+
+//     for(int dof=0 ; dof<3 ; dof++){
+//       physPoints(0, 0, dof) = obcDataPoints[iEvalPt].initialCoords[dof];
+//     }
+
+//     for(int i=0 ; i<numNodes ; i++){
+//       double* coordinates = stk::mesh::field_data(*coordinatesField, nodes[i]);
+//       for(int dof=0 ; dof<3 ; dof++){
+// 	nodalValues(0, i, dof) = coordinates[dof];
+//       }
+//     }
+
+
+// I THINK I CAN JUST
+//   1)  GET THE REF POINT POSITION
+//   2) MAP TO THE PHYSICAL FRAME WITH CURRENT POSITIONS USED AS THE NODAL VALUES
+
+    // DEBUGGING
+//     std::cout << "DJL DEBUGGING physPoint " << physPoints(0,0,0) << ", " << physPoints(0,0,1) << ", " << physPoints(0,0,2) << std::endl;
+//     std::cout << "DJL DEBUGGING nodalValues #1 " << nodalValues(0,0,0) << ", " << nodalValues(0,0,1) << ", " << nodalValues(0,0,2)
+// 	      << ", nodalValues #2 " << nodalValues(0,1,0) << ", " << nodalValues(0,1,1) << ", " << nodalValues(0,1,2)
+// 	      << ", nodalValues #3 " << nodalValues(0,2,0) << ", " << nodalValues(0,2,1) << ", " << nodalValues(0,2,2)
+// 	      << ", nodalValues #4 " << nodalValues(0,3,0) << ", " << nodalValues(0,3,1) << ", " << nodalValues(0,3,2)
+// 	      << ", nodalValues #5 " << nodalValues(0,4,0) << ", " << nodalValues(0,4,1) << ", " << nodalValues(0,4,2)
+// 	      << ", nodalValues #6 " << nodalValues(0,5,0) << ", " << nodalValues(0,5,1) << ", " << nodalValues(0,5,2)
+// 	      << ", nodalValues #7 " << nodalValues(0,6,0) << ", " << nodalValues(0,6,1) << ", " << nodalValues(0,6,2)
+// 	      << ", nodalValues #8 " << nodalValues(0,7,0) << ", " << nodalValues(0,7,1) << ", " << nodalValues(0,7,2) << std::endl;
+//     std::cout << "DJL DEBUGGING  refPoints " << refPoints(0,0,0) << ", " << refPoints(0,0,1) << ", " << refPoints(0,0,2) << std::endl;
+    // end DEBUGGING
+
+    // Get the values of the basis functions at the point
+//     Intrepid::FieldContainer<RealType> basisValuesInput;
+//     basisValuesInput.resize(numPoints, numDim);
+//     for(int dof=0 ; dof<3 ; dof++){
+//       basisValuesInput(0, dof) = refPoints(0, 0, dof);
+//     }
+//     Intrepid::FieldContainer<RealType> basisValuesOutput;
+//     basisValuesOutput.resize(numNodes, numPoints);
+//     Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis = Albany::getIntrepidBasis(obcDataPoints[iEvalPt].cellTopologyData);
+//     intrepidBasis->getValues(basisValuesOutput, basisValuesInput, Intrepid::OPERATOR_VALUE);
+
+    // 99% sure we don't need to call this
+    //Intrepid::FunctionSpaceTools::HGRADtransformVALUE
+
+//     Intrepid::FieldContainer<RealType> outPointVals;
+//     outPointVals.resize(numCells, numPoints, numDim);
+
+//     Intrepid::FieldContainer<RealType> inCoeffs;
+//     inCoeffs.resize(numCells, numNodes);
+//     for(int iNode=0 ; iNode<numNodes ; iNode++){
+//       inCoeff(0,iNode) = basisValuesOutput(0,iNode);
+//     }
+
+//     Intrepid::FieldContainer<RealType> inFields;
+//     inFields.resize(numCells, numNodes, numPoints, numDim);
+//     for(int iNode=0 ; iNode<numNodes ; iNode++){
+//       for(int dof=0 ; dof<3 ; dof++){
+// 	inFields(0,iNode,0,dof) = 
+//       }
+//     }
+
+    // values:  output array of dimension (
+    //
+    // inFields
+//     Intrepid::FunctionSpaceTools::evaluate<RealType>(outPointVals, inCoeffs, inFields);
+
+    // Record the difference between the Albany displacement at the point (which was just computed using Intrepid) and
+    // the Peridigm displacement at the point
+//     for(int dof=0 ; dof<3 ; dof++){
+//       displacementDiff[3*iEvalPt+dof] = values(0,0,dof) - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
+//     }
   }
 
   double functionalValue(0.0);

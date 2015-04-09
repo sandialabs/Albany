@@ -51,6 +51,7 @@ public:
     int peridigmGlobalId;
     stk::mesh::Entity albanyElement;
     CellTopologyData cellTopologyData;
+    double naturalCoords[3];
   };
 
   //! Singleton.
