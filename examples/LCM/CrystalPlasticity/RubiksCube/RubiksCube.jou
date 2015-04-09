@@ -42,7 +42,7 @@ nodeset 3 curve 34 42 27
 nodeset 4 surface 98 191 193 108 201 203 88 181 183
 nodeset 5 curve 146 292 297
 nodeset 6 curve 33 44 25
-export genesis 'RubiksCube_Mesh1.g' overwrite
+export genesis 'RubiksCube.g' overwrite
 refine vol all numsplit 1
 export genesis 'RubiksCube_Mesh2.g' overwrite
 refine vol all numsplit 1
