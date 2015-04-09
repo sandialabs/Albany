@@ -837,6 +837,7 @@ computeGlobalResidualImplT(
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -1058,6 +1059,7 @@ computeGlobalJacobianImplT(const double alpha,
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -1564,6 +1566,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2130,6 +2133,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2317,6 +2321,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2594,6 +2599,7 @@ computeGlobalSGTangent(
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2821,6 +2827,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -3007,6 +3014,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -3290,6 +3298,7 @@ computeGlobalMPTangent(
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = coupled_apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
