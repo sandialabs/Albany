@@ -21,12 +21,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPS.g.4.3
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPS.g.4.3 COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPS.gold.e
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPS.gold.e COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPS_PeridigmResults.gold.e
-               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPS_PeridigmResults.gold.e COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPS.exodiff
                ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPS.exodiff COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPS_PeridigmResults.exodiff
-               ${CMAKE_CURRENT_BINARY_DIR}/TensileBarPS_PeridigmResults.exodiff COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)
