@@ -83,16 +83,20 @@ public:
   void
   allocateVectors();
 
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > getThyraRangeSpace() const; 
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraRangeSpace() const;
   
-  Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > getThyraDomainSpace() const; 
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraDomainSpace() const;
 
 
 protected:
 
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> > range_space_;
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> >
+  range_space_;
   
-  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> > domain_space_;
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> >
+  domain_space_;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
@@ -120,8 +124,12 @@ private:
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidProblemParameters() const;
 
+  Thyra::ModelEvaluatorBase::InArgs<ST>
+  createInArgsImpl() const;
+
   //! List of free parameter names
-  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > > param_names_;
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >
+  param_names_;
   
   /// RCP to matDB object
   Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> >
@@ -139,10 +147,6 @@ private:
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
-
-  Thyra::ModelEvaluatorBase::InArgs<ST>
-  createInArgsImpl() const;
-
   
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
