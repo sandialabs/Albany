@@ -144,7 +144,9 @@ SchwarzMultiscale(
 
       assert(num_parameters > 0);
 
-      response_names[l] = Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+      response_names[l] =
+          Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
+
       for (int k = 0; k < num_parameters; ++k) {
         (*response_names[l])[k] =
           p_list->get<std::string>(Albany::strint("Response", k));
@@ -199,23 +201,39 @@ SchwarzMultiscale(
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
 
-    //Overwrite Parameter sublists for individual models, if they are provided, to set them 
-    //to the parameters specified in the "master" coupled input file. 
-    Teuchos::ParameterList &param_params_m = problem_params_m->sublist("Parameters", false);    
-    if (param_params_m.isSublist("Parameters")) 
-       param_params_m.setParameters(parameter_params); 
+    // Overwrite Parameter sublists for individual models,
+    // if they are provided, to set them
+    // to the parameters specified in the "master" coupled input file.
+    Teuchos::ParameterList &
+    param_params_m = problem_params_m->sublist("Parameters", false);
+
+    if (param_params_m.isSublist("Parameters")) {
+      param_params_m.setParameters(parameter_params);
+    }
+
     param_params_m.setParametersNotAlreadySet(parameter_params); 
     
-    //Overwrite Responses sublists for individual models, if they are provided, to set them 
-    //to the parameters specified in the "master" coupled input file. 
-    Teuchos::ParameterList &response_params_m = problem_params_m->sublist("Response Functions", false);    
-    if (response_params_m.isSublist("Response Functions")) 
-       response_params_m.setParameters(response_params); 
+    // Overwrite Responses sublists for individual models,
+    // if they are provided, to set them
+    // to the parameters specified in the "master" coupled input file.
+    Teuchos::ParameterList &
+    response_params_m = problem_params_m->sublist("Response Functions", false);
+
+    if (response_params_m.isSublist("Response Functions")) {
+      response_params_m.setParameters(response_params);
+    }
+
     response_params_m.setParametersNotAlreadySet(response_params); 
 
-    Teuchos::ParameterList& response_params_m2 = Teuchos::sublist(model_app_params[m], "Problem")->sublist("Response Functions", false);
-    std::cout << "m, # responses global: " << m << ", " << response_params.get<int>("Number") << '\n';
-    std::cout << "m, # responses: " << m << ", " << response_params_m2.get<int>("Number") << '\n';
+    Teuchos::ParameterList &
+    response_params_m2 = Teuchos::sublist(
+        model_app_params[m], "Problem")->sublist("Response Functions", false);
+
+    std::cout << "m, # responses global: " << m << ", ";
+    std::cout << response_params.get<int>("Number") << '\n';
+
+    std::cout << "m, # responses: " << m << ", ";
+    std::cout << response_params_m2.get<int>("Number") << '\n';
 
     model_problem_params[m] = problem_params_m;
 
@@ -308,25 +326,31 @@ SchwarzMultiscale(
   // for use in evalModelImpl
   sacado_param_vecs_.resize(num_models_);
 
-  for (int m = 0; m < num_models_; ++m) 
+  for (int m = 0; m < num_models_; ++m) {
     sacado_param_vecs_[m].resize(num_params_total_);
+  }
 
   for (int m = 0; m < num_models_; ++m) {
     for (int l = 0; l < num_params_total_; ++l) {
        try {
          // Initialize Sacado parameter vector
-         // The following call will throw, and it is often due to an incorrect input line in the "Parameters" PL
-         // in the input file. Give the user a hint about what might be happening
+         // The following call will throw,
+         // and it is often due to an incorrect input line in the
+         // "Parameters" PL
+         // in the input file.
+         // Give the user a hint about what might be happening
          apps_[m]->getParamLib()->fillVector<PHAL::AlbanyTraits::Residual>(
          *(param_names_[l]), sacado_param_vecs_[m][l]);
        }
-       catch (const std::logic_error& le) {
-         std::cout << "Error: exception thrown from ParamLib fillVector in file " << __FILE__ << " line " << __LINE__ << '\n';
-         std::cout << "This is probably due to something incorrect in the \"Parameters\" list in the input file, one of the lines:"
-                   << '\n';
-         for (int k = 0; k < param_names_[l]->size(); ++k)
+       catch (const std::logic_error & le) {
+         std::cout << "Error: exception thrown from ParamLib fillVector in ";
+         std::cout << __FILE__ << " line " << __LINE__ << '\n';
+         std::cout << "This is probably due to something incorrect in the";
+         std::cout << " \"Parameters\" list in the input file, ";
+         std::cout << "one of the lines:" << '\n';
+         for (int k = 0; k < param_names_[l]->size(); ++k) {
            std::cout << "      " << (*param_names_[l])[k] << '\n';
-
+         }
          throw le; // rethrow to shut things down
        }
      }
