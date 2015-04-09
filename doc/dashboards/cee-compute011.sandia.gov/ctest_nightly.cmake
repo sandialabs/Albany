@@ -251,7 +251,7 @@ IF(CTEST_DO_SUBMIT)
 ENDIF()
 
 IF(count LESS 0)
-	message(FATAL_ERROR "Cannot update Trilinos!")
+	message(FATAL_ERROR "Cannot update Albany repository!")
 endif()
 
 ENDIF()
