@@ -16,6 +16,7 @@
 
 #include "Albany_Layouts.hpp"
 
+#include "QCAD_MathVector.hpp"
 #include "QCAD_MaterialDatabase.hpp"
 
 namespace QCAD {
@@ -60,6 +61,10 @@ namespace QCAD {
     bool limitX, limitY, limitZ;      // restrict along x,y,z
     double xmin, xmax, ymin, ymax, zmin, zmax;  // limits along x,y,z
 
+    //! Restricting to xy-polygon (still need zmin & zmax)
+    bool bRestrictToXYPolygon;
+    std::vector<mathVector> xyPolygon; //polygon of (x,y) points 
+
     //! Restricting to a "boxed" level set of a given field
     bool bRestrictToLevelSet;
     std::string levelSetFieldname;              
@@ -75,6 +80,7 @@ namespace QCAD {
   public:
     static Teuchos::RCP<const Teuchos::ParameterList> getValidParameters()
     {
+      const int MAX_POLYGON_PTS = 20;
       Teuchos::RCP<Teuchos::ParameterList> validPL =
      	rcp(new Teuchos::ParameterList("Valid MeshRegion Params"));;
 
@@ -90,6 +96,12 @@ namespace QCAD {
       validPL->set<double>("y max", 0.0, "Box domain maximum y coordinate");
       validPL->set<double>("z min", 0.0, "Box domain minimum z coordinate");
       validPL->set<double>("z max", 0.0, "Box domain maximum z coordinate");
+
+      Teuchos::ParameterList& polyPL = validPL->sublist("XY Polygon");
+      polyPL.set<int>("Number of Points", 0, "The number of points in the polygon");
+      for(int i=0; i<MAX_POLYGON_PTS; ++i) {
+	polyPL.set< Teuchos::Array<double> >(Albany::strint("Point",i), Teuchos::Array<double>(2,0), "(x,y) point of polygon");
+      }
       
       validPL->set<std::string>("Level Set Field Name", "<field name>","Scalar Field to use for level set region");
       validPL->set<double>("Level Set Field Minimum", 0.0, "Minimum value of field to include in region");

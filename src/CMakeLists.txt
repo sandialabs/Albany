@@ -251,6 +251,7 @@ SET(SOURCES ${SOURCES}
   evaluators/QCAD_ResponseSaveField.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_MeshRegion.cpp
+  evaluators/QCAD_MathVector.cpp
   evaluators/QCAD_EvaluatorTools.cpp
   evaluators/PHAL_HeatEqResid.cpp
   evaluators/PHAL_Source.cpp
@@ -366,6 +367,7 @@ SET(HEADERS ${HEADERS}
   evaluators/QCAD_ResponseCenterOfMass_Def.hpp
   evaluators/QCAD_MeshRegion.hpp
   evaluators/QCAD_MeshRegion_Def.hpp
+  evaluators/QCAD_MathVector.hpp
   evaluators/QCAD_EvaluatorTools.hpp
   evaluators/QCAD_EvaluatorTools_Def.hpp
   evaluators/PHAL_HeatEqResid.hpp

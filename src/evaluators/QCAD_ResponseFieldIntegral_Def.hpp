@@ -174,9 +174,8 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+  // Zero out global response
+  PHAL::set(this->global_response, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -314,8 +313,8 @@ postEvaluate(typename Traits::PostEvalData workset)
    #else
    PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
-   if (bPositiveOnly && this->global_response[0] < 1e-6) {
-     this->global_response[0] = 1e+100;
+   if (bPositiveOnly && this->global_response(0) < 1e-6) {
+     this->global_response(0) = 1e+100;
    }
    #endif
   

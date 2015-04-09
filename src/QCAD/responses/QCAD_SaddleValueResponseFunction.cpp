@@ -19,8 +19,9 @@
 //! Helper function prototypes
 namespace QCAD 
 {
-  bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
-  bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
+  //Moved to MathVector.hpp
+  //bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
+  //bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
 
 #ifdef ALBANY_EPETRA
   void gatherVector(std::vector<double>& v, std::vector<double>& gv,
@@ -2693,6 +2694,9 @@ getHighestPtIndex() const
   }
   }*/
 
+
+//MOVED to QCAD_MathVector.cpp
+/*
 // Returns true if point is inside polygon, false otherwise
 //  Assumes 2D points (more dims ok, but uses only first two components)
 //  Algorithm = ray trace along positive x-axis
@@ -2718,7 +2722,7 @@ bool QCAD::ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const doubl
   }
   return c;
 }
-
+*/
 
 //Not used - but keep for reference
 // Returns true if point is inside polygon, false otherwise
@@ -2739,11 +2743,12 @@ bool QCAD::ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const doubl
 
 
 
-
 /*************************************************************/
 //! mathVector class: a vector with math operations (helper class) 
 /*************************************************************/
 
+//MOVED to it's own file (QCAD_MathVector.cpp)
+/*
 QCAD::mathVector::mathVector() 
 {
   dim_ = -1;
@@ -2930,6 +2935,7 @@ std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::mathVector& mv)
   os << ")";
   return os;
 }
+*/
 
 std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebImagePt& np)
 {
