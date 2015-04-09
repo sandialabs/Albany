@@ -887,6 +887,14 @@ namespace Albany {
     {return coupled_apps_;}
 
     void
+    setAppIndex(int const i)
+    {app_index_ = i;}
+
+    int
+    getAppIndex()
+    {return app_index_;}
+
+    void
     setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>> & anim)
     {app_name_index_map_ = anim;}
 
@@ -897,6 +905,9 @@ namespace Albany {
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
     coupled_apps_;
+
+    int
+    app_index_;
 
     Teuchos::RCP<std::map<std::string, int>>
     app_name_index_map_;
