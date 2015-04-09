@@ -745,6 +745,8 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
     for(int i=0 ; i<numNodes ; i++){
       int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
       int albanyCurrentDisplacementIndex = albanyMap->getLocalElement(3*globalAlbanyNodeId);
+      // DJL:  This may not work in parallel because nodes may not be on processor
+      //       Do we need an overlap map?
       cellWorkset(0, i, 0) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex];
       cellWorkset(0, i, 1) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 1];
       cellWorkset(0, i, 2) = albanyCurrentDisplacement[albanyCurrentDisplacementIndex + 2];
@@ -763,6 +765,19 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
 
   double functionalValue(0.0);
   displacementDiff.Norm2(&functionalValue);
+
+  // Send displacement differences to Peridigm for output
+  Teuchos::RCP< std::vector<PeridigmNS::Block> > peridigmBlocks = peridigm->getBlocks();
+  for(unsigned int iBlock=0 ; iBlock<peridigmBlocks->size() ; iBlock++){
+    std::string blockName = (*peridigmBlocks)[iBlock].getName();
+    bool hasOBCFunctional = peridigm->hasBlockData(blockName, "OBC_Functional");
+    if(hasOBCFunctional){
+      Teuchos::RCP<Epetra_Vector> data = peridigm->getBlockData(blockName, "OBC_Functional"); 
+      Epetra_Import importer(data->Map(), displacementDiff.Map());
+      int importErrorCode = data->Import(displacementDiff, importer, Insert);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(importErrorCode != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), import operation failed!\n\n");
+    }
+  }
 
   return functionalValue;
 }
@@ -973,6 +988,11 @@ void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
       field.relation = "element";
       field.initType = "scalar";
       field.length = 1;
+    }
+    else if(name == "OBC_Functional"){
+      field.relation = "element";
+      field.initType = "scalar";
+      field.length = 3;
     }
     else if(name == "Model_Coordinates" || name == "Coordinates" || name == "Displacement" || name == "Velocity" || name == "Force"){
       field.relation = "node";
