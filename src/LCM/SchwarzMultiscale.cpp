@@ -195,11 +195,6 @@ SchwarzMultiscale(
 
   material_dbs_.resize(num_models_);
 
-  //string for storing name of first problem, for error checking
-  std::string
-  problem_name_0 = "";
-    
-
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
   for (int m = 0; m < num_models_; ++m) {
@@ -256,12 +251,6 @@ SchwarzMultiscale(
     problem_name = problem_params_m->get("Name", "");
 
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
-
-    if (m == 0) {
-      problem_name_0 = problem_params_m->get("Name", "");
-    }
-
-    assert(problem_name_0 == problem_name);
 
     std::ostringstream
     oss("materials");

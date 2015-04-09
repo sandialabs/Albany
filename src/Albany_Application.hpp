@@ -903,7 +903,7 @@ namespace Albany {
     {return app_name_index_map_;}
 
   private:
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     coupled_apps_;
 
     int
