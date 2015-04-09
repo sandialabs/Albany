@@ -54,18 +54,29 @@ SchwarzMultiscale(
 
   //----------------Parameters------------------------
   //Get "Problem" parameter list
-  Teuchos::ParameterList & problem_params = app_params->sublist("Problem"); 
+  Teuchos::ParameterList &
+  problem_params = app_params->sublist("Problem");
+
   //Get "Parameters" parameter sublist 
-  Teuchos::ParameterList & parameter_params = problem_params.sublist("Parameters"); 
+  Teuchos::ParameterList &
+  parameter_params = problem_params.sublist("Parameters");
+
   num_params_total_ = parameter_params.get("Number of Parameter Vectors", 0);
-  bool using_old_parameter_list = false;
-  if (parameter_params.isType<int>("Number")) {
-    int num_parameters = parameter_params.get<int>("Number");
+
+  bool
+  using_old_parameter_list = false;
+
+  if (parameter_params.isType<int>("Number") == true) {
+
+    int
+    num_parameters = parameter_params.get<int>("Number");
+
     if (num_parameters > 0) {
       num_params_total_ = 1;
       using_old_parameter_list = true;
     }
   }
+
   std::cout << "Number of parameter vectors = " << num_params_total_ << std::endl;
 
   //Get parameter names
