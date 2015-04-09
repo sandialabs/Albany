@@ -288,6 +288,9 @@ SchwarzMultiscale(
     // Add application array for later use in Schwarz BC.
     apps_[m]->setCoupledApplications(apps_);
 
+    // See application index for use with Schwarz BC.
+    apps_[m]->setAppIndex(m);
+
     // App application name-index map for later use in Schwarz BC.
     apps_[m]->setAppNameIndexMap(app_name_index_map);
 
