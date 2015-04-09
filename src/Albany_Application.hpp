@@ -891,7 +891,7 @@ namespace Albany {
     {app_name_index_map_ = anim;}
 
     Teuchos::RCP<std::map<std::string, int>>
-    setAppNameIndexMap()
+    getAppNameIndexMap()
     {return app_name_index_map_;}
 
   private:
