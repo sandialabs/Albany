@@ -42,11 +42,13 @@
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
     <ParameterList name="Dirichlet BCs">
       <!-- Peridynamics block -->
-      <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="-0.01"/>
+      <Parameter name="DBC on NS nodelist_1 for DOF X prescribe Field" type="string" value="dirichlet_field"/>
+      <!--Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="-0.01"/-->
       <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
       <!-- Classical continuum mechanics block -->
-      <Parameter name="DBC on NS nodelist_11 for DOF X" type="double" value="0.01"/>
+      <Parameter name="DBC on NS nodelist_11 for DOF X prescribe Field" type="string" value="dirichlet_field"/>
+      <!--Parameter name="DBC on NS nodelist_11 for DOF X" type="double" value="0.01"/-->
       <Parameter name="DBC on NS nodelist_12 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_13 for DOF Z" type="double" value="0.0"/>
     </ParameterList>
