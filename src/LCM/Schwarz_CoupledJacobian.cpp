@@ -16,19 +16,23 @@
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
 
-#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
+//#define OUTPUT_TO_SCREEN
+
 using Thyra::PhysicallyBlockedLinearOpBase;
 
 LCM::Schwarz_CoupledJacobian::Schwarz_CoupledJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & commT)
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
+#endif
   commT_ = commT;
 }
 
@@ -45,7 +49,9 @@ getThyraCoupledJacobian(
     Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary)
 const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   std::size_t
   block_dim = jacs.size();

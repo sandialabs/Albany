@@ -20,7 +20,7 @@ ones, similar to what is done for "Parameters" [Irina].
 
 3.) Fix memory leak issues that show up after solve.
 
-5.) Issue reading in materials.xml when it's not in input file [Alejandro].
+6.) Issue when there is no "Parameters" or "Responses" section in input file [Irina].
 
 ---------------------Development TODOs------------------------
 

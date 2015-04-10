@@ -12,12 +12,14 @@
 #include <sstream>
 
 //uncomment the following to write stuff out to matrix market to debug
-#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static
 int mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
+
+//#define OUTPUT_TO_SCREEN 
 
 LCM::
 SchwarzMultiscale::
@@ -28,7 +30,9 @@ SchwarzMultiscale(
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &
     solver_factory)
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   commT_ = commT;
 
@@ -51,7 +55,6 @@ SchwarzMultiscale(
   num_models_ = model_filenames.size();
 
   std::cout << "DEBUG: num_models_: " << num_models_ << '\n';
-
   // Create application name-index map used for Schwarz BC.
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
@@ -239,10 +242,8 @@ SchwarzMultiscale(
     response_params_m2 = Teuchos::sublist(
         model_app_params[m], "Problem")->sublist("Response Functions", false);
 
-    std::cout << "m, # responses global: " << m << ", ";
     std::cout << response_params.get<int>("Number") << '\n';
 
-    std::cout << "m, # responses: " << m << ", ";
     std::cout << response_params_m2.get<int>("Number") << '\n';
 
     model_problem_params[m] = problem_params_m;
@@ -252,18 +253,16 @@ SchwarzMultiscale(
 
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
 
-    std::ostringstream
-    oss("materials");
-
-    oss << '_' << m << ".xml";
-
     std::string
-    matdb_filename(oss.str());
+    matdb_filename;
 
-    if (problem_params_m->isType<std::string>("MaterialDB Filename")) {
+    if (problem_params_m->isType<std::string>("MaterialDB Filename")) 
       matdb_filename =
           problem_params_m->get<std::string>("MaterialDB Filename");
-    }
+    else 
+      TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::logic_error,
+                             "Error in LCM::CoupledSchwarz! Input file needs to have 'MaterialDB Filename' specified." <<  std::endl) ;
 
     material_dbs_[m] =
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
@@ -313,7 +312,9 @@ SchwarzMultiscale(
     }
   }
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "Finished creating Albany apps and models!\n";
+#endif
 
   //Now get maps, InArgs, OutArgs for each model.
   //Calculate how many parameters, responses there are in total.
@@ -410,7 +411,9 @@ SchwarzMultiscale(
     nominal_values_.set_p(l, p_prod_vec);
   }
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "Set nominal_values_! \n";
+#endif
 
   //--------------End setting of nominal values------------------
 
@@ -431,22 +434,27 @@ LCM::SchwarzMultiscale::~SchwarzMultiscale()
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_x_space() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   return getThyraDomainSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::get_f_space() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   return getThyraRangeSpace();
 }
 
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::getThyraRangeSpace() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   if (range_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
@@ -465,8 +473,9 @@ LCM::SchwarzMultiscale::getThyraRangeSpace() const
 Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
 LCM::SchwarzMultiscale::getThyraDomainSpace() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   if (domain_space_ == Teuchos::null) {
     // loop over all vectors and build the vector space
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
@@ -487,7 +496,9 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 {
   assert(0 <= l && l < num_params_total_);
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
   vs_array;
@@ -506,7 +517,9 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 {
   assert(0 <= l && l < num_responses_total_);
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
   vs_array;
@@ -527,14 +540,18 @@ Teuchos::RCP<const Teuchos::Array<std::string> >
 LCM::SchwarzMultiscale::get_p_names(int l) const
 {
   assert(0 <= l && l < num_params_total_);
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   return param_names_[l]; 
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getNominalValues() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   return nominal_values_;
 }
@@ -542,24 +559,27 @@ LCM::SchwarzMultiscale::getNominalValues() const
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getLowerBounds() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::getUpperBounds() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   return Thyra::ModelEvaluatorBase::InArgs<ST>(); // Default value
 }
 
 Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::SchwarzMultiscale::create_W_op() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   LCM::Schwarz_CoupledJacobian csJac(commT_);
   return csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_);
 }
@@ -567,8 +587,9 @@ LCM::SchwarzMultiscale::create_W_op() const
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
 LCM::SchwarzMultiscale::create_W_prec() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   //Analog of EpetraExt::ModelEvaluator::Preconditioner does not exist
   //in Thyra yet!  So problem will run for now with no
   //preconditioner...
@@ -582,16 +603,18 @@ LCM::SchwarzMultiscale::create_W_prec() const
 Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> >
 LCM::SchwarzMultiscale::get_W_factory() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   return solver_factory_;
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::createInArgs() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   return this->createInArgsImpl();
 }
 
@@ -600,8 +623,9 @@ LCM::SchwarzMultiscale::reportFinalPoint(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & final_point,
     bool const was_solved)
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   TEUCHOS_TEST_FOR_EXCEPTION(true,
       Teuchos::Exceptions::InvalidParameter,
       "Calling reportFinalPoint in CoupledSchwarz.cpp" << '\n');
@@ -613,8 +637,9 @@ allocateVectors()
 {
   //In this function, we create and set x_init and x_dot_init in
   //nominal_values_ for the coupled model.
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-
+#endif
   Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> > spaces(
       num_models_);
   for (int m = 0; m < num_models_; ++m)
@@ -668,7 +693,9 @@ create_DgDx_op_impl(int j) const
   assert(0 <= j && j < num_responses_total_);
 
   //FIX ME: re-implement using product vectors! 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   return Teuchos::null;
 }
 
@@ -678,8 +705,9 @@ LCM::SchwarzMultiscale::
 create_DgDx_dot_op_impl(int j) const
 {
   assert(0 <= j && j < num_responses_total_);
-
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   //FIXME: re-implement using product vectors!
   return Teuchos::null;
 }
@@ -689,7 +717,9 @@ Thyra::ModelEvaluatorBase::OutArgs<ST>
 LCM::SchwarzMultiscale::
 createOutArgsImpl() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST>
   result;
@@ -728,8 +758,9 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
-
+#endif
   //Get xT and x_dotT from in_args
   Teuchos::RCP<const Thyra::ProductVectorBase<ST> > xT =
       Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
@@ -1000,8 +1031,9 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 LCM::SchwarzMultiscale::
 createInArgsImpl() const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
-
+#endif
   Thyra::ModelEvaluatorBase::InArgsSetup<ST>
   result;
 

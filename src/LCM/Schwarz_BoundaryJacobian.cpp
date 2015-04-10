@@ -39,7 +39,9 @@ void LCM::Schwarz_BoundaryJacobian::initialize()
   // These can be stored in an array of Tpetra_CrsMatrices like the jacobians.
   // Set member variables
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
+#endif
 }
 
 // Returns the result of a Tpetra_Operator applied to a
@@ -51,7 +53,9 @@ void LCM::Schwarz_BoundaryJacobian::apply(
     ST alpha,
     ST beta) const
 {
+#ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
+#endif
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug
