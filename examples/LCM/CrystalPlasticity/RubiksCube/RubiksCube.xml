@@ -6,16 +6,16 @@
     <Parameter name="MaterialDB Filename" type="string" value="RubiksCube_Material.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
-        <Parameter name="Number of points" type="int" value="11"/>
-        <Parameter name="Time Values" type="Array(double)" value="{0.00,  0.10,  0.20,  0.30,  0.40,  0.50,  0.60,  0.70,  0.80,  0.90,  1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00, -0.01, -0.02, -0.03, -0.04, -0.05, -0.06, -0.07, -0.08, -0.09, -0.10}"/>
+        <Parameter name="Number of points" type="int" value="2"/>
+        <Parameter name="Time Values" type="Array(double)" value="{0.00,  1.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00, -0.10}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF X">
-        <Parameter name="Number of points" type="int" value="11"/>
-        <Parameter name="Time Values" type="Array(double)" value="{0.00,  0.10,  0.20,  0.30,  0.40,  0.50,  0.60,  0.70,  0.80,  0.90,  1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00,  0.01,  0.02,  0.03,  0.04,  0.05,  0.06,  0.07,  0.08,  0.09,  0.10}"/>
+        <Parameter name="Number of points" type="int" value="2"/>
+        <Parameter name="Time Values" type="Array(double)" value="{0.00,  1.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00,  0.10}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_6 for DOF Z" type="double" value="0.0"/>
