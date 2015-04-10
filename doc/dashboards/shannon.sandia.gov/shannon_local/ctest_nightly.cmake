@@ -5,11 +5,11 @@ cmake_minimum_required(VERSION 2.8)
 SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
-SET(DOWNLOAD_TRILINOS TRUE)
-SET(DOWNLOAD_ALBANY TRUE)
-SET(BUILD_TRILINOS TRUE)
+SET(DOWNLOAD_TRILINOS FALSE)
+SET(DOWNLOAD_ALBANY FALSE)
+SET(BUILD_TRILINOS FALSE)
 SET(BUILD_ALBANY TRUE)
-SET(CLEAN_BUILD TRUE)
+SET(CLEAN_BUILD FALSE)
 
 # Begin User inputs:
 set( CTEST_SITE             "shannon.sandia.gov" ) # generally the output of hostname
@@ -433,6 +433,8 @@ MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
           RETURN_VALUE  HAD_ERROR
+          TARGET "Albany"
+          TARGET "AlbanyT"
           NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
           APPEND
 )
@@ -454,6 +456,7 @@ CTEST_TEST(
               BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
 #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
 #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+              INCLUDE_LABEL "CUDA_TEST"
               #NUMBER_FAILED  TEST_NUM_FAILED
 )
 
