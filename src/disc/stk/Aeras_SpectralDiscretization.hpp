@@ -52,7 +52,7 @@ namespace Aeras
                                                                const int points_per_edge) 
       {
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: in AerasMeshSpectStruct!  Points Per Edge =  " << points_per_edge << std::endl;
+      std::cout << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  " << points_per_edge << std::endl;
 #endif 
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 

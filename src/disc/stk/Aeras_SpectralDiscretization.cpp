@@ -381,10 +381,10 @@ Aeras::SpectralDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
-  else if (transformType == "Cube Sphere") { //This works in Aeras_SpectralDiscretization (only transform) [IKT, 3/25/15]
+  else if (transformType == "Spherical") { //This works in Aeras_SpectralDiscretization (only transform) [IKT, 3/25/15]
   //This form takes a mesh of a square / cube and transforms it into a mesh of a circle/sphere
 #ifdef OUTPUT_TO_SCREEN
-    *out << "Cube Sphere!" << endl;
+    *out << "Spherical" << endl;
 #endif
     const int numDim  = stkMeshStruct->numDim;
     for (int ws = 0; ws < coords.size(); ws++) { //workset

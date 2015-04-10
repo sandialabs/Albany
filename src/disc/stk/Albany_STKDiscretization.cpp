@@ -330,10 +330,10 @@ Albany::STKDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
-  else if (transformType == "Cube Sphere") {
+  else if (transformType == "Spherical") {
   //This form takes a mesh of a square / cube and transforms it into a mesh of a circle/sphere
 #ifdef OUTPUT_TO_SCREEN
-    *out << "Cube Sphere!" << endl;
+    *out << "Spherical!" << endl;
 #endif
     const int numDim = stkMeshStruct->numDim;
     for (int i=0; i < numOverlapNodes; i++)  {
