@@ -4,7 +4,7 @@
 #
 # Run at 5:00AM local time every day
 #
-# 00 07 * * * /projects/AppComp/nightly_gahanse/cee-compute012/submit_script.sh
+# 00 07 * * * /projects/AppComp/nightly_gahanse/shannon-AlbanyCUVM/submit_script.sh
 
 DOWNLOAD_FILES="True"
 #DOWNLOAD_FILES=
@@ -12,7 +12,7 @@ DOWNLOAD_FILES="True"
 UPLOAD_FILES="True"
 #UPLOAD_FILES=
 
-BASE_DIR=/projects/AppComp/nightly_gahanse/shannonAlb
+BASE_DIR=/projects/AppComp/nightly_gahanse/shannon-AlbanyCUVM
 SCRIPT_DIR=/ascldap/users/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/cee-compute012
 
 CDASH_SITE="http://cdash.sandia.gov/CDash-2-3-0/submit.php?project=Albany"
@@ -21,7 +21,7 @@ export PATH=/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin:/usr/loca
 
 now=$(date +"%m_%d_%Y-%H_%M")
 #LOG_FILE=/projects/AppComp/nightly/cee-compute011/nightly_$now
-LOG_FILE=/projects/AppComp/nightly_gahanse/shannonAlb/nightly_log.txt
+LOG_FILE=/projects/AppComp/nightly_gahanse/shannon-AlbanyCUVM/nightly_log.txt
 
 cd $BASE_DIR
 
@@ -61,9 +61,9 @@ if [ "$DOWNLOAD_FILES" ]; then
  kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab
 
 # Get the TAG file
- echo "scp gahanse@shannon:/home/gahanse/nightly/build/Testing/TAG $DOWNLOAD_DIR/TAG" >> $LOG_FILE
+ echo "scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG" >> $LOG_FILE
  echo >> $LOG_FILE
- scp gahanse@shannon:/home/gahanse/nightly/build/Testing/TAG $DOWNLOAD_DIR/TAG
+ scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG
 
 fi
 

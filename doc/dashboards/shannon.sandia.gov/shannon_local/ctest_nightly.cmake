@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
-#SET(CTEST_TEST_TYPE Nightly)
+SET(CTEST_TEST_TYPE Nightly)
 
-SET(CTEST_TEST_TYPE Experimental)
+#SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
-SET(DOWNLOAD_TRILINOS FALSE)
-SET(DOWNLOAD_ALBANY FALSE)
-SET(BUILD_TRILINOS FALSE)
+SET(DOWNLOAD_TRILINOS TRUE)
+SET(DOWNLOAD_ALBANY TRUE)
+SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALBANY TRUE)
-SET(CLEAN_BUILD FALSE)
+SET(CLEAN_BUILD TRUE)
 
 # Begin User inputs:
 set( CTEST_SITE             "shannon.sandia.gov" ) # generally the output of hostname
@@ -393,11 +393,11 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_SCOREC:BOOL=ON"
   "-DENABLE_SG_MP:BOOL=OFF"
   "-DENABLE_FELIX:BOOL=ON"
-  "-DENABLE_AERAS:BOOL=OFF"
+  "-DENABLE_AERAS:BOOL=ON"
   "-DENABLE_QCAD:BOOL=OFF"
   "-DENABLE_MOR:BOOL=OFF"
-  "-DENABLE_ATO:BOOL=ON"
-  "-DENABLE_SEE:BOOL=ON"
+  "-DENABLE_ATO:BOOL=OFF"
+  "-DENABLE_SEE:BOOL=OFF"
   "-DENABLE_ASCR:BOOL=OFF"
   "-DENABLE_CHECK_FPE:BOOL=OFF"
   "-DENABLE_LAME:BOOL=OFF"
@@ -426,15 +426,15 @@ endif()
 #
 ###################################################################################################################
 
-SET(CTEST_BUILD_TARGET all)
+SET(CTEST_BUILD_TARGET "Albany")
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+#SET(CTEST_BUILD_COMMAND "${CTEST_CMAKE_COMMAND} ${CTEST_BUILD_FLAGS} Albany AlbanyT")
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
           RETURN_VALUE  HAD_ERROR
-          TARGET "Albany"
-          TARGET "AlbanyT"
           NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
           APPEND
 )
