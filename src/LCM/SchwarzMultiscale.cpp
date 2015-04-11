@@ -274,7 +274,7 @@ SchwarzMultiscale(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
 
     // Add application array for later use in Schwarz BC.
-    apps_[m]->setApplications(apps_);
+    apps_[m]->setApplications(apps_.create_weak());
 
     // See application index for use with Schwarz BC.
     apps_[m]->setAppIndex(m);
