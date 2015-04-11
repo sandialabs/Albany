@@ -17,4 +17,5 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 # Create the test with this name and standard executable
 add_test(${testName} ${Albany.exe} Mechanics.xml)
+set_tests_properties(${testName}  PROPERTIES LABELS CUDA_TEST)
 add_test(${testName} ${AlbanyT.exe} MechanicsT.xml)

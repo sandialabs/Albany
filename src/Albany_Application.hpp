@@ -879,7 +879,7 @@ namespace Albany {
   public:
     void
     setApplications(
-        Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > & ca)
+        Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > ca)
     {apps_ = ca;}
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >

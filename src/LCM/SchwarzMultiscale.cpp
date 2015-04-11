@@ -274,7 +274,7 @@ SchwarzMultiscale(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
 
     // Add application array for later use in Schwarz BC.
-    apps_[m]->setApplications(apps_);
+    apps_[m]->setApplications(apps_.create_weak());
 
     // See application index for use with Schwarz BC.
     apps_[m]->setAppIndex(m);
@@ -393,18 +393,15 @@ SchwarzMultiscale(
     Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
     p_space = Thyra::productVectorSpace<ST>(p_spaces);
 
-    std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const> >
+    Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> const> >
     p_vecs(num_models_);
     
     for (int m = 0; m < num_models_; ++m) {
       p_vecs[m] = models_[m]->getNominalValues().get_p(l);
     }
 
-    Teuchos::ArrayView<Teuchos::RCP<Thyra::VectorBase<ST> const> const>
-    p_vecs_AV = Teuchos::arrayViewFromVector(p_vecs);
-
     Teuchos::RCP<Thyra::DefaultProductVector<ST> >
-    p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs_AV);
+    p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs());
 
     if (Teuchos::is_null(p_prod_vec) == true) continue;
 
@@ -647,10 +644,10 @@ allocateVectors()
   Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> >
   space = Thyra::productVectorSpace<ST>(spaces);
 
-  std::vector<Teuchos::RCP<Thyra::VectorBase<ST> > >
+  Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> > >
   xT_vecs;
 
-  std::vector<Teuchos::RCP<Thyra::VectorBase<ST> > >
+  Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> > >
   x_dotT_vecs;
 
   xT_vecs.resize(num_models_);
@@ -668,17 +665,11 @@ allocateVectors()
     x_dotT_vecs[m] = Thyra::createVector(x_dotT_vec, spaces[m]);
   }
 
-  Teuchos::ArrayView<const Teuchos::RCP<Thyra::VectorBase<ST> > >
-  xT_vecs_AV = Teuchos::arrayViewFromVector(xT_vecs);
-
-  Teuchos::ArrayView<const Teuchos::RCP<Thyra::VectorBase<ST> > >
-  x_dotT_vecs_AV = Teuchos::arrayViewFromVector(x_dotT_vecs);
+  Teuchos::RCP<Thyra::DefaultProductVector<ST> >
+  xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs());
 
   Teuchos::RCP<Thyra::DefaultProductVector<ST> >
-  xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs_AV);
-
-  Teuchos::RCP<Thyra::DefaultProductVector<ST> >
-  x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs_AV);
+  x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs());
 
   nominal_values_.set_x(xT_prod_vec);
   nominal_values_.set_x_dot(x_dotT_prod_vec);

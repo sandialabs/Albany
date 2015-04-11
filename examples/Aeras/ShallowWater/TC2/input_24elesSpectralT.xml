@@ -45,8 +45,8 @@
     <!--Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/-->
     <Parameter name="Cubature Degree" type="int" value="6"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Points Per Edge" type="int" value="5"/>
-    <Parameter name="Transform Type" type="string" value="Cube Sphere"/>
+    <Parameter name="Element Degree" type="int" value="5"/>
+    <Parameter name="Transform Type" type="string" value="Spherical"/>
     <!--Parameter name="Exodus Write Interval" type="int" value="5"/-->
     <!--Parameter name="Workset Size" type="int" value="500"/-->
   </ParameterList>
