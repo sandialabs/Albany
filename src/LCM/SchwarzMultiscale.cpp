@@ -393,7 +393,7 @@ SchwarzMultiscale(
     Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
     p_space = Thyra::productVectorSpace<ST>(p_spaces);
 
-    std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const> >
+    Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> const> >
     p_vecs(num_models_);
     
     for (int m = 0; m < num_models_; ++m) {
@@ -401,7 +401,7 @@ SchwarzMultiscale(
     }
 
     Teuchos::ArrayView<Teuchos::RCP<Thyra::VectorBase<ST> const> const>
-    p_vecs_AV = Teuchos::arrayViewFromVector(p_vecs);
+    p_vecs_AV(p_vecs);
 
     Teuchos::RCP<Thyra::DefaultProductVector<ST> >
     p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs_AV);
@@ -647,10 +647,10 @@ allocateVectors()
   Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> >
   space = Thyra::productVectorSpace<ST>(spaces);
 
-  std::vector<Teuchos::RCP<Thyra::VectorBase<ST> > >
+  Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> > >
   xT_vecs;
 
-  std::vector<Teuchos::RCP<Thyra::VectorBase<ST> > >
+  Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> > >
   x_dotT_vecs;
 
   xT_vecs.resize(num_models_);
@@ -669,10 +669,10 @@ allocateVectors()
   }
 
   Teuchos::ArrayView<const Teuchos::RCP<Thyra::VectorBase<ST> > >
-  xT_vecs_AV = Teuchos::arrayViewFromVector(xT_vecs);
+  xT_vecs_AV(xT_vecs);
 
   Teuchos::ArrayView<const Teuchos::RCP<Thyra::VectorBase<ST> > >
-  x_dotT_vecs_AV = Teuchos::arrayViewFromVector(x_dotT_vecs);
+  x_dotT_vecs_AV(x_dotT_vecs);
 
   Teuchos::RCP<Thyra::DefaultProductVector<ST> >
   xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs_AV);
