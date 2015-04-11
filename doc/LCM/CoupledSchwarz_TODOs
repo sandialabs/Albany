@@ -1,26 +1,16 @@
 
 -----------------------Cleanup TODOs---------------------------
 
-4.) Change variable/function names to comply with C++ coding standards
+1.) Change variable/function names to comply with C++ coding standards
 [Alejandro] Mostly done in SchwarzMultiscale.*.
 
-6.) Eventually we'll want to put an ifdef to suppress all the debug
-output [TBD].
+2.) Printing of param vec for ThyraProductVector in Main_SolveT.cpp [Irina].
 
-7.) Printing of param vec for ThyraProductVector in Main_SolveT.cpp [Irina].
-
-8.) Put logic to copy Response parameter list from "master" to individual model 
-ones, similar to what is done for "Parameters" [Irina]. 
-
-9.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to be Teuchos::Array?).
+3.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to be Teuchos::Array?).
 
 ---------------------Debug TODOs------------------------
 
-2.) Get responses working for > 1 model. [Irina]
-
-3.) Fix memory leak issues that show up after solve.
-
-6.) Issue when there is no "Parameters" or "Responses" section in input file [Irina].
+1.) Get responses working for > 1 model. [Irina]
 
 ---------------------Development TODOs------------------------
 
