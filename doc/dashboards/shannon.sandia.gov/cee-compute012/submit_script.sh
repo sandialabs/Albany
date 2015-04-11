@@ -56,14 +56,14 @@ if [ "$DOWNLOAD_FILES" ]; then
 
 # Do the kinit
 
- echo "kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab" >> $LOG_FILE
- echo >> $LOG_FILE
- kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab
+# echo "kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab" >> $LOG_FILE
+# echo >> $LOG_FILE
+# kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab >> $LOG_FILE
 
 # Get the TAG file
  echo "scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG" >> $LOG_FILE
  echo >> $LOG_FILE
- scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG
+ scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG >> $LOG_FILE
 
 fi
 
@@ -76,12 +76,12 @@ if [ "$DOWNLOAD_FILES" ]; then
 # rsync the files
   echo "rsync -a gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/${build_number}/ $DOWNLOAD_DIR/$build_number" >> $LOG_FILE
   echo >> $LOG_FILE
-  rsync -a gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/${build_number}/ $DOWNLOAD_DIR/$build_number
+  rsync -a gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/${build_number}/ $DOWNLOAD_DIR/$build_number >> $LOG_FILE
 
 # kill the ticket
-  echo "kdestroy" >> $LOG_FILE
-  echo >> $LOG_FILE
-  kdestroy
+#  echo "kdestroy" >> $LOG_FILE
+#  echo >> $LOG_FILE
+#  kdestroy >> $LOG_FILE
 
 fi
 
