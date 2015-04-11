@@ -11,9 +11,9 @@
 #include "Albany_Utils.hpp"
 
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
-  mesh(disc->getPUMIMeshStruct()->getMesh()),
+  mesh_struct(disc->getPUMIMeshStruct()),
   commT(disc->getComm()) {
-  initialAverageEdgeLength = ma::getAverageEdgeLength(mesh);
+  initialAverageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
 }
 
 AAdapt::UnifRefSizeField::

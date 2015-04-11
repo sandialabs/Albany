@@ -279,6 +279,8 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
           "AlbPUMI:PUMIDiscretization: getNodalParameterSIS() not implemented yet");
     }
 
+    virtual void releaseMesh();
+
   private:
 
     //! Private to prohibit copying

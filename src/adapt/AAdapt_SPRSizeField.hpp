@@ -36,7 +36,7 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   private:
 
-    apf::Mesh2* mesh;
+    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
     apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;

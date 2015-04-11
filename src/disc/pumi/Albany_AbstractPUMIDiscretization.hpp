@@ -20,7 +20,7 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractPUMIDiscretization(){}
 
-    // Retrieve mesh struct
+    //! Retrieve mesh struct
     virtual Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() = 0;
 
     virtual apf::GlobalNumbering* getAPFGlobalNumbering() = 0;
@@ -28,8 +28,14 @@ namespace Albany {
     virtual void attachQPData() = 0;
     virtual void detachQPData() = 0;
 
-    // After mesh modification, need to update the element connectivity and nodal coordinates
+    //! After mesh modification, need to update the element connectivity and
+    //! nodal coordinates
     virtual void updateMesh(bool shouldTransferIPData) = 0;
+
+    //! There can be situations where we want to create a new apf::Mesh2 from
+    //! scratch. Clean up everything that depends on the current mesh first,
+    //! thereby releasing the mesh.
+    virtual void releaseMesh() = 0;
 
 #ifdef ALBANY_EPETRA
     virtual void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename) = 0;

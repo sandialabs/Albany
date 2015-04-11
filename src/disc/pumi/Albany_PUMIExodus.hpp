@@ -16,7 +16,8 @@ class PUMIExodus : public PUMIOutput {
 
   public:
 
-    PUMIExodus(PUMIMeshStruct& meshStruct, const Teuchos::RCP<const Teuchos_Comm>& comm_);
+    PUMIExodus(const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
+               const Teuchos::RCP<const Teuchos_Comm>& comm_);
 
     ~PUMIExodus();
 
@@ -26,6 +27,7 @@ class PUMIExodus : public PUMIOutput {
     void setFileName(const std::string& fname){ outputFileName = fname; }
 
   private:
+    Teuchos::RCP<PUMIMeshStruct> mesh_struct;
     apf::Mesh2* mesh;
     apf::StkModels& sets_p;
     std::string outputFileName;

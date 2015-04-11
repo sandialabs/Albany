@@ -13,7 +13,7 @@
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
   commT(disc->getComm()),
-  mesh(disc->getPUMIMeshStruct()->getMesh()),
+  mesh_struct(disc->getPUMIMeshStruct()),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),
@@ -55,6 +55,7 @@ double AAdapt::SPRSizeField::getValue(ma::Entity* v) {
 void
 AAdapt::SPRSizeField::copyInputFields()
 {
+  apf::Mesh2* mesh = mesh_struct->getMesh();
   apf::FieldShape* fs = apf::getVoronoiShape(mesh->getDimension(), cub_degree);
   apf::Field* eps = apf::createField(mesh, "eps", apf::MATRIX, fs);
   global_numbering = pumi_disc->getAPFGlobalNumbering();
@@ -79,18 +80,18 @@ AAdapt::SPRSizeField::copyInputFields()
 
 void AAdapt::SPRSizeField::freeSizeField()
 {
-  apf::destroyField(mesh->findField("size"));
+  apf::destroyField(mesh_struct->getMesh()->findField("size"));
 }
 
 void AAdapt::SPRSizeField::freeInputFields()
 {
-  apf::destroyField(mesh->findField("eps"));
+  apf::destroyField(mesh_struct->getMesh()->findField("eps"));
 }
 
 void
 AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
   
-  apf::Field* f = mesh->findField("solution");
+  apf::Field* f = mesh_struct->getMesh()->findField("solution");
   apf::Field* sol_grad = spr::getGradIPField(f,"sol_grad",cub_degree);
   field = spr::getSPRSizeField(sol_grad,rel_err);
   apf::destroyField(sol_grad);
@@ -100,7 +101,7 @@ AAdapt::SPRSizeField::computeErrorFromRecoveredGradients() {
 void
 AAdapt::SPRSizeField::computeErrorFromStateVariable() {
 
-  apf::Field* eps = mesh->findField("eps");
+  apf::Field* eps = mesh_struct->getMesh()->findField("eps");
   field = spr::getSPRSizeField(eps,rel_err);
 
 }

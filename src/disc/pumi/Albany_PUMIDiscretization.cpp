@@ -63,7 +63,7 @@ Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStru
   interleavedOrdering(pumiMeshStruct_->interleavedOrdering),
   outputInterval(0)
 {
-  meshOutput = PUMIOutput::create(*pumiMeshStruct_, commT_);
+  meshOutput = PUMIOutput::create(pumiMeshStruct_, commT_);
 #ifdef ALBANY_EPETRA
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
@@ -95,7 +95,8 @@ Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStru
     for (size_t i = 0; i < solNames.size(); ++i)
       apf::zeroField(pumiMeshStruct->getMesh()->findField(solNames[i].c_str()));
   else
-    apf::zeroField(pumiMeshStruct->getMesh()->findField("residual"));
+    apf::zeroField(
+      pumiMeshStruct->getMesh()->findField(PUMIMeshStruct::residual_name));
 }
 
 Albany::PUMIDiscretization::~PUMIDiscretization()
@@ -384,7 +385,7 @@ void Albany::PUMIDiscretization::writeAnySolutionToMeshDatabase(
       const bool overlapped)
 {
   if (solNames.size() == 0)
-    this->setField("solution",soln,overlapped);
+    this->setField(PUMIMeshStruct::solution_name,soln,overlapped);
   else
     this->setSplitFields(solNames,solIndex,soln,overlapped);
 
@@ -461,7 +462,7 @@ Albany::PUMIDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
   Teuchos::ArrayRCP<const ST> data = residualT.get1dView();
   if (solNames.size() == 0)
-    this->setField("residual",&(data[0]),/*overlapped=*/false);
+    this->setField(PUMIMeshStruct::residual_name,&(data[0]),/*overlapped=*/false);
   else
     this->setSplitFields(resNames,solIndex,&(data[0]),/*overlapped=*/false);
 
@@ -473,7 +474,7 @@ void
 Albany::PUMIDiscretization::setResidualField(const Epetra_Vector& residual)
 {
   if (solNames.size() == 0)
-    this->setField("residual",&(residual[0]),/*overlapped=*/false);
+    this->setField(PUMIMeshStruct::residual_name,&(residual[0]),/*overlapped=*/false);
   else
     this->setSplitFields(resNames,solIndex,&(residual[0]),/*overlapped=*/false);
 
@@ -492,7 +493,7 @@ Albany::PUMIDiscretization::getSolutionFieldT(bool overlapped) const
 
     if (pumiMeshStruct->solutionInitialized) {
       if (solNames.size() == 0)
-        this->getField("solution",&(data[0]),overlapped);
+        this->getField(PUMIMeshStruct::solution_name,&(data[0]),overlapped);
       else
         this->getSplitFields(solNames,solIndex,&(data[0]),overlapped);
     }
@@ -512,7 +513,7 @@ Albany::PUMIDiscretization::getSolutionField(bool overlapped) const
 
   if (pumiMeshStruct->solutionInitialized) {
     if (solNames.size() == 0)
-      this->getField("solution",&((*soln)[0]),overlapped);
+      this->getField(PUMIMeshStruct::solution_name,&((*soln)[0]),overlapped);
     else
       this->getSplitFields(solNames,solIndex,&((*soln)[0]),overlapped);
   }
@@ -1224,4 +1225,15 @@ Albany::PUMIDiscretization::attachQPData() {
 void
 Albany::PUMIDiscretization::detachQPData() {
   removeQPStatesFromAPF();
+}
+
+void Albany::PUMIDiscretization::releaseMesh () {
+  if (globalNumbering) {
+    apf::destroyGlobalNumbering(globalNumbering);
+    globalNumbering = 0;
+  }
+  if (elementNumbering) {
+    apf::destroyGlobalNumbering(elementNumbering);  
+    elementNumbering = 0;
+  }
 }

@@ -21,11 +21,11 @@
 #include <Teuchos_RCP.hpp>
 
 Albany::PUMIExodus::
-PUMIExodus(PUMIMeshStruct& meshStruct,
+PUMIExodus(const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
            const Teuchos::RCP<const Teuchos_Comm>& comm_)
-  : mesh(meshStruct.getMesh()),
-    sets_p(meshStruct.getSets()),
-    outputFileName(meshStruct.outputFileName),
+  : mesh_struct(meshStruct),
+    sets_p(meshStruct->getSets()),
+    outputFileName(meshStruct->outputFileName),
     comm(comm_)
 {
 }
@@ -58,6 +58,8 @@ Albany::PUMIExodus::
 write(const char* filename, const double time_val)
 {
 #ifdef ALBANY_SEACAS
+  apf::Mesh2* mesh = mesh_struct->getMesh();
+
   apf::GlobalNumbering* n[4];
   apf::makeStkNumberings(mesh, n);
   apf::StkModels& models = sets_p;

@@ -61,6 +61,9 @@ namespace Albany {
     gmi_model* getMdl() { return model; }
     apf::StkModels& getSets() { return sets; }
 
+    // For RC: Recoverable.
+    void setMesh(apf::Mesh2* new_mesh);
+
     // Solution history
     int solutionFieldHistoryDepth;
     void loadSolutionFieldHistory(int step);
@@ -96,6 +99,9 @@ namespace Albany {
     std::string outputFileName;
     int outputInterval;
     bool useNullspaceTranslationOnly;
+
+    static const char* solution_name;
+    static const char* residual_name;
 
 private:
 

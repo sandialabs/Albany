@@ -38,7 +38,7 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     double elem_size;
     double initialAverageEdgeLength;
-    apf::Mesh2* mesh;
+    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
 
 };
 

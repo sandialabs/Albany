@@ -24,6 +24,11 @@
 #include <ma.h>
 #include <PCU.h>
 
+// Capitalize Solution so that it sorts before other fields in Paraview. Saves a
+// few button clicks, e.g. when warping by vector.
+const char* Albany::PUMIMeshStruct::solution_name = "Solution";
+const char* Albany::PUMIMeshStruct::residual_name = "residual";
+
 class SizeFunction : public ma::IsotropicFunction {
   public:
     SizeFunction(double s) {size = s;}
@@ -89,13 +94,16 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     model_file = params->get<std::string>("Parasolid Model Input File Name");
 #endif
 
-  mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
+  model = gmi_load(model_file.c_str());
+
+  mesh = apf::loadMdsMesh(model, mesh_file.c_str());
+  // Tell the mesh that we'll handle deleting the model.
+  apf::disownMdsModel(mesh);
 
   bool isQuadMesh = params->get<bool>("2nd Order Mesh",false);
   if (isQuadMesh)
     apf::changeMeshShape(mesh, apf::getLagrange(2), false);
 
-  model = mesh->getModel();
   mesh->verify();
 
   int d = mesh->getDimension();
@@ -195,13 +203,22 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 
 Albany::PUMIMeshStruct::~PUMIMeshStruct()
 {
-  mesh->destroyNative();
-  apf::destroyMesh(mesh);
+  setMesh(0);
+  if (model) gmi_destroy(model);
   PCU_Comm_Free();
 #ifdef SCOREC_SIMMODEL
   gmi_sim_stop();
   Sim_unregisterAllKeys();
 #endif
+}
+
+void Albany::PUMIMeshStruct::setMesh(apf::Mesh2* new_mesh)
+{
+  if (mesh) {
+    mesh->destroyNative();
+    apf::destroyMesh(mesh);
+  }
+  mesh = new_mesh;
 }
 
 void
@@ -235,8 +252,8 @@ Albany::PUMIMeshStruct::setFieldAndBulkData(
       assert(neq==9);
       valueType = apf::MATRIX;
     }
-    apf::createFieldOn(mesh,"residual",valueType);
-    apf::createFieldOn(mesh,"solution",valueType);
+    apf::createFieldOn(mesh,residual_name,valueType);
+    apf::createFieldOn(mesh,solution_name,valueType);
   }
   else
     splitFields(solVectorLayout);
