@@ -59,6 +59,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   )
 
 add_library(albanySTK ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanySTK ${Trilinos_LIBRARIES})
 
 set_target_properties(albanySTK PROPERTIES PUBLIC_HEADER "${HEADERS}")
 
