@@ -10,10 +10,10 @@ cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
 # Error check up front
-#IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-#  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-#  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-#ENDIF()
+IF (NOT DEFINED ALBANY_TRILINOS_DIR)
+  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
+  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
+ENDIF()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
