@@ -58,6 +58,7 @@
 
 #ifdef ALBANY_LCM
   #include "SchwarzMultiscale.hpp"
+  #include "Schwarz_PiroObserverT.hpp"
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
@@ -676,7 +677,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     //FIXME, IKT, 2/13/15: the following needs to be replaced with the right observer for CoupledSchwarz!
     //I think we need to write an observer that takes in coupled_model similar to QCAD::CoupledPS_NOXObserverConstructor.
-    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(albanyApp));
     //Will have something like: 
     //const RCP<Piro::ObserverBase<double> > coupled_observer = rcp(new LCM::CoupledSchwarz_NOXObserverConstructor(coupled_model));
     //Coupled observer would split up the coupled solution into individual solution vectors (one for each model/domain)
