@@ -10,10 +10,10 @@ cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
 # Error check up front
-#IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-#  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-#  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-#ENDIF()
+IF (NOT DEFINED ALBANY_TRILINOS_DIR)
+  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
+  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
+ENDIF()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
@@ -221,14 +221,10 @@ IF (Amesos2_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_AMESOS2)
   MESSAGE("-- Looking for Amesos2:            Found, compiling with -DALBANY_AMESOS2")
   SET(ALBANY_AMESOS2 TRUE)
-  LIST(FIND Amesos2_TPL_LIST SuperLU Amesos2_SuperLU_List_ID)
-  IF (Amesos2_SuperLU_List_ID GREATER -1)
-    MESSAGE("---- Amesos2 has been compiled with an operational solver")
-    SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER TRUE)
-  ELSE()
-    MESSAGE("---- Amesos2 has NOT been compiled with an operational solver. Enable SuperLU.")
-    SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER FALSE)
-  ENDIF()
+  # We can't rely on Amesos2_TPL_LIST any longer; KLU2 and Basker are not
+  # TPLs. These will soon be enabled by default in Amesos2. So we'll just
+  # assume we have a coarse direct solver.
+  SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER TRUE)
 ELSE()
   MESSAGE("-- Looking for Amesos2:            NOT found.")
   SET(ALBANY_AMESOS2 FALSE)
@@ -583,8 +579,8 @@ ELSE()
   SET(ALBANY_AMP FALSE)
 ENDIF()
 
-# Set optional build of MOR (Model Order Reduction) defaults to ON
-OPTION(ENABLE_MOR "Flag to turn on MOR Source code" ON)
+# Set optional build of MOR (Model Order Reduction) defaults to OFF
+OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
   ADD_DEFINITIONS(-DALBANY_MOR)
   MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")

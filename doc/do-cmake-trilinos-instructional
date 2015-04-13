@@ -132,8 +132,12 @@ cmake \
 # There are two advantages to using a shared-lib build: first, link time of
 # large executables is essentially gone; second, incremental rebuilds (in a
 # debug-modify-build loop) are much faster: on average, perhaps 5x faster, and
-# often up to 20x faster. You might have to add -fPIC to the build flags for
+# often up to 20x faster. You will have to add -fPIC to the build flags for
 # TPLs to build shared libs.
+#   Tip: In SuperLU's make.inc, add -fPIC to these three places:
+#     CC           = gcc-4.7 -fPIC
+#     FFLAGS       = -O3 -fPIC
+#     LOADOPTS     = -fPIC
 #
 # Add these lines to make a debug build.
 #   -D CMAKE_BUILD_TYPE:STRING=DEBUG \
