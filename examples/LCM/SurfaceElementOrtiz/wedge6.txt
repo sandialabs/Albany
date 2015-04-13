@@ -1,0 +1,79 @@
+! Database Title     exotxt                          2013/08/07                       1.23                           
+Sierra Output Default Title                                                     
+! Database initial variables
+         3      6.11        20     ! dimensions, version number, name length
+         6         1         1     ! nodes, elements, element blocks
+         4         0               ! #node sets, #side sets
+        14        14               ! len: node set list, dist fact length
+         0         0         0     ! side sets len: element, node , dist fact
+! Coordinate names
+x                    y                    z                   
+! Coordinates
+   1.0000000E+00   0.0000000E+00  -5.0000000E-01
+   0.0000000E+00   1.0000000E+00  -5.0000000E-01
+   0.0000000E+00   0.0000000E+00  -5.0000000E-01
+   1.0000000E+00   0.0000000E+00  -5.0000000E-01
+   0.0000000E+00   1.0000000E+00  -5.0000000E-01
+   0.0000000E+00   0.0000000E+00  -5.0000000E-01
+! Node number map
+sequence 1..numnp
+! Element number map
+sequence 1..numel
+! Element order map
+sequence 1..numel
+! Element block    1
+         1         1      WEDGE6      ! ID, elements, element type
+         6         0      ! nodes per element, attributes
+! Connectivity
+         3         1         2         6         4         5
+! Node sets                           4
+! Len node set node list             14
+! Len node set dist fact list        14
+! Nodal point set         1
+         1         4         4      ! ID, nodes, dist factors
+         1     1.0000000E+00
+         3     1.0000000E+00
+         4     1.0000000E+00
+         6     1.0000000E+00
+! Nodal point set         2
+         2         3         3      ! ID, nodes, dist factors
+         3     1.0000000E+00
+         1     1.0000000E+00
+         2     1.0000000E+00
+! Nodal point set         3
+         3         3         3      ! ID, nodes, dist factors
+         6     1.0000000E+00
+         4     1.0000000E+00
+         5     1.0000000E+00
+! Nodal point set         4
+         4         4         4      ! ID, nodes, dist factors
+         6     1.0000000E+00
+         3     1.0000000E+00
+         2     1.0000000E+00
+         5     1.0000000E+00
+! Properties
+         1            ! Number of ELEMENT BLOCK Properties
+! Property Name: 
+ID                  
+! Property Value(s): 
+         1         
+         1            ! Number of NODE SET Properties
+! Property Name: 
+ID                  
+! Property Value(s): 
+         1          2          3          4
+         0            ! Number of SIDE SET Properties
+! QA Records
+         2      ! QA records
+unknown                         
+unknown                         
+2015/03/30                      
+17:40:50                        
+exotxt                          
+ 1.23                           
+20150406                        
+18:56:22                        
+! Information Records
+         0      ! information records
+! Variable names
+         0         0         0      ! global, nodal, element variables

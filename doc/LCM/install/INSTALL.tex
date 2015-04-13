@@ -12,7 +12,7 @@
 {\oldendv\egroup\fboxsep0pt \noindent\colorbox[gray]{0.95}{\usebox0}\par}
 
 \author{The Albany/LCM team\thanks{Original version by Juli\'an R\'imoli}}
-\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 20}
+\title{Instructions for Installing Albany/LCM and Trilinos on Fedora 21}
 \begin{document}
 
 \maketitle
@@ -20,12 +20,16 @@
 \section{Introduction}
 This document describes the necessary steps to install Albany/LCM and
 Trilinos on a machine with Fedora Linux. The procedures described
-herein were tested using Fedora 20.
+herein were tested using Fedora 21.
 
-If you want a shortcut obtain the script \verb+install_albany.sh+ (stored in \verb+Albany/doc/LCM/build+) and then try: \\
-\verb+./install_albany+ \\
-which will install and build Trilinos and Albany in your current directory. 
-If the script does not complete it will tell you why and with help from this document you will be able to complete the install.
+If you want a shortcut obtain the script \verb+install_albany.sh+
+(stored in \verb+Albany/doc/LCM/build+) and then try:
+\begin{verbatim}
+./install_albany
+\end{verbatim}
+This will install and build Trilinos and Albany in the current
+directory.  If the script does not complete it will tell you why and
+with help from this document you will be able to complete the install.
 
 \section{Required packages}
 After installing Fedora, the following packages should be installed
@@ -103,14 +107,21 @@ Change directory to the newly created one:
 cd LCM
 \end{verbatim}
 
-Now, check out the latest version of Trilinos:
+Now, check out the latest version of Trilinos. If you have an account on
+\verb+software.sandia.gov+, then use:
 \begin{verbatim}
-git clone https://github.com/trilinos/trilinos.git Trilinos
+git clone software.sandia.gov:/space/git/Trilinos Trilinos
 \end{verbatim}
+Otherwise clone with:
+\begin{verbatim}
+git clone git@github.com:trilinos/trilinos.git Trilinos
+\end{verbatim}
+This last public Trilinos repository is a few days behind the one at
+\verb+software.sandia.gov+ which for most purposes will not be an issue.
 
 Finally, check out the latest version of Albany:
 \begin{verbatim}
-git clone https://github.com/gahansen/Albany.git Albany
+git clone git@github.com:gahansen/Albany.git Albany
 \end{verbatim}
 
 At this point, the directory structure should look like this:
@@ -122,9 +133,9 @@ LCM
 
 \section{Installation scripts}
 Create symbolic links to the installation scripts inside the directory
-\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+ directory. If you
-intend to modify these scripts, it is better to copy them. The necessary scripts
-are:
+\verb+LCM/Albany/doc/LCM/build+ to the top-level \verb+LCM+
+directory. If you intend to modify these scripts, it is better to copy
+them. The necessary scripts are:
 \begin{verbatim}
 albany-config.sh
 build-all.sh
@@ -135,10 +146,11 @@ trilinos-config.sh
 \end{verbatim}
 
 Once this is done, go to the top-level \verb+LCM+ directory, open the
-\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they match your
-environment. If you do not want to tinker with any of this, just change the
-email addresses for tests reports at the end of \verb+env-single.sh+ and make
-sure all the scripts are executable and read only:
+\verb+env-all.sh+ and \verb+env-single.sh+ scripts and make sure they
+match your environment. If you do not want to tinker with any of this,
+just change the email addresses for tests reports at the end of
+\verb+env-single.sh+ and make sure all the scripts are executable and
+read only:
 \begin{verbatim}
 cd ~/LCM
 chmod +x *.sh
@@ -164,7 +176,8 @@ ln -s build.sh clean-config-build-test.sh
 ln -s build.sh config-build.sh
 ln -s build.sh config-build-test.sh
 \end{verbatim}
-There is also a script \verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
+There is also a script
+\verb+LCM/Albany/doc/LCM/install/albany-lcm-symlinks.sh+
 that will create the appropriate symbolic links. 
 
 \section{Environment variables}
@@ -202,10 +215,11 @@ release version of the code using 16 processors, type:
 Note that to compile a version of Albany with a specific toolchain and
 build type, the corresponding version of Trilinos must exist.
 
-Currently the options for the toolchain are \verb+gcc+ and
-\verb+clang+, and for build type are \verb+debug+ and
-\verb+release+. The \verb+clang+ toolchain requires installation of
-the \verb+clang+ and \verb+clang-devel+ packages.
+Currently the options for the toolchain are \verb+gcc+, \verb+clang+
+and \verb+intel+ if the Intel compilers are installed, and for build
+type are \verb+debug+ and \verb+release+. The \verb+clang+ toolchain
+requires installation of the \verb+clang+ and \verb+clang-devel+
+packages.
 
 \section{After initial setup}
 The procedure described before configures and compiles the code. From
@@ -236,11 +250,11 @@ you commit changes.
 
 In addition, within LCM we strongly encourage you to follow the C++
 Google style guide that can be found at
-\verb+http://google-styleguide.googlecode.com/svn/trunk/cppguide.html+. This
-style is somewhat different to what is currently used in the rest of
-Albany, but we believe that the Google style helps the developer more
-in that it advocates more style differentiation between the different
-syntactic elements of C++. This in turn makes reading code easier and
-helps to avoid coding errors.
+\verb+http://google-styleguide.googlecode.com/svn/trunk/cppguide.html+.
+This style is somewhat different to what is currently used in the rest
+of Albany, but we believe that the Google style helps the developer
+more in that it advocates more style differentiation between the
+different syntactic elements of C++. This in turn makes reading code
+easier and helps to avoid coding errors.
 
 \end{document}

@@ -744,6 +744,12 @@ public:
   }
 
   bool
+  is_in_part(stk::mesh::Part & part, stk::mesh::Entity e)
+  {
+    return get_bulk_data().bucket(e).member(part);
+  }
+
+  bool
   is_bulk_cell(stk::mesh::Entity e)
   {
     return (get_bulk_data().entity_rank(e) == stk::topology::ELEMENT_RANK)
@@ -850,6 +856,12 @@ public:
     assert(rank < topologies_.size());
     return topologies_[rank];
   }
+
+  ///
+  /// Compute normal using first 3 nodes of boundary entity.
+  ///
+  Intrepid::Vector<double>
+  get_normal(stk::mesh::Entity boundary_entity);
 
 private:
   ///

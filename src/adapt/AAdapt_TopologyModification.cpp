@@ -9,9 +9,7 @@
 #include <stk_util/parallel/ParallelReduce.hpp>
 
 #include "AAdapt_TopologyModification.hpp"
-//#include "AAdapt_StressFracture.hpp"
 #include "LCM/utils/topology/Topology_FractureCriterion.h"
-#include <boost/foreach.hpp>
 
 namespace AAdapt {
 

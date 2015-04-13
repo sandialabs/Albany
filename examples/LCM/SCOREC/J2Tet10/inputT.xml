@@ -31,14 +31,14 @@
   </ParameterList>
 
   <ParameterList name="Discretization">
-    <Parameter name="Method"                        type="string"             value="FMDB"/>
+    <Parameter name="Method"                        type="string"             value="PUMI"/>
     <Parameter name="Workset Size"                  type="int"                value="50"/> 
     <Parameter name="Mesh Model Input File Name"    type="string"             value="../meshes/cube/cube-quad.dmg"/>
-    <Parameter name="FMDB Input File Name"          type="string"             value="../meshes/cube/cube-quad.smb"/>
-    <Parameter name="FMDB Output File Name"         type="string"             value="j2_tet10.vtk"/>
+    <Parameter name="PUMI Input File Name"          type="string"             value="../meshes/cube/cube-quad.smb"/>
+    <Parameter name="PUMI Output File Name"         type="string"             value="j2_tet10.vtk"/>
     <Parameter name="Element Block Associations"    type="TwoDArray(string)"  value="2x1:{95, eb_1}"/>
     <Parameter name="Node Set Associations"         type="TwoDArray(string)"  value="2x4:{85, 83, 1, 81, ns_1, ns_2, ns_3, ns_4}"/>
-    <Parameter name="2nd Order Mesh"                type="bool"               value="false"/>
+    <Parameter name="2nd Order Mesh"                type="bool"               value="true"/>
     <Parameter name="Cubature Degree"               type="int"                value="2"/>
   </ParameterList>
 

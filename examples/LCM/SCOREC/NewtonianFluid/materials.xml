@@ -1,0 +1,31 @@
+<ParameterList>
+
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="top">
+      <Parameter name="material" type="string" value="top fluid"/>
+    </ParameterList>
+    <ParameterList name="bottom">
+      <Parameter name="material" type="string" value="bottom fluid"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="top fluid">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Newtonian Fluid"/>
+      </ParameterList>
+      <Parameter name="Shear Viscosity" type="double" value="1.0"/>
+    </ParameterList>
+
+    <ParameterList name="bottom fluid">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Newtonian Fluid"/>
+      </ParameterList>
+      <Parameter name="Shear Viscosity" type="double" value="1.0"/>
+    </ParameterList>
+ 
+    
+  </ParameterList>
+
+</ParameterList>

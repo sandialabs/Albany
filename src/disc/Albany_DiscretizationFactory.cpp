@@ -28,8 +28,8 @@
 #include "Albany_FromCubitSTKMeshStruct.hpp"
 #endif
 #ifdef ALBANY_SCOREC
-#include "AlbPUMI_FMDBDiscretization.hpp"
-#include "AlbPUMI_FMDBMeshStruct.hpp"
+#include "Albany_PUMIDiscretization.hpp"
+#include "Albany_PUMIMeshStruct.hpp"
 #endif
 #ifdef ALBANY_CATALYST
 #include "Albany_Catalyst_Decorator.hpp"
@@ -267,11 +267,11 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 #endif
   }
 
-  else if(method == "FMDB") {
+  else if(method == "PUMI") {
 #ifdef ALBANY_SCOREC
-    meshStruct = Teuchos::rcp(new AlbPUMI::FMDBMeshStruct(discParams, commT));
+    meshStruct = Teuchos::rcp(new Albany::PUMIMeshStruct(discParams, commT));
 #else
-    TEUCHOS_TEST_FOR_EXCEPTION(method == "FMDB",
+    TEUCHOS_TEST_FOR_EXCEPTION(method == "PUMI",
                                Teuchos::Exceptions::InvalidParameter,
                                "Error: Discretization method " << method
                                << " requested, but not compiled in" << std::endl);
@@ -282,7 +282,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, std::endl <<
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
-                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Ioss Aeras, Exodus, Exodus Aeras, Cubit, FMDB, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                               << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Ioss Aeras, Exodus, Exodus Aeras, Cubit, PUMI, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
   }
 
 #ifdef ALBANY_LCM
@@ -295,8 +295,8 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   //overwrite the meshSpecs of the meshStruct with an enriched one. 
 #ifdef ALBANY_AERAS
   if (method == "Ioss Aeras" || method == "Exodus Aeras") { 
-    //get "Points Per Edge" from parameter list.  Default value is 2. 
-    int points_per_edge = discParams->get("Points Per Edge", 2); 
+    //get "Element Degree" from parameter list.  Default value is 2. 
+    int points_per_edge = discParams->get("Element Degree", 2); 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > &mesh_specs_struct = meshStruct->getMeshSpecs();
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type number_blocks = mesh_specs_struct.size();
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > enriched_mesh_specs_struct; 
@@ -382,16 +382,9 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
       }
       break;
 #ifdef ALBANY_SCOREC
-
-      case Albany::AbstractMeshStruct::FMDB_VTK_MS: {
-        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-        return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBVtk>(ms, commT, rigidBodyModes));
-      }
-      break;
-
-      case Albany::AbstractMeshStruct::FMDB_EXODUS_MS: {
-        Teuchos::RCP<AlbPUMI::FMDBMeshStruct> ms = Teuchos::rcp_dynamic_cast<AlbPUMI::FMDBMeshStruct>(meshStruct);
-        return Teuchos::rcp(new AlbPUMI::FMDBDiscretization<AlbPUMI::FMDBExodus>(ms, commT, rigidBodyModes));
+      case Albany::AbstractMeshStruct::PUMI_MS: {
+        Teuchos::RCP<Albany::PUMIMeshStruct> ms = Teuchos::rcp_dynamic_cast<Albany::PUMIMeshStruct>(meshStruct);
+        return Teuchos::rcp(new Albany::PUMIDiscretization(ms, commT, rigidBodyModes));
       }
       break;
 #endif

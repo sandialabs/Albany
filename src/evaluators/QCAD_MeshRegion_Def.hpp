@@ -49,6 +49,25 @@ MeshRegion(std::string coordVecName, std::string weightsName,
     zmax = p.get<double>("z max");
   }
 
+  //Restriction to xy polygon
+  const int polyPtDim = 2; //expect (x,y) coordinates
+  int nPts = 0; 
+  if( p.isSublist("XY Polygon") ) {
+    Teuchos::Array<double> ar;
+    Teuchos::ParameterList& polyList = p.sublist("XY Polygon");
+    nPts = polyList.get<int>("Number of Points",0);
+    xyPolygon.resize(nPts);
+
+    for(int i=0; i<nPts; i++) {
+      xyPolygon[i].resize(numDims);
+      ar = polyList.get<Teuchos::Array<double> >( Albany::strint("Point",i) );
+      TEUCHOS_TEST_FOR_EXCEPTION (ar.size() != (int)polyPtDim, Teuchos::Exceptions::InvalidParameter, std::endl 
+				  << "XY-polygon point does not have " << polyPtDim << " elements" << std::endl); 
+      for(std::size_t k=0; k<polyPtDim; k++) xyPolygon[i][k] = ar[k];
+    }
+  }
+  bRestrictToXYPolygon = (nPts >= 3); //need at least three points to restrict to a polygon
+
   // Restriction to a level set of a field
   levelSetFieldname = p.get<std::string>("Level Set Field Name","");
   levelSetFieldMin = p.get<double>("Level Set Field Minimum", -1e100);
@@ -123,6 +142,13 @@ cellIsInRegion(std::size_t cell)
 	(limitY && (coordVec(cell,qp,1) < ymin || coordVec(cell,qp,1) > ymax)) ||
 	(limitZ && (coordVec(cell,qp,2) < zmin || coordVec(cell,qp,2) > zmax)) )
       return false;
+
+    if(bRestrictToXYPolygon) {
+      MeshScalarT pt[2]; //code below only works when MeshScalarT == double.  Need to generalize for other cases.
+      pt[0] = coordVec(cell,qp,0);
+      pt[1] = coordVec(cell,qp,1);
+      if( !QCAD::ptInPolygon(xyPolygon, pt) ) return false;
+    }
   }
 
   if(bRestrictToLevelSet) {

@@ -50,10 +50,10 @@ class MultiSTKFieldContainer : public GenericSTKFieldContainer<Interleaved> {
 
 #ifdef ALBANY_EPETRA
     void fillVector(Epetra_Vector& field_vector, const std::string&  field_name,
-        stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {exit(1);};
+        stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
 
     void saveVector(const Epetra_Vector& field_vector, const std::string&  field_name,
-           stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) {exit(0);};
+        stk::mesh::Selector& field_selection, const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager);
 #endif
 
     void transferSolutionToCoords();

@@ -214,7 +214,9 @@ Subgraph::vertexFromEntity(stk::mesh::Entity entity)
 // Add a vertex in the subgraph.
 //
 Vertex
-Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
+Subgraph::addVertex(
+    stk::mesh::EntityRank vertex_rank,
+    stk::mesh::Entity entity)
 {
   get_topology().increase_highest_id(vertex_rank);
 
@@ -233,19 +235,61 @@ Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
   stk::mesh::PartVector
   add_parts;
 
+  // If the entity passed is a node, propagate parts to new entities.
+  bool const
+  propagate_parts = entity != INVALID_ENTITY &&
+    vertex_rank == stk::topology::NODE_RANK;
+
+  if (propagate_parts == true) {
+    std::map<std::string, stk::mesh::Part*> &
+    ns_parts = get_stk_mesh_struct()->nsPartVec;
+
+    stk::mesh::Selector
+    select_local = stk::mesh::Selector(get_meta_data().locally_owned_part());
+
+    for (auto it = ns_parts.begin(); it != ns_parts.end(); ++it) {
+      stk::mesh::Part &
+      ns_part = *(it->second);
+
+      stk::mesh::Selector
+      select_in_nodeset = stk::mesh::Selector(ns_part);
+
+      stk::mesh::Selector
+      select_local_in_nodeset = select_local & select_in_nodeset;
+
+      std::vector<stk::mesh::Entity>
+      ns_nodes;
+
+      stk::mesh::get_selected_entities(
+          select_local_in_nodeset,
+          get_bulk_data().buckets(stk::topology::NODE_RANK),
+          ns_nodes);
+
+      bool const
+      is_local_and_in_nodeset =
+          std::find(ns_nodes.begin(), ns_nodes.end(), entity) != ns_nodes.end();
+
+      if (is_local_and_in_nodeset == true) {
+        add_parts.push_back(&ns_part);
+      }
+
+    }
+
+  }
+
   stk::mesh::Entity
-  entity = get_bulk_data().declare_entity(vertex_rank, high_id, add_parts);
+  new_entity = get_bulk_data().declare_entity(vertex_rank, high_id, add_parts);
 
   // Add the vertex to the subgraph
   Vertex
-  vertex = boost::add_vertex(*this);
+  new_vertex = boost::add_vertex(*this);
 
   // Update maps
   std::pair<Vertex, stk::mesh::Entity>
-  vertex_entity_pair = std::make_pair(vertex, entity);
+  vertex_entity_pair = std::make_pair(new_vertex, new_entity);
 
   std::pair<stk::mesh::Entity, Vertex>
-  entity_vertex_pair = std::make_pair(entity, vertex);
+  entity_vertex_pair = std::make_pair(new_entity, new_vertex);
 
   vertex_entity_map_.insert(vertex_entity_pair);
 
@@ -255,9 +299,9 @@ Subgraph::addVertex(stk::mesh::EntityRank vertex_rank)
   VertexNamePropertyMap
   vertex_property_map = boost::get(VertexName(), *this);
 
-  boost::put(vertex_property_map, vertex, vertex_rank);
+  boost::put(vertex_property_map, new_vertex, vertex_rank);
 
-  return vertex;
+  return new_vertex;
 }
 
 //
@@ -719,9 +763,12 @@ Subgraph::splitArticulation(Vertex articulation_vertex)
   std::vector<Vertex>
   split_vertices(num_components - 1);
 
+  stk::mesh::Entity
+  articulation_entity = entityFromVertex(articulation_vertex);
+
   for (std::vector<Vertex>::size_type i = 0; i < split_vertices.size(); ++i) {
     Vertex
-    split_vertex = addVertex(articulation_rank);
+    split_vertex = addVertex(articulation_rank, articulation_entity);
 
     split_vertices[i] = split_vertex;
   }

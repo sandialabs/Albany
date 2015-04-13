@@ -18,13 +18,19 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
-  //amb No idea. Need to ask Mauro.
-  return app->getDistParamLib()->size();
+  //Mauro: currently distributed derivatives work only with scalar parameters, to be updated.
+  return ms->ctd.node_count;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
  const Albany::Application* app, const int ebi)
 {
+#ifdef ALBANY_AERAS
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->getEnrichedMeshSpecs(); 
+  return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+      app, mesh_specs[ebi].get());
+#endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
     app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
 }
@@ -32,6 +38,12 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
  const Albany::Application* app, const int ebi)
 {
+#ifdef ALBANY_AERAS
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->getEnrichedMeshSpecs(); 
+  return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+      app, mesh_specs[ebi].get());
+#endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
     app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
 }
@@ -39,6 +51,12 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
  const Albany::Application* app, const int ebi)
 {
+#ifdef ALBANY_AERAS
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > mesh_specs = 
+  app->getEnrichedMeshSpecs(); 
+  return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+      app, mesh_specs[ebi].get());
+#endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
     app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
 }

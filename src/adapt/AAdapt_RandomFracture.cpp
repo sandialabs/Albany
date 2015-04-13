@@ -9,8 +9,6 @@
 #include "Teuchos_TimeMonitor.hpp"
 #include <stk_util/parallel/ParallelReduce.hpp>
 
-#include <boost/foreach.hpp>
-
 using stk::mesh::EntityKey;
 using stk::mesh::Entity;
 

@@ -31,9 +31,11 @@
   #include "STKMeshData.hpp"
 #endif
 
+#ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
 #ifdef ALBANY_EPETRA
 #include "Teko_StridedEpetraOperator.hpp"
+#endif
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
@@ -223,8 +225,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   determinePiroSolver(params);
 
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
+#ifdef ALBANY_TEKO
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
+#endif
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -356,9 +360,16 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       commT));
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+  LCM::PeridigmManager::self().setDirichletFields(disc);
+#endif
+#endif
+
+
 #ifdef ALBANY_EPETRA
   try {
-    //dp-todo getNodalParameterSIS() needs to be implemented in FMDB. Until
+    //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
     // Create Distributed parameters and initialize them with data stored in the mesh.
     const Albany::StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
@@ -539,11 +550,12 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
-#if ALBANY_EPETRA
+#ifdef ALBANY_EPETRA
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
 {
+#if defined(ALBANY_TEKO)
    //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
    inverseLib = Teko::InverseLibrary::buildFromParameterList(tekoParams->sublist("Inverse Factory Library"));
    inverseLib->PrintAvailableInverses(*out);
@@ -565,6 +577,9 @@ getPreconditioner()
    TEUCHOS_ASSERT(neq==sum);
 
    return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
+#else
+   return Teuchos::null; 
+#endif
 }
 
 RCP<const Epetra_Vector>
@@ -778,20 +793,11 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_PERIDIGM 
 #ifdef ALBANY_EPETRA
-
-//   xT
-//   const Teuchos::RCP<Epetra_Vector>& initial_x_dot = solMgr->get_initial_xdot();
-//   Petra::TpetraVector_To_EpetraVector(this->getInitialSolutionDotT(), *initial_x_dot, comm);
-//   return initial_x_dot;
-
-
-
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
 #endif
 #endif
-
 
   // Set data in Workset struct, and perform fill via field manager
   {
@@ -833,8 +839,12 @@ computeGlobalResidualImplT(
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
@@ -1051,8 +1061,12 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Jacobian>(workset);
@@ -1194,7 +1208,7 @@ computeGlobalJacobianT(const double alpha,
   if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
     countJac++; //increment Jacobian counter
   //Debut output
-  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+  if (writeToMatrixMarketRes != 0 && fT != NULL) { //If requesting writing to MatrixMarket of residual...
     char name[100];  //create string for file name
     if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
        sprintf(name, "rhs%i.mm", countRes);
@@ -1207,7 +1221,7 @@ computeGlobalJacobianT(const double alpha,
       }
     }
   }
-  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+  if (writeToCoutRes != 0 && fT != NULL) { //If requesting writing of residual to cout...
     if (writeToCoutRes == -1) { //cout residual time it arises
        std::cout << "Global Residual #" << countRes << ": " << std::endl;
        fT->describe(*out, Teuchos::VERB_EXTREME);
@@ -1223,12 +1237,13 @@ computeGlobalJacobianT(const double alpha,
     countRes++;  //increment residual counter
 }
 
-#if ALBANY_EPETRA
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
                             const RCP<Epetra_Operator>& prec)
 {
+#if defined(ALBANY_TEKO)
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
   *out << "Computing WPrec by Teko" << std::endl;
@@ -1240,6 +1255,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
 
   wrappedJac = buildWrappedOperator(jac, wrappedJac);
   blockPrec->rebuildInverseOperator(wrappedJac);
+#endif
 }
 #endif
 
@@ -1552,8 +1568,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::Tangent>(workset);
@@ -1754,6 +1774,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
     workset.fpVT = fpVT;
     workset.Vp_bcT = V_bc_ncT;
     workset.transpose_dist_param_deriv = trans;
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.disc = disc;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time =
@@ -1816,7 +1838,9 @@ applyGlobalDistParamDerivImplT(const double current_time,
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Distributed Parameter Derivative Export");
   // Assemble global df/dp*V
   if (trans) {
+    Tpetra_MultiVector temp(*fpVT,Teuchos::Copy);
     distParamLib->get(dist_param_name)->export_add(*fpVT, *overlapped_fpVT);
+    fpVT->update(1.0, temp, 1.0); //fpTV += temp;
   }
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
@@ -2111,8 +2135,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGResidual>(workset);
@@ -2295,8 +2323,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGJacobian>(workset);
@@ -2569,8 +2601,12 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::SGTangent>(workset);
@@ -2793,8 +2829,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPResidual>(workset);
@@ -2976,8 +3016,12 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     // FillType template argument used to specialize Sacado
     dfm->evaluateFields<PHAL::AlbanyTraits::MPJacobian>(workset);
@@ -3256,8 +3300,12 @@ computeGlobalMPTangent(
     workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
+#ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
+#endif
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
   }
@@ -3430,10 +3478,12 @@ evaluateStateFieldManagerT(
   workset.fT = overlapped_fT;
 
   // Perform fill via field manager
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->beginEvaluatingSfm();
   for (int ws=0; ws < numWorksets; ws++) {
     loadWorksetBucketInfo<PHAL::AlbanyTraits::Residual>(workset, ws);
     sfm[wsPhysIndex[ws]]->evaluateFields<PHAL::AlbanyTraits::Residual>(workset);
   }
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->endEvaluatingSfm();
 }
 
 void Albany::Application::registerShapeParameters()
@@ -3560,13 +3610,28 @@ postRegSetup(std::string eval)
       }
   }
   else if (eval=="Distributed Parameter Derivative") { //!!!
-    for (int ps=0; ps < fm.size(); ps++)
+    for (int ps=0; ps < fm.size(); ps++) {
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, ps));
+      fm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
       fm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
-    if (dfm!=Teuchos::null)
+    }
+    if (dfm!=Teuchos::null) {
+      std::vector<PHX::index_size_type> derivative_dimensions;
+      derivative_dimensions.push_back(
+        PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, 0));
+      dfm->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
       dfm->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+    }
     if (nfm!=Teuchos::null)
-      for (int ps=0; ps < nfm.size(); ps++)
+      for (int ps=0; ps < nfm.size(); ps++) {
+        std::vector<PHX::index_size_type> derivative_dimensions;
+        derivative_dimensions.push_back(
+          PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(this, ps));
+        nfm[ps]->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(derivative_dimensions);
         nfm[ps]->postRegistrationSetupForType<PHAL::AlbanyTraits::DistParamDeriv>(eval);
+      }
   }
 #ifdef ALBANY_SG_MP
   else if (eval=="SGResidual") {
@@ -3656,7 +3721,7 @@ postRegSetup(std::string eval)
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
 RCP<Epetra_Operator>
 Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
                                           const RCP<Epetra_Operator>& wrapInput,

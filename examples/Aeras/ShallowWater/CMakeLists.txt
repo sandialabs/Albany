@@ -10,7 +10,3 @@ add_subdirectory(TCGalewsky)
 #add_subdirectory(TC4)
 add_subdirectory(TC7)
 
-#The Spectral example runs with the AlbanyT executable only.
-if (NOT ALBANY_EPETRA) 
-add_subdirectory(Spectral)
-endif()

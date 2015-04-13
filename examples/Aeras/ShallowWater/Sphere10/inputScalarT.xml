@@ -40,11 +40,12 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../Spectral/shell4_sphere_24faces.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD9/cube_quad9_6eles.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="sphere10_quad4_scalar.exo"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Transform Type" type="string" value="Cube Sphere"/>
     <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/>

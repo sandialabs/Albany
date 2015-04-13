@@ -6,9 +6,10 @@
 
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
-#include "Phalanx_DataLayout.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Phalanx.hpp"
+#include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldAverage<EvalT, Traits>::
@@ -97,9 +98,8 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldAverage<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+  // Zero out global response
+  PHAL::set(this->global_response, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -111,9 +111,7 @@ void QCAD::ResponseFieldAverage<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   ScalarT t;
 
@@ -146,37 +144,42 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldAverage<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  #if 0
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
-//Irina TOFIX reduceAll
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
-/*
-  // we cannot pass the same object for both the send and receive buffers in reduceAll call
-  // creating a copy of the global_response, not a view
-  std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
-  PHX::MDField<ScalarT> partial_response(this->global_response);
-  partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    this->global_response.size(), &partial_response[0],
-    &this->global_response[0]);
+  //Irina TOFIX reduceAll
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
+  /*
+    // we cannot pass the same object for both the send and receive buffers in reduceAll call
+    // creating a copy of the global_response, not a view
+    std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
+    PHX::MDField<ScalarT> partial_response(this->global_response);
+    partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
+    
+    Teuchos::reduceAll(
+      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+      this->global_response.size(), &partial_response[0],
+      &this->global_response[0]);
+  */
+  #else
+  PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
 
   int iNormalizer = 1;
-  if( fabs(this->global_response[iNormalizer]) > 1e-9 ) {
+  if( fabs(this->global_response(iNormalizer)) > 1e-9 ) {
     for( int i=0; i < this->global_response.size(); i++) {
       if( i == iNormalizer ) continue;
-      this->global_response[i] /= this->global_response[iNormalizer];
+      this->global_response(i) /= this->global_response(iNormalizer);
     }
-
-    //leave the normalizer as an output of the response (index [1] in this case)
-    //this->global_response[iNormalizer] = 1.0; 
   }
+  #endif
+    
+  //leave the normalizer as an output of the response (index [1] in this case)
+  //this->global_response[iNormalizer] = 1.0; 
 
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
-*/
+  
 }
 
 // **********************************************************************

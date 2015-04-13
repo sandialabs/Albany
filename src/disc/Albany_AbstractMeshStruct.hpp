@@ -68,7 +68,7 @@ struct AbstractMeshStruct {
 
     //! Internal mesh specs type needed
 #ifdef ALBANY_SCOREC
-    enum msType { STK_MS, FMDB_VTK_MS, FMDB_EXODUS_MS };
+    enum msType { STK_MS, PUMI_MS };
 #else
     enum msType { STK_MS};
 #endif

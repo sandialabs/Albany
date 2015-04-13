@@ -16,14 +16,15 @@
 rm -f CMakeCache.txt
 
 cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
-      -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D Boost_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}" \
       -D Netcdf_LIBRARY_DIRS:FILEPATH="${NETCDF_DIR}/lib" \
       -D Netcdf_INCLUDE_DIRS:FILEPATH="${NETCDF_DIR}/include" \
-      -D BoostLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
-      -D BoostLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}/include" \
+      -D TPL_Netcdf_INCLUDE_DIRS:PATH="${NETCDF_DIR}/include" \
+      -D BoostLib_LIBRARY_DIRS:FILEPATH="${BOOST_LIB}" \
+      -D BoostLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}" \
       -D TPL_ENABLE_BoostAlbLib:BOOL=ON \
-      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}"/include \
-      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}"/lib \
+      -D BoostAlbLib_INCLUDE_DIRS:FILEPATH="${BOOST_DIR}" \
+      -D BoostAlbLib_LIBRARY_DIRS:FILEPATH="${BOOST_LIB}" \
       -D CMAKE_BUILD_TYPE:STRING=RELEASE \
       -D Trilinos_WARNINGS_AS_ERRORS_FLAGS:STRING="" \
       -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF \
@@ -33,12 +34,11 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
 \
       -D TPL_ENABLE_SuperLU:BOOL=OFF \
       -D Amesos2_ENABLE_KLU2:BOOL=ON \
-      -D SuperLU_INCLUDE_DIRS:PATH=$SUPERLUDIR/SRC \
-      -D TPL_SuperLU_LIBRARIES:PATH=$SUPERLUDIR/lib/libsuperlu_4.3.a \
+      -D SuperLU_INCLUDE_DIRS:PATH=/global/homes/i/ikalash/Install/SuperLU_4.3/SRC \
+      -D TPL_SuperLU_LIBRARIES:PATH=/global/homes/i/ikalash/Install/SuperLU_4.3/lib/libsuperlu_4.3.a \
 \
       -D Trilinos_ASSERT_MISSING_PACKAGES=OFF \
       -D Trilinos_ENABLE_Teuchos:BOOL=ON \
-      -D Teuchos_ENABLE_LONG_LONG_INT:BOOL=ON \
       -D HAVE_TEUCHOS_COMM_TIMERS=ON \
       -D Trilinos_ENABLE_Shards:BOOL=ON \
       -D Trilinos_ENABLE_Sacado:BOOL=ON \
@@ -53,17 +53,12 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D Trilinos_ENABLE_Anasazi:BOOL=ON \
       -D Trilinos_ENABLE_Belos:BOOL=ON \
       -D Trilinos_ENABLE_Phalanx:BOOL=ON \
-\
       -D Trilinos_ENABLE_Kokkos:BOOL=ON \
       -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
       -D Trilinos_ENABLE_KokkosContainers:BOOL=ON \
-      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
-      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
-      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
-      -D Kokkos_ENABLE_Serial:BOOL=ON \
-      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
-      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
-\
+      -D Trilinos_ENABLE_KokkosLinAlg:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCompat:BOOL=ON \
+      -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
       -D Trilinos_ENABLE_Intrepid:BOOL=ON \
       -D Trilinos_ENABLE_ML:BOOL=ON \
       -D Trilinos_ENABLE_MueLu:BOOL=ON \
@@ -83,19 +78,33 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
       -D Trilinos_ENABLE_SEACASExodus:BOOL=ON \
       -D Trilinos_ENABLE_Teko:BOOL=ON \
       -D TPL_FIND_SHARED_LIBS:BOOL=OFF \
+      -D BUILD_SHARED_LIBS:BOOL=OFF \
+      -D Trilinos_LINK_SEARCH_START_STATIC:BOOL=ON \
+\
+      -D Trilinos_ENABLE_Kokkos:BOOL=ON \
+      -D Trilinos_ENABLE_KokkosCore:BOOL=ON \
+      -D Phalanx_KOKKOS_DEVICE_TYPE:STRING="SERIAL" \
+      -D Phalanx_INDEX_SIZE_TYPE:STRING="INT" \
+      -D Phalanx_SHOW_DEPRECATED_WARNINGS:BOOL=OFF \
+      -D Kokkos_ENABLE_Serial:BOOL=ON \
+      -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
+      -D Kokkos_ENABLE_Pthread:BOOL=OFF \
 \
       -D Trilinos_ENABLE_TriKota:BOOL=OFF \
       -D TriKota_ENABLE_DakotaCMake:BOOL=OFF \
       -D DAKOTA_ENABLE_TESTS:BOOL=OFF \
-      -D Boost_LIBRARY_DIRS:FILEPATH="${BOOST_DIR}/lib" \
+      -D Boost_LIBRARY_DIRS:FILEPATH="${BOOST_LIB}" \
 \
       -D Trilinos_ENABLE_SEACASIoss:BOOL=ON \
       -D Trilinos_ENABLE_ThreadPool:STRING="ON" \
       -D Trilinos_ENABLE_Pamgen:BOOL=ON \
       -D TPL_ENABLE_Netcdf:BOOL=ON \
-      -D TPL_Netcdf_INCLUDE_DIRS:PATH="${NETCDF_DIR}/include" \
-      -D Netcdf_LIBRARY_DIRS:PATH="${NETCDF_DIR}/lib" \
 \
+      -D TPL_ENABLE_BLAS:BOOL=ON \
+      -D BLAS_LIBRARY_NAMES:STRING="" \
+      -D LAPACK_LIBRARY_NAMES:STRING="" \
+      -D TPL_ENABLE_GLM:BOOL=OFF \
+      -D TPL_ENABLE_Matio:BOOL=OFF \
       -D Trilinos_ENABLE_Mesquite:BOOL=OFF\
       -D Trilinos_ENABLE_Zoltan:BOOL=ON \
       -D Trilinos_ENABLE_Zoltan2:BOOL=ON\
@@ -125,17 +134,20 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=$TRILINSTALLDIR \
 \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
       -D Trilinos_VERBOSE_CONFIGURE:BOOL=OFF \
-      -D CMAKE_CXX_FLAGS:STRING="-O2" \
-      -D CMAKE_Fortran_FLAGS:STRING="-O2" \
       -D Trilinos_ENABLE_Export_Makefiles:BOOL=ON \
 \
-      -D CMAKE_C_COMPILER:FILEPATH="cc" \
+      -D MPI_USE_COMPILER_WRAPPERS:BOOL=OFF \
       -D CMAKE_CXX_COMPILER:FILEPATH="CC" \
+      -D CMAKE_C_COMPILER:FILEPATH="cc" \
       -D CMAKE_Fortran_COMPILER:FILEPATH="ftn" \
-      -D TPL_BLAS_LIBRARIES:STRING="sci_gnu_mp" \
-      -D TPL_LAPACK_LIBRARIES:STRING="sci_gnu_mp" \
+      -D Trilinos_ENABLE_Fortran=ON \
+      -D CMAKE_C_FLAGS:STRING="-O3 -DREDUCE_SCATTER_BUG" \
+      -D CMAKE_CXX_FLAGS:STRING="-O3 -DREDUCE_SCATTER_BUG -DBOOST_NO_HASH" \
+      -D Trilinos_ENABLE_SHADOW_WARNINGS=OFF \
+      -D Trilinos_ENABLE_CXX11=ON \
       -DTPL_ENABLE_Pthread:BOOL=OFF \
       -DTPL_ENABLE_BinUtils:BOOL=OFF \
+      -DTrilinos_ENABLE_ROL:BOOL=ON \
 \
       -D MPI_EXEC:FILEPATH=aprun \
       -D MPI_EXEC_MAX_NUMPROCS:STRING=4 \

@@ -128,7 +128,7 @@ ENDIF()
 
 ENDIF()
 
-# Mesh Adapt depends on SCOREC tools and FMDB
+# Mesh Adapt depends on SCOREC tools and PUMI
 IF(ALBANY_SCOREC)
 
 SET(SOURCES ${SOURCES}
@@ -138,8 +138,8 @@ SET(SOURCES ${SOURCES}
    )
 
 SET(HEADERS ${HEADERS}
+    AAdapt_MeshSizeField.hpp
     AAdapt_MeshAdapt.hpp
-    AAdapt_MeshAdapt_Def.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
    )
@@ -149,7 +149,7 @@ SET(SOURCES ${SOURCES} AAdapt_SPRSizeField.cpp)
 SET(HEADERS ${HEADERS} AAdapt_SPRSizeField.hpp)
 ENDIF()
 
-include_directories(${ALBANY_FMDB_INCLUDE_DIRS} ${FMDB_INCLUDE_DIR})
+include_directories(${ALBANY_PUMI_INCLUDE_DIRS} ${PUMI_INCLUDE_DIR})
 
 ENDIF()
 

@@ -162,8 +162,18 @@ Albany::STKDiscretization::getMap(const std::string& field_name) const {
 }
 
 Teuchos::RCP<const Epetra_Map>
+Albany::STKDiscretization::getNodeMap(const std::string& field_name) const {
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).node_map;
+}
+
+Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getOverlapMap(const std::string& field_name) const {
   return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_map;
+}
+
+Teuchos::RCP<const Epetra_Map>
+Albany::STKDiscretization::getOverlapNodeMap(const std::string& field_name) const {
+  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_node_map;
 }
 
 Teuchos::RCP<const Epetra_CrsGraph>
@@ -289,7 +299,7 @@ Albany::STKDiscretization::getCoordinates() const
 }
 
 // These methods were added to support mesh adaptation, which is currently
-// limited to FMDBDiscretization.
+// limited to PUMIDiscretization.
 void Albany::STKDiscretization::
 setCoordinates(const Teuchos::ArrayRCP<const double>& c)
 {
@@ -320,6 +330,23 @@ Albany::STKDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
+  else if (transformType == "Spherical") {
+  //This form takes a mesh of a square / cube and transforms it into a mesh of a circle/sphere
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Spherical!" << endl;
+#endif
+    const int numDim = stkMeshStruct->numDim;
+    for (int i=0; i < numOverlapNodes; i++)  {
+      double* x = stk::mesh::field_data(*coordinates_field, overlapnodes[i]);
+      double r = 0.0; 
+      for (int n=0; n<numDim; n++) 
+        r += x[n]*x[n]; 
+      r = sqrt(r);
+      for (int n=0; n<numDim; n++) 
+      //FIXME: there could be division by 0 here! 
+        x[n] = x[n]/r;  
+    }
+  }
   else if (transformType == "ISMIP-HOM Test A") {
 #ifdef OUTPUT_TO_SCREEN
     *out << "Test A!" << endl;
@@ -1578,12 +1605,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
   }
 
   typedef Albany::AbstractSTKFieldContainer::ScalarValueState ScalarValueState;
-  typedef Albany::AbstractSTKFieldContainer::QPScalarState QPScalarState ;
+  typedef Albany::AbstractSTKFieldContainer::QPScalarState QPScalarState;
   typedef Albany::AbstractSTKFieldContainer::QPVectorState QPVectorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensorState QPTensorState;
   typedef Albany::AbstractSTKFieldContainer::QPTensor3State QPTensor3State;
 
-  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState ;
+  typedef Albany::AbstractSTKFieldContainer::ScalarState ScalarState;
   typedef Albany::AbstractSTKFieldContainer::VectorState VectorState;
   typedef Albany::AbstractSTKFieldContainer::TensorState TensorState;
 
@@ -1615,13 +1642,13 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpvs)->name()] = ar;
     }
-    for (QPTensorState::iterator qpts = qptensor_states.begin();
-              qpts != qptensor_states.end(); ++qpts){
-      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qpts, buck);
+    for (QPTensorState::iterator qptsa = qptensor_states.begin();
+              qptsa != qptensor_states.end(); ++qptsa){
+      BucketArray<Albany::AbstractSTKFieldContainer::QPTensorFieldType> array(**qptsa, buck);
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " QPTFT dim[3]: " << array.dimension(3) << std::endl;
       MDArray ar = array;
-      stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
+      stateArrays.elemStateArrays[b][(*qptsa)->name()] = ar;
     }
     for (QPTensor3State::iterator qpts = qptensor3_states.begin();
               qpts != qptensor3_states.end(); ++qpts){
@@ -1631,15 +1658,16 @@ void Albany::STKDiscretization::computeWorksetInfo()
       MDArray ar = array;
       stateArrays.elemStateArrays[b][(*qpts)->name()] = ar;
     }
-    for (ScalarValueState::iterator svs = scalarValue_states.begin();
-              svs != scalarValue_states.end(); ++svs){
+//    for (ScalarValueState::iterator svs = scalarValue_states.begin();
+//              svs != scalarValue_states.end(); ++svs){
+    for (int i = 0; i < scalarValue_states.size(); i++){
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*svs], size);
+      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*scalarValue_states[i]], size);
       MDArray ar = array;
 //Debug
 //std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
 //std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
+      stateArrays.elemStateArrays[b][*scalarValue_states[i]] = ar;
     }
   }
 
@@ -1874,12 +1902,14 @@ void Albany::STKDiscretization::computeNodeSets()
 				      nodes );
 
     nodeSets[ns->first].resize(nodes.size());
+    nodeSetGIDs[ns->first].resize(nodes.size());
     nodeSetCoords[ns->first].resize(nodes.size());
 //    nodeSetIDs.push_back(ns->first); // Grab string ID
     *out << "STKDisc: nodeset "<< ns->first <<" has size " << nodes.size() << "  on Proc 0." << std::endl;
     for (std::size_t i=0; i < nodes.size(); i++) {
       GO node_gid = gid(nodes[i]);
       int node_lid = node_mapT->getLocalElement(node_gid);
+      nodeSetGIDs[ns->first][i] = node_gid;
       nodeSets[ns->first][i].resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)  nodeSets[ns->first][i][eq] = getOwnedDOF(node_lid,eq);
       nodeSetCoords[ns->first][i] = stk::mesh::field_data(*coordinates_field, nodes[i]);

@@ -44,6 +44,16 @@ public:
     }
   };
 
+  //! Data structure for Optimization-Based Coupling
+  struct OBCDataPoint {
+    double initialCoords[3];
+    double currentCoords[3];
+    int peridigmGlobalId;
+    stk::mesh::Entity albanyElement;
+    CellTopologyData cellTopologyData;
+    double naturalCoords[3];
+  };
+
   //! Singleton.
   static PeridigmManager & self();
 
@@ -51,6 +61,12 @@ public:
   void initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   Teuchos::RCP<Albany::AbstractDiscretization> disc,
 		  const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+  //! Identify the overlapping solid element for each peridynamic sphere element (applies only to overlapping discretizations).
+  void obcOverlappingElementSearch();
+
+  //! Evaluate the functional for optimization-based coupling
+  double obcEvaluateFunctional();
 
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
@@ -65,7 +81,7 @@ public:
   void writePeridigmSubModel(RealType currentTime);
 
   //! Retrieve the force for the given global degree of freedom (evaluateInternalForce() must be called prior to getForce()).
-  double getForce(int globalId, int dof);
+  double getForce(int globalAlbanyNodeId, int dof);
 
   //! Retrieve the partial stress tensors for the quadrature points in the given element (evaluateInternalForce() must be called prior to getPartialStress()).
   void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues);
@@ -78,6 +94,9 @@ public:
 
   //! Get the list of peridynamics variables that will be written to Exodus.
   std::vector<OutputField> getOutputFields();
+
+  //! Set Dirichlet Fields;
+  void setDirichletFields(Teuchos::RCP<Albany::AbstractDiscretization> disc);
 
 private:
 
@@ -94,6 +113,8 @@ private:
 
   bool hasPeridynamics;
 
+  bool enableOptimizationBasedCoupling;
+
   double previousTime;
   double currentTime;
   double timeStep;
@@ -108,7 +129,7 @@ private:
 
   std::vector<int> peridigmNodeGlobalIds;
 
-  std::map<int,int> peridigmNodeGlobalIdToLocalId;
+  std::map<int,int> peridigmGlobalIdToPeridigmLocalId;
 
   std::vector<int> sphereElementGlobalNodeIds;
 
@@ -116,7 +137,13 @@ private:
 
   std::map< int, std::vector<int> > albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
 
+  std::vector<OBCDataPoint> obcDataPoints;
+
+  Teuchos::RCP<Epetra_Vector> obcPeridynamicNodeCurrentCoords;
+
   int cubatureDegree;
+
+  Teuchos::RCP<Tpetra_Vector> albanyOverlapSolutionVector;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();

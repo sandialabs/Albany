@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "FieldNameMap.hpp"
+#include "Albany_Utils.hpp"
 
 namespace LCM {
 
@@ -37,6 +38,12 @@ namespace LCM {
     name_map->insert( std::make_pair("F","F") );
     name_map->insert( std::make_pair("J","J") );
     name_map->insert( std::make_pair("Velocity_Gradient","Velocity_Gradient") );
+    // Crystal-plasticity model
+    const int max_slip_systems = 24;
+    for (int i=0; i < max_slip_systems; ++i) {
+      std::string g = Albany::strint("gamma_", i+1);
+      name_map->insert( std::make_pair(g,g) );
+    }
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );

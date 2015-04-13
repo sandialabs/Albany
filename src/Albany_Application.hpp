@@ -56,7 +56,9 @@
 #include "EpetraExt_MultiComm.h"
 
 #include "LOCA_Epetra_Group.H"
+#ifdef ALBANY_TEKO
 #include "Teko_InverseLibrary.hpp"
+#endif
 #endif
 
 #ifdef ALBANY_MOR
@@ -717,7 +719,7 @@ namespace Albany {
     //! Private to prohibit copying
     Application& operator=(const Application&);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
     //! Call to Teko to build strided block operator
     Teuchos::RCP<Epetra_Operator> buildWrappedOperator(
                            const Teuchos::RCP<Epetra_Operator>& Jac,
@@ -732,6 +734,8 @@ namespace Albany {
 
   public:
 
+
+   
     //! Routine to get workset (bucket) size info needed by all Evaluation types
     template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
@@ -749,6 +753,9 @@ namespace Albany {
     void loadWorksetJacobianInfo(PHAL::Workset& workset,
                 const double& alpha, const double& beta, const double& omega);
 
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > 
+    getEnrichedMeshSpecs() const {return meshSpecs; } 
+ 
     //! Routine to load common nodeset info into workset
     void loadWorksetNodesetInfo(PHAL::Workset& workset);
 
@@ -866,6 +873,45 @@ namespace Albany {
     Teuchos::RCP<MORFacade> getMorFacade();
 #endif
 #endif
+
+#ifdef ALBANY_LCM
+  // Needed for coupled Schwarz
+  public:
+    void
+    setApplications(
+        Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > ca)
+    {apps_ = ca;}
+
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+    getApplications() const
+    {return apps_;}
+
+    void
+    setAppIndex(int const i)
+    {app_index_ = i;}
+
+    int
+    getAppIndex() const
+    {return app_index_;}
+
+    void
+    setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>> & anim)
+    {app_name_index_map_ = anim;}
+
+    Teuchos::RCP<std::map<std::string, int>>
+    getAppNameIndexMap() const
+    {return app_name_index_map_;}
+
+  private:
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+    apps_;
+
+    int
+    app_index_;
+
+    Teuchos::RCP<std::map<std::string, int>>
+    app_name_index_map_;
+#endif //ALBANY_LCM
 
   protected:
 
@@ -999,7 +1045,7 @@ namespace Albany {
 
     unsigned int neq, spatial_dimension, tangent_deriv_dim;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
     //! Teko stuff
     Teuchos::RCP<Teko::InverseLibrary> inverseLib;
     Teuchos::RCP<Teko::InverseFactory> inverseFac;

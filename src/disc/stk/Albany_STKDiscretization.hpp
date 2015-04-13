@@ -109,8 +109,14 @@ namespace Albany {
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
 
+    //! Get field node map
+    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const;
+
     //! Get field overlapped DOF map
     Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
+
+    //! Get field overlapped node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const;
 #endif
 
 #ifdef ALBANY_EPETRA
@@ -140,6 +146,7 @@ namespace Albany {
 
     //! Get Node set lists (typedef in Albany_AbstractDiscretization.hpp)
     const NodeSetList& getNodeSets() const { return nodeSets; };
+    const NodeSetGIDsList& getNodeSetGIDs() const { return nodeSetGIDs; };
     const NodeSetCoordList& getNodeSetCoords() const { return nodeSetCoords; };
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
@@ -158,6 +165,9 @@ namespace Albany {
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     const std::vector<IDArray>& getElNodeEqID(const std::string& field_name) const
         {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
+
+    const NodalDOFManager& getDOFManager(const std::string& field_name) const
+            {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
 #endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
@@ -393,6 +403,7 @@ namespace Albany {
 
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;
+    Albany::NodeSetGIDsList nodeSetGIDs;
     Albany::NodeSetCoordList nodeSetCoords;
 
     //! side sets stored as std::map(string ID, SideArray classes) per workset (std::vector across worksets)

@@ -8,16 +8,17 @@
 #ifndef AADAPT_SPRSIZEFIELD_HPP
 #define AADAPT_SPRSIZEFIELD_HPP
 
-#include "AlbPUMI_FMDBDiscretization.hpp"
+#include "Albany_PUMIDiscretization.hpp"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
+#include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class SPRSizeField : public ma::IsotropicFunction {
+class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
-    SPRSizeField(const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& disc);
+    SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
   
     ~SPRSizeField();
 
@@ -25,8 +26,7 @@ class SPRSizeField : public ma::IsotropicFunction {
 
     int getCubatureDegree(int num_qp);
 
-    void setParams(double element_size, double err_bound,
-        const std::string state_var_name);
+    void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 
     void computeError();
 
@@ -36,11 +36,11 @@ class SPRSizeField : public ma::IsotropicFunction {
 
   private:
 
-    apf::Mesh2* mesh;
+    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
     apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
-    Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization> pumi_disc;
+    Teuchos::RCP<Albany::AbstractPUMIDiscretization> pumi_disc;
 
     Teuchos::RCP<const Teuchos_Comm> commT;
 

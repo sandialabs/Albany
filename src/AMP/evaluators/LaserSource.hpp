@@ -59,9 +59,8 @@ private:
   void init_constant_laser_power(ScalarT value_laser_power, Teuchos::ParameterList& p);
   void init_constant_powder_hemispherical_reflectivity(ScalarT value_powder_hemispherical_reflectivity, Teuchos::ParameterList& p);
 
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> coord_;
-
-  PHX::MDField<ScalarT,Cell,Node> laser_source_;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coord_;
+  PHX::MDField<ScalarT,Cell,QuadPoint> laser_source_;
 
   unsigned int num_qps_;
   unsigned int num_dims_;

@@ -163,6 +163,24 @@ int main(int ac, char* av[])
       Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDetDefGradP));
 
   //---------------------------------------------------------------------------
+  // Small strain tensor
+  // initially set the strain tensor to zeros
+
+  Teuchos::ArrayRCP<ScalarT> strain(9);
+  for (int i(0); i < 9; ++i)
+    strain[i] = 0.0;
+
+  // SetField evaluator, which will be used to manually assign a value
+  // to the strain field
+  Teuchos::ParameterList setStrainP("SetFieldStrain");
+  setStrainP.set<std::string>("Evaluated Field Name", "Strain");
+  setStrainP.set<Teuchos::RCP<PHX::DataLayout> >(
+      "Evaluated Field Data Layout",
+      dl->qp_tensor);
+  setStrainP.set<Teuchos::ArrayRCP<ScalarT> >("Field Values", strain);
+  Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldStrain = Teuchos::rcp(
+      new LCM::SetField<Residual, Traits>(setStrainP));
+  //---------------------------------------------------------------------------
   // Instantiate a field manager
   PHX::FieldManager<Traits> fieldManager;
 
@@ -172,10 +190,12 @@ int main(int ac, char* av[])
   // Register the evaluators with the field manager
   fieldManager.registerEvaluator<Residual>(setFieldDefGrad);
   fieldManager.registerEvaluator<Residual>(setFieldDetDefGrad);
+  fieldManager.registerEvaluator<Residual>(setFieldStrain);
 
   // Register the evaluators with the state field manager
   stateFieldManager.registerEvaluator<Residual>(setFieldDefGrad);
   stateFieldManager.registerEvaluator<Residual>(setFieldDetDefGrad);
+  stateFieldManager.registerEvaluator<Residual>(setFieldStrain);
 
   // Instantiate a state manager
   Albany::StateManager stateMgr;
@@ -239,9 +259,14 @@ int main(int ac, char* av[])
   fieldManager.registerEvaluator<Residual>(setFieldDT);
   stateFieldManager.registerEvaluator<Residual>(setFieldDT);
 
+  // check if the material wants the tangent to be computed
+  bool check_stability;
+  check_stability = mpsParams.get<bool>("Check Stability", false);
+  paramList.set<bool>("Compute Tangent", check_stability);
+
   //---------------------------------------------------------------------------
-  std::cout << "// Constitutive Model Parameters"
-            << std::endl;
+  //std::cout << "// Constitutive Model Parameters"
+            //<< std::endl;
   Teuchos::ParameterList cmpPL;
   paramList.set<Teuchos::RCP<std::map<std::string, std::string> > >(
       "Name Map",
@@ -258,8 +283,8 @@ int main(int ac, char* av[])
   stateFieldManager.registerEvaluator<Residual>(CMP);
 
   //---------------------------------------------------------------------------
-  std::cout << "// Constitutive Model Interface Evaluator"
-            << std::endl;
+  //std::cout << "// Constitutive Model Interface Evaluator"
+           // << std::endl;
   Teuchos::ParameterList cmiPL;
   cmiPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
   if (have_temperature) {
@@ -300,16 +325,13 @@ int main(int ac, char* av[])
   std::cout << "// Bifurcation Check Evaluator"
             << std::endl;
 
-  // check if the material wants the tangent to be checked
-  bool check_stability;
-  check_stability = mpsParams.get<bool>("Check Stability", false);
-
   if (check_stability) {
     Teuchos::ParameterList bcPL;
     bcPL.set<Teuchos::ParameterList*>("Material Parameters", &paramList);
     bcPL.set<std::string>("Material Tangent Name", "Material Tangent");
     bcPL.set<std::string>("Ellipticity Flag Name", "Ellipticity_Flag");
     bcPL.set<std::string>("Bifurcation Direction Name", "Direction");
+    bcPL.set<std::string>("Min detA Name", "Min detA");
     Teuchos::RCP<LCM::BifurcationCheck<Residual, Traits> > BC = Teuchos::rcp(
         new LCM::BifurcationCheck<Residual, Traits>(bcPL, dl));
     fieldManager.registerEvaluator<Residual>(BC);
@@ -342,11 +364,26 @@ int main(int ac, char* av[])
     ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
     fieldManager.registerEvaluator<Residual>(ev);
     stateFieldManager.registerEvaluator<Residual>(ev);
+    
+    // register min(det(A))
+    p = stateMgr.registerStateVariable(
+        "Min detA",
+        dl->qp_scalar,
+        dl->dummy,
+        element_block_name,
+        "scalar",
+        0.0,
+        false,
+        true);
+    ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+    fieldManager.registerEvaluator<Residual>(ev);
+    stateFieldManager.registerEvaluator<Residual>(ev);    
+    
   }
 
   //---------------------------------------------------------------------------
-  std::cout << "// register deformation gradient"
-            << std::endl;
+  //std::cout << "// register deformation gradient"
+           // << std::endl;
   p = stateMgr.registerStateVariable(
       "F",
       dl->qp_tensor,
@@ -360,13 +397,28 @@ int main(int ac, char* av[])
   fieldManager.registerEvaluator<Residual>(ev);
   stateFieldManager.registerEvaluator<Residual>(ev);
   //---------------------------------------------------------------------------
+  //std::cout << "// register small strain tensor"
+           // << std::endl;
+  p = stateMgr.registerStateVariable(
+      "Strain",
+      dl->qp_tensor,
+      dl->dummy,
+      element_block_name,
+      "scalar",
+      0.0,
+      false,
+      true);
+  ev = Teuchos::rcp(new PHAL::SaveStateField<Residual, Traits>(*p));
+  fieldManager.registerEvaluator<Residual>(ev);
+  stateFieldManager.registerEvaluator<Residual>(ev);
+  //---------------------------------------------------------------------------
   //
   Traits::SetupData setupData = "Test String";
-  std::cout << "Calling postRegistrationSetup" << std::endl;
+  //std::cout << "Calling postRegistrationSetup" << std::endl;
   fieldManager.postRegistrationSetup(setupData);
 
-  std::cout << "// set the required fields for the state manager"
-            << std::endl;
+  //std::cout << "// set the required fields for the state manager"
+            //<< std::endl;
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
       new PHX::MDALayout<Dummy>(0));
   std::vector<std::string> responseIDs = stateMgr.getResidResponseIDsToRequire(
@@ -382,7 +434,7 @@ int main(int ac, char* av[])
   }
   stateFieldManager.postRegistrationSetup("");
 
-  std::cout << "Process using 'dot -Tpng -O <name>'\n";
+  //std::cout << "Process using 'dot -Tpng -O <name>'\n";
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
@@ -467,21 +519,21 @@ int main(int ac, char* av[])
   Intrepid::Tensor<ScalarT> log_F_tensor = Intrepid::log(F_tensor);
 
   std::cout << "F\n" << F_tensor << std::endl;
-  std::cout << "log F\n" << log_F_tensor << std::endl;
+  //std::cout << "log F\n" << log_F_tensor << std::endl;
 
   //
   // Setup loading scenario and instantiate evaluatFields
   //
   for (int istep(0); istep <= number_steps; ++istep) {
 
-    std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
+    //std::cout << "****** in MPS step " << istep << " ****** " << std::endl;
     // alpha \in [0,1]
     double alpha = double(istep) / number_steps;
-    std::cout << "alpha: " << alpha << std::endl;
+    //std::cout << "alpha: " << alpha << std::endl;
     Intrepid::Tensor<ScalarT> scaled_log_F_tensor = alpha * log_F_tensor;
     Intrepid::Tensor<ScalarT> current_F = Intrepid::exp(scaled_log_F_tensor);
 
-    std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
+    //std::cout << "scaled log F\n" << scaled_log_F_tensor << std::endl;
     std::cout << "current F\n" << current_F << std::endl;
 
     for (int i = 0; i < 3; ++i) {
@@ -492,6 +544,19 @@ int main(int ac, char* av[])
 
     // jacobian
     detdefgrad[0] = Intrepid::det(current_F);
+
+    // small strain tensor
+    Intrepid::Tensor<ScalarT> current_strain;
+    current_strain = 0.5 * (current_F + Intrepid::transpose(current_F)) 
+      - Intrepid::eye<ScalarT>(3);
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        strain[3 * i + j] = current_strain(i, j);
+      }
+    }
+
+    //std::cout << "current strain\n" << current_strain << std::endl;
 
     // Call the evaluators, evaluateFields() is the function that
     // computes stress based on deformation gradient
@@ -524,7 +589,7 @@ int main(int ac, char* av[])
     }
 
     // Call the state field manager
-    std::cout << "+++ calling the stateFieldManager\n";
+    //std::cout << "+++ calling the stateFieldManager\n";
     stateFieldManager.preEvaluate<Residual>(workset);
     stateFieldManager.evaluateFields<Residual>(workset);
     stateFieldManager.postEvaluate<Residual>(workset);

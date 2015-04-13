@@ -113,7 +113,7 @@ endif()
   ENDIF()
 
   IF(ALBANY_SCOREC)
-    add_subdirectory(Heat3DFMDB)
+    add_subdirectory(Heat3DPUMI)
   ENDIF()
 
 # DEMO PDES ###############
@@ -190,6 +190,12 @@ ENDIF()
 
 IF(ALBANY_SEE)
   add_subdirectory(SEE)
+ENDIF()
+
+# AMP   ##################
+
+IF(ALBANY_AMP)
+  add_subdirectory(AMP)
 ENDIF()
 
 IF(ALBANY_PERFORMANCE_TESTS)

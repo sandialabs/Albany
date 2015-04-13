@@ -169,7 +169,7 @@ set(INCLUDE_DIRS
   ${LCM_DIR}/models
   ${LCM_DIR}/utils
   ${LCM_DIR}/utils/topology
-  ${ALBANY_FMDB_INCLUDE_DIRS}
+  ${ALBANY_PUMI_INCLUDE_DIRS}
   ${Trilinos_TPL_INCLUDE_DIRS}
 )
 
@@ -200,6 +200,7 @@ IF (LCM_TEST_EXES)
   add_executable(MeshComponents test/utils/MeshComponents.cc)
   add_executable(NodeUpdate test/utils/NodeUpdate.cc)
   add_executable(PartitionTest test/utils/PartitionTest.cc)
+  add_executable(BifurcationTest test/utils/BifurcationTest.cc)
   add_executable(Subdivision test/utils/Subdivision.cc)
   add_executable(MinSurfaceMPS test/utils/MinSurfaceMPS.cc)
   add_executable(MinSurfaceOutput test/utils/MinSurfaceOutput.cc)
@@ -323,14 +324,14 @@ ENDIF ()
 
 IF(BUILD_SHARED_LIBS)
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS albanyLib albanyAdapt fmdb albanySTK LCM albanyLib)
+    SET(LCM_UT_LIBS albanyLib albanyAdapt pumi albanySTK LCM albanyLib)
   ELSE()
     SET(LCM_UT_LIBS albanyLib albanyAdapt albanySTK LCM albanyLib)
   ENDIF()
 ELSE(BUILD_SHARED_LIBS)
   # We really don't link to anything in Hydride
   IF(ALBANY_SCOREC)
-    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib fmdb albanySTK albanyLib)
+    SET(LCM_UT_LIBS LCM albanyAdapt albanyLib pumi albanySTK albanyLib)
   ELSE()
     SET(LCM_UT_LIBS LCM albanyAdapt albanyLib albanySTK albanyLib )
   ENDIF()
@@ -346,6 +347,7 @@ IF (LCM_TEST_EXES)
   target_link_libraries(MeshComponents ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(NodeUpdate ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(PartitionTest ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(BifurcationTest ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(Subdivision ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(MinSurfaceMPS ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(MinSurfaceOutput ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})

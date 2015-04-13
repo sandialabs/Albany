@@ -192,7 +192,6 @@ Aeras::SpectralDiscretization::getOverlapJacobianGraphT() const
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getNodeMap() const
 {
-  //dp-remove Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   return node_map;
 }
 
@@ -200,6 +199,20 @@ Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getOverlapNodeMap() const
 {
   return overlap_node_map;
+}
+
+Teuchos::RCP<const Epetra_Map>
+Aeras::SpectralDiscretization::getNodeMap(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
+}
+
+Teuchos::RCP<const Epetra_Map>
+Aeras::SpectralDiscretization::getOverlapNodeMap(const std::string& field_name) const
+{
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
 }
 #endif
 
@@ -336,7 +349,7 @@ Aeras::SpectralDiscretization::getCoordinates() const
 }
 
 // These methods were added to support mesh adaptation, which is currently
-// limited to FMDBDiscretization.
+// limited to PUMIDiscretization.
 void Aeras::SpectralDiscretization::
 setCoordinates(const Teuchos::ArrayRCP<const double>& c)
 {
@@ -358,7 +371,8 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 // transformMesh() as this is for now an Aeras-only class.  The
 // setting of the schar mountain transformation needs to be fixed to
 // use the new (enriched) nodes rather than the nodes pulled from STK.
-// This is not critical -- Schar Mountain transformation only called for XZ Hydrostatic equations.
+// This is not critical -- Schar Mountain transformation only called for XZ Hydrostatic equations. 
+//
 void
 Aeras::SpectralDiscretization::transformMesh()
 {
@@ -367,6 +381,27 @@ Aeras::SpectralDiscretization::transformMesh()
   std::string transformType = stkMeshStruct->transformType;
 
   if (transformType == "None") {}
+  else if (transformType == "Spherical") { //This works in Aeras_SpectralDiscretization (only transform) [IKT, 3/25/15]
+  //This form takes a mesh of a square / cube and transforms it into a mesh of a circle/sphere
+#ifdef OUTPUT_TO_SCREEN
+    *out << "Spherical" << endl;
+#endif
+    const int numDim  = stkMeshStruct->numDim;
+    for (int ws = 0; ws < coords.size(); ws++) { //workset
+      for (int e = 0; e < coords[ws].size(); e++) {  // cell
+        for (int j = 0; j < coords[ws][e].size(); j++)  {// node
+          double r = 0.0; 
+          for (int n=0; n<numDim; n++) //dimensions  
+             r += coords[ws][e][j][n]*coords[ws][e][j][n]; 
+          r = sqrt(r);
+          for (int n=0; n<numDim; n++) { //dimensions
+            //FIXME: there could be division by 0 here! 
+            coords[ws][e][j][n] = coords[ws][e][j][n]/r;  
+          }
+        }
+      }
+    }
+  }
   else if (transformType == "Aeras Schar Mountain")
   {
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Error: transformMesh() is not implemented yet in Aeras::SpectralDiscretiation!" << std::endl);
@@ -1078,7 +1113,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       edgeNodes = bulkData.begin_nodes(edges[1]);
       edgeID = gid(edges[1]);
       for (unsigned inode = 1; inode < np-1; ++inode)
-        if (edgeNodes[1] == nodes[1])
+        if (edgeNodes[0] == nodes[1])
           // buffer[inode][np-1] = enrichedEdges[edgeID][inode];
           wsElNodeID[ibuck][ielem][inode*np + (np-1)] = enrichedEdges[edgeID][inode];
         else
@@ -1089,7 +1124,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       edgeNodes = bulkData.begin_nodes(edges[2]);
       edgeID = gid(edges[2]);
       for (unsigned inode = 1; inode < np-1; ++inode)
-        if (edgeNodes[2] == nodes[2])
+        if (edgeNodes[0] == nodes[2])
           // buffer[np-1][inode] = enrichedEdges[edgeID][np-inode-1];
           wsElNodeID[ibuck][ielem][(np-1)*np + inode] = enrichedEdges[edgeID][np-inode-1];
         else
@@ -1100,7 +1135,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       edgeNodes = bulkData.begin_nodes(edges[3]);
       edgeID = gid(edges[3]);
       for (unsigned inode = 1; inode < np-1; ++inode)
-        if (edgeNodes[3] == nodes[3])
+        if (edgeNodes[0] == nodes[3])
           // buffer[inode][0] = enrichedEdges[edgeID][np-inode-1];
           wsElNodeID[ibuck][ielem][inode*np] = enrichedEdges[edgeID][np-inode-1];
         else
@@ -1113,7 +1148,7 @@ void Aeras::SpectralDiscretization::enrichMesh()
       for (unsigned ii = 0; ii < np-2; ++ii)
         for (unsigned jj = 0; jj < np-2; ++jj)
           // buffer[ii+1][jj+1] = offset + ii * (np-2) + jj;
-          wsElNodeID[ibuck][ielem][(ii+1)*np + (jj+1)] = offset + ii * (np-2) + jj;
+          wsElNodeID[ibuck][ielem][(ii+1)*np + (jj+1)] = offset + ii * (np-2) + jj - 1;
     }
   }
 
@@ -2099,12 +2134,12 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
          svs != scalarValue_states.end(); ++svs)
     {
       const int size = 1;
-      shards::Array<double, shards::NaturalOrder, Cell> array(&time[*svs], size);
+      shards::Array<double, shards::NaturalOrder, Cell> array(&time[**svs], size);
       Albany::MDArray ar = array;
       // Debug
       // std::cout << "Buck.size(): " << buck.size() << " SVState dim[0]: " << array.dimension(0) << std::endl;
-      // std::cout << "SV Name: " << *svs << " address : " << &array << std::endl;
-      stateArrays.elemStateArrays[b][*svs] = ar;
+      // std::cout << "SV Name: " << **svs << " address : " << &array << std::endl;
+      stateArrays.elemStateArrays[b][**svs] = ar;
     }
   }
 
@@ -3181,11 +3216,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
   Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
-  // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
-  // enriched coordinates This function is not critical and only
-  // called for XZ hydrostatic equations.
-  transformMesh();
-
   computeWorksetInfo();
 
   // IKT, 2/16/15: moving computeGraphs() to after
@@ -3195,6 +3225,11 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
   computeCoords();
+
+  // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
+  // enriched coordinates This function is not critical and only
+  // called for XZ hydrostatic equations.
+  transformMesh();
 
  // IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN

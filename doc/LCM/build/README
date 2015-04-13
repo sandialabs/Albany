@@ -9,7 +9,7 @@ suffice for building and running.
 Four parameters are passed to the script:
 
 package [trilinos|albany]
-toolchain [gcc|clang]
+toolchain [gcc|clang|intel]
 build type [debug|release]
 number of processors (default is 1)
 

@@ -106,6 +106,7 @@ cmake \
  -D Kokkos_ENABLE_Serial:BOOL=ON \
  -D Kokkos_ENABLE_OpenMP:BOOL=OFF \
  -D Kokkos_ENABLE_Pthread:BOOL=OFF \
+ -D HAVE_INTREPID_KOKKOSCORE:BOOL=ON \
 \
  ../
 

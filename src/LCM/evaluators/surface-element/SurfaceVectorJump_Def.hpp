@@ -11,91 +11,99 @@
 namespace LCM {
 
 //**********************************************************************
-  template<typename EvalT, typename Traits>
-  SurfaceVectorJump<EvalT, Traits>::
-  SurfaceVectorJump(const Teuchos::ParameterList& p,
-                    const Teuchos::RCP<Albany::Layouts>& dl) :
-      cubature     (p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")), 
-      intrepidBasis(p.get<Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > >("Intrepid Basis")), 
-      vector       (p.get<std::string>("Vector Name"),dl->node_vector),
-      jump         (p.get<std::string>("Vector Jump Name"),dl->qp_vector)
-  {
-    this->addDependentField(vector);
+template<typename EvalT, typename Traits>
+SurfaceVectorJump<EvalT, Traits>::
+SurfaceVectorJump(const Teuchos::ParameterList & p,
+    const Teuchos::RCP<Albany::Layouts> & dl) :
+    cubature_(p.get<Teuchos::RCP<Intrepid::Cubature<RealType> > >("Cubature")),
+    intrepid_basis_(p.get<Teuchos::RCP<Intrepid::Basis<RealType,
+        Intrepid::FieldContainer<RealType> > > >(
+            "Intrepid Basis")),
+    vector_(p.get<std::string>("Vector Name"), dl->node_vector),
+    jump_(p.get<std::string>("Vector Jump Name"), dl->qp_vector)
+{
+  this->addDependentField(vector_);
 
-    this->addEvaluatedField(jump);
+  this->addEvaluatedField(jump_);
 
-    this->setName("Surface Vector Jump" + PHX::typeAsString<EvalT>());
+  this->setName("Surface Vector Jump" + PHX::typeAsString<EvalT>());
 
-    std::vector<PHX::DataLayout::size_type> dims;
-    dl->node_vector->dimensions(dims);
-    worksetSize = dims[0];
-    numNodes = dims[1];
-    numDims = dims[2];
+  std::vector<PHX::DataLayout::size_type> dims;
+  dl->node_vector->dimensions(dims);
+  workset_size_ = dims[0];
+  num_nodes_ = dims[1];
+  num_dims_ = dims[2];
 
-    numQPs = cubature->getNumPoints();
+  num_qps_ = cubature_->getNumPoints();
 
-    numPlaneNodes = numNodes / 2;
-    numPlaneDims = numDims - 1;
+  num_plane_nodes_ = num_nodes_ / 2;
+  num_plane_dims_ = num_dims_ - 1;
 
 #ifdef ALBANY_VERBOSE
-    std::cout << "in Surface Vector Jump" << std::endl;
-    std::cout << " numPlaneNodes: " << numPlaneNodes << std::endl;
-    std::cout << " numPlaneDims: " << numPlaneDims << std::endl;
-    std::cout << " numQPs: " << numQPs << std::endl;
-    std::cout << " cubature->getNumPoints(): " << cubature->getNumPoints() << std::endl;
-    std::cout << " cubature->getDimension(): " << cubature->getDimension() << std::endl;
+  std::cout << "in Surface Vector Jump" << '\n';
+  std::cout << " num_plane_nodes_: " << num_plane_nodes_ << '\n';
+  std::cout << " num_plane_dims_: " << num_plane_dims_ << '\n';
+  std::cout << " num_qps_: " << num_qps_ << '\n';
+  std::cout << " cubature_->getNumPoints(): ";
+  std::cout << cubature_->getNumPoints() << '\n';
+  std::cout << " cubature_->getDimension(): ";
+  std::cout << cubature_->getDimension() << '\n';
 #endif
-    
-    // Allocate Temporary FieldContainers
-    refValues.resize(numPlaneNodes, numQPs);
-    refGrads.resize(numPlaneNodes, numQPs, numPlaneDims);
-    refPoints.resize(numQPs, numPlaneDims);
-    refWeights.resize(numQPs);
 
-    // Pre-Calculate reference element quantitites
-    cubature->getCubature(refPoints, refWeights);
-    intrepidBasis->getValues(refValues, refPoints, Intrepid::OPERATOR_VALUE);
-    intrepidBasis->getValues(refGrads, refPoints, Intrepid::OPERATOR_GRAD);
-  }
+  // Allocate Temporary FieldContainers
+  ref_values_.resize(num_plane_nodes_, num_qps_);
+  ref_grads_.resize(num_plane_nodes_, num_qps_, num_plane_dims_);
+  ref_points_.resize(num_qps_, num_plane_dims_);
+  ref_weights_.resize(num_qps_);
 
-  //**********************************************************************
-  template<typename EvalT, typename Traits>
-  void SurfaceVectorJump<EvalT, Traits>::postRegistrationSetup(
-      typename Traits::SetupData d, PHX::FieldManager<Traits>& fm)
-  {
-    this->utils.setFieldData(vector, fm);
-    this->utils.setFieldData(jump, fm);
-  }
+  // Pre-Calculate reference element quantitites
+  cubature_->getCubature(ref_points_, ref_weights_);
+  intrepid_basis_->getValues(
+      ref_values_,
+      ref_points_,
+      Intrepid::OPERATOR_VALUE);
+  intrepid_basis_->getValues(ref_grads_, ref_points_, Intrepid::OPERATOR_GRAD);
+}
 
-  //**********************************************************************
-  template<typename EvalT, typename Traits>
-  void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
-      typename Traits::EvalData workset)
-  {
-    Intrepid::Vector<ScalarT> vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void SurfaceVectorJump<EvalT, Traits>::postRegistrationSetup(
+    typename Traits::SetupData d, PHX::FieldManager<Traits> & fm)
+{
+  this->utils.setFieldData(vector_, fm);
+  this->utils.setFieldData(jump_, fm);
+}
 
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      for (int pt = 0; pt < numQPs; ++pt) {
-        vecA.clear();
-        vecB.clear();
-        for (int node = 0; node < numPlaneNodes; ++node) {
-          int topNode = node + numPlaneNodes;
-          vecA += Intrepid::Vector<ScalarT>(
-              refValues(node, pt) * vector(cell, node, 0),
-              refValues(node, pt) * vector(cell, node, 1),
-              refValues(node, pt) * vector(cell, node, 2));
-          vecB += Intrepid::Vector<ScalarT>(
-              refValues(node, pt) * vector(cell, topNode, 0),
-              refValues(node, pt) * vector(cell, topNode, 1),
-              refValues(node, pt) * vector(cell, topNode, 2));
-        }
-        vecJump = vecB - vecA;
-        jump(cell, pt, 0) = vecJump(0);
-        jump(cell, pt, 1) = vecJump(1);
-        jump(cell, pt, 2) = vecJump(2);
+//**********************************************************************
+template<typename EvalT, typename Traits>
+void SurfaceVectorJump<EvalT, Traits>::evaluateFields(
+    typename Traits::EvalData workset)
+{
+  Intrepid::Vector<ScalarT>
+  vecA(0, 0, 0), vecB(0, 0, 0), vecJump(0, 0, 0);
+
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int pt = 0; pt < num_qps_; ++pt) {
+      vecA.fill(Intrepid::ZEROS);
+      vecB.fill(Intrepid::ZEROS);
+      for (int node = 0; node < num_plane_nodes_; ++node) {
+        int topNode = node + num_plane_nodes_;
+        vecA += Intrepid::Vector<ScalarT>(
+            ref_values_(node, pt) * vector_(cell, node, 0),
+            ref_values_(node, pt) * vector_(cell, node, 1),
+            ref_values_(node, pt) * vector_(cell, node, 2));
+        vecB += Intrepid::Vector<ScalarT>(
+            ref_values_(node, pt) * vector_(cell, topNode, 0),
+            ref_values_(node, pt) * vector_(cell, topNode, 1),
+            ref_values_(node, pt) * vector_(cell, topNode, 2));
       }
+      vecJump = vecB - vecA;
+      jump_(cell, pt, 0) = vecJump(0);
+      jump_(cell, pt, 1) = vecJump(1);
+      jump_(cell, pt, 2) = vecJump(2);
     }
   }
+}
 
 //**********************************************************************
 }
