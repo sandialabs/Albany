@@ -13,94 +13,22 @@ template<typename EvalT, typename Traits>
 PHAL::AlbanyPeridigmOBCFunctional<EvalT, Traits>::
 AlbanyPeridigmOBCFunctional(Teuchos::ParameterList& p,
 			    const Teuchos::RCP<Albany::Layouts>& dl) :
-  coordVec("Coord Vec", dl->qp_gradient)
+  referenceCoordinates ("Coord Vec", dl->vertices_vector),
+  displacement         ("Displacement", dl->node_vector)
 {
-  // get and validate Response parameter list
-  Teuchos::ParameterList* plist = 
-    p.get<Teuchos::ParameterList*>("Parameter List");
-//   Teuchos::RCP<const Teuchos::ParameterList> reflist = 
-//     this->getValidResponseParameters();
-//   plist->validateParameters(*reflist, 0);
+//   Teuchos::ParameterList* plist = p.get<Teuchos::ParameterList*>("Parameter List");
 
-  // Get field type and corresponding layouts
-  std::string field_name = plist->get<std::string>("Field Name");
-  std::string fieldType = plist->get<std::string>("Field Type", "Scalar");
-  if (plist->isType< Teuchos::Array<int> >("Field Components"))
-    field_components = plist->get< Teuchos::Array<int> >("Field Components");
-  Teuchos::RCP<PHX::DataLayout> field_layout;
-  Teuchos::RCP<PHX::DataLayout> local_response_layout;
-  Teuchos::RCP<PHX::DataLayout> global_response_layout;
-  if (fieldType == "Scalar") {
-    field_layout = dl->qp_scalar;
-    local_response_layout = dl->cell_scalar;
-    global_response_layout = dl->workset_scalar;
-  }
-  else if (fieldType == "Vector") {
-    field_layout = dl->qp_vector;
-    if (field_components.size() == 0) {
-      local_response_layout = dl->cell_vector;
-      global_response_layout = dl->workset_vector;
-    }
-    else {
-      int worksetSize = dl->cell_scalar->dimension(0);
-      local_response_layout = 
-	Teuchos::rcp(new PHX::MDALayout<Cell,Dim>(worksetSize, 
-						  field_components.size()));
-      global_response_layout = 
-	Teuchos::rcp(new PHX::MDALayout<Dim>(field_components.size()));
-    }
-  }
-  else if (fieldType == "Tensor") {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, std::logic_error,
-      "local_ and global_response must have rank 2. However, this code path "
-      "makes them rank 3. Needs to be fixed.");
-    field_layout = dl->qp_tensor;
-    local_response_layout = dl->cell_tensor;
-    global_response_layout = dl->workset_tensor;
-  }
-  else {
-    TEUCHOS_TEST_FOR_EXCEPTION(
-      true, 
-      Teuchos::Exceptions::InvalidParameter,
-      "Invalid field type " << fieldType << ".  Support values are " << 
-      "Scalar, Vector, and Tensor." << std::endl);
-  }
-  field = PHX::MDField<ScalarT>(field_name, field_layout);
-  field_layout->dimensions(field_dims);
-  field_rank = field_layout->rank();
-  if (field_components.size() == 0) {
-    int num_components = field_dims[field_rank-1];
-    field_components.resize(num_components);
-    for (int i=0; i<num_components; i++)
-      field_components[i] = i;
-  }
-
-  // coordinate dimensions
-  std::vector<PHX::DataLayout::size_type> coord_dims;
-  dl->qp_vector->dimensions(coord_dims);
-  numQPs = coord_dims[1];
-  numDims = coord_dims[2];
- 
-  // User-specified parameters
-  std::string ebNameStr = plist->get<std::string>("Element Block Name","");
-//   if(ebNameStr.length() > 0) split(ebNameStr,',',ebNames);
+  std::cout << "OBC DEBUGGING AlbanyPeridigmOBCFunctional::AlbanyPeridigmOBCFunctional()" << std::endl;
 
   // add dependent fields
-  this->addDependentField(field);
-  this->addDependentField(coordVec);
-  this->setName(field_name+" OBC Functional"+PHX::typeAsString<EvalT>());
+  this->addDependentField(referenceCoordinates);
+  this->addDependentField(displacement);
+  this->setName("OBC Functional"+PHX::typeAsString<EvalT>());
 
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
-  std::string local_response_name = 
-    field_name + " Local OBC Functional";
-  std::string global_response_name = 
-    field_name + " Global OBC Functional";
-  PHX::Tag<ScalarT> local_response_tag(local_response_name, 
-				       local_response_layout);
-  PHX::Tag<ScalarT> global_response_tag(global_response_name, 
-					global_response_layout);
+  PHX::Tag<ScalarT> local_response_tag("Local OBC Functional", dl->node_scalar);
+  PHX::Tag<ScalarT> global_response_tag("Global OBC Functional", dl->workset_scalar);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
@@ -112,8 +40,8 @@ void PHAL::AlbanyPeridigmOBCFunctional<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(field,fm);
-  this->utils.setFieldData(coordVec,fm);
+  this->utils.setFieldData(referenceCoordinates,fm);
+  this->utils.setFieldData(displacement,fm);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postRegistrationSetup(d,fm);
 }
 
@@ -131,22 +59,22 @@ preEvaluate(typename Traits::PreEvalData workset)
 template<typename EvalT, typename Traits>
 void PHAL::AlbanyPeridigmOBCFunctional<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
-{   
+{
+  std::cout << "OBC DEBUGGING AlbanyPeridigmOBCFunctional::evaluateFields() top of function" << std::endl;
+
+  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+
   // Zero out local response
   PHAL::set(this->local_response, 0.0);
 
-  Teuchos::RCP<Albany::AbstractDiscretization> disc = workset.disc;
-  Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for STK meshes.\n\n");
-  Teuchos::RCP<const stk::mesh::MetaData> metaData = Teuchos::rcpFromRef(stkDisc->getSTKMetaData());
+  Teuchos::RCP<Albany::STKDiscretization> stkDisc = peridigmManager.getSTKDisc();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  stkDisc.is_null() == true.\n\n");
   Teuchos::RCP<const stk::mesh::BulkData> bulkData = Teuchos::rcpFromRef(stkDisc->getSTKBulkData());
-
-  
 
   // WsLIDList is a std::map<GO, wsLid>
   // The key is the global id and the value is the workset local id
   // wsLid is a struct containing ws (workset id), and LID (local id of the element)
-  Albany::WsLIDList& elemIdData = disc->getElemGIDws();
+  Albany::WsLIDList& elemIdData = stkDisc->getElemGIDws();
   for(Albany::WsLIDList::iterator it=elemIdData.begin() ; it!=elemIdData.end() ; it++){
     GO globalElemId = it->first;
     int worksetId = it->second.ws;
@@ -157,7 +85,7 @@ evaluateFields(typename Traits::EvalData workset)
   // Global solution vector, which contains nodal displacements
   Teuchos::RCP<const Epetra_Vector> displacement = workset.x;
 
-  Teuchos::RCP< std::vector<LCM::PeridigmManager::OBCDataPoint> > obcDataPoints = LCM::PeridigmManager::self().getOBCDataPoints();
+  Teuchos::RCP< std::vector<LCM::PeridigmManager::OBCDataPoint> > obcDataPoints = peridigmManager.getOBCDataPoints();
 
   int numCells = 1;
   int numPoints = 1;
@@ -250,8 +178,12 @@ evaluateFields(typename Traits::EvalData workset)
 //     }
 //   }
 
+  std::cout << "OBC DEBUGGING AlbanyPeridigmOBCFunctional::evaluateFields() about to call PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset)" << std::endl;
+
   // Do any local-scattering necessary
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::evaluateFields(workset);
+
+  std::cout << "OBC DEBUGGING AlbanyPeridigmOBCFunctional::evaluateFields() bottom of function" << std::endl;
 }
 
 // **********************************************************************

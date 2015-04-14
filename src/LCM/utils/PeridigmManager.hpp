@@ -103,12 +103,16 @@ public:
   //! Set Dirichlet Fields;
   void setDirichletFields(Teuchos::RCP<Albany::AbstractDiscretization> disc);
 
+  //! Get the STK discretization
+  Teuchos::RCP<Albany::STKDiscretization> getSTKDisc(){ return stkDisc; }
+
 private:
 
   // Peridigm objects
   Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 
+  Teuchos::RCP<Albany::STKDiscretization> stkDisc;
   Teuchos::RCP<const stk::mesh::MetaData> metaData;
   Teuchos::RCP<const stk::mesh::BulkData> bulkData;
 

@@ -36,19 +36,11 @@ namespace PHAL {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    PHX::MDField<ScalarT> field;
-    PHX::MDField<MeshScalarT> coordVec;
-    PHX::MDField<MeshScalarT> weights;
-    PHX::index_size_type field_rank;
-    std::vector<PHX::DataLayout::size_type> field_dims;
-    Teuchos::Array<int> field_components;
+    PHX::MDField<MeshScalarT> referenceCoordinates;
+    PHX::MDField<ScalarT> displacement;
+
     std::size_t numQPs;
     std::size_t numDims;
-
-    std::vector<std::string> ebNames;    
-    double scaling;
-    bool limitX, limitY, limitZ;
-    double xmin, xmax, ymin, ymax, zmin, zmax;
   };
 	
 }

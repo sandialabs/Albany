@@ -44,7 +44,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, teuchosComm));
   }
 
-  Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
+  stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for STK meshes.\n\n");
   metaData = Teuchos::rcpFromRef(stkDisc->getSTKMetaData());
   bulkData = Teuchos::rcpFromRef(stkDisc->getSTKBulkData());
