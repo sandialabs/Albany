@@ -247,9 +247,10 @@ SchwarzMultiscale(
             true,
             std::logic_error,
             "Error in LCM::CoupledSchwarz! Model input file " <<
-            model_filenames[m] << " cannot have a 'Parameters' section!  " <<
+            model_filenames[m] <<
+            " cannot have a 'Parameters' section!  " <<
             "Parameters should be specified in the 'master' input file " <<
-            "driving the coupled problem."  <<  '\n') ;
+            "driving the coupled problem.\n") ;
       }
       Teuchos::ParameterList &
       param_params_m = problem_params_m->sublist("Parameters", false);
@@ -266,11 +267,14 @@ SchwarzMultiscale(
             true,
             std::logic_error,
             "Error in LCM::CoupledSchwarz! Model input file " <<
-            model_filenames[m] << " cannot have a 'Response Functions' section!  " <<
+            model_filenames[m] <<
+            " cannot have a 'Response Functions' section!  " <<
             "Responses should be specified in the 'master' input file " <<
-            "driving the coupled problem."  <<  '\n') ;
+            "driving the coupled problem.\n") ;
       }
-      Teuchos::ParameterList & response_params_m = problem_params_m->sublist("Response Functions", false);
+      Teuchos::ParameterList &
+      response_params_m =
+          problem_params_m->sublist("Response Functions", false);
       response_params_m.setParametersNotAlreadySet(*response_params); 
     }
 
@@ -284,13 +288,17 @@ SchwarzMultiscale(
     std::string
     matdb_filename;
 
-    if (problem_params_m->isType<std::string>("MaterialDB Filename")) 
+    if (problem_params_m->isType<std::string>("MaterialDB Filename")) {
       matdb_filename =
           problem_params_m->get<std::string>("MaterialDB Filename");
-    else 
-      TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::logic_error,
-                             "Error in LCM::CoupledSchwarz! Input file needs to have 'MaterialDB Filename' specified." <<  '\n') ;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "Error in LCM::CoupledSchwarz! " <<
+          "Input file needs to have 'MaterialDB Filename' specified.\n") ;
+    }
 
     material_dbs_[m] =
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
