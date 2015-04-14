@@ -391,13 +391,26 @@ int main(int argc, char *argv[]) {
                         Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(nominal.get_p(0),false) :
                         Teuchos::null;
       //If p_prod is not product vector, print out parameter vector by converting thyra vector to tpetra vector
-      if (p_prod == Teuchos::null) {
+      if (p_prod == Teuchos::null) { //Thyra vector case (default -- for everything except CoupledSchwarz right now)
         for (int i=0; i<num_p; i++) {
           Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],
              ConverterT::getConstTpetraVector(nominal.get_p(i)));
         }
       }
-      //FIXME: implementing printing of parameters when you have thyra vectors!
+      else { //Thyra product vector case
+        for (int i=0; i<num_p; i++) {
+           Teuchos::RCP<const Thyra::ProductVectorBase<ST> > pT =
+                Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
+                nominal.get_p(i), true);
+           //IKT: note that we are assuming the parameters are all the same for all the models 
+           //that are being coupled (in CoupledSchwarz) so we print the parameters from the 0th 
+           //model only.  LOCA does not populate p for more than 1 model at the moment so we cannot
+           //allow for different parameters in different models.
+           Teuchos::RCP<const Tpetra_Vector> p = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+                                       pT->getVectorBlock(0),true)->getConstTpetraVector();
+           Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i], p); 
+        }
+      }
     }
 
     for (int i=0; i<num_g-1; i++) {

@@ -4,9 +4,7 @@
 1.) Change variable/function names to comply with C++ coding standards
 [Alejandro] Mostly done in SchwarzMultiscale.*.
 
-2.) Printing of param vec for ThyraProductVector in Main_SolveT.cpp [Irina].
-
-3.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to be Teuchos::Array?).
+2.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to be Teuchos::Array?).
 
 ---------------------Debug TODOs------------------------
 
