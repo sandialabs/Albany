@@ -25,7 +25,6 @@ will be passed to Schwarz_CoupledJacobian class. [Alejandro]
 3.) Sensitivities [how to define DfDp, DgDp, DgDx, etc. when 
 we have Thyra Product Vectors?  Is this supported?]
 
-4.) Implement observer [Irina].
 
 ------------------Questions/Comments/Notes-----------------------------
 
@@ -39,20 +38,6 @@ It's used to set x_init and x_dot_init, part of nominal_values
 
 ----------------Development Planning TODOs----------------------------------------
 
-
-2.) Understand how the output will be done.  In
-QCAD::CoupledPoissonSchrodinger, a discretization object is created
-just for producing the collected output.  Need to understand how this
-works and how to extend it to our case.  A related question is whether
-we need to create an observer.  We would need a routine that breaks up
-the final concatenated solutions into separate ones and gives these to
-the mesh output routines (like separateCombinedVector in QCAD?).
-
-3.) Figure out how we'll hook in Teko for the preconditioner.
-
-4.) Figure out if Thyra can be used for efficient matrix/vector
-multiplies and getting submatrices/vectors for coupled model.  Is
-Tpetra_Operator Jacobian class OK, or should this be Thyra?
 
 -----------------Notes from emails with Andy/Eric Cyr---------------------------------------
 

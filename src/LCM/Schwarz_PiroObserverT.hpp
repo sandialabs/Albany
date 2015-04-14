@@ -43,17 +43,17 @@ protected:
 private:
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
-      const ST defaultStamp);
+      const ST default_stamp);
 
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
       const Thyra::VectorBase<ST> &solution_dot,
-      const ST defaultStamp);
+      const ST default_stamp);
 
   void observeTpetraSolutionImpl(
       Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > >solutions,
       Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >solutions_dot,
-      const ST defaultStamp);
+      const ST default_stamp);
 
   Teuchos::RCP<ObserverImpl> impl_;
 

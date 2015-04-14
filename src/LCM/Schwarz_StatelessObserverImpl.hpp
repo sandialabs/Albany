@@ -50,11 +50,11 @@ class StatelessObserverImpl {
 public:
   explicit StatelessObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
 
-  RealType getTimeParamValueOrDefault(RealType defaultValue) const;
+  RealType getTimeParamValueOrDefault(RealType default_value) const;
 
   virtual void observeSolutionT(
-    double stamp, Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > > nonOverlappedSolutionsT,
-    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > nonOverlappedSolutionDotsT);
+    double stamp, Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > > non_overlapped_solutionT,
+    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > non_overlapped_solution_dotT);
 
 protected:
   Teuchos::RCP<Teuchos::Time> sol_out_time_;
