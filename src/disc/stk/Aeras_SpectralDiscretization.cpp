@@ -68,7 +68,7 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
