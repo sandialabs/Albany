@@ -134,7 +134,8 @@ SchwarzMultiscale(
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
   if (problem_params.isSublist("Response Functions")) {
-    response_params = Teuchos::rcp(&(problem_params.sublist("Response Functions")),false);
+    response_params = Teuchos::rcp(
+        &(problem_params.sublist("Response Functions")), false);
 
     num_responses_total_ = response_params->get("Number of Response Vectors", 0);
 
