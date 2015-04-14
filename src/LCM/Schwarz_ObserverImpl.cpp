@@ -15,15 +15,20 @@
 namespace LCM {
 
 ObserverImpl::
-ObserverImpl (const Teuchos::RCP<Albany::Application> &app)
-  : StatelessObserverImpl(app)
-{}
+ObserverImpl (const Teuchos::RCP<Albany::Application> &app, 
+              Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps) :
+  StatelessObserverImpl(app, apps) 
+{
+  //FIXME: remove app as argument 
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+}
 
 
 void ObserverImpl::observeSolutionT(
   double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
   const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT,
                                    Teuchos::null, nonOverlappedSolutionT);
   app_->getStateMgr().updateStates();

@@ -14,6 +14,7 @@
 #include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
 #include "Schwarz_ObserverImpl.hpp"
+#include "SchwarzMultiscale.hpp"
 
 #include "Teuchos_RCP.hpp"
 
@@ -21,7 +22,7 @@ namespace LCM {
 
 class Schwarz_PiroObserverT : public Piro::ObserverBase<ST> {
 public:
-  explicit Schwarz_PiroObserverT(const Teuchos::RCP<Albany::Application> &app);
+  explicit Schwarz_PiroObserverT(const Teuchos::RCP<Albany::Application> &app, const Teuchos::RCP<SchwarzMultiscale>& cs_model);
 
   virtual void observeSolution(
       const Thyra::VectorBase<ST> &solution);
@@ -50,7 +51,9 @@ private:
       Teuchos::Ptr<const Tpetra_Vector> solution_dot,
       const ST defaultStamp);
 
-  ObserverImpl impl_;
+  Teuchos::RCP<ObserverImpl> impl_;
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
 };
 
 } // namespace Albany

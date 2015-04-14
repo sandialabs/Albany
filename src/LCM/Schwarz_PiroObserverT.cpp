@@ -11,15 +11,19 @@
 #include <cstddef>
 
 LCM::Schwarz_PiroObserverT::Schwarz_PiroObserverT(
-    const Teuchos::RCP<Albany::Application> &app) :
-  impl_(app)
+    const Teuchos::RCP<Albany::Application> &app, const Teuchos::RCP<SchwarzMultiscale>& cs_model)
 {
+  //FIXME: remove app as argument 
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  apps_ = cs_model->getApps(); 
+  std::cout << "# models seen by Schwarz_PiroObserverT: " << apps_.size() << std::endl; 
+  impl_ = Teuchos::rcp(new ObserverImpl(app, apps_));  
 }
 
 void
 LCM::Schwarz_PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   this->observeSolutionImpl(solution, Teuchos::ScalarTraits<ST>::zero());
 }
 
@@ -28,6 +32,7 @@ LCM::Schwarz_PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution,
     const ST stamp)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   this->observeSolutionImpl(solution, stamp);
 }
 
@@ -37,6 +42,7 @@ LCM::Schwarz_PiroObserverT::observeSolution(
     const Thyra::VectorBase<ST> &solution_dot,
     const ST stamp)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   this->observeSolutionImpl(solution, solution_dot, stamp);
 }
 
@@ -45,11 +51,13 @@ namespace { // anonymous
 Teuchos::RCP<const Tpetra_Vector>
 tpetraFromThyra(const Thyra::VectorBase<double> &v)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   // Create non-owning RCP to solution to use the Thyra -> Epetra converter
   // This is safe since we will not be creating any persisting relations
   const Teuchos::RCP<const Thyra::VectorBase<double> > v_nonowning_rcp =
     Teuchos::rcpFromRef(v);
 
+  //FIXME: this does not work with product vectors!! 
   return ConverterT::getConstTpetraVector(v_nonowning_rcp);
 }
 
@@ -60,6 +68,7 @@ LCM::Schwarz_PiroObserverT::observeSolutionImpl(
     const Thyra::VectorBase<ST> &solution,
     const ST defaultStamp)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
     tpetraFromThyra(solution);
 
@@ -75,6 +84,7 @@ LCM::Schwarz_PiroObserverT::observeSolutionImpl(
     const Thyra::VectorBase<ST> &solution_dot,
     const ST defaultStamp)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   const Teuchos::RCP<const Tpetra_Vector> solution_tpetra =
     tpetraFromThyra(solution);
   const Teuchos::RCP<const Tpetra_Vector> solution_dot_tpetra =
@@ -92,8 +102,9 @@ LCM::Schwarz_PiroObserverT::observeTpetraSolutionImpl(
     Teuchos::Ptr<const Tpetra_Vector> solution_dot,
     const ST defaultStamp)
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   // Determine the stamp associated with the snapshot
-  const ST stamp = impl_.getTimeParamValueOrDefault(defaultStamp);
+  const ST stamp = impl_->getTimeParamValueOrDefault(defaultStamp);
 
-  impl_.observeSolutionT(stamp, solution, solution_dot);
+  impl_->observeSolutionT(stamp, solution, solution_dot);
 }

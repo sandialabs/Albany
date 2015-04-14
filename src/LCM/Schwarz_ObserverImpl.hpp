@@ -12,7 +12,8 @@ namespace LCM {
 
 class ObserverImpl : public StatelessObserverImpl {
 public:
-  explicit ObserverImpl(const Teuchos::RCP<Albany::Application>& app);
+  explicit ObserverImpl(const Teuchos::RCP<Albany::Application>& app, 
+                        Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
 
   virtual void observeSolutionT(
     double stamp, const Tpetra_Vector& nonOverlappedSolutionT,

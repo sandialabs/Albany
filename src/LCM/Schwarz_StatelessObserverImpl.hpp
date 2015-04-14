@@ -48,7 +48,8 @@ namespace LCM {
  */
 class StatelessObserverImpl {
 public:
-  explicit StatelessObserverImpl(const Teuchos::RCP<Albany::Application> &app);
+  explicit StatelessObserverImpl(const Teuchos::RCP<Albany::Application> &app, 
+                                 Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
@@ -61,6 +62,7 @@ public:
 protected:
   Teuchos::RCP<Albany::Application> app_;
   Teuchos::RCP<Teuchos::Time> solOutTime_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
 
 private:
   StatelessObserverImpl(const StatelessObserverImpl&);

@@ -88,7 +88,9 @@ public:
   
   Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
   getThyraDomainSpace() const;
-
+  
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  getApps() const {return apps_;}  
 
 protected:
 
