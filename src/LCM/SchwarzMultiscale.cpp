@@ -218,16 +218,19 @@ SchwarzMultiscale(
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
 
-    // Overwrite Parameter sublists for individual models,
-    // if they are provided, to set them
+    // Set Parameter sublists for individual models 
     // to the parameters specified in the "master" coupled input file.
     if (parameter_params != Teuchos::null) {
-      Teuchos::ParameterList &
-      param_params_m = problem_params_m->sublist("Parameters", false);
-
-      if (param_params_m.isSublist("Parameters")) {
-        param_params_m.setParameters(*parameter_params);
+      if (problem_params_m->isSublist("Parameters")) {
+        std::cout << "parameters!" << std::endl; 
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::logic_error,
+                             "Error in LCM::CoupledSchwarz! Model input file " << 
+                             model_filenames[m] << " cannot have a 'Parameters' section!  " <<
+                             "Parameters should be specified in the 'master' input file " << 
+                             "driving the coupled problem."  <<  std::endl) ;
       }
+      Teuchos::ParameterList & param_params_m = problem_params_m->sublist("Parameters", false);
       param_params_m.setParametersNotAlreadySet(*parameter_params); 
     }
     
@@ -235,12 +238,15 @@ SchwarzMultiscale(
     // if they are provided, to set them
     // to the parameters specified in the "master" coupled input file.
     if (response_params != Teuchos::null) {
-      Teuchos::ParameterList &
-      response_params_m = problem_params_m->sublist("Response Functions", false);
-
-      if (response_params_m.isSublist("Response Functions")) {
-        response_params_m.setParameters(*response_params);
+      if (problem_params_m->isSublist("Response Functions")) {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,
+                             std::logic_error,
+                             "Error in LCM::CoupledSchwarz! Model input file " << 
+                             model_filenames[m] << " cannot have a 'Response Functions' section!  " <<
+                             "Responses should be specified in the 'master' input file " << 
+                             "driving the coupled problem."  <<  std::endl) ;
       }
+      Teuchos::ParameterList & response_params_m = problem_params_m->sublist("Response Functions", false);
       response_params_m.setParametersNotAlreadySet(*response_params); 
     }
 
