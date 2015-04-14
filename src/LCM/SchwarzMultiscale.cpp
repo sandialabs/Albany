@@ -97,8 +97,9 @@ SchwarzMultiscale(
     //Get parameter names
     param_names_.resize(num_params_total_);
     for (int l = 0; l < num_params_total_; ++l) {
-      Teuchos::RCP<const Teuchos::ParameterList>
+      Teuchos::RCP<Teuchos::ParameterList const>
       p_list;
+
       if (using_old_parameter_list) 
         p_list =  Teuchos::rcp(new Teuchos::ParameterList(*parameter_params));
       else
@@ -641,11 +642,14 @@ allocateVectors()
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> > spaces(
-      num_models_);
-  for (int m = 0; m < num_models_; ++m)
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+  spaces(num_models_);
+
+  for (int m = 0; m < num_models_; ++m) {
     spaces[m] = Thyra::createVectorSpace<ST>(disc_maps_[m]);
-  Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> >
+  }
+
+  Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
   space = Thyra::productVectorSpace<ST>(spaces);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> > >
