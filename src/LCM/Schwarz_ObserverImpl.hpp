@@ -15,12 +15,15 @@ public:
   explicit ObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
 
   virtual void observeSolutionT(
-    double stamp, Teuchos::ArrayRCP<const Tpetra_Vector>& nonOverlappedSolutionT,
-    Teuchos::ArrayRCP<const Teuchos::Ptr<const Tpetra_Vector> >& nonOverlappedSolutionDotT);
+    double stamp, Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > nonOverlappedSolutionT,
+    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > nonOverlappedSolutionDotT);
 
 private:
   ObserverImpl(const ObserverImpl&);
   ObserverImpl& operator=(const ObserverImpl&);
+protected:
+  int n_models_; 
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
 };
 
 } // namespace LCM

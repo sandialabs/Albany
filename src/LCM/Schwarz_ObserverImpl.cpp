@@ -19,22 +19,24 @@ ObserverImpl (Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps) :
   StatelessObserverImpl(apps) 
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  n_models_  = apps.size();
+  apps_ = apps;  
 }
 
 
 void ObserverImpl::observeSolutionT(
-  double stamp, Teuchos::ArrayRCP<const Tpetra_Vector > &nonOverlappedSolutionT,
-  Teuchos::ArrayRCP<const Teuchos::Ptr<const Tpetra_Vector> >& nonOverlappedSolutionDotT)
+  double stamp, Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > > nonOverlappedSolutionT,
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > nonOverlappedSolutionDotT)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-/*
-  app_->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT,
-                                   Teuchos::null, nonOverlappedSolutionT);
-  app_->getStateMgr().updateStates();
-
+  for (int m=0; m<n_models_; m++) { 
+    apps_[m]->evaluateStateFieldManagerT(stamp, nonOverlappedSolutionDotT[m].ptr(), 
+                                         Teuchos::null, *nonOverlappedSolutionT[m]); 
+    apps_[m]->getStateMgr().updateStates(); 
+  }
   StatelessObserverImpl::observeSolutionT(stamp, nonOverlappedSolutionT,
                                           nonOverlappedSolutionDotT);
-*/
+  
 }
 
 } // namespace LCM

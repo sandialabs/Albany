@@ -36,6 +36,10 @@ public:
       const Thyra::VectorBase<ST> &solution_dot,
       const ST stamp);
 
+protected:
+  int n_models_; 
+
+
 private:
   void observeSolutionImpl(
       const Thyra::VectorBase<ST> &solution,
@@ -47,13 +51,14 @@ private:
       const ST defaultStamp);
 
   void observeTpetraSolutionImpl(
-      const Tpetra_Vector &solution,
-      Teuchos::Ptr<const Tpetra_Vector> solution_dot,
+      Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > >solutions,
+      Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >solutions_dot,
       const ST defaultStamp);
 
   Teuchos::RCP<ObserverImpl> impl_;
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
+  
 };
 
 } // namespace Albany

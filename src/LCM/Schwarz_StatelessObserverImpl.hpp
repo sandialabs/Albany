@@ -52,15 +52,14 @@ public:
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
-  Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
-
   virtual void observeSolutionT(
-    double stamp, Teuchos::ArrayRCP<const Tpetra_Vector >& nonOverlappedSolutionsT,
-    Teuchos::ArrayRCP<const Teuchos::Ptr<const Tpetra_Vector> >& nonOverlappedSolutionDotsT);
+    double stamp, Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > > nonOverlappedSolutionsT,
+    Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > nonOverlappedSolutionDotsT);
 
 protected:
-  Teuchos::RCP<Teuchos::Time> solOutTime_;
+  Teuchos::RCP<Teuchos::Time> sol_out_time_;
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
+  int n_models_; 
 
 private:
   StatelessObserverImpl(const StatelessObserverImpl&);
