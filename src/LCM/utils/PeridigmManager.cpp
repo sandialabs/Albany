@@ -44,7 +44,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, teuchosComm));
   }
 
-  Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
+  stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for STK meshes.\n\n");
   metaData = Teuchos::rcpFromRef(stkDisc->getSTKMetaData());
   bulkData = Teuchos::rcpFromRef(stkDisc->getSTKBulkData());
@@ -448,6 +448,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
 void LCM::PeridigmManager::obcOverlappingElementSearch()
 {
+  obcDataPoints = Teuchos::rcp(new std::vector<OBCDataPoint>());
+
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
@@ -693,7 +695,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	    dataPoint.peridigmGlobalId = epetraOverlapIsSphere.Map().GID(neighborIndex);
 	    dataPoint.albanyElement = elements[iElem];
 	    dataPoint.cellTopologyData = cellTopologyData;
-	    obcDataPoints.push_back(dataPoint);
+	    obcDataPoints->push_back(dataPoint);
 	  }
 	}
       }
@@ -701,9 +703,9 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   }
 
   // Create an Epetra_Vector for importing the displacements of the peridynamic nodes
-  std::vector<int> tempGlobalIds(obcDataPoints.size());
-  for(unsigned int i=0 ; i<obcDataPoints.size() ; i++){
-    tempGlobalIds[i] = obcDataPoints[i].peridigmGlobalId;
+  std::vector<int> tempGlobalIds(obcDataPoints->size());
+  for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
+    tempGlobalIds[i] = (*obcDataPoints)[i].peridigmGlobalId;
   }
 
   Epetra_BlockMap epetraTempMap(-1,
@@ -717,7 +719,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
   // As a sanity check, determine the total number of overlapping peridynamic nodes
   vector<int> localVal(1), globalVal(1);
-  localVal[0] = static_cast<int>(obcDataPoints.size());
+  localVal[0] = static_cast<int>(obcDataPoints->size());
   Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localVal[0], &globalVal[0]);
   int numberOfOverlappingPeridynamicNodes = globalVal[0];
 
@@ -740,10 +742,10 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
   Epetra_Import overlapCurrentCoordsImporter(obcPeridynamicNodeCurrentCoords->Map(), peridigmCurrentPositions.Map());
   int err = obcPeridynamicNodeCurrentCoords->Import(peridigmCurrentPositions, overlapCurrentCoordsImporter, Insert);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), import operation failed!\n\n");
-  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
-    int localId = obcPeridynamicNodeCurrentCoords->Map().LID(obcDataPoints[iEvalPt].peridigmGlobalId);
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints->size() ; iEvalPt++){
+    int localId = obcPeridynamicNodeCurrentCoords->Map().LID((*obcDataPoints)[iEvalPt].peridigmGlobalId);
     for(int dof=0 ; dof<3 ; dof++){
-      obcDataPoints[iEvalPt].currentCoords[dof] = (*obcPeridynamicNodeCurrentCoords)[3*localId+dof];
+      (*obcDataPoints)[iEvalPt].currentCoords[dof] = (*obcPeridynamicNodeCurrentCoords)[3*localId+dof];
     }
   }
 
@@ -760,14 +762,14 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
 
   // Compute the difference in displacements at each peridynamic node
   Epetra_Vector displacementDiff(obcPeridynamicNodeCurrentCoords->Map());
-  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints->size() ; iEvalPt++){
 
     for(int dof=0 ; dof<3 ; dof++){
-      refPoints(0, 0, dof) = obcDataPoints[iEvalPt].naturalCoords[dof];
+      refPoints(0, 0, dof) = (*obcDataPoints)[iEvalPt].naturalCoords[dof];
     }
 
-    int numNodes = bulkData->num_nodes(obcDataPoints[iEvalPt].albanyElement);
-    const stk::mesh::Entity* nodes = bulkData->begin_nodes(obcDataPoints[iEvalPt].albanyElement);
+    int numNodes = bulkData->num_nodes((*obcDataPoints)[iEvalPt].albanyElement);
+    const stk::mesh::Entity* nodes = bulkData->begin_nodes((*obcDataPoints)[iEvalPt].albanyElement);
 
     Intrepid::FieldContainer<RealType> cellWorkset;
     cellWorkset.resize(numCells, numNodes, numDim);
@@ -780,14 +782,14 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
       cellWorkset(0, i, 2) = albanyCurrentDisplacement[albanyLocalId + 2];
     }
 
-    shards::CellTopology cellTopology(&obcDataPoints[iEvalPt].cellTopologyData);
+    shards::CellTopology cellTopology(&(*obcDataPoints)[iEvalPt].cellTopologyData);
 
     Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
     // Record the difference between the Albany displacement at the point (which was just computed using Intrepid) and
     // the Peridigm displacement at the point
     for(int dof=0 ; dof<3 ; dof++){
-      displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
+      displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
     }
   }
 
