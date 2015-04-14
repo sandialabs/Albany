@@ -624,7 +624,6 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/problems
                      ./ATO/evaluators
                      ./ATO/utils
-                     ./GOEE
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -810,11 +809,6 @@ ENDIF()
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
-ENDIF()
-
-IF (ALBANY_GOEE)
-  add_subdirectory(GOEE)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} GOEE)
 ENDIF()
 
 IF (ALBANY_AMP)
