@@ -62,9 +62,6 @@ ALBANY_BUILD_TYPES = \
     "hydride" : [
         ("ALBANY_HYDRIDE", "ON"),
     ],
-    "see" : [
-        ("ALBANY_SEE", "ON"),
-    ],
     "amp" : [
         ("ALBANY_AMP", "ON"),
     ],

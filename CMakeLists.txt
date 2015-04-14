@@ -557,17 +557,6 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
-# Set optional dependency on SEE, defaults to Disabled
-OPTION(ENABLE_SEE "Flag to turn on SEE (SCOREC error estimation) source code" OFF)
-IF (ENABLE_SEE)
-  ADD_DEFINITIONS(-DALBANY_SEE)
-  MESSAGE("-- SEE       is Enabled, compiling with -DALBANY_SEE")
-  SET(ALBANY_SEE TRUE)
-ELSE()
-  MESSAGE("-- SEE       is NOT Enabled.")
-  SET(ALBANY_SEE FALSE)
-ENDIF()
-
 # Set optional dependency on AMP, defaults to Disabled
 OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
 IF (ENABLE_AMP)
@@ -865,10 +854,6 @@ IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
 want to useTriKota.")
 ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
-
-IF (ALBANY_SEE AND (NOT ALBANY_SCOREC))
-  MESSAGE("-- WARNING: SEE              is Enabled but SCOREC is not; SEE tests will fail.")
-ENDIF(ALBANY_SEE AND (NOT ALBANY_SCOREC))
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)
