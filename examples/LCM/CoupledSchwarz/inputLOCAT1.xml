@@ -28,7 +28,7 @@
     <Parameter name="Workset Size" type="int" value="1"/> <!-- Sets the number of elements per workset -->
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="../Mechanics/2hex.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="2hex_tpetra.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="2hex_tpetra1.e"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
   </ParameterList>
