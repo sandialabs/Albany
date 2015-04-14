@@ -133,16 +133,21 @@ SchwarzMultiscale(
   //---------------End Parameters---------------------
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
+  num_responses_total_ = 0;
+
   if (problem_params.isSublist("Response Functions")) {
     response_params = Teuchos::rcp(
         &(problem_params.sublist("Response Functions")), false);
 
-    num_responses_total_ = response_params->get("Number of Response Vectors", 0);
+    num_responses_total_ =
+        response_params->get("Number of Response Vectors", 0);
 
-    bool using_old_response_list = false;
+    bool
+    using_old_response_list = false;
 
     if (response_params->isType<int>("Number") == true) {
-      int num_parameters = response_params->get<int>("Number");
+      int
+      num_parameters = response_params->get<int>("Number");
 
       if (num_parameters > 0) {
         num_responses_total_ = 1;
@@ -156,17 +161,26 @@ SchwarzMultiscale(
     response_names.resize(num_responses_total_);
 
     for (int l = 0; l < num_responses_total_; ++l) {
+
       Teuchos::RCP<const Teuchos::ParameterList>
       p_list;
-      if (using_old_response_list) 
+
+      if (using_old_response_list) {
         p_list =  Teuchos::rcp(new Teuchos::ParameterList(*response_params));
-      else
-        p_list = Teuchos::rcp(&(response_params->sublist(Albany::strint("Response Vector", l))),false);
+
+      }
+      else {
+        p_list = Teuchos::rcp(
+            &(response_params->sublist(Albany::strint("Response Vector", l))),
+            false);
+      }
  
-      bool number_exists = p_list->getEntryPtr("Number");
+      bool
+      number_exists = p_list->getEntryPtr("Number");
 
       if (number_exists == true){
-        const int num_parameters = p_list->get<int>("Number");
+        int const
+        num_parameters = p_list->get<int>("Number");
 
         assert(num_parameters > 0);
 
@@ -180,8 +194,7 @@ SchwarzMultiscale(
       }
     }
   }
-  else num_responses_total_ = 0; 
-  
+
   std::cout << "Number of response vectors = " << num_responses_total_ << '\n';
    
   //----------- end Responses-----------------------
