@@ -100,12 +100,17 @@ SchwarzMultiscale(
       Teuchos::RCP<Teuchos::ParameterList const>
       p_list;
 
-      if (using_old_parameter_list) 
+      if (using_old_parameter_list) {
         p_list =  Teuchos::rcp(new Teuchos::ParameterList(*parameter_params));
-      else
-        p_list = Teuchos::rcp(&(parameter_params->sublist(Albany::strint("Parameter Vector", l))),false);
+      }
+      else {
+        p_list = Teuchos::rcp(
+            &(parameter_params->sublist(Albany::strint("Parameter Vector", l))),
+            false);
+      }
  
-      const int num_parameters = p_list->get<int>("Number");
+      int const
+      num_parameters = p_list->get<int>("Number");
 
       assert(num_parameters > 0);
 
