@@ -86,6 +86,11 @@ public:
   //! Retrieve the partial stress tensors for the quadrature points in the given element (evaluateInternalForce() must be called prior to getPartialStress()).
   void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues);
 
+  //! Accessor for the list of solid elements in the overlap region for optimization-based coupling.
+  Teuchos::RCP< std::vector<OBCDataPoint> > getOBCDataPoints(){
+    return obcDataPoints;
+  }
+
   //! Retrieve the Epetra_Vector for a given Peridigm data field.
   Teuchos::RCP<const Epetra_Vector> getBlockData(std::string blockName, std::string fieldName);
 
@@ -137,7 +142,7 @@ private:
 
   std::map< int, std::vector<int> > albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
 
-  std::vector<OBCDataPoint> obcDataPoints;
+  Teuchos::RCP< std::vector<OBCDataPoint> > obcDataPoints;
 
   Teuchos::RCP<Epetra_Vector> obcPeridynamicNodeCurrentCoords;
 
