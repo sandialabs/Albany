@@ -687,7 +687,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     // FIXME?
     std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
-    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT);
+    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
     }
 #endif
 
