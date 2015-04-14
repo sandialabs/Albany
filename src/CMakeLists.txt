@@ -613,13 +613,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
-                     ./SEE/
-                     ./SEE/problems
-                     ./SEE/evaluators
-                     ./SEE/responses
                      ./AMP/
-		     ./AMP/problems
-		     ./AMP/evaluators
+                     ./AMP/problems
+                     ./AMP/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -813,11 +809,6 @@ ENDIF()
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
-ENDIF()
-
-IF (ALBANY_SEE)
-  add_subdirectory(SEE)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
 ENDIF()
 
 IF (ALBANY_AMP)
