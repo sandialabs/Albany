@@ -14,12 +14,9 @@
 namespace LCM {
 
 StatelessObserverImpl::
-StatelessObserverImpl (const Teuchos::RCP<Albany::Application> &app, 
-                       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps)
+StatelessObserverImpl (Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  //FIXME: remove app as argument 
-  app_ = app;
   apps_ = apps; 
   solOutTime_ = Teuchos::TimeMonitor::getNewTimer("Albany: Output to File"); 
 }
@@ -27,28 +24,29 @@ StatelessObserverImpl (const Teuchos::RCP<Albany::Application> &app,
 RealType StatelessObserverImpl::
 getTimeParamValueOrDefault (RealType defaultValue) const {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  const std::string label("Time");
+  /*const std::string label("Time");
   return (app_->getParamLib()->isParameter(label)) ?
     app_->getParamLib()->getRealValue<PHAL::AlbanyTraits::Residual>(label) :
     defaultValue;
+  */
 }
 
 Teuchos::RCP<const Tpetra_Map>
 StatelessObserverImpl::getNonOverlappedMapT () const {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  return app_->getMapT();
+  //return app_->getMapT();
 }
 
 void StatelessObserverImpl::observeSolutionT (
-  double stamp, const Tpetra_Vector &nonOverlappedSolutionT,
-  const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT)
+  double stamp, Teuchos::ArrayRCP<const Tpetra_Vector > &nonOverlappedSolutionT,
+  Teuchos::ArrayRCP<const Teuchos::Ptr<const Tpetra_Vector> >& nonOverlappedSolutionDotT)
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-  Teuchos::TimeMonitor timer(*solOutTime_);
+  /*Teuchos::TimeMonitor timer(*solOutTime_);
   const Teuchos::RCP<const Tpetra_Vector> overlappedSolutionT =
     app_->getOverlapSolutionT(nonOverlappedSolutionT);
-  app_->getDiscretization()->writeSolutionT(
-    *overlappedSolutionT, stamp, /*overlapped =*/ true);
+  app_->getDiscretization()->writeSolutionT(*/
+  //  *overlappedSolutionT, stamp, /*overlapped =*/ true);
 }
 
 } // namespace LCM

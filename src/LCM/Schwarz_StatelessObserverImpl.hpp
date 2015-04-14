@@ -48,19 +48,17 @@ namespace LCM {
  */
 class StatelessObserverImpl {
 public:
-  explicit StatelessObserverImpl(const Teuchos::RCP<Albany::Application> &app, 
-                                 Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
+  explicit StatelessObserverImpl(Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
 
   RealType getTimeParamValueOrDefault(RealType defaultValue) const;
 
   Teuchos::RCP<const Tpetra_Map> getNonOverlappedMapT() const;
 
   virtual void observeSolutionT(
-    double stamp, const Tpetra_Vector& nonOverlappedSolutionT,
-    const Teuchos::Ptr<const Tpetra_Vector>& nonOverlappedSolutionDotT);
+    double stamp, Teuchos::ArrayRCP<const Tpetra_Vector >& nonOverlappedSolutionsT,
+    Teuchos::ArrayRCP<const Teuchos::Ptr<const Tpetra_Vector> >& nonOverlappedSolutionDotsT);
 
 protected:
-  Teuchos::RCP<Albany::Application> app_;
   Teuchos::RCP<Teuchos::Time> solOutTime_;
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
 

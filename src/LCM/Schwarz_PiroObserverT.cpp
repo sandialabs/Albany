@@ -10,14 +10,12 @@
 
 #include <cstddef>
 
-LCM::Schwarz_PiroObserverT::Schwarz_PiroObserverT(
-    const Teuchos::RCP<Albany::Application> &app, const Teuchos::RCP<SchwarzMultiscale>& cs_model)
+LCM::Schwarz_PiroObserverT::Schwarz_PiroObserverT(const Teuchos::RCP<SchwarzMultiscale>& cs_model)
 {
-  //FIXME: remove app as argument 
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   apps_ = cs_model->getApps(); 
   std::cout << "# models seen by Schwarz_PiroObserverT: " << apps_.size() << std::endl; 
-  impl_ = Teuchos::rcp(new ObserverImpl(app, apps_));  
+  impl_ = Teuchos::rcp(new ObserverImpl(apps_));  
 }
 
 void
@@ -106,5 +104,6 @@ LCM::Schwarz_PiroObserverT::observeTpetraSolutionImpl(
   // Determine the stamp associated with the snapshot
   const ST stamp = impl_->getTimeParamValueOrDefault(defaultStamp);
 
-  impl_->observeSolutionT(stamp, solution, solution_dot);
+  //FIXME: change arguments to take in arrays
+  //impl_->observeSolutionT(stamp, solution, solution_dot);
 }

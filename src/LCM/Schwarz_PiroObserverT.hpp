@@ -22,7 +22,7 @@ namespace LCM {
 
 class Schwarz_PiroObserverT : public Piro::ObserverBase<ST> {
 public:
-  explicit Schwarz_PiroObserverT(const Teuchos::RCP<Albany::Application> &app, const Teuchos::RCP<SchwarzMultiscale>& cs_model);
+  explicit Schwarz_PiroObserverT(const Teuchos::RCP<SchwarzMultiscale>& cs_model);
 
   virtual void observeSolution(
       const Thyra::VectorBase<ST> &solution);
