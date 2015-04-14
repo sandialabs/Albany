@@ -1,0 +1,128 @@
+\title{Putting New Physics into \textit{Albany}}
+
+
+\author{
+Irina K. Tezaur}
+
+
+
+\date{\today}
+
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{array}
+\usepackage{xy}
+\usepackage{epsfig}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{floatflt}
+\usepackage{mathrsfs}
+\usepackage{url}
+\usepackage{subfigure}
+\usepackage{lscape}
+\usepackage{algorithm,algorithmic}
+\usepackage{multirow}
+\usepackage{bm}
+\usepackage{color}
+
+\oddsidemargin  -0.3in \evensidemargin 0.0in \textwidth      7in
+\textheight     8.5in \headheight     -0.3in \topmargin      0.0in
+
+
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\Bphi}{{\bm \phi}}
+\newcommand{\dg}{$^\circ$ }
+\newcommand{\Pe}{\text{Pe} }
+\newcommand{\Peclet}{\textrm{P\'{e}clet}}
+\newcommand{\uvec}{\mathbf{u}}
+\newcommand{\uhatvec}{\hat{\mathbf{u}}}
+\newcommand{\bM}{\mathbf{M}}
+\newcommand{\bLambda}{\bm{\Lambda}}
+\newcommand{\bQ}{\mathbf{Q}}
+\newcommand{\btildeM}{\tilde{\mathbf{M}}}
+\newcommand{\bD}{\mathbf{D}}
+\newcommand{\bK}{\mathbf{K}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bU}{\mathbf{U}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bB}{\mathbf{B}}
+\newcommand{\bC}{\mathbf{C}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bI}{\mathbf{I}}
+\newcommand{\bT}{\mathbf{T}}
+\newcommand{\bE}{\mathbf{E}}
+\newcommand{\bL}{\mathbf{L}}
+\newcommand{\bR}{\mathbf{R}}
+\newcommand{\zero}{\mathbf{0}}
+\newcommand{\avec}{\mathbf{a}}
+\newcommand{\be}{\mathbf{e}}
+\newcommand{\xvec}{\mathbf{x}}
+\newcommand{\bn}{\mathbf{n}}
+\newcommand{\vvec}{\mathbf{v}}
+\newcommand{\zvec}{\mathbf{z}}
+\newcommand{\fvec}{\mathbf{f}}
+\newcommand{\gvec}{\mathbf{g}}
+\newcommand{\bq}{\mathbf{q}}
+\newcommand{\bV}{\mathbf{V}}
+\newcommand{\utilde}{\tilde{\mathbf{u}}}
+\newcommand{\vtilde}{\tilde{\mathbf{v}}}
+\newcommand{\bmu}{{\bm \mu}}
+\newcommand{\bpsi}{{\bm \psi}}
+\newcommand{\bphi}{{\bm \phi}}
+\newcommand{\bomega}{{\bm \omega}}
+\newcommand{\bxi}{{\bm \xi}}
+\newcommand{\bzeta}{{\bm \zeta}}
+\newcommand{\bOmega}{{\bm \Omega}}
+\newcommand{\bGamma}{{\bm \Gamma}}
+\newcommand{\Vspace}{\mathcal{\bm V}}
+\newcommand{\Wspace}{\mathcal{\bm W}}
+\newcommand{\Qspace}{\mathcal{Q}}
+\newcommand{\Pspace}{\mathcal{P}}
+
+\begin{document}
+
+
+\maketitle
+
+This document describes the key steps to putting in a new problem with a new set of physics (PDEs) into 
+the \textit{Albany} code base. 
+
+\begin{enumerate}
+\item Obtain and build TPLs required for \textit{Trilinos} (HDF5, Netcdf, Boost), \textit{Trilinos} and \textit{Albany} (see instructions 
+on the \textit{Albany} WiKi: \url{https://github.com/gahansen/Albany/wiki/Building-Albany-and-supporting-tools}, \url{https://github.com/gahansen/Albany/wiki/Building-the-new-Albany}).
+\item Find a problem in \textit{Albany} that is similar to your problem (e.g., similar PDEs, same \# dofs/node, etc.). Lets say the problem you find is has the name ``Original Problem" with evaluators {\tt problems/OrigProblem.hpp}, {\tt problems/OrigProblem.cpp}, {\tt evaluators/OrigProblemResid.hpp}, {\tt evaluators/OrigProblemResid}$\_${\tt Def.hpp}, {\tt evaluators/OrigProblemResid.cpp}.   
+\item Lets say you want to create a problem called ``New Problem".  First, copy the following: 
+\begin{itemize}
+\item {\tt cd Albany/src/problems} \\
+ {\tt cp OrigProblem.hpp NewProblem.hpp}\\
+ {\tt cp OrigProblem.cpp NewProblem.cpp}.
+\item {\tt cd Albany/src/evaluators}\\ 
+ {\tt cp OrigProblemResid.hpp NewProblemResid.hpp}\\
+ {\tt cp OrigProblemResid.cpp NewProblemResid.cpp}\\
+ {\tt cp OrigProblemResid}$\_${\tt Def.hpp NewProblemResid}$\_${\tt Def.hpp}. 
+\item {\tt cd Albany/examples} \\ 
+{\tt mkdir NewProblem}\\
+{\tt cd NewProblem}\\
+{\tt cp ../OldProblem/CMakeLists.txt .}\\
+{\tt cp ../OldProblem/input*.xml .}  
+\end{itemize} 
+\item Rename the classes in the new files under {\tt Albany/src/problems} and {\tt Albany/src/evaluators}. 
+\item Edit {\tt CMakeLists.txt} and {\tt examples/NewProblem} 
+to add new files and directories that have just been created.
+\item  Edit {\tt Albany/src/problems/Albany}$\_${\tt ProblemFactory.cpp} to add your new method and a constructor for it, e.g.,\\ 
+{\tt else if (method == "New Problem") }\\
+{\tt    strategy = rcp(new Albany::NewProblem(problemParams, paramLib));}
+\item Edit {\tt Albany/src/examples/NewProblem/input*.xml} files, changing ``Problem" name to ``New Problem". 
+\item Clean up NewProblem files in {\tt Albany/src/evaluators} and {\tt Albany/src/problems} -- remove extraneous stuff, change \# dofs per node, if necessary.  You may need to add dependencies, but this can be done at a later time.  
+\item Put your new PDEs (weak for of the residual) in {\tt NewProblemResid}$\_${\tt Def.hpp}.  
+\item You may want to write additional evaluators for some of the terms in the PDEs, e.g., viscosity, source term, etc.
+\item Edit {\tt Albany/src/examples/NewProblem/input*.xml} files to specify your desired initial conditions, boundary conditions and mesh 
+(``Dirichlet BCs", ``Neumann BCs", ``Discretization" sections).  Also specify any parameters, if applicable.  Change the solver, if applicable/desired.  
+\end{enumerate}
+
+
+\end{document}
