@@ -75,6 +75,18 @@ private:
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
   ///
+  /// predictor
+  ///
+  void
+  predictor(int cell,
+	    int pt,
+	    ScalarT dt,
+	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
+	    std::vector<Albany::MDArray * > const & previous_slips,Intrepid::Tensor<ScalarT> const & F,
+	    Intrepid::Tensor<ScalarT> & L,
+	    Intrepid::Tensor<ScalarT> & Fp);
+
+  ///
   /// helper
   ///
   void 
@@ -82,6 +94,12 @@ private:
                 Intrepid::Tensor<ScalarT> const & Fp,
                 Intrepid::Tensor<ScalarT>       & T,
                 Intrepid::Tensor<ScalarT>       & S);
+
+  ///
+  /// Check tensor for nans and infs.
+  ///
+  void confirmTensorSanity(Intrepid::Tensor<ScalarT> const & input,
+			   std::string const & message);
 
   ///
   /// Crystal elasticity parameters
@@ -129,8 +147,6 @@ private:
   Intrepid::Tensor<ScalarT> F_, Fpinv_, Fe_, E_; 
   Intrepid::Tensor<RealType> I_;
   };
-
-
 }
 
 #endif

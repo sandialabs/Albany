@@ -851,7 +851,10 @@ doNudgedElasticBand(const double current_time,
 
       // update avgForce and avgOpposingForce
       avgForce += force[i].norm();
-      dp = force[i].dot(lastForce[i]) / (force[i].norm() * lastForce[i].norm()); 
+      // Handle the 0 case so we don't divide by 0.
+      const double lastForce_norm = lastForce[i].norm();
+      dp = lastForce_norm == 0 ? 0 :
+        force[i].dot(lastForce[i]) / (force[i].norm() * lastForce_norm);
       if( dp < 0 ) {  //if current force and last force point in "opposite" directions
 	mathVector v = force[i] - lastForce[i];
 	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
@@ -1117,7 +1120,10 @@ doNudgedElasticBandT(const double current_time,
 
       // update avgForce and avgOpposingForce
       avgForce += force[i].norm();
-      dp = force[i].dot(lastForce[i]) / (force[i].norm() * lastForce[i].norm()); 
+      // Handle the 0 case so we don't divide by 0.
+      const double lastForce_norm = lastForce[i].norm();
+      dp = lastForce_norm == 0 ? 0 :
+        force[i].dot(lastForce[i]) / (force[i].norm() * lastForce_norm);
       if( dp < 0 ) {  //if current force and last force point in "opposite" directions
 	mathVector v = force[i] - lastForce[i];
 	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
