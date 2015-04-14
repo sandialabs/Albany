@@ -242,15 +242,18 @@ SchwarzMultiscale(
     // to the parameters specified in the "master" coupled input file.
     if (parameter_params != Teuchos::null) {
       if (problem_params_m->isSublist("Parameters")) {
-        std::cout << "parameters!" << std::endl; 
-        TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::logic_error,
-                             "Error in LCM::CoupledSchwarz! Model input file " << 
-                             model_filenames[m] << " cannot have a 'Parameters' section!  " <<
-                             "Parameters should be specified in the 'master' input file " << 
-                             "driving the coupled problem."  <<  std::endl) ;
+        std::cout << "parameters!" << '\n';
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            std::logic_error,
+            "Error in LCM::CoupledSchwarz! Model input file " <<
+            model_filenames[m] << " cannot have a 'Parameters' section!  " <<
+            "Parameters should be specified in the 'master' input file " <<
+            "driving the coupled problem."  <<  '\n') ;
       }
-      Teuchos::ParameterList & param_params_m = problem_params_m->sublist("Parameters", false);
+      Teuchos::ParameterList &
+      param_params_m = problem_params_m->sublist("Parameters", false);
+
       param_params_m.setParametersNotAlreadySet(*parameter_params); 
     }
     
@@ -259,12 +262,13 @@ SchwarzMultiscale(
     // to the parameters specified in the "master" coupled input file.
     if (response_params != Teuchos::null) {
       if (problem_params_m->isSublist("Response Functions")) {
-        TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::logic_error,
-                             "Error in LCM::CoupledSchwarz! Model input file " << 
-                             model_filenames[m] << " cannot have a 'Response Functions' section!  " <<
-                             "Responses should be specified in the 'master' input file " << 
-                             "driving the coupled problem."  <<  std::endl) ;
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            std::logic_error,
+            "Error in LCM::CoupledSchwarz! Model input file " <<
+            model_filenames[m] << " cannot have a 'Response Functions' section!  " <<
+            "Responses should be specified in the 'master' input file " <<
+            "driving the coupled problem."  <<  '\n') ;
       }
       Teuchos::ParameterList & response_params_m = problem_params_m->sublist("Response Functions", false);
       response_params_m.setParametersNotAlreadySet(*response_params); 
@@ -286,7 +290,7 @@ SchwarzMultiscale(
     else 
       TEUCHOS_TEST_FOR_EXCEPTION(true,
                              std::logic_error,
-                             "Error in LCM::CoupledSchwarz! Input file needs to have 'MaterialDB Filename' specified." <<  std::endl) ;
+                             "Error in LCM::CoupledSchwarz! Input file needs to have 'MaterialDB Filename' specified." <<  '\n') ;
 
     material_dbs_[m] =
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
