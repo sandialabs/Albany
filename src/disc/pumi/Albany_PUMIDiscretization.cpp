@@ -286,8 +286,9 @@ void Albany::PUMIDiscretization::setField(
     apf::synchronize(f);
 }
 
-void Albany::PUMIDiscretization::setSplitFields(std::vector<std::string> names,
-    std::vector<int> indices, const ST* data, bool overlapped)
+void Albany::PUMIDiscretization::setSplitFields(
+  const std::vector<std::string>& names, const std::vector<int>& indices,
+  const ST* data, bool overlapped)
 {
   apf::Mesh* m = pumiMeshStruct->getMesh();
   int offset = 0;
@@ -321,8 +322,9 @@ void Albany::PUMIDiscretization::getField(
   }
 }
 
-void Albany::PUMIDiscretization::getSplitFields(std::vector<std::string> names,
-   std::vector<int> indices, ST* data, bool overlapped) const
+void Albany::PUMIDiscretization::getSplitFields(
+  const std::vector<std::string>& names, const std::vector<int>& indices, ST* data,
+  bool overlapped) const
 {
   apf::Mesh* m = pumiMeshStruct->getMesh();
   int offset = 0;

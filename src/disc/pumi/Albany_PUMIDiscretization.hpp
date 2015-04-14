@@ -169,14 +169,16 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
     // Copy field data from Tpetra_Vector to APF
     void setField(const char* name, const ST* data, bool overlapped,
                   int offset = 0, int nentries = -1);
-    void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        const ST* data, bool overlapped);
+    void setSplitFields(const std::vector<std::string>& names,
+                        const std::vector<int>& indices,
+                        const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
     void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
                   int nentries = -1) const;
-    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        ST* dataT, bool overlapped) const;
+    void getSplitFields(const std::vector<std::string>& names,
+                        const std::vector<int>& indices,
+                        ST* dataT, bool overlapped) const;
 
     void createField(const char* name, int value_type);
 
@@ -217,8 +219,9 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
         const Epetra_Vector& data,
         bool overlapped,
         int offset = 0);
-    void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        const Epetra_Vector& data, bool overlapped);
+    void setSplitFields(const std::vector<std::string>& names,
+                        const std::vector<int>& indices,
+                        const Epetra_Vector& data, bool overlapped);
 
     // Copy field data from APF to Epetra_Vector
     void getField(
@@ -226,8 +229,9 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
         Epetra_Vector& data,
         bool overlapped,
         int offset = 0) const;
-    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        Epetra_Vector& data, bool overlapped) const;
+    void getSplitFields(const std::vector<std::string>& names,
+                        const std::vector<int>& indices,
+                        Epetra_Vector& data, bool overlapped) const;
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
