@@ -245,7 +245,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         // and pass it to the Schwarz BC evaluator.
         p->set<Teuchos::RCP<Albany::Application>>(
             "Application",
-            sub_list.get<Teuchos::RCP<Albany::Application>>("Application")
+            param.get<Teuchos::RCP<Albany::Application>>("Application")
         );
 
         // Fill up ParameterList with things DirichletBase wants
