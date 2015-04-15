@@ -160,6 +160,22 @@ namespace Albany {
 
     //! Private to prohibit copying
     AbstractProblem& operator=(const AbstractProblem&);
+
+#ifdef ALBANY_LCM
+  public:
+
+    void setApplication(Teuchos::RCP<Application> const & a)
+    {app_ = a;}
+
+    Teuchos::RCP<Application>
+    getApplication() const
+    {return app_;}
+
+  private:
+
+    Teuchos::RCP<Application>
+    app_;
+#endif // ALBANY_LCM
   };
 
   template <typename ProblemType>
