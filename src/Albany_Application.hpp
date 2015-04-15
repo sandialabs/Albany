@@ -874,7 +874,7 @@ namespace Albany {
 #endif
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
   public:
     void

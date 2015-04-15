@@ -121,7 +121,7 @@ createResponseFunction(
 	   name == "OBC Functional") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
       // Skip if dealing with interface block
       //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif
@@ -135,7 +135,7 @@ createResponseFunction(
            name == "Project IP to Nodal Field") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
       // Skip if dealing with interface block
       //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif

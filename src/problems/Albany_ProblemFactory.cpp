@@ -33,7 +33,7 @@
 #include "ATO/problems/PoissonsEquation.hpp"
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "LCM/problems/MechanicsProblem.hpp"
 #include "LCM/problems/ElasticityProblem.hpp"
 #include "LCM/problems/ThermoElasticityProblem.hpp"
@@ -203,7 +203,7 @@ Albany::ProblemFactory::create()
     strategy = rcp(new Albany::ThermoElectrostaticsProblem(problemParams, paramLib, 3));
   }
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   else if (method == "LAME" || method == "Lame" || method == "lame") {
 #if defined(ALBANY_LAME) || defined(ALBANY_LAMENT)
     strategy = rcp(new Albany::LameProblem(problemParams, paramLib, 3, commT));

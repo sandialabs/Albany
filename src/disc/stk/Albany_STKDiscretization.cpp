@@ -762,7 +762,7 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
 void
 Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
   if(container->hasResidualField()){
@@ -785,7 +785,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 void
 Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
   if(container->hasResidualField()){
@@ -1452,7 +1452,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
     }
 
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
       sphereVolume[b].resize(buck.size());
 #endif
@@ -1513,7 +1513,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       }
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
       if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1){
 	double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
 	if(volumeTemp){

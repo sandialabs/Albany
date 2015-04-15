@@ -26,7 +26,7 @@
   #include "QCAD_ResponseRegionBoundary.hpp"
 #endif
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "IPtoNodalField.hpp"
 #include "ProjectIPtoNodalField.hpp"
 #endif
@@ -316,7 +316,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #endif
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   else if (responseName == "IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );

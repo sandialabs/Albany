@@ -38,7 +38,7 @@
 typedef Albany::DistributedParameterLibrary<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParamLib;
 typedef Albany::DistributedParameter<Tpetra_Vector, Tpetra_MultiVector, Albany::IDArray> DistParam;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 // Forward declaration needed for Schwarz coupling
 namespace Albany {
 class Application;
@@ -173,7 +173,7 @@ struct Workset {
 
   // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters. 
   Teuchos::RCP<Albany::AbstractDiscretization> disc;
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Needed for Schwarz coupling
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   apps_;

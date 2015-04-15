@@ -56,7 +56,7 @@
   #include "ATO_Solver.hpp"
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   #include "SchwarzMultiscale.hpp"
   #include "Schwarz_PiroObserverT.hpp"
 #endif
@@ -343,7 +343,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     if (solutionMethod == "Coupled Schwarz") {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Coupled Schwarz Solution Method does not work with Albany executable!  Please re-run with AlbanyT Executable. \n");
     }
@@ -626,7 +626,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //#endif /* ALBANY_ATO */
 //    }
   
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;

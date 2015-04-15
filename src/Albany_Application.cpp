@@ -278,7 +278,7 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // This is needed for Schwarz coupling so that when Dirichlet
   // BCs are created we know what application is doing it.
   problem->setApplication(Teuchos::rcp(this, false));
@@ -845,7 +845,7 @@ computeGlobalResidualImplT(
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -1067,7 +1067,7 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -1574,7 +1574,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2141,7 +2141,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2329,7 +2329,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2607,7 +2607,7 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2835,7 +2835,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -3022,7 +3022,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -3306,7 +3306,7 @@ computeGlobalMPTangent(
     workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;

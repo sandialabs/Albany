@@ -114,7 +114,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
 
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // do the residual next
 
   if(residual_vector.size() == 0) { // Do the default residual vector
@@ -206,7 +206,7 @@ Albany::MultiSTKFieldContainer<Interleaved>::MultiSTKFieldContainer(
   stk::io::set_field_role(*this->coordinates_field, Ioss::Field::MESH);
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // sphere volume is a mesh attribute read from a genesis mesh file containing sphere element (used for peridynamics)
   // for whatever reason, its type is stk::mesh::Field<double, stk::mesh::Cartesian3d>
   // the read won't work if you try to read it as a SFT
@@ -250,7 +250,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
       *this->refine_field,
       this->metaData->universal_part());
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Fracture state used for adaptive insertion.
   // It exists for all entities except cells (elements).
 
@@ -267,7 +267,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 #ifdef ALBANY_SEACAS
   stk::io::set_field_role(*this->proc_rank_field, Ioss::Field::MESH);
   stk::io::set_field_role(*this->refine_field, Ioss::Field::MESH);
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   for (stk::mesh::EntityRank rank = stk::topology::NODE_RANK; rank < stk::topology::ELEMENT_RANK; ++rank) {
     stk::io::set_field_role(*this->fracture_state[rank], Ioss::Field::MESH);
   }

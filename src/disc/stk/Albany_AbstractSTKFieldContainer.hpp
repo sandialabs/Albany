@@ -76,7 +76,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     IntScalarFieldType* getRefineField(){ return refine_field; }
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
 #endif // ALBANY_LCM
     stk::mesh::Field<double,stk::mesh::Cartesian3d>* getSphereVolumeField(){ return sphereVolume_field; }
@@ -117,7 +117,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
     IntScalarFieldType* refine_field;
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     IntScalarFieldType* fracture_state[stk::topology::ELEMENT_RANK];
 #endif // ALBANY_LCM
 

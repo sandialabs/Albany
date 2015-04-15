@@ -126,7 +126,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
     }
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 
   ///
   /// Time dependent BC specific
@@ -507,7 +507,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
     }
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 
   ///
   /// Time dependent BC specific
