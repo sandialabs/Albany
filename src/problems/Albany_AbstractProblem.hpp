@@ -128,6 +128,11 @@ namespace Albany {
     //! Number of equations per node being solved
     unsigned int neq;
 
+#ifdef ALBANY_AERAS
+    //! boolean flag for Aeras problems
+    bool useHyperViscosity;
+#endif
+    
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
 
