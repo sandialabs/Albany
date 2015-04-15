@@ -45,7 +45,7 @@
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>
-    <Parameter name="Transform Type" type="string" value="Cube Sphere"/>
+    <Parameter name="Transform Type" type="string" value="Spherical"/>
     <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
     <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
     <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/>

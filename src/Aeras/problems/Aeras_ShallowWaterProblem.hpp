@@ -144,10 +144,14 @@ Aeras::ShallowWaterProblem::constructEvaluators(
   const int numVertices = meshSpecs.ctd.node_count;
   int vecDim;
 
-  if (neq == 1) vecDim = neq; 
-  else vecDim = spatialDim;
-  
-  if (useHyperViscosity) vecDim = 2*vecDim; 
+  if (useHyperViscosity == false) {
+    if (neq == 1) vecDim = neq; 
+    else vecDim = spatialDim;
+  }
+  else { 
+    if (neq == 2) vecDim = neq; 
+    else vecDim = spatialDim;
+  }
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
