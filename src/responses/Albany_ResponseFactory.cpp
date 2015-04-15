@@ -15,13 +15,13 @@
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_SolutionResponseFunction.hpp"
 #endif
 #include "Albany_KLResponseFunction.hpp"
 
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "QCAD_SaddleValueResponseFunction.hpp"
 #endif
 #endif
@@ -152,7 +152,7 @@ createResponseFunction(
   }
 
   else if (name == "Solution") {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
 #endif
@@ -169,7 +169,7 @@ createResponseFunction(
   }
 
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   else if (name == "Saddle Value") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {

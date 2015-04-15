@@ -14,7 +14,7 @@
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
@@ -33,7 +33,7 @@
 
 #ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Teko_StridedEpetraOperator.hpp"
 #endif
 #endif
@@ -42,7 +42,7 @@
 #include "PHAL_Utilities.hpp"
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PeridigmManager.hpp"
 #endif
 #endif
@@ -75,7 +75,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   phxGraphVisDetail(0),
   stateGraphVisDetail(0)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
   initialSetUp(params);
@@ -96,7 +96,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     phxGraphVisDetail(0),
     stateGraphVisDetail(0)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
 };
@@ -134,7 +134,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   distParamLib = rcp(new DistParamLib);
 
 #ifdef ALBANY_DEBUG
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   int break_set = (getenv("ALBANY_BREAK") == NULL)?0:1;
   int env_status = 0;
   int length = 1;
@@ -348,7 +348,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   if(!stateMgr.areStateVarsAllocated())
     stateMgr.setStateArrays(disc);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(!TpetraBuild){
     RCP<Epetra_Vector> initial_guessE;
     if (Teuchos::nonnull(initial_guess)) {
@@ -366,13 +366,13 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   LCM::PeridigmManager::self().setDirichletFields(disc);
 #endif
 #endif
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   try {
     //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
@@ -422,7 +422,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
   // Now setup response functions (see note above)
   if(!TpetraBuild){
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     for (int i=0; i<responses.size(); i++)
       responses[i]->setup();
 #endif
@@ -468,7 +468,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   }
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(disc->supportsMOR())
     morFacade = createMORFacade(disc, problemParams);
 #endif
@@ -478,7 +478,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
  * Initialize mesh adaptation features
  */
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(!TpetraBuild &&  solMgr->hasAdaptation()){
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, commT);
@@ -487,7 +487,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 #endif
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   LCM::PeridigmManager::self().initialize(params, disc, commT);
 #endif
 #endif
@@ -522,7 +522,7 @@ getComm() const
   return commT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Map>
 Albany::Application::
 getMap() const
@@ -539,7 +539,7 @@ getMapT() const
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_CrsGraph>
 Albany::Application::
 getJacobianGraph() const
@@ -555,7 +555,7 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
@@ -604,7 +604,7 @@ getInitialSolutionT() const
   return solMgrT->getInitialSolutionT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
@@ -797,7 +797,7 @@ computeGlobalResidualImplT(
   fT->putScalar(0.0);
 
 #ifdef ALBANY_PERIDIGM 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
@@ -856,7 +856,7 @@ computeGlobalResidualImplT(
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalResidual(const double current_time,
@@ -1080,7 +1080,7 @@ computeGlobalJacobianImplT(const double alpha,
   jacT->fillComplete();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalJacobian(const double alpha,
@@ -1242,7 +1242,7 @@ computeGlobalJacobianT(const double alpha,
     countRes++;  //increment residual counter
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
@@ -1585,7 +1585,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalTangent(const double alpha,
@@ -1933,7 +1933,7 @@ evaluateResponseTangentT(int response_index,
     alpha, beta, omega, t, sum_derivs, xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateResponseDerivative(
@@ -1984,7 +1984,7 @@ evaluateResponseDerivativeT(
     t, xdotT, xdotdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateResponseDistParamDeriv(
@@ -3393,7 +3393,7 @@ evaluateMPResponseDerivative(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateStateFieldManager(const double current_time,
@@ -3795,7 +3795,7 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset,
        double current_time)
@@ -3852,7 +3852,7 @@ void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const i
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4054,7 +4054,7 @@ void Albany::Application::setupBasicWorksetInfo(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4479,7 +4479,7 @@ void Albany::Application::setupTangentWorksetInfo(
 #endif //ALBANY_SG_MP
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 {
   return morFacade;

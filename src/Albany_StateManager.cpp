@@ -763,7 +763,7 @@ Albany::StateManager::updateStates()
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Albany::EigendataStruct>
 Albany::StateManager::getEigenData()
 {

@@ -8,7 +8,7 @@
 
 //IK, 9/13/14: Epetra ifdef'ed out except if SG and MP if ALBANY_EPETRA_EXE set to off.
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::DistributedResponseFunction::
 evaluateDerivative(

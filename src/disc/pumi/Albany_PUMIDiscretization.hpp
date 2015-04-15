@@ -13,7 +13,7 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Comm.h"
 #endif
 
@@ -21,7 +21,7 @@
 #include "Albany_PUMIMeshStruct.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 #endif
@@ -187,7 +187,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     /* DAI: old Epetra functions still used by parts of Albany/Trilinos
        Remove when we get to full Tpetra */
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
@@ -343,7 +343,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     //! Stk Mesh Objects
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
@@ -356,26 +356,26 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     //! Unknown Map
     Teuchos::RCP<const Tpetra_Map> mapT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> map;
 #endif
 
     //! Overlapped unknown map, and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> overlap_map;
 #endif
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_CrsGraph> graph;
 #endif
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
 #endif
 

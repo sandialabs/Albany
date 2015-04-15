@@ -8,7 +8,7 @@
 //No epetra if setting ALBANY_EPETRA_EXE off.
 
 #include "Albany_SolverFactory.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_PiroObserver.hpp"
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Petra_Converters.hpp"
@@ -43,7 +43,7 @@
 #endif
 
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   #include "QCAD_Solver.hpp"
   #include "QCAD_CoupledPoissonSchrodinger.hpp"
   #include "QCAD_CoupledPSObserver.hpp"
@@ -78,7 +78,7 @@
 
 extern bool TpetraBuild;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 namespace Albany {
 
 class NOXObserverConstructor : public Piro::ProviderBase<NOX::Epetra::Observer> {
@@ -232,7 +232,7 @@ Albany::SolverFactory::SolverFactory(
 
 Albany::SolverFactory::~SolverFactory(){
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Release the model to eliminate RCP circular reference
   if(Teuchos::nonnull(thyraModelFactory))
     thyraModelFactory->releaseModel();
@@ -244,7 +244,7 @@ Albany::SolverFactory::~SolverFactory(){
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -267,7 +267,7 @@ Albany::SolverFactory::createT(
   return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -761,7 +761,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
     }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
@@ -774,7 +774,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
     }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
@@ -786,7 +786,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   return Teuchos::null;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -940,7 +940,7 @@ int Albany::SolverFactory::checkSolveTestResultsT(
   return failures;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 int Albany::SolverFactory::checkSolveTestResults(
   int response_index,
   int parameter_index,
@@ -1074,7 +1074,7 @@ int Albany::SolverFactory::checkAnalysisTestResults(
   return failures;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 int Albany::SolverFactory::checkSGTestResults(
   int response_index,
   const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,

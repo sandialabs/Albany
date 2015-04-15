@@ -657,7 +657,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       //! Schrodinger source for electrons
       if(quantumRegionSource == "schrodinger")
       {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
         // retrieve Previous Poisson Potential
         ScalarT prevPhi = 0.0, approxEDensity = 0.0;
         
@@ -778,7 +778,7 @@ evaluateFields_moscap1d(typename Traits::EvalData workset)
       //! Schrodinger source for electrons
       if(quantumRegionSource == "schrodinger")
       {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
         // retrieve Previous Poisson Potential
         ScalarT prevPhi = 0.0, approxEDensity = 0.0;
         
@@ -1088,7 +1088,7 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
 
   //Fill additional members for quantum and coulomb sources
   if(sourceName == "schrodinger") {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     if(bUsePredictorCorrector) // retrieve Previous Poisson Potential
       ret.prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"]; //assumed in [myV]
 
@@ -1096,7 +1096,7 @@ QCAD::PoissonSource<EvalT, Traits>::source_setup(const std::string& sourceName, 
 #endif
   }
   else if(sourceName == "ci") {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     if(bUsePredictorCorrector) // retrieve Previous Poisson Potential
       ret.prevPhiArray = (*workset.stateArrayPtr)["PS Previous Poisson Potential"]; //assumed in [myV]
 
@@ -1486,7 +1486,7 @@ QCAD::PoissonSource<EvalT,Traits>::ionizedDopants(const std::string dopType, con
 //! ----------------- Quantum electron density functions ---------------------
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 // *****************************************************************************
 template<typename EvalT, typename Traits>
 typename QCAD::PoissonSource<EvalT,Traits>::ScalarT

@@ -6,7 +6,7 @@
 
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Petra_Converters.hpp"
 #endif
 #include <algorithm>
@@ -203,7 +203,7 @@ evaluateTangentT(const double alpha,
   evaluate<PHAL::AlbanyTraits::Tangent>(workset);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateGradient(const double current_time,
@@ -383,7 +383,7 @@ evaluateGradientT(const double current_time,
   }  
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::FieldManagerScalarResponseFunction::
 evaluateDistParamDeriv(

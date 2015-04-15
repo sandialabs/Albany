@@ -55,7 +55,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void 
     evaluateGradient(const double current_time,
 		     const Epetra_Vector* xdot,
@@ -83,7 +83,7 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void
     evaluateDistParamDeriv(
           const double current_time,

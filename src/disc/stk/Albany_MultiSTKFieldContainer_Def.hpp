@@ -276,7 +276,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::initializeSTKAdaptation() {
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVector(Epetra_Vector& soln,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -389,7 +389,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::fillSolnVectorT(Tpetra_Vector 
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVector(const Epetra_Vector& soln,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {
@@ -505,7 +505,7 @@ void Albany::MultiSTKFieldContainer<Interleaved>::saveSolnVectorT(const Tpetra_V
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 void Albany::MultiSTKFieldContainer<Interleaved>::saveResVector(const Epetra_Vector& res,
     stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) {

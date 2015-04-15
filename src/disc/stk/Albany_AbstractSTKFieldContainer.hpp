@@ -11,7 +11,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #endif
@@ -96,7 +96,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
       return time;
     }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
     virtual void fillVector(Epetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
                         const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;

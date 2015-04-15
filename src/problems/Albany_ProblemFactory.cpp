@@ -45,7 +45,7 @@
 #include "LCM/problems/ThermoMechanicalProblem.hpp"
 #include "LCM/problems/ProjectionProblem.hpp"
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "LCM/problems/PeridigmProblem.hpp"
 #endif
 #endif
@@ -390,7 +390,7 @@ Albany::ProblemFactory::create()
 #endif
   else if (method == "Peridigm Code Coupling" ) {
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     strategy = rcp(new Albany::PeridigmProblem(problemParams, paramLib, 3, commT));
 #else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::runtime_error, " **** Peridigm code coupling requires epetra and Peridigm, recompile with -DENABLE_ALBANY_EPETRA_EXE and -DENABLE_PERIDIGM ****\n");

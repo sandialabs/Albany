@@ -27,7 +27,7 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PHAL_GatherAuxData.hpp"
 #endif
 #include "PHAL_LoadStateField.hpp"

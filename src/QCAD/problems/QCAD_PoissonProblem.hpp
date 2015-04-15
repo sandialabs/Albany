@@ -121,7 +121,7 @@ namespace QCAD {
 #include "QCAD_PoissonSource.hpp"
 #include "PHAL_DOFInterpolation.hpp"
 #include "QCAD_PoissonResid.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "QCAD_ResponseSaddleValue.hpp"
 #include "PHAL_GatherEigenvectors.hpp"
 #endif
@@ -214,7 +214,7 @@ QCAD::PoissonProblem::constructEvaluators(
        (evalUtils.constructDOFGradInterpolationEvaluator(dof_names[i], i));
   }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   { // Gather Eigenvectors
     RCP<ParameterList> p = rcp(new ParameterList);
     p->set<string>("Eigenvector field name root", "Evec");

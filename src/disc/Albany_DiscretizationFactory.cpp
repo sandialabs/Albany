@@ -17,7 +17,7 @@
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #ifdef ALBANY_FELIX
@@ -231,7 +231,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, commT));
   }
@@ -392,7 +392,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
   }
 #ifdef ALBANY_AERAS
   else if (method == "Ioss Aeras" || method == "Exodus Aeras") {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     TEUCHOS_TEST_FOR_EXCEPTION(true,
                                Teuchos::Exceptions::InvalidParameter,
                                "Ioss Aeras and Exodus Aeras are not implemented to run with Albany executable!  " 
