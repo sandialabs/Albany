@@ -72,6 +72,9 @@ public:
 
 protected:
 
+  Teuchos::RCP<Albany::Application>
+  app_;
+
   std::string
   coupled_app_name_;
 
