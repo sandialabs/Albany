@@ -50,7 +50,9 @@
 
 namespace Albany {
 
+#ifdef ALBANY_LCM
   class Application;
+#endif //ALBANY_LCM
 
   enum FieldManagerChoice {BUILD_RESID_FM, BUILD_RESPONSE_FM, BUILD_STATE_FM};
 
