@@ -9,11 +9,14 @@
 
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "QCAD_MaterialDatabase.hpp"
+#include "QCAD_MathVector.hpp"
 
 #define MAX_DIMENSIONS 3
 
 namespace QCAD {
 
+  //MOVED to it's own file (QCAD_MathVector.hpp)
+  /*
   // Helper class: a vector with math operators
   class mathVector
   {
@@ -56,6 +59,9 @@ namespace QCAD {
     int dim_;
     std::vector<double> data_;
   };
+  */
+
+  std::ostream& operator<<(std::ostream& os, const mathVector& mv);
 
   // Data Structure for an image point
   struct nebImagePt {
@@ -80,7 +86,6 @@ namespace QCAD {
     double radius;
   };
 
-  std::ostream& operator<<(std::ostream& os, const mathVector& mv);
   std::ostream& operator<<(std::ostream& os, const nebImagePt& np);
 
   // a double array with maximal dimension

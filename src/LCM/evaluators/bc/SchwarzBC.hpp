@@ -4,8 +4,6 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
 #if !defined(LCM_SchwarzBC_hpp)
 #define LCM_SchwarzBC_hpp
 
@@ -26,7 +24,7 @@
 namespace LCM {
 
 //
-// \brief Schwarz for blocks BC Dirichlet evaluator
+// \brief Schwarz for models BC Dirichlet evaluator
 //
 
 //
@@ -57,15 +55,31 @@ public:
   getDiscretization() const {return disc_;}
 
   void
-  setCoupledBlock(std::string const & cb) {coupled_block_ = cb;}
+  setCoupledAppName(std::string const & can) {coupled_app_name_ = can;}
 
   std::string
-  getCoupledBlock() const {return coupled_block_;}
+  getCoupledAppName() const {return coupled_app_name_;}
+
+  int
+  appIndexFromName(std::string const & name) const
+  {return std::atoi(name.c_str());}
+
+  void
+  setCoupledBlockName(std::string const & cbn) {coupled_block_name_ = cbn;}
+
+  std::string
+  getCoupledBlockName() const {return coupled_block_name_;}
 
 protected:
 
+  Teuchos::RCP<Albany::Application>
+  app_;
+
   std::string
-  coupled_block_;
+  coupled_app_name_;
+
+  std::string
+  coupled_block_name_;
 
   Discretization
   disc_;

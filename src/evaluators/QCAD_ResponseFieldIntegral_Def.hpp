@@ -8,6 +8,9 @@
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
 #include "Albany_Utils.hpp"
+#include "Phalanx.hpp"
+#include "Phalanx_DataLayout.hpp"
+#include "PHAL_Utilities.hpp"
 
 template<typename EvalT, typename Traits>
 QCAD::ResponseFieldIntegral<EvalT, Traits>::
@@ -124,16 +127,24 @@ ResponseFieldIntegral(Teuchos::ParameterList& p,
   //TODO: make name unique? Is this needed for anything?
   this->setName(fieldName+" Response Field Integral" );
   
+  using PHX::MDALayout;
+
   // Setup scatter evaluator
   p.set("Stand-alone Evaluator", false);
   std::string local_response_name = 
     fieldName + " Local Response Field Integral";
   std::string global_response_name = 
     fieldName + " Global Response Field Integral";
+
+  int worksetSize = dl->qp_scalar->dimension(0);
+  int responseSize = 1;
+  Teuchos::RCP<PHX::DataLayout> local_response_layout = Teuchos::rcp(new MDALayout<Cell, Dim>(worksetSize, responseSize));
+  Teuchos::RCP<PHX::DataLayout> global_response_layout = Teuchos::rcp(new MDALayout<Dim>(responseSize));
+
   PHX::Tag<ScalarT> local_response_tag(local_response_name, 
-				       dl->cell_scalar);
+				       local_response_layout); //dl->cell_scalar);
   PHX::Tag<ScalarT> global_response_tag(global_response_name, 
-					dl->workset_scalar);
+					global_response_layout);
   p.set("Local Response Field Tag", local_response_tag);
   p.set("Global Response Field Tag", global_response_tag);
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::setup(p,dl);
@@ -163,9 +174,8 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+  // Zero out global response
+  PHAL::set(this->global_response, 0.0);  
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -177,9 +187,7 @@ void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
   // Zero out local response
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->local_response.size(); i++)
-    this->local_response[i] = 0.0;
+  PHAL::set(this->local_response, 0.0);
 
   typename std::vector<PHX::MDField<ScalarT,Cell,QuadPoint> >::const_iterator it;
 
@@ -248,7 +256,10 @@ evaluateFields(typename Traits::EvalData workset)
 	val *= weights(cell,qp) * scaling; //multiply integrand by volume
 
 	//dbI += val; //DEBUG
-        this->local_response(cell) += val;
+	//std::cout << "local response size = " << this->local_response.size() << std::endl;
+	//std::cout << "cell = " << cell << std::endl;
+	//std::cout << "workset size = " << workset.numCells << std::endl;
+        this->local_response(cell,0) += val;
 	this->global_response(0) += val;
       }
     }
@@ -274,6 +285,8 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseFieldIntegral<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
+  #if 0
+
   // Add contributions across processors
   Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
     workset.serializerManager.template getValue<EvalT>();
@@ -281,25 +294,32 @@ postEvaluate(typename Traits::PostEvalData workset)
   // we cannot pass the same object for both the send and receive buffers in reduceAll call
   // creating a copy of the global_response, not a view
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "tpetra_kokoks not impl'ed");
-//Irina TOFIX pointer
-/*std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
-  PHX::MDField<ScalarT> partial_response(this->global_response);
-  partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-*/
-//Irina TOFIX
-/*
-  Teuchos::reduceAll(
-    *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    this->global_response.size(), &partial_response[0],
-    &this->global_response[0]);
 
-  if (bPositiveOnly && this->global_response[0] < 1e-6) {
-    this->global_response[0] = 1e+100;
-  }
+  //Irina TOFIX pointer
+  /*std::vector<ScalarT> partial_vector(&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
+    PHX::MDField<ScalarT> partial_response(this->global_response);
+    partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
+  */
+  //Irina TOFIX
+  /*
+    Teuchos::reduceAll(
+      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
+      this->global_response.size(), &partial_response[0],
+      &this->global_response[0]);
+  
+    if (bPositiveOnly && this->global_response[0] < 1e-6) {
+      this->global_response[0] = 1e+100;
+      } */
+   #else
+   PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
+
+   if (bPositiveOnly && this->global_response(0) < 1e-6) {
+     this->global_response(0) = 1e+100;
+   }
+   #endif
   
   // Do global scattering
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::postEvaluate(workset);
-*/
 }
 
 // **********************************************************************

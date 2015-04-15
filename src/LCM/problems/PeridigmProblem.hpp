@@ -84,6 +84,7 @@ namespace Albany {
     std::string mtrlDbFilename;
     Teuchos::RCP<QCAD::MaterialDatabase> materialDataBase;
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
+    std::set<std::string> registered_distributedFields;
   };
 
 }
@@ -181,6 +182,17 @@ Albany::PeridigmProblem::constructEvaluators(
        fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherCoordinateVectorEvaluator());
      }
 
+     { //registering field for dirichlet boundary conditions
+       std::string stateName("dirichlet_field");
+       if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+         const std::string& meshPart = "";//"nodelist_2"
+         RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_vector, elementBlockName, true, &entity, meshPart);
+         ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
+       }
+     }
+
      if (haveSource) { // Source
        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  "Error!  Sources not available for Peridigm!");
@@ -230,38 +242,38 @@ Albany::PeridigmProblem::constructEvaluators(
        peridigmManager.setOutputFields(outputVariables);
        std::vector<LCM::PeridigmManager::OutputField> outputFields = peridigmManager.getOutputFields();
        for(unsigned int i=0 ; i<outputFields.size() ; ++i){
-	 std::string albanyName = outputFields[i].albanyName;       
-	 std::string initType = outputFields[i].initType;
-	 std::string relation = outputFields[i].relation;
-	 int length = outputFields[i].length;
+         std::string albanyName = outputFields[i].albanyName;
+         std::string initType = outputFields[i].initType;
+         std::string relation = outputFields[i].relation;
+         int length = outputFields[i].length;
 
-	 Teuchos::RCP<PHX::DataLayout> layout;
-	 if(relation == "node" && length == 1)
-	   layout = dataLayout->node_scalar;
-	 else if(relation == "node" && length == 3)
-	   layout = dataLayout->node_vector;
-	 else if(relation == "node" && length == 9)
-	   layout = dataLayout->node_tensor;
-	 else if(relation == "element" && length == 1)
-	   layout = dataLayout->qp_scalar;
-	 else if(relation == "element" && length == 3)
-	   layout = dataLayout->qp_vector;
-	 else if(relation == "element" && length == 9)
-	   layout = dataLayout->qp_tensor;
-	 else
-	   TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::constructEvaluators(), invalid output varialble type.\n");
+         Teuchos::RCP<PHX::DataLayout> layout;
+         if(relation == "node" && length == 1)
+           layout = dataLayout->node_scalar;
+         else if(relation == "node" && length == 3)
+           layout = dataLayout->node_vector;
+         else if(relation == "node" && length == 9)
+           layout = dataLayout->node_tensor;
+         else if(relation == "element" && length == 1)
+           layout = dataLayout->qp_scalar;
+         else if(relation == "element" && length == 3)
+           layout = dataLayout->qp_vector;
+         else if(relation == "element" && length == 9)
+           layout = dataLayout->qp_tensor;
+         else
+           TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n\n**** Error in PeridigmManager::constructEvaluators(), invalid output varialble type.\n");
 
-	 RCP<ParameterList> p = rcp(new ParameterList("Save " + albanyName));
-	 p = stateMgr.registerStateVariable(albanyName,
-					    layout,
-					    dataLayout->dummy,
-					    elementBlockName,
-					    initType,
-					    0.0,
-					    false,
-					    true);
-	 ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
-	 fm0.template registerEvaluator<EvalT>(ev);
+         RCP<ParameterList> p = rcp(new ParameterList("Save " + albanyName));
+         p = stateMgr.registerStateVariable(albanyName,
+                    layout,
+                    dataLayout->dummy,
+                    elementBlockName,
+                    initType,
+                    0.0,
+                    false,
+                    true);
+         ev = rcp(new PHAL::SaveStateField<EvalT, AlbanyTraits>(*p));
+         fm0.template registerEvaluator<EvalT>(ev);
        }
      }
 
@@ -304,7 +316,7 @@ Albany::PeridigmProblem::constructEvaluators(
 
    } // ---- End Peridynamics Evaluators ----
 
-   // --------- Option 2:  Classical Elasticity ---------   
+   // --------- Option 2:  Peridynamic Partial Stress ---------
 
    else if(materialModelName == "Peridynamic Partial Stress"){
 
@@ -334,6 +346,17 @@ Albany::PeridigmProblem::constructEvaluators(
      TEUCHOS_TEST_FOR_EXCEPTION(dataLayout->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
+
+     { //registering field for dirichlet boundary conditions
+        std::string stateName("dirichlet_field");
+        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+          const std::string& meshPart = "";//"nodelist_2"
+          RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_vector, elementBlockName, true, &entity, meshPart);
+          ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+        }
+      }
 
      // Displacement Fields
 
@@ -512,6 +535,17 @@ Albany::PeridigmProblem::constructEvaluators(
      TEUCHOS_TEST_FOR_EXCEPTION(dataLayout->vectorAndGradientLayoutsAreEquivalent==false, std::logic_error,
 				"Data Layout Usage in Peridigm problems assume vecDim = numDim");
      Albany::EvaluatorUtils<EvalT, PHAL::AlbanyTraits> evalUtils(dataLayout);
+
+     { //registering field for dirichlet boundary conditions
+        std::string stateName("dirichlet_field");
+        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+          const std::string& meshPart = "";//"nodelist_2"
+          RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_vector, elementBlockName, true, &entity, meshPart);
+          ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+          fm0.template registerEvaluator<EvalT>(ev);
+        }
+      }
 
      // Displacement Fields
 

@@ -4,6 +4,10 @@ source ./env-single.sh
 
 cd "$LCM_DIR"
 
+if [ -f "$STATUS_LOG" ]; then
+    rm "$STATUS_LOG" -f
+fi
+		
 case "$SCRIPT_NAME" in
     build.sh)
 	;;
@@ -41,16 +45,18 @@ case "$SCRIPT_NAME" in
 	;;
 esac
 
-echo "------------------------------------------------------------"
+LINE="------------------------------------------------------------"
+
+echo "$LINE"
 echo -e "$PACKAGE_NAME directory\t: $PACKAGE_DIR"
 echo -e "Install directory \t: $INSTALL_DIR"
 echo -e "Build directory\t\t: $BUILD_DIR"
-echo "------------------------------------------------------------"
+echo "$LINE"
 
 case "$SCRIPT_NAME" in
     *clean*)
 	echo "CLEANING UP $PACKAGE_STRING ..."
-	echo "------------------------------------------------------------"
+	echo "$LINE"
 	# Remove install directory for Trilinos only.
 	case "$PACKAGE" in
 	    trilinos)
@@ -71,7 +77,7 @@ case "$SCRIPT_NAME" in
 	;;&
     *config*)
 	echo "CONFIGURING $PACKAGE_STRING ..."
-	echo "------------------------------------------------------------"
+	echo "$LINE"
 	if [ ! -d "$BUILD_DIR" ]; then
 	    mkdir "$BUILD_DIR"
 	fi
@@ -87,7 +93,7 @@ case "$SCRIPT_NAME" in
 	sed -i -e "s|build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
 	sed -i -e "s|package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
 	./"$CONFIG_FILE"
-	echo "------------------------------------------------------------"
+	echo "$LINE"
 	;;&
     *build*)
 	if [ ! -d "$BUILD_DIR" ]; then
@@ -98,10 +104,10 @@ case "$SCRIPT_NAME" in
 	fi
 	cd "$BUILD_DIR"
 	echo "REBUILDING $PACKAGE_STRING ..."
-	echo "------------------------------------------------------------"
+	echo "$LINE"
 	cd "$BUILD_DIR"
 	echo "WARNINGS AND ERRORS REDIRECTED TO $ERROR_LOG"
-	echo "------------------------------------------------------------"
+	echo "$LINE"
 	if [ -f "$ERROR_LOG" ]; then
 	    rm "$ERROR_LOG"
 	fi
@@ -112,12 +118,15 @@ case "$SCRIPT_NAME" in
 		STATUS=$?
 		if [ $STATUS -ne 0 ]; then
 		    echo "*** MAKE COMMAND FAILED ***"
+		    exit 1
 		else
 		    make install
 		    STATUS=$?
 		    if [ $STATUS -ne 0 ]; then
 			echo "*** MAKE INSTALL COMMAND FAILED ***"
+			exit 1
 		    fi
+		    echo SUCCESS > "$STATUS_LOG" 
 		fi
 		;;
 	    albany)
@@ -125,7 +134,9 @@ case "$SCRIPT_NAME" in
 		STATUS=$?
 		if [ $STATUS -ne 0 ]; then
 		    echo "*** MAKE COMMAND FAILED ***"
+		    exit 1
 		fi
+		echo SUCCESS > "$STATUS_LOG" 
 		;;
 	    *)
 		echo "Unrecognized package option"
@@ -147,8 +158,8 @@ case "$SCRIPT_NAME" in
 		fi
 		cd "$BUILD_DIR"
 		echo "TESTING $PACKAGE_STRING ..."
-		echo "------------------------------------------------------------"
-		ctest -j $NUM_PROCS --timeout 300 . | tee "$TEST_LOG"
+		echo "$LINE"
+		ctest --timeout 300 . | tee "$TEST_LOG"
 		;;
 	    *)
 		echo "Unrecognized package option"
@@ -161,6 +172,11 @@ case "$SCRIPT_NAME" in
 	    SUCCESS_RATE=`grep "tests failed" "$TEST_LOG"`
 	    HEADER="LCM TESTS: $HOST, $TOOL_CHAIN $BUILD_TYPE, $SUCCESS_RATE"
 	    mail -r "$FROM" -s "$HEADER" "$TO" < "$TEST_LOG"
+	    STATUS=$?
+	    if [ $STATUS -ne 0 ]; then
+		echo "*** MAIL COMMAND FAILED ***"
+		exit 1
+	    fi
 	fi
 	;;&
 esac

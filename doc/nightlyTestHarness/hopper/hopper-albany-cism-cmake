@@ -21,7 +21,11 @@ cmake  \
     -D GPTL_INCLUDE_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
     -D GPTL_LIBRARY_DIR:FILEPATH="/global/project/projectdirs/ccsm1/libgptl/newlibgptl-gnu" \
     -D ENABLE_CISM_INTERFACE:BOOL=ON \
-    -D Albany_BUILD_STATIC_EXE:BOOL=ON \
     -D CISM_INCLUDE_DIR:FILEPATH=$CISMDIR/libdycore \
+    -D Albany_BUILD_STATIC_EXE:BOOL=ON \
+    -D ALBANY_MPI_OPTIONS:BOOL=ON \
+    -D ALBANY_MPI_EXEC:FILEPATH=aprun \
+    -D ALBANY_MPI_EXEC_MAX_NUMPROCS:STRING=4 \
+    -D ALBANY_MPI_EXEC_NUMPROCS_FLAG:STRING=-n \
     ..
 

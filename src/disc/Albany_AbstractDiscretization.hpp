@@ -26,12 +26,14 @@
 #include "Shards_Array.hpp"
 #include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
+#include "Albany_NodalDOFManager.hpp"
 
 namespace AAdapt { namespace rc { class Manager; } }
 
 namespace Albany {
 
 typedef std::map<std::string, std::vector<std::vector<int> > > NodeSetList;
+typedef std::map<std::string, std::vector<GO> > NodeSetGIDsList;
 typedef std::map<std::string, std::vector<double*> > NodeSetCoordList;
 
 class SideStruct {
@@ -111,6 +113,9 @@ class AbstractDiscretization {
 #ifdef ALBANY_EPETRA
     //! Get Epetra Node map
     virtual Teuchos::RCP<const Epetra_Map> getNodeMap() const = 0;
+
+    //! Get Field Node map
+    virtual Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const = 0;
 #endif
     //! Get Tpetra Node map
     virtual Teuchos::RCP<const Tpetra_Map> getNodeMapT() const = 0;
@@ -118,12 +123,16 @@ class AbstractDiscretization {
 #ifdef ALBANY_EPETRA
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const = 0;
+
+    //! Get Field overlapped Node map
+    virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const = 0;
 #endif
     //! Get overlapped Node map
     virtual Teuchos::RCP<const Tpetra_Map> getOverlapNodeMapT() const = 0;
 
     //! Get Node set lists
     virtual const NodeSetList& getNodeSets() const = 0;
+    virtual const NodeSetGIDsList& getNodeSetGIDs() const = 0;
     virtual const NodeSetCoordList& getNodeSetCoords() const = 0;
 
     //! Get Side set lists
@@ -140,6 +149,9 @@ class AbstractDiscretization {
 #ifdef ALBANY_EPETRA
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     virtual const std::vector<IDArray>& getElNodeEqID(const std::string& field_name) const = 0;
+
+    //! Get Dof Manager of field field_name
+    virtual const NodalDOFManager& getDOFManager(const std::string& field_name) const = 0;
 #endif
 
     //! Retrieve coodinate ptr_field (ws, el, node)

@@ -31,9 +31,11 @@
   #include "STKMeshData.hpp"
 #endif
 
+#ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
 #ifdef ALBANY_EPETRA
 #include "Teko_StridedEpetraOperator.hpp"
+#endif
 #endif
 
 #include "Albany_ScalarResponseFunction.hpp"
@@ -223,8 +225,10 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   determinePiroSolver(params);
 
   physicsBasedPreconditioner = problemParams->get("Use Physics-Based Preconditioner",false);
+#ifdef ALBANY_TEKO
   if (physicsBasedPreconditioner)
     tekoParams = Teuchos::sublist(problemParams, "Teko", true);
+#endif
 
   // Create debug output object
   RCP<Teuchos::ParameterList> debugParams =
@@ -273,6 +277,12 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 
 void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
+
+#ifdef ALBANY_LCM
+  // This is needed for Schwarz coupling so that when Dirichlet
+  // BCs are created we know what application is doing it.
+  problem->setApplication(Teuchos::rcp(this, false));
+#endif //ALBANY_LCM
 
   neq = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
@@ -356,9 +366,16 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
       commT));
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+  LCM::PeridigmManager::self().setDirichletFields(disc);
+#endif
+#endif
+
+
 #ifdef ALBANY_EPETRA
   try {
-    //dp-todo getNodalParameterSIS() needs to be implemented in FMDB. Until
+    //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
     // Create Distributed parameters and initialize them with data stored in the mesh.
     const Albany::StateInfoStruct& distParamSIS = disc->getNodalParameterSIS();
@@ -539,11 +556,12 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
-#if ALBANY_EPETRA
+#ifdef ALBANY_EPETRA
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
 {
+#if defined(ALBANY_TEKO)
    //inverseLib = Teko::InverseLibrary::buildFromStratimikos();
    inverseLib = Teko::InverseLibrary::buildFromParameterList(tekoParams->sublist("Inverse Factory Library"));
    inverseLib->PrintAvailableInverses(*out);
@@ -565,6 +583,9 @@ getPreconditioner()
    TEUCHOS_ASSERT(neq==sum);
 
    return rcp(new Teko::Epetra::InverseFactoryOperator(inverseFac));
+#else
+   return Teuchos::null; 
+#endif
 }
 
 RCP<const Epetra_Vector>
@@ -827,7 +848,8 @@ computeGlobalResidualImplT(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -1048,7 +1070,8 @@ computeGlobalJacobianImplT(const double alpha,
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -1220,12 +1243,13 @@ computeGlobalJacobianT(const double alpha,
     countRes++;  //increment residual counter
 }
 
-#if ALBANY_EPETRA
+#ifdef ALBANY_EPETRA
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
                             const RCP<Epetra_Operator>& prec)
 {
+#if defined(ALBANY_TEKO)
   TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Precond");
 
   *out << "Computing WPrec by Teko" << std::endl;
@@ -1237,6 +1261,7 @@ computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
 
   wrappedJac = buildWrappedOperator(jac, wrappedJac);
   blockPrec->rebuildInverseOperator(wrappedJac);
+#endif
 }
 #endif
 
@@ -1552,7 +1577,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -1754,6 +1780,8 @@ applyGlobalDistParamDerivImplT(const double current_time,
     workset.fpVT = fpVT;
     workset.Vp_bcT = V_bc_ncT;
     workset.transpose_dist_param_deriv = trans;
+    workset.dist_param_deriv_name = dist_param_name;
+    workset.disc = disc;
 
     if ( paramLib->isParameter("Time") )
       workset.current_time =
@@ -1816,7 +1844,9 @@ applyGlobalDistParamDerivImplT(const double current_time,
   { TEUCHOS_FUNC_TIME_MONITOR("> Albany Fill: Distributed Parameter Derivative Export");
   // Assemble global df/dp*V
   if (trans) {
+    Tpetra_MultiVector temp(*fpVT,Teuchos::Copy);
     distParamLib->get(dist_param_name)->export_add(*fpVT, *overlapped_fpVT);
+    fpVT->update(1.0, temp, 1.0); //fpTV += temp;
   }
   else {
     fpVT->doExport(*overlapped_fpVT, *exporterT, Tpetra::ADD);
@@ -2114,7 +2144,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2301,7 +2332,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2578,7 +2610,8 @@ computeGlobalSGTangent(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2805,7 +2838,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -2991,7 +3025,8 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     // FillType template argument used to specialize Sacado
@@ -3274,7 +3309,8 @@ computeGlobalMPTangent(
 #ifdef ALBANY_LCM
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
-    workset.apps = coupled_apps_;
+    workset.apps_ = apps_;
+    workset.current_app_ = Teuchos::rcp(this, false);
 #endif
 
     dfm->evaluateFields<PHAL::AlbanyTraits::MPTangent>(workset);
@@ -3691,7 +3727,7 @@ postRegSetup(std::string eval)
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA) && defined(ALBANY_TEKO)
 RCP<Epetra_Operator>
 Albany::Application::buildWrappedOperator(const RCP<Epetra_Operator>& Jac,
                                           const RCP<Epetra_Operator>& wrapInput,

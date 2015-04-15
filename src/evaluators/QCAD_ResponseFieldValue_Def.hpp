@@ -9,6 +9,7 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "PHAL_Utilities.hpp"
 
 // **********************************************************************
 // Specialization: Jacobian
@@ -24,7 +25,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   if (gT != Teuchos::null) {
     Teuchos::ArrayRCP<ST> gT_nonconstView = gT->get1dViewNonConst();
     for (int res = 0; res < this->field_components.size(); res++) {
-      gT_nonconstView[res] = this->global_response[this->field_components[res]].val();
+      gT_nonconstView[res] = this->global_response(this->field_components[res]).val();
   }
   }
 
@@ -158,7 +159,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP< Stokhos::EpetraVectorOrthogPoly > g_sg = workset.sg_g;
   if (g_sg != Teuchos::null) {
     for (int res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->global_response[this->field_components[res]];
+      ScalarT& val = this->global_response(this->field_components[res]);
       for (int block=0; block<g_sg->size(); block++)
         (*g_sg)[block][res] = val.val().coeff(block);
     }
@@ -235,7 +236,7 @@ postEvaluate(typename Traits::PostEvalData workset)
   Teuchos::RCP<Stokhos::ProductEpetraVector> g_mp = workset.mp_g;
   if (g_mp != Teuchos::null) {
     for (int res = 0; res < this->field_components.size(); res++) {
-      ScalarT& val = this->global_response[this->field_components[res]];
+      ScalarT& val = this->global_response(this->field_components[res]);
       for (int block=0; block<g_mp->size(); block++)
         (*g_mp)[block][res] = val.val().coeff(block);
     }
@@ -426,7 +427,7 @@ preEvaluate(typename Traits::PreEvalData workset)
 {
   for (typename PHX::MDField<ScalarT>::size_type i=0;
        i<this->global_response.size(); i++)
-    this->global_response[i] = initVals[i];
+    this->global_response(i) = initVals[i];
 
   // Do global initialization
   QCAD::FieldValueScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -469,12 +470,12 @@ evaluateFields(typename Traits::EvalData workset)
 
 
     // Check if the currently stored min/max value needs to be updated
-    if( (operation == "Maximize" && opVal > this->global_response[1]) ||
-        (operation == "Minimize" && opVal < this->global_response[1]) ) {
+    if( (operation == "Maximize" && opVal > this->global_response(1)) ||
+        (operation == "Minimize" && opVal < this->global_response(1)) ) {
       max_nodeID = workset.wsElNodeEqID[cell];
 
       // set g[0] = value of return field at the current cell (avg)
-      this->global_response[0]=0.0;
+      this->global_response(0)=0.0;
       if(bReturnOpField) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
           qpVal = 0.0;
@@ -484,7 +485,7 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
           else qpVal = opField(cell,qp);
-          this->global_response[0] += qpVal * weights(cell,qp);
+          this->global_response(0) += qpVal * weights(cell,qp);
         }
       }
       else {
@@ -496,20 +497,20 @@ evaluateFields(typename Traits::EvalData workset)
             }
           }
           else qpVal = retField(cell,qp);
-          this->global_response[0] += qpVal * weights(cell,qp);
+          this->global_response(0) += qpVal * weights(cell,qp);
         }
       }
-      this->global_response[0] /= cellVol;
+      this->global_response(0) /= cellVol;
 
       // set g[1] = value of the field operated on at the current cell (avg)
-      this->global_response[1] = opVal;
+      this->global_response(1) = opVal;
 
       // set g[2+] = average qp coordinate values of the current cell
       for(std::size_t i=0; i<numDims; i++) {
-        this->global_response[i+2] = 0.0;
+        this->global_response(i+2) = 0.0;
         for (std::size_t qp=0; qp < numQPs; ++qp)
-          this->global_response[i+2] += coordVec(cell,qp,i);
-        this->global_response[i+2] /= numQPs;
+          this->global_response(i+2) += coordVec(cell,qp,i);
+        this->global_response(i+2) /= numQPs;
       }
     }
 
@@ -524,36 +525,27 @@ void QCAD::ResponseFieldValue<EvalT, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
   int indexToMax = 1;
-  ScalarT max = this->global_response[indexToMax];
+  ScalarT max = this->global_response(indexToMax);
   Teuchos::EReductionType reductType;
   if (operation == "Maximize")
     reductType = Teuchos::REDUCE_MAX;
   else
     reductType = Teuchos::REDUCE_MIN;
 
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
-    workset.serializerManager.template getValue<EvalT>();
-
-  // Compute contributions across processors
-//Irina TOFIX reduceAll
-TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll is not supported yet)");
-//  Teuchos::reduceAll<int, ScalarT>(
-//    *workset.comm, *serializer, reductType, 1,
-//    &this->global_response[indexToMax], &max);
+  ScalarT send = this->global_response(indexToMax);
+  Teuchos::reduceAll<int, ScalarT>(
+    *workset.comm, reductType, 1, &send, &max);
 
   int procToBcast;
-  if( this->global_response[indexToMax] == max )
+  if( this->global_response(indexToMax) == max )
     procToBcast = workset.comm->getRank();
   else procToBcast = -1;
 
   int winner;
+  Teuchos::reduceAll(
+    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
 
-//Irina TOFIX reduceAll
-//  Teuchos::reduceAll(
-//    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
-//  Teuchos::broadcast<int, ScalarT>(
-//    *workset.comm, *serializer, winner, this->global_response.size(),
-//    &this->global_response[0]);
+  PHAL::broadcast(*workset.comm, winner, this->global_response);
 
   // Do global scattering
   if (workset.comm->getRank() == winner)

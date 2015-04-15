@@ -5,7 +5,7 @@
 //*****************************************************************//
 
 #include "Adapt_NodalDataVector.hpp"
-#include "Tpetra_Import_decl.hpp"
+#include "Tpetra_Import.hpp"
 #include "Teuchos_CommHelpers.hpp"
 
 #ifdef ALBANY_ATO

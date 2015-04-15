@@ -20,7 +20,6 @@
 #endif
 #include "Albany_KLResponseFunction.hpp"
 
-
 #ifdef ALBANY_QCAD
 #ifdef ALBANY_EPETRA
 #include "QCAD_SaddleValueResponseFunction.hpp"
@@ -117,9 +116,9 @@ createResponseFunction(
 	   name == "Internal Energy Objective" ||
 	   name == "Tensor PNorm Objective" ||
 	   name == "Modal Objective" ||
-           name == "Linear Adjoint Solve" ||
            name == "PHAL Field Integral" ||
-           name == "PHAL Field IntegralT") {
+           name == "PHAL Field IntegralT" ||
+	   name == "OBC Functional") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
 #ifdef ALBANY_LCM

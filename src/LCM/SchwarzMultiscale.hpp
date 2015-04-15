@@ -10,6 +10,8 @@
 #include "Albany_ModelEvaluatorT.hpp"
 #include "Albany_DataTypes.hpp"
 #include "Schwarz_BoundaryJacobian.hpp" 
+#include "Thyra_DefaultProductVector.hpp"
+#include "Thyra_DefaultProductVectorSpace.hpp"
 
 namespace LCM {
 
@@ -24,7 +26,8 @@ public:
   SchwarzMultiscale(Teuchos::RCP<Teuchos::ParameterList> const & app_params,
       Teuchos::RCP<Teuchos::Comm<int> const > const & commT,
       Teuchos::RCP<Tpetra_Vector const > const & initial_guessT, 
-      const Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > & solver_factory);
+      Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const > const &
+      solver_factory);
 
   ///Destructor
   ~SchwarzMultiscale();
@@ -80,23 +83,22 @@ public:
   void
   allocateVectors();
 
-  /// Create the map for the coupled solution from an array of the maps
-  /// for each individual model that is being coupled.
-  Teuchos::RCP<Tpetra_Map const>
-  createCoupledMap(
-      Teuchos::Array<Teuchos::RCP<Tpetra_Map const> > maps,
-      Teuchos::RCP<Teuchos::Comm<int> const> const & commT);
-
-  //Take in a combined vector for a coupled model 
-  //and separates into into individual subvectors for each submodel.
-  //These are stored in a Teuchos::Array of Tpetra_Vectors.
-  void separateCoupledVectorConst( const Teuchos::RCP<const Tpetra_Vector>& combined_vector, 
-                              Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >& vecs) const;
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraRangeSpace() const;
   
-  void separateCoupledVectorNonConst( const Teuchos::RCP<Tpetra_Vector>& combined_vector, 
-                              Teuchos::Array<Teuchos::RCP<Tpetra_Vector> >& vecs) const;
+  Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+  getThyraDomainSpace() const;
+  
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  getApps() const {return apps_;}  
 
 protected:
+
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> >
+  range_space_;
+  
+  mutable Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> >
+  domain_space_;
 
   /// Create operator form of dg/dx for distributed responses
   Teuchos::RCP<Thyra::LinearOpBase<ST> >
@@ -117,12 +119,20 @@ protected:
       Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const;
 
 private:
+
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidAppParameters() const;
 
   Teuchos::RCP<Teuchos::ParameterList const>
   getValidProblemParameters() const;
 
+  Thyra::ModelEvaluatorBase::InArgs<ST>
+  createInArgsImpl() const;
+
+  //! List of free parameter names
+  Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >
+  param_names_;
+  
   /// RCP to matDB object
   Teuchos::Array<Teuchos::RCP<QCAD::MaterialDatabase> >
   material_dbs_;
@@ -139,37 +149,21 @@ private:
   /// Cached nominal values -- this contains stuff like x_init, x_dot_init, etc.
   Thyra::ModelEvaluatorBase::InArgs<ST>
   nominal_values_;
-
-  Thyra::ModelEvaluatorBase::InArgs<ST>
-  createInArgsImpl() const;
-
-  Teuchos::RCP<const Tpetra_Map>
-  coupled_disc_map_;
   
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
 
   //Teuchos array holding main diagonal jacobians (non-coupled models)
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs_;
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
+  jacs_;
 
   //Teuchos array holding off-diagonal jacobians (coupling ones)
-  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary_;
+  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> >
+  jacs_boundary_;
 
   int
   num_models_;
 
-  Teuchos::Array<int>
-  num_params_;
-
-  Teuchos::Array<int>
-  num_responses_;
-  
-  Teuchos::Array<int>
-  num_params_partial_sum_;
-
-  Teuchos::Array<int>
-  num_responses_partial_sum_;
-  
   //like num_param_vecs
   int
   num_params_total_;
@@ -183,8 +177,10 @@ private:
   num_responses_total_;
 
   //for setting get_W_factory() 
-  Teuchos::RCP<const Thyra::LinearOpWithSolveFactoryBase<ST> > solver_factory_;
+  Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
+  solver_factory_;
     
+  //! Array of Sacado parameter vectors
   mutable Teuchos::Array<Teuchos::Array<ParamVec> >
   sacado_param_vecs_;
 

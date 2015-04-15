@@ -5,10 +5,503 @@
 //*****************************************************************//
 
 #include <iomanip>
-#include "AAdapt_MeshAdapt.hpp"
-#include "AAdapt_MeshAdapt_Def.hpp"
 
-MESHADAPT_INSTANTIATE_TEMPLATE_CLASS(AAdapt::MeshAdaptT)
+#include <Teuchos_DefaultComm.hpp>
+#include <Teuchos_CommHelpers.hpp>
+#include <Teuchos_TimeMonitor.hpp>
+
+#include <ma.h>
+#include <PCU.h>
+#include <parma.h>
+#include <apfMDS.h> // for createMdsMesh
+
+#include "AAdapt_UnifSizeField.hpp"
+#include "AAdapt_UnifRefSizeField.hpp"
+#ifdef SCOREC_SPR
+#include "AAdapt_SPRSizeField.hpp"
+#endif
+
+#include "AAdapt_RC_Manager.hpp"
+
+#include "AAdapt_MeshAdapt.hpp"
+
+AAdapt::MeshAdapt::
+MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+          const Albany::StateManager& StateMgr_,
+          const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_)
+  : remeshFileIndex(1), rc_mgr(refConfigMgr_)
+{
+  disc = StateMgr_.getDiscretization();
+
+  pumi_discretization = Teuchos::rcp_dynamic_cast<Albany::AbstractPUMIDiscretization>(disc);
+
+  Teuchos::RCP<Albany::PUMIMeshStruct> pumiMeshStruct =
+    pumi_discretization->getPUMIMeshStruct();
+
+  mesh = pumiMeshStruct->getMesh();
+
+  const std::string& method = params_->get("Method", "");
+  if (method == "RPI Unif Size")
+    szField = Teuchos::rcp(new AAdapt::UnifSizeField(pumi_discretization));
+  else if (method == "RPI UnifRef Size")
+    szField = Teuchos::rcp(new AAdapt::UnifRefSizeField(pumi_discretization));
+#ifdef SCOREC_SPR
+  else if (method == "RPI SPR Size")
+    szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
+#endif
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "should not be here");
+
+  num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
+
+  // Save the initial output file name
+  base_exo_filename = pumiMeshStruct->outputFileName;
+
+  adaptation_method = params_->get<std::string>("Method");
+
+  if ( adaptation_method.compare(0,15,"RPI SPR Size") == 0 )
+    checkValidStateVariable(StateMgr_,params_->get<std::string>("State Variable",""));
+
+  initRcMgr();
+}
+
+namespace {
+inline int getValueType (const PHX::DataLayout& dl) {
+  switch (dl.rank() - 2) {
+  case 0: return apf::SCALAR;
+  case 1: return apf::VECTOR;
+  case 2: return apf::MATRIX;
+  default:
+    std::stringstream ss;
+    ss << "not a valid rank: " << dl.rank() - 2;
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, ss.str());
+    return -1;
+  }
+}
+} // namespace
+
+void AAdapt::MeshAdapt::initRcMgr () {
+  if (rc_mgr.is_null()) return;
+  // A field to store the reference configuration x (displacement). At each
+  // adapatation, it will be interpolated to the new mesh.
+  //rc-todo Always apf::VECTOR?
+  //rc-todo Generalize to Albany::AbstractDiscretization.
+  pumi_discretization->createField("x_accum", apf::VECTOR);
+  if (rc_mgr->usingProjection()) {
+    for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
+           end = rc_mgr->fieldsEnd();
+         it != end; ++it) {
+      const int value_type = getValueType(*(*it)->layout);
+      for (int i = 0; i < (*it)->num_g_fields; ++i) {
+        pumi_discretization->createField(
+          (*it)->get_g_name(i).c_str(), value_type);
+      }
+    }
+    rc_mgr->initProjector(pumi_discretization->getNodeMapT(),
+                          pumi_discretization->getOverlapNodeMapT());
+  }
+#ifdef AMBDEBUG
+  // Create a field that never changes. It's interp'ed from now mesh to the
+  // next. In the initial configuration, each component is simply a
+  // coordinate value.
+  pumi_discretization->createField("test_interp_field", apf::VECTOR);
+  const Teuchos::ArrayRCP<const double>&
+    coords = pumi_discretization->getCoordinates();
+  Teuchos::Array<double> f(coords.size());
+  memcpy(&f[0], &coords[0], coords.size()*sizeof(double));
+  pumi_discretization->setField("test_interp_field", &f[0], true, 0, 3);
+#endif
+}
+
+AAdapt::MeshAdapt::~MeshAdapt() {}
+
+bool AAdapt::MeshAdapt::queryAdaptationCriteria(
+  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+  int iter)
+{
+  if (adapt_params_->get<std::string>("Remesh Strategy", "None").compare("Continuous") == 0)
+    return iter > 1;
+  Teuchos::Array<int> remesh_iter = adapt_params_->get<Teuchos::Array<int> >("Remesh Step Number");
+  for (int i = 0; i < remesh_iter.size(); i++)
+    if (iter == remesh_iter[i])
+      return true;
+  return false;
+}
+
+
+void AAdapt::MeshAdapt::initAdapt(
+  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+  Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+{
+  if (PCU_Comm_Self() == 0) {
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+    std::cout << "Adapting mesh using AAdapt::MeshAdapt method        " << std::endl;
+    std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+  }
+
+  // Create a remeshed output file naming convention by adding the
+  // remesh_file_index_ ahead of the period
+  const std::size_t found = base_exo_filename.find("exo");
+  if (found != std::string::npos) {
+    std::ostringstream ss;
+    std::string str = base_exo_filename;
+    ss << "_" << remeshFileIndex << ".";
+    str.replace(str.find('.'), 1, ss.str());
+
+    *output_stream_ << "Remeshing: renaming exodus output file to - " << str << std::endl;
+
+    // Open the new exodus file for results
+    pumi_discretization->reNameExodusOutput(str);
+
+    remeshFileIndex++;
+  }
+
+  // attach qp data to mesh if solution transfer is turned on
+  should_transfer_ip_data = adapt_params_->get<bool>("Transfer IP Data", false);
+  // If the mesh adapt loop is run, we have to transfer state for SPR.
+  if (Teuchos::nonnull(rc_mgr)) should_transfer_ip_data = true;
+
+  szField->setParams(adapt_params_);
+
+}
+
+void AAdapt::MeshAdapt::beforeAdapt()
+{
+  if (should_transfer_ip_data) pumi_discretization->attachQPData();
+  szField->copyInputFields();
+}
+
+// Do some RTTI to figure out which ma::configure to call. I think this part is
+// why MeshAdapt(T) was templated on SizeField. I find that templating quite
+// unnatural and cumbersome (need to maintain ETI, for example), so I'm going to
+// switch to runtime polymorphism and pay the price right here.
+static ma::Input*
+configure (apf::Mesh2* mesh, const Teuchos::RCP<AAdapt::MeshSizeField>& sf) {
+  { ma::IsotropicFunction*
+      isf = dynamic_cast<ma::IsotropicFunction*>(sf.get());
+    if (isf) return ma::configure(mesh, isf); }
+  { ma::AnisotropicFunction*
+      asf = dynamic_cast<ma::AnisotropicFunction*>(sf.get());
+    if (asf) return ma::configure(mesh, asf); }
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "shouldn't be here");
+  return 0;
+}
+
+void AAdapt::MeshAdapt::adaptInPartition(
+  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+{
+  szField->computeError();
+
+  ma::Input* input = configure(mesh, szField);
+  input->maximumIterations = num_iterations;
+  //do not snap on deformation problems even if the model supports it
+  input->shouldSnap = false;
+
+  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
+  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
+  if (loadBalancing) {
+    input->shouldRunPreZoltan = true;
+    input->shouldRunMidParma = true;
+    input->shouldRunPostParma = true;
+    input->maximumImbalance = lbMaxImbalance;
+  }
+
+  ma::adapt(input);
+
+  szField->freeSizeField();
+}
+
+void AAdapt::MeshAdapt::afterAdapt()
+{
+  mesh->verify();
+
+  szField->freeInputFields();
+  // Throw away all the Albany data structures and re-build them from the mesh
+  // Note that the solution transfer for the QP fields happens in this call
+  pumi_discretization->updateMesh(should_transfer_ip_data);
+
+  // detach QP fields from the apf mesh
+  if (should_transfer_ip_data)
+    pumi_discretization->detachQPData();
+}
+
+template <class T>
+struct AdaptCallbackOf : public Parma_GroupCode
+{
+  T* adapter;
+  const Teuchos::RCP<Teuchos::ParameterList>* adapt_params;
+  void run(int group) {
+    adapter->adaptInPartition(*adapt_params);
+  }
+};
+
+/* Adaptation loop.
+ *   Namespace al and method adaptMeshLoop implement the following operation. We
+ * have current coordinates c and the solution vector of displacements d. Now we
+ * need to update the coordinates to be c' = c + d and then hand c' to the
+ * SCOREC remesher.
+ *   One problem is that if we simply add d to c, some tets may flip from having
+ * positive volume to negative volume. This loop implements a stepping procedure
+ * that tries out c'' = c + alpha d, with the goal of moving alpha from 0 to
+ * 1. It tries alpha = 1 first to take advantage of the easy case of no volume
+ * sign flips. If that fails, then it backs off. Once it finds 0 < alpha < 1 for
+ * which c'' has all positive-volume tets, c'' is passed to the SCOREC
+ * remesher. The remesher also interpolates (1 - alpha) d, which is the
+ * displacement remaining to be accumulated into the coordinates, to the new
+ * mesh. This procedure repeats until alpha = 1.
+ */
+namespace al {
+void anlzCoords(
+  const Teuchos::RCP<const Albany::AbstractPUMIDiscretization>& pumi_disc);
+void writeMesh(
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc);
+double findAlpha(
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
+  // Max number of iterations to spend if a successful alpha is already found.
+  const int n_iterations_if_found,
+  // Max number of iterations before failure is declared. Must be >=
+  // n_iterations_if_found.
+  const int n_iterations_to_fail);
+
+bool correctnessTestSkip () {
+#ifndef AMBDEBUG
+  return false;
+#else
+  static int cnt = 0;
+  if ( ! amb::Options::get()->params()->isType<int>("nadapt")) return false;
+  return ++cnt > amb::Options::get()->params()->get<int>("nadapt");
+#endif
+}
+} // namespace al
+
+void adaptShrunken(apf::Mesh2* m, double min_part_density,
+                   Parma_GroupCode& callback);
+
+bool AAdapt::MeshAdapt::adaptMesh(
+  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_,
+  Teuchos::RCP<Teuchos::FancyOStream>& output_stream_)
+{
+#ifdef AMBDEBUG
+  al::anlzCoords(pumi_discretization);
+#endif
+
+  AdaptCallbackOf<AAdapt::MeshAdapt > callback;
+  callback.adapter = this;
+  callback.adapt_params = &adapt_params_;
+  const double
+    min_part_density = adapt_params_->get<double>("Minimum Part Density", 1000);
+
+  initAdapt(adapt_params_, output_stream_);
+
+  bool success;
+  if (rc_mgr.is_null()) {
+    // Old method. No reference configuration updating.
+    if ( ! al::correctnessTestSkip()) {
+      beforeAdapt();
+      adaptShrunken(pumi_discretization->getPUMIMeshStruct()->getMesh(),
+                    min_part_density, callback);
+      afterAdapt();
+    }
+    success = true;
+  } else {
+    success = adaptMeshWithRc(min_part_density, callback);
+  }
+
+#ifdef AMBDEBUG
+  al::anlzCoords(pumi_discretization);
+  //al::writeMesh(pumi_discretization);
+#endif
+  return success;
+}
+
+bool AAdapt::MeshAdapt::
+adaptMeshWithRc (const double min_part_density, Parma_GroupCode& callback) {
+  const bool overlapped = true;
+
+  rc_mgr->beginAdapt();
+
+  if (rc_mgr->usingProjection()) {
+    // Give PUMI the nodal data.
+    for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
+           end = rc_mgr->fieldsEnd();
+         it != end; ++it)
+      for (int i = 0; i < (*it)->num_g_fields; ++i) {
+        const Teuchos::RCP<Tpetra_MultiVector>&
+          mv = rc_mgr->getNodalField(**it, i, overlapped);
+        const std::size_t n = mv->getLocalLength();
+        const int ncol = mv->getNumVectors();
+        Teuchos::Array<double> data(n * ncol);
+        // non-interleaved -> interleaved ordering.
+        //rcu-todo Figure out these ordering details. What sets the ordering
+        // requirements? Can we changed by field at runtime?
+        for (int c = 0; c < ncol; ++c) {
+          Teuchos::ArrayRCP<RealType>
+            v = mv->getVectorNonConst(c)->getDataNonConst();
+          for (size_t k = 0; k < n; ++k) data[ncol*k + c] = v[k];
+        }
+        pumi_discretization->setField((*it)->get_g_name(i).c_str(), &data[0],
+                                      overlapped, 0, ncol);
+      }
+  }
+
+  const bool success = adaptMeshLoop(min_part_density, callback);
+  rc_mgr->endAdapt(pumi_discretization->getNodeMapT(),
+                   pumi_discretization->getOverlapNodeMapT());
+
+  if (rc_mgr->usingProjection()) {
+    // Get the nodal data from PUMI.
+    for (rc::Manager::Field::iterator it = rc_mgr->fieldsBegin(),
+           end = rc_mgr->fieldsEnd();
+         it != end; ++it)
+      for (int i = 0; i < (*it)->num_g_fields; ++i) {
+        const Teuchos::RCP<Tpetra_MultiVector>&
+          mv = rc_mgr->getNodalField(**it, i, overlapped);
+        const std::size_t n = mv->getLocalLength();
+        const int ncol = mv->getNumVectors();
+        Teuchos::Array<double> data(n * ncol);
+        pumi_discretization->getField((*it)->get_g_name(i).c_str(), &data[0],
+                                      overlapped, 0, ncol);
+        for (int c = 0; c < ncol; ++c) {
+          Teuchos::ArrayRCP<RealType>
+            v = mv->getVectorNonConst(c)->getDataNonConst();
+          for (size_t k = 0; k < n; ++k) v[k] = data[ncol*k + c];
+        }
+      }
+  }
+
+  return success;
+}
+
+bool AAdapt::MeshAdapt::
+adaptMeshLoop (const double min_part_density, Parma_GroupCode& callback) {
+  const int
+    n_max_outer_iterations = 10,
+    n_max_inner_iterations_if_found = 20,
+    // -log2(eps) = 52. Since this iteration uses bisection, we can go for about
+    // 50 iterations before failure is definite. The iteration is cheap relative
+    // to other parts of adaptation, so there is no reason not to set this
+    // parameter to ~50.
+    n_max_inner_iterations_to_fail = 50;
+  bool success = false;
+  double alpha_accum = 0;
+  for (int it = 0; it < n_max_outer_iterations; ++it) {
+    const double alpha = al::findAlpha(
+      pumi_discretization, rc_mgr, n_max_inner_iterations_if_found,
+      n_max_inner_iterations_to_fail);
+    if (Teuchos::DefaultComm<int>::getComm()->getRank() == 0) {
+      alpha_accum = alpha_accum + alpha*(1 - alpha_accum);
+      std::cout << "amb: adaptMeshLoop it " << it << " alpha " << alpha
+                << " alpha_accum " << alpha_accum << "\n";
+    }
+    if (alpha == 0) { success = false; break; }
+
+    if ( ! al::correctnessTestSkip()) {
+      beforeAdapt();
+      adaptShrunken(pumi_discretization->getPUMIMeshStruct()->getMesh(),
+                    min_part_density, callback);
+      afterAdapt();
+    }
+
+    // Resize x.
+    rc_mgr->get_x() = Teuchos::rcp(
+      new Tpetra_Vector(pumi_discretization->getSolutionFieldT()->getMap()));
+    // Copy ref config data, now interp'ed to new mesh, into it.
+    pumi_discretization->getField(
+      "x_accum", &rc_mgr->get_x()->get1dViewNonConst()[0], false);
+    
+    if (alpha == 1) { success = true; break; }
+  }
+
+  return success;
+}
+
+void AAdapt::MeshAdapt::checkValidStateVariable(
+  const Albany::StateManager& state_mgr_,
+  const std::string name)
+{
+  if (name.length() > 0) {
+    // does state variable exist?
+    std::string stateName;
+
+    Albany::StateArrays& sa = disc->getStateArrays();
+    Albany::StateArrayVec& esa = sa.elemStateArrays;
+    Teuchos::RCP<Albany::StateInfoStruct> stateInfo = state_mgr_.getStateInfoStruct();
+    bool exists = false;
+    for(unsigned int i = 0; i < stateInfo->size(); i++) {
+      stateName = (*stateInfo)[i]->name;
+      if ( name.compare(0,100,stateName) == 0 ) {
+        exists = true;
+        break;
+      }
+    }
+    if (!exists)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                 "Error!    Invalid State Variable Parameter!");
+
+    // is state variable a 3x3 tensor?
+
+    std::vector<int> dims;
+    esa[0][name].dimensions(dims);
+    int size = dims.size();
+    if (size != 4)
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+                                 "Error! Invalid State Variable Parameter \"" << name << "\" looking for \"" << stateName << "\"" << std::endl);
+  }
+}
+
+Teuchos::RCP<const Teuchos::ParameterList>
+AAdapt::MeshAdapt::getValidAdapterParameters(
+  Teuchos::RCP<Teuchos::ParameterList>& validPL) const
+{
+  Teuchos::Array<int> defaultArgs;
+
+  validPL->set<Teuchos::Array<int> >("Remesh Step Number", defaultArgs, "Iteration step at which to remesh the problem");
+  validPL->set<std::string>("Remesh Strategy", "", "Strategy to use when remeshing: Continuous - remesh every step.");
+  validPL->set<int>("Max Number of Mesh Adapt Iterations", 1, "Number of iterations to limit meshadapt to");
+  validPL->set<double>("Target Element Size", 0.1, "Seek this element size when isotropically adapting");
+  validPL->set<double>("Error Bound", 0.1, "Max relative error for error-based adaptivity");
+  validPL->set<std::string>("State Variable", "", "SPR operates on this variable");
+  validPL->set<bool>("Load Balancing", true, "Turn on predictive load balancing");
+  validPL->set<double>("Maximum LB Imbalance", 1.3, "Set maximum imbalance tolerance for predictive laod balancing");
+  validPL->set<std::string>("Adaptation Displacement Vector", "", "Name of APF displacement field");
+  validPL->set<bool>("Transfer IP Data", false, "Turn on solution transfer of integration point data");
+  validPL->set<double>("Minimum Part Density", 1000, "Minimum elements per part: triggers partition shrinking");
+  if (Teuchos::nonnull(rc_mgr)) rc_mgr->getValidParameters(validPL);
+
+  return validPL;
+}
+
+AAdapt::MeshAdaptT::
+MeshAdaptT(const Teuchos::RCP<Teuchos::ParameterList>& params_,
+           const Teuchos::RCP<ParamLib>& paramLib_,
+           const Albany::StateManager& StateMgr_,
+           const Teuchos::RCP<AAdapt::rc::Manager>& refConfigMgr_,
+           const Teuchos::RCP<const Teuchos_Comm>& commT_)
+  : AbstractAdapterT(params_, paramLib_, StateMgr_, commT_),
+    meshAdapt(params_, StateMgr_, refConfigMgr_)
+{}
+
+bool AAdapt::MeshAdaptT::queryAdaptationCriteria(int iteration)
+{
+  return meshAdapt.queryAdaptationCriteria(this->adapt_params_,iteration);
+}
+
+bool AAdapt::MeshAdaptT::adaptMesh(
+  const Teuchos::RCP<const Tpetra_Vector>& solution,
+  const Teuchos::RCP<const Tpetra_Vector>& ovlp_solution)
+{
+  return meshAdapt.adaptMesh(
+    this->adapt_params_,this->output_stream_);
+}
+
+Teuchos::RCP<const Teuchos::ParameterList>
+AAdapt::MeshAdaptT::getValidAdapterParameters() const
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+    this->getGenericAdapterParams("ValidMeshAdaptParams");
+  return meshAdapt.getValidAdapterParameters(validPL);
+}
 
 static double getAveragePartDensity(apf::Mesh* m)
 {
@@ -40,7 +533,7 @@ static void warnAboutShrinking(int factor)
 }
 
 void adaptShrunken(apf::Mesh2* m, double minPartDensity,
-    Parma_GroupCode& callback)
+                   Parma_GroupCode& callback)
 {
   int factor = getShrinkFactor(m, minPartDensity);
   if (factor == 1)
@@ -85,7 +578,7 @@ void dispExtremum (
 
 // For analysis.
 void anlzCoords (
-  const Teuchos::RCP<const AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<const Albany::AbstractPUMIDiscretization>& pumi_disc)
 {
   // x = coords + displacement.
   const int dim = pumi_disc->getNumDim();
@@ -103,7 +596,7 @@ void anlzCoords (
 }
 
 void writeMesh (
-  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc)
 {
   static int ncalls = 0;
   std::stringstream ss;
@@ -125,7 +618,7 @@ public:
   const Teuchos::ArrayRCP<const ST> soln_ol_data;
 
   CoordState (
-    const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc)
+    const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc)
     : soln_ol_(pumi_disc->getSolutionFieldT(true)),
       soln_nol(pumi_disc->getSolutionFieldT(false)),
       soln_ol_data(soln_ol_->get1dView())
@@ -146,10 +639,10 @@ public:
 };
 
 void updateCoordinates (
-  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
   const CoordState& cs, const Teuchos::ArrayRCP<double>& x)
 {
-  // AlbPUMI::FMDBDiscretization uses interleaved DOF and coordinates, so we
+  // Albany::PUMIDiscretization uses interleaved DOF and coordinates, so we
   // can sum coords and soln_data straightforwardly.
   for (std::size_t i = 0; i < cs.coords.size(); ++i)
     x[i] = cs.coords[i] + cs.soln_ol_data[i];
@@ -157,7 +650,7 @@ void updateCoordinates (
 }
 
 void updateRefConfig (
-  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   const CoordState& cs)
 {
@@ -169,7 +662,7 @@ void updateRefConfig (
 }
 
 void updateSolution (
-  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
   const double alpha, CoordState& cs)
 {
   // Set solution to (1 - alpha) solution.
@@ -192,7 +685,7 @@ void updateSolution (
 // reference configuration is updated, and the solution field is set to (1 -
 // alpha) [original solution].
 double findAlpha (
-  const Teuchos::RCP<AlbPUMI::AbstractPUMIDiscretization>& pumi_disc,
+  const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& pumi_disc,
   const Teuchos::RCP<AAdapt::rc::Manager>& rc_mgr,
   // Max number of iterations to spend if a successful alpha is already found.
   const int n_iterations_if_found,
@@ -212,7 +705,7 @@ double findAlpha (
 
     ++it;
     const long n_negative_simplices = apf::verifyVolumes(
-      pumi_disc->getFMDBMeshStruct()->getMesh(), false);
+      pumi_disc->getPUMIMeshStruct()->getMesh(), false);
     // Adjust alpha bounds.
     if (n_negative_simplices == 0)
       alpha_lo = alpha;

@@ -5,3 +5,4 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/run_exodiff_test.py
 add_subdirectory(SingleElement2d)
 add_subdirectory(SingleElement3d)
 add_subdirectory(SingleSlipPlane)
+add_subdirectory(RubiksCube)

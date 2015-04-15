@@ -62,10 +62,6 @@
 #include "Hydride/problems/LaplaceBeltramiProblem.hpp"
 #endif
 
-#ifdef ALBANY_SEE
-#include "SEE/problems/NonlinearPoissonProblem.hpp"
-#endif
-
 #ifdef ALBANY_AMP
 #include "AMP/problems/PhaseProblem.hpp"
 #endif
@@ -318,17 +314,6 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinearElasticityModal 3D") {
     strategy = rcp(new Albany::LinearElasticityModalProblem(problemParams, paramLib, 3));
-  }
-#endif
-#ifdef ALBANY_SEE
-  else if (method == "Nonlinear Poisson 1D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 1, commT));
-  }
-  else if (method == "Nonlinear Poisson 2D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 2, commT));
-  }
-  else if (method == "Nonlinear Poisson 3D") {
-    strategy = rcp(new Albany::NonlinearPoissonProblem(problemParams, paramLib, 3, commT));
   }
 #endif
 #ifdef ALBANY_AMP

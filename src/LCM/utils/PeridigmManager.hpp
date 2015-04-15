@@ -44,6 +44,16 @@ public:
     }
   };
 
+  //! Data structure for Optimization-Based Coupling
+  struct OBCDataPoint {
+    double initialCoords[3];
+    double currentCoords[3];
+    int peridigmGlobalId;
+    stk::mesh::Entity albanyElement;
+    CellTopologyData cellTopologyData;
+    double naturalCoords[3];
+  };
+
   //! Singleton.
   static PeridigmManager & self();
 
@@ -51,6 +61,12 @@ public:
   void initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
                   Teuchos::RCP<Albany::AbstractDiscretization> disc,
 		  const Teuchos::RCP<const Teuchos_Comm>& comm);
+
+  //! Identify the overlapping solid element for each peridynamic sphere element (applies only to overlapping discretizations).
+  void obcOverlappingElementSearch();
+
+  //! Evaluate the functional for optimization-based coupling
+  double obcEvaluateFunctional();
 
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
@@ -70,6 +86,11 @@ public:
   //! Retrieve the partial stress tensors for the quadrature points in the given element (evaluateInternalForce() must be called prior to getPartialStress()).
   void getPartialStress(std::string blockName, int worksetIndex, int worksetLocalElementId, std::vector< std::vector<RealType> >& partialStressValues);
 
+  //! Accessor for the list of solid elements in the overlap region for optimization-based coupling.
+  Teuchos::RCP< std::vector<OBCDataPoint> > getOBCDataPoints(){
+    return obcDataPoints;
+  }
+
   //! Retrieve the Epetra_Vector for a given Peridigm data field.
   Teuchos::RCP<const Epetra_Vector> getBlockData(std::string blockName, std::string fieldName);
 
@@ -79,12 +100,19 @@ public:
   //! Get the list of peridynamics variables that will be written to Exodus.
   std::vector<OutputField> getOutputFields();
 
+  //! Set Dirichlet Fields;
+  void setDirichletFields(Teuchos::RCP<Albany::AbstractDiscretization> disc);
+
+  //! Get the STK discretization
+  Teuchos::RCP<Albany::STKDiscretization> getSTKDisc(){ return stkDisc; }
+
 private:
 
   // Peridigm objects
   Teuchos::RCP<PeridigmNS::Discretization> peridynamicDiscretization;
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm;
 
+  Teuchos::RCP<Albany::STKDiscretization> stkDisc;
   Teuchos::RCP<const stk::mesh::MetaData> metaData;
   Teuchos::RCP<const stk::mesh::BulkData> bulkData;
 
@@ -93,6 +121,8 @@ private:
   Teuchos::RCP<const Teuchos_Comm> teuchosComm;
 
   bool hasPeridynamics;
+
+  bool enableOptimizationBasedCoupling;
 
   double previousTime;
   double currentTime;
@@ -108,7 +138,7 @@ private:
 
   std::vector<int> peridigmNodeGlobalIds;
 
-  std::map<int,int> peridigmNodeGlobalIdToLocalId;
+  std::map<int,int> peridigmGlobalIdToPeridigmLocalId;
 
   std::vector<int> sphereElementGlobalNodeIds;
 
@@ -116,7 +146,13 @@ private:
 
   std::map< int, std::vector<int> > albanyPartialStressElementGlobalIdToPeridigmGlobalIds;
 
+  Teuchos::RCP< std::vector<OBCDataPoint> > obcDataPoints;
+
+  Teuchos::RCP<Epetra_Vector> obcPeridynamicNodeCurrentCoords;
+
   int cubatureDegree;
+
+  Teuchos::RCP<Tpetra_Vector> albanyOverlapSolutionVector;
 
   //! Constructor, private to prohibit use.
   PeridigmManager();

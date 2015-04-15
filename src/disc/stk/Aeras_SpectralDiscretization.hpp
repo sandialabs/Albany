@@ -41,7 +41,7 @@
 #include "Shards_CellTopology.hpp"
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 namespace Aeras
 {
@@ -52,7 +52,7 @@ namespace Aeras
                                                                const int points_per_edge) 
       {
 #ifdef OUTPUT_TO_SCREEN
-      std::cout << "DEBUG: in AerasMeshSpectStruct!  Points Per Edge =  " << points_per_edge << std::endl;
+      std::cout << "DEBUG: in AerasMeshSpectStruct!  Element Degree =  " << points_per_edge << std::endl;
 #endif 
       //get data from original STK Mesh struct
       CellTopologyData orig_ctd = orig_mesh_specs_struct->ctd; 
@@ -162,14 +162,16 @@ namespace Aeras
 #ifdef ALBANY_EPETRA
     //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
+    
+    //! Get overlapped node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+
+    //! Get field overlapped node map
+    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap(const std::string& field_name) const;
 #endif
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
-#ifdef ALBANY_EPETRA
-    //! Get Epetra overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
-#endif
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
@@ -177,8 +179,6 @@ namespace Aeras
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
 
-    //! Get field overlapped DOF map
-    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
 #endif
 
 #ifdef ALBANY_EPETRA
@@ -196,10 +196,14 @@ namespace Aeras
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
 #ifdef ALBANY_EPETRA
-    //! Get Epetra Node map
-    Teuchos::RCP<const Epetra_Map> getNodeMap() const; 
-    //! Get overlapped Node map
-    Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
+    //! Get field node map
+    Teuchos::RCP<const Epetra_Map> getNodeMap() const;
+    //! Get field node map
+    Teuchos::RCP<const Epetra_Map> getNodeMap(const std::string& field_name) const;
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Epetra_Map> getOverlapMap() const;
+    //! Get field overlapped DOF map
+    Teuchos::RCP<const Epetra_Map> getOverlapMap(const std::string& field_name) const;
 #endif
     //! Get Tpetra Node map
     Teuchos::RCP<const Tpetra_Map> getNodeMapT() const; 
@@ -214,6 +218,10 @@ namespace Aeras
     const Albany::NodeSetCoordList& getNodeSetCoords() const
     {
       return nodeSetCoords;
+    };
+    const Albany::NodeSetGIDsList& getNodeSetGIDs() const 
+    { 
+      return nodeSetGIDs; 
     };
 
     //! Get Side set lists (typedef in Albany_AbstractDiscretization.hpp)
@@ -242,6 +250,8 @@ namespace Aeras
     {
       return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
     }
+    const Albany::NodalDOFManager& getDOFManager(const std::string& field_name) const
+            {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
 #endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
@@ -562,6 +572,7 @@ namespace Aeras
     //! node sets stored as std::map(string ID, int vector of GIDs)
     Albany::NodeSetList nodeSets;
     Albany::NodeSetCoordList nodeSetCoords;
+    Albany::NodeSetGIDsList nodeSetGIDs;
 
     //! side sets stored as std::map(string ID, SideArray classes) per
     //! workset (std::vector across worksets)

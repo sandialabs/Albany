@@ -19,8 +19,9 @@
 //! Helper function prototypes
 namespace QCAD 
 {
-  bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
-  bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
+  //Moved to MathVector.hpp
+  //bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
+  //bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
 
 #ifdef ALBANY_EPETRA
   void gatherVector(std::vector<double>& v, std::vector<double>& gv,
@@ -850,7 +851,10 @@ doNudgedElasticBand(const double current_time,
 
       // update avgForce and avgOpposingForce
       avgForce += force[i].norm();
-      dp = force[i].dot(lastForce[i]) / (force[i].norm() * lastForce[i].norm()); 
+      // Handle the 0 case so we don't divide by 0.
+      const double lastForce_norm = lastForce[i].norm();
+      dp = lastForce_norm == 0 ? 0 :
+        force[i].dot(lastForce[i]) / (force[i].norm() * lastForce_norm);
       if( dp < 0 ) {  //if current force and last force point in "opposite" directions
 	mathVector v = force[i] - lastForce[i];
 	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
@@ -1116,7 +1120,10 @@ doNudgedElasticBandT(const double current_time,
 
       // update avgForce and avgOpposingForce
       avgForce += force[i].norm();
-      dp = force[i].dot(lastForce[i]) / (force[i].norm() * lastForce[i].norm()); 
+      // Handle the 0 case so we don't divide by 0.
+      const double lastForce_norm = lastForce[i].norm();
+      dp = lastForce_norm == 0 ? 0 :
+        force[i].dot(lastForce[i]) / (force[i].norm() * lastForce_norm);
       if( dp < 0 ) {  //if current force and last force point in "opposite" directions
 	mathVector v = force[i] - lastForce[i];
 	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
@@ -2693,6 +2700,9 @@ getHighestPtIndex() const
   }
   }*/
 
+
+//MOVED to QCAD_MathVector.cpp
+/*
 // Returns true if point is inside polygon, false otherwise
 //  Assumes 2D points (more dims ok, but uses only first two components)
 //  Algorithm = ray trace along positive x-axis
@@ -2718,7 +2728,7 @@ bool QCAD::ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const doubl
   }
   return c;
 }
-
+*/
 
 //Not used - but keep for reference
 // Returns true if point is inside polygon, false otherwise
@@ -2739,11 +2749,12 @@ bool QCAD::ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const doubl
 
 
 
-
 /*************************************************************/
 //! mathVector class: a vector with math operations (helper class) 
 /*************************************************************/
 
+//MOVED to it's own file (QCAD_MathVector.cpp)
+/*
 QCAD::mathVector::mathVector() 
 {
   dim_ = -1;
@@ -2930,6 +2941,7 @@ std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::mathVector& mv)
   os << ")";
   return os;
 }
+*/
 
 std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebImagePt& np)
 {

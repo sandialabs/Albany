@@ -30,7 +30,7 @@ set( CTEST_SOURCE_NAME          repos)
 set( CTEST_BUILD_NAME           "linux-gcc-${CTEST_BUILD_CONFIGURATION}")
 set( CTEST_BINARY_NAME          build)
 
-SET(PREFIX_DIR /users/ghansen)
+SET(PREFIX_DIR /users/ambrad)
 
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
@@ -64,9 +64,14 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 find_program(CTEST_SVN_COMMAND NAMES svn)
 
 # Point at the public Repo
-SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
+# getting the error
+#     error: server certificate verification failed. CAfile: /etc/ssl/certs/ca-certificates.crt CRLfile: none while accessing https://software.sandia.gov/trilinos/repositories/publicTrilinos/info/refs
+# so switching to the github one for now
+#SET(Trilinos_REPOSITORY_LOCATION https://software.sandia.gov/trilinos/repositories/publicTrilinos)
+SET(Trilinos_REPOSITORY_LOCATION https://github.com/trilinos/trilinos.git)
+
 #SET(SCOREC_REPOSITORY_LOCATION https://redmine.scorec.rpi.edu/svn/buildutil/trunk/cmake)
-#SET(Albany_REPOSITORY_LOCATION ghansen@jumpgate.scorec.rpi.edu:/users/ghansen/Albany.git)
+#SET(Albany_REPOSITORY_LOCATION ambrad@jumpgate.scorec.rpi.edu:/users/ambrad/Albany.git)
 SET(SCOREC_REPOSITORY_LOCATION git@github.com:SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION git@github.com:gahansen/Albany.git)
 
@@ -180,7 +185,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot update Trilinos!")
+	message(FATAL_ERROR "Cannot submit to cdash.")
   endif()
 ENDIF()
 
@@ -199,7 +204,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot update SCOREC!")
+	message(FATAL_ERROR "Cannot submit to cdash.")
   endif()
 ENDIF()
 
@@ -217,7 +222,7 @@ IF(CTEST_DO_SUBMIT)
   )
 
   if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot update Albany repository!")
+	message(FATAL_ERROR "Cannot submit to cdash.")
   endif()
 ENDIF()
 
@@ -297,6 +302,7 @@ SET(COMMON_CONFIGURE_OPTIONS
   "-DKokkos_ENABLE_Serial:BOOL=ON"
   "-DKokkos_ENABLE_OpenMP:BOOL=OFF"
   "-DKokkos_ENABLE_Pthread:BOOL=OFF"
+  "-DHAVE_INTREPID_KOKKOSCORE:BOOL=ON"
 #
   "-DTrilinos_ENABLE_TESTS:BOOL=OFF"
   "-DTrilinos_ENABLE_TriKota:BOOL=OFF"
@@ -484,7 +490,7 @@ SET(CONFIGURE_OPTIONS
   "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
   "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
   "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
-  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm /users/ghansen/lib64/libgfortran.a'"
+  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm /users/ambrad/lib64/libgfortran.a'"
 #  "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm -lcurl ${PREFIX_DIR}/ompi-clang/lib/libmpi.so'"
   "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstallC11"
   ${COMMON_CONFIGURE_OPTIONS}
@@ -520,7 +526,7 @@ SET(CTEST_BUILD_TARGET install)
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-set(ENV{LD_LIBRARY_PATH} "/users/ghansen/ompi-clang/lib:${INITIAL_LD_LIBRARY_PATH}")
+set(ENV{LD_LIBRARY_PATH} "/users/ambrad/ompi-clang/lib:${INITIAL_LD_LIBRARY_PATH}")
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/TriBuildC11"
@@ -566,7 +572,7 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_QCAD:BOOL=ON"
   "-DENABLE_MOR:BOOL=ON"
   "-DENABLE_ATO:BOOL=ON"
-  "-DENABLE_SEE:BOOL=ON"
+  "-DENABLE_AMP:BOOL=ON"
   "-DENABLE_ASCR:BOOL=OFF"
 #  "-DENABLE_CHECK_FPE:BOOL=ON"
   )

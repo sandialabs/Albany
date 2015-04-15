@@ -82,23 +82,32 @@ evaluateFields(typename Traits::EvalData workset)
 {
   typedef Intrepid::FunctionSpaceTools FST;
 
+  for (int cell=0; cell < workset.numCells; ++cell) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int dim=0; dim<numDims; dim++) {
+	ExResidual(cell,node,dim)=0.0;
+      }
+      for (int qp=0; qp < numQPs; ++qp) {
+	for (int i=0; i<numDims; i++) {
+	  for (int dim=0; dim<numDims; dim++) {
+	    ExResidual(cell,node,i) += Stress(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
+	  }
+	}
+      }
+    }
+  }
+
+  if (workset.transientTerms && enableTransient) {
     for (int cell=0; cell < workset.numCells; ++cell) {
       for (int node=0; node < numNodes; ++node) {
-              for (int dim=0; dim<numDims; dim++)  ExResidual(cell,node,dim)=0.0;
-          for (int qp=0; qp < numQPs; ++qp) {
-            for (int i=0; i<numDims; i++) {
-              for (int dim=0; dim<numDims; dim++) {
-                ExResidual(cell,node,i) += Stress(cell, qp, i, dim) * wGradBF(cell, node, qp, dim);
-    } } } } }
-
-
-  if (workset.transientTerms && enableTransient)
-    for (int cell=0; cell < workset.numCells; ++cell) {
-      for (int node=0; node < numNodes; ++node) {
-          for (int qp=0; qp < numQPs; ++qp) {
-            for (int i=0; i<numDims; i++) {
-                ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
-    } } } }
+	for (int qp=0; qp < numQPs; ++qp) {
+	  for (int i=0; i<numDims; i++) {
+	    ExResidual(cell,node,i) += uDotDot(cell, qp, i) * wBF(cell, node, qp);
+	  }
+	}
+      }
+    }
+  }
 
 //   FST::integrate<ScalarT>(ExResidual, Stress, wGradBF, Intrepid::COMP_CPP, false); // "false" overwrites
 

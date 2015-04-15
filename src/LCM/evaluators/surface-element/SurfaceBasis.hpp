@@ -18,177 +18,187 @@
 #include "Intrepid_Cubature.hpp"
 
 namespace LCM {
-  
-  /// \brief Surface Basis Evaluator
+
+/// \brief Surface Basis Evaluator
+///
+/// This evaluator computes bases for surface elements
+/// \tparam EvalT
+/// \tparam Traits
+///
+template<typename EvalT, typename Traits>
+class SurfaceBasis: public PHX::EvaluatorWithBaseImpl<Traits>,
+    public PHX::EvaluatorDerived<EvalT, Traits> {
+
+public:
+  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::MeshScalarT MeshScalarT;
+
   ///
-  /// This evaluator computes bases for surface elements
-  /// \tparam EvalT
-  /// \tparam Traits
+  /// Constructor
+  /// \param[in] p Teuchos::ParameterList
+  /// \param[in] dl RCP to Albany::Layout
   ///
-  template<typename EvalT, typename Traits>
-  class SurfaceBasis : public PHX::EvaluatorWithBaseImpl<Traits>,
-                       public PHX::EvaluatorDerived<EvalT, Traits>  {
+  SurfaceBasis(Teuchos::ParameterList const & p,
+      Teuchos::RCP<Albany::Layouts> const & dl);
 
-  public:
-    typedef typename EvalT::ScalarT ScalarT;
-    typedef typename EvalT::MeshScalarT MeshScalarT;
-    typedef Intrepid::FieldContainer<ScalarT> SFC;
-    typedef Intrepid::FieldContainer<MeshScalarT> MFC;
+  ///
+  /// Phalanx method to allocate space
+  ///
+  void
+  postRegistrationSetup(typename Traits::SetupData d,
+      PHX::FieldManager<Traits> & vm);
 
-    ///
-    /// Constructor
-    /// \param[in] p Teuchos::ParameterList
-    /// \param[in] dl RCP to Albany::Layout
-    ///
-    SurfaceBasis(const Teuchos::ParameterList& p,
-                 const Teuchos::RCP<Albany::Layouts>& dl);
+  ///
+  /// Implementation of physics
+  ///
+  void
+  evaluateFields(typename Traits::EvalData d);
 
-    ///
-    /// Phalanx method to allocate space
-    ///
-    void postRegistrationSetup(typename Traits::SetupData d,
-                               PHX::FieldManager<Traits>& vm);
+  ///
+  /// Takes given coordinates and computes the corresponding midplane
+  /// \param refCoords
+  /// \param midplane_coords
+  ///
+  template<typename ST>
+  void
+  computeMidplaneCoords(
+      PHX::MDField<ST, Cell, Vertex, Dim> const coords,
+      Intrepid::FieldContainer<ST> & midplane_coords);
 
-    ///
-    /// Implementation of physics
-    ///
-    void evaluateFields(typename Traits::EvalData d);
+  ///
+  /// Computes basis from the reference midplane
+  /// \param midplane_coords
+  /// \param basis
+  ///
+  template<typename ST>
+  void
+  computeBasisVectors(Intrepid::FieldContainer<ST> const & midplane_coords,
+      PHX::MDField<ST, Cell, QuadPoint, Dim, Dim> basis);
 
-    ///
-    /// Takes the reference coordinates and computes the midplane
-    /// \param refCoords
-    /// \param midplaneCoords
-    ///
-    void computeReferenceMidplaneCoords(const PHX::MDField<MeshScalarT,Cell,Vertex,Dim> refCoords,
-                                        MFC & midplaneCoords);
+  ///
+  /// Computes the Dual from the midplane and reference bases
+  /// \param midplane_coords
+  /// \param basis
+  /// \param normal
+  /// \param dual_basis
+  ///
+  void
+  computeDualBasisVectors(
+      Intrepid::FieldContainer<MeshScalarT> const & midplane_coords,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim> normal,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> dual_basis);
 
-    ///
-    /// Takes the current coordinates and computes the midplane
-    /// \param currentCoords
-    /// \param midplaneCoords
-    ///
-    void computeCurrentMidplaneCoords(const PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords,
-                                      SFC & midplaneCoords);
+  ///
+  /// Computes the jacobian mapping - da/dA
+  /// \param basis
+  /// \param dual_basis
+  /// \param area
+  ///
+  void
+  computeJacobian(
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const basis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim> const dual_basis,
+      PHX::MDField<MeshScalarT, Cell, QuadPoint> area);
 
-    ///
-    /// Computes Reference configuration Bases from the reference midplane
-    /// \param midplaneCoords
-    /// \param basis
-    ///
-    void computeReferenceBaseVectors(const MFC & midplaneCoords, 
-                                     PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> basis);
+private:
+  unsigned int
+  num_dims_, num_nodes_, num_qps_, num_surf_nodes_, num_surf_dims_;
 
-    ///
-    /// Computes current configuration Bases from the current midplane
-    /// \param midplaneCoords
-    /// \param basis
-    ///
-    void computeCurrentBaseVectors(const SFC & midplaneCoords, 
-                            PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> basis);
+  bool
+  need_current_basis_;
 
-    ///
-    /// Computes the Dual from the midplane and reference bases
-    /// \param midplaneCoords
-    /// \param basis
-    /// \param normal
-    /// \param dualBasis
-    ///
-    void computeDualBaseVectors(const MFC & midplaneCoords, 
-                                const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> basis, 
-                                PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> normal, 
-                                PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> dualBasis);
+  ///
+  /// Input: Cordinates in the reference configuration
+  ///
+  PHX::MDField<MeshScalarT, Cell, Vertex, Dim>
+  reference_coords_;
 
-    ///
-    /// Computes the jacobian mapping - da/dA
-    /// \param basis
-    /// \param dualBasis
-    /// \param area
-    ///
-    void computeJacobian(const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> basis,
-                         const PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> dualBasis,
-                         PHX::MDField<MeshScalarT,Cell,QuadPoint> area);
+  ///
+  /// Input: Numerical integration rule
+  ///
+  Teuchos::RCP<Intrepid::Cubature<RealType> >
+  cubature_;
 
-  private:
-    unsigned int  numDims, numNodes, numQPs, numPlaneNodes, numPlaneDims;
+  ///
+  /// Input: Finite element basis for the midplane
+  ///
+  Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+  intrepid_basis_;
 
-    bool needCurrentBasis;
+  ///
+  /// Local FieldContainer to store the reference midplane_coords
+  ///
+  Intrepid::FieldContainer<MeshScalarT>
+  ref_midplane_coords_;
 
-    ///
-    /// Input: Cordinates in the reference configuration
-    ///
-    PHX::MDField<MeshScalarT,Cell,Vertex,Dim> referenceCoords;
+  ///
+  /// Local FieldContainer to store the current midplane_coords
+  ///
+  Intrepid::FieldContainer<ScalarT>
+  current_midplane_coords_;
 
-    ///
-    /// Input: Numerical integration rule
-    ///
-    Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
-    
-    ///
-    /// Input: Finite element basis for the midplane
-    ///
-    Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
+  ///
+  /// Output: Reference basis
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>
+  ref_basis_;
 
-    ///
-    /// Local FieldContainer to store the reference midplaneCoords
-    ///
-    Intrepid::FieldContainer<MeshScalarT> refMidplaneCoords;
+  ///
+  /// Output: Reference integration area
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint>
+  ref_area_;
 
-    ///
-    /// Local FieldContainer to store the current midplaneCoords
-    ///
-    Intrepid::FieldContainer<ScalarT> currentMidplaneCoords;
+  ///
+  /// Output: Reference dual basis
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim, Dim>
+  ref_dual_basis_;
 
-    ///
-    /// Output: Reference basis
-    ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> refBasis;
+  ///
+  /// Output: Reference normal
+  ///
+  PHX::MDField<MeshScalarT, Cell, QuadPoint, Dim>
+  ref_normal_;
 
-    ///
-    /// Output: Reference integration area
-    ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint> refArea;
+  // if we need to compute the current bases (for mechanics)
+  ///
+  /// Optional Input: Coordinates in the current configuration
+  ///
+  PHX::MDField<ScalarT, Cell, Vertex, Dim>
+  current_coords_;
 
-    ///
-    /// Output: Reference dual basis
-    ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> refDualBasis;
+  ///
+  /// Optional Output: Current basis
+  ///
+  PHX::MDField<ScalarT, Cell, QuadPoint, Dim, Dim>
+  current_basis_;
 
-    ///
-    /// Output: Reference normal
-    ///
-    PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> refNormal;
+  ///
+  /// Reference Cell FieldContainer for basis values
+  ///
+  Intrepid::FieldContainer<RealType>
+  ref_values_;
 
-    // if we need to compute the current bases (for mechanics)
-    ///
-    /// Optional Input: Coordinates in the current configuration
-    ///
-    PHX::MDField<ScalarT,Cell,Vertex,Dim> currentCoords;
+  ///
+  /// Reference Cell FieldContainer for basis gradients
+  ///
+  Intrepid::FieldContainer<RealType>
+  ref_grads_;
 
-    ///
-    /// Optional Output: Current basis
-    ///
-    PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim> currentBasis;
+  ///
+  /// Reference Cell FieldContainer for integration point locations
+  ///
+  Intrepid::FieldContainer<RealType>
+  ref_points_;
 
-    ///
-    /// Reference Cell FieldContainer for basis values
-    ///
-    Intrepid::FieldContainer<RealType> refValues;
-
-    ///
-    /// Reference Cell FieldContainer for basis gradients
-    ///
-    Intrepid::FieldContainer<RealType> refGrads;
-
-    ///
-    /// Reference Cell FieldContainer for integration point locations
-    ///
-    Intrepid::FieldContainer<RealType> refPoints;
-
-    ///
-    /// Reference Cell FieldContainer for integration weights
-    ///
-    Intrepid::FieldContainer<RealType> refWeights;
-  };
+  ///
+  /// Reference Cell FieldContainer for integration weights
+  ///
+  Intrepid::FieldContainer<RealType>
+  ref_weights_;
+};
 }
 
-#endif
+#endif // SURFACE_BASIS_HPP

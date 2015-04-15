@@ -38,6 +38,7 @@ add_test(${testName}_GisUnstructured ${Albany.exe} input_fo_gis_unstruct.xml)
 add_test(${testName}_GisRestartUnstructured ${Albany.exe} input_fo_gis_unstruct_restart.xml)
 add_test(${testName}_GisAdjointSensitivity ${Albany.exe} input_fo_gis_adjoint_sensitivity.xml)
 set_tests_properties(${testName}_GisRestartUnstructured  PROPERTIES DEPENDS ${testName}_GisUnstructured) 
+set_tests_properties(${testName}_Gis20km  PROPERTIES LABELS CUDA_TEST) 
 endif() 
 if(ALBANY_IFPACK2)
 add_test(${testName}_Gis20km_Tpetra ${AlbanyT.exe} input_fo_gis20km_testT.xml)
@@ -48,3 +49,5 @@ IF(ALBANY_STK_PERCEPT AND ALBANY_EPETRA)
 add_test(${testName}_Gis20km_refine ${Albany8.exe} input_fo_gis20km_refine.xml)
 ENDIF()
 
+#salloc -n 4 -n 4 -p pbatch
+#mpirun -np 4 ../../../build/src/Albany input_fo_gis20km.xml

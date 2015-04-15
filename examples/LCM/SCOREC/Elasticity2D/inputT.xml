@@ -27,10 +27,10 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="FMDB"/>
-    <Parameter name="FMDB Input File Name" type="string" value="../meshes/square/square-serial.smb"/>
+    <Parameter name="Method" type="string" value="PUMI"/>
+    <Parameter name="PUMI Input File Name" type="string" value="../meshes/square/square-serial.smb"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/square/square.dmg"/>
-    <Parameter name="FMDB Output File Name" type="string" value="out.vtk"/>
+    <Parameter name="PUMI Output File Name" type="string" value="out.vtk"/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{2, eb_1}"/>
     <Parameter name="Edge Node Set Associations" type="TwoDArray(string)" value="2x4:{16,12,6,14, left,right,top,bottom}"/>
   </ParameterList>

@@ -170,10 +170,16 @@ struct Workset {
   Teuchos::ArrayRCP<double>  wsSphereVolume;
   Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double> > > >  ws_coord_derivs;
   std::string EBName;
+
+  // Needed for Schwarz coupling and for dirichlet conditions based on dist parameters. 
+  Teuchos::RCP<Albany::AbstractDiscretization> disc;
 #ifdef ALBANY_LCM
   // Needed for Schwarz coupling
-  Teuchos::RCP<Albany::AbstractDiscretization> disc;
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  apps_;
+
+  Teuchos::RCP<Albany::Application>
+  current_app_;
 #endif
 
   Albany::StateArray* stateArrayPtr;

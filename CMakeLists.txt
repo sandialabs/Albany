@@ -10,10 +10,10 @@ cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
 # Error check up front
-#IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-#  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-#  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-#ENDIF()
+IF (NOT DEFINED ALBANY_TRILINOS_DIR)
+  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
+  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
+ENDIF()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
@@ -221,14 +221,10 @@ IF (Amesos2_List_ID GREATER -1)
   ADD_DEFINITIONS(-DALBANY_AMESOS2)
   MESSAGE("-- Looking for Amesos2:            Found, compiling with -DALBANY_AMESOS2")
   SET(ALBANY_AMESOS2 TRUE)
-  LIST(FIND Amesos2_TPL_LIST SuperLU Amesos2_SuperLU_List_ID)
-  IF (Amesos2_SuperLU_List_ID GREATER -1)
-    MESSAGE("---- Amesos2 has been compiled with an operational solver")
-    SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER TRUE)
-  ELSE()
-    MESSAGE("---- Amesos2 has NOT been compiled with an operational solver. Enable SuperLU.")
-    SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER FALSE)
-  ENDIF()
+  # We can't rely on Amesos2_TPL_LIST any longer; KLU2 and Basker are not
+  # TPLs. These will soon be enabled by default in Amesos2. So we'll just
+  # assume we have a coarse direct solver.
+  SET(ALBANY_AMESOS2_OPERATIONAL_SOLVER TRUE)
 ELSE()
   MESSAGE("-- Looking for Amesos2:            NOT found.")
   SET(ALBANY_AMESOS2 FALSE)
@@ -561,17 +557,6 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
-# Set optional dependency on SEE, defaults to Disabled
-OPTION(ENABLE_SEE "Flag to turn on SEE (SCOREC error estimation) source code" OFF)
-IF (ENABLE_SEE)
-  ADD_DEFINITIONS(-DALBANY_SEE)
-  MESSAGE("-- SEE       is Enabled, compiling with -DALBANY_SEE")
-  SET(ALBANY_SEE TRUE)
-ELSE()
-  MESSAGE("-- SEE       is NOT Enabled.")
-  SET(ALBANY_SEE FALSE)
-ENDIF()
-
 # Set optional dependency on AMP, defaults to Disabled
 OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
 IF (ENABLE_AMP)
@@ -583,8 +568,8 @@ ELSE()
   SET(ALBANY_AMP FALSE)
 ENDIF()
 
-# Set optional build of MOR (Model Order Reduction) defaults to ON
-OPTION(ENABLE_MOR "Flag to turn on MOR Source code" ON)
+# Set optional build of MOR (Model Order Reduction) defaults to OFF
+OPTION(ENABLE_MOR "Flag to turn on MOR Source code" OFF)
 IF (ENABLE_MOR)
   ADD_DEFINITIONS(-DALBANY_MOR)
   MESSAGE("-- MOR       is Enabled, compiling with -DALBANY_MOR")
@@ -634,7 +619,7 @@ ELSE()
   #EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake)
 ENDIF()
 
-# Set optional dependency on SCOREC FMDB,  optional adaptivity
+# Set optional dependency on SCOREC PUMI,  optional adaptivity
 # MESSAGE("-- Looking for SCOREC:")
 LIST(FIND Trilinos_PACKAGE_LIST SCOREC SCOREC_List_ID)
 OPTION(ENABLE_SCOREC "Flag to turn on SCOREC dependency" OFF)
@@ -718,9 +703,16 @@ MESSAGE("\nMiscellaneous Albany Options:")
 # Set optional build of FELIX (Land Ice SciDAC project), defaults to Disabled
 OPTION(ENABLE_FAST_FELIX "Flag to turn on Code Optimization for FELIX that
 may break other physics" OFF)
-IF (ENABLE_FELIX AND ENABLE_FAST_FELIX)
+OPTION(ENABLE_SLFAD "Flag to turn on Code Optimization for ALBANY that
+may break other physics" OFF)
+
+SET(SLFAD_SIZE 27 CACHE INT "set Sacado SLFad size")
+
+IF (ENABLE_SLFAD OR ENABLE_FAST_FELIX)
   ADD_DEFINITIONS(-DALBANY_FAST_FELIX)
+  ADD_DEFINITIONS(-DALBANY_SLFAD_SIZE=${SLFAD_SIZE})
   MESSAGE("-- FAST_FELIX               is Enabled: MIGHT BREAK OTHER PHYSICS!!")
+  MESSAGE("-- SLFAD_SIZE=${SLFAD_SIZE}"               )  
 ENDIF()
 
 
@@ -833,6 +825,13 @@ if (ENABLE_KERNELGETMEMORYSIZE)
   message("-- Memory: Kernel_GetMemorySize() is Enabled.")
 endif()
 
+# Mesh database tools.
+OPTION(ENABLE_MESHDB_TOOLS "Flag to turn on mesh database tools" OFF)
+IF (ENABLE_MESHDB_TOOLS)
+  MESSAGE("-- Mesh database tools       are Enabled.")
+  SET(ALBANY_MESHDB_TOOLS TRUE)
+ENDIF()
+
 IF (ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE)) 
   MESSAGE("-- WARNING: QCAD               is Enabled but does not work with AlbanyT executable yet!  To run, set ENABLE_ALBANY_EPETRA_EXE to ON and run with Albany executable.")
 ENDIF(ENABLE_QCAD AND (NOT ENABLE_ALBANY_EPETRA_EXE))
@@ -855,10 +854,6 @@ IF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
 ENABLE_ALBANY_EPETRA_EXE turned off!  Turn on ENABLE_ALBANY_EPETRA_EXE if you
 want to useTriKota.")
 ENDIF (TriKota_List_ID GREATER -1 AND NOT ENABLE_ALBANY_EPETRA_EXE)
-
-IF (ALBANY_SEE AND (NOT ALBANY_SCOREC))
-  MESSAGE("-- WARNING: SEE              is Enabled but SCOREC is not; SEE tests will fail.")
-ENDIF(ALBANY_SEE AND (NOT ALBANY_SCOREC))
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)

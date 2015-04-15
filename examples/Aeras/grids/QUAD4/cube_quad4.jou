@@ -1,0 +1,20 @@
+
+#This journal file creates a mesh of a cube from [-1,1]^3 using quads. 
+#It can be fed in to the code to be transformed into a cube-sphere mesh 
+#using Transform Type "Cube Sphere".
+
+set geometry engine acis
+brick x 2 y 2 z 2
+volume 1 interval 1
+#change the following to mesh volume n to get a mesh with n elements in each coordinat edirection 
+mesh volume 1
+set duplicate block elements off
+block 1 surface all
+block 1 element type SHELL4 
+set large exodus file on 
+export genesis "cube_quad4_6eles.g" block 1 overwrite
+
+
+
+
+

@@ -339,6 +339,10 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   num_p = (nParameters > 0) ? 1 : 0; // Only use first parameter (p) vector, if there are any parameters
   num_g = (responseFns.size() > 0) ? 1 : 0; // Only use first response vector (but really one more than num_g -- 2nd holds solution vector)
 
+  //Make sure "Number" parameter under "Parameters" list is set correctly so that sensitivities are displayed
+  // currectly, now that Main_Solve.cpp checks "Number" to determine what parameter vectors are distributed vs. not.
+  // We want Main_Solve to treat the fist parameter vector as non-distributed if we have any paramters.
+  paramList.set<int>("Number",nParameters);
 
 #ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
   typedef int GlobalIndex;
@@ -2000,6 +2004,7 @@ void QCAD::Solver::setupParameterMapping(const Teuchos::ParameterList& list, con
 
   else {  // When "Number" is not given, expose all the parameters of the default SubSolver
 
+    
     if( (subSolversData.find(defaultSubSolver)->second).Np > 0 )
       nParameters = (subSolversData.find(defaultSubSolver)->second).pLength[0]; //just use param vec 0
     else nParameters = 0; //if the solver has no parameter vectors, then there are no parameters

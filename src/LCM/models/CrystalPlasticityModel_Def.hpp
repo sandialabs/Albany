@@ -12,13 +12,12 @@
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
-#define CP_HARDENING
+
 #include <typeinfo>
 #include <Sacado_Traits.hpp>
 namespace LCM
 {
 
-//------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 CrystalPlasticityModel<EvalT, Traits>::
 CrystalPlasticityModel(Teuchos::ParameterList* p,
@@ -75,11 +74,17 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     Teuchos::ParameterList ss_list = p->sublist(Albany::strint("Slip System", num_ss+1));
 
+    // Obtain and normalize slip directions. Miller indices need to be normalized.
     std::vector<RealType> s_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Direction").toVector();
-    slip_systems_[num_ss].s_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &s_temp[0]));
+    Intrepid::Vector<RealType> s_temp_normalized(num_dims_,&s_temp[0]);
+    s_temp_normalized = Intrepid::unit(s_temp_normalized);
+    slip_systems_[num_ss].s_ = orientation_*s_temp_normalized;
 
+    // Obtain and normal slip normals. Miller indices need to be normalized.
     std::vector<RealType> n_temp = ss_list.get<Teuchos::Array<RealType> >("Slip Normal").toVector();
-    slip_systems_[num_ss].n_ = orientation_*(Intrepid::Vector<RealType>(num_dims_, &n_temp[0]));
+    Intrepid::Vector<RealType> n_temp_normalized(num_dims_,&n_temp[0]);
+    n_temp_normalized = Intrepid::unit(n_temp_normalized);
+    slip_systems_[num_ss].n_ = orientation_*n_temp_normalized;
 
     // print each slip direction and slip normal after transformation
     #ifdef PRINT_DEBUG
@@ -162,7 +167,6 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(p->get<bool>("Output Mechanical Source", false));
   //
   // gammas
-#ifdef CP_HARDENING
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     std::string g = Albany::strint("gamma_", num_ss+1);
     std::string gamma_string = (*field_name_map_)[g];
@@ -175,13 +179,14 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_old_state_flags_.push_back(true);
     this->state_var_output_flags_.push_back(p->get<bool>("Output "+gamma_string , false));
   }
-#endif
 
 #ifdef PRINT_DEBUG
   std::cout << "<<< done in cp constructor\n";
 #endif
 }
+
 //------------------------------------------------------------------------------
+
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeState(typename Traits::EvalData workset,
@@ -210,28 +215,27 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
-#ifdef CP_HARDENING
+
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips;
+  std::vector<Albany::MDArray * > previous_slips;
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
     std::string g = Albany::strint("gamma_", num_ss+1);
     std::string gamma_string = (*field_name_map_)[g];
     slips.push_back(eval_fields[gamma_string]);
+    previous_slips.push_back(&((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
-#endif
 
   // get state variables
   Albany::MDArray previous_plastic_deformation = (*workset.stateArrayPtr)[Fp_string + "_old"];
 
   ScalarT tau, gamma, dgamma;
-  ScalarT g0, tauC, m, H;
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
-  Intrepid::Tensor<ScalarT> Fp_temp(num_dims_);
+  Intrepid::Tensor<ScalarT> L(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
-  Intrepid::Tensor<ScalarT> L(num_dims_), expL(num_dims_);
-  Intrepid::Tensor<RealType> P(num_dims_);
-  I_=Intrepid::eye<RealType>(num_dims_);
+
+  I_ = Intrepid::eye<RealType>(num_dims_);
 
 #ifdef PRINT_OUTPUT
   std::ofstream out("output.dat", std::fstream::app);
@@ -239,9 +243,7 @@ computeState(typename Traits::EvalData workset,
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
-#ifdef PRINT_OUTPUT
-//    std::cout << ">>> cell " << cell << " point " << pt << " <<<\n";
-#endif
+
       // fill local tensors
       F.fill(def_grad, cell, pt, 0, 0);
       for (int i(0); i < num_dims_; ++i) {
@@ -250,106 +252,120 @@ computeState(typename Traits::EvalData workset,
         }
       }
 
-      // compute stress 
+      // TODO get rid of cell and pt arguments and just pass a reference to the correct entries in
+      //      slips and previous_slips (assuming this is possible with the Intrepid data structures).
+      predictor(cell, pt, dt, slips, previous_slips, F, L, Fp);
+
+      // IMPLICIT LOOP GOES HERE
+
       computeStress(F,Fp,sigma,S);
-#ifdef PRINT_OUTPUT
-      double dgammas[24];
-      double taus[24];
-#endif
-      // compute velocity gradient
-      L.fill(Intrepid::ZEROS);
-      if (num_slip_ >0) { // crystal plasticity
-        for (int s(0); s < num_slip_; ++s) {
-          P  = slip_systems_[s].projector_; 
-          // compute resolved shear stresses
-          tau = Intrepid::dotdot(P,S);
-          int sign = tau < 0 ? -1 : 1;
-          // compute  dgammas
-          g0   = slip_systems_[s].gamma_dot_0_;
-          tauC = slip_systems_[s].tau_critical_;
-          m    = slip_systems_[s].gamma_exp_;
-          H    = slip_systems_[s].H_;
-#ifdef CP_HARDENING
-          PHX::MDField<ScalarT> slip  = *(slips[s]);
-          gamma = slip(cell, pt);
-#else
-          gamma = 0.;
-#endif
-          ScalarT t1 = std::fabs(tau /(tauC+H*gamma));
-          dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
-#ifdef CP_HARDENING
-          slip(cell, pt) += dgamma;
-#endif
-          L += (dgamma* P);
-#ifdef PRINT_OUTPUT
-          dgammas[s] = Sacado::ScalarValue<ScalarT>::eval(dgamma);
-          taus[s] = Sacado::ScalarValue<ScalarT>::eval(tau);
-#endif
-        }
-        // update plastic deformation gradient
-        expL = Intrepid::exp(L);
-        Fp_temp = expL * Fp;
-        Fp = Fp_temp;
-        // recompute stress
-        computeStress(F,Fp,sigma,S);
-      }
+
+      // Load results into Albany data containers
       source(cell, pt) = 0.0;
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
-
-	  // Check for NaN and Inf
-	  // DJL this check could/should eventually be made to run with debug builds only
-	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(Fp(i,j)), std::logic_error,
-				     "\n****Error, NaN detected in CrystalPlasticityModel Fp");
-	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(sigma(i,j)), std::logic_error,
-				     "\n****Error, NaN detected in CrystalPlasticityModel sigma");
-	  TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(L(i,j)), std::logic_error,
-				     "\n****Error, NaN detected in CrystalPlasticityModel L");
-
           plastic_deformation(cell, pt, i, j) = Fp(i, j);
           stress(cell, pt, i, j) = sigma(i, j);
           velocity_gradient(cell, pt, i, j) = L(i, j);
         }
       }
+
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
-      out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
-        }
-      }
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
-        }
-      }
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
-        }
-      }
-      for (int i(0); i < num_dims_; ++i) {
-        for (int j(0); j < num_dims_; ++j) {
-          out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
-        }
-      }
-      for (int s(0); s < num_slip_; ++s) {
-        out << std::setprecision(12) <<  dgammas[s] << " ";
-      }
-      for (int s(0); s < num_slip_; ++s) {
-        out << std::setprecision(12) <<  taus[s] << " ";
-      }
-      out << "\n";
+	out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
+	for (int i(0); i < num_dims_; ++i) {
+	  for (int j(0); j < num_dims_; ++j) {
+	    out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
+	  }
+	}
+	for (int i(0); i < num_dims_; ++i) {
+	  for (int j(0); j < num_dims_; ++j) {
+	    out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
+	  }
+	}
+	for (int i(0); i < num_dims_; ++i) {
+	  for (int j(0); j < num_dims_; ++j) {
+	    out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
+	  }
+	}
+	for (int i(0); i < num_dims_; ++i) {
+	  for (int j(0); j < num_dims_; ++j) {
+	    out << std::setprecision(12) <<  Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
+	  }
+	}
+	out << "\n";
       }
 #endif
+
     }
   }
 #ifdef PRINT_DEBUG
   std::cout << "<<< done in cp compute state\n" << std::flush;
 #endif
 }
+
 //------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+predictor(int cell,
+	  int pt,
+	  ScalarT dt,
+	  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
+	  std::vector<Albany::MDArray * > const & previous_slips,
+	  Intrepid::Tensor<ScalarT> const & F,
+	  Intrepid::Tensor<ScalarT> & L,
+	  Intrepid::Tensor<ScalarT> & Fp)
+{
+  ScalarT g0, tau, tauC, gamma, dgamma,  m, H, t1;
+  Intrepid::Tensor<RealType> P(num_dims_);
+  Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_), expL(num_dims_), Fp_temp(num_dims_);
+  PHX::MDField<ScalarT> slip;
+  Albany::MDArray previous_slip;
+
+  computeStress(F,Fp,sigma,S);
+
+  confirmTensorSanity(sigma, "first sigma calculation in predictor()");
+
+  L.fill(Intrepid::ZEROS);
+  for (int s(0); s < num_slip_; ++s) {
+    P = slip_systems_[s].projector_; 
+
+    // compute resolved shear stresses
+    tau = Intrepid::dotdot(P,S);
+    int sign = tau < 0 ? -1 : 1;
+
+    // compute  dgammas
+    g0   = slip_systems_[s].gamma_dot_0_;
+    tauC = slip_systems_[s].tau_critical_;
+    m    = slip_systems_[s].gamma_exp_;
+    H    = slip_systems_[s].H_;
+
+    slip  = *(slips[s]);
+    previous_slip  = *(previous_slips[s]);
+    slip(cell, pt) = previous_slip(cell, pt);
+    gamma = slip(cell, pt);
+
+    t1 = std::fabs(tau /(tauC+H*std::fabs(gamma)));
+    dgamma = dt*g0*std::fabs(std::pow(t1,m))*sign;
+
+    slip(cell, pt) += dgamma;
+
+    L += (dgamma* P);
+  }
+
+  confirmTensorSanity(L, "L in predictor().");
+
+  // update plastic deformation gradient
+  expL = Intrepid::exp(L);
+  Fp_temp = expL * Fp;
+  Fp = Fp_temp;
+
+  confirmTensorSanity(Fp, "Fp in predictor()");
+}
+
+//------------------------------------------------------------------------------
+
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeStress(Intrepid::Tensor<ScalarT> const & F,
@@ -370,5 +386,23 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
   S = Intrepid::dotdot(C_,E_);
   sigma = (1.0 / Intrepid::det(F) ) * F * S * Intrepid::transpose(F);
 }
+
 //------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+confirmTensorSanity(Intrepid::Tensor<ScalarT> const & input,
+		    std::string const & message)
+{
+  int dim = input.get_dimension();
+  for(int i=0 ; i<dim ; i++){
+    for(int j=0 ; j<dim ; j++){
+      if( !boost::math::isfinite(input(i,j)) ){
+	std::string msg = "**** Invalid data detected in CrystalPlasticityModel::confirmTensorSanity(): " + message;
+	TEUCHOS_TEST_FOR_EXCEPTION(!boost::math::isfinite(input(i,j)), std::logic_error, msg);
+      }
+    }
+  }
 }
+
+} // namespace LCM

@@ -29,7 +29,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Output">
-        <Parameter name="Output Filename" type="string" value="TensileBarPDPS_PeridigmResults"/>
+<!--        <Parameter name="Output Filename" type="string" value="TensileBarPDPS_PeridigmResults"/> -->
         <Parameter name="Output Frequency" type="int" value="1"/>
         <ParameterList name="Output Variables">
           <Parameter name="Model_Coordinates" type="bool" value="true"/>

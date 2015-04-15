@@ -40,10 +40,11 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../Spectral/shell4_sphere_24faces.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/cube_quad4_6eles.g"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Points Per Edge" type="int" value="2"/>
+    <Parameter name="Points Per Edge" type="int" value="3"/>
+    <Parameter name="Transform Type" type="string" value="Cube Sphere"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>

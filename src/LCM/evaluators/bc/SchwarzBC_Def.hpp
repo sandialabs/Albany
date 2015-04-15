@@ -4,11 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/13/14: no Epetra except SG and MP
-
-//#include "AAdapt_STKAdapt.hpp"
-#include "Albany_STKDiscretization.hpp"
+#include "Albany_Application.hpp"
 #include "Albany_GenericSTKMeshStruct.hpp"
+#include "Albany_STKDiscretization.hpp"
 #include "Intrepid_MiniTensor.h"
 #include "Phalanx_DataLayout.hpp"
 #include "Sacado_ParameterRegistration.hpp"
@@ -17,7 +15,7 @@
 //define DEBUG_LCM_SCHWARZ
 
 //
-// Genereric Template Code for Constructor and PostRegistrationSetup
+// Generic Template Code for Constructor and PostRegistrationSetup
 //
 
 namespace LCM {
@@ -26,7 +24,9 @@ template <typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
-  coupled_block_(p.get<std::string>("Coupled Block")),
+  app_(p.get<Teuchos::RCP<Albany::Application>>("Application", Teuchos::null)),
+  coupled_app_name_(p.get<std::string>("Coupled Application", "self")),
+  coupled_block_name_(p.get<std::string>("Coupled Block")),
   disc_(Teuchos::null)
 {
 }
@@ -44,64 +44,111 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  coupled_apps = dirichlet_workset.apps_;
+
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = Teuchos::null;
+
   Teuchos::RCP<Albany::AbstractDiscretization>
   disc = dirichlet_workset.disc;
 
-  assert(disc != Teuchos::null);
-
   Albany::STKDiscretization *
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+  stk_disc = static_cast<Albany::STKDiscretization *>(disc.get());
 
   Teuchos::RCP<const Tpetra_Vector>
-  solution = stk_discretization->getSolutionFieldT();
+  solution = stk_disc->getSolutionFieldT();
 
   Teuchos::ArrayRCP<const ST>
   solution_view = solution->get1dView();
 
-  Albany::GenericSTKMeshStruct &
-  gms = dynamic_cast<Albany::GenericSTKMeshStruct &>(
-      *(stk_discretization->getSTKMeshStruct())
-  );
-
   const Teuchos::ArrayRCP<double> &
-  coordinates = stk_discretization->getCoordinates();
+  coordinates = stk_disc->getCoordinates();
 
-  std::string const
-  coupled_block = this->getCoupledBlock();
+  auto const
+  num_coupled_apps = coupled_apps.size();
+
+  bool const
+  self_coupled = num_coupled_apps == 0;
+
+  if (self_coupled == true) {
+
+    // Mainly just for testing the Schwarz BC
+    coupled_disc = disc;
+
+  } else {
+
+    std::string const
+    coupled_app_name = this->getCoupledAppName();
+
+    int const
+    coupled_app_index = appIndexFromName(coupled_app_name);
+
+    if (coupled_app_index >= coupled_apps.size()) {
+      std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+      std::cerr << "Application index out of range: " << coupled_app_index;
+      std::cerr << '\n';
+      std::cerr << "Number of coupled applications: " << coupled_apps.size();
+      std::cerr << '\n';
+      exit(1);
+    }
+
+    Teuchos::RCP<Albany::Application>
+    coupled_app = coupled_apps[coupled_app_index];
+
+    coupled_disc = coupled_app->getDiscretization();
+
+  }
+
+  Albany::STKDiscretization *
+  coupled_stk_disc =
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+
+  Albany::GenericSTKMeshStruct &
+  coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
+    (*(coupled_stk_disc->getSTKMeshStruct()));
 
   Albany::WorksetArray<std::string>::type const &
-  ws_eb_names = disc->getWsEBNames();
+  coupled_ws_eb_names = coupled_disc->getWsEBNames();
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
-  mesh_specs = gms.getMeshSpecs();
+  coupled_mesh_specs = coupled_gms.getMeshSpecs();
 
-  // Get cell topology of the block to which this node set
+  // Get cell topology of the application and block to which this node set
   // is coupled.
   std::map<std::string, int> const &
-  block_name_2_index = gms.ebNameToIndex;
+  coupled_block_name_2_index = coupled_gms.ebNameToIndex;
+
+  std::string const
+  coupled_block_name = this->getCoupledBlockName();
 
   std::map<std::string, int>::const_iterator
-  it = block_name_2_index.find(coupled_block);
+  it = coupled_block_name_2_index.find(coupled_block_name);
 
-  assert(it != block_name_2_index.end());
+  if (it == coupled_block_name_2_index.end()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    exit(1);
+  }
 
   int const
-  index_block = it->second;
+  coupled_block_index = it->second;
 
   CellTopologyData const
-  cell_topology_data = mesh_specs[index_block]->ctd;
+  coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
 
   shards::CellTopology
-  cell_topology(&cell_topology_data);
+  coupled_cell_topology(&coupled_cell_topology_data);
 
   size_t const
-  dimension = cell_topology_data.dimension;
+  coupled_dimension = coupled_cell_topology_data.dimension;
 
   size_t const
-  vertex_count = cell_topology_data.vertex_count;
+  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
 
   Intrepid::ELEMENT::Type const
-  element_type = Intrepid::find_type(dimension, vertex_count);
+  coupled_element_type =
+      Intrepid::find_type(coupled_dimension, coupled_vertex_count);
 
   std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
@@ -111,17 +158,17 @@ computeBCs(
   WSELND;
 
   WSELND const &
-  ws_el_2_nd = stk_discretization->getWsElNodeID();
+  ws_el_2_nd = stk_disc->getWsElNodeID();
 
   std::vector< Intrepid::Vector<double> >
-  element_vertices(vertex_count);
+  coupled_element_vertices(coupled_vertex_count);
 
   std::vector< Intrepid::Vector<double> >
-  element_solution(vertex_count);
+  coupled_element_solution(coupled_vertex_count);
 
-  for (size_t i = 0; i < vertex_count; ++i) {
-    element_vertices[i].set_dimension(dimension);
-    element_solution[i].set_dimension(dimension);
+  for (size_t i = 0; i < coupled_vertex_count; ++i) {
+    coupled_element_vertices[i].set_dimension(coupled_dimension);
+    coupled_element_solution[i].set_dimension(coupled_dimension);
   }
 
   double const
@@ -133,7 +180,7 @@ computeBCs(
   Intrepid::Vector<double>
   point;
 
-  point.set_dimension(dimension);
+  point.set_dimension(coupled_dimension);
 
   point.fill(coord);
 
@@ -150,38 +197,39 @@ computeBCs(
   for (size_t workset = 0; workset < ws_el_2_nd.size(); ++workset) {
 
     std::string const &
-    element_block = ws_eb_names[workset];
+    coupled_element_block = coupled_ws_eb_names[workset];
 
-    if (element_block != coupled_block) continue;
+    if (coupled_element_block != coupled_block_name) continue;
 
     size_t const
     elements_per_workset = ws_el_2_nd[workset].size();
 
     for (size_t element = 0; element < elements_per_workset; ++element) {
 
-      for (size_t node = 0; node < vertex_count; ++node) {
+      for (size_t node = 0; node < coupled_vertex_count; ++node) {
 
         size_t const
         node_id = ws_el_2_nd[workset][element][node];
 
         double * const
-        pcoord = &(coordinates[dimension * node_id]);
+        pcoord = &(coordinates[coupled_dimension * node_id]);
 
-        element_vertices[node].fill(pcoord);
+        coupled_element_vertices[node].fill(pcoord);
 
-        for (size_t i = 0; i < dimension; ++i) {
-          element_solution[node](i) = solution_view[dimension * node_id + i];
+        for (size_t i = 0; i < coupled_dimension; ++i) {
+          coupled_element_solution[node](i) =
+              solution_view[coupled_dimension * node_id + i];
         }
       }
 
       bool
       in_element = false;
 
-      switch (element_type) {
+      switch (coupled_element_type) {
 
       default:
-        std::cerr << "ERROR: " << __PRETTY_FUNCTION__ << '\n';
-        std::cerr << "Unknown element type: " << element_type << '\n';
+        std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "Unknown element type: " << coupled_element_type << '\n';
         exit(1);
         break;
 
@@ -193,10 +241,10 @@ computeBCs(
 
         in_element = Intrepid::in_tetrahedron(
             point,
-            element_vertices[0],
-            element_vertices[1],
-            element_vertices[2],
-            element_vertices[3],
+            coupled_element_vertices[0],
+            coupled_element_vertices[1],
+            coupled_element_vertices[2],
+            coupled_element_vertices[3],
             tolerance);
         break;
 
@@ -208,14 +256,14 @@ computeBCs(
 
         in_element = Intrepid::in_hexahedron(
             point,
-            element_vertices[0],
-            element_vertices[1],
-            element_vertices[2],
-            element_vertices[3],
-            element_vertices[4],
-            element_vertices[5],
-            element_vertices[6],
-            element_vertices[7],
+            coupled_element_vertices[0],
+            coupled_element_vertices[1],
+            coupled_element_vertices[2],
+            coupled_element_vertices[3],
+            coupled_element_vertices[4],
+            coupled_element_vertices[5],
+            coupled_element_vertices[6],
+            coupled_element_vertices[7],
             tolerance);
         break;
 
@@ -250,9 +298,9 @@ computeBCs(
 
   // Container for the physical point
   Intrepid::FieldContainer<double>
-  physical_coordinates(number_cells, dimension);
+  physical_coordinates(number_cells, coupled_dimension);
 
-  for (size_t i = 0; i < dimension; ++i) {
+  for (size_t i = 0; i < coupled_dimension; ++i) {
     physical_coordinates(0, i) = point(i);
   }
 
@@ -260,11 +308,11 @@ computeBCs(
   // TODO: matToReference more general, accepts more topologies.
   // Use it to find if point is contained in element as well.
   Intrepid::FieldContainer<double>
-  nodal_coordinates(number_cells, vertex_count, dimension);
+  nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
 
-  for (size_t i = 0; i < vertex_count; ++i) {
-    for (size_t j = 0; j < dimension; ++j) {
-      nodal_coordinates(0,i,j) = element_vertices[i](j);
+  for (size_t i = 0; i < coupled_vertex_count; ++i) {
+    for (size_t j = 0; j < coupled_dimension; ++j) {
+      nodal_coordinates(0,i,j) = coupled_element_vertices[i](j);
     }
   }
 
@@ -273,7 +321,7 @@ computeBCs(
       parametric_point,
       physical_coordinates,
       nodal_coordinates,
-      cell_topology,
+      coupled_cell_topology,
       0
   );
 
@@ -281,25 +329,25 @@ computeBCs(
   size_t const number_points = 1;
 
   Intrepid::FieldContainer<double>
-  basis_values(vertex_count, number_points);
+  basis_values(coupled_vertex_count, number_points);
 
   basis->getValues(basis_values, parametric_point, Intrepid::OPERATOR_VALUE);
 
   // Evaluate solution at parametric point using values of shape
   // functions just computed.
   Intrepid::Vector<double>
-  value(dimension, Intrepid::ZEROS);
+  value(coupled_dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to block: " << coupled_block << '\n';
+  std::cout << "Coupling to block: " << coupled_app_name << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
-  for (size_t i = 0; i < vertex_count; ++i) {
-    value += basis_values(i, 0) * element_solution[i];
+  for (size_t i = 0; i < coupled_vertex_count; ++i) {
+    value += basis_values(i, 0) * coupled_element_solution[i];
 
 #if defined(DEBUG_LCM_SCHWARZ)
     std::cout << std::scientific << std::setprecision(16);
-    std::cout << basis_values(i, 0) << "    " << element_solution[i] << '\n';
+    std::cout << basis_values(i, 0) << "    " << coupled_element_solution[i] << '\n';
 #endif // DEBUG_LCM_SCHWARZ
 
   }

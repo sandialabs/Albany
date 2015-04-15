@@ -9,7 +9,7 @@ LCM_DIR=`pwd`
 TRILINOS="trilinos"
 INTEL_DIR=/opt/intel
 
-
+# Some basic error checking.
 if [ -z "$PACKAGE" ]; then
     echo "Specifiy package [trilinos|albany]"
     exit 1
@@ -67,6 +67,10 @@ case "$TOOL_CHAIN" in
 	;;
 esac
 
+# This is here to add or change compiler flags in addition to those
+# specified by CMake during configuration. Right now they are empty
+# (at least for gcc) as any additional modifications here seem to
+# interfere with the NVidia CUDA compiler.
 case "$BUILD_TYPE" in
     debug)
 	BUILD_STRING="DEBUG"
@@ -100,6 +104,7 @@ case "$BUILD_TYPE" in
 	;;
 esac
 
+# Setup flags with the info gathered above.
 CONFIG_FILE="$PACKAGE-config.sh"
 BUILD=$TOOL_CHAIN-$BUILD_TYPE
 PACKAGE_DIR="$LCM_DIR/$PACKAGE_NAME"
@@ -109,10 +114,11 @@ BUILD_DIR="$LCM_DIR/$PACKAGE-build-$BUILD"
 PREFIX="$PACKAGE-$TOOL_CHAIN-$BUILD_TYPE"
 BUILD_LOG="$LCM_DIR/$PREFIX-build.log"
 ERROR_LOG="$LCM_DIR/$PREFIX-error.log"
+STATUS_LOG="$LCM_DIR/$PREFIX-status.log"
 TEST_LOG="$LCM_DIR/$PREFIX-test.log"
 HOST=`hostname`
-FROM="name@address"
-TO="name@address"
+FROM="amota@sandia.gov"
+TO="albany-regression@software.sandia.gov"
 # Set directory flags so that the appropriate shared objects and executables
 # can be found.
 PATH="$INSTALL_DIR/bin:$PATH"

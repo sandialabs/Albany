@@ -43,7 +43,8 @@ public:
   ///
   virtual
   ~OrtizPandolfiModel()
-  {};
+  {
+  }
 
   ///
   /// Method to compute the state (e.g. energy, stress, tangent)
@@ -58,9 +59,10 @@ public:
   void
   computeStateParallel(typename Traits::EvalData workset,
       std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
-      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields){
-         TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
- }
+      std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
+  {
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
+  }
 
 private:
 
@@ -79,6 +81,6 @@ private:
   ///
   RealType delta_c, sigma_c, beta, stiff_c;
 };
-}
+} // namespace LCM
 
 #endif

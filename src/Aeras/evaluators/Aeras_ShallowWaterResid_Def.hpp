@@ -13,6 +13,8 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Aeras_ShallowWaterConstants.hpp"
+
+#include "Shards_CellTopologyData.h"
 namespace Aeras {
 
 
@@ -27,6 +29,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   UNodal   (p.get<std::string> ("Nodal Variable Name"), dl->node_vector),
   Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
   UDot     (p.get<std::string> ("QP Time Derivative Variable Name"), dl->qp_vector),
+  cellType      (p.get<Teuchos::RCP <shards::CellTopology> > ("Cell Type")),
   mountainHeight  (p.get<std::string> ("Aeras Surface Height QP Variable Name"), dl->qp_scalar),
   jacobian_inv  (p.get<std::string>  ("Jacobian Inv Name"), dl->qp_tensor ),
   jacobian_det  (p.get<std::string>  ("Jacobian Det Name"), dl->qp_scalar ),
@@ -57,6 +60,65 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   ViscCoeff = shallowWaterList->get<double>("Viscosity Coefficient", 0.0); //Default: 0.0
 
   AlphaAngle = shallowWaterList->get<double>("Rotation Angle", 0.0); //Default: 0.0
+
+  const CellTopologyData *ctd = cellType->getCellTopologyData(); 
+  int nNodes = ctd->node_count;
+  int nDim   = ctd->dimension;
+  std::string name     = ctd->name;
+  size_t      len      = name.find("_");
+  if (len != std::string::npos) name = name.substr(0,len);
+
+ #define ALBANY_VERBOSE
+#ifdef ALBANY_VERBOSE
+  std::cout << "In Aeras::ShallowWaterResid: CellTopology is " << name << " with nodes " << nNodes 
+            << "  dim " << nDim << std::endl;
+  std::cout << "FullCellTopology name is " << ctd->name << std::endl;
+#endif
+
+  qpToNodeMap.resize(nNodes); 
+  nodeToQPMap.resize(nNodes); 
+  //Spectral quads
+  if (name == "SpectralQuadrilateral" || name == "SpectralShellQuadrilateral") {
+    if (nNodes == 4) {
+       qpToNodeMap[0] = 0; qpToNodeMap[1] = 1; 
+       qpToNodeMap[2] = 3; qpToNodeMap[3] = 2;  
+       nodeToQPMap[0] = 0; nodeToQPMap[1] = 1; 
+       nodeToQPMap[2] = 3; nodeToQPMap[3] = 2;  
+    }
+    else {
+      for(int i=0; i<nNodes; i++) {
+        qpToNodeMap[i] = i; 
+        nodeToQPMap[i] = i; 
+      }
+    }
+  }
+  //Isoparametric quads
+  else if (name == "Quadrilateral" || name == "ShellQuadrilateral") {
+    if (nNodes == 4) {
+      for(int i=0; i<nNodes; i++) {
+        qpToNodeMap[i] = i; 
+        nodeToQPMap[i] = i;
+      } 
+    }
+    else if (nNodes == 9) {
+      qpToNodeMap[0] = 0; qpToNodeMap[1] = 4; qpToNodeMap[2] = 1; 
+      qpToNodeMap[3] = 7; qpToNodeMap[4] = 8; qpToNodeMap[5] = 5; 
+      qpToNodeMap[6] = 3; qpToNodeMap[7] = 6; qpToNodeMap[8] = 2; 
+      nodeToQPMap[0] = 0; nodeToQPMap[1] = 2; nodeToQPMap[2] = 8; 
+      nodeToQPMap[3] = 6; nodeToQPMap[4] = 1; nodeToQPMap[5] = 5; 
+      nodeToQPMap[6] = 7; nodeToQPMap[7] = 3; nodeToQPMap[8] = 4; 
+    }
+    else {
+       TEUCHOS_TEST_FOR_EXCEPTION(true,
+         Teuchos::Exceptions::InvalidParameter,"Aeras::ShallowWaterResid: qpToNodeMap and nodeToQPMap " << 
+         "not implemented for quadrilateral/shellquadrilateral element with " << nNodes << ".");
+    }
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPTION(true,
+       Teuchos::Exceptions::InvalidParameter,"Aeras::ShallowWaterResid: qpToNodeMap and nodeToQPMap " << 
+       "non-quadrilateral/shellquadrilateral elements.");
+  }
   
   this->addDependentField(U);
   this->addDependentField(UNodal);
@@ -179,8 +241,8 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  vcontra=PHX::MDField<ScalarT,Node,Dim>("vcontra",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
  vcontra.setFieldData(ViewFactory::buildView(vcontra.fieldTag(),ddims_));
 
-nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",9);
-for (int i=0; i<9; i++)
+nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",nNodes);
+for (int i=0; i<nNodes; i++)
  nodeToQPMap_Kokkos(i)=nodeToQPMap[i];
 #endif
 }

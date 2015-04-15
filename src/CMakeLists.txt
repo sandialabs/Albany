@@ -251,6 +251,7 @@ SET(SOURCES ${SOURCES}
   evaluators/QCAD_ResponseSaveField.cpp
   evaluators/QCAD_ResponseCenterOfMass.cpp
   evaluators/QCAD_MeshRegion.cpp
+  evaluators/QCAD_MathVector.cpp
   evaluators/QCAD_EvaluatorTools.cpp
   evaluators/PHAL_HeatEqResid.cpp
   evaluators/PHAL_Source.cpp
@@ -366,6 +367,7 @@ SET(HEADERS ${HEADERS}
   evaluators/QCAD_ResponseCenterOfMass_Def.hpp
   evaluators/QCAD_MeshRegion.hpp
   evaluators/QCAD_MeshRegion_Def.hpp
+  evaluators/QCAD_MathVector.hpp
   evaluators/QCAD_EvaluatorTools.hpp
   evaluators/QCAD_EvaluatorTools_Def.hpp
   evaluators/PHAL_HeatEqResid.hpp
@@ -590,7 +592,7 @@ set(ALB_TRILINOS_LIBS ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES})
 
 include_directories (${Trilinos_INCLUDE_DIRS}
                      ${Trilinos_TPL_INCLUDE_DIRS}
-                     ${ALBANY_FMDB_INCLUDE_DIRS}
+                     ${ALBANY_PUMI_INCLUDE_DIRS}
                      ./
                      ./evaluators
                      ./problems
@@ -611,13 +613,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
-                     ./SEE/
-                     ./SEE/problems
-                     ./SEE/evaluators
-                     ./SEE/responses
                      ./AMP/
-		     ./AMP/problems
-		     ./AMP/evaluators
+                     ./AMP/problems
+                     ./AMP/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -628,8 +626,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/utils
                     )
 
-link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS}
-  ${FMDB_LIBRARY_DIR})
+link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
 
 IF ( ENABLE_NLopt )
   include_directories (${NLopt_INCLUDE_DIR})
@@ -685,11 +682,11 @@ ENDIF()
 
 # RPI SCOREC Adaptivity
 IF(ALBANY_SCOREC)
-  SET(ALBANY_FMDB_INCLUDE_DIRS ./disc/fmdb)
-  include_directories (${ALBANY_FMDB_INCLUDE_DIRS})
+  SET(ALBANY_PUMI_INCLUDE_DIRS ./disc/pumi)
+  include_directories (${ALBANY_PUMI_INCLUDE_DIRS})
 ELSE()
   set(SCOREC_LIB )
-  SET(ALBANY_FMDB_INCLUDE_DIRS )
+  SET(ALBANY_PUMI_INCLUDE_DIRS )
 ENDIF()
 
 # Catalyst CoProcessing
@@ -750,6 +747,11 @@ ENDIF()
 add_executable(AlbanyAnalysisT Main_AnalysisT.cpp)
 SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} AlbanyAnalysisT)
 
+IF (ALBANY_MESHDB_TOOLS)
+  add_executable(exopumiconvert disc/tools/exopumiconvert.cpp)
+  SET(ALBANY_EXECUTABLES ${ALBANY_EXECUTABLES} exopumiconvert)
+ENDIF()
+
 set(ALL_LIBRARIES
   ${Peridigm_LIBRARIES}
   ${ALBANY_CI_LIB}
@@ -806,12 +808,7 @@ ENDIF()
 
 # RPI SCOREC Adaptivity tools
 IF(ALBANY_SCOREC)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} fmdb)
-ENDIF()
-
-IF (ALBANY_SEE)
-  add_subdirectory(SEE)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
 ENDIF()
 
 IF (ALBANY_AMP)

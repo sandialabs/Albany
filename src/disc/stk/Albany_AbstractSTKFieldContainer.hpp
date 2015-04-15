@@ -60,7 +60,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     // One scalar per QP   - (Cell, QP)
     typedef stk::mesh::Field<double, QPTag>                      QPScalarFieldType ;
 
-    typedef std::vector<std::string> ScalarValueState;
+    typedef std::vector<const std::string*> ScalarValueState;
     typedef std::vector<QPScalarFieldType*> QPScalarState;
     typedef std::vector<QPVectorFieldType*> QPVectorState;
     typedef std::vector<QPTensorFieldType*> QPTensorState;

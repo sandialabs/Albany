@@ -30,6 +30,12 @@
 
 #include "Kokkos_Core.hpp"
 
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+#include "PeridigmManager.hpp"
+#endif
+#endif
+
 // Uncomment for run time nan checking
 // This is set in the toplevel CMakeLists.txt file
 //
@@ -272,6 +278,12 @@ int main(int argc, char *argv[]) {
     *out << "\nNumber of Failed Comparisons: " << status << std::endl;
     if (writeToCoutSoln == true) 
        std::cout << "xfinal: " << *xfinal << std::endl;
+
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+    *out << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = " << LCM::PeridigmManager::self().obcEvaluateFunctional()  << "\n" << std::endl;
+#endif
+#endif
 
     if (debugParams.get<bool>("Analyze Memory", false))
       Albany::printMemoryAnalysis(std::cout, comm);
