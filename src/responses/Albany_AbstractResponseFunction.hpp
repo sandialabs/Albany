@@ -11,7 +11,7 @@
 
 #include "Teuchos_Array.hpp"
 #include "Teuchos_RCP.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
@@ -43,7 +43,7 @@ namespace Albany {
     //! Destructor
     virtual ~AbstractResponseFunction() {};
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Setup response function
     virtual void setup() = 0;
 #endif
@@ -51,7 +51,7 @@ namespace Albany {
     //! Setup response function
     virtual void setupT() = 0;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const = 0;
 #endif    
@@ -65,7 +65,7 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const = 0;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const = 0;
 #endif
@@ -104,7 +104,7 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp) = 0;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,
@@ -133,7 +133,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp) = 0;
     
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative dg/dp
     virtual void evaluateDistParamDeriv(
       const double current_time,

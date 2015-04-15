@@ -10,7 +10,7 @@
 #define ALBANY_DISTRIBUTED_RESPONSE_FUNCTION_HPP
 
 #include "Albany_AbstractResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Stokhos_ProductEpetraOperator.hpp"
 #include "Stokhos_EpetraOperatorOrthogPoly.hpp"
 #endif
@@ -33,7 +33,7 @@ namespace Albany {
     //! Destructor
     virtual ~DistributedResponseFunction() {};
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void evaluateGradient(
       const double current_time,
@@ -106,7 +106,7 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const { return false; }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate derivative dg/dx, dg/dxdot, dg/dp
     virtual void evaluateDerivative(
       const double current_time,

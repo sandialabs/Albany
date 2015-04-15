@@ -11,7 +11,7 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ParameterList.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #endif
@@ -76,7 +76,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     IntScalarFieldType* getRefineField(){ return refine_field; }
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     IntScalarFieldType* getFractureState(stk::topology::rank_t rank){ return fracture_state[rank]; }
 #endif // ALBANY_LCM
     stk::mesh::Field<double,stk::mesh::Cartesian3d>* getSphereVolumeField(){ return sphereVolume_field; }
@@ -96,7 +96,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
       return time;
     }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void fillSolnVector(Epetra_Vector& soln, stk::mesh::Selector& sel, const Teuchos::RCP<Epetra_Map>& node_map) = 0;
     virtual void fillVector(Epetra_Vector& field_vector, const std::string&  field_name, stk::mesh::Selector& field_selection,
                         const Teuchos::RCP<Epetra_Map>& field_node_map, const NodalDOFManager& nodalDofManager) = 0;
@@ -117,7 +117,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     VectorFieldType* coordinates_field;
     IntScalarFieldType* proc_rank_field;
     IntScalarFieldType* refine_field;
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     IntScalarFieldType* fracture_state[stk::topology::ELEMENT_RANK];
 #endif // ALBANY_LCM
 

@@ -90,7 +90,7 @@ evaluateTangentT(const double alpha,
     gpT->putScalar(0.0);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionAverageResponseFunction::
 evaluateGradient(const double current_time,
@@ -163,7 +163,7 @@ evaluateGradientT(const double current_time,
     dg_dpT->putScalar(0.0);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::SolutionAverageResponseFunction::
 evaluateDistParamDeriv(

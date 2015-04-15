@@ -41,7 +41,7 @@ void
 DirichletField<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
   Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
   const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
@@ -56,7 +56,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   const std::vector<std::vector<int> >& nsNodes = dirichletWorkset.nodeSets->find(this->nodeSetID)->second;
   for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
       int lunk = nsNodes[inode][this->offset];
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
       GO node_gid = nsNodesGIDs[inode];
       int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
       fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
@@ -80,7 +80,7 @@ template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
   Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
   const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
@@ -120,7 +120,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
       jacT->replaceLocalValues(lunk, index(), value()); 
       
       if (fillResid) {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
         fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
@@ -145,7 +145,7 @@ template<typename Traits>
 void DirichletField<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
   Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
   const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
@@ -172,7 +172,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     int lunk = nsNodes[inode][this->offset];
 
     if (fT != Teuchos::null) { 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
       GO node_gid = nsNodesGIDs[inode];
       int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
       fT_nonconstView[lunk] = xT_constView[lunk] - pT[lfield];
@@ -230,14 +230,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
     //non-const view of VpT
     Teuchos::ArrayRCP<ST> VpT_nonconstView;
     if(isFieldParameter) {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
       const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
       Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
       const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
 #endif
       for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
         int lunk = nsNodes[inode][this->offset];
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
 #else
@@ -266,14 +266,14 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
   // for (df/dp)*V we zero out corresponding entries in df/dp
   else {
     if(isFieldParameter) {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
       const Albany::NodalDOFManager& fieldDofManager = dirichletWorkset.disc->getDOFManager(this->field_name);
       Teuchos::RCP<const Epetra_Map> fiedNodeMap = dirichletWorkset.disc->getNodeMap(this->field_name);
       const std::vector<GO>& nsNodesGIDs = dirichletWorkset.disc->getNodeSetGIDs().find(this->nodeSetID)->second;
 #endif
       for (unsigned int inode = 0; inode < nsNodes.size(); inode++) {
         int lunk = nsNodes[inode][this->offset];
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
         GO node_gid = nsNodesGIDs[inode];
         int lfield = fieldDofManager.getLocalDOF(fiedNodeMap->LID(node_gid),this->offset);
 #else

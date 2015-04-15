@@ -7,14 +7,14 @@
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Teuchos_TestForException.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #endif
 
 #include "Albany_DataTypes.hpp"
 #include "Albany_Utils.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::ScalarResponseFunction::
 responseMap() const
@@ -42,7 +42,7 @@ responseMapT() const
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Operator>
 Albany::ScalarResponseFunction::
 createGradientOp() const
@@ -66,7 +66,7 @@ createGradientOpT() const
   return Teuchos::null;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::ScalarResponseFunction::
 evaluateDerivative(

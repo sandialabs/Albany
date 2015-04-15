@@ -6,7 +6,7 @@
 
 
 #include <limits>
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Export.h"
 #endif
 
@@ -28,7 +28,7 @@
 #include <apfShape.h>
 #include <PCU.h>
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 // Some integer-type converter helpers for Epetra_Map so that we can compile
 // the Epetra_Map file regardless of the value of ALBANY_64BIT_INT.
 namespace {
@@ -64,7 +64,7 @@ Albany::PUMIDiscretization::PUMIDiscretization(Teuchos::RCP<Albany::PUMIMeshStru
   outputInterval(0)
 {
   meshOutput = PUMIOutput::create(pumiMeshStruct_, commT_);
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
   globalNumbering = 0;
@@ -118,7 +118,7 @@ Albany::PUMIDiscretization::getOverlapMapT() const
   return overlap_mapT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::PUMIDiscretization::getOverlapNodeMap() const
 {
@@ -373,7 +373,7 @@ void Albany::PUMIDiscretization::writeSolutionToFileT(
   writeAnySolutionToFile(&(data[0]),time_value,overlapped);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::PUMIDiscretization::writeSolution(const Epetra_Vector& soln, const double time_value,
       const bool overlapped)
 {
@@ -471,7 +471,7 @@ Albany::PUMIDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
   pumiMeshStruct->residualInitialized = true;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::PUMIDiscretization::setResidualField(const Epetra_Vector& residual)
 {
@@ -505,7 +505,7 @@ Albany::PUMIDiscretization::getSolutionFieldT(bool overlapped) const
   return solnT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Vector>
 Albany::PUMIDiscretization::getSolutionField(bool overlapped) const
 {
@@ -567,7 +567,7 @@ void Albany::PUMIDiscretization::computeOwnedNodesAndUnknowns()
       indices[getDOF(i,j)] = getDOF(gid,j);
     }
   mapT = Tpetra::createNonContigMap<LO, GO>(indices, commT);
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   map = Teuchos::rcp(
     new Epetra_Map(-1, indices.size(), convert(indices)->getRawPtr(), 0,
                    *comm));
@@ -592,7 +592,7 @@ void Albany::PUMIDiscretization::computeOverlapNodesAndUnknowns()
   }
   overlap_node_mapT = Tpetra::createNonContigMap<LO, GO>(nodeIndices, commT);
   overlap_mapT = Tpetra::createNonContigMap<LO, GO>(dofIndices, commT);
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   overlap_map = Teuchos::rcp(
     new Epetra_Map(-1, dofIndices.size(), convert(dofIndices)->getRawPtr(), 0,
                    *comm));
@@ -624,7 +624,7 @@ void Albany::PUMIDiscretization::computeGraphs()
      are coupled by element-node connectivity */
   overlap_graphT = Teuchos::rcp(new Tpetra_CrsGraph(
                  overlap_mapT, neq*nodes_per_element));
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   overlap_graph =
     Teuchos::rcp(new Epetra_CrsGraph(Copy, *overlap_map,
                                      neq*nodes_per_element, false));
@@ -640,7 +640,7 @@ void Albany::PUMIDiscretization::computeGraphs()
             GO col = getDOF(cellNodes[l],m);
             Teuchos::ArrayView<GO> colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
             EpetraInt ecol = Teuchos::as<EpetraInt>(col);
             overlap_graph->InsertGlobalIndices(row,1,&ecol);
 #endif
@@ -650,13 +650,13 @@ void Albany::PUMIDiscretization::computeGraphs()
     }
   }
   overlap_graphT->fillComplete();
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   overlap_graph->FillComplete();
 #endif
 
   // Create Owned graph by exporting overlap with known row map
   graphT = Teuchos::rcp(new Tpetra_CrsGraph(mapT, nonzeroesPerRow(neq)));
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   graph = Teuchos::rcp(new Epetra_CrsGraph(Copy, *map, nonzeroesPerRow(neq), false));
 #endif
 
@@ -666,7 +666,7 @@ void Albany::PUMIDiscretization::computeGraphs()
   graphT->doExport(*overlap_graphT, *exporterT, Tpetra::INSERT);
   graphT->fillComplete();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   Epetra_Export exporter(*overlap_map, *map);
   graph->Export(*overlap_graph, exporter, Insert);
   graph->FillComplete();

@@ -15,7 +15,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_FancyOStream.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
 #include "Epetra_Import.h"
 #include "Epetra_CrsGraph.h"
@@ -40,14 +40,14 @@ namespace Albany {
     //! Destructor
     virtual ~KLResponseFunction();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Setup response function
     virtual void setup() { response->setup(); }
 #endif
     //! Setup response function
     virtual void setupT() { response->setupT(); }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get the map associate with this response
     virtual Teuchos::RCP<const Epetra_Map> responseMap() const;
 #endif
@@ -61,7 +61,7 @@ namespace Albany {
      */
     virtual bool isScalarResponse() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Create operator for gradient (e.g., dg/dx)
     virtual Teuchos::RCP<Epetra_Operator> createGradientOp() const;
 #endif
@@ -100,7 +100,7 @@ namespace Albany {
       Tpetra_MultiVector* gx,
       Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative dg/dp
     virtual void evaluateDistParamDeriv(
       const double current_time,
@@ -113,7 +113,7 @@ namespace Albany {
 #endif
 
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void evaluateDerivative(
       const double current_time,
       const Epetra_Vector* xdot,
@@ -271,7 +271,7 @@ namespace Albany {
 
   protected:
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     bool computeKL(const Stokhos::EpetraVectorOrthogPoly& sg_u,
 		   const int NumKL,
 		   Teuchos::Array<double>& evals,

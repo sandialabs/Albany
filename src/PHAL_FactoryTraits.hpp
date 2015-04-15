@@ -11,7 +11,7 @@
 
 // User Defined Evaluator Types
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "LCM/evaluators/bc/KfieldBC.hpp"
 #include "LCM/evaluators/bc/TimeDepBC.hpp"
 #include "LCM/evaluators/bc/TimeTracBC.hpp"
@@ -27,7 +27,7 @@
 #include "PHAL_Neumann.hpp"
 #include "PHAL_GatherCoordinateVector.hpp"
 #include "PHAL_GatherSolution.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PHAL_GatherAuxData.hpp"
 #endif
 #include "PHAL_LoadStateField.hpp"
@@ -68,7 +68,7 @@ namespace PHAL {
     static const int id_torsion_bc                     =  8; // Only for LCM probs
     static const int id_schwarz_bc                     =  9; // Only for LCM probs
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     typedef boost::mpl::vector10<
 #else
       typedef boost::mpl::vector5<
@@ -82,7 +82,7 @@ namespace PHAL {
 #else
         PHAL::Dirichlet<_,Traits>                 //  4 dummy
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
         ,
         LCM::KfieldBC<_,Traits>,                  //  5
         LCM::TimeDepBC<_, Traits>,                //  6
@@ -107,7 +107,7 @@ namespace PHAL {
     static const int id_timedep_bc                =  7; // Only for LCM probs
 
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     typedef boost::mpl::vector8<
 #else
     typedef boost::mpl::vector7<
@@ -123,7 +123,7 @@ namespace PHAL {
 #else
        PHAL::Neumann<_,Traits>                    //  6 dummy
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
        , LCM::TimeTracBC<_, Traits>               //  7
 #endif
 	  > EvaluatorTypes;

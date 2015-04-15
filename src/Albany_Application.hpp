@@ -16,7 +16,7 @@
 #include "Teuchos_VerboseObject.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_CrsMatrix.h"
@@ -28,7 +28,7 @@
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_AbstractResponseFunction.hpp"
 #include "Albany_StateManager.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 #endif
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
@@ -50,7 +50,7 @@
 
 #include "Stokhos_OrthogPolyExpansion.hpp"
 #include "Stokhos_Quadrature.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Stokhos_EpetraVectorOrthogPoly.hpp"
 #include "Stokhos_EpetraMultiVectorOrthogPoly.hpp"
 #include "EpetraExt_MultiComm.h"
@@ -62,7 +62,7 @@
 #endif
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   #include "MOR/Albany_MORFacade.hpp"
 #endif
 #endif
@@ -106,7 +106,7 @@ namespace Albany {
     //! Get communicator
     Teuchos::RCP<const Teuchos_Comm> getComm() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
 #endif
@@ -114,7 +114,7 @@ namespace Albany {
     //! Get Tpetra DOF map
     Teuchos::RCP<const Tpetra_Map> getMapT() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
 #endif
@@ -122,7 +122,7 @@ namespace Albany {
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get Preconditioner Operator
     Teuchos::RCP<Epetra_Operator> getPreconditioner();
 
@@ -135,12 +135,12 @@ namespace Albany {
 //    Teuchos::RCP<const Tpetra_Vector> getInitialSolutionT() const;
 
     //! Get initial solution dot
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<const Epetra_Vector> getInitialSolutionDot() const;
 #endif
     Teuchos::RCP<const Tpetra_Vector> getInitialSolutionDotT() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get the solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> getAdaptSolMgr(){ return solMgr;}
 #endif
@@ -185,7 +185,7 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void computeGlobalResidual(const double current_time,
                                const Epetra_Vector* xdot,
                                const Epetra_Vector* xdotdot,
@@ -216,7 +216,7 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void computeGlobalJacobian(const double alpha,
                                const double beta,
                                const double omega,
@@ -259,7 +259,7 @@ namespace Albany {
     /*!
      * Set xdot to NULL for steady-state problems
      */
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void computeGlobalPreconditioner(const Teuchos::RCP<Epetra_CrsMatrix>& jac,
                                      const Teuchos::RCP<Epetra_Operator>& prec);
 
@@ -384,7 +384,7 @@ namespace Albany {
     /*!
      * Set xdot, dg_dxdot to NULL for steady-state problems
      */
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void evaluateResponseDerivative(
       int response_index,
       const double current_time,
@@ -414,7 +414,7 @@ namespace Albany {
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdotT,
       const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void evaluateResponseDistParamDeriv(  int response_index,
       const double current_time,
       const Epetra_Vector* xdot,
@@ -673,7 +673,7 @@ namespace Albany {
     //! Class to manage state variables (a.k.a. history)
     StateManager& getStateMgr() {return stateMgr; }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate state field manager
     void evaluateStateFieldManager(const double current_time,
                                    const Epetra_Vector* xdot,
@@ -698,7 +698,7 @@ namespace Albany {
         return problemParams;
     }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Accessor function to Epetra_Import the solution from other PEs for output
     Epetra_Vector* getOverlapSolution(const Epetra_Vector& solution) {
       return solMgr->getOverlapSolution(solution);
@@ -740,7 +740,7 @@ namespace Albany {
     template <typename EvalT>
     void loadWorksetBucketInfo(PHAL::Workset& workset, const int& ws);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void loadBasicWorksetInfo(
             PHAL::Workset& workset,
             double current_time);
@@ -762,7 +762,7 @@ namespace Albany {
     //! Routine to load common sideset info into workset
     void loadWorksetSidesetInfo(PHAL::Workset& workset, const int ws);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void setupBasicWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -802,7 +802,7 @@ namespace Albany {
       const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals);
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void setupTangentWorksetInfo(
       PHAL::Workset& workset,
       double current_time,
@@ -869,12 +869,12 @@ namespace Albany {
     void postRegSetup(std::string eval);
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<MORFacade> getMorFacade();
 #endif
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Needed for coupled Schwarz
   public:
     void
@@ -902,6 +902,10 @@ namespace Albany {
     getAppNameIndexMap() const
     {return app_name_index_map_;}
 
+    void
+    setCoupledAppBlock(
+        std::string const & app_name, std::string const & block_name);
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
@@ -911,11 +915,14 @@ namespace Albany {
 
     Teuchos::RCP<std::map<std::string, int>>
     app_name_index_map_;
+
+    std::map<int, std::string>
+    app_index_block_name_map_;
 #endif //ALBANY_LCM
 
   protected:
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
@@ -947,7 +954,7 @@ namespace Albany {
     //! Distributed parameter library
     Teuchos::RCP<DistParamLib> distParamLib;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Solution memory manager
     Teuchos::RCP<AAdapt::AdaptiveSolutionManager> solMgr;
 #endif
@@ -982,7 +989,7 @@ namespace Albany {
     //! Stochastic Galerkin expansion
     Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> > sg_expansion;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Product multi-comm
     Teuchos::RCP<const EpetraExt::MultiComm> product_comm;
 
@@ -1069,7 +1076,7 @@ namespace Albany {
     void determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterList>& topLevelParams);
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<MORFacade> morFacade;
 #endif
 #endif
@@ -1108,7 +1115,7 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   loadWorksetSidesetInfo(workset, ws);
 
   workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 #endif
