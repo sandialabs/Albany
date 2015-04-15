@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cd "$LCM_DIR"
-
 source ./env-single.sh
+
+cd "$LCM_DIR"
 
 if [ -f "$STATUS_LOG" ]; then
     rm "$STATUS_LOG" -f
