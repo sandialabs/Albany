@@ -241,6 +241,13 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
             sub_list.get<std::string>("Coupled Block")
         );
 
+        // Get the application from the main parameters list above
+        // and pass it to the Schwarz BC evaluator.
+        p->set<Teuchos::RCP<Albany::Application>>(
+            "Application",
+            sub_list.get<Teuchos::RCP<Albany::Application>>("Application")
+        );
+
         // Fill up ParameterList with things DirichletBase wants
         p->set< RCP<DataLayout> >("Data Layout", dummy);
         p->set< std::string > ("Dirichlet Name", ss);
