@@ -63,7 +63,6 @@ int countRes; //counter which counts instances of residual (for debug output)
 
 extern bool TpetraBuild;
 
-
 Albany::Application::
 Application(const RCP<const Teuchos_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
@@ -4487,3 +4486,31 @@ Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 }
 #endif
 #endif
+
+#if defined(ALBANY_LCM)
+void
+Albany::
+Application::
+setCoupledAppBlock(
+    std::string const & app_name, std::string const & block_name)
+{
+  // Check for valid application name
+  auto
+  it = app_name_index_map_->find(app_name);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      it == app_name_index_map_->end(),
+      std::logic_error,
+      "Trying to couple to an unknown Application: " <<
+      app_name << '\n');
+
+  int const
+  app_index = it->second;
+
+  auto
+  app_index_block_name = std::make_pair(app_index, block_name);
+
+  app_index_block_name_map_.insert(app_index_block_name);
+}
+
+#endif // ALBANY_LCM

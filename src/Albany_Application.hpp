@@ -902,6 +902,10 @@ namespace Albany {
     getAppNameIndexMap() const
     {return app_name_index_map_;}
 
+    void
+    setCoupledAppBlock(
+        std::string const & app_name, std::string const & block_name);
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
