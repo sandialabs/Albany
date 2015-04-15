@@ -911,6 +911,9 @@ namespace Albany {
 
     Teuchos::RCP<std::map<std::string, int>>
     app_name_index_map_;
+
+    std::set<int>
+    coupled_apps_indices_;
 #endif //ALBANY_LCM
 
   protected:
