@@ -8,13 +8,15 @@
 
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
+       evaluators/FELIX_EpsilonL1L2.cpp
+       evaluators/FELIX_HydrologyResidual.cpp
+       evaluators/FELIX_HydrologyRhs.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
        evaluators/FELIX_Viscosity.cpp
        evaluators/FELIX_ViscosityFO.cpp
        evaluators/FELIX_ViscosityL1L2.cpp
-       evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_StokesContinuityResid.cpp
        evaluators/FELIX_StokesTauM.cpp
        evaluators/FELIX_StokesContravarientMetricTensor.cpp
@@ -22,6 +24,7 @@
        evaluators/FELIX_StokesBodyForce.cpp
        evaluators/FELIX_StokesFOBodyForce.cpp
        evaluators/FELIX_StokesL1L2BodyForce.cpp
+       problems/FELIX_Hydrology.cpp
        problems/FELIX_Stokes.cpp
        problems/FELIX_StokesFO.cpp
        problems/FELIX_StokesL1L2.cpp
@@ -46,6 +49,12 @@ ENDIF()
   SET(HEADERS
        evaluators/FELIX_BasalFrictionCoefficient.hpp
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
+       evaluators/FELIX_EpsilonL1L2.hpp
+       evaluators/FELIX_EpsilonL1L2_Def.hpp
+       evaluators/FELIX_HydrologyResidual.hpp
+       evaluators/FELIX_HydrologyResidual_Def.hpp
+       evaluators/FELIX_HydrologyRhs.hpp
+       evaluators/FELIX_HydrologyRhs_Def.hpp
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp
@@ -56,8 +65,6 @@ ENDIF()
        evaluators/FELIX_ViscosityFO_Def.hpp
        evaluators/FELIX_ViscosityL1L2.hpp
        evaluators/FELIX_ViscosityL1L2_Def.hpp
-       evaluators/FELIX_EpsilonL1L2.hpp
-       evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_StokesContinuityResid.hpp
        evaluators/FELIX_StokesContinuityResid_Def.hpp
        evaluators/FELIX_StokesTauM.hpp
@@ -70,6 +77,7 @@ ENDIF()
        evaluators/FELIX_StokesBodyForce_Def.hpp
        evaluators/FELIX_StokesFOBodyForce.hpp
        evaluators/FELIX_StokesFOBodyForce_Def.hpp
+       problems/FELIX_Hydrology.hpp
        problems/FELIX_Stokes.hpp
        problems/FELIX_StokesFO.hpp
        problems/FELIX_StokesL1L2.hpp

@@ -4,11 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-
-#ifdef ALBANY_SEACAS
-
 #ifndef ALBANY_IOSS_STKMESHSTRUCT_HPP
 #define ALBANY_IOSS_STKMESHSTRUCT_HPP
+
+#ifdef ALBANY_SEACAS
 
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include <stk_io/StkMeshIoBroker.hpp>
@@ -16,55 +15,60 @@
 
 #include <Ionit_Initializer.h>
 
-namespace Albany {
+namespace Albany
+{
 
-  class IossSTKMeshStruct : public GenericSTKMeshStruct {
+class IossSTKMeshStruct : public GenericSTKMeshStruct
+{
+public:
 
-    public:
+  IossSTKMeshStruct(
+                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
+                const Teuchos::RCP<const Teuchos_Comm>& commT);
 
-    IossSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                  const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
-                  const Teuchos::RCP<const Teuchos_Comm>& commT);
+  ~IossSTKMeshStruct();
 
-    ~IossSTKMeshStruct();
+  void setFieldAndBulkData(
+                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                const Teuchos::RCP<Teuchos::ParameterList>& params,
+                const unsigned int neq_,
+                const AbstractFieldContainer::FieldContainerRequirements& req,
+                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+                const unsigned int worksetSize);
 
-    void setFieldAndBulkData(
-                  const Teuchos::RCP<const Teuchos_Comm>& commT,
-                  const Teuchos::RCP<Teuchos::ParameterList>& params,
-                  const unsigned int neq_,
-                  const AbstractFieldContainer::FieldContainerRequirements& req,
-                  const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+  int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
+  double getSolutionFieldHistoryStamp(int step) const;
+  void loadSolutionFieldHistory(int step);
 
-    int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
-    double getSolutionFieldHistoryStamp(int step) const;
-    void loadSolutionFieldHistory(int step);
+  //! Flag if solution has a restart values -- used in Init Cond
+  bool hasRestartSolution() const {return m_hasRestartSolution;}
 
-    //! Flag if solution has a restart values -- used in Init Cond
-    bool hasRestartSolution() const {return m_hasRestartSolution;}
+  //! If restarting, convenience function to return restart data time
+  double restartDataTime() const {return m_restartDataTime;}
 
-    //! If restarting, convenience function to return restart data time
-    double restartDataTime() const {return m_restartDataTime;}
+private:
+  Ioss::Init::Initializer ioInit;
 
-    private:
-    Ioss::Init::Initializer ioInit;
+  Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
-    Teuchos::RCP<const Teuchos::ParameterList>
-      getValidDiscretizationParameters() const;
+  void readFileSerial (std::string& fname, Tpetra_MultiVector& content, const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+  void fillTpetraVec (Tpetra_Vector& vec, double value);
+  void fillTpetraMVec (Tpetra_MultiVector& mvec, const Teuchos::Array<double>& values);
 
-    Teuchos::RCP<Teuchos::FancyOStream> out;
-    bool usePamgen;
-    bool useSerialMesh;
-    bool periodic;
-    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
+  Teuchos::RCP<Teuchos::FancyOStream> out;
+  bool usePamgen;
+  bool useSerialMesh;
+  bool periodic;
+  Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data;
 
-    bool m_hasRestartSolution;
-    double m_restartDataTime;
-    int m_solutionFieldHistoryDepth;
+  bool m_hasRestartSolution;
+  double m_restartDataTime;
+  int m_solutionFieldHistoryDepth;
+};
 
-  };
+} // Namespace Albany
 
-}
-#endif
-#endif
+#endif // ALBANY_SEACAS
+
+#endif // ALBANY_IOSS_STKMESHSTRUCT_HPP

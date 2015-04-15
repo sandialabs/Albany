@@ -19,7 +19,7 @@ namespace Albany {
     public:
 
     AsciiSTKMesh2D(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~AsciiSTKMesh2D();
@@ -50,10 +50,12 @@ namespace Albany {
     int NumNodes; //number of nodes
     int NumEles; //number of elements
     int NumBdEdges; //number of faces on basal boundary
+    std::map<int,std::string> bdTagToNodeSetName;
+    std::map<int,std::string> bdTagToSideSetName;
     double (*xyz)[3];
     double* sh;
     int (*eles)[4]; //hard-coded for quads
-    int (*be)[2];
+    int (*be)[3]; //2 points plus label
   };
 
 }

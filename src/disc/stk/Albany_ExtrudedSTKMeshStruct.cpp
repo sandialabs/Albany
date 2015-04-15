@@ -30,7 +30,7 @@
 
 #include "Albany_Utils.hpp"
 
-const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid (); 
+const Tpetra::global_size_t INVALID = Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, const Teuchos::RCP<const Teuchos_Comm>& comm) :
     GenericSTKMeshStruct(params, Teuchos::null, 3), out(Teuchos::VerboseObjectBase::getDefaultOStream()), periodic(false) {
@@ -226,16 +226,15 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   //std::cout << "Num Global Elements: " << maxGlobalElements2D<< " " << maxGlobalVertices2dId<< " " << maxGlobalEdges2D << std::endl;
 
   Teuchos::Array<GO> indices(nodes2D.size());
-  std::vector<GO> serialIndices;
   for (int i = 0; i < nodes2D.size(); ++i)
     indices[i] = bulkData2D.identifier(nodes2D[i]) - 1;
-  
+
   Teuchos::RCP<const Tpetra_Map>
     nodes_map = Tpetra::createNonContigMapWithNode<LO, GO> (
       indices(), comm, KokkosClassic::Details::getNode<KokkosNode>());
   int numMyElements = (comm->getRank() == 0) ? numGlobalVertices2D : 0;
-  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm); 
-  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm)); 
+  //Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Tpetra::createUniformContigMap<LO, GO>(numMyElements, comm);
+  Teuchos::RCP<const Tpetra_Map> serial_nodes_map = Teuchos::rcp(new const Tpetra_Map(INVALID, numMyElements, 0, comm));
   Teuchos::RCP<Tpetra_Import> importOperator = Teuchos::rcp(new Tpetra_Import(serial_nodes_map, nodes_map));
 
   Teuchos::RCP<Tpetra_Vector> temp = Teuchos::rcp(new Tpetra_Vector(serial_nodes_map));
@@ -643,7 +642,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
       bulkData->declare_relation(side, node, j);
     }
   }
-  
+
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
@@ -703,8 +702,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Tpetra_Mu
       ifile.close();
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
-      //	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-      //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
+      //  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      //      std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
 }
@@ -725,8 +724,8 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
           std::endl << "Error in ExtrudedSTKMeshStruct: Number of nodes in file " << fname << " (" << numNodes << ") is different from the number expected (" << map_serial->getNodeNumElements() << ")" << std::endl);
     } else {
       std::cout << "Warning in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl;
-      //	TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-      //			std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
+      //  TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+      //      std::endl << "Error in ExtrudedSTKMeshStruct: Unable to open input file " << fname << std::endl);
     }
   }
   // The first int is for Comm<int>; the second is the type of numComponents.
@@ -739,9 +738,9 @@ void Albany::ExtrudedSTKMeshStruct::readFileSerial(std::string &fname, Teuchos::
       ifile >> zCoords[i];
   }
   //comm->Broadcast(&zCoords[0], numComponents, 0);
-  //IK, 10/1/14: double should be ST? 
+  //IK, 10/1/14: double should be ST?
   Teuchos::broadcast<int, double>(*comm, 0, numComponents, &zCoords[0]);
-  
+
   temperatureVec = Teuchos::rcp(new Tpetra_MultiVector(map, numComponents));
 
   Teuchos::ArrayRCP<ST> tempT_nonConstView = tempT.get1dViewNonConst();

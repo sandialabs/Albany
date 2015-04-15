@@ -372,7 +372,12 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(coordVec,fm);
   if (inputConditions == "robin") this->utils.setFieldData(dof,fm);
 #ifdef ALBANY_FELIX
-  else if (inputConditions == "basal" || inputConditions == "basal_scalar_field")
+  else if (inputConditions == "basal")
+  {
+    this->utils.setFieldData(dofVec,fm);
+    this->utils.setFieldData(beta_field,fm);
+  }
+  else if (inputConditions == "basal_scalar_field")
   {
     this->utils.setFieldData(dofVec,fm);
     this->utils.setFieldData(beta_field,fm);
