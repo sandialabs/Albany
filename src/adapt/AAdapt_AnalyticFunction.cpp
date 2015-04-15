@@ -1244,7 +1244,9 @@ double AAdapt::AerasTC4Init::phicon(const double lat){
 
 AAdapt::AerasTC3Init::AerasTC3Init(int neq_, int spatialDim_, Teuchos::Array<double> data_)
 : spatialDim(spatialDim_), neq(neq_), data(data_) {
-    TEUCHOS_TEST_FOR_EXCEPTION( (neq!=3 || spatialDim!=3 || data.size()!=1) ,
+    bool error = true; 
+    if (neq == 3 || neq == 6) error = false; 
+    TEUCHOS_TEST_FOR_EXCEPTION( (error || spatialDim!=3 || data.size()!=1), 
                                std::logic_error,
                                "Error! Invalid call of Aeras TC3Init with " << neq
                                << " " << spatialDim <<  " "<< data.size()<< std::endl);
@@ -1383,6 +1385,8 @@ void AAdapt::AerasTC3Init::compute(double* solution, const double* X) {
     solution[0] = h;
     solution[1] = u;
     solution[2] = v;
+    for (int i=3; i<neq; ++i) //Hyperviscosity initial condition
+      solution[i] = 0.0; 
 }
 
 //*****************************************************************************
