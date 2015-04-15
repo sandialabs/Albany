@@ -278,6 +278,12 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
+#ifdef ALBANY_LCM
+  // This is needed for Schwarz coupling so that when Dirichlet
+  // BCs are created we know what application is doing it.
+  problem->setApplication(Teuchos::rcp(this, false));
+#endif //ALBANY_LCM
+
   neq = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
 
