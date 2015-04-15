@@ -232,6 +232,11 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set<int>("Type", traits_type::typeSw);
 
         p->set<std::string>(
+            "Coupled Application",
+            sub_list.get<std::string>("Coupled Application")
+        );
+
+        p->set<std::string>(
             "Coupled Block",
             sub_list.get<std::string>("Coupled Block")
         );
