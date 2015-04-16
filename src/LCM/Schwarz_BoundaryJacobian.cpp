@@ -30,6 +30,8 @@ LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
         b_initialized_(false),
         n_models_(0)
 {
+  assert(0 <= this_app_index && this_app_index < ca.size());
+  assert(0 <= coupled_app_index && coupled_app_index < ca.size());
 }
 
 LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
