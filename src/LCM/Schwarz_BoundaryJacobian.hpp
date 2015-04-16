@@ -65,6 +65,23 @@ public:
     return range_map_;
   }
 
+  void
+  setThisAppIndex(int const tai)
+  {this_app_index_ = tai;}
+
+  int
+  getThisAppIndex() const
+  {return this_app_index_;}
+
+  void
+  setCoupledAppIndex(int const cai)
+  {coupled_app_index_ = cai;}
+
+  int
+  getCoupledAppIndex() const
+  {return coupled_app_index_;}
+
+
 private:
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
