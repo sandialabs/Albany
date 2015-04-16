@@ -72,7 +72,17 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif  // WRITE_TO_MATRIX_MARKET
 
-  //FIXME: fill in!
+  int const
+  this_app_index = getThisAppIndex();
+
+  Albany::Application &
+  this_app = getApplication(this_app_index);
+
+  int const
+  coupled_app_index = getCoupledAppIndex();
+
+  Albany::Application &
+  coupled_app = getApplication(coupled_app_index);
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug

@@ -83,6 +83,13 @@ public:
   getCoupledAppIndex() const
   {return coupled_app_index_;}
 
+  Albany::Application &
+  getApplication(int const app_index)
+  {return *(coupled_apps_[app_index]);}
+
+  Albany::Application &
+  getApplication(int const app_index) const
+  {return *(coupled_apps_[app_index]);}
 
 private:
 
