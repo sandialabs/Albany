@@ -85,6 +85,9 @@ apply(
   int const
   coupled_app_index = getCoupledAppIndex();
 
+  // If they are not couples get out.
+  if (this_app.isCoupled(coupled_app_index) == false) return;
+
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
