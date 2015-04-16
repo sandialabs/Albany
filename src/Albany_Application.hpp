@@ -924,6 +924,14 @@ namespace Albany {
       return it->second.second;
     }
 
+    bool
+    isCoupled(int const app_index) const
+    {
+      return
+        coupled_app_index_block_nodeset_names_map_.find(app_index) !=
+        coupled_app_index_block_nodeset_names_map_.end();
+    }
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
