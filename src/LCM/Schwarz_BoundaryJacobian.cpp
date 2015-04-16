@@ -54,7 +54,10 @@ void LCM::Schwarz_BoundaryJacobian::initialize()
 
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
-void LCM::Schwarz_BoundaryJacobian::apply(
+void
+LCM::
+Schwarz_BoundaryJacobian::
+apply(
     Tpetra_MultiVector const & X,
     Tpetra_MultiVector& Y,
     Teuchos::ETransp mode,
@@ -122,4 +125,16 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 }
+
+Intrepid::Vector<double>
+LCM::
+Schwarz_BoundaryJacobian::
+computeBC(int const dimension, size_t const ns_node)
+{
+  Intrepid::Vector<double>
+  bc(dimension, Intrepid::ZEROS);
+
+  return bc;
+}
+
 
