@@ -32,7 +32,9 @@ class Schwarz_BoundaryJacobian: public Tpetra_Operator {
 public:
   Schwarz_BoundaryJacobian(
       Teuchos::RCP<Teuchos_Comm const> const & comm,
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca);
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+      int const this_app_index = 0,
+      int const coupled_app_index = 0);
 
   ~Schwarz_BoundaryJacobian();
 

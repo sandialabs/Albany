@@ -19,12 +19,17 @@ mm_counter = 0;
 
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm,
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca) :
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+    int const this_app_index,
+    int const coupled_app_index) :
+        commT_(comm),
         coupled_apps_(ca),
-        commT_(comm), b_use_transpose_(false), b_initialized_(false),
+        this_app_index_(this_app_index),
+        coupled_app_index_(coupled_app_index),
+        b_use_transpose_(false),
+        b_initialized_(false),
         n_models_(0)
 {
-  return;
 }
 
 LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
