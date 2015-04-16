@@ -66,7 +66,7 @@ public:
   void obcOverlappingElementSearch();
 
   //! Evaluate the functional for optimization-based coupling
-  double obcEvaluateFunctional();
+  double obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement = NULL);
 
   //! Load the current time and displacement from Albany into the Peridigm manager.
   void setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector);
