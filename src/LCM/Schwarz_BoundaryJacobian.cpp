@@ -98,11 +98,21 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   Albany::STKDiscretization *
   stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
 
+  int const
+  dimension = stk_discretization->getNumDim();
+
   Albany::NodeSetList const &
   nodesets = stk_discretization->getNodeSets();
 
   std::vector<std::vector<int> > const &
   ns_dof = nodesets.find(coupled_nodeset_name)->second;
+
+  size_t const
+  ns_number_nodes = ns_dof.size();
+
+  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+  } // node in node set loop
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug

@@ -8,17 +8,18 @@
 #define LCM_SCHWARZ_BOUNDARY_JACOBIAN_H
 
 #include <iostream>
+
 #include "Teuchos_Comm.hpp"
-#include "Tpetra_Map.hpp"
-#include "Tpetra_Vector.hpp"
-#include "Tpetra_Operator.hpp"
+#include "Teuchos_RCP.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 #include "Tpetra_Import.hpp"
+#include "Tpetra_Map.hpp"
+#include "Tpetra_Operator.hpp"
+#include "Tpetra_Vector.hpp"
 
-#include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
-
-#include "Teuchos_RCP.hpp"
+#include "Albany_DataTypes.hpp"
+#include "Intrepid_MiniTensor.h"
 
 namespace LCM {
 
@@ -90,6 +91,11 @@ public:
   Albany::Application const&
   getApplication(int const app_index) const
   {return *(coupled_apps_[app_index]);}
+
+private:
+
+  Intrepid::Vector<double>
+  computeBC(int const dimension, size_t const ns_node);
 
 private:
 
