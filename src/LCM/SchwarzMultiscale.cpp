@@ -80,7 +80,9 @@ SchwarzMultiscale(
 
   //Get "Parameters" parameter sublist, if it exists
   if (problem_params.isSublist("Parameters")) {
-    parameter_params = Teuchos::rcp(&(problem_params.sublist("Parameters")),false);
+    parameter_params = Teuchos::rcp(
+        &(problem_params.sublist("Parameters")),
+        false);
 
     num_params_total_ = parameter_params->get("Number of Parameter Vectors", 0);
 
