@@ -29,7 +29,13 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
   coupled_block_name_(p.get<std::string>("Coupled Block")),
   disc_(Teuchos::null)
 {
-  app_->setCoupledAppBlock(coupled_app_name_, coupled_block_name_);
+  std::string const &
+  nodeset_name = this->nodeSetID;
+
+  app_->setCoupledAppBlockNodeset(
+      coupled_app_name_,
+      coupled_block_name_,
+      nodeset_name);
 }
 
 //

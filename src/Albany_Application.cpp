@@ -4491,8 +4491,10 @@ Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 void
 Albany::
 Application::
-setCoupledAppBlock(
-    std::string const & app_name, std::string const & block_name)
+setCoupledAppBlockNodeset(
+    std::string const & app_name,
+    std::string const & block_name,
+    std::string const & nodeset_name)
 {
   // Check for valid application name
   auto
@@ -4508,9 +4510,12 @@ setCoupledAppBlock(
   app_index = it->second;
 
   auto
-  app_index_block_name = std::make_pair(app_index, block_name);
+  block_nodeset_names = std::make_pair(block_name, nodeset_name);
 
-  coupled_app_index_block_name_map_.insert(app_index_block_name);
+  auto
+  app_index_block_names = std::make_pair(app_index, block_nodeset_names);
+
+  coupled_app_index_names_map_.insert(app_index_block_names);
 }
 
 #endif // ALBANY_LCM

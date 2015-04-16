@@ -903,8 +903,10 @@ namespace Albany {
     {return app_name_index_map_;}
 
     void
-    setCoupledAppBlock(
-        std::string const & app_name, std::string const & block_name);
+    setCoupledAppBlockNodeset(
+        std::string const & app_name,
+        std::string const & block_name,
+        std::string const & nodeset_name);
 
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
@@ -916,8 +918,8 @@ namespace Albany {
     Teuchos::RCP<std::map<std::string, int>>
     app_name_index_map_;
 
-    std::map<int, std::string>
-    coupled_app_index_block_name_map_;
+    std::map<int, std::pair<std::string, std::string>>
+    coupled_app_index_names_map_;
 #endif //ALBANY_LCM
 
   protected:
