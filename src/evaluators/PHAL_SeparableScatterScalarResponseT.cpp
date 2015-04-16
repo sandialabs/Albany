@@ -10,4 +10,4 @@
 #include "PHAL_SeparableScatterScalarResponseT_Def.hpp"
 
 PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SeparableScatterScalarResponseT)
-
+PHAL_INSTANTIATE_TEMPLATE_CLASS(PHAL::SeparableScatterScalarResponseBaseT)
