@@ -75,13 +75,13 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   int const
   this_app_index = getThisAppIndex();
 
-  Albany::Application &
+  Albany::Application const &
   this_app = getApplication(this_app_index);
 
   int const
   coupled_app_index = getCoupledAppIndex();
 
-  Albany::Application &
+  Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
   std::string const &
