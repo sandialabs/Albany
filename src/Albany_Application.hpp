@@ -919,7 +919,7 @@ namespace Albany {
     app_name_index_map_;
 
     std::map<int, std::pair<std::string, std::string>>
-    coupled_app_index_names_map_;
+    coupled_app_index_block_nodeset_names_map_;
 #endif //ALBANY_LCM
 
   protected:

@@ -4515,7 +4515,7 @@ setCoupledAppBlockNodeset(
   auto
   app_index_block_names = std::make_pair(app_index, block_nodeset_names);
 
-  coupled_app_index_names_map_.insert(app_index_block_names);
+  coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
 }
 
 #endif // ALBANY_LCM
