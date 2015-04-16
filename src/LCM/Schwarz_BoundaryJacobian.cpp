@@ -54,7 +54,7 @@ void LCM::Schwarz_BoundaryJacobian::initialize()
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
 void LCM::Schwarz_BoundaryJacobian::apply(
-    const Tpetra_MultiVector& X,
+    Tpetra_MultiVector const & X,
     Tpetra_MultiVector& Y,
     Teuchos::ETransp mode,
     ST alpha,
