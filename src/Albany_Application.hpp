@@ -917,7 +917,7 @@ namespace Albany {
     app_name_index_map_;
 
     std::map<int, std::string>
-    app_index_block_name_map_;
+    coupled_app_index_block_name_map_;
 #endif //ALBANY_LCM
 
   protected:

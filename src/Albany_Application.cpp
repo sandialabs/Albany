@@ -4510,7 +4510,7 @@ setCoupledAppBlock(
   auto
   app_index_block_name = std::make_pair(app_index, block_name);
 
-  app_index_block_name_map_.insert(app_index_block_name);
+  coupled_app_index_block_name_map_.insert(app_index_block_name);
 }
 
 #endif // ALBANY_LCM
