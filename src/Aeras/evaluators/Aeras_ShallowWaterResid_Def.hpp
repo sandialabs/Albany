@@ -704,6 +704,8 @@ evaluateFields(typename Traits::EvalData workset)
                               +  ViscCoeff*hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
                               +  ViscCoeff*hgradNodes(qp,1)*wGradBF(cell,node,qp,1)
                               + hyperViscosity(cell,node,0);
+        for (int i=1; i<vecDim; ++i) 
+          Residual(cell,node,i) += hyperViscosity(cell,node,i); 
       }
     }
     
