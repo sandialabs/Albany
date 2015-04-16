@@ -3,10 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #include "Schwarz_BoundaryJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
+
+#include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
@@ -89,6 +90,19 @@ void LCM::Schwarz_BoundaryJacobian::apply(
 
   std::string const &
   coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+
+  // Get DOFs associated with node set.
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  disc = coupled_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+
+  Albany::NodeSetList const &
+  nodesets = stk_discretization->getNodeSets();
+
+  std::vector<std::vector<int> > const &
+  ns_dof = nodesets.find(coupled_nodeset_name)->second;
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug
