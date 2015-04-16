@@ -84,6 +84,12 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   Albany::Application &
   coupled_app = getApplication(coupled_app_index);
 
+  std::string const &
+  coupled_block_name = coupled_app.getBlockName(coupled_app_index);
+
+  std::string const &
+  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug
   // final solution Y (after all the operations to set Y = Jac*X
