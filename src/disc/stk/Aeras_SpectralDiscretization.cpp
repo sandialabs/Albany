@@ -69,6 +69,7 @@ const Tpetra::global_size_t INVALID =
 
 // Uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
+#define PRINT_COORDS
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
@@ -270,6 +271,28 @@ Aeras::SpectralDiscretization::printCoords() const
                   << " node: " << j << " x, y, z: "
                   << coords[ws][e][j][0] << ", " << coords[ws][e][j][1]
                   << ", " << coords[ws][e][j][2] << std::endl;
+      }
+    }
+  }
+}
+
+void
+Aeras::SpectralDiscretization::printCoordsAndGIDs() const
+{
+  //print coordinates
+  std::cout << "Processor " << bulkData.parallel_rank() << " has "
+            << coords.size() << " worksets." << std::endl;
+  for (int ws = 0; ws < coords.size(); ws++)             // workset
+  {
+    for (int e = 0; e < coords[ws].size(); e++)          // cell
+    {
+      for (int j = 0; j < coords[ws][e].size(); j++)     // node
+      {
+      // IK, 1/27/15: the following assumes a 3D mesh but this is OK
+      // here.
+        std::cout << "GID, x, y, z: " << wsElNodeID[ws][e][j]<< " "
+                  << coords[ws][e][j][0] << " " << coords[ws][e][j][1]
+                  << " " << coords[ws][e][j][2] << std::endl;
       }
     }
   }
@@ -3234,6 +3257,9 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
  // IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN
   printCoords();
+#endif
+#ifdef PRINT_COORDS
+  printCoordsAndGIDs(); 
 #endif
 
   // IK, 1/23/15: I have changed it so nothing happens in the
