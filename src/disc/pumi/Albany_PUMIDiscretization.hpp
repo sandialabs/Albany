@@ -219,9 +219,6 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
         const Epetra_Vector& data,
         bool overlapped,
         int offset = 0);
-    void setSplitFields(const std::vector<std::string>& names,
-                        const std::vector<int>& indices,
-                        const Epetra_Vector& data, bool overlapped);
 
     // Copy field data from APF to Epetra_Vector
     void getField(
@@ -229,9 +226,6 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
         Epetra_Vector& data,
         bool overlapped,
         int offset = 0) const;
-    void getSplitFields(const std::vector<std::string>& names,
-                        const std::vector<int>& indices,
-                        Epetra_Vector& data, bool overlapped) const;
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
