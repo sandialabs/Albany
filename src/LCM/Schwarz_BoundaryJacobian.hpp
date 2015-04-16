@@ -22,10 +22,11 @@
 
 namespace LCM {
 
-/** 
- *  \brief A Tpetra operator that evaluates the Jacobian of a
- *  LCM coupled Schwarz Multiscale problem
- */
+///
+/// \brief A Tpetra operator that evaluates the Jacobian of a
+/// LCM coupled Schwarz Multiscale problem.
+/// Each Jacobian couples one single application to another.
+///
 
 class Schwarz_BoundaryJacobian: public Tpetra_Operator {
 public:
@@ -68,6 +69,12 @@ private:
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   coupled_apps_;
+
+  int
+  this_app_index_;
+
+  int
+  coupled_app_index_;
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;
