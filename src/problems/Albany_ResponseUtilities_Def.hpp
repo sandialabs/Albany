@@ -39,11 +39,6 @@
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
 #endif
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-#include "AlbanyPeridigmOBCFunctional.hpp"
-#endif
-#endif
 
 template<typename EvalT, typename Traits>
 Albany::ResponseUtilities<EvalT,Traits>::ResponseUtilities(
@@ -188,19 +183,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-  
-#ifdef ALBANY_PERIDIGM
-#if defined(ALBANY_EPETRA)
-  else if (responseName == "OBC Functional")
-  {
-    RCP<PHAL::AlbanyPeridigmOBCFunctional<EvalT,Traits> > res_ev =
-      rcp(new PHAL::AlbanyPeridigmOBCFunctional<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
-#endif
-#endif
 
 #ifdef ALBANY_AERAS
   else if (responseName == "Aeras Shallow Water L2 Error")

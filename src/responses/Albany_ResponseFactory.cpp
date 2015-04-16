@@ -12,6 +12,11 @@
 #include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+#include "AlbanyPeridigmOBCFunctional.hpp"
+#endif
+#endif
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
@@ -73,6 +78,14 @@ createResponseFunction(
       rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
   }
 
+  else if (name == "OBC Functional") {
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+    responses.push_back(rcp(new Albany::AlbanyPeridigmOBCFunctional(comm)));
+#endif
+#endif
+  }
+
   else if (name == "Aggregated") {
     int num_aggregate_responses = responseParams.get<int>("Number");
     Array< RCP<AbstractResponseFunction> > aggregated_responses;
@@ -117,8 +130,7 @@ createResponseFunction(
 	   name == "Tensor PNorm Objective" ||
 	   name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
-           name == "PHAL Field IntegralT" ||
-	   name == "OBC Functional") {
+           name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
 #if defined(ALBANY_LCM)
