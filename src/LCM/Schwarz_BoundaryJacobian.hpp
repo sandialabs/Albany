@@ -45,7 +45,9 @@ public:
 
   /// Returns the result of a Tpetra_Operator applied to a
   ///Tpetra_MultiVector X in Y.
-  virtual void apply(Tpetra_MultiVector const & X, Tpetra_MultiVector & Y,
+  virtual void apply(
+      Tpetra_MultiVector const & X,
+      Tpetra_MultiVector & Y,
       Teuchos::ETransp mode = Teuchos::NO_TRANS,
       ST alpha = Teuchos::ScalarTraits<ST>::one(),
       ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
