@@ -105,7 +105,8 @@ namespace QCAD {
     void fillSingleSubSolverParams(const InArgs& inArgs, const std::string& name, 
 				   QCAD::SolverSubSolver& subSolver, int nLeaveOffEnd=0) const;
 
-    SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
+    SolverSubSolver CreateSubSolver(const std::string& name,
+				    const Teuchos::RCP<Teuchos::ParameterList> appParams, const Epetra_Comm& comm,
 				    const Teuchos::RCP<const Epetra_Vector>& initial_guess  = Teuchos::null) const;
 
     SolverSubSolverData CreateSubSolverData(const QCAD::SolverSubSolver& sub) const;
@@ -119,6 +120,8 @@ namespace QCAD {
 			Teuchos::RCP<Teuchos::FancyOStream> out) const;
     
   private:
+    std::map<std::string, QCAD::SolverSubSolver> persistent_subSolvers;
+
     int numDims;
     std::string problemNameBase;
     std::string defaultSubSolver;
@@ -133,6 +136,7 @@ namespace QCAD {
     std::size_t nResponseDoubles;    
 
     std::string iterationMethod;
+    std::string discretizationCreateCmd;
     int  nEigenvectors; //used in Poisson-CI coupling
 
     int num_p, num_g;
