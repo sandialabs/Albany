@@ -261,7 +261,36 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   discFactory->setMeshMover(meshMover);
 #endif
 
- }
+#if defined(ALBANY_LCM)
+  // Check for Schwarz parameters
+  bool const
+  has_app_array = params->isParameter("Application Array");
+
+  bool const
+  has_app_index = params->isParameter("Application Index");
+
+  bool const
+  has_app_name_index_map = params->isParameter("Application Name Index Map");
+
+  // Only if all these are present set them in the app.
+  bool const
+  has_all = has_app_array && has_app_index && has_app_name_index_map;
+
+  if (has_all == true) {
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+    aa = params->get<Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>>
+    ("Application Array");
+
+    int const
+    ai = params->get<int>("Application Index");
+
+    std::map<std::string, int>
+    anim = params->get<std::map<std::string, int>>
+    ("Application Name Index Map");
+  }
+#endif // ALBANY_LCM
+
+}
 
 void Albany::Application::createMeshSpecs() {
   // Get mesh specification object: worksetSize, cell topology, etc
