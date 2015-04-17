@@ -51,6 +51,15 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
+  bool const
+  disabled = true;
+
+  if (disabled == true) {
+    x_val = 0.0;
+    y_val = 0.0;
+    z_val = 0.0;
+    return;
+  }
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   coupled_apps = dirichlet_workset.apps_;
 
