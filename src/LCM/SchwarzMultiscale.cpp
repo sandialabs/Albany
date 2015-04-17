@@ -310,22 +310,19 @@ SchwarzMultiscale(
 
     // Pass these on the parameter list because the are needed before
     // BC evaluators are built.
+
+    // Add application array for later use in Schwarz BC.
     app_params_m.set("Application Array", apps_);
+
+    // See application index for use with Schwarz BC.
     app_params_m.set("Application Index", m);
+
+    // App application name-index map for later use in Schwarz BC.
     app_params_m.set("Application Name Index Map", app_name_index_map);
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
-
-    // Add application array for later use in Schwarz BC.
-    apps_[m]->setApplications(apps_.create_weak());
-
-    // See application index for use with Schwarz BC.
-    apps_[m]->setAppIndex(m);
-
-    // App application name-index map for later use in Schwarz BC.
-    apps_[m]->setAppNameIndexMap(app_name_index_map);
 
     //Create model evaluator
     Albany::ModelFactory

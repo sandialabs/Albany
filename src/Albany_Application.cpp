@@ -284,9 +284,15 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
     int const
     ai = params->get<int>("Application Index");
 
-    std::map<std::string, int>
-    anim = params->get<std::map<std::string, int>>
+    Teuchos::RCP<std::map<std::string, int>>
+    anim = params->get<Teuchos::RCP<std::map<std::string, int>>>
     ("Application Name Index Map");
+
+    this->setApplications(aa.create_weak());
+
+    this->setAppIndex(ai);
+
+    this->setAppNameIndexMap(anim);
   }
 #endif // ALBANY_LCM
 
