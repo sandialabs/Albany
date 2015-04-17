@@ -9,14 +9,14 @@
 #include "Albany_ModelFactory.hpp"
 
 #include "Albany_Application.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_ModelEvaluator.hpp"
 #endif
 #include "Albany_ModelEvaluatorT.hpp"
 
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "MOR_ReducedOrderModelFactory.hpp"
 #endif
 #endif
@@ -34,7 +34,7 @@ ModelFactory::ModelFactory(const RCP<ParameterList> &params,
   // Nothing to do
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<EpetraExt::ModelEvaluator> ModelFactory::create() const
 {
   RCP<EpetraExt::ModelEvaluator> model(new Albany::ModelEvaluator(app_, params_));

@@ -6,7 +6,7 @@
 #include "Albany_StatelessObserverImpl.hpp"
 
 #include "Albany_AbstractDiscretization.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "AAdapt_AdaptiveSolutionManager.hpp"
 #endif
 
@@ -31,7 +31,7 @@ getTimeParamValueOrDefault (RealType defaultValue) const {
     defaultValue;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 const Epetra_Map& StatelessObserverImpl::getNonOverlappedMap () const {
   return *app_->getMap();
 }
@@ -42,7 +42,7 @@ StatelessObserverImpl::getNonOverlappedMapT () const {
   return app_->getMapT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void StatelessObserverImpl::observeSolution (
   double stamp, const Epetra_Vector &nonOverlappedSolution,
   const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot)

@@ -17,7 +17,7 @@
 #ifdef ALBANY_SEACAS
 #include "Albany_IossSTKMeshStruct.hpp"
 #endif
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_AsciiSTKMeshStruct.hpp"
 #include "Albany_AsciiSTKMesh2D.hpp"
 #ifdef ALBANY_FELIX
@@ -35,7 +35,7 @@
 #include "Albany_Catalyst_Decorator.hpp"
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "Topology_Utils.h"
 #endif // ALBANY_LCM
 
@@ -73,7 +73,7 @@ Albany::DiscretizationFactory::setMeshMover(const Teuchos::RCP<CUTR::CubitMeshMo
 }
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 
 namespace {
 
@@ -231,7 +231,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                << " requested, but not compiled in" << std::endl);
 #endif
   }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   else if(method == "Ascii") {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, commT));
   }
@@ -285,7 +285,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                << "\nValid Methods are: STK1D, STK2D, STK3D, Ioss, Ioss Aeras, Exodus, Exodus Aeras, Cubit, PUMI, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   // Add an interface block. For now relies on STK, so we force a cast that
   // will fail if the underlying meshStruct is not based on STK.
   createInterfaceParts(adaptParams, meshStruct);
@@ -392,7 +392,7 @@ Albany::DiscretizationFactory::createDiscretizationFromInternalMeshStruct(
   }
 #ifdef ALBANY_AERAS
   else if (method == "Ioss Aeras" || method == "Exodus Aeras") {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     TEUCHOS_TEST_FOR_EXCEPTION(true,
                                Teuchos::Exceptions::InvalidParameter,
                                "Ioss Aeras and Exodus Aeras are not implemented to run with Albany executable!  " 

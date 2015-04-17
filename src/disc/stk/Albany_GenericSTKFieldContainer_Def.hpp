@@ -171,7 +171,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<bool Interleaved>
 template<class T>
 typename boost::disable_if< boost::is_same<T, Albany::AbstractSTKFieldContainer::ScalarFieldType>, void >::type
@@ -294,7 +294,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelperT(Tpetra_Vector &
     }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 // Specialization for ScalarFieldType
 template<bool Interleaved>
 void Albany::GenericSTKFieldContainer<Interleaved>::fillVectorHelper(Epetra_Vector& soln,

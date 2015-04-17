@@ -74,6 +74,7 @@ for TOOL_CHAIN in $TOOL_CHAINS; do
 				    git add "$DEST"
 				    git commit -m "$MSG"
 				    git push
+				    cd "$LCM_DIR"
 				fi
 				;;
 			    clang)

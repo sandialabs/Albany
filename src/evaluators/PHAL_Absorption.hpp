@@ -12,7 +12,7 @@
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Vector.h"
 #endif
 

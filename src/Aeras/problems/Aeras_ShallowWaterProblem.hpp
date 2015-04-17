@@ -100,6 +100,7 @@ namespace Aeras {
 
 #include "Aeras_ShallowWaterResid.hpp"
 #include "Aeras_ShallowWaterSource.hpp"
+#include "Aeras_ShallowWaterHyperViscosity.hpp"
 #include "Aeras_SurfaceHeight.hpp"
 
 #include "Aeras_ComputeBasisFunctions.hpp"
@@ -141,9 +142,16 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
   const int numQPts     = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
-  int vecDim; 
-  if (neq == 1) vecDim = neq; 
-  else vecDim = spatialDim;
+  int vecDim;
+
+  if (useHyperViscosity == false) {
+    if (neq == 1) vecDim = neq; 
+    else vecDim = spatialDim;
+  }
+  else { 
+    if (neq == 2) vecDim = neq; 
+    else vecDim = spatialDim;
+  }
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -257,6 +265,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<std::string>("Aeras Surface Height QP Variable Name", "Aeras Surface Height");
     p->set<std::string>("Shallow Water Source QP Variable Name", "Shallow Water Source");
+    p->set<std::string>("Hyperviscosity Name", "Shallow Water Hyperviscosity");
     p->set<string>("Coordinate Vector Name",          "Coord Vec");
     p->set<string>("Spherical Coord Name",       "Lat-Long");
     p->set<std::string>("Lambda Coord Nodal Name", "Lat Nodal");
@@ -302,6 +311,23 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     fm0.template registerEvaluator<EvalT>(ev);
     
   }
+  { // Aeras hyperviscosity for shallow water equations
+
+    RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Hyperviscosity"));
+
+    //Input
+    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
+    p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
+    p->set<RCP<ParamLib> >("Parameter Library", paramLib);
+    Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
+    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+
+    //Output
+    p->set<std::string>("Hyperviscosity Name", "Shallow Water Hyperviscosity");
+    ev = rcp(new Aeras::ShallowWaterHyperViscosity<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+ 
 
   { // Aeras source for shallow water equations
 
@@ -318,6 +344,7 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     ev = rcp(new Aeras::ShallowWaterSource<EvalT,AlbanyTraits>(*p,dl));
     fm0.template registerEvaluator<EvalT>(ev);
   }
+  
  
 /*
   { // Aeras viscosity

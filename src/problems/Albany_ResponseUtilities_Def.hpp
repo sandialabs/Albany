@@ -11,7 +11,7 @@
 #include "QCAD_ResponseFieldAverage.hpp"
 #include "QCAD_ResponseSaveField.hpp"
 #include "QCAD_ResponseCenterOfMass.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PHAL_ResponseFieldIntegral.hpp"
 #endif
 #include "PHAL_ResponseFieldIntegralT.hpp"
@@ -21,12 +21,12 @@
   #include "FELIX_ResponseSurfaceVelocityMismatch.hpp"
 #endif
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   #include "QCAD_ResponseSaddleValue.hpp"
   #include "QCAD_ResponseRegionBoundary.hpp"
 #endif
 #endif
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 #include "IPtoNodalField.hpp"
 #include "ProjectIPtoNodalField.hpp"
 #endif
@@ -38,11 +38,6 @@
 #endif
 #ifdef ALBANY_AERAS
 #include "Aeras_ShallowWaterResponseL2Error.hpp"
-#endif
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-#include "AlbanyPeridigmOBCFunctional.hpp"
-#endif
 #endif
 
 template<typename EvalT, typename Traits>
@@ -133,7 +128,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #ifdef ALBANY_QCAD
   else if (responseName == "Saddle Value")
   {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     p->set<std::string>("Coordinate Vector Name", "Coord Vec");
     p->set<std::string>("Weights Name",   "Weights");
@@ -151,7 +146,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
   else if (responseName == "Region Boundary")
   {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     RCP<QCAD::ResponseRegionBoundary<EvalT,Traits> > res_ev =
       rcp(new QCAD::ResponseRegionBoundary<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -167,7 +162,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 
   else if (responseName == "PHAL Field Integral")
   {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     RCP<PHAL::ResponseFieldIntegral<EvalT,Traits> > res_ev =
       rcp(new PHAL::ResponseFieldIntegral<EvalT,Traits>(*p, dl));
     fm.template registerEvaluator<EvalT>(res_ev);
@@ -188,19 +183,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
     response_tag = res_ev->getResponseFieldTag();
     fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
   }
-  
-#ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
-  else if (responseName == "OBC Functional")
-  {
-    RCP<PHAL::AlbanyPeridigmOBCFunctional<EvalT,Traits> > res_ev =
-      rcp(new PHAL::AlbanyPeridigmOBCFunctional<EvalT,Traits>(*p, dl));
-    fm.template registerEvaluator<EvalT>(res_ev);
-    response_tag = res_ev->getResponseFieldTag();
-    fm.requireField<EvalT>(*(res_ev->getEvaluatedFieldTag()));
-  }
-#endif
-#endif
 
 #ifdef ALBANY_AERAS
   else if (responseName == "Aeras Shallow Water L2 Error")
@@ -239,7 +221,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Modal Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::ModalObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::ModalObjective<EvalT,Traits>(*p, dl));
@@ -259,7 +241,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Stiffness Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::StiffnessObjective<EvalT,Traits> > res_ev =
       rcp(new ATO::StiffnessObjective<EvalT,Traits>(*p, dl));
@@ -279,7 +261,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Tensor PNorm Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::TensorPNormResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::TensorPNormResponse<EvalT,Traits>(*p, dl));
@@ -299,7 +281,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
   else if (responseName == "Internal Energy Objective")
   {
 #ifdef ALBANY_ATO
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     RCP<ATO::InternalEnergyResponse<EvalT,Traits> > res_ev =
       rcp(new ATO::InternalEnergyResponse<EvalT,Traits>(*p, dl));
@@ -316,7 +298,7 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #endif
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   else if (responseName == "IP to Nodal Field")
   {
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );

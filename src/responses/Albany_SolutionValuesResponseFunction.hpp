@@ -14,7 +14,7 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_RCP.hpp"
 #include "Albany_Utils.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_CombineMode.h"
 #endif
 
@@ -39,7 +39,7 @@ namespace Albany {
     //! Get the number of responses
     virtual unsigned int numResponses() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Setup response function
     virtual void setup();
 #endif
@@ -47,7 +47,7 @@ namespace Albany {
     //! Setup response function
     virtual void setupT();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate responses
     virtual void
     evaluateResponse(const double current_time,
@@ -134,7 +134,7 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdot,
 		     Tpetra_MultiVector* dg_dp);
     
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
     evaluateDistParamDeriv(
@@ -157,7 +157,7 @@ namespace Albany {
     Teuchos::RCP<const Application> app_;
 
     Teuchos::RCP<SolutionCullingStrategyBase> cullingStrategy_;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Import> solutionImporter_;
 #endif
     Teuchos::RCP<Tpetra_Import> solutionImporterT_;
@@ -165,12 +165,12 @@ namespace Albany {
     class SolutionPrinter;
     Teuchos::RCP<SolutionPrinter> sol_printer_;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void updateSolutionImporter();
 #endif
     void updateSolutionImporterT();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 ImportWithAlternateMap(
     const Epetra_Import &importer,

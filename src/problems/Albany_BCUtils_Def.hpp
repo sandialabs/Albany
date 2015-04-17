@@ -126,7 +126,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
     }
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 
   ///
   /// Time dependent BC specific
@@ -232,8 +232,20 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set<int>("Type", traits_type::typeSw);
 
         p->set<std::string>(
+            "Coupled Application",
+            sub_list.get<std::string>("Coupled Application")
+        );
+
+        p->set<std::string>(
             "Coupled Block",
             sub_list.get<std::string>("Coupled Block")
+        );
+
+        // Get the application from the main parameters list above
+        // and pass it to the Schwarz BC evaluator.
+        p->set<Teuchos::RCP<Albany::Application>>(
+            "Application",
+            params->get<Teuchos::RCP<Albany::Application>>("Application")
         );
 
         // Fill up ParameterList with things DirichletBase wants
@@ -495,7 +507,7 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
     }
   }
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
 
   ///
   /// Time dependent BC specific

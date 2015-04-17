@@ -14,7 +14,7 @@
 #include "Stokhos_OrthogPolyBasis.hpp"
 #include "Teuchos_TimeMonitor.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "EpetraExt_RowMatrixOut.h"
@@ -33,7 +33,7 @@
 
 #ifdef ALBANY_TEKO
 #include "Teko_InverseFactoryOperator.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Teko_StridedEpetraOperator.hpp"
 #endif
 #endif
@@ -42,7 +42,7 @@
 #include "PHAL_Utilities.hpp"
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PeridigmManager.hpp"
 #endif
 #endif
@@ -63,7 +63,6 @@ int countRes; //counter which counts instances of residual (for debug output)
 
 extern bool TpetraBuild;
 
-
 Albany::Application::
 Application(const RCP<const Teuchos_Comm>& comm_,
 	    const RCP<Teuchos::ParameterList>& params,
@@ -76,7 +75,7 @@ Application(const RCP<const Teuchos_Comm>& comm_,
   phxGraphVisDetail(0),
   stateGraphVisDetail(0)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
   initialSetUp(params);
@@ -97,7 +96,7 @@ Application(const RCP<const Teuchos_Comm>& comm_) :
     phxGraphVisDetail(0),
     stateGraphVisDetail(0)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(comm_); 
 #endif
 };
@@ -135,7 +134,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   distParamLib = rcp(new DistParamLib);
 
 #ifdef ALBANY_DEBUG
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   int break_set = (getenv("ALBANY_BREAK") == NULL)?0:1;
   int env_status = 0;
   int length = 1;
@@ -278,6 +277,12 @@ void Albany::Application::createMeshSpecs(Teuchos::RCP<Albany::AbstractMeshStruc
 void Albany::Application::buildProblem()   {
   problem->buildProblem(meshSpecs, stateMgr);
 
+#if defined(ALBANY_LCM)
+  // This is needed for Schwarz coupling so that when Dirichlet
+  // BCs are created we know what application is doing it.
+  problem->setApplication(Teuchos::rcp(this, false));
+#endif //ALBANY_LCM
+
   neq = problem->numEquations();
   spatial_dimension = problem->spatialDimension();
 
@@ -343,7 +348,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   if(!stateMgr.areStateVarsAllocated())
     stateMgr.setStateArrays(disc);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(!TpetraBuild){
     RCP<Epetra_Vector> initial_guessE;
     if (Teuchos::nonnull(initial_guess)) {
@@ -361,13 +366,13 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   if (Teuchos::nonnull(rc_mgr)) rc_mgr->setSolutionManager(solMgrT);
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   LCM::PeridigmManager::self().setDirichletFields(disc);
 #endif
 #endif
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   try {
     //dp-todo getNodalParameterSIS() needs to be implemented in PUMI. Until
     // then, catch the exception and continue.
@@ -417,7 +422,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
   // Now setup response functions (see note above)
   if(!TpetraBuild){
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     for (int i=0; i<responses.size(); i++)
       responses[i]->setup();
 #endif
@@ -463,7 +468,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
   }
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(disc->supportsMOR())
     morFacade = createMORFacade(disc, problemParams);
 #endif
@@ -473,7 +478,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
  * Initialize mesh adaptation features
  */
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(!TpetraBuild &&  solMgr->hasAdaptation()){
 
     solMgr->buildAdaptiveProblem(paramLib, stateMgr, commT);
@@ -482,7 +487,7 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 #endif
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   LCM::PeridigmManager::self().initialize(params, disc, commT);
 #endif
 #endif
@@ -517,7 +522,7 @@ getComm() const
   return commT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Map>
 Albany::Application::
 getMap() const
@@ -534,7 +539,7 @@ getMapT() const
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_CrsGraph>
 Albany::Application::
 getJacobianGraph() const
@@ -550,7 +555,7 @@ getJacobianGraphT() const
   return disc->getJacobianGraphT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<Epetra_Operator>
 Albany::Application::
 getPreconditioner()
@@ -599,7 +604,7 @@ getInitialSolutionT() const
   return solMgrT->getInitialSolutionT();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 RCP<const Epetra_Vector>
 Albany::Application::
 getInitialSolutionDot() const
@@ -792,7 +797,7 @@ computeGlobalResidualImplT(
   fT->putScalar(0.0);
 
 #ifdef ALBANY_PERIDIGM 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
   peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
   peridigmManager.evaluateInternalForce();
@@ -839,7 +844,7 @@ computeGlobalResidualImplT(
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -851,7 +856,7 @@ computeGlobalResidualImplT(
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalResidual(const double current_time,
@@ -1061,7 +1066,7 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -1075,7 +1080,7 @@ computeGlobalJacobianImplT(const double alpha,
   jacT->fillComplete();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalJacobian(const double alpha,
@@ -1237,7 +1242,7 @@ computeGlobalJacobianT(const double alpha,
     countRes++;  //increment residual counter
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalPreconditioner(const RCP<Epetra_CrsMatrix>& jac,
@@ -1568,7 +1573,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -1580,7 +1585,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 computeGlobalTangent(const double alpha,
@@ -1928,7 +1933,7 @@ evaluateResponseTangentT(int response_index,
     alpha, beta, omega, t, sum_derivs, xdotT, xdotdotT, xT, p, deriv_p, VxdotT, VxdotdotT, VxT, VpT, gT, gxT, gpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateResponseDerivative(
@@ -1979,7 +1984,7 @@ evaluateResponseDerivativeT(
     t, xdotT, xdotdotT, xT, p, deriv_p, gT, dg_dxT, dg_dxdotT, dg_dxdotdotT, dg_dpT);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateResponseDistParamDeriv(
@@ -2135,7 +2140,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2323,7 +2328,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2601,7 +2606,7 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -2829,7 +2834,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -3016,7 +3021,7 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -3300,7 +3305,7 @@ computeGlobalMPTangent(
     workset.distParamLib = distParamLib;
 
     // FillType template argument used to specialize Sacado
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
     workset.disc = disc;
     workset.apps_ = apps_;
@@ -3388,7 +3393,7 @@ evaluateMPResponseDerivative(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::Application::
 evaluateStateFieldManager(const double current_time,
@@ -3790,7 +3795,7 @@ Albany::Application::determinePiroSolver(const Teuchos::RCP<Teuchos::ParameterLi
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::loadBasicWorksetInfo(
        PHAL::Workset& workset,
        double current_time)
@@ -3847,7 +3852,7 @@ void Albany::Application::loadWorksetSidesetInfo(PHAL::Workset& workset, const i
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::setupBasicWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4049,7 +4054,7 @@ void Albany::Application::setupBasicWorksetInfo(
 }
 #endif //ALBANY_SG_MP
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::Application::setupTangentWorksetInfo(
   PHAL::Workset& workset,
   double current_time,
@@ -4474,10 +4479,43 @@ void Albany::Application::setupTangentWorksetInfo(
 #endif //ALBANY_SG_MP
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Albany::MORFacade> Albany::Application::getMorFacade()
 {
   return morFacade;
 }
 #endif
 #endif
+
+#if defined(ALBANY_LCM)
+void
+Albany::
+Application::
+setCoupledAppBlockNodeset(
+    std::string const & app_name,
+    std::string const & block_name,
+    std::string const & nodeset_name)
+{
+  // Check for valid application name
+  auto
+  it = app_name_index_map_->find(app_name);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(
+      it == app_name_index_map_->end(),
+      std::logic_error,
+      "Trying to couple to an unknown Application: " <<
+      app_name << '\n');
+
+  int const
+  app_index = it->second;
+
+  auto
+  block_nodeset_names = std::make_pair(block_name, nodeset_name);
+
+  auto
+  app_index_block_names = std::make_pair(app_index, block_nodeset_names);
+
+  coupled_app_index_block_nodeset_names_map_.insert(app_index_block_names);
+}
+
+#endif // ALBANY_LCM

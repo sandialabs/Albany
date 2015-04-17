@@ -41,7 +41,7 @@ namespace LCM {
     // Crystal-plasticity model
     const int max_slip_systems = 24;
     for (int i=0; i < max_slip_systems; ++i) {
-      std::string g = Albany::strint("gamma_", i+1);
+      std::string g = Albany::strint("gamma", i+1,'_');
       name_map->insert( std::make_pair(g,g) );
     }
     // Poroplasticity model

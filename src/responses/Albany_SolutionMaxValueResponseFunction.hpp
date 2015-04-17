@@ -59,7 +59,7 @@ namespace Albany {
 		    Tpetra_MultiVector* gx,
 		    Tpetra_MultiVector* gp);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate gradient = dg/dx, dg/dxdot, dg/dp
     virtual void 
     evaluateGradient(const double current_time,
@@ -89,7 +89,7 @@ namespace Albany {
 		     Tpetra_MultiVector* dg_dxdotdotT,
 		     Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Evaluate distributed parameter derivative dg/dp
     virtual void
     evaluateDistParamDeriv(
@@ -123,7 +123,7 @@ namespace Albany {
     //! Flag for interleaved verus blocked unknown ordering
     bool interleavedOrdering;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Compute max value and index
     void computeMaxValue(const Epetra_Vector& x, double& val, int& index);
 #endif

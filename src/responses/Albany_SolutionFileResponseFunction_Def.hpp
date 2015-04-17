@@ -6,7 +6,7 @@
 
 
 #include "Albany_SolutionFileResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"  
 #include "EpetraExt_BlockMapIn.h"  
 #include "Epetra_SerialComm.h"  ///HAQ
@@ -14,7 +14,7 @@
 #include "Teuchos_CommHelpers.hpp"
 #include "Tpetra_DistObject.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<class Norm>
 Albany::SolutionFileResponseFunction<Norm>::
 SolutionFileResponseFunction(const Teuchos::RCP<const Teuchos_Comm>& commT)
@@ -37,7 +37,7 @@ Albany::SolutionFileResponseFunction<Norm>::
 ~SolutionFileResponseFunction()
 {
   if (solutionLoaded) {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     delete RefSoln; 
 #endif
     delete RefSolnT; 
@@ -129,7 +129,7 @@ evaluateTangentT(
 {
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<class Norm>
 void
 Albany::SolutionFileResponseFunction<Norm>::
@@ -219,7 +219,7 @@ evaluateGradientT(const double current_time,
 {
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //! Evaluate distributed parameter derivative dg/dp
 template<class Norm>
 void
@@ -240,7 +240,7 @@ evaluateDistParamDeriv(
 // This is "borrowed" from EpetraExt because more explicit debugging information is needed than
 //  is present in the EpetraExt version. TO DO: Move this back there
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<class Norm>
 int 
 Albany::SolutionFileResponseFunction<Norm>::
@@ -264,7 +264,7 @@ MatrixMarketFileToTpetraVector( const char *filename, const Tpetra_Map & mapT, T
   return(0);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 template<class Norm>
 int 
 Albany::SolutionFileResponseFunction<Norm>::

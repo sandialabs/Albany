@@ -12,16 +12,21 @@
 #include "Albany_SolutionValuesResponseFunction.hpp"
 #include "Albany_SolutionMaxValueResponseFunction.hpp"
 #include "Albany_SolutionFileResponseFunction.hpp"
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+#include "AlbanyPeridigmOBCFunctional.hpp"
+#endif
+#endif
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_FieldManagerScalarResponseFunction.hpp"
 #include "Albany_FieldManagerResidualOnlyResponseFunction.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_SolutionResponseFunction.hpp"
 #endif
 #include "Albany_KLResponseFunction.hpp"
 
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "QCAD_SaddleValueResponseFunction.hpp"
 #endif
 #endif
@@ -73,6 +78,14 @@ createResponseFunction(
       rcp(new Albany::SolutionFileResponseFunction<Albany::NormInf>(comm)));
   }
 
+  else if (name == "OBC Functional") {
+#ifdef ALBANY_PERIDIGM
+#ifdef ALBANY_EPETRA
+    responses.push_back(rcp(new Albany::AlbanyPeridigmOBCFunctional(comm)));
+#endif
+#endif
+  }
+
   else if (name == "Aggregated") {
     int num_aggregate_responses = responseParams.get<int>("Number");
     Array< RCP<AbstractResponseFunction> > aggregated_responses;
@@ -117,11 +130,10 @@ createResponseFunction(
 	   name == "Tensor PNorm Objective" ||
 	   name == "Modal Objective" ||
            name == "PHAL Field Integral" ||
-           name == "PHAL Field IntegralT" ||
-	   name == "OBC Functional") {
+           name == "PHAL Field IntegralT") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
       // Skip if dealing with interface block
       //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif
@@ -135,7 +147,7 @@ createResponseFunction(
            name == "Project IP to Nodal Field") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
       // Skip if dealing with interface block
       //if (meshSpecs[i]->ebName == "Surface Element") continue;
 #endif
@@ -152,7 +164,7 @@ createResponseFunction(
   }
 
   else if (name == "Solution") {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     responses.push_back(
       rcp(new Albany::SolutionResponseFunction(app, responseParams)));
 #endif
@@ -169,7 +181,7 @@ createResponseFunction(
   }
 
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   else if (name == "Saddle Value") {
     responseParams.set("Name", name);
     for (int i=0; i<meshSpecs.size(); i++) {

@@ -13,7 +13,7 @@
 
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_VerboseObject.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Comm.h"
 #endif
 
@@ -21,7 +21,7 @@
 #include "Albany_PUMIMeshStruct.hpp"
 
 #include "Albany_NullSpaceUtils.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
 #endif
@@ -169,14 +169,16 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
     // Copy field data from Tpetra_Vector to APF
     void setField(const char* name, const ST* data, bool overlapped,
                   int offset = 0, int nentries = -1);
-    void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        const ST* data, bool overlapped);
+    void setSplitFields(const std::vector<std::string>& names,
+                        const std::vector<int>& indices,
+                        const ST* data, bool overlapped);
 
     // Copy field data from APF to Tpetra_Vector
     void getField(const char* name, ST* dataT, bool overlapped, int offset = 0,
                   int nentries = -1) const;
-    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        ST* dataT, bool overlapped) const;
+    void getSplitFields(const std::vector<std::string>& names,
+                        const std::vector<int>& indices,
+                        ST* dataT, bool overlapped) const;
 
     void createField(const char* name, int value_type);
 
@@ -185,7 +187,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     /* DAI: old Epetra functions still used by parts of Albany/Trilinos
        Remove when we get to full Tpetra */
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual Teuchos::RCP<const Epetra_Map> getMap() const { return map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapMap() const { return overlap_map; }
     virtual Teuchos::RCP<const Epetra_Map> getOverlapNodeMap() const;
@@ -217,8 +219,6 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
         const Epetra_Vector& data,
         bool overlapped,
         int offset = 0);
-    void setSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        const Epetra_Vector& data, bool overlapped);
 
     // Copy field data from APF to Epetra_Vector
     void getField(
@@ -226,8 +226,6 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
         Epetra_Vector& data,
         bool overlapped,
         int offset = 0) const;
-    void getSplitFields(std::vector<std::string> names, std::vector<int> indices,
-        Epetra_Vector& data, bool overlapped) const;
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
@@ -339,7 +337,7 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     //! Stk Mesh Objects
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
@@ -352,26 +350,26 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     //! Unknown Map
     Teuchos::RCP<const Tpetra_Map> mapT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> map;
 #endif
 
     //! Overlapped unknown map, and node map
     Teuchos::RCP<const Tpetra_Map> overlap_mapT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> overlap_map;
 #endif
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT;
 
     //! Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> graphT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_CrsGraph> graph;
 #endif
 
     //! Overlapped Jacobian matrix graph
     Teuchos::RCP<Tpetra_CrsGraph> overlap_graphT;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_CrsGraph> overlap_graph;
 #endif
 

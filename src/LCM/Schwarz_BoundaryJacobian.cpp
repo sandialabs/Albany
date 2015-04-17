@@ -3,10 +3,11 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-
 #include "Schwarz_BoundaryJacobian.hpp"
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
+
+#include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
@@ -19,12 +20,19 @@ mm_counter = 0;
 
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm,
-    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca) :
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+    int const this_app_index,
+    int const coupled_app_index) :
+        commT_(comm),
         coupled_apps_(ca),
-        commT_(comm), b_use_transpose_(false), b_initialized_(false),
+        this_app_index_(this_app_index),
+        coupled_app_index_(coupled_app_index),
+        b_use_transpose_(false),
+        b_initialized_(false),
         n_models_(0)
 {
-  return;
+  assert(0 <= this_app_index && this_app_index < ca.size());
+  assert(0 <= coupled_app_index && coupled_app_index < ca.size());
 }
 
 LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
@@ -46,8 +54,11 @@ void LCM::Schwarz_BoundaryJacobian::initialize()
 
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
-void LCM::Schwarz_BoundaryJacobian::apply(
-    const Tpetra_MultiVector& X,
+void
+LCM::
+Schwarz_BoundaryJacobian::
+apply(
+    Tpetra_MultiVector const & X,
     Tpetra_MultiVector& Y,
     Teuchos::ETransp mode,
     ST alpha,
@@ -65,7 +76,49 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif  // WRITE_TO_MATRIX_MARKET
 
-  //FIXME: fill in!
+  int const
+  this_app_index = getThisAppIndex();
+
+  Albany::Application const &
+  this_app = getApplication(this_app_index);
+
+  int const
+  coupled_app_index = getCoupledAppIndex();
+
+  // If they are not couples get out.
+  if (this_app.isCoupled(coupled_app_index) == false) return;
+
+  Albany::Application const &
+  coupled_app = getApplication(coupled_app_index);
+
+  std::string const &
+  coupled_block_name = coupled_app.getBlockName(coupled_app_index);
+
+  std::string const &
+  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+
+  // Get DOFs associated with node set.
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  disc = coupled_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+
+  int const
+  dimension = stk_discretization->getNumDim();
+
+  Albany::NodeSetList const &
+  nodesets = stk_discretization->getNodeSets();
+
+  std::vector<std::vector<int> > const &
+  ns_dof = nodesets.find(coupled_nodeset_name)->second;
+
+  size_t const
+  ns_number_nodes = ns_dof.size();
+
+  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+  } // node in node set loop
 
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug
@@ -75,4 +128,16 @@ void LCM::Schwarz_BoundaryJacobian::apply(
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 }
+
+Intrepid::Vector<double>
+LCM::
+Schwarz_BoundaryJacobian::
+computeBC(int const dimension, size_t const ns_node)
+{
+  Intrepid::Vector<double>
+  bc(dimension, Intrepid::ZEROS);
+
+  return bc;
+}
+
 

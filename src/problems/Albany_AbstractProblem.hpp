@@ -50,7 +50,9 @@
 
 namespace Albany {
 
+#if defined(ALBANY_LCM)
   class Application;
+#endif //ALBANY_LCM
 
   enum FieldManagerChoice {BUILD_RESID_FM, BUILD_RESPONSE_FM, BUILD_STATE_FM};
 
@@ -126,6 +128,11 @@ namespace Albany {
     //! Number of equations per node being solved
     unsigned int neq;
 
+#ifdef ALBANY_AERAS
+    //! boolean flag for Aeras problems
+    bool useHyperViscosity;
+#endif
+    
     //! Problem parameters
     Teuchos::RCP<Teuchos::ParameterList> params;
 
@@ -158,6 +165,22 @@ namespace Albany {
 
     //! Private to prohibit copying
     AbstractProblem& operator=(const AbstractProblem&);
+
+#if defined(ALBANY_LCM)
+  public:
+
+    void setApplication(Teuchos::RCP<Application> const & a)
+    {app_ = a;}
+
+    Teuchos::RCP<Application>
+    getApplication() const
+    {return app_;}
+
+  private:
+
+    Teuchos::RCP<Application>
+    app_;
+#endif // ALBANY_LCM
   };
 
   template <typename ProblemType>

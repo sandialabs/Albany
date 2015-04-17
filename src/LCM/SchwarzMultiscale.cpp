@@ -80,7 +80,9 @@ SchwarzMultiscale(
 
   //Get "Parameters" parameter sublist, if it exists
   if (problem_params.isSublist("Parameters")) {
-    parameter_params = Teuchos::rcp(&(problem_params.sublist("Parameters")),false);
+    parameter_params = Teuchos::rcp(
+        &(problem_params.sublist("Parameters")),
+        false);
 
     num_params_total_ = parameter_params->get("Number of Parameter Vectors", 0);
 
@@ -345,7 +347,7 @@ SchwarzMultiscale(
     for (int j = 0; j < num_models_; ++j) {
       //Check if have this term?  Put into Teuchos array?
       jacs_boundary_[i * num_models_ + j] = Teuchos::rcp(
-          new LCM::Schwarz_BoundaryJacobian(commT_, apps_));
+          new LCM::Schwarz_BoundaryJacobian(commT_, apps_, i, j));
     }
   }
 

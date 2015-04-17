@@ -46,7 +46,6 @@
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
-      <Parameter name="Output gamma_0" type="bool" value="true"/>
 
     </ParameterList>
 
@@ -82,7 +81,6 @@
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
-      <Parameter name="Output gamma_0" type="bool" value="true"/>
 
     </ParameterList>
 

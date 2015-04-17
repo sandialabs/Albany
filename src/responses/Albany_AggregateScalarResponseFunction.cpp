@@ -7,7 +7,7 @@
 
 #include "Albany_AggregateScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_LocalMap.h"
 #endif
 
@@ -23,7 +23,7 @@ AggregateScalarResponseFunction(
 {
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::AggregateScalarResponseFunction::
 setup()
@@ -182,7 +182,7 @@ evaluateTangentT(const double alpha,
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::AggregateScalarResponseFunction::
 evaluateGradient(const double current_time,
@@ -335,7 +335,7 @@ evaluateGradientT(const double current_time,
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::AggregateScalarResponseFunction::
 evaluateDistParamDeriv(

@@ -60,6 +60,7 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperViscosity;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
