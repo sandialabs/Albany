@@ -557,6 +557,17 @@ ELSE()
   SET(ALBANY_HYDRIDE FALSE)
 ENDIF()
 
+# Set optional dependency on GOAL, defaults to Disabled
+OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
+IF (ENABLE_GOAL)
+  ADD_DEFINITIONS(-DALBANY_GOAL)
+  MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
+  SET(ALBANY_GOAL TRUE)
+ELSE()
+  MESSAGE("-- GOAL      is NOT Enabled.")
+  SET(ALBANY_GOAL FALSE)
+ENDIF()
+
 # Set optional dependency on AMP, defaults to Disabled
 OPTION(ENABLE_AMP "Flag to turn on AMP (additive manufacturing processes) source code" OFF)
 IF (ENABLE_AMP)

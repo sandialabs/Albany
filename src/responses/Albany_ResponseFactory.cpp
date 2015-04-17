@@ -31,6 +31,10 @@
 #endif
 #endif
 
+#ifdef ALBANY_GOAL
+#include "GOAL_AdjointResponseFunction.hpp"
+#endif
+
 #include "Teuchos_TestForException.hpp"
 
 void
@@ -191,6 +195,17 @@ createResponseFunction(
     }
   }
 #endif
+#endif
+
+#ifdef ALBANY_GOAL
+  else if (name == "Mechanics Adjoint") {
+    responseParams.set("Name", name);
+    for (int i=0; i<meshSpecs.size(); i++) {
+      responses.push_back(
+          rcp(new GOAL::AdjointResponseFunction(
+              app, prob, meshSpecs[i], stateMgr, responseParams)));
+    }
+  }
 #endif
 
   else {
