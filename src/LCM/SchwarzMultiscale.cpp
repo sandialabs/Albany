@@ -57,8 +57,8 @@ SchwarzMultiscale(
   std::cout << "DEBUG: num_models_: " << num_models_ << '\n';
 
   // Create application name-index map used for Schwarz BC.
-  std::map<std::string, int>
-  app_name_index_map;
+  Teuchos::RCP<std::map<std::string, int>>
+  app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
 
   for (auto app_index = 0; app_index < num_models_; ++app_index) {
 
@@ -68,7 +68,7 @@ SchwarzMultiscale(
     std::pair<std::string, int>
     app_name_index = std::make_pair(app_name, app_index);
 
-    app_name_index_map.insert(app_name_index);
+    app_name_index_map->insert(app_name_index);
   }
 
   //----------------Parameters------------------------
@@ -307,6 +307,12 @@ SchwarzMultiscale(
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
+
+    // Pass these on the parameter list because the are needed before
+    // BC evaluators are built.
+    app_params_m.set("Application Array", apps_);
+    app_params_m.set("Application Index", m);
+    app_params_m.set("Application Name Index Map", app_name_index_map);
 
     //create application for mth model
     apps_[m] = Teuchos::rcp(

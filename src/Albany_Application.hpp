@@ -895,10 +895,10 @@ namespace Albany {
     {return app_index_;}
 
     void
-    setAppNameIndexMap(std::map<std::string, int> & anim)
+    setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>> & anim)
     {app_name_index_map_ = anim;}
 
-    std::map<std::string, int>
+    Teuchos::RCP<std::map<std::string, int>>
     getAppNameIndexMap() const
     {return app_name_index_map_;}
 
@@ -939,7 +939,7 @@ namespace Albany {
     int
     app_index_;
 
-    std::map<std::string, int>
+    Teuchos::RCP<std::map<std::string, int>>
     app_name_index_map_;
 
     std::map<int, std::pair<std::string, std::string>>
