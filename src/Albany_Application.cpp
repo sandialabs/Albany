@@ -4498,10 +4498,10 @@ setCoupledAppBlockNodeset(
 {
   // Check for valid application name
   auto
-  it = app_name_index_map_->find(app_name);
+  it = app_name_index_map_.find(app_name);
 
   TEUCHOS_TEST_FOR_EXCEPTION(
-      it == app_name_index_map_->end(),
+      it == app_name_index_map_.end(),
       std::logic_error,
       "Trying to couple to an unknown Application: " <<
       app_name << '\n');
