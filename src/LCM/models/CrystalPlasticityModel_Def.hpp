@@ -14,6 +14,7 @@
 //#define  DECOUPLE
 
 #include <typeinfo>
+#include <iostream>
 #include <Sacado_Traits.hpp>
 namespace LCM
 {
@@ -117,11 +118,13 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
 
   // define the dependent fields
+  // required for calculation
   this->dep_field_map_.insert(std::make_pair(F_string, dl->qp_tensor));
   this->dep_field_map_.insert(std::make_pair(J_string, dl->qp_scalar));
   this->dep_field_map_.insert(std::make_pair("Delta Time", dl->workset_scalar));
 
   // define the evaluated fields
+  // optional output
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
@@ -168,8 +171,9 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   //
   // gammas
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
-    std::string g = Albany::strint("gamma_", num_ss+1);
+    std::string g = Albany::strint("gamma", num_ss+1,'_');
     std::string gamma_string = (*field_name_map_)[g];
+    std::string output_gamma_string = "Output " + gamma_string;
     this->eval_field_map_.insert(std::make_pair(gamma_string, dl->qp_scalar));
     this->num_state_variables_++;
     this->state_var_names_.push_back(gamma_string);
@@ -177,7 +181,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_init_types_.push_back("scalar");
     this->state_var_init_values_.push_back(0.0);
     this->state_var_old_state_flags_.push_back(true);
-    this->state_var_output_flags_.push_back(p->get<bool>("Output "+gamma_string , false));
+    this->state_var_output_flags_.push_back(p->get<bool>(output_gamma_string , false));
   }
 
 #ifdef PRINT_DEBUG
@@ -219,7 +223,7 @@ computeState(typename Traits::EvalData workset,
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips;
   std::vector<Albany::MDArray * > previous_slips;
   for (int num_ss=0; num_ss < num_slip_; ++num_ss) {
-    std::string g = Albany::strint("gamma_", num_ss+1);
+    std::string g = Albany::strint("gamma", num_ss+1,'_');
     std::string gamma_string = (*field_name_map_)[g];
     slips.push_back(eval_fields[gamma_string]);
     previous_slips.push_back(&((*workset.stateArrayPtr)[gamma_string + "_old"]));

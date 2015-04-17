@@ -45,8 +45,9 @@ namespace Albany {
 
   Teuchos::RCP<Teuchos_Comm> createTeuchosCommFromMpiComm(const Albany_MPI_Comm& mc);
 
-  //! Utility to make a string out of a string + int: strint("dog",2) = "dog 2"
-  std::string strint(const std::string s, const int i);
+  //! Utility to make a string out of a string + int with a delimiter: strint("dog",2,' ') = "dog 2"
+  //! The default delimiter is ' '. Potential delimiters include '_' - "dog_2"
+  std::string strint(const std::string s, const int i, const char delim = ' ');
 
   //! Returns true of the given string is a valid initialization string of the format "initial value 1.54"
   bool isValidInitString(const std::string& initString);

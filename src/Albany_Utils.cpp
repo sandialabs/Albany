@@ -87,11 +87,11 @@
 
   // End of Utils to do with Communicators
 
-  std::string Albany::strint(const std::string s, const int i) {
-    std::ostringstream ss;
-    ss << s << " " << i;
-    return ss.str();
-  }
+  std::string Albany::strint(const std::string s, const int i, const char delim) {
+      std::ostringstream ss;
+      ss << s << delim << i;
+      return ss.str();
+    }
 
   bool Albany::isValidInitString(const std::string& initString) {
 
