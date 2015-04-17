@@ -68,6 +68,9 @@ apply(
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
+  std::cout << "X size: " << X.getLocalLength() << '\n';
+  std::cout << "Y size: " << Y.getLocalLength() << '\n';
+
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug
   // initial X where we will set Y = Jac*X
@@ -87,6 +90,9 @@ apply(
 
   // If they are not couples get out.
   if (this_app.isCoupled(coupled_app_index) == false) return;
+
+  size_t const
+  offset = 0;
 
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
@@ -132,7 +138,11 @@ apply(
 Intrepid::Vector<double>
 LCM::
 Schwarz_BoundaryJacobian::
-computeBC(int const dimension, size_t const ns_node)
+computeBC(
+    Albany::Application const & this_app,
+    Albany::Application const & coupled_app,
+    int const dimension,
+    size_t const ns_node)
 {
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);

@@ -243,10 +243,11 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
 
         // Get the application from the main parameters list above
         // and pass it to the Schwarz BC evaluator.
-        p->set<Teuchos::RCP<Albany::Application>>(
-            "Application",
-            params->get<Teuchos::RCP<Albany::Application>>("Application")
-        );
+        Teuchos::RCP<Albany::Application> const &
+        application =
+            params->get<Teuchos::RCP<Albany::Application>>("Application");
+
+        p->set<Teuchos::RCP<Albany::Application>>("Application", application);
 
         // Fill up ParameterList with things DirichletBase wants
         p->set< RCP<DataLayout> >("Data Layout", dummy);

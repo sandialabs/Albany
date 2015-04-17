@@ -303,8 +303,11 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
 
   // Pass on the Application as well that is needed for
   // the coupled Schwarz BC. It is just ignored otherwise.
+  Teuchos::RCP<Albany::Application> const &
+  application = getApplication();
+
   this->params->set<Teuchos::RCP<Albany::Application>>(
-      "Application", getApplication());
+      "Application", application);
 
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,

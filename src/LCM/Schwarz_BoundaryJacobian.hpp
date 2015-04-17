@@ -97,7 +97,11 @@ public:
 private:
 
   Intrepid::Vector<double>
-  computeBC(int const dimension, size_t const ns_node);
+  computeBC(
+      Albany::Application const & this_app,
+      Albany::Application const & coupled_app,
+      int const dimension,
+      size_t const ns_node);
 
 private:
 
