@@ -32,7 +32,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       app, mesh_specs[ebi].get());
 #endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
@@ -45,7 +45,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
       app, mesh_specs[ebi].get());
 #endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
@@ -58,7 +58,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
       app, mesh_specs[ebi].get());
 #endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 namespace {

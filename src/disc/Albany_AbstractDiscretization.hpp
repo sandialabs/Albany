@@ -14,7 +14,6 @@
 
 #include "Teuchos_RCP.hpp"
 #include "Teuchos_ArrayRCP.hpp"
-#include "Albany_DataTypes.hpp"
 
 #if defined(ALBANY_EPETRA)
 #include "Epetra_Map.h"
@@ -24,7 +23,6 @@
 
 #include "Shards_CellTopologyData.h"
 #include "Shards_Array.hpp"
-#include "Albany_AbstractMeshStruct.hpp"
 #include "Albany_StateInfoStruct.hpp"
 #include "Albany_NodalDOFManager.hpp"
 
@@ -171,9 +169,6 @@ class AbstractDiscretization {
 
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
-
-    //! Get MeshStruct
-    virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
 
     //! Get stateArrays
     virtual Albany::StateArrays& getStateArrays() = 0;

@@ -1153,6 +1153,7 @@ void Albany::PUMIDiscretization::computeSideSets()
 
 void Albany::PUMIDiscretization::computeNodeSets()
 {
+#if 0
   // Make sure all the maps are allocated
   for (std::vector<std::string>::iterator ns_iter = pumiMeshStruct->nsNames.begin();
         ns_iter != pumiMeshStruct->nsNames.end(); ++ns_iter )
@@ -1161,6 +1162,16 @@ void Albany::PUMIDiscretization::computeNodeSets()
     nodeSetCoords[*ns_iter].resize(0);
     nodeset_node_coords[*ns_iter].resize(0);
   }
+#else
+  // Make sure all the maps are allocated - nvcc will not compile the above !
+  for (int i = 0; i < pumiMeshStruct->nsNames.size(); i++)
+  { // Iterate over Node Sets
+    std::string name = pumiMeshStruct->nsNames[i];
+    nodeSets[name].resize(0);
+    nodeSetCoords[name].resize(0);
+    nodeset_node_coords[name].resize(0);
+  }
+#endif
   //grab the node set geometric objects
   apf::StkModels sets = pumiMeshStruct->getSets();
   apf::Mesh* m = pumiMeshStruct->getMesh();

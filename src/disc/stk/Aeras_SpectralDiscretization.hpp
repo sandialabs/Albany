@@ -329,10 +329,6 @@ namespace Aeras
     {
       return stkMeshStruct;
     }
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const
-    {
-      return stkMeshStruct;
-    }
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const

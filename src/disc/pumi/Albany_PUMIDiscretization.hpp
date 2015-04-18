@@ -125,7 +125,6 @@ class PUMIDiscretization : public AbstractPUMIDiscretization {
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::PUMIMeshStruct> getPUMIMeshStruct() {return pumiMeshStruct;}
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return pumiMeshStruct;}
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return pumiMeshStruct->hasRestartSolution;}
