@@ -1169,8 +1169,13 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
   if(discretizationCreateCmd.length() > 0) {
-    //Do re-meshing
-    std::system("echo \"QCAD REMESHING PLACEHOLDER\"");
+    //Write geometry parameters to a (HARDCODED) text file and do re-meshing on root processor
+    if( solverComm->MyPID() == 0 ) {
+      writeSingleSubSolverParamsToFile(inArgs, "Geometry", "QCAD_geometry_params.txt");
+      std::system(discretizationCreateCmd.c_str()); 
+      //std::system("echo \"QCAD REMESHING PLACEHOLDER\""); //TEST
+    }
+    solverComm->Barrier(); //make sure processors wait until root is done working
   }
 
   if(bVerbose) {
@@ -2080,6 +2085,25 @@ void QCAD::Solver::fillSingleSubSolverParams(const InArgs& inArgs, const std::st
   }
 }
 
+void QCAD::Solver::writeSingleSubSolverParamsToFile(const InArgs& inArgs, const std::string& name,
+						    const std::string& filename) const
+{
+  std::fstream f;
+  f.open (filename.c_str(), std::fstream::out);
+
+  if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
+    Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(0); //only use *first* param vector
+    std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
+    for(std::size_t i=0; i<nParameters; i++) {
+      for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end(); pit++) {
+	(*pit)->writeSingleSubSolverParamsToFile((*p)[i], name, f);
+      }
+    }
+  }
+  f.close();
+}
+
+
 
 const Teuchos::RCP<Teuchos::ParameterList>& QCAD::Solver::getSubSolverParams(const std::string& name) const
 {
@@ -2253,6 +2277,7 @@ QCAD::Solver::getValidProblemParameters() const
 
   validPL->set<std::string>("Schrodinger Eigensolver", "LOBPCG", "Name of eigensolver to use in schrodinger solve.  Can be LOCA or LOBPCG");
   validPL->set<bool>("Eigenvectors are Real",false,"Whether Schrodinger eigenvectors are known to have no imaginary part.");
+  validPL->set<std::string>("Discretization Creation Cmd", "", "Shell command to run in order to create the input mesh");
 
   validPL->set<bool>("Use Integrated Poisson Schrodinger",true,"After converging iterative P-S, run integrated P-S solver");
   validPL->set<int>("Number of Eigenvalues",0,"The number of eigenvalue-eigenvector pairs");
@@ -2363,11 +2388,37 @@ void QCAD::SolverParamFn::fillSingleSubSolverParams(double parameterValue, const
   inArgs->set_p(0, p);
 }
 
+void QCAD::SolverParamFn::writeSingleSubSolverParamsToFile(double parameterValue, const std::string& subSolverName,
+							   std::fstream& file) const
+{
+  if(subSolverName != targetName) return;
+
+  std::vector< std::vector<std::string> >::const_iterator fit;
+  for(fit = filters.begin(); fit != filters.end(); ++fit) {
+
+    //perform function operation
+    std::string fnName = (*fit)[0];
+    if( fnName == "scale" ) {
+      TEUCHOS_TEST_FOR_EXCEPT( fit->size() != 1+1 ); // "scale" should have 1 parameter
+      parameterValue *= atof( (*fit)[1].c_str() );
+    }
+    else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+	      "Unknown function " << (*fit)[0] << " for given type." << std::endl);
+  }
+  
+  // copy parameterValue into sub-solver parameter vector where appropriate
+  std::vector<int>::const_iterator it;
+  for(it = targetIndices.begin(); it != targetIndices.end(); ++it)
+    file << (*it) << "   " << std::setprecision(8) << parameterValue << std::endl;
+}
+
 
 
 void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue, 
    const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) const
 {
+  if(subSolvers.find(targetName) == subSolvers.end()) return; //target not applicable to these subSolvers
+
   std::vector< std::vector<std::string> >::const_iterator fit;
   for(fit = filters.begin(); fit != filters.end(); ++fit) {
 
