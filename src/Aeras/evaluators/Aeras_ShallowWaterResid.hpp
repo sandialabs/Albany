@@ -14,6 +14,10 @@
 #include "Albany_Layouts.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
+#include <Shards_CellTopology.hpp>
+#include <Intrepid_Basis.hpp>
+#include <Intrepid_Cubature.hpp>
+
 namespace Aeras {
 /** \brief ShallowWater equation Residual for atmospheric modeling
 
