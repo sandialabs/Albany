@@ -1,5 +1,6 @@
 <ParameterList>
   <ParameterList name="Problem">
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="MaterialDB Filename" type="string" value="materials.xml"/>
     <Parameter name="Solution Method" type="string" value="Steady"/>
@@ -19,7 +20,7 @@
     <Parameter name="Method" type="string" value="PUMI"/>
     <Parameter name="PUMI Input File Name" type="string" value="../meshes/cube/cube-serial.smb"/>
     <Parameter name="Mesh Model Input File Name" type="string" value="../meshes/cube/cube.dmg"/>
-    <Parameter name="PUMI Output File Name" type="string" value="out.vtk"/>
+    <Parameter name="PUMI Output File Name" type="string" value=""/>
     <Parameter name="Element Block Associations" type="TwoDArray(string)" value="2x1:{95, eb_1}"/>
     <Parameter name="Node Set Associations" type="TwoDArray(string)" value="2x4:{85,83,43,81,ns_1,ns_2,ns_3,ns_4}"/>
   </ParameterList>
