@@ -7,6 +7,7 @@
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
@@ -157,6 +158,23 @@ computeBC(
     int const dimension,
     size_t const ns_node) const
 {
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = coupled_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  coupled_stk_disc =
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+
+  Albany::GenericSTKMeshStruct &
+  coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
+    (*(coupled_stk_disc->getSTKMeshStruct()));
+
+  Albany::WorksetArray<std::string>::type const &
+  coupled_ws_eb_names = coupled_disc->getWsEBNames();
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  coupled_mesh_specs = coupled_gms.getMeshSpecs();
+
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
 
