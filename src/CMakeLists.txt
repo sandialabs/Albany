@@ -584,6 +584,7 @@ endif ()
 
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
 
 
 # Add Albany external libraries
@@ -613,13 +614,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./Aeras/evaluators
                      ./Hydride/problems
                      ./Hydride/evaluators
-                     ./SEE/
-                     ./SEE/problems
-                     ./SEE/evaluators
-                     ./SEE/responses
                      ./AMP/
-		     ./AMP/problems
-		     ./AMP/evaluators
+                     ./AMP/problems
+                     ./AMP/evaluators
                      ./QCAD
                      ./QCAD/problems
                      ./QCAD/evaluators
@@ -628,6 +625,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/problems
                      ./ATO/evaluators
                      ./ATO/utils
+                     ./GOAL
+                     ./GOAL/responses
+                     ./GOAL/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -815,14 +815,14 @@ IF(ALBANY_SCOREC)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} pumi)
 ENDIF()
 
-IF (ALBANY_SEE)
-  add_subdirectory(SEE)
-  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} SEE)
-ENDIF()
-
 IF (ALBANY_AMP)
   add_subdirectory(AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
+ENDIF()
+
+IF (ALBANY_GOAL)
+  add_subdirectory(GOAL)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} GOAL)
 ENDIF()
 
 IF(ALBANY_CATALYST)

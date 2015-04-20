@@ -4,6 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+#include "Intrepid_FunctionSpaceTools.hpp"
 #include "ATO_OptimizationProblem.hpp"
 #include "Albany_AbstractDiscretization.hpp"
 #include "Epetra_Export.h"

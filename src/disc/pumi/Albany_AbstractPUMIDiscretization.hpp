@@ -37,7 +37,7 @@ namespace Albany {
     //! thereby releasing the mesh.
     virtual void releaseMesh() = 0;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     virtual void debugMeshWriteNative(const Epetra_Vector& sol, const char* filename) = 0;
     virtual void debugMeshWrite(const Epetra_Vector& sol, const char* filename) = 0;
 #endif

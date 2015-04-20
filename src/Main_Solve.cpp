@@ -31,7 +31,7 @@
 #include "Kokkos_Core.hpp"
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "PeridigmManager.hpp"
 #endif
 #endif
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
        std::cout << "xfinal: " << *xfinal << std::endl;
 
 #ifdef ALBANY_PERIDIGM
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     *out << "\nPERIDIGM-ALBANY OPTIMIZATION-BASED COUPLING FINAL FUNCTIONAL VALUE = " << LCM::PeridigmManager::self().obcEvaluateFunctional()  << "\n" << std::endl;
 #endif
 #endif

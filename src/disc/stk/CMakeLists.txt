@@ -42,8 +42,6 @@ SET(HEADERS
   Albany_STKNodeSharing.hpp
   )
 
-#amb not yet  Albany_NodalDOFManager.hpp
-
 IF (ALBANY_FELIX) 
   SET(SOURCES ${SOURCES} Albany_ExtrudedSTKMeshStruct.cpp)
   SET(HEADERS ${HEADERS} Albany_ExtrudedSTKMeshStruct.hpp)
@@ -59,6 +57,7 @@ include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   )
 
 add_library(albanySTK ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanySTK ${Trilinos_LIBRARIES})
 
 set_target_properties(albanySTK PROPERTIES PUBLIC_HEADER "${HEADERS}")
 

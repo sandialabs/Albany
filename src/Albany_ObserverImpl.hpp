@@ -14,7 +14,7 @@ class ObserverImpl : public StatelessObserverImpl {
 public:
   explicit ObserverImpl(const Teuchos::RCP<Application>& app);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   virtual void observeSolution(
     double stamp, const Epetra_Vector& nonOverlappedSolution,
     const Teuchos::Ptr<const Epetra_Vector>& nonOverlappedSolutionDot);

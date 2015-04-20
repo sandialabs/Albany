@@ -9,6 +9,7 @@
 #include <fstream>
 #include "Teuchos_TestForException.hpp"
 #include "Teuchos_CommHelpers.hpp"
+#include "PHAL_Utilities.hpp"
 
 // **********************************************************************
 // Specialization: Jacobian
@@ -531,15 +532,9 @@ postEvaluate(typename Traits::PostEvalData workset)
   else
     reductType = Teuchos::REDUCE_MIN;
 
-  Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
-    workset.serializerManager.template getValue<EvalT>();
-
-  // Compute contributions across processors
-  //Irina TOFIX reduceAll
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(0== 0, "evaluator has to be fixed for Kokkos data types (reduceAll on a single global_response component and broadcast are not supported yet)");
-  //  Teuchos::reduceAll<int, ScalarT>(
-  //    *workset.comm, *serializer, reductType, 1,
-  //    &this->global_response[indexToMax], &max);
+  ScalarT send = this->global_response(indexToMax);
+  Teuchos::reduceAll<int, ScalarT>(
+    *workset.comm, reductType, 1, &send, &max);
 
   int procToBcast;
   if( this->global_response(indexToMax) == max )
@@ -547,13 +542,10 @@ postEvaluate(typename Traits::PostEvalData workset)
   else procToBcast = -1;
 
   int winner;
+  Teuchos::reduceAll(
+    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
 
-  //Irina TOFIX reduceAll
-  //  Teuchos::reduceAll(
-  //    *workset.comm, Teuchos::REDUCE_MAX, 1, &procToBcast, &winner);
-  //  Teuchos::broadcast<int, ScalarT>(
-  //    *workset.comm, *serializer, winner, this->global_response.size(),
-  //    &this->global_response[0]);
+  PHAL::broadcast(*workset.comm, winner, this->global_response);
 
   // Do global scattering
   if (workset.comm->getRank() == winner)

@@ -40,7 +40,7 @@ getValidInitialConditionParameters(const Teuchos::ArrayRCP<std::string>& wsEBNam
   return validPL;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void InitialConditions(const Teuchos::RCP<Epetra_Vector>& soln,
                        const Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > >& wsElNodeEqID,
                        const Teuchos::ArrayRCP<std::string>& wsEBNames,

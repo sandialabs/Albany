@@ -32,7 +32,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
       app, mesh_specs[ebi].get());
 #endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
@@ -45,7 +45,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (
       app, mesh_specs[ebi].get());
 #endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
@@ -58,7 +58,7 @@ template<> int getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv> (
       app, mesh_specs[ebi].get());
 #endif
   return getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
-    app, app->getDiscretization()->getMeshStruct()->getMeshSpecs()[ebi].get());
+    app, app->getEnrichedMeshSpecs()[ebi].get());
 }
 
 namespace {
@@ -152,40 +152,20 @@ void reduceAll (
   const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
   ScalarT& a)
 {
-  typedef typename ScalarT::value_type ValueT;
-  const int sz = a.size();
-  // Pack into a vector of values.
-  std::vector<ValueT> pack;
-  pack.push_back(a.val());
-  for (int j = 0; j < sz; ++j)
-    pack.push_back(a.fastAccessDx(j));
-  // reduceAll the package.
-  switch (reduct_type) {
-  case Teuchos::REDUCE_SUM: {
-    std::vector<ValueT> send(pack);
-    Teuchos::reduceAll<int, ValueT>(
-      comm, reduct_type, pack.size(), &send[0], &pack[0]);
-  } break;
-  default: TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
-  }
-  // Unpack.
-  int slot = 0;
-  a.val() = pack[slot++];
-  for (int j = 0; j < sz; ++j)
-    a.fastAccessDx(j) = pack[slot++];
+  ScalarT b = a;
+  Teuchos::reduceAll(comm, reduct_type, 1, &a, &b);
+  a = b;
 }
 
-template<>
-void reduceAll<RealType> (
-  const Teuchos_Comm& comm, const Teuchos::EReductionType reduct_type,
-  RealType& a)
-{
-  RealType send = a;
-  Teuchos::reduceAll<int, RealType>(
-    comm, reduct_type, send, Teuchos::Ptr<RealType>(&a));
+template<typename ScalarT>
+void broadcast (const Teuchos_Comm& comm, const int root_rank,
+                PHX::MDField<ScalarT>& a) {
+  std::vector<ScalarT> v;
+  copy<ScalarT>(a, v);
+  Teuchos::broadcast<int, ScalarT>(comm, root_rank, v.size(), &v[0]);
+  copy<ScalarT>(v, a);
 }
 
-//amb This should go somewhere useful.
 #ifdef ALBANY_SG_MP
 # ifdef ALBANY_FADTYPE_NOTEQUAL_TANFADTYPE
 #define apply_to_all_ad_types(macro)            \
@@ -226,6 +206,11 @@ apply_to_all_ad_types(eti)
 #define eti(T)                                                  \
   template void reduceAll<T> (                                  \
     const Teuchos_Comm&, const Teuchos::EReductionType, T&);
+apply_to_all_ad_types(eti)
+#undef eti
+#define eti(T)                                                          \
+  template void broadcast<T> (                                          \
+    const Teuchos_Comm&, const int root_rank, PHX::MDField<T>&);
 apply_to_all_ad_types(eti)
 #undef eti
 #undef apply_to_all_ad_types

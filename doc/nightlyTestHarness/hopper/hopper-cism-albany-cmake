@@ -16,8 +16,6 @@ rm -rf ./CMakeFiles
 echo
 echo "Doing CMake Configuration step"
 
-TRILINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Trilinos/build/install
-ALBINSTALLDIR=/project/projectdirs/piscees/nightlyTests/Results/Albany/build_cism/install
 
 cmake \
   -D CISM_MPI_MODE:BOOL=ON \
@@ -39,7 +37,7 @@ cmake \
   -D CMAKE_C_COMPILER=cc \
   -D CMAKE_Fortran_COMPILER=ftn \
 \
-  -D CMAKE_CXX_FLAGS:STRING="-O2 -static" \
+  -D CMAKE_CXX_FLAGS:STRING="-O2 -static std=gnu++11" \
   -D BUILD_SHARED_LIBS:BOOL=OFF \
   -D CISM_STATIC_LINKING:BOOL=ON \
   -D CISM_Fortran_FLAGS="-ffree-line-length-none" \

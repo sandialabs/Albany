@@ -8,30 +8,34 @@
 #define LCM_SCHWARZ_BOUNDARY_JACOBIAN_H
 
 #include <iostream>
+
 #include "Teuchos_Comm.hpp"
-#include "Tpetra_Map.hpp"
-#include "Tpetra_Vector.hpp"
-#include "Tpetra_Operator.hpp"
+#include "Teuchos_RCP.hpp"
 #include "Tpetra_CrsMatrix.hpp"
 #include "Tpetra_Import.hpp"
+#include "Tpetra_Map.hpp"
+#include "Tpetra_Operator.hpp"
+#include "Tpetra_Vector.hpp"
 
-#include "Albany_DataTypes.hpp"
 #include "Albany_Application.hpp"
-
-#include "Teuchos_RCP.hpp"
+#include "Albany_DataTypes.hpp"
+#include "Intrepid_MiniTensor.h"
 
 namespace LCM {
 
-/** 
- *  \brief A Tpetra operator that evaluates the Jacobian of a
- *  LCM coupled Schwarz Multiscale problem
- */
+///
+/// \brief A Tpetra operator that evaluates the Jacobian of a
+/// LCM coupled Schwarz Multiscale problem.
+/// Each Jacobian couples one single application to another.
+///
 
 class Schwarz_BoundaryJacobian: public Tpetra_Operator {
 public:
   Schwarz_BoundaryJacobian(
       Teuchos::RCP<Teuchos_Comm const> const & comm,
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca);
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+      int const this_app_index = 0,
+      int const coupled_app_index = 0);
 
   ~Schwarz_BoundaryJacobian();
 
@@ -41,7 +45,9 @@ public:
 
   /// Returns the result of a Tpetra_Operator applied to a
   ///Tpetra_MultiVector X in Y.
-  virtual void apply(Tpetra_MultiVector const & X, Tpetra_MultiVector & Y,
+  virtual void apply(
+      Tpetra_MultiVector const & X,
+      Tpetra_MultiVector & Y,
       Teuchos::ETransp mode = Teuchos::NO_TRANS,
       ST alpha = Teuchos::ScalarTraits<ST>::one(),
       ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
@@ -64,10 +70,49 @@ public:
     return range_map_;
   }
 
+  void
+  setThisAppIndex(int const tai)
+  {this_app_index_ = tai;}
+
+  int
+  getThisAppIndex() const
+  {return this_app_index_;}
+
+  void
+  setCoupledAppIndex(int const cai)
+  {coupled_app_index_ = cai;}
+
+  int
+  getCoupledAppIndex() const
+  {return coupled_app_index_;}
+
+  Albany::Application const &
+  getApplication(int const app_index)
+  {return *(coupled_apps_[app_index]);}
+
+  Albany::Application const&
+  getApplication(int const app_index) const
+  {return *(coupled_apps_[app_index]);}
+
+private:
+
+  Intrepid::Vector<double>
+  computeBC(
+      Albany::Application const & this_app,
+      Albany::Application const & coupled_app,
+      int const dimension,
+      size_t const ns_node);
+
 private:
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   coupled_apps_;
+
+  int
+  this_app_index_;
+
+  int
+  coupled_app_index_;
 
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_maps_;

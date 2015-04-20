@@ -144,9 +144,7 @@ template<typename EvalT, typename Traits>
 void QCAD::ResponseSaddleValue<EvalT, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-  for (typename PHX::MDField<ScalarT>::size_type i=0; 
-       i<this->global_response.size(); i++)
-    this->global_response[i] = 0.0;
+  PHAL::set(this->global_response, 0.0);
 
   // Do global initialization
   PHAL::SeparableScatterScalarResponse<EvalT,Traits>::preEvaluate(workset);
@@ -232,15 +230,15 @@ evaluateFields(typename Traits::EvalData workset)
 
 	  // Return field value
 	  this->local_response(cell,0) += wt*retFieldVal;
-	  this->global_response[0] += wt*retFieldVal;
+	  this->global_response(0) += wt*retFieldVal;
 
 	  // Field value (field searched for saddle point)
 	  this->local_response(cell,1) += wt*fieldVal;
-	  this->global_response[1] += wt*fieldVal;
+	  this->global_response(1) += wt*fieldVal;
 
-	  this->global_response[2] = 0.0; // x-coord -- written later: would just be a MeshScalar anyway
-	  this->global_response[3] = 0.0; // y-coord -- written later: would just be a MeshScalar anyway
-	  this->global_response[4] = 0.0; // z-coord -- written later: would just be a MeshScalar anyway
+	  this->global_response(2) = 0.0; // x-coord -- written later: would just be a MeshScalar anyway
+	  this->global_response(3) = 0.0; // y-coord -- written later: would just be a MeshScalar anyway
+	  this->global_response(4) = 0.0; // z-coord -- written later: would just be a MeshScalar anyway
 	}
       }
     }
@@ -301,28 +299,12 @@ postEvaluate(typename Traits::PostEvalData workset)
     Teuchos::RCP< Teuchos::ValueTypeSerializer<int,ScalarT> > serializer =
       workset.serializerManager.template getValue<EvalT>();
 
-    #if 0
-    // we cannot pass the same object for both the send and receive buffers in reduceAll call
-    // creating a copy of the global_response, not a view
-    TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Transition of this "
-              << "function to Kokkos has not been completed" << std::endl);
-    std::vector<ScalarT> partial_vector;//Drake FIXME (&this->global_response[0],&this->global_response[0]+this->global_response.size()); //needed for allocating new storage
-    PHX::MDField<ScalarT> partial_response(this->global_response);
-    partial_response.setFieldData(Teuchos::ArrayRCP<ScalarT>(partial_vector.data(),0,partial_vector.size(),false));
-
-    //Drake FIXME    Teuchos::reduceAll(
-    //Drake FIXME      *workset.comm, *serializer, Teuchos::REDUCE_SUM,
-    //Drake FIXME      this->global_response.size(), &partial_response[0],
-    //Drake FIXME      &this->global_response[0]);
-
-    #else
     PHAL::reduceAll(*workset.comm, Teuchos::REDUCE_SUM, this->global_response);
-    #endif
 
     // Copy in position of saddle point here (no derivative info yet)
     const double* pt = svResponseFn->getSaddlePointPosition();
     for(std::size_t i=0; i<numDims; i++) 
-      this->global_response[2+i] = pt[i];
+      this->global_response(2+i) = pt[i];
 
     if(retFieldName == "current" &&
        //(QCAD::EvaluatorTools<EvalT,Traits>::getEvalType() == "Tangent" ||
@@ -334,8 +316,8 @@ postEvaluate(typename Traits::PostEvalData workset)
       // sensitivities are being computed).  It would be nice to have a cleaner
       // way of implementing a response whose algorithm cannot support AD types. (EGN)
       
-      this->global_response[1] = this->global_response[0];
-      this->global_response[0] = svResponseFn->getCurrent(lattTemp, materialDB);
+      this->global_response(1) = this->global_response(0);
+      this->global_response(0) = svResponseFn->getCurrent(lattTemp, materialDB);
     }
 	
     // Do global scattering

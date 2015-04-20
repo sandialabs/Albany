@@ -113,22 +113,24 @@ void tpetraFromThyraProdVec(
 {
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   responses.clear();
-  responses.reserve(thyraResponses.size());
-  if (thyraResponses.size() > 0) 
-    *out << "WARNING: For Thyra::ProductVectorBase, only first model response is printed! \n"; 
+  //FIXME: right now only setting # of responses to 1 (solution vector) as printing of other 
+  //responses does not work. 
+  //responses.reserve(thyraResponses.size());
+  responses.reserve(1); 
   typedef Teuchos::Array<Teuchos::RCP<const Thyra::VectorBase<ST> > > ThyraResponseArray;
   for (ThyraResponseArray::const_iterator it_begin = thyraResponses.begin(),
-      it_end = thyraResponses.end(),
-      it = it_begin;
-      it != it_end;
-      ++it) 
-      {
+    it_end = thyraResponses.end(),
+    it = it_begin;
+    it != it_end;
+    ++it) 
+    {
+    if (it == it_end-1) {
       Teuchos::RCP<const Thyra::ProductVectorBase<ST> > r_prod =
            Teuchos::nonnull(*it) ?
            Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(*it,true) :
            Teuchos::null;
       if (r_prod != Teuchos::null) {
-        //productSpace()->numBlocks() when we have responses and >1 model does not work for some reason.  
+        //FIXME: productSpace()->numBlocks() when we have responses and >1 model does not work for some reason.  
         //Need to figure out why!
         const int nProdVecs = r_prod->productSpace()->numBlocks(); 
         //create Teuchos array of spaces / vectors, to be populated from the product vector
@@ -138,8 +140,9 @@ void tpetraFromThyraProdVec(
         }
         Teuchos::RCP<Tpetra_Vector> r_vec = createCombinedTpetraVector(rs); 
         responses.push_back(r_vec);
-      }
-    }
+       }
+     }
+   }
   sensitivities.clear();
   sensitivities.reserve(thyraSensitivities.size());
   if (thyraSensitivities.size() > 0) 
@@ -300,7 +303,12 @@ int main(int argc, char *argv[]) {
     else tpetraFromThyraProdVec(thyraResponses, thyraSensitivities, responses, sensitivities);
 
     const int num_p = solver->Np(); // Number of *vectors* of parameters
-    const int num_g = solver->Ng(); // Number of *vectors* of responses
+    int num_g = solver->Ng();  // Number of *vectors* of responses
+    if (r_prod != Teuchos::null && num_g > 0) { 
+      *out << "WARNING: For Thyra::ProductVectorBase, printing of responses does not work yet!  " <<
+              "No responses will be printed even though you requested " << num_g-1 << " responses. \n"; 
+      num_g = 1; 
+    }
 
     *out << "Finished eval of first model: Params, Responses "
       << std::setprecision(12) << std::endl;
@@ -391,13 +399,26 @@ int main(int argc, char *argv[]) {
                         Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(nominal.get_p(0),false) :
                         Teuchos::null;
       //If p_prod is not product vector, print out parameter vector by converting thyra vector to tpetra vector
-      if (p_prod == Teuchos::null) {
+      if (p_prod == Teuchos::null) { //Thyra vector case (default -- for everything except CoupledSchwarz right now)
         for (int i=0; i<num_p; i++) {
           Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i],
              ConverterT::getConstTpetraVector(nominal.get_p(i)));
         }
       }
-      //FIXME: implementing printing of parameters when you have thyra vectors!
+      else { //Thyra product vector case
+        for (int i=0; i<num_p; i++) {
+           Teuchos::RCP<const Thyra::ProductVectorBase<ST> > pT =
+                Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
+                nominal.get_p(i), true);
+           //IKT: note that we are assuming the parameters are all the same for all the models 
+           //that are being coupled (in CoupledSchwarz) so we print the parameters from the 0th 
+           //model only.  LOCA does not populate p for more than 1 model at the moment so we cannot
+           //allow for different parameters in different models.
+           Teuchos::RCP<const Tpetra_Vector> p = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+                                       pT->getVectorBlock(0),true)->getConstTpetraVector();
+           Albany::printTpetraVector(*out << "\nParameter vector " << i << ":\n", *param_names[i], p); 
+        }
+      }
     }
 
     for (int i=0; i<num_g-1; i++) {

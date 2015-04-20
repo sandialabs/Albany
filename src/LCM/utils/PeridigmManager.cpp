@@ -44,7 +44,7 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
     materialDataBase = Teuchos::rcp(new QCAD::MaterialDatabase(filename, teuchosComm));
   }
 
-  Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
+  stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(stkDisc.is_null(), "\n\n**** Error in PeridigmManager::initialize():  Peridigm interface is valid only for STK meshes.\n\n");
   metaData = Teuchos::rcpFromRef(stkDisc->getSTKMetaData());
   bulkData = Teuchos::rcpFromRef(stkDisc->getSTKBulkData());
@@ -448,6 +448,8 @@ void LCM::PeridigmManager::initialize(const Teuchos::RCP<Teuchos::ParameterList>
 
 void LCM::PeridigmManager::obcOverlappingElementSearch()
 {
+  obcDataPoints = Teuchos::rcp(new std::vector<OBCDataPoint>());
+
   stk::mesh::Field<double,stk::mesh::Cartesian3d>* coordinatesField = 
     metaData->get_field< stk::mesh::Field<double,stk::mesh::Cartesian3d> >(stk::topology::NODE_RANK, "coordinates");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(coordinatesField == 0, "\n\n**** Error in PeridigmManager::obcOverlappingElementSearch(), unable to access coordinates field.\n\n");
@@ -693,7 +695,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 	    dataPoint.peridigmGlobalId = epetraOverlapIsSphere.Map().GID(neighborIndex);
 	    dataPoint.albanyElement = elements[iElem];
 	    dataPoint.cellTopologyData = cellTopologyData;
-	    obcDataPoints.push_back(dataPoint);
+	    obcDataPoints->push_back(dataPoint);
 	  }
 	}
       }
@@ -701,9 +703,9 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   }
 
   // Create an Epetra_Vector for importing the displacements of the peridynamic nodes
-  std::vector<int> tempGlobalIds(obcDataPoints.size());
-  for(unsigned int i=0 ; i<obcDataPoints.size() ; i++){
-    tempGlobalIds[i] = obcDataPoints[i].peridigmGlobalId;
+  std::vector<int> tempGlobalIds(obcDataPoints->size());
+  for(unsigned int i=0 ; i<obcDataPoints->size() ; i++){
+    tempGlobalIds[i] = (*obcDataPoints)[i].peridigmGlobalId;
   }
 
   Epetra_BlockMap epetraTempMap(-1,
@@ -717,7 +719,7 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
 
   // As a sanity check, determine the total number of overlapping peridynamic nodes
   vector<int> localVal(1), globalVal(1);
-  localVal[0] = static_cast<int>(obcDataPoints.size());
+  localVal[0] = static_cast<int>(obcDataPoints->size());
   Teuchos::reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &localVal[0], &globalVal[0]);
   int numberOfOverlappingPeridynamicNodes = globalVal[0];
 
@@ -725,11 +727,14 @@ void LCM::PeridigmManager::obcOverlappingElementSearch()
   std::cout << "  number of peridynamic nodes in overlap region: " << numberOfOverlappingPeridynamicNodes << std::endl;
 }
 
-double LCM::PeridigmManager::obcEvaluateFunctional()
+double LCM::PeridigmManager::obcEvaluateFunctional(Epetra_Vector* obcFunctionalDerivWrtDisplacement)
 {
   if(!enableOptimizationBasedCoupling){
     return 0.0;
   }
+
+  if(obcFunctionalDerivWrtDisplacement != NULL)
+    obcFunctionalDerivWrtDisplacement->PutScalar(0);
 
   // Set up access to the current displacements of the nodes in the solid elements
   Teuchos::ArrayRCP<const ST> albanyCurrentDisplacement = albanyOverlapSolutionVector->getData();
@@ -740,10 +745,10 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
   Epetra_Import overlapCurrentCoordsImporter(obcPeridynamicNodeCurrentCoords->Map(), peridigmCurrentPositions.Map());
   int err = obcPeridynamicNodeCurrentCoords->Import(peridigmCurrentPositions, overlapCurrentCoordsImporter, Insert);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "\n\n**** Error in PeridigmManager::obcEvaluateFunctional(), import operation failed!\n\n");
-  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
-    int localId = obcPeridynamicNodeCurrentCoords->Map().LID(obcDataPoints[iEvalPt].peridigmGlobalId);
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints->size() ; iEvalPt++){
+    int localId = obcPeridynamicNodeCurrentCoords->Map().LID((*obcDataPoints)[iEvalPt].peridigmGlobalId);
     for(int dof=0 ; dof<3 ; dof++){
-      obcDataPoints[iEvalPt].currentCoords[dof] = (*obcPeridynamicNodeCurrentCoords)[3*localId+dof];
+      (*obcDataPoints)[iEvalPt].currentCoords[dof] = (*obcPeridynamicNodeCurrentCoords)[3*localId+dof];
     }
   }
 
@@ -760,14 +765,14 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
 
   // Compute the difference in displacements at each peridynamic node
   Epetra_Vector displacementDiff(obcPeridynamicNodeCurrentCoords->Map());
-  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints.size() ; iEvalPt++){
+  for(unsigned int iEvalPt=0 ; iEvalPt<obcDataPoints->size() ; iEvalPt++){
 
     for(int dof=0 ; dof<3 ; dof++){
-      refPoints(0, 0, dof) = obcDataPoints[iEvalPt].naturalCoords[dof];
+      refPoints(0, 0, dof) = (*obcDataPoints)[iEvalPt].naturalCoords[dof];
     }
 
-    int numNodes = bulkData->num_nodes(obcDataPoints[iEvalPt].albanyElement);
-    const stk::mesh::Entity* nodes = bulkData->begin_nodes(obcDataPoints[iEvalPt].albanyElement);
+    int numNodes = bulkData->num_nodes((*obcDataPoints)[iEvalPt].albanyElement);
+    const stk::mesh::Entity* nodes = bulkData->begin_nodes((*obcDataPoints)[iEvalPt].albanyElement);
 
     Intrepid::FieldContainer<RealType> cellWorkset;
     cellWorkset.resize(numCells, numNodes, numDim);
@@ -780,14 +785,46 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
       cellWorkset(0, i, 2) = albanyCurrentDisplacement[albanyLocalId + 2];
     }
 
-    shards::CellTopology cellTopology(&obcDataPoints[iEvalPt].cellTopologyData);
+    shards::CellTopology cellTopology(&(*obcDataPoints)[iEvalPt].cellTopologyData);
 
     Intrepid::CellTools<RealType>::mapToPhysicalFrame(physPoints, refPoints, cellWorkset, cellTopology);
 
     // Record the difference between the Albany displacement at the point (which was just computed using Intrepid) and
     // the Peridigm displacement at the point
     for(int dof=0 ; dof<3 ; dof++){
-      displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - (obcDataPoints[iEvalPt].currentCoords[dof] - obcDataPoints[iEvalPt].initialCoords[dof]);
+      displacementDiff[3*iEvalPt+dof] = physPoints(0,0,dof) - ((*obcDataPoints)[iEvalPt].currentCoords[dof] - (*obcDataPoints)[iEvalPt].initialCoords[dof]);
+    }
+
+
+    if(obcFunctionalDerivWrtDisplacement != NULL) {
+      Intrepid::FieldContainer<RealType> refPoint;
+      refPoint.resize(numPoints, numDim);
+      for(int dof=0 ; dof<3 ; dof++)
+        refPoint(0, dof) = refPoints(0, 0, dof);
+
+      //FIX select basis looking at celltopology
+      Intrepid::Basis_HGRAD_HEX_C1_FEM<RealType, Intrepid::FieldContainer<RealType> > refBasis;
+      Intrepid::FieldContainer<RealType> basisOnRefPoint(numNodes, 1);
+      refBasis.getValues( basisOnRefPoint, refPoint, Intrepid::OPERATOR_VALUE);
+
+
+      double deriv[3];
+      int globalNodeIds[3];
+      for(int i=0 ; i<numNodes ; i++) {
+        int globalAlbanyNodeId = bulkData->identifier(nodes[i]) - 1;
+
+        for(int dim=0; dim<3; ++dim) {
+          deriv[dim] = 2*displacementDiff[3*iEvalPt+dim]*basisOnRefPoint(i,0);
+          globalNodeIds[dim] =3*globalAlbanyNodeId+dim;
+        }
+        obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
+      }
+
+      for(int dim=0; dim<3; ++dim) {
+        deriv[dim] = -2*displacementDiff[3*iEvalPt+dim];
+        globalNodeIds[dim] = 3*(*obcDataPoints)[iEvalPt].peridigmGlobalId+dim;
+      }
+      obcFunctionalDerivWrtDisplacement->SumIntoGlobalValues(3, deriv, globalNodeIds);
     }
   }
 
@@ -807,7 +844,7 @@ double LCM::PeridigmManager::obcEvaluateFunctional()
     }
   }
 
-  return functionalValue;
+  return pow(functionalValue,2);
 }
 
 void LCM::PeridigmManager::setCurrentTimeAndDisplacement(double time, const Teuchos::RCP<const Tpetra_Vector>& albanySolutionVector)
@@ -1043,41 +1080,66 @@ void LCM::PeridigmManager::setOutputFields(const Teuchos::ParameterList& params)
 }
 
 void LCM::PeridigmManager::setDirichletFields(Teuchos::RCP<Albany::AbstractDiscretization> disc){
-  typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
+  typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
   Teuchos::RCP<Albany::STKDiscretization> stkDisc = Teuchos::rcp_dynamic_cast<Albany::STKDiscretization>(disc);
-  VectorFieldType* dirichletField = stkDisc->getSTKMetaData().get_field <VectorFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
-  if (dirichletField == NULL)
-   return;
-  const std::string& meshPart1 = "nodelist_1"; //TODO: make this general
-  Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart1);
-  if(it != disc->getNodeSetGIDs().end()) {
-   const std::vector<GO>& nsNodesGIDs = it->second;
-   for(int i=0; i<nsNodesGIDs.size(); ++i) {
-     GO gId = nsNodesGIDs[i];
-     stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
-     double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
-     double* dirichletData = stk::mesh::field_data(*dirichletField, node);
-     //set dirichletData as any function of the coordinates;
-     dirichletData[0]= 0.005*(coord[0]-1.66);
-     dirichletData[1]= 0;
-     dirichletData[2]= 0; // coord[0] + 3*coord[1];
-   }
-  }
-  const std::string& meshPart2 = "nodelist_11"; //TODO: make this general
-  it= disc->getNodeSetGIDs().find(meshPart2);
-  if(it != disc->getNodeSetGIDs().end()) {
-    const std::vector<GO>& nsNodesGIDs = it->second;
-    for(int i=0; i<nsNodesGIDs.size(); ++i) {
-      GO gId = nsNodesGIDs[i];
-      stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
-      double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
-      double* dirichletData = stk::mesh::field_data(*dirichletField, node);
-      //set dirichletData as any function of the coordinates;
-      dirichletData[0]= 0.005*(coord[0]-1.66);
-      dirichletData[1]= 0;
-      dirichletData[2]= 0; // coord[0] + 3*coord[1];
+  ScalarFieldType* dirichletField = stkDisc->getSTKMetaData().get_field <ScalarFieldType> (stk::topology::NODE_RANK, "dirichlet_field");
+  ScalarFieldType* dirichletControlField = stkDisc->getSTKMetaData().get_field <ScalarFieldType> (stk::topology::NODE_RANK, "dirichlet_control_field");
+  if (dirichletField != NULL) {
+    {
+      const std::string& meshPart = "nodelist_1"; //TODO: make this general
+      Albany::NodeSetGIDsList::const_iterator it = disc->getNodeSetGIDs ().find (meshPart);
+      if (it != disc->getNodeSetGIDs ().end ()) {
+        const std::vector<GO>& nsNodesGIDs = it->second;
+        for (int i = 0; i < nsNodesGIDs.size (); ++i) {
+          GO gId = nsNodesGIDs[i];
+          stk::mesh::Entity node = stkDisc->getSTKBulkData ().get_entity (stk::topology::NODE_RANK, gId + 1);
+          double* coord = stk::mesh::field_data (*stkDisc->getSTKMeshStruct ()->getCoordinatesField (), node);
+          double* dirichletData = stk::mesh::field_data (*dirichletField, node);
+
+          //set dirichletData as any function of the coordinates;
+          dirichletData[0] = 0.005 * (coord[0] - 1.66);
+          //    dirichletData[1]= 0;
+          //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
+        }
+      }
+    }
+    {
+      const std::string& meshPart = "nodelist_11"; //TODO: make this general
+      Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
+      if(it != disc->getNodeSetGIDs().end()) {
+        const std::vector<GO>& nsNodesGIDs = it->second;
+        for(int i=0; i<nsNodesGIDs.size(); ++i) {
+          GO gId = nsNodesGIDs[i];
+          stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
+          double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
+          double* dirichletData = stk::mesh::field_data(*dirichletField, node);
+          //set dirichletData as any function of the coordinates;
+          dirichletData[0]= 0.005*(coord[0]-1.66);
+      //    dirichletData[1]= 0;
+      //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
+        }
+      }
     }
   }
+
+  if (dirichletControlField != NULL) {
+    const std::string& meshPart = "nodelist_16"; //TODO: make this general
+    Albany::NodeSetGIDsList::const_iterator it= disc->getNodeSetGIDs().find(meshPart);
+    if(it != disc->getNodeSetGIDs().end()) {
+      const std::vector<GO>& nsNodesGIDs = it->second;
+      for(int i=0; i<nsNodesGIDs.size(); ++i) {
+        GO gId = nsNodesGIDs[i];
+        stk::mesh::Entity node = stkDisc->getSTKBulkData().get_entity(stk::topology::NODE_RANK, gId + 1);
+        double* coord = stk::mesh::field_data(*stkDisc->getSTKMeshStruct()->getCoordinatesField(), node);
+        double* dirichletControlData = stk::mesh::field_data(*dirichletControlField, node);
+        //set dirichletData as any function of the coordinates;
+        dirichletControlData[0]= 0;
+    //    dirichletData[1]= 0;
+    //    dirichletData[2]= 0; // coord[0] + 3*coord[1];
+      }
+    }
+  }
+
 }
 
 std::vector<LCM::PeridigmManager::OutputField> LCM::PeridigmManager::getOutputFields()

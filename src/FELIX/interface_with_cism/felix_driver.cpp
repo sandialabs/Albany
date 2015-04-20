@@ -23,7 +23,7 @@
 #include "Thyra_EpetraThyraWrappers.hpp"
 #endif
 //#include "Teuchos_TestForException.hpp"
-
+#include "Kokkos_Core.hpp"
 
 #ifdef WRITE_TO_MATRIX_MARKET
 #ifdef CISM_USE_EPETRA
@@ -240,7 +240,9 @@ extern "C" void felix_driver_();
 
 //What is exec_mode??
 void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const char * input_fname)
-{ 
+{
+   if (first_time_step) 
+     Kokkos::initialize();  
     // ---------------------------------------------
     //get communicator / communicator info from CISM
     //TO DO: ifdef to check if CISM and Albany have MPI?  
@@ -955,6 +957,15 @@ void felix_driver_run(FelixToGlimmer * ftg_ptr, double& cur_time_yr, double time
 
 
     first_time_step = false;
+    meshStruct = Teuchos::null;
+    albanyApp = Teuchos::null;
+    solver = Teuchos::null;
+#ifdef CISM_USE_EPETRA
+    mpiComm = Teuchos::null; 
+    reducedMpiComm = Teuchos::null;
+#endif
+    if (cur_time_yr == final_time) 
+      Kokkos::finalize(); 
 }
   
 
@@ -964,6 +975,13 @@ void felix_driver_finalize(int ftg_obj_index)
 {
   if (debug_output_verbosity != 0 & mpiCommT->getRank() == 0) {
     std::cout << "In felix_driver_finalize: cleaning up..." << std::endl;
+    mpiCommT = Teuchos::null; 
+    reducedMpiCommT = Teuchos::null;
+    parameterList = Teuchos::null;
+    discParams = Teuchos::null;
+    slvrfctry = Teuchos::null;
+    node_map = Teuchos::null; 
+    
     //Should something happen here?? 
     std::cout << "done cleaning up!" << std::endl << std::endl; 
   }

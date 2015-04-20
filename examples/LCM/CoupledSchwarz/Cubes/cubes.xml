@@ -4,12 +4,10 @@
 	       value="{cube0.xml, cube1.xml}"/>
   </ParameterList>
   <ParameterList name="Debug Output">
-     <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
-     <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
-     <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
-     <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
+    <Parameter name="Write Solution to MatrixMarket"
+	       type="bool" value="true"/>
+    <Parameter name="Write Solution to Standard Output"
+	       type="bool" value="true"/>
   </ParameterList>
 
   <!-- MODEL DECLARATION, Look in the "Problem" directory -->
@@ -32,6 +30,12 @@
       <Parameter name="Response 0" type="string" value="Solution Average"/>
     </ParameterList>
 
+  </ParameterList>
+  <ParameterList name="Regression Results">
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values"
+		type="Array(double)" value="{7.61904761905e-05}"/>
+    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
   </ParameterList>
 
   <!-- Solver options -->

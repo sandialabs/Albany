@@ -240,6 +240,36 @@ memory because the huge size of the symbolic information required for
 debugging. Thus, if the compiling procedure stalls, try reducing the
 number of processors.
 
+\section{Running and debugging LCM} 
+
+After building Albany, you might want to run and/or debug the code. 
+Tools were built in Trilinos (decomp, epu, etc.) that are necessary for parallel execution. 
+Please modify your path
+\begin{verbatim}
+export PATH=$HOME/LCM/trilinos-install-gcc-release/bin:$PATH
+\end{verbatim}
+and include the necessary libraries
+\begin{verbatim}
+export LD_LIBRARY_PATH=$HOME/LCM/trilinos-install-gcc-release/lib:$LD_LIBRARY_PATH
+\end{verbatim}
+prior to execution. Please note that in this specific case, we are pointing to 
+\verb+gcc-release+.
+If we attempt to execute the debug version, the \verb+LD_LIBRARY_PATH+ will be invalid.
+One is required to change the  \verb+LD_LIBRARY_PATH+ for each toolchain and build type.
+To select toolchains and build types for execution, one can create configuration scripts in his/her LCM
+directory. Each configuration script might be named something akin to \verb+LCM_gcc_release.conf+ 
+and contain the necessary changes to \verb+PATH+ and \verb+LD_LIBRARY_PATH+. For example,
+prior to debugging the code one would construct the configuration file  
+\verb+$HOME/LCM/LCM_gcc_debug.conf+
+\begin{verbatim}
+export PATH=$HOME/LCM/trilinos-install-gcc-debug/bin:$PATH
+export LD_LIBRARY_PATH=/$HOME/LCM/trilinos-install-gcc-debug/lib:$LD_LIBRARY_PATH
+\end{verbatim}
+and then \verb+source $HOME/LCM/LCM_gcc_debug.conf+ prior to execution. We note that these 
+environmental variables are temporarily set by the build scripts. However, one may have a total of six
+toolchains and build types. Currently, the user must specify the environmental variables 
+necessary for execution. 
+
 \section{Policies}
 Albany is a simulation code for researchers by researchers. As such,
 vibrant development of new and exciting capabilities is strongly

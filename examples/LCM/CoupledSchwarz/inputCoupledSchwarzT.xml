@@ -21,7 +21,7 @@
   <!-- RGRESSION comparison of the RESPONSE FUNCTION declared above-->
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{0.0111855}"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{3.00294319291e-20}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
   </ParameterList>
   <ParameterList name="Piro">

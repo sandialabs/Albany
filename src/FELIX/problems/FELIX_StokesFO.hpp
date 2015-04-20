@@ -206,24 +206,58 @@ FELIX::StokesFO::constructEvaluators(
      fm0.template registerEvaluator<EvalT>(ev);
    }
 
-   entity= Albany::StateStruct::NodalDistParameter;
-
    {
      std::string stateName("basal_friction");
-     const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
-     RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity, meshPart);
-     fm0.template registerEvaluator<EvalT>
-         (evalUtils.constructGatherScalarNodalParameter(stateName));
-    }
+     RCP<ParameterList> p;
+
+     //Finding whether basal friction is a distributed parameter
+     bool isStateAParameter(false);
+     const std::string* meshPart;
+     const std::string emptyString("");
+     if(this->params->isSublist("Distributed Parameters")) {
+       Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
+       Teuchos::ParameterList* param_list;
+       int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
+       for(int p_index=0; p_index< numParams; ++p_index) {
+         std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
+         if(dist_params_list.isSublist(parameter_sublist_name)) {
+           param_list = &dist_params_list.sublist(parameter_sublist_name);
+           if(param_list->get<std::string>("Name", emptyString) == stateName) {
+             meshPart = &param_list->get<std::string>("Mesh Part",emptyString);
+             isStateAParameter = true;
+             break;
+           }
+         } else {
+           if(stateName == dist_params_list.get(Albany::strint("Parameter", p_index), emptyString)) {
+             isStateAParameter = true;
+             meshPart = &emptyString;
+             break;
+           }
+         }
+       }
+     }
+
+     if(isStateAParameter) { //basal friction is a distributed parameter
+       entity= Albany::StateStruct::NodalDistParameter;
+       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity, *meshPart);
+       fm0.template registerEvaluator<EvalT>
+           (evalUtils.constructGatherScalarNodalParameter(stateName));
+       std::stringstream key; key << stateName <<  "Is Distributed Parameter";
+       this->params->set<int>(key.str(), 1);
+     } else {
+       entity= Albany::StateStruct::NodalDataToElemNode;
+       p = stateMgr.registerStateVariable(stateName, dl->node_scalar, elementBlockName,true, &entity);
+       ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
+       fm0.template registerEvaluator<EvalT>(ev);
+     }
+   }
 
 #if defined(CISM_HAS_FELIX) || defined(MPAS_HAS_FELIX)
    {
     // Here is how to register the field for dirichlet condition.
     std::string stateName("dirichlet_field");
-    // IK, 12/9/14: Changed "false" to "true" from Mauro's initial implementation for outputting to Exodus
-    RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity);
-     ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-     fm0.template registerEvaluator<EvalT>(ev);
+    entity= Albany::StateStruct::NodalDistParameter;
+    stateMgr.registerStateVariable(stateName, dl->node_vector, elementBlockName, true, &entity, "");
    }
 #endif
 

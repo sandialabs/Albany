@@ -55,6 +55,7 @@ SchwarzMultiscale(
   num_models_ = model_filenames.size();
 
   std::cout << "DEBUG: num_models_: " << num_models_ << '\n';
+
   // Create application name-index map used for Schwarz BC.
   Teuchos::RCP<std::map<std::string, int>>
   app_name_index_map = Teuchos::rcp(new std::map<std::string, int>);
@@ -79,7 +80,9 @@ SchwarzMultiscale(
 
   //Get "Parameters" parameter sublist, if it exists
   if (problem_params.isSublist("Parameters")) {
-    parameter_params = Teuchos::rcp(&(problem_params.sublist("Parameters")),false);
+    parameter_params = Teuchos::rcp(
+        &(problem_params.sublist("Parameters")),
+        false);
 
     num_params_total_ = parameter_params->get("Number of Parameter Vectors", 0);
 
@@ -97,14 +100,20 @@ SchwarzMultiscale(
     //Get parameter names
     param_names_.resize(num_params_total_);
     for (int l = 0; l < num_params_total_; ++l) {
-      Teuchos::RCP<const Teuchos::ParameterList>
+      Teuchos::RCP<Teuchos::ParameterList const>
       p_list;
-      if (using_old_parameter_list) 
+
+      if (using_old_parameter_list) {
         p_list =  Teuchos::rcp(new Teuchos::ParameterList(*parameter_params));
-      else
-        p_list = Teuchos::rcp(&(parameter_params->sublist(Albany::strint("Parameter Vector", l))),false);
+      }
+      else {
+        p_list = Teuchos::rcp(
+            &(parameter_params->sublist(Albany::strint("Parameter Vector", l))),
+            false);
+      }
  
-      const int num_parameters = p_list->get<int>("Number");
+      int const
+      num_parameters = p_list->get<int>("Number");
 
       assert(num_parameters > 0);
 
@@ -127,15 +136,21 @@ SchwarzMultiscale(
   //---------------End Parameters---------------------
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
+  num_responses_total_ = 0;
+
   if (problem_params.isSublist("Response Functions")) {
-    response_params = Teuchos::rcp(&(problem_params.sublist("Response Functions")),false);
+    response_params = Teuchos::rcp(
+        &(problem_params.sublist("Response Functions")), false);
 
-    num_responses_total_ = response_params->get("Number of Response Vectors", 0);
+    num_responses_total_ =
+        response_params->get("Number of Response Vectors", 0);
 
-    bool using_old_response_list = false;
+    bool
+    using_old_response_list = false;
 
     if (response_params->isType<int>("Number") == true) {
-      int num_parameters = response_params->get<int>("Number");
+      int
+      num_parameters = response_params->get<int>("Number");
 
       if (num_parameters > 0) {
         num_responses_total_ = 1;
@@ -149,17 +164,26 @@ SchwarzMultiscale(
     response_names.resize(num_responses_total_);
 
     for (int l = 0; l < num_responses_total_; ++l) {
+
       Teuchos::RCP<const Teuchos::ParameterList>
       p_list;
-      if (using_old_response_list) 
+
+      if (using_old_response_list) {
         p_list =  Teuchos::rcp(new Teuchos::ParameterList(*response_params));
-      else
-        p_list = Teuchos::rcp(&(response_params->sublist(Albany::strint("Response Vector", l))),false);
+
+      }
+      else {
+        p_list = Teuchos::rcp(
+            &(response_params->sublist(Albany::strint("Response Vector", l))),
+            false);
+      }
  
-      bool number_exists = p_list->getEntryPtr("Number");
+      bool
+      number_exists = p_list->getEntryPtr("Number");
 
       if (number_exists == true){
-        const int num_parameters = p_list->get<int>("Number");
+        int const
+        num_parameters = p_list->get<int>("Number");
 
         assert(num_parameters > 0);
 
@@ -173,8 +197,7 @@ SchwarzMultiscale(
       }
     }
   }
-  else num_responses_total_ = 0; 
-  
+
   std::cout << "Number of response vectors = " << num_responses_total_ << '\n';
    
   //----------- end Responses-----------------------
@@ -218,16 +241,23 @@ SchwarzMultiscale(
     Teuchos::RCP<Teuchos::ParameterList>
     problem_params_m = Teuchos::sublist(model_app_params[m], "Problem");
 
-    // Overwrite Parameter sublists for individual models,
-    // if they are provided, to set them
+    // Set Parameter sublists for individual models 
     // to the parameters specified in the "master" coupled input file.
     if (parameter_params != Teuchos::null) {
+      if (problem_params_m->isSublist("Parameters")) {
+        std::cout << "parameters!" << '\n';
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            std::logic_error,
+            "Error in LCM::CoupledSchwarz! Model input file " <<
+            model_filenames[m] <<
+            " cannot have a 'Parameters' section!  " <<
+            "Parameters should be specified in the 'master' input file " <<
+            "driving the coupled problem.\n") ;
+      }
       Teuchos::ParameterList &
       param_params_m = problem_params_m->sublist("Parameters", false);
 
-      if (param_params_m.isSublist("Parameters")) {
-        param_params_m.setParameters(*parameter_params);
-      }
       param_params_m.setParametersNotAlreadySet(*parameter_params); 
     }
     
@@ -235,12 +265,19 @@ SchwarzMultiscale(
     // if they are provided, to set them
     // to the parameters specified in the "master" coupled input file.
     if (response_params != Teuchos::null) {
-      Teuchos::ParameterList &
-      response_params_m = problem_params_m->sublist("Response Functions", false);
-
-      if (response_params_m.isSublist("Response Functions")) {
-        response_params_m.setParameters(*response_params);
+      if (problem_params_m->isSublist("Response Functions")) {
+        TEUCHOS_TEST_FOR_EXCEPTION(
+            true,
+            std::logic_error,
+            "Error in LCM::CoupledSchwarz! Model input file " <<
+            model_filenames[m] <<
+            " cannot have a 'Response Functions' section!  " <<
+            "Responses should be specified in the 'master' input file " <<
+            "driving the coupled problem.\n") ;
       }
+      Teuchos::ParameterList &
+      response_params_m =
+          problem_params_m->sublist("Response Functions", false);
       response_params_m.setParametersNotAlreadySet(*response_params); 
     }
 
@@ -254,31 +291,38 @@ SchwarzMultiscale(
     std::string
     matdb_filename;
 
-    if (problem_params_m->isType<std::string>("MaterialDB Filename")) 
+    if (problem_params_m->isType<std::string>("MaterialDB Filename")) {
       matdb_filename =
           problem_params_m->get<std::string>("MaterialDB Filename");
-    else 
-      TEUCHOS_TEST_FOR_EXCEPTION(true,
-                             std::logic_error,
-                             "Error in LCM::CoupledSchwarz! Input file needs to have 'MaterialDB Filename' specified." <<  std::endl) ;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(
+          true,
+          std::logic_error,
+          "Error in LCM::CoupledSchwarz! " <<
+          "Input file needs to have 'MaterialDB Filename' specified.\n") ;
+    }
 
     material_dbs_[m] =
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
 
     std::cout << "Materials #" << m << ": " << matdb_filename << '\n';
 
+    // Pass these on the parameter list because the are needed before
+    // BC evaluators are built.
+
+    // Add application array for later use in Schwarz BC.
+    app_params_m.set("Application Array", apps_);
+
+    // See application index for use with Schwarz BC.
+    app_params_m.set("Application Index", m);
+
+    // App application name-index map for later use in Schwarz BC.
+    app_params_m.set("Application Name Index Map", app_name_index_map);
+
     //create application for mth model
     apps_[m] = Teuchos::rcp(
         new Albany::Application(commT, model_app_params[m], initial_guessT));
-
-    // Add application array for later use in Schwarz BC.
-    apps_[m]->setApplications(apps_.create_weak());
-
-    // See application index for use with Schwarz BC.
-    apps_[m]->setAppIndex(m);
-
-    // App application name-index map for later use in Schwarz BC.
-    apps_[m]->setAppNameIndexMap(app_name_index_map);
 
     //Create model evaluator
     Albany::ModelFactory
@@ -306,7 +350,7 @@ SchwarzMultiscale(
     for (int j = 0; j < num_models_; ++j) {
       //Check if have this term?  Put into Teuchos array?
       jacs_boundary_[i * num_models_ + j] = Teuchos::rcp(
-          new LCM::Schwarz_BoundaryJacobian(commT_, apps_));
+          new LCM::Schwarz_BoundaryJacobian(commT_, apps_, i, j));
     }
   }
 
@@ -635,11 +679,14 @@ allocateVectors()
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> > spaces(
-      num_models_);
-  for (int m = 0; m < num_models_; ++m)
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
+  spaces(num_models_);
+
+  for (int m = 0; m < num_models_; ++m) {
     spaces[m] = Thyra::createVectorSpace<ST>(disc_maps_[m]);
-  Teuchos::RCP<const Thyra::DefaultProductVectorSpace<ST> >
+  }
+
+  Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const>
   space = Thyra::productVectorSpace<ST>(spaces);
 
   Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> > >

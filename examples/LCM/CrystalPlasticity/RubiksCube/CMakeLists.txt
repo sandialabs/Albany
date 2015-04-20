@@ -1,7 +1,7 @@
 
 # Create a symbolic link for exodiff
-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-                ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EXODIFF} ${CMAKE_CURRENT_BINARY_DIR}/exodiff)
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE_CURRENT_BINARY_DIR}/epu)
 
 # Copy Input files from source to binary dir
 

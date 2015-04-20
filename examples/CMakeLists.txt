@@ -186,12 +186,6 @@ IF(ALBANY_MOR AND ALBANY_EPETRA)
   add_subdirectory(MOR)
 ENDIF()
 
-# SEE   ##################
-
-IF(ALBANY_SEE)
-  add_subdirectory(SEE)
-ENDIF()
-
 # AMP   ##################
 
 IF(ALBANY_AMP)

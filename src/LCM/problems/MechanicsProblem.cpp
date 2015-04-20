@@ -301,6 +301,14 @@ constructDirichletEvaluators(const Albany::MeshSpecsStruct& meshSpecs)
   if (have_damage_eq_) dirichletNames[index++] = "D";
   if (have_stab_pressure_eq_) dirichletNames[index++] = "SP";
 
+  // Pass on the Application as well that is needed for
+  // the coupled Schwarz BC. It is just ignored otherwise.
+  Teuchos::RCP<Albany::Application> const &
+  application = getApplication();
+
+  this->params->set<Teuchos::RCP<Albany::Application>>(
+      "Application", application);
+
   Albany::BCUtils<Albany::DirichletTraits> dirUtils;
   dfm = dirUtils.constructBCEvaluators(meshSpecs.nsNames, dirichletNames,
       this->params, this->paramLib);

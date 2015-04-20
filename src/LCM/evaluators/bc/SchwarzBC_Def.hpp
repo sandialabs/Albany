@@ -24,10 +24,18 @@ template <typename EvalT, typename Traits>
 SchwarzBC_Base<EvalT, Traits>::
 SchwarzBC_Base(Teuchos::ParameterList & p) :
   PHAL::DirichletBase<EvalT, Traits>(p),
+  app_(p.get<Teuchos::RCP<Albany::Application>>("Application", Teuchos::null)),
   coupled_app_name_(p.get<std::string>("Coupled Application", "self")),
   coupled_block_name_(p.get<std::string>("Coupled Block")),
   disc_(Teuchos::null)
 {
+  std::string const &
+  nodeset_name = this->nodeSetID;
+
+  app_->setCoupledAppBlockNodeset(
+      coupled_app_name_,
+      coupled_block_name_,
+      nodeset_name);
 }
 
 //
@@ -43,6 +51,15 @@ computeBCs(
     ScalarT & y_val,
     ScalarT & z_val)
 {
+  bool const
+  disabled = true;
+
+  if (disabled == true) {
+    x_val = 0.0;
+    y_val = 0.0;
+    z_val = 0.0;
+    return;
+  }
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
   coupled_apps = dirichlet_workset.apps_;
 

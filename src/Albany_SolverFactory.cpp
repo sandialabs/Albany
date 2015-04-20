@@ -8,7 +8,7 @@
 //No epetra if setting ALBANY_EPETRA_EXE off.
 
 #include "Albany_SolverFactory.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Albany_PiroObserver.hpp"
 #include "Piro_Epetra_SolverFactory.hpp"
 #include "Petra_Converters.hpp"
@@ -43,7 +43,7 @@
 #endif
 
 #ifdef ALBANY_QCAD
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   #include "QCAD_Solver.hpp"
   #include "QCAD_CoupledPoissonSchrodinger.hpp"
   #include "QCAD_CoupledPSObserver.hpp"
@@ -56,8 +56,9 @@
   #include "ATO_Solver.hpp"
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   #include "SchwarzMultiscale.hpp"
+  #include "Schwarz_PiroObserverT.hpp"
 #endif
 
 //#include "Thyra_EpetraModelEvaluator.hpp"
@@ -77,7 +78,7 @@
 
 extern bool TpetraBuild;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 namespace Albany {
 
 class NOXObserverConstructor : public Piro::ProviderBase<NOX::Epetra::Observer> {
@@ -231,7 +232,7 @@ Albany::SolverFactory::SolverFactory(
 
 Albany::SolverFactory::~SolverFactory(){
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Release the model to eliminate RCP circular reference
   if(Teuchos::nonnull(thyraModelFactory))
     thyraModelFactory->releaseModel();
@@ -243,7 +244,7 @@ Albany::SolverFactory::~SolverFactory(){
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::create(
   const Teuchos::RCP<const Epetra_Comm>& appComm,
@@ -266,7 +267,7 @@ Albany::SolverFactory::createT(
   return createAndGetAlbanyAppT(dummyAlbanyApp, appComm, solverComm, initial_guess);
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAndGetAlbanyApp(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -342,7 +343,7 @@ Albany::SolverFactory::createAndGetAlbanyApp(
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Must activate QCAD\n");
 #endif /* ALBANY_QCAD */
     }
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     if (solutionMethod == "Coupled Schwarz") {
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Coupled Schwarz Solution Method does not work with Albany executable!  Please re-run with AlbanyT Executable. \n");
     }
@@ -625,7 +626,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //#endif /* ALBANY_ATO */
 //    }
   
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
@@ -676,7 +677,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     //FIXME, IKT, 2/13/15: the following needs to be replaced with the right observer for CoupledSchwarz!
     //I think we need to write an observer that takes in coupled_model similar to QCAD::CoupledPS_NOXObserverConstructor.
-    const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(albanyApp));
+    const RCP<Piro::ObserverBase<double> > observer = rcp(new LCM::Schwarz_PiroObserverT(coupled_model_with_solveT));
     //Will have something like: 
     //const RCP<Piro::ObserverBase<double> > coupled_observer = rcp(new LCM::CoupledSchwarz_NOXObserverConstructor(coupled_model));
     //Coupled observer would split up the coupled solution into individual solution vectors (one for each model/domain)
@@ -686,7 +687,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     // FIXME?
     std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
-    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT);
+    return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
     }
 #endif
 
@@ -760,7 +761,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
     }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, solMgrT, observer);
@@ -773,7 +774,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserverT(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
     }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     else {
       const RCP<Piro::ObserverBase<double> > observer = rcp(new PiroObserver(app));
       return piroFactory.createSolver<ST>(piroParams, modelWithSolveT, observer);
@@ -785,7 +786,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
   return Teuchos::null;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<EpetraExt::ModelEvaluator>
 Albany::SolverFactory::createAlbanyAppAndModel(
   Teuchos::RCP<Albany::Application>& albanyApp,
@@ -939,7 +940,7 @@ int Albany::SolverFactory::checkSolveTestResultsT(
   return failures;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 int Albany::SolverFactory::checkSolveTestResults(
   int response_index,
   int parameter_index,
@@ -1073,7 +1074,7 @@ int Albany::SolverFactory::checkAnalysisTestResults(
   return failures;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 int Albany::SolverFactory::checkSGTestResults(
   int response_index,
   const Teuchos::RCP<Stokhos::EpetraVectorOrthogPoly>& g_sg,

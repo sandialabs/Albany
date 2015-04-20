@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 #include <Teuchos_Array.hpp>
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include <Epetra_LocalMap.h>
 #endif
 #include "Albany_Utils.hpp"
@@ -23,7 +23,7 @@ namespace QCAD
   //bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const QCAD::mathVector& pt);
   //bool ptInPolygon(const std::vector<QCAD::mathVector>& polygon, const double* pt);
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   void gatherVector(std::vector<double>& v, std::vector<double>& gv,
 		    const Epetra_Comm& comm);
 #endif
@@ -53,7 +53,7 @@ SaddleValueResponseFunction(
 
   Teuchos::Array<double> ar;
   Teuchos::RCP<const Teuchos_Comm> commT = application->getComm(); 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT);
 #endif
   imagePtSize   = params.get<double>("Image Point Size", 0.01);
@@ -267,7 +267,7 @@ fillSaddlePointData(current_time, xdot, x, p, g, dbMode);
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 QCAD::SaddleValueResponseFunction::
 initializeImagePoints(const double current_time,
@@ -549,7 +549,7 @@ initializeImagePointsT(const double current_time,
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 QCAD::SaddleValueResponseFunction::
 initializeFinalImagePoints(const double current_time,
@@ -851,7 +851,10 @@ doNudgedElasticBand(const double current_time,
 
       // update avgForce and avgOpposingForce
       avgForce += force[i].norm();
-      dp = force[i].dot(lastForce[i]) / (force[i].norm() * lastForce[i].norm()); 
+      // Handle the 0 case so we don't divide by 0.
+      const double lastForce_norm = lastForce[i].norm();
+      dp = lastForce_norm == 0 ? 0 :
+        force[i].dot(lastForce[i]) / (force[i].norm() * lastForce_norm);
       if( dp < 0 ) {  //if current force and last force point in "opposite" directions
 	mathVector v = force[i] - lastForce[i];
 	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
@@ -1117,7 +1120,10 @@ doNudgedElasticBandT(const double current_time,
 
       // update avgForce and avgOpposingForce
       avgForce += force[i].norm();
-      dp = force[i].dot(lastForce[i]) / (force[i].norm() * lastForce[i].norm()); 
+      // Handle the 0 case so we don't divide by 0.
+      const double lastForce_norm = lastForce[i].norm();
+      dp = lastForce_norm == 0 ? 0 :
+        force[i].dot(lastForce[i]) / (force[i].norm() * lastForce_norm);
       if( dp < 0 ) {  //if current force and last force point in "opposite" directions
 	mathVector v = force[i] - lastForce[i];
 	avgOpposingForce += v.norm() / (force[i].norm() + lastForce[i].norm());
@@ -1228,7 +1234,7 @@ doNudgedElasticBandT(const double current_time,
   return;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 QCAD::SaddleValueResponseFunction::
 fillSaddlePointData(const double current_time,
@@ -1341,7 +1347,7 @@ fillSaddlePointDataT(const double current_time,
   return;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 QCAD::SaddleValueResponseFunction::
 doLevelSet(const double current_time,
@@ -1539,7 +1545,7 @@ doLevelSetT(const double current_time,
   return;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //! Level-set Algorithm for finding saddle point
 int QCAD::SaddleValueResponseFunction::
 FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
@@ -2063,7 +2069,7 @@ evaluateGradientT(const double current_time,
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 //IK, 10/9/14: are these functions even needed...
 void 
 QCAD::SaddleValueResponseFunction::
@@ -2606,7 +2612,7 @@ getSaddlePointPosition() const
   return imagePts[iSaddlePt].coords.data();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 bool QCAD::SaddleValueResponseFunction::
 matchesCurrentResults(Epetra_Vector& g) const
 {
@@ -2954,7 +2960,7 @@ std::ostream& QCAD::operator<<(std::ostream& os, const QCAD::nebImagePt& np)
 //! Helper functions
 /*************************************************************/
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void QCAD::gatherVector(std::vector<double>& v, std::vector<double>& gv, const Epetra_Comm& comm_)
 {
   double *pvec, zeroSizeDummy = 0;

@@ -1,15 +1,16 @@
 
 reset
 
-#{HORIZON=0.375}
+#{HORIZON=0.3333333333333333333}
 
 create brick x 2.0 y 0.5 z 0.5
 volume 1 move x 1.0 y 0.25 z 0.25
-volume 1 copy move x 1.25 y 0.0 z 0.0
+volume 1 copy move x 1.3333333333 y 0.0 z 0.0
 webcut volume 1 with plane xplane offset {2.0*HORIZON} imprint merge
-volume all size {HORIZON/3.0}
+webcut volume 1 with plane xplane offset {2.0 - 2.0*HORIZON + HORIZON/2.0} imprint merge
+volume all size {HORIZON/2.0}
 mesh volume all
-block 1 volume 1 3
+block 1 volume 1 3 4
 block 2 volume 2
 nodeset 1  volume  3 # left pd two-horizon volume
 nodeset 2  curve   9  # z axis on pd side
@@ -17,6 +18,9 @@ nodeset 3  curve   7  # y axis on pd side
 nodeset 11 surface 12 # right fem face
 nodeset 12 curve   22 # z axis on fem side
 nodeset 13 curve   17 # y axis on fem side
+nodeset 14 volume 1
+nodeset 15 surface 10
+nodeset 16 volume 1 surface 10
 export genesis 'OptimizationBasedCoupling_AllHex.g' overwrite
 
 # spheregen.py --ignore-blocks 2 -o OptimizationBasedCoupling.g OptimizationBasedCoupling_AllHex.g
