@@ -879,9 +879,10 @@ computeGlobalResidualImplT(
     else
       workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -1101,9 +1102,10 @@ computeGlobalJacobianImplT(const double alpha,
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -1608,9 +1610,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -2175,9 +2178,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     else
       workset.current_time = current_time;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -2363,9 +2367,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -2641,9 +2646,10 @@ computeGlobalSGTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -2869,9 +2875,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     if (mp_xdot != NULL) workset.transientTerms = true;
     if (mp_xdotdot != NULL) workset.accelerationTerms = true;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -3056,9 +3063,10 @@ for (unsigned int i=0; i<shapeParams.size(); i++) *out << shapeParams[i] << "  "
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+    workset.disc = disc;
+
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
@@ -3339,10 +3347,11 @@ computeGlobalMPTangent(
     loadWorksetNodesetInfo(workset);
     workset.distParamLib = distParamLib;
 
+    workset.disc = disc;
+
     // FillType template argument used to specialize Sacado
 #if defined(ALBANY_LCM)
     // Needed for more specialized Dirichlet BCs (e.g. Schwarz coupling)
-    workset.disc = disc;
     workset.apps_ = apps_;
     workset.current_app_ = Teuchos::rcp(this, false);
 #endif
