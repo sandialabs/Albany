@@ -14,6 +14,9 @@
       <Parameter name="Number" type="int" value="2"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
       <Parameter name="Response 1" type="string" value="Mechanics Adjoint"/>
+      <ParameterList name="ResponseParams 1">
+        <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+      </ParameterList>
     </ParameterList>
   </ParameterList>
   <ParameterList name="Discretization">

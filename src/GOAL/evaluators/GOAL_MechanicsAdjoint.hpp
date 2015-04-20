@@ -46,9 +46,6 @@ class MechanicsAdjointBase :
 
   protected:
 
-    PHX::MDField<RealType,Cell,Node,QuadPoint> BF_;
-    PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF_;
-
     Teuchos::RCP<Albany::StateManager*> stateManager_;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > fieldTag_;
