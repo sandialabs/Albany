@@ -12,12 +12,12 @@
 
     <ParameterList name="Distributed Parameters">
       <Parameter name="Number of Parameter Vectors" type="int" value="1"/>
-      <Parameter name="Parameter 0" type="string" value="dirichlet_control_field"/>
-      <Parameter name="Mesh Part" type="string" value="nodelist_16"/>
+        <ParameterList name="Distributed Parameter 0">
+        <Parameter name="Name" type="string" value="dirichlet_control_field"/>
+        <Parameter name="Mesh Part" type="string" value="nodelist_16"/>
+      </ParameterList>
     </ParameterList>
-
-
-
+    
     <ParameterList name="Peridigm Parameters">
       <ParameterList name="Optimization Based Coupling">
       </ParameterList>
