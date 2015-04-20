@@ -635,16 +635,20 @@ Albany::BCUtils<Albany::NeumannTraits>::constructBCEvaluators(
   // Build evaluator for basal_friction
   string NeuGBF="Evaluator for Gather basal_friction";
   {
+    const string paramName = "basal_friction";
     RCP<ParameterList> p = rcp(new ParameterList());
-    p->set<int>("Type", traits_type::typeSNP);
-    //p->set<int>("Type", traits_type::typeSF);
-
-    // for new way
-    p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
-    p->set< string >("Parameter Name", "basal_friction");
-    p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
-    p->set< string >("State Name", "basal_friction");
-    p->set< string >("Field Name", "basal_friction");
+    std::stringstream key; key<< paramName <<  "Is Distributed Parameter";
+    if(params->get<int>(key.str(),0) == 1) {
+      p->set<int>("Type", traits_type::typeSNP);
+      p->set< RCP<Albany::Layouts> >("Layouts Struct", dl);
+      p->set< string >("Parameter Name", paramName);
+    }
+    else {
+      p->set<int>("Type", traits_type::typeSF);
+      p->set< RCP<DataLayout> >  ("State Field Layout",  dl->node_scalar);
+      p->set< string >("State Name", paramName);
+      p->set< string >("Field Name", paramName);
+    }
 
     evaluators_to_build[NeuGBF] = p;
   }
