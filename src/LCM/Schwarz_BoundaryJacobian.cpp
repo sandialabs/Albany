@@ -178,6 +178,26 @@ computeBC(
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
 
+  // Get cell topology of the application and block to which this node set
+  // is coupled.
+  int const
+  this_app_index = this_app.getAppIndex();
+
+  std::string const
+  coupled_block_name = this_app.getBlockName(this_app_index);
+
+  std::map<std::string, int> const &
+  coupled_block_name_2_index = coupled_gms.ebNameToIndex;
+
+  auto
+  it = coupled_block_name_2_index.find(coupled_block_name);
+
+  if (it == coupled_block_name_2_index.end()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    exit(1);
+  }
+
   return bc;
 }
 
