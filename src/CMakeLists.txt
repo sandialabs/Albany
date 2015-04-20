@@ -584,6 +584,7 @@ endif ()
 
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
 
 
 # Add Albany external libraries

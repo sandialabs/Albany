@@ -6,8 +6,10 @@
 
 # CMAKE File for Albany building against an installed Trilinos
 
-cmake_minimum_required(VERSION 2.7)
+cmake_minimum_required(VERSION 2.8)
 include(CMakeDependentOption)
+
+project(Albany CXX C Fortran)
 
 # Error check up front
 IF (NOT DEFINED ALBANY_TRILINOS_DIR)
@@ -41,7 +43,7 @@ MESSAGE("   Trilinos_BIN_DIRS = ${Trilinos_BIN_DIRS}")
 MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
 #MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
 #MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
-MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
+#MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
@@ -76,10 +78,21 @@ IF (INSTALL_ALBANY)
   include(CMakePackageConfigHelpers)
 ENDIF ()
 
-MESSAGE("Setting and checking of compilers:")
-SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )
+# Make sure the compilers match.
+MESSAGE("Checking of compilers:")
+IF(NOT ${Trilinos_CXX_COMPILER} STREQUAL ${CMAKE_CXX_COMPILER})
+  MESSAGE(FATAL_ERROR "C++ compilers don't match (Trilinos: ${Trilinos_CXX_COMPILER}, ${PROJECT_NAME}: ${CMAKE_CXX_COMPILER}).")
+ENDIF()
+IF(NOT ${Trilinos_C_COMPILER} STREQUAL ${CMAKE_C_COMPILER})
+  MESSAGE(FATAL_ERROR "C compilers don't match (Trilinos: ${Trilinos_C_COMPILER}, ${PROJECT_NAME}: ${CMAKE_C_COMPILER}).")
+ENDIF()
+IF(NOT ${Trilinos_Fortran_COMPILER} STREQUAL ${CMAKE_Fortran_COMPILER})
+  MESSAGE(FATAL_ERROR "Fortran compilers don't match (Trilinos: ${Trilinos_Fortran_COMPILER}, ${PROJECT_NAME}: ${CMAKE_Fortran_COMPILER}).")
+ENDIF()
+
+#SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
+#SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
+#SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 
