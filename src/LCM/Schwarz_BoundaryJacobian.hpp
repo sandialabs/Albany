@@ -101,7 +101,7 @@ private:
       Albany::Application const & this_app,
       Albany::Application const & coupled_app,
       int const dimension,
-      size_t const ns_node);
+      size_t const ns_node) const;
 
 private:
 

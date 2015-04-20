@@ -122,7 +122,20 @@ apply(
   size_t const
   ns_number_nodes = ns_dof.size();
 
+  Teuchos::ArrayRCP<ST>
+  Y_1d_view = Y.get1dViewNonConst();
+
   for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+    Intrepid::Vector<double>
+    bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
+
+    for (Intrepid::Index i = 0; i < dimension; ++i) {
+      size_t const
+      dof = ns_dof[ns_node][i];
+
+      Y_1d_view[dof] = bc_value(i);
+    }
 
   } // node in node set loop
 
@@ -142,7 +155,7 @@ computeBC(
     Albany::Application const & this_app,
     Albany::Application const & coupled_app,
     int const dimension,
-    size_t const ns_node)
+    size_t const ns_node) const
 {
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
