@@ -34,10 +34,10 @@ LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
         b_initialized_(false),
         n_models_(0)
 {
-  domain_map_ = ca[coupled_app_index_]->getMapT();
-  range_map_ = ca[this_app_index_]->getMapT();
   assert(0 <= this_app_index && this_app_index < ca.size());
   assert(0 <= coupled_app_index && coupled_app_index < ca.size());
+  domain_map_ = ca[coupled_app_index]->getMapT();
+  range_map_ = ca[this_app_index]->getMapT();
 }
 
 LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
