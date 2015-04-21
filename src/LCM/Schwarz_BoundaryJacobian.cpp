@@ -440,9 +440,25 @@ computeBC(
   Intrepid::Vector<double>
   value(coupled_dimension, Intrepid::ZEROS);
 
-  // Boundary condition.
-  Intrepid::Vector<double>
-  bc(dimension, Intrepid::ZEROS);
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << "Coupling to app  : " << coupled_app_name << '\n';
+  std::cout << "Coupling to block: " << coupled_block_name << '\n';
+#endif // DEBUG_LCM_SCHWARZ
 
-  return bc;
+  for (auto i = 0; i < coupled_vertex_count; ++i) {
+    value += basis_values(i, 0) * coupled_element_solution[i];
+
+#if defined(DEBUG_LCM_SCHWARZ)
+    std::cout << std::scientific << std::setprecision(16);
+    std::cout << basis_values(i, 0) << "    ";
+    std::cout << coupled_element_solution[i] << '\n';
+#endif // DEBUG_LCM_SCHWARZ
+
+  }
+
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << " ==> " << value << '\n';
+#endif // DEBUG_LCM_SCHWARZ
+
+  return value;
 }
