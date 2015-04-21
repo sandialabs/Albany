@@ -187,9 +187,6 @@ computeBC(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
   coupled_mesh_specs = coupled_gms.getMeshSpecs();
 
-  Intrepid::Vector<double>
-  bc(dimension, Intrepid::ZEROS);
-
   // Get cell topology of the application and block to which this node set
   // is coupled.
   int const
@@ -246,6 +243,9 @@ computeBC(
   std::vector<double *> const &
   ns_coord =
       this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
+
+  Intrepid::Vector<double>
+  bc(dimension, Intrepid::ZEROS);
 
   return bc;
 }
