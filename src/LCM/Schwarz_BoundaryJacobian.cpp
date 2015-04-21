@@ -284,7 +284,19 @@ computeBC(
   Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
   basis;
 
-  // Boundary condition.
+  for (size_t workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
+
+    std::string const &
+    coupled_element_block = coupled_ws_eb_names[workset];
+
+    if (coupled_element_block != coupled_block_name) continue;
+
+    size_t const
+    elements_per_workset = ws_elem_2_node_id[workset].size();
+
+  } // workset loop
+
+    // Boundary condition.
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
 
