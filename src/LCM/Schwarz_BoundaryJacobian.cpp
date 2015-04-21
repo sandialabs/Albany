@@ -183,6 +183,15 @@ computeBC(
   int const
   this_app_index = this_app.getAppIndex();
 
+  std::string const &
+  this_app_name = this_app.getAppName();
+
+  std::string const &
+  coupled_app_name = coupled_app.getAppName();
+
+  int const
+  coupled_app_index = coupled_app.getAppIndex();
+
   std::string const
   coupled_block_name = this_app.getBlockName(this_app_index);
 
@@ -195,6 +204,8 @@ computeBC(
   if (it == coupled_block_name_2_index.end()) {
     std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
     std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    std::cerr << "Coupling application : " << this_app_name << '\n';
+    std::cerr << "To application       : " << coupled_app_name << '\n';
     exit(1);
   }
 
