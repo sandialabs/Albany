@@ -16,10 +16,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPlaneOffKilterLoading.exodi
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPlaneOffKilterLoading.exodiff COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPlaneOffKilterLoading.gold.exo
                ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPlaneOffKilterLoading.gold.exo COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PostProcess.py
-               ${CMAKE_CURRENT_BINARY_DIR}/PostProcess.py COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/SingleSlipPlaneOffKilterLoading.gnuplot
-               ${CMAKE_CURRENT_BINARY_DIR}/SingleSlipPlaneOffKilterLoading.gnuplot COPYONLY)
 
 # Add the tests
 if(ALBANY_IFPACK2)
