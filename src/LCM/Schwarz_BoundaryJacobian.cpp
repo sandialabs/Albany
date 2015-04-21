@@ -385,6 +385,47 @@ computeBC(
 
   assert(found == true);
 
+  // We do this element by element
+  size_t const
+  number_cells = 1;
+
+  // Container for the parametric coordinates
+  Intrepid::FieldContainer<double>
+  parametric_point(number_cells, parametric_dimension);
+
+  for (auto j = 0; j < parametric_dimension; ++j) {
+    parametric_point(0, j) = 0.0;
+  }
+
+  // Container for the physical point
+  Intrepid::FieldContainer<double>
+  physical_coordinates(number_cells, coupled_dimension);
+
+  for (auto i = 0; i < coupled_dimension; ++i) {
+    physical_coordinates(0, i) = point(i);
+  }
+
+  // Container for the physical nodal coordinates
+  // TODO: matToReference more general, accepts more topologies.
+  // Use it to find if point is contained in element as well.
+  Intrepid::FieldContainer<double>
+  nodal_coordinates(number_cells, coupled_vertex_count, coupled_dimension);
+
+  for (auto i = 0; i < coupled_vertex_count; ++i) {
+    for (auto j = 0; j < coupled_dimension; ++j) {
+      nodal_coordinates(0,i,j) = coupled_element_vertices[i](j);
+    }
+  }
+
+  // Get parametric coordinates
+  Intrepid::CellTools<double>::mapToReferenceFrame(
+      parametric_point,
+      physical_coordinates,
+      nodal_coordinates,
+      coupled_cell_topology,
+      0
+  );
+
   // Boundary condition.
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
