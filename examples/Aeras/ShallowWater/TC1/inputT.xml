@@ -31,10 +31,10 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Debug Output">
-     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+     <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
      <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
+     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
      <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
      <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>
