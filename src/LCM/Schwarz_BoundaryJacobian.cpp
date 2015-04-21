@@ -261,11 +261,21 @@ computeBC(
     coupled_element_solution[i].set_dimension(coupled_dimension);
   }
 
-  // This tolerance is used for geometric approximations. it will be used
-  // to determine whether a node of this_app is within an element of
+  // This tolerance is used for geometric approximations. It will be used
+  // to determine whether a node of this_app is inside an element of
   // coupled_app within that tolerance.
   double const
   tolerance = 5.0e-2;
+
+  double * const
+  coord = ns_coord[ns_node];
+
+  Intrepid::Vector<double>
+  point;
+
+  point.set_dimension(coupled_dimension);
+
+  point.fill(coord);
 
   return bc;
 }
