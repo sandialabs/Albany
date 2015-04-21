@@ -932,6 +932,29 @@ namespace Albany {
         coupled_app_index_block_nodeset_names_map_.end();
     }
 
+    // Few coupled applications, so do this by brute force.
+    std::string
+    getAppName(int app_index = -1) const
+    {
+      if (app_index == -1) app_index = this->getAppIndex();
+
+      std::string
+      name;
+
+      auto
+      it = app_name_index_map_->begin();
+
+      for ( ; it != app_name_index_map_->end(); ++it) {
+        if (app_index == it->second) {
+          name = it->first;
+        }
+      }
+
+      assert(it != app_name_index_map_->end());
+
+      return name;
+    }
+
   private:
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     apps_;
