@@ -34,11 +34,10 @@ LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
         b_initialized_(false),
         n_models_(0)
 {
-  //FIXME, IKT: are range_map_ = domain_map_ for the boundary Jacobian operators? 
-  range_map_ = ca[this_app_index_*n_models_ + coupled_app_index_]->getMapT();
-  domain_map_ = ca[this_app_index_*n_models_ + coupled_app_index_]->getMapT();
   assert(0 <= this_app_index && this_app_index < ca.size());
   assert(0 <= coupled_app_index && coupled_app_index < ca.size());
+  domain_map_ = ca[coupled_app_index]->getMapT();
+  range_map_ = ca[this_app_index]->getMapT();
 }
 
 LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
@@ -187,9 +186,6 @@ computeBC(
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
   coupled_mesh_specs = coupled_gms.getMeshSpecs();
 
-  Intrepid::Vector<double>
-  bc(dimension, Intrepid::ZEROS);
-
   // Get cell topology of the application and block to which this node set
   // is coupled.
   int const
@@ -246,6 +242,9 @@ computeBC(
   std::vector<double *> const &
   ns_coord =
       this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
+
+  Intrepid::Vector<double>
+  bc(dimension, Intrepid::ZEROS);
 
   return bc;
 }
