@@ -880,27 +880,39 @@ namespace Albany {
     void
     setApplications(
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> ca)
-    {apps_ = ca;}
+    {
+      apps_ = ca;
+    }
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     getApplications() const
-    {return apps_;}
+    {
+      return apps_;
+    }
 
     void
     setAppIndex(int const i)
-    {app_index_ = i;}
+    {
+      app_index_ = i;
+    }
 
     int
     getAppIndex() const
-    {return app_index_;}
+    {
+      return app_index_;
+    }
 
     void
     setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>> & anim)
-    {app_name_index_map_ = anim;}
+    {
+      app_name_index_map_ = anim;
+    }
 
     Teuchos::RCP<std::map<std::string, int>>
     getAppNameIndexMap() const
-    {return app_name_index_map_;}
+    {
+      return app_name_index_map_;
+    }
 
     void
     setCoupledAppBlockNodeset(
