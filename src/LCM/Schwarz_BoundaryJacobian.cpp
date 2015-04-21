@@ -164,6 +164,13 @@ computeBC(
     size_t const ns_node) const
 {
   Teuchos::RCP<Albany::AbstractDiscretization>
+  this_disc = this_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  this_stk_disc =
+      static_cast<Albany::STKDiscretization *>(this_disc.get());
+
+  Teuchos::RCP<Albany::AbstractDiscretization>
   coupled_disc = coupled_app.getDiscretization();
 
   Albany::STKDiscretization *
@@ -188,6 +195,15 @@ computeBC(
   int const
   this_app_index = this_app.getAppIndex();
 
+  std::string const &
+  this_app_name = this_app.getAppName();
+
+  std::string const &
+  coupled_app_name = coupled_app.getAppName();
+
+  int const
+  coupled_app_index = coupled_app.getAppIndex();
+
   std::string const
   coupled_block_name = this_app.getBlockName(this_app_index);
 
@@ -200,8 +216,36 @@ computeBC(
   if (it == coupled_block_name_2_index.end()) {
     std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
     std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    std::cerr << "Coupling application : " << this_app_name << '\n';
+    std::cerr << "To application       : " << coupled_app_name << '\n';
     exit(1);
   }
+
+  int const
+  coupled_block_index = it->second;
+
+  CellTopologyData const
+  coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
+
+  shards::CellTopology
+  coupled_cell_topology(&coupled_cell_topology_data);
+
+  size_t const
+  coupled_dimension = coupled_cell_topology_data.dimension;
+
+  size_t const
+  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
+
+  Intrepid::ELEMENT::Type const
+  coupled_element_type =
+      Intrepid::find_type(coupled_dimension, coupled_vertex_count);
+
+  std::string const &
+  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+
+  std::vector<double *> const &
+  ns_coord =
+      this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
 
   return bc;
 }
