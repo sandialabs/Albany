@@ -159,6 +159,13 @@ computeBC(
     size_t const ns_node) const
 {
   Teuchos::RCP<Albany::AbstractDiscretization>
+  this_disc = this_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  this_stk_disc =
+      static_cast<Albany::STKDiscretization *>(this_disc.get());
+
+  Teuchos::RCP<Albany::AbstractDiscretization>
   coupled_disc = coupled_app.getDiscretization();
 
   Albany::STKDiscretization *
@@ -227,6 +234,13 @@ computeBC(
   Intrepid::ELEMENT::Type const
   coupled_element_type =
       Intrepid::find_type(coupled_dimension, coupled_vertex_count);
+
+  std::string const &
+  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+
+  std::vector<double *> const &
+  ns_coord =
+      this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
 
   return bc;
 }
