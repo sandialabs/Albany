@@ -63,7 +63,6 @@
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
       <Parameter name="Final Time" type="double" value="864"/>
-      <Parameter name="Stepper Type" type="string" value="Forward Euler"/>
       <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
       <!--Parameter name="Final Time" type="double" value="86400"/-->
       <!-- change to 12*24*3600 to get full 12 days -->
