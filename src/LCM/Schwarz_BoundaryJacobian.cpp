@@ -386,7 +386,7 @@ computeBC(
   assert(found == true);
 
   // We do this element by element
-  size_t const
+  auto const
   number_cells = 1;
 
   // Container for the parametric coordinates
@@ -425,6 +425,20 @@ computeBC(
       coupled_cell_topology,
       0
   );
+
+  // Evaluate shape functions at parametric point.
+  auto const
+  number_points = 1;
+
+  Intrepid::FieldContainer<double>
+  basis_values(coupled_vertex_count, number_points);
+
+  basis->getValues(basis_values, parametric_point, Intrepid::OPERATOR_VALUE);
+
+  // Evaluate solution at parametric point using values of shape
+  // functions just computed.
+  Intrepid::Vector<double>
+  value(coupled_dimension, Intrepid::ZEROS);
 
   // Boundary condition.
   Intrepid::Vector<double>
