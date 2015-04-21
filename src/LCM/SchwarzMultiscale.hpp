@@ -157,10 +157,6 @@ private:
   Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
   jacs_;
 
-  //Teuchos array holding off-diagonal jacobians (coupling ones)
-  Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> >
-  jacs_boundary_;
-
   int
   num_models_;
 

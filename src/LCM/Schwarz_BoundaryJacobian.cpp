@@ -13,11 +13,13 @@
 //#include "Tpetra_LocalMap.h"
 
 #define WRITE_TO_MATRIX_MARKET
+#define OUTPUT_TO_SCREEN
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
+
 
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm,
@@ -32,6 +34,9 @@ LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
         b_initialized_(false),
         n_models_(0)
 {
+  //FIXME, IKT: are range_map_ = domain_map_ for the boundary Jacobian operators? 
+  range_map_ = ca[this_app_index_*n_models_ + coupled_app_index_]->getMapT();
+  domain_map_ = ca[this_app_index_*n_models_ + coupled_app_index_]->getMapT();
   assert(0 <= this_app_index && this_app_index < ca.size());
   assert(0 <= coupled_app_index && coupled_app_index < ca.size());
 }

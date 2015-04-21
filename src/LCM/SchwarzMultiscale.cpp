@@ -215,11 +215,6 @@ SchwarzMultiscale(
 
   jacs_.resize(num_models_);
 
-  //FIXME: jacs_boundary_ will be smaller than num_models_^2 in practice
-  int
-  num_models2 = num_models_ * num_models_;
-  jacs_boundary_.resize(num_models2);
-
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_overlap_maps(num_models_);
 
@@ -342,17 +337,6 @@ SchwarzMultiscale(
             Teuchos::null;
   }
 
-  //Initialize each entry of jacs_boundary_ 
-  //FIXME: the loops don't need to go through num_models_*num_models_
-  //FIXME: allocate array(s) of indices identifying where entries of
-  // jacs_boundary_ will go
-  for (int i = 0; i < num_models_; ++i) {
-    for (int j = 0; j < num_models_; ++j) {
-      //Check if have this term?  Put into Teuchos array?
-      jacs_boundary_[i * num_models_ + j] = Teuchos::rcp(
-          new LCM::Schwarz_BoundaryJacobian(commT_, apps_, i, j));
-    }
-  }
 
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "Finished creating Albany apps and models!\n";
@@ -620,7 +604,7 @@ LCM::SchwarzMultiscale::create_W_op() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   LCM::Schwarz_CoupledJacobian csJac(commT_);
-  return csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_);
+  return csJac.getThyraCoupledJacobian(jacs_, apps_);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
@@ -930,15 +914,8 @@ evalModelImpl(
 
   // FIXME: create coupled W matrix from array of model W matrices
   if (W_op_outT != Teuchos::null) {
-    //FIXME: create boundary operators 
-    for (int i = 0; i < jacs_boundary_.size(); ++i) {
-      //FIXME: initialize will have arguments (index array?)!
-      jacs_boundary_[i]->initialize();
-    }
-
     LCM::Schwarz_CoupledJacobian csJac(commT_);
-    //FIXME: add boundary operators array to coupled Jacobian parameter list 
-    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_);
+    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
   }
 
   // FIXME: in the following, need to check logic involving looping over
