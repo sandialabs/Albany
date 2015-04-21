@@ -959,6 +959,7 @@ namespace Albany {
       for ( ; it != app_name_index_map_->end(); ++it) {
         if (app_index == it->second) {
           name = it->first;
+          break;
         }
       }
 
