@@ -12,7 +12,7 @@
     <ParameterList name="Coarse">
 
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="Neohookean"/>
+        <Parameter name="Model Name" type="string" value="Linear Elastic"/>
       </ParameterList>
 
       <ParameterList name="Elastic Modulus">
