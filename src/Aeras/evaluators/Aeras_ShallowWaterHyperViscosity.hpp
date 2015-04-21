@@ -55,7 +55,7 @@ private:
   bool useHyperViscosity; 
   double hvTau; 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperViscosity;
+  PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> hyperViscosity;
 
   std::size_t numQPs, numDims, numNodes, vecDim, spatialDim;
           

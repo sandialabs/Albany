@@ -46,7 +46,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   lambda_nodal  (p.get<std::string>  ("Lambda Coord Nodal Name"), dl->node_scalar), 
   theta_nodal   (p.get<std::string>  ("Theta Coord Nodal Name"), dl->node_scalar), 
   gravity (Aeras::ShallowWaterConstants::self().gravity),
-  hyperViscosity (p.get<std::string> ("Hyperviscosity Name"), dl->node_vector),
+  hyperViscosity (p.get<std::string> ("Hyperviscosity Name"), dl->qp_vector),
   Omega(2.0*(Aeras::ShallowWaterConstants::self().pi)/(24.*3600.))
 {
 
@@ -57,6 +57,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   ibpGradH = shallowWaterList->get<bool>("IBP Grad h Term", false); //Default: false
 
   usePrescribedVelocity = shallowWaterList->get<bool>("Use Prescribed Velocity", false); //Default: false
+  useHyperViscosity = shallowWaterList->get<bool>("Use Hyperviscosity", false); //Default: false
   
   
  #define ALBANY_VERBOSE
@@ -229,8 +230,12 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  
  surf=PHX::MDField<ScalarT,Node>("surf",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
  surf.setFieldData(ViewFactory::buildView(surf.fieldTag(),ddims_));
+ surftilde=PHX::MDField<ScalarT,Node>("surftilde",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
+ surftilde.setFieldData(ViewFactory::buildView(surftilde.fieldTag(),ddims_));
  hgradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("hgradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
  hgradNodes.setFieldData(ViewFactory::buildView(hgradNodes.fieldTag(),ddims_));
+ htildegradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("htildegradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
+ htildegradNodes.setFieldData(ViewFactory::buildView(htildegradNodes.fieldTag(),ddims_));
 
  ucomp=PHX::MDField<ScalarT,Node>("ucomp",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
  ucomp.setFieldData(ViewFactory::buildView(ucomp.fieldTag(),ddims_));
@@ -630,8 +635,10 @@ evaluateFields(typename Traits::EvalData workset)
 
   //container for surface height for viscosty
   Intrepid::FieldContainer<ScalarT> surf(numNodes);
+  Intrepid::FieldContainer<ScalarT> surftilde(numNodes);
   //conteiner for surface height gradient for viscosity
   Intrepid::FieldContainer<ScalarT> hgradNodes(numQPs,2);
+  Intrepid::FieldContainer<ScalarT> htildegradNodes(numQPs,2);
   
   //containers for U and V components separately, I don't know how to
   //pass to the gradient uAtNodes(:,0)
@@ -651,16 +658,18 @@ evaluateFields(typename Traits::EvalData workset)
     div_hU.initialize();
     
     surf.initialize();
+    surftilde.initialize();
     hgradNodes.initialize();
+    htildegradNodes.initialize();
 
     if (vecDim == 3) {
-    for (std::size_t node=0; node < numNodes; ++node) {
-      ScalarT surfaceHeight = UNodal(cell,node,0);
-      ScalarT ulambda = UNodal(cell, node,1);
-      ScalarT utheta  = UNodal(cell, node,2);
-      huAtNodes(node,0) = surfaceHeight*ulambda;
-      huAtNodes(node,1) = surfaceHeight*utheta;
-    }
+      for (std::size_t node=0; node < numNodes; ++node) {
+        ScalarT surfaceHeight = UNodal(cell,node,0);
+        ScalarT ulambda = UNodal(cell, node,1);
+        ScalarT utheta  = UNodal(cell, node,2);
+        huAtNodes(node,0) = surfaceHeight*ulambda;
+        huAtNodes(node,1) = surfaceHeight*utheta;
+      }
     }
     else if (vecDim == 1) { //scalar PDE case
       const double alpha = 1.5707963; //FIXME: have alpha be read from parameter list!  Here it's hard-coded to pi/2;  
@@ -685,15 +694,18 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
     
-    for (std::size_t node=0; node < numNodes; ++node) {
+    for (std::size_t node=0; node < numNodes; ++node) 
       surf(node) = UNodal(cell,node,0);
+    gradient(surf, cell, hgradNodes);
+
+    if (useHyperViscosity) {
+      for (std::size_t node=0; node < numNodes; ++node) 
+        surftilde(node) = UNodal(cell,node,3);
+      gradient(surftilde, cell, htildegradNodes);
     }
 
     divergence(huAtNodes, cell, div_hU);
     
-    if ( ViscCoeff != 0) {
-      gradient(surf, cell, hgradNodes);
-    }
 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
         
@@ -702,17 +714,18 @@ evaluateFields(typename Traits::EvalData workset)
         Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell, node, qp)
                               +  div_hU(qp)*wBF(cell, node, qp)
                               +  ViscCoeff*hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                              +  ViscCoeff*hgradNodes(qp,1)*wGradBF(cell,node,qp,1)
-                              + hyperViscosity(cell,node,0);
-        for (int i=1; i<vecDim; ++i) 
-          Residual(cell,node,i) += hyperViscosity(cell,node,i); 
+                              +  ViscCoeff*hgradNodes(qp,1)*wGradBF(cell,node,qp,1); 
+        if (useHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi) 
+          Residual(cell,node,0) -= hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
+                                -  hyperViscosity(cell,qp,1)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
+        }
       }
     }
     
   }
 
 
-  if ( vecDim == 3) {
+  if ( vecDim > 2) {
   // Velocity Equations
   if (usePrescribedVelocity) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -722,6 +735,9 @@ evaluateFields(typename Traits::EvalData workset)
                                 +  hyperViscosity(cell,node,1);
           Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp)
                                 +  hyperViscosity(cell,node,2);
+          if (useHyperViscosity) //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi) 
+            Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                  + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
         }
       }
     }

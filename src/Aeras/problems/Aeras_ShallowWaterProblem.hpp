@@ -313,8 +313,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Hyperviscosity"));
 
     //Input
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);

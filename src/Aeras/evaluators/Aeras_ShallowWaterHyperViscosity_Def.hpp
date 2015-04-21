@@ -22,9 +22,7 @@ template<typename EvalT, typename Traits>
 ShallowWaterHyperViscosity<EvalT, Traits>::
 ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
             const Teuchos::RCP<Albany::Layouts>& dl) :
-  wGradBF  (p.get<std::string> ("Weighted Gradient BF Name"),dl->node_qp_gradient),
-  Ugrad    (p.get<std::string> ("Gradient QP Variable Name"), dl->qp_vecgradient),
-  hyperViscosity (p.get<std::string> ("Hyperviscosity Name"), dl->node_vector)
+  hyperViscosity (p.get<std::string> ("Hyperviscosity Name"), dl->qp_vector)
 {
   Teuchos::ParameterList* shallowWaterList =
    p.get<Teuchos::ParameterList*>("Parameter List");
@@ -44,8 +42,6 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
   }
 
   this->addEvaluatedField(hyperViscosity);
-  this->addEvaluatedField(wGradBF);
-  this->addEvaluatedField(Ugrad);
 
   std::vector<PHX::DataLayout::size_type> dims;
   
@@ -54,8 +50,6 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
   numDims = dims[2];
   dl->qp_vector->dimensions(dims);
   vecDim  = dims[2]; //# of dofs/node
-  wGradBF.fieldTag().dataLayout().dimensions(dims);
-  numNodes = dims[1];
 
  #define ALBANY_VERBOSE
 #ifdef ALBANY_VERBOSE
@@ -64,7 +58,6 @@ ShallowWaterHyperViscosity(const Teuchos::ParameterList& p,
   std::cout << "hvTau: " << hvTau << std::endl;
   std::cout << "hvTypeString: " << hvTypeString << std::endl;  
   std::cout << "vecDim: " << vecDim << std::endl;  
-  std::cout << "numNodes: " << numNodes << std::endl;  
 #endif
 
   this->setName("ShallowWaterHyperViscosity"+PHX::typeAsString<EvalT>());
@@ -77,8 +70,6 @@ postRegistrationSetup(typename Traits::SetupData d,
                       PHX::FieldManager<Traits>& fm)
 {
   this->utils.setFieldData(hyperViscosity,fm);
-  this->utils.setFieldData(wGradBF,fm);
-  this->utils.setFieldData(Ugrad,fm);
 }
 
 //**********************************************************************
@@ -99,24 +90,19 @@ evaluateFields(typename Traits::EvalData workset)
 {
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   if (useHyperViscosity == false) { //no hyperviscosity
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-      for (int node=0; node < numNodes; ++node) 
+    for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for(std::size_t qp = 0; qp < numQPs; ++qp) {
         for (int i=0; i<vecDim; ++i) 
-           hyperViscosity(cell, node, i) = 0.0;       
+           hyperViscosity(cell, qp, i) = 0.0;
+      }
+    }       
   }
   else { //hyperviscosity
     if (hvType == CONSTANT) {
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-        for (int qp=0; qp < numQPs; ++qp) {
-          for (int node=0; node < numNodes; ++node) {
-            for (int i=0; i<vecDim; ++i) {
-              //FIXME: Oksana will implement hyperviscosity here.
-              hyperViscosity(cell, node, i) = hvTau*0.0;      
-              //e.g., if your hyperviscosity is hvTau*d(solution vector)/dx*dw/dx + hvTau*d(solution vector)/dy*dw/dy, you'd put
-              //hyperViscosity(cell, node, i) = hvTau*Ugrad(cell,qp,i,0)*wGradBF(cell,node,qp,0) 
-              //                              + hvTau*Ugrad(cell,qp,i,1)*wGradBF(cell,node,qp,1); 
-            }
-          }
+    for(std::size_t cell = 0; cell < workset.numCells; ++cell) {
+      for(std::size_t qp = 0; qp < numQPs; ++qp) {
+        for (int i=0; i<vecDim; ++i) 
+           hyperViscosity(cell, qp, i) = hvTau;       
         }
       }
     }
