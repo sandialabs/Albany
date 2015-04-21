@@ -244,16 +244,13 @@ computeBC(
   ns_coord =
       this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
 
-  Intrepid::Vector<double>
-  bc(dimension, Intrepid::ZEROS);
-
   auto const &
   ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
 
-  std::vector< Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   coupled_element_vertices(coupled_vertex_count);
 
-  std::vector< Intrepid::Vector<double> >
+  std::vector<Intrepid::Vector<double>>
   coupled_element_solution(coupled_vertex_count);
 
   for (size_t i = 0; i < coupled_vertex_count; ++i) {
@@ -276,6 +273,20 @@ computeBC(
   point.set_dimension(coupled_dimension);
 
   point.fill(coord);
+
+  // Determine the element that contains this point.
+  bool
+  found = false;
+
+  size_t
+  parametric_dimension = 0;
+
+  Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
+  basis;
+
+  // Boundary condition.
+  Intrepid::Vector<double>
+  bc(dimension, Intrepid::ZEROS);
 
   return bc;
 }
