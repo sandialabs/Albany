@@ -199,7 +199,7 @@ computeBC(
   coupled_app_index = coupled_app.getAppIndex();
 
   std::string const
-  coupled_block_name = this_app.getBlockName(this_app_index);
+  coupled_block_name = this_app.getBlockName(coupled_app_index);
 
   std::map<std::string, int> const &
   coupled_block_name_2_index = coupled_gms.ebNameToIndex;
