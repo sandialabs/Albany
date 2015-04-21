@@ -47,6 +47,7 @@
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
       <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
       <Parameter name="Output tau_1" type="bool" value="true"/>
 
     </ParameterList>
@@ -84,8 +85,8 @@
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
       <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_1" type="bool" value="true"/>      
       <Parameter name="Output tau_1" type="bool" value="true"/>
-
 
     </ParameterList>
 

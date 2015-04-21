@@ -6,11 +6,14 @@ import matplotlib.pyplot as plt
 file_name = "SingleSlipPlaneHard.exo"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
-dep_var_name = "tau_1_1"
+dep_var_name = "tau_hard_1_1"
+dep_var_name_2= "tau_1_1"
+
 int_pt = 1
 block_id = 2
 
-output_file_name = file_name + ".pdf"
+output_file_name = file_name + dep_var_name + ".pdf"
+output_file_name_2 = file_name + dep_var_name_2 + ".pdf"
 
 ###############
 n_steps = exo_file.num_times()
@@ -24,6 +27,10 @@ dep_var = numpy.zeros(shape=(n_steps,1))
 for i in range(n_steps):
     dep_var[i]=exo_file.get_element_variable_values(block_id,dep_var_name,i+1)
 
+dep_var_2 = numpy.zeros(shape=(n_steps,1))
+for i in range(n_steps):
+    dep_var_2[i]=exo_file.get_element_variable_values(block_id,dep_var_name_2,i+1)
+
 ###############
 fig, ax = plt.subplots()
 ax.plot(inp_var,dep_var,color='blue',marker='o',label=file_name)
@@ -35,12 +42,13 @@ plt.tight_layout()
 plt.show()
 fig.savefig(output_file_name)
 
-""" fig, ax = plt.subplots()
-ax.plot(time_vals,dep_var,color='blue',marker='o',label=file_name)
-plt.xlabel('time')
-plt.ylabel(dep_var_name)
+fig, ax = plt.subplots()
+ax.plot(inp_var,dep_var_2,color='blue',marker='o',label=file_name)
+plt.xlabel(inp_var_name)
+plt.ylabel(dep_var_name_2)
 lg = plt.legend(loc = 4)
 lg.draw_frame(False)
 plt.tight_layout()
-plt.show() """
+plt.show()
+fig.savefig(output_file_name_2)
 

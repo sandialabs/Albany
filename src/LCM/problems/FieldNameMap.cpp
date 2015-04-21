@@ -45,6 +45,11 @@ namespace LCM {
       std::string g = Albany::strint("gamma", i+1,'_');
       name_map->insert( std::make_pair(g,g) );
     }
+    // field names for the hardening on each system
+    for (int i=0; i < max_slip_systems; ++i) {
+          std::string t_h = Albany::strint("tau_hard", i+1,'_');
+          name_map->insert( std::make_pair(t_h,t_h) );
+    }
     // field names for shear stress on each system
     for (int i=0; i < max_slip_systems; ++i) {
       std::string t = Albany::strint("tau", i+1,'_');

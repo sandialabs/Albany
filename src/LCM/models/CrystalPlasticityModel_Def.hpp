@@ -177,7 +177,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_output_flags_.push_back(
       p->get<bool>("Output Mechanical Source", false));
   //
-  // gammas
+  // gammas for each slip system
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string g = Albany::strint("gamma", num_ss + 1, '_');
     std::string gamma_string = (*field_name_map_)[g];
@@ -192,8 +192,23 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_gamma_string, false));
   }
+  // tau_hard - state variable for hardening on each slip system
+  for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+    std::string t_h = Albany::strint("tau_hard", num_ss + 1, '_');
+    std::string tau_hard_string = (*field_name_map_)[t_h];
+    std::string output_tau_hard_string = "Output " + tau_hard_string;
+    this->eval_field_map_.insert(std::make_pair(tau_hard_string, dl->qp_scalar));
+    this->num_state_variables_++;
+    this->state_var_names_.push_back(tau_hard_string);
+    this->state_var_layouts_.push_back(dl->qp_scalar);
+    this->state_var_init_types_.push_back("scalar");
+    this->state_var_init_values_.push_back(0.0);
+    this->state_var_old_state_flags_.push_back(true);
+    this->state_var_output_flags_.push_back(
+        p->get<bool>(output_tau_hard_string, false));
+  }
   //
-  // taus
+  // taus - output resolved shear stress for debugging - not stated
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string t = Albany::strint("tau", num_ss + 1, '_');
     std::string tau_string = (*field_name_map_)[t];
@@ -204,7 +219,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_layouts_.push_back(dl->qp_scalar);
     this->state_var_init_types_.push_back("scalar");
     this->state_var_init_values_.push_back(0.0);
-    this->state_var_old_state_flags_.push_back(true);
+    this->state_var_old_state_flags_.push_back(false);
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_tau_string, false));
   }
@@ -255,16 +270,23 @@ computeState(typename Traits::EvalData workset,
     previous_slips.push_back(
         &((*workset.stateArrayPtr)[gamma_string + "_old"]));
   }
+  // extract hardening on each slip system
+  std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > hards;
+  std::vector<Albany::MDArray *> previous_hards;
+  for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
+    std::string t_h = Albany::strint("tau_hard", num_ss + 1, '_');
+    std::string tau_hard_string = (*field_name_map_)[t_h];
+    hards.push_back(eval_fields[tau_hard_string]);
+    previous_hards.push_back(
+        &((*workset.stateArrayPtr)[tau_hard_string + "_old"]));
+  }
 
-  // extract shear on each slip system
+  // store shear on each slip system for output
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > shears;
-  std::vector<Albany::MDArray *> previous_shears;
   for (int num_ss = 0; num_ss < num_slip_; ++num_ss) {
     std::string t = Albany::strint("tau", num_ss + 1, '_');
     std::string tau_string = (*field_name_map_)[t];
     shears.push_back(eval_fields[tau_string]);
-    previous_shears.push_back(
-        &((*workset.stateArrayPtr)[tau_string + "_old"]));
   }
 
   // get state variables
@@ -299,7 +321,7 @@ computeState(typename Traits::EvalData workset,
 
       // TODO get rid of cell and pt arguments and just pass a reference to the correct entries in
       //      slips and previous_slips (assuming this is possible with the Intrepid data structures).
-      predictor(cell, pt, dt, slips, previous_slips, F, L, Fp);
+      predictor(cell, pt, dt, slips, previous_slips, hards, previous_hards, F, L, Fp);
 
       // IMPLICIT LOOP GOES HERE
 
@@ -368,6 +390,8 @@ predictor(int cell,
     ScalarT dt,
     std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
     std::vector<Albany::MDArray *> const & previous_slips,
+    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & hards,
+    std::vector<Albany::MDArray *> const & previous_hards,
     Intrepid::Tensor<ScalarT> const & F,
     Intrepid::Tensor<ScalarT> & L,
     Intrepid::Tensor<ScalarT> & Fp)
@@ -377,7 +401,9 @@ predictor(int cell,
   Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_), expL(num_dims_),
       Fp_temp(num_dims_);
   PHX::MDField<ScalarT> slip;
+  PHX::MDField<ScalarT> hard;
   Albany::MDArray previous_slip;
+  Albany::MDArray previous_hard;
 
   computeStress(F, Fp, sigma, S);
 
@@ -392,21 +418,37 @@ predictor(int cell,
     int sign = tau < 0 ? -1 : 1;
 
     // compute  dgammas
+
+    // material parameters
     g0 = slip_systems_[s].gamma_dot_0_;
     tauC = slip_systems_[s].tau_critical_;
     m = slip_systems_[s].gamma_exp_;
     H = slip_systems_[s].H_;
 
+    // initialize slip, previous slip, and gamma (slip)
     slip = *(slips[s]);
     previous_slip = *(previous_slips[s]);
     slip(cell, pt) = previous_slip(cell, pt);
     gamma = previous_slip(cell, pt);
 
-    t1 = std::fabs(tau / (tauC + H * std::fabs(gamma)));
+    // initialize hardening and previous hardening
+    hard = *(hards[s]);
+    previous_hard = *(previous_hards[s]);
+    hard(cell, pt) = previous_hard(cell, pt);
+
+    // calculate additional hardening
+    ScalarT tmp_hard = H * std::fabs(gamma);
+    if (tmp_hard > hard(cell, pt)) {
+      hard(cell, pt) = tmp_hard;
+    }
+    // calculate slip increment with additional hardening
+    t1 = std::fabs(tau / (tauC + hard(cell, pt)));
     dgamma = dt * g0 * std::fabs(std::pow(t1, m)) * sign;
 
+    // update slip
     slip(cell, pt) += dgamma;
 
+    // calculate plastic velocity gradient
     L += (dgamma * P);
   }
 
