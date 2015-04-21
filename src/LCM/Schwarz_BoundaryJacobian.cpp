@@ -139,7 +139,8 @@ apply(
       size_t const
       dof = ns_dof[ns_node][i];
 
-      Y_1d_view[dof] = bc_value(i);
+      // Disable for now for testing.
+      //Y_1d_view[dof] = bc_value(i);
     }
 
   } // node in node set loop
