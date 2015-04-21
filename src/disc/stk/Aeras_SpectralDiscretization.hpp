@@ -59,11 +59,12 @@ namespace Aeras
       std::string orig_name = orig_ctd.name;
       size_t len      = orig_name.find("_");
       if (len != std::string::npos) orig_name = orig_name.substr(0,len);
-      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral"), 
+      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral")
+                                  && (orig_name != "Line"), 
                                   Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error!  Attempting to enrich a non-quadrilateral element (" <<
                                   orig_name << ")!  Aeras::SpectralDiscretization is currently implemented only for " <<
-                                  "Quadrilateral and ShellQuadrilateral elements.\n"); 
+                                  "Quadrilateral, ShellQuadrilateral and Line elements.\n"); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
 #endif 
@@ -83,7 +84,11 @@ namespace Aeras
       //cell topology data (ctd), but with a different node_count, vertex_count and name. 
       CellTopologyData new_ctd = orig_ctd; 
       //overwrite node_count, vertex_count and name of the original ctd.
-      int np = points_per_edge*points_per_edge; 
+      int np; 
+      if (orig_name == "ShellQuadrilateral" || orig_name == "Quadrilateral") 
+        np = points_per_edge*points_per_edge; 
+      else if (orig_name == "Line") 
+        np = points_per_edge; 
       new_ctd.node_count = np; 
       new_ctd.vertex_count = np; //Assumes vertex_count = node_count for ctd, which is the case for 
                                  //isoparametric finite elements.
@@ -460,36 +465,42 @@ namespace Aeras
     getMaximumID(const stk::mesh::EntityRank rank) const;
 
     //! Enrich the linear STK mesh to a spectral Albany mesh
-    void enrichMesh();
+    void enrichMeshLines();
+    void enrichMeshQuads();
 
 #if defined(ALBANY_EPETRA)
     void computeNodalEpetraMaps(bool overlapped);
 #endif
 
     //! Process spectral Albany mesh for owned nodal quantitites
-    void computeOwnedNodesAndUnknowns();
+    void computeOwnedNodesAndUnknownsLines();
+    void computeOwnedNodesAndUnknownsQuads();
 
     //! Process coords for ML
     void setupMLCoords();
 
     //! Process spectral Albany mesh for overlap nodal quantitites
-    void computeOverlapNodesAndUnknowns();
+    void computeOverlapNodesAndUnknownsLines();
+    void computeOverlapNodesAndUnknownsQuads();
 
     //! Fill in the Workset of coordinates with corner nodes from the
     //! STK mesh and enriched points from Gauss-Lobatto quadrature
-    void computeCoords();
+    void computeCoordsLines();
+    void computeCoordsQuads();
 
     //! Process spectral Albany mesh for CRS Graphs
-    void computeGraphs();
+    void computeGraphsLines();
+    void computeGraphsQuads();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
-    void computeWorksetInfo();
+    void computeWorksetInfoLines();
+    void computeWorksetInfoQuads();
 
     //! Process spectral Albany mesh for NodeSets
-    void computeNodeSets();
+    void computeNodeSetsLines();
 
     //! Process spectral Albany mesh for SideSets
-    void computeSideSets();
+    void computeSideSetsLines();
 
     //! Create new STK mesh in which spectral elements are interpreted
     //! as a patch of linear quadrilaterals, and use this to setup
@@ -527,6 +538,8 @@ namespace Aeras
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
+
+    int spatial_dim; //how many spatial dimensions there are in the problem
 
     int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
 

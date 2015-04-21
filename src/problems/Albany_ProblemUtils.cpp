@@ -33,13 +33,26 @@ Albany::getIntrepidBasis(const CellTopologyData& ctd, bool compositeTet)
    cout << "FullCellTopology name is " << ctd.name << endl;
 #endif
 
-   // 1D elements
+   // 1D elements -- non-spectral basis
    if (name == "Line")
    {
+#ifdef ALBANY_VERBOSE
+     cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
+#endif
      if (numNodes == 2)
        intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_C1_FEM< RealType, Field_t >() );
      else
-       intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_Cn_FEM< RealType, Field_t >(numNodes, Intrepid::POINTTYPE_SPECTRAL) );
+       TEUCHOS_TEST_FOR_EXCEPTION(
+         true,
+         Teuchos::Exceptions::InvalidParameter,
+         "Albany::ProblemUtils::getIntrepidBasis line element with " << numNodes << " nodes is not supported");
+   }
+   else if (name == "SpectralLine")
+   {
+#ifdef ALBANY_VERBOSE
+     cout << "  For " << name << " element, numNodes = " << numNodes <<  endl;
+#endif
+     intrepidBasis = rcp(new Intrepid::Basis_HGRAD_LINE_Cn_FEM< RealType, Field_t >(numNodes-1, Intrepid::POINTTYPE_SPECTRAL) );
    }
 
    // 2D triangles -- non-spectral basis
