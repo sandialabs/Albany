@@ -60,17 +60,8 @@ def bc_string(node_set_id, dof, times, values):
 
 if __name__ == "__main__":
 
-    print "\nThis test has a single element with a single slip plane."
-    print "The slip plane is orientated such that it is not aligned with"
-    print "the coordinate axes.  Loading is then applied such that there"
-    print "is zero shear stress on the slip plane.  There should be no"
-    print "plastic slip in this case.  A second case is also tested in which"
-    print "the slip plane is at a 45-degree angle to the load.  This results"
-    print "in the maximum possible resolved shear stress, and hence plastic"
-    print "flow."
-
     YoungsModulus = 200.0
-    PoissonsRatio = 0.49999
+    PoissonsRatio = 0.3
     C11 = (1.0 - PoissonsRatio)            * ( YoungsModulus / ((1.0 + PoissonsRatio)*(1.0 - 2.0*PoissonsRatio)) )
     C12 = PoissonsRatio                    * ( YoungsModulus / ((1.0 + PoissonsRatio)*(1.0 - 2.0*PoissonsRatio)) )
     C44 = ((1.0 - 2.0*PoissonsRatio)/2.0)  * ( YoungsModulus / ((1.0 + PoissonsRatio)*(1.0 - 2.0*PoissonsRatio)) )
@@ -85,11 +76,11 @@ if __name__ == "__main__":
 
     R_active = ConstructActiveRotationTensor(Bunge_Euler_phi1, Bunge_Euler_Phi, Bunge_Euler_phi2)
 
-    R_passive = [[R_active[0][0], R_active[1][0], R_active[2][0]],
-                 [R_active[0][1], R_active[1][1], R_active[2][1]],
-                 [R_active[0][2], R_active[1][2], R_active[2][2]]]
+#    R_passive = [[R_active[0][0], R_active[1][0], R_active[2][0]],
+#                 [R_active[0][1], R_active[1][1], R_active[2][1]],
+#                 [R_active[0][2], R_active[1][2], R_active[2][2]]]
 
-    BasisVector1, BasisVector2, BasisVector3 = ConstructBasisVectors(R_passive) # DJL:  WHY IS THIS NOT R_active ??
+    BasisVector1, BasisVector2, BasisVector3 = ConstructBasisVectors(R_active)
 
     nodes = []
     nodes.append((1, 0, 1))
@@ -101,8 +92,8 @@ if __name__ == "__main__":
     nodes.append((0, 0, 0))
     nodes.append((0, 1, 0))
 
-    time_step = 0.0001
-    num_time_steps = 1000
+    time_step = 0.01
+    num_time_steps = 12
     final_time = time_step*(num_time_steps-1)
     times = [n*time_step for n in range(num_time_steps)]
 
