@@ -230,6 +230,7 @@ computeBC(
   size_t const
   coupled_dimension = coupled_cell_topology_data.dimension;
 
+  // FIXME: Generalize element topology.
   size_t const
   coupled_vertex_count = coupled_cell_topology_data.vertex_count;
 
@@ -293,21 +294,21 @@ computeBC(
   Teuchos::ArrayRCP<double> const &
   coupled_coordinates = coupled_stk_disc->getCoordinates();
 
-  for (size_t workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
+  for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
     std::string const &
     coupled_element_block = coupled_ws_eb_names[workset];
 
     if (coupled_element_block != coupled_block_name) continue;
 
-    size_t const
+    auto const
     elements_per_workset = ws_elem_2_node_id[workset].size();
 
-    for (size_t element = 0; element < elements_per_workset; ++element) {
+    for (auto element = 0; element < elements_per_workset; ++element) {
 
-      for (size_t node = 0; node < coupled_vertex_count; ++node) {
+      for (auto node = 0; node < coupled_vertex_count; ++node) {
 
-        size_t const
+        auto const
         node_id = ws_elem_2_node_id[workset][element][node];
 
         double * const
@@ -315,7 +316,7 @@ computeBC(
 
         coupled_element_vertices[node].fill(pcoord);
 
-        for (size_t i = 0; i < coupled_dimension; ++i) {
+        for (auto i = 0; i < coupled_dimension; ++i) {
           coupled_element_solution[node](i) =
               coupled_solution_view[coupled_dimension * node_id + i];
         }
