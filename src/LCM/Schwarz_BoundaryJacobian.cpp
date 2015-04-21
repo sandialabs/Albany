@@ -284,6 +284,15 @@ computeBC(
   Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
   basis;
 
+  Teuchos::RCP<Tpetra_Vector const>
+  coupled_solution = coupled_stk_disc->getSolutionFieldT();
+
+  Teuchos::ArrayRCP<ST const>
+  coupled_solution_view = coupled_solution->get1dView();
+
+  Teuchos::ArrayRCP<double> const &
+  coupled_coordinates = coupled_stk_disc->getCoordinates();
+
   for (size_t workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
     std::string const &
@@ -293,6 +302,26 @@ computeBC(
 
     size_t const
     elements_per_workset = ws_elem_2_node_id[workset].size();
+
+    for (size_t element = 0; element < elements_per_workset; ++element) {
+
+      for (size_t node = 0; node < coupled_vertex_count; ++node) {
+
+        size_t const
+        node_id = ws_elem_2_node_id[workset][element][node];
+
+        double * const
+        pcoord = &(coupled_coordinates[coupled_dimension * node_id]);
+
+        coupled_element_vertices[node].fill(pcoord);
+
+        for (size_t i = 0; i < coupled_dimension; ++i) {
+          coupled_element_solution[node](i) =
+              coupled_solution_view[coupled_dimension * node_id + i];
+        }
+      }
+
+    } // element loop
 
   } // workset loop
 
