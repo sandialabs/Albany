@@ -197,7 +197,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     std::string t_h = Albany::strint("tau_hard", num_ss + 1, '_');
     std::string tau_hard_string = (*field_name_map_)[t_h];
     std::string output_tau_hard_string = "Output " + tau_hard_string;
-    this->eval_field_map_.insert(std::make_pair(tau_hard_string, dl->qp_scalar));
+    this->eval_field_map_.insert(
+        std::make_pair(tau_hard_string, dl->qp_scalar));
     this->num_state_variables_++;
     this->state_var_names_.push_back(tau_hard_string);
     this->state_var_layouts_.push_back(dl->qp_scalar);
@@ -300,8 +301,6 @@ computeState(typename Traits::EvalData workset,
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
 
-
-
   I_ = Intrepid::eye<RealType>(num_dims_);
 
 #ifdef PRINT_OUTPUT
@@ -321,7 +320,17 @@ computeState(typename Traits::EvalData workset,
 
       // TODO get rid of cell and pt arguments and just pass a reference to the correct entries in
       //      slips and previous_slips (assuming this is possible with the Intrepid data structures).
-      predictor(cell, pt, dt, slips, previous_slips, hards, previous_hards, F, L, Fp);
+      predictor(
+          cell,
+          pt,
+          dt,
+          slips,
+          previous_slips,
+          hards,
+          previous_hards,
+          F,
+          L,
+          Fp);
 
       // IMPLICIT LOOP GOES HERE
 
@@ -331,10 +340,10 @@ computeState(typename Traits::EvalData workset,
       Intrepid::Tensor<RealType> P(num_dims_);
       PHX::MDField<ScalarT> shear;
       for (int s(0); s < num_slip_; ++s) {
-          P = slip_systems_[s].projector_;
-          tau = Intrepid::dotdot(P, S);
-          shear = *(shears[s]);
-          shear(cell,pt) = tau;
+        P = slip_systems_[s].projector_;
+        tau = Intrepid::dotdot(P, S);
+        shear = *(shears[s]);
+        shear(cell, pt) = tau;
       }
 
       // Load results into Albany data containers
