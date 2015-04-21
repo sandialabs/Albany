@@ -93,24 +93,21 @@ apply(
   int const
   coupled_app_index = getCoupledAppIndex();
 
-  // If they are not couples get out.
+  // If they are not coupled get out.
   if (this_app.isCoupled(coupled_app_index) == false) return;
-
-  size_t const
-  offset = 0;
 
   Albany::Application const &
   coupled_app = getApplication(coupled_app_index);
 
   std::string const &
-  coupled_block_name = coupled_app.getBlockName(coupled_app_index);
+  coupled_block_name = this_app.getCoupledBlockName(coupled_app_index);
 
   std::string const &
-  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+  this_nodeset_name = this_app.getNodesetName(coupled_app_index);
 
   // Get DOFs associated with node set.
   Teuchos::RCP<Albany::AbstractDiscretization>
-  disc = coupled_app.getDiscretization();
+  disc = this_app.getDiscretization();
 
   Albany::STKDiscretization *
   stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
@@ -121,22 +118,22 @@ apply(
   Albany::NodeSetList const &
   nodesets = stk_discretization->getNodeSets();
 
-  std::vector<std::vector<int> > const &
-  ns_dof = nodesets.find(coupled_nodeset_name)->second;
+  std::vector<std::vector<int>> const &
+  ns_dof = nodesets.find(this_nodeset_name)->second;
 
-  size_t const
+  auto const
   ns_number_nodes = ns_dof.size();
 
   Teuchos::ArrayRCP<ST>
   Y_1d_view = Y.get1dViewNonConst();
 
-  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     Intrepid::Vector<double>
     bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
 
-    for (Intrepid::Index i = 0; i < dimension; ++i) {
-      size_t const
+    for (auto i = 0; i < dimension; ++i) {
+      auto const
       dof = ns_dof[ns_node][i];
 
       // Disable for now for testing.
@@ -202,7 +199,7 @@ computeBC(
   coupled_app_index = coupled_app.getAppIndex();
 
   std::string const
-  coupled_block_name = this_app.getBlockName(this_app_index);
+  coupled_block_name = this_app.getCoupledBlockName(coupled_app_index);
 
   std::map<std::string, int> const &
   coupled_block_name_2_index = coupled_gms.ebNameToIndex;
@@ -239,7 +236,7 @@ computeBC(
       Intrepid::find_type(coupled_dimension, coupled_vertex_count);
 
   std::string const &
-  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+  coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
 
   std::vector<double *> const &
   ns_coord =

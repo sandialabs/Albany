@@ -921,7 +921,7 @@ namespace Albany {
         std::string const & nodeset_name);
 
     std::string
-    getBlockName(int const app_index) const
+    getCoupledBlockName(int const app_index) const
     {
       auto it = coupled_app_index_block_nodeset_names_map_.find(app_index);
       assert(it != coupled_app_index_block_nodeset_names_map_.end());
@@ -959,6 +959,7 @@ namespace Albany {
       for ( ; it != app_name_index_map_->end(); ++it) {
         if (app_index == it->second) {
           name = it->first;
+          break;
         }
       }
 

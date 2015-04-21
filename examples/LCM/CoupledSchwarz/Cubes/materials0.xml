@@ -12,7 +12,7 @@
     <ParameterList name="Fine">
 
       <ParameterList name="Material Model"> 
-        <Parameter name="Model Name" type="string" value="J2"/>
+        <Parameter name="Model Name" type="string" value="Linear Elastic"/>
       </ParameterList>
 
       <ParameterList name="Elastic Modulus">
@@ -24,23 +24,8 @@
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="0.30"/>
       </ParameterList>
-
-      <ParameterList name="Hardening Modulus">
-	<Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
-	<Parameter name="Value" type="double" value="20.0e09"/>
-      </ParameterList>
-      
-      <ParameterList name="Yield Strength">
-	<Parameter name="Yield Strength Type" type="string" value="Constant"/>
-	<!--Parameter name="Value" type="double" value="250.0e06"/-->
-	<Parameter name="Value" type="double" value="250.0e12"/>
-      </ParameterList>
       
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
-      <Parameter name="Output eqps" type="bool" value="true"/> 
-      <Parameter name="Output Yield Surface" type="bool" value="true"/>
-      <Parameter name="Output Fp" type="bool" value="true"/>
-      <Parameter name="Output J" type="bool" value="true"/>
       
     </ParameterList>
 
