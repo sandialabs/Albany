@@ -209,6 +209,25 @@ computeBC(
     exit(1);
   }
 
+  int const
+  coupled_block_index = it->second;
+
+  CellTopologyData const
+  coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
+
+  shards::CellTopology
+  coupled_cell_topology(&coupled_cell_topology_data);
+
+  size_t const
+  coupled_dimension = coupled_cell_topology_data.dimension;
+
+  size_t const
+  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
+
+  Intrepid::ELEMENT::Type const
+  coupled_element_type =
+      Intrepid::find_type(coupled_dimension, coupled_vertex_count);
+
   return bc;
 }
 
