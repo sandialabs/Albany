@@ -148,8 +148,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   eigensolverName = problemParams.get<string>("Schrodinger Eigensolver","LOBPCG");
   bRealEvecs = problemParams.get<bool>("Eigenvectors are Real",false);
-  discretizationCreateCmd = problemParams.get<std::string>("Discretization Creation Cmd","");
-
+  
   // Get problem parameters used for iterating Poisson-Schrodinger loop
   if(problemNameBase == "Poisson Schrodinger" || problemNameBase == "Poisson Schrodinger CI") {
     bUseIntegratedPS = problemParams.get<bool>("Use Integrated Poisson Schrodinger",true);
@@ -214,6 +213,52 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
   // Get name of output exodus file specified in Discretization section
   std::string outputExo = appParams->sublist("Discretization").get<std::string>("Exodus Output File Name");
+
+  // Set variables for case when the discretization depends on the parameters
+  std::vector<double> geoParamInitialVals;
+  discretizationCreateCmd = problemParams.get<std::string>("Discretization Creation Cmd","");
+  bDiscretizationDependsOnParameters = bool(discretizationCreateCmd.length() > 0);
+  if(bDiscretizationDependsOnParameters) {
+    // Use a pointer to an integer here instead of just an integer so that this
+    //  counter can be modified within the const member function evalModel(...).
+    //  This can be viewed as a hack to get around evalModel being const, or as
+    //   a poor man's observer counter, which will be later incorporated into some
+    //   persistent observer object that makes sure it doesn't overwrite previously
+    //   written solutions (as in Albany::STKDiscretization::writeSolution), except 
+    //   in this case the discretizations are different so we write to a new Exodus file.
+    currentEvalIndex = Teuchos::rcp(new int); 
+    *currentEvalIndex = -1;
+    baseOutputExodusFilename = outputExo;
+
+#ifndef EPETRA_NO_32BIT_GLOBAL_INDICES
+    typedef int GlobalIndex;
+#else
+    typedef long long GlobalIndex;
+#endif
+
+    //Create a dummy solution vector to return as the last response vector, since we don't
+    // know what the final solution vector size/map will be given that it depends on the parameters.
+    std::size_t dummySize = 1;
+    dummy_soln_map = Teuchos::rcp(new Epetra_LocalMap(static_cast<GlobalIndex>(dummySize), 0, *comm));
+    dummy_soln_vec = Teuchos::rcp(new Epetra_Vector(*(dummy_soln_map)));
+
+    //Get geometry parameter initial values
+    if(problemParams.isSublist("Geometry Parameters")) {
+      Teuchos::ParameterList& geoParamPL = problemParams.sublist("Geometry Parameters", true);
+      int nGeoParams = geoParamPL.get<int>("Number", 0);
+      geoParamInitialVals.resize(nGeoParams);
+      for (int i=0; i<nGeoParams; i++) {
+	geoParamInitialVals[i] = geoParamPL.get<double>(Albany::strint("Geometry Parameter",i));
+      }
+    }
+  }
+  else {
+    dummy_soln_map = Teuchos::null;
+    dummy_soln_vec = Teuchos::null;
+    currentEvalIndex = Teuchos::null;
+    baseOutputExodusFilename = "UNUSED_OUTPUT_EXO_NAME";
+  }
+
 
   // Create Solver parameter lists based on problem name
   if( problemNameBase == "Poisson" ) {
@@ -289,8 +334,9 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   //Save the initial guess passed to the solver
   saved_initial_guess = initial_guess;
 
-  //Temporarily create a map of sub-solvers, used for obtaining the initial parameter vector and 
-  //   for figuring out what types of derivatives are supported.
+  // Create a map of sub-solvers, used for obtaining the initial parameter vector,
+  //   for figuring out what types of derivatives are supported, and for use 
+  //   within evalModel (unless we need to re-mesh at each evalModel)
   std::map<std::string, SolverSubSolverData> subSolversData;
   std::map<std::string, Teuchos::RCP<Teuchos::ParameterList> >::const_iterator itp;
   for(itp = subProblemAppParams.begin(); itp != subProblemAppParams.end(); ++itp) {
@@ -367,7 +413,7 @@ Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   // Take initial value from the first (if multiple) parameter 
   //    fns for each given parameter
   for(std::size_t i=0; i<nParameters; i++) {
-    (*epetra_param_vec)[i] = paramFnVecs[i][0]->getInitialParam(subSolversData);
+    (*epetra_param_vec)[i] = paramFnVecs[i][0]->getInitialParam(subSolversData, geoParamInitialVals);
   }
 }
 
@@ -1099,7 +1145,10 @@ Teuchos::RCP<const Epetra_Map> QCAD::Solver::get_g_map(int j) const
                      j << std::endl);
 
   if      (j < num_g) return epetra_response_map;  //no index because num_g == 1 so j must be zero
-  else if (j == num_g) return epetra_x_map;
+  else if (j == num_g) {
+    if(bDiscretizationDependsOnParameters) return dummy_soln_map;
+    else return epetra_x_map; 
+  }
   return Teuchos::null;
 }
 
@@ -1168,7 +1217,11 @@ QCAD::Solver::evalModel(const InArgs& inArgs,
   std::map<std::string, SolverSubSolver> subSolvers; 
   Teuchos::RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-  if(discretizationCreateCmd.length() > 0) {
+  if(bDiscretizationDependsOnParameters) {
+    //Increment evaluation index, which keeps us from overwriting a previous output by
+    // changing the output exodus filename.
+    (*currentEvalIndex)++;  // a pointer to an integer so it's value can be modified in a const member fn
+       	
     //Write geometry parameters to a (HARDCODED) text file and do re-meshing on root processor
     if( solverComm->MyPID() == 0 ) {
       writeSingleSubSolverParamsToFile(inArgs, "Geometry", "QCAD_geometry_params.txt");
@@ -2004,7 +2057,7 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 
 
 void QCAD::Solver::setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
-					 const std::map<std::string, SolverSubSolverData>& subSolversData )
+					 const std::map<std::string, SolverSubSolverData>& subSolversData)
 {
   std::string s;
   std::vector<std::string> fnStrings;
@@ -2027,7 +2080,6 @@ void QCAD::Solver::setupParameterMapping(const Teuchos::ParameterList& list, con
 
   else {  // When "Number" is not given, expose all the parameters of the default SubSolver
 
-    
     if( (subSolversData.find(defaultSubSolver)->second).Np > 0 )
       nParameters = (subSolversData.find(defaultSubSolver)->second).pLength[0]; //just use param vec 0
     else nParameters = 0; //if the solver has no parameter vectors, then there are no parameters
@@ -2124,19 +2176,43 @@ QCAD::Solver::CreateSubSolver(const std::string& name, const Teuchos::RCP<Teucho
   Teuchos::RCP<const Teuchos_Comm> mpiCommT = Albany::createTeuchosCommFromMpiComm(mpiComm);
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
+  Teuchos::RCP<Teuchos::ParameterList> modified_appParams = Teuchos::rcp( new Teuchos::ParameterList(*appParams) );
+
+  if(bDiscretizationDependsOnParameters) {
+    //Find and replace output exodus name in appParams if the set value
+    //  equals baseOutputExodusFilename, since this indicates that this is the final 
+    //  output exodus file that we don't want to overwrite.
+
+    if(modified_appParams->isSublist("Discretization")) {
+      Teuchos::ParameterList& discList = modified_appParams->sublist("Discretization");
+      if(discList.get<std::string>("Exodus Output File Name","") == baseOutputExodusFilename) {
+	if( (*currentEvalIndex) >= 0) {
+	  std::string outputExo = Albany::strint(baseOutputExodusFilename, *currentEvalIndex, '_');
+	  discList.set("Exodus Output File Name",outputExo);
+	  if(bVerbose) *out << "QCAD Solver setting Exodus Output File Name =\"" << outputExo 
+			    << "\" for " << name << " sub-solver" << std::endl;
+	}
+	else {
+	  discList.remove("Exodus Output File Name",false);
+	  if(bVerbose) *out << "QCAD Solver removing Exodus Output File Name" 
+			    << " for " << name << " sub-solver" << std::endl;
+	}
+      }
+    }
+  }
+
 
   //Determine whether we should create a new subSolver (using solver factory) or populate from
   //  persistent_subSolvers "cache"
   if( persistent_subSolvers.find(name) == persistent_subSolvers.end() ||
       (persistent_subSolvers.find(name)->second).app == Teuchos::null ||
-      initial_guess != Teuchos::null ||
-      discretizationCreateCmd.length() > 0) {
+      initial_guess != Teuchos::null || bDiscretizationDependsOnParameters) {
   
       *out << "QCAD Solver creating solver from " << appParams->name() 
            << " parameter list" << std::endl;
      
       //! Create solver factory, which reads xml input filen
-      Albany::SolverFactory slvrfctry(appParams, mpiCommT);
+      Albany::SolverFactory slvrfctry(modified_appParams, mpiCommT);
         
       //! Create solver and application objects via solver factory
       RCP<Epetra_Comm> appComm = Albany::createEpetraCommFromMpiComm(mpiComm);
@@ -2321,6 +2397,14 @@ QCAD::Solver::getValidProblemParameters() const
     validResponsePL.sublist(Albany::strint("Response Vector",i));
   }
 
+  const int maxGeoParameters = 100;
+  Teuchos::ParameterList& validGeoParamPL = validPL->sublist("Geometry Parameters", false, "");
+  validGeoParamPL.set<int>("Number", 0);
+  for (int i=0; i<maxGeoParameters; i++) {
+    validGeoParamPL.set<double>(Albany::strint("Geometry Parameter",i), 0.0);
+  }
+
+
   // Candidates for deprecation. Pertain to the solution rather than the problem definition.
   validPL->set<std::string>("Solution Method", "Steady", "Flag for Steady, Transient, or Continuation");
   
@@ -2338,7 +2422,7 @@ QCAD::Solver::getValidProblemParameters() const
 // "fn1(a,b)>fn2(c,d) ... >SolverName[X:Y]  OR
 // "SolverName[X:Y]"
 QCAD::SolverParamFn::SolverParamFn(const std::string& fnString, 
-			     const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData)
+				   const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData)
 {
   std::vector<std::string> fnsAndTarget = QCAD::string_split(fnString,'>',true);
   std::vector<std::string>::const_iterator it;  
@@ -2445,16 +2529,25 @@ void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue,
 }
 
 double QCAD::SolverParamFn::
-getInitialParam(const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData) const
+getInitialParam(const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData, 
+		const std::vector<double>& geoParamInitialVals) const
 {
   //get first target parameter's initial value
   double initVal;
 
-  Teuchos::RCP<const Epetra_Vector> p_init = 
-    (subSolversData.find(targetName)->second).p_init; //only one p vector used
+  if(targetName == "Geometry") { //special case of geometry parameter
+    TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
+    TEUCHOS_TEST_FOR_EXCEPT(geoParamInitialVals.size() <= targetIndices[0]);
+    initVal = geoParamInitialVals[ targetIndices[0] ];
+  }
+  else {
 
-  TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
-  initVal = (*p_init)[ targetIndices[0] ];
+    Teuchos::RCP<const Epetra_Vector> p_init = 
+      (subSolversData.find(targetName)->second).p_init; //only one p vector used
+
+    TEUCHOS_TEST_FOR_EXCEPT(targetIndices.size() == 0);
+    initVal = (*p_init)[ targetIndices[0] ];
+  }
 
   std::vector< std::vector<std::string> >::const_iterator fit;
   for(fit = filters.end(); fit != filters.begin(); --fit) {

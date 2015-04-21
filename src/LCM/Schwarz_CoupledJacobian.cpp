@@ -83,8 +83,12 @@ const
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
+      } else {
+        Teuchos::RCP<Thyra::LinearOpBase<ST> >
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(
+            jacs_boundary[i * block_dim + j]);
+        blocked_op->setNonconstBlock(i, j, block);
       }
-      //FIXME: add off-diagonal blocks
     }
   }
 

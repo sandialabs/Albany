@@ -7,6 +7,7 @@
 #include "Teuchos_ParameterListExceptions.hpp"
 #include "Teuchos_TestForException.hpp"
 
+#include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
@@ -122,7 +123,20 @@ apply(
   size_t const
   ns_number_nodes = ns_dof.size();
 
+  Teuchos::ArrayRCP<ST>
+  Y_1d_view = Y.get1dViewNonConst();
+
   for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+    Intrepid::Vector<double>
+    bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
+
+    for (Intrepid::Index i = 0; i < dimension; ++i) {
+      size_t const
+      dof = ns_dof[ns_node][i];
+
+      Y_1d_view[dof] = bc_value(i);
+    }
 
   } // node in node set loop
 
@@ -142,10 +156,91 @@ computeBC(
     Albany::Application const & this_app,
     Albany::Application const & coupled_app,
     int const dimension,
-    size_t const ns_node)
+    size_t const ns_node) const
 {
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  this_disc = this_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  this_stk_disc =
+      static_cast<Albany::STKDiscretization *>(this_disc.get());
+
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = coupled_app.getDiscretization();
+
+  Albany::STKDiscretization *
+  coupled_stk_disc =
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+
+  Albany::GenericSTKMeshStruct &
+  coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
+    (*(coupled_stk_disc->getSTKMeshStruct()));
+
+  Albany::WorksetArray<std::string>::type const &
+  coupled_ws_eb_names = coupled_disc->getWsEBNames();
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
+  coupled_mesh_specs = coupled_gms.getMeshSpecs();
+
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
+
+  // Get cell topology of the application and block to which this node set
+  // is coupled.
+  int const
+  this_app_index = this_app.getAppIndex();
+
+  std::string const &
+  this_app_name = this_app.getAppName();
+
+  std::string const &
+  coupled_app_name = coupled_app.getAppName();
+
+  int const
+  coupled_app_index = coupled_app.getAppIndex();
+
+  std::string const
+  coupled_block_name = this_app.getBlockName(this_app_index);
+
+  std::map<std::string, int> const &
+  coupled_block_name_2_index = coupled_gms.ebNameToIndex;
+
+  auto
+  it = coupled_block_name_2_index.find(coupled_block_name);
+
+  if (it == coupled_block_name_2_index.end()) {
+    std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+    std::cerr << "Unknown coupled block: " << coupled_block_name << '\n';
+    std::cerr << "Coupling application : " << this_app_name << '\n';
+    std::cerr << "To application       : " << coupled_app_name << '\n';
+    exit(1);
+  }
+
+  int const
+  coupled_block_index = it->second;
+
+  CellTopologyData const
+  coupled_cell_topology_data = coupled_mesh_specs[coupled_block_index]->ctd;
+
+  shards::CellTopology
+  coupled_cell_topology(&coupled_cell_topology_data);
+
+  size_t const
+  coupled_dimension = coupled_cell_topology_data.dimension;
+
+  size_t const
+  coupled_vertex_count = coupled_cell_topology_data.vertex_count;
+
+  Intrepid::ELEMENT::Type const
+  coupled_element_type =
+      Intrepid::find_type(coupled_dimension, coupled_vertex_count);
+
+  std::string const &
+  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+
+  std::vector<double *> const &
+  ns_coord =
+      this_stk_disc->getNodeSetCoords().find(coupled_nodeset_name)->second;
 
   return bc;
 }

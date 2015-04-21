@@ -12,9 +12,7 @@ template<typename EvalT, typename Traits>
 MechanicsAdjointBase<EvalT, Traits>::
 MechanicsAdjointBase (Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl,
-    const Albany::MeshSpecsStruct* mesh_specs) :
-  wBF_(p.get<std::string>("Weighted BF Name"), dl->node_qp_scalar),
-  BF_(p.get<std::string>("BF Name"), dl->node_qp_scalar)
+    const Albany::MeshSpecsStruct* mesh_specs)
 {
   std::cout << "MECHANICS ADJOINT: in constructor" << std::endl;
 }

@@ -20,17 +20,17 @@ static void print(const char* format, ...)
 }
 
 AdjointResponseFunction::AdjointResponseFunction(
-    const Teuchos::RCP<Albany::Application>& application_,
-    const Teuchos::RCP<Albany::AbstractProblem>& problem_,
-    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs_,
-    const Teuchos::RCP<Albany::StateManager>& stateMgr_,
-    Teuchos::ParameterList& responseParams_) :
-  ScalarResponseFunction(application_->getComm()),
-  application(application_),
-  problem(problem_),
-  meshSpecs(meshSpecs_),
-  stateMgr(stateMgr_),
-  responseParams(responseParams_)
+    const Teuchos::RCP<Albany::Application>& application,
+    const Teuchos::RCP<Albany::AbstractProblem>& problem,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
+    const Teuchos::RCP<Albany::StateManager>& stateManager,
+    Teuchos::ParameterList& responseParams) :
+  ScalarResponseFunction(application->getComm()),
+  application_(application),
+  problem_(problem),
+  meshSpecs_(meshSpecs),
+  stateManager_(stateManager),
+  responseParams_(responseParams)
 {
   print("in constructor");
   setupT();
@@ -44,6 +44,29 @@ AdjointResponseFunction::~AdjointResponseFunction()
 void AdjointResponseFunction::setupT()
 {
   print("in setupT");
+
+  // create field manager
+  rfm_ = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
+
+  // create evaluators for field manager
+  Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags =
+    problem_->buildEvaluators(
+        *rfm_,
+        *meshSpecs_,
+        *stateManager_,
+        Albany::BUILD_RESPONSE_FM,
+        Teuchos::rcp(&responseParams_,false));
+
+  // visualize response field manager graph
+  visResponseGraph_ =
+    responseParams_.get("Phalanx Graph Visualization Detail", 0);
+  visResponseName_ = responseParams_.get<std::string>("Name");
+  std::replace(visResponseName_.begin(), visResponseName_.end(), ' ', '_');
+  std::transform(
+      visResponseName_.begin(),
+      visResponseName_.end(),
+      visResponseName_.begin(),
+      ::tolower);
 }
 
 Teuchos::RCP<const Tpetra_Map> AdjointResponseFunction::responseMapT() const
