@@ -150,9 +150,13 @@ public:
 
  PHX::MDField<ScalarT,Node> ucomp;
  PHX::MDField<ScalarT,Node> vcomp;
+ PHX::MDField<ScalarT,Node> utildecomp;
+ PHX::MDField<ScalarT,Node> vtildecomp;
 
  PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
+ PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;
+ PHX::MDField<ScalarT,QuadPoint, Dim> vtildegradNodes;
 
  PHX::MDField<ScalarT,Node, Dim> vcontra;
 

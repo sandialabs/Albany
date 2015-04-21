@@ -241,11 +241,19 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  ucomp.setFieldData(ViewFactory::buildView(ucomp.fieldTag(),ddims_));
  vcomp=PHX::MDField<ScalarT,Node>("vcomp",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
  vcomp.setFieldData(ViewFactory::buildView(vcomp.fieldTag(),ddims_));
+ utildecomp=PHX::MDField<ScalarT,Node>("utildecomp",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
+ utildecomp.setFieldData(ViewFactory::buildView(utildecomp.fieldTag(),ddims_));
+ vtildecomp=PHX::MDField<ScalarT,Node>("vtildecomp",Teuchos::rcp(new PHX::MDALayout<Node>(numNodes)));
+ vtildecomp.setFieldData(ViewFactory::buildView(vtildecomp.fieldTag(),ddims_));
 
  ugradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("ugradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
  ugradNodes.setFieldData(ViewFactory::buildView(ugradNodes.fieldTag(),ddims_));
  vgradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("vgradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
  vgradNodes.setFieldData(ViewFactory::buildView(vgradNodes.fieldTag(),ddims_));
+ utildegradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("utildegradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
+ utildegradNodes.setFieldData(ViewFactory::buildView(utildegradNodes.fieldTag(),ddims_));
+ vtildegradNodes=PHX::MDField<ScalarT,QuadPoint,Dim>("vtildegradNodes",Teuchos::rcp(new PHX::MDALayout<QuadPoint,Dim>(numQPs,2)));
+ vtildegradNodes.setFieldData(ViewFactory::buildView(vtildegradNodes.fieldTag(),ddims_));
 
  vcontra=PHX::MDField<ScalarT,Node,Dim>("vcontra",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
  vcontra.setFieldData(ViewFactory::buildView(vcontra.fieldTag(),ddims_));
@@ -644,11 +652,15 @@ evaluateFields(typename Traits::EvalData workset)
   //pass to the gradient uAtNodes(:,0)
   Intrepid::FieldContainer<ScalarT> ucomp(numNodes);
   Intrepid::FieldContainer<ScalarT> vcomp(numNodes);
+  Intrepid::FieldContainer<ScalarT> utildecomp(numNodes);
+  Intrepid::FieldContainer<ScalarT> vtildecomp(numNodes);
   //containers for grads of velocity U, V components for viscosity
   //note that we do not implement it for the most generality (any dimension velocity)
   //because the rest of the code considers only 2D velocity (look at definition of uAtNodes)
   Intrepid::FieldContainer<ScalarT> ugradNodes(numQPs,2);
   Intrepid::FieldContainer<ScalarT> vgradNodes(numQPs,2);
+  Intrepid::FieldContainer<ScalarT> utildegradNodes(numQPs,2);
+  Intrepid::FieldContainer<ScalarT> vtildegradNodes(numQPs,2);
   
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
@@ -724,6 +736,13 @@ evaluateFields(typename Traits::EvalData workset)
     
   }
 
+  if (vecDim == 2)
+    if (useHyperViscosity) //hyperviscosity residual(1) = htilde*phi + grad(h)*grad(phi)  
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) 
+        for (std::size_t qp=0; qp < numQPs; ++qp) 
+          for (std::size_t node=0; node < numNodes; ++node) 
+            Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                  + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
 
   if ( vecDim > 2) {
   // Velocity Equations
@@ -759,6 +778,10 @@ evaluateFields(typename Traits::EvalData workset)
       vcomp.initialize();
       ugradNodes.initialize();
       vgradNodes.initialize();
+      utildecomp.initialize();
+      vtildecomp.initialize();
+      utildegradNodes.initialize();
+      vtildegradNodes.initialize();
 
       get_coriolis(cell, coriolis);
 
@@ -775,12 +798,18 @@ evaluateFields(typename Traits::EvalData workset)
         //for viscosity
         ucomp(node) = ulambda;
         vcomp(node) = utheta;
+        if (useHyperViscosity) {
+           utildecomp(node) = UNodal(cell,node,4);
+           vtildecomp(node) = UNodal(cell,node,5);
+        } 
       }
       
-      if (ViscCoeff != 0) {
-        //obtain grads of U, V comp
-        gradient(ucomp, cell, ugradNodes);
-        gradient(vcomp, cell, vgradNodes);
+      //obtain grads of U, V comp
+      gradient(ucomp, cell, ugradNodes);
+      gradient(vcomp, cell, vgradNodes);
+      if (useHyperViscosity) {
+        gradient(utildecomp, cell, utildegradNodes);
+        gradient(vtildecomp, cell, vtildegradNodes);
       }
       
       if (ibpGradH == false) 
@@ -798,18 +827,27 @@ evaluateFields(typename Traits::EvalData workset)
                                        - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
                                       )*wBF(cell,node,qp)
                                   +  ViscCoeff*ugradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                                  +  ViscCoeff*ugradNodes(qp,1)*wGradBF(cell,node,qp,1)
-                                  +  hyperViscosity(cell,node,1);
-            
+                                  +  ViscCoeff*ugradNodes(qp,1)*wGradBF(cell,node,qp,1); 
             Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
                                        + gradPotentialEnergy(qp,1)
                                        + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
                                       )*wBF(cell,node,qp)
                                   +  ViscCoeff*vgradNodes(qp,0)*wGradBF(cell,node,qp,0)
-                                  +  ViscCoeff*vgradNodes(qp,1)*wGradBF(cell,node,qp,1)
-                                  +  hyperViscosity(cell,node,2);
-            for (int i=3; i<vecDim; ++i)  
-              Residual(cell,node,i) += hyperViscosity(cell,node,i); 
+                                  +  ViscCoeff*vgradNodes(qp,1)*wGradBF(cell,node,qp,1);
+            if (useHyperViscosity) {
+                                    //hyperviscosity residual(1) = residual(1) - tau*grad(utilde)*grad(phi) 
+              Residual(cell,node,1) -= hyperViscosity(cell,qp,0)*utildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
+                                    -  hyperViscosity(cell,qp,1)*utildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
+                                    //hyperviscosity residual(2) = residual(2) - tau*grad(vtilde)*grad(phi) 
+              Residual(cell,node,2) -= hyperViscosity(cell,qp,0)*vtildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
+                                    -  hyperViscosity(cell,qp,1)*vtildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
+                                    //hyperviscosity residual(4) = utilde*phi + grad(u)*grad(phi) 
+              Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp) + ugradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                    + ugradNodes(qp,1)*wGradBF(cell,node,qp,1);
+                                  //hyperviscosity residual(5) = vtilde*phi + grad(v)*grap(phi)
+              Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp) + vgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                    + vgradNodes(qp,1)*wGradBF(cell,node,qp,1);
+            }
           }
         }
       }
@@ -823,6 +861,20 @@ evaluateFields(typename Traits::EvalData workset)
                                   - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,0) + source(cell,qp,1)*wBF(cell,node,qp);
             Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1))*wBF(cell,node,qp)
                                   - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,1) + source(cell,qp,2)*wBF(cell,node,qp);
+            if (useHyperViscosity) {
+                                    //hyperviscosity residual(1) = residual(1) - tau*grad(utilde)*grad(phi) 
+              Residual(cell,node,1) -= hyperViscosity(cell,qp,0)*utildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
+                                    -  hyperViscosity(cell,qp,1)*utildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
+                                    //hyperviscosity residual(2) = residual(2) - tau*grad(vtilde)*grad(phi) 
+              Residual(cell,node,2) -= hyperViscosity(cell,qp,0)*vtildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
+                                    -  hyperViscosity(cell,qp,1)*vtildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
+                                    //hyperviscosity residual(4) = utilde*phi + grad(u)*grad(phi) 
+              Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp) + ugradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                    + ugradNodes(qp,1)*wGradBF(cell,node,qp,1);
+                                  //hyperviscosity residual(5) = vtilde*phi + grad(v)*grap(phi)
+              Residual(cell,node,5) += U(cell,qp,5)*wBF(cell,node,qp) + vgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                    + vgradNodes(qp,1)*wGradBF(cell,node,qp,1);
+            }
           }
         }
       }
