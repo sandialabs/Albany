@@ -236,7 +236,7 @@ computeBC(
       Intrepid::find_type(coupled_dimension, coupled_vertex_count);
 
   std::string const &
-  coupled_nodeset_name = coupled_app.getNodesetName(coupled_app_index);
+  coupled_nodeset_name = this_app.getNodesetName(coupled_app_index);
 
   std::vector<double *> const &
   ns_coord =
