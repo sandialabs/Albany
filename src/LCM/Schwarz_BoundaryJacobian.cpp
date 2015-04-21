@@ -321,60 +321,71 @@ computeBC(
               coupled_solution_view[coupled_dimension * node_id + i];
         } // dimension loop
 
-        bool
-        in_element = false;
-
-        switch (coupled_element_type) {
-
-        default:
-          std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
-          std::cerr << "Unknown element type: " << coupled_element_type << '\n';
-          exit(1);
-          break;
-
-        case Intrepid::ELEMENT::TETRAHEDRAL:
-          parametric_dimension = 3;
-
-          basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM<
-              double, Intrepid::FieldContainer<double>>());
-
-          in_element = Intrepid::in_tetrahedron(
-              point,
-              coupled_element_vertices[0],
-              coupled_element_vertices[1],
-              coupled_element_vertices[2],
-              coupled_element_vertices[3],
-              tolerance);
-          break;
-
-        case Intrepid::ELEMENT::HEXAHEDRAL:
-          parametric_dimension = 3;
-
-          basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<
-              double, Intrepid::FieldContainer<double>>());
-
-          in_element = Intrepid::in_hexahedron(
-              point,
-              coupled_element_vertices[0],
-              coupled_element_vertices[1],
-              coupled_element_vertices[2],
-              coupled_element_vertices[3],
-              coupled_element_vertices[4],
-              coupled_element_vertices[5],
-              coupled_element_vertices[6],
-              coupled_element_vertices[7],
-              tolerance);
-          break;
-
-        } // switch
-
       } // node loop
+
+      bool
+      in_element = false;
+
+      switch (coupled_element_type) {
+
+      default:
+        std::cerr << "\nERROR: " << __PRETTY_FUNCTION__ << '\n';
+        std::cerr << "Unknown element type: " << coupled_element_type << '\n';
+        exit(1);
+        break;
+
+      case Intrepid::ELEMENT::TETRAHEDRAL:
+        parametric_dimension = 3;
+
+        basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_TET_C1_FEM<
+            double, Intrepid::FieldContainer<double>>());
+
+        in_element = Intrepid::in_tetrahedron(
+            point,
+            coupled_element_vertices[0],
+            coupled_element_vertices[1],
+            coupled_element_vertices[2],
+            coupled_element_vertices[3],
+            tolerance);
+        break;
+
+      case Intrepid::ELEMENT::HEXAHEDRAL:
+        parametric_dimension = 3;
+
+        basis = Teuchos::rcp(new Intrepid::Basis_HGRAD_HEX_C1_FEM<
+            double, Intrepid::FieldContainer<double>>());
+
+        in_element = Intrepid::in_hexahedron(
+            point,
+            coupled_element_vertices[0],
+            coupled_element_vertices[1],
+            coupled_element_vertices[2],
+            coupled_element_vertices[3],
+            coupled_element_vertices[4],
+            coupled_element_vertices[5],
+            coupled_element_vertices[6],
+            coupled_element_vertices[7],
+            tolerance);
+        break;
+
+      } // switch
+
+      if (in_element == true) {
+        found = true;
+        break;
+      }
 
     } // element loop
 
+    if (found == true) {
+      break;
+    }
+
   } // workset loop
 
-    // Boundary condition.
+  assert(found == true);
+
+  // Boundary condition.
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
 
