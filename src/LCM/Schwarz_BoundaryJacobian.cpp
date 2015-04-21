@@ -247,7 +247,25 @@ computeBC(
   Intrepid::Vector<double>
   bc(dimension, Intrepid::ZEROS);
 
+  auto const &
+  ws_elem_2_node_id = coupled_stk_disc->getWsElNodeID();
+
+  std::vector< Intrepid::Vector<double> >
+  coupled_element_vertices(coupled_vertex_count);
+
+  std::vector< Intrepid::Vector<double> >
+  coupled_element_solution(coupled_vertex_count);
+
+  for (size_t i = 0; i < coupled_vertex_count; ++i) {
+    coupled_element_vertices[i].set_dimension(coupled_dimension);
+    coupled_element_solution[i].set_dimension(coupled_dimension);
+  }
+
+  // This tolerance is used for geometric approximations. it will be used
+  // to determine whether a node of this_app is within an element of
+  // coupled_app within that tolerance.
+  double const
+  tolerance = 5.0e-2;
+
   return bc;
 }
-
-
