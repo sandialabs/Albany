@@ -38,8 +38,7 @@ public:
 
   Teuchos::RCP<Thyra::LinearOpBase<ST> > getThyraCoupledJacobian(
       Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
-      Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> >
-  jacs_boundary) const;
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca) const;
 
 private:
 

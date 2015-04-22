@@ -50,7 +50,7 @@
 
 namespace Albany {
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   class Application;
 #endif //ALBANY_LCM
 
@@ -161,7 +161,7 @@ namespace Albany {
     //! Private to prohibit copying
     AbstractProblem& operator=(const AbstractProblem&);
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   public:
 
     void setApplication(Teuchos::RCP<Application> const & a)

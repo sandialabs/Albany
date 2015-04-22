@@ -82,7 +82,10 @@ private:
 	    int pt,
 	    ScalarT dt,
 	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
-	    std::vector<Albany::MDArray * > const & previous_slips,Intrepid::Tensor<ScalarT> const & F,
+	    std::vector<Albany::MDArray * > const & previous_slips,
+	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & hards,
+	    std::vector<Albany::MDArray * > const & previous_hards,
+	    Intrepid::Tensor<ScalarT> const & F,
 	    Intrepid::Tensor<ScalarT> & L,
 	    Intrepid::Tensor<ScalarT> & Fp);
 

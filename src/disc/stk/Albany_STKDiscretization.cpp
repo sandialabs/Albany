@@ -45,7 +45,7 @@ extern "C" {
 #endif
 
 #include <algorithm>
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Export.h"
 #include "EpetraExt_MultiVectorOut.h"
 #include "Petra_Converters.hpp"
@@ -73,7 +73,7 @@ STKDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   comm = Albany::createEpetraCommFromTeuchosComm(commT_);
 #endif
   Albany::STKDiscretization::updateMesh();
@@ -122,7 +122,7 @@ Albany::STKDiscretization::printConnectivity() const
   }
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getMap() const
 {
@@ -141,7 +141,7 @@ Albany::STKDiscretization::getMapT() const
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getOverlapMap() const
 {
@@ -155,7 +155,7 @@ Albany::STKDiscretization::getOverlapMapT() const
   return overlap_mapT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getMap(const std::string& field_name) const {
   return nodalDOFsStructContainer.getDOFsStruct(field_name).map;
@@ -190,7 +190,7 @@ Albany::STKDiscretization::getJacobianGraphT() const
   return graphT;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_CrsGraph>
 Albany::STKDiscretization::getOverlapJacobianGraph() const
 {
@@ -206,7 +206,7 @@ Albany::STKDiscretization::getOverlapJacobianGraphT() const
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<const Epetra_Map>
 Albany::STKDiscretization::getNodeMap() const
 {
@@ -619,7 +619,7 @@ Albany::STKDiscretization::getWsPhysIndex() const
   return wsPhysIndex;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const double time, const bool overlapped){
 
   // Put solution as Epetra_Vector into STK Mesh
@@ -758,11 +758,11 @@ Albany::STKDiscretization::monotonicTimeLabel(const double time)
   return previous_time_label;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
   if(container->hasResidualField()){
@@ -785,7 +785,7 @@ Albany::STKDiscretization::setResidualField(const Epetra_Vector& residual)
 void
 Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 {
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
   Teuchos::RCP<AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
   if(container->hasResidualField()){
@@ -804,7 +804,7 @@ Albany::STKDiscretization::setResidualFieldT(const Tpetra_Vector& residualT)
 }
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_Vector>
 Albany::STKDiscretization::getSolutionField(bool overlapped) const
 {
@@ -841,7 +841,7 @@ Albany::STKDiscretization::getSolutionFieldHistoryDepth() const
   return stkMeshStruct->getSolutionFieldHistoryDepth();
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 Teuchos::RCP<Epetra_MultiVector>
 Albany::STKDiscretization::getSolutionFieldHistory() const
 {
@@ -950,7 +950,7 @@ Albany::STKDiscretization::getSolutionFieldT(Tpetra_Vector &resultT, const bool 
 /*** Private functions follow. These are just used in above code */
 /*****************************************************************/
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::STKDiscretization::setField(const Epetra_Vector &result, const std::string& name, bool overlapped)
 {
@@ -1011,7 +1011,7 @@ Albany::STKDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void
 Albany::STKDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 {
@@ -1080,7 +1080,7 @@ int Albany::STKDiscretization::nonzeroesPerRow(const int neq) const
   return estNonzeroesPerRow;
 }
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 void Albany::STKDiscretization::computeNodalEpetraMaps (bool overlapped)
 {
   // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes, map
@@ -1165,7 +1165,7 @@ void Albany::STKDiscretization::computeOwnedNodesAndUnknowns()
 				    ownednodes );
 
   numOwnedNodes = ownednodes.size();
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   node_map = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").map;
   map = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").map;
 
@@ -1211,7 +1211,7 @@ void Albany::STKDiscretization::computeOverlapNodesAndUnknowns()
 				    overlapnodes );
 
   numOverlapNodes = overlapnodes.size();
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   numOverlapNodes = overlapnodes.size();
 
   overlap_map = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_map;
@@ -1366,7 +1366,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
   typedef stk::mesh::Cartesian ElemTag;
   typedef stk::mesh::Cartesian CompTag;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   NodalDOFsStructContainer::MapOfDOFsStructs::iterator it;
   NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
   for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
@@ -1452,12 +1452,12 @@ void Albany::STKDiscretization::computeWorksetInfo()
     }
 
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
     if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField())
       sphereVolume[b].resize(buck.size());
 #endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     stk::mesh::Entity element = buck[0];
     int nodes_per_element = bulkData.num_nodes(element);
     for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
@@ -1490,7 +1490,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       wsElNodeID[b][i].resize(nodes_per_element);
       coords[b][i].resize(nodes_per_element);
  
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
       for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it) {
         IDArray& wsElNodeEqID_array = it->second.wsElNodeEqID[b];
         GIDArray& wsElNodeID_array = it->second.wsElNodeID[b];
@@ -1513,7 +1513,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
       }
 #endif
 
-#ifdef ALBANY_LCM
+#if defined(ALBANY_LCM)
       if(stkMeshStruct->getFieldContainer()->hasSphereVolumeField() && nodes_per_element == 1){
 	double* volumeTemp = stk::mesh::field_data(*sphereVolume_field, element);
 	if(volumeTemp){
@@ -1523,7 +1523,7 @@ void Albany::STKDiscretization::computeWorksetInfo()
 #endif
 
       // loop over local nodes
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
       DOFsStruct& dofs_struct = mapOfDOFsStructs[make_pair(std::string(""),neq)];
       GIDArray& node_array = dofs_struct.wsElNodeID[b];
       IDArray& node_eq_array = dofs_struct.wsElNodeEqID[b];
@@ -2274,7 +2274,7 @@ int Albany::STKDiscretization::processNetCDFOutputRequestT(const Tpetra_Vector& 
 #endif
   return 0;
 }
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 int Albany::STKDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field) {
 #ifdef ALBANY_SEACAS
   const long long unsigned rank = commT->getRank();
@@ -2618,7 +2618,7 @@ Albany::STKDiscretization::printVertexConnectivity(){
 void
 Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
   nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
   nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
@@ -2647,7 +2647,7 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 
   setupMLCoords();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   computeNodalEpetraMaps(true);
 #endif // ALBANY_EPETRA
 

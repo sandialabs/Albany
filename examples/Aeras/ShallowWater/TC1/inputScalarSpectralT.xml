@@ -1,15 +1,21 @@
 <ParameterList>
   <ParameterList name="Problem">
     <Parameter name="Name" type="string" value="Aeras Shallow Water 3D"/>
+    <ParameterList name="Equation Set">
+      <Parameter name="Type" type="string" value="Scalar"/>
+    </ParameterList>
     <Parameter name="Solution Method" type="string" value="Transient"/>
     <ParameterList name="Shallow Water Problem">
       <Parameter name="Use Prescribed Velocity" type="bool" value="true"/>
+      <Parameter name="Use Hyperviscosity" type="bool" value="True"/>
+      <Parameter name="Hyperviscosity Type" type="string" value="Constant"/>
+      <Parameter name="Hyperviscosity Tau" type="double" value="0.1"/>
     </ParameterList>
     <ParameterList name="Dirichlet BCs">
     </ParameterList>
     
     <ParameterList name="Initial Condition"> 
-       <Parameter name="Function" type="string" value="Aeras CosineBell"/>
+       <Parameter name="Function" type="string" value="Aeras Scalar CosineBell"/>
        <Parameter name="Function Data" type="Array(double)"
        value="{1.5707963}"/>
        <!-- pi/2 = 1.5707963 -->
@@ -37,16 +43,11 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
-    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/uniform_10_quad4.g"/>
-    <!--Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/-->
+    <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/cube_quad4_6eles.g"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <!--Parameter name="Exodus Write Interval" type="int" value="1"/>
-    <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
-    <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
-    <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
     <Parameter name="Element Degree" type="int" value="3"/>
-    <Parameter name="Workset Size" type="int" value="-1"/>
+    <Parameter name="Transform Type" type="string" value="Spherical"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
@@ -60,6 +61,7 @@
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
       <Parameter name="Final Time" type="double" value="864"/>
+      <Parameter name="Stepper Type" type="string" value="Forward Euler"/>
       <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
       <!--Parameter name="Final Time" type="double" value="86400"/-->
       <!-- change to 12*24*3600 to get full 12 days -->

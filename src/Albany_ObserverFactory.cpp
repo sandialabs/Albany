@@ -10,7 +10,7 @@
 #include "Albany_RythmosObserver.hpp"
 
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "MOR_ObserverFactory.hpp"
 #endif
 #endif
@@ -30,7 +30,7 @@ NOXObserverFactory::createInstance()
 {
   Teuchos::RCP<NOX::Epetra::Observer> result(new Albany_NOXObserver(app_));
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(app_->getDiscretization()->supportsMOR()){
     const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
     result = morObserverFactory->create(result);
@@ -49,7 +49,7 @@ Teuchos::RCP<NOX::Epetra::Observer>
 NOXStatelessObserverFactory::createInstance () {
   Teuchos::RCP<NOX::Epetra::Observer> result(new NOXStatelessObserver(app_));
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if (app_->getDiscretization()->supportsMOR()) {
     const Teuchos::RCP<MOR::ObserverFactory>
       morObserverFactory = app_->getMorFacade()->observerFactory();
@@ -69,7 +69,7 @@ RythmosObserverFactory::createInstance()
 {
   Teuchos::RCP<Rythmos::IntegrationObserverBase<double> > result(new Albany_RythmosObserver(app_));
 #ifdef ALBANY_MOR
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   if(app_->getDiscretization()->supportsMOR()){
     const Teuchos::RCP<MOR::ObserverFactory> morObserverFactory = app_->getMorFacade()->observerFactory();
     result = morObserverFactory->create(result);

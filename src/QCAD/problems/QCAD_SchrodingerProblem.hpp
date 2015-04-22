@@ -106,7 +106,7 @@ namespace QCAD {
 
 #include "QCAD_SchrodingerPotential.hpp"
 #include "QCAD_SchrodingerResid.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "QCAD_ResponseSaddleValue.hpp"
 #endif
 
@@ -224,7 +224,7 @@ QCAD::SchrodingerProblem::constructEvaluators(
     }
     else {
      
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
       //Case when we load the potential from an aux data vector (on the nodes)
       // to the potential field (on the quad points).  Note this requires the
       // "Type" parameter of the "Potential" input file sublist to be "From Aux Data Vector"

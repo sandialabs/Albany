@@ -9,11 +9,14 @@
 cmake_minimum_required(VERSION 2.7)
 include(CMakeDependentOption)
 
-# Error check up front
-IF (NOT DEFINED ALBANY_TRILINOS_DIR)
-  MESSAGE(FATAL_ERROR "\nAlbany Error: cmake must define ALBANY_TRILINOS_DIR:
-  (-D ALBANY_TRILINOS_DIR:FILEPATH=<trilinos_install_prefix>)!")
-ENDIF()
+if (NOT DEFINED SET_COMPILERS_AUTOMATICALLY)
+  set(SET_COMPILERS_AUTOMATICALLY TRUE)
+endif()
+
+if (NOT SET_COMPILERS_AUTOMATICALLY)
+  message("Experimental configuration.")
+  project(Albany CXX C Fortran)
+endif ()
 
 # Advertise that we support shared libs
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
@@ -76,10 +79,24 @@ IF (INSTALL_ALBANY)
   include(CMakePackageConfigHelpers)
 ENDIF ()
 
-MESSAGE("Setting and checking of compilers:")
-SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
-SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
-SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )
+if (SET_COMPILERS_AUTOMATICALLY)
+  MESSAGE("Setting and checking of compilers:")
+  SET(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER} )
+  SET(CMAKE_C_COMPILER ${Trilinos_C_COMPILER} )
+  SET(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER} )   
+else()
+  # Make sure the compilers match.
+  MESSAGE("Checking compilers:")
+  IF(NOT ${Trilinos_CXX_COMPILER} STREQUAL ${CMAKE_CXX_COMPILER})
+    MESSAGE(FATAL_ERROR "C++ compilers don't match (Trilinos: ${Trilinos_CXX_COMPILER}, ${PROJECT_NAME}: ${CMAKE_CXX_COMPILER}).")
+  ENDIF()
+  IF(NOT ${Trilinos_C_COMPILER} STREQUAL ${CMAKE_C_COMPILER})
+    MESSAGE(FATAL_ERROR "C compilers don't match (Trilinos: ${Trilinos_C_COMPILER}, ${PROJECT_NAME}: ${CMAKE_C_COMPILER}).")
+  ENDIF()
+  IF(NOT ${Trilinos_Fortran_COMPILER} STREQUAL ${CMAKE_Fortran_COMPILER})
+    MESSAGE(FATAL_ERROR "Fortran compilers don't match (Trilinos: ${Trilinos_Fortran_COMPILER}, ${PROJECT_NAME}: ${CMAKE_Fortran_COMPILER}).")
+  ENDIF()
+endif()
 
 # Build Albany as shared libraries if Trilinos was compiled that way
 
@@ -101,7 +118,9 @@ ENDIF((NOT BUILD_SHARED_LIBS) AND (Albany_BUILD_STATIC_EXE))
 #  NOTE: PROJECT command checks for compilers, so this statement
 #        is moved AFTER setting CMAKE_CXX_COMPILER from Trilinos
 
-PROJECT(Albany)
+if (SET_COMPILERS_AUTOMATICALLY)
+  PROJECT(Albany)
+endif()
 
 set(ALBANY_ENABLE_FORTRAN ON CACHE BOOL "enable fortran" )
 
@@ -555,6 +574,17 @@ IF (ENABLE_HYDRIDE)
 ELSE()
   MESSAGE("-- HYDRIDE   is NOT Enabled.")
   SET(ALBANY_HYDRIDE FALSE)
+ENDIF()
+
+# Set optional dependency on GOAL, defaults to Disabled
+OPTION(ENABLE_GOAL "Flag to turn on goal-oriented error estimation source code" OFF)
+IF (ENABLE_GOAL)
+  ADD_DEFINITIONS(-DALBANY_GOAL)
+  MESSAGE("-- GOAL      is Enabled, compiling with -DALBANY_GOAL")
+  SET(ALBANY_GOAL TRUE)
+ELSE()
+  MESSAGE("-- GOAL      is NOT Enabled.")
+  SET(ALBANY_GOAL FALSE)
 ENDIF()
 
 # Set optional dependency on AMP, defaults to Disabled

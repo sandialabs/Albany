@@ -28,7 +28,7 @@ default_arch="sm_35"
 #default_compiler="/home/projects/gcc/4.9.0/bin/g++"
 #default_compiler="/home/projects/x86-64/gcc/4.8.3/bin/g++"
 #default_compiler="/home/projects/x86-64/openmpi/1.8.2/gnu/4.8.3/cuda/6.5.14/bin/mpicxx"
-default_compiler="/home/projects/x86-64/openmpi/1.8.4/gnu/4.9.0/cuda/7.0.18/bin/mpicxx"
+default_compiler="/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/bin/mpicxx"
 #default_compiler="/usr/local/gcc/4.9.1/bin/g++"
 
 #
@@ -56,10 +56,7 @@ replace_pragma_ident=0
 current_file_path="${@: -1}"
 current_file="${current_file_path##*/}"
 
-use_base_compiler="Ifpack.cpp
-Conjoin.C
-exodiff.C
-Ioss_Map.C"
+use_base_compiler=""
 
 for c_name in $use_base_compiler
 do
@@ -179,7 +176,7 @@ if [ $arch_set -ne 1 ]; then
 fi
 
 #Compose compilation command
-command="nvcc $cuda_args $xlinker_args $xcompiler_args"
+command="nvcc -w $cuda_args $xlinker_args $xcompiler_args"
 
 #nvcc does not accept '#pragma ident SOME_MACRO_STRING' but it does accept '#ident SOME_MACRO_STRING'
 if [ $replace_pragma_ident -eq 1 ]; then

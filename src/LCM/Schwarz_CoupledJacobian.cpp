@@ -46,7 +46,7 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::Schwarz_CoupledJacobian::
 getThyraCoupledJacobian(
     Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
-    Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary)
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca)
 const
 {
 #ifdef OUTPUT_TO_SCREEN
@@ -83,8 +83,16 @@ const
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
+      } else {
+        Teuchos::RCP<Tpetra_Operator> jac_boundary = Teuchos::rcp(
+          new LCM::Schwarz_BoundaryJacobian(commT_, ca, i, j));
+        //IKT, 4/21/15: is initialize necessary? 
+        //jacs_boundary->initialize();
+        Teuchos::RCP<Thyra::LinearOpBase<ST> >
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(
+            jac_boundary);
+        blocked_op->setNonconstBlock(i, j, block);
       }
-      //FIXME: add off-diagonal blocks
     }
   }
 

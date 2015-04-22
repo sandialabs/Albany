@@ -584,6 +584,7 @@ endif ()
 
 
 add_library(albanyLib ${Albany_LIBRARY_TYPE} ${SOURCES} ${HEADERS})
+target_link_libraries(albanyLib ${Trilinos_LIBRARIES})
 
 
 # Add Albany external libraries
@@ -624,6 +625,9 @@ include_directories (${Trilinos_INCLUDE_DIRS}
                      ./ATO/problems
                      ./ATO/evaluators
                      ./ATO/utils
+                     ./GOAL
+                     ./GOAL/responses
+                     ./GOAL/evaluators
                     )
 
 link_directories (${Trilinos_LIBRARY_DIRS} ${Trilinos_TPL_LIBRARY_DIRS})
@@ -814,6 +818,11 @@ ENDIF()
 IF (ALBANY_AMP)
   add_subdirectory(AMP)
   SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} AMP)
+ENDIF()
+
+IF (ALBANY_GOAL)
+  add_subdirectory(GOAL)
+  SET(ALBANY_LIBRARIES ${ALBANY_LIBRARIES} GOAL)
 ENDIF()
 
 IF(ALBANY_CATALYST)

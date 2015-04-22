@@ -13,7 +13,7 @@
 #include "Phalanx_MDField.hpp"
 
 #include "Teuchos_ParameterList.hpp"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Vector.h"
 #endif
 
@@ -41,34 +41,32 @@ public:
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  computeBCs(
-      typename Traits::EvalData dirichlet_workset,
-      size_t const ns_node,
-      ScalarT & x_val,
-      ScalarT & y_val,
-      ScalarT & z_val);
-
-  void
-  setDiscretization(Discretization & d) {disc_ = d;}
+  setDiscretization(Discretization & d)
+  {disc_ = d;}
 
   Discretization
-  getDiscretization() const {return disc_;}
+  getDiscretization() const
+  {return disc_;}
 
   void
-  setCoupledAppName(std::string const & can) {coupled_app_name_ = can;}
+  setCoupledAppName(std::string const & can)
+  {coupled_app_name_ = can;}
 
   std::string
-  getCoupledAppName() const {return coupled_app_name_;}
+  getCoupledAppName() const
+  {return coupled_app_name_;}
 
   int
   appIndexFromName(std::string const & name) const
   {return std::atoi(name.c_str());}
 
   void
-  setCoupledBlockName(std::string const & cbn) {coupled_block_name_ = cbn;}
+  setCoupledBlockName(std::string const & cbn)
+  {coupled_block_name_ = cbn;}
 
   std::string
-  getCoupledBlockName() const {return coupled_block_name_;}
+  getCoupledBlockName() const
+  {return coupled_block_name_;}
 
 protected:
 

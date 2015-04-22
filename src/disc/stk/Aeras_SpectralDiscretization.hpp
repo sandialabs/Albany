@@ -19,7 +19,7 @@
 #include "Albany_AbstractSTKMeshStruct.hpp"
 #include "Albany_DataTypes.hpp"
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Epetra_Comm.h"
 #include "Epetra_CrsMatrix.h"
 #include "Epetra_Vector.h"
@@ -59,11 +59,12 @@ namespace Aeras
       std::string orig_name = orig_ctd.name;
       size_t len      = orig_name.find("_");
       if (len != std::string::npos) orig_name = orig_name.substr(0,len);
-      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral"), 
+      TEUCHOS_TEST_FOR_EXCEPTION((orig_name != "ShellQuadrilateral") && (orig_name!= "Quadrilateral")
+                                  && (orig_name != "Line"), 
                                   Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error!  Attempting to enrich a non-quadrilateral element (" <<
                                   orig_name << ")!  Aeras::SpectralDiscretization is currently implemented only for " <<
-                                  "Quadrilateral and ShellQuadrilateral elements.\n"); 
+                                  "Quadrilateral, ShellQuadrilateral and Line elements.\n"); 
 #ifdef OUTPUT_TO_SCREEN
       std::cout << "DEBUG: original ctd name = " << orig_name << std::endl; 
 #endif 
@@ -83,7 +84,11 @@ namespace Aeras
       //cell topology data (ctd), but with a different node_count, vertex_count and name. 
       CellTopologyData new_ctd = orig_ctd; 
       //overwrite node_count, vertex_count and name of the original ctd.
-      int np = points_per_edge*points_per_edge; 
+      int np; 
+      if (orig_name == "ShellQuadrilateral" || orig_name == "Quadrilateral") 
+        np = points_per_edge*points_per_edge; 
+      else if (orig_name == "Line") 
+        np = points_per_edge; 
       new_ctd.node_count = np; 
       new_ctd.vertex_count = np; //Assumes vertex_count = node_count for ctd, which is the case for 
                                  //isoparametric finite elements.
@@ -108,7 +113,7 @@ namespace Aeras
     }
   };
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   typedef shards::Array<GO, shards::NaturalOrder> GIDArray;
 
   struct DOFsStruct
@@ -159,7 +164,7 @@ namespace Aeras
     //! Destructor
     ~SpectralDiscretization();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get Epetra DOF map
     Teuchos::RCP<const Epetra_Map> getMap() const;
     
@@ -175,27 +180,27 @@ namespace Aeras
     //! Get Tpetra overlapped DOF map
     Teuchos::RCP<const Tpetra_Map> getOverlapMapT() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get field DOF map
     Teuchos::RCP<const Epetra_Map> getMap(const std::string& field_name) const;
 
 #endif
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get Epetra Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getJacobianGraph() const;
 #endif
     //! Get Tpetra Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getJacobianGraphT() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get Epetra overlap Jacobian graph
     Teuchos::RCP<const Epetra_CrsGraph> getOverlapJacobianGraph() const;
 #endif
     //! Get Tpetra overlap Jacobian graph
     Teuchos::RCP<const Tpetra_CrsGraph> getOverlapJacobianGraphT() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get field node map
     Teuchos::RCP<const Epetra_Map> getNodeMap() const;
     //! Get field node map
@@ -243,7 +248,7 @@ namespace Aeras
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type&
     getWsElNodeID() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
     const std::vector<Albany::IDArray>&
     getElNodeEqID(const std::string& field_name) const
@@ -271,6 +276,7 @@ namespace Aeras
     //! Print the coordinates for debugging
     void printCoords() const;
     void printConnectivity(bool printEdges=false) const;
+    void printCoordsAndGIDs() const; 
 
     //! Get stateArrays
     Albany::StateArrays& getStateArrays() {return stateArrays;}
@@ -286,7 +292,7 @@ namespace Aeras
     //! Retrieve Vector (length num worksets) of physics set index
     const Albany::WorksetArray<int>::type&  getWsPhysIndex() const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void writeSolution(const Epetra_Vector& soln,
                        const double time,
                        const bool overlapped = false);
@@ -302,7 +308,7 @@ namespace Aeras
                              const double time,
                              const bool overlapped = false);
 
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     Teuchos::RCP<Epetra_Vector>
     getSolutionField(const bool overlapped=false) const;
 #endif
@@ -311,7 +317,7 @@ namespace Aeras
     getSolutionFieldT(const bool overlapped=false) const;
 
     int getSolutionFieldHistoryDepth() const;
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_MultiVector>
     getSolutionFieldHistory() const;
     Teuchos::RCP<Epetra_MultiVector>
@@ -325,10 +331,6 @@ namespace Aeras
 
     // Retrieve mesh struct
     Teuchos::RCP<Albany::AbstractSTKMeshStruct> getSTKMeshStruct()
-    {
-      return stkMeshStruct;
-    }
-    Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const
     {
       return stkMeshStruct;
     }
@@ -415,7 +417,7 @@ namespace Aeras
 
     inline GO gid(const stk::mesh::Entity node) const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     // Copy values from STK Mesh field to given Epetra_Vector
     void getSolutionField(Epetra_Vector &result,
                           bool overlapped=false) const;
@@ -424,7 +426,7 @@ namespace Aeras
     void getSolutionFieldT(Tpetra_Vector &resultT,
                            bool overlapped=false) const;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Copy field from STK Mesh field to given Epetra_Vector
     void getField(Epetra_Vector &field_vector,
                   const std::string& field_name) const;
@@ -447,7 +449,7 @@ namespace Aeras
 
     // Copy solution vector from Epetra_Vector into STK Mesh
     // Here soln is the local + neighbor (overlapped) solution
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void setOvlpSolutionField(const Epetra_Vector& soln);
 #endif
     //Tpetra version of above
@@ -463,36 +465,42 @@ namespace Aeras
     getMaximumID(const stk::mesh::EntityRank rank) const;
 
     //! Enrich the linear STK mesh to a spectral Albany mesh
-    void enrichMesh();
+    void enrichMeshLines();
+    void enrichMeshQuads();
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void computeNodalEpetraMaps(bool overlapped);
 #endif
 
     //! Process spectral Albany mesh for owned nodal quantitites
-    void computeOwnedNodesAndUnknowns();
+    void computeOwnedNodesAndUnknownsLines();
+    void computeOwnedNodesAndUnknownsQuads();
 
     //! Process coords for ML
     void setupMLCoords();
 
     //! Process spectral Albany mesh for overlap nodal quantitites
-    void computeOverlapNodesAndUnknowns();
+    void computeOverlapNodesAndUnknownsLines();
+    void computeOverlapNodesAndUnknownsQuads();
 
     //! Fill in the Workset of coordinates with corner nodes from the
     //! STK mesh and enriched points from Gauss-Lobatto quadrature
-    void computeCoords();
+    void computeCoordsLines();
+    void computeCoordsQuads();
 
     //! Process spectral Albany mesh for CRS Graphs
-    void computeGraphs();
+    void computeGraphsLines();
+    void computeGraphsQuads();
 
     //! Process spectral Albany mesh for Workset/Bucket Info
-    void computeWorksetInfo();
+    void computeWorksetInfoLines();
+    void computeWorksetInfoQuads();
 
     //! Process spectral Albany mesh for NodeSets
-    void computeNodeSets();
+    void computeNodeSetsLines();
 
     //! Process spectral Albany mesh for SideSets
-    void computeSideSets();
+    void computeSideSetsLines();
 
     //! Create new STK mesh in which spectral elements are interpreted
     //! as a patch of linear quadrilaterals, and use this to setup
@@ -501,7 +509,7 @@ namespace Aeras
 
     //! Call stk_io for creating NetCDF output file
     void setupNetCDFOutput();
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     int processNetCDFOutputRequest(const Epetra_Vector&);
 #endif
     int processNetCDFOutputRequestT(const Tpetra_Vector&);
@@ -526,10 +534,12 @@ namespace Aeras
     stk::mesh::MetaData& metaData;
     stk::mesh::BulkData& bulkData;
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif
+
+    int spatial_dim; //how many spatial dimensions there are in the problem
 
     int points_per_edge; //number of points per edge (i.e., the degree of enrichment) -- read in from ParameterList.
 
@@ -544,7 +554,7 @@ namespace Aeras
     Teuchos::RCP<const Tpetra_Map> overlap_mapT; 
     Teuchos::RCP<const Tpetra_Map> overlap_node_mapT; 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     Teuchos::RCP<Epetra_Map> node_map;
     Teuchos::RCP<Epetra_Map> map;
     Teuchos::RCP<Epetra_Map> overlap_node_map;

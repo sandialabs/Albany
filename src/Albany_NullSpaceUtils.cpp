@@ -248,7 +248,7 @@ setCoordinatesAndNullspace(const Teuchos::RCP<const Tpetra_Map>& node_map,
     Coord2RBM(numNodes, x, y, z, numPDEs, numScalar, nullSpaceDim, &rr[0]);
     if (isMLUsed()) {
       plist->set("null space: type", "pre-computed");
-      plist->set("null space: dimension", nullSpaceDim);
+      plist->set("null space: dimension", nullSpaceDim + numScalar);
       plist->set("null space: vectors", &rr[0]);
       plist->set("null space: add default vectors", false);      
     } else {

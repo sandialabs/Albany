@@ -2,9 +2,10 @@
 -----------------------Cleanup TODOs---------------------------
 
 1.) Change variable/function names to comply with C++ coding standards
-[Alejandro] Mostly done in SchwarzMultiscale.*.
+[Alejandro] Mostly done.
 
-2.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to be Teuchos::Array?).
+2.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to
+be Teuchos::Array?).
 
 ---------------------Debug TODOs------------------------
 
@@ -18,7 +19,11 @@ in general already in other parts of the code. [TBD?]
 
 2.) Implement Schwarz_BoundaryJacobian class to create / apply boundary 
 Jacobians as Tpetra_Operators.  Resulting Teuchos Array of Tpetra_Operators
-will be passed to Schwarz_CoupledJacobian class. [Alejandro]
+will be passed to Schwarz_CoupledJacobian class.
+
+Current status: The implementation of the old Schwarz BC has been
+ported to the new code. The apply method in the coupled Jacobian
+is producing nans at the moment. [Alejandro]
 
 3.) Sensitivities [how to define DfDp, DgDp, DgDx, etc. when 
 we have Thyra Product Vectors?  Is this supported?]
@@ -34,10 +39,10 @@ It's used to set x_init and x_dot_init, part of nominal_values
 
 2.) How will we handle multi-proc runs? [Ray has asked]
 
-----------------Development Planning TODOs----------------------------------------
+----------------Development Planning TODOs--------------------------
 
 
------------------Notes from emails with Andy/Eric Cyr---------------------------------------
+-----------------Notes from emails with Andy/Eric Cyr---------------
 
 1.) The CouplePS_NOXObserver takes a single vector for the fully
 coupled problem and breaks it into separate vectors for output. The
@@ -64,11 +69,12 @@ views of others, and a matrix from views of sub-matrices. This will
 make everything much cleaner if we can figure out the syntax.  Talk to
 Roger Pawlowski, Roscoe Bartless, Eric Cyr.
 
-5.) One cannot select Ifpack2 or MueLu on its own as the preconditioner for a 
-thyra block operator system.  Basically the Ifpack2 Stratimikos code expects a 
-Thyra operator that wraps a Tpetra operator. Another layer of indirection and 
-it will have problems. In this case you have a 1x1 DefaultBlockLinearOp wrapping 
-a Thyra::TpetraLinearOp wrapping a Tpetra::Operator. This is 
-already to much to handle.  Eric Cyr has written code that recurses to the “concrete” 
-(meaning Epetra or Tpetra) matrix type and then uses that operator. 
-This can be done, but its not clear its desirable. 
+5.) One cannot select Ifpack2 or MueLu on its own as the
+preconditioner for a thyra block operator system.  Basically the
+Ifpack2 Stratimikos code expects a Thyra operator that wraps a Tpetra
+operator. Another layer of indirection and it will have problems. In
+this case you have a 1x1 DefaultBlockLinearOp wrapping a
+Thyra::TpetraLinearOp wrapping a Tpetra::Operator. This is already to
+much to handle.  Eric Cyr has written code that recurses to the
+“concrete” (meaning Epetra or Tpetra) matrix type and then uses that
+operator.  This can be done, but its not clear its desirable.

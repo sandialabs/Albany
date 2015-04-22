@@ -10,7 +10,7 @@
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Epetra_Export.h"
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
 #include "Petra_Converters.hpp"
 #endif
 #include "PHAL_Utilities.hpp"
@@ -173,7 +173,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 preEvaluate(typename Traits::PreEvalData workset)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Initialize derivatives
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;
   Teuchos::RCP<Epetra_MultiVector> overlapped_dgdp = workset.overlapped_dgdp;
@@ -188,7 +188,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Here we scatter the *local* response derivative
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.overlapped_dgdp;
 
@@ -225,7 +225,7 @@ template<typename Traits>
 void SeparableScatterScalarResponse<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
 postEvaluate(typename Traits::PostEvalData workset)
 {
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
   // Here we scatter the *global* response and its derivatives
   Teuchos::RCP<Epetra_Vector> g = workset.g;
   Teuchos::RCP<Epetra_MultiVector> dgdp = workset.dgdp;

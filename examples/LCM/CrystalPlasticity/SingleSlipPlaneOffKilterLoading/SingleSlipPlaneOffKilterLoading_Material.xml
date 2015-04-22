@@ -26,20 +26,9 @@
         <Parameter name="C12" type="double" value="115.384615385"/>
         <Parameter name="C44" type="double" value="76.9230769231"/>
 
-        <!-- The basis vectors were generated with ProblemSetup.py -->
-
-        <!-- JAY, PLAY WITH THESE -->
-        <!-- I think the first set of basis vectors is aligned with the loading and should give  -->
-        <!-- zero shear stress on the slip plane. But the opposite seems to be happening in the code.-->
-
-<!--
+        <!-- Basis vectors determined by ProblemSetup.py -->
         <Parameter name="Basis Vector 1" type="Array(double)" value="{0.996005300702,0.0892941262031,0.0}"/>
         <Parameter name="Basis Vector 2" type="Array(double)" value="{-0.0892941262031,0.996005300702,0.0}"/>
-        <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
--->
-
-        <Parameter name="Basis Vector 1" type="Array(double)" value="{0.996005300702,-0.0892941262031,0.0}"/>
-        <Parameter name="Basis Vector 2" type="Array(double)" value="{0.0892941262031,0.996005300702,0.0}"/>
         <Parameter name="Basis Vector 3" type="Array(double)" value="{0.0,0.0,1.0}"/>
 
       </ParameterList>
@@ -49,7 +38,7 @@
       <ParameterList name="Slip System 1">
         <Parameter name="Slip Direction" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
-        <Parameter name="Tau Critical" type="double" value="0.01"/>
+        <Parameter name="Tau Critical" type="double" value="1.0e10"/>
         <Parameter name="Gamma Dot" type="double" value="1.0"/>
         <Parameter name="Gamma Exponent" type="double" value="1.0"/>
       </ParameterList>
@@ -59,6 +48,8 @@
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output tau_1" type="bool" value="true"/>
 
     </ParameterList>
 
@@ -84,7 +75,7 @@
       <ParameterList name="Slip System 1">
         <Parameter name="Slip Direction" type="Array(double)" value="{1.0, 0.0, 0.0}"/>
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
-        <Parameter name="Tau Critical" type="double" value="0.01"/>
+        <Parameter name="Tau Critical" type="double" value="1.0e10"/>
         <Parameter name="Gamma Dot" type="double" value="1.0"/>
         <Parameter name="Gamma Exponent" type="double" value="1.0"/>
       </ParameterList>
@@ -94,6 +85,8 @@
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output tau_1" type="bool" value="true"/>
 
     </ParameterList>
 

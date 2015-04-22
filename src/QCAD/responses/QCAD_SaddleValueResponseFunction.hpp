@@ -160,7 +160,7 @@ namespace QCAD {
 		     Tpetra_MultiVector* dg_dpT);
 
 
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     //! Post process responses
     virtual void 
     postProcessResponses(const Epetra_Comm& comm, const Teuchos::RCP<Epetra_Vector>& g);
@@ -189,7 +189,7 @@ namespace QCAD {
   private:
 
     //! Helper functions for Nudged Elastic Band (NEB) algorithm, performed in evaluateResponse
-#ifdef ALBANY_EPETRA
+#if defined(ALBANY_EPETRA)
     void initializeImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			       Epetra_Vector& g, int dbMode);
@@ -198,7 +198,7 @@ namespace QCAD {
     void initializeImagePointsT(const double current_time, const Tpetra_Vector* xdotT,
 			       const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			       Tpetra_Vector& gT, int dbMode);
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
 //IK, 10/9/14, to do: convert this to Tpetra
     void initializeFinalImagePoints(const double current_time, const Epetra_Vector* xdot,
 			       const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
@@ -211,7 +211,7 @@ namespace QCAD {
     void doNudgedElasticBandT(const double current_time, const Tpetra_Vector* xdotT,
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, int dbMode);
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     void fillSaddlePointData(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
@@ -221,7 +221,7 @@ namespace QCAD {
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, int dbMode);
 
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     //! Helper functions for level-set algorithm, performed in evaluateResponse
     void doLevelSet(const double current_time,  const Epetra_Vector* xdot,
 		    const Epetra_Vector& x,  const Teuchos::Array<ParamVec>& p,
@@ -231,7 +231,7 @@ namespace QCAD {
     void doLevelSetT(const double current_time,  const Tpetra_Vector* xdotT,
 		    const Tpetra_Vector& xT,  const Teuchos::Array<ParamVec>& p,
 		    Tpetra_Vector& gT, int dbMode);
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     int FindSaddlePoint_LevelSet(std::vector<double>& allFieldVals,
 			     std::vector<double>* allCoords, std::vector<int>& ordering,
 			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
@@ -243,7 +243,7 @@ namespace QCAD {
 			     double cutoffDistance, double cutoffFieldVal, double minDepth, int dbMode,
 			     Tpetra_Vector& gT);
 
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     //! Helper functions for doNudgedElasticBand(...)
     void getImagePointValues(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
@@ -255,7 +255,7 @@ namespace QCAD {
 			     const Tpetra_Vector& xT, const Teuchos::Array<ParamVec>& p,
 			     Tpetra_Vector& gT, double* globalPtValues, double* globalPtWeights,
 			     double* globalPtGrads, std::vector<mathVector> lastPositions, int dbMode);
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     void getFinalImagePointValues(const double current_time, const Epetra_Vector* xdot,
 			     const Epetra_Vector& x, const Teuchos::Array<ParamVec>& p,
 			     Epetra_Vector& g, int dbMode);
@@ -270,7 +270,7 @@ namespace QCAD {
 		      const double& gradScale,  const double& springScale, 
 		      QCAD::mathVector& force, double& dt, double& dt2, int dbMode);
 
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     bool matchesCurrentResults(Epetra_Vector& g) const;
 #endif
     bool matchesCurrentResultsT(Tpetra_Vector& gT) const;
@@ -288,7 +288,7 @@ namespace QCAD {
     //! helper function to get the highest image point (the one with the largest value)
     int getHighestPtIndex() const;
 
-#ifdef ALBANY_EPETRA 
+#if defined(ALBANY_EPETRA) 
     //! Epetra Communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 #endif

@@ -14,6 +14,10 @@
 #include "Albany_Layouts.hpp"
 #include "Sacado_ParameterAccessor.hpp"
 
+#include <Shards_CellTopology.hpp>
+#include <Intrepid_Basis.hpp>
+#include <Intrepid_Cubature.hpp>
+
 namespace Aeras {
 /** \brief ShallowWater equation Residual for atmospheric modeling
 
@@ -60,12 +64,14 @@ private:
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim,Dim> jacobian_inv;
   PHX::MDField<MeshScalarT,Cell,QuadPoint> jacobian_det;
   Intrepid::FieldContainer<RealType>    grad_at_cub_points;
+  PHX::MDField<ScalarT,Cell,Node,VecDim> hyperViscosity;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;
 
 
   bool usePrescribedVelocity;
+  bool useHyperViscosity;
   bool ibpGradH;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
@@ -138,13 +144,19 @@ public:
  PHX::MDField<ScalarT,QuadPoint> coriolis;
 
  PHX::MDField<ScalarT,Node> surf;
+ PHX::MDField<ScalarT,Node> surftilde;
  PHX::MDField<ScalarT,QuadPoint, Dim> hgradNodes;
+ PHX::MDField<ScalarT,QuadPoint, Dim> htildegradNodes;
 
  PHX::MDField<ScalarT,Node> ucomp;
  PHX::MDField<ScalarT,Node> vcomp;
+ PHX::MDField<ScalarT,Node> utildecomp;
+ PHX::MDField<ScalarT,Node> vtildecomp;
 
  PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
+ PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;
+ PHX::MDField<ScalarT,QuadPoint, Dim> vtildegradNodes;
 
  PHX::MDField<ScalarT,Node, Dim> vcontra;
 

@@ -79,6 +79,15 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 };
 
+// Template Specialization: DistParamDeriv Evaluation
+template<typename Traits>
+class PeridigmForce<PHAL::AlbanyTraits::DistParamDeriv, Traits> : public PeridigmForceBase<PHAL::AlbanyTraits::DistParamDeriv, Traits> {
+public:
+  PeridigmForce(Teuchos::ParameterList& p, const Teuchos::RCP<Albany::Layouts>& dataLayout)
+    : PeridigmForceBase<PHAL::AlbanyTraits::DistParamDeriv,Traits>(p, dataLayout) {};
+  void evaluateFields(typename Traits::EvalData d);
+};
+
 }
 
 #endif

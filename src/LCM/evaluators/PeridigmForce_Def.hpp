@@ -146,5 +146,14 @@ evaluateFields(typename Traits::EvalData workset)
   }
 }
 
+//**********************************************************************
+template<typename Traits>
+void PeridigmForce<PHAL::AlbanyTraits::DistParamDeriv, Traits>::
+evaluateFields(typename Traits::EvalData workset) {
+  //do nothing
+}
+
+
+
 } // namespace LCM
 
