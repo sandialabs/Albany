@@ -39,6 +39,7 @@
 #endif
 
 #include "Shards_CellTopology.hpp"
+#include "Aeras_SpectralOutputSTKMeshStruct.hpp"
 
 // Uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -156,7 +157,7 @@ namespace Aeras
   public:
 
     //! Constructor
-    SpectralDiscretization(
+    SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams,
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
@@ -529,10 +530,15 @@ namespace Aeras
 
   protected:
 
+    Teuchos::RCP<Teuchos::ParameterList> discParams;
 
     //! Stk Mesh Objects
     stk::mesh::MetaData& metaData;
     stk::mesh::BulkData& bulkData;
+
+    //! STK Mesh Struct for output
+    Teuchos::RCP<Aeras::SpectralOutputSTKMeshStruct> outputStkMeshStruct;
+
 
 #if defined(ALBANY_EPETRA)
     //! Epetra communicator

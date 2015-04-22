@@ -48,8 +48,10 @@ IF (ALBANY_FELIX)
 ENDIF()
 
 IF (ALBANY_AERAS)
-  SET(SOURCES ${SOURCES} Aeras_SpectralDiscretization.cpp)
-  SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp)
+  SET(SOURCES ${SOURCES} Aeras_SpectralDiscretization.cpp
+                         Aeras_SpectralOutputSTKMeshStruct.cpp)
+  SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp
+                         Aeras_SpectralOutputSTKMeshStruct.hpp)
 ENDIF() 
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
