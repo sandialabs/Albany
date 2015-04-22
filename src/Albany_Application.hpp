@@ -880,27 +880,39 @@ namespace Albany {
     void
     setApplications(
         Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> ca)
-    {apps_ = ca;}
+    {
+      apps_ = ca;
+    }
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
     getApplications() const
-    {return apps_;}
+    {
+      return apps_;
+    }
 
     void
     setAppIndex(int const i)
-    {app_index_ = i;}
+    {
+      app_index_ = i;
+    }
 
     int
     getAppIndex() const
-    {return app_index_;}
+    {
+      return app_index_;
+    }
 
     void
     setAppNameIndexMap(Teuchos::RCP<std::map<std::string, int>> & anim)
-    {app_name_index_map_ = anim;}
+    {
+      app_name_index_map_ = anim;
+    }
 
     Teuchos::RCP<std::map<std::string, int>>
     getAppNameIndexMap() const
-    {return app_name_index_map_;}
+    {
+      return app_name_index_map_;
+    }
 
     void
     setCoupledAppBlockNodeset(
@@ -909,7 +921,7 @@ namespace Albany {
         std::string const & nodeset_name);
 
     std::string
-    getBlockName(int const app_index) const
+    getCoupledBlockName(int const app_index) const
     {
       auto it = coupled_app_index_block_nodeset_names_map_.find(app_index);
       assert(it != coupled_app_index_block_nodeset_names_map_.end());
@@ -930,6 +942,30 @@ namespace Albany {
       return
         coupled_app_index_block_nodeset_names_map_.find(app_index) !=
         coupled_app_index_block_nodeset_names_map_.end();
+    }
+
+    // Few coupled applications, so do this by brute force.
+    std::string
+    getAppName(int app_index = -1) const
+    {
+      if (app_index == -1) app_index = this->getAppIndex();
+
+      std::string
+      name;
+
+      auto
+      it = app_name_index_map_->begin();
+
+      for ( ; it != app_name_index_map_->end(); ++it) {
+        if (app_index == it->second) {
+          name = it->first;
+          break;
+        }
+      }
+
+      assert(it != app_name_index_map_->end());
+
+      return name;
     }
 
   private:

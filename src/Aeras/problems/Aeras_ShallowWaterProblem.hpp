@@ -142,16 +142,13 @@ Aeras::ShallowWaterProblem::constructEvaluators(
 
   const int numQPts     = cubature->getNumPoints();
   const int numVertices = meshSpecs.ctd.node_count;
-  int vecDim;
+  int vecDim = neq;
 
-  if (useHyperViscosity == false) {
-    if (neq == 1) vecDim = neq; 
-    else vecDim = spatialDim;
-  }
-  else { 
-    if (neq == 2) vecDim = neq; 
-    else vecDim = spatialDim;
-  }
+  /*if (neq == 1 || neq == 2) 
+    vecDim = neq; 
+  else 
+    vecDim = spatialDim; 
+  */
   
   *out << "Field Dimensions: Workset=" << worksetSize 
        << ", Vertices= " << numVertices
@@ -316,8 +313,6 @@ Aeras::ShallowWaterProblem::constructEvaluators(
     RCP<ParameterList> p = rcp(new ParameterList("Shallow Water Hyperviscosity"));
 
     //Input
-    p->set<std::string>("Weighted Gradient BF Name", "wGrad BF");
-    p->set<std::string>("Gradient QP Variable Name", "Flow State Gradient");
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
     Teuchos::ParameterList& paramList = params->sublist("Shallow Water Problem");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);

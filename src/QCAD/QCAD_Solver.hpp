@@ -139,8 +139,14 @@ namespace QCAD {
     std::size_t nResponseDoubles;    
 
     std::string iterationMethod;
-    std::string discretizationCreateCmd;
     int  nEigenvectors; //used in Poisson-CI coupling
+
+    bool bDiscretizationDependsOnParameters;
+    std::string discretizationCreateCmd;
+    std::string baseOutputExodusFilename;
+    Teuchos::RCP<int> currentEvalIndex;
+    Teuchos::RCP<Epetra_LocalMap> dummy_soln_map;
+    Teuchos::RCP<Epetra_Vector> dummy_soln_vec;
 
     int num_p, num_g;
     Teuchos::RCP<Epetra_LocalMap> epetra_param_map;
@@ -186,7 +192,8 @@ namespace QCAD {
     void fillSubSolverParams(double parameterValue, 
 			     const std::map<std::string, SolverSubSolver>& subSolvers) const;
 
-    double getInitialParam(const std::map<std::string, SolverSubSolverData>& subSolversData) const;
+    double getInitialParam(const std::map<std::string, SolverSubSolverData>& subSolversData,
+			   const std::vector<double>& geoParamInitialVals) const;
 
     std::string getTargetName() const { return targetName; }
     std::vector<int> getTargetIndices() const { return targetIndices; }

@@ -72,27 +72,39 @@ public:
 
   void
   setThisAppIndex(int const tai)
-  {this_app_index_ = tai;}
+  {
+    this_app_index_ = tai;
+  }
 
   int
   getThisAppIndex() const
-  {return this_app_index_;}
+  {
+    return this_app_index_;
+  }
 
   void
   setCoupledAppIndex(int const cai)
-  {coupled_app_index_ = cai;}
+  {
+    coupled_app_index_ = cai;
+  }
 
   int
   getCoupledAppIndex() const
-  {return coupled_app_index_;}
+  {
+    return coupled_app_index_;
+  }
 
   Albany::Application const &
   getApplication(int const app_index)
-  {return *(coupled_apps_[app_index]);}
+  {
+    return *(coupled_apps_[app_index]);
+  }
 
   Albany::Application const&
   getApplication(int const app_index) const
-  {return *(coupled_apps_[app_index]);}
+  {
+    return *(coupled_apps_[app_index]);
+  }
 
 private:
 
@@ -101,7 +113,7 @@ private:
       Albany::Application const & this_app,
       Albany::Application const & coupled_app,
       int const dimension,
-      size_t const ns_node);
+      size_t const ns_node) const;
 
 private:
 

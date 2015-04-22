@@ -158,6 +158,25 @@ Albany::PeridigmProblem::constructEvaluators(
 
    // --------- Option 1: Peridynamics ---------
 
+
+    //Finding whether basal dirichlet_control_field is a distributed parameter
+    std::map<std::string, std::string> controlParameterMap;
+    const std::string emptyString("");
+    if(this->params->isSublist("Distributed Parameters")) {
+      Teuchos::ParameterList& dist_params_list =  this->params->sublist("Distributed Parameters");
+      Teuchos::ParameterList* param_list;
+      int numParams = dist_params_list.get<int>("Number of Parameter Vectors",0);
+      for(int p_index=0; p_index< numParams; ++p_index) {
+       std::string parameter_sublist_name = Albany::strint("Distributed Parameter", p_index);
+       if(dist_params_list.isSublist(parameter_sublist_name)) {
+         param_list = &dist_params_list.sublist(parameter_sublist_name);
+         const std::string& name = param_list->get<std::string>("Name", emptyString);
+         const std::string& meshPart = param_list->get<std::string>("Mesh Part",emptyString);
+         controlParameterMap.insert(std::make_pair(name, meshPart));
+       }
+     }
+   }
+
    if(materialModelName == "Peridynamics"){
 
      *out << "PeridigmProblem::constructEvaluators(), Creating evaluators for peridynamics material." << std::endl;
@@ -185,24 +204,21 @@ Albany::PeridigmProblem::constructEvaluators(
      { //registering field for dirichlet boundary conditions
        std::string stateName("dirichlet_field");
        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
-         const std::string& meshPart = "";
-         RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity, meshPart);
-         ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-         fm0.template registerEvaluator<EvalT>(ev);
+         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+         stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
        }
      }
 
-     { //registering field for dirichlet boundary conditions
-       std::string stateName("dirichlet_control_field");
-       if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
-         const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
-         RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity, meshPart);
-         ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-         fm0.template registerEvaluator<EvalT>(ev);
-       }
-     }
+     {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+          if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+            stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+            fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
+        }
+      }
 
      if (haveSource) { // Source
        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
@@ -361,24 +377,21 @@ Albany::PeridigmProblem::constructEvaluators(
      { //registering field for dirichlet boundary conditions
         std::string stateName("dirichlet_field");
         if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
-          const std::string& meshPart = "";
-          RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity, meshPart);
-          ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+          stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
         }
       }
 
-     { //registering field for dirichlet boundary conditions
-       std::string stateName("dirichlet_control_field");
-       if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-         Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
-         const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
-         RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity, meshPart);
-         ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-         fm0.template registerEvaluator<EvalT>(ev);
-       }
-     }
+     {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+          if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+            stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+            fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
+        }
+      }
 
      // Displacement Fields
 
@@ -561,22 +574,19 @@ Albany::PeridigmProblem::constructEvaluators(
      { //registering field for dirichlet boundary conditions
         std::string stateName("dirichlet_field");
         if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
-          const std::string& meshPart = "";
-          RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity, meshPart);
-          ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
+          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDataToElemNode;
+          stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity);
         }
       }
 
-     { //registering field for dirichlet boundary conditions
-        std::string stateName("dirichlet_control_field");
-        if(registered_distributedFields.insert(stateName).second) {//make sure the field has not been already registered
-          Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
-          const std::string& meshPart = this->params->sublist("Distributed Parameters").get("Mesh Part","");
-          RCP<ParameterList> p = stateMgr.registerStateVariable(stateName, dataLayout->node_scalar, elementBlockName, true, &entity, meshPart);
-          ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
-          fm0.template registerEvaluator<EvalT>(ev);
+     {
+        Albany::StateStruct::MeshFieldEntity entity= Albany::StateStruct::NodalDistParameter;
+        std::map<std::string, std::string>::const_iterator it=controlParameterMap.begin();
+        for(; it!=controlParameterMap.end(); ++it) {
+          if(registered_distributedFields.insert(it->first).second) {//make sure the field has not been already registered
+            stateMgr.registerStateVariable(it->first, dataLayout->node_scalar, elementBlockName, true, &entity, it->second);
+            fm0.template registerEvaluator<EvalT>(evalUtils.constructGatherScalarNodalParameter(it->first));
+          }
         }
       }
 

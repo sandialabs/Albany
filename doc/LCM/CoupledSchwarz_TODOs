@@ -2,7 +2,7 @@
 -----------------------Cleanup TODOs---------------------------
 
 1.) Change variable/function names to comply with C++ coding standards
-[Alejandro] Mostly done in SchwarzMultiscale.*.
+[Alejandro] Mostly done.
 
 2.) Fix up sacado_param_vec in SchwarzMultiscale.cpp (does it need to
 be Teuchos::Array?).
@@ -21,10 +21,9 @@ in general already in other parts of the code. [TBD?]
 Jacobians as Tpetra_Operators.  Resulting Teuchos Array of Tpetra_Operators
 will be passed to Schwarz_CoupledJacobian class.
 
-Current status: As the coupled Jacobian apply method is filled in with
-a modified version of the old Schwarz BC, the latter needs to be
-deactivated it starts looking for blocks within an application that
-only exist in another application. [Alejandro]
+Current status: The implementation of the old Schwarz BC has been
+ported to the new code. The apply method in the coupled Jacobian
+is producing nans at the moment. [Alejandro]
 
 3.) Sensitivities [how to define DfDp, DgDp, DgDx, etc. when 
 we have Thyra Product Vectors?  Is this supported?]

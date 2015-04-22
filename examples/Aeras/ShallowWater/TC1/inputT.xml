@@ -31,10 +31,10 @@
     </ParameterList>
   </ParameterList>
   <ParameterList name="Debug Output">
-     <Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
-     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/>
+     <!--Parameter name="Write Jacobian to MatrixMarket" type="int" value="-1"/>
+     <Parameter name="Write Residual to MatrixMarket" type="int" value="-1"/-->
      <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
-     <Parameter name="Write Solution to Standard Output" type="bool" value="true"/>
+     <!--Parameter name="Write Solution to Standard Output" type="bool" value="true"/-->
      <!--Parameter name="Write Jacobian to Standard Output" type="int" value="1"/>
      <Parameter name="Write Residual to Standard Output" type="int" value="3"/-->
   </ParameterList>
@@ -63,7 +63,6 @@
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
       <Parameter name="Final Time" type="double" value="864"/>
-      <Parameter name="Stepper Type" type="string" value="Forward Euler"/>
       <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
       <!--Parameter name="Final Time" type="double" value="86400"/-->
       <!-- change to 12*24*3600 to get full 12 days -->
@@ -76,7 +75,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Fixed dt" type="double" value="900"/>
+        <Parameter name="Number of Time Steps" type="int" value="20"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">

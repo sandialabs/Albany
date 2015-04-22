@@ -270,12 +270,17 @@ class AdjointResponseFunction :
 
   protected:
 
-    Teuchos::RCP<Albany::Application> application;
-    Teuchos::RCP<Albany::AbstractProblem> problem;
-    Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs;
-    Teuchos::RCP<Albany::StateManager> stateMgr;
-    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm;
-    Teuchos::ParameterList responseParams;
+    Teuchos::RCP<Albany::Application> application_;
+    Teuchos::RCP<Albany::AbstractProblem> problem_;
+    Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs_;
+    Teuchos::RCP<Albany::StateManager> stateManager_;
+    Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm_;
+    Teuchos::ParameterList responseParams_;
+
+    int visResponseGraph_;
+    std::string visResponseName_;
+    template<typename EvalT> void
+    visResponseGraph(const std::string& resType);
 
   private:
 
@@ -284,6 +289,27 @@ class AdjointResponseFunction :
     AdjointResponseFunction& operator=(const AdjointResponseFunction&);
 
 };
+
+template <typename EvalT>  void
+AdjointResponseFunction::
+visResponseGraph(const std::string& resType) {
+  static bool first = true;
+  if (first && visResponseGraph_ > 0)
+  {
+    bool detail = false;
+    if (visResponseGraph_ > 1)
+      detail = true;
+    Teuchos::RCP<Teuchos::FancyOStream> out = 
+      Teuchos::VerboseObjectBase::getDefaultOStream();
+    *out << "Phalanx writing graphviz file for graph of Response fill "
+      << "(detail = "<< visResponseGraph_ << ")"<< std::endl;
+    std::string detailName = 
+      "responses_graph_" + visResponseName_ + resType;
+    *out << "Process using 'dot -Tpng -O ' " << detailName << "\n" << std::endl;
+    rfm_->writeGraphvizFile<EvalT>(detailName,detail,detail);
+    first = false;
+  }
+}
 
 }
 

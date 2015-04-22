@@ -6,14 +6,14 @@
     <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlaneHard_Material.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
-        <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.3}"/>
+        <Parameter name="Number of points" type="int" value="6"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.10, 0.20,  0.30,  0.40,  0.50, 1.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05, 0.00,  0.05,  0.00,  0.05, 0.30}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
-        <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.0}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.3}"/>
+        <Parameter name="Number of points" type="int" value="6"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.10, 0.20,  0.30,  0.40,  0.50, 1.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05, 0.00,  0.05,  0.00,  0.05, 0.30}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
@@ -39,7 +39,6 @@
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
-    <Parameter name="Workset Size" type="int" value="300"/>
   </ParameterList>
   <!-- The regression test examines "Response 0", as defined above. -->
 <!--
@@ -59,8 +58,8 @@
       <ParameterList name="Stepper">
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="100"/>
-        <Parameter name="Max Value" type="double" value="0.05"/>
+        <Parameter name="Max Steps" type="int" value="500"/>
+        <Parameter name="Max Value" type="double" value="0.3"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
         <ParameterList name="Eigensolver">

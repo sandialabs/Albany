@@ -4,18 +4,10 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 //
-// IK, 1/8/15: This is a new class where we will implement spectral
-// elements for Aeras, by reading in a STK mesh from an Exodus file
+// This class implements spectralelements for Aeras, by reading in a STK mesh from an Exodus file
 // containing a bilinear quad/hex mesh and enriching it with
 // additional nodes to create a higher order mesh.
 //
-// I have begun filling in to-dos here towards getting the spectral
-// elements, but have not completed it.  Basically all the stk::mesh
-// calls need to be examined and many of them rewritten.  The
-// coordinates array needs to be sized to have the new enriched nodes.
-// All the maps need to be defined to have the enriched mesh.
-// wsElNode* objects need to be populated with enriched mesh.
-
 // Standard includes
 #include <algorithm>
 #include <fstream>
@@ -68,11 +60,12 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 #define PRINT_COORDS
 
 Aeras::SpectralDiscretization::
-SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+                  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -81,12 +74,13 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
   bulkData(*stkMeshStruct_->bulkData),
   commT(commT_),
   rigidBodyModes(rigidBodyModes_),
+  discParams(discParams_), 
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out <<"In Aeras::SpectralDiscretization constructor!" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 
 #if defined(ALBANY_EPETRA)
@@ -95,6 +89,19 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
 
   // Get from parameter list how many points per edge we have (default = 2: no enrichment)
   points_per_edge = stkMeshStruct->points_per_edge;
+  CellTopologyData ctd = stkMeshStruct->getMeshSpecs()[0]->ctd;
+  std::string element_name = ctd.name; 
+  size_t len      = element_name.find("_");
+  if (len != std::string::npos) element_name = element_name.substr(0,len);
+  if (element_name == "Line") 
+    spatial_dim = 1; 
+  else if (element_name == "Quadrilateral" || element_name == "ShellQuadrilateral")  
+    spatial_dim = 2;
+#ifdef OUTPUT_TO_SCREEN 
+  *out << "points_per_edge: " << points_per_edge << std::endl;
+  *out << "element name: " << element_name << std::endl;
+  *out << "spatial_dim: " << spatial_dim << std::endl;  
+#endif
   Aeras::SpectralDiscretization::updateMesh();
 }
 
@@ -265,8 +272,8 @@ Aeras::SpectralDiscretization::printCoords() const
     {
       for (int j = 0; j < coords[ws][e].size(); j++)     // node
       {
-      // IK, 1/27/15: the following assumes a 3D mesh but this is OK
-      // here.
+      // IK, 1/27/15: the following assumes a 3D mesh.
+      // FIXME, 4/21/15: add logic for the case when we have line elements.
         std::cout << "Coord for workset: " << ws << " element: " << e
                   << " node: " << j << " x, y, z: "
                   << coords[ws][e][j][0] << ", " << coords[ws][e][j][1]
@@ -288,8 +295,8 @@ Aeras::SpectralDiscretization::printCoordsAndGIDs() const
     {
       for (int j = 0; j < coords[ws][e].size(); j++)     // node
       {
-      // IK, 1/27/15: the following assumes a 3D mesh but this is OK
-      // here.
+      // IK, 1/27/15: the following assumes a 3D mesh.
+      // FIXME, 4/21/15: add logic for the case when we have line elements.
         std::cout << "GID, x, y, z: " << wsElNodeID[ws][e][j]<< " "
                   << coords[ws][e][j][0] << " " << coords[ws][e][j][1]
                   << " " << coords[ws][e][j][2] << std::endl;
@@ -399,6 +406,9 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 void
 Aeras::SpectralDiscretization::transformMesh()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   using std::cout; using std::endl;
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   std::string transformType = stkMeshStruct->transformType;
@@ -606,6 +616,9 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
                                               const double time,
                                               const bool overlapped)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   writeSolutionToMeshDatabaseT(solnT, time, overlapped);
   writeSolutionToFileT(solnT, time, overlapped);
 }
@@ -615,6 +628,9 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(const Tpetra_Vector&
                                                             const double time,
                                                             const bool overlapped)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // Put solution as Epetra_Vector into STK Mesh
   if (!overlapped)
     setSolutionFieldT(solnT);
@@ -628,34 +644,28 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
                                                     const double time,
                                                     const bool overlapped)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 #ifdef ALBANY_SEACAS
-
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
-  {
-    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-    container->transferSolutionToCoords();
-    if (!mesh_data.is_null())
-    {
-      // Mesh coordinates have changed. Rewrite output file by
-      // deleting the mesh data object and recreate it
-      setupExodusOutput();
-    }
-  }
-
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
+  if (stkMeshStruct->exoOutput && !(outputInterval % outputStkMeshStruct->exoOutputInterval))
   {
+    setupExodusOutput();
+    //IKT, FIXME, 4/22/15: the following function needs to be implemented 
+    outputStkMeshStruct->copySolutionToOutputMesh(solnT);  
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
     if (mapT->getComm()->getRank() == 0)
     {
       *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
+      *out << " to index " <<out_step<<" in file "<<outputStkMeshStruct->exoOutFile<< std::endl;
     }
   }
-  if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
+ 
+  //IKT, 4/22/15: we are not going to worry about netcdf file writing yet. 
+ /* if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
   {
     double time_label = monotonicTimeLabel(time);
     const int out_step = processNetCDFOutputRequestT(solnT);
@@ -665,7 +675,7 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
     }
-  }
+  }*/
   outputInterval++;
 #endif
 
@@ -1026,10 +1036,18 @@ Aeras::SpectralDiscretization::getMaximumID(const stk::mesh::EntityRank rank) co
   return result;
 }
 
-void Aeras::SpectralDiscretization::enrichMesh()
+void Aeras::SpectralDiscretization::enrichMeshLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::enrichMesh()" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, 4/21/15: fill in for line elements
+}
+
+void Aeras::SpectralDiscretization::enrichMeshQuads()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   // Initialization
   size_t np  = points_per_edge;
@@ -1273,10 +1291,18 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
 }
 #endif // ALBANY_EPETRA
 
-void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
+void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, 4/21/15: fill in for line elements
+}
+
+void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   // Initialization
   int np = points_per_edge;
@@ -1406,7 +1432,7 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
     commT->barrier();
     if (rank == commT->getRank())
       std::cout << "P" << rank
-                << ": computeOwnedNodesAndUnknowns(), inode = " << inode
+                << ": computeOwnedNodesAndUnknownsQuads(), inode = " << inode
                 << ", numOwnedNodes = " << numOwnedNodes << ", indicesT = "
                 << indicesT << std::endl;
   }
@@ -1435,11 +1461,18 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknowns()
 #endif
 }
 
-void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
+void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()"
-       << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, 4/21/15: fill in for line elements
+}
+
+void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   // Initialization
   int np = points_per_edge;
@@ -1555,7 +1588,7 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
     commT->barrier();
     if (rank == commT->getRank())
       std::cout << "P" << rank
-                << ": computeOverlapNodesAndUnknowns(), inode = " << inode
+                << ": computeOverlapNodesAndUnknownsQuads(), inode = " << inode
                 << ", numOwnedNodes = " << numOwnedNodes << ", indicesT = "
                 << overlapIndicesT << std::endl;
   }
@@ -1581,10 +1614,18 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknowns()
   coordinates.resize(3*numOverlapNodes);
 }
 
-void Aeras::SpectralDiscretization::computeCoords()
+void Aeras::SpectralDiscretization::computeCoordsLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeCoords()" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, 4/21/15: fill in for line elements
+}
+
+void Aeras::SpectralDiscretization::computeCoordsQuads()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   // Initialization
   typedef Intrepid::FieldContainer< double > Field_t;
@@ -1675,13 +1716,21 @@ void Aeras::SpectralDiscretization::computeCoords()
   }
 }
 
-void Aeras::SpectralDiscretization::computeGraphs()
+void Aeras::SpectralDiscretization::computeGraphsLines()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, 4/21/15: fill in for line elements
+}
+
+void Aeras::SpectralDiscretization::computeGraphsQuads()
 {
   //std::map<int, stk::mesh::Part*>::iterator pv = stkMeshStruct->partVec.begin();
   //int nodes_per_element =  metaData.get_cell_topology(*(pv->second)).getNodeCount();
 
 #ifdef OUTPUT_TO_SCREEN
-  *out <<"In Aeras::SpectralDiscretization computeGraphs()!" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 
   const int nodes_per_element = points_per_edge*points_per_edge;
@@ -1750,10 +1799,18 @@ void Aeras::SpectralDiscretization::computeGraphs()
   graphT->fillComplete();
 }
 
-void Aeras::SpectralDiscretization::computeWorksetInfo()
+void Aeras::SpectralDiscretization::computeWorksetInfoLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeWorksetInfo()" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, 4/21/15: fill in for line elements
+}
+
+void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
+{
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   int np  = points_per_edge;
   int np2 = np * np;
@@ -2192,10 +2249,10 @@ void Aeras::SpectralDiscretization::computeWorksetInfo()
   }
 }
 
-void Aeras::SpectralDiscretization::computeSideSets()
+void Aeras::SpectralDiscretization::computeSideSetsLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeSideSets(): nothing to do!" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   /*
   // Clean up existing sideset structure if remeshing
@@ -2397,10 +2454,10 @@ Aeras::SpectralDiscretization::determine_local_side_id(const stk::mesh::Entity e
   return static_cast<unsigned>(side_id) ;
 }
 
-void Aeras::SpectralDiscretization::computeNodeSets()
+void Aeras::SpectralDiscretization::computeNodeSetsLines()
 {
 #ifdef OUTPUT_TO_SCREEN
-  *out << "In Aeras::SpectralDiscretization::computeNodeSets(): nothing to do!" << std::endl;
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   /*
   std::map<std::string, stk::mesh::Part*>::iterator ns = stkMeshStruct->nsPartVec.begin();
@@ -2435,13 +2492,27 @@ void Aeras::SpectralDiscretization::computeNodeSets()
 
 void Aeras::SpectralDiscretization::setupExodusOutput()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput)
   {
+    //construct new mesh struct for output 
+    outputStkMeshStruct = Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(discParams, commT,
+                        stkMeshStruct->numDim, stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
+                        wsElNodeID, coords, node_mapT, points_per_edge));
+    Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+    Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    //set field and bulk data for new struct (for output)
+    outputStkMeshStruct->setFieldAndBulkData(commT, discParams, neq, req,
+                                         sis, stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
 
+
+    
     outputInterval = 0;
 
-    std::string str = stkMeshStruct->exoOutFile;
+    std::string str = outputStkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
@@ -2449,6 +2520,8 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
+    //IKT, 4/22/15: lets not worry about fields for now.
+/*
     const stk::mesh::FieldVector &fields = mesh_data->meta_data().get_fields();
     for (size_t i=0; i < fields.size(); i++)
     {
@@ -2459,7 +2532,7 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
         mesh_data->add_field(outputFileIdx, *fields[i]);
       }
       catch (std::runtime_error const&) { }
-    }
+    }*/
   }
 #else
   if (stkMeshStruct->exoOutput)
@@ -3189,94 +3262,114 @@ Aeras::SpectralDiscretization::printVertexConnectivity()
 void
 Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
-
-  enrichMesh();
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  if (spatial_dim == 1)
+    enrichMeshLines(); 
+  else if (spatial_dim == 2)  
+    enrichMeshQuads();
 
 #ifdef OUTPUT_TO_SCREEN
-  printConnectivity(true);
-  commT->barrier();
-  printConnectivity();
+    printConnectivity(true);
+    commT->barrier();
+    printConnectivity();
 #endif
 
 #if defined(ALBANY_EPETRA)
-  const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
-  nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
-  nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
-  for(int is=0; is<nodal_param_states.size(); is++)
-  {
-    const Albany::StateStruct& param_state = *nodal_param_states[is];
-    const Albany::StateStruct::FieldDims& dim = param_state.dim;
-    int numComps = 1;
-    if (dim.size()==3)      // vector
-      numComps = dim[2];
-    else if (dim.size()==4) // tensor
-      numComps = dim[2]*dim[3];
+    const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
+    nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
+    nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
+    for(int is=0; is<nodal_param_states.size(); is++)
+    {
+      const Albany::StateStruct& param_state = *nodal_param_states[is];
+      const Albany::StateStruct::FieldDims& dim = param_state.dim;
+      int numComps = 1;
+      if (dim.size()==3)      // vector
+        numComps = dim[2];
+      else if (dim.size()==4) // tensor
+        numComps = dim[2]*dim[3];
 
-    nodalDOFsStructContainer.addEmptyDOFsStruct(param_state.name, param_state.meshPart,numComps);
-  }
-
-  computeNodalEpetraMaps(false);
+      nodalDOFsStructContainer.addEmptyDOFsStruct(param_state.name, param_state.meshPart,numComps);
+    }
+    computeNodalEpetraMaps(false);
 #endif // ALBANY_EPETRA
 
-  computeOwnedNodesAndUnknowns();
+  if (spatial_dim == 1) 
+    computeOwnedNodesAndUnknownsLines();
+  else if (spatial_dim == 2) 
+    computeOwnedNodesAndUnknownsQuads();
 
-  //write owned maps to matrix market file for debug
-  Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
-  Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
+    //write owned maps to matrix market file for debug
+    Tpetra_MatrixMarket_Writer::writeMapFile("mapT.mm", *mapT);
+    Tpetra_MatrixMarket_Writer::writeMapFile("node_mapT.mm", *node_mapT);
 
-  // IK, 1/23/15: I've commented out the guts of this function.  It is
-  // only needed for ML/MueLu and is not critical right now to get
-  // spectral elements to work.
-  setupMLCoords();
+    // IK, 1/23/15: I've commented out the guts of this function.  It is
+    // only needed for ML/MueLu and is not critical right now to get
+    // spectral elements to work.
+    setupMLCoords();
 
 #if defined(ALBANY_EPETRA)
-  computeNodalEpetraMaps(true);
+    computeNodalEpetraMaps(true);
 #endif // ALBANY_EPETRA
 
-  computeOverlapNodesAndUnknowns();
+  if (spatial_dim == 1) 
+    computeOverlapNodesAndUnknownsLines();
+  else if (spatial_dim == 2) 
+    computeOverlapNodesAndUnknownsQuads();
 
-  //write overlap maps to matrix market file for debug
-  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
-  Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
+    //write overlap maps to matrix market file for debug
+    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_mapT.mm", *overlap_mapT);
+    Tpetra_MatrixMarket_Writer::writeMapFile("overlap_node_mapT.mm", *overlap_node_mapT);
 
-  computeWorksetInfo();
+  if (spatial_dim == 1) 
+    computeWorksetInfoLines();
+  else if (spatial_dim == 2) 
+    computeWorksetInfoQuads();
 
-  // IKT, 2/16/15: moving computeGraphs() to after
-  // computeWorksetInfo(), as computeGraphs() relies on wsElNodeEqID
-  // array which is set in computeWorksetInfo()
-  computeGraphs();
+    // IKT, 2/16/15: moving computeGraphsQuads() to after
+    // computeWorksetInfoQuads(), as computeGraphsQuads() relies on wsElNodeEqID
+    // array which is set in computeWorksetInfoQuads()
+  if (spatial_dim == 1) 
+    computeGraphsLines();
+  else if (spatial_dim == 2) 
+    computeGraphsQuads();
 
-  //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
-  computeCoords();
+    //Note that getCoordinates has not been converted to use the enriched mesh, but I believe it's not used anywhere.
+  if (spatial_dim == 1) 
+    computeCoordsLines();
+  else if (spatial_dim == 2) 
+    computeCoordsQuads();
 
-  // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
-  // enriched coordinates This function is not critical and only
-  // called for XZ hydrostatic equations.
-  transformMesh();
+    // IK, 1/23/15, FIXME: to implement -- transform mesh based on new
+    // enriched coordinates This function is not critical and only
+    // called for XZ hydrostatic equations.
+    transformMesh();
 
- // IK, 1/27/15: debug output
+   // IK, 1/27/15: debug output
 #ifdef OUTPUT_TO_SCREEN
-  printCoords();
+    printCoords();
 #endif
 #ifdef PRINT_COORDS
-  printCoordsAndGIDs(); 
+    printCoordsAndGIDs(); 
 #endif
 
-  // IK, 1/23/15: I have changed it so nothing happens in the
-  // following functions b/c we have no Dirichlet/Neumann BCs for
-  // spherical mesh.  Ultimately we probably want to remove these.
-  computeNodeSets();
-  computeSideSets();
+    // IK, 1/23/15: I have changed it so nothing happens in the
+    // following functions b/c we have no Dirichlet/Neumann BCs for
+    // spherical mesh.  Ultimately we probably want to remove these.
+  if (spatial_dim == 1) { 
+    computeNodeSetsLines();
+    computeSideSetsLines();
+  }
 
-  // IK, 1/26/15 -- commenting out for now
-  // setupExodusOutput();
+  if (spatial_dim == 2) 
+     setupExodusOutput();
 
-  // Build the node graph needed for the mass matrix for solution transfer and projection operations
-  // FIXME this only needs to be called if we are using the L2 Projection response
-  // IK, 1/23/15: I don't think we'll need meshToGraph for Aeras.
-  // meshToGraph();
-  // printVertexConnectivity();
-  // IK, 1/26/15 -- commenting out for now
-  // setupNetCDFOutput();
-
+    // Build the node graph needed for the mass matrix for solution transfer and projection operations
+    // FIXME this only needs to be called if we are using the L2 Projection response
+    // IK, 1/23/15: I don't think we'll need meshToGraph for Aeras.
+    // meshToGraph();
+    // printVertexConnectivity();
+    // IK, 1/26/15 -- commenting out for now
+    // setupNetCDFOutput();
 }

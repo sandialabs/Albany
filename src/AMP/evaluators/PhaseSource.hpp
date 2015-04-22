@@ -16,6 +16,7 @@
 #include "Sacado_ParameterAccessor.hpp"
 #include "Stokhos_KL_ExponentialRandomField.hpp"
 #include "Teuchos_Array.hpp"
+#include "Albany_Layouts.hpp"
 
 namespace AMP {
 ///

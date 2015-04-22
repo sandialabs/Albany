@@ -58,6 +58,7 @@ public:
   ///
   /// Optional Method to volume average the pressure
   ///
+  virtual
   void
   computeVolumeAverage(
       typename Traits::EvalData workset,
