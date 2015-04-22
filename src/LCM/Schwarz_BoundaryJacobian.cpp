@@ -125,6 +125,13 @@ apply(
   auto const
   num_this_unknowns = this_solution_view.size();
 
+  // Initialize Y vector with solution vector.
+  assert(Y_view.size() == num_this_unknowns);
+
+  for (auto i = 0; i < num_this_unknowns; ++i) {
+    Y_view[i] = this_solution_view[i];
+  }
+
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
   sprintf(name, "X_%i.mm", mm_counter);
@@ -142,13 +149,6 @@ apply(
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
-
-  // Initialize Y vector with solution vector.
-  assert(Y_view.size() == num_this_unknowns);
-
-  for (auto i = 0; i < num_this_unknowns; ++i) {
-    Y_view[i] = this_solution_view[i];
-  }
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
