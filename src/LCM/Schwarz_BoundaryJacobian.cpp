@@ -73,14 +73,6 @@ apply(
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-#ifdef WRITE_TO_MATRIX_MARKET
-  // writing to MatrixMarket file for debug
-  // initial X where we will set Y = Jac*X
-  char name[100];  //create string for file name
-  sprintf(name, "X_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
-#endif  // WRITE_TO_MATRIX_MARKET
-
   int const
   this_app_index = getThisAppIndex();
 
@@ -133,6 +125,24 @@ apply(
   auto const
   num_this_unknowns = this_solution_view.size();
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  char name[100];
+  sprintf(name, "X_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Y_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
+  ++mm_counter;
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "soln_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
+  ++mm_counter;
+#endif  // WRITE_TO_MATRIX_MARKET
+
   // Initialize Y vector with solution vector.
   assert(Y_view.size() == num_this_unknowns);
 
@@ -155,13 +165,6 @@ apply(
 
   } // node in node set loop
 
-#ifdef WRITE_TO_MATRIX_MARKET
-  // writing to MatrixMarket file for debug
-  // final solution Y (after all the operations to set Y = Jac*X
-  sprintf(name, "Y_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
-  ++mm_counter;
-#endif  // WRITE_TO_MATRIX_MARKET
 }
 
 Intrepid::Vector<double>
