@@ -46,7 +46,7 @@ class MechanicsAdjointBase :
 
   protected:
 
-    Teuchos::RCP<Albany::StateManager*> stateManager_;
+    Albany::StateManager* stateManager_;
 
     Teuchos::RCP< PHX::Tag<ScalarT> > fieldTag_;
 

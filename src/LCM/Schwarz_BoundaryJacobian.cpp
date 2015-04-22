@@ -73,17 +73,6 @@ apply(
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  std::cout << "X size: " << X.getLocalLength() << '\n';
-  std::cout << "Y size: " << Y.getLocalLength() << '\n';
-
-#ifdef WRITE_TO_MATRIX_MARKET
-  // writing to MatrixMarket file for debug
-  // initial X where we will set Y = Jac*X
-  char name[100];  //create string for file name
-  sprintf(name, "X_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
-#endif  // WRITE_TO_MATRIX_MARKET
-
   int const
   this_app_index = getThisAppIndex();
 
@@ -107,16 +96,16 @@ apply(
 
   // Get DOFs associated with node set.
   Teuchos::RCP<Albany::AbstractDiscretization>
-  disc = this_app.getDiscretization();
+  this_disc = this_app.getDiscretization();
 
   Albany::STKDiscretization *
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
   int const
-  dimension = stk_discretization->getNumDim();
+  dimension = this_stk_disc->getNumDim();
 
   Albany::NodeSetList const &
-  nodesets = stk_discretization->getNodeSets();
+  nodesets = this_stk_disc->getNodeSets();
 
   std::vector<std::vector<int>> const &
   ns_dof = nodesets.find(this_nodeset_name)->second;
@@ -125,7 +114,41 @@ apply(
   ns_number_nodes = ns_dof.size();
 
   Teuchos::ArrayRCP<ST>
-  Y_1d_view = Y.get1dViewNonConst();
+  Y_view = Y.get1dViewNonConst();
+
+  Teuchos::RCP<Tpetra_Vector const>
+  this_solution = this_stk_disc->getSolutionFieldT();
+
+  Teuchos::ArrayRCP<ST const>
+  this_solution_view = this_solution->get1dView();
+
+  auto const
+  num_this_unknowns = this_solution_view.size();
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  char name[100];
+  sprintf(name, "X_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Y_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
+  ++mm_counter;
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "soln_%i.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
+  ++mm_counter;
+#endif  // WRITE_TO_MATRIX_MARKET
+
+  // Initialize Y vector with solution vector.
+  assert(Y_view.size() == num_this_unknowns);
+
+  for (auto i = 0; i < num_this_unknowns; ++i) {
+    Y_view[i] = this_solution_view[i];
+  }
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -137,18 +160,11 @@ apply(
       dof = ns_dof[ns_node][i];
 
       // Disable for now for testing.
-      //Y_1d_view[dof] = bc_value(i);
+      //Y_view[dof] = bc_value(i);
     }
 
   } // node in node set loop
 
-#ifdef WRITE_TO_MATRIX_MARKET
-  // writing to MatrixMarket file for debug
-  // final solution Y (after all the operations to set Y = Jac*X
-  sprintf(name, "Y_%i.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
-  ++mm_counter;
-#endif  // WRITE_TO_MATRIX_MARKET
 }
 
 Intrepid::Vector<double>

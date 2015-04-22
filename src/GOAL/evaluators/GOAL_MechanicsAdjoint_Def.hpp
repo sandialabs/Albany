@@ -14,7 +14,17 @@ MechanicsAdjointBase (Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl,
     const Albany::MeshSpecsStruct* mesh_specs)
 {
-  std::cout << "MECHANICS ADJOINT: in constructor" << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(
+    mesh_specs == NULL, std::logic_error,
+    "MechanicsAdjointBase needs access to"
+    "mesh_specs->ebName and mesh_specs->sepEvalsByEB");
+
+  // register with the state manager
+  this->stateManager_ = p.get<Albany::StateManager*>("State Manager Ptr");
+
+  // create field tag
+  fieldTag_ =
+    Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
 }
 
 template<typename EvalT, typename Traits>
@@ -22,7 +32,6 @@ void MechanicsAdjointBase<EvalT, Traits>::
 postRegistrationSetup (typename Traits::SetupData d,
     PHX::FieldManager<Traits>& fm)
 {
-  std::cout << "MECHANICS ADJOINT: in postregistration" << std::endl;
 }
 
 /*************************
@@ -36,28 +45,24 @@ MechanicsAdjoint (
     const Albany::MeshSpecsStruct* mesh_specs) :
   MechanicsAdjointBase<PHAL::AlbanyTraits::Residual, Traits>(p,dl,mesh_specs)
 {
-  std::cout << "MECHANICS ADJOINT: in postregistration" << std::endl;
 }
 
 template<typename Traits>
 void MechanicsAdjoint<PHAL::AlbanyTraits::Residual, Traits>::
 preEvaluate (typename Traits::PreEvalData workset)
 {
-  std::cout << "MECHANICS ADJOINT: in preevaluate" << std::endl;
 }
 
 template<typename Traits>
 void MechanicsAdjoint<PHAL::AlbanyTraits::Residual, Traits>::
 evaluateFields (typename Traits::EvalData workset)
 {
-  std::cout << "MECHANICS ADJOINT: in evaluate" << std::endl;
 }
 
 template<typename Traits>
 void MechanicsAdjoint<PHAL::AlbanyTraits::Residual, Traits>::
 postEvaluate (typename Traits::PostEvalData workset)
 {
-  std::cout << "MECHANICS ADJOINT: in postevaluate" << std::endl;
 }
 
 }
