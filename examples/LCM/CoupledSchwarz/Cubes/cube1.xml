@@ -33,7 +33,7 @@
 		   type="Array(double)" value="{ 0.0, 2.00}"/>
 	
         <Parameter name="BC Values"
-		   type="Array(double)" value="{ 0.0, 0.002}"/>
+		   type="Array(double)" value="{ 0.0, 0.02}"/>
 	
       </ParameterList>
       
