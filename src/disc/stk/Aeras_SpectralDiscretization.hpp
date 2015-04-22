@@ -156,7 +156,7 @@ namespace Aeras
   public:
 
     //! Constructor
-    SpectralDiscretization(
+    SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams,
        Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes = Teuchos::null);
@@ -529,6 +529,7 @@ namespace Aeras
 
   protected:
 
+    Teuchos::RCP<Teuchos::ParameterList> discParams;
 
     //! Stk Mesh Objects
     stk::mesh::MetaData& metaData;

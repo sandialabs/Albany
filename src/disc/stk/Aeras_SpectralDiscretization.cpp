@@ -52,6 +52,7 @@ extern "C"
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
 #include "Aeras_SpectralDiscretization.hpp"
+#include "Aeras_SpectralOutputSTKMeshStruct.hpp"
 
 // Constants
 const double pi = 3.1415926535897932385;
@@ -64,7 +65,8 @@ const Tpetra::global_size_t INVALID =
 #define PRINT_COORDS
 
 Aeras::SpectralDiscretization::
-SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
+SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
+                  Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct_,
                   const Teuchos::RCP<const Teuchos_Comm>& commT_,
                   const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes_) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -73,6 +75,7 @@ SpectralDiscretization(Teuchos::RCP<Albany::AbstractSTKMeshStruct> stkMeshStruct
   bulkData(*stkMeshStruct_->bulkData),
   commT(commT_),
   rigidBodyModes(rigidBodyModes_),
+  discParams(discParams_), 
   neq(stkMeshStruct_->neq),
   stkMeshStruct(stkMeshStruct_),
   interleavedOrdering(stkMeshStruct_->interleavedOrdering)
@@ -633,6 +636,7 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
                                                     const double time,
                                                     const bool overlapped)
 {
+  //FIXME: this will need to be rewritten for output to Exodus of bilinear mesh!
 #ifdef ALBANY_SEACAS
 
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
@@ -2487,10 +2491,25 @@ void Aeras::SpectralDiscretization::computeNodeSetsLines()
 
 void Aeras::SpectralDiscretization::setupExodusOutput()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput)
   {
+    //create new mesh struct for output 
+    Teuchos::RCP<Aeras::SpectralOutputSTKMeshStruct> outputMeshStruct 
+         = Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(discParams, commT,
+                        stkMeshStruct->numDim, stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
+                        wsElNodeID, coords, node_mapT, points_per_edge));
+    Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+    Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    outputMeshStruct->setFieldAndBulkData(commT, discParams, neq, req,
+                                         sis, stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
 
+
+   //FIXME, IKT, 4/22/15: parts of the following will need to be uncommented 
+/*
     outputInterval = 0;
 
     std::string str = stkMeshStruct->exoOutFile;
@@ -2511,7 +2530,7 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
         mesh_data->add_field(outputFileIdx, *fields[i]);
       }
       catch (std::runtime_error const&) { }
-    }
+    }*/
   }
 #else
   if (stkMeshStruct->exoOutput)
@@ -3339,8 +3358,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     computeSideSetsLines();
   }
 
-    // IK, 1/26/15 -- commenting out for now
-    // setupExodusOutput();
+  if (spatial_dim == 2) 
+     setupExodusOutput();
 
     // Build the node graph needed for the mass matrix for solution transfer and projection operations
     // FIXME this only needs to be called if we are using the L2 Projection response
