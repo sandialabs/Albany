@@ -221,6 +221,11 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
   bulkData->modification_end();
 }
 
+void 
+Aeras::SpectralOutputSTKMeshStruct::copySolutionToOutputMesh(const Tpetra_Vector& solnT) {
+//FIXME: fill in this function!  Can be deferred at for now.
+} 
+
 Teuchos::RCP<const Teuchos::ParameterList>
 Aeras::SpectralOutputSTKMeshStruct::getValidDiscretizationParameters() const
 {

@@ -52,7 +52,6 @@ extern "C"
 #include "Albany_STKNodeFieldContainer.hpp"
 #include "Albany_BucketArray.hpp"
 #include "Aeras_SpectralDiscretization.hpp"
-#include "Aeras_SpectralOutputSTKMeshStruct.hpp"
 
 // Constants
 const double pi = 3.1415926535897932385;
@@ -61,7 +60,7 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 #define PRINT_COORDS
 
 Aeras::SpectralDiscretization::
@@ -407,6 +406,9 @@ setReferenceConfigurationManager(const Teuchos::RCP<AAdapt::rc::Manager>& rcm)
 void
 Aeras::SpectralDiscretization::transformMesh()
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   using std::cout; using std::endl;
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
   std::string transformType = stkMeshStruct->transformType;
@@ -614,6 +616,9 @@ Aeras::SpectralDiscretization::writeSolutionT(const Tpetra_Vector& solnT,
                                               const double time,
                                               const bool overlapped)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   writeSolutionToMeshDatabaseT(solnT, time, overlapped);
   writeSolutionToFileT(solnT, time, overlapped);
 }
@@ -623,6 +628,9 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(const Tpetra_Vector&
                                                             const double time,
                                                             const bool overlapped)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // Put solution as Epetra_Vector into STK Mesh
   if (!overlapped)
     setSolutionFieldT(solnT);
@@ -636,35 +644,28 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
                                                     const double time,
                                                     const bool overlapped)
 {
-  //FIXME: this will need to be rewritten for output to Exodus of bilinear mesh!
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 #ifdef ALBANY_SEACAS
-
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
-  {
-    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container =
-      stkMeshStruct->getFieldContainer();
-    container->transferSolutionToCoords();
-    if (!mesh_data.is_null())
-    {
-      // Mesh coordinates have changed. Rewrite output file by
-      // deleting the mesh data object and recreate it
-      setupExodusOutput();
-    }
-  }
-
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
+  if (stkMeshStruct->exoOutput && !(outputInterval % outputStkMeshStruct->exoOutputInterval))
   {
+    setupExodusOutput();
+    //IKT, FIXME, 4/22/15: the following function needs to be implemented 
+    outputStkMeshStruct->copySolutionToOutputMesh(solnT);  
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
     if (mapT->getComm()->getRank() == 0)
     {
       *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
+      *out << " to index " <<out_step<<" in file "<<outputStkMeshStruct->exoOutFile<< std::endl;
     }
   }
-  if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
+ 
+  //IKT, 4/22/15: we are not going to worry about netcdf file writing yet. 
+ /* if (stkMeshStruct->cdfOutput && !(outputInterval % stkMeshStruct->cdfOutputInterval))
   {
     double time_label = monotonicTimeLabel(time);
     const int out_step = processNetCDFOutputRequestT(solnT);
@@ -674,7 +675,7 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
       if (time_label != time) *out << " with label " << time_label;
       *out << " to index " <<out_step<<" in file "<<stkMeshStruct->cdfOutFile<< std::endl;
     }
-  }
+  }*/
   outputInterval++;
 #endif
 
@@ -2497,22 +2498,21 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
 #ifdef ALBANY_SEACAS
   if (stkMeshStruct->exoOutput)
   {
-    //create new mesh struct for output 
-    Teuchos::RCP<Aeras::SpectralOutputSTKMeshStruct> outputMeshStruct 
-         = Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(discParams, commT,
+    //construct new mesh struct for output 
+    outputStkMeshStruct = Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(discParams, commT,
                         stkMeshStruct->numDim, stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
                         wsElNodeID, coords, node_mapT, points_per_edge));
     Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
-    outputMeshStruct->setFieldAndBulkData(commT, discParams, neq, req,
+    //set field and bulk data for new struct (for output)
+    outputStkMeshStruct->setFieldAndBulkData(commT, discParams, neq, req,
                                          sis, stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
 
 
-   //FIXME, IKT, 4/22/15: parts of the following will need to be uncommented 
-/*
+    
     outputInterval = 0;
 
-    std::string str = stkMeshStruct->exoOutFile;
+    std::string str = outputStkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
@@ -2520,6 +2520,8 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
     mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
+    //IKT, 4/22/15: lets not worry about fields for now.
+/*
     const stk::mesh::FieldVector &fields = mesh_data->meta_data().get_fields();
     for (size_t i=0; i < fields.size(); i++)
     {
@@ -3260,7 +3262,9 @@ Aeras::SpectralDiscretization::printVertexConnectivity()
 void
 Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
-
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   if (spatial_dim == 1)
     enrichMeshLines(); 
   else if (spatial_dim == 2)  
