@@ -73,9 +73,6 @@ apply(
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  std::cout << "X size: " << X.getLocalLength() << '\n';
-  std::cout << "Y size: " << Y.getLocalLength() << '\n';
-
 #ifdef WRITE_TO_MATRIX_MARKET
   // writing to MatrixMarket file for debug
   // initial X where we will set Y = Jac*X
