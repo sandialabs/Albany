@@ -84,6 +84,7 @@ const
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
       } else {
+        /*
         Teuchos::RCP<Tpetra_Operator> jac_boundary = Teuchos::rcp(
           new LCM::Schwarz_BoundaryJacobian(commT_, ca, i, j));
         //IKT, 4/21/15: is initialize necessary? 
@@ -92,6 +93,7 @@ const
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(
             jac_boundary);
         blocked_op->setNonconstBlock(i, j, block);
+        */
       }
     }
   }
