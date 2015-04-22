@@ -107,16 +107,16 @@ apply(
 
   // Get DOFs associated with node set.
   Teuchos::RCP<Albany::AbstractDiscretization>
-  disc = this_app.getDiscretization();
+  this_disc = this_app.getDiscretization();
 
   Albany::STKDiscretization *
-  stk_discretization = static_cast<Albany::STKDiscretization *>(disc.get());
+  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
   int const
-  dimension = stk_discretization->getNumDim();
+  dimension = this_stk_disc->getNumDim();
 
   Albany::NodeSetList const &
-  nodesets = stk_discretization->getNodeSets();
+  nodesets = this_stk_disc->getNodeSets();
 
   std::vector<std::vector<int>> const &
   ns_dof = nodesets.find(this_nodeset_name)->second;
