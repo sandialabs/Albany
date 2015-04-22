@@ -125,7 +125,23 @@ apply(
   ns_number_nodes = ns_dof.size();
 
   Teuchos::ArrayRCP<ST>
-  Y_1d_view = Y.get1dViewNonConst();
+  Y_view = Y.get1dViewNonConst();
+
+  Teuchos::RCP<Tpetra_Vector const>
+  this_solution = this_stk_disc->getSolutionFieldT();
+
+  Teuchos::ArrayRCP<ST const>
+  this_solution_view = this_solution->get1dView();
+
+  auto const
+  num_this_unknowns = this_solution_view.size();
+
+  // Initialize Y vector with solution vector.
+  assert(Y_view.size() == num_this_unknowns);
+
+  for (auto i = 0; i < num_this_unknowns; ++i) {
+    Y_view[i] = this_solution_view[i];
+  }
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -137,7 +153,7 @@ apply(
       dof = ns_dof[ns_node][i];
 
       // Disable for now for testing.
-      //Y_1d_view[dof] = bc_value(i);
+      //Y_view[dof] = bc_value(i);
     }
 
   } // node in node set loop
