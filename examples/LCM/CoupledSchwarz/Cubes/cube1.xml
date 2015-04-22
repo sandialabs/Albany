@@ -20,20 +20,20 @@
       <Parameter name="DBC on NS nodelist_2 for DOF Z"
 		 type="double" value="0.0"/>
 
-      <!--ParameterList name="DBC on NS nodelist_1 for DOF Schwarz">
+      <ParameterList name="DBC on NS nodelist_1 for DOF Schwarz">
 	 <Parameter name="BC Function" type="string" value="Schwarz"/>
-	 <Parameter name="Coupled Application" type="string" value="0"/>
+	 <Parameter name="Coupled Application" type="string" value="cube0.xml"/>
 	 <Parameter name="Coupled Block" type="string" value="fine"/>
-      </ParameterList-->
+      </ParameterList>
 
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Z">
         <Parameter name="Number of points" type="int" value="2"/>
 	
         <Parameter name="Time Values"
-		   type="Array(double)" value="{ 0.0, 2.00}"/>
+		   type="Array(double)" value="{0.0, 2.00}"/>
 	
         <Parameter name="BC Values"
-		   type="Array(double)" value="{ 0.0, 0.02}"/>
+		   type="Array(double)" value="{0.0, 0.02}"/>
 	
       </ParameterList>
       
