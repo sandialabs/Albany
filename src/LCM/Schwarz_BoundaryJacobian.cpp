@@ -66,7 +66,7 @@ LCM::
 Schwarz_BoundaryJacobian::
 apply(
     Tpetra_MultiVector const & X,
-    Tpetra_MultiVector& Y,
+    Tpetra_MultiVector & Y,
     Teuchos::ETransp mode,
     ST alpha,
     ST beta) const
@@ -145,7 +145,7 @@ apply(
       dof = ns_dof[ns_node][i];
 
       auto const
-      value = bc_value(i) - Y_view[dof];
+      value = bc_value(i);
 
       Y_view[dof] = value;
     }
