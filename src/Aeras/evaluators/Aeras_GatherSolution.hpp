@@ -48,11 +48,15 @@ public:
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
   
 protected:
-
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
+#else
   std::vector< PHX::MDField<ScalarT> > val;
   std::vector< PHX::MDField<ScalarT> > val_dot;
 //  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val;
 //  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot;
+#endif
   const int numNodes;
   const int numDims;
   const int numLevels;

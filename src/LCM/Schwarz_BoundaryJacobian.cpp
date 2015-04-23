@@ -69,6 +69,13 @@ apply(
     ST alpha,
     ST beta) const
 {
+#if 1
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+
+#else
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
@@ -125,35 +132,38 @@ apply(
   auto const
   num_this_unknowns = this_solution_view.size();
 
+  // Initialize Y vector.
+  assert(Y_view.size() == num_this_unknowns);
+
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  for (auto i = 0; i < num_this_unknowns; ++i) {
+    Y_view[i] = Teuchos::ScalarTraits<ST>::zero();
+  }
+
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
-  sprintf(name, "X_%i.mm", mm_counter);
+  sprintf(name, "X_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "Y_%i.mm", mm_counter);
+  sprintf(name, "Y_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "soln_%i.mm", mm_counter);
+  sprintf(name, "soln_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 
-  // Initialize Y vector with solution vector.
-  assert(Y_view.size() == num_this_unknowns);
-
-  for (auto i = 0; i < num_this_unknowns; ++i) {
-    Y_view[i] = this_solution_view[i];
-  }
-
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
-    Intrepid::Vector<double>
-    bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
+    //Intrepid::Vector<double>
+    //bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
 
     for (auto i = 0; i < dimension; ++i) {
       auto const
@@ -165,6 +175,7 @@ apply(
 
   } // node in node set loop
 
+#endif
 }
 
 Intrepid::Vector<double>

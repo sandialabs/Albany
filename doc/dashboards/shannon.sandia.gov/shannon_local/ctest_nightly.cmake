@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
+SET(CTEST_DO_SUBMIT ON)
 SET(CTEST_TEST_TYPE Nightly)
 
+#SET(CTEST_DO_SUBMIT OFF)
 #SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
@@ -47,6 +49,20 @@ SET(CTEST_NIGHTLY_START_TIME "07:00:00 UTC")
 SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 SET (CTEST_BUILD_FLAGS "-j16")
+
+set(CTEST_DROP_SITE "software-login.sandia.gov")
+set(CTEST_DROP_LOCATION "Albany")
+set(CTEST_DROP_METHOD "scp")
+find_program(CTEST_SCP_COMMAND scp DOC "scp command for local copy of results")
+set(CTEST_TRIGGER_SITE "")
+set(CTEST_DROP_SITE_USER "")
+# CTest does "scp file ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}" so for
+# local copy w/o needing sshd on localhost we arrange to have : in the
+# absolute filepath
+if (NOT EXISTS "${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}")
+    message(FATAL_ERROR
+      "must set ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION} to an existing directory")
+endif (NOT EXISTS "${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}")
 
 find_program(CTEST_GIT_COMMAND NAMES git)
 
@@ -140,11 +156,6 @@ ENDIF()
 
 CTEST_START(${CTEST_TEST_TYPE})
 
-# Read the build number from the TAG file
-#
-# I'm sure this is a CTest variable, but can't deduce it from Google at least
-file(STRINGS "${CTEST_BINARY_DIRECTORY}/Testing/TAG" build_number LIMIT_COUNT 1)
-
 IF(DOWNLOAD_TRILINOS)
 
 #
@@ -159,19 +170,24 @@ set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 CTEST_UPDATE(SOURCE "${TRILINOS_HOME}" RETURN_VALUE count)
 message("Found ${count} changed files")
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Trilinos update results!")
+  endif()
+ENDIF()
+
 IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Trilinos!")
 endif()
 
-# Save a copy of the Trilinos update to post to the CDash site. Why can't this be done 
-# in an easier way???
+# Save a copy of the Trilinos update to post to the CDash site.
 
-if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Update.xml")
-
-  EXECUTE_PROCESS( COMMAND cp Update.xml Update_Trilinos.xml
-                 WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
+EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update_Trilinos.xml
                )
-endif()
 
 # Get the SCOREC tools
 
@@ -198,6 +214,16 @@ SET_PROPERTY (GLOBAL PROPERTY Label Albany_CUVM)
 set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
 message("Found ${count} changed files")
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot update Albany repository!")
+  endif()
+ENDIF()
 
 IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Albany!")
@@ -335,19 +361,24 @@ CTEST_CONFIGURE(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Configure
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Trilinos configure results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Trilinos build!")
 endif()
 
-# Save a copy of the Trilinos configure to post to the CDash site. Why can't this be done 
-# in an easier way???
+# Save a copy of the Trilinos configure to post to the CDash site.
 
-if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Configure.xml")
-
-  EXECUTE_PROCESS( COMMAND cp Configure.xml Configure_Trilinos.xml
-                 WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
+EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure_Trilinos.xml
                )
-endif()
 
 SET(CTEST_BUILD_TARGET install)
 
@@ -360,18 +391,28 @@ CTEST_BUILD(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Trilinos build results!")
+  endif()
+
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Trilinos!")
 endif()
 
-# Save a copy of the Trilinos build to post to the CDash site. Why can't this be done 
-# in an easier way???
+# Save a copy of the Trilinos build to post to the CDash site.
 
-if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Build.xml")
-
-  EXECUTE_PROCESS( COMMAND cp Build.xml Build_Trilinos.xml
-                 WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
+EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build_Trilinos.xml
                )
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+        message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
 endif()
 
 ENDIF()
@@ -416,6 +457,16 @@ CTEST_CONFIGURE(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Configure
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany configure results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Albany build!")
 endif()
@@ -429,7 +480,20 @@ SET(CTEST_BUILD_TARGET "Albany")
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-#SET(CTEST_BUILD_COMMAND "${CTEST_CMAKE_COMMAND} ${CTEST_BUILD_FLAGS} Albany AlbanyT")
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+          APPEND
+)
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+endif()
+
+SET(CTEST_BUILD_TARGET "AlbanyT")
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -438,12 +502,22 @@ CTEST_BUILD(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+        message(FATAL_ERROR "Cannot submit Albany build results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
+	message(FATAL_ERROR "Cannot build AlbanyT!")
 endif()
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+    message(FATAL_ERROR "Encountered build errors in AlbanyT build. Exiting!")
 endif()
 
 #
@@ -458,6 +532,16 @@ CTEST_TEST(
               INCLUDE_LABEL "CUDA_TEST"
               #NUMBER_FAILED  TEST_NUM_FAILED
 )
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Test
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany test results!")
+  endif()
+ENDIF()
 
 ENDIF()
 
