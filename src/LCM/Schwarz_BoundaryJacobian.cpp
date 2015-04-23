@@ -150,14 +150,14 @@ apply(
       Y_view[dof] = value;
     }
 
-    // Create scratch space
-    Tpetra_MultiVector
-    Z(Y, Teuchos::DataAccess::Copy);
-
-    // Multiply with the corresponding diagonal Jacobian.
-    jacs_[this_app_index]->apply(Z, Y);
-
   } // node in node set loop
+
+  // Create scratch space
+  Tpetra_MultiVector
+  Z(Y, Teuchos::DataAccess::Copy);
+
+  // Multiply with the corresponding diagonal Jacobian.
+  jacs_[this_app_index]->apply(Z, Y);
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
@@ -172,7 +172,7 @@ apply(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Z_%02d.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Z);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
