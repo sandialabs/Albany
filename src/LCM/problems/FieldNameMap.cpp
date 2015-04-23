@@ -55,6 +55,7 @@ namespace LCM {
       std::string t = Albany::strint("tau", i+1,'_');
       name_map->insert( std::make_pair(t,t) );
     }
+    name_map->insert( std::make_pair("CP_Residual","CP_Residual") );
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );
