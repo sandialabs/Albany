@@ -69,7 +69,7 @@ apply(
     ST alpha,
     ST beta) const
 {
-#if 1
+#if 0
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
 
@@ -139,7 +139,7 @@ apply(
   zero = Teuchos::ScalarTraits<ST>::zero();
 
   for (auto i = 0; i < num_this_unknowns; ++i) {
-    Y_view[i] = Teuchos::ScalarTraits<ST>::zero();
+    Y_view[i] = zero;
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -162,15 +162,18 @@ apply(
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
-    //Intrepid::Vector<double>
+    //Intrepid::Vector<ST>
     //bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
 
     for (auto i = 0; i < dimension; ++i) {
       auto const
       dof = ns_dof[ns_node][i];
 
+      auto const
+      value = Y_view[dof];
+
       // Disable for now for testing.
-      //Y_view[dof] = bc_value(i);
+      //Y_view[dof] = bc_value(i) - value;
     }
 
   } // node in node set loop
