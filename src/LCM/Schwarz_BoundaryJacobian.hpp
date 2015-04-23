@@ -34,6 +34,7 @@ public:
   Schwarz_BoundaryJacobian(
       Teuchos::RCP<Teuchos_Comm const> const & comm,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
       int const this_app_index = 0,
       int const coupled_app_index = 0);
 
@@ -117,8 +118,11 @@ private:
 
 private:
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   coupled_apps_;
+
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  jacs_;
 
   int
   this_app_index_;
@@ -137,9 +141,6 @@ private:
 
   Teuchos::RCP<Teuchos_Comm const>
   commT_;
-
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
-  jacs_;
 
   bool
   b_use_transpose_;

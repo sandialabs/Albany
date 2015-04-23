@@ -24,10 +24,12 @@ mm_counter = 0;
 LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm,
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+    Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
     int const this_app_index,
     int const coupled_app_index) :
         commT_(comm),
         coupled_apps_(ca),
+        jacs_(jacs),
         this_app_index_(this_app_index),
         coupled_app_index_(coupled_app_index),
         b_use_transpose_(false),
@@ -64,18 +66,11 @@ LCM::
 Schwarz_BoundaryJacobian::
 apply(
     Tpetra_MultiVector const & X,
-    Tpetra_MultiVector& Y,
+    Tpetra_MultiVector & Y,
     Teuchos::ETransp mode,
     ST alpha,
     ST beta) const
 {
-#if 1
-  auto const
-  zero = Teuchos::ScalarTraits<ST>::zero();
-
-  Y.putScalar(zero);
-
-#else
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
@@ -120,6 +115,12 @@ apply(
   auto const
   ns_number_nodes = ns_dof.size();
 
+  // Initialize Y vector.
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
@@ -132,15 +133,31 @@ apply(
   auto const
   num_this_unknowns = this_solution_view.size();
 
-  // Initialize Y vector.
   assert(Y_view.size() == num_this_unknowns);
 
-  auto const
-  zero = Teuchos::ScalarTraits<ST>::zero();
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
-  for (auto i = 0; i < num_this_unknowns; ++i) {
-    Y_view[i] = Teuchos::ScalarTraits<ST>::zero();
-  }
+    Intrepid::Vector<ST> const
+    bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
+
+    for (auto i = 0; i < dimension; ++i) {
+      auto const
+      dof = ns_dof[ns_node][i];
+
+      auto const
+      value = bc_value(i);
+
+      Y_view[dof] = value;
+    }
+
+    // Create scratch space
+    Tpetra_MultiVector
+    Z(Y, Teuchos::DataAccess::Copy);
+
+    // Multiply with the corresponding diagonal Jacobian.
+    jacs_[this_app_index]->apply(Z, Y);
+
+  } // node in node set loop
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
@@ -160,22 +177,6 @@ apply(
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 
-  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
-
-    //Intrepid::Vector<double>
-    //bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
-
-    for (auto i = 0; i < dimension; ++i) {
-      auto const
-      dof = ns_dof[ns_node][i];
-
-      // Disable for now for testing.
-      //Y_view[dof] = bc_value(i);
-    }
-
-  } // node in node set loop
-
-#endif
 }
 
 Intrepid::Vector<double>

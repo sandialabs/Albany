@@ -122,6 +122,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
+  std::string residual_string = (*field_name_map_)["CP_Residual"];
 
   // define the dependent fields
   // required for calculation
@@ -135,6 +136,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(source_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(residual_string, dl->qp_scalar));
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
 
   // define the state variables
@@ -224,6 +226,15 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     this->state_var_output_flags_.push_back(
         p->get<bool>(output_tau_string, false));
   }
+  // residual
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(residual_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(
+        p->get<bool>("Output CP_Residual", false));
 
 #ifdef PRINT_DEBUG
   std::cout << "<<< done in cp constructor\n";
@@ -245,6 +256,7 @@ computeState(typename Traits::EvalData workset,
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
+  std::string residual_string = (*field_name_map_)["CP_Residual"];
   std::string source_string = (*field_name_map_)["Mechanical_Source"];
   std::string F_string = (*field_name_map_)["F"];
   std::string J_string = (*field_name_map_)["J"];
@@ -259,6 +271,8 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
   PHX::MDField<ScalarT> source = *eval_fields[source_string];
+  PHX::MDField<ScalarT> cp_residual = *eval_fields[residual_string];
+
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
 
   // extract slip on each slip system
@@ -332,21 +346,60 @@ computeState(typename Traits::EvalData workset,
           L,
           Fp);
 
-      // IMPLICIT LOOP GOES HERE
-
+      // compute stresses
       computeStress(F, Fp, sigma, S);
 
-      // Project new stress onto each system for postprocessing
+      // prior to implicit scheme - calculate resdiual from predictor
+      // residual vector currently only consists of slips
+      ScalarT g0, tauC, m;
+      ScalarT dgamma, g, tau, t1;
+      int sign;
       Intrepid::Tensor<RealType> P(num_dims_);
+      PHX::MDField<ScalarT> slip;
+      PHX::MDField<ScalarT> hard;
       PHX::MDField<ScalarT> shear;
+      Albany::MDArray previous_slip;
+      // residual vector
+      Intrepid::Vector<ScalarT> residual_vector(num_slip_);
+
+      // Loop over slip systems to calculate residual
       for (int s(0); s < num_slip_; ++s) {
+
+        // material properties for each slip system
+        g0 = slip_systems_[s].gamma_dot_0_;
+        tauC = slip_systems_[s].tau_critical_;
+        m = slip_systems_[s].gamma_exp_;
         P = slip_systems_[s].projector_;
+
+        // state of the slip system
+        slip = *(slips[s]);
+        previous_slip = *(previous_slips[s]);
+        hard = *(hards[s]);
+        shear = *(shears[s]); // not needed, storing for output
+
+        dgamma = slip(cell, pt) - previous_slip(cell, pt);
+        g = hard(cell, pt);
         tau = Intrepid::dotdot(P, S);
-        shear = *(shears[s]);
-        shear(cell, pt) = tau;
+        sign = tau < 0 ? -1 : 1;
+        shear(cell, pt) = tau; // not needed, storing for output
+
+        // residual
+        t1 = std::fabs(tau / (tauC + g));
+        residual_vector(s) = -dgamma + dt * g0 * std::fabs(std::pow(t1, m)) * sign;
       }
 
-      // Load results into Albany data containers
+      // Take norm of residual - protect sqrt (Saccado)
+      ScalarT norm_residual_2 = 0.0;
+      ScalarT norm_residual = 0.0;
+      norm_residual_2 = Intrepid::dot(residual_vector, residual_vector);
+      if (norm_residual_2 > 0.0) {
+          norm_residual = std::sqrt(norm_residual_2);
+      }
+      cp_residual(cell,pt) = norm_residual;
+
+      // implicit here
+
+      // load results into Albany data containers
       source(cell, pt) = 0.0;
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {

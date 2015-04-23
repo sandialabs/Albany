@@ -14,14 +14,14 @@
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
 
-//#define WRITE_TO_MATRIX_MARKET
+#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
@@ -82,7 +82,8 @@ const
       } else { // Off-diagonal blocks
         Teuchos::RCP<Tpetra_Operator>
         jac_boundary =
-            Teuchos::rcp(new LCM::Schwarz_BoundaryJacobian(commT_, ca, i, j));
+            Teuchos::rcp(
+                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
 
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
