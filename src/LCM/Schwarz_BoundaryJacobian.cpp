@@ -144,18 +144,18 @@ apply(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
-  sprintf(name, "X_%i.mm", mm_counter);
+  sprintf(name, "X_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "Y_%i.mm", mm_counter);
+  sprintf(name, "Y_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "soln_%i.mm", mm_counter);
+  sprintf(name, "soln_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
   ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET

@@ -53,17 +53,15 @@ const
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  std::size_t
+  auto const
   block_dim = jacs.size();
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];  //create string for file name
-  sprintf(name, "Jac0_%i.mm", mm_counter);
-  //write individual model jacobians to matrix market for debug
-  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
-  if (block_dim > 1) {
-    sprintf(name, "Jac1_%i.mm", mm_counter);
-    Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[1]);
+
+  for (auto i = 0; i < block_dim; ++i) {
+    sprintf(name, "Jac%02d_%04d.mm", i, mm_counter);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[i]);
   }
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET
