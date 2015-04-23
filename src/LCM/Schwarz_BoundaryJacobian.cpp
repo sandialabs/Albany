@@ -168,15 +168,23 @@ apply(
 #ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Y_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
-  ++mm_counter;
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Z_%02d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "soln_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
-  ++mm_counter;
 #endif  // WRITE_TO_MATRIX_MARKET
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Jac%02d_%04d.mm", this_app_index, mm_counter);
+  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs_[this_app_index]);
+  mm_counter++;
+#endif // WRITE_TO_MATRIX_MARKET
 }
 
 Intrepid::Vector<double>
