@@ -1,24 +1,21 @@
 <ParameterList>
   <ParameterList name="Problem">
-    <Parameter name="Name" type="string" value="Aeras XZ Hydrostatic"/>
+    <Parameter name="Name" type="string" value="Aeras Hydrostatic"/>
     <Parameter name="Solution Method" type="string" value="Transient"/>
-    <ParameterList name="XZHydrostatic Problem">
+    <ParameterList name="Hydrostatic Problem">
       <!--Parameter name="Reynolds Number" type="double" value="0.02"/-->
-      <Parameter name="Number of Vertical Levels" type="int" value="30"/>
-      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Cloud}"/>
+      <Parameter name="Number of Vertical Levels" type="int" value="3"/>
+      <Parameter name="Tracers" type="Array(string)" value="{Vapor,Rain,Snow}"/>
       <Parameter name="P0" type="double" value="101325.0"/>
       <Parameter name="Ptop" type="double" value="101.325"/>
-      <Parameter name="Viscosity" type="double" value="100.0"/>
-      <Parameter name="Compute Cloud Physics" type="bool" value="false"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Aeras XZ Hydrostatic"/>
-       <Parameter name="Function Data" type="Array(double)" value="{30, 3, 101325.0, 10.0, 300.0, 0.001, 0.0, 0.0}"/>
+       <Parameter name="Function" type="string" value="Aeras Hydrostatic"/>
+       <Parameter name="Function Data" type="Array(double)" value="{3, 3, 101325.0, 1.0, 0.0, 300.0, 0.333, 0.333, 0.333}"/>
     </ParameterList>
     <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="2"/>
+      <Parameter name="Number" type="int" value="1"/>
       <Parameter name="Response 0" type="string" value="Solution Average"/>
-      <Parameter name="Response 1" type="string" value="Aeras Total Volume"/>
     </ParameterList>
 <!--
     <ParameterList name="Parameters">
@@ -28,20 +25,21 @@
 -->
   </ParameterList>
   <ParameterList name="Discretization">
-    <Parameter name="Method" type="string" value="STK1D Aeras"/>
-    <Parameter name="1D Elements" type="int" value="300"/>
-    <Parameter name="1D Scale" type="double" value="300.0"/>
-    <Parameter name="Workset Size" type="int" value="-1"/>
-    <Parameter name="Periodic_x BC" type="bool" value="true"/>
+    <Parameter name="Method" type="string" value="Exodus Aeras"/>
+    <Parameter name="Exodus Input File Name" type="string" value="../grids/QUAD4/uniform_10_quad4.g"/>
+    <!--Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/-->
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
+    <Parameter name="Workset Size" type="int" value="-1"/>
     <Parameter name="Element Degree" type="int" value="3"/>
-    <!--Parameter name="Transform Type" type="string" value="Aeras Schar Mountain"/-->
-    <!--Parameter name="Exodus Output File Name" type="string" value="xzhydrostatic.exo"/-->
+    <!--Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="NetCDF Output File Name" type="string" value="sphere10.nl"/>
+    <Parameter name="NetCDF Output Number of Latitudes" type="int"  value="128"/>
+    <Parameter name="NetCDF Output Number of Longitudes" type="int" value="256"/-->
   </ParameterList>
   <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="2"/>
-    <Parameter  name="Test Values" type="Array(double)" value="{732.616092715, 9000.0}"/>
+    <Parameter  name="Number of Comparisons" type="int" value="1"/>
+    <Parameter  name="Test Values" type="Array(double)" value="{5380.26315789}"/>
     <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
     <Parameter  name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter  name="Number of Sensitivity Comparisons" type="int" value="0"/>
@@ -49,42 +47,28 @@
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
-      <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="1.0"/>
-      <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
-      <!--Parameter name="Final Time" type="double" value="86400"/-->
-      <!-- change to 12*24*3600 to get full 12 days -->
-      <!--Parameter name="Max State Error" type="double" value="0.05"/>
-      <Parameter name="Alpha"           type="double" value="0.0"/-->
+      <!--Parameter name="Num Time Steps" type="int" value="2000"/-->
+      <Parameter name="Num Time Steps" type="int" value="10"/>
+      <!-- Originally Num Time Steps was 10; reduced it for nightly tests (IK, 10/8/14) -->
+      <!--Parameter name="Num Time Steps" type="double" value="10."/-->
+      <Parameter name="Final Time" type="double" value= "100."/>
+      <Parameter name="Max State Error" type="double" value="0.05"/>
+      <Parameter name="Alpha"           type="double" value="0.0"/>
       <ParameterList name="Rythmos Stepper">
 	<ParameterList name="VerboseObject">
 	  <Parameter name="Verbosity Level" type="string" value="low"/>
 	</ParameterList>
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
-        <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Fixed dt" type="double" value="0.1"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">
 	  <Parameter name="Verbosity Level" type="string" value="none"/>
 	</ParameterList>
-	</ParameterList>
+      </ParameterList>
       <ParameterList name="Stratimikos">
 	<Parameter name="Linear Solver Type" type="string" value="Belos"/>
 	<ParameterList name="Linear Solver Types">
-	  <ParameterList name="AztecOO">
-	    <ParameterList name="Forward Solve">
-	      <ParameterList name="AztecOO Settings">
-		<Parameter name="Aztec Solver" type="string" value="GMRES"/>
-		<Parameter name="Convergence Test" type="string" value="r0"/>
-		<Parameter name="Size of Krylov Subspace" type="int" value="200"/>
-	      </ParameterList>
-	      <Parameter name="Max Iterations" type="int" value="200"/>
-	      <Parameter name="Tolerance" type="double" value="1e-8"/>
-	    </ParameterList>
-	    <Parameter name="Output Every RHS" type="bool" value="1"/>
-	  </ParameterList>
 	  <ParameterList name="Belos">
 	    <Parameter name="Solver Type" type="string" value="Block GMRES"/>
 	    <ParameterList name="Solver Types">
@@ -105,8 +89,8 @@
 	<ParameterList name="Preconditioner Types">
 	  <ParameterList name="Ifpack2">
 	    <Parameter name="Prec Type" type="string" value="ILUT"/>
-	    <Parameter name="Overlap" type="int" value="1"/>
-	    <ParameterList name="Ifpack2 Settings">
+	    <Parameter name="Overlap" type="int" value="0"/>
+	    <ParameterList name="Ifpack Settings">
 	      <Parameter name="fact: ilut level-of-fill" type="double" value="1.0"/>
 	    </ParameterList>
 	  </ParameterList>
