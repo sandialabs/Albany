@@ -7,7 +7,7 @@
 #if !defined(LCM_ConstitutiveModelDriver_hpp)
 #define LCM_ConstitutiveModelDriver_hpp
 
-#include "Phalanx_ConfigDefs.hpp"
+#include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
