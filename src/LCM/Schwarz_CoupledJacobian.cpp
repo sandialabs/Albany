@@ -14,14 +14,14 @@
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
 
-#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
