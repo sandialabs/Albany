@@ -150,6 +150,15 @@ apply(
       Y_view[dof] = value;
     }
 
+    // Create scratch space
+    Tpetra_MultiVector
+    Z;
+
+    Z.assign(Y);
+
+    // Multiply with the corresponding diagonal Jacobian.
+    jacs_[this_app_index]->apply(Z, Y);
+
   } // node in node set loop
 
 #ifdef WRITE_TO_MATRIX_MARKET
