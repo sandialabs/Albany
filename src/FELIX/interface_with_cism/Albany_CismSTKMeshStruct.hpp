@@ -28,7 +28,9 @@ namespace Albany {
                   const int * global_element_id_active_owned_map_Ptr, 
                   const int * global_element_conn_active_Ptr, 
                   const int * global_basal_face_active_owned_map_Ptr, 
+                  const int * global_top_face_active_owned_map_Ptr, 
                   const int * global_basal_face_conn_active_Ptr, 
+                  const int * global_top_face_conn_active_Ptr, 
                   const int * global_west_face_active_owned_map_Ptr,
                   const int * global_west_face_conn_active_Ptr, 
                   const int * global_east_face_active_owned_map_Ptr,
@@ -108,6 +110,7 @@ namespace Albany {
     GO* globalElesID; //int array to define element map 
     GO* globalNodesID; //int array to define node map 
     GO* basalFacesID; //int array to define basal face map 
+    GO* topFacesID; //int array to define top face map 
     GO* westFacesID; 
     GO* eastFacesID; 
     GO* southFacesID; 
@@ -120,6 +123,7 @@ namespace Albany {
     bool have_thck; // Does thickness data field exist? 
     bool have_shGrad; // Does surface height gradient data exist?
     bool have_bf; // Does basal face connectivity file exist?
+    bool have_tf; // Does top face connectivity file exist?
     bool have_wf, have_ef, have_sf, have_nf; 
     bool have_flwa; // Does flwa (flow factor) file exist?
     bool have_temp; // Does temperature file exist?
@@ -128,6 +132,7 @@ namespace Albany {
     double *uvel; //arrays to hold Dirichlet values for Dirichlet BC passed from CISM
     double *vvel;  
     int (*bf)[5]; //hard-coded for 3D hexes for now (meaning boundary faces are quads)
+    int (*tf)[5]; 
     int (*wf)[5]; 
     int (*ef)[5]; 
     int (*sf)[5]; 
@@ -135,6 +140,7 @@ namespace Albany {
     Teuchos::RCP<Tpetra_Map> elem_mapT; //element map 
     Teuchos::RCP<Tpetra_Map> node_mapT; //node map 
     Teuchos::RCP<Tpetra_Map> basal_face_mapT; //basalface map 
+    Teuchos::RCP<Tpetra_Map> top_face_mapT; //topface map 
     Teuchos::RCP<Tpetra_Map> west_face_mapT; //westface map
     Teuchos::RCP<Tpetra_Map> east_face_mapT; //eastface map
     Teuchos::RCP<Tpetra_Map> south_face_mapT; //southface map

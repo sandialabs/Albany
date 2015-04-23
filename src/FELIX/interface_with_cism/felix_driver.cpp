@@ -82,7 +82,9 @@ int * global_node_id_owned_map_Ptr;
 int * global_element_conn_active_Ptr; 
 int * global_element_id_active_owned_map_Ptr; 
 int * global_basal_face_conn_active_Ptr; 
+int * global_top_face_conn_active_Ptr; 
 int * global_basal_face_id_active_owned_map_Ptr; 
+int * global_top_face_id_active_owned_map_Ptr; 
 int * global_west_face_conn_active_Ptr; 
 int * global_west_face_id_active_owned_map_Ptr; 
 int * global_east_face_conn_active_Ptr; 
@@ -363,7 +365,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     global_element_conn_active_Ptr = ftg_ptr -> getInt4Var("global_element_conn_active","connectivity");  
     global_element_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_element_id_active_owned_map","connectivity");  
     global_basal_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_basal_face_conn_active","connectivity");  
+    global_top_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_top_face_conn_active","connectivity");  
     global_basal_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_basal_face_id_active_owned_map","connectivity");  
+    global_top_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_top_face_id_active_owned_map","connectivity");  
     global_west_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_west_face_conn_active","connectivity");  
     global_west_face_id_active_owned_map_Ptr = ftg_ptr -> getInt4Var("global_west_face_id_active_owned_map","connectivity");  
     global_east_face_conn_active_Ptr = ftg_ptr -> getInt4Var("global_east_face_conn_active","connectivity");  
@@ -423,7 +427,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
     //std::cout << "DEBUG: global_node_id_owned_map_Ptr: " << global_node_id_owned_map_Ptr << std::endl; 
     //std::cout << "DEBUG: global_element_conn_active_Ptr: " << global_element_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_basal_face_conn_active_Ptr: " << global_basal_face_conn_active_Ptr << std::endl; 
+    //std::cout << "DEBUG: global_top_face_conn_active_Ptr: " << global_top_face_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_basal_face_id_active_owned_map_Ptr: " << global_basal_face_id_active_owned_map_Ptr << std::endl;
+    //std::cout << "DEBUG: global_top_face_id_active_owned_map_Ptr: " << global_top_face_id_active_owned_map_Ptr << std::endl;
     //std::cout << "DEBUG: global_west_face_conn_active_Ptr: " << global_west_face_conn_active_Ptr << std::endl; 
     //std::cout << "DEBUG: global_west_face_id_active_owned_map_Ptr: " << global_west_face_id_active_owned_map_Ptr << std::endl;
     //std::cout << "DEBUG: global_east_face_conn_active_Ptr: " << global_east_face_conn_active_Ptr << std::endl; 
@@ -481,7 +487,9 @@ void felix_driver_init(int argc, int exec_mode, FelixToGlimmer * ftg_ptr, const 
                                                            global_element_id_active_owned_map_Ptr, 
                                                            global_element_conn_active_Ptr, 
                                                            global_basal_face_id_active_owned_map_Ptr, 
+                                                           global_top_face_id_active_owned_map_Ptr, 
                                                            global_basal_face_conn_active_Ptr,
+                                                           global_top_face_conn_active_Ptr,
                                                            global_west_face_id_active_owned_map_Ptr, 
                                                            global_west_face_conn_active_Ptr,
                                                            global_east_face_id_active_owned_map_Ptr, 
