@@ -25,7 +25,7 @@ LOG_FILE=/projects/AppComp/nightly_gahanse/shannon-AlbanyCUVM/nightly_log.txt
 
 cd $BASE_DIR
 
-DOWNLOAD_DIR=$BASE_DIR/Download
+DOWNLOAD_DIR=$BASE_DIR/Download/Albany
 
 echo "Running CDash post at $now" > $LOG_FILE
 echo >> $LOG_FILE
@@ -44,44 +44,12 @@ if [ "$DOWNLOAD_FILES" ]; then
  echo >> $LOG_FILE
  mkdir $DOWNLOAD_DIR
 
-# Note: shannon does not let one ssh with a public key, so we have to do a keytab to obfiscate a kerberos key
-
-# Generate the keytab:
-
-# > ktutil
-# ktutil:  addent -password -p gahanse@dce.sandia.gov -k 1 -e rc4-hmac
-# Password for gahanse@dce.sandia.gov:
-# ktutil:  wkt gahanse.keytab
-# ktutil:  quit
-
-# Do the kinit
-
-# echo "kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab" >> $LOG_FILE
-# echo >> $LOG_FILE
-# kinit gahanse@dce.sandia.gov -k -t /ascldap/users/gahanse/.ssh/gahanse.keytab >> $LOG_FILE
-
-# Get the TAG file
- echo "scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG" >> $LOG_FILE
- echo >> $LOG_FILE
- scp gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/TAG $DOWNLOAD_DIR/TAG >> $LOG_FILE
-
-fi
-
-read build_number < $DOWNLOAD_DIR/TAG
-echo "Build number is $build_number" >> $LOG_FILE
-echo >> $LOG_FILE
-
 if [ "$DOWNLOAD_FILES" ]; then
 
 # rsync the files
-  echo "rsync -a gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/${build_number}/ $DOWNLOAD_DIR/$build_number" >> $LOG_FILE
+  echo "rsync -a gahanse@software-login.sandia.gov:/home/gahanse/Albany/ $DOWNLOAD_DIR" >> $LOG_FILE
   echo >> $LOG_FILE
-  rsync -a gahanse@shannon:/home/gahanse/nightly/buildAlbany/Testing/${build_number}/ $DOWNLOAD_DIR/$build_number >> $LOG_FILE
-
-# kill the ticket
-#  echo "kdestroy" >> $LOG_FILE
-#  echo >> $LOG_FILE
-#  kdestroy >> $LOG_FILE
+  rsync -a gahanse@software-login.sandia.gov:/home/gahanse/Albany/ $DOWNLOAD_DIR >> $LOG_FILE
 
 fi
 
@@ -96,9 +64,9 @@ if [ "$UPLOAD_FILES" ]; then
 
 # curl the files to the CDash site
 
-  if [ -d "$DOWNLOAD_DIR/$build_number" ]; then
+  if [ -d "$DOWNLOAD_DIR" ]; then
 
-   for files in $DOWNLOAD_DIR/$build_number/*; do
+   for files in $DOWNLOAD_DIR/*; do
       echo "Sending $files to CDash site: $CDASH_SITE" >> $LOG_FILE
       curl -T $files $CDASH_SITE >> $LOG_FILE
       echo >> $LOG_FILE

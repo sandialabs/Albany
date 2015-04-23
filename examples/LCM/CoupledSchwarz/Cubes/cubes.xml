@@ -24,20 +24,8 @@
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
 
-    <!-- RESPONSE FUNCTION used for regression testing -->
-    <ParameterList name="Response Functions">
-      <Parameter name="Number" type="int" value="0"/>
-      <Parameter name="Response 0" type="string" value="Solution Average"/>
-    </ParameterList>
-
   </ParameterList>
-  <ParameterList name="Regression Results">
-    <Parameter  name="Number of Comparisons" type="int" value="1"/>
-    <Parameter  name="Test Values"
-		type="Array(double)" value="{7.61904761905e-05}"/>
-    <Parameter  name="Relative Tolerance" type="double" value="1.0e-5"/>
-  </ParameterList>
-
+  
   <!-- Solver options -->
   <ParameterList name="Piro">
     <Parameter name="Solver Type" type="string" value="LOCA"/>

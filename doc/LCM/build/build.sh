@@ -92,6 +92,18 @@ case "$SCRIPT_NAME" in
 	sed -i -e "s|install_dir|$INSTALL_DIR|g;" "$CONFIG_FILE"
 	sed -i -e "s|build_type|$BUILD_STRING|g;" "$CONFIG_FILE"
 	sed -i -e "s|package_dir|$PACKAGE_DIR|g;" "$CONFIG_FILE"
+	case "$BUILD_TYPE" in
+	    debug)
+		sed -i -e "s|fpe_switch|ON|g;" "$CONFIG_FILE"
+		;;
+	    release)
+		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
+		;;
+	    *)
+		echo "Unrecognized build type option"
+		exit 1
+		;;
+	esac
 	./"$CONFIG_FILE"
 	echo "$LINE"
 	;;&

@@ -47,7 +47,7 @@ LinearHMCModel(Teuchos::ParameterList* p,
     strainDifferenceName[i] = sdname.str();
     this->dep_field_map_.insert(std::make_pair(sdname.str(), dl->qp_tensor));
     std::stringstream sgradname;
-    sgradname << "Microstrain_" << i << " Gradient";
+    sgradname << "Microstrain " << i << " Gradient";
     microStrainGradientName[i] = sgradname.str();
     this->dep_field_map_.insert(std::make_pair(sgradname.str(), dl->qp_tensor3));
   }
