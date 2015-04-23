@@ -69,6 +69,13 @@ apply(
     ST alpha,
     ST beta) const
 {
+#if 1
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+
+#else
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
@@ -125,11 +132,14 @@ apply(
   auto const
   num_this_unknowns = this_solution_view.size();
 
-  // Initialize Y vector with solution vector.
+  // Initialize Y vector.
   assert(Y_view.size() == num_this_unknowns);
 
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
   for (auto i = 0; i < num_this_unknowns; ++i) {
-    Y_view[i] = this_solution_view[i];
+    Y_view[i] = Teuchos::ScalarTraits<ST>::zero();
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -152,8 +162,8 @@ apply(
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
-    Intrepid::Vector<double>
-    bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
+    //Intrepid::Vector<double>
+    //bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
 
     for (auto i = 0; i < dimension; ++i) {
       auto const
@@ -165,6 +175,7 @@ apply(
 
   } // node in node set loop
 
+#endif
 }
 
 Intrepid::Vector<double>
