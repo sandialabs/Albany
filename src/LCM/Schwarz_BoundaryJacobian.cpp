@@ -152,9 +152,7 @@ apply(
 
     // Create scratch space
     Tpetra_MultiVector
-    Z;
-
-    Z.assign(Y);
+    Z(Y, Teuchos::DataAccess::Copy);
 
     // Multiply with the corresponding diagonal Jacobian.
     jacs_[this_app_index]->apply(Z, Y);
