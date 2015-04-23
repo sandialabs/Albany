@@ -11,8 +11,6 @@
 #include "Albany_Utils.hpp"
 #include "Thyra_DefaultBlockedLinearOp.hpp"
 
-//#include "Tpetra_LocalMap.h"
-
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
 
