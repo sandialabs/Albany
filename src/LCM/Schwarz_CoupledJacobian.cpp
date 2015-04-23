@@ -79,18 +79,18 @@ const
   for (std::size_t i = 0; i < block_dim; i++) {
     for (std::size_t j = 0; j < block_dim; j++) {
       // build (i,j) block matrix and add it to blocked operator
-      if (i == j) { //diagonal blocks
+      if (i == j) { // Diagonal blocks
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
-      } else {
-        Teuchos::RCP<Tpetra_Operator> jac_boundary = Teuchos::rcp(
-          new LCM::Schwarz_BoundaryJacobian(commT_, ca, i, j));
-        //IKT, 4/21/15: is initialize necessary? 
-        //jacs_boundary->initialize();
+      } else { // Off-diagonal blocks
+        Teuchos::RCP<Tpetra_Operator>
+        jac_boundary =
+            Teuchos::rcp(new LCM::Schwarz_BoundaryJacobian(commT_, ca, i, j));
+
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
-        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(
-            jac_boundary);
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
+
         blocked_op->setNonconstBlock(i, j, block);
       }
     }
