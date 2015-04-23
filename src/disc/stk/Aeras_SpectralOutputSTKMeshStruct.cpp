@@ -77,8 +77,7 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   stk::io::put_io_part_attribute(*partVec[0]);
 #endif
 
-  //FIXME (Bill): the geometry is hard-coded to hex 8s - need to change to quad 3s
-  stk::mesh::set_cell_topology<shards::Hexahedron<8> >(*partVec[0]);
+  stk::mesh::set_cell_topology<shards::ShellQuadrilateral<4> >(*partVec[0]);
 
   int cub = params->get("Cubature Degree",3);
   //FIXME: hard-coded for now that all the elements are in 1 workset
@@ -137,8 +136,9 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
 
   //FIXME (Bill): compute how many elements will be in the new bilinear mesh for output.  
   //int numElementsNew = # of elements in new bilinear mesh for output on each processor
-  //FIXME (Bill): create a map of the new bilinear elements.  Call it elem_map_new:
+  //FIXME (Bill): You could create a map of the global IDs of the new bilinear elements, e.g.,
   //Teuchos::RCP<Tpetra_Map> elem_map_new = Teuchos::rcp(new Tpetra_Map(...
+  //Alternatively, you could assign global IDs to the elements on the fly in line 152. 
 
   //NOTES FOR BILL:  The below needs to be rewritten.  It is cut/paste from Albany_ASCIISTKMeshStruct.cpp.  
   //Think of eles below as similar to wsElNodeID (connectivity array).  It assumed hex meshes.  
