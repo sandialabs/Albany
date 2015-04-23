@@ -82,7 +82,8 @@ const
       } else { // Off-diagonal blocks
         Teuchos::RCP<Tpetra_Operator>
         jac_boundary =
-            Teuchos::rcp(new LCM::Schwarz_BoundaryJacobian(commT_, ca, i, j));
+            Teuchos::rcp(
+                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
 
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
