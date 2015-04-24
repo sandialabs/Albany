@@ -85,14 +85,6 @@ postRegistrationSetup(typename Traits::SetupData d,
   
 }
 
-template <typename T>
-T
-cube_root(T const & x)
-{
-    double const third = 1.0/3.0;
-	return std::pow(x, third);
-}
-
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void HeliumODEs<EvalT, Traits>::
@@ -150,7 +142,7 @@ evaluateFields(typename Traits::EvalData workset)
   const double pi = acos(-1.0);
   const double onethrd = 1.0/3.0;
   const double twothrd = 2.0/3.0;
-  const double cub_tfpi = cube_root(3.0/4.0/pi);
+  const double cub_tfpi = std::cbrt(3.0/4.0/pi);
   
   // temporary variables
   ScalarT n1_old, nb_old, sb_old, n1, nb, sb;
@@ -192,15 +184,15 @@ evaluateFields(typename Traits::EvalData workset)
 				  sb_exp = sb_old;
 				  
 				  const ScalarT nb_exp2 = nb_exp*nb_exp;
-				  const ScalarT cube_root_nb_exp2 = cube_root(nb_exp2);
+				  const ScalarT cube_root_nb_exp2 = std::cbrt(nb_exp2);
 
 				  for (int sub_increment = 0; sub_increment < explicit_sub_increments; sub_increment++) {
 					  n1 = n1_exp + dt_explicit*(g_old - 32.0*pi*he_radius_*d*n1_exp*n1_exp -
-							  4.0*pi*d*n1_exp*cub_tfpi*cube_root(sb_exp)*
+							  4.0*pi*d*n1_exp*cub_tfpi*std::cbrt(sb_exp)*
 							  cube_root_nb_exp2);
 					  nb = nb_exp + dt_explicit*(16.0*pi*he_radius_*d*n1_exp*n1_exp);
 					  sb = sb_exp + atomic_omega/eta_*dt_explicit*(32.*pi*he_radius_*d*n1_exp*n1_exp +
-							  4.0*pi*d*n1_exp*cub_tfpi*cube_root(sb_exp)*
+							  4.0*pi*d*n1_exp*cub_tfpi*std::cbrt(sb_exp)*
 							  cube_root_nb_exp2);
 					  n1_exp = n1;
 					  nb_exp = nb;
@@ -209,8 +201,8 @@ evaluateFields(typename Traits::EvalData workset)
 			  }
 			  
 			  ScalarT nb2 = nb*nb;
-			  ScalarT cube_root_nb2 = cube_root(nb2);
-			  ScalarT cube_root_sb = cube_root(sb);
+			  ScalarT cube_root_nb2 = std::cbrt(nb2);
+			  ScalarT cube_root_sb = std::cbrt(sb);
 
 			  // calculate initial residual for a relative tolerance
 			  residual(0) = n1 - n1_old - dt*(g - 32.0*pi*he_radius_*d*n1*n1 -
@@ -226,17 +218,17 @@ evaluateFields(typename Traits::EvalData workset)
 		      while (norm_residual_2 > norm_residual_goal_2 && iter < maxIterations) {
 		    	  
 		    	  // Common factors w/cube_root
-		    	  ScalarT cube_root_nb = cube_root(nb);
+		    	  ScalarT cube_root_nb = std::cbrt(nb);
 		    	  nb2 = nb*nb;
-		    	  cube_root_nb2 = cube_root(nb2);
-		    	  cube_root_sb = cube_root(sb);
+		    	  cube_root_nb2 = std::cbrt(nb2);
+		    	  cube_root_sb = std::cbrt(sb);
 		    	  ScalarT sb2 = sb*sb;
-		    	  ScalarT cube_root_sb2 = cube_root(sb2);
+		    	  ScalarT cube_root_sb2 = std::cbrt(sb2);
 		    	  const double pi2 = pi*pi;
-		    	  const double cube_root_pi2 = cube_root(pi2);
-		    	  const double cube_root_2 = cube_root(2.0);
-		    	  const double cube_root_6 = cube_root(6.0);
-		    	  const double cube_root_9 = cube_root(9.0);
+		    	  const double cube_root_pi2 = std::cbrt(pi2);
+		    	  const double cube_root_2 = std::cbrt(2.0);
+		    	  const double cube_root_6 = std::cbrt(6.0);
+		    	  const double cube_root_9 = std::cbrt(9.0);
 
 
 		    	  // calculate tangent
@@ -244,8 +236,8 @@ evaluateFields(typename Traits::EvalData workset)
 		    			  cube_root_nb2*cube_root_pi2*cube_root_sb);
 		    	  tangent(0,1) = 4.0*cube_root_2*dt*d*n1*cube_root_pi2*
 		    			  cube_root_sb/cube_root_9/cube_root_nb;
-		    	  tangent(0,2) = 2.0*cube_root_2*dt*d*n1*cube_root(nb2)*
-		    			  cube_root(pi2/9.0)/cube_root_sb2;
+		    	  tangent(0,2) = 2.0*cube_root_2*dt*d*n1*std::cbrt(nb2)*
+		    			  std::cbrt(pi2/9.0)/cube_root_sb2;
 		    	  tangent(1,0) = -32.0*dt*d*n1*pi*he_radius_;
 		    	  tangent(1,1) = 1.0;
 		    	  tangent(1,2) = 0.0;
@@ -254,7 +246,7 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  tangent(2,1) = -4.0*cube_root_2*dt*d*n1*atomic_omega*
 		    			  cube_root_pi2*cube_root_sb/cube_root_9/eta_/cube_root_nb;
 		    	  tangent(2,2) = 1.0 - 2.0*cube_root_2*dt*d*n1*cube_root_nb2*
-		    			  atomic_omega*cube_root(pi2/9.0)/eta_/cube_root_sb2;
+		    			  atomic_omega*std::cbrt(pi2/9.0)/eta_/cube_root_sb2;
 		    	  
 		    	  // find increment
 		    	  increment = -Intrepid::inverse(tangent)*residual;
@@ -265,8 +257,8 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  sb = sb + increment(2);
 		    	  
 		    	  nb2 = nb*nb;
-		    	  cube_root_nb2 = cube_root(nb2);
-		    	  cube_root_sb = cube_root(sb);
+		    	  cube_root_nb2 = std::cbrt(nb2);
+		    	  cube_root_sb = std::cbrt(sb);
 
 		    	  // find new residual and norm
 		    	  residual(0) = n1 - n1_old - dt*(g - 32.*pi*he_radius_*d*n1*n1 -
