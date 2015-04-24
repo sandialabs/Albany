@@ -49,14 +49,6 @@ LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
 // Initialize the operator with everything needed to apply it
 void LCM::Schwarz_BoundaryJacobian::initialize()
 {
-  // FIXME: add parameter list argument, member parameters for
-  // specifying boundary conditions.
-  // These can be stored in an array of Tpetra_CrsMatrices like the jacobians.
-  // Set member variables
-
-#ifdef OUTPUT_TO_SCREEN
-  std::cout << __PRETTY_FUNCTION__ << "\n";
-#endif
 }
 
 // Returns the result of a Tpetra_Operator applied to a
