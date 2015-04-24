@@ -249,6 +249,15 @@ computeState(typename Traits::EvalData workset,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
     std::map<std::string, Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields)
 {
+
+bool print_debug = false;
+#ifdef PRINT_DEBUG
+  if (typeid(ScalarT) == typeid(RealType)) {
+    print_debug = true;
+  }
+  std::cout.precision(15);
+#endif
+
 #ifdef PRINT_DEBUG
   std::cout << ">>> in cp compute state\n";
 #endif
@@ -383,6 +392,15 @@ computeState(typename Traits::EvalData workset,
         sign = tau < 0 ? -1 : 1;
         shear(cell, pt) = tau; // not needed, storing for output
 
+        // Debugging residual
+        if (print_debug) {
+          std::cout << "--- KINEMATICS CELL: " << cell << ", IP: " << pt << '\n';
+          std::cout << "projector_"  << s + 1 << ": " << slip_systems_[s].projector_ << '\n';
+          std::cout << "2nd PK : " << S << '\n';
+          std::cout << "tau_" << s + 1 << ": " << tau << '\n';
+          std::cout << "shear_" << s + 1 << ": " << shear(cell,pt) << '\n';
+        }
+
         // residual
         t1 = std::fabs(tau / (tauC + g));
         residual_vector(s) = -dgamma + dt * g0 * std::fabs(std::pow(t1, m)) * sign;
@@ -411,22 +429,28 @@ computeState(typename Traits::EvalData workset,
 
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
+        out << "\n" << "time: ";
         out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(tcurrent) << " ";
+        out << "\n";
+        out << "\n" << "F: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(F(i,j)) << " ";
           }
         }
+        out << "\n" << "Fp: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(Fp(i,j)) << " ";
           }
         }
+        out << "\n" << "Sigma: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(sigma(i,j)) << " ";
           }
         }
+        out << "\n" << "Lp: ";
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
             out << std::setprecision(12) << Sacado::ScalarValue<ScalarT>::eval(L(i,j)) << " ";
