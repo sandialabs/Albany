@@ -13,7 +13,8 @@
 //#include "Tpetra_LocalMap.h"
 
 #define WRITE_TO_MATRIX_MARKET
-#define OUTPUT_TO_SCREEN
+//#define OUTPUT_TO_SCREEN
+#define DEBUG_LCM_SCHWARZ
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int
@@ -152,22 +153,22 @@ apply(
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
-  sprintf(name, "X_%02d.mm", mm_counter);
+  sprintf(name, "X_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "Y_%02d.mm", mm_counter);
+  sprintf(name, "Y_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "Z_%02d.mm", mm_counter);
+  sprintf(name, "Z_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Z);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "Jac%02d_%04d.mm", this_app_index, mm_counter);
+  sprintf(name, "Jac%04d_%04d.mm", this_app_index, mm_counter);
   Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs_[this_app_index]);
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET
