@@ -22,6 +22,13 @@
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 
+#include "TpetraExt_MMHelpers.hpp"
+
+//IK, 4/24/15: adding option to write the mass matrix to matrix market file, which is needed 
+//for some applications.  Uncomment the following line to turn on.
+#define WRITE_MASS_MATRIX_TO_MM_FILE
+
+
 Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Albany::Application>& app_,
     const Teuchos::RCP<Teuchos::ParameterList>& appParams)
@@ -569,11 +576,32 @@ Albany::ModelEvaluatorT::evalModelImpl(
     ConverterT::getTpetraOperator(outArgsT.get_W_op()) :
     Teuchos::null;
 
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+  //IK, 4/24/15: adding object to hold mass matrix to be written to matrix market file
+  const Teuchos::RCP<Tpetra_Operator> Mass =
+    Teuchos::nonnull(outArgsT.get_W_op()) ?
+    ConverterT::getTpetraOperator(outArgsT.get_W_op()) :
+    Teuchos::null;
+  //IK, 4/24/15: needed for writing mass matrix out to matrix market file
+  const Teuchos::RCP<Tpetra_Vector> ftmp =
+    Teuchos::nonnull(outArgsT.get_f()) ?
+    ConverterT::getTpetraVector(outArgsT.get_f()) :
+    Teuchos::null;
+#endif
+
   // Cast W to a CrsMatrix, throw an exception if this fails
   const Teuchos::RCP<Tpetra_CrsMatrix> W_op_out_crsT =
     Teuchos::nonnull(W_op_outT) ?
     Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_op_outT, true) :
     Teuchos::null;
+
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+  //IK, 4/24/15: adding object to hold mass matrix to be written to matrix market file
+  const Teuchos::RCP<Tpetra_CrsMatrix> Mass_crs =
+    Teuchos::nonnull(Mass) ?
+    Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Mass, true) :
+    Teuchos::null;
+#endif
 
   //
   // Compute the functions
@@ -586,6 +614,17 @@ Albany::ModelEvaluatorT::evalModelImpl(
         alpha, beta, omega, curr_time, x_dotT.get(), x_dotdotT.get(),  *xT,
         sacado_param_vec, fT_out.get(), *W_op_out_crsT);
     f_already_computed = true;
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE
+    //IK, 4/24/15: write mass matrix to matrix market file
+    //Warning: to read this in to MATLAB correctly, code must be run in serial.
+    //Otherwise Mass will have a distributed Map which would also need to be read in to MATLAB for proper
+    //reading in of Mass.
+    app->computeGlobalJacobianT(1.0, 0.0, 0.0, curr_time, x_dotT.get(), x_dotdotT.get(), *xT, 
+                               sacado_param_vec, ftmp.get(), *Mass_crs);
+    Tpetra_MatrixMarket_Writer::writeSparseFile("mass.mm", Mass_crs);
+    Tpetra_MatrixMarket_Writer::writeMapFile("rowmap.mm", *Mass_crs->getRowMap()); 
+    Tpetra_MatrixMarket_Writer::writeMapFile("colmap.mm", *Mass_crs->getColMap()); 
+#endif
   }
 
   // df/dp
