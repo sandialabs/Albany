@@ -113,6 +113,7 @@ private:
   computeBC(
       Albany::Application const & this_app,
       Albany::Application const & coupled_app,
+      Tpetra_MultiVector const & coupled_solution,
       int const dimension,
       size_t const ns_node) const;
 

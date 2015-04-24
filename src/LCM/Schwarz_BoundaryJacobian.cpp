@@ -138,7 +138,7 @@ apply(
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     Intrepid::Vector<ST> const
-    bc_value = computeBC(this_app, coupled_app, dimension, ns_node);
+    bc_value = computeBC(this_app, coupled_app, X, dimension, ns_node);
 
     for (auto i = 0; i < dimension; ++i) {
       auto const
@@ -158,6 +158,9 @@ apply(
 
   // Multiply with the corresponding diagonal Jacobian.
   jacs_[this_app_index]->apply(Z, Y);
+
+  // FIXME: Temporary to test.
+  //Y.putScalar(zero);
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
@@ -193,6 +196,7 @@ Schwarz_BoundaryJacobian::
 computeBC(
     Albany::Application const & this_app,
     Albany::Application const & coupled_app,
+    Tpetra_MultiVector const & coupled_solution,
     int const dimension,
     size_t const ns_node) const
 {
@@ -318,11 +322,8 @@ computeBC(
   Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
   basis;
 
-  Teuchos::RCP<Tpetra_Vector const>
-  coupled_solution = coupled_stk_disc->getSolutionFieldT();
-
   Teuchos::ArrayRCP<ST const>
-  coupled_solution_view = coupled_solution->get1dView();
+  coupled_solution_view = coupled_solution.get1dView();
 
   Teuchos::ArrayRCP<double> const &
   coupled_coordinates = coupled_stk_disc->getCoordinates();
