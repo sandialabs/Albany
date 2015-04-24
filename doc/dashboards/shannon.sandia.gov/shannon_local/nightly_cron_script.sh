@@ -4,7 +4,7 @@
 #
 # Run at midnight every day (0700 UTC)
 #
-# 00 07 * * * /home/gahanse/Codes/WorkingAlb/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
+# 00 07 * * * /home/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/shannon_local/nightly_cron_script.sh
 
 cd /home/gahanse/nightly
 
@@ -23,4 +23,4 @@ LOG_FILE=/home/gahanse/nightly/nightly_log_albany.txt
 echo "Date and time is $now" > $LOG_FILE
 
 salloc -n 4 -N 4 -p stella bash -c \
-"env MV2_USE_CUDA=1 TEST_DIRECTORY=/home/gahanse/nightly SCRIPT_DIRECTORY=/home/gahanse/Codes/WorkingAlb/doc/dashboards/shannon.sandia.gov/shannon_local /home/gahanse/bin/ctest -VV -S /home/gahanse/Codes/WorkingAlb/doc/dashboards/shannon.sandia.gov/shannon_local/ctest_nightly.cmake" >> $LOG_FILE 2>&1
+"env MV2_USE_CUDA=1 TEST_DIRECTORY=/home/gahanse/nightly SCRIPT_DIRECTORY=/home/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/shannon_local /home/gahanse/bin/ctest -VV -S /home/gahanse/Codes/Albany/doc/dashboards/shannon.sandia.gov/shannon_local/ctest_nightly.cmake" >> $LOG_FILE 2>&1
