@@ -148,8 +148,10 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
         for (int j=0; j<points_per_edge-1; j++) {
           //Set connectivity for new mesh  
           singlePartVec[0] = partVec[ebNo];
-          const unsigned int elem_GID = FIXME: assign global ID to element!  If it's 0-based, we'll have 1+elem_id
-          in the next line b/c stk bulkData is 1-based 
+          FIXME: assign global ID to element!
+          //IKT, 4/24/15: I think the following should work.  We set the element # to the global node ID 
+          //of the 0th node in each new bilinear element.   
+          const unsigned int elem_GID = wsElNodeID[ws][e][i+j*nodes_per_edge]; 
           stk::mesh::Entity = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
           stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK, 
                                     1+wsElNodeID[ws][e][i+j*nodes_per_edge], nodePartVec);
