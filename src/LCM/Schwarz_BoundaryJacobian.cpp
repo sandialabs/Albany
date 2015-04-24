@@ -130,8 +130,7 @@ apply(
     bc_value = computeBC(this_app, coupled_app, X, dimension, ns_node);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-    std::cout << "--------------------------------------------------------\n";
-    std::cout << "DIMENSION  DOF\n";
+    std::cout << "DIMENSION    DOF\n";
     std::cout << "--------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
 
@@ -142,13 +141,16 @@ apply(
 #if defined(DEBUG_LCM_SCHWARZ)
       std::cout << std::setw(8) << i;
       std::cout << std::setw(8) << dof;
-      std::cout << "--------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
       auto const
       value = bc_value(i);
 
       Y_view[dof] = value;
     }
+
+#if defined(DEBUG_LCM_SCHWARZ)
+    std::cout << "--------------------------------------------------------\n";
+#endif // DEBUG_LCM_SCHWARZ
 
   } // node in node set loop
 
