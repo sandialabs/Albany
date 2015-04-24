@@ -124,17 +124,6 @@ apply(
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
-  Teuchos::RCP<Tpetra_Vector const>
-  this_solution = this_stk_disc->getSolutionFieldT();
-
-  Teuchos::ArrayRCP<ST const>
-  this_solution_view = this_solution->get1dView();
-
-  auto const
-  num_this_unknowns = this_solution_view.size();
-
-  assert(Y_view.size() == num_this_unknowns);
-
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     Intrepid::Vector<ST> const
@@ -176,11 +165,6 @@ apply(
 #ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Z_%02d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Z);
-#endif  // WRITE_TO_MATRIX_MARKET
-
-#ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "soln_%02d.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, this_solution);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
