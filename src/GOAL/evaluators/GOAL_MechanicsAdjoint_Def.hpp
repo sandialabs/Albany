@@ -8,6 +8,17 @@
 
 namespace GOAL {
 
+
+Teuchos::RCP<Teuchos::ParameterList> getValidMechanicsAdjointParameters()
+{
+  Teuchos::RCP<Teuchos::ParameterList> validPL =
+    rcp(new Teuchos::ParameterList("Valid MechanicsAdjoint Params"));
+
+  validPL->set<std::string>("QoI Name","","Quantity of interest name");
+
+  return validPL;
+}
+
 template<typename EvalT, typename Traits>
 MechanicsAdjointBase<EvalT, Traits>::
 MechanicsAdjointBase (Teuchos::ParameterList& p,
@@ -19,12 +30,14 @@ MechanicsAdjointBase (Teuchos::ParameterList& p,
     "MechanicsAdjointBase needs access to"
     "mesh_specs->ebName and mesh_specs->sepEvalsByEB");
 
-  // register with the state manager
+  this->setName("MechanicsAdjoint" + PHX::typeAsString<EvalT>());
+
   this->stateManager_ = p.get<Albany::StateManager*>("State Manager Ptr");
 
-  // create field tag
   fieldTag_ =
-    Teuchos::rcp(new PHX::Tag<ScalarT>("Project IP to Nodal Field", dl->dummy));
+    Teuchos::rcp(new PHX::Tag<ScalarT>("Mechanics Adjoint", dl->dummy));
+
+  this->addEvaluatedField(*fieldTag_);
 }
 
 template<typename EvalT, typename Traits>
