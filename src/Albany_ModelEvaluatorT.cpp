@@ -22,12 +22,13 @@
 #include "Teuchos_TestForException.hpp"
 #include "Tpetra_ConfigDefs.hpp"
 
-#include "TpetraExt_MMHelpers.hpp"
 
 //IK, 4/24/15: adding option to write the mass matrix to matrix market file, which is needed 
 //for some applications.  Uncomment the following line to turn on.
-#define WRITE_MASS_MATRIX_TO_MM_FILE
-
+//#define WRITE_MASS_MATRIX_TO_MM_FILE
+#ifdef WRITE_MASS_MATRIX_TO_MM_FILE 
+#include "TpetraExt_MMHelpers.hpp"
+#endif
 
 Albany::ModelEvaluatorT::ModelEvaluatorT(
     const Teuchos::RCP<Albany::Application>& app_,
