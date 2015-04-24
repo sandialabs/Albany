@@ -312,6 +312,7 @@ computeBC(
 
 #if defined(DEBUG_LCM_SCHWARZ)
   std::cout << "--------------------------------------------------------\n";
+  std::cout << "Current app      : " << this_app_name << '\n';
   std::cout << "Coupling to app  : " << coupled_app_name << '\n';
   std::cout << "Coupling to block: " << coupled_block_name << '\n';
   std::cout << "Node set node    : " << ns_node << '\n';
@@ -482,7 +483,7 @@ computeBC(
   value(coupled_dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "NODE    BASIS                    VALUE\n";
+  std::cout << "NODE   BASIS                     VALUE\n";
   std::cout << "---------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
 
