@@ -21,7 +21,9 @@ mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
 
-LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
+LCM::
+Schwarz_BoundaryJacobian::
+Schwarz_BoundaryJacobian(
     Teuchos::RCP<Teuchos_Comm const> const & comm,
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
     Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
@@ -42,12 +44,17 @@ LCM::Schwarz_BoundaryJacobian::Schwarz_BoundaryJacobian(
   range_map_ = ca[this_app_index]->getMapT();
 }
 
-LCM::Schwarz_BoundaryJacobian::~Schwarz_BoundaryJacobian()
+LCM::
+Schwarz_BoundaryJacobian::
+~Schwarz_BoundaryJacobian()
 {
 }
 
 // Initialize the operator with everything needed to apply it
-void LCM::Schwarz_BoundaryJacobian::initialize()
+void
+LCM::
+Schwarz_BoundaryJacobian::
+initialize()
 {
 }
 
@@ -240,11 +247,11 @@ computeBC(
   shards::CellTopology
   coupled_cell_topology(&coupled_cell_topology_data);
 
-  size_t const
+  auto const
   coupled_dimension = coupled_cell_topology_data.dimension;
 
   // FIXME: Generalize element topology.
-  size_t const
+  auto const
   coupled_vertex_count = coupled_cell_topology_data.vertex_count;
 
   Intrepid::ELEMENT::Type const
@@ -267,7 +274,7 @@ computeBC(
   std::vector<Intrepid::Vector<double>>
   coupled_element_solution(coupled_vertex_count);
 
-  for (size_t i = 0; i < coupled_vertex_count; ++i) {
+  for (auto i = 0; i < coupled_vertex_count; ++i) {
     coupled_element_vertices[i].set_dimension(coupled_dimension);
     coupled_element_solution[i].set_dimension(coupled_dimension);
   }
