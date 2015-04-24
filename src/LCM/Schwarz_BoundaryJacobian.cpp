@@ -129,10 +129,21 @@ apply(
     Intrepid::Vector<ST> const
     bc_value = computeBC(this_app, coupled_app, X, dimension, ns_node);
 
-    for (auto i = 0; i < dimension; ++i) {
+#if defined(DEBUG_LCM_SCHWARZ)
+    std::cout << "--------------------------------------------------------\n";
+    std::cout << "DIMENSION  DOF\n";
+    std::cout << "--------------------------------------------------------\n";
+#endif // DEBUG_LCM_SCHWARZ
+
+  for (auto i = 0; i < dimension; ++i) {
       auto const
       dof = ns_dof[ns_node][i];
 
+#if defined(DEBUG_LCM_SCHWARZ)
+      std::cout << std::setw(8) << i;
+      std::cout << std::setw(8) << dof;
+      std::cout << "--------------------------------------------------------\n";
+#endif // DEBUG_LCM_SCHWARZ
       auto const
       value = bc_value(i);
 
@@ -295,6 +306,15 @@ computeBC(
   point.set_dimension(coupled_dimension);
 
   point.fill(coord);
+
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << "--------------------------------------------------------\n";
+  std::cout << "Coupling to app  : " << coupled_app_name << '\n';
+  std::cout << "Coupling to block: " << coupled_block_name << '\n';
+  std::cout << "Node set node    : " << ns_node << '\n';
+  std::cout << "Point            : " << point << '\n';
+  std::cout << "--------------------------------------------------------\n";
+#endif // DEBUG_LCM_SCHWARZ
 
   // Determine the element that contains this point.
   bool
@@ -459,15 +479,16 @@ computeBC(
   value(coupled_dimension, Intrepid::ZEROS);
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "Coupling to app  : " << coupled_app_name << '\n';
-  std::cout << "Coupling to block: " << coupled_block_name << '\n';
+  std::cout << "NODE    BASIS                    VALUE\n";
+  std::cout << "---------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
 
   for (auto i = 0; i < coupled_vertex_count; ++i) {
     value += basis_values(i, 0) * coupled_element_solution[i];
 
 #if defined(DEBUG_LCM_SCHWARZ)
-    std::cout << std::scientific << std::setprecision(16);
+    std::cout << std::setw(4) << i << ' ';
+    std::cout << std::scientific << std::setw(24) << std::setprecision(16);
     std::cout << basis_values(i, 0) << "    ";
     std::cout << coupled_element_solution[i] << '\n';
 #endif // DEBUG_LCM_SCHWARZ
@@ -475,7 +496,9 @@ computeBC(
   }
 
 #if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << " ==> " << value << '\n';
+  std::cout << "--------------------------------------------------------\n";
+  std::cout << "RESULT : " << value << '\n';
+  std::cout << "--------------------------------------------------------\n";
 #endif // DEBUG_LCM_SCHWARZ
 
   return value;
