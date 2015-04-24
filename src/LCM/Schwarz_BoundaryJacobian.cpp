@@ -141,6 +141,7 @@ apply(
 #if defined(DEBUG_LCM_SCHWARZ)
       std::cout << std::setw(8) << i;
       std::cout << std::setw(8) << dof;
+      std::cout << '\n';
 #endif // DEBUG_LCM_SCHWARZ
       auto const
       value = bc_value(i);
