@@ -44,12 +44,10 @@ if [ "$DOWNLOAD_FILES" ]; then
  echo >> $LOG_FILE
  mkdir $DOWNLOAD_DIR
 
-if [ "$DOWNLOAD_FILES" ]; then
-
 # rsync the files
   echo "rsync -a gahanse@software-login.sandia.gov:/home/gahanse/Albany/ $DOWNLOAD_DIR" >> $LOG_FILE
   echo >> $LOG_FILE
-  rsync -a gahanse@software-login.sandia.gov:/home/gahanse/Albany/ $DOWNLOAD_DIR >> $LOG_FILE
+  rsync -a --delete gahanse@software-login.sandia.gov:/home/gahanse/Albany/ $DOWNLOAD_DIR >> $LOG_FILE 2>&1
 
 fi
 
@@ -58,7 +56,7 @@ if [ "$UPLOAD_FILES" ]; then
 # curl the Project.xml file to the CDash site
   echo "Sending Project.xml to CDash site: $CDASH_SITE" >> $LOG_FILE
   echo >> $LOG_FILE
-  curl -T $SCRIPT_DIR/Project.xml $CDASH_SITE >> $LOG_FILE
+  curl -T $SCRIPT_DIR/Project.xml $CDASH_SITE >> $LOG_FILE 2>&1
   echo >> $LOG_FILE
 
 
@@ -68,7 +66,7 @@ if [ "$UPLOAD_FILES" ]; then
 
    for files in $DOWNLOAD_DIR/*; do
       echo "Sending $files to CDash site: $CDASH_SITE" >> $LOG_FILE
-      curl -T $files $CDASH_SITE >> $LOG_FILE
+      curl -T $files $CDASH_SITE >> $LOG_FILE 2>&1
       echo >> $LOG_FILE
    done
   fi
