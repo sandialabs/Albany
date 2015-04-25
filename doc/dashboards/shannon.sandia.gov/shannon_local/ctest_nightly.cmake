@@ -33,6 +33,13 @@ SET(INTEL_DIR /opt/intel/mkl/lib/intel64)
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
+IF (CLEAN_BUILD)
+  IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
+#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
+  ENDIF()
+ENDIF()
+
 IF(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   FILE(MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
 ENDIF()
@@ -62,10 +69,6 @@ find_program(CTEST_GIT_COMMAND NAMES git)
 SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
-
-IF (CLEAN_BUILD)
-  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-ENDIF()
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 
@@ -219,9 +222,6 @@ ENDIF()
 #
 #######################################################################################################################
 
-SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos_CUVM)
-SET_PROPERTY (GLOBAL PROPERTY Label Trilinos_CUVM)
-
 SET(CONFIGURE_OPTIONS
   "-Wno-dev"
   "-DTrilinos_CONFIGURE_OPTIONS_FILE:FILEPATH=${TRILINOS_HOME}/sampleScripts/AlbanySettings.cmake"
@@ -331,6 +331,9 @@ IF(BUILD_TRILINOS)
 # Configure the Trilinos build
 #
 ###############################################################################################################
+
+SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos_CUVM)
+SET_PROPERTY (GLOBAL PROPERTY Label Trilinos_CUVM)
 
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
   FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)

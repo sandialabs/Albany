@@ -37,11 +37,12 @@ if [ ! -d "$TEST_DIR/buildAlbany/nightly" ]; then
 fi
 if [ ! -d "$TEST_DIR/buildAlbany/nightly/Albany" ]; then
   mkdir $TEST_DIR/buildAlbany/nightly/Albany
+else
+  /bin/rm -rf $TEST_DIR/buildAlbany/nightly/Albany/*
 fi
 
-/bin/rm -rf $TEST_DIR/buildAlbany/nightly/Albany/*
 
 salloc -n 4 -N 4 -p stella bash -c \
 "env MV2_USE_CUDA=1 TEST_DIRECTORY=$TEST_DIR SCRIPT_DIRECTORY=$SCRIPT_DIR /home/gahanse/bin/ctest -VV -S $SCRIPT_DIR/ctest_nightly.cmake" >> $LOG_FILE 2>&1
 
-/usr/bin/rsync -avz --delete $TEST_DIR/buildAlbany/nightly/Albany/ software-login.sandia.gov:/home/gahanse/Albany > $LOG_FILE 2>&1
+/usr/bin/rsync -avz --delete $TEST_DIR/buildAlbany/nightly/Albany/ software-login.sandia.gov:/home/gahanse/Albany >> $LOG_FILE 2>&1
