@@ -144,7 +144,7 @@ apply(
       std::cout << '\n';
 #endif // DEBUG_LCM_SCHWARZ
       auto const
-      value = bc_value(i);
+      value = -bc_value(i);
 
       Y_view[dof] = value;
     }
@@ -160,10 +160,10 @@ apply(
   Z(Y, Teuchos::DataAccess::Copy);
 
   // Multiply with the corresponding diagonal Jacobian.
-  jacs_[this_app_index]->apply(Z, Y);
+  //jacs_[this_app_index]->apply(Z, Y);
 
   // FIXME: Temporary to test.
-  //Y.putScalar(zero);
+  Y.putScalar(zero);
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
