@@ -170,7 +170,7 @@ ENDIF()
 
 # FELIX ##################
 
-IF(ALBANY_FELIX AND ALBANY_SEACAS )
+IF(ALBANY_FELIX)
   add_subdirectory(FELIX_Stokes)
 ENDIF()
 

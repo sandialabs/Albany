@@ -242,18 +242,20 @@ Albany::DiscretizationFactory::createMeshSpecs() {
     meshStruct = Teuchos::rcp(new Albany::AsciiSTKMeshStruct(discParams, commT));
   }
   else if(method == "Ascii2D") {
-	  Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
-      meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(discParams, commT));
-      Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
-	  Albany::AbstractFieldContainer::FieldContainerRequirements req;
-	  int neq=2;
-      meshStruct2D->setFieldAndBulkData(commT, discParams, neq, req,
-                                        sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
-      Ioss::Init::Initializer io;
-      Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
-      mesh_data->set_bulk_data(*meshStruct2D->bulkData);
-      size_t idx = mesh_data->create_output_mesh("IceSheet.exo", stk::io::WRITE_RESULTS);
-      mesh_data->process_output_request(idx, 0.0);
+    Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
+    meshStruct2D = Teuchos::rcp(new Albany::AsciiSTKMesh2D(discParams, commT));
+    Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
+    Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    int neq=2;
+    meshStruct2D->setFieldAndBulkData(commT, discParams, neq, req,
+                                      sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
+#ifdef ALBANY_SEACAS
+    Ioss::Init::Initializer io;
+    Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data =Teuchos::rcp(new stk::io::StkMeshIoBroker(MPI_COMM_WORLD));
+    mesh_data->set_bulk_data(*meshStruct2D->bulkData);
+    size_t idx = mesh_data->create_output_mesh("IceSheet.exo", stk::io::WRITE_RESULTS);
+    mesh_data->process_output_request(idx, 0.0);
+#endif
   }
 #ifdef ALBANY_FELIX
   else if(method == "Extruded") {
