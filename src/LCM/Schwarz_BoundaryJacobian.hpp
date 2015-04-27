@@ -34,6 +34,7 @@ public:
   Schwarz_BoundaryJacobian(
       Teuchos::RCP<Teuchos_Comm const> const & comm,
       Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
       int const this_app_index = 0,
       int const coupled_app_index = 0);
 
@@ -72,27 +73,39 @@ public:
 
   void
   setThisAppIndex(int const tai)
-  {this_app_index_ = tai;}
+  {
+    this_app_index_ = tai;
+  }
 
   int
   getThisAppIndex() const
-  {return this_app_index_;}
+  {
+    return this_app_index_;
+  }
 
   void
   setCoupledAppIndex(int const cai)
-  {coupled_app_index_ = cai;}
+  {
+    coupled_app_index_ = cai;
+  }
 
   int
   getCoupledAppIndex() const
-  {return coupled_app_index_;}
+  {
+    return coupled_app_index_;
+  }
 
   Albany::Application const &
   getApplication(int const app_index)
-  {return *(coupled_apps_[app_index]);}
+  {
+    return *(coupled_apps_[app_index]);
+  }
 
   Albany::Application const&
   getApplication(int const app_index) const
-  {return *(coupled_apps_[app_index]);}
+  {
+    return *(coupled_apps_[app_index]);
+  }
 
 private:
 
@@ -100,13 +113,17 @@ private:
   computeBC(
       Albany::Application const & this_app,
       Albany::Application const & coupled_app,
+      Tpetra_MultiVector const & coupled_solution,
       int const dimension,
-      size_t const ns_node);
+      size_t const ns_node) const;
 
 private:
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> >
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   coupled_apps_;
+
+  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>>
+  jacs_;
 
   int
   this_app_index_;
@@ -125,9 +142,6 @@ private:
 
   Teuchos::RCP<Teuchos_Comm const>
   commT_;
-
-  Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> >
-  jacs_;
 
   bool
   b_use_transpose_;

@@ -36,8 +36,8 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="1.0"/>
-        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
-        <Parameter name="Hardening" type="double" value="1.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="5.0"/>
+        <Parameter name="Hardening" type="double" value="10.0"/>
 
       </ParameterList>
 
@@ -45,7 +45,10 @@
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
-      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
+      <Parameter name="Output tau_1" type="bool" value="true"/>
+      <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
     </ParameterList>
 
@@ -72,15 +75,18 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="1.0"/>
-        <Parameter name="Gamma Exponent" type="double" value="1.0"/>
-        <Parameter name="Hardening" type="double" value="1.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="5.0"/>
+        <Parameter name="Hardening" type="double" value="10.0"/>
       </ParameterList>
 
       <!-- Specify output to Exodus -->
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
-      <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_1" type="bool" value="true"/>      
+      <Parameter name="Output tau_1" type="bool" value="true"/>
+      <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
     </ParameterList>
 

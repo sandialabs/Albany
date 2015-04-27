@@ -24,6 +24,7 @@
 #include "AAAModel.hpp"
 #include "LinearElasticModel.hpp"
 #include "LinearHMCModel.hpp"
+#include "J2HMCModel.hpp"
 #include "HyperelasticDamageModel.hpp"
 #include "CapExplicitModel.hpp"
 #include "CapImplicitModel.hpp"
@@ -329,6 +330,8 @@ initializeModel(Teuchos::ParameterList* p,
     model = rcp(new AnisotropicViscoplasticModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Linear HMC") {
     model = rcp(new LinearHMCModel<EvalT, Traits>(p, dl));
+  } else if (model_name == "J2 HMC") {
+    model = rcp(new J2HMCModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Ortiz Pandolfi") {
     model = rcp(new OrtizPandolfiModel<EvalT, Traits>(p, dl));
   } else if (model_name == "Elasto Viscoplastic") {

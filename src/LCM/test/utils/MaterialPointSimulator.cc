@@ -247,8 +247,6 @@ int main(int ac, char* av[])
   // Time step
   Teuchos::ArrayRCP<ScalarT> delta_time(1);
   delta_time[0] = step_size;;
-  // SetField evaluator, which will be used to manually assign a value
-  // to the detdefgrad field
   Teuchos::ParameterList setDTP("SetFieldTimeStep");
   setDTP.set<std::string>("Evaluated Field Name", "Delta Time");
   setDTP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout",
@@ -421,8 +419,8 @@ int main(int ac, char* av[])
             //<< std::endl;
   Teuchos::RCP<PHX::DataLayout> dummy = Teuchos::rcp(
       new PHX::MDALayout<Dummy>(0));
-  std::vector<std::string> responseIDs = stateMgr.getResidResponseIDsToRequire(
-      element_block_name);
+  std::vector<std::string> responseIDs =
+    stateMgr.getResidResponseIDsToRequire(element_block_name);
   std::vector<std::string>::const_iterator it;
   for (it = responseIDs.begin(); it != responseIDs.end(); it++) {
     const std::string& responseID = *it;
@@ -438,12 +436,16 @@ int main(int ac, char* av[])
   fieldManager.writeGraphvizFile<Residual>("FM", true, true);
   stateFieldManager.writeGraphvizFile<Residual>("SFM", true, true);
 
+  //---------------------------------------------------------------------------
   // grab the output file name
+  //
   std::string output_file = mpsParams.get<std::string>(
       "Output File Name",
       "output.exo");
 
+  //---------------------------------------------------------------------------
   // Create discretization, as required by the StateManager
+  //
   Teuchos::RCP<Teuchos::ParameterList> discretizationParameterList =
       Teuchos::rcp(new Teuchos::ParameterList("Discretization"));
   discretizationParameterList->set<int>("1D Elements", workset_size);
@@ -453,11 +455,16 @@ int main(int ac, char* av[])
   discretizationParameterList->set<std::string>(
       "Exodus Output File Name",
       output_file);
-  Teuchos::RCP<Tpetra_Map> mapT = Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes, 0, commT, Tpetra::LocallyReplicated));
-  Teuchos::RCP<Tpetra_Vector> solution_vectorT = Teuchos::rcp(new Tpetra_Vector(mapT)); 
+  Teuchos::RCP<Tpetra_Map> mapT = 
+    Teuchos::rcp(new Tpetra_Map(workset_size*num_dims*num_nodes,
+                                0,
+                                commT,
+                                Tpetra::LocallyReplicated));
+  Teuchos::RCP<Tpetra_Vector> solution_vectorT =
+    Teuchos::rcp(new Tpetra_Vector(mapT));
 
   int numberOfEquations = 3;
-  Albany::AbstractFieldContainer::FieldContainerRequirements req; // The default fields
+  Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
   Teuchos::RCP<Albany::GenericSTKMeshStruct> stkMeshStruct = Teuchos::rcp(
       new Albany::TmplSTKMeshStruct<3>(
@@ -475,10 +482,14 @@ int main(int ac, char* av[])
   Teuchos::RCP<Albany::AbstractDiscretization> discretization = Teuchos::rcp(
       new Albany::STKDiscretization(stkMeshStruct, commT));
 
+  //---------------------------------------------------------------------------
   // Associate the discretization with the StateManager
+  //
   stateMgr.setStateArrays(discretization);
 
+  //---------------------------------------------------------------------------
   // Create a workset
+  //
   PHAL::Workset workset;
   workset.numCells = workset_size;
   workset.stateArrayPtr = &stateMgr.getStateArray(
@@ -512,7 +523,7 @@ int main(int ac, char* av[])
     TEUCHOS_TEST_FOR_EXCEPTION(
         true,
         std::runtime_error,
-        "Impropoer Loading Case in Material Point Simulator block");
+        "Improper Loading Case in Material Point Simulator block");
   }
 
   Intrepid::Tensor<ScalarT> F_tensor(3, &F_vector[0]);

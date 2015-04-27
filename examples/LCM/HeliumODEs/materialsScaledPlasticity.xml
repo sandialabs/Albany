@@ -34,7 +34,7 @@
           <Parameter name="Pre-exponential Factor" type="double" value="5.4e5"/>
           <Parameter name="Diffusion Activation Enthalpy" type="double" value="53.9"/>
           <Parameter name="Trap Binding Energy" type="double" value="9.65"/>
-          <Parameter name="Number of Lattice Sites" type="double" value="0.145"/>
+          <Parameter name="Number of Lattice Sites" type="double" value="0.1405283867341203"/>
           <Parameter name="Reference Total Concentration" type="double" value="5.6e-4"/>
           <Parameter name="Lattice Strain Flag" type="bool" value="false"/>
           <Parameter name="A Constant" type="double" value="8.6"/>

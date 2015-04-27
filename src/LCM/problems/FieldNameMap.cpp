@@ -38,12 +38,24 @@ namespace LCM {
     name_map->insert( std::make_pair("F","F") );
     name_map->insert( std::make_pair("J","J") );
     name_map->insert( std::make_pair("Velocity_Gradient","Velocity_Gradient") );
-    // Crystal-plasticity model
+    // Crystal plasticity model
     const int max_slip_systems = 24;
+    // field names for slip on each system
     for (int i=0; i < max_slip_systems; ++i) {
       std::string g = Albany::strint("gamma", i+1,'_');
       name_map->insert( std::make_pair(g,g) );
     }
+    // field names for the hardening on each system
+    for (int i=0; i < max_slip_systems; ++i) {
+          std::string t_h = Albany::strint("tau_hard", i+1,'_');
+          name_map->insert( std::make_pair(t_h,t_h) );
+    }
+    // field names for shear stress on each system
+    for (int i=0; i < max_slip_systems; ++i) {
+      std::string t = Albany::strint("tau", i+1,'_');
+      name_map->insert( std::make_pair(t,t) );
+    }
+    name_map->insert( std::make_pair("CP_Residual","CP_Residual") );
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );

@@ -4,93 +4,132 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
+
 #include "GOAL_AdjointResponseFunction.hpp"
+#if defined(ALBANY_EPETRA)
+#include "Petra_Converters.hpp"
+#endif
+#include <algorithm>
 #include "PHAL_Utilities.hpp"
 
 namespace GOAL {
 
-static void print(const char* format, ...)
+AdjointResponseFunction::
+AdjointResponseFunction(
+    const Teuchos::RCP<Albany::Application>& app,
+    const Teuchos::RCP<Albany::AbstractProblem>& prob,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  ms,
+    const Teuchos::RCP<Albany::StateManager>& sm,
+    Teuchos::ParameterList& rp) :
+  ScalarResponseFunction(app->getComm()),
+  application_(app),
+  problem_(prob),
+  meshSpecs_(ms),
+  stateManager_(sm)
 {
-  printf("\nADJOINT: ");
-  va_list ap;
-  va_start(ap,format);
-  vfprintf(stdout,format,ap);
-  va_end(ap);
-  printf("\n");
+    setup(rp);
 }
 
-AdjointResponseFunction::AdjointResponseFunction(
-    const Teuchos::RCP<Albany::Application>& application,
-    const Teuchos::RCP<Albany::AbstractProblem>& problem,
-    const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs,
-    const Teuchos::RCP<Albany::StateManager>& stateManager,
-    Teuchos::ParameterList& responseParams) :
-  ScalarResponseFunction(application->getComm()),
-  application_(application),
-  problem_(problem),
-  meshSpecs_(meshSpecs),
-  stateManager_(stateManager),
-  responseParams_(responseParams)
+AdjointResponseFunction::
+AdjointResponseFunction(
+    const Teuchos::RCP<Albany::Application>& app,
+    const Teuchos::RCP<Albany::AbstractProblem>& prob,
+    const Teuchos::RCP<Albany::MeshSpecsStruct>&  ms,
+    const Teuchos::RCP<Albany::StateManager>& sm) :
+  ScalarResponseFunction(app->getComm()),
+  application_(app),
+  problem_(prob),
+  meshSpecs_(ms),
+  stateManager_(sm)
 {
-  print("in constructor");
-  setupT();
 }
 
-AdjointResponseFunction::~AdjointResponseFunction()
+void AdjointResponseFunction::
+setup(Teuchos::ParameterList& responseParams)
 {
-  print("in destructor");
-}
+  Teuchos::RCP<const Teuchos_Comm> commT = application_->getComm();
 
-void AdjointResponseFunction::setupT()
-{
-  print("in setupT");
+  // Restrict to the element block?
+  const char* reb_parm = "Restrict to Element Block";
+  const bool
+    reb_parm_present = responseParams.isType<bool>(reb_parm),
+    reb = reb_parm_present && responseParams.get<bool>(reb_parm, false);
+  elemBlockIdx_ = reb ? meshSpecs_->ebNameToIndex[meshSpecs_->ebName] : -1;
+  if (reb_parm_present) responseParams.remove(reb_parm, false);
 
-  // create field manager
+  // Create field manager
   rfm_ = Teuchos::rcp(new PHX::FieldManager<PHAL::AlbanyTraits>);
 
-  // create evaluators for field manager
+  // Create evaluators for field manager
   Teuchos::Array< Teuchos::RCP<const PHX::FieldTag> > tags =
     problem_->buildEvaluators(
         *rfm_,
         *meshSpecs_,
         *stateManager_,
         Albany::BUILD_RESPONSE_FM,
-        Teuchos::rcp(&responseParams_,false));
+        Teuchos::rcp(&responseParams,false));
 
-  // visualize response field manager graph
-  visResponseGraph_ =
-    responseParams_.get("Phalanx Graph Visualization Detail", 0);
-  visResponseName_ = responseParams_.get<std::string>("Name");
-  std::replace(visResponseName_.begin(), visResponseName_.end(), ' ', '_');
-  std::transform(
-      visResponseName_.begin(),
-      visResponseName_.end(),
-      visResponseName_.begin(),
-      ::tolower);
+  int rank = tags[0]->dataLayout().rank();
+  numResponses_ = tags[0]->dataLayout().dimension(rank-1);
+  if (numResponses_ == 0)
+    numResponses_ = 1;
+
+  // Do post-registration setup
+
+  // this is not right because rfm doesn't account for multiple element
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian>(
+        application_.get(), meshSpecs_.get()));
+    rfm_->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Jacobian>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::Tangent>(
+        application_.get(), meshSpecs_.get()));
+    rfm_->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::Tangent>(
+      derivative_dimensions); }
+  { std::vector<PHX::index_size_type> derivative_dimensions;
+    derivative_dimensions.push_back(
+      PHAL::getDerivativeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+        application_.get(), meshSpecs_.get()));
+    rfm_->setKokkosExtendedDataTypeDimensions<PHAL::AlbanyTraits::DistParamDeriv>(
+      derivative_dimensions); }
+  rfm_->postRegistrationSetup("");
+
+  if (reb_parm_present) responseParams.set<bool>(reb_parm, reb);
 }
 
-Teuchos::RCP<const Tpetra_Map> AdjointResponseFunction::responseMapT() const
+AdjointResponseFunction::
+~AdjointResponseFunction()
 {
-  print("in responseMapT");
 }
 
-bool AdjointResponseFunction::isScalarResponse() const
+unsigned int AdjointResponseFunction::
+numResponses() const
 {
-  print("in isScalarResponse");
-  return true;
+  return numResponses_;
 }
 
-unsigned int AdjointResponseFunction::numResponses() const
+template<typename EvalT>
+void AdjointResponseFunction::
+evaluate(PHAL::Workset& workset)
 {
-  return 1;
+  const Albany::WorksetArray<int>::type&
+    wsPhysIndex = application_->getDiscretization()->getWsPhysIndex();
+  rfm_->preEvaluate<EvalT>(workset);
+  for (int ws = 0, numWorksets = application_->getNumWorksets();
+       ws < numWorksets; ws++) {
+    if (elemBlockIdx_ >= 0 && elemBlockIdx_ != wsPhysIndex[ws])
+      continue;
+    application_->loadWorksetBucketInfo<EvalT>(workset, ws);
+    rfm_->evaluateFields<EvalT>(workset);
+  }
+  rfm_->postEvaluate<EvalT>(workset);
 }
 
-Teuchos::RCP<Tpetra_Operator> AdjointResponseFunction::createGradientOpT() const
-{
-  print("in createGradientOpT");
-}
-
-void AdjointResponseFunction::evaluateResponseT(
+void AdjointResponseFunction::
+evaluateResponseT(
     const double current_time,
     const Tpetra_Vector* xdotT,
     const Tpetra_Vector* xdotdotT,
@@ -98,10 +137,19 @@ void AdjointResponseFunction::evaluateResponseT(
     const Teuchos::Array<ParamVec>& p,
     Tpetra_Vector& gT)
 {
-  print("in evaluateResponseT");
+  // Set data in Workset struct
+  PHAL::Workset workset;
+
+  application_->setupBasicWorksetInfoT(workset, current_time, rcp(xdotT, false), rcp(xdotdotT, false), rcpFromRef(xT), p);
+  workset.gT = Teuchos::rcp(&gT,false);
+
+  // Perform fill via field manager
+  evaluate<PHAL::AlbanyTraits::Residual>(workset);
 }
 
-void AdjointResponseFunction::evaluateTangentT(
+
+void AdjointResponseFunction::
+evaluateTangentT(
     const double alpha, 
     const double beta,
     const double omega,
@@ -120,28 +168,11 @@ void AdjointResponseFunction::evaluateTangentT(
     Tpetra_MultiVector* gxT,
     Tpetra_MultiVector* gpT)
 {
-  print("in evaluateTangentT");
   if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
 }
 
-void AdjointResponseFunction::evaluateDerivativeT(
-    const double current_time,
-    const Tpetra_Vector* xdotT,
-    const Tpetra_Vector* xdotdotT,
-    const Tpetra_Vector& xT,
-    const Teuchos::Array<ParamVec>& p,
-    ParamVec* deriv_p,
-    Tpetra_Vector* gT,
-    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
-    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
-    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
-    const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp)
-{
-  print("in evaluateDerivativeT");
-  if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
-}
-
-void AdjointResponseFunction::evaluateGradientT(
+void AdjointResponseFunction::
+evaluateGradientT(
     const double current_time,
     const Tpetra_Vector* xdotT,
     const Tpetra_Vector* xdotdotT,
@@ -154,9 +185,7 @@ void AdjointResponseFunction::evaluateGradientT(
     Tpetra_MultiVector* dg_dxdotdotT,
     Tpetra_MultiVector* dg_dpT)
 {
-  print("in evaluateGradientT");
   if (gT) this->evaluateResponseT(current_time, xdotT, xdotdotT, xT, p, *gT);
 }
-
 
 }

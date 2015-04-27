@@ -140,7 +140,7 @@ evaluateFields(typename Traits::EvalData workset)
 // Specialization: Residual
 // **********************************************************************
 //Kokkos kernel Residual
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
 void GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
@@ -179,6 +179,7 @@ operator() (const int &cell) const{
 
 }
 #endif
+*/
 // ***********************************************************************
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Residual, Traits>::
@@ -200,7 +201,7 @@ evaluateFields(typename Traits::EvalData workset)
   xT_constView = xT->get1dView();
   xdotT_constView = xdotT->get1dView();
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   for (int cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID  = workset.wsElNodeEqID[cell];
@@ -235,18 +236,19 @@ evaluateFields(typename Traits::EvalData workset)
       eq += this->numTracerVar;
     }
   }
-#else
+/*#else
    wsID_kokkos=workset.wsElNodeEqID_kokkos;
   Kokkos::parallel_for(workset.numCells,*this);
 
 #endif
+*/
 }
 
 // **********************************************************************
 // Specialization: Jacobian
 // **********************************************************************
 //Kokkos kernels Jacobian
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 template<typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -362,10 +364,8 @@ operator() (const GatherSolution_transientTerms_Tag &tag, const int &cell) const
    gather_solution_transientTerms(cell, node, neq, num_dof, firstunk);
   }
 }
-
-
-
 #endif
+*/
 // **********************************************************************
 template<typename Traits>
 GatherSolution<PHAL::AlbanyTraits::Jacobian, Traits>::
@@ -382,7 +382,7 @@ evaluateFields(typename Traits::EvalData workset)
   const Teuchos::RCP<const Tpetra_Vector>    xT = workset.xT;
   const Teuchos::RCP<const Tpetra_Vector> xdotT = workset.xdotT;
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   //get const view of xT and xdotT   
   Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
@@ -468,7 +468,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
-#else
+/*#else
  xT_constView = xT->get1dView();
  xdotT_constView = xdotT->get1dView();
  ignore_residual=workset.ignore_residual;
@@ -486,7 +486,7 @@ evaluateFields(typename Traits::EvalData workset)
  
 
 #endif
-
+*/
 }
 
 // **********************************************************************

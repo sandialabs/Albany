@@ -4,45 +4,37 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef GOAL_ADJOINTRESPONSEFUNCTION_HPP
-#define GOAL_ADJOINTRESPONSEFUNCTION_HPP
+#ifndef ALBANY_ADJOINTRESPONSEFUNCTION_HPP
+#define ALBANY_ADJOINTRESPONSEFUNCTION_HPP
 
 #include "Albany_ScalarResponseFunction.hpp"
 #include "Albany_Application.hpp"
 #include "Albany_AbstractProblem.hpp"
 #include "Albany_StateManager.hpp"
 #include "Albany_StateInfoStruct.hpp"
-#include "Phalanx.hpp"
 #include "PHAL_AlbanyTraits.hpp"
+#include "Phalanx.hpp"
 
 namespace GOAL {
 
 class AdjointResponseFunction :
   public Albany::ScalarResponseFunction
 {
-
   public:
 
     AdjointResponseFunction(
-        const Teuchos::RCP<Albany::Application>& application_,
-        const Teuchos::RCP<Albany::AbstractProblem>& problem_,
-        const Teuchos::RCP<Albany::MeshSpecsStruct>&  meshSpecs_,
-        const Teuchos::RCP<Albany::StateManager>& stateMgr_,
-        Teuchos::ParameterList& responseParams);
+        const Teuchos::RCP<Albany::Application>& app,
+        const Teuchos::RCP<Albany::AbstractProblem>& prob,
+        const Teuchos::RCP<Albany::MeshSpecsStruct>&  ms,
+        const Teuchos::RCP<Albany::StateManager>& sm,
+        Teuchos::ParameterList& rp);
 
-    ~AdjointResponseFunction();
+    virtual ~AdjointResponseFunction();
 
-    void setupT();
-    
-    Teuchos::RCP<const Tpetra_Map> responseMapT() const;
-    
-    bool isScalarResponse() const;
+    virtual unsigned int numResponses() const;
 
-    unsigned int numResponses() const;
-    
-    Teuchos::RCP<Tpetra_Operator> createGradientOpT() const;
-
-    void evaluateResponseT(
+    virtual void
+    evaluateResponseT(
         const double current_time,
         const Tpetra_Vector* xdotT,
         const Tpetra_Vector* xdotdotT,
@@ -50,8 +42,9 @@ class AdjointResponseFunction :
         const Teuchos::Array<ParamVec>& p,
         Tpetra_Vector& gT);
 
-    void evaluateTangentT(
-        const double alpha, 
+    virtual void
+    evaluateTangentT(
+        const double alpha,
         const double beta,
         const double omega,
         const double current_time,
@@ -69,20 +62,8 @@ class AdjointResponseFunction :
         Tpetra_MultiVector* gx,
         Tpetra_MultiVector* gp);
 
-    void evaluateDerivativeT(
-        const double current_time,
-        const Tpetra_Vector* xdotT,
-        const Tpetra_Vector* xdotdotT,
-        const Tpetra_Vector& xT,
-        const Teuchos::Array<ParamVec>& p,
-        ParamVec* deriv_p,
-        Tpetra_Vector* gT,
-        const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dx,
-        const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdot,
-        const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dxdotdot,
-        const Thyra::ModelEvaluatorBase::Derivative<ST>& dg_dp);
-
-    void evaluateGradientT(
+    virtual void
+    evaluateGradientT(
         const double current_time,
         const Tpetra_Vector* xdotT,
         const Tpetra_Vector* xdotdotT,
@@ -95,37 +76,9 @@ class AdjointResponseFunction :
         Tpetra_MultiVector* dg_dxdotdotT,
         Tpetra_MultiVector* dg_dpT);
 
-#ifdef ALBANY_EPETRA
-    void setup() {}
-
-    Teuchos::RCP<const Epetra_Map> responseMap() const {}
-
-    Teuchos::RCP<Epetra_Operator> createGradientOp() const {}
-
-    void evaluateDerivative(
-        const double current_time,
-        const Epetra_Vector* xdot,
-        const Epetra_Vector* xdotdot,
-        const Epetra_Vector& x,
-        const Teuchos::Array<ParamVec>& p,
-        ParamVec* deriv_p,
-        Epetra_Vector* g,
-        const EpetraExt::ModelEvaluator::Derivative& dg_dx,
-        const EpetraExt::ModelEvaluator::Derivative& dg_dxdot,
-        const EpetraExt::ModelEvaluator::Derivative& dg_dxdotdot,
-        const EpetraExt::ModelEvaluator::Derivative& dg_dp) {}
-
-    void evaluateDistParamDeriv(
-        const double current_time,
-        const Epetra_Vector* xdot,
-        const Epetra_Vector* xdotdot,
-        const Epetra_Vector& x,
-        const Teuchos::Array<ParamVec>& param_array,
-        const std::string& dist_param_name,
-        Epetra_MultiVector*  dg_dp) {}
-
-    void evaluateGradient(
-        const double current_time,
+#if defined(ALBANY_EPETRA)
+    virtual void
+    evaluateGradient(const double current_time,
         const Epetra_Vector* xdot,
         const Epetra_Vector* xdotdot,
         const Epetra_Vector& x,
@@ -136,16 +89,26 @@ class AdjointResponseFunction :
         Epetra_MultiVector* dg_dxdot,
         Epetra_MultiVector* dg_dxdotdot,
         Epetra_MultiVector* dg_dp) {}
+
+    virtual void
+    evaluateDistParamDeriv(
+        const double current_time,
+        const Epetra_Vector* xdot,
+        const Epetra_Vector* xdotdot,
+        const Epetra_Vector& x,
+        const Teuchos::Array<ParamVec>& param_array,
+        const std::string& dist_param_name,
+        Epetra_MultiVector* dg_dp) {}
 #endif
 
 #ifdef ALBANY_SG_MP
-    void init_sg(
+    virtual void init_sg(
         const Teuchos::RCP<const Stokhos::OrthogPolyBasis<int,double> >& basis,
         const Teuchos::RCP<const Stokhos::Quadrature<int,double> >& quad,
         const Teuchos::RCP<Stokhos::OrthogPolyExpansion<int,double> >& expansion,
         const Teuchos::RCP<const EpetraExt::MultiComm>& multiComm) {}
 
-    void evaluateSGResponse(
+    virtual void evaluateSGResponse(
         const double curr_time,
         const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
         const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
@@ -155,10 +118,10 @@ class AdjointResponseFunction :
         const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
         Stokhos::EpetraVectorOrthogPoly& sg_g) {}
 
-    void evaluateSGTangent(
-        const double alpha, 
-        const double beta, 
-        const double omega, 
+    virtual void evaluateSGTangent(
+        const double alpha,
+        const double beta,
+        const double omega,
         const double current_time,
         bool sum_derivs,
         const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
@@ -176,7 +139,7 @@ class AdjointResponseFunction :
         Stokhos::EpetraMultiVectorOrthogPoly* sg_JV,
         Stokhos::EpetraMultiVectorOrthogPoly* sg_gp) {}
 
-    void evaluateSGDerivative(
+    virtual void evaluateSGGradient(
         const double current_time,
         const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
         const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
@@ -186,12 +149,12 @@ class AdjointResponseFunction :
         const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
         ParamVec* deriv_p,
         Stokhos::EpetraVectorOrthogPoly* sg_g,
-        const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dx,
-        const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdot,
-        const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dxdotdot,
-        const EpetraExt::ModelEvaluator::SGDerivative& sg_dg_dp) {}
+        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
+        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
+        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
+        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) {}
 
-    void evaluateMPResponse(
+    virtual void evaluateMPResponse(
         const double curr_time,
         const Stokhos::ProductEpetraVector* mp_xdot,
         const Stokhos::ProductEpetraVector* mp_xdotdot,
@@ -201,10 +164,10 @@ class AdjointResponseFunction :
         const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
         Stokhos::ProductEpetraVector& mp_g) {}
 
-    void evaluateMPTangent(
-        const double alpha, 
-        const double beta, 
-        const double omega, 
+    virtual void evaluateMPTangent(
+        const double alpha,
+        const double beta,
+        const double omega,
         const double current_time,
         bool sum_derivs,
         const Stokhos::ProductEpetraVector* mp_xdot,
@@ -222,37 +185,7 @@ class AdjointResponseFunction :
         Stokhos::ProductEpetraMultiVector* mp_JV,
         Stokhos::ProductEpetraMultiVector* mp_gp) {}
 
-    void evaluateMPDerivative(
-        const double current_time,
-        const Stokhos::ProductEpetraVector* mp_xdot,
-        const Stokhos::ProductEpetraVector* mp_xdotdot,
-        const Stokhos::ProductEpetraVector& mp_x,
-        const Teuchos::Array<ParamVec>& p,
-        const Teuchos::Array<int>& mp_p_index,
-        const Teuchos::Array< Teuchos::Array<MPType> >& mp_p_vals,
-        ParamVec* deriv_p,
-        Stokhos::ProductEpetraVector* mp_g,
-        const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dx,
-        const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdot,
-        const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dxdotdot,
-        const EpetraExt::ModelEvaluator::MPDerivative& mp_dg_dp) {}
-    
-    void evaluateSGGradient(
-        const double current_time,
-        const Stokhos::EpetraVectorOrthogPoly* sg_xdot,
-        const Stokhos::EpetraVectorOrthogPoly* sg_xdotdot,
-        const Stokhos::EpetraVectorOrthogPoly& sg_x,
-        const Teuchos::Array<ParamVec>& p,
-        const Teuchos::Array<int>& sg_p_index,
-        const Teuchos::Array< Teuchos::Array<SGType> >& sg_p_vals,
-        ParamVec* deriv_p,
-        Stokhos::EpetraVectorOrthogPoly* sg_g,
-        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dx,
-        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdot,
-        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dxdotdot,
-        Stokhos::EpetraMultiVectorOrthogPoly* sg_dg_dp) {}
-
-    void evaluateMPGradient(
+    virtual void evaluateMPGradient(
         const double current_time,
         const Stokhos::ProductEpetraVector* mp_xdot,
         const Stokhos::ProductEpetraVector* mp_xdotdot,
@@ -268,6 +201,21 @@ class AdjointResponseFunction :
         Stokhos::ProductEpetraMultiVector* mp_dg_dp) {}
 #endif
 
+  private:
+
+    AdjointResponseFunction(const AdjointResponseFunction&);
+    AdjointResponseFunction& operator=(const AdjointResponseFunction&);
+
+  protected:
+
+    AdjointResponseFunction(
+      const Teuchos::RCP<Albany::Application>& application,
+      const Teuchos::RCP<Albany::AbstractProblem>& problem,
+      const Teuchos::RCP<Albany::MeshSpecsStruct>&  ms,
+      const Teuchos::RCP<Albany::StateManager>& stateMgr);
+
+    void setup(Teuchos::ParameterList& responseParams);
+
   protected:
 
     Teuchos::RCP<Albany::Application> application_;
@@ -275,41 +223,16 @@ class AdjointResponseFunction :
     Teuchos::RCP<Albany::MeshSpecsStruct> meshSpecs_;
     Teuchos::RCP<Albany::StateManager> stateManager_;
     Teuchos::RCP<PHX::FieldManager<PHAL::AlbanyTraits> > rfm_;
-    Teuchos::ParameterList responseParams_;
 
-    int visResponseGraph_;
-    std::string visResponseName_;
-    template<typename EvalT> void
-    visResponseGraph(const std::string& resType);
+    unsigned int numResponses_;
 
   private:
 
-    /* private to prohibit copying */
-    AdjointResponseFunction(const AdjointResponseFunction&);
-    AdjointResponseFunction& operator=(const AdjointResponseFunction&);
+    template <typename EvalT> void evaluate(PHAL::Workset& workset);
+
+    int elemBlockIdx_;
 
 };
-
-template <typename EvalT>  void
-AdjointResponseFunction::
-visResponseGraph(const std::string& resType) {
-  static bool first = true;
-  if (first && visResponseGraph_ > 0)
-  {
-    bool detail = false;
-    if (visResponseGraph_ > 1)
-      detail = true;
-    Teuchos::RCP<Teuchos::FancyOStream> out = 
-      Teuchos::VerboseObjectBase::getDefaultOStream();
-    *out << "Phalanx writing graphviz file for graph of Response fill "
-      << "(detail = "<< visResponseGraph_ << ")"<< std::endl;
-    std::string detailName = 
-      "responses_graph_" + visResponseName_ + resType;
-    *out << "Process using 'dot -Tpng -O ' " << detailName << "\n" << std::endl;
-    rfm_->writeGraphvizFile<EvalT>(detailName,detail,detail);
-    first = false;
-  }
-}
 
 }
 

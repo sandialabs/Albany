@@ -24,7 +24,7 @@ HMCProblem(const Teuchos::RCP<Teuchos::ParameterList>& params_,
   }
   TEUCHOS_TEST_FOR_EXCEPTION(!validMaterialDB,
                              std::logic_error,
-                             "HMC Problem Requires a Material Database");
+                             "Mechanics Problem Requires a Material Database");
 
 
 // the following function returns the problem information required for setting the rigid body modes (RBMs) for elasticity problems
@@ -186,6 +186,8 @@ Albany::HMCProblem::getValidProblemParameters() const
   validPL->set<int>("Additional Scales", false, "1");
   validPL->set<std::string>("MaterialDB Filename","materials.xml",
                             "Filename of material database xml file");
+  validPL->sublist("Hierarchical Elasticity Model", false, "");
+
   return validPL;
 }
 

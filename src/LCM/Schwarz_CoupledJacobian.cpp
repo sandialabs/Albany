@@ -11,8 +11,6 @@
 #include "Albany_Utils.hpp"
 #include "Thyra_DefaultBlockedLinearOp.hpp"
 
-//#include "Tpetra_LocalMap.h"
-
 using Teuchos::getFancyOStream;
 using Teuchos::rcpFromRef;
 
@@ -46,24 +44,22 @@ Teuchos::RCP<Thyra::LinearOpBase<ST> >
 LCM::Schwarz_CoupledJacobian::
 getThyraCoupledJacobian(
     Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
-    Teuchos::Array<Teuchos::RCP<LCM::Schwarz_BoundaryJacobian> > jacs_boundary)
+    Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca)
 const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  std::size_t
+  auto const
   block_dim = jacs.size();
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];  //create string for file name
-  sprintf(name, "Jac0_%i.mm", mm_counter);
-  //write individual model jacobians to matrix market for debug
-  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[0]);
-  if (block_dim > 1) {
-    sprintf(name, "Jac1_%i.mm", mm_counter);
-    Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[1]);
+
+  for (auto i = 0; i < block_dim; ++i) {
+    sprintf(name, "Jac%02d_%04d.mm", i, mm_counter);
+    Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs[i]);
   }
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET
@@ -79,12 +75,21 @@ const
   for (std::size_t i = 0; i < block_dim; i++) {
     for (std::size_t j = 0; j < block_dim; j++) {
       // build (i,j) block matrix and add it to blocked operator
-      if (i == j) { //diagonal blocks
+      if (i == j) { // Diagonal blocks
         Teuchos::RCP<Thyra::LinearOpBase<ST> >
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
+      } else { // Off-diagonal blocks
+        Teuchos::RCP<Tpetra_Operator>
+        jac_boundary =
+            Teuchos::rcp(
+                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
+
+        Teuchos::RCP<Thyra::LinearOpBase<ST> >
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
+
+        blocked_op->setNonconstBlock(i, j, block);
       }
-      //FIXME: add off-diagonal blocks
     }
   }
 

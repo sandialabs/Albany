@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
+SET(CTEST_DO_SUBMIT ON)
 SET(CTEST_TEST_TYPE Nightly)
 
+#SET(CTEST_DO_SUBMIT OFF)
 #SET(CTEST_TEST_TYPE Experimental)
 
 # What to build and test
@@ -31,6 +33,13 @@ SET(INTEL_DIR /opt/intel/mkl/lib/intel64)
 SET (CTEST_SOURCE_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_SOURCE_NAME}")
 SET (CTEST_BINARY_DIRECTORY "${CTEST_DASHBOARD_ROOT}/${CTEST_BINARY_NAME}")
 
+IF (CLEAN_BUILD)
+  IF(EXISTS "${CTEST_BINARY_DIRECTORY}" )
+#  ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
+    FILE(REMOVE_RECURSE "${CTEST_BINARY_DIRECTORY}")
+  ENDIF()
+ENDIF()
+
 IF(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   FILE(MAKE_DIRECTORY "${CTEST_SOURCE_DIRECTORY}")
 ENDIF()
@@ -48,28 +57,18 @@ SET (CTEST_CMAKE_COMMAND "${PREFIX_DIR}/bin/cmake")
 SET (CTEST_COMMAND "${PREFIX_DIR}/bin/ctest -D ${CTEST_TEST_TYPE}")
 SET (CTEST_BUILD_FLAGS "-j16")
 
+set(CTEST_DROP_SITE "shannon.sandia.gov")
+set(CTEST_DROP_LOCATION "nightly/Albany")
+set(CTEST_DROP_METHOD "cp")
+set(CTEST_TRIGGER_SITE "")
+set(CTEST_DROP_SITE_USER "")
+
 find_program(CTEST_GIT_COMMAND NAMES git)
 
 # Point at the public Repo
 SET(Trilinos_REPOSITORY_LOCATION software.sandia.gov:/git/Trilinos)
 SET(SCOREC_REPOSITORY_LOCATION https://github.com/SCOREC/core.git)
 SET(Albany_REPOSITORY_LOCATION https://github.com/gahansen/Albany.git)
-
-IF (CLEAN_BUILD)
-
-# Initial cache info
-set( CACHE_CONTENTS "
-SITE:STRING=${CTEST_SITE}
-CMAKE_BUILD_TYPE:STRING=Release
-CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
-BUILD_TESTING:BOOL=OFF
-PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
-" )
-
-ctest_empty_binary_directory( "${CTEST_BINARY_DIRECTORY}" )
-file(WRITE "${CTEST_BINARY_DIRECTORY}/CMakeCache.txt" "${CACHE_CONTENTS}")
-
-ENDIF()
 
 SET(TRILINOS_HOME "${CTEST_SOURCE_DIRECTORY}/Trilinos")
 
@@ -140,11 +139,6 @@ ENDIF()
 
 CTEST_START(${CTEST_TEST_TYPE})
 
-# Read the build number from the TAG file
-#
-# I'm sure this is a CTest variable, but can't deduce it from Google at least
-file(STRINGS "${CTEST_BINARY_DIRECTORY}/Testing/TAG" build_number LIMIT_COUNT 1)
-
 IF(DOWNLOAD_TRILINOS)
 
 #
@@ -159,19 +153,27 @@ set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 CTEST_UPDATE(SOURCE "${TRILINOS_HOME}" RETURN_VALUE count)
 message("Found ${count} changed files")
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Trilinos update results!")
+  endif()
+ENDIF()
+
 IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Trilinos!")
 endif()
 
-# Save a copy of the Trilinos update to post to the CDash site. Why can't this be done 
-# in an easier way???
+# Save a copy of the Trilinos update to post to the CDash site.
 
-if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Update.xml")
+#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Update_Trilinos.xml
+#               )
 
-  EXECUTE_PROCESS( COMMAND cp Update.xml Update_Trilinos.xml
-                 WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
-               )
-endif()
+FILE(GLOB UPDATE_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Update.xml")
+FILE(RENAME ${UPDATE_FILES} ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Update_Trilinos.xml)
 
 # Get the SCOREC tools
 
@@ -199,6 +201,16 @@ set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 CTEST_UPDATE(SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany" RETURN_VALUE count)
 message("Found ${count} changed files")
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Update
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot update Albany repository!")
+  endif()
+ENDIF()
+
 IF(count LESS 0)
         message(FATAL_ERROR "Cannot update Albany!")
 endif()
@@ -209,9 +221,6 @@ ENDIF()
 # Set the common Trilinos config options
 #
 #######################################################################################################################
-
-SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos_CUVM)
-SET_PROPERTY (GLOBAL PROPERTY Label Trilinos_CUVM)
 
 SET(CONFIGURE_OPTIONS
   "-Wno-dev"
@@ -323,9 +332,25 @@ IF(BUILD_TRILINOS)
 #
 ###############################################################################################################
 
+SET_PROPERTY (GLOBAL PROPERTY SubProject Trilinos_CUVM)
+SET_PROPERTY (GLOBAL PROPERTY Label Trilinos_CUVM)
+
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
   FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
 endif()
+
+IF (CLEAN_BUILD)
+# Initial cache info
+set( CACHE_CONTENTS "
+SITE:STRING=${CTEST_SITE}
+CMAKE_BUILD_TYPE:STRING=Release
+CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+BUILD_TESTING:BOOL=OFF
+PRODUCT_REPO:STRING=${Trilinos_REPOSITORY_LOCATION}
+" )
+file(WRITE "${CTEST_BINARY_DIRECTORY}/TriBuild/CMakeCache.txt" "${CACHE_CONTENTS}")
+ENDIF()
+
 
 CTEST_CONFIGURE(
           BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
@@ -335,19 +360,27 @@ CTEST_CONFIGURE(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Configure
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Trilinos configure results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Trilinos build!")
 endif()
 
-# Save a copy of the Trilinos configure to post to the CDash site. Why can't this be done 
-# in an easier way???
+# Save a copy of the Trilinos configure to post to the CDash site.
 
-if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Configure.xml")
+#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Configure_Trilinos.xml
+#               )
 
-  EXECUTE_PROCESS( COMMAND cp Configure.xml Configure_Trilinos.xml
-                 WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
-               )
-endif()
+FILE(GLOB CONFIG_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Configure.xml")
+FILE(RENAME ${CONFIG_FILES} ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Configure_Trilinos.xml)
 
 SET(CTEST_BUILD_TARGET install)
 
@@ -360,18 +393,31 @@ CTEST_BUILD(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Trilinos build results!")
+  endif()
+
+ENDIF()
+
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot build Trilinos!")
 endif()
 
-# Save a copy of the Trilinos build to post to the CDash site. Why can't this be done 
-# in an easier way???
+# Save a copy of the Trilinos build to post to the CDash site.
 
-if(EXISTS "${CTEST_BINARY_DIRECTORY}/Testing/${build_number}/Build.xml")
+#EXECUTE_PROCESS( COMMAND ${CTEST_SCP_COMMAND} ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build.xml ${CTEST_DROP_SITE}:${CTEST_DROP_LOCATION}/Build_Trilinos.xml
+#               )
 
-  EXECUTE_PROCESS( COMMAND cp Build.xml Build_Trilinos.xml
-                 WORKING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Testing/${build_number}
-               )
+FILE(GLOB BUILD_FILES "${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/*Build.xml")
+FILE(RENAME ${BUILD_FILES} ${CTEST_BINARY_DIRECTORY}/${CTEST_DROP_LOCATION}/Build_Trilinos.xml)
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+        message(FATAL_ERROR "Encountered build errors in Trilinos build. Exiting!")
 endif()
 
 ENDIF()
@@ -408,6 +454,19 @@ if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany")
   FILE(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany)
 endif()
 
+IF (CLEAN_BUILD)
+# Initial cache info
+set( CACHE_CONTENTS "
+SITE:STRING=${CTEST_SITE}
+CMAKE_BUILD_TYPE:STRING=Release
+CMAKE_GENERATOR:INTERNAL=${CTEST_CMAKE_GENERATOR}
+BUILD_TESTING:BOOL=OFF
+PRODUCT_REPO:STRING=${Albany_REPOSITORY_LOCATION}
+" )
+file(WRITE "${CTEST_BINARY_DIRECTORY}/Albany/CMakeCache.txt" "${CACHE_CONTENTS}")
+ENDIF()
+
+
 CTEST_CONFIGURE(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
           SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
@@ -415,6 +474,16 @@ CTEST_CONFIGURE(
           RETURN_VALUE HAD_ERROR
           APPEND
 )
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Configure
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany configure results!")
+  endif()
+ENDIF()
 
 if(HAD_ERROR)
 	message(FATAL_ERROR "Cannot configure Albany build!")
@@ -429,7 +498,20 @@ SET(CTEST_BUILD_TARGET "Albany")
 
 MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-#SET(CTEST_BUILD_COMMAND "${CTEST_CMAKE_COMMAND} ${CTEST_BUILD_FLAGS} Albany AlbanyT")
+CTEST_BUILD(
+          BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
+          RETURN_VALUE  HAD_ERROR
+          NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+          APPEND
+)
+
+if(BUILD_LIBS_NUM_ERRORS GREATER 0)
+    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+endif()
+
+SET(CTEST_BUILD_TARGET "AlbanyT")
+
+MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
 CTEST_BUILD(
           BUILD "${CTEST_BINARY_DIRECTORY}/Albany"
@@ -438,12 +520,22 @@ CTEST_BUILD(
           APPEND
 )
 
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+  )
+
+  if(S_HAD_ERROR)
+        message(FATAL_ERROR "Cannot submit Albany build results!")
+  endif()
+ENDIF()
+
 if(HAD_ERROR)
-	message(FATAL_ERROR "Cannot build Albany!")
+	message(FATAL_ERROR "Cannot build AlbanyT!")
 endif()
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+    message(FATAL_ERROR "Encountered build errors in AlbanyT build. Exiting!")
 endif()
 
 #
@@ -458,6 +550,16 @@ CTEST_TEST(
               INCLUDE_LABEL "CUDA_TEST"
               #NUMBER_FAILED  TEST_NUM_FAILED
 )
+
+IF(CTEST_DO_SUBMIT)
+  CTEST_SUBMIT(PARTS Test
+               RETURN_VALUE  HAD_ERROR
+  )
+
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit Albany test results!")
+  endif()
+ENDIF()
 
 ENDIF()
 

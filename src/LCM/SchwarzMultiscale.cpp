@@ -215,11 +215,6 @@ SchwarzMultiscale(
 
   jacs_.resize(num_models_);
 
-  //FIXME: jacs_boundary_ will be smaller than num_models_^2 in practice
-  int
-  num_models2 = num_models_ * num_models_;
-  jacs_boundary_.resize(num_models2);
-
   Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
   disc_overlap_maps(num_models_);
 
@@ -342,17 +337,6 @@ SchwarzMultiscale(
             Teuchos::null;
   }
 
-  //Initialize each entry of jacs_boundary_ 
-  //FIXME: the loops don't need to go through num_models_*num_models_
-  //FIXME: allocate array(s) of indices identifying where entries of
-  // jacs_boundary_ will go
-  for (int i = 0; i < num_models_; ++i) {
-    for (int j = 0; j < num_models_; ++j) {
-      //Check if have this term?  Put into Teuchos array?
-      jacs_boundary_[i * num_models_ + j] = Teuchos::rcp(
-          new LCM::Schwarz_BoundaryJacobian(commT_, apps_, i, j));
-    }
-  }
 
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "Finished creating Albany apps and models!\n";
@@ -620,7 +604,7 @@ LCM::SchwarzMultiscale::create_W_op() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   LCM::Schwarz_CoupledJacobian csJac(commT_);
-  return csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_);
+  return csJac.getThyraCoupledJacobian(jacs_, apps_);
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST> >
@@ -774,16 +758,6 @@ createOutArgsImpl() const
           Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
           true));
 
- //FIXME: re-implement sensitivities stuff given that we have parameters now!
- //Add DgDx, DgDp, etc.
- /*
-  for (int l = 0; l < num_params_total_; ++l) {
-    result.setSupports(
-        Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, l,
-        Thyra::ModelEvaluatorBase::DERIV_MV_BY_COL);
-  } 
-  */
-
   return result;
 }
 
@@ -930,59 +904,10 @@ evalModelImpl(
 
   // FIXME: create coupled W matrix from array of model W matrices
   if (W_op_outT != Teuchos::null) {
-    //FIXME: create boundary operators 
-    for (int i = 0; i < jacs_boundary_.size(); ++i) {
-      //FIXME: initialize will have arguments (index array?)!
-      jacs_boundary_[i]->initialize();
-    }
-
     LCM::Schwarz_CoupledJacobian csJac(commT_);
-    //FIXME: add boundary operators array to coupled Jacobian parameter list 
-    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, jacs_boundary_);
+    W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
   }
 
-  // FIXME: in the following, need to check logic involving looping over
-  // num_models_ -- here we're not creating arrays to store things in
-  // for each model.
-  // TODO: understand better how evalModel is called and how g and f parameter
-  // arrays are set in df/dp
-
-  //FIXME: implement dfdp given that we're working with product vectors now.
-  //df/dp
-  /*
-  for (int l = 0; l < out_args.Np(); ++l) {
-     Teuchos::RCP<Thyra::ProductMultiVectorBase<ST> > const dfdp_outT =
-      Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> >(
-          out_args.get_DfDp(l).getMultiVector(),
-          true);
-
-     // Teuchos::RCP<Thyra::ProductMultiVectorBase<ST> > const
-     // dfdp_outT = out_args.get_DfDp(l).getMultiVector();
-
-     if (dfdp_outT != Teuchos::null) {
-       for (int m = 0; m < num_models_; ++m) {
-         //Get each Tpetra MultiVector of dfdp for each model
-         Teuchos::RCP<Tpetra_MultiVector> dfdp_outT_m =
-         Teuchos::rcp_dynamic_cast<ThyraMultiVector>(
-           dfdp_outT->getNonconstMultiVectorBlock(m),
-           true)->getTpetraMultiVector();
-         Teuchos::RCP<ParamVec> const p_vec =
-         Teuchos::rcpFromRef(sacado_param_vecs_[m][l]);
-
-         // computeGlobalTangentT sets last 3 arguments:
-         // fTs_out[m_num] and dfdp_outT
-         apps_[m]->computeGlobalTangentT(
-             0.0, 0.0, 0.0, curr_time, false, x_dotTs[m].get(), x_dotdotT.get(),
-             *xTs[m], sacado_param_vecs_[m], p_vec.get(),
-             NULL, NULL, NULL, NULL, fTs_out[m].get(), NULL, dfdp_outT_m.get());
-
-         fs_already_computed[m] = true;
-        }
-      }
-    }
-  */
-
-  // f
   for (int m = 0; m < num_models_; ++m) {
     if (apps_[m]->is_adjoint) {
       Thyra::ModelEvaluatorBase::Derivative<ST> const

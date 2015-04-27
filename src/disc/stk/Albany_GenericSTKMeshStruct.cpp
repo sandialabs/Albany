@@ -119,6 +119,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
      bulkData = Teuchos::rcp(
        new stk::mesh::BulkData(*metaData,
                                *mpiComm->getRawMpiComm(),
+                               stk::mesh::BulkData::NO_AUTO_AURA,
                                //worksetSize, // capability currently removed from STK_Mesh
                                false, // add_fmwk_data
                                NULL, // ConnectivityMap

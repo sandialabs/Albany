@@ -48,11 +48,15 @@ public:
   virtual void evaluateFields(typename Traits::EvalData d) = 0;
   
 protected:
-
-//  std::vector< PHX::MDField<ScalarT> > val;
-//  std::vector< PHX::MDField<ScalarT> > val_dot;
-  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val;
-  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot;
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
+#else
+  std::vector< PHX::MDField<ScalarT> > val;
+  std::vector< PHX::MDField<ScalarT> > val_dot;
+//  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val;
+//  Kokkos::vector< PHX::MDField<ScalarT>, PHX::Device > val_dot;
+#endif
   const int numNodes;
   const int numDims;
   const int numLevels;
@@ -96,13 +100,14 @@ public:
 
   Teuchos::ArrayRCP<const ST> xT_constView;
   Teuchos::ArrayRCP<const ST> xdotT_constView;
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   typedef typename PHX::Device execution_space;
   Kokkos::View<int***, PHX::Device> wsID_kokkos;
 
   KOKKOS_INLINE_FUNCTION
   void operator() (const int &cell) const;
 #endif
+*/
 };
 
 // **************************************************************
@@ -118,7 +123,7 @@ public:
                  const Teuchos::RCP<Aeras::Layouts>& dl);
   void evaluateFields(typename Traits::EvalData d); 
 
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::ArrayRCP<const ST> xT_constView;
   Teuchos::ArrayRCP<const ST> xdotT_constView;
 
@@ -146,6 +151,7 @@ public:
   void gather_solution_transientTerms(const int &cell, const int &node, const int &neq, const int &num_dof, const int &firstunk) const;
 
 #endif
+*/
 };
 
 

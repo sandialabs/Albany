@@ -13,6 +13,7 @@ SET(SOURCES
   Albany_MultiSTKFieldContainer.cpp
   Albany_STKNodeFieldContainer.cpp
   Albany_TmplSTKMeshStruct.cpp
+  Albany_STK3DPointStruct.cpp
   Albany_FromCubitSTKMeshStruct.cpp
   Albany_IossSTKMeshStruct.cpp
   Albany_AsciiSTKMesh2D.cpp
@@ -35,6 +36,7 @@ SET(HEADERS
   Albany_STKNodeFieldContainer_Def.hpp
   Albany_TmplSTKMeshStruct.hpp
   Albany_TmplSTKMeshStruct_Def.hpp
+  Albany_STK3DPointStruct.hpp
   Albany_FromCubitSTKMeshStruct.hpp
   Albany_IossSTKMeshStruct.hpp
   Albany_AsciiSTKMesh2D.hpp
@@ -48,8 +50,10 @@ IF (ALBANY_FELIX)
 ENDIF()
 
 IF (ALBANY_AERAS)
-  SET(SOURCES ${SOURCES} Aeras_SpectralDiscretization.cpp)
-  SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp)
+  SET(SOURCES ${SOURCES} Aeras_SpectralDiscretization.cpp
+                         Aeras_SpectralOutputSTKMeshStruct.cpp)
+  SET(HEADERS ${HEADERS} Aeras_SpectralDiscretization.hpp
+                         Aeras_SpectralOutputSTKMeshStruct.hpp)
 ENDIF() 
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
