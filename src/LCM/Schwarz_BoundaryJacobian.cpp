@@ -84,6 +84,12 @@ apply(
   int const
   coupled_app_index = getCoupledAppIndex();
 
+  // Initialize Y vector.
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+
   // If they are not coupled get out.
   if (this_app.isCoupled(coupled_app_index) == false) return;
 
@@ -115,12 +121,6 @@ apply(
   auto const
   ns_number_nodes = ns_dof.size();
 
-  // Initialize Y vector.
-  auto const
-  zero = Teuchos::ScalarTraits<ST>::zero();
-
-  Y.putScalar(zero);
-
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
@@ -144,7 +144,7 @@ apply(
       std::cout << '\n';
 #endif // DEBUG_LCM_SCHWARZ
       auto const
-      value = -bc_value(i);
+      value = bc_value(i);
 
       Y_view[dof] = value;
     }
