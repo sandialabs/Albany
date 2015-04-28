@@ -75,13 +75,13 @@ apply(
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  int const
+  auto const
   this_app_index = getThisAppIndex();
 
   Albany::Application const &
   this_app = getApplication(this_app_index);
 
-  int const
+  auto const
   coupled_app_index = getCoupledAppIndex();
 
   // Initialize Y vector.
@@ -109,7 +109,7 @@ apply(
   Albany::STKDiscretization *
   this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
-  int const
+  auto const
   dimension = this_stk_disc->getNumDim();
 
   Albany::NodeSetList const &
