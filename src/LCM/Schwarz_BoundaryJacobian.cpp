@@ -216,7 +216,7 @@ computeBC(
   coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
     (*(coupled_stk_disc->getSTKMeshStruct()));
 
-  Albany::WorksetArray<std::string>::type const &
+  auto const &
   coupled_ws_eb_names = coupled_disc->getWsEBNames();
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >
