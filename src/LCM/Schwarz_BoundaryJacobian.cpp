@@ -224,7 +224,7 @@ computeBC(
 
   // Get cell topology of the application and block to which this node set
   // is coupled.
-  int const
+  auto const
   this_app_index = this_app.getAppIndex();
 
   std::string const &
@@ -233,7 +233,7 @@ computeBC(
   std::string const &
   coupled_app_name = coupled_app.getAppName();
 
-  int const
+  auto const
   coupled_app_index = coupled_app.getAppIndex();
 
   std::string const
@@ -253,7 +253,7 @@ computeBC(
     exit(1);
   }
 
-  int const
+  auto const
   coupled_block_index = it->second;
 
   CellTopologyData const
@@ -269,7 +269,7 @@ computeBC(
   auto const
   coupled_vertex_count = coupled_cell_topology_data.vertex_count;
 
-  Intrepid::ELEMENT::Type const
+  auto const
   coupled_element_type =
       Intrepid::find_type(coupled_dimension, coupled_vertex_count);
 
@@ -324,7 +324,7 @@ computeBC(
   bool
   found = false;
 
-  size_t
+  auto
   parametric_dimension = 0;
 
   Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
