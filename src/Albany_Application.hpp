@@ -1143,6 +1143,8 @@ namespace Albany {
 #endif
 #endif
 
+    int derivatives_check_;
+
   };
 }
 

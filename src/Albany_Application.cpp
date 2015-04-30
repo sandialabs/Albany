@@ -236,6 +236,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
   writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0);
   writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
+  derivatives_check_ = debugParams->get<int>("Derivative Check", 0);
   //the above 4 parameters cannot have values < -1
   if (writeToMatrixMarketJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::Application constructor:  " <<
@@ -772,6 +773,128 @@ void dfm_set (
   workset.transientTerms = ! Teuchos::nonnull(xd);
   workset.accelerationTerms = ! Teuchos::nonnull(xdd);
 }
+
+// For the perturbation xd,
+//     f_i(x + xd) = f_i(x) + J_i(x) xd + O(xd' H_i(x) xd),
+// where J_i is the i'th row of the Jacobian matrix and H_i is the Hessian of
+// f_i at x. We don't have the Hessian, however, so approximate the last term by
+// norm(f) O(xd' xd). We use the inf-norm throughout.
+//   For check_lvl >= 1, check that f(x + xd) - f(x) is approximately equal to
+// J(x) xd by computing
+//     reldif(f(x + dx) - f(x), J(x) dx)
+//        = norm(f(x + dx) - f(x) - J(x) dx) /
+//          max(norm(f(x + dx) - f(x)), norm(J(x) dx)).
+// This norm should be on the order of norm(xd).
+//   For check_lvl >= 2, output a multivector in matrix market format having
+// columns
+//     [x, dx, f(x), f(x + dx) - f(x), f(x + dx) - f(x) - J(x) dx].
+//   The purpose of this derivative checker is to help find programming errors
+// in the Jacobian. Automatic differentiation largely or entirely prevents math
+// errors, but other kinds of programming errors (uninitialized memory,
+// accidentaly omission of a FadType, etc.) can cause errors. The common symptom
+// of such an error is that the residual is correct, and therefore so is the
+// solution, but convergence to the solution is not quadratic.
+//   A complementary method to check for errors in the Jacobian is to use
+//     Piro -> Jacobian Operator = Matrix-Free,
+// which works for Epetra-based problems.
+//   Enable this check using the debug block:
+//     <ParameterList>
+//       <ParameterList name="Debug Output">
+//         <Parameter name="Derivative Check" type="int" value="1"/>
+void checkDerivatives (Albany::Application& app, const double time,
+                       const Teuchos::RCP<const Tpetra_Vector>& xdot,
+                       const Teuchos::RCP<const Tpetra_Vector>& xdotdot,
+                       const Teuchos::RCP<const Tpetra_Vector>& x,
+                       const Teuchos::Array<ParamVec>& p,
+                       const Teuchos::RCP<const Tpetra_Vector>& fi,
+                       const Teuchos::RCP<const Tpetra_CrsMatrix>& jacobian,
+                       const int check_lvl) {
+  if (check_lvl <= 0) return;
+
+  // Work vectors. x's map is compatible with f's, so don't distinguish among
+  // maps in this function.
+  Tpetra_Vector w1(x->getMap()), w2(x->getMap()), w3(x->getMap());
+
+  Teuchos::RCP<Tpetra_MultiVector> mv;
+  if (check_lvl > 1)
+    mv = Teuchos::rcp(new Tpetra_MultiVector(x->getMap(), 5));
+
+  // Construct a perturbation.
+  const double delta = 1e-7;
+  Tpetra_Vector& xd = w1;
+  xd.randomize();
+  Tpetra_Vector& xpd = w2;
+  {
+    const Teuchos::ArrayRCP<const RealType> x_d = x->getData();
+    const Teuchos::ArrayRCP<RealType>
+      xd_d = xd.getDataNonConst(), xpd_d = xpd.getDataNonConst();
+    for (size_t i = 0; i < x_d.size(); ++i) {
+      xd_d[i] = 2*xd_d[i] - 1;
+      if (x_d[i] == 0) {
+        xd_d[i] = xpd_d[i] = delta*xd_d[i];
+      } else {
+        xpd_d[i] = (1 + delta*xd_d[i])*x_d[i];
+        // Sanitize xd_d.
+        xd_d[i] = xpd_d[i] - x_d[i];
+      }
+      if (xd_d[i] == 0) std::cerr << "hrm? " << i << "\n";
+    }
+  }
+  if (Teuchos::nonnull(mv)) {
+    mv->getVectorNonConst(0)->update(1, *x, 0);
+    mv->getVectorNonConst(1)->update(1, xd, 0);
+  }
+
+  // If necessary, compute f(x).
+  Teuchos::RCP<const Tpetra_Vector> f;
+  if (fi.is_null()) {
+    Teuchos::RCP<Tpetra_Vector>
+      w = Teuchos::rcp(new Tpetra_Vector(x->getMap()));
+    app.computeGlobalResidualT(time, xdot.get(), xdotdot.get(), *x, p, *w);
+    f = w;
+  } else {
+    f = fi;
+  }
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(2)->update(1, *f, 0);
+
+  // fpd = f(xpd).
+  Tpetra_Vector& fpd = w3;
+  app.computeGlobalResidualT(time, xdot.get(), xdotdot.get(), xpd, p, fpd);
+
+  // fd = fpd - f.
+  Tpetra_Vector& fd = fpd;
+  fd.update(-1, *f, 1);
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(3)->update(1, fd, 0);
+
+  // Jxd = J xd.
+  Tpetra_Vector& Jxd = w2;
+  jacobian->apply(xd, Jxd);
+
+  // Norms.
+  const double fdn = fd.normInf(), Jxdn = Jxd.normInf(), xdn = xd.normInf();
+  // d = norm(fd - Jxd).
+  Tpetra_Vector& d = fd;
+  d.update(-1, Jxd, 1);
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(4)->update(1, d, 0);
+  const double dn = d.normInf();
+
+  // Assess.
+  const double
+    den = std::max(fdn, Jxdn),
+    e = dn / den;
+  *Teuchos::VerboseObjectBase::getDefaultOStream()
+    << "Albany::Application Check Derivatives level " << check_lvl << ":\n"
+    << "   reldif(f(x + dx) - f(x), J(x) dx) = " << e
+    << ",\n which should be on the order of " << xdn << "\n";
+
+  if (Teuchos::nonnull(mv)) {
+    static int ctr = 0;
+    std::stringstream ss;
+    ss << "dc" << ctr << ".mm";
+    Tpetra_MatrixMarket_Writer::writeDenseFile(ss.str(), mv);
+    ++ctr;
+  }
+}
 } // namespace
 
 void
@@ -1115,6 +1238,10 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   jacT->fillComplete();
+
+  if (derivatives_check_ > 0)
+    checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
+                     derivatives_check_);
 }
 
 #if defined(ALBANY_EPETRA)
