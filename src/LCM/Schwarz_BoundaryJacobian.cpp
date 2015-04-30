@@ -59,6 +59,22 @@ initialize()
 {
 }
 
+// Auxiliary functions.
+namespace {
+
+Tpetra_MultiVector make_vector(Tpetra_MultiVector const & X)
+{
+  Tpetra_MultiVector
+  W(X, Teuchos::DataAccess::Copy);
+
+  auto const
+  length = X.getGlobalLength();
+
+  return W;
+}
+
+} // anonymous namspace
+
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
 void
