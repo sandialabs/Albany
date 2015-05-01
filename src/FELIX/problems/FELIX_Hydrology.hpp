@@ -45,7 +45,7 @@ public:
              const int numDimensions);
 
   //! Destructor
-  ~Hydrology();
+  virtual ~Hydrology();
 
   //! Return number of spatial dimensions
   virtual int spatialDimension () const
