@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out!  
-//No Epetra if ALBANY_EPETRA_EXE turned off. 
+//IK, 9/12/14: Epetra ifdef'ed out!
+//No Epetra if ALBANY_EPETRA_EXE turned off.
 
 #include "Albany_StateManager.hpp"
 #include "Albany_Utils.hpp"
@@ -43,7 +43,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
 
   // Create param list for SaveStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State "
-							  + stateName + " to/from field " + fieldName));
+                + stateName + " to/from field " + fieldName));
   p->set<const std::string>("State Name", stateName);
   p->set<const std::string>("Field Name", fieldName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
@@ -64,7 +64,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
 
   // Create param list for SaveStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State "
-							  + stateName + " to/from field " + stateName));
+                + stateName + " to/from field " + stateName));
   p->set<const std::string>("State Name", stateName);
   p->set<const std::string>("Field Name", stateName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
@@ -85,7 +85,7 @@ Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateN
 
   // Create param list for SaveStateField evaluator
   Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Save or Load State "
-							  + stateName + " to/from field " + stateName));
+                + stateName + " to/from field " + stateName));
   p->set<const std::string>("State Name", stateName);
   p->set<const std::string>("Field Name", stateName);
   p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl);
@@ -113,7 +113,7 @@ Albany::StateManager::registerStateVariable(const std::string &stateName, const 
 
 void
 Albany::StateManager::registerStateVariable(const std::string &stateName,
-					    const Teuchos::RCP<PHX::DataLayout> &dl,
+              const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string &init_type){
 
   // Grab the ebName
@@ -128,15 +128,15 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
 void
 Albany::StateManager::registerStateVariable(const std::string &stateName,
-					    const Teuchos::RCP<PHX::DataLayout> &dl,
+              const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string& ebName,
                                             const std::string &init_type,
                                             const double init_val,
                                             const bool registerOldState,
-					    const bool outputToExodus,
-					    const std::string &responseIDtoRequire,
-					    StateStruct::MeshFieldEntity const* fieldEntity,
-					    const std::string& meshPartName)
+              const bool outputToExodus,
+              const std::string &responseIDtoRequire,
+              StateStruct::MeshFieldEntity const* fieldEntity,
+              const std::string& meshPartName)
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
   using Albany::StateStruct;
@@ -222,13 +222,13 @@ Albany::StateManager::registerStateVariable(const std::string &stateName,
 
 void
 Albany::StateManager::registerNodalVectorStateVariable(const std::string &stateName,
-					    const Teuchos::RCP<PHX::DataLayout> &dl,
+              const Teuchos::RCP<PHX::DataLayout> &dl,
                                             const std::string& ebName,
                                             const std::string &init_type,
                                             const double init_val,
                                             const bool registerOldState,
-					    const bool outputToExodus,
-					    const std::string &responseIDtoRequire)
+              const bool outputToExodus,
+              const std::string &responseIDtoRequire)
 
 {
   TEUCHOS_TEST_FOR_EXCEPT(stateVarsAreAllocated);
@@ -341,7 +341,19 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
 
   disc = disc_;
 
+  doSetStateArrays(disc,stateInfo);
 
+  std::map<std::string,Teuchos::RCP<StateInfoStruct> >::iterator it;
+  for (it=stateInfoBoundary.begin(); it!=stateInfoBoundary.end(); ++it)
+  {
+    doSetStateArrays (disc->getBoundaryDiscretization(it->first),*it->second);
+  }
+}
+
+void
+Albany::StateManager::doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
+                                       const Teuchos::RCP<StateInfoStruct& stateInfoPtr)
+{
   // Get states from STK mesh
   Albany::StateArrays& sa = disc->getStateArrays();
   Albany::StateArrayVec& esa = sa.elemStateArrays;
@@ -353,11 +365,11 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
   // For each workset, loop over registered states
 
   for (unsigned int i=0; i<stateInfo->size(); i++) {
-    const std::string stateName = (*stateInfo)[i]->name;
-    const std::string init_type = (*stateInfo)[i]->initType;
-    const double init_val       = (*stateInfo)[i]->initValue;
-    bool have_restart           = (*stateInfo)[i]->restartDataAvailable;
-    Albany::StateStruct *pParentStruct = (*stateInfo)[i]->pParentStateStruct;
+    const std::string& stateName = (*stateInfoPtr)[i]->name;
+    const std::string& init_type = (*stateInfoPtr)[i]->initType;
+    const double init_val        = (*stateInfoPtr)[i]->initValue;
+    bool have_restart            = (*stateInfoPtr)[i]->restartDataAvailable;
+    Albany::StateStruct *pParentStruct = (*stateInfoPtr)[i]->pParentStateStruct;
 
     // JTO: specifying zero recovers previous behavior
     // if (stateName == "zero")
@@ -367,7 +379,7 @@ Albany::StateManager::setStateArrays(const Teuchos::RCP<Albany::AbstractDiscreti
     // }
 
     *out << "StateManager: initializing state:  " << stateName;
-    switch((*stateInfo)[i]->entity){
+    switch((*stateInfoPtr)[i]->entity){
 
      case Albany::StateStruct::WorksetValue :
      case Albany::StateStruct::ElemData :
@@ -609,29 +621,29 @@ importStateData(Albany::StateArrays& states_from)
         switch (size) {
         case 1:
     for (int cell = 0; cell < dims[0]; ++cell)
-  	  esa[ws][stateName](cell) = elemStatesToCopyFrom[ws][stateName](cell);
-  	break;
+      esa[ws][stateName](cell) = elemStatesToCopyFrom[ws][stateName](cell);
+    break;
         case 2:
-  	for (int cell = 0; cell < dims[0]; ++cell)
-  	  for (int qp = 0; qp < dims[1]; ++qp)
-  	    esa[ws][stateName](cell, qp) = elemStatesToCopyFrom[ws][stateName](cell, qp);
-  	break;
+    for (int cell = 0; cell < dims[0]; ++cell)
+      for (int qp = 0; qp < dims[1]; ++qp)
+        esa[ws][stateName](cell, qp) = elemStatesToCopyFrom[ws][stateName](cell, qp);
+    break;
         case 3:
-  	for (int cell = 0; cell < dims[0]; ++cell)
-  	  for (int qp = 0; qp < dims[1]; ++qp)
-  	    for (int i = 0; i < dims[2]; ++i)
-  	      esa[ws][stateName](cell, qp, i) = elemStatesToCopyFrom[ws][stateName](cell, qp, i);
-  	break;
+    for (int cell = 0; cell < dims[0]; ++cell)
+      for (int qp = 0; qp < dims[1]; ++qp)
+        for (int i = 0; i < dims[2]; ++i)
+          esa[ws][stateName](cell, qp, i) = elemStatesToCopyFrom[ws][stateName](cell, qp, i);
+    break;
         case 4:
-  	for (int cell = 0; cell < dims[0]; ++cell)
-  	  for (int qp = 0; qp < dims[1]; ++qp)
-  	    for (int i = 0; i < dims[2]; ++i)
-  	      for (int j = 0; j < dims[3]; ++j)
-  		esa[ws][stateName](cell, qp, i, j) = elemStatesToCopyFrom[ws][stateName](cell, qp, i, j);
-  	break;
+    for (int cell = 0; cell < dims[0]; ++cell)
+      for (int qp = 0; qp < dims[1]; ++qp)
+        for (int i = 0; i < dims[2]; ++i)
+          for (int j = 0; j < dims[3]; ++j)
+      esa[ws][stateName](cell, qp, i, j) = elemStatesToCopyFrom[ws][stateName](cell, qp, i, j);
+    break;
         default:
-  	TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
-  				   "Something is wrong during zero state variable fill: " << size);
+    TEUCHOS_TEST_FOR_EXCEPTION(size<2||size>4, std::logic_error,
+             "Something is wrong during zero state variable fill: " << size);
         }
      }
 
@@ -654,29 +666,29 @@ importStateData(Albany::StateArrays& states_from)
 
         switch (size) {
         case 1: // node scalar
-  	for (int node = 0; node < dims[0]; ++node)
-  	  nsa[ws][stateName](node) = nodeStatesToCopyFrom[ws][stateName](node);
-  	break;
+    for (int node = 0; node < dims[0]; ++node)
+      nsa[ws][stateName](node) = nodeStatesToCopyFrom[ws][stateName](node);
+    break;
         case 2: // node vector
-  	for (int node = 0; node < dims[0]; ++node)
-  	  for (int dim = 0; dim < dims[1]; ++dim)
-  	    nsa[ws][stateName](node, dim) = nodeStatesToCopyFrom[ws][stateName](node, dim);
-  	break;
+    for (int node = 0; node < dims[0]; ++node)
+      for (int dim = 0; dim < dims[1]; ++dim)
+        nsa[ws][stateName](node, dim) = nodeStatesToCopyFrom[ws][stateName](node, dim);
+    break;
         case 3: // node tensor
-  	for (int node = 0; node < dims[0]; ++node)
-  	  for (int dim = 0; dim < dims[1]; ++dim)
-  	    for (int i = 0; i < dims[2]; ++i)
-  	      nsa[ws][stateName](node, dim, i) = nodeStatesToCopyFrom[ws][stateName](node, dim, i);
-  	break;
+    for (int node = 0; node < dims[0]; ++node)
+      for (int dim = 0; dim < dims[1]; ++dim)
+        for (int i = 0; i < dims[2]; ++i)
+          nsa[ws][stateName](node, dim, i) = nodeStatesToCopyFrom[ws][stateName](node, dim, i);
+    break;
         default:
-  	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-  				   "Something is wrong during node zero state variable fill: " << size);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+             "Something is wrong during node zero state variable fill: " << size);
         }
       }
      break;
         default:
-  	TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-  				   "Unknown state variable entity encountered " << (*stateInfo)[i]->entity);
+    TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+             "Unknown state variable entity encountered " << (*stateInfo)[i]->entity);
     }
   }
 
@@ -756,7 +768,7 @@ Albany::StateManager::updateStates()
 
        default :
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-  				   "Error: Cannot match state entity : " << (*stateInfo)[i]->entity << " in state manager. " << std::endl);
+             "Error: Cannot match state entity : " << (*stateInfo)[i]->entity << " in state manager. " << std::endl);
         break;
       }
     }

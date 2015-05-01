@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-//IK, 9/12/14: Epetra ifdef'ed out!  
-//No Epetra if ALBANY_EPETRA_EXE turned off. 
+//IK, 9/12/14: Epetra ifdef'ed out!
+//No Epetra if ALBANY_EPETRA_EXE turned off.
 
 #ifndef ALBANY_STATEMANAGER
 #define ALBANY_STATEMANAGER
@@ -49,24 +49,24 @@ public:
 
   //! Method to call multiple times (before allocate) to register which states will be saved.
   void registerStateVariable(const std::string &stateName,
-			     const Teuchos::RCP<PHX::DataLayout> &dl,
+           const Teuchos::RCP<PHX::DataLayout> &dl,
                              const std::string &ebName,
-			     const std::string &init_type="scalar",
-			     const double init_val=0.0,
-			     const bool registerOldState=false,
-			     const bool outputToExodus=true,
-			     const std::string &responseIDtoRequire="",
-			     StateStruct::MeshFieldEntity const * fieldEntity=0,
-			     const std::string& meshPartName="");
+           const std::string &init_type="scalar",
+           const double init_val=0.0,
+           const bool registerOldState=false,
+           const bool outputToExodus=true,
+           const std::string &responseIDtoRequire="",
+           StateStruct::MeshFieldEntity const * fieldEntity=0,
+           const std::string& meshPartName="");
 
   void registerNodalVectorStateVariable(const std::string &stateName,
-			     const Teuchos::RCP<PHX::DataLayout> &dl,
+           const Teuchos::RCP<PHX::DataLayout> &dl,
                              const std::string &ebName,
-			     const std::string &init_type="scalar",
-			     const double init_val=0.0,
-			     const bool registerOldState=false,
-			     const bool outputToExodus=true,
-			     const std::string &responseIDtoRequire="");
+           const std::string &init_type="scalar",
+           const double init_val=0.0,
+           const bool registerOldState=false,
+           const bool outputToExodus=true,
+           const std::string &responseIDtoRequire="");
 
   //! Method to call multiple times (before allocate) to register which states will be saved.
   //! Returns param vector with all info to build a SaveStateField or LoadStateField evaluator
@@ -90,36 +90,36 @@ public:
   //! If field name to save/load is different from state name
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-			const Teuchos::RCP<PHX::DataLayout> &dummy,
+      const Teuchos::RCP<PHX::DataLayout> &dummy,
                         const std::string &ebName,
-			const std::string &init_type,
+      const std::string &init_type,
                         const double init_val,
                         const bool registerOldState,
-			const std::string &fieldName);
+      const std::string &fieldName);
 
   //! If you want to give more control over whether or not to output to Exodus
   Teuchos::RCP<Teuchos::ParameterList>
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-			const Teuchos::RCP<PHX::DataLayout> &dummy,
+      const Teuchos::RCP<PHX::DataLayout> &dummy,
                         const std::string &ebName,
-			const std::string &init_type,
+      const std::string &init_type,
                         const double init_val,
                         const bool registerOldState,
-			const bool outputToExodus);
+      const bool outputToExodus);
 
   Teuchos::RCP<Teuchos::ParameterList>
   registerNodalVectorStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-			const Teuchos::RCP<PHX::DataLayout> &dummy,
+      const Teuchos::RCP<PHX::DataLayout> &dummy,
                         const std::string &ebName,
-			const std::string &init_type,
+      const std::string &init_type,
                         const double init_val,
                         const bool registerOldState,
-			const bool outputToExodus);
+      const bool outputToExodus);
 
   //! Very basic
   void
   registerStateVariable(const std::string &stateName, const Teuchos::RCP<PHX::DataLayout> &dl,
-			const std::string &init_type);
+      const std::string &init_type);
 
 
   //! Method to re-initialize state variables, which can be called multiple times after allocating
@@ -169,6 +169,10 @@ private:
 
   //! Private to prohibit copying
   StateManager& operator=(const StateManager&);
+
+  //! Sets states arrays from a given StateInfoStruct into a given discretization
+  void doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscretization>& disc,
+                        const Teuchos::RCP<StateInfoStruct& stateInfoPtr);
 
   //! boolean to enforce that allocate gets called once, and after registration and befor gets
   bool stateVarsAreAllocated;
