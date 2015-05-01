@@ -830,14 +830,24 @@ void checkDerivatives (Albany::Application& app, const double time,
       xd_d = xd.getDataNonConst(), xpd_d = xpd.getDataNonConst();
     for (size_t i = 0; i < x_d.size(); ++i) {
       xd_d[i] = 2*xd_d[i] - 1;
+      const double xdi = xd_d[i];
       if (x_d[i] == 0) {
+        // No scalar-level way to get the magnitude of x_i, so just go with
+        // something:
         xd_d[i] = xpd_d[i] = delta*xd_d[i];
       } else {
-        xpd_d[i] = (1 + delta*xd_d[i])*x_d[i];
+        // Make the perturbation meaningful relative to the magnitude of x_i.
+        xpd_d[i] = (1 + delta*xd_d[i])*x_d[i]; // mult line
         // Sanitize xd_d.
         xd_d[i] = xpd_d[i] - x_d[i];
+        if (xd_d[i] == 0) {
+          // Underflow in "mult line" occurred because x_d[i] is something like
+          // 1e-314. That's a possible sign of uninitialized memory. However,
+          // carry on here to get a good perturbation by reverting to the
+          // no-magnitude case:
+          xd_d[i] = xpd_d[i] = delta*xd_d[i];
+        }
       }
-      if (xd_d[i] == 0) std::cerr << "hrm? " << i << "\n";
     }
   }
   if (Teuchos::nonnull(mv)) {
