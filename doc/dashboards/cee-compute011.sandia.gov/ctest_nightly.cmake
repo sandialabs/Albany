@@ -18,14 +18,14 @@ else ()
   set (CTEST_TEST_TYPE Experimental)
 
   # What to build and test
-  set (BUILD_ALB32 TRUE)
   set (BUILD_ALB64 FALSE)
   set (BUILD_ALB64CLANG11 FALSE)
-  set (DOWNLOAD TRUE)
-  set (BUILD_TRILINOS FALSE)
+  set (DOWNLOAD FALSE)
+  set (BUILD_TRILINOS TRUE)
+  set (BUILD_PERIDIGM TRUE)
+  set (BUILD_ALB32 TRUE)
   set (BUILD_TRILINOSCLANG11 FALSE)
   set (CLEAN_BUILD FALSE)
-  set (BUILD_PERIDIGM TRUE)
 endif ()
 
 # Begin User inputs:
@@ -288,7 +288,7 @@ if (DOWNLOAD)
     endif ()
 
     # Until Dave and I get the hdf5_hl linking issue worked out, copy in a
-    # modified CMakeLists.txt.
+    # mod'ed CMakeLists.txt.
     execute_process (COMMAND
       cp CMakeLists.txt.peridigm ${CTEST_SOURCE_DIRECTORY}/Peridigm/CMakeLists.txt
       RESULT_VARIABLE HAD_ERROR)
@@ -340,24 +340,24 @@ set (COMMON_CONFIGURE_OPTIONS
   "-DBoostAlbLib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DBoostAlbLib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
-  "-DTPL_ENABLE_Netcdf:STRING=ON"
+  "-DTPL_ENABLE_Netcdf:BOOL=ON"
   "-DNetcdf_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DNetcdf_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
-  "-DTPL_ENABLE_HDF5:STRING=ON"
+  "-DTPL_ENABLE_HDF5:BOOL=ON"
   "-DHDF5_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DHDF5_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
-  "-DHDF5_LIBRARY_NAMES:STRING=hdf5_hl;hdf5;z"
+  "-DHDF5_LIBRARY_NAMES:STRING='hdf5_hl\\;hdf5\\;z'"
   #
-  "-DTPL_ENABLE_Zlib:STRING=ON"
+  "-DTPL_ENABLE_Zlib:BOOL=ON"
   "-DZlib_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DZlib_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
-  "-DTPL_ENABLE_ParMETIS:STRING=ON"
+  "-DTPL_ENABLE_ParMETIS:BOOL=ON"
   "-DParMETIS_INCLUDE_DIRS:PATH=${PREFIX_DIR}/include"
   "-DParMETIS_LIBRARY_DIRS:PATH=${PREFIX_DIR}/lib"
   #
-  "-DTPL_ENABLE_SuperLU:STRING=ON"
+  "-DTPL_ENABLE_SuperLU:BOOL=ON"
   "-DSuperLU_INCLUDE_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/include"
   "-DSuperLU_LIBRARY_DIRS:PATH=${PREFIX_DIR}/SuperLU_4.3/lib"
   #
@@ -460,7 +460,7 @@ if (BUILD_TRILINOS)
     "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
-    ${COMMON_CONFIGURE_OPTIONS}
+    "${COMMON_CONFIGURE_OPTIONS}"
     )
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
