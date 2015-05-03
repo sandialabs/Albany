@@ -297,6 +297,11 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   }
 #endif // ALBANY_LCM
 
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  LCM::PeridigmManager::initializeSingleton(params);
+#endif
+#endif
 }
 
 void Albany::Application::createMeshSpecs() {
@@ -403,7 +408,8 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  LCM::PeridigmManager::self().setDirichletFields(disc);
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+    LCM::PeridigmManager::self()->setDirichletFields(disc);
 #endif
 #endif
 
@@ -524,7 +530,8 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  LCM::PeridigmManager::self().initialize(params, disc, commT);
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+    LCM::PeridigmManager::self()->initialize(params, disc, commT);
 #endif
 #endif
 }
@@ -966,9 +973,12 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_PERIDIGM 
 #if defined(ALBANY_EPETRA)
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-  peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
-  peridigmManager.evaluateInternalForce();
+  const Teuchos::RCP<LCM::PeridigmManager>&
+    peridigmManager = LCM::PeridigmManager::self();
+  if (Teuchos::nonnull(peridigmManager)) {
+    peridigmManager->setCurrentTimeAndDisplacement(current_time, xT);
+    peridigmManager->evaluateInternalForce();
+  }
 #endif
 #endif
 

@@ -37,7 +37,7 @@ evaluateResponseT(const double current_time,
      const Teuchos::Array<ParamVec>& p,
      Tpetra_Vector& gT)
 {
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+  LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
   Teuchos::ArrayRCP<ST> gT_nonconstView = gT.get1dViewNonConst();
   peridigmManager.obcOverlappingElementSearch();
   gT_nonconstView[0] = peridigmManager.obcEvaluateFunctional();
@@ -83,7 +83,7 @@ evaluateGradient(const double current_time,
 
   // Evaluate response g
   if ((g != NULL) || dg_dx != NULL) {
-    LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+    LCM::PeridigmManager& peridigmManager = *LCM::PeridigmManager::self();
     peridigmManager.obcOverlappingElementSearch();
     Epetra_Vector* dgdx0 = (dg_dx != NULL) ? (*dg_dx)(0) : NULL;
     double resp = peridigmManager.obcEvaluateFunctional((*dg_dx)(0));

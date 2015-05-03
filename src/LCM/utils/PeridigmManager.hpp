@@ -55,7 +55,10 @@ public:
   };
 
   //! Singleton.
-  static PeridigmManager & self();
+  static const Teuchos::RCP<PeridigmManager>& self();
+  //! Instantiate the singleton
+  static void initializeSingleton(
+    const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   //! Instantiate the Peridigm object
   void initialize(const Teuchos::RCP<Teuchos::ParameterList>& params,
