@@ -245,11 +245,10 @@ Albany::PUMIMeshStruct::setFieldAndBulkData(
     int valueType;
     if (neq==1)
       valueType = apf::SCALAR;
-    else if (neq==3)
+    else if (neq == 2 || neq == 3)
       valueType = apf::VECTOR;
-    else
-    {
-      assert(neq==9);
+    else {
+      assert(neq == 4 || neq == 9);
       valueType = apf::MATRIX;
     }
     apf::createFieldOn(mesh,residual_name,valueType);
