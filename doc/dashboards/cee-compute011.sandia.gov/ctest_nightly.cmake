@@ -20,7 +20,7 @@ else ()
   # What to build and test
   set (BUILD_ALB64 FALSE)
   set (BUILD_ALB64CLANG11 FALSE)
-  set (DOWNLOAD FALSE)
+  set (DOWNLOAD TRUE)
   set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
   set (BUILD_ALB32 TRUE)
@@ -285,15 +285,6 @@ if (DOWNLOAD)
 
     if (CTEST_DO_SUBMIT)
       ctest_submit (PARTS Update RETURN_VALUE HAD_ERROR)
-    endif ()
-
-    # Until Dave and I get the hdf5_hl linking issue worked out, copy in a
-    # mod'ed CMakeLists.txt.
-    execute_process (COMMAND
-      cp CMakeLists.txt.peridigm ${CTEST_SOURCE_DIRECTORY}/Peridigm/CMakeLists.txt
-      RESULT_VARIABLE HAD_ERROR)
-    if (HAD_ERROR)
-      set (BUILD_PERIDIGM FALSE)
     endif ()
 
     message ("After downloading, BUILD_PERIDIGM = ${BUILD_PERIDIGM}")
