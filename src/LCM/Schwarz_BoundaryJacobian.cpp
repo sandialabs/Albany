@@ -70,6 +70,49 @@ Tpetra_MultiVector make_vector(Tpetra_MultiVector const & X)
   auto const
   length = X.getGlobalLength();
 
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  W.putScalar(zero);
+
+  Teuchos::ArrayRCP<ST>
+  W_view = W.get1dViewNonConst();
+
+  auto const
+  dim = 3;
+
+  auto const
+  offset = 0;
+
+  auto const
+  num_nodes = length / dim;
+
+  for (auto n = 0; n < num_nodes; ++n) {
+    double
+    value = 0.0;
+
+    switch (num_nodes) {
+    default:
+      break;
+
+    case 8:
+      if (0 <= n && n < 4) value = 3.0;
+      if (4 <= n && n < 8) value = 1.0;
+      break;
+
+    case 27:
+      if ( 0 <= n && n <  9) value = 2.0;
+      if ( 9 <= n && n < 18) value = 1.0;
+      if (18 <= n && n < 27) value = 0.0;
+      break;
+    }
+
+    auto const
+    dof = dim * n + offset;
+
+    W_view[dof] = value;
+  }
+
   return W;
 }
 
@@ -140,10 +183,14 @@ apply(
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
+  // DEBUG
+  Tpetra_MultiVector const
+  W = make_vector(X);
+
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     Intrepid::Vector<ST> const
-    bc_value = computeBC(this_app, coupled_app, X, dimension, ns_node);
+    bc_value = computeBC(this_app, coupled_app, W, dimension, ns_node);
 
 #if defined(DEBUG_LCM_SCHWARZ)
     std::cout << "DIMENSION    DOF\n";
@@ -175,16 +222,20 @@ apply(
   Tpetra_MultiVector
   Z(Y, Teuchos::DataAccess::Copy);
 
-  // Multiply with the corresponding diagonal Jacobian.
-  //jacs_[this_app_index]->apply(Z, Y);
+  Z.putScalar(zero);
 
-  // FIXME: Temporary to test.
-  Y.putScalar(zero);
+  // Multiply with the corresponding diagonal Jacobian.
+  jacs_[this_app_index]->apply(Y, Z);
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
   sprintf(name, "X_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "W_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, W);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
