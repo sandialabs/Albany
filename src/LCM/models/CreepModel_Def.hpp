@@ -134,19 +134,6 @@ CreepModel(Teuchos::ParameterList* p,
   }
 }
 
-void creepprint(double x)
-{
-  fprintf(stderr, "%a\n", x);
-}
-
-void creepprint(FadType const& x)
-{
-  fprintf(stderr, "%a [", x.val());
-  for (int i = 0; i < x.size(); ++i)
-    fprintf(stderr, " %a", x.dx(i));
-  fprintf(stderr, "\n");
-}
-
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void CreepModel<EvalT, Traits>::
@@ -195,7 +182,7 @@ computeState(typename Traits::EvalData workset,
 
   long int debug_output_counter = 0;
 
-  if (sizeof(ScalarT) == sizeof(double))
+  if (typeid(ScalarT) == typeid(double))
     std::cerr << "Model double times_called " << times_called << '\n';
   else
     std::cerr << "Model FAD times_called " << times_called << '\n';
@@ -241,7 +228,7 @@ computeState(typename Traits::EvalData workset,
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
-      bool doit = (sizeof(ScalarT) == sizeof(FadType) && times_called == 5000
+      bool doit = (typeid(ScalarT) == typeid(FadType) && times_called == 5000
           && cell == 0 && pt == 0);
       // check yield condition
       if (f <= 0.0) {
@@ -501,7 +488,7 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
-  if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000) {
+  if ((typeid(ScalarT) == typeid(FadType)) && times_called == 5000) {
     std::cerr << "stress:\n";
     for (int cell = 0; cell < workset.numCells; ++cell) {
       std::cerr << "cell " << cell << ":\n";
@@ -530,7 +517,7 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
-  if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000)
+  if ((typeid(ScalarT) == typeid(FadType)) && times_called == 5000)
     abort();
 
   ++times_called;
