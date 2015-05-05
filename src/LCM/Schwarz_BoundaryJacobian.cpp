@@ -62,13 +62,17 @@ initialize()
 // Auxiliary functions.
 namespace {
 
-Tpetra_MultiVector make_vector(Tpetra_MultiVector const & X)
+Tpetra_MultiVector make_vector(
+    Tpetra_MultiVector const & X,
+    Teuchos::ArrayRCP<double> const & coords)
 {
   Tpetra_MultiVector
   W(X, Teuchos::DataAccess::Copy);
 
   auto const
   length = X.getGlobalLength();
+
+  assert(length == coords.size());
 
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
@@ -82,35 +86,27 @@ Tpetra_MultiVector make_vector(Tpetra_MultiVector const & X)
   dim = 3;
 
   auto const
-  offset = 0;
-
-  auto const
   num_nodes = length / dim;
 
   for (auto n = 0; n < num_nodes; ++n) {
-    double
-    value = 0.0;
-
-    switch (num_nodes) {
-    default:
-      break;
-
-    case 8:
-      if (0 <= n && n < 4) value = 3.0;
-      if (4 <= n && n < 8) value = 1.0;
-      break;
-
-    case 27:
-      if ( 0 <= n && n <  9) value = 2.0;
-      if ( 9 <= n && n < 18) value = 1.0;
-      if (18 <= n && n < 27) value = 0.0;
-      break;
-    }
+    auto const
+    dof_x = dim * n;
 
     auto const
-    dof = dim * n + offset;
+    dof_y = dof_x + 1;
 
-    W_view[dof] = value;
+    auto const
+    dof_z = dof_x + 2;
+
+    auto const
+    z = coords[dof_z];
+
+    auto const
+    value = 2.0 * (z + 0.75);
+
+    W_view[dof_x] = value;
+    W_view[dof_y] = 2.0 * value;
+    W_view[dof_z] = 3.0 * value;
   }
 
   return W;
@@ -168,6 +164,16 @@ apply(
   auto *
   this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
+  Teuchos::RCP<Albany::AbstractDiscretization>
+  coupled_disc = coupled_app.getDiscretization();
+
+  auto *
+  coupled_stk_disc =
+      static_cast<Albany::STKDiscretization *>(coupled_disc.get());
+
+  Teuchos::ArrayRCP<double> const &
+  coupled_coordinates = coupled_stk_disc->getCoordinates();
+
   auto const
   dimension = this_stk_disc->getNumDim();
 
@@ -183,9 +189,9 @@ apply(
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
-  // DEBUG
-  Tpetra_MultiVector const
-  W = make_vector(X);
+  // Debug
+  Tpetra_MultiVector
+  W = make_vector(X, coupled_coordinates);
 
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
@@ -234,11 +240,6 @@ apply(
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "W_%04d.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, W);
-#endif  // WRITE_TO_MATRIX_MARKET
-
-#ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Y_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
 #endif  // WRITE_TO_MATRIX_MARKET
@@ -246,6 +247,11 @@ apply(
 #ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Z_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Z);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "W_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, W);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
@@ -396,11 +402,11 @@ computeBC(
   Teuchos::RCP<Intrepid::Basis<double, Intrepid::FieldContainer<double>>>
   basis;
 
-  Teuchos::ArrayRCP<ST const>
-  coupled_solution_view = coupled_solution.get1dView();
-
   Teuchos::ArrayRCP<double> const &
   coupled_coordinates = coupled_stk_disc->getCoordinates();
+
+  Teuchos::ArrayRCP<ST const>
+  coupled_solution_view = coupled_solution.get1dView();
 
   for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
