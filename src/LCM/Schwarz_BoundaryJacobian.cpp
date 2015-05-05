@@ -165,7 +165,7 @@ apply(
   Teuchos::RCP<Albany::AbstractDiscretization>
   this_disc = this_app.getDiscretization();
 
-  Albany::STKDiscretization *
+  auto *
   this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
   auto const
@@ -268,18 +268,17 @@ computeBC(
   Teuchos::RCP<Albany::AbstractDiscretization>
   this_disc = this_app.getDiscretization();
 
-  Albany::STKDiscretization *
-  this_stk_disc =
-      static_cast<Albany::STKDiscretization *>(this_disc.get());
+  auto *
+  this_stk_disc = static_cast<Albany::STKDiscretization *>(this_disc.get());
 
   Teuchos::RCP<Albany::AbstractDiscretization>
   coupled_disc = coupled_app.getDiscretization();
 
-  Albany::STKDiscretization *
+  auto *
   coupled_stk_disc =
       static_cast<Albany::STKDiscretization *>(coupled_disc.get());
 
-  Albany::GenericSTKMeshStruct &
+  auto &
   coupled_gms = dynamic_cast<Albany::GenericSTKMeshStruct &>
     (*(coupled_stk_disc->getSTKMeshStruct()));
 
