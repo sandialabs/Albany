@@ -88,6 +88,8 @@ Tpetra_MultiVector make_vector(
   auto const
   num_nodes = length / dim;
 
+  std::cout << "COORDINATES:\n";
+
   for (auto n = 0; n < num_nodes; ++n) {
     auto const
     dof_x = dim * n;
@@ -107,12 +109,69 @@ Tpetra_MultiVector make_vector(
     W_view[dof_x] = value;
     W_view[dof_y] = 2.0 * value;
     W_view[dof_z] = 3.0 * value;
+
+    Intrepid::Vector<double, 3>
+    x(coords[dof_x], coords[dof_y], coords[dof_z]);
+
+    std::cout << std::setw(4) << n << " " << x << '\n';
   }
 
   return W;
 }
 
 } // anonymous namspace
+
+// Returns the result of a Tpetra_Operator applied to a
+// Tpetra_MultiVector X in Y.
+void
+LCM::
+Schwarz_BoundaryJacobian::
+apply2(
+    Tpetra_MultiVector const & X,
+    Tpetra_MultiVector & Y,
+    Teuchos::ETransp mode,
+    ST alpha,
+    ST beta) const
+{
+  auto const
+  length = X.getGlobalLength();
+
+  // Initialize Y vector.
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+
+  Teuchos::ArrayRCP<ST>
+  Y_view = Y.get1dViewNonConst();
+
+  Teuchos::ArrayRCP<ST const>
+  X_view = X.get1dView();
+
+  switch (length) {
+  default:
+    assert(false);
+    break;
+
+  case 24:
+    break;
+
+  case 81:
+    break;
+  }
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  char name[100];
+  sprintf(name, "X_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Y_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
+  mm_counter++;
+#endif  // WRITE_TO_MATRIX_MARKET
+}
 
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
