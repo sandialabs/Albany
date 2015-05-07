@@ -36,37 +36,46 @@ template <typename EvalT, typename Traits>
 class SchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
-  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
 
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  setDiscretization(Discretization & d)
-  {disc_ = d;}
-
-  Discretization
-  getDiscretization() const
-  {return disc_;}
+  computeBCs(
+      typename Traits::EvalData dirichlet_workset,
+      size_t const ns_node,
+      ScalarT & x_val,
+      ScalarT & y_val,
+      ScalarT & z_val);
 
   void
   setCoupledAppName(std::string const & can)
-  {coupled_app_name_ = can;}
+  {
+    coupled_app_name_ = can;
+  }
 
   std::string
   getCoupledAppName() const
-  {return coupled_app_name_;}
+  {
+    return coupled_app_name_;
+  }
 
   int
   appIndexFromName(std::string const & name) const
-  {return std::atoi(name.c_str());}
+  {
+    return std::atoi(name.c_str());
+  }
 
   void
   setCoupledBlockName(std::string const & cbn)
-  {coupled_block_name_ = cbn;}
+  {
+    coupled_block_name_ = cbn;
+  }
 
   std::string
   getCoupledBlockName() const
-  {return coupled_block_name_;}
+  {
+    return coupled_block_name_;
+  }
 
 protected:
 
@@ -78,9 +87,6 @@ protected:
 
   std::string
   coupled_block_name_;
-
-  Discretization
-  disc_;
 };
 
 //
