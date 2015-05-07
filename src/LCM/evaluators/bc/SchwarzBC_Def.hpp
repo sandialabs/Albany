@@ -284,15 +284,20 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
+  Teuchos::RCP<Tpetra_Vector>
+  fT = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_MultiVector> fpT = dirichlet_workset.fpT;
+  Teuchos::RCP<Tpetra_MultiVector>
+  fpT = dirichlet_workset.fpT;
 
-  Teuchos::RCP<Tpetra_MultiVector> JVT = dirichlet_workset.JVT;
+  Teuchos::RCP<Tpetra_MultiVector>
+  JVT = dirichlet_workset.JVT;
 
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichlet_workset.xT;
+  Teuchos::RCP<const Tpetra_Vector>
+  xT = dirichlet_workset.xT;
 
-  Teuchos::RCP<const Tpetra_MultiVector> VxT = dirichlet_workset.VxT;
+  Teuchos::RCP<const Tpetra_MultiVector>
+  VxT = dirichlet_workset.VxT;
 
   RealType const
   j_coeff = dirichlet_workset.j_coeff;
@@ -300,29 +305,31 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double*> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
+  Teuchos::ArrayRCP<const ST>
+  VxT_const_view;
 
-  // global and local indices into unknown vector
-  int
-  x_dof, y_dof, z_dof;
+  Teuchos::ArrayRCP<ST>
+  fT_nonconst_view;
 
-  double *
-  coord;
+  Teuchos::ArrayRCP<const ST>
+  xT_const_view = xT->get1dView();
 
-  ScalarT
-  x_val, y_val, z_val;
+  if (fT != Teuchos::null) {
+    fT_nonconst_view = fT->get1dViewNonConst();
+  }
 
-  Teuchos::ArrayRCP<const ST> VxT_const_view;
-  Teuchos::ArrayRCP<ST> fT_nonconst_view;
-  if (fT != Teuchos::null) fT_nonconst_view = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_const_view = xT->get1dView();
-
-  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+  for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+    auto const
     x_dof = ns_nodes[ns_node][0];
+
+    auto const
     y_dof = ns_nodes[ns_node][1];
+
+    auto const
     z_dof = ns_nodes[ns_node][2];
-    coord = ns_coord[ns_node];
+
+    ScalarT
+    x_val, y_val, z_val;
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
@@ -333,8 +340,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 
     if (JVT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> JVT_nonconstView;
-      for (int i = 0; i < dirichlet_workset.num_cols_x; ++i) {
+      Teuchos::ArrayRCP<ST>
+      JVT_nonconstView;
+
+      for (auto i = 0; i < dirichlet_workset.num_cols_x; ++i) {
         JVT_nonconstView = JVT->getDataNonConst(i);
         VxT_const_view = VxT->getData(i);
         JVT_nonconstView[x_dof] = j_coeff * VxT_const_view[x_dof];
@@ -344,15 +353,16 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     }
 
     if (fpT != Teuchos::null) {
-      Teuchos::ArrayRCP<ST> fpT_nonconstView;
-      for (int i = 0; i < dirichlet_workset.num_cols_p; ++i) {
+      Teuchos::ArrayRCP<ST>
+      fpT_nonconstView;
+
+      for (auto i = 0; i < dirichlet_workset.num_cols_p; ++i) {
         fpT_nonconstView = fpT->getDataNonConst(i);
         fpT_nonconstView[x_dof] = -x_val.dx(dirichlet_workset.param_offset + i);
         fpT_nonconstView[y_dof] = -y_val.dx(dirichlet_workset.param_offset + i);
         fpT_nonconstView[z_dof] = -z_val.dx(dirichlet_workset.param_offset + i);
       }
     }
-
   }
 }
 
