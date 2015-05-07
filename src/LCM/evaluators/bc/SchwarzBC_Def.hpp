@@ -210,10 +210,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         matrix_entries(),
         num_entries);
 
-    for (int i = 0; i < num_entries; ++i) {
+    for (auto i = 0; i < num_entries; ++i) {
       matrix_entries[i] = 0;
     }
 
+    jacT->replaceLocalValues(x_dof, matrix_indices(), matrix_entries());
     index[0] = x_dof;
     jacT->replaceLocalValues(x_dof, index(), value());
 
@@ -229,10 +230,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         matrix_entries(),
         num_entries);
 
-    for (int i = 0; i < num_entries; ++i) {
+    for (auto i = 0; i < num_entries; ++i) {
       matrix_entries[i] = 0;
     }
 
+    jacT->replaceLocalValues(y_dof, matrix_indices(), matrix_entries());
     index[0] = y_dof;
     jacT->replaceLocalValues(y_dof, index(), value());
 
@@ -248,10 +250,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         matrix_entries(),
         num_entries);
 
-    for (int i = 0; i < num_entries; ++i) {
+    for (auto i = 0; i < num_entries; ++i) {
       matrix_entries[i] = 0;
     }
 
+    jacT->replaceLocalValues(z_dof, matrix_indices(), matrix_entries());
     index[0] = z_dof;
     jacT->replaceLocalValues(z_dof, index(), value());
 
@@ -400,7 +403,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double*> const &
+  std::vector<double *> const &
   ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
 
   // global and local indices into unknown vector
@@ -421,25 +424,25 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
 
       auto const
-      xlunk = ns_nodes[inode][0];
+      x_dof = ns_nodes[inode][0];
 
       auto const
-      ylunk = ns_nodes[inode][1];
+      y_dof = ns_nodes[inode][1];
 
       auto const
-      zlunk = ns_nodes[inode][2];
+      z_dof = ns_nodes[inode][2];
       // coord = ns_coord[inode];
 
       // this->computeBCs(coord, x_val, y_val, z_val);
 
       for (auto col = 0; col < num_cols; ++col) {
-        //(*Vp)[col][xlunk] = 0.0;
-        //(*Vp)[col][ylunk] = 0.0;
-        //(*Vp)[col][zlunk] = 0.0;
+        //(*Vp)[col][x_dof] = 0.0;
+        //(*Vp)[col][y_dof] = 0.0;
+        //(*Vp)[col][z_dof] = 0.0;
         VpT_view = VpT->getDataNonConst(col);
-        VpT_view[xlunk] = 0.0;
-        VpT_view[ylunk] = 0.0;
-        VpT_view[zlunk] = 0.0;
+        VpT_view[x_dof] = 0.0;
+        VpT_view[y_dof] = 0.0;
+        VpT_view[z_dof] = 0.0;
       }
     }
   }
@@ -449,25 +452,25 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     for (auto inode = 0; inode < ns_nodes.size(); ++inode) {
 
       auto const
-      xlunk = ns_nodes[inode][0];
+      x_dof = ns_nodes[inode][0];
 
       auto const
-      ylunk = ns_nodes[inode][1];
+      y_dof = ns_nodes[inode][1];
 
       auto const
-      zlunk = ns_nodes[inode][2];
+      z_dof = ns_nodes[inode][2];
       // coord = ns_coord[inode];
 
       // this->computeBCs(coord, x_val, y_val, z_val);
 
       for (auto col = 0; col < num_cols; ++col) {
-        //(*fpV)[col][xlunk] = 0.0;
-        //(*fpV)[col][ylunk] = 0.0;
-        //(*fpV)[col][zlunk] = 0.0;
+        //(*fpV)[col][x_dof] = 0.0;
+        //(*fpV)[col][y_dof] = 0.0;
+        //(*fpV)[col][z_dof] = 0.0;
         fpVT_view = fpVT->getDataNonConst(col);
-        fpVT_view[xlunk] = 0.0;
-        fpVT_view[ylunk] = 0.0;
-        fpVT_view[zlunk] = 0.0;
+        fpVT_view[x_dof] = 0.0;
+        fpVT_view[y_dof] = 0.0;
+        fpVT_view[z_dof] = 0.0;
       }
     }
   }
