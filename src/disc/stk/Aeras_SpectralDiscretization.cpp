@@ -2517,7 +2517,10 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
     Ioss::Init::Initializer io;
 
     mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(Albany::getMpiCommFromTeuchosComm(commT)));
-    mesh_data->set_bulk_data(bulkData);
+    mesh_data->set_bulk_data(*outputStkMeshStruct->bulkData);
+    //IKT, 5/7/15:
+    //Uncomment the following out if you want to see the un-enriched mesh written out
+    //mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
     //IKT, 4/22/15: lets not worry about fields for now.
