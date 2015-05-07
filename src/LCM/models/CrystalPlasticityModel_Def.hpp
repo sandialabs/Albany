@@ -370,6 +370,7 @@ bool print_debug = false;
 	  F_np1(i, j) = def_grad(cell, pt, i, j);
           Fp_n(i, j) = previous_plastic_deformation(cell, pt, i, j);
 	  Fp_np1(i, j) = Fp_n(i, j);
+	  Lp_np1(i, j) = 0.0;
         }
       }
       // Slip-system quantities
@@ -393,14 +394,16 @@ bool print_debug = false;
 
       // Iterate until values for slip_np1 are found that drive norm_slip_residual below the tolerance, or until
       // the maximum number of iterations has been reached.
-      while(iteration < max_iterations){
+      while(Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual) > residual_tolerance && iteration < max_iterations){
 
 	// Update the guess for slip_np1
 	// This is a work in progress.  Currently, we'll just use the explicit approach to compute slip_np1.
 	// Soon, we'll replace this call with the proper machinery for the implicit Newton scheme.
 	predictor(dt, slip_n, slip_np1, hardness_n, hardness_np1, F_np1, Lp_np1, Fp_np1);	
 
+	// Evaluate the stresses and norm_slip_residual
  	residual(dt, slip_n, slip_np1, hardness_np1, F_np1, Fp_np1, sigma_np1, S_np1, shear_np1, norm_slip_residual);
+
 	iteration += 1;
       }
 
@@ -578,6 +581,7 @@ residual(ScalarT                            dt,
     P = slip_systems_[s].projector_;
     tauC = slip_systems_[s].tau_critical_;
     m = slip_systems_[s].gamma_exp_;
+    g0 = slip_systems_[s].gamma_dot_0_;
 
     // The current computed value of dgamma
     dgamma_value1 = slip_np1[s] - slip_n[s];
