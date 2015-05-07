@@ -255,13 +255,21 @@ void AAdapt::LinearY::compute(double* x, const double* X) {
 //*****************************************************************************
 AAdapt::QuadraticX::QuadraticX(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
-  TEUCHOS_TEST_FOR_EXCEPTION((neq != 1) || (numDim != 2),
+  bool error = true; 
+  if (neq == 1 || neq == 3) error = false; 
+  TEUCHOS_TEST_FOR_EXCEPTION(error || (numDim != 2),
                              std::logic_error,
                              "Error! Invalid call of QuadraticX with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
 void AAdapt::QuadraticX::compute(double* x, const double* X) {
   x[0] = X[0]*(1.0-X[0])*X[1]*(1.0-X[1]);
+  //The following is optional -- for testing if IC is needed for auxiliary variables.
+  //It should not be. 
+  /*if (neq == 3) { 
+    x[1] = (1.0-2.0*X[0])*X[1]*(1.0-X[1]); 
+    x[2] = X[0]*(1.0-X[0])*(1.0-2.0*X[1]); 
+  }*/
 }
 //*****************************************************************************
 AAdapt::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
