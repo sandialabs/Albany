@@ -89,29 +89,11 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** RESIDUAL ***\n";
-  std::cout << "\n*** X BEFORE COMPUTE BC ***\n";
-  xT->print(std::cout);
-  std::cout << "\n*** F BEFORE COMPUTE BC ***\n";
-  fT->print(std::cout);
-#endif // DEBUG_LCM_SCHWARZ
-
   //
   // Collect nodal coordinates of nodeset (BC) nodes
   //
   std::vector<std::vector<int> > const &
   ns_dof = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
-
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "CONSTRAINED DOFS:\n";
-  for (size_t i = 0; i < ns_dof.size(); ++i) {
-    for (size_t j = 0; j < ns_dof[i].size(); ++j) {
-      std::cout << ' ' << ns_dof[i][j];
-    }
-    std::cout << '\n';
-  }
-#endif // DEBUG_LCM_SCHWARZ
 
   size_t const
   ns_number_nodes = ns_dof.size();
@@ -138,13 +120,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   } // node in node set loop
 
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** X AFTER COMPUTE BC ***\n";
-  xT->print(std::cout);
-  std::cout << "\n*** F AFTER COMPUTE BC ***\n";
-  fT->print(std::cout);
-#endif // DEBUG_LCM_SCHWARZ
-
   return;
 }
 
@@ -165,10 +140,6 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** JACOBIAN ***\n";
-#endif // DEBUG_LCM_SCHWARZ
-
   Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
   Teuchos::ArrayRCP<ST> fT_nonconstView;
 
@@ -288,10 +259,6 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Tangent, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-#if defined(DEBUG_LCM_SCHWARZ)
-  std::cout << "\n*** TANGENT ***\n";
-#endif // DEBUG_LCM_SCHWARZ
-
   Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
 
   Teuchos::RCP<Tpetra_MultiVector> fpT = dirichlet_workset.fpT;
