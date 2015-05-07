@@ -95,19 +95,16 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   Teuchos::ArrayRCP<ST>
   fT_nonconst_view = fT->get1dViewNonConst();
 
-  //
-  // Collect nodal coordinates of nodeset (BC) nodes
-  //
   std::vector<std::vector<int> > const &
   ns_dof = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
   auto const
   ns_number_nodes = ns_dof.size();
 
-  ScalarT
-  x_val, y_val, z_val;
-
   for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+
+    ScalarT
+    x_val, y_val, z_val;
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
