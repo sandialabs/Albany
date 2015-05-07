@@ -154,13 +154,15 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
   }
 #endif
 
+  int count = 0;  
+  int numOutputEles = wsElNodeID.size()*(points_per_edge-1)*(points_per_edge-1);
   for (int ws = 0; ws < wsElNodeID.size(); ws++){             // workset
     for (int e = 0; e < wsElNodeID[ws].size(); e++){          // cell
       for (int i=0; i<points_per_edge-1; i++) {           //Each spectral element broken into (points_per_edge-1)^2 bilinear elements
         for (int j=0; j<points_per_edge-1; j++) {
           //Set connectivity for new mesh  
-          //We set the element # to the global node ID of the 0th node in each new bilinear element.  
-          const unsigned int elem_GID = wsElNodeID[ws][e][i+j*points_per_edge];
+          const unsigned int elem_GID = count + numOutputEles*commT->getRank();
+          count++; 
           stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
           singlePartVec[0] = partVec[ebNo];
           //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based 
