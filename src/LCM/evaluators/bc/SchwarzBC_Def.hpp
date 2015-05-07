@@ -173,10 +173,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   value[0] = j_coeff;
 
   Teuchos::Array<ST>
-  matrix_entriesT;
+  matrix_entries;
 
   Teuchos::Array<LO>
-  matrix_indicesT;
+  matrix_indices;
 
   bool
   fill_residual = (fT != Teuchos::null);
@@ -203,57 +203,57 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     // replace jac values for the X dof
     auto
-    num_entriesT = jacT->getNumEntriesInLocalRow(x_dof);
+    num_entries = jacT->getNumEntriesInLocalRow(x_dof);
 
-    matrix_entriesT.resize(num_entriesT);
-    matrix_indicesT.resize(num_entriesT);
+    matrix_entries.resize(num_entries);
+    matrix_indices.resize(num_entries);
 
     jacT->getLocalRowCopy(
         x_dof,
-        matrix_indicesT(),
-        matrix_entriesT(),
-        num_entriesT);
+        matrix_indices(),
+        matrix_entries(),
+        num_entries);
 
-    for (int i = 0; i < num_entriesT; ++i) {
-      matrix_entriesT[i] = 0;
+    for (int i = 0; i < num_entries; ++i) {
+      matrix_entries[i] = 0;
     }
 
     index[0] = x_dof;
     jacT->replaceLocalValues(x_dof, index(), value());
 
     // replace jac values for the y dof
-    num_entriesT = jacT->getNumEntriesInLocalRow(y_dof);
+    num_entries = jacT->getNumEntriesInLocalRow(y_dof);
 
-    matrix_entriesT.resize(num_entriesT);
-    matrix_indicesT.resize(num_entriesT);
+    matrix_entries.resize(num_entries);
+    matrix_indices.resize(num_entries);
 
     jacT->getLocalRowCopy(
         y_dof,
-        matrix_indicesT(),
-        matrix_entriesT(),
-        num_entriesT);
+        matrix_indices(),
+        matrix_entries(),
+        num_entries);
 
-    for (int i = 0; i < num_entriesT; ++i) {
-      matrix_entriesT[i] = 0;
+    for (int i = 0; i < num_entries; ++i) {
+      matrix_entries[i] = 0;
     }
 
     index[0] = y_dof;
     jacT->replaceLocalValues(y_dof, index(), value());
 
     // replace jac values for the z dof
-    num_entriesT = jacT->getNumEntriesInLocalRow(z_dof);
+    num_entries = jacT->getNumEntriesInLocalRow(z_dof);
 
-    matrix_entriesT.resize(num_entriesT);
-    matrix_indicesT.resize(num_entriesT);
+    matrix_entries.resize(num_entries);
+    matrix_indices.resize(num_entries);
 
     jacT->getLocalRowCopy(
         z_dof,
-        matrix_indicesT(),
-        matrix_entriesT(),
-        num_entriesT);
+        matrix_indices(),
+        matrix_entries(),
+        num_entries);
 
-    for (int i = 0; i < num_entriesT; ++i) {
-      matrix_entriesT[i] = 0;
+    for (int i = 0; i < num_entries; ++i) {
+      matrix_entries[i] = 0;
     }
 
     index[0] = z_dof;
