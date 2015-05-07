@@ -630,6 +630,7 @@ Aeras::SpectralDiscretization::writeSolutionToMeshDatabaseT(const Tpetra_Vector&
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+   Tpetra_MatrixMarket_Writer::writeDenseFile("solnT.mm", solnT);
 #endif
   // Put solution as Epetra_Vector into STK Mesh
   if (!overlapped)
@@ -653,7 +654,7 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
   {
     setupExodusOutput();
     //IKT, FIXME, 4/22/15: the following function needs to be implemented 
-    outputStkMeshStruct->copySolutionToOutputMesh(solnT);  
+    //outputStkMeshStruct->copySolutionToOutputMesh(solnT);  
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
     if (mapT->getComm()->getRank() == 0)
@@ -928,14 +929,17 @@ Aeras::SpectralDiscretization::setSolutionField(const Epetra_Vector& soln)
 void
 Aeras::SpectralDiscretization::setSolutionFieldT(const Tpetra_Vector& solnT)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 
   // Copy soln vector into solution field, one node at a time
   // Note that soln coming in is the local (non overlapped) soln
 
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
 
   // Iterate over the on-processor nodes
-  stk::mesh::Selector locally_owned = metaData.locally_owned_part();
+  stk::mesh::Selector locally_owned = outputStkMeshStruct->metaData->locally_owned_part();
 
   container->saveSolnVectorT(solnT, locally_owned, node_mapT);
 
@@ -962,13 +966,16 @@ Aeras::SpectralDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
 void
 Aeras::SpectralDiscretization::setOvlpSolutionFieldT(const Tpetra_Vector& solnT)
 {
+#ifdef OUTPUT_TO_SCREEN
+  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   // Copy soln vector into solution field, one node at a time
   // Note that soln coming in is the local+ghost (overlapped) soln
 
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
 
   // Iterate over the processor-visible nodes
-  stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
+  stk::mesh::Selector select_owned_or_shared = outputStkMeshStruct->metaData->locally_owned_part() | outputStkMeshStruct->metaData->globally_shared_part();
 
   container->saveSolnVectorT(solnT, select_owned_or_shared, overlap_node_mapT);
 
@@ -2523,8 +2530,6 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
     //mesh_data->set_bulk_data(bulkData);
     outputFileIdx = mesh_data->create_output_mesh(str, stk::io::WRITE_RESULTS);
 
-    //IKT, 4/22/15: lets not worry about fields for now.
-/*
     const stk::mesh::FieldVector &fields = mesh_data->meta_data().get_fields();
     for (size_t i=0; i < fields.size(); i++)
     {
@@ -2535,7 +2540,7 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
         mesh_data->add_field(outputFileIdx, *fields[i]);
       }
       catch (std::runtime_error const&) { }
-    }*/
+    }
   }
 #else
   if (stkMeshStruct->exoOutput)
