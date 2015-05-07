@@ -40,16 +40,12 @@ public:
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> & d)
-  {
-    disc_ = d;
-  }
-
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  getDiscretization() const
-  {
-    return disc_;
-  }
+  computeBCs(
+      typename Traits::EvalData dirichlet_workset,
+      size_t const ns_node,
+      ScalarT & x_val,
+      ScalarT & y_val,
+      ScalarT & z_val);
 
   void
   setCoupledAppName(std::string const & can)
@@ -91,9 +87,6 @@ protected:
 
   std::string
   coupled_block_name_;
-
-  Teuchos::RCP<Albany::AbstractDiscretization>
-  disc_;
 };
 
 //
