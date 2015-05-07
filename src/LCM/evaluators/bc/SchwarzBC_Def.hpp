@@ -86,14 +86,14 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   xT = dirichlet_workset.xT;
 
   Teuchos::ArrayRCP<const ST>
-  xT_constView = xT->get1dView();
+  xT_const_view = xT->get1dView();
 
   // Solution
   Teuchos::RCP<Tpetra_Vector>
   fT = dirichlet_workset.fT;
 
   Teuchos::ArrayRCP<ST>
-  fT_nonconstView = fT->get1dViewNonConst();
+  fT_nonconst_view = fT->get1dViewNonConst();
 
   //
   // Collect nodal coordinates of nodeset (BC) nodes
@@ -101,28 +101,28 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_dof = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  size_t const
+  auto const
   ns_number_nodes = ns_dof.size();
 
   ScalarT
   x_val, y_val, z_val;
 
-  for (size_t ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
+  for (auto ns_node = 0; ns_node < ns_number_nodes; ++ns_node) {
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
-    size_t const
+    auto const
     dof_x = ns_dof[ns_node][0];
 
-    size_t const
+    auto const
     dof_y = ns_dof[ns_node][1];
 
-    size_t const
+    auto const
     dof_z = ns_dof[ns_node][2];
 
-    fT_nonconstView[dof_x] = xT_constView[dof_x] - x_val;
-    fT_nonconstView[dof_y] = xT_constView[dof_y] - y_val;
-    fT_nonconstView[dof_z] = xT_constView[dof_z] - z_val;
+    fT_nonconst_view[dof_x] = xT_const_view[dof_x] - x_val;
+    fT_nonconst_view[dof_y] = xT_const_view[dof_y] - y_val;
+    fT_nonconst_view[dof_z] = xT_const_view[dof_z] - z_val;
 
   } // node in node set loop
 
@@ -146,13 +146,20 @@ template<typename Traits>
 void SchwarzBC<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData dirichlet_workset)
 {
-  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
+  Teuchos::RCP<Tpetra_Vector>
+  fT = dirichlet_workset.fT;
 
-  Teuchos::RCP<Tpetra_CrsMatrix> jacT = dirichlet_workset.JacT;
+  Teuchos::ArrayRCP<ST>
+  fT_nonconst_view;
 
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichlet_workset.xT;
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<Tpetra_CrsMatrix>
+  jacT = dirichlet_workset.JacT;
+
+  Teuchos::RCP<const Tpetra_Vector>
+  xT = dirichlet_workset.xT;
+
+  Teuchos::ArrayRCP<const ST>
+  xT_const_view = xT->get1dView();
 
   RealType const
   j_coeff = dirichlet_workset.j_coeff;
@@ -175,75 +182,108 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   RealType
   diag = j_coeff;
 
-  Teuchos::Array<LO> index(1);
-  Teuchos::Array<ST> value(1);
-  size_t numEntriesT;
+  Teuchos::Array<LO>
+  index(1);
+
+  Teuchos::Array<ST>
+  value(1);
+
   value[0] = j_coeff;
-  Teuchos::Array<ST> matrixEntriesT;
-  Teuchos::Array<LO> matrixIndicesT;
 
-  bool fill_residual = (fT != Teuchos::null);
-  if (fill_residual) fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::Array<ST>
+  matrix_entriesT;
 
-  // local indices into unknown vector
-  int
-  x_dof, y_dof, z_dof;
+  Teuchos::Array<LO>
+  matrix_indicesT;
 
-  double *
-  coord;
+  bool
+  fill_residual = (fT != Teuchos::null);
 
-  ScalarT
-  x_val, y_val, z_val;
+  if (fill_residual == true) {
+    fT_nonconst_view = fT->get1dViewNonConst();
+  }
 
-  for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+  for (auto ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
+
+    auto const
     x_dof = ns_nodes[ns_node][0];
+
+    auto const
     y_dof = ns_nodes[ns_node][1];
+
+    auto const
     z_dof = ns_nodes[ns_node][2];
+
+    double * const
     coord = ns_coord[ns_node];
+
+    ScalarT
+    x_val, y_val, z_val;
 
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
-    numEntriesT = jacT->getNumEntriesInLocalRow(x_dof);
-    matrixEntriesT.resize(numEntriesT);
-    matrixIndicesT.resize(numEntriesT);
-
     // replace jac values for the X dof
+    auto
+    num_entriesT = jacT->getNumEntriesInLocalRow(x_dof);
+
+    matrix_entriesT.resize(num_entriesT);
+    matrix_indicesT.resize(num_entriesT);
+
     jacT->getLocalRowCopy(
         x_dof,
-        matrixIndicesT(),
-        matrixEntriesT(),
-        numEntriesT);
-    for (int i = 0; i < num_entries; ++i)
-      matrixEntriesT[i] = 0;
+        matrix_indicesT(),
+        matrix_entriesT(),
+        num_entriesT);
+
+    for (int i = 0; i < num_entries; ++i) {
+      matrix_entriesT[i] = 0;
+    }
+
     index[0] = x_dof;
     jacT->replaceLocalValues(x_dof, index(), value());
 
     // replace jac values for the y dof
+    num_entriesT = jacT->getNumEntriesInLocalRow(y_dof);
+
+    matrix_entriesT.resize(num_entriesT);
+    matrix_indicesT.resize(num_entriesT);
+
     jacT->getLocalRowCopy(
         y_dof,
-        matrixIndicesT(),
-        matrixEntriesT(),
-        numEntriesT);
-    for (int i = 0; i < num_entries; ++i)
-      matrixEntriesT[i] = 0;
+        matrix_indicesT(),
+        matrix_entriesT(),
+        num_entriesT);
+
+    for (int i = 0; i < num_entries; ++i) {
+      matrix_entriesT[i] = 0;
+    }
+
     index[0] = y_dof;
     jacT->replaceLocalValues(y_dof, index(), value());
 
     // replace jac values for the z dof
+    num_entriesT = jacT->getNumEntriesInLocalRow(z_dof);
+
+    matrix_entriesT.resize(num_entriesT);
+    matrix_indicesT.resize(num_entriesT);
+
     jacT->getLocalRowCopy(
         z_dof,
-        matrixIndicesT(),
-        matrixEntriesT(),
-        numEntriesT);
-    for (int i = 0; i < num_entries; ++i)
-      matrixEntriesT[i] = 0;
+        matrix_indicesT(),
+        matrix_entriesT(),
+        num_entriesT);
+
+    for (int i = 0; i < num_entries; ++i) {
+      matrix_entriesT[i] = 0;
+    }
+
     index[0] = z_dof;
     jacT->replaceLocalValues(z_dof, index(), value());
 
     if (fill_residual == true) {
-      fT_nonconstView[x_dof] = xT_constView[x_dof] - x_val.val();
-      fT_nonconstView[y_dof] = xT_constView[y_dof] - y_val.val();
-      fT_nonconstView[z_dof] = xT_constView[z_dof] - z_val.val();
+      fT_nonconst_view[x_dof] = xT_const_view[x_dof] - x_val.val();
+      fT_nonconst_view[y_dof] = xT_const_view[y_dof] - y_val.val();
+      fT_nonconst_view[z_dof] = xT_const_view[z_dof] - z_val.val();
     }
   }
 }
@@ -294,10 +334,10 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   ScalarT
   x_val, y_val, z_val;
 
-  Teuchos::ArrayRCP<const ST> VxT_constView;
-  Teuchos::ArrayRCP<ST> fT_nonconstView;
-  if (fT != Teuchos::null) fT_nonconstView = fT->get1dViewNonConst();
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::ArrayRCP<const ST> VxT_const_view;
+  Teuchos::ArrayRCP<ST> fT_nonconst_view;
+  if (fT != Teuchos::null) fT_nonconst_view = fT->get1dViewNonConst();
+  Teuchos::ArrayRCP<const ST> xT_const_view = xT->get1dView();
 
   for (size_t ns_node = 0; ns_node < ns_nodes.size(); ++ns_node) {
     x_dof = ns_nodes[ns_node][0];
@@ -308,19 +348,19 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
     if (fT != Teuchos::null) {
-      fT_nonconstView[x_dof] = xT_constView[x_dof] - x_val.val();
-      fT_nonconstView[y_dof] = xT_constView[y_dof] - y_val.val();
-      fT_nonconstView[z_dof] = xT_constView[z_dof] - z_val.val();
+      fT_nonconst_view[x_dof] = xT_const_view[x_dof] - x_val.val();
+      fT_nonconst_view[y_dof] = xT_const_view[y_dof] - y_val.val();
+      fT_nonconst_view[z_dof] = xT_const_view[z_dof] - z_val.val();
     }
 
     if (JVT != Teuchos::null) {
       Teuchos::ArrayRCP<ST> JVT_nonconstView;
       for (int i = 0; i < dirichlet_workset.num_cols_x; ++i) {
         JVT_nonconstView = JVT->getDataNonConst(i);
-        VxT_constView = VxT->getData(i);
-        JVT_nonconstView[x_dof] = j_coeff * VxT_constView[x_dof];
-        JVT_nonconstView[y_dof] = j_coeff * VxT_constView[y_dof];
-        JVT_nonconstView[z_dof] = j_coeff * VxT_constView[z_dof];
+        VxT_const_view = VxT->getData(i);
+        JVT_nonconstView[x_dof] = j_coeff * VxT_const_view[x_dof];
+        JVT_nonconstView[y_dof] = j_coeff * VxT_const_view[y_dof];
+        JVT_nonconstView[z_dof] = j_coeff * VxT_const_view[z_dof];
       }
     }
 
