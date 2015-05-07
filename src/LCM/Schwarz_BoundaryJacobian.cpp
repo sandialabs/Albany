@@ -220,7 +220,7 @@ apply2(
         }
       }
       for (auto d = 0; d < dim; ++d) {
-        Y_view[dim * node + d] = value(d);
+        Y_view[dim * node + d] = -value(d);
       }
     }
   }
@@ -340,7 +340,7 @@ apply(
       auto const
       value = bc_value(i);
 
-      Y_view[dof] = value;
+      Y_view[dof] = -value;
     }
 
 #if defined(DEBUG_LCM_SCHWARZ)

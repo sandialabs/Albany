@@ -42,31 +42,45 @@ public:
 
   void
   setDiscretization(Discretization & d)
-  {disc_ = d;}
+  {
+    disc_ = d;
+  }
 
   Discretization
   getDiscretization() const
-  {return disc_;}
+  {
+    return disc_;
+  }
 
   void
   setCoupledAppName(std::string const & can)
-  {coupled_app_name_ = can;}
+  {
+    coupled_app_name_ = can;
+  }
 
   std::string
   getCoupledAppName() const
-  {return coupled_app_name_;}
+  {
+    return coupled_app_name_;
+  }
 
   int
   appIndexFromName(std::string const & name) const
-  {return std::atoi(name.c_str());}
+  {
+    return std::atoi(name.c_str());
+  }
 
   void
   setCoupledBlockName(std::string const & cbn)
-  {coupled_block_name_ = cbn;}
+  {
+    coupled_block_name_ = cbn;
+  }
 
   std::string
   getCoupledBlockName() const
-  {return coupled_block_name_;}
+  {
+    return coupled_block_name_;
+  }
 
 protected:
 
