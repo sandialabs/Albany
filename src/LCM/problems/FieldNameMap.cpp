@@ -56,6 +56,8 @@ namespace LCM {
       name_map->insert( std::make_pair(t,t) );
     }
     name_map->insert( std::make_pair("CP_Residual","CP_Residual") );
+    // field name for crystallographic rotation tensor
+    name_map->insert( std::make_pair("Re","Re") );
     // Poroplasticity model
     name_map->insert( std::make_pair("Total_Stress","Total_Stress") );
     name_map->insert( std::make_pair("KCPermeability","KCPermeability") );

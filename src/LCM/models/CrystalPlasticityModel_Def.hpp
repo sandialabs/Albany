@@ -117,6 +117,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
   std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string Re_string = (*field_name_map_)["Re"];
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
@@ -134,6 +135,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   // define the evaluated fields
   // optional output
   this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(Re_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
@@ -152,6 +154,15 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->state_var_old_state_flags_.push_back(false);
   this->state_var_output_flags_.push_back(
       p->get<bool>("Output EQPS", false));
+  //
+  // Re
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(Re_string);
+  this->state_var_layouts_.push_back(dl->qp_tensor);
+  this->state_var_init_types_.push_back("identity");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Re", false));
   //
   // stress
   this->num_state_variables_++;
@@ -275,6 +286,7 @@ bool print_debug = false;
 #endif
   // retrive appropriate field name strings
   std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string Re_string = (*field_name_map_)["Re"];
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
@@ -290,6 +302,7 @@ bool print_debug = false;
 
   // extract evaluated MDFields
   PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> xtal_rotation = *eval_fields[Re_string];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
@@ -337,6 +350,7 @@ bool print_debug = false;
   Intrepid::Tensor<ScalarT> L(num_dims_);
   Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
   Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
+  Intrepid::Tensor<ScalarT> Re(num_dims_);
 
   I_ = Intrepid::eye<RealType>(num_dims_);
 
@@ -436,10 +450,19 @@ bool print_debug = false;
       Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
       CGS_Fp = 0.5*(((Intrepid::transpose(Fp))*Fp) - (Intrepid::eye<ScalarT>(num_dims_)));
       eqps(cell, pt) = sqrt((Intrepid::dotdot(CGS_Fp, CGS_Fp))*2.0/3.0);
+// The xtal rotation from the polar decomp of Fe.
+  // Saint Venant–Kirchhoff model
+#ifdef DECOUPLE
+      Fe_ = F;
+#else
+      Fe_ = F * (Intrepid::inverse(Fp));
+#endif
+      Re = Intrepid::polar_rotation(Fe_);
 
       source(cell, pt) = 0.0;
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
+          xtal_rotation(cell, pt, i, j) = Re(i, j);
           plastic_deformation(cell, pt, i, j) = Fp(i, j);
           stress(cell, pt, i, j) = sigma(i, j);
           velocity_gradient(cell, pt, i, j) = L(i, j);
