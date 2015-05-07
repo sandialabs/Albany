@@ -164,15 +164,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  RealType *
-  matrix_entries;
-
-  int *
-  matrix_indices;
-
-  int
-  num_entries;
-
   Teuchos::Array<LO>
   index(1);
 
@@ -223,7 +214,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         matrix_entriesT(),
         num_entriesT);
 
-    for (int i = 0; i < num_entries; ++i) {
+    for (int i = 0; i < num_entriesT; ++i) {
       matrix_entriesT[i] = 0;
     }
 
@@ -242,7 +233,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         matrix_entriesT(),
         num_entriesT);
 
-    for (int i = 0; i < num_entries; ++i) {
+    for (int i = 0; i < num_entriesT; ++i) {
       matrix_entriesT[i] = 0;
     }
 
@@ -261,7 +252,7 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
         matrix_entriesT(),
         num_entriesT);
 
-    for (int i = 0; i < num_entries; ++i) {
+    for (int i = 0; i < num_entriesT; ++i) {
       matrix_entriesT[i] = 0;
     }
 
