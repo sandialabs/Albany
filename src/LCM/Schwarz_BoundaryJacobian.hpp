@@ -126,6 +126,9 @@ private:
       int const dimension,
       size_t const ns_node) const;
 
+  Tpetra_MultiVector
+  make_vector(Tpetra_MultiVector const & X) const;
+
 private:
 
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
