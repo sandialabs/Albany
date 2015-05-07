@@ -105,17 +105,17 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
     this->computeBCs(dirichlet_workset, ns_node, x_val, y_val, z_val);
 
     auto const
-    dof_x = ns_dof[ns_node][0];
+    x_dof = ns_dof[ns_node][0];
 
     auto const
-    dof_y = ns_dof[ns_node][1];
+    y_dof = ns_dof[ns_node][1];
 
     auto const
-    dof_z = ns_dof[ns_node][2];
+    z_dof = ns_dof[ns_node][2];
 
-    fT_view[dof_x] = xT_const_view[dof_x] - x_val;
-    fT_view[dof_y] = xT_const_view[dof_y] - y_val;
-    fT_view[dof_z] = xT_const_view[dof_z] - z_val;
+    fT_view[x_dof] = xT_const_view[x_dof] - x_val;
+    fT_view[y_dof] = xT_const_view[y_dof] - y_val;
+    fT_view[z_dof] = xT_const_view[z_dof] - z_val;
 
   } // node in node set loop
 
