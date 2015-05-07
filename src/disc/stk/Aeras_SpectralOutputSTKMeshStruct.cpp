@@ -64,7 +64,6 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 
-  //FIXME (Bill): set member functions wsElNodeID, coords, node_mapT.
   contigIDs = params->get("Contiguous IDs", true);
   
   params->validateParameters(*getValidDiscretizationParameters(),0);
@@ -137,59 +136,94 @@ Aeras::SpectralOutputSTKMeshStruct::setFieldAndBulkData(
   Albany::AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
 
   //IKT, 4/24/15: the following algorithm should work for creating the connectivity of the STK 
-  //bilinear mesh from the spectral mesh.  Needs to be uncommented and double checked.  Also, I have not yet assigned 
-  //global IDs to the new elements, which needs to be done (see "FIXME" below).
+  //bilinear mesh from the spectral mesh.  Needs to be uncommented and double checked.  
   //
   //IKT: for an example of how the following is defined, please see Albany_AsciiSTKMeshStruct.cpp . 
 
-/*for (int ws = 0; ws < coords.size(); ws++){             // workset
-    for (int e = 0; e < coords[ws].size(); e++){          // cell
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "Spectral Mesh # ws, # eles: " << wsElNodeID.size() << ", " << wsElNodeID[0].size() << std::endl; 
+  for (int ws = 0; ws < wsElNodeID.size(); ws++){           
+    for (int e = 0; e < wsElNodeID[ws].size(); e++){        
+      std::cout << "Spectral Mesh Element " << e << ": Nodes = ";
+      for (size_t inode = 0; inode < points_per_edge*points_per_edge; ++inode)
+        std::cout << wsElNodeID[ws][e][inode] << " ";
+            std::cout << std::endl;
+      }
+  }
+#endif
+
+  for (int ws = 0; ws < wsElNodeID.size(); ws++){             // workset
+    for (int e = 0; e < wsElNodeID[ws].size(); e++){          // cell
       for (int i=0; i<points_per_edge-1; i++) {           //Each spectral element broken into (points_per_edge-1)^2 bilinear elements
         for (int j=0; j<points_per_edge-1; j++) {
           //Set connectivity for new mesh  
+          //IKT, 4/24/15: I think the following should work to assign global IDs to the elements.  
+          //We set the element # to the global node ID 
+          //of the 0th node in each new bilinear element.  
+          const unsigned int elem_GID = wsElNodeID[ws][e][i+j*points_per_edge];
+          stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
           singlePartVec[0] = partVec[ebNo];
-          FIXME: assign global ID to element!
-          //IKT, 4/24/15: I think the following should work.  We set the element # to the global node ID 
-          //of the 0th node in each new bilinear element.   
-          const unsigned int elem_GID = wsElNodeID[ws][e][i+j*nodes_per_edge]; 
-          stk::mesh::Entity = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
+          //Add 1 to elem_id in the following line b/c STK is 1-based whereas wsElNodeID is 0-based 
+          stk::mesh::Entity elem = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
           stk::mesh::Entity node0 = bulkData->declare_entity(stk::topology::NODE_RANK, 
-                                    1+wsElNodeID[ws][e][i+j*nodes_per_edge], nodePartVec);
+                                    1+wsElNodeID[ws][e][i+j*points_per_edge], nodePartVec);
           stk::mesh::Entity node1 = bulkData->declare_entity(stk::topology::NODE_RANK, 
-                                    1+wsElNodeID[ws][e][i+1+j*nodes_per_edge], nodePartVec);
+                                    1+wsElNodeID[ws][e][i+1+j*points_per_edge], nodePartVec);
           stk::mesh::Entity node2 = bulkData->declare_entity(stk::topology::NODE_RANK, 
-                                    1+wsElNodeID[ws][e][i+points_per_edge+1+j*nodes_per_edge], nodePartVec);
+                                    1+wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge], nodePartVec);
           stk::mesh::Entity node3 = bulkData->declare_entity(stk::topology::NODE_RANK,
-                                    1+wsElNodeID[ws][e][i+points_per_edge+j*nodes_per_edge], nodePartVec); 
+                                    1+wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge], nodePartVec); 
+#ifdef OUTPUT_TO_SCREEN
+          std::cout << "Output Mesh elem_GID, node0, node1, node2, node3: " << elem_GID << ", " 
+                    << wsElNodeID[ws][e][i+j*points_per_edge] << ", " 
+                    << wsElNodeID[ws][e][i+1+j*points_per_edge] << ", " 
+                    << wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge] << ", " 
+                    << wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge] 
+                    << std::endl; 
+#endif 
+          bulkData->declare_relation(elem, node0, 0);
+          bulkData->declare_relation(elem, node1, 1);
+          bulkData->declare_relation(elem, node2, 2);
+          bulkData->declare_relation(elem, node3, 3);
+
+          //FIXME: the following is not quite right.  node_GID is not used.
           //Set coordinates of new mesh
           double* coord;
           int node_GID;
           unsigned int node_LID;
           //set node 0 in STK bilinear mesh 
-          node_GID = wsElNodeID[ws][e][i+j*nodes_per_edge];
+          node_GID = wsElNodeID[ws][e][i+j*points_per_edge];
           node_LID = node_mapT->getLocalElement(node_GID);
           coord = stk::mesh::field_data(*coordinates_field, node0);
-          coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
+          coord[0] = coords[ws][e][i+j*points_per_edge][0];   
+          coord[1] = coords[ws][e][i+j*points_per_edge][1];  
+          coord[2] = coords[ws][e][i+j*points_per_edge][2];  
           //set node 1 in STK bilinear mesh 
-          node_GID = wsElNodeID[ws][e][i+1+j*nodes_per_edge];
+          node_GID = wsElNodeID[ws][e][i+1+j*points_per_edge];
           node_LID = node_mapT->getLocalElement(node_GID);
           coord = stk::mesh::field_data(*coordinates_field, node1);
-          coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
+          coord[0] = coords[ws][e][i+j*points_per_edge][0];   
+          coord[1] = coords[ws][e][i+j*points_per_edge][1];  
+          coord[2] = coords[ws][e][i+j*points_per_edge][2];  
           //set node 2 in STK bilinear mesh 
-          node_GID = wsElNodeID[ws][e][i+points_per_edge+1+j*nodes_per_edge];
+          node_GID = wsElNodeID[ws][e][i+points_per_edge+1+j*points_per_edge];
           node_LID = node_mapT->getLocalElement(node_GID);
           coord = stk::mesh::field_data(*coordinates_field, node2);
-          coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
+          coord[0] = coords[ws][e][i+j*points_per_edge][0];   
+          coord[1] = coords[ws][e][i+j*points_per_edge][1];  
+          coord[2] = coords[ws][e][i+j*points_per_edge][2];  
           //set node 3 in STK bilinear mesh 
-          node_GID = wsElNodeID[ws][e][i+points_per_edge+j*nodes_per_edge];
+          node_GID = wsElNodeID[ws][e][i+points_per_edge+j*points_per_edge];
           node_LID = node_mapT->getLocalElement(node_GID);
           coord = stk::mesh::field_data(*coordinates_field, node3);
-          coord[0] = xyz[node_LID][0];   coord[1] = xyz[node_LID][1];   coord[2] = xyz[node_LID][2];
+          coord[0] = coords[ws][e][i+j*points_per_edge][0];   
+          coord[1] = coords[ws][e][i+j*points_per_edge][1];  
+          coord[2] = coords[ws][e][i+j*points_per_edge][2];  
         }
       }
     }
   }    
-*/
+
 
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
