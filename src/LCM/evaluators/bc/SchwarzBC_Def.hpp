@@ -82,12 +82,18 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   //
 
   // Coordinates
-  Teuchos::RCP<const Tpetra_Vector> xT = dirichlet_workset.xT;
-  Teuchos::ArrayRCP<const ST> xT_constView = xT->get1dView();
+  Teuchos::RCP<const Tpetra_Vector>
+  xT = dirichlet_workset.xT;
+
+  Teuchos::ArrayRCP<const ST>
+  xT_constView = xT->get1dView();
 
   // Solution
-  Teuchos::RCP<Tpetra_Vector> fT = dirichlet_workset.fT;
-  Teuchos::ArrayRCP<ST> fT_nonconstView = fT->get1dViewNonConst();
+  Teuchos::RCP<Tpetra_Vector>
+  fT = dirichlet_workset.fT;
+
+  Teuchos::ArrayRCP<ST>
+  fT_nonconstView = fT->get1dViewNonConst();
 
   //
   // Collect nodal coordinates of nodeset (BC) nodes
