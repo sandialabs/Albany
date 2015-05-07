@@ -167,9 +167,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
   std::vector<std::vector<int> > const &
   ns_nodes = dirichlet_workset.nodeSets->find(this->nodeSetID)->second;
 
-  std::vector<double*> const &
-  ns_coord = dirichlet_workset.nodeSetCoords->find(this->nodeSetID)->second;
-
   RealType *
   matrix_entries;
 
@@ -178,9 +175,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
   int
   num_entries;
-
-  RealType
-  diag = j_coeff;
 
   Teuchos::Array<LO>
   index(1);
@@ -213,9 +207,6 @@ evaluateFields(typename Traits::EvalData dirichlet_workset)
 
     auto const
     z_dof = ns_nodes[ns_node][2];
-
-    double * const
-    coord = ns_coord[ns_node];
 
     ScalarT
     x_val, y_val, z_val;
