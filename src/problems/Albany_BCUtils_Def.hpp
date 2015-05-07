@@ -214,7 +214,7 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
   ///
   /// Schwarz BC specific
   ///
-  for (std::size_t i = 0; i < nodeSetIDs.size(); i++) {
+  for (auto i = 0; i < nodeSetIDs.size(); ++i) {
 
     std::string
     ss = traits_type::constructBCName(nodeSetIDs[i], "Schwarz");
@@ -250,11 +250,11 @@ Albany::BCUtils<Albany::DirichletTraits>::constructBCEvaluators(
         p->set<Teuchos::RCP<Albany::Application>>("Application", application);
 
         // Fill up ParameterList with things DirichletBase wants
-        p->set< RCP<DataLayout> >("Data Layout", dummy);
-        p->set< std::string > ("Dirichlet Name", ss);
-        p->set< RealType >("Dirichlet Value", 0.0);
-        p->set< std::string > ("Node Set ID", nodeSetIDs[i]);
-        p->set< int > ("Equation Offset", 0);
+        p->set<RCP<DataLayout>>("Data Layout", dummy);
+        p->set<std::string> ("Dirichlet Name", ss);
+        p->set<RealType>("Dirichlet Value", 0.0);
+        p->set<std::string> ("Node Set ID", nodeSetIDs[i]);
+        p->set<int> ("Equation Offset", 0);
         // if set to zero, the cubature degree of the side
         // will be set to that of the element
         p->set<int>("Cubature Degree", BCparams.get("Cubature Degree", 0));
