@@ -36,17 +36,16 @@ template <typename EvalT, typename Traits>
 class SchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
-  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
 
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  setDiscretization(Discretization & d)
+  setDiscretization(Teuchos::RCP<Albany::AbstractDiscretization> & d)
   {
     disc_ = d;
   }
 
-  Discretization
+  Teuchos::RCP<Albany::AbstractDiscretization>
   getDiscretization() const
   {
     return disc_;
@@ -93,7 +92,7 @@ protected:
   std::string
   coupled_block_name_;
 
-  Discretization
+  Teuchos::RCP<Albany::AbstractDiscretization>
   disc_;
 };
 
