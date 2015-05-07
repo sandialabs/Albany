@@ -78,16 +78,14 @@ private:
   /// predictor
   ///
   void
-  predictor(int cell,
-	    int pt,
-	    ScalarT dt,
-	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
-	    std::vector<Albany::MDArray * > const & previous_slips,
-	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & hards,
-	    std::vector<Albany::MDArray * > const & previous_hards,
-	    Intrepid::Tensor<ScalarT> const & F,
-	    Intrepid::Tensor<ScalarT> & L,
-	    Intrepid::Tensor<ScalarT> & Fp);
+  predictor(ScalarT                            dt,
+	    std::vector<ScalarT> const &       slip_n,
+	    std::vector<ScalarT> &             slip_np1,
+	    std::vector<ScalarT> const &       hardness_n,
+	    std::vector<ScalarT> &             hardness_np1,
+	    Intrepid::Tensor<ScalarT> const &  F_np1,
+	    Intrepid::Tensor<ScalarT> &        Lp_np1,
+	    Intrepid::Tensor<ScalarT> &        Fp_np1);
 
   ///
   /// helper
