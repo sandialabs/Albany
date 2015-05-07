@@ -88,6 +88,21 @@ private:
 	    Intrepid::Tensor<ScalarT> &        Fp_np1);
 
   ///
+  /// residual
+  ///
+  void
+  residual(ScalarT                            dt,
+	   std::vector<ScalarT> const &       slip_n,
+	   std::vector<ScalarT> const &       slip_np1,
+	   std::vector<ScalarT> const &       hardness_np1,
+	   Intrepid::Tensor<ScalarT> const &  F_np1,
+	   Intrepid::Tensor<ScalarT> const &  Fp_np1,
+	   Intrepid::Tensor<ScalarT> &        sigma_np1,
+	   Intrepid::Tensor<ScalarT> &        S_np1,
+	   std::vector<ScalarT> &             shear_np1,
+	   ScalarT &                          norm_slip_residual);
+
+  ///
   /// helper
   ///
   void 
