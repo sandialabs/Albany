@@ -34,6 +34,9 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
 
   else if(name == "Linear Y")
     F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
+  
+  else if(name == "Quadratic X")
+    F = Teuchos::rcp(new AAdapt::QuadraticX(neq, numDim, data));
 
   else if(name == "Gaussian Pressure")
     F = Teuchos::rcp(new AAdapt::GaussianPress(neq, numDim, data));
@@ -248,6 +251,17 @@ void AAdapt::LinearY::compute(double* x, const double* X) {
   x[1] = data[0] * X[0];
 
   if(numDim > 2) x[2] = 0.0;
+}
+//*****************************************************************************
+AAdapt::QuadraticX::QuadraticX(int neq_, int numDim_, Teuchos::Array<double> data_)
+  : numDim(numDim_), neq(neq_), data(data_) {
+  TEUCHOS_TEST_FOR_EXCEPTION((neq != 1) || (numDim != 2),
+                             std::logic_error,
+                             "Error! Invalid call of QuadraticX with " << neq
+                             << " " << numDim << "  " << data.size() << std::endl);
+}
+void AAdapt::QuadraticX::compute(double* x, const double* X) {
+  x[0] = X[0]*(1.0-X[0])*X[1]*(1.0-X[1]);
 }
 //*****************************************************************************
 AAdapt::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)

@@ -107,6 +107,7 @@ SET(PDE_SRCS
   problems/Albany_NavierStokes.cpp
   problems/Albany_GPAMProblem.cpp
   problems/Albany_LinComprNSProblem.cpp
+  problems/Albany_AdvDiffProblem.cpp
   problems/Albany_ComprNSProblem.cpp
   problems/Albany_ODEProblem.cpp
   problems/Albany_Helmholtz2DProblem.cpp
@@ -131,6 +132,7 @@ SET(PDE_HDRS
   problems/Albany_NavierStokes.hpp
   problems/Albany_GPAMProblem.hpp
   problems/Albany_LinComprNSProblem.hpp
+  problems/Albany_AdvDiffProblem.hpp
   problems/Albany_ComprNSProblem.hpp
   problems/Albany_ODEProblem.hpp
   problems/Albany_Helmholtz2DProblem.hpp
@@ -281,6 +283,7 @@ SET(PDE_SRCS ${PDE_SRCS}
   evaluators/PHAL_ODEResid.cpp
   evaluators/PHAL_GPAMResid.cpp
   evaluators/PHAL_LinComprNSResid.cpp
+  evaluators/PHAL_AdvDiffResid.cpp
   evaluators/PHAL_LinComprNSBodyForce.cpp
   evaluators/PHAL_ComprNSResid.cpp
   evaluators/PHAL_ComprNSBodyForce.cpp
@@ -410,6 +413,8 @@ SET(PDE_HDRS ${PDE_HDRS}
   evaluators/PHAL_GPAMResid_Def.hpp
   evaluators/PHAL_LinComprNSResid.hpp
   evaluators/PHAL_LinComprNSResid_Def.hpp
+  evaluators/PHAL_AdvDiffResid.hpp
+  evaluators/PHAL_AdvDiffResid_Def.hpp
   evaluators/PHAL_ComprNSResid.hpp
   evaluators/PHAL_ComprNSResid_Def.hpp
   evaluators/PHAL_LinComprNSBodyForce.hpp
