@@ -664,8 +664,6 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
   if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
   {
     setupExodusOutput();
-    //IKT, FIXME, 4/22/15: the following function needs to be implemented 
-    //outputStkMeshStruct->copySolutionToOutputMesh(solnT);  
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
     if (mapT->getComm()->getRank() == 0)

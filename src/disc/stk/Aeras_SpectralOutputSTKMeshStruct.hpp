@@ -49,7 +49,6 @@ namespace Aeras {
     //Is this necessary here? 
     const bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
-    void copySolutionToOutputMesh(const Tpetra_Vector& solnT); 
     private:
     //Ioss::Init::Initializer ioInit;
 
