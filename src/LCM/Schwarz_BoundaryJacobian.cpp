@@ -150,29 +150,25 @@ apply2(
   auto const
   num_dof = Y.getGlobalLength();
 
+  auto const
+  dim = 3;
+
+  auto const
+  num_nodes = num_dof / dim;
+
   // Initialize Y vector.
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
 
   Y.putScalar(zero);
 
+  if (num_nodes == 8) return;
+
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
-//  Tpetra_MultiVector
-//  W = make_vector(X);
-//
-//  Teuchos::ArrayRCP<ST const>
-//  X_view = W.get1dView();
-
   Teuchos::ArrayRCP<ST const>
   X_view = X.get1dView();
-
-  auto const
-  dim = 3;
-
-  auto const
-  num_nodes = num_dof / dim;
 
   std::vector<int> const
   ns_coarse = {4,5,6,7};
@@ -225,22 +221,25 @@ apply2(
     }
   }
 
+  auto const
+  this_app_index = getThisAppIndex();
+
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
   sprintf(name, "X_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
 #endif  // WRITE_TO_MATRIX_MARKET
 
-//#ifdef WRITE_TO_MATRIX_MARKET
-//  sprintf(name, "W_%04d.mm", mm_counter);
-//  Tpetra_MatrixMarket_Writer::writeDenseFile(name, W);
-//#endif  // WRITE_TO_MATRIX_MARKET
-
-  #ifdef WRITE_TO_MATRIX_MARKET
+#ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Y_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
-  mm_counter++;
 #endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Jac%04d_%04d.mm", this_app_index, mm_counter);
+  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs_[this_app_index]);
+  mm_counter++;
+#endif // WRITE_TO_MATRIX_MARKET
 }
 
 // Returns the result of a Tpetra_Operator applied to a
@@ -273,6 +272,8 @@ apply(
   zero = Teuchos::ScalarTraits<ST>::zero();
 
   Y.putScalar(zero);
+
+  if (Y.getLocalLength() == 24) return;
 
   // If they are not coupled get out.
   if (this_app.isCoupled(coupled_app_index) == false) return;
