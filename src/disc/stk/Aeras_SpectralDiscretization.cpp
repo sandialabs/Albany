@@ -649,8 +649,18 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 #ifdef ALBANY_SEACAS
+  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
+   Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
+
+   container->transferSolutionToCoords();
+
+   if (!mesh_data.is_null()) {
+     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
+     setupExodusOutput();
+   }
+  }
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % outputStkMeshStruct->exoOutputInterval))
+  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
   {
     setupExodusOutput();
     //IKT, FIXME, 4/22/15: the following function needs to be implemented 
@@ -661,7 +671,7 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
     {
       *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<outputStkMeshStruct->exoOutFile<< std::endl;
+      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
     }
   }
  
@@ -2519,7 +2529,7 @@ void Aeras::SpectralDiscretization::setupExodusOutput()
     
     outputInterval = 0;
 
-    std::string str = outputStkMeshStruct->exoOutFile;
+    std::string str = stkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
