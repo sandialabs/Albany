@@ -49,7 +49,6 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
                                              const int numDim_, const int worksetSize_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_,
                                              const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
-                                             const Teuchos::RCP<const Tpetra_Map>& node_mapT_, 
                                              const int points_per_edge_):
   GenericSTKMeshStruct(params,Teuchos::null,3),
   out(Teuchos::VerboseObjectBase::getDefaultOStream()),
@@ -57,11 +56,8 @@ Aeras::SpectralOutputSTKMeshStruct::SpectralOutputSTKMeshStruct(
   numDim(numDim_),
   wsElNodeID(wsElNodeID_),
   coords(coords_), 
-  node_mapT(node_mapT_), 
   points_per_edge(points_per_edge_)
 {
-//FIXME, IKT, 5/7/15: it appears node_mapT is not needed.  In this case, remove it from 
-//list of member functions and argument list. 
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif

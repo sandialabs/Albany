@@ -2517,7 +2517,7 @@ void Aeras::SpectralDiscretization::createOutputMesh()
     //construct new mesh struct for output 
     outputStkMeshStruct = Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(discParams, commT,
                         stkMeshStruct->numDim, stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
-                        wsElNodeID, coords, node_mapT, points_per_edge));
+                        wsElNodeID, coords, points_per_edge));
     Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
     //set field and bulk data for new struct (for output)
