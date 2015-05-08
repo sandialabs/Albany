@@ -6,7 +6,7 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="1"/>
-    <Parameter name="MaterialDB Filename" type="string" value="materialsHe.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="materialsHeV2.xml"/>
 
     <!-- Transport & Decay -->
     <ParameterList name="Transport">
@@ -58,7 +58,7 @@
     <Parameter name="2D Elements" type="int" value="1"/>
     <Parameter name="3D Elements" type="int" value="1"/>
     <Parameter name="Method" type="string" value="STK3D"/>
-    <Parameter name="Exodus Output File Name" type="string" value="MechanicsAndHelium.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="MechanicsAndHeliumV2.e"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, CL, S, tauH, S}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V, CLresid, S, tauHresid, S}"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/> 
