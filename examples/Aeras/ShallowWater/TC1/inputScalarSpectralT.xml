@@ -48,6 +48,8 @@
     <Parameter name="Cubature Rule" type="int" value="3"/>
     <Parameter name="Element Degree" type="int" value="3"/>
     <Parameter name="Transform Type" type="string" value="Spherical"/>
+    <Parameter name="Exodus Output File Name" type="string" value="spectral_6eles_out.exo"/>
+    <Parameter name="Exodus Write Interval" type="int" value="1"/>
   </ParameterList>
   <ParameterList name="Regression Results">
     <Parameter  name="Number of Comparisons" type="int" value="0"/>
