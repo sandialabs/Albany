@@ -1320,6 +1320,8 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
       p->set<std::string>("Total Bubble Density Name", total_bubble_density);
       param_list.set<bool>("Have Bubble Volume Fraction", true);
       param_list.set<bool>("Have Total Bubble Density", true);
+      param_list.set<RealType>("Helium Radius", 
+          param_list.sublist("Tritium Coefficients").get<RealType>("Helium Radius", 0.0));
     }
 
     param_list.set<Teuchos::RCP<std::map<std::string, std::string> > >(

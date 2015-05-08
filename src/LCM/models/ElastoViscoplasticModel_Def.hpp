@@ -31,8 +31,10 @@ ElastoViscoplasticModel(Teuchos::ParameterList* p,
   q3_(p->get<RealType>("Yield Parameter q3", 1.0)),
   alpha1_(p->get<RealType>("Hydrogen Yield Parameter", 0.0)),
   alpha2_(p->get<RealType>("Helium Yield Parameter", 0.0)),
+  Ra_(p->get<RealType>("Helium Radius", 0.0)),
   print_(p->get<bool>("Output Convergence", false))
 {
+
   // retrive appropriate field name strings
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
@@ -197,6 +199,7 @@ computeState(typename Traits::EvalData workset,
   const RealType sq23(std::sqrt(2. / 3.));
   const RealType sq32(std::sqrt(3. / 2.));
   const RealType pi    = 3.141592653589793;
+  const RealType radius_fac(3.0/(4.0*pi));
 
   // pre-define some tensors that will be re-used below
   //
@@ -213,8 +216,20 @@ computeState(typename Traits::EvalData workset,
         / (3. * (1. - 2. * poissons_ratio(cell, pt)));
       ScalarT mu = elastic_modulus(cell, pt) / (2. * (1. + poissons_ratio(cell, pt)));
       ScalarT Y = yield_strength(cell, pt);
+
+      // adjustment to the yield strength in the presence of hydrogen
+      //
       if (have_total_concentration_) {
         Y += alpha1_ * total_concentration_(cell,pt);
+      }
+
+      // adjustment to the yield strength in the presence of helium
+      //
+      if (have_total_bubble_density_ && have_bubble_volume_fraction_) {
+        if (total_bubble_density_(cell,pt) > 0.0 && bubble_volume_fraction_(cell,pt) > 0.0) {
+          ScalarT Rb = std::cbrt(radius_fac * bubble_volume_fraction_(cell,pt)/total_bubble_density_(cell,pt)); 
+          Y += alpha2_ * (Rb*Rb)/(Ra_*Ra_);
+        }
       }
 
       // assign local state variables

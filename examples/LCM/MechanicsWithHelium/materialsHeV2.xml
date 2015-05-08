@@ -128,7 +128,7 @@
 
       <!-- Transport coupling mechanical parameters -->
       <Parameter name="Hydrogen Yield Parameter" type="double" value="63.9535"/>   
-      <Parameter name="Helium Yield Parameter" type="double" value="0.0"/>
+      <Parameter name="Helium Yield Parameter" type="double" value="4.5"/>
 
       <!-- Output -->
       <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
