@@ -56,7 +56,6 @@ extern "C"
 // Constants
 const double pi = 3.1415926535897932385;
 
-
 const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
@@ -650,29 +649,19 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
 #ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords) {
-   Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
-
-   container->transferSolutionToCoords();
-
-   if (!mesh_data.is_null()) {
-     // Mesh coordinates have changed. Rewrite output file by deleting the mesh data object and recreate it
-     setupExodusOutput();
-   }
-  }
   // Skip this write unless the proper interval has been reached
-  if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
+  if (stkMeshStruct->exoOutput && !(outputInterval % outputStkMeshStruct->exoOutputInterval))
   {
-    setupExodusOutput();
+    setupExodusOutput(solnT);
     //IKT, FIXME, 4/22/15: the following function needs to be implemented 
-    //outputStkMeshStruct->copySolutionToOutputMesh(solnT);  
+    //outputStkMeshStruct->copySolutionToOutputMesh(solnT, commT);  
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
     if (mapT->getComm()->getRank() == 0)
     {
       *out << "Aeras::SpectralDiscretization::writeSolution: writing time " << time;
       if (time_label != time) *out << " with label " << time_label;
-      *out << " to index " <<out_step<<" in file "<<stkMeshStruct->exoOutFile<< std::endl;
+      *out << " to index " <<out_step<<" in file "<<outputStkMeshStruct->exoOutFile<< std::endl;
     }
   }
  
@@ -1472,10 +1461,10 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
   mapT = Teuchos::null; // delete existing map happens here on remesh
   mapT = Tpetra::createNonContigMap<LO, GO>(dofIndicesT(), commT);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(
+  /*TEUCHOS_TEST_FOR_EXCEPTION(
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
     std::logic_error,
-    "Nodal database not implemented for Aeras::SpectralDiscretization");
+    "Nodal database not implemented for Aeras::SpectralDiscretization");*/
 #endif
 }
 
@@ -2508,7 +2497,7 @@ void Aeras::SpectralDiscretization::computeNodeSetsLines()
   }*/
 }
 
-void Aeras::SpectralDiscretization::createOutputMesh() 
+void Aeras::SpectralDiscretization::setupExodusOutput(const Tpetra_Vector& solnT)
 {
 #ifdef OUTPUT_TO_SCREEN
   *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -2519,27 +2508,18 @@ void Aeras::SpectralDiscretization::createOutputMesh()
     //construct new mesh struct for output 
     outputStkMeshStruct = Teuchos::rcp(new Aeras::SpectralOutputSTKMeshStruct(discParams, commT,
                         stkMeshStruct->numDim, stkMeshStruct->getMeshSpecs()[0]->worksetSize, 
-                        wsElNodeID, coords, node_mapT, points_per_edge));
+                        wsElNodeID, coords, node_mapT, points_per_edge, solnT));
     Teuchos::RCP<Albany::StateInfoStruct> sis=Teuchos::rcp(new Albany::StateInfoStruct);
     Albany::AbstractFieldContainer::FieldContainerRequirements req;
     //set field and bulk data for new struct (for output)
     outputStkMeshStruct->setFieldAndBulkData(commT, discParams, neq, req,
                                          sis, stkMeshStruct->getMeshSpecs()[0]->worksetSize); 
-   }
-#endif
-}
 
-void Aeras::SpectralDiscretization::setupExodusOutput()
-{
-#ifdef OUTPUT_TO_SCREEN
-  *out << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
-#endif
-#ifdef ALBANY_SEACAS
-  if (stkMeshStruct->exoOutput)
-  {
+
+    
     outputInterval = 0;
 
-    std::string str = stkMeshStruct->exoOutFile;
+    std::string str = outputStkMeshStruct->exoOutFile;
 
     Ioss::Init::Initializer io;
 
@@ -3390,10 +3370,8 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     computeSideSetsLines();
   }
 
-  if (spatial_dim == 2) { 
-     createOutputMesh(); 
-     setupExodusOutput();
-  }
+//  if (spatial_dim == 2) 
+//     setupExodusOutput();
 
     // Build the node graph needed for the mass matrix for solution transfer and projection operations
     // FIXME this only needs to be called if we are using the L2 Projection response
