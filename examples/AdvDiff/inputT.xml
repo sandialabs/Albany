@@ -18,7 +18,6 @@
        <Parameter name="Advection a" type="double" value="1.0"/>
        <Parameter name="Advection b" type="double" value="1.0"/>
        <Parameter name="Viscosity mu" type="double" value="0.1"/>
-       <Parameter name="Use Augmented Form" type="bool" value="true"/>
     </ParameterList>
     <ParameterList name="Parameters">
       <Parameter name="Number" type="int" value="0"/>
@@ -37,6 +36,9 @@
       </ParameterList>
       <Parameter name="Response 2" type="string" value="Solution Average"/>
     </ParameterList>
+  </ParameterList>
+  <ParameterList name="Debug Output">
+    <Parameter name="Write Solution to MatrixMarket" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="1D Elements" type="int" value="20"/>
