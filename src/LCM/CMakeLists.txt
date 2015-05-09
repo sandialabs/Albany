@@ -223,6 +223,12 @@ IF (LCM_TEST_EXES)
     test/unit_tests/StandardUnitTestMain.cpp
     test/unit_tests/utSurfaceElement.cpp
     )
+
+  add_executable(
+    utHeliumODEs
+    test/unit_tests/StandardUnitTestMain.cpp
+    test/unit_tests/utHeliumODEs.cpp
+    )
 ENDIF()
 
 IF (LCM_TEST_EXES AND (ALBANY_LAME OR ALBANY_LAMENT))
@@ -360,4 +366,5 @@ IF (LCM_TEST_EXES)
   target_link_libraries(TopologyBase ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utLocalNonlinearSolver ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
   target_link_libraries(utSurfaceElement ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
+  target_link_libraries(utHeliumODEs ${LCM_UT_LIBS} ${ALBANY_LIBRARIES} ${ALL_LIBRARIES})
 ENDIF()
