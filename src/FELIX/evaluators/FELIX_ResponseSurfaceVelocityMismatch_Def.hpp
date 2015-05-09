@@ -39,17 +39,7 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
 
   Intrepid::DefaultCubatureFactory<RealType> cubFactory;
   cubatureCell = cubFactory.create(*cellType, 1); //meshSpecs->cubatureDegree);
-
-  const CellTopologyData * const side_top = elem_top->side[0].topology;
-
-  sideType = Teuchos::rcp(new shards::CellTopology(side_top));
-
-  int cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
-
-  cubatureSide = cubFactory.create(*sideType, cubatureDegree);
-
-  sideDims = sideType->getDimension();
-  numQPsSide = cubatureSide->getNumPoints();
+  cubatureDegree = plist->isParameter("Cubature Degree") ? plist->get<int>("Cubature Degree") : meshSpecs->cubatureDegree;
 
   numNodes = intrepidBasis->getCardinality();
 
@@ -60,33 +50,9 @@ FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::ResponseSurfaceVelocityMi
   numQPs = dim[1];
   cellDims = dim[2];
 
-  // Allocate Temporary FieldContainers
-  cubPointsSide.resize(numQPsSide, sideDims);
-  refPointsSide.resize(numQPsSide, cellDims);
-  cubWeightsSide.resize(numQPsSide);
-  physPointsSide.resize(1, numQPsSide, cellDims);
-  dofSide.resize(1, numQPsSide);
-  dofSideVec.resize(1, numQPsSide, numVecDim);
-
-  // Do the BC one side at a time for now
-  jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-  invJacobianSide.resize(1, numQPsSide, cellDims, cellDims);
-  jacobianSide_det.resize(1, numQPsSide);
-
-  weighted_measure.resize(1, numQPsSide);
-  basis_refPointsSide.resize(numNodes, numQPsSide);
-  basisGrad_refPointsSide.resize(numNodes, numQPsSide, cellDims);
-  trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-  trans_gradBasis_refPointsSide.resize(1, numNodes, numQPsSide, cellDims);
-  weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
-
   physPointsCell.resize(1, numNodes, cellDims);
   dofCell.resize(1, numNodes);
   dofCellVec.resize(1, numNodes, numVecDim);
-  data.resize(1, numQPsSide);
-
-  // Pre-Calculate reference element quantitites
-  cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->qp_gradient->dimensions(dims);
@@ -153,9 +119,9 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
   if (it != ssList.end()) {
     const std::vector<Albany::SideStruct>& sideSet = it->second;
 
-    Intrepid::FieldContainer<ScalarT> surfaceVelocityOnSide(1, numQPsSide, numVecDim);
-    Intrepid::FieldContainer<ScalarT> velocityRMSOnSide(1, numQPsSide, numVecDim);
-    Intrepid::FieldContainer<ScalarT> velocityOnSide(1, numQPsSide, numVecDim);
+    Intrepid::FieldContainer<ScalarT> surfaceVelocityOnSide;
+    Intrepid::FieldContainer<ScalarT> velocityRMSOnSide;
+    Intrepid::FieldContainer<ScalarT> velocityOnSide;
 
     // Zero out local response
     PHAL::set(this->local_response, 0.0);
@@ -167,6 +133,40 @@ void FELIX::ResponseSurfaceVelocityMismatch<EvalT, Traits>::evaluateFields(typen
       const int elem_GID = sideSet[side].elem_GID;
       const int elem_LID = sideSet[side].elem_LID;
       const int elem_side = sideSet[side].side_local_id;
+
+      sideType = Teuchos::rcp(new shards::CellTopology(cellType->getCellTopologyData()->side[elem_side].topology));
+      Intrepid::DefaultCubatureFactory<RealType> cubFactory;
+      cubatureSide = cubFactory.create(*sideType, cubatureDegree);
+      sideDims = sideType->getDimension();
+      numQPsSide = cubatureSide->getNumPoints();
+
+      // Allocate Temporary FieldContainers
+      cubPointsSide.resize(numQPsSide, sideDims);
+      refPointsSide.resize(numQPsSide, cellDims);
+      cubWeightsSide.resize(numQPsSide);
+      physPointsSide.resize(1, numQPsSide, cellDims);
+      dofSide.resize(1, numQPsSide);
+      dofSideVec.resize(1, numQPsSide, numVecDim);
+
+      // Do the BC one side at a time for now
+      jacobianSide.resize(1, numQPsSide, cellDims, cellDims);
+      invJacobianSide.resize(1, numQPsSide, cellDims, cellDims);
+      jacobianSide_det.resize(1, numQPsSide);
+
+      weighted_measure.resize(1, numQPsSide);
+      basis_refPointsSide.resize(numNodes, numQPsSide);
+      basisGrad_refPointsSide.resize(numNodes, numQPsSide, cellDims);
+      trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
+      trans_gradBasis_refPointsSide.resize(1, numNodes, numQPsSide, cellDims);
+      weighted_trans_basis_refPointsSide.resize(1, numNodes, numQPsSide);
+      data.resize(1, numQPsSide);
+
+      // Pre-Calculate reference element quantitites
+      cubatureSide->getCubature(cubPointsSide, cubWeightsSide);
+
+      surfaceVelocityOnSide.resize(1, numQPsSide, numVecDim);
+      velocityRMSOnSide.resize(1, numQPsSide, numVecDim);
+      velocityOnSide.resize(1, numQPsSide, numVecDim);
 
       // Copy the coordinate data over to a temp container
       for (std::size_t node = 0; node < numNodes; ++node) {

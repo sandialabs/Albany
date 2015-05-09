@@ -39,7 +39,7 @@ namespace FELIX {
   private:
     Teuchos::RCP<const Teuchos::ParameterList> getValidResponseParameters() const;
 
-    int  cellDims, sideDims, numQPsSide, numNodes;
+    int  cellDims, sideDims, numQPsSide, numNodes, cubatureDegree;
 
     std::size_t numQPs;
     std::size_t numDims;
