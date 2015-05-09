@@ -90,7 +90,6 @@ template<typename EvalT, typename Traits>
 void HeliumODEs<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-  std::cout << "In HeliumODEs::evlauateFields" << std::endl;
   // Declaring time step & calculated input parameters
   ScalarT dt;
   ScalarT atomic_omega;
