@@ -291,7 +291,7 @@ Albany::DiscretizationFactory::createMeshSpecs() {
                                "Error!  Unknown discretization method in DiscretizationFactory: " << method <<
                                "!" << std::endl << "Supplied parameter list is " << std::endl << *discParams
                                << "\nValid Methods are: STK1D, STK2D, STK3D, STK3DPoint, Ioss,  Ioss Aeras," <<
-                                  " Exodus, Exodus Aeras, Cubit, FMDB, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
+                                  " Exodus, Exodus Aeras, Cubit, PUMI, Mpas, Ascii, Ascii2D, Extruded" << std::endl);
   }
 
 #if defined(ALBANY_LCM)
