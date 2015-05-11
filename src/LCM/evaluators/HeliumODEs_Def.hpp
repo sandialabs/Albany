@@ -148,6 +148,13 @@ evaluateFields(typename Traits::EvalData workset)
   ScalarT n1_exp, nb_exp, sb_exp;
   ScalarT d, g_old, g;
 
+  const double pi2 = pi*pi;
+  const double cube_root_pi2 = std::cbrt(pi2);
+  const double cube_root_2 = std::cbrt(2.0);
+  const double cube_root_6 = std::cbrt(6.0);
+  const double cube_root_9 = std::cbrt(9.0);
+  const double cube_root_pi2_9 = std::cbrt(pi2/9.0);
+
   for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
 	  
 	  for (std::size_t pt = 0; pt < num_pts_; ++pt) {
@@ -183,25 +190,42 @@ evaluateFields(typename Traits::EvalData workset)
 				  sb_exp = sb_old;
 				  
 				  const ScalarT nb_exp2 = nb_exp*nb_exp;
-				  const ScalarT cube_root_nb_exp2 = std::cbrt(nb_exp2);
+				  ScalarT cube_root_nb_exp2(0.0);
+                                  if (nb_exp2 > 0.0) {
+                                    cube_root_nb_exp2 = std::cbrt(nb_exp2);
+                                  }
 
 				  for (int sub_increment = 0; sub_increment < explicit_sub_increments; sub_increment++) {
-					  n1 = n1_exp + dt_explicit*(g_old - 32.0*pi*he_radius_*d*n1_exp*n1_exp -
-							  4.0*pi*d*n1_exp*cub_tfpi*std::cbrt(sb_exp)*
-							  cube_root_nb_exp2);
-					  nb = nb_exp + dt_explicit*(16.0*pi*he_radius_*d*n1_exp*n1_exp);
-					  sb = sb_exp + atomic_omega/eta_*dt_explicit*(32.*pi*he_radius_*d*n1_exp*n1_exp +
-							  4.0*pi*d*n1_exp*cub_tfpi*std::cbrt(sb_exp)*
-							  cube_root_nb_exp2);
-					  n1_exp = n1;
-					  nb_exp = nb;
-					  sb_exp = sb;
+                                    n1 = n1_exp + dt_explicit*(g_old - 32.0*pi*he_radius_*d*n1_exp*n1_exp);
+                                    if (sb_exp > 0.0) {
+                                      n1 -= dt_explicit*(4.0*pi*d*n1_exp*cub_tfpi*std::cbrt(sb_exp)*cube_root_nb_exp2);
+                                    }
+                                    nb = nb_exp + dt_explicit*(16.0*pi*he_radius_*d*n1_exp*n1_exp);
+                                    sb = sb_exp + atomic_omega/eta_*dt_explicit*(32.*pi*he_radius_*d*n1_exp*n1_exp);
+                                    if (sb_exp > 0.0) {
+                                      sb += atomic_omega/eta_*dt_explicit*(4.0*pi*d*n1_exp*cub_tfpi*std::cbrt(sb_exp)*
+                                                                           cube_root_nb_exp2);
+                                    }
+                                    n1_exp = n1;
+                                    nb_exp = nb;
+                                    sb_exp = sb;
 				  }   
 			  }
+                          
+                          // std::cout << "n1: " << n1 << std::endl;
+                          // std::cout << "nb: " << nb << std::endl;
+                          // std::cout << "sb: " << sb << std::endl;
+
 			  
 			  ScalarT nb2 = nb*nb;
-			  ScalarT cube_root_nb2 = std::cbrt(nb2);
-			  ScalarT cube_root_sb = std::cbrt(sb);
+			  ScalarT cube_root_nb2(0.0);
+                          if (nb2 > 0.0) {
+                            cube_root_nb2 = std::cbrt(nb2);
+                          }
+			  ScalarT cube_root_sb(0.0);
+                          if (sb > 0.0) {
+                            cube_root_sb = std::cbrt(sb);
+                          }
 
 			  // calculate initial residual for a relative tolerance
 			  residual(0) = n1 - n1_old - dt*(g - 32.0*pi*he_radius_*d*n1*n1 -
@@ -216,27 +240,28 @@ evaluateFields(typename Traits::EvalData workset)
               // N-R loop for implicit time integration
 		      while (norm_residual_2 > norm_residual_goal_2 && iter < maxIterations) {
 		    	  
-		    	  // Common factors w/cube_root
-		    	  ScalarT cube_root_nb = std::cbrt(nb);
-		    	  nb2 = nb*nb;
-		    	  cube_root_nb2 = std::cbrt(nb2);
-		    	  cube_root_sb = std::cbrt(sb);
-		    	  ScalarT sb2 = sb*sb;
-		    	  ScalarT cube_root_sb2 = std::cbrt(sb2);
-		    	  const double pi2 = pi*pi;
-		    	  const double cube_root_pi2 = std::cbrt(pi2);
-		    	  const double cube_root_2 = std::cbrt(2.0);
-		    	  const double cube_root_6 = std::cbrt(6.0);
-		    	  const double cube_root_9 = std::cbrt(9.0);
-
+                          // Common factors w/cube_root
+                          ScalarT cube_root_nb(0.0);
+                          if (nb > 0.0) {
+                            cube_root_nb = std::cbrt(nb);
+                            nb2 = nb*nb;
+                            cube_root_nb2 = std::cbrt(nb2);
+                          }
+                          ScalarT sb2(0.0);
+                          ScalarT cube_root_sb2(0.0);
+                          if (sb > 0.0) {
+		    	    cube_root_sb = std::cbrt(sb);
+                            sb2 = sb*sb;
+                            cube_root_sb2 = std::cbrt(sb2);
+                          }
 
 		    	  // calculate tangent
 		    	  tangent(0,0) = 1.0 + 2.0*dt*d*(32.0*n1*pi*he_radius_ + cube_root_6*
 		    			  cube_root_nb2*cube_root_pi2*cube_root_sb);
 		    	  tangent(0,1) = 4.0*cube_root_2*dt*d*n1*cube_root_pi2*
 		    			  cube_root_sb/cube_root_9/cube_root_nb;
-		    	  tangent(0,2) = 2.0*cube_root_2*dt*d*n1*std::cbrt(nb2)*
-		    			  std::cbrt(pi2/9.0)/cube_root_sb2;
+		    	  tangent(0,2) = 2.0*cube_root_2*dt*d*n1*cube_root_nb2*
+		    			  cube_root_pi2_9/cube_root_sb2;
 		    	  tangent(1,0) = -32.0*dt*d*n1*pi*he_radius_;
 		    	  tangent(1,1) = 1.0;
 		    	  tangent(1,2) = 0.0;
@@ -245,8 +270,12 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  tangent(2,1) = -4.0*cube_root_2*dt*d*n1*atomic_omega*
 		    			  cube_root_pi2*cube_root_sb/cube_root_9/eta_/cube_root_nb;
 		    	  tangent(2,2) = 1.0 - 2.0*cube_root_2*dt*d*n1*cube_root_nb2*
-		    			  atomic_omega*std::cbrt(pi2/9.0)/eta_/cube_root_sb2;
+		    			  atomic_omega*cube_root_pi2_9/eta_/cube_root_sb2;
 		    	  
+
+                          // std::cout << "tangent:\n" << tangent << std::endl;
+                          // std::cout << "inverse tangent:\n" << Intrepid::inverse(tangent) << std::endl;
+
 		    	  // find increment
 		    	  increment = -Intrepid::inverse(tangent)*residual;
 		    	  
@@ -256,8 +285,10 @@ evaluateFields(typename Traits::EvalData workset)
 		    	  sb = sb + increment(2);
 		    	  
 		    	  nb2 = nb*nb;
-		    	  cube_root_nb2 = std::cbrt(nb2);
-		    	  cube_root_sb = std::cbrt(sb);
+                          if (nb > 0.0 && sb > 0.0) {
+                            cube_root_nb2 = std::cbrt(nb2);
+                            cube_root_sb = std::cbrt(sb);
+                          }
 
 		    	  // find new residual and norm
 		    	  residual(0) = n1 - n1_old - dt*(g - 32.*pi*he_radius_*d*n1*n1 -
