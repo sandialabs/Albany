@@ -48,6 +48,7 @@ private:
   double mu;   //viscosity coefficient
   double a;    //advection coefficient
   double b;    //advection coefficient
+  bool useAugForm; //use augmented form?
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

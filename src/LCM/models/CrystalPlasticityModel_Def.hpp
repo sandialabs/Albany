@@ -107,6 +107,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 #endif
 
     slip_systems_[num_ss].tau_critical_ = ss_list.get<RealType>("Tau Critical");
+    TEUCHOS_TEST_FOR_EXCEPTION(slip_systems_[num_ss].tau_critical_ <= 0, std::logic_error, "\n**** Error in CrystalPlasticityModel, invalid value for Tau Critical\n");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponent");
     slip_systems_[num_ss].H_ = ss_list.get<RealType>("Hardening", 0);
@@ -116,6 +117,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 #endif
 
   // retrive appropriate field name strings (ref to problems/FieldNameMap)
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string Re_string = (*field_name_map_)["Re"];
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
@@ -132,6 +135,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
 
   // define the evaluated fields
   // optional output
+  this->eval_field_map_.insert(std::make_pair(eqps_string, dl->qp_scalar));
+  this->eval_field_map_.insert(std::make_pair(Re_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(cauchy_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(Fp_string, dl->qp_tensor));
   this->eval_field_map_.insert(std::make_pair(L_string, dl->qp_tensor));
@@ -140,6 +145,25 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
   this->eval_field_map_.insert(std::make_pair("Time", dl->workset_scalar));
 
   // define the state variables
+  //
+  // eqps
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(eqps_string);
+  this->state_var_layouts_.push_back(dl->qp_scalar);
+  this->state_var_init_types_.push_back("scalar");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(
+      p->get<bool>("Output EQPS", false));
+  //
+  // Re
+  this->num_state_variables_++;
+  this->state_var_names_.push_back(Re_string);
+  this->state_var_layouts_.push_back(dl->qp_tensor);
+  this->state_var_init_types_.push_back("identity");
+  this->state_var_init_values_.push_back(0.0);
+  this->state_var_old_state_flags_.push_back(false);
+  this->state_var_output_flags_.push_back(p->get<bool>("Output Re", false));
   //
   // stress
   this->num_state_variables_++;
@@ -262,6 +286,8 @@ bool print_debug = false;
   std::cout << ">>> in cp compute state\n";
 #endif
   // retrive appropriate field name strings
+  std::string eqps_string = (*field_name_map_)["eqps"];
+  std::string Re_string = (*field_name_map_)["Re"];
   std::string cauchy_string = (*field_name_map_)["Cauchy_Stress"];
   std::string Fp_string = (*field_name_map_)["Fp"];
   std::string L_string = (*field_name_map_)["Velocity_Gradient"];
@@ -276,6 +302,8 @@ bool print_debug = false;
   PHX::MDField<ScalarT> delta_time = *dep_fields["Delta Time"];
 
   // extract evaluated MDFields
+  PHX::MDField<ScalarT> eqps = *eval_fields[eqps_string];
+  PHX::MDField<ScalarT> xtal_rotation = *eval_fields[Re_string];
   PHX::MDField<ScalarT> stress = *eval_fields[cauchy_string];
   PHX::MDField<ScalarT> plastic_deformation = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> velocity_gradient = *eval_fields[L_string];
@@ -283,7 +311,6 @@ bool print_debug = false;
   PHX::MDField<ScalarT> cp_residual = *eval_fields[residual_string];
 
   PHX::MDField<ScalarT> time = *eval_fields["Time"];
-
   // extract slip on each slip system
   std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > slips;
   std::vector<Albany::MDArray *> previous_slips;
@@ -316,14 +343,17 @@ bool print_debug = false;
   // get state variables
   Albany::MDArray previous_plastic_deformation =
       (*workset.stateArrayPtr)[Fp_string + "_old"];
-
   ScalarT tau, gamma, dgamma;
   ScalarT dt = delta_time(0);
   ScalarT tcurrent = time(0);
-  Intrepid::Tensor<ScalarT> L(num_dims_);
-  Intrepid::Tensor<ScalarT> F(num_dims_), Fp(num_dims_);
-  Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
-
+  Intrepid::Tensor<ScalarT> Lp_np1(num_dims_);
+  Intrepid::Tensor<ScalarT> F_np1(num_dims_), Fp_n(num_dims_), Fp_np1(num_dims_);
+  Intrepid::Tensor<ScalarT> sigma_np1(num_dims_), S_np1(num_dims_);
+  Intrepid::Tensor<ScalarT> Re_np1(num_dims_);
+  std::vector<ScalarT> slip_n(num_slip_), slip_np1(num_slip_), delta_slip_increment(num_slip_);
+  std::vector<ScalarT> hardness_n(num_slip_), hardness_np1(num_slip_), shear_np1(num_slip_);
+  Intrepid::Vector<ScalarT> slip_residual(num_slip_);
+  ScalarT norm_slip_residual;
   I_ = Intrepid::eye<RealType>(num_dims_);
 
 #ifdef PRINT_OUTPUT
@@ -333,100 +363,99 @@ bool print_debug = false;
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
 
-      // fill local tensors
-      F.fill(def_grad, cell, pt, 0, 0);
+      // -- Copy everything into local data structures --
+      // Initial guesses for np1 quantities assume zero plastic slip over the load step
+      // Tensors
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
-          Fp(i, j) = ScalarT(previous_plastic_deformation(cell, pt, i, j));
+	  F_np1(i, j) = def_grad(cell, pt, i, j);
+          Fp_n(i, j) = previous_plastic_deformation(cell, pt, i, j);
+	  Fp_np1(i, j) = Fp_n(i, j);
+	  Lp_np1(i, j) = 0.0;
         }
       }
-
-      // TODO get rid of cell and pt arguments and just pass a reference to the correct entries in
-      //      slips and previous_slips (assuming this is possible with the Intrepid data structures).
-      predictor(
-          cell,
-          pt,
-          dt,
-          slips,
-          previous_slips,
-          hards,
-          previous_hards,
-          F,
-          L,
-          Fp);
-
-      // compute stresses
-      computeStress(F, Fp, sigma, S);
-
-      // prior to implicit scheme - calculate resdiual from predictor
-      // residual vector currently only consists of slips
-      ScalarT g0, tauC, m;
-      ScalarT dgamma, g, tau, t1;
-      int sign;
-      Intrepid::Tensor<RealType> P(num_dims_);
-      PHX::MDField<ScalarT> slip;
-      PHX::MDField<ScalarT> hard;
-      PHX::MDField<ScalarT> shear;
-      Albany::MDArray previous_slip;
-      // residual vector
-      Intrepid::Vector<ScalarT> residual_vector(num_slip_);
-
-      // Loop over slip systems to calculate residual
+      // Slip-system quantities
       for (int s(0); s < num_slip_; ++s) {
-
-        // material properties for each slip system
-        g0 = slip_systems_[s].gamma_dot_0_;
-        tauC = slip_systems_[s].tau_critical_;
-        m = slip_systems_[s].gamma_exp_;
-        P = slip_systems_[s].projector_;
-
-        // state of the slip system
-        slip = *(slips[s]);
-        previous_slip = *(previous_slips[s]);
-        hard = *(hards[s]);
-        shear = *(shears[s]); // not needed, storing for output
-
-        dgamma = slip(cell, pt) - previous_slip(cell, pt);
-        g = hard(cell, pt);
-        tau = Intrepid::dotdot(P, S);
-        sign = tau < 0 ? -1 : 1;
-        shear(cell, pt) = tau; // not needed, storing for output
-
-        // Debugging residual
-        if (print_debug) {
-          std::cout << "--- KINEMATICS CELL: " << cell << ", IP: " << pt << '\n';
-          std::cout << "projector_"  << s + 1 << ": " << slip_systems_[s].projector_ << '\n';
-          std::cout << "2nd PK : " << S << '\n';
-          std::cout << "tau_" << s + 1 << ": " << tau << '\n';
-          std::cout << "shear_" << s + 1 << ": " << shear(cell,pt) << '\n';
-        }
-
-        // residual
-        t1 = std::fabs(tau / (tauC + g));
-        residual_vector(s) = -dgamma + dt * g0 * std::fabs(std::pow(t1, m)) * sign;
+	slip_n[s] = (*(previous_slips[s]))(cell, pt);
+	slip_np1[s] = slip_n[s];
+	delta_slip_increment[s] = 0.0;
+	hardness_n[s] = (*(previous_hards[s]))(cell, pt);
+	hardness_np1[s] = hardness_n[s];
       }
 
-      // Take norm of residual - protect sqrt (Saccado)
-      ScalarT norm_residual_2 = 0.0;
-      ScalarT norm_residual = 0.0;
-      norm_residual_2 = Intrepid::dot(residual_vector, residual_vector);
-      if (norm_residual_2 > 0.0) {
-          norm_residual = std::sqrt(norm_residual_2);
+
+
+
+
+      // Evaluate stress quantities and the residual under the assumption that slip increments are zero
+      computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
+      computeResidual(dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+
+      // Determine convergence tolerances for the nonlinear solver
+      RealType residual_tolerance = 1.0e-6 * Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
+      int iteration(0), max_iterations(1);
+
+      // Iterate until values for slip_np1 are found that drive norm_slip_residual below the tolerance, or until
+      // the maximum number of iterations has been reached.
+      while(Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual) > residual_tolerance && iteration < max_iterations){
+
+	// compute delta_slip_increment
+ 	computeSlipIncrementsViaExplicitIntegration(dt, slip_n, hardness_n, S_np1, delta_slip_increment);
+
+	// compute slip_np1, Lp_np1, and Fp_np1
+ 	applyDeltaSlipIncrement(delta_slip_increment, slip_n, slip_np1, Lp_np1, Fp_np1);
+
+	// compute hardness_np1
+ 	updateHardness(slip_np1, hardness_n, hardness_np1);
+
+	// compute sigma_np1, S_np1, and shear_np1
+ 	computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
+
+	// compute slip_residual and norm_slip_residual
+	computeResidual(dt, slip_n, slip_np1, hardness_np1, shear_np1, slip_residual, norm_slip_residual);
+
+	iteration += 1;
       }
-      cp_residual(cell,pt) = norm_residual;
 
-      // implicit here
 
-      // load results into Albany data containers
+
+
+
+      // The EQPS can be computed (or can it?) from the Cauchy Green strain of Fp.
+      Intrepid::Tensor<ScalarT> CGS_Fp(num_dims_);
+      CGS_Fp = 0.5*(((Intrepid::transpose(Fp_np1))*Fp_np1) - (Intrepid::eye<ScalarT>(num_dims_)));
+      ScalarT equivalent_plastic_strain = (2.0/3.0)*Intrepid::dotdot(CGS_Fp, CGS_Fp);
+      if(equivalent_plastic_strain > 0.0){
+	equivalent_plastic_strain = std::sqrt(equivalent_plastic_strain);
+      }
+      eqps(cell, pt) = equivalent_plastic_strain;
+      // The xtal rotation from the polar decomp of Fe.
+      // Saint Venant–Kirchhoff model
+#ifdef DECOUPLE
+      Fe_ = F_np1;
+#else
+      Fe_ = F_np1 * (Intrepid::inverse(Fp_np1));
+#endif
+      Re_np1 = Intrepid::polar_rotation(Fe_);
+
+      // -- Fill Albany data containers --
+      // Scalars
       source(cell, pt) = 0.0;
+      // Tensors
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
-          plastic_deformation(cell, pt, i, j) = Fp(i, j);
-          stress(cell, pt, i, j) = sigma(i, j);
-          velocity_gradient(cell, pt, i, j) = L(i, j);
+          xtal_rotation(cell, pt, i, j) = Re_np1(i, j);
+          plastic_deformation(cell, pt, i, j) = Fp_np1(i, j);
+          stress(cell, pt, i, j) = sigma_np1(i, j);
+          velocity_gradient(cell, pt, i, j) = Lp_np1(i, j);
         }
       }
-
+      // Slip-system quantities
+      for (int s(0); s < num_slip_; ++s) {
+	(*(slips[s]))(cell, pt) = slip_np1[s];
+	(*(hards[s]))(cell, pt) = hardness_np1[s];
+	(*(shears[s]))(cell, pt) = shear_np1[s];
+      }
 #ifdef PRINT_OUTPUT
       if (cell == 0 && pt == 0) {
         out << "\n" << "time: ";
@@ -471,81 +500,204 @@ bool print_debug = false;
 
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
-predictor(int cell,
-    int pt,
-    ScalarT dt,
-    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
-    std::vector<Albany::MDArray *> const & previous_slips,
-    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & hards,
-    std::vector<Albany::MDArray *> const & previous_hards,
-    Intrepid::Tensor<ScalarT> const & F,
-    Intrepid::Tensor<ScalarT> & L,
-    Intrepid::Tensor<ScalarT> & Fp)
+predictorOLD(ScalarT                            dt,
+	     std::vector<ScalarT> const &       slip_n,
+	     std::vector<ScalarT> &             slip_np1,
+	     std::vector<ScalarT> const &       hardness_n,
+	     std::vector<ScalarT> &             hardness_np1,
+	     Intrepid::Tensor<ScalarT> const &  F_np1,
+	     Intrepid::Tensor<ScalarT> &        Lp_np1,
+	     Intrepid::Tensor<ScalarT> &        Fp_np1)
 {
-  ScalarT g0, tau, tauC, gamma, dgamma, m, H, t1;
+  ScalarT g0, tau, tauC, dgamma, m, H, t1;
   Intrepid::Tensor<RealType> P(num_dims_);
-  Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_), expL(num_dims_),
-      Fp_temp(num_dims_);
-  PHX::MDField<ScalarT> slip;
-  PHX::MDField<ScalarT> hard;
-  Albany::MDArray previous_slip;
-  Albany::MDArray previous_hard;
+  Intrepid::Tensor<ScalarT> expL(num_dims_), Fp_temp(num_dims_);
 
-  computeStress(F, Fp, sigma, S);
-
+  Intrepid::Tensor<ScalarT> sigma(num_dims_), S(num_dims_);
+  std::vector<ScalarT> shear(num_slip_);
+  computeStress(F_np1, Fp_np1, sigma, S, shear);
   confirmTensorSanity(sigma, "first sigma calculation in predictor()");
 
-  L.fill(Intrepid::ZEROS);
+  Lp_np1.fill(Intrepid::ZEROS);
   for (int s(0); s < num_slip_; ++s) {
+
+    // material parameters
     P = slip_systems_[s].projector_;
+    tauC = slip_systems_[s].tau_critical_;
+    m = slip_systems_[s].gamma_exp_;
+    g0 = slip_systems_[s].gamma_dot_0_;
+    H = slip_systems_[s].H_;
 
     // compute resolved shear stresses
     tau = Intrepid::dotdot(P, S);
     int sign = tau < 0 ? -1 : 1;
 
-    // compute  dgammas
-
-    // material parameters
-    g0 = slip_systems_[s].gamma_dot_0_;
-    tauC = slip_systems_[s].tau_critical_;
-    m = slip_systems_[s].gamma_exp_;
-    H = slip_systems_[s].H_;
-
-    // initialize slip, previous slip, and gamma (slip)
-    slip = *(slips[s]);
-    previous_slip = *(previous_slips[s]);
-    slip(cell, pt) = previous_slip(cell, pt);
-    gamma = previous_slip(cell, pt);
-
-    // initialize hardening and previous hardening
-    hard = *(hards[s]);
-    previous_hard = *(previous_hards[s]);
-    hard(cell, pt) = previous_hard(cell, pt);
-
     // calculate additional hardening
-    ScalarT tmp_hard = H * std::fabs(gamma);
-    if (tmp_hard > hard(cell, pt)) {
-      hard(cell, pt) = tmp_hard;
+    ScalarT tmp_hard = H * std::fabs(slip_n[s]);
+    if (tmp_hard > hardness_np1[s]) {
+      hardness_np1[s] = tmp_hard;
     }
     // calculate slip increment with additional hardening
-    t1 = std::fabs(tau / (tauC + hard(cell, pt)));
+    t1 = std::fabs(tau / (tauC + hardness_np1[s]));
     dgamma = dt * g0 * std::fabs(std::pow(t1, m)) * sign;
 
     // update slip
-    slip(cell, pt) += dgamma;
+    slip_np1[s] += dgamma;
 
     // calculate plastic velocity gradient
-    L += (dgamma * P);
+    Lp_np1 += (dgamma * P);
   }
 
-  confirmTensorSanity(L, "L in predictor().");
+  confirmTensorSanity(Lp_np1, "Lp_np1 in predictor().");
 
   // update plastic deformation gradient
-  expL = Intrepid::exp(L);
-  Fp_temp = expL * Fp;
-  Fp = Fp_temp;
+  expL = Intrepid::exp(Lp_np1);
+  Fp_temp = expL * Fp_np1;
+  Fp_np1 = Fp_temp;
 
-  confirmTensorSanity(Fp, "Fp in predictor()");
+  confirmTensorSanity(Fp_np1, "Fp_np1 in predictor()");
+}
+
+//------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+computeSlipIncrementsViaExplicitIntegration(ScalarT                       dt,
+					    std::vector<ScalarT> const &  slip_n,
+					    std::vector<ScalarT> const &  hardness_n,
+					    Intrepid::Tensor<ScalarT>  &  S_n,
+					    std::vector<ScalarT> &        slip_increment)
+{
+  ScalarT g0, tau, tauC, m, H, t1, temp, hardness_temp;
+  Intrepid::Tensor<RealType> P(num_dims_);
+
+  for (int s(0); s < num_slip_; ++s) {
+
+    // material parameters
+    P = slip_systems_[s].projector_;
+    tauC = slip_systems_[s].tau_critical_;
+    m = slip_systems_[s].gamma_exp_;
+    g0 = slip_systems_[s].gamma_dot_0_;
+    H = slip_systems_[s].H_;
+
+    // compute resolved shear stresses
+    tau = Intrepid::dotdot(P, S_n);
+    int sign = tau < 0 ? -1 : 1;
+
+    // calculate additional hardening
+    hardness_temp = hardness_n[s];
+    ScalarT temp = H * std::fabs(slip_n[s]);
+    if (temp > hardness_temp) {
+      hardness_temp = temp;
+    }
+    // calculate slip increment with additional hardening
+    t1 = std::fabs(tau / (tauC + hardness_temp));
+    slip_increment[s] = dt * g0 * std::fabs(std::pow(t1, m)) * sign;
+  }
+}
+
+//------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+applyDeltaSlipIncrement(std::vector<ScalarT> const &       delta_slip_increment,
+			std::vector<ScalarT> const &       slip_n,
+			std::vector<ScalarT> &             slip_np1,
+			Intrepid::Tensor<ScalarT> &        Lp_np1,
+			Intrepid::Tensor<ScalarT> &        Fp_np1)
+{
+  ScalarT temp;
+  Intrepid::Tensor<RealType> P(num_dims_);
+  Intrepid::Tensor<ScalarT> expL(num_dims_), Fp_temp(num_dims_);
+
+  Lp_np1.fill(Intrepid::ZEROS);
+  for (int s(0); s < num_slip_; ++s) {
+
+    // material parameters
+    P = slip_systems_[s].projector_;
+
+    // update slip
+    slip_np1[s] += delta_slip_increment[s];
+
+    // calculate plastic velocity gradient
+    Lp_np1 += (slip_np1[s] - slip_n[s]) * P;
+  }
+
+  confirmTensorSanity(Lp_np1, "Lp_np1 in applyDeltaSlipIncrement().");
+
+  // update plastic deformation gradient
+  expL = Intrepid::exp(Lp_np1);
+  Fp_temp = expL * Fp_np1;
+  Fp_np1 = Fp_temp;
+
+  confirmTensorSanity(Fp_np1, "Fp_np1 in applyDeltaSlipIncrement()");
+}
+
+//------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+updateHardness(std::vector<ScalarT> const & slip_np1,
+	       std::vector<ScalarT> const & hardness_n,
+	       std::vector<ScalarT> &       hardness_np1)
+{
+  ScalarT H, temp;
+
+  for (int s(0); s < num_slip_; ++s) {
+
+    // material parameters
+    H = slip_systems_[s].H_;
+
+    // calculate additional hardening
+    ScalarT temp = H * std::fabs(slip_np1[s]);
+    if (temp > hardness_n[s]) {
+      hardness_np1[s] = temp;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+computeResidual(ScalarT                            dt,
+		std::vector<ScalarT> const &       slip_n,
+		std::vector<ScalarT> const &       slip_np1,
+		std::vector<ScalarT> const &       hardness_np1,
+		std::vector<ScalarT> const &       shear_np1,
+		Intrepid::Vector<ScalarT> &        slip_residual,
+		ScalarT &                          norm_slip_residual)
+{
+  ScalarT g0, tauC, m, temp;
+  ScalarT dgamma_value1, dgamma_value2;
+  Intrepid::Tensor<RealType> P(num_dims_);
+  int sign;
+
+  for (int s(0); s < num_slip_; ++s) {
+
+    // Material properties
+    P = slip_systems_[s].projector_;
+    tauC = slip_systems_[s].tau_critical_;
+    m = slip_systems_[s].gamma_exp_;
+    g0 = slip_systems_[s].gamma_dot_0_;
+
+    // The current computed value of dgamma
+    dgamma_value1 = slip_np1[s] - slip_n[s];
+
+    // Compute slip increment using Fe_np1
+    sign = shear_np1[s] < 0 ? -1 : 1;
+    temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
+    dgamma_value2 = dt * g0 * std::fabs(std::pow(temp, m)) * sign;
+
+    // The difference between the slip increment calculations is the residual for this slip system
+    slip_residual[s] = dgamma_value2 - dgamma_value1;
+  }
+
+  // Take norm of residual - protect sqrt (Saccado)
+  norm_slip_residual = Intrepid::dot(slip_residual, slip_residual);
+  if (norm_slip_residual > 0.0) {
+    norm_slip_residual = std::sqrt(norm_slip_residual);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -553,10 +705,10 @@ predictor(int cell,
 template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 computeStress(Intrepid::Tensor<ScalarT> const & F,
-    Intrepid::Tensor<ScalarT> const & Fp,
-    Intrepid::Tensor<ScalarT> & sigma,
-    Intrepid::Tensor<ScalarT> & S)
-
+	      Intrepid::Tensor<ScalarT> const & Fp,
+	      Intrepid::Tensor<ScalarT> &       sigma,
+	      Intrepid::Tensor<ScalarT> &       S,
+	      std::vector<ScalarT> &            shear)
 {
   // Saint Venant–Kirchhoff model
   Fpinv_ = Intrepid::inverse(Fp);
@@ -569,6 +721,12 @@ computeStress(Intrepid::Tensor<ScalarT> const & F,
   E_ = 0.5 * (Intrepid::transpose(Fe_) * Fe_ - I_);
   S = Intrepid::dotdot(C_, E_);
   sigma = (1.0 / Intrepid::det(F)) * F * S * Intrepid::transpose(F);
+  confirmTensorSanity(sigma, "Cauchy stress in CrystalPlasticityModel::computeStress()");
+
+  // Compute resolved shear stresses
+  for (int s(0); s < num_slip_; ++s) {
+    shear[s] = Intrepid::dotdot(slip_systems_[s].projector_, S);
+  }
 }
 
 //------------------------------------------------------------------------------

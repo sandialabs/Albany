@@ -506,6 +506,8 @@ namespace Aeras
     //! Create new STK mesh in which spectral elements are interpreted
     //! as a patch of linear quadrilaterals, and use this to setup
     //! Exodus output
+    void createOutputMesh();
+    
     void setupExodusOutput();
 
     //! Call stk_io for creating NetCDF output file

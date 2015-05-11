@@ -207,7 +207,7 @@ Albany::AdvDiffProblem::constructEvaluators(
     p->set< RCP<DataLayout> >("Node QP Gradient Data Layout", dl->node_qp_gradient);
 
     p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-    Teuchos::ParameterList& paramList = params->sublist("Equation Set");
+    Teuchos::ParameterList& paramList = params->sublist("Options");
     p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
     //Output

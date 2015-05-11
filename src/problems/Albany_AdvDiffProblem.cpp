@@ -24,6 +24,10 @@ AdvDiffProblem( const Teuchos::RCP<Teuchos::ParameterList>& params_,
 {
   // Get number of species equations from Problem specifications
   neq = params_->get("Number of PDE Equations", numDim);
+  bool useAugForm = params_->sublist("Options").get<bool>("Use Augmented Form", false); 
+  if (useAugForm) //if we're using the augmented form of the equations, there are 2 extra auxiliary dofs / node (in 2D).
+    neq = neq + 2;
+  std::cout << "useAugForm, neq: " << useAugForm << ", " << neq << std::endl; 
 }
 
 Albany::AdvDiffProblem::
@@ -72,7 +76,7 @@ Albany::AdvDiffProblem::constructDirichletEvaluators(
    // Construct Dirichlet evaluators for all nodesets and names
    std::vector<std::string> dirichletNames(neq);
    for (int i=0; i<neq; i++) {
-     std::stringstream s; s << "qFluct" << i;
+     std::stringstream s; s << "U" << i;
      dirichletNames[i] = s.str();
    }
    Albany::BCUtils<Albany::DirichletTraits> dirUtils;
@@ -87,7 +91,7 @@ Albany::AdvDiffProblem::getValidProblemParameters() const
     this->getGenericProblemParams("ValidAdvDiffProblemParams");
 
   validPL->set("Number of PDE Equations", 1, "Number of PDE Equations in AdvDiff equation set");
-  validPL->sublist("Equation Set", false, "");
+  validPL->sublist("Options", false, "");
 
   return validPL;
 }

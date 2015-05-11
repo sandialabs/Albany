@@ -78,25 +78,64 @@ private:
   /// predictor
   ///
   void
-  predictor(int cell,
-	    int pt,
-	    ScalarT dt,
-	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & slips,
-	    std::vector<Albany::MDArray * > const & previous_slips,
-	    std::vector<Teuchos::RCP<PHX::MDField<ScalarT> > > & hards,
-	    std::vector<Albany::MDArray * > const & previous_hards,
-	    Intrepid::Tensor<ScalarT> const & F,
-	    Intrepid::Tensor<ScalarT> & L,
-	    Intrepid::Tensor<ScalarT> & Fp);
+  predictorOLD(ScalarT                            dt,
+	       std::vector<ScalarT> const &       slip_n,
+	       std::vector<ScalarT> &             slip_np1,
+	       std::vector<ScalarT> const &       hardness_n,
+	       std::vector<ScalarT> &             hardness_np1,
+	       Intrepid::Tensor<ScalarT> const &  F_np1,
+	       Intrepid::Tensor<ScalarT> &        Lp_np1,
+	       Intrepid::Tensor<ScalarT> &        Fp_np1);
 
   ///
-  /// helper
+  /// explicit update of the slip
+  ///
+  void
+  computeSlipIncrementsViaExplicitIntegration(ScalarT                       dt,
+					      std::vector<ScalarT> const &  slip_n,
+					      std::vector<ScalarT> const &  hardness_n,
+					      Intrepid::Tensor<ScalarT>  &  S,
+					      std::vector<ScalarT> &        slip_increment);
+
+  ///
+  /// update the slip at step n+1 and compute related quantities
+  ///
+  void
+  applyDeltaSlipIncrement(std::vector<ScalarT> const &  delta_slip_increment,
+			  std::vector<ScalarT> const &  slip_n,
+			  std::vector<ScalarT> &        slip_np1,
+			  Intrepid::Tensor<ScalarT> &   Lp_np1,
+			  Intrepid::Tensor<ScalarT> &   Fp_np1);
+
+  ///
+  /// update the hardness
+  ///
+  void
+  updateHardness(std::vector<ScalarT> const &  slip_np1,
+		 std::vector<ScalarT> const &  hardness_n,
+		 std::vector<ScalarT> &        hardness_np1);
+  
+  ///
+  /// residual
+  ///
+  void
+  computeResidual(ScalarT                            dt,
+		  std::vector<ScalarT> const &       slip_n,
+		  std::vector<ScalarT> const &       slip_np1,
+		  std::vector<ScalarT> const &       hardness_np1,
+		  std::vector<ScalarT> const &       shear_np1,
+		  Intrepid::Vector<ScalarT> &        slip_residual,
+		  ScalarT &                          norm_slip_residual);
+
+  ///
+  /// compute stresses
   ///
   void 
-  computeStress(Intrepid::Tensor<ScalarT> const & F,
-                Intrepid::Tensor<ScalarT> const & Fp,
-                Intrepid::Tensor<ScalarT>       & T,
-                Intrepid::Tensor<ScalarT>       & S);
+  computeStress(Intrepid::Tensor<ScalarT> const &  F,
+                Intrepid::Tensor<ScalarT> const &  Fp,
+                Intrepid::Tensor<ScalarT>       &  T,
+                Intrepid::Tensor<ScalarT>       &  S,
+		std::vector<ScalarT>            &  shear);
 
   ///
   /// Check tensor for nans and infs.
