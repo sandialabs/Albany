@@ -26,6 +26,7 @@ public:
 
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
+  typedef typename Sacado::Fad::DFad<ScalarT> Fad;
 
   using ConstitutiveModel<EvalT, Traits>::num_dims_;
   using ConstitutiveModel<EvalT, Traits>::num_pts_;
@@ -75,46 +76,32 @@ private:
   CrystalPlasticityModel& operator=(const CrystalPlasticityModel&);
 
   ///
-  /// predictor
-  ///
-  void
-  predictorOLD(ScalarT                            dt,
-	       std::vector<ScalarT> const &       slip_n,
-	       std::vector<ScalarT> &             slip_np1,
-	       std::vector<ScalarT> const &       hardness_n,
-	       std::vector<ScalarT> &             hardness_np1,
-	       Intrepid::Tensor<ScalarT> const &  F_np1,
-	       Intrepid::Tensor<ScalarT> &        Lp_np1,
-	       Intrepid::Tensor<ScalarT> &        Fp_np1);
-
-  ///
   /// explicit update of the slip
   ///
   void
-  computeSlipIncrementsViaExplicitIntegration(ScalarT                       dt,
-					      std::vector<ScalarT> const &  slip_n,
-					      std::vector<ScalarT> const &  hardness_n,
-					      Intrepid::Tensor<ScalarT>  &  S,
-					      std::vector<ScalarT> &        slip_increment);
+  updateSlipViaExplicitIntegration(ScalarT                        dt,
+				   std::vector<ScalarT> const &   slip_n,
+				   std::vector<ScalarT> const &   hardness_n,
+				   Intrepid::Tensor<Fad> const &  S,
+				   std::vector<Fad> &             slip_np1);
 
   ///
-  /// update the slip at step n+1 and compute related quantities
+  /// Compute Lp_np1 and Fp_np1 based on computed slip increment
   ///
   void
-  applyDeltaSlipIncrement(std::vector<ScalarT> const &       delta_slip_increment,
-			  std::vector<ScalarT> const &       slip_n,
-			  Intrepid::Tensor<ScalarT> const &  Fp_n,
-			  std::vector<ScalarT> &             slip_np1,
-			  Intrepid::Tensor<ScalarT> &        Lp_np1,
-			  Intrepid::Tensor<ScalarT> &        Fp_np1);
+  applySlipIncrement(std::vector<ScalarT> const &       slip_n,
+		     std::vector<Fad> const &           slip_np1,
+		     Intrepid::Tensor<ScalarT> const &  Fp_n,
+		     Intrepid::Tensor<Fad> &            Lp_np1,
+		     Intrepid::Tensor<Fad> &            Fp_np1);
 
   ///
   /// update the hardness
   ///
   void
-  updateHardness(std::vector<ScalarT> const &  slip_np1,
+  updateHardness(std::vector<Fad> const &      slip_np1,
 		 std::vector<ScalarT> const &  hardness_n,
-		 std::vector<ScalarT> &        hardness_np1);
+		 std::vector<Fad> &            hardness_np1);
   
   ///
   /// residual
@@ -122,35 +109,35 @@ private:
   void
   computeResidual(ScalarT                       dt,
 		  std::vector<ScalarT> const &  slip_n,
-		  std::vector<ScalarT> const &  slip_np1,
-		  std::vector<ScalarT> const &  hardness_np1,
-		  std::vector<ScalarT> const &  shear_np1,
-		  std::vector<ScalarT> &        slip_residual,
-		  ScalarT &                     norm_slip_residual);
+		  std::vector<Fad> const &      slip_np1,
+		  std::vector<Fad> const &      hardness_np1,
+		  std::vector<Fad> const &      shear_np1,
+		  std::vector<Fad> &            slip_residual,
+		  Fad &                         norm_slip_residual);
 
   ///
   /// compute stresses
   ///
   void 
   computeStress(Intrepid::Tensor<ScalarT> const &  F,
-                Intrepid::Tensor<ScalarT> const &  Fp,
-                Intrepid::Tensor<ScalarT>       &  T,
-                Intrepid::Tensor<ScalarT>       &  S,
-		std::vector<ScalarT>            &  shear);
+                Intrepid::Tensor<Fad> const &      Fp,
+                Intrepid::Tensor<Fad> &            T,
+                Intrepid::Tensor<Fad> &            S,
+		std::vector<Fad>      &            shear);
 
   void
   constructMatrixFiniteDifference(ScalarT                            dt,
 				  Intrepid::Tensor<ScalarT> const &  Fp_n,
 				  Intrepid::Tensor<ScalarT> const &  F_np1,
 				  std::vector<ScalarT> const &       slip_n,
-				  std::vector<ScalarT> const &       slip_np1,
+				  std::vector<Fad> const &           slip_np1,
 				  std::vector<ScalarT> const &       hardness_n,
-				  std::vector<ScalarT> &             matrix);
+				  std::vector<Fad> &                 matrix);
 
   ///
   /// Check tensor for nans and infs.
   ///
-  void confirmTensorSanity(Intrepid::Tensor<ScalarT> const & input,
+  void confirmTensorSanity(Intrepid::Tensor<Fad> const & input,
 			   std::string const & message);
 
   ///
@@ -168,14 +155,7 @@ private:
   //! \brief Struct to slip system information
   struct SlipSystemStruct {
 
-    SlipSystemStruct() {
-      // s_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
-      // n_ = Intrepid::Vector<RealType> (num_dims_, Intrepid::ZEROS);
-      // tau_critical_ = 1.0;
-      // gamma_dot_0_  = 0.0;
-      // gamma_exp_    = 0.0;
-      // H_            = 0.0;
-    }
+    SlipSystemStruct() {}
 
     // slip system vectors
     Intrepid::Vector<RealType> s_, n_;
@@ -191,13 +171,6 @@ private:
   /// Crystal Plasticity parameters
   ///
   std::vector<SlipSystemStruct> slip_systems_;
-
-
-  ///
-  /// Workspace
-  ///
-  Intrepid::Tensor<ScalarT> F_, Fpinv_, Fe_, E_; 
-  Intrepid::Tensor<RealType> I_;
   };
 }
 
