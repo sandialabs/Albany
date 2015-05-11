@@ -8,6 +8,7 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Albany_Utils.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
+#include "LocalNonlinearSolver.hpp"
 
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
@@ -352,9 +353,13 @@ bool print_debug = false;
   Intrepid::Tensor<ScalarT> Re_np1(num_dims_);
   std::vector<ScalarT> slip_n(num_slip_), slip_np1(num_slip_), delta_slip_increment(num_slip_);
   std::vector<ScalarT> hardness_n(num_slip_), hardness_np1(num_slip_), shear_np1(num_slip_);
-  Intrepid::Vector<ScalarT> slip_residual(num_slip_);
+  std::vector<ScalarT> slip_residual(num_slip_);
   ScalarT norm_slip_residual;
   I_ = Intrepid::eye<RealType>(num_dims_);
+
+  // This solver deals with Sacado type info
+  LocalNonlinearSolver<EvalT, Traits> solver;
+  std::vector<ScalarT> solver_matrix(num_slip_*num_slip_);
 
 #ifdef PRINT_OUTPUT
   std::ofstream out("output.dat", std::fstream::app);
@@ -400,10 +405,10 @@ bool print_debug = false;
       while(Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual) > residual_tolerance && iteration < max_iterations){
 
 	// compute delta_slip_increment
- 	computeSlipIncrementsViaExplicitIntegration(dt, slip_n, hardness_n, S_np1, delta_slip_increment);
+	computeSlipIncrementsViaExplicitIntegration(dt, slip_n, hardness_n, S_np1, delta_slip_increment);
 
 	// compute slip_np1, Lp_np1, and Fp_np1
- 	applyDeltaSlipIncrement(delta_slip_increment, slip_n, slip_np1, Lp_np1, Fp_np1);
+ 	applyDeltaSlipIncrement(delta_slip_increment, slip_n, Fp_n, slip_np1, Lp_np1, Fp_np1);
 
 	// compute hardness_np1
  	updateHardness(slip_np1, hardness_n, hardness_np1);
@@ -602,13 +607,14 @@ template<typename EvalT, typename Traits>
 void CrystalPlasticityModel<EvalT, Traits>::
 applyDeltaSlipIncrement(std::vector<ScalarT> const &       delta_slip_increment,
 			std::vector<ScalarT> const &       slip_n,
+			Intrepid::Tensor<ScalarT> const &  Fp_n,
 			std::vector<ScalarT> &             slip_np1,
 			Intrepid::Tensor<ScalarT> &        Lp_np1,
 			Intrepid::Tensor<ScalarT> &        Fp_np1)
 {
   ScalarT temp;
   Intrepid::Tensor<RealType> P(num_dims_);
-  Intrepid::Tensor<ScalarT> expL(num_dims_), Fp_temp(num_dims_);
+  Intrepid::Tensor<ScalarT> expL(num_dims_);
 
   Lp_np1.fill(Intrepid::ZEROS);
   for (int s(0); s < num_slip_; ++s) {
@@ -627,8 +633,7 @@ applyDeltaSlipIncrement(std::vector<ScalarT> const &       delta_slip_increment,
 
   // update plastic deformation gradient
   expL = Intrepid::exp(Lp_np1);
-  Fp_temp = expL * Fp_np1;
-  Fp_np1 = Fp_temp;
+  Fp_np1 = expL * Fp_n;
 
   confirmTensorSanity(Fp_np1, "Fp_np1 in applyDeltaSlipIncrement()");
 }
@@ -665,7 +670,7 @@ computeResidual(ScalarT                            dt,
 		std::vector<ScalarT> const &       slip_np1,
 		std::vector<ScalarT> const &       hardness_np1,
 		std::vector<ScalarT> const &       shear_np1,
-		Intrepid::Vector<ScalarT> &        slip_residual,
+		std::vector<ScalarT> &             slip_residual,
 		ScalarT &                          norm_slip_residual)
 {
   ScalarT g0, tauC, m, temp;
@@ -694,9 +699,63 @@ computeResidual(ScalarT                            dt,
   }
 
   // Take norm of residual - protect sqrt (Saccado)
-  norm_slip_residual = Intrepid::dot(slip_residual, slip_residual);
+  norm_slip_residual = 0.0;
+  for(unsigned int i=0 ; i<slip_residual.size() ; ++i){
+    norm_slip_residual += slip_residual[i]*slip_residual[i];
+  }
   if (norm_slip_residual > 0.0) {
     norm_slip_residual = std::sqrt(norm_slip_residual);
+  }
+}
+
+//------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+void CrystalPlasticityModel<EvalT, Traits>::
+constructMatrixFiniteDifference(ScalarT                            dt,
+				Intrepid::Tensor<ScalarT> const &  Fp_n,
+				Intrepid::Tensor<ScalarT> const &  F_np1,
+				std::vector<ScalarT> const &       slip_n,
+				std::vector<ScalarT> const &       slip_np1,
+				std::vector<ScalarT> const &       hardness_n,
+				std::vector<ScalarT> &             matrix)
+{
+  std::vector<ScalarT> delta_slip_increment_temp(num_slip_);
+  std::vector<ScalarT> slip_np1_temp(num_slip_);
+  std::vector<ScalarT> hardness_np1_temp(num_slip_);
+  Intrepid::Tensor<ScalarT> Lp_np1_temp(num_dims_);
+  Intrepid::Tensor<ScalarT> Fp_np1_temp(num_dims_);
+  Intrepid::Tensor<ScalarT> sigma_np1_temp(num_dims_), S_np1_temp(num_dims_);
+  std::vector<ScalarT> shear_np1_temp(num_slip_);
+  std::vector<ScalarT> slip_residual_unperturbed(num_slip_);
+  std::vector<ScalarT> slip_residual_temp(num_slip_);
+  ScalarT norm_slip_residual_temp;
+
+  // Compute unperturbed slip residual
+  for (int s(0); s < num_slip_; ++s) {
+    slip_np1_temp[s] = slip_np1[s];
+    delta_slip_increment_temp[s] = slip_np1[s] - slip_n[s];
+  }
+  applyDeltaSlipIncrement(delta_slip_increment_temp, slip_n, Fp_n, slip_np1_temp, Lp_np1_temp, Fp_np1_temp);
+  updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
+  computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
+  computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_unperturbed, norm_slip_residual_temp);
+
+  // Compute the entries in the matrix via forward finite difference
+  ScalarT epsilon = 1.0e-6;
+  for(int row=0 ; row<num_slip_ ; row++){
+    for (int s(0); s < num_slip_; ++s) {
+      slip_np1_temp[s] = slip_np1[s];
+      delta_slip_increment_temp[s] = slip_np1[s] - slip_n[s];
+    }
+    delta_slip_increment_temp[row] += epsilon;
+    applyDeltaSlipIncrement(delta_slip_increment_temp, slip_n, Fp_n, slip_np1_temp, Lp_np1_temp, Fp_np1_temp);
+    updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
+    computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
+    computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_temp, norm_slip_residual_temp);
+    for(int column=0 ; column<num_slip_ ; column++){
+      matrix[row*num_slip_ + column] = (slip_residual_temp[column] - slip_residual_unperturbed[column])/epsilon;
+    }
   }
 }
 

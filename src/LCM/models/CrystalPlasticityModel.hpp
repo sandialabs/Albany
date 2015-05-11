@@ -101,11 +101,12 @@ private:
   /// update the slip at step n+1 and compute related quantities
   ///
   void
-  applyDeltaSlipIncrement(std::vector<ScalarT> const &  delta_slip_increment,
-			  std::vector<ScalarT> const &  slip_n,
-			  std::vector<ScalarT> &        slip_np1,
-			  Intrepid::Tensor<ScalarT> &   Lp_np1,
-			  Intrepid::Tensor<ScalarT> &   Fp_np1);
+  applyDeltaSlipIncrement(std::vector<ScalarT> const &       delta_slip_increment,
+			  std::vector<ScalarT> const &       slip_n,
+			  Intrepid::Tensor<ScalarT> const &  Fp_n,
+			  std::vector<ScalarT> &             slip_np1,
+			  Intrepid::Tensor<ScalarT> &        Lp_np1,
+			  Intrepid::Tensor<ScalarT> &        Fp_np1);
 
   ///
   /// update the hardness
@@ -119,13 +120,13 @@ private:
   /// residual
   ///
   void
-  computeResidual(ScalarT                            dt,
-		  std::vector<ScalarT> const &       slip_n,
-		  std::vector<ScalarT> const &       slip_np1,
-		  std::vector<ScalarT> const &       hardness_np1,
-		  std::vector<ScalarT> const &       shear_np1,
-		  Intrepid::Vector<ScalarT> &        slip_residual,
-		  ScalarT &                          norm_slip_residual);
+  computeResidual(ScalarT                       dt,
+		  std::vector<ScalarT> const &  slip_n,
+		  std::vector<ScalarT> const &  slip_np1,
+		  std::vector<ScalarT> const &  hardness_np1,
+		  std::vector<ScalarT> const &  shear_np1,
+		  std::vector<ScalarT> &        slip_residual,
+		  ScalarT &                     norm_slip_residual);
 
   ///
   /// compute stresses
@@ -136,6 +137,15 @@ private:
                 Intrepid::Tensor<ScalarT>       &  T,
                 Intrepid::Tensor<ScalarT>       &  S,
 		std::vector<ScalarT>            &  shear);
+
+  void
+  constructMatrixFiniteDifference(ScalarT                            dt,
+				  Intrepid::Tensor<ScalarT> const &  Fp_n,
+				  Intrepid::Tensor<ScalarT> const &  F_np1,
+				  std::vector<ScalarT> const &       slip_n,
+				  std::vector<ScalarT> const &       slip_np1,
+				  std::vector<ScalarT> const &       hardness_n,
+				  std::vector<ScalarT> &             matrix);
 
   ///
   /// Check tensor for nans and infs.
