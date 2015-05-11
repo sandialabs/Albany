@@ -4,7 +4,7 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#define DEBUG_FREQ 10000000
+#define DEBUG_FREQ 100000000000
 #include <Intrepid_MiniTensor.h>
 #include "Teuchos_TestForException.hpp"
 #include "Phalanx_DataLayout.hpp"
@@ -55,7 +55,6 @@ CreepModel(Teuchos::ParameterList* p,
     const Teuchos::RCP<Albany::Layouts>& dl) :
     LCM::ConstitutiveModel<EvalT, Traits>(p, dl),
     creep_initial_guess_(p->get<RealType>("Initial Creep Guess", 1.1e-4)),
-    // relax_time_scale_(p->get<RealType>("Relaxation Time Scale", 0.0025)),
 
     //sat_mod_(p->get<RealType>("Saturation Modulus", 0.0)),
     //sat_exp_(p->get<RealType>("Saturation Exponent", 0.0)),
@@ -134,6 +133,19 @@ CreepModel(Teuchos::ParameterList* p,
   }
 }
 
+void creepprint(double x)
+{
+  fprintf(stderr, "%a\n", x);
+}
+
+void creepprint(FadType const& x)
+{
+  fprintf(stderr, "%a [", x.val());
+  for (int i = 0; i < x.size(); ++i)
+    fprintf(stderr, " %a", x.dx(i));
+  fprintf(stderr, "\n");
+}
+
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
 void CreepModel<EvalT, Traits>::
@@ -170,7 +182,7 @@ computeState(typename Traits::EvalData workset,
 
   ScalarT kappa, mu, mubar, K, Y;
   // new parameters introduced here for being the temperature dependent, they are the last two listed below
-  ScalarT Jm23, p, dgam, dgam_plastic, a0, a1, f, smag, smag_new, temp_adj_relaxation_para_;
+  ScalarT Jm23, p, dgam, dgam_plastic, a0, a1, f, smag, temp_adj_relaxation_para_;
   ScalarT sq23(std::sqrt(2. / 3.));
 
   Intrepid::Tensor<ScalarT> F(num_dims_), be(num_dims_), s(num_dims_), sigma(
@@ -182,7 +194,7 @@ computeState(typename Traits::EvalData workset,
 
   long int debug_output_counter = 0;
 
-  if (typeid(ScalarT) == typeid(double))
+  if (sizeof(ScalarT) == sizeof(double))
     std::cerr << "Model double times_called " << times_called << '\n';
   else
     std::cerr << "Model FAD times_called " << times_called << '\n';
@@ -201,7 +213,15 @@ computeState(typename Traits::EvalData workset,
       // ----------------------------  temperature dependent coefficient ------------------------
 
       // the effective 'B' we had before in the previous models, with mu
-      temp_adj_relaxation_para_ = relaxation_para_ *  std::exp( - activation_para_ / 303.0);
+      if(have_temperature_) {
+        temp_adj_relaxation_para_ = relaxation_para_ *  std::exp( - activation_para_ / temperature_(cell,pt)) ;
+      }else {
+        temp_adj_relaxation_para_ = relaxation_para_ *  std::exp( - activation_para_ / 303.0);
+      }
+
+      if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"B = "<<temp_adj_relaxation_para_<<std::endl;
+
+
 
       // fill local tensors
       F.fill(def_grad, cell, pt, 0, 0);
@@ -228,7 +248,7 @@ computeState(typename Traits::EvalData workset,
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
-      bool doit = (typeid(ScalarT) == typeid(FadType) && times_called == 5000
+      bool doit = (sizeof(ScalarT) == sizeof(FadType) && times_called == 5000000000
           && cell == 0 && pt == 0);
       // check yield condition
       if (f <= 0.0) {
@@ -251,24 +271,27 @@ computeState(typename Traits::EvalData workset,
           std::vector<ScalarT> dFdX(1);
           std::vector<ScalarT> X(1);
 
-          X[0] = smag;
+
+          X[0] = creep_initial_guess_;
+
+          F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.)- 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.);
+
+          dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.) - 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * std::pow(a1, 2.) - 4./3. * a0 * a1);
 
           while (!converged && count <= 30)
           {
-            //count++;
-            F[0] = X[0] - smag + 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_) ;
-
-            dFdX[0] = 1. + strain_rate_expo_ * 2. * mubar * delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ - 1.);
-
-            //solver.solve(dFdX, X, F);
-            solver.solve(dFdX, X, F);
             count++;
+            solver.solve(dFdX, X, F);
+
+            F[0] = X[0] - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.)- 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.);
+
+          dFdX[0] = 1. - delta_time(0)*temp_adj_relaxation_para_*std::pow(mu, strain_rate_expo_ )*( strain_rate_expo_ /2. )*std::pow( std::pow(a0, 2.) + 4./9. * std::pow(X[0], 2.) * std::pow(a1, 2.) - 4./3. * X[0] * a0 * a1, strain_rate_expo_ /2.- 1.)*(8./9. * X[0] * std::pow(a1, 2.) - 4./3. * a0 * a1);
+
 
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"Creep Solver count = "<<count<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"X[0] = "<<X[0]<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"F[0] = "<<F[0]<<std::endl;
             if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"dFdX[0] = "<<dFdX[0]<<std::endl;
-        //    if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"***finish return mapping***"<<std::endl;
    
 
             res = std::abs(F[0]);
@@ -285,15 +308,21 @@ computeState(typename Traits::EvalData workset,
                 "\nalpha = " << alpha << std::endl);
 
           }
-          //solver.computeFadInfo(dFdX, X, F);
-          dgam = delta_time(0) * temp_adj_relaxation_para_ * std::pow(X[0], strain_rate_expo_ );
-
+          solver.computeFadInfo(dFdX, X, F);
+          
+          dgam = X[0];
+      
           // plastic direction
           N =  s / Intrepid::norm(s);
 
           // update s
-          // s -= 2 * mubar * dgam * N;
-          s = X[0]*N;
+          s -= 2 * mubar * dgam * N;
+
+          // mechanical source
+          if (have_temperature_ && delta_time(0) > 0) {
+          source(cell, pt) = 0.0 * (sq23 * dgam / delta_time(0)
+            * (Y + temperature_(cell,pt))) / (density_ * heat_capacity_);
+          }
 
           // exponential map to get Fpnew
           A = dgam * N;
@@ -324,7 +353,7 @@ computeState(typename Traits::EvalData workset,
         ScalarT res = 0.0;
         int count = 0;
         dgam = 0.0;
-        smag_new = 0.0;
+        //smag_new = 0.0;
         dgam_plastic = 0.0;
 
         LocalNonlinearSolver<EvalT, Traits> solver;
@@ -433,6 +462,12 @@ computeState(typename Traits::EvalData workset,
         // update eqps
         eqps(cell, pt) = alpha;
 
+        // mechanical source
+        if (have_temperature_ && delta_time(0) > 0) {
+          source(cell, pt) = 0.0 * (sq23 * dgam / delta_time(0)
+            * (Y + H + temperature_(cell,pt))) / (density_ * heat_capacity_);
+        }
+
         // exponential map to get Fpnew
         A = dgam * N;
         expA = Intrepid::exp(A);
@@ -485,10 +520,12 @@ computeState(typename Traits::EvalData workset,
           for (int j = 0; j < num_dims_; ++j)
             aprints(stress(cell,pt,i,j));
       }
+
+ //     if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"sigma(combine) = "<<sigma<<std::endl;
     }
   }
 
-  if ((typeid(ScalarT) == typeid(FadType)) && times_called == 5000) {
+  if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000000000) {
     std::cerr << "stress:\n";
     for (int cell = 0; cell < workset.numCells; ++cell) {
       std::cerr << "cell " << cell << ":\n";
@@ -517,7 +554,7 @@ computeState(typename Traits::EvalData workset,
     }
   }
 
-  if ((typeid(ScalarT) == typeid(FadType)) && times_called == 5000)
+  if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000000000)
     abort();
 
   ++times_called;
