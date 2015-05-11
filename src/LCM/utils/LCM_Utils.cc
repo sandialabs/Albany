@@ -10,7 +10,7 @@ namespace LCM {
 RCP<MaterialDatabase>
 createMaterialDatabase(
     RCP<ParameterList> const & params,
-    RCP<const Teuchos_Comm> & commT)
+    RCP<Teuchos_Comm const> & commT)
 {
   bool
   is_valid_material_db = params->isType<std::string>("MaterialDB Filename");
