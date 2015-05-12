@@ -190,6 +190,14 @@ ELEMENT VARIABLES relative 1.e-6 floor 0.0
 	Mechanical_Source_6			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
 	Mechanical_Source_7			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
 	Mechanical_Source_8			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
+	CP_Residual_1	 absolute 1e-12
+	CP_Residual_2	 absolute 1e-12
+	CP_Residual_3	 absolute 1e-12
+	CP_Residual_4	 absolute 1e-12
+	CP_Residual_5	 absolute 1e-12
+	CP_Residual_6	 absolute 1e-12
+	CP_Residual_7	 absolute 1e-12
+	CP_Residual_8	 absolute 1e-12
 	Velocity_Gradient_01	 absolute 2.7788467e-09	# min: 0 @ t1,b1,e1 max: 0.00027788467 @ t50,b2,e2
 	Velocity_Gradient_02	 absolute 2.7788467e-09	# min: 0 @ t1,b1,e1 max: 0.00027788467 @ t50,b2,e2
 	Velocity_Gradient_03			# min: 0 @ t1,b1,e1 max: 0 @ t1,b1,e1
