@@ -22,6 +22,7 @@
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-6"/>
       <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
+      <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
       <!-- Crystal Elasticity moduli and orientation -->
       <ParameterList name="Crystal Elasticity">
@@ -86,6 +87,7 @@
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output Mechanical Source" type="bool" value="true"/>
+      <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
     </ParameterList>
 

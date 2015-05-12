@@ -10,7 +10,7 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 #include "LocalNonlinearSolver.hpp"
 
-//#define  PRINT_DEBUG
+#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
 
@@ -561,6 +561,7 @@ bool print_debug = false;
 
       // Copy data from local data structures back into Albany fields
       source(cell, pt) = 0.0;
+      cp_residual(cell, pt) = norm_slip_residual;
       for (int i(0); i < num_dims_; ++i) {
         for (int j(0); j < num_dims_; ++j) {
           xtal_rotation(cell, pt, i, j) = Re_np1(i, j);
