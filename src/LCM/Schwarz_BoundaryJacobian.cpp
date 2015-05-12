@@ -169,16 +169,8 @@ apply(
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
-  Tpetra_MultiVector
-  W(X, Teuchos::DataAccess::Copy);
-
-  W = make_vector(X);
-
   Teuchos::ArrayRCP<ST const>
-  X_view = W.get1dView();
-
-  //Teuchos::ArrayRCP<ST const>
-  //X_view = X.get1dView();
+  X_view = X.get1dView();
 
   std::vector<int> const
   ns_coarse = {4,5,6,7};
@@ -245,17 +237,12 @@ apply(
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "W_%04d.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, W);
-#endif  // WRITE_TO_MATRIX_MARKET
-
-#ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Jac%04d_%04d.mm", this_app_index, mm_counter);
   Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs_[this_app_index]);
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET
 }
-#endif // APPLY_H27_H8_EXPLICIT
+#endif // APPLY_H8_H8_EXPLICIT
 
 #if defined(APPLY_H27_H8_EXPLICIT)
 // Returns the result of a Tpetra_Operator applied to a

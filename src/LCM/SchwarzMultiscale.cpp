@@ -75,44 +75,40 @@ SchwarzMultiscale(
   //Get "Problem" parameter list
   Teuchos::ParameterList &
   problem_params = app_params->sublist("Problem");
-  Teuchos::RCP<Teuchos::ParameterList> parameter_params; 
-  Teuchos::RCP<Teuchos::ParameterList> response_params; 
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  parameter_params;
+
+  Teuchos::RCP<Teuchos::ParameterList>
+  response_params;
 
   //Get "Parameters" parameter sublist, if it exists
   if (problem_params.isSublist("Parameters")) {
     parameter_params = Teuchos::rcp(
-        &(problem_params.sublist("Parameters")),
-        false);
+        &(problem_params.sublist("Parameters")), false);
 
-    num_params_total_ = parameter_params->get("Number of Parameter Vectors", 0);
+    auto const
+    num_parameters = parameter_params->isType<int>("Number") == true ?
+        parameter_params->get<int>("Number") : 0;
 
-    bool using_old_parameter_list = false;
 
-    if (parameter_params->isType<int>("Number") == true) {
-      int num_parameters = parameter_params->get<int>("Number");
+    bool const
+    using_old_parameter_list = num_parameters > 0 ? true : false;
 
-      if (num_parameters > 0) {
-        num_params_total_ = 1;
-        using_old_parameter_list = true;
-      }
-    }
-  
+    num_params_total_ = num_parameters > 0  ?
+        1 : parameter_params->get("Number of Parameter Vectors", 0);
+
     //Get parameter names
     param_names_.resize(num_params_total_);
-    for (int l = 0; l < num_params_total_; ++l) {
-      Teuchos::RCP<Teuchos::ParameterList const>
-      p_list;
+    for (auto l = 0; l < num_params_total_; ++l) {
 
-      if (using_old_parameter_list) {
-        p_list =  Teuchos::rcp(new Teuchos::ParameterList(*parameter_params));
-      }
-      else {
-        p_list = Teuchos::rcp(
-            &(parameter_params->sublist(Albany::strint("Parameter Vector", l))),
-            false);
-      }
- 
-      int const
+      Teuchos::RCP<Teuchos::ParameterList const>
+      p_list = using_old_parameter_list == true ?
+          Teuchos::rcp(new Teuchos::ParameterList(*parameter_params)) :
+          Teuchos::rcp(&(parameter_params->sublist(
+              Albany::strint("Parameter Vector", l))),false);
+
+      auto const
       num_parameters = p_list->get<int>("Number");
 
       assert(num_parameters > 0);
@@ -120,27 +116,29 @@ SchwarzMultiscale(
       param_names_[l] =
           Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
 
-      for (int k = 0; k < num_parameters; ++k) {
+      for (auto k = 0; k < num_parameters; ++k) {
         (*param_names_[l])[k] =
           p_list->get<std::string>(Albany::strint("Parameter", k));
       }
-      std::cout << "Number of parameters in parameter vector "
-        << l << " = " << num_parameters << '\n';
+      std::cout << "Number of parameters in parameter vector ";
+      std::cout << l << " = " << num_parameters << '\n';
     }
   }
-  else num_params_total_ = 0; 
+  else {
+    num_params_total_ = 0;
+  }
 
   std::cout << "Number of parameter vectors = " << num_params_total_ << '\n';
 
-  
   //---------------End Parameters---------------------
+  
   //----------------Responses------------------------
   //Get "Response functions" parameter sublist
   num_responses_total_ = 0;
 
   if (problem_params.isSublist("Response Functions")) {
-    response_params = Teuchos::rcp(
-        &(problem_params.sublist("Response Functions")), false);
+    response_params =
+        Teuchos::rcp(&(problem_params.sublist("Response Functions")), false);
 
     num_responses_total_ =
         response_params->get("Number of Response Vectors", 0);
