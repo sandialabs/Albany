@@ -46,7 +46,7 @@
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/cube_quad4_6eles.g"/>
     <Parameter name="Cubature Degree" type="int" value="3"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Element Degree" type="int" value="3"/>
+    <Parameter name="Element Degree" type="int" value="2"/>
     <Parameter name="Transform Type" type="string" value="Spherical"/>
     <Parameter name="Exodus Output File Name" type="string" value="spectral_6eles_out.exo"/>
     <Parameter name="Exodus Write Interval" type="int" value="1"/>

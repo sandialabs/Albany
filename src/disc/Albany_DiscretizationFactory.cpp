@@ -304,8 +304,8 @@ Albany::DiscretizationFactory::createMeshSpecs() {
   //overwrite the meshSpecs of the meshStruct with an enriched one. 
 #ifdef ALBANY_AERAS
   if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras") { 
-    //get "Element Degree" from parameter list.  Default value is 2. 
-    int points_per_edge = discParams->get("Element Degree", 2); 
+    //get "Element Degree" from parameter list.  Default value is 1. 
+    int points_per_edge = discParams->get("Element Degree", 1) + 1; 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > &mesh_specs_struct = meshStruct->getMeshSpecs();
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> >::size_type number_blocks = mesh_specs_struct.size();
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > enriched_mesh_specs_struct; 
