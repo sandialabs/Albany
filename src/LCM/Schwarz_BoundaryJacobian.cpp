@@ -21,6 +21,9 @@ static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
+//#define APPLY_GENERAL_IMPLICIT
+//#define APPLY_H27_H8_EXPLICIT
+#define APPLY_H8_H8_EXPLICIT
 
 LCM::
 Schwarz_BoundaryJacobian::
@@ -135,12 +138,13 @@ make_vector(Tpetra_MultiVector const & X) const
   return W;
 }
 
+#if defined(APPLY_H8_H8_EXPLICIT)
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
 void
 LCM::
 Schwarz_BoundaryJacobian::
-apply2(
+apply(
     Tpetra_MultiVector const & X,
     Tpetra_MultiVector & Y,
     Teuchos::ETransp mode,
@@ -162,32 +166,40 @@ apply2(
 
   Y.putScalar(zero);
 
-  if (num_nodes == 8) return;
-
   Teuchos::ArrayRCP<ST>
   Y_view = Y.get1dViewNonConst();
 
+  Tpetra_MultiVector
+  W(X, Teuchos::DataAccess::Copy);
+
+  W = make_vector(X);
+
   Teuchos::ArrayRCP<ST const>
-  X_view = X.get1dView();
+  X_view = W.get1dView();
+
+  //Teuchos::ArrayRCP<ST const>
+  //X_view = X.get1dView();
 
   std::vector<int> const
   ns_coarse = {4,5,6,7};
 
   std::vector<int> const
-  ns_fine = {0,1,2,3,4,5,6,7,8};
+  ns_fine = {0,1,2,3};
 
   std::vector<std::vector<int>> const
-  from_fine = {{23}, {19}, {18}, {21}};
+  from_fine = {{0,5}, {1,4}, {2,7}, {3,6}};
 
   std::vector<std::vector<int>> const
-  from_coarse = {{0,5}, {1,4}, {0,1,4,5}, {2,7}, {1,2,4,7}, {3,6},
-      {2,3,6,7}, {0,3,5,6}, {0,1,2,3,4,5,6,7}};
+  from_coarse = {{1,4}, {0,5}, {3,6}, {2,7}};
+
+  auto const
+  this_app_index = getThisAppIndex();
 
   std::vector<int> const &
-  ns_nodes = num_nodes == 8 ? ns_coarse : ns_fine;
+  ns_nodes = this_app_index == 1 ? ns_coarse : ns_fine;
 
   std::vector<std::vector<int>> const &
-  from_nodes = num_nodes == 8 ? from_fine : from_coarse;
+  from_nodes = this_app_index == 1 ? from_fine : from_coarse;
 
   for (auto node = 0; node < num_nodes; ++node) {
 
@@ -221,8 +233,117 @@ apply2(
     }
   }
 
+#ifdef WRITE_TO_MATRIX_MARKET
+  char name[100];
+  sprintf(name, "X_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, X);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Y_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "W_%04d.mm", mm_counter);
+  Tpetra_MatrixMarket_Writer::writeDenseFile(name, W);
+#endif  // WRITE_TO_MATRIX_MARKET
+
+#ifdef WRITE_TO_MATRIX_MARKET
+  sprintf(name, "Jac%04d_%04d.mm", this_app_index, mm_counter);
+  Tpetra_MatrixMarket_Writer::writeSparseFile(name, jacs_[this_app_index]);
+  mm_counter++;
+#endif // WRITE_TO_MATRIX_MARKET
+}
+#endif // APPLY_H27_H8_EXPLICIT
+
+#if defined(APPLY_H27_H8_EXPLICIT)
+// Returns the result of a Tpetra_Operator applied to a
+// Tpetra_MultiVector X in Y.
+void
+LCM::
+Schwarz_BoundaryJacobian::
+apply(
+    Tpetra_MultiVector const & X,
+    Tpetra_MultiVector & Y,
+    Teuchos::ETransp mode,
+    ST alpha,
+    ST beta) const
+{
+  auto const
+  num_dof = Y.getGlobalLength();
+
+  auto const
+  dim = 3;
+
+  auto const
+  num_nodes = num_dof / dim;
+
+  // Initialize Y vector.
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+
+  Teuchos::ArrayRCP<ST>
+  Y_view = Y.get1dViewNonConst();
+
+  Teuchos::ArrayRCP<ST const>
+  X_view = X.get1dView();
+
+  std::vector<int> const
+  ns_coarse = {4,5,6,7};
+
+  std::vector<int> const
+  ns_fine = {0,1,2,3,4,5,6,7,8};
+
+  std::vector<std::vector<int>> const
+  from_fine = {{23}, {19}, {18}, {21}};
+
+  std::vector<std::vector<int>> const
+  from_coarse = {{0,5}, {1,4}, {0,1,4,5}, {2,7}, {1,2,4,7}, {3,6},
+      {2,3,6,7}, {0,3,5,6}, {0,1,2,3,4,5,6,7}};
+
   auto const
   this_app_index = getThisAppIndex();
+
+  std::vector<int> const &
+  ns_nodes = this_app_index == 1 ? ns_coarse : ns_fine;
+
+  std::vector<std::vector<int>> const &
+  from_nodes = this_app_index == 1 ? from_fine : from_coarse;
+
+  for (auto node = 0; node < num_nodes; ++node) {
+
+    for (auto i = 0; i < ns_nodes.size(); ++i) {
+      if (node != ns_nodes[i]) continue;
+
+      Intrepid::Vector<double, dim>
+      value(Intrepid::ZEROS);
+
+      std::vector<int> const &
+      inodes = from_nodes[i];
+
+      auto const
+      num_inodes = inodes.size();
+
+      auto const
+      weight = 1.0 / num_inodes;
+
+      for (auto j = 0; j < num_inodes; ++j) {
+
+        auto const
+        inode = inodes[j];
+
+        for (auto d = 0; d < dim; ++d) {
+          value(d) += weight * X_view[dim * inode + d];
+        }
+      }
+      for (auto d = 0; d < dim; ++d) {
+        Y_view[dim * node + d] = -value(d);
+      }
+    }
+  }
 
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
@@ -241,7 +362,9 @@ apply2(
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET
 }
+#endif // APPLY_H27_H8_EXPLICIT
 
+#if defined(APPLY_GENERAL_IMPLICIT)
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.
 void
@@ -305,6 +428,34 @@ apply(
   auto const
   dimension = this_stk_disc->getNumDim();
 
+#if defined(DEBUG_LCM_SCHWARZ)
+  std::cout << "COORDINATES:\n";
+
+  auto const
+  length = X.getLocalLength();
+
+  auto const
+  num_nodes = length / dimension;
+
+  for (auto n = 0; n < num_nodes; ++n) {
+    auto const
+    dof_x = dimension * n;
+
+    auto const
+    dof_y = dof_x + 1;
+
+    auto const
+    dof_z = dof_x + 2;
+
+    Intrepid::Vector<double, 3>
+    x(coupled_coordinates[dof_x],
+      coupled_coordinates[dof_y],
+      coupled_coordinates[dof_z]);
+
+    std::cout << std::setw(4) << n << " " << x << '\n';
+  }
+#endif // DEBUG_LCM_SCHWARZ
+
   Albany::NodeSetList const &
   nodesets = this_stk_disc->getNodeSets();
 
@@ -365,6 +516,7 @@ apply(
   mm_counter++;
 #endif // WRITE_TO_MATRIX_MARKET
 }
+#endif //APPLY_GENERAL_IMPLICIT
 
 Intrepid::Vector<double>
 LCM::
