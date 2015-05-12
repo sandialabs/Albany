@@ -186,24 +186,24 @@ SchwarzMultiscale(
   apps_.resize(num_models_);
   models_.resize(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
   model_app_params(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList> >
+  Teuchos::Array<Teuchos::RCP<Teuchos::ParameterList>>
   model_problem_params(num_models_);
 
   disc_maps_.resize(num_models_);
 
   jacs_.resize(num_models_);
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_overlap_maps(num_models_);
 
   material_dbs_.resize(num_models_);
 
   //Set up each application and model object in Teuchos::Array
   //(similar logic to that in Albany::SolverFactory::createAlbanyAppAndModelT)
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
 
     //get parameterlist from mth model *.xml file
     Albany::SolverFactory
@@ -228,7 +228,7 @@ SchwarzMultiscale(
             "Error in LCM::CoupledSchwarz! Model input file " <<
             model_filenames[m] <<
             " cannot have a 'Parameters' section!  " <<
-            "Parameters should be specified in the 'master' input file " <<
+            "Parameters must be specified in the 'master' input file " <<
             "driving the coupled problem.\n") ;
       }
       Teuchos::ParameterList &
@@ -248,7 +248,7 @@ SchwarzMultiscale(
             "Error in LCM::CoupledSchwarz! Model input file " <<
             model_filenames[m] <<
             " cannot have a 'Response Functions' section!  " <<
-            "Responses should be specified in the 'master' input file " <<
+            "Responses must be specified in the 'master' input file " <<
             "driving the coupled problem.\n") ;
       }
       Teuchos::ParameterList &
@@ -259,25 +259,24 @@ SchwarzMultiscale(
 
     model_problem_params[m] = problem_params_m;
 
-    std::string &
+    std::string const &
     problem_name = problem_params_m->get("Name", "");
 
     std::cout << "Name of problem #" << m << ": " << problem_name << '\n';
 
-    std::string
-    matdb_filename;
+    bool const
+    matdb_exists = problem_params_m->isType<std::string>("MaterialDB Filename");
 
-    if (problem_params_m->isType<std::string>("MaterialDB Filename")) {
-      matdb_filename =
-          problem_params_m->get<std::string>("MaterialDB Filename");
-    }
-    else {
+    if (matdb_exists == false) {
       TEUCHOS_TEST_FOR_EXCEPTION(
           true,
           std::logic_error,
           "Error in LCM::CoupledSchwarz! " <<
-          "Input file needs to have 'MaterialDB Filename' specified.\n") ;
+          "Input file needs to have 'MaterialDB Filename' specified.\n");
     }
+
+    std::string const &
+    matdb_filename = problem_params_m->get<std::string>("MaterialDB Filename");
 
     material_dbs_[m] =
         Teuchos::rcp(new QCAD::MaterialDatabase(matdb_filename, commT_));
@@ -318,7 +317,6 @@ SchwarzMultiscale(
             Teuchos::null;
   }
 
-
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "Finished creating Albany apps and models!\n";
 #endif
@@ -328,7 +326,7 @@ SchwarzMultiscale(
   solver_inargs_.resize(num_models_);
   solver_outargs_.resize(num_models_);
 
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     disc_maps_[m] = apps_[m]->getMapT();
 
     disc_overlap_maps[m] =
@@ -344,12 +342,12 @@ SchwarzMultiscale(
   // for use in evalModelImpl
   sacado_param_vecs_.resize(num_models_);
 
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     sacado_param_vecs_[m].resize(num_params_total_);
   }
 
-  for (int m = 0; m < num_models_; ++m) {
-    for (int l = 0; l < num_params_total_; ++l) {
+  for (auto m = 0; m < num_models_; ++m) {
+    for (auto l = 0; l < num_params_total_; ++l) {
        try {
          // Initialize Sacado parameter vector
          // The following call will throw,
@@ -366,7 +364,7 @@ SchwarzMultiscale(
          std::cout << "This is probably due to something incorrect in the";
          std::cout << " \"Parameters\" list in the input file, ";
          std::cout << "one of the lines:" << '\n';
-         for (int k = 0; k < param_names_[l]->size(); ++k) {
+         for (auto k = 0; k < param_names_[l]->size(); ++k) {
            std::cout << "      " << (*param_names_[l])[k] << '\n';
          }
          throw le; // rethrow to shut things down
@@ -388,12 +386,12 @@ SchwarzMultiscale(
   // create product vector that concatenates parameters from each model.
   // TODO: Check if these are correct nominal values for parameters
 
-  for (int l = 0; l < num_params_total_; ++l) {
+  for (auto l = 0; l < num_params_total_; ++l) {
 
     Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
     p_spaces(num_models_);
 
-    for (int m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_models_; ++m) {
       p_spaces[m] = models_[m]->get_p_space(l);
     }
 
@@ -403,7 +401,7 @@ SchwarzMultiscale(
     Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> const> >
     p_vecs(num_models_);
     
-    for (int m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_models_; ++m) {
       p_vecs[m] = models_[m]->getNominalValues().get_p(l);
     }
 
@@ -464,7 +462,7 @@ LCM::SchwarzMultiscale::getThyraRangeSpace() const
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
     vs_array;
 
-    for (std::size_t m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_models_; ++m) {
       vs_array.push_back(
           Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
     }
@@ -485,7 +483,7 @@ LCM::SchwarzMultiscale::getThyraDomainSpace() const
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
     vs_array;
 
-    for (std::size_t m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_models_; ++m) {
       vs_array.push_back(
           Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_maps_[m]));
     }
@@ -509,7 +507,7 @@ LCM::SchwarzMultiscale::get_p_space(int l) const
 
   // create product space for lth parameter by concatenating lth parameter
   // from all the models.
-  for (std::size_t m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     vs_array.push_back(models_[m]->get_p_space(l));
   }
 
@@ -530,7 +528,7 @@ LCM::SchwarzMultiscale::get_g_space(int l) const
 
   // create product space for lth response by concatenating lth response
   // from all the models.
-  for (std::size_t m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     vs_array.push_back(
           Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
               apps_[m]->getResponse(l)->responseMapT()));
@@ -647,7 +645,7 @@ allocateVectors()
   Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> >
   spaces(num_models_);
 
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     spaces[m] = Thyra::createVectorSpace<ST>(disc_maps_[m]);
   }
 
@@ -663,7 +661,7 @@ allocateVectors()
   xT_vecs.resize(num_models_);
   x_dotT_vecs.resize(num_models_);
 
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     Teuchos::RCP<Tpetra_Vector>
     xT_vec = Teuchos::rcp(new Tpetra_Vector(*apps_[m]->getInitialSolutionT()));
 
@@ -753,16 +751,14 @@ evalModelImpl(
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << '\n';
 #endif
   //Get xT and x_dotT from in_args
-  Teuchos::RCP<const Thyra::ProductVectorBase<ST> > xT =
-      Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
-          in_args.get_x(),
-          true);
+  Teuchos::RCP<const Thyra::ProductVectorBase<ST> >
+  xT = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
+          in_args.get_x(), true);
 
-  Teuchos::RCP<const Thyra::ProductVectorBase<ST> > x_dotT =
-      Teuchos::nonnull(in_args.get_x_dot()) ?
+  Teuchos::RCP<const Thyra::ProductVectorBase<ST> >
+  x_dotT = Teuchos::nonnull(in_args.get_x_dot()) ?
           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
-              in_args.get_x_dot(),
-              true) :
+              in_args.get_x_dot(), true) :
           Teuchos::null;
 
   // Create a Teuchos array of the xT and x_dotT for each model,
@@ -773,14 +769,14 @@ evalModelImpl(
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> >
   x_dotTs(num_models_);
 
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     //Get each Tpetra vector
     xTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
         xT->getVectorBlock(m),
         true)->getConstTpetraVector();
   }
   if (x_dotT != Teuchos::null) {
-    for (int m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
       x_dotTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
           x_dotT->getVectorBlock(m),
@@ -789,11 +785,11 @@ evalModelImpl(
   }
 
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
-  Teuchos::RCP<Tpetra_Vector const> const x_dotdotT = Teuchos::null;
+  Teuchos::RCP<Tpetra_Vector const> const
+  x_dotdotT = Teuchos::null;
 
   double const
-  alpha =
-      (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
+  alpha = (Teuchos::nonnull(x_dotT) || Teuchos::nonnull(x_dotdotT)) ?
           in_args.get_alpha() : 0.0;
 
   // AGS: x_dotdot time integrators not imlemented in Thyra ME yet
@@ -812,15 +808,15 @@ evalModelImpl(
           in_args.get_t() : 0.0;
 
   //Get parameters
-  for (int l = 0; l < num_params_total_; ++l) { 
+  for (auto l = 0; l < num_params_total_; ++l) {
     //get p from in_args for each parameter
-    Teuchos::RCP<const Thyra::ProductVectorBase<ST> > pT =
+    Teuchos::RCP<Thyra::ProductVectorBase<ST> const> pT =
       Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
-         in_args.get_p(l),
-         true);
+         in_args.get_p(l), true);
       // Don't set it if there is nothing. Avoid null pointer.
       if (Teuchos::is_null(pT) == true) continue;
-      for (int m = 0; m < num_models_; ++m) {
+
+      for (auto m = 0; m < num_models_; ++m) {
         ParamVec &
         sacado_param_vector = sacado_param_vecs_[m][l];
 
@@ -835,7 +831,7 @@ evalModelImpl(
             pT->getVectorBlock(0), true)->getConstTpetraVector();
 
         Teuchos::ArrayRCP<ST const> pTm_constView = pTm->get1dView();
-        for (unsigned int k = 0; k < sacado_param_vector.size(); ++k) {
+        for (auto k = 0; k < sacado_param_vector.size(); ++k) {
           sacado_param_vector[k].baseValue = pTm_constView[k];
       }
     }
@@ -846,14 +842,13 @@ evalModelImpl(
   Teuchos::RCP<Thyra::ProductVectorBase<ST> > fT_out =
       Teuchos::nonnull(out_args.get_f()) ?
           Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST> >(
-              out_args.get_f(),
-              true) :
+              out_args.get_f(), true) :
           Teuchos::null;
 
   //Create a Teuchos array of the fT_out for each model.
   Teuchos::Array<Teuchos::RCP<Tpetra_Vector> > fTs_out(num_models_);
   if (fT_out != Teuchos::null) {
-    for (int m = 0; m < num_models_; ++m) {
+    for (auto m = 0; m < num_models_; ++m) {
       //Get each Tpetra vector
       fTs_out[m] = Teuchos::rcp_dynamic_cast<ThyraVector>(
           fT_out->getNonconstVectorBlock(m),
@@ -871,7 +866,7 @@ evalModelImpl(
   Teuchos::Array<bool> fs_already_computed(num_models_, false);
 
   // W matrix for each individual model
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     if (Teuchos::nonnull(W_op_outT)) {
       //computeGlobalJacobianT sets fTs_out[m] and jacs_[m]
       apps_[m]->computeGlobalJacobianT(
@@ -889,7 +884,7 @@ evalModelImpl(
     W_op_outT = csJac.getThyraCoupledJacobian(jacs_, apps_);
   }
 
-  for (int m = 0; m < num_models_; ++m) {
+  for (auto m = 0; m < num_models_; ++m) {
     if (apps_[m]->is_adjoint) {
       Thyra::ModelEvaluatorBase::Derivative<ST> const
       f_derivT(solver_outargs_[m].get_f(),
@@ -898,7 +893,7 @@ evalModelImpl(
       Thyra::ModelEvaluatorBase::Derivative<ST> const dummy_derivT;
 
       // need to add capability for sending this in
-      int const
+      auto const
       response_index = 0;
 
       apps_[m]->evaluateResponseDerivativeT(
@@ -942,7 +937,7 @@ evalModelImpl(
 //Responses / sensitivities
 //FIXME: need to implement DgDx, DgDp, etc for sensitivity analysis! 
 // Response functions
-  for (int j = 0; j < out_args.Ng(); ++j) {
+  for (auto j = 0; j < out_args.Ng(); ++j) {
 
     Teuchos::RCP<Thyra::ProductVectorBase<ST> >
     gT_out = Teuchos::nonnull(out_args.get_g(j)) ?
@@ -951,14 +946,14 @@ evalModelImpl(
           Teuchos::null;
     
     if (Teuchos::is_null(gT_out) == false) {
-      for (int m = 0; m < num_models_; ++m) {
+      for (auto m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector
         Teuchos::RCP<Tpetra_Vector>
         gT_out_m = Teuchos::rcp_dynamic_cast<ThyraVector>(
                   gT_out->getNonconstVectorBlock(m),
                   true)->getTpetraVector();
 
-        for (int l = 0; l < out_args.Np(); ++l) {
+        for (auto l = 0; l < out_args.Np(); ++l) {
           //sets gT_out
           apps_[m]->evaluateResponseT(
               l, curr_time, x_dotTs[m].get(), x_dotdotT.get(),
