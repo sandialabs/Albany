@@ -29,7 +29,7 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
   // Need to allocate a fields in mesh database
   this->requirements.push_back("basal_height");
   this->requirements.push_back("basal_friction");
-  this->requirements.push_back("basal_velocity_magnitude");
+  this->requirements.push_back("sliding_velocity_magnitude");
   this->requirements.push_back("drainage_sheet_depth");
   this->requirements.push_back("ice_thickness");
   this->requirements.push_back("ice_viscosity");

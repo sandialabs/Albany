@@ -9,8 +9,11 @@
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
+       evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
+       evaluators/FELIX_QuadPointsToCellInterpolation.cpp
+       evaluators/FELIX_SaveSideSetStateField.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
        evaluators/FELIX_StokesFOResid.cpp
        evaluators/FELIX_StokesL1L2Resid.cpp
@@ -51,10 +54,16 @@ ENDIF()
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
        evaluators/FELIX_EpsilonL1L2_Def.hpp
+       evaluators/FELIX_FieldNorm.hpp
+       evaluators/FELIX_FieldNorm_Def.hpp
        evaluators/FELIX_HydrologyResidual.hpp
        evaluators/FELIX_HydrologyResidual_Def.hpp
        evaluators/FELIX_HydrologyRhs.hpp
        evaluators/FELIX_HydrologyRhs_Def.hpp
+       evaluators/FELIX_QuadPointsToCellInterpolation.hpp
+       evaluators/FELIX_QuadPointsToCellInterpolation_Def.hpp
+       evaluators/FELIX_SaveSideSetStateField.hpp
+       evaluators/FELIX_SaveSideSetStateField_Def.hpp
        evaluators/FELIX_StokesMomentumResid.hpp
        evaluators/FELIX_StokesFOResid_Def.hpp
        evaluators/FELIX_StokesFOResid.hpp

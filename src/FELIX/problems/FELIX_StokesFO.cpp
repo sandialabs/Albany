@@ -182,6 +182,7 @@ FELIX::StokesFO::getValidProblemParameters () const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getGenericProblemParams("ValidStokesFOProblemParams");
 
+  validPL->set<bool>("Ice-Hydrology Coupling", false, "If true, saves basalside quantities needed by the Hydrology model");
   validPL->sublist("FELIX Viscosity", false, "");
   validPL->sublist("FELIX Basal Friction Coefficient", false, "Parameters needed to compute the basal friction coefficient");
   validPL->sublist("FELIX Surface Gradient", false, "");

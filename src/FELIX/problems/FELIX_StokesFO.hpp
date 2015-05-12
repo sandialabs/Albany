@@ -90,6 +90,8 @@ public:
   void constructNeumannEvaluators(const Teuchos::RCP<Albany::MeshSpecsStruct>& meshSpecs);
 
 protected:
+
+  // Used to build basal friction evaluator for all evaluation types
   struct ConstructBasalEvaluatorOp
   {
       StokesFO& prob_;
@@ -101,12 +103,17 @@ protected:
       template<typename T>
       void operator() (T x) {
       evaluators_.push_back(prob_.template buildBasalFrictionCoefficientEvaluator<T>());
+      evaluators_.push_back(prob_.template buildSlidingVelocityEvaluator<T>());
       }
   };
 
   template<typename EvalT>
   Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
   buildBasalFrictionCoefficientEvaluator ();
+
+  template<typename EvalT>
+  Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+  buildSlidingVelocityEvaluator();
 
   int numDim;
   double gravity;  //gravity
@@ -132,6 +139,9 @@ protected:
 #endif
 #include "FELIX_StokesFOBodyForce.hpp"
 #include "FELIX_ViscosityFO.hpp"
+#include "FELIX_FieldNorm.hpp"
+#include "FELIX_SaveSideSetStateField.hpp"
+#include "FELIX_QuadPointsToCellInterpolation.hpp"
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_Source.hpp"
@@ -343,6 +353,13 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     }
     fm0.template registerEvaluator<EvalT>(ev);
   }
+
+  // Sliding velocity calculation
+  {
+    ev = buildSlidingVelocityEvaluator<EvalT>();
+    fm0.template registerEvaluator<EvalT>(ev);
+  }
+
   { // FELIX basal friction coefficient
     ev = buildBasalFrictionCoefficientEvaluator<EvalT>();
     fm0.template registerEvaluator<EvalT>(ev);
@@ -399,6 +416,51 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
     paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
   }
+  if (params->get("Ice-Hydrology Coupling",false) && fieldManagerChoice==Albany::BUILD_STATE_FM)
+  {
+    // If we are solving the StokesFO problem, in the big picture of the coupling
+    // with the hydrology problem, we need to save some data on the 2D mesh
+
+    // Save Friction Coefficient
+    {
+      RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","beta_field","basal_friction",
+                                                                    dl->node_scalar, elementBlockName,true);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+      ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    // Ice viscosity interpolation from QP to Cell
+    {
+      RCP<ParameterList> p = rcp(new ParameterList("Quad Points To Cell Interpolation"));
+      p->set<std::string>("Field QP Name","FELIX Viscosity");
+      p->set<std::string>("Field Cell Name","FELIX Viscosity Cell");
+
+      ev = rcp(new FELIX::QuadPointsToCellInterpolation<EvalT,PHAL::AlbanyTraits>(*p,dl));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    // Save Ice Viscosity
+    {
+      RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","FELIX Viscosity Cell","ice_viscosity",
+                                                                    dl->cell_scalar2, elementBlockName,true);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+      ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+
+    // Save Sliding Velocity
+    {
+      RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","Velocity Norm","sliding_velocity",
+                                                                    dl->node_scalar, elementBlockName,true);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+
+      ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
+      fm0.template registerEvaluator<EvalT>(ev);
+    }
+  }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {
     PHX::Tag<typename EvalT::ScalarT> res_tag("Scatter Stokes", dl->dummy);
@@ -406,8 +468,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
-    fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("beta_field"));
-
     entity= Albany::StateStruct::NodalDataToElemNode;
 
     {
@@ -424,8 +484,6 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
       fm0.template registerEvaluator<EvalT>(ev);
     }
 
-    fm0.template registerEvaluator<EvalT> (evalUtils.constructDOFInterpolationEvaluator("beta_field"));
-
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);
   }
@@ -435,31 +493,47 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
 template<typename EvalT>
 Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
+FELIX::StokesFO::buildSlidingVelocityEvaluator ()
+{
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Velocity Norm"));
+  p->set<std::string>("Field Name","Velocity");
+  p->set<std::string>("Field Norm Name","Velocity Norm");
+
+  // Need a more specific pointer to access the setHomotopyParamPtr method
+  Teuchos::RCP<FELIX::FieldNorm<EvalT,PHAL::AlbanyTraits> > ev;
+  ev = Teuchos::rcp(new FELIX::FieldNorm<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev->setHomotopyParamPtr(HomotopyParamValue<EvalT,PHAL::AlbanyTraits>::value);
+
+  return ev;
+}
+
+template<typename EvalT>
+Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
 FELIX::StokesFO::buildBasalFrictionCoefficientEvaluator ()
 {
-    Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Basal Friction Coefficient"));
 
-    //Input fields
-    p->set<std::string>("Velocity Name", "Velocity");
-    p->set<std::string>("Given Beta Field Name", "basal_friction");
-    p->set<std::string>("thickness Field Name", "thickness");
+  //Input fields
+  p->set<std::string>("Velocity Norm Name", "Velocity Norm");
+  p->set<std::string>("Given Beta Field Name", "basal_friction");
+  p->set<std::string>("thickness Field Name", "thickness");
 
-    //Input physics parameters
-    Teuchos::ParameterList& physics = this->params->sublist("FELIX Physics");
-    p->set<double> ("Ice Density", physics.get("Ice Density",910));
-    p->set<double> ("Gravity Acceleration", physics.get("Gravity Acceleration", 9.8));
+  //Input physics parameters
+  Teuchos::ParameterList& physics = this->params->sublist("FELIX Physics");
+  p->set<double> ("Ice Density", physics.get("Ice Density",910));
+  p->set<double> ("Gravity Acceleration", physics.get("Gravity Acceleration", 9.8));
 
-    Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
-    p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
+  p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
 
-    //Output
-    p->set<std::string>("FELIX Basal Friction Coefficient Name", "beta_field");
+  //Output
+  p->set<std::string>("FELIX Basal Friction Coefficient Name", "beta_field");
 
-    Teuchos::RCP<FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits> > ev;
-    ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits>(*p,dl));
-    ev->setHomotopyParamPtr(HomotopyParamValue<EvalT,PHAL::AlbanyTraits>::value);
+  Teuchos::RCP<FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits> > ev;
+  ev = Teuchos::rcp(new FELIX::BasalFrictionCoefficient<EvalT,PHAL::AlbanyTraits>(*p,dl));
+  ev->setHomotopyParamPtr(HomotopyParamValue<EvalT,PHAL::AlbanyTraits>::value);
 
-    return ev;
+  return ev;
 }
 
 #endif // FELIX_STOKESFOPROBLEM_HPP
