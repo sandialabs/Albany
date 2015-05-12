@@ -48,8 +48,8 @@ struct EBSpecsStruct {
     GO numElems(int dim){ return (max[dim] - min[dim]);}
 
     //! Calculate the sizes of the elements in this element block
-//    void calcElemSizes(std::vector<std::vector<double> > &h){ 
-    void calcElemSizes(std::vector<double> h[]){ 
+//    void calcElemSizes(std::vector<std::vector<double> > &h){
+    void calcElemSizes(std::vector<double> h[]){
 //        for(std::size_t i = 0; i < h.size(); i++)
         for(unsigned i = 0; i < Dim; i++)
           for(GO j = min[i]; j < max[i]; j++)
@@ -57,9 +57,9 @@ struct EBSpecsStruct {
     }
 
     std::string name;      // Name of element block
-    GO min[traits_type::size];       // Minimum logical coordinate of the block 
-    GO max[traits_type::size];       // Maximum logical coordinate of the block 
-    double blLength[traits_type::size];      
+    GO min[traits_type::size];       // Minimum logical coordinate of the block
+    GO max[traits_type::size];       // Maximum logical coordinate of the block
+    double blLength[traits_type::size];
 
 };
 
@@ -79,8 +79,8 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     typedef typename traits_type::default_element_side_type default_element_side_type;
 
     //! Default constructor
-    TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                      const Teuchos::RCP<Teuchos::ParameterList>& adaptParams, 
+    TmplSTKMeshStruct(const Teuchos::RCP<Teuchos::ParameterList>& params,
+                      const Teuchos::RCP<Teuchos::ParameterList>& adaptParams,
                       const Teuchos::RCP<const Teuchos_Comm>& commT);
 
     ~TmplSTKMeshStruct() {};
@@ -92,7 +92,8 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+                  const unsigned int worksetSize,
+                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis = Teuchos::null);
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -106,13 +107,13 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
     //! Build the mesh
     void buildMesh(const Teuchos::RCP<const Teuchos_Comm>& commT);
 
- 
+
     //! Build a parameter list that contains valid input parameters
     Teuchos::RCP<const Teuchos::ParameterList>
       getValidDiscretizationParameters() const;
 
     //! Build STK parts and nodesets that correspond to the dimension of the problem and input values
-    void DeclareParts(std::vector<EBSpecsStruct<Dim, traits>  > ebStructArray, 
+    void DeclareParts(std::vector<EBSpecsStruct<Dim, traits>  > ebStructArray,
          std::vector<std::string> ssNames,
          std::vector<std::string> nsNames);
 
@@ -132,7 +133,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
 // Explicit template definitions in support of the above
 
   template <>
-  struct albany_stk_mesh_traits<0> { 
+  struct albany_stk_mesh_traits<0> {
 
     enum { size = 1 }; // stk wants one dimension
     typedef shards::Particle default_element_type;
@@ -142,7 +143,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
   };
 
   template <>
-  struct albany_stk_mesh_traits<1> { 
+  struct albany_stk_mesh_traits<1> {
 
     enum { size = 1 };
     typedef shards::Line<2> default_element_type;
@@ -152,7 +153,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
   };
 
   template <>
-  struct albany_stk_mesh_traits<2> { 
+  struct albany_stk_mesh_traits<2> {
 
     enum { size = 2 };
     typedef shards::Quadrilateral<4> default_element_type;
@@ -162,7 +163,7 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
   };
 
   template <>
-  struct albany_stk_mesh_traits<3> { 
+  struct albany_stk_mesh_traits<3> {
 
     enum { size = 3 };
     typedef shards::Hexahedron<8> default_element_type;
@@ -193,7 +194,8 @@ template<unsigned Dim, class traits = albany_stk_mesh_traits<Dim> >
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+                  const unsigned int worksetSize,
+                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis);
 
   template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<0>::getValidDiscretizationParameters() const;
   template<> Teuchos::RCP<const Teuchos::ParameterList> TmplSTKMeshStruct<1>::getValidDiscretizationParameters() const;

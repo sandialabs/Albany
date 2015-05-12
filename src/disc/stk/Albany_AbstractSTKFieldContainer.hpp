@@ -73,6 +73,8 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
     //! Destructor
     virtual ~AbstractSTKFieldContainer() {};
 
+    virtual void addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis) = 0;
+
     VectorFieldType* getCoordinatesField(){ return coordinates_field; }
     IntScalarFieldType* getProcRankField(){ return proc_rank_field; }
     IntScalarFieldType* getRefineField(){ return refine_field; }
@@ -131,7 +133,7 @@ class AbstractSTKFieldContainer : public AbstractFieldContainer {
 
     StateInfoStruct nodal_sis;
     StateInfoStruct nodal_parameter_sis;
-    
+
     std::map<std::string, double> time;
 
 };

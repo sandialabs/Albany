@@ -318,13 +318,14 @@ Albany::DiscretizationFactory::createMeshSpecs() {
 Teuchos::RCP<Albany::AbstractDiscretization>
 Albany::DiscretizationFactory::createDiscretization(unsigned int neq,
     const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis,
     const AbstractFieldContainer::FieldContainerRequirements& req,
     const Teuchos::RCP<Albany::RigidBodyModes>& rigidBodyModes) {
   TEUCHOS_TEST_FOR_EXCEPTION(meshStruct == Teuchos::null,
                              std::logic_error,
                              "meshStruct accessed, but it has not been constructed" << std::endl);
 
-  setupInternalMeshStruct(neq, sis, req);
+  setupInternalMeshStruct(neq, sis, side_set_sis, req);
   Teuchos::RCP<Albany::AbstractDiscretization> result =
       createDiscretizationFromInternalMeshStruct(rigidBodyModes);
 
@@ -350,9 +351,10 @@ void
 Albany::DiscretizationFactory::setupInternalMeshStruct(
   unsigned int neq,
   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& side_set_sis,
   const AbstractFieldContainer::FieldContainerRequirements& req) {
-  meshStruct->setFieldAndBulkData(commT, discParams, neq, req,
-                                  sis, meshStruct->getMeshSpecs()[0]->worksetSize);
+  meshStruct->setFieldAndBulkData(commT, discParams, neq, req, sis,
+                                  meshStruct->getMeshSpecs()[0]->worksetSize, side_set_sis);
 }
 
 Teuchos::RCP<Albany::AbstractDiscretization>

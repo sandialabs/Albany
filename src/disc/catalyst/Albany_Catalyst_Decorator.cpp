@@ -106,6 +106,11 @@ Teuchos::RCP<AbstractMeshStruct> Decorator::getMeshStruct() const
   return discretization->getMeshStruct();
 }
 
+Teuchos::RCP<SideSetDiscretizations> Decorator::getSideSetDiscretizations () const
+{
+  return discretization->getSideSetDiscretizations;
+}
+
 StateArrays &Decorator::getStateArrays()
 {
   return discretization->getStateArrays();

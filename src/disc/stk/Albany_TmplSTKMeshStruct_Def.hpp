@@ -270,11 +270,11 @@ Albany::TmplSTKMeshStruct<Dim, traits>::TmplSTKMeshStruct(
 
     if (triangles)
       stk::mesh::set_cell_topology<optional_element_type>(*partVec[i]);
-    else 
+    else
       stk::mesh::set_cell_topology<default_element_type>(*partVec[i]);
   }
 
-  for(std::map<std::string, stk::mesh::Part*>::const_iterator it = ssPartVec.begin(); 
+  for(std::map<std::string, stk::mesh::Part*>::const_iterator it = ssPartVec.begin();
     it != ssPartVec.end(); ++it)
 
     stk::mesh::set_cell_topology<default_element_side_type>(*it->second);
@@ -332,7 +332,8 @@ Albany::TmplSTKMeshStruct<Dim, traits>::setFieldAndBulkData(
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize)
+                  const unsigned int worksetSize,
+                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
 {
 
   // Create global mesh: Dim-D structured, rectangular
@@ -588,7 +589,8 @@ Albany::TmplSTKMeshStruct<0, Albany::albany_stk_mesh_traits<0> >::setFieldAndBul
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize)
+                  const unsigned int worksetSize,
+                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
 {
 
   SetupFieldData(commT, neq_, req, sis, worksetSize);
@@ -698,7 +700,7 @@ Albany::TmplSTKMeshStruct<1>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       bulkData->change_entity_parts(rnode, singlePartVec);
     }
 
-// Note: Side_ranks are not currently registered for 1D elements, see 
+// Note: Side_ranks are not currently registered for 1D elements, see
 // $TRILINOS_DIR/packages/stk/stk_mesh/stk_mesh/fem/MetaData.cpp line 104.
 // Skip sideset construction in 1D for this reason (GAH)
 
@@ -804,7 +806,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem2, side,  2 /*local side id*/); 
+         bulkData->declare_relation(elem2, side,  2 /*local side id*/);
 
          bulkData->declare_relation(side, ulnode, 0);
          bulkData->declare_relation(side, llnode, 1);
@@ -816,7 +818,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  1 /*local side id*/); 
+         bulkData->declare_relation(elem, side,  1 /*local side id*/);
 
          bulkData->declare_relation(side, lrnode, 0);
          bulkData->declare_relation(side, urnode, 1);
@@ -828,7 +830,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  0 /*local side id*/); 
+         bulkData->declare_relation(elem, side,  0 /*local side id*/);
 
          bulkData->declare_relation(side, llnode, 0);
          bulkData->declare_relation(side, lrnode, 1);
@@ -840,7 +842,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem2, side,  1 /*local side id*/); 
+         bulkData->declare_relation(elem2, side,  1 /*local side id*/);
 
          bulkData->declare_relation(side, urnode, 0);
          bulkData->declare_relation(side, ulnode, 1);
@@ -849,7 +851,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
     } // end pair of triangles
 
     else {  //4-node quad
-  
+
       stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
       bulkData->declare_relation(elem, llnode, 0);
       bulkData->declare_relation(elem, lrnode, 1);
@@ -864,7 +866,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID));
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  3 /*local side id*/); 
+         bulkData->declare_relation(elem, side,  3 /*local side id*/);
 
          bulkData->declare_relation(side, ulnode, 0);
          bulkData->declare_relation(side, llnode, 1);
@@ -877,7 +879,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 1);
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  1 /*local side id*/); 
+         bulkData->declare_relation(elem, side,  1 /*local side id*/);
 
          bulkData->declare_relation(side, lrnode, 0);
          bulkData->declare_relation(side, urnode, 1);
@@ -890,7 +892,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID);
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  0 /*local side id*/); 
+         bulkData->declare_relation(elem, side,  0 /*local side id*/);
 
          bulkData->declare_relation(side, llnode, 0);
          bulkData->declare_relation(side, lrnode, 1);
@@ -903,7 +905,7 @@ Albany::TmplSTKMeshStruct<2>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
          stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * nelem[1]) + x_GID);
 
          stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-         bulkData->declare_relation(elem, side,  2 /*local side id*/); 
+         bulkData->declare_relation(elem, side,  2 /*local side id*/);
 
          bulkData->declare_relation(side, urnode, 0);
          bulkData->declare_relation(side, ulnode, 1);
@@ -1116,16 +1118,16 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
 
      singlePartVec[0] = ssPartVec["SideSet0"];
 
-     stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) + 
+     stk::mesh::EntityId side_id = (stk::mesh::EntityId)(nelem[0] + (2 * y_GID) +
       (nelem[0] + nelem[1]) * 2 * z_GID);
 
      stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  3 /*local side id*/); 
+     bulkData->declare_relation(elem, side,  3 /*local side id*/);
 
-     bulkData->declare_relation(side, llnode, 0); 
-     bulkData->declare_relation(side, llnodeb, 2); 
-     bulkData->declare_relation(side, ulnodeb, 3); 
-     bulkData->declare_relation(side, ulnode, 1); 
+     bulkData->declare_relation(side, llnode, 0);
+     bulkData->declare_relation(side, llnodeb, 2);
+     bulkData->declare_relation(side, ulnodeb, 3);
+     bulkData->declare_relation(side, ulnode, 1);
 
     }
     if ((x_GIDplus1)==nelem[0]) { // right edge of mesh, elem has side 1 on right boundary
@@ -1139,12 +1141,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
         (nelem[0] + nelem[1]) * 2 * z_GID);
 
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  1 /*local side id*/); 
+       bulkData->declare_relation(elem, side,  1 /*local side id*/);
 
-       bulkData->declare_relation(side, lrnode, 0); 
-       bulkData->declare_relation(side, urnode, 1); 
-       bulkData->declare_relation(side, urnodeb, 3); 
-       bulkData->declare_relation(side, lrnodeb, 2); 
+       bulkData->declare_relation(side, lrnode, 0);
+       bulkData->declare_relation(side, urnode, 1);
+       bulkData->declare_relation(side, urnodeb, 3);
+       bulkData->declare_relation(side, lrnodeb, 2);
 
     }
     if (y_GID==0) { // bottom edge of mesh, elem has side 0 on lower boundary
@@ -1156,12 +1158,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
        stk::mesh::EntityId side_id = (stk::mesh::EntityId)(x_GID + (nelem[0] + nelem[1]) * 2 * z_GID);
 
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-       bulkData->declare_relation(elem, side,  0 /*local side id*/); 
+       bulkData->declare_relation(elem, side,  0 /*local side id*/);
 
-       bulkData->declare_relation(side, llnode, 0); 
-       bulkData->declare_relation(side, lrnode, 1); 
-       bulkData->declare_relation(side, lrnodeb, 3); 
-       bulkData->declare_relation(side, llnodeb, 2); 
+       bulkData->declare_relation(side, llnode, 0);
+       bulkData->declare_relation(side, lrnode, 1);
+       bulkData->declare_relation(side, lrnodeb, 3);
+       bulkData->declare_relation(side, llnodeb, 2);
 
     }
     if ((y_GIDplus1)==nelem[1]) { // tope edge of mesh, elem has side 2 on upper boundary
@@ -1174,12 +1176,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       (nelem[0] + nelem[1]) * 2 * z_GID);
 
      stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  2 /*local side id*/); 
+     bulkData->declare_relation(elem, side,  2 /*local side id*/);
 
-     bulkData->declare_relation(side, urnode, 0); 
-     bulkData->declare_relation(side, ulnode, 1); 
-     bulkData->declare_relation(side, ulnodeb, 3); 
-     bulkData->declare_relation(side, urnodeb, 2); 
+     bulkData->declare_relation(side, urnode, 0);
+     bulkData->declare_relation(side, ulnode, 1);
+     bulkData->declare_relation(side, ulnodeb, 3);
+     bulkData->declare_relation(side, urnodeb, 2);
 
   }
   if (z_GID==0) {
@@ -1192,7 +1194,7 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       x_GID + (2 * nelem[0]) * y_GID);
 
      stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  4 /*local side id*/); 
+     bulkData->declare_relation(elem, side,  4 /*local side id*/);
 
      bulkData->declare_relation(side, llnode, 0);
      bulkData->declare_relation(side, ulnode, 3);
@@ -1209,12 +1211,12 @@ Albany::TmplSTKMeshStruct<3>::buildMesh(const Teuchos::RCP<const Teuchos_Comm>& 
       x_GID + (2 * nelem[0]) * y_GID + nelem[0]);
 
      stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
-     bulkData->declare_relation(elem, side,  5 /*local side id*/); 
+     bulkData->declare_relation(elem, side,  5 /*local side id*/);
 
-     bulkData->declare_relation(side, llnodeb, 0); 
-     bulkData->declare_relation(side, lrnodeb, 1); 
-     bulkData->declare_relation(side, urnodeb, 2); 
-     bulkData->declare_relation(side, ulnodeb, 3); 
+     bulkData->declare_relation(side, llnodeb, 0);
+     bulkData->declare_relation(side, lrnodeb, 1);
+     bulkData->declare_relation(side, urnodeb, 2);
+     bulkData->declare_relation(side, ulnodeb, 3);
 
     }
 

@@ -55,7 +55,7 @@ inline Ioss::Field::RoleType role_type(const bool output) {
 
 template<bool Interleaved>
 void
-Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
+Albany::GenericSTKFieldContainer<Interleaved>::addStateStructs(const Teuchos::RCP<Albany::StateInfoStruct>& sis){
 
   using namespace Albany;
 
@@ -75,7 +75,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
       qpscalar_states.push_back(& metaData->declare_field< QPSFT >(stk::topology::ELEMENT_RANK, st.name));
       stk::mesh::put_field(*qpscalar_states.back() ,
                            metaData->universal_part(), 1);
-      
+
       //Debug
       //      cout << "Allocating qps field name " << qpscalar_states.back()->name() <<
       //            " size: (" << dim[0] << ", " << dim[1] << ")" <<endl;
@@ -144,7 +144,7 @@ Albany::GenericSTKFieldContainer<Interleaved>::buildStateStructs(const Teuchos::
 
         const Teuchos::RCP<Albany::NodeFieldContainer>& nodeContainer
                = sis->getNodalDataBase()->getNodeContainer();
-      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer 
+      // const Teuchos::RCP<Albany::AbstractNodeFieldContainer>& nodeContainer
       //         = sis->getNodalDataBlock()->getNodeContainer();
 
         if(st.entity == StateStruct::NodalDataToElemNode) {

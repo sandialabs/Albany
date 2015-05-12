@@ -30,12 +30,13 @@ public:
   ~IossSTKMeshStruct();
 
   void setFieldAndBulkData(
-                const Teuchos::RCP<const Teuchos_Comm>& commT,
+                const Teuchos::RCP<const Teuchos_Comm>& comm,
                 const Teuchos::RCP<Teuchos::ParameterList>& params,
                 const unsigned int neq_,
                 const AbstractFieldContainer::FieldContainerRequirements& req,
                 const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                const unsigned int worksetSize);
+                const unsigned int worksetSize,
+                const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis = Teuchos::null);
 
   int getSolutionFieldHistoryDepth() const {return m_solutionFieldHistoryDepth;}
   double getSolutionFieldHistoryStamp(int step) const;

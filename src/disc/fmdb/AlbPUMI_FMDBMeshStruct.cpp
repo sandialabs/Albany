@@ -61,7 +61,7 @@ static void loadSets(
 
 AlbPUMI::FMDBMeshStruct::FMDBMeshStruct(
           const Teuchos::RCP<Teuchos::ParameterList>& params,
-		  const Teuchos::RCP<const Teuchos_Comm>& commT) :
+      const Teuchos::RCP<const Teuchos_Comm>& commT) :
   out(Teuchos::VerboseObjectBase::getDefaultOStream())
 {
   PCU_Comm_Init();
@@ -214,7 +214,8 @@ AlbPUMI::FMDBMeshStruct::setFieldAndBulkData(
                   const unsigned int neq_,
                   const Albany::AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize_)
+                  const unsigned int worksetSize_,
+                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
 {
 
   using Albany::StateStruct;

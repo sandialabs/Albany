@@ -405,12 +405,13 @@ Albany::AsciiSTKMeshStruct::~AsciiSTKMeshStruct()
 
 void
 Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
-                                               const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                               const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                               const unsigned int neq_,
-                                               const AbstractFieldContainer::FieldContainerRequirements& req,
-                                               const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                                               const unsigned int worksetSize)
+              const Teuchos::RCP<const Teuchos_Comm>& commT,
+              const Teuchos::RCP<Teuchos::ParameterList>& params,
+              const unsigned int neq_,
+              const AbstractFieldContainer::FieldContainerRequirements& req,
+              const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+              const unsigned int worksetSize,
+              const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& /*side_set_sis*/)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 
@@ -448,11 +449,11 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
 
   for (int i=0; i<elem_mapT->getNodeNumElements(); i++) {
      const unsigned int elem_GID = elem_mapT->getGlobalElement(i);
-     //std::cout << "elem_GID: " << elem_GID << std::endl; 
+     //std::cout << "elem_GID: " << elem_GID << std::endl;
      stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
      singlePartVec[0] = partVec[ebNo];
      stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, 1+elem_id, singlePartVec);
-     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh 
+     //I am assuming the ASCII mesh is 1-based not 0-based, so no need to add 1 for STK mesh
      stk::mesh::Entity llnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][0], nodePartVec);
      stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][1], nodePartVec);
      stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, eles[i][2], nodePartVec);
@@ -558,19 +559,19 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        sHeight[0] = sh[node_LID];
      }
      if (have_flwa) {
-       double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem); 
+       double *flowFactor = stk::mesh::field_data(*flowFactor_field, elem);
        //i is elem_LID (element local ID);
        //*out << "i: " << i <<", flwa: " << flwa[i] << std::endl;
        flowFactor[0] = flwa[i];
      }
      if (have_temp) {
-       double *temperature = stk::mesh::field_data(*temperature_field, elem); 
+       double *temperature = stk::mesh::field_data(*temperature_field, elem);
        //i is elem_LID (element local ID);
        //*out << "i: " << i <<", temp: " << temperature[i] << std::endl;
        temperature[0] = temper[i];
      }
      if (have_beta) {
-       double* bFriction; 
+       double* bFriction;
        bFriction = stk::mesh::field_data(*basal_friction_field, llnode);
        node_GID = eles[i][0]-1;
        node_LID = node_mapT->getLocalElement(node_GID);
@@ -692,7 +693,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        stk::mesh::Entity side  = bulkData->declare_entity(metaData->side_rank(), 1 + side_id, singlePartVec);
 
        const unsigned int elem_GID = bf[i][0];
-       //std::cout << "elem_GID: " << elem_GID << std::endl; 
+       //std::cout << "elem_GID: " << elem_GID << std::endl;
        stk::mesh::EntityId elem_id = (stk::mesh::EntityId) elem_GID;
        stk::mesh::Entity elem  = bulkData->declare_entity(stk::topology::ELEMENT_RANK, elem_id, emptyPartVec);
        bulkData->declare_relation(elem, side,  4 /*local side id*/);
@@ -700,7 +701,7 @@ Albany::AsciiSTKMeshStruct::setFieldAndBulkData(
        stk::mesh::Entity lrnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][2], nodePartVec);
        stk::mesh::Entity urnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][3], nodePartVec);
        stk::mesh::Entity ulnode = bulkData->declare_entity(stk::topology::NODE_RANK, bf[i][4], nodePartVec);
-       
+
        bulkData->declare_relation(side, llnode, 0);
        bulkData->declare_relation(side, ulnode, 3);
        bulkData->declare_relation(side, urnode, 2);

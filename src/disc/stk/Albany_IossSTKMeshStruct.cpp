@@ -121,7 +121,7 @@ Albany::IossSTKMeshStruct::IossSTKMeshStruct(
   mesh_data->add_mesh_database(file_name, mesh_type, stk::io::READ_MESH);
   mesh_data->create_input_mesh();
 
-  metaData = Teuchos::rcpFromRef(mesh_data->meta_data());
+  metaData = mesh_data->meta_data_rcp();//Teuchos::rcpFromRef(mesh_data->meta_data());
 
   // End of creating input mesh
 
@@ -255,12 +255,14 @@ Albany::IossSTKMeshStruct::~IossSTKMeshStruct()
 }
 
 void
-Albany::IossSTKMeshStruct::setFieldAndBulkData (const Teuchos::RCP<const Teuchos_Comm>& commT,
-                                                const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                                const unsigned int neq_,
-                                                const AbstractFieldContainer::FieldContainerRequirements& req,
-                                                const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                                                 const unsigned int worksetSize)
+Albany::IossSTKMeshStruct::setFieldAndBulkData (
+          const Teuchos::RCP<const Teuchos_Comm>& commT,
+          const Teuchos::RCP<Teuchos::ParameterList>& params,
+          const unsigned int neq_,
+          const AbstractFieldContainer::FieldContainerRequirements& req,
+          const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+          const unsigned int worksetSize,
+          const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_/*sis*/)
 {
   this->SetupFieldData(commT, neq_, req, sis, worksetSize);
 

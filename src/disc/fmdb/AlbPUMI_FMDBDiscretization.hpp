@@ -126,6 +126,12 @@ template<class Output>
     Teuchos::RCP<AlbPUMI::FMDBMeshStruct> getFMDBMeshStruct() {return fmdbMeshStruct;}
     Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const {return fmdbMeshStruct;}
 
+    Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Functionality not supported in FMDB discretization.\n");
+      return Teuchos::null;
+    }
+
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return fmdbMeshStruct->hasRestartSolution;}
 

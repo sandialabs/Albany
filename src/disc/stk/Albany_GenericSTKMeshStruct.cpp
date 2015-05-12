@@ -100,7 +100,7 @@ Albany::GenericSTKMeshStruct::GenericSTKMeshStruct(
 Albany::GenericSTKMeshStruct::~GenericSTKMeshStruct() {}
 
 void Albany::GenericSTKMeshStruct::SetupFieldData(
-		  const Teuchos::RCP<const Teuchos_Comm>& commT,
+      const Teuchos::RCP<const Teuchos_Comm>& commT,
                   const int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
@@ -177,7 +177,7 @@ void Albany::GenericSTKMeshStruct::SetupFieldData(
   felixAlpha = params->get("FELIX alpha", 0.0);
   felixL = params->get("FELIX L", 1.0);
 
-  points_per_edge = params->get("Points Per Edge", 2); 
+  points_per_edge = params->get("Points Per Edge", 2);
 
   //boolean specifying if ascii mesh has contiguous IDs; only used for ascii meshes on 1 processor
   contigIDs = params->get("Contiguous IDs", true);
@@ -668,7 +668,6 @@ void Albany::GenericSTKMeshStruct::setupMeshBlkInfo()
 
 }
 
-
 void Albany::GenericSTKMeshStruct::printParts(stk::mesh::MetaData *metaData){
 
     std::cout << "Printing all part names of the parts found in the metaData:" << std::endl;
@@ -730,7 +729,7 @@ Albany::GenericSTKMeshStruct::getValidGenericSTKParameters(std::string listname)
   validPL->set<bool>("Separate Evaluators by Element Block", false,
                      "Flag for different evaluation trees for each Element Block");
   validPL->set<std::string>("Transform Type", "None", "None or ISMIP-HOM Test A"); //for FELIX problem that require tranformation of STK mesh
-  validPL->set<int>("Points Per Edge", 2, "Points per edge in enriched Aeras mesh"); 
+  validPL->set<int>("Points Per Edge", 2, "Points per edge in enriched Aeras mesh");
   validPL->set<bool>("Write Coordinates to MatrixMarket", false, "Writing Coordinates to MatrixMarket File"); //for writing coordinates to matrix market file
   validPL->set<double>("FELIX alpha", 0.0, "Surface boundary inclination for FELIX problems (in degrees)"); //for FELIX problem that require tranformation of STK mesh
   validPL->set<double>("FELIX L", 1, "Domain length for FELIX problems"); //for FELIX problem that require tranformation of STK mesh

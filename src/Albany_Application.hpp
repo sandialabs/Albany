@@ -78,9 +78,9 @@ namespace Albany {
 
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm,
-		const Teuchos::RCP<Teuchos::ParameterList>& params,
-		const Teuchos::RCP<const Tpetra_Vector>& initial_guess =
-		Teuchos::null);
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const Teuchos::RCP<const Tpetra_Vector>& initial_guess =
+    Teuchos::null);
 
     //! Constructor
     Application(const Teuchos::RCP<const Teuchos_Comm>& comm);
@@ -229,7 +229,7 @@ namespace Albany {
 
      void computeGlobalJacobianT(const double alpha,
                                  const double beta,
-			         const double omega,
+               const double omega,
                                  const double current_time,
                                  const Tpetra_Vector* xdotT,
                                  const Tpetra_Vector* xdotdotT,
@@ -286,7 +286,7 @@ namespace Albany {
 
      void computeGlobalTangentT(const double alpha,
                               const double beta,
-			      const double omega,
+            const double omega,
                               const double current_time,
                               bool sum_derivs,
                               const Tpetra_Vector* xdotT,
@@ -321,7 +321,7 @@ namespace Albany {
                                     const Teuchos::RCP<Tpetra_Vector>& fT,
                                     const Teuchos::RCP<Tpetra_MultiVector>& JVT,
                                     const Teuchos::RCP<Tpetra_MultiVector>& fpT);
-    
+
 
   public:
 
@@ -338,7 +338,7 @@ namespace Albany {
                                    const bool trans,
                                    const Teuchos::RCP<const Tpetra_MultiVector>& VT,
                                    const Teuchos::RCP<Tpetra_MultiVector>& fpVT);
-    
+
 
 
     //! Evaluate response functions
@@ -1062,19 +1062,24 @@ void Albany::Application::loadWorksetBucketInfo(PHAL::Workset& workset,
   loadWorksetSidesetInfo(workset, ws);
 
   workset.stateArrayPtr = &stateMgr.getStateArray(Albany::StateManager::ELEM, ws);
+
+#ifdef ALBANY_EPETRA
+  workset.disc = disc;  // Needed by FELIX for sideset DOF save
+#endif
+
 #ifdef ALBANY_EPETRA
   workset.eigenDataPtr = stateMgr.getEigenData();
   workset.auxDataPtr = stateMgr.getAuxData();
 #endif
 
- 
+
 //  workset.wsElNodeEqID_kokkos =
   Kokkos:: View<int***, PHX::Device> wsElNodeEqID_kokkos ("wsElNodeEqID_kokkos",workset.numCells, wsElNodeEqID[ws][0].size(), wsElNodeEqID[ws][0][0].size());
    workset.wsElNodeEqID_kokkos=wsElNodeEqID_kokkos;
-   for (int i=0; i< workset.numCells; i++) 
+   for (int i=0; i< workset.numCells; i++)
       for (int j=0; j< wsElNodeEqID[ws][0].size(); j++)
           for (int k=0; k<wsElNodeEqID[ws][0][0].size();k++)
-              workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k]; 
+              workset.wsElNodeEqID_kokkos(i,j,k)=workset.wsElNodeEqID[i][j][k];
 
   PHAL::BuildSerializer<EvalT> bs(workset);
 }

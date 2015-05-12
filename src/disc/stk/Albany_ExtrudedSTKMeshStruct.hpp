@@ -19,7 +19,7 @@ namespace Albany {
     public:
 
     ExtrudedSTKMeshStruct(
-                  const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                  const Teuchos::RCP<Teuchos::ParameterList>& params,
                   const Teuchos::RCP<const Teuchos_Comm>& comm);
 
     ~ExtrudedSTKMeshStruct();
@@ -30,7 +30,8 @@ namespace Albany {
                   const unsigned int neq_,
                   const AbstractFieldContainer::FieldContainerRequirements& req,
                   const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-                  const unsigned int worksetSize);
+                  const unsigned int worksetSize,
+                  const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis = Teuchos::null);
 
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return false; }
@@ -40,8 +41,6 @@ namespace Albany {
 
     private:
     //Ioss::Init::Initializer ioInit;
-
-    Teuchos::RCP<Albany::GenericSTKMeshStruct> meshStruct2D;
 
     inline void computeMap();
     inline int prismType(GO const* prismVertexMpasIds, int& minIndex);

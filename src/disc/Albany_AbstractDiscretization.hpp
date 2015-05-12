@@ -66,6 +66,8 @@ struct WorksetArray {
 class AbstractDiscretization {
   public:
 
+    typedef std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > SideSetDiscretizations;
+
     //! Constructor
     AbstractDiscretization() {};
 
@@ -160,6 +162,9 @@ class AbstractDiscretization {
     //! Print the coords for mesh debugging
     virtual void printCoords() const = 0;
 
+    //! Get sideSet discretizations map
+    virtual Teuchos::RCP<SideSetDiscretizations> getSideSetDiscretizations () const = 0;
+
     //! Get MeshStruct
     virtual Teuchos::RCP<Albany::AbstractMeshStruct> getMeshStruct() const = 0;
 
@@ -229,7 +234,7 @@ class AbstractDiscretization {
     virtual void writeSolutionToMeshDatabaseT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
     //! Write the solution to file. Must call writeSolutionT first.
     virtual void writeSolutionToFileT(const Tpetra_Vector &solutionT, const double time, const bool overlapped = false) = 0;
-    
+
     //! update the mesh
     virtual void updateMesh(bool shouldTransferIPData = false) = 0;
 

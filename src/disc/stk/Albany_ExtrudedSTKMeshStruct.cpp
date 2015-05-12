@@ -84,13 +84,17 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
-  meshStruct2D = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
+
+  sideSetMeshStructs["basalside"] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
+
   Teuchos::RCP<Albany::StateInfoStruct> sis = Teuchos::rcp(new Albany::StateInfoStruct);
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
-  meshStruct2D->setFieldAndBulkData(comm, params, 1, req, sis, meshStruct2D->getMeshSpecs()[0]->worksetSize);
 
-  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(meshStruct2D->metaData->universal_part()) & stk::mesh::Selector(meshStruct2D->metaData->locally_owned_part());
-  int numCells = stk::mesh::count_selected_entities(select_owned_in_part, meshStruct2D->bulkData->buckets(stk::topology::ELEMENT_RANK));
+  int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
+  sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size, Teuchos::null, false);
+
+  stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->universal_part()) & stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->locally_owned_part());
+  int numCells = stk::mesh::count_selected_entities(select_owned_in_part, sideSetMeshStructs["basalside"]->bulkData->buckets(stk::topology::ELEMENT_RANK));
 
   std::string shape = params->get("Element Shape", "Hexahedron");
   std::string basalside_name;
@@ -110,7 +114,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameterValue,
               std::endl << "Error in ExtrudedSTKMeshStruct: Element Shape " << shape << " not recognized. Possible values: Tetrahedron, Wedge, Hexahedron");
 
-  std::string elem2d_name(meshStruct2D->getMeshSpecs()[0]->ctd.base->name);
+  std::string elem2d_name(sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->ctd.base->name);
   TEUCHOS_TEST_FOR_EXCEPTION(basalside_name != elem2d_name, Teuchos::Exceptions::InvalidParameterValue,
                 std::endl << "Error in ExtrudedSTKMeshStruct: Expecting topology name of elements of 2d mesh to be " <<  basalside_name << " but it is " << elem2d_name);
 
@@ -149,14 +153,55 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
-
 }
 
-Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct() {
+Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()
+{
+  // Nothing to be done here
 }
 
-void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const Teuchos_Comm>& comm, const Teuchos::RCP<Teuchos::ParameterList>& params, const unsigned int neq_, const AbstractFieldContainer::FieldContainerRequirements& req, const Teuchos::RCP<Albany::StateInfoStruct>& sis,
-    const unsigned int worksetSize) {
+void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
+    const Teuchos::RCP<const Teuchos_Comm>& comm,
+    const Teuchos::RCP<Teuchos::ParameterList>& params,
+    const unsigned int neq_,
+    const AbstractFieldContainer::FieldContainerRequirements& req,
+    const Teuchos::RCP<Albany::StateInfoStruct>& sis,
+    const unsigned int worksetSize,
+    const Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::StateInfoStruct> > >& ss_sis)
+{
+  // Rewriting the field data, now that we do have the sideSet field container
+  if (Teuchos::nonnull(ss_sis))
+  {
+    Teuchos::RCP<Albany::StateInfoStruct> basal_sis = ss_sis->find("basalside")->second;
+
+    // Unfortunately, due to how stk handles stuff, we cannot add more states to the mesh, so
+    // we have to re-create it again (namely, stk commits mesh
+    Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
+    params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
+    params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
+
+    // If we intend to store some field on the side set mesh, we need to register them in the mesh
+    Teuchos::ParameterList& basalSideOutputInfo = params->sublist("Side Sets Output").sublist("basalside");
+    params2D->sublist("Required Fields Info",false,"") = basalSideOutputInfo;
+    params2D->set<std::string>("Exodus Output File Name",basalSideOutputInfo.get<std::string>("Exodus Output File Name"));
+
+    sideSetMeshStructs["basalside"] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
+
+    Albany::AbstractFieldContainer::FieldContainerRequirements req;
+    if (params->isSublist("Side Sets Output") )
+    {
+      Teuchos::ParameterList& basalSideOutputInfo = params->sublist("Side Sets Output").sublist("basalside");
+      Teuchos::Array<std::string> req_names = basalSideOutputInfo.get<Teuchos::Array<std::string> >("Output Fields Names");
+      for (int i(0); i<req_names.size(); ++i)
+        req.push_back(req_names[i]);  // Filling the req with the names of the side set fields to export
+    }
+
+    int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
+    sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, basal_sis, ws_size);
+
+
+    this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = sideSetMeshStructs["basalside"]->getMeshSpecs();
+  }
 
   int numLayers = params->get("NumLayers", 10);
   bool useGlimmerSpacing = params->get("Use Glimmer Spacing", false);
@@ -167,8 +212,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(const Teuchos::RCP<const
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
-  const stk::mesh::BulkData& bulkData2D = *meshStruct2D->bulkData;
-  const stk::mesh::MetaData& metaData2D = *meshStruct2D->metaData; //bulkData2D.mesh_meta_data();
+  const stk::mesh::BulkData& bulkData2D = *sideSetMeshStructs["basalside"]->bulkData;
+  const stk::mesh::MetaData& metaData2D = *sideSetMeshStructs["basalside"]->metaData; //bulkData2D.mesh_meta_data();
 
   std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 
@@ -661,6 +706,11 @@ Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getVal
   validPL->set<int>("NumLayers", 10, "Number of vertical Layers of the extruded mesh. In a vertical column, the mesh will have numLayers+1 nodes");
   validPL->set<bool>("Use Glimmer Spacing", false, "When true, the layer spacing is computed according to Glimmer formula (layers are denser close to the bedrock)");
   validPL->set<bool>("Columnwise Ordering", false, "True for Columnwise ordering, false for Layerwise ordering");
+
+#ifdef ALBANY_FELIX
+  validPL->sublist("Side Sets Output", false, "A sublist containing info for storing side set meshes");
+#endif
+
   return validPL;
 }
 
