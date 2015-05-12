@@ -273,8 +273,6 @@ apply(
 
   Y.putScalar(zero);
 
-  if (Y.getLocalLength() == 24) return;
-
   // If they are not coupled get out.
   if (this_app.isCoupled(coupled_app_index) == false) return;
 
@@ -350,13 +348,6 @@ apply(
 
   } // node in node set loop
 
-  // Create scratch space
-  Tpetra_MultiVector
-  Z(Y, Teuchos::DataAccess::Copy);
-
-  // Multiply with the corresponding diagonal Jacobian.
-  jacs_[this_app_index]->apply(Z, Y);
-
 #ifdef WRITE_TO_MATRIX_MARKET
   char name[100];
   sprintf(name, "X_%04d.mm", mm_counter);
@@ -366,11 +357,6 @@ apply(
 #ifdef WRITE_TO_MATRIX_MARKET
   sprintf(name, "Y_%04d.mm", mm_counter);
   Tpetra_MatrixMarket_Writer::writeDenseFile(name, Y);
-#endif  // WRITE_TO_MATRIX_MARKET
-
-#ifdef WRITE_TO_MATRIX_MARKET
-  sprintf(name, "Z_%04d.mm", mm_counter);
-  Tpetra_MatrixMarket_Writer::writeDenseFile(name, Z);
 #endif  // WRITE_TO_MATRIX_MARKET
 
 #ifdef WRITE_TO_MATRIX_MARKET
