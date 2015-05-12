@@ -82,6 +82,8 @@ SchwarzMultiscale(
   Teuchos::RCP<Teuchos::ParameterList>
   response_params;
 
+  num_params_total_ = 0;
+
   //Get "Parameters" parameter sublist, if it exists
   if (problem_params.isSublist("Parameters")) {
     parameter_params = Teuchos::rcp(
@@ -106,7 +108,7 @@ SchwarzMultiscale(
       p_list = using_old_parameter_list == true ?
           Teuchos::rcp(new Teuchos::ParameterList(*parameter_params)) :
           Teuchos::rcp(&(parameter_params->sublist(
-              Albany::strint("Parameter Vector", l))),false);
+              Albany::strint("Parameter Vector", l))), false);
 
       auto const
       num_parameters = p_list->get<int>("Number");
@@ -124,9 +126,6 @@ SchwarzMultiscale(
       std::cout << l << " = " << num_parameters << '\n';
     }
   }
-  else {
-    num_params_total_ = 0;
-  }
 
   std::cout << "Number of parameter vectors = " << num_params_total_ << '\n';
 
@@ -140,58 +139,42 @@ SchwarzMultiscale(
     response_params =
         Teuchos::rcp(&(problem_params.sublist("Response Functions")), false);
 
-    num_responses_total_ =
-        response_params->get("Number of Response Vectors", 0);
+    auto const
+    num_parameters = response_params->isType<int>("Number") == true ?
+        response_params->get<int>("Number") : 0;
 
-    bool
-    using_old_response_list = false;
+    bool const
+    using_old_response_list = num_parameters > 0 ? true : false;
 
-    if (response_params->isType<int>("Number") == true) {
-      int
-      num_parameters = response_params->get<int>("Number");
+    num_responses_total_ = num_parameters > 0 ?
+        1 : response_params->get("Number of Response Vectors", 0);
 
-      if (num_parameters > 0) {
-        num_responses_total_ = 1;
-        using_old_response_list = true;
-      }
-    }
-
-    Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string> > >
+    Teuchos::Array<Teuchos::RCP<Teuchos::Array<std::string>>>
     response_names;
 
     response_names.resize(num_responses_total_);
 
-    for (int l = 0; l < num_responses_total_; ++l) {
+    for (auto l = 0; l < num_responses_total_; ++l) {
 
-      Teuchos::RCP<const Teuchos::ParameterList>
-      p_list;
+      Teuchos::RCP<Teuchos::ParameterList const>
+      p_list = using_old_response_list == true ?
+          Teuchos::rcp(new Teuchos::ParameterList(*response_params)) :
+          Teuchos::rcp(&(response_params->sublist(
+              Albany::strint("Response Vector", l))), false);
 
-      if (using_old_response_list) {
-        p_list =  Teuchos::rcp(new Teuchos::ParameterList(*response_params));
+      auto const
+      num_parameters = p_list->get<int>("Number") == true ?
+          p_list->get<int>("Number") : 0;
 
-      }
-      else {
-        p_list = Teuchos::rcp(
-            &(response_params->sublist(Albany::strint("Response Vector", l))),
-            false);
-      }
- 
-      bool
-      number_exists = p_list->getEntryPtr("Number");
-
-      if (number_exists == true){
-        int const
-        num_parameters = p_list->get<int>("Number");
-
-        assert(num_parameters > 0);
-
+      if (num_parameters > 0) {
         response_names[l] =
             Teuchos::rcp(new Teuchos::Array<std::string>(num_parameters));
 
-        for (int k = 0; k < num_parameters; ++k) {
+        for (auto k = 0; k < num_parameters; ++k) {
           (*response_names[l])[k] =
             p_list->get<std::string>(Albany::strint("Response", k));
         }
+
       }
     }
   }
