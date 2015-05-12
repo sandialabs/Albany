@@ -423,19 +423,19 @@ bool print_debug = false;
 
       if(integration_scheme_ == EXPLICIT){
 
-	// compute sigma_np1, S_np1, and shear_np1 using Fp at step n
+	// compute sigma_np1, S_np1, and shear_np1 using Fp_n
  	computeStress(F_np1, Fp_n, sigma_np1, S_np1, shear_np1);
 
+	// compute hardness_np1 using slip_n
+ 	updateHardness(slip_n, hardness_n, hardness_np1);
+
 	// compute slip_np1
-	updateSlipViaExplicitIntegration(dt, slip_n, hardness_n, S_np1, slip_np1);
+	updateSlipViaExplicitIntegration(dt, slip_n, hardness_np1, S_np1, shear_np1, slip_np1);
 
  	// compute Lp_np1, and Fp_np1
  	applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
 
-	// compute hardness_np1
- 	updateHardness(slip_np1, hardness_n, hardness_np1);
-
-	// compute sigma_np1, S_np1, and shear_np1
+	// compute sigma_np1, S_np1, and shear_np1 using Fp_np1
  	computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
 
 	// compute slip_residual and norm_slip_residual
@@ -621,36 +621,22 @@ template<typename ArgT>
 void CrystalPlasticityModel<EvalT, Traits>::
 updateSlipViaExplicitIntegration(ScalarT                         dt,
 				 std::vector<ScalarT> const &    slip_n,
-				 std::vector<ScalarT> const &    hardness_n,
-				 Intrepid::Tensor<ArgT> const &  S_n,
+				 std::vector<ScalarT> const &    hardness,
+				 Intrepid::Tensor<ArgT> const &  S,
+				 std::vector<ArgT> const &       shear,
 				 std::vector<ArgT> &             slip_np1) const
 {
-  ScalarT g0, tau, tauC, m, H, t1, temp, hardness_temp;
-  Intrepid::Tensor<RealType> P(num_dims_);
+  ScalarT g0, tauC, m, temp;
 
   for (int s(0); s < num_slip_; ++s) {
 
-    // material parameters
-    P = slip_systems_[s].projector_;
     tauC = slip_systems_[s].tau_critical_;
     m = slip_systems_[s].gamma_exp_;
     g0 = slip_systems_[s].gamma_dot_0_;
-    H = slip_systems_[s].H_;
 
-    // compute resolved shear stresses
-    tau = Intrepid::dotdot(P, S_n);
-    int sign = tau < 0 ? -1 : 1;
-
-    // calculate additional hardening
-    hardness_temp = hardness_n[s];
-    ScalarT temp = H * std::fabs(slip_n[s]);
-    if (temp > hardness_temp) {
-      hardness_temp = temp;
-    }
-    // calculate slip increment with additional hardening
-    t1 = std::fabs(tau / (tauC + hardness_temp));
-//     t1 = std::fabs(tau / (tauC + hardness_np1[s]));
-    slip_np1[s] = slip_n[s] + dt * g0 * std::fabs(std::pow(t1, m)) * sign;
+    int sign = shear[s] < 0 ? -1 : 1;
+    temp = std::fabs(shear[s] / (tauC + hardness[s]));
+    slip_np1[s] = slip_n[s] + dt * g0 * std::fabs(std::pow(temp, m)) * sign;
   }
 }
 

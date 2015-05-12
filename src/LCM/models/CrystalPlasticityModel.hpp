@@ -83,8 +83,9 @@ private:
   void
   updateSlipViaExplicitIntegration(ScalarT                         dt,
 				   std::vector<ScalarT> const &    slip_n,
-				   std::vector<ScalarT> const &    hardness_n,
+				   std::vector<ScalarT> const &    hardness,
 				   Intrepid::Tensor<ArgT> const &  S,
+				   std::vector<ArgT> const &       shear,
 				   std::vector<ArgT> &             slip_np1) const ;
 
   ///
