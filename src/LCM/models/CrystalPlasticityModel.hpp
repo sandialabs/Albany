@@ -24,6 +24,8 @@ class CrystalPlasticityModel: public LCM::ConstitutiveModel<EvalT, Traits>
 {
 public:
 
+  enum IntegrationScheme { EXPLICIT=0, IMPLICIT=1 };
+
   typedef typename EvalT::ScalarT ScalarT;
   typedef typename EvalT::MeshScalarT MeshScalarT;
   typedef typename Sacado::Fad::DFad<ScalarT> Fad;
@@ -62,7 +64,6 @@ public:
          TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Not implemented.");
  }
 
-
 private:
 
   ///
@@ -78,67 +79,75 @@ private:
   ///
   /// explicit update of the slip
   ///
+  template<typename ArgT>
   void
-  updateSlipViaExplicitIntegration(ScalarT                        dt,
-				   std::vector<ScalarT> const &   slip_n,
-				   std::vector<ScalarT> const &   hardness_n,
-				   Intrepid::Tensor<Fad> const &  S,
-				   std::vector<Fad> &             slip_np1);
+  updateSlipViaExplicitIntegration(ScalarT                         dt,
+				   std::vector<ScalarT> const &    slip_n,
+				   std::vector<ScalarT> const &    hardness_n,
+				   Intrepid::Tensor<ArgT> const &  S,
+				   std::vector<ArgT> &             slip_np1) const ;
 
   ///
   /// Compute Lp_np1 and Fp_np1 based on computed slip increment
   ///
+  template<typename ArgT>
   void
   applySlipIncrement(std::vector<ScalarT> const &       slip_n,
-		     std::vector<Fad> const &           slip_np1,
+		     std::vector<ArgT> const &          slip_np1,
 		     Intrepid::Tensor<ScalarT> const &  Fp_n,
-		     Intrepid::Tensor<Fad> &            Lp_np1,
-		     Intrepid::Tensor<Fad> &            Fp_np1);
+		     Intrepid::Tensor<ArgT> &           Lp_np1,
+		     Intrepid::Tensor<ArgT> &           Fp_np1) const ;
 
   ///
   /// update the hardness
   ///
+  template<typename ArgT>
   void
-  updateHardness(std::vector<Fad> const &      slip_np1,
+  updateHardness(std::vector<ArgT> const &     slip_np1,
 		 std::vector<ScalarT> const &  hardness_n,
-		 std::vector<Fad> &            hardness_np1);
+		 std::vector<ArgT> &           hardness_np1) const ;
   
   ///
   /// residual
   ///
+  template<typename ArgT>
   void
   computeResidual(ScalarT                       dt,
 		  std::vector<ScalarT> const &  slip_n,
-		  std::vector<Fad> const &      slip_np1,
-		  std::vector<Fad> const &      hardness_np1,
-		  std::vector<Fad> const &      shear_np1,
-		  std::vector<Fad> &            slip_residual,
-		  Fad &                         norm_slip_residual);
+		  std::vector<ArgT> const &     slip_np1,
+		  std::vector<ArgT> const &     hardness_np1,
+		  std::vector<ArgT> const &     shear_np1,
+		  std::vector<ArgT> &           slip_residual,
+		  ArgT &                        norm_slip_residual) const ;
 
   ///
   /// compute stresses
   ///
+  template<typename ArgT>
   void 
   computeStress(Intrepid::Tensor<ScalarT> const &  F,
-                Intrepid::Tensor<Fad> const &      Fp,
-                Intrepid::Tensor<Fad> &            T,
-                Intrepid::Tensor<Fad> &            S,
-		std::vector<Fad>      &            shear);
+                Intrepid::Tensor<ArgT> const &     Fp,
+                Intrepid::Tensor<ArgT> &           T,
+                Intrepid::Tensor<ArgT> &           S,
+		std::vector<ArgT>      &           shear) const;
 
+  template<typename ArgT>
   void
   constructMatrixFiniteDifference(ScalarT                            dt,
 				  Intrepid::Tensor<ScalarT> const &  Fp_n,
 				  Intrepid::Tensor<ScalarT> const &  F_np1,
 				  std::vector<ScalarT> const &       slip_n,
-				  std::vector<Fad> const &           slip_np1,
+				  std::vector<ArgT> const &          slip_np1,
 				  std::vector<ScalarT> const &       hardness_n,
-				  std::vector<Fad> &                 matrix);
+				  std::vector<ArgT> &                matrix) const ;
 
   ///
   /// Check tensor for nans and infs.
   ///
-  void confirmTensorSanity(Intrepid::Tensor<Fad> const & input,
-			   std::string const & message);
+  template<typename ArgT>
+  void
+  confirmTensorSanity(Intrepid::Tensor<ArgT> const & input,
+		      std::string const & message) const ;
 
   ///
   /// Crystal elasticity parameters
@@ -171,6 +180,10 @@ private:
   /// Crystal Plasticity parameters
   ///
   std::vector<SlipSystemStruct> slip_systems_;
+
+  IntegrationScheme integration_scheme_;
+  RealType implicit_nonlinear_solver_tolerance_;
+  int implicit_nonlinear_solver_max_iterations_;
   };
 }
 
