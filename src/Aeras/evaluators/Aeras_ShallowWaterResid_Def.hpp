@@ -728,9 +728,8 @@ evaluateFields(typename Traits::EvalData workset)
                               +  ViscCoeff*hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
                               +  ViscCoeff*hgradNodes(qp,1)*wGradBF(cell,node,qp,1); 
         if (useHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi) 
-          //Residual(cell,node,0) -= hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
-          //                      -  hyperViscosity(cell,qp,1)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
-          Residual(cell,node,0) += div_hU(qp)*wBF(cell, node, qp) + U(cell,qp,3)*wBF(cell, node, qp); 
+          Residual(cell,node,0) -= hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
+                                -  hyperViscosity(cell,qp,1)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
         }
       }
     }
@@ -754,9 +753,8 @@ evaluateFields(typename Traits::EvalData workset)
           Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
           Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp); 
           if (useHyperViscosity) //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi) 
-            //Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
-            //                      + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
-            Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + div_hU(qp)*wBF(cell,node,qp); 
+            Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
+                                  + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
         }
       }
     }
