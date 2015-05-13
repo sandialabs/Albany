@@ -661,7 +661,8 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<ScalarT> vgradNodes(numQPs,2);
   Intrepid::FieldContainer<ScalarT> utildegradNodes(numQPs,2);
   Intrepid::FieldContainer<ScalarT> vtildegradNodes(numQPs,2);
-  
+ 
+
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       
@@ -718,6 +719,8 @@ evaluateFields(typename Traits::EvalData workset)
 
     divergence(huAtNodes, cell, div_hU);
     
+    //IKT, FIXME: wGradBF needs to be transformed to the spherical mesh
+    //using the gradient function (Oksana).  
 
     for (std::size_t qp=0; qp < numQPs; ++qp) {
         
@@ -736,18 +739,36 @@ evaluateFields(typename Traits::EvalData workset)
     
   }
 
-  if (vecDim == 2)
-    if (useHyperViscosity) //hyperviscosity residual(1) = htilde*phi + grad(h)*grad(phi)  
-      for (std::size_t cell=0; cell < workset.numCells; ++cell) 
-        for (std::size_t qp=0; qp < numQPs; ++qp) 
-          for (std::size_t node=0; node < numNodes; ++node) 
+  if (vecDim == 2) {
+    if (useHyperViscosity) {//hyperviscosity residual(1) = htilde*phi + grad(h)*grad(phi)  
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) { 
+        surf.initialize();
+        hgradNodes.initialize();
+        for (std::size_t node=0; node < numNodes; ++node) 
+          surf(node) = UNodal(cell,node,0);
+        gradient(surf, cell, hgradNodes);
+        //IKT, FIXME: wGradBF needs to be transformed to the spherical mesh
+        //using the gradient function (Oksana).  
+        for (std::size_t qp=0; qp < numQPs; ++qp) {
+          for (std::size_t node=0; node < numNodes; ++node) {
             Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
                                   + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
-
+          }
+         }
+       }
+    }
+  }
   if ( vecDim > 2) {
   // Velocity Equations
   if (usePrescribedVelocity) {
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      surf.initialize();
+      hgradNodes.initialize();
+      for (std::size_t node=0; node < numNodes; ++node) 
+        surf(node) = UNodal(cell,node,0);
+      gradient(surf, cell, hgradNodes);
+      //IKT, FIXME: wGradBF needs to be transformed to the spherical mesh
+      //using the gradient function (Oksana).  
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t node=0; node < numNodes; ++node) {
           Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
@@ -815,6 +836,8 @@ evaluateFields(typename Traits::EvalData workset)
 
       gradient(kineticEnergyAtNodes, cell, gradKineticEnergy);
       curl(uAtNodes, cell, curlU);
+      //IKT, FIXME: wGradBF needs to be transformed to the spherical mesh
+      //using the gradient function (Oksana).  
  
       if (ibpGradH == false) {
         for (std::size_t qp=0; qp < numQPs; ++qp) {
