@@ -118,47 +118,47 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         paramLib_,
         stateMgr_,
         commT_));
-  }
+  } else
 
-#if defined(ALBANY_LCM)
-  else if (method == "Topmod") {
+# if defined(ALBANY_LCM)
+  if (method == "Topmod") {
     adapter_ = Teuchos::rcp(new AAdapt::TopologyModT(adaptParams_,
         paramLib_,
         stateMgr_,
         commT_));
-  }
-#endif
-  else
+  } else
+# endif
 #endif
 
 #if 0
 # if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
-  else if (method == "Random") {
+  if (method == "Random") {
     strategy = rcp(new AAdapt::RandomFracture(adaptParams_,
             param_lib_,
             state_mgr_,
             epetra_comm_));
-  }
+  } else
 # endif
 #endif
-  // RCP needs to be non-owned because otherwise there is an RCP circle.
-  /*if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
-           method == "RPI SPR Size")
 #ifdef ALBANY_SCOREC
+  // RCP needs to be non-owned because otherwise there is an RCP circle.
+  if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
+      method == "RPI SPR Size") {
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdaptT(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              commT_));
+  } else
 #endif
-  else if (method == "Unif Size") {
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
+  if (method == "Unif Size") {
     adapter_ = Teuchos::rcp(new AAdapt::STKAdaptT<AAdapt::STKUnifRefineField>(adaptParams_,
             paramLib_,
             stateMgr_,
             commT_));
+  } else
 #endif
-  }
 
-  else {
+  {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         Teuchos::Exceptions::InvalidParameter,
         std::endl <<
@@ -167,7 +167,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         " !" << std::endl
         << "Supplied parameter list is " <<
         std::endl << *adaptParams_);
-  }*/
+  }
 
   *out << "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n"
       << " Mesh adapter has been initialized:\n"
@@ -293,7 +293,7 @@ void
 AAdapt::AdaptiveSolutionManagerT::
 projectCurrentSolution()
 {
-  std::cout << "here! " << std::endl; 
+
   // grp->getNOXThyraVecRCPX() is the current solution on the old mesh
 
   // TO provide an example, assume that the meshes are identical and we can just copy the data between them (a Copy Remesh)
