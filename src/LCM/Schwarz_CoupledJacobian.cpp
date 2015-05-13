@@ -38,6 +38,8 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 {
 }
 
+#define EXPLICIT_OFF_DIAGONAL
+
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
@@ -80,6 +82,22 @@ const
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jacs[i]);
         blocked_op->setNonconstBlock(i, j, block);
       } else { // Off-diagonal blocks
+
+#if defined(EXPLICIT_OFF_DIAGONAL)
+
+        Teuchos::RCP<Schwarz_BoundaryJacobian>
+        jac_boundary =
+            Teuchos::rcp(
+                new LCM::Schwarz_BoundaryJacobian(commT_, ca, jacs, i, j));
+
+        Teuchos::RCP<Tpetra_CrsMatrix>
+        exp_jac = jac_boundary->getExplicitOperator();
+
+        Teuchos::RCP<Thyra::LinearOpBase<ST>>
+        block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(exp_jac);
+
+#else
+
         Teuchos::RCP<Tpetra_Operator>
         jac_boundary =
             Teuchos::rcp(
@@ -87,6 +105,8 @@ const
 
         Teuchos::RCP<Thyra::LinearOpBase<ST>>
         block = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(jac_boundary);
+
+#endif // EXPLICIT_OFF_DIAGONAL
 
         blocked_op->setNonconstBlock(i, j, block);
       }
