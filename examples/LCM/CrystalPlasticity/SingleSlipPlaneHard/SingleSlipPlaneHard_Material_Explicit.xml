@@ -36,7 +36,7 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="1.0"/>
-        <Parameter name="Gamma Exponent" type="double" value="5.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="10.0"/>
 
       </ParameterList>
@@ -75,7 +75,7 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="1.0"/>
-        <Parameter name="Gamma Exponent" type="double" value="5.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="10.0"/>
       </ParameterList>
 

@@ -3,7 +3,7 @@ import exodus
 import numpy
 import matplotlib.pyplot as plt
 
-file_name = "SingleSlipPlaneHard.exo"
+file_name = "SingleSlipPlaneHard_Implicit.e"
 exo_file = exodus.exodus(file_name,"r")
 inp_var_name = "gamma_1_1"
 dep_var_name = "tau_hard_1_1"
@@ -62,7 +62,7 @@ fig, ax = plt.subplots()
 ax.plot(inp_var[:-1],dep_var_3[:-1],color='blue',marker='o',label=file_name)
 plt.xlabel(inp_var_name)
 plt.ylabel(dep_var_name_3)
-plt.ylim([-1.0e-13,1.0e-13])
+##plt.ylim([-1.0e-13,1.0e-13])
 lg = plt.legend(loc = 4)
 lg.draw_frame(False)
 plt.tight_layout()

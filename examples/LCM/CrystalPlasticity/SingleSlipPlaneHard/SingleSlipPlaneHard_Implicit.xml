@@ -3,17 +3,17 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlaneHard_Material.xml"/> -->
+    <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlaneHard_Material_Implicit.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
-        <Parameter name="Number of points" type="int" value="6"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.10, 0.20,  0.30,  0.40,  0.50, 1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05, 0.00,  0.05,  0.00,  0.05, 0.30}"/>
+        <Parameter name="Number of points" type="int" value="2"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.30}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
-        <Parameter name="Number of points" type="int" value="6"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 0.10, 0.20,  0.30,  0.40,  0.50, 1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.05, 0.00,  0.05,  0.00,  0.05, 0.30}"/>
+        <Parameter name="Number of points" type="int" value="2"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.30}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
@@ -34,7 +34,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="SingleSlipPlane.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlaneHard.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlaneHard_Implicit.e"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
@@ -53,7 +53,7 @@
       <ParameterList name="Bifurcation"/>
       <ParameterList name="Constraints"/>
       <ParameterList name="Predictor">
-        <Parameter name="Method" type="string" value="Tangent"/>
+        <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
       <ParameterList name="Stepper">
         <Parameter name="Initial Value" type="double" value="0.0"/>
@@ -69,7 +69,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.001"/>
+        <Parameter name="Initial Step Size" type="double" value="0.01"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
