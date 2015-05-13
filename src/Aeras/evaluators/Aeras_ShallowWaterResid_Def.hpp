@@ -759,8 +759,7 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
   if ( vecDim > 2) {
-  // Velocity Equations
-  if (usePrescribedVelocity) {
+  if (useHyperViscosity) { //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi) 
     for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       surf.initialize();
       hgradNodes.initialize();
@@ -771,11 +770,19 @@ evaluateFields(typename Traits::EvalData workset)
       //using the gradient function (Oksana).  
       for (std::size_t qp=0; qp < numQPs; ++qp) {
         for (std::size_t node=0; node < numNodes; ++node) {
-          Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
-          Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp); 
-          if (useHyperViscosity) //hyperviscosity residual(3) = htilde*phi + grad(h)*grad(phi) 
             Residual(cell,node,3) += U(cell,qp,3)*wBF(cell,node,qp) + hgradNodes(qp,0)*wGradBF(cell,node,qp,0)
                                   + hgradNodes(qp,1)*wGradBF(cell,node,qp,1);
+        }
+      }
+    }
+  }
+  // Velocity Equations
+  if (usePrescribedVelocity) {
+    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+      for (std::size_t qp=0; qp < numQPs; ++qp) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+          Residual(cell,node,1) += UDot(cell,qp,1)*wBF(cell,node,qp) + source(cell,qp,1)*wBF(cell, node, qp);
+          Residual(cell,node,2) += UDot(cell,qp,2)*wBF(cell,node,qp) + source(cell,qp,2)*wBF(cell, node, qp); 
         }
       }
     }
