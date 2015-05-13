@@ -35,8 +35,8 @@ Teuchos::RCP<AAdapt::AnalyticFunction> AAdapt::createAnalyticFunction(
   else if(name == "Linear Y")
     F = Teuchos::rcp(new AAdapt::LinearY(neq, numDim, data));
   
-  else if(name == "Quadratic X")
-    F = Teuchos::rcp(new AAdapt::QuadraticX(neq, numDim, data));
+  else if(name == "Circle")
+    F = Teuchos::rcp(new AAdapt::Circle(neq, numDim, data));
 
   else if(name == "Gaussian Pressure")
     F = Teuchos::rcp(new AAdapt::GaussianPress(neq, numDim, data));
@@ -253,23 +253,25 @@ void AAdapt::LinearY::compute(double* x, const double* X) {
   if(numDim > 2) x[2] = 0.0;
 }
 //*****************************************************************************
-AAdapt::QuadraticX::QuadraticX(int neq_, int numDim_, Teuchos::Array<double> data_)
+AAdapt::Circle::Circle(int neq_, int numDim_, Teuchos::Array<double> data_)
   : numDim(numDim_), neq(neq_), data(data_) {
   bool error = true; 
   if (neq == 1 || neq == 3) error = false; 
   TEUCHOS_TEST_FOR_EXCEPTION(error || (numDim != 2),
                              std::logic_error,
-                             "Error! Invalid call of QuadraticX with " << neq
+                             "Error! Invalid call of Circle with " << neq
                              << " " << numDim << "  " << data.size() << std::endl);
 }
-void AAdapt::QuadraticX::compute(double* x, const double* X) {
-  x[0] = X[0]*(1.0-X[0])*X[1]*(1.0-X[1]);
-  //The following is optional -- for testing if IC is needed for auxiliary variables.
-  //It should not be. 
-  /*if (neq == 3) { 
-    x[1] = (1.0-2.0*X[0])*X[1]*(1.0-X[1]); 
-    x[2] = X[0]*(1.0-X[0])*(1.0-2.0*X[1]); 
-  }*/
+void AAdapt::Circle::compute(double* x, const double* X) {
+  if( ((X[0]-.5)*(X[0]-.5) + (X[1]-.5)*(X[1]-.5))< 1.0/16.0  )
+    x[0] = 1.0;
+  else
+    x[0] = 0.0;
+
+  if (neq == 3) {
+    x[1] = 0.0; 
+    x[2] = 0.0; 
+  }
 }
 //*****************************************************************************
 AAdapt::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)

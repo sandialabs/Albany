@@ -5,16 +5,13 @@
    <Parameter name="Solution Method" type="string" value="Transient"/>
     <Parameter name="Number of PDE Equations" type="int" value="1"/>
     <ParameterList name="Dirichlet BCs">     
-      <Parameter name="DBC on NS NodeSet0 for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet1 for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet2 for DOF U0" type="double" value="0.0"/>
-      <Parameter name="DBC on NS NodeSet3 for DOF U0" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Initial Condition">
-       <Parameter name="Function" type="string" value="Quadratic X"/>
+       <Parameter name="Function" type="string" value="Circle"/>
     </ParameterList>
     <ParameterList name="Options">
        <Parameter name="Use Augmented Form" type="bool" value="true"/>
+       <Parameter name="Augmented Form Type" type="int" value="2"/>
        <Parameter name="Advection a" type="double" value="1.0"/>
        <Parameter name="Advection b" type="double" value="1.0"/>
        <Parameter name="Viscosity mu" type="double" value="0.1"/>
@@ -45,6 +42,8 @@
     <Parameter name="1D Scale" type="double" value="1"/>
     <Parameter name="2D Elements" type="int" value="20"/>
     <Parameter name="2D Scale" type="double" value="1"/>
+    <Parameter name="Periodic_x BC" type="bool" value="true"/>
+    <Parameter name="Periodic_y BC" type="bool" value="true"/>
     <Parameter name="Method" type="string" value="STK2D"/>
     <Parameter name="Exodus Output File Name" type="string" value="advdiff2D_out.exo"/>
   </ParameterList>
@@ -56,7 +55,7 @@
   <ParameterList name="Piro">
     <ParameterList name="Rythmos">
       <Parameter name="Nonlinear Solver Type" type="string" value="Rythmos"/>
-      <Parameter name="Final Time" type="double" value="5"/>
+      <Parameter name="Final Time" type="double" value="0.5"/>
       <!-- Originally final time was 86400; reduced it for nightly tests (IK, 10/8/14) -->
       <!--Parameter name="Final Time" type="double" value="86400"/-->
       <!-- change to 12*24*3600 to get full 12 days -->
@@ -69,7 +68,7 @@
       </ParameterList>
       <ParameterList name="Rythmos Integration Control">
         <Parameter name="Take Variable Steps" type="bool" value="false"/>
-        <Parameter name="Number of Time Steps" type="int" value="100"/>
+        <Parameter name="Number of Time Steps" type="int" value="20"/>
       </ParameterList>
       <ParameterList name="Rythmos Integrator">
 	<ParameterList name="VerboseObject">

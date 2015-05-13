@@ -63,10 +63,22 @@ AdvDiffResid(const Teuchos::ParameterList& p) :
   b = bf_list->get("Advection b", 1.0); 
   mu = bf_list->get("Viscosity mu", 0.1); 
   useAugForm = bf_list->get("Use Augmented Form", false); 
+  formType = bf_list->get("Augmented Form Type", 1);
+
+  bool error = true; 
+  if (formType == 1 || formType == 2) 
+    error = false;  
+
+  TEUCHOS_TEST_FOR_EXCEPTION(error, std::logic_error,
+       "Invalid Augmented Form Type: " << formType << "; valid options are 1 and 2");
+ 
 
   std::cout << "a, b, mu: " << a << ", " << b << ", " << mu << std::endl; 
   std::cout << " vecDim = " << vecDim << std::endl;
   std::cout << " numDims = " << numDims << std::endl;
+  std::cout << "Augmented Form? " << useAugForm << std::endl; 
+  if (useAugForm == true) 
+    std::cout << "  Augmented form type: " << formType << std::endl; 
 
 
 }
@@ -109,27 +121,50 @@ evaluateFields(typename Traits::EvalData workset)
        }        
     }
   }
-  else { //augmented form of advection diffusion equation, where we let q = grad(u) 
-    for (std::size_t cell=0; cell < workset.numCells; ++cell) {
-      for (std::size_t node=0; node < numNodes; ++node) {
-        for (std::size_t i=0; i<vecDim; i++)  
-          Residual(cell,node,i) = 0.0;
-          for (std::size_t qp=0; qp < numQPs; ++qp) {
-            //du/dt + (a,b).q - mu*div(q) = 0
-            Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) + 
-                                     a*U(cell,qp,1)*wBF(cell,node,qp) +
-                                     b*U(cell,qp,2)*wBF(cell,node,qp) +  
-                                     mu*U(cell,qp,1)*wGradBF(cell,node,qp,0) + 
-                                     mu*U(cell,qp,2)*wGradBF(cell,node,qp,1);
-            //q - grad(u) = 0 
-            Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) - UGrad(cell,qp,0,0)*wBF(cell,node,qp); 
-            Residual(cell,node,2) += U(cell,qp,2)*wBF(cell,node,qp) - UGrad(cell,qp,0,1)*wBF(cell,node,qp); 
-          }
-       }        
+  else { //augmented form of advection diffusion equation
+    if (formType == 1) {
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+          for (std::size_t i=0; i<vecDim; i++)  
+            Residual(cell,node,i) = 0.0;
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+              //du/dt + (a,b).q - mu*div(q) = 0
+              Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) + 
+                                       a*U(cell,qp,1)*wBF(cell,node,qp) +
+                                       b*U(cell,qp,2)*wBF(cell,node,qp) +  
+                                       mu*U(cell,qp,1)*wGradBF(cell,node,qp,0) + 
+                                       mu*U(cell,qp,2)*wGradBF(cell,node,qp,1);
+              //q - grad(u) = 0 
+              Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) - UGrad(cell,qp,0,0)*wBF(cell,node,qp); 
+              Residual(cell,node,2) += U(cell,qp,2)*wBF(cell,node,qp) - UGrad(cell,qp,0,1)*wBF(cell,node,qp); 
+            }
+          }        
+       }
     }
-  }
+    else if (formType == 2) { 
+      for (std::size_t cell=0; cell < workset.numCells; ++cell) {
+        for (std::size_t node=0; node < numNodes; ++node) {
+          for (std::size_t i=0; i<vecDim; i++)  
+            Residual(cell,node,i) = 0.0;
+            for (std::size_t qp=0; qp < numQPs; ++qp) {
+              //du/dt + q = 0
+              Residual(cell,node,0) += UDot(cell,qp,0)*wBF(cell,node,qp) + 
+                                       U(cell,qp,1)*wBF(cell,node,qp) +
+                                       U(cell,qp,2)*wBF(cell,node,qp);
+              //q - (a,b).grad(u) + mu*delta(u) = 0
+              Residual(cell,node,1) += U(cell,qp,1)*wBF(cell,node,qp) - a*UGrad(cell,qp,0,0)*wBF(cell,node,qp) 
+                                    -  mu*UGrad(cell,qp,0,0)*wGradBF(cell,node,qp,0); 
+              Residual(cell,node,2) += U(cell,qp,2)*wBF(cell,node,qp) - b*UGrad(cell,qp,0,1)*wBF(cell,node,qp) 
+                                    -  mu*UGrad(cell,qp,0,1)*wGradBF(cell,node,qp,1);
+            }
+          }        
+        }
+      }
+    }
 }
 
 //**********************************************************************
 }
+
+
 

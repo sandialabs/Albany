@@ -49,6 +49,7 @@ private:
   double a;    //advection coefficient
   double b;    //advection coefficient
   bool useAugForm; //use augmented form?
+  int formType; //augmented form type
   
   // Output:
   PHX::MDField<ScalarT,Cell,Node,VecDim> Residual;

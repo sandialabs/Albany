@@ -110,9 +110,9 @@ class LinearY : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
-class QuadraticX : public AnalyticFunction {
+class Circle : public AnalyticFunction {
   public:
-    QuadraticX(int neq_, int numDim_, Teuchos::Array<double> data_);
+    Circle(int neq_, int numDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     int numDim; // size of coordinate vector X
