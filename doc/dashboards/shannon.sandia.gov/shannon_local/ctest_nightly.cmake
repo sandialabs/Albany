@@ -232,7 +232,7 @@ SET(CONFIGURE_OPTIONS
   "-DCMAKE_CXX_COMPILER:FILEPATH=${CTEST_SCRIPT_DIRECTORY}/nvcc_wrapper"
   "-DCMAKE_C_COMPILER:FILEPATH=mpicc"
   "-DCMAKE_Fortran_COMPILER:FILEPATH=mpifort"
-  "-DCMAKE_CXX_FLAGS:STRING='-w -DNDEBUG'"
+  "-DCMAKE_CXX_FLAGS:STRING='-DNDEBUG'"
   "-DCMAKE_C_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DCMAKE_Fortran_FLAGS:STRING='-O3 -w -DNDEBUG'"
   "-DTrilinos_ENABLE_EXPLICIT_INSTANTIATION:BOOL=OFF"
@@ -508,7 +508,22 @@ CTEST_BUILD(
 )
 
 if(BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+  IF(CTEST_DO_SUBMIT)
+    CTEST_SUBMIT(PARTS Build
+               RETURN_VALUE  S_HAD_ERROR
+    )
+
+    if(S_HAD_ERROR)
+        message(FATAL_ERROR "Cannot submit Albany build results!")
+    endif()
+  ENDIF()
+
+  if(HAD_ERROR)
+	message(FATAL_ERROR "Cannot build Albany!")
+  endif()
+
+  message(FATAL_ERROR "Encountered build errors in Albany build. Exiting!")
+
 endif()
 
 SET(CTEST_BUILD_TARGET "AlbanyT")
