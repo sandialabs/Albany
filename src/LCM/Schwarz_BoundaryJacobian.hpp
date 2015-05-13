@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_SCHWARZ_BOUNDARY_JACOBIAN_H
-#define LCM_SCHWARZ_BOUNDARY_JACOBIAN_H
+#if !defined(LCM_SchwarzBoundaryJacobian_hpp)
+#define LCM_SchwarzBoundaryJacobian_hpp
 
 #include <iostream>
 
@@ -33,8 +33,8 @@ class Schwarz_BoundaryJacobian: public Tpetra_Operator {
 public:
   Schwarz_BoundaryJacobian(
       Teuchos::RCP<Teuchos_Comm const> const & comm,
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > const & ca,
-      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix> > jacs,
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> const & ca,
+      Teuchos::Array<Teuchos::RCP<Tpetra_CrsMatrix>> jacs,
       int const this_app_index = 0,
       int const coupled_app_index = 0);
 
@@ -42,11 +42,14 @@ public:
 
   /// Initialize the operator with everything needed to apply it
   //FIXME: add arguments
-  void initialize();
+  void
+  initialize();
 
   /// Returns the result of a Tpetra_Operator applied to a
   ///Tpetra_MultiVector X in Y.
-  virtual void apply(
+  virtual
+  void
+  apply(
       Tpetra_MultiVector const & X,
       Tpetra_MultiVector & Y,
       Teuchos::ETransp mode = Teuchos::NO_TRANS,
@@ -54,19 +57,25 @@ public:
       ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
 
   /// Returns the current UseTranspose setting.
-  virtual bool hasTransposeApply() const
+  virtual
+  bool
+  hasTransposeApply() const
   {
     return b_use_transpose_;
   }
 
   /// Returns the Tpetra_Map object associated with the domain of this operator.
-  virtual Teuchos::RCP<Tpetra_Map const> getDomainMap() const
+  virtual
+  Teuchos::RCP<Tpetra_Map const>
+  getDomainMap() const
   {
     return domain_map_;
   }
 
   /// Returns the Tpetra_Map object associated with the range of this operator.
-  virtual Teuchos::RCP<Tpetra_Map const> getRangeMap() const
+  virtual
+  Teuchos::RCP<Tpetra_Map const>
+  getRangeMap() const
   {
     return range_map_;
   }
@@ -101,7 +110,7 @@ public:
     return *(coupled_apps_[app_index]);
   }
 
-  Albany::Application const&
+  Albany::Application const &
   getApplication(int const app_index) const
   {
     return *(coupled_apps_[app_index]);
@@ -134,7 +143,7 @@ private:
   int
   coupled_app_index_;
 
-  Teuchos::Array<Teuchos::RCP<Tpetra_Map const> >
+  Teuchos::Array<Teuchos::RCP<Tpetra_Map const>>
   disc_maps_;
 
   Teuchos::RCP<Tpetra_Map const>
@@ -154,8 +163,7 @@ private:
 
   int
   n_models_;
-
 };
 
 }
-#endif
+#endif // LCM_SchwarzBoundaryJacobian_hpp

@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef LCM_SCHWARZ_JACOBIAN_H
-#define LCM_SCHWARZ_JACOBIAN_H
+#if !defined(LCM_SchwarzCoupledJacobian_hpp)
+#define LCM_SchwarzCoupledJacobian_hpp
 
 #include <iostream>
 #include "Teuchos_Comm.hpp"
@@ -48,4 +48,4 @@ private:
 };
 
 }
-#endif
+#endif // LCM_SchwarzCoupledJacobian_hpp
