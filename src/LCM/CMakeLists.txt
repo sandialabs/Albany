@@ -62,6 +62,7 @@ file (GLOB models-headers
   "${LCM_DIR}/models/*.hpp"
 )
 
+IF(ALBANY_HAVE_STK)
 #LCM utils
 file (GLOB utils-sources
   "${LCM_DIR}/utils/*.cpp"
@@ -79,6 +80,16 @@ file (GLOB topology-sources
 file (GLOB topology-headers
   "${LCM_DIR}/utils/topology/*.h"
 )
+ELSE()
+  set(utils-headers ${utils-headers}
+    ${LCM_DIR}/utils/LCM_Utils.h
+    ${LCM_DIR}/utils/Projection.hpp
+  )
+  set(utils-sources ${utils-sources}
+    ${LCM_DIR}/utils/LCM_Utils.cc
+    ${LCM_DIR}/utils/Projection.cpp
+  )
+ENDIF()
 
 set(SOURCES ${SOURCES}
   ${problem-sources}
@@ -124,6 +135,18 @@ IF(NOT ALBANY_CONTACT)
   list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/MortarContactConstraints.cpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints.hpp)
   list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/MortarContactConstraints_Def.hpp)
+ENDIF()
+
+IF(NOT ALBANY_HAVE_STK)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/Schwarz_BoundaryJacobian.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/Schwarz_BoundaryJacobian.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/Schwarz_CoupledJacobian.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/Schwarz_CoupledJacobian.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/SchwarzMultiscale.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/SchwarzMultiscale.hpp)
+  list(REMOVE_ITEM SOURCES ${LCM_DIR}/evaluators/bc/SchwarzBC.cpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC_Def.hpp)
+  list(REMOVE_ITEM HEADERS ${LCM_DIR}/evaluators/bc/SchwarzBC.hpp)
 ENDIF()
 
 IF(ALBANY_LAME OR ALBANY_LAMENT)

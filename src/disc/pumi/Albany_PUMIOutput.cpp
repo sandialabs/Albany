@@ -6,7 +6,9 @@
 
 #include "Albany_PUMIOutput.hpp"
 #include "Albany_PUMIVtk.hpp"
+#if defined(HAVE_STK)
 #include "Albany_PUMIExodus.hpp"
+#endif
 
 Albany::PUMIOutput::~PUMIOutput() {
 }
@@ -14,8 +16,10 @@ Albany::PUMIOutput::~PUMIOutput() {
 Albany::PUMIOutput* Albany::PUMIOutput::create(
   const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
   const Teuchos::RCP<const Teuchos_Comm>& comm) {
+#if defined(HAVE_STK)
   if (meshStruct->outputFileName.find("exo") != std::string::npos)
     return new PUMIExodus(meshStruct, comm);
   else
+#endif
     return new PUMIVtk(meshStruct, comm);
 }

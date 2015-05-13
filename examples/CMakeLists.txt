@@ -77,6 +77,7 @@ if (ALBANY_ASCR)
   set(SerialAlbanySGCoupled.exe  ${AlbanySGCoupledPath})
 endif()
 
+  IF(ALBANY_HAVE_STK) # STK is needed for all these
 # Heat Transfer Problems ###############
   add_subdirectory(SteadyHeat1D)
   add_subdirectory(SteadyHeat2D)
@@ -111,11 +112,13 @@ endif()
     add_subdirectory(CUTR_Heat2D)
     add_subdirectory(CUTR_HeatStruct2D)
   ENDIF()
+  ENDIF()
 
   IF(ALBANY_SCOREC)
     add_subdirectory(Heat3DPUMI)
   ENDIF()
 
+IF(ALBANY_HAVE_STK)
 # DEMO PDES ###############
 IF(ALBANY_DEMO_PDES)
   add_subdirectory(Helmholtz2D)
@@ -148,11 +151,15 @@ IF(ALBANY_DEMO_PDES)
 
 ENDIF(ALBANY_DEMO_PDES)
 
+ENDIF()
+
 # LCM ###############
 
 IF(ALBANY_LCM)
   add_subdirectory(LCM)
 ENDIF(ALBANY_LCM)
+
+IF(ALBANY_HAVE_STK)
 
 # QCAD ##################
 
@@ -195,6 +202,8 @@ ENDIF()
 
 IF(ALBANY_PERFORMANCE_TESTS)
   add_subdirectory(PerformanceTests)
+ENDIF()
+
 ENDIF()
 
 ###################

@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
+#if defined(HAVE_STK)
 #include "AAdapt_CopyRemeshT.hpp"
 #if defined(ALBANY_LCM)
 #include "AAdapt_TopologyModificationT.hpp"
@@ -14,6 +15,7 @@
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 #include "AAdapt_STKAdaptT.hpp"
+#endif
 #endif
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
@@ -110,6 +112,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 
   std::string& method = adaptParams_->get("Method", "");
 
+#if defined(HAVE_STK)
   if (method == "Copy Remesh") {
     adapter_ = Teuchos::rcp(new AAdapt::CopyRemeshT(adaptParams_,
         paramLib_,
@@ -125,6 +128,8 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
         commT_));
   }
 #endif
+  else
+#endif
 
 #if 0
 # if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
@@ -138,7 +143,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 #endif
 #ifdef ALBANY_SCOREC
   // RCP needs to be non-owned because otherwise there is an RCP circle.
-  else if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
+  if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
            method == "RPI SPR Size")
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdaptT(adaptParams_, paramLib_, stateMgr_, rc_mgr,

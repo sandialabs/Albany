@@ -1285,11 +1285,11 @@ void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
     numNodes = nodes.size();
     std::vector<int> indices(numNodes*nComp);
     Albany::NodalDOFManager* dofManager = (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
-    dofManager->setup(&bulkData, nComp, numNodes, numGlobalNodes, interleavedOrdering);
+    dofManager->setup(nComp, numNodes, numGlobalNodes, interleavedOrdering);
 
     for (int i=0; i < numNodes; i++)
       for (int j=0; j < nComp; j++)
-        indices[dofManager->getLocalDOF(i,j)] = dofManager->getGlobalDOF(nodes[i],j);
+        indices[dofManager->getLocalDOF(i,j)] = dofManager->getGlobalDOF(bulkData.identifier(nodes[i])-1, j);
 
     Teuchos::RCP<Epetra_Map>& map = (overlapped) ? it->second.overlap_map : it->second.map;
     map = Teuchos::null;

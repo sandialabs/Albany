@@ -21,7 +21,11 @@
 #include <apf.h>
 #include <apfMesh2.h>
 #include <apfMDS.h>
+#if defined(HAVE_STK)
 #include <apfSTK.h>
+#else
+#include <apfAlbany.h>
+#endif
 #include <gmi.h>
 
 namespace Albany {

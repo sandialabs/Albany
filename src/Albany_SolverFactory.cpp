@@ -56,7 +56,7 @@
   #include "ATO_Solver.hpp"
 #endif
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
   #include "SchwarzMultiscale.hpp"
   #include "Schwarz_PiroObserverT.hpp"
 #endif
@@ -626,7 +626,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //#endif /* ALBANY_ATO */
 //    }
   
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;

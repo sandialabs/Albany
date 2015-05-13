@@ -216,6 +216,7 @@ SET(HEADERS ${HEADERS}
   disc/Albany_AbstractFieldContainer.hpp
   disc/Albany_AbstractNodeFieldContainer.hpp
   disc/Albany_DiscretizationFactory.hpp
+  disc/Albany_NodalDOFManager.hpp
   disc/Adapt_NodalDataBase.hpp
   disc/Adapt_NodalDataVector.hpp
   disc/Adapt_NodalFieldUtils.hpp
@@ -766,7 +767,11 @@ set(ALL_LIBRARIES
 add_subdirectory(adapt)
 add_subdirectory(disc)
 
+IF(ALBANY_HAVE_STK)
 SET(ALBANY_LIBRARIES albanyLib albanyAdapt albanySTK)
+ELSE()
+SET(ALBANY_LIBRARIES albanyLib albanyAdapt)
+ENDIF()
 
 IF(ALBANY_DEMO_PDES)
   add_library(albanyPDEs ${Albany_LIBRARY_TYPE} ${PDE_SRCS} ${PDE_HDRS})
