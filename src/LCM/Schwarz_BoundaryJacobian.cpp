@@ -159,9 +159,55 @@ getExplicitOperator() const
 
   K->setAllToScalar(zero);
 
-  std::cout << "Number rows: " << K->getNodeNumRows() << '\n';
-  std::cout << "Number cols: " << K->getNodeNumCols() << '\n';
-  std::cout << *K << '\n';
+  auto const
+  this_app_index = getThisAppIndex();
+
+  auto const
+  coupled_app_index = getCoupledAppIndex();
+
+  switch (this_app_index) {
+  default:
+    break;
+  case 0:
+    switch (coupled_app_index) {
+    default:
+      break;
+    case 1:
+      break;
+    }
+    break;
+  case 1:
+    switch (coupled_app_index) {
+    default:
+      break;
+    case 0:
+      break;
+    }
+    break;
+  }
+
+  /*
+  Teuchos::Array<GO>
+  cols(num_cols);
+
+  Teuchos::Array<ST>
+  vals(num_cols);
+
+  for (auto j = 0; j < num_cols; ++j) {
+    cols[j] = j;
+    vals[j] = zero;
+  }
+
+  for (auto i = 0; i < num_rows; ++i) {
+    K->sumIntoGlobalValues(i, cols, vals);
+  }
+  */
+
+  K->fillComplete();
+
+  //std::cout << "Number rows: " << K->getNodeNumRows() << '\n';
+  //std::cout << "Number cols: " << K->getNodeNumCols() << '\n';
+  //std::cout << *K << '\n';
 
   return K;
 }
