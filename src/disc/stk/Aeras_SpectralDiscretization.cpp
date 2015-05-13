@@ -61,8 +61,8 @@ const Tpetra::global_size_t INVALID =
   Teuchos::OrdinalTraits<Tpetra::global_size_t>::invalid ();
 
 // Uncomment the following line if you want debug output to be printed to screen
-#define OUTPUT_TO_SCREEN
-#define PRINT_COORDS
+//#define OUTPUT_TO_SCREEN
+//#define PRINT_COORDS
 
 Aeras::SpectralDiscretization::
 SpectralDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& discParams_,
