@@ -159,6 +159,10 @@ getExplicitOperator() const
 
   K->setAllToScalar(zero);
 
+  std::cout << "Number rows: " << K->getNodeNumRows() << '\n';
+  std::cout << "Number cols: " << K->getNodeNumCols() << '\n';
+  std::cout << *K << '\n';
+
   return K;
 }
 
