@@ -138,6 +138,17 @@ make_vector(Tpetra_MultiVector const & X) const
   return W;
 }
 
+/// Returns explicit matrix representation of operator if available.
+Teuchos::RCP<Tpetra_CrsMatrix>
+LCM::
+Schwarz_BoundaryJacobian::
+getExplicitOperator() const
+{
+  Teuchos::RCP<Tpetra_CrsMatrix>
+  K = Teuchos::rcp(new Tpetra_CrsMatrix(getRangeMap(), getDomainMap(), 24));
+  return K;
+}
+
 #if defined(APPLY_H8_H8_EXPLICIT)
 // Returns the result of a Tpetra_Operator applied to a
 // Tpetra_MultiVector X in Y.

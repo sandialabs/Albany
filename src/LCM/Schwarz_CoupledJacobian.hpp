@@ -44,7 +44,6 @@ private:
 
   Teuchos::RCP<Teuchos_Comm const>
   commT_;
-
 };
 
 }

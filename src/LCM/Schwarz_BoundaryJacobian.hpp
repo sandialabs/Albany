@@ -46,7 +46,7 @@ public:
   initialize();
 
   /// Returns the result of a Tpetra_Operator applied to a
-  ///Tpetra_MultiVector X in Y.
+  /// Tpetra_MultiVector X in Y.
   virtual
   void
   apply(
@@ -55,6 +55,10 @@ public:
       Teuchos::ETransp mode = Teuchos::NO_TRANS,
       ST alpha = Teuchos::ScalarTraits<ST>::one(),
       ST beta = Teuchos::ScalarTraits<ST>::zero()) const;
+
+  /// Returns explicit matrix representation of operator if available.
+  Teuchos::RCP<Tpetra_CrsMatrix>
+  getExplicitOperator() const;
 
   /// Returns the current UseTranspose setting.
   virtual
