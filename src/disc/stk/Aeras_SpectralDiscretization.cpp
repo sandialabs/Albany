@@ -663,7 +663,6 @@ Aeras::SpectralDiscretization::writeSolutionToFileT(const Tpetra_Vector& solnT,
   // Skip this write unless the proper interval has been reached
   if (stkMeshStruct->exoOutput && !(outputInterval % stkMeshStruct->exoOutputInterval))
   {
-    setupExodusOutput();
     double time_label = monotonicTimeLabel(time);
     int out_step = mesh_data->process_output_request(outputFileIdx, time_label);
     if (mapT->getComm()->getRank() == 0)
