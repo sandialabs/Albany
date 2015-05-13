@@ -61,7 +61,7 @@ AdvDiffResid(const Teuchos::ParameterList& p) :
 
   a = bf_list->get("Advection a", 1.0); 
   b = bf_list->get("Advection b", 1.0); 
-  mu = bf_list->get("Viscocity mu", 0.1); 
+  mu = bf_list->get("Viscosity mu", 0.1); 
   useAugForm = bf_list->get("Use Augmented Form", false); 
 
   std::cout << "a, b, mu: " << a << ", " << b << ", " << mu << std::endl; 
