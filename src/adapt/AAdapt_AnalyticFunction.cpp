@@ -268,10 +268,12 @@ void AAdapt::Circle::compute(double* x, const double* X) {
   else
     x[0] = 0.0;
 
-  if (neq == 3) {
+  //This would be the initial condition for the auxiliary variables, but it should not 
+  //be needed. 
+  /*if (neq == 3) {
     x[1] = 0.0; 
     x[2] = 0.0; 
-  }
+  }*/
 }
 //*****************************************************************************
 AAdapt::GaussianPress::GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_)
