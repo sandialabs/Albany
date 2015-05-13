@@ -735,9 +735,14 @@ computeResidual(ScalarT                       dt,
     // Compute slip increment using Fe_np1
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
+    // Establishing filter for active slip systems (help from JTO)
+    if (temp < std::numeric_limits<RealType>::epsilon()) {
+      dgamma_value2 = dt * g0 * 0.0 * sign;
+    }
+    else {
     // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
     dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
-
+    }
     // The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
   }
