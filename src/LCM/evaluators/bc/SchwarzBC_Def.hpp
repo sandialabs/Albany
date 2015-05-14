@@ -26,6 +26,7 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
     PHAL::DirichletBase<EvalT, Traits>(p),
     app_(p.get<Teuchos::RCP<Albany::Application>>(
         "Application", Teuchos::null)),
+    coupled_apps_(app_->getApplications()),
     coupled_app_name_(p.get<std::string>("Coupled Application", "self")),
     coupled_block_name_(p.get<std::string>("Coupled Block"))
 {
@@ -36,6 +37,31 @@ SchwarzBC_Base(Teuchos::ParameterList & p) :
       coupled_app_name_,
       coupled_block_name_,
       nodeset_name);
+
+  std::string const &
+  this_app_name = app_->getAppName();
+
+  auto const &
+  app_name_index_map = *(app_->getAppNameIndexMap());
+
+  auto
+  it = app_name_index_map.find(this_app_name);
+
+  assert(it != app_name_index_map.end());
+
+  auto const
+  this_app_index = it->second;
+
+  setThisAppIndex(this_app_index);
+
+  it = app_name_index_map.find(coupled_app_name_);
+
+  assert(it != app_name_index_map.end());
+
+  auto const
+  coupled_app_index = it->second;
+
+  setCoupledAppIndex(this_app_index);
 }
 
 //
