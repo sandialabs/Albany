@@ -145,14 +145,11 @@ Schwarz_BoundaryJacobian::
 getExplicitOperator() const
 {
   auto const
-  num_rows = getRangeMap()->getNodeNumElements();
-
-  auto const
-  num_cols = getDomainMap()->getNodeNumElements();
+  max_num_cols = getDomainMap()->getNodeNumElements();
 
   Teuchos::RCP<Tpetra_CrsMatrix>
   K = Teuchos::rcp(
-      new Tpetra_CrsMatrix(getRangeMap(), getDomainMap(), num_cols));
+      new Tpetra_CrsMatrix(getRangeMap(), getDomainMap(), max_num_cols));
 
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
@@ -165,43 +162,51 @@ getExplicitOperator() const
   auto const
   coupled_app_index = getCoupledAppIndex();
 
-  switch (this_app_index) {
-  default:
-    break;
-  case 0:
-    switch (coupled_app_index) {
-    default:
-      break;
-    case 1:
-      break;
+  std::vector<int> const
+  row_idx_fine = {0,1,2,3};
+
+  std::vector<std::vector<int>> const
+  cols_idx_fine = {{0,5}, {1,4}, {2,7}, {3,6}};
+
+  std::vector<int> const
+  row_idx_coarse = {4,5,6,7};
+
+  std::vector<std::vector<int>> const
+  cols_idx_coarse = {{1,4}, {0,5}, {3,6}, {2,7}};
+
+  if (this_app_index + coupled_app_index == 1) {
+
+    std::vector<int> const &
+    row_idx = this_app_index == 0 ? row_idx_fine : row_idx_coarse;
+
+    std::vector<std::vector<int>> const &
+    cols_idx = this_app_index == 0 ? cols_idx_fine : cols_idx_coarse;
+
+    auto const
+    num_rows = row_idx.size();
+
+    for (auto i = 0; i < num_rows; ++i) {
+      auto const
+      row = row_idx[i];
+
+      auto const
+      num_cols = cols_idx[i].size();
+
+      Teuchos::Array<GO>
+      cols(num_cols);
+
+      Teuchos::Array<ST>
+      vals(num_cols);
+
+      for (auto j = 0; j < num_cols; ++j) {
+        cols[j] = cols_idx[i][j];
+        vals[j] = 0.5;
+      }
+
+      K->insertGlobalValues(row, cols, vals);
     }
-    break;
-  case 1:
-    switch (coupled_app_index) {
-    default:
-      break;
-    case 0:
-      break;
-    }
-    break;
+
   }
-
-  /*
-  Teuchos::Array<GO>
-  cols(num_cols);
-
-  Teuchos::Array<ST>
-  vals(num_cols);
-
-  for (auto j = 0; j < num_cols; ++j) {
-    cols[j] = j;
-    vals[j] = zero;
-  }
-
-  for (auto i = 0; i < num_rows; ++i) {
-    K->sumIntoGlobalValues(i, cols, vals);
-  }
-  */
 
   K->fillComplete();
 
