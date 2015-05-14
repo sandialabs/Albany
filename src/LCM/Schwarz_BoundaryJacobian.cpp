@@ -154,6 +154,9 @@ getExplicitOperator() const
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
 
+  auto const
+  dimension = 3;
+
   K->setAllToScalar(zero);
 
   auto const
@@ -163,34 +166,38 @@ getExplicitOperator() const
   coupled_app_index = getCoupledAppIndex();
 
   std::vector<int> const
-  row_idx_fine = {0,1,2,3};
+  ns_fine = {0,1,2,3};
 
   std::vector<std::vector<int>> const
-  cols_idx_fine = {{0,5}, {1,4}, {2,7}, {3,6}};
+  from_coarse = {{0,5}, {1,4}, {2,7}, {3,6}};
 
   std::vector<int> const
-  row_idx_coarse = {4,5,6,7};
+  ns_coarse = {4,5,6,7};
 
   std::vector<std::vector<int>> const
-  cols_idx_coarse = {{1,4}, {0,5}, {3,6}, {2,7}};
+  from_fine = {{1,4}, {0,5}, {3,6}, {2,7}};
 
   if (this_app_index + coupled_app_index == 1) {
 
     std::vector<int> const &
-    row_idx = this_app_index == 0 ? row_idx_fine : row_idx_coarse;
+    ns_nodes = this_app_index == 0 ? ns_fine : ns_coarse;
 
     std::vector<std::vector<int>> const &
-    cols_idx = this_app_index == 0 ? cols_idx_fine : cols_idx_coarse;
+    from_nodes = this_app_index == 0 ? from_coarse : from_fine;
 
     auto const
-    num_rows = row_idx.size();
+    num_ns_nodes = ns_nodes.size();
 
-    for (auto i = 0; i < num_rows; ++i) {
-      auto const
-      row = row_idx[i];
+    for (auto ns_node = 0; ns_node < num_ns_nodes; ++ns_node) {
 
       auto const
-      num_cols = cols_idx[i].size();
+      row_node = ns_nodes[ns_node];
+
+      auto const
+      num_from_nodes = from_nodes[ns_node].size();
+
+      auto const
+      num_cols = num_from_nodes * dimension;
 
       Teuchos::Array<GO>
       cols(num_cols);
@@ -198,14 +205,33 @@ getExplicitOperator() const
       Teuchos::Array<ST>
       vals(num_cols);
 
-      for (auto j = 0; j < num_cols; ++j) {
-        cols[j] = cols_idx[i][j];
-        vals[j] = 0.5;
+      for (auto col_node = 0; col_node < num_from_nodes; ++col_node) {
+
+        auto const
+        from_node = from_nodes[ns_node][col_node];
+
+        for (auto d = 0; d < dimension; ++d) {
+
+          auto const
+          col = dimension * col_node + d;
+
+          auto const
+          from_dof = from_node * dimension + d;
+
+          cols[col] = from_dof;
+          vals[col] = 0.5;
+
+        }
       }
 
-      K->insertGlobalValues(row, cols, vals);
-    }
+      for (auto d = 0; d < dimension; ++d) {
 
+        auto const
+        row = dimension * row_node + d;
+
+        K->insertGlobalValues(row, cols, vals);
+      }
+    }
   }
 
   K->fillComplete();
