@@ -30,13 +30,14 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
 
   Teuchos::ParameterList* beta_list = p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::ParameterList* physics = p.get<Teuchos::ParameterList*>("Physical Parameters");
 
   std::string betaType = (beta_list->isParameter("Type") ? beta_list->get<std::string>("Type") : "From File");
 
-  mu    = beta_list->get("Coulomb Friction Coefficient",1.0);
-  rho   = beta_list->get("Ice Density",990);
-  g     = beta_list->get("Gravity Acceleration",9.8);
-  alpha = beta_list->get("Water Pressure Fraction",0.5);
+  mu    = beta_list->get<double>("Coulomb Friction Coefficient");
+  alpha = beta_list->get<double>("Water Pressure Fraction");
+  rho   = physics->get<double>("Ice Density");
+  g     = physics->get<double>("Gravity Acceleration");
 
   if (betaType == "From File")
   {
@@ -216,9 +217,14 @@ postRegistrationSetup (typename Traits::SetupData d,
     case FROM_FILE:
         this->utils.setFieldData(beta_given,fm);
         break;
+    case HYDROSTATIC:
+        this->utils.setFieldData(thickness,fm);
+        break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
         this->utils.setFieldData(thickness,fm);
+        this->utils.setFieldData(u_norm,fm);
+        break;
     case PIECEWISE_LINEAR:
         this->utils.setFieldData(u_norm,fm);
   }
@@ -312,6 +318,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
     if (printedH!=*homotopyParam)
     {
+        *output << "Basal Friction Coefficient\n";
         *output << "h = " << *homotopyParam << "\n";
         printedH = *homotopyParam;
     }

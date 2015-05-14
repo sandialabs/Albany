@@ -495,7 +495,7 @@ template<typename EvalT>
 Teuchos::RCP<PHX::Evaluator<PHAL::AlbanyTraits> >
 FELIX::StokesFO::buildSlidingVelocityEvaluator ()
 {
-  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("Velocity Norm"));
+  Teuchos::RCP<Teuchos::ParameterList> p = Teuchos::rcp(new Teuchos::ParameterList("FELIX Velocity Norm"));
   p->set<std::string>("Field Name","Velocity");
   p->set<std::string>("Field Norm Name","Velocity Norm");
 
@@ -519,12 +519,11 @@ FELIX::StokesFO::buildBasalFrictionCoefficientEvaluator ()
   p->set<std::string>("thickness Field Name", "thickness");
 
   //Input physics parameters
-  Teuchos::ParameterList& physics = this->params->sublist("FELIX Physics");
-  p->set<double> ("Ice Density", physics.get("Ice Density",910));
-  p->set<double> ("Gravity Acceleration", physics.get("Gravity Acceleration", 9.8));
+  Teuchos::ParameterList& physics = this->params->sublist("Physical Parameters");
 
   Teuchos::ParameterList& paramList = this->params->sublist("FELIX Basal Friction Coefficient");
   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
+  p->set<Teuchos::ParameterList*>("Physical Parameters", &physics);
 
   //Output
   p->set<std::string>("FELIX Basal Friction Coefficient Name", "beta_field");
