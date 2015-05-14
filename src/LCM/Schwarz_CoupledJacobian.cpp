@@ -115,9 +115,11 @@ const
 
   // all done
   blocked_op->endBlockFill();
+#ifdef OUTPUT_TO_SCREEN
   Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
   std::cout << "blocked_op: " << std::endl;
   blocked_op->describe(*out, Teuchos::VERB_HIGH);
+#endif
   return blocked_op;
 }
 
