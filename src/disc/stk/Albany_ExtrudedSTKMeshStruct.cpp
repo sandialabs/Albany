@@ -91,7 +91,7 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Albany::AbstractFieldContainer::FieldContainerRequirements req;
 
   int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
-  sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size, Teuchos::null, false);
+  sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, sis, ws_size, Teuchos::null);
 
   stk::mesh::Selector select_owned_in_part = stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->universal_part()) & stk::mesh::Selector(sideSetMeshStructs["basalside"]->metaData->locally_owned_part());
   int numCells = stk::mesh::count_selected_entities(select_owned_in_part, sideSetMeshStructs["basalside"]->bulkData->buckets(stk::topology::ELEMENT_RANK));
@@ -691,10 +691,77 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   Albany::fix_node_sharing(*bulkData);
   bulkData->modification_end();
 
+  if (params->get("Export 2D Data",false))
+  {
+    // We export the basal mesh in GMSH format
+    std::ofstream ofile;
+    ofile.open (params->get("GMSH 2D Output File Name","basal_mesh.msh"));
+    TEUCHOS_TEST_FOR_EXCEPTION (!ofile.is_open(), std::logic_error, "Error! Cannot open file 'basal_mesh.msh'.\n");
+
+    // Preamble
+    ofile << "$MeshFormat\n"
+          << "2.2 0 8\n"
+          << "$EndMeshFormat\n";
+
+    // Nodes
+    ofile << "$Nodes\n" << nodes2D.size() << "\n";
+    stk::mesh::Entity node2d;
+    stk::mesh::EntityId nodeId;
+    for (int i(0); i<nodes2D.size(); ++i)
+    {
+      node2d = bulkData2D.get_entity(stk::topology::NODE_RANK, i + 1);
+      nodeId = bulkData2D.identifier(nodes2D[i]);
+
+      double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
+
+      ofile << nodeId << " " << coord2d[0] << " " << coord2d[1] << " " << 0. << "\n";
+    }
+    ofile << "$EndNodes\n";
+
+    // Mesh Elements (including edges)
+    ofile << "$Elements\n";
+    ofile << edges2D.size()+cells2D.size() << "\n";
+
+    int counter = 1;
+
+    // edges
+    for (int i(0); i<edges2D.size(); ++i)
+    {
+      stk::mesh::Entity const* rel = bulkData2D.begin_nodes(edges2D[i]);
+
+      ofile << counter << " " << 1 << " " << 2 << " " << 30 << " " << 1;
+      for (int j(0); j<2; ++j)
+      {
+        stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]);
+        ofile << " " << node2dId;
+      }
+      ofile << "\n";
+      ++counter;
+    }
+
+    // elements
+    for (int i(0); i<cells2D.size(); ++i)
+    {
+      stk::mesh::Entity const* rel = bulkData2D.begin_nodes(cells2D[i]);
+      ofile << counter << " " << 2 << " " << 2 << " " << 100 << " " << 11;
+      for (int j(0); j<3; ++j)
+      {
+        stk::mesh::EntityId node2dId = bulkData2D.identifier(rel[j]);
+        ofile << " " << node2dId;
+      }
+      ofile << "\n";
+      ++counter;
+    }
+    ofile << "$EndElements\n";
+
+    ofile.close();
+  }
 }
 
 Teuchos::RCP<const Teuchos::ParameterList> Albany::ExtrudedSTKMeshStruct::getValidDiscretizationParameters() const {
   Teuchos::RCP<Teuchos::ParameterList> validPL = this->getValidGenericSTKParameters("Valid Extruded_DiscParams");
+  validPL->set<bool>("Export 2D Data", "", "If true, exports the 2D mesh in GMSH format");
+  validPL->set<std::string>("GMSH 2D Output File Name", "", "File Name for GMSH 2D Basal Mesh Export");
   validPL->set<std::string>("Exodus Input File Name", "", "File Name For Exodus Mesh Input");
   validPL->set<std::string>("Surface Height File Name", "surface_height.ascii", "Name of the file containing the surface height data");
   validPL->set<std::string>("Thickness File Name", "thickness.ascii", "Name of the file containing the thickness data");
