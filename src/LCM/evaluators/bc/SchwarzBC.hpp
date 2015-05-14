@@ -59,12 +59,6 @@ public:
     return coupled_app_name_;
   }
 
-  int
-  appIndexFromName(std::string const & name) const
-  {
-    return std::atoi(name.c_str());
-  }
-
   void
   setCoupledBlockName(std::string const & cbn)
   {
