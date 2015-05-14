@@ -7,6 +7,9 @@
 #include "Phalanx_DataLayout.hpp"
 #include "Phalanx_TypeStrings.hpp"
 
+//uncomment the following line if you want debug output to be printed to screen
+#define OUTPUT_TO_SCREEN
+
 namespace FELIX {
 
 //**********************************************************************
@@ -44,12 +47,26 @@ template<typename EvalT,typename Traits>
 void FieldNorm<EvalT,Traits>::setHomotopyParamPtr(ScalarT* h)
 {
   homotopyParam = h;
+#ifdef OUTPUT_TO_SCREEN
+    printedH = -1234.56789;
+#endif
 }
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
+#ifdef OUTPUT_TO_SCREEN
+    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+
+    if (printedH!=*homotopyParam)
+    {
+        *output << "Field Norm\n";
+        *output << "h = " << *homotopyParam << "\n";
+        printedH = *homotopyParam;
+    }
+#endif
+
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   ScalarT ff = 0;
