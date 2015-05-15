@@ -154,10 +154,11 @@ getExplicitOperator() const
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
 
+  K->setAllToScalar(zero);
+
+#if 0
   auto const
   dimension = 3;
-
-  K->setAllToScalar(zero);
 
   auto const
   this_app_index = getThisAppIndex();
@@ -234,6 +235,7 @@ getExplicitOperator() const
     }
   }
 
+#endif
   K->fillComplete();
 
   //std::cout << "Number rows: " << K->getNodeNumRows() << '\n';

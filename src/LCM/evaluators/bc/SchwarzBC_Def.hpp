@@ -12,7 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-//define DEBUG_LCM_SCHWARZ
+#define DEBUG_LCM_SCHWARZ
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
@@ -217,8 +217,11 @@ computeBCs(
   Teuchos::ArrayRCP<double> const &
   coupled_coordinates = coupled_stk_disc->getCoordinates();
 
+  Teuchos::RCP<Tpetra_Vector const>
+  coupled_solution = coupled_stk_disc->getSolutionFieldT();
+
   Teuchos::ArrayRCP<ST const>
-  coupled_solution_view = dirichlet_workset.xT->get1dView();
+  coupled_solution_view = coupled_solution->get1dView();
 
   for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
@@ -392,6 +395,9 @@ computeBCs(
   x_val = value(0);
   y_val = value(1);
   z_val = value(2);
+//  x_val = 0.0;
+//  y_val = 0.0;
+//  z_val = 0.0;
 
   return;
 }
