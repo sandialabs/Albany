@@ -464,49 +464,121 @@ template<typename Traits>
 void ScatterResidual<PHAL::AlbanyTraits::Jacobian, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+#if 1 //ndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Teuchos::RCP<Tpetra_Vector> fT = workset.fT;
   Teuchos::RCP<Tpetra_CrsMatrix> JacT = workset.JacT;
   const bool loadResid = Teuchos::nonnull(fT);
   Teuchos::Array<LO> colT;
+  Teuchos::Array<LO> colT2;
   const int neq = workset.wsElNodeEqID[0][0].size();
   const int nunk = neq*this->numNodes;
   colT.resize(nunk);
   int numDim = 0;
   if (this->tensorRank==2) numDim = this->valTensor[0].dimension(2);
 
+  const Albany::NodalDOFManager& solDOFManager = workset.disc->getOverlapDOFManager("ordinary_solution");
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *workset.disc->getLayeredMeshNumbering();
+  int numLayers = layeredMeshNumbering.numLayers;
+  colT2.resize(neq*3*(numLayers+1));
+
+
+  const Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> >& wsElNodeID  = workset.disc->getWsElNodeID()[workset.wsIndex];
+
+
   for (std::size_t cell=0; cell < workset.numCells; ++cell ) {
     const Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >& nodeID = workset.wsElNodeEqID[cell];
+    const Teuchos::ArrayRCP<GO>& elNodeID = wsElNodeID[cell];
+
+ //   std::cout << "Ah: "<<__LINE__ <<std::endl;
     // Local Unks: Loop over nodes in element, Loop over equations per node
     for (unsigned int node_col=0, i=0; node_col<this->numNodes; node_col++){
       for (unsigned int eq_col=0; eq_col<neq; eq_col++) {
         colT[neq * node_col + eq_col] = nodeID[node_col][eq_col];
       }
     }
+ //   std::cout << "Ah: "<<__LINE__ <<std::endl;
+
+    std::map<LO, std::size_t> baseIds;
     for (std::size_t node = 0; node < this->numNodes; ++node) {
-      for (std::size_t eq = 0; eq < numFields; eq++) {
-        typename PHAL::Ref<ScalarT>::type
+      LO lnodeId = workset.disc->getOverlapNodeMapT()->getLocalElement(elNodeID[node]);
+      LO base_id, ilayer;
+      layeredMeshNumbering.getIndices(lnodeId, base_id, ilayer);
+      if(ilayer == numLayers)
+        baseIds[base_id] = node;
+    }
+ //   std::cout << "Ah: "<<__LINE__ <<std::endl;
+
+    if((this->offset == 2)) {
+      if(baseIds.size() != 3) continue;
+      std::map<LO, std::size_t>::const_iterator it = baseIds.begin(), it1;
+      for (int i=0; it != baseIds.end(); ++it, ++i){
+        for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+          LO inode = layeredMeshNumbering.getId(it->first, il_col);
+          for (unsigned int eq_col=0; eq_col<neq; eq_col++)
+            colT2[il_col*neq*baseIds.size() + neq*i + eq_col] = solDOFManager.getLocalDOF(inode, eq_col);
+        }
+      }
+
+  //  std::cout << "Ah: "<<__LINE__ <<std::endl;
+      for (it = baseIds.begin(); it != baseIds.end(); ++it) {
+        std::size_t node = it->second;
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          typename PHAL::Ref<ScalarT>::type
           valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
                     this->tensorRank == 1 ? this->valVec(cell,node,eq) :
                     this->valTensor[0](cell,node, eq/numDim, eq%numDim));
-        const LO rowT = nodeID[node][this->offset + eq];
-        if (loadResid)
-          fT->sumIntoLocalValue(rowT, valptr.val());
-        // Check derivative array is nonzero
-        if (valptr.hasFastAccess()) {
-          if (workset.is_adjoint) {
-            // Sum Jacobian transposed
-            for (unsigned int lunk = 0; lunk < nunk; lunk++)
-              JacT->sumIntoLocalValues(
-                colT[lunk], Teuchos::arrayView(&rowT, 1),
-                Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
-          }
-          else {
+          const LO rowT = nodeID[node][this->offset + eq];
+          if (loadResid)
+            fT->sumIntoLocalValue(rowT, valptr.val());
+          if (valptr.hasFastAccess()) {
+            int j=0;
+        //    for (it1 = baseIds.begin(); it1 != baseIds.end(); ++it1, ++j) {
+        //      for (std::size_t eq = 0; eq < neq; eq++) {
+        //        for (unsigned int il_col=0; il_col<numLayers+1; il_col++)
+        //          std::cout << "\n(" << it1->second << ", " << eq << ", "<< il_col << "): " << valptr.fastAccessDx(il_col*3*baseIds.size() + 3*j + eq);
+         //     }
+         //   }
+
+
             // Sum Jacobian entries all at once
-            JacT->sumIntoLocalValues(
-              rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
-          }
-        } // has fast access
+       //     if(rowT == 36143){
+        //    std::cout << "\nR: " << rowT << ": ";
+         //   for(int i=0; i<colT2.size(); ++i)
+          //    std::cout << colT2[i] << " ";
+           // }
+
+             JacT->sumIntoLocalValues(rowT, colT2, Teuchos::arrayView(&(valptr.fastAccessDx(0)),3*baseIds.size()*(numLayers+1)));
+          } // has fast access
+        }
+      }
+    }
+    else {
+      for (std::size_t node = 0; node < this->numNodes; ++node) {
+        for (std::size_t eq = 0; eq < numFields; eq++) {
+          typename PHAL::Ref<ScalarT>::type
+            valptr = (this->tensorRank == 0 ? this->val[eq](cell,node) :
+                      this->tensorRank == 1 ? this->valVec(cell,node,eq) :
+                      this->valTensor[0](cell,node, eq/numDim, eq%numDim));
+          const LO rowT = nodeID[node][this->offset + eq];
+          if (loadResid)
+            fT->sumIntoLocalValue(rowT, valptr.val());
+
+          // Check derivative array is nonzero
+          if (valptr.hasFastAccess()) {
+            if (workset.is_adjoint) {
+              // Sum Jacobian transposed
+              for (unsigned int lunk = 0; lunk < nunk; lunk++)
+                JacT->sumIntoLocalValues(
+                  colT[lunk], Teuchos::arrayView(&rowT, 1),
+                  Teuchos::arrayView(&(valptr.fastAccessDx(lunk)), 1));
+            }
+            else {
+              // Sum Jacobian entries all at once
+              JacT->sumIntoLocalValues(
+                rowT, colT, Teuchos::arrayView(&(valptr.fastAccessDx(0)), nunk));
+            }
+          } // has fast access
+        }
       }
     }
   }

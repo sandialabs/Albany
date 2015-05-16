@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_STOKESFORESID_HPP
-#define FELIX_STOKESFORESID_HPP
+#ifndef FELIX_STOKESFOTHICKRESID_HPP
+#define FELIX_STOKESFOTHICKRESID_HPP
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -21,12 +21,12 @@ namespace FELIX {
 */
 
 template<typename EvalT, typename Traits>
-class StokesFOResid : public PHX::EvaluatorWithBaseImpl<Traits>,
+class StokesFOThicknessResid : public PHX::EvaluatorWithBaseImpl<Traits>,
 		        public PHX::EvaluatorDerived<EvalT, Traits>  {
 
 public:
 
-  StokesFOResid(const Teuchos::ParameterList& p,
+  StokesFOThicknessResid(const Teuchos::ParameterList& p,
                 const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup(typename Traits::SetupData d,
@@ -46,6 +46,8 @@ private:
 
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> U;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim,Dim> Ugrad;
+  PHX::MDField<ScalarT,Cell,QuadPoint> H;
+   PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradH0;
   PHX::MDField<ScalarT,Cell,QuadPoint,VecDim> UDot;
   PHX::MDField<ScalarT,Cell,QuadPoint> muFELIX;
 

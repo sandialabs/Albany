@@ -70,7 +70,15 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
   int lElemColumnShift = (ordering == 1) ? 3 : 3 * indexToTriangleID.size();
   int elemLayerShift = (ordering == 0) ? 3 : 3 * nLayers;
 
+  int neq = meshStruct->neq;
+
   const bool interleavedOrdering = meshStruct->getInterleavedOrdering();
+
+
+  Teuchos::ArrayRCP<double>& layerThicknessRatio = meshStruct->layered_mesh_numbering->layers_ratio;
+  for (int i = 0; i < nLayers; i++) {
+    layerThicknessRatio[i] = levelsNormalizedThickness[i+1]-levelsNormalizedThickness[i];
+  }
 
   typedef Albany::AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
   typedef Albany::AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
@@ -109,6 +117,9 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     double* sol = stk::mesh::field_data(*solutionField, node);
     sol[0] = velocityOnVertices[j];
     sol[1] = velocityOnVertices[j + numVertices3D];
+    if(neq==3) {
+      sol[2] = thicknessData[ib];
+    }
     double* dirichletVel = stk::mesh::field_data(*dirichletField, node);
     dirichletVel[0]=velocityOnVertices[j]; //velocityOnVertices stores initial guess and dirichlet velocities.
     dirichletVel[1]=velocityOnVertices[j + numVertices3D];
@@ -134,7 +145,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
   }
 
-  meshStruct->setHasRestartSolution(!first_time_step);
+  meshStruct->setHasRestartSolution(true);//!first_time_step);
 
   if (!first_time_step) {
     meshStruct->setRestartDataTime(
@@ -171,20 +182,20 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
       Teuchos::Array<Teuchos::RCP<const Thyra::MultiVectorBase<double> > > > thyraSensitivities;
   Piro::PerformSolveBase(*solver, solveParams, thyraResponses,
       thyraSensitivities);
-#ifdef MPAS_USE_EPETRA
+/*#ifdef MPAS_USE_EPETRA
   const Epetra_Map& overlapMap(
       *albanyApp->getDiscretization()->getOverlapMap());
   Epetra_Import import(overlapMap, *albanyApp->getDiscretization()->getMap());
   Epetra_Vector solution(overlapMap);
   solution.Import(*albanyApp->getDiscretization()->getSolutionField(), import,
       Insert);
-#else
+#else*/
   Teuchos::RCP<const Tpetra_Map> overlapMap = albanyApp->getDiscretization()->getOverlapMapT();
   Teuchos::RCP<Tpetra_Import> import = Teuchos::rcp(new Tpetra_Import(albanyApp->getDiscretization()->getMapT(), overlapMap));
   Teuchos::RCP<Tpetra_Vector> solution = Teuchos::rcp(new Tpetra_Vector(overlapMap));
   solution->doImport(*albanyApp->getDiscretization()->getSolutionFieldT(), *import, Tpetra::INSERT);
   Teuchos::ArrayRCP<const ST> solution_constView = solution->get1dView();
-#endif
+//#endif
 
 
   for (UInt j = 0; j < numVertices3D; ++j) {
@@ -196,9 +207,9 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 
     int lId0, lId1;
 
-#ifdef MPAS_USE_EPETRA
+/*#ifdef MPAS_USE_EPETRA
     if (interleavedOrdering) {
-      lId0 = overlapMap.LID(2 * gId);
+      lId0 = overlapMap.LID(neq * gId);
       lId1 = lId0 + 1;
     } else {
       lId0 = overlapMap.LID(gId);
@@ -206,9 +217,9 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
     velocityOnVertices[j] = solution[lId0];
     velocityOnVertices[j + numVertices3D] = solution[lId1];
-#else
+#else*/
     if (interleavedOrdering) {
-      lId0 = overlapMap->getLocalElement(2 * gId);
+      lId0 = overlapMap->getLocalElement(neq * gId);
       lId1 = lId0 + 1;
     } else {
       lId0 = overlapMap->getLocalElement(gId);
@@ -216,7 +227,7 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
     }
     velocityOnVertices[j] = solution_constView[lId0];
     velocityOnVertices[j + numVertices3D] = solution_constView[lId1];
-#endif
+//#endif
   }
 
   keptMesh = true;
@@ -305,7 +316,7 @@ void velocity_solver_extrude_3d_grid(int nLayers, int nGlobalTriangles,
   albanyApp = Teuchos::rcp(new Albany::Application(mpiCommT));
   albanyApp->initialSetUp(paramList);
 
-  int neq = 2;
+  int neq = (paramList->sublist("Problem").get<std::string>("Name") == "FELIX Coupled FO H 3D") ? 3 : 2;
 
   meshStruct = Teuchos::rcp(
       new Albany::MpasSTKMeshStruct(discParams, mpiCommT, indexToTriangleID,

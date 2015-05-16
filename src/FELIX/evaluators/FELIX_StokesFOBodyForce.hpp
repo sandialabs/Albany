@@ -59,7 +59,7 @@ private:
 
   std::size_t numQPs;
   std::size_t numDims;
-  std::size_t vecDim;
+  std::size_t vecDimFO;
   std::size_t numNodes;
 
   //Glen's law parameters

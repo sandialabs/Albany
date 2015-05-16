@@ -27,6 +27,38 @@ struct DynamicDataArray {
    typedef Teuchos::ArrayRCP<Teuchos::RCP<T> > type;
 };
 
+template <typename T>
+struct LayeredMeshNumbering {
+  T stride;
+  bool ordering; //0 for layer wise, 1 for column wise
+  Teuchos::ArrayRCP<double> layers_ratio;
+  T numLevels, numLayers;
+
+  LayeredMeshNumbering(const T _stride, const bool  _ordering, const Teuchos::ArrayRCP<double>& _layers_ratio){
+    stride = _stride;
+    ordering = _ordering;
+    layers_ratio= _layers_ratio;
+    numLayers = layers_ratio.size();
+    numLevels = numLayers+1;
+  }
+
+  T getId(const T column_id, const T level_index) const {
+      return  (ordering == 0) ?
+          column_id + level_index*stride :
+          column_id * stride + level_index;
+  }
+
+  void getIndices(const T id, T& column_id, T& level_index) const {
+    if(ordering)  {
+      level_index = id%stride;
+      column_id = id/stride;
+    } else {
+      level_index = id/stride;
+      column_id = id%stride;
+    }
+  }
+};
+
 class CellSpecs {
 
   public:
@@ -90,6 +122,8 @@ struct AbstractMeshStruct {
     virtual const Albany::DynamicDataArray<Albany::CellSpecs>::type& getMeshDynamicData() const = 0;
 
     virtual msType meshSpecsType() = 0;
+
+    Teuchos::RCP<LayeredMeshNumbering<LO> > layered_mesh_numbering;
 
     Teuchos::RCP<Adapt::NodalDataBase> nodal_data_base;
 

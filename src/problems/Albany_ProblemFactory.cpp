@@ -72,6 +72,7 @@
 #ifdef ALBANY_FELIX
 #include "FELIX/problems/FELIX_Stokes.hpp"
 #include "FELIX/problems/FELIX_StokesFO.hpp"
+#include "FELIX/problems/FELIX_StokesFOThickness.hpp"
 #include "FELIX/problems/FELIX_StokesL1L2.hpp"
 #endif
 
@@ -385,6 +386,9 @@ Albany::ProblemFactory::create()
   else if (method == "FELIX Stokes First Order 3D" || method == "FELIX Stokes FO 3D" ) {
     strategy = rcp(new FELIX::StokesFO(problemParams, paramLib, 3));
   }
+  else if (method == "FELIX Coupled FO H 3D" ) {
+      strategy = rcp(new FELIX::StokesFOThickness(problemParams, paramLib, 3));
+    }
   else if (method == "FELIX Stokes L1L2 2D") {
     strategy = rcp(new FELIX::StokesL1L2(problemParams, paramLib, 2));
   }

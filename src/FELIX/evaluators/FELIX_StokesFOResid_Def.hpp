@@ -77,23 +77,23 @@ StokesFOResid(const Teuchos::ParameterList& p,
   numDims  = dims[3];
 
   U.fieldTag().dataLayout().dimensions(dims);
-  vecDim  = dims[2];
+  vecDimFO = std::min(std::size_t(2), dims[2]);
 
 #ifdef OUTPUT_TO_SCREEN
 *out << " in FELIX Stokes FO residual! " << std::endl;
-*out << " vecDim = " << vecDim << std::endl;
+*out << " vecDimFO = " << vecDimFO << std::endl;
 *out << " numDims = " << numDims << std::endl;
 *out << " numQPs = " << numQPs << std::endl; 
 *out << " numNodes = " << numNodes << std::endl; 
 #endif
 
-if (vecDim != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if (vecDimFO != 2 & eqn_type == FELIX)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
-				  "Invalid Parameter vecDim.  Problem implemented for 2 dofs per node only (u and v). " << std::endl);}
-if (vecDim != 1 & eqn_type == POISSON)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+				  "Invalid Parameter vecDim.  Problem implemented for at least 2 dofs per node (u and v). " << std::endl);}
+if (vecDimFO != 1 & eqn_type == POISSON)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
 				  "Invalid Parameter vecDim.  Poisson problem implemented for 1 dof per node only. " << std::endl);}
-if (vecDim != 1 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+if (vecDimFO != 1 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				  std::endl << "Error in FELIX::StokesFOResid constructor:  " <<
 				  "Invalid Parameter vecDim.  FELIX XZ problem implemented for 1 dof per node only. " << std::endl);}
 if (numDims != 2 & eqn_type == FELIX_XZ)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,

@@ -297,6 +297,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
     int lEdgeColumnShift = (Ordering == 1) ? 1 : indexToEdgeID.size();
     int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
 
+    Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
+    this->layered_mesh_numbering = (Ordering==0) ?
+              Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+              Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
+
 
   metaData->commit();
 
@@ -474,6 +479,11 @@ Albany::MpasSTKMeshStruct::constructMesh(
     int edgeColumnShift = (Ordering == 1) ? 2 : 2*nGlobalEdges;
     int lEdgeColumnShift = (Ordering == 1) ? 1 : indexToEdgeID.size();
     int edgeLayerShift = (Ordering == 0) ? 1 : numLayers;
+
+    Teuchos::ArrayRCP<double> layerThicknessRatio(numLayers, 1.0/double(numLayers));
+    this->layered_mesh_numbering = (Ordering==0) ?
+          Teuchos::rcp(new LayeredMeshNumbering<LO>(lVertexColumnShift,Ordering,layerThicknessRatio)):
+          Teuchos::rcp(new LayeredMeshNumbering<LO>(vertexLayerShift,Ordering,layerThicknessRatio));
 
 
   metaData->commit();

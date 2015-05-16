@@ -6,7 +6,7 @@ namespace PHAL {
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Jacobian> (
   const Albany::Application* app, const Albany::MeshSpecsStruct* ms)
 {
-  return app->getNumEquations() * ms->ctd.node_count;
+  return 99;//10*app->getNumEquations() * ms->ctd.node_count;
 }
 
 template<> int getDerivativeDimensions<PHAL::AlbanyTraits::Tangent> (

@@ -167,7 +167,11 @@ namespace Albany {
         {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
 
     const NodalDOFManager& getDOFManager(const std::string& field_name) const
-            {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
+      {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
+
+    const NodalDOFManager& getOverlapDOFManager(const std::string& field_name) const
+      {return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_dofManager;}
+
 #endif
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
@@ -255,6 +259,7 @@ namespace Albany {
     //! Locate nodal dofs using global indexing
     GO getGlobalDOF(const GO inode, const int eq) const;
 
+    Teuchos::RCP<LayeredMeshNumbering<LO> > getLayeredMeshNumbering() {return stkMeshStruct->layered_mesh_numbering;}
 
     //! used when NetCDF output on a latitude-longitude grid is requested.
     // Each struct contains a latitude/longitude index and it's parametric

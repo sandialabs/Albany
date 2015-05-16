@@ -4079,6 +4079,7 @@ void Albany::Application::loadBasicWorksetInfo(
     workset.xdotdot     = solMgr->get_overlapped_xdotdot();
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
     //workset.delta_time = delta_time;
     if (workset.xdot != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdot != Teuchos::null) workset.accelerationTerms = true;
@@ -4096,6 +4097,7 @@ void Albany::Application::loadBasicWorksetInfoT(
     workset.xdotdotT     = solMgrT->get_overlapped_xdotdotT();
     workset.current_time = current_time;
     workset.distParamLib = distParamLib;
+    workset.disc = disc;
     //workset.delta_time = delta_time;
     if (workset.xdotT != Teuchos::null) workset.transientTerms = true;
     if (workset.xdotdotT != Teuchos::null) workset.accelerationTerms = true;
@@ -4156,6 +4158,7 @@ void Albany::Application::setupBasicWorksetInfo(
   workset.xdot = overlapped_xdot;
   workset.xdotdot = overlapped_xdotdot;
   workset.distParamLib = distParamLib;
+  workset.disc = disc;
 
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
@@ -4203,6 +4206,7 @@ void Albany::Application::setupBasicWorksetInfoT(
   workset.xdotT = overlapped_xdotT;
   workset.xdotdotT = overlapped_xdotdotT;
   workset.distParamLib = distParamLib;
+  workset.disc = disc;
   if (!paramLib->isParameter("Time"))
     workset.current_time = current_time;
   else

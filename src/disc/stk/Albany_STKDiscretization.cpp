@@ -1265,6 +1265,9 @@ void Albany::STKDiscretization::computeGraphs()
   GO row, col;
   Teuchos::ArrayView<GO> colAV;
 
+  const Albany::LayeredMeshNumbering<LO>& layeredMeshNumbering = *getLayeredMeshNumbering();
+  int numLayers = layeredMeshNumbering.numLayers;
+
   for (std::size_t i=0; i < cells.size(); i++) {
     stk::mesh::Entity e = cells[i];
     stk::mesh::Entity const* node_rels = bulkData.begin_nodes(e);
@@ -1283,6 +1286,34 @@ void Albany::STKDiscretization::computeGraphs()
             col = getGlobalDOF(gid(colNode), m);
             colAV = Teuchos::arrayView(&col, 1);
             overlap_graphT->insertGlobalIndices(row, colAV);
+          }
+        }
+//FELIX
+        if (k==2) {
+         GO node_gid = gid(rowNode);
+          LO base_id, ilayer;
+          int node_lid = overlap_node_mapT->getLocalElement(node_gid);
+          layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
+          if(ilayer == numLayers) {
+          //  std::cout << "\nrow: " << row << ": ";
+            for (std::size_t l=0; l < num_nodes; l++) {
+              stk::mesh::Entity colNode = node_rels[l];
+              node_gid = gid(colNode);
+              node_lid = overlap_node_mapT->getLocalElement(node_gid);
+              layeredMeshNumbering.getIndices(node_lid, base_id, ilayer);
+              if(ilayer == numLayers) {
+                for (unsigned int il_col=0; il_col<numLayers+1; il_col++) {
+                  LO inode = layeredMeshNumbering.getId(base_id, il_col);
+                  GO gnode = overlap_node_mapT->getGlobalElement(inode);
+                  for (std::size_t m=0; m < neq; m++) {
+                    col = getGlobalDOF(gnode, m);
+                    colAV = Teuchos::arrayView(&col, 1);
+                   // std::cout <<col <<" ";
+                    overlap_graphT->insertGlobalIndices(row, colAV);
+                  }
+                }
+              }
+            }
           }
         }
       }

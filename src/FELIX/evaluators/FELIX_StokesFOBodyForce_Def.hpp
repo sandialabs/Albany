@@ -170,10 +170,9 @@ StokesFOBodyForce(const Teuchos::ParameterList& p,
   dl->qp_gradient->dimensions(dims);
   numQPs  = dims[1];
   numDims = dims[2];
-  dl->qp_vector->dimensions(dims);
-  vecDim  = dims[2];
-  dl->node_qp_scalar->dimensions(dims);
+  dl->node_vector->dimensions(dims);
   numNodes = dims[1];
+  vecDimFO = std::min(std::size_t(2), dims[2]); //vecDim (dims[2]) can be greater than 2 for coupled problems and = 1 for the problem in the xz plane
 
 
 //*out << " in FELIX Stokes FO source! " << std::endl;
@@ -229,7 +228,7 @@ evaluateFields(typename Traits::EvalData workset)
  if (bf_type == NONE) {
    for (std::size_t cell=0; cell < workset.numCells; ++cell) 
      for (std::size_t qp=0; qp < numQPs; ++qp)       
-       for (std::size_t i=0; i < vecDim; ++i) 
+       for (std::size_t i=0; i < vecDimFO; ++i)
   	 force(cell,qp,i) = 0.0;
  }
  //source using the gradient of the interpolated surface height
