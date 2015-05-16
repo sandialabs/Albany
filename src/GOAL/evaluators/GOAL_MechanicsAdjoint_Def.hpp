@@ -8,36 +8,26 @@
 
 namespace GOAL {
 
-
-Teuchos::RCP<Teuchos::ParameterList> getValidMechanicsAdjointParameters()
-{
-  Teuchos::RCP<Teuchos::ParameterList> validPL =
-    rcp(new Teuchos::ParameterList("Valid MechanicsAdjoint Params"));
-
-  validPL->set<std::string>("QoI Name","","Quantity of interest name");
-
-  return validPL;
-}
-
 template<typename EvalT, typename Traits>
 MechanicsAdjointBase<EvalT, Traits>::
 MechanicsAdjointBase (Teuchos::ParameterList& p,
     const Teuchos::RCP<Albany::Layouts>& dl,
     const Albany::MeshSpecsStruct* mesh_specs)
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(
-    mesh_specs == NULL, std::logic_error,
-    "MechanicsAdjointBase needs access to"
-    "mesh_specs->ebName and mesh_specs->sepEvalsByEB");
+  /* input
+     TODO this should be generalized to include other scatter
+     evaluators (e.g. scatter temperature), preferably by
+     querying the mechanics problem directly. This is placed
+     here, because I believe it is cleaner than injecting code
+     directly into the Mechanics problem */
+  PHX::Tag<typename EvalT::ScalarT> tag("Scatter",dl->dummy);
+  this->addDependentField(tag);
 
-  this->setName("MechanicsAdjoint" + PHX::typeAsString<EvalT>());
-
-  this->stateManager_ = p.get<Albany::StateManager*>("State Manager Ptr");
-
+  /* output */
   fieldTag_ =
     Teuchos::rcp(new PHX::Tag<ScalarT>("Mechanics Adjoint", dl->dummy));
-
   this->addEvaluatedField(*fieldTag_);
+  this->setName("MechanicsAdjoint" + PHX::typeAsString<EvalT>());
 }
 
 template<typename EvalT, typename Traits>
@@ -47,9 +37,7 @@ postRegistrationSetup (typename Traits::SetupData d,
 {
 }
 
-/*************************
-  RESIDUAL SPECIALIZATION
-**************************/
+/* Specialization : Residual */
 template<typename Traits>
 MechanicsAdjoint<PHAL::AlbanyTraits::Residual, Traits>::
 MechanicsAdjoint (
