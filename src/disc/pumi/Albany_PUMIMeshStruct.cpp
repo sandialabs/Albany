@@ -105,7 +105,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     double wx = params->get<double>("1D Scale", 1);
     double wy = params->get<double>("2D Scale", 1);
     double wz = params->get<double>("3D Scale", 1);
-    bool is = ! params->get<bool>("Hexahedral", false);
+    bool is = ! params->get<bool>("Hexahedral", true);
     buildBoxMesh(nex, ney, nez, wx, wy, wz, is);
   }
 
@@ -436,7 +436,7 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
-  validPL->set<bool>("Hexahedral", false, "Build hexahedral elements");
+  validPL->set<bool>("Hexahedral", true, "Build hexahedral elements");
 
   return validPL;
 }
