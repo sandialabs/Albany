@@ -114,9 +114,9 @@ BoxBuilder::BoxBuilder(int nx, int ny, int nz,
   mgrid(3,3,3)
 {
   for (dim = 0; grid.size[dim] > 1 && dim < 3; ++dim);
-  w[0] = wx;
-  w[1] = wy;
-  w[2] = wz;
+  w[0] = nx ? (wx / nx) : 0;
+  w[1] = ny ? (wy / ny) : 0;
+  w[2] = nz ? (wz / nz) : 0;
   is_simplex = is;
   formModelTable();
   m = apf::makeEmptyMdsMesh(gmi_load(".null"), dim, false);
