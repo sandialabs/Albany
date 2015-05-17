@@ -10,6 +10,12 @@ if (ALBANY_EPETRA)
 add_test(${testName} ${Albany.exe})
 endif()
 
+if (ALBANY_SCOREC)
+  configure_file (${CMAKE_CURRENT_SOURCE_DIR}/inputT_pumi.xml
+    ${CMAKE_CURRENT_BINARY_DIR}/inputT_pumi.xml COPYONLY)
+  add_test (${testName}_pumi ${SerialAlbanyT.exe} inputT_pumi.xml)
+endif ()
+
 if (ALBANY_MUELU_EXAMPLES)
   if (ALBANY_64BIT_INT)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputT_MueLu_64.xml
