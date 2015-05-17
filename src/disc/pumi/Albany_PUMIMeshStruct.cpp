@@ -16,6 +16,7 @@
 #include <Shards_BasicTopologies.hpp>
 
 #include <gmi_mesh.h>
+#include <gmi_null.h>
 #ifdef SCOREC_SIMMODEL
 #include <gmi_sim.h>
 #include <SimUtil.h>
@@ -69,13 +70,13 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   PCU_Comm_Init();
   params->validateParameters(*getValidDiscretizationParameters(),0);
 
-  std::string mesh_file = params->get<std::string>("PUMI Input File Name");
   outputFileName = params->get<std::string>("PUMI Output File Name", "");
   outputInterval = params->get<int>("PUMI Write Interval", 1); // write every time step default
   useNullspaceTranslationOnly = params->get<bool>("Use Nullspace Translation Only", false);
 
   compositeTet = false;
 
+  gmi_register_null();
   gmi_register_mesh();
 
   std::string model_file;
@@ -94,9 +95,21 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     model_file = params->get<std::string>("Parasolid Model Input File Name");
 #endif
 
-  model = gmi_load(model_file.c_str());
+  if (params->isParameter("PUMI Input File Name")) {
+    std::string mesh_file = params->get<std::string>("PUMI Input File Name");
+    mesh = apf::loadMdsMesh(model_file.c_str(), mesh_file.c_str());
+  } else {
+    int nex = params->get<int>("1D Elements", 0);
+    int ney = params->get<int>("2D Elements", 0);
+    int nez = params->get<int>("3D Elements", 0);
+    double wx = params->get<double>("1D Scale", 1);
+    double wy = params->get<double>("2D Scale", 1);
+    double wz = params->get<double>("3D Scale", 1);
+    bool is = ! params->get<bool>("Hexahedral", false);
+    buildBoxMesh(nex, ney, nez, wx, wy, wz, is);
+  }
 
-  mesh = apf::loadMdsMesh(model, mesh_file.c_str());
+  model = mesh->getModel();
   // Tell the mesh that we'll handle deleting the model.
   apf::disownMdsModel(mesh);
 
@@ -204,7 +217,8 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 Albany::PUMIMeshStruct::~PUMIMeshStruct()
 {
   setMesh(0);
-  if (model) gmi_destroy(model);
+  if (model)
+    gmi_destroy(model);
   PCU_Comm_Free();
 #ifdef SCOREC_SIMMODEL
   gmi_sim_stop();
@@ -415,6 +429,14 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
 
   validPL->set<bool>("Use Nullspace Translation Only", false,
                      "Temporary hack to get MueLu (possibly) working for us");
+
+  validPL->set<int>("1D Elements", 0, "Number of Elements in X discretization");
+  validPL->set<int>("2D Elements", 0, "Number of Elements in Y discretization");
+  validPL->set<int>("3D Elements", 0, "Number of Elements in Z discretization");
+  validPL->set<double>("1D Scale", 1.0, "Width of X discretization");
+  validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
+  validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
+  validPL->set<bool>("Hexahedral", false, "Build hexahedral elements");
 
   return validPL;
 }

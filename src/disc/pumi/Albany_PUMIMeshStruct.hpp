@@ -115,6 +115,9 @@ private:
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
 
+    void buildBoxMesh(int nex, int ney, int nez,
+        double wx, double wy, double wz, bool is);
+
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
     Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs;
