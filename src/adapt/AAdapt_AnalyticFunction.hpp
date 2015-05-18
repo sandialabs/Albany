@@ -260,6 +260,16 @@ class AerasCosineBell : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class AerasSlottedCylinder : public AnalyticFunction {
+  public:
+    AerasSlottedCylinder(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class AerasScalarCosineBell : public AnalyticFunction {
   public:
     AerasScalarCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_);
