@@ -18,12 +18,10 @@ if (ALBANY_EPETRA)
 add_test(Aeras_${testName} ${Albany.exe})
 endif()
 add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
-if (NOT ALBANY_EPETRA) 
 add_test(Aeras_${testName}_Spectral_Large_Quad9_Tpetra ${AlbanyT.exe}
 inputSpectralT.xml) 
 add_test(Aeras_${testName}_24Eles_Quad9_Tpetra ${AlbanyT.exe}
 input_24elesT.xml) 
 add_test(Aeras_${testName}_Spectral_24Eles_Quad25_Tpetra ${AlbanyT.exe}
 input_24elesSpectralT.xml) 
-endif() 
 

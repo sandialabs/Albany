@@ -124,10 +124,7 @@ Aeras::SpectralDiscretization::~SpectralDiscretization()
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getMap() const
 {
-  // AMB: The new nodalDOFsStructContainer means that when Epetra is enabled, the
-  // Epetra maps have precedence, and the Tpetra maps must remain consistent
-  // with them.
-  //dp-remove Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
+  Teuchos::RCP<const Epetra_Map> map = Petra::TpetraMap_To_EpetraMap(mapT, comm);
   return map;
 }
 #endif
@@ -143,7 +140,7 @@ Aeras::SpectralDiscretization::getMapT() const
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getOverlapMap() const
 {
-  //dp-remove Teuchos::RCP<const Epetra_Map> overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
+  Teuchos::RCP<const Epetra_Map> overlap_map = Petra::TpetraMap_To_EpetraMap(overlap_mapT, comm);
   return overlap_map;
 }
 #endif
@@ -158,13 +155,15 @@ Aeras::SpectralDiscretization::getOverlapMapT() const
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getMap(const std::string& field_name) const
 {
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).map;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getOverlapMap(const std::string& field_name) const
 {
-  return nodalDOFsStructContainer.getDOFsStruct(field_name).overlap_map;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "not impl'ed");
+  return Teuchos::null;
 }
 
 Teuchos::RCP<const Epetra_CrsGraph>
@@ -201,12 +200,14 @@ Aeras::SpectralDiscretization::getOverlapJacobianGraphT() const
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getNodeMap() const
 {
+  Teuchos::RCP<const Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   return node_map;
 }
 
 Teuchos::RCP<const Epetra_Map>
 Aeras::SpectralDiscretization::getOverlapNodeMap() const
 {
+  Teuchos::RCP<const Epetra_Map> overlap_node_map = Petra::TpetraMap_To_EpetraMap(overlap_node_mapT, comm);
   return overlap_node_map;
 }
 
@@ -581,7 +582,7 @@ Aeras::SpectralDiscretization::writeSolution(const Epetra_Vector& soln,
 
   if (stkMeshStruct->exoOutput && stkMeshStruct->transferSolutionToCoords)
   {
-    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+    Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
 
     container->transferSolutionToCoords();
 
@@ -960,7 +961,7 @@ Aeras::SpectralDiscretization::setOvlpSolutionField(const Epetra_Vector& soln)
   // Copy soln vector into solution field, one node at a time
   // Note that soln coming in is the local+ghost (overlapped) soln
 
-  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
+  Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = outputStkMeshStruct->getFieldContainer();
 
   // Iterate over the processor-visible nodes
   stk::mesh::Selector select_owned_or_shared = metaData.locally_owned_part() | metaData.globally_shared_part();
@@ -1230,82 +1231,6 @@ void Aeras::SpectralDiscretization::enrichMeshQuads()
   }
 }
 
-#if defined(ALBANY_EPETRA)
-void Aeras::SpectralDiscretization::computeNodalEpetraMaps (bool overlapped)
-{
-  // Loads member data:  ownednodes, numOwnedNodes, node_map, numGlobalNodes, map
-  // maps for owned nodes and unknowns
-
-  stk::mesh::Selector map_type_selector = overlapped ?
-           (metaData.locally_owned_part() | metaData.globally_shared_part()) :
-           metaData.locally_owned_part();
-
-  NodalDOFsStructContainer::MapOfDOFsStructs::iterator it, it2;
-  NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
-  std::vector< stk::mesh::Entity> nodes;
-  std::vector<int> indices;
-  int numNodes(0);
-
-  // compute NumGlobalNodes
-  stk::mesh::get_selected_entities( map_type_selector ,
-                  bulkData.buckets( stk::topology::NODE_RANK ) ,
-                  nodes );
-
-  long long int maxID(0), maxGID(0);
-  for (int i=0; i < nodes.size(); i++)
-    maxID = std::max(maxID, static_cast<long long int>(gid(nodes[i])));
-  comm->MaxAll(&maxID, &maxGID, 1);
-  numGlobalNodes = maxGID+1; // maxGID is the same for overlapped and unique maps
-
-  // build maps
-  for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it )
-  {
-    stk::mesh::Selector selector(map_type_selector);
-    const std::string& part = it->first.first;
-    int nComp = it->first.second;
-    if(part.size())
-    {
-      std::map<std::string, stk::mesh::Part*>::const_iterator it3 = stkMeshStruct->nsPartVec.find(part);
-      if(it3 != stkMeshStruct->nsPartVec.end())
-        selector &= *(it3->second);
-      else
-      { // throw error
-        std::ostringstream msg;
-        msg << "Aeras::SpectralDiscretization::computeNodalEpetraMaps(overlapped==" << overlapped <<
-            "):\n    Part " << part << " is not in  stkMeshStruct->nsPartVec.\n";
-        throw std::runtime_error(msg.str());
-      }
-    }
-
-    stk::mesh::get_selected_entities( selector ,
-                bulkData.buckets( stk::topology::NODE_RANK ) ,
-                nodes );
-
-    numNodes = nodes.size();
-    std::vector<int> indices(numNodes*nComp);
-    Albany::NodalDOFManager* dofManager = (overlapped) ? &it->second.overlap_dofManager : &it->second.dofManager;
-    dofManager->setup(nComp, numNodes, numGlobalNodes, interleavedOrdering);
-
-    for (int i=0; i < numNodes; i++)
-      for (int j=0; j < nComp; j++)
-        indices[dofManager->getLocalDOF(i,j)] = dofManager->getGlobalDOF(bulkData.identifier(nodes[i])-1, j);
-
-    Teuchos::RCP<Epetra_Map>& map = (overlapped) ? it->second.overlap_map : it->second.map;
-    map = Teuchos::null;
-    map = Teuchos::rcp(new Epetra_Map(-1, indices.size(), indices.data(), 0, *comm));
-
-    Teuchos::RCP<Epetra_Map>& node_map = (overlapped) ? it->second.overlap_node_map : it->second.node_map;
-    node_map = Teuchos::null;
-
-    it2=it;
-    if((nComp==1) || ((it2=mapOfDOFsStructs.find(make_pair(part,1)))!=mapOfDOFsStructs.end()))
-    {
-      node_map = (overlapped) ? it2->second.overlap_map : it2->second.map;
-    }
-  }
-}
-#endif // ALBANY_EPETRA
-
 void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsLines()
 {
 #ifdef OUTPUT_TO_SCREEN
@@ -1392,19 +1317,6 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
   }
   numOwnedNodes += numNewElementNodes;
 
-#if defined(ALBANY_EPETRA)
-  // FIXME: WFS: not updated yet for enriched elements
-  node_map = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").map;
-  map = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").map;
-
-  node_mapT = Petra::EpetraMap_To_TpetraMap(node_map, commT);
-  mapT = Petra::EpetraMap_To_TpetraMap(map, commT);
-
-  if (Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeLocalMap(
-      node_mapT->getNodeElementList(), commT);
-#else // ALBANY_EPETRA
-
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the indicesT array is inherently serial
   Teuchos::Array<GO> indicesT(numOwnedNodes);
@@ -1473,7 +1385,6 @@ void Aeras::SpectralDiscretization::computeOwnedNodesAndUnknownsQuads()
     Teuchos::nonnull(stkMeshStruct->nodal_data_base),
     std::logic_error,
     "Nodal database not implemented for Aeras::SpectralDiscretization");
-#endif
 }
 
 void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsLines()
@@ -1550,21 +1461,6 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
     numOverlapNodes += edgeBucket.size() * (np-2);
   }
 
-#if defined(ALBANY_EPETRA)
-  // FIXME: WFS: not updated yet for enriched elements
-  numOverlapNodes = overlapnodes.size();
-
-  overlap_map = nodalDOFsStructContainer.getDOFsStruct("ordinary_solution").overlap_map;
-  overlap_node_map = nodalDOFsStructContainer.getDOFsStruct("mesh_nodes").overlap_map;
-
-  overlap_node_mapT = Petra::EpetraMap_To_TpetraMap(overlap_node_map, commT);
-  overlap_mapT = Petra::EpetraMap_To_TpetraMap(overlap_map, commT);
-
-  if(Teuchos::nonnull(stkMeshStruct->nodal_data_base))
-    stkMeshStruct->nodal_data_base->resizeOverlapMap(
-      overlap_node_mapT->getNodeElementList(), commT);
-#else // ALBANY_EPETRA
-
   //////////////////////////////////////////////////////////////////////
   // N.B.: Filling the overlapIndicesT array is inherently serial
 
@@ -1625,7 +1521,6 @@ void Aeras::SpectralDiscretization::computeOverlapNodesAndUnknownsQuads()
   overlap_mapT = Teuchos::null; // delete existing map happens here on remesh
   overlap_mapT = Tpetra::createNonContigMap<LO, GO>(overlapDofIndicesT(), commT);
 
-#endif // ALBANY_EPETRA
   coordinates.resize(3*numOverlapNodes);
 }
 
@@ -1897,19 +1792,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
   typedef stk::mesh::Cartesian ElemTag;
   typedef stk::mesh::Cartesian CompTag;
 
-#if defined(ALBANY_EPETRA)
-  // FIXME: WFS: not yet updated for enriched elements
-  NodalDOFsStructContainer::MapOfDOFsStructs::iterator it;
-  NodalDOFsStructContainer::MapOfDOFsStructs& mapOfDOFsStructs = nodalDOFsStructContainer.mapOfDOFsStructs;
-  for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
-  {
-    it->second.wsElNodeEqID.resize(numBuckets);
-    it->second.wsElNodeEqID_rawVec.resize(numBuckets);
-    it->second.wsElNodeID.resize(numBuckets);
-    it->second.wsElNodeID_rawVec.resize(numBuckets);
-  }
-#endif // ALBANY_EPETRA
-
   for (int b = 0; b < numBuckets; ++b)
   {
 
@@ -1992,22 +1874,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
       }
     }
 
-#if defined(ALBANY_EPETRA)
-    // FIXME: WFS: not yet updated for enriched elements
-    stk::mesh::Entity element = buck[0];
-    int nodes_per_element = bulkData.num_nodes(element);
-    for(it = mapOfDOFsStructs.begin(); it != mapOfDOFsStructs.end(); ++it)
-    {
-      int nComp = it->first.second;
-      it->second.wsElNodeEqID_rawVec[b].resize(buck.size()*nodes_per_element*nComp);
-      it->second.wsElNodeEqID[b].assign<ElemTag, NodeTag, CompTag>(
-        it->second.wsElNodeEqID_rawVec[b].data(),(int)buck.size(),nodes_per_element,nComp);
-      it->second.wsElNodeID_rawVec[b].resize(buck.size()*nodes_per_element);
-      it->second.wsElNodeID[b].assign<ElemTag, NodeTag>(
-        it->second.wsElNodeID_rawVec[b].data(),(int)buck.size(),nodes_per_element);
-    }
-#endif // ALBANY_EPETRA
-
     // i is the element index within bucket b
     for (std::size_t i = 0; i < buck.size(); ++i)
     {
@@ -2057,31 +1923,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
 #endif
 
       // loop over local nodes
-#if defined(ALBANY_EPETRA)
-      // FIXME: WFS: not yet updated for enriched elements
-      DOFsStruct& dofs_struct = mapOfDOFsStructs[make_pair(std::string(""),neq)];
-      GIDArray& node_array = dofs_struct.wsElNodeID[b];
-      Albany::IDArray& node_eq_array = dofs_struct.wsElNodeEqID[b];
-      for (int j = 0; j < nodes_per_element; ++j)
-      {
-        // const stk::mesh::Entity rowNode = node_rels[j];
-        // const GO node_gid = gid(rowNode);
-        const GO node_gid = node_rels[j];
-        const LO node_lid = overlap_node_mapT->getLocalElement(node_gid);
-
-        TEUCHOS_TEST_FOR_EXCEPTION(
-          node_lid < 0,
-          std::logic_error,
-          "STK1D_Disc: node_lid out of range " << node_lid << std::endl);
-        //coords[b][i][j] = stk::mesh::field_data(*coordinates_field, rowNode);
-
-        //wsElNodeID[b][i][j] = node_array((int)i,j);
-
-        wsElNodeEqID[b][i][j].resize(neq);
-        for (int eq=0; eq < neq; eq++)
-          wsElNodeEqID[b][i][j][eq] = node_eq_array((int)i,j,eq);
-      }
-#else
       for (int j = 0; j < nodes_per_element; ++j)
       {
         // const stk::mesh::Entity rowNode = node_rels[j];
@@ -2101,7 +1942,6 @@ void Aeras::SpectralDiscretization::computeWorksetInfoQuads()
         for (std::size_t eq = 0; eq < neq; ++eq)
           wsElNodeEqID[b][i][j][eq] = getOverlapDOF(node_lid,eq);
       }
-#endif
     }
   }
 
@@ -2923,77 +2763,9 @@ int
 Aeras::SpectralDiscretization::processNetCDFOutputRequest(const Epetra_Vector& solution_field)
 {
 #ifdef ALBANY_SEACAS
-  const long long unsigned rank = commT->getRank();
-  const unsigned nlat = stkMeshStruct->nLat;
-  const unsigned nlon = stkMeshStruct->nLon;
-
-  std::vector<double> local(nlat*nlon*neq, -std::numeric_limits<double>::max());
-
-
-  for (unsigned n=0; n<neq; ++n)
-  {
-    for (unsigned b=0; b<interpolateData.size(); ++b)
-    {
-      Teuchos::ArrayRCP<std::vector<interp> >        Interpb = interpolateData[b];
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > Coordsb = coords[b];
-      Teuchos::ArrayRCP<Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> > > ElNodeEqID = wsElNodeEqID[b];
-
-      for (unsigned e=0; e<Interpb.size(); ++e)
-      {
-        const std::vector<interp>                    &interp = Interpb[e];
-        Teuchos::ArrayRCP<double*>                    coordp = Coordsb[e];
-        Teuchos::ArrayRCP<Teuchos::ArrayRCP<int> >    elnode = ElNodeEqID[e];
-
-        const int C = coordp.size();
-        std::vector<double> soln(C);
-        for (unsigned i=0; i<C; ++i)
-        {
-          const int overlap_dof = elnode[i][n];
-          soln[i] = solution_field[overlap_dof];
-        }
-        for (unsigned p=0; p<interp.size(); ++p)
-        {
-          Aeras::SpectralDiscretization::interp par    = interp[p];
-          const double y = value(soln, par.parametric_coords);
-          std::pair<unsigned,unsigned> latlon =   par.latitude_longitude;
-          local[nlon*latlon.first + latlon.second + n*nlat*nlon] = y;
-        }
-      }
-    }
-  }
-
-  std::vector<double> global(neq*nlat*nlon);
-  comm->MaxAll(&local[0], &global[0], neq*nlat*nlon);
-
-#ifdef ALBANY_PAR_NETCDF
-  const long long unsigned np   = commT->getSize();
-  const size_t start            = static_cast<size_t>((rank*nlat)/np);
-  const size_t end              = static_cast<size_t>(((rank+1)*nlat)/np);
-  const size_t len              = end-start;
-
-  for (unsigned n=0; n<neq; ++n)
-  {
-    const size_t  startp[] = {netCDFOutputRequest,    0, start, 0};
-    const size_t  countp[] = {1, 1, len, nlon};
-    if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-        "nc_put_vara_double returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-  }
-#else
-  if (netCDFp)
-  {
-    for (unsigned n=0; n<neq; ++n)
-    {
-      const size_t  startp[] = {netCDFOutputRequest,    0, 0, 0};
-      const size_t  countp[] = {1, 1, nlat, nlon};
-      if (const int ierr = nc_put_vara_double (netCDFp, varSolns[n], startp, countp, &global[n*nlat*nlon]))
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
-          "nc_put_vara returned error code "<<ierr<<" - "<<nc_strerror(ierr)<<std::endl);
-    }
-  }
+  // IK, 10/13/14: need to implement!
 #endif
-#endif
-  return netCDFOutputRequest++;
+  return 0;
 }
 #endif
 
@@ -3301,25 +3073,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     printConnectivity();
 #endif
 
-#if defined(ALBANY_EPETRA)
-    const Albany::StateInfoStruct& nodal_param_states = stkMeshStruct->getFieldContainer()->getNodalParameterSIS();
-    nodalDOFsStructContainer.addEmptyDOFsStruct("ordinary_solution", "", neq);
-    nodalDOFsStructContainer.addEmptyDOFsStruct("mesh_nodes", "", 1);
-    for(int is=0; is<nodal_param_states.size(); is++)
-    {
-      const Albany::StateStruct& param_state = *nodal_param_states[is];
-      const Albany::StateStruct::FieldDims& dim = param_state.dim;
-      int numComps = 1;
-      if (dim.size()==3)      // vector
-        numComps = dim[2];
-      else if (dim.size()==4) // tensor
-        numComps = dim[2]*dim[3];
-
-      nodalDOFsStructContainer.addEmptyDOFsStruct(param_state.name, param_state.meshPart,numComps);
-    }
-    computeNodalEpetraMaps(false);
-#endif // ALBANY_EPETRA
-
   if (spatial_dim == 1) 
     computeOwnedNodesAndUnknownsLines();
   else if (spatial_dim == 2) 
@@ -3333,10 +3086,6 @@ Aeras::SpectralDiscretization::updateMesh(bool /*shouldTransferIPData*/)
     // only needed for ML/MueLu and is not critical right now to get
     // spectral elements to work.
     setupMLCoords();
-
-#if defined(ALBANY_EPETRA)
-    computeNodalEpetraMaps(true);
-#endif // ALBANY_EPETRA
 
   if (spatial_dim == 1) 
     computeOverlapNodesAndUnknownsLines();
