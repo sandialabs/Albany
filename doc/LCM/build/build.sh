@@ -99,6 +99,12 @@ case "$SCRIPT_NAME" in
 	    release)
 		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
 		;;
+	    profile)
+		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
+		;;
+	    small)
+		sed -i -e "s|fpe_switch|OFF|g;" "$CONFIG_FILE"
+		;;
 	    *)
 		echo "Unrecognized build type option"
 		exit 1
