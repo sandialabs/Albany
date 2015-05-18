@@ -16,6 +16,8 @@ Albany::PUMIOutput::~PUMIOutput() {
 Albany::PUMIOutput* Albany::PUMIOutput::create(
   const Teuchos::RCP<PUMIMeshStruct>& meshStruct,
   const Teuchos::RCP<const Teuchos_Comm>& comm) {
+  if (meshStruct->outputFileName.empty())
+    return 0;
 #if defined(HAVE_STK)
   if (meshStruct->outputFileName.find("exo") != std::string::npos)
     return new PUMIExodus(meshStruct, comm);
