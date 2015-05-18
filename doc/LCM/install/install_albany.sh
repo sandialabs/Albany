@@ -24,10 +24,16 @@ if [ ! -d Trilinos ]; then
   #git clone git@github.com:trilinos/trilinos.git Trilinos
   git clone software.sandia.gov:/space/git/Trilinos Trilinos
   #git clone https://github.com/trilinos/trilinos.git Trilinos
+else
+  echo ">>> Trilinos exists, freshening it <<<"
+  (cd Trilinos; git pull)
 fi
 if [ ! -d Albany ]; then
   git clone git@github.com:gahansen/Albany.git Albany
   #git clone https://github.com/gahansen/Albany.git Albany
+else
+  echo ">>> Albany exists, freshening it <<<"
+  (cd Albany; git pull)
 fi
 
 ln -sf Albany/doc/LCM/build/*.sh .
@@ -60,11 +66,10 @@ buildtype="debug"
 for target in trilinos albany; do
  dir=${target}-build-${toolchain}-${buildtype}
  if [ ! -d $dir ]; then
-   echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
-   ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
- else 
    echo "!!! $dir exists !!!"
  fi
+ echo ">>> building ${target}-${toolchain}-${buildtype} with ${NP} processes <<<"
+ ./clean-config-build.sh ${target} gcc debug $NP >& ${target}_build.log
 done
 
 if [ -e albany-build-${toolchain}-${buildtype}/src/Albany ]; then
