@@ -59,12 +59,6 @@ public:
     return coupled_app_name_;
   }
 
-  int
-  appIndexFromName(std::string const & name) const
-  {
-    return std::atoi(name.c_str());
-  }
-
   void
   setCoupledBlockName(std::string const & cbn)
   {
@@ -77,16 +71,61 @@ public:
     return coupled_block_name_;
   }
 
+  void
+  setThisAppIndex(int const tai)
+  {
+    this_app_index_ = tai;
+  }
+
+  int
+  getThisAppIndex() const
+  {
+    return this_app_index_;
+  }
+
+  void
+  setCoupledAppIndex(int const cai)
+  {
+    coupled_app_index_ = cai;
+  }
+
+  int
+  getCoupledAppIndex() const
+  {
+    return coupled_app_index_;
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index)
+  {
+    return *(coupled_apps_[app_index]);
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index) const
+  {
+    return *(coupled_apps_[app_index]);
+  }
+
 protected:
 
   Teuchos::RCP<Albany::Application>
   app_;
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+  coupled_apps_;
 
   std::string
   coupled_app_name_;
 
   std::string
   coupled_block_name_;
+
+  int
+  this_app_index_;
+
+  int
+  coupled_app_index_;
 };
 
 //

@@ -10,12 +10,12 @@ SET(GOAL_DIR ${Albany_SOURCE_DIR}/src/Apogee)
 
 SET(SOURCES
   evaluators/GOAL_MechanicsAdjoint.cpp
-  responses/GOAL_AdjointResponseFunction.cpp)
+  responses/GOAL_MechAdjResponse.cpp)
 
 SET(HEADERS
   evaluators/GOAL_MechanicsAdjoint.hpp
   evaluators/GOAL_MechanicsAdjoint_Def.hpp
-  responses/GOAL_AdjointResponseFunction.hpp)
+  responses/GOAL_MechAdjResponse.hpp)
 
 include_directories(
   ${Trilinos_INCLUDE_DIRS}

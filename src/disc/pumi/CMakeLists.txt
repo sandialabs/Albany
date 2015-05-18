@@ -13,6 +13,7 @@
     Albany_PUMINodeData.cpp
     Albany_PUMIVtk.cpp
     Albany_PUMIOutput.cpp
+    Albany_PUMIBuildBox.cpp
     )
 
   SET(HEADERS

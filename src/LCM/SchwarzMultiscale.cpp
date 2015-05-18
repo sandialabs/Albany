@@ -54,7 +54,9 @@ SchwarzMultiscale(
   //number of models
   num_models_ = model_filenames.size();
 
+#ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: num_models_: " << num_models_ << '\n';
+#endif
 
   // Create application name-index map used for Schwarz BC.
   Teuchos::RCP<std::map<std::string, int>>

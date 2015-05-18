@@ -145,19 +145,102 @@ Schwarz_BoundaryJacobian::
 getExplicitOperator() const
 {
   auto const
-  num_rows = getRangeMap()->getNodeNumElements();
-
-  auto const
-  num_cols = getDomainMap()->getNodeNumElements();
+  max_num_cols = getDomainMap()->getNodeNumElements();
 
   Teuchos::RCP<Tpetra_CrsMatrix>
   K = Teuchos::rcp(
-      new Tpetra_CrsMatrix(getRangeMap(), getDomainMap(), num_cols));
+      new Tpetra_CrsMatrix(getRangeMap(), getDomainMap(), max_num_cols));
 
   auto const
   zero = Teuchos::ScalarTraits<ST>::zero();
 
   K->setAllToScalar(zero);
+
+#if 0
+  auto const
+  dimension = 3;
+
+  auto const
+  this_app_index = getThisAppIndex();
+
+  auto const
+  coupled_app_index = getCoupledAppIndex();
+
+  std::vector<int> const
+  ns_fine = {0,1,2,3};
+
+  std::vector<std::vector<int>> const
+  from_coarse = {{0,5}, {1,4}, {2,7}, {3,6}};
+
+  std::vector<int> const
+  ns_coarse = {4,5,6,7};
+
+  std::vector<std::vector<int>> const
+  from_fine = {{1,4}, {0,5}, {3,6}, {2,7}};
+
+  if (this_app_index + coupled_app_index == 1) {
+
+    std::vector<int> const &
+    ns_nodes = this_app_index == 0 ? ns_fine : ns_coarse;
+
+    std::vector<std::vector<int>> const &
+    from_nodes = this_app_index == 0 ? from_coarse : from_fine;
+
+    auto const
+    num_ns_nodes = ns_nodes.size();
+
+    for (auto ns_node = 0; ns_node < num_ns_nodes; ++ns_node) {
+
+      auto const
+      row_node = ns_nodes[ns_node];
+
+      auto const
+      num_from_nodes = from_nodes[ns_node].size();
+
+      auto const
+      num_cols = num_from_nodes * dimension;
+
+      Teuchos::Array<GO>
+      cols(num_cols);
+
+      Teuchos::Array<ST>
+      vals(num_cols);
+
+      for (auto col_node = 0; col_node < num_from_nodes; ++col_node) {
+
+        auto const
+        from_node = from_nodes[ns_node][col_node];
+
+        for (auto d = 0; d < dimension; ++d) {
+
+          auto const
+          col = dimension * col_node + d;
+
+          auto const
+          from_dof = from_node * dimension + d;
+
+          cols[col] = from_dof;
+          vals[col] = 0.5;
+
+        }
+      }
+
+      for (auto d = 0; d < dimension; ++d) {
+
+        auto const
+        row = dimension * row_node + d;
+
+        K->insertGlobalValues(row, cols, vals);
+      }
+    }
+  }
+
+#endif
+  K->fillComplete();
+
+  //std::cout << "Number rows: " << K->getNodeNumRows() << '\n';
+  //std::cout << "Number cols: " << K->getNodeNumCols() << '\n';
+  //std::cout << *K << '\n';
 
   return K;
 }

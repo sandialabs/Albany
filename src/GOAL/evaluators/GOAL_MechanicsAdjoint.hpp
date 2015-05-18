@@ -36,20 +36,14 @@ class MechanicsAdjointBase :
     void postEvaluate(typename Traits::PostEvalData d) = 0;
     void evaluateFields(typename Traits::EvalData d) = 0;
 
-    Teuchos::RCP<const PHX::FieldTag> getEvaluatedFieldTag() const {
-      return fieldTag_;
-    }
+    Teuchos::RCP<const PHX::FieldTag>
+      getEvaluatedFieldTag() const { return fieldTag_; }
 
-    Teuchos::RCP<const PHX::FieldTag> getResponseFieldTag() const {
-      return fieldTag_;
-    }
+    Teuchos::RCP<const PHX::FieldTag>
+      getResponseFieldTag() const { return fieldTag_; }
 
   protected:
-
-    Albany::StateManager* stateManager_;
-
     Teuchos::RCP< PHX::Tag<ScalarT> > fieldTag_;
-
 };
 
 template<typename EvalT, typename Traits>
@@ -65,15 +59,7 @@ class MechanicsAdjoint : public MechanicsAdjointBase<EvalT, Traits>
     void evaluateFields(typename Traits::EvalData d) {}
 };
 
-// **************************************************************
-// **************************************************************
-// * Specializations
-// **************************************************************
-// **************************************************************
-
-// **************************************************************
-// Residual 
-// **************************************************************
+/* Specialization : Residual */
 template<typename Traits>
 class MechanicsAdjoint<PHAL::AlbanyTraits::Residual,Traits> :
 public MechanicsAdjointBase<PHAL::AlbanyTraits::Residual, Traits>
@@ -85,8 +71,6 @@ public MechanicsAdjointBase<PHAL::AlbanyTraits::Residual, Traits>
     void preEvaluate(typename Traits::PreEvalData d);
     void postEvaluate(typename Traits::PostEvalData d);
     void evaluateFields(typename Traits::EvalData d);
-
-  private:
 };
 
 }
