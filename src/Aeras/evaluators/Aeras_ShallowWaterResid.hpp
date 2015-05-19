@@ -72,7 +72,6 @@ private:
 
   bool usePrescribedVelocity;
   bool useHyperViscosity;
-  bool ibpGradH;
                     
   Teuchos::RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > > intrepidBasis;
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
@@ -151,8 +150,6 @@ public:
  PHX::MDField<ScalarT,Node> utildecomp;
  PHX::MDField<ScalarT,Node> vtildecomp;
 
- PHX::MDField<ScalarT,QuadPoint,Dim> utilde;
- PHX::MDField<ScalarT,QuadPoint,Dim> vtilde;
  PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;

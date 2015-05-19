@@ -52,10 +52,6 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 
   Teuchos::ParameterList* shallowWaterList = p.get<Teuchos::ParameterList*>("Shallow Water Problem");
 
-  //IK, 3/25/14: boolean flag that says whether to integrate by parts the g*grad(h+hs) term
-  // AGS: ToDo Add list validator!
-  ibpGradH = shallowWaterList->get<bool>("IBP Grad h Term", false); //Default: false
-
   usePrescribedVelocity = shallowWaterList->get<bool>("Use Prescribed Velocity", false); //Default: false
   useHyperViscosity = shallowWaterList->get<bool>("Use Hyperviscosity", false); //Default: false
   
@@ -685,7 +681,6 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FieldContainer<ScalarT> utildegradNodes(numQPs,2);
   Intrepid::FieldContainer<ScalarT> vtildegradNodes(numQPs,2);
  
-//TODO: erase presence of ibpGradH
   
   for (std::size_t cell=0; cell < workset.numCells; ++cell) {
       
