@@ -14,39 +14,39 @@
 namespace LCM
 {
 
-static void aprintd(double x)
-{
-  if (-1e-5 < x && x < 0)
-    x = 0;
-  fprintf(stderr, "%.5f", x);
-}
+//static void aprintd(double x)
+//{
+//  if (-1e-5 < x && x < 0)
+//    x = 0;
+//  fprintf(stderr, "%.5f", x);
+//}
 
-static void aprints(double x)
-{
-  aprintd(x);
-  fprintf(stderr,"\n");
-}
+//static void aprints(double x)
+//{
+//  aprintd(x);
+//  fprintf(stderr,"\n");
+//}
 
-static void aprints(FadType const& x)
-{
-  aprintd(x.val());
-  fprintf(stderr," [");
-  for (int i = 0; i < x.size(); ++i) {
-    fprintf(stderr," ");
-    aprintd(x.dx(i));
-  }
-  fprintf(stderr,"]\n");
-}
+//static void aprints(FadType const& x)
+//{
+//  aprintd(x.val());
+//  fprintf(stderr," [");
+//  for (int i = 0; i < x.size(); ++i) {
+//    fprintf(stderr," ");
+//    aprintd(x.dx(i));
+//  }
+//  fprintf(stderr,"]\n");
+//}
 
-static void stripDeriv(double& x)
-{
-  (void)x;
-}
+//static void stripDeriv(double& x)
+//{
+//  (void)x;
+//}
 
-static void stripDeriv(FadType& x)
-{
-  x.resize(0);
-}
+//static void stripDeriv(FadType& x)
+//{
+//  x.resize(0);
+//}
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -133,18 +133,18 @@ CreepModel(Teuchos::ParameterList* p,
   }
 }
 
-void creepprint(double x)
-{
-  fprintf(stderr, "%a\n", x);
-}
+//void creepprint(double x)
+//{
+//  fprintf(stderr, "%a\n", x);
+//}
 
-void creepprint(FadType const& x)
-{
-  fprintf(stderr, "%a [", x.val());
-  for (int i = 0; i < x.size(); ++i)
-    fprintf(stderr, " %a", x.dx(i));
-  fprintf(stderr, "\n");
-}
+//void creepprint(FadType const& x)
+//{
+//  fprintf(stderr, "%a [", x.val());
+//  for (int i = 0; i < x.size(); ++i)
+//    fprintf(stderr, " %a", x.dx(i));
+//  fprintf(stderr, "\n");
+//}
 
 //------------------------------------------------------------------------------
 template<typename EvalT, typename Traits>
@@ -175,6 +175,10 @@ computeState(typename Traits::EvalData workset,
   PHX::MDField<ScalarT> Fp     = *eval_fields[Fp_string];
   PHX::MDField<ScalarT> eqps   = *eval_fields[eqps_string];
   PHX::MDField<ScalarT> source;
+  if (have_temperature_) {
+    source = *eval_fields[source_string];
+  }
+
 
   // get State Variables
   Albany::MDArray Fpold = (*workset.stateArrayPtr)[Fp_string + "_old"];
@@ -194,10 +198,10 @@ computeState(typename Traits::EvalData workset,
 
   long int debug_output_counter = 0;
 
-  if (sizeof(ScalarT) == sizeof(double))
-    std::cerr << "Model double times_called " << times_called << '\n';
-  else
-    std::cerr << "Model FAD times_called " << times_called << '\n';
+//  if (sizeof(ScalarT) == sizeof(double))
+//    std::cerr << "Model double times_called " << times_called << '\n';
+//  else
+//    std::cerr << "Model FAD times_called " << times_called << '\n';
 
   for (int cell(0); cell < workset.numCells; ++cell) {
     for (int pt(0); pt < num_pts_; ++pt) {
@@ -248,15 +252,16 @@ computeState(typename Traits::EvalData workset,
 
       f = smag - sq23 * (Y + K * eqpsold(cell, pt));
 
-      bool doit = (sizeof(ScalarT) == sizeof(FadType) && times_called == 5000000000
-          && cell == 0 && pt == 0);
+      //bool doit = (sizeof(ScalarT) == sizeof(FadType) && times_called == 5000000000
+      //    && cell == 0 && pt == 0);
+      
       // check yield condition
       if (f <= 0.0) {
-        if (doit)
-          std::cerr << "f <= 0.0\n";
+        //if (doit)
+        //  std::cerr << "f <= 0.0\n";
         if (a0 > 1E-12) {
-          if (doit)
-            std::cerr << "a0 > 1E-12\n";
+        //  if (doit)
+        //    std::cerr << "a0 > 1E-12\n";
           // return mapping algorithm
           bool converged = false;
           ScalarT alpha = 0.0;
@@ -334,8 +339,8 @@ computeState(typename Traits::EvalData workset,
             }
           }
         } else {
-          if (doit)
-            std::cerr << "a0 <= 1E-12\n";
+      //    if (doit)
+      //      std::cerr << "a0 <= 1E-12\n";
           eqps(cell, pt) = eqpsold(cell, pt);
           for (int i(0); i < num_dims_; ++i) {
             for (int j(0); j < num_dims_; ++j) {
@@ -344,8 +349,8 @@ computeState(typename Traits::EvalData workset,
           }
         }
       } else {
-        if (doit)
-          std::cerr << "f > 0\n";
+       //  if (doit)
+       //   std::cerr << "f > 0\n";
         bool converged = false;
         ScalarT H = 0.0;
         ScalarT dH = 0.0;
@@ -374,19 +379,19 @@ computeState(typename Traits::EvalData workset,
           F[0] = f - 2. * mubar * (1. + K/(3. * mubar)) * X[0] - H;
           dFdX[0] = -2. * mubar * (1. + K/(3. * mubar)) - dH;
 
-          if (doit) {
-            std::cerr << "before count " << count << '\n';
-            std::cerr << "dFdX[0]: " << dFdX[0] << '\n';
-            std::cerr << "X[0]: " << X[0] << '\n';
-            std::cerr << "F[0]: " << F[0] << '\n';
-          }
+          //if (doit) {
+          //  std::cerr << "before count " << count << '\n';
+          //  std::cerr << "dFdX[0]: " << dFdX[0] << '\n';
+          //  std::cerr << "X[0]: " << X[0] << '\n';
+          //  std::cerr << "F[0]: " << F[0] << '\n';
+         // }
           solver.solve(dFdX, X, F);
-          if (doit) {
-            std::cerr << "after count " << count << '\n';
-            std::cerr << "dFdX[0]: " << dFdX[0] << '\n';
-            std::cerr << "X[0]: " << X[0] << '\n';
-            std::cerr << "F[0]: " << F[0] << '\n';
-          }
+         // if (doit) {
+         //   std::cerr << "after count " << count << '\n';
+         //   std::cerr << "dFdX[0]: " << dFdX[0] << '\n';
+         //   std::cerr << "X[0]: " << X[0] << '\n';
+         //   std::cerr << "F[0]: " << F[0] << '\n';
+         // }
           res = std::abs(F[0]);
           if (res < 1.e-08 || res / f < 1.E-11)
             converged = true;
@@ -401,10 +406,10 @@ computeState(typename Traits::EvalData workset,
               "\ndg = " << dFdX[0] << std::endl);
         }
         solver.computeFadInfo(dFdX, X, F);
-        if (doit) {
-          std::cerr << "X[0] after fadinfo: ";
-          aprints(X[0]);
-        }
+       // if (doit) {
+       //   std::cerr << "X[0] after fadinfo: ";
+       //   aprints(X[0]);
+       // }
 
         dgam_plastic = X[0];
 
@@ -413,51 +418,51 @@ computeState(typename Traits::EvalData workset,
 
         // update s
 
-        if (doit) {
-          std::cerr << "s before:\n";
-          for (int i(0); i < num_dims_; ++i)
-            for (int j(0); j < num_dims_; ++j)
-              aprints(s(i,j));
-        }
+        //if (doit) {
+        //  std::cerr << "s before:\n";
+        //  for (int i(0); i < num_dims_; ++i)
+        //    for (int j(0); j < num_dims_; ++j)
+        //      aprints(s(i,j));
+       // }
 
         s -= 2 * mubar * dgam_plastic * N + f * N - 2. * mubar * ( 1. + K/(3. * mubar)) * dgam_plastic * N;
 
-        if (doit) {
-          std::cerr << "s after:\n";
-          for (int i(0); i < num_dims_; ++i)
-            for (int j(0); j < num_dims_; ++j)
-              aprints(s(i,j));
-        }
+        //if (doit) {
+        // std::cerr << "s after:\n";
+        //  for (int i(0); i < num_dims_; ++i)
+        //    for (int j(0); j < num_dims_; ++j)
+        //      aprints(s(i,j));
+       // }
 
         dgam = dgam_plastic + delta_time(0) * temp_adj_relaxation_para_ * std::pow(Intrepid::norm(s), strain_rate_expo_ );
 
-        if (doit) {
-          std::cerr << "eqpsold: " << eqpsold(cell, pt) << '\n';
-          std::cerr << "dgam_plastic: " << dgam_plastic << '\n';
-          std::cerr << "dgam: " << dgam_plastic << '\n';
-        }
+       // if (doit) {
+       //   std::cerr << "eqpsold: " << eqpsold(cell, pt) << '\n';
+       //   std::cerr << "dgam_plastic: " << dgam_plastic << '\n';
+       //   std::cerr << "dgam: " << dgam_plastic << '\n';
+       // }
 
-        if (doit) {
-          std::cerr << "K: " << K << '\n';
-          std::cerr << "f: " << f << '\n';
-          std::cerr << "delta_time(0): " << delta_time(0) << '\n';
-          std::cerr << "temp_adj_relaxation_para_: "
-            << temp_adj_relaxation_para_ << '\n';
-          std::cerr << "strain_rate_expo_: " << strain_rate_expo_ << '\n';
-        }
+       // if (doit) {
+       //   std::cerr << "K: " << K << '\n';
+       //   std::cerr << "f: " << f << '\n';
+       //   std::cerr << "delta_time(0): " << delta_time(0) << '\n';
+       //   std::cerr << "temp_adj_relaxation_para_: "
+       //     << temp_adj_relaxation_para_ << '\n';
+       //   std::cerr << "strain_rate_expo_: " << strain_rate_expo_ << '\n';
+       // }
         alpha = eqpsold(cell, pt) + sq23 * dgam_plastic ;
-        stripDeriv(alpha);
-        if (doit)
-          std::cerr << "alpha " << alpha << '\n';
+        //stripDeriv(alpha);
+        //if (doit)
+        //  std::cerr << "alpha " << alpha << '\n';
 
         // plastic direction
         N =  s / Intrepid::norm(s);
-        if (doit) {
-          std::cerr << "N:\n";
-          for (int i(0); i < num_dims_; ++i)
-            for (int j(0); j < num_dims_; ++j)
-              aprints(N(i,j));
-        }
+        //if (doit) {
+        //  std::cerr << "N:\n";
+        //  for (int i(0); i < num_dims_; ++i)
+        //    for (int j(0); j < num_dims_; ++j)
+        //      aprints(N(i,j));
+       // }
 
         // update eqps
         eqps(cell, pt) = alpha;
@@ -471,18 +476,18 @@ computeState(typename Traits::EvalData workset,
         // exponential map to get Fpnew
         A = dgam * N;
         expA = Intrepid::exp(A);
-        if (doit) {
-          std::cerr << "dgam: ";
-          aprints(dgam);
-          std::cerr << "expA:\n";
-          for (int i(0); i < num_dims_; ++i)
-            for (int j(0); j < num_dims_; ++j)
-              aprints(expA(i,j));
-          std::cerr << "Fpn:\n";
-          for (int i(0); i < num_dims_; ++i)
-            for (int j(0); j < num_dims_; ++j)
-              aprints(Fpn(i,j));
-        }
+        //if (doit) {
+        //  std::cerr << "dgam: ";
+        //  aprints(dgam);
+        //  std::cerr << "expA:\n";
+        //  for (int i(0); i < num_dims_; ++i)
+        //    for (int j(0); j < num_dims_; ++j)
+        //      aprints(expA(i,j));
+        //  std::cerr << "Fpn:\n";
+        //  for (int i(0); i < num_dims_; ++i)
+        //    for (int j(0); j < num_dims_; ++j)
+        //      aprints(Fpn(i,j));
+       // }
         Fpnew = expA * Fpn;
         for (int i(0); i < num_dims_; ++i) {
           for (int j(0); j < num_dims_; ++j) {
@@ -492,20 +497,20 @@ computeState(typename Traits::EvalData workset,
       }
 
       // compute pressure
-      if (doit) {
-        std::cerr << "kappa: ";
-        aprints(kappa);
-        std::cerr << "J: ";
-        aprints(J(cell,pt));
-      }
+      //if (doit) {
+      //  std::cerr << "kappa: ";
+      // aprints(kappa);
+      //  std::cerr << "J: ";
+      //  aprints(J(cell,pt));
+     // }
       p = 0.5 * kappa * (J(cell, pt) - 1. / (J(cell, pt)));
-      if (doit) {
-        std::cerr << "p: " << p << '\n';
-        std::cerr << "s:\n";
-        for (int i(0); i < num_dims_; ++i)
-          for (int j(0); j < num_dims_; ++j)
-            aprints(s(i,j));
-      }
+      //if (doit) {
+      //  std::cerr << "p: " << p << '\n';
+      //  std::cerr << "s:\n";
+      //  for (int i(0); i < num_dims_; ++i)
+      //   for (int j(0); j < num_dims_; ++j)
+      //      aprints(s(i,j));
+      //}
 
       // compute stress
       sigma = p * I + s / J(cell, pt);
@@ -514,50 +519,69 @@ computeState(typename Traits::EvalData workset,
           stress(cell, pt, i, j) = sigma(i, j);
         }
       }
-      if (doit) {
-        std::cerr << "final stress:\n";
-        for (int i = 0; i < num_dims_; ++i)
-          for (int j = 0; j < num_dims_; ++j)
-            aprints(stress(cell,pt,i,j));
-      }
+      //if (doit) {
+      //  std::cerr << "final stress:\n";
+      //  for (int i = 0; i < num_dims_; ++i)
+      //    for (int j = 0; j < num_dims_; ++j)
+      //      aprints(stress(cell,pt,i,j));
+     // }
 
  //     if(debug_output_counter%DEBUG_FREQ == 0)std::cout<<"sigma(combine) = "<<sigma<<std::endl;
     }
   }
 
-  if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000000000) {
-    std::cerr << "stress:\n";
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      std::cerr << "cell " << cell << ":\n";
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        std::cerr << "pt " << pt << ":\n";
-        for (int i = 0; i < num_dims_; ++i)
-          for (int j = 0; j < num_dims_; ++j)
-            aprints(stress(cell,pt,i,j));
+ // if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000000000) {
+ //   std::cerr << "stress:\n";
+ //   for (int cell = 0; cell < workset.numCells; ++cell) {
+ //     std::cerr << "cell " << cell << ":\n";
+ //     for (int pt = 0; pt < num_pts_; ++pt) {
+ //       std::cerr << "pt " << pt << ":\n";
+ //       for (int i = 0; i < num_dims_; ++i)
+ //         for (int j = 0; j < num_dims_; ++j)
+ //           aprints(stress(cell,pt,i,j));
+ //     }
+ //   }
+ //   std::cerr << "Fp:\n";
+ //   for (int cell = 0; cell < workset.numCells; ++cell) {
+ //     std::cerr << "cell " << cell << ":\n";
+ //     for (int pt = 0; pt < num_pts_; ++pt) {
+ //       std::cerr << "pt " << pt << ":\n";
+ //       for (int i = 0; i < num_dims_; ++i)
+ //         for (int j = 0; j < num_dims_; ++j)
+ //           aprints(Fp(cell,pt,i,j));
+ //     }
+ //   }
+ //   std::cerr << "eqps:\n";
+ //   for (int cell = 0; cell < workset.numCells; ++cell) {
+ //     std::cerr << "cell " << cell << ":\n";
+ //     for (int pt = 0; pt < num_pts_; ++pt)
+ //       aprints(eqps(cell,pt));
+ //   }
+ // }
+
+ // if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000000000)
+ //   abort();
+
+ // ++times_called;
+//}
+
+if (have_temperature_) {
+    for (int cell(0); cell < workset.numCells; ++cell) {
+      for (int pt(0); pt < num_pts_; ++pt) {
+        F.fill(def_grad,cell,pt,0,0);
+        ScalarT J = Intrepid::det(F);
+        sigma.fill(stress,cell,pt,0,0);
+        sigma -= 3.0 * expansion_coeff_ * (1.0 + 1.0 / (J*J))
+          * (temperature_(cell,pt) - ref_temperature_) * I;
+        for (int i = 0; i < num_dims_; ++i) {
+          for (int j = 0; j < num_dims_; ++j) {
+            stress(cell, pt, i, j) = sigma(i, j);
+          }
+        }
       }
-    }
-    std::cerr << "Fp:\n";
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      std::cerr << "cell " << cell << ":\n";
-      for (int pt = 0; pt < num_pts_; ++pt) {
-        std::cerr << "pt " << pt << ":\n";
-        for (int i = 0; i < num_dims_; ++i)
-          for (int j = 0; j < num_dims_; ++j)
-            aprints(Fp(cell,pt,i,j));
-      }
-    }
-    std::cerr << "eqps:\n";
-    for (int cell = 0; cell < workset.numCells; ++cell) {
-      std::cerr << "cell " << cell << ":\n";
-      for (int pt = 0; pt < num_pts_; ++pt)
-        aprints(eqps(cell,pt));
     }
   }
 
-  if ((sizeof(ScalarT) == sizeof(FadType)) && times_called == 5000000000)
-    abort();
-
-  ++times_called;
 }
 
 
