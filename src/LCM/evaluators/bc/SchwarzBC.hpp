@@ -36,42 +36,84 @@ template <typename EvalT, typename Traits>
 class SchwarzBC_Base : public PHAL::DirichletBase<EvalT, Traits> {
 public:
   typedef typename EvalT::ScalarT ScalarT;
-  typedef Teuchos::RCP<Albany::AbstractDiscretization> Discretization;
 
   SchwarzBC_Base(Teuchos::ParameterList & p);
 
   void
-  setDiscretization(Discretization & d)
-  {disc_ = d;}
-
-  Discretization
-  getDiscretization() const
-  {return disc_;}
+  computeBCs(
+      typename Traits::EvalData dirichlet_workset,
+      size_t const ns_node,
+      ScalarT & x_val,
+      ScalarT & y_val,
+      ScalarT & z_val);
 
   void
   setCoupledAppName(std::string const & can)
-  {coupled_app_name_ = can;}
+  {
+    coupled_app_name_ = can;
+  }
 
   std::string
   getCoupledAppName() const
-  {return coupled_app_name_;}
-
-  int
-  appIndexFromName(std::string const & name) const
-  {return std::atoi(name.c_str());}
+  {
+    return coupled_app_name_;
+  }
 
   void
   setCoupledBlockName(std::string const & cbn)
-  {coupled_block_name_ = cbn;}
+  {
+    coupled_block_name_ = cbn;
+  }
 
   std::string
   getCoupledBlockName() const
-  {return coupled_block_name_;}
+  {
+    return coupled_block_name_;
+  }
+
+  void
+  setThisAppIndex(int const tai)
+  {
+    this_app_index_ = tai;
+  }
+
+  int
+  getThisAppIndex() const
+  {
+    return this_app_index_;
+  }
+
+  void
+  setCoupledAppIndex(int const cai)
+  {
+    coupled_app_index_ = cai;
+  }
+
+  int
+  getCoupledAppIndex() const
+  {
+    return coupled_app_index_;
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index)
+  {
+    return *(coupled_apps_[app_index]);
+  }
+
+  Albany::Application const &
+  getApplication(int const app_index) const
+  {
+    return *(coupled_apps_[app_index]);
+  }
 
 protected:
 
   Teuchos::RCP<Albany::Application>
   app_;
+
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+  coupled_apps_;
 
   std::string
   coupled_app_name_;
@@ -79,8 +121,11 @@ protected:
   std::string
   coupled_block_name_;
 
-  Discretization
-  disc_;
+  int
+  this_app_index_;
+
+  int
+  coupled_app_index_;
 };
 
 //

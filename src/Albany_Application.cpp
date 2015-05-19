@@ -236,6 +236,7 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   writeToMatrixMarketRes = debugParams->get("Write Residual to MatrixMarket", 0);
   writeToCoutJac = debugParams->get("Write Jacobian to Standard Output", 0);
   writeToCoutRes = debugParams->get("Write Residual to Standard Output", 0);
+  derivatives_check_ = debugParams->get<int>("Derivative Check", 0);
   //the above 4 parameters cannot have values < -1
   if (writeToMatrixMarketJac < -1)  {TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
                                   std::endl << "Error in Albany::Application constructor:  " <<
@@ -296,6 +297,11 @@ void Albany::Application::initialSetUp(const RCP<Teuchos::ParameterList>& params
   }
 #endif // ALBANY_LCM
 
+#ifdef ALBANY_PERIDIGM
+#if defined(ALBANY_EPETRA)
+  LCM::PeridigmManager::initializeSingleton(params);
+#endif
+#endif
 }
 
 void Albany::Application::createMeshSpecs() {
@@ -402,7 +408,8 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  LCM::PeridigmManager::self().setDirichletFields(disc);
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+    LCM::PeridigmManager::self()->setDirichletFields(disc);
 #endif
 #endif
 
@@ -523,7 +530,8 @@ void Albany::Application::finalSetUp(const Teuchos::RCP<Teuchos::ParameterList>&
 
 #ifdef ALBANY_PERIDIGM
 #if defined(ALBANY_EPETRA)
-  LCM::PeridigmManager::self().initialize(params, disc, commT);
+  if (Teuchos::nonnull(LCM::PeridigmManager::self()))
+    LCM::PeridigmManager::self()->initialize(params, disc, commT);
 #endif
 #endif
 }
@@ -772,6 +780,138 @@ void dfm_set (
   workset.transientTerms = ! Teuchos::nonnull(xd);
   workset.accelerationTerms = ! Teuchos::nonnull(xdd);
 }
+
+// For the perturbation xd,
+//     f_i(x + xd) = f_i(x) + J_i(x) xd + O(xd' H_i(x) xd),
+// where J_i is the i'th row of the Jacobian matrix and H_i is the Hessian of
+// f_i at x. We don't have the Hessian, however, so approximate the last term by
+// norm(f) O(xd' xd). We use the inf-norm throughout.
+//   For check_lvl >= 1, check that f(x + xd) - f(x) is approximately equal to
+// J(x) xd by computing
+//     reldif(f(x + dx) - f(x), J(x) dx)
+//        = norm(f(x + dx) - f(x) - J(x) dx) /
+//          max(norm(f(x + dx) - f(x)), norm(J(x) dx)).
+// This norm should be on the order of norm(xd).
+//   For check_lvl >= 2, output a multivector in matrix market format having
+// columns
+//     [x, dx, f(x), f(x + dx) - f(x), f(x + dx) - f(x) - J(x) dx].
+//   The purpose of this derivative checker is to help find programming errors
+// in the Jacobian. Automatic differentiation largely or entirely prevents math
+// errors, but other kinds of programming errors (uninitialized memory,
+// accidentaly omission of a FadType, etc.) can cause errors. The common symptom
+// of such an error is that the residual is correct, and therefore so is the
+// solution, but convergence to the solution is not quadratic.
+//   A complementary method to check for errors in the Jacobian is to use
+//     Piro -> Jacobian Operator = Matrix-Free,
+// which works for Epetra-based problems.
+//   Enable this check using the debug block:
+//     <ParameterList>
+//       <ParameterList name="Debug Output">
+//         <Parameter name="Derivative Check" type="int" value="1"/>
+void checkDerivatives (Albany::Application& app, const double time,
+                       const Teuchos::RCP<const Tpetra_Vector>& xdot,
+                       const Teuchos::RCP<const Tpetra_Vector>& xdotdot,
+                       const Teuchos::RCP<const Tpetra_Vector>& x,
+                       const Teuchos::Array<ParamVec>& p,
+                       const Teuchos::RCP<const Tpetra_Vector>& fi,
+                       const Teuchos::RCP<const Tpetra_CrsMatrix>& jacobian,
+                       const int check_lvl) {
+  if (check_lvl <= 0) return;
+
+  // Work vectors. x's map is compatible with f's, so don't distinguish among
+  // maps in this function.
+  Tpetra_Vector w1(x->getMap()), w2(x->getMap()), w3(x->getMap());
+
+  Teuchos::RCP<Tpetra_MultiVector> mv;
+  if (check_lvl > 1)
+    mv = Teuchos::rcp(new Tpetra_MultiVector(x->getMap(), 5));
+
+  // Construct a perturbation.
+  const double delta = 1e-7;
+  Tpetra_Vector& xd = w1;
+  xd.randomize();
+  Tpetra_Vector& xpd = w2;
+  {
+    const Teuchos::ArrayRCP<const RealType> x_d = x->getData();
+    const Teuchos::ArrayRCP<RealType>
+      xd_d = xd.getDataNonConst(), xpd_d = xpd.getDataNonConst();
+    for (size_t i = 0; i < x_d.size(); ++i) {
+      xd_d[i] = 2*xd_d[i] - 1;
+      const double xdi = xd_d[i];
+      if (x_d[i] == 0) {
+        // No scalar-level way to get the magnitude of x_i, so just go with
+        // something:
+        xd_d[i] = xpd_d[i] = delta*xd_d[i];
+      } else {
+        // Make the perturbation meaningful relative to the magnitude of x_i.
+        xpd_d[i] = (1 + delta*xd_d[i])*x_d[i]; // mult line
+        // Sanitize xd_d.
+        xd_d[i] = xpd_d[i] - x_d[i];
+        if (xd_d[i] == 0) {
+          // Underflow in "mult line" occurred because x_d[i] is something like
+          // 1e-314. That's a possible sign of uninitialized memory. However,
+          // carry on here to get a good perturbation by reverting to the
+          // no-magnitude case:
+          xd_d[i] = xpd_d[i] = delta*xd_d[i];
+        }
+      }
+    }
+  }
+  if (Teuchos::nonnull(mv)) {
+    mv->getVectorNonConst(0)->update(1, *x, 0);
+    mv->getVectorNonConst(1)->update(1, xd, 0);
+  }
+
+  // If necessary, compute f(x).
+  Teuchos::RCP<const Tpetra_Vector> f;
+  if (fi.is_null()) {
+    Teuchos::RCP<Tpetra_Vector>
+      w = Teuchos::rcp(new Tpetra_Vector(x->getMap()));
+    app.computeGlobalResidualT(time, xdot.get(), xdotdot.get(), *x, p, *w);
+    f = w;
+  } else {
+    f = fi;
+  }
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(2)->update(1, *f, 0);
+
+  // fpd = f(xpd).
+  Tpetra_Vector& fpd = w3;
+  app.computeGlobalResidualT(time, xdot.get(), xdotdot.get(), xpd, p, fpd);
+
+  // fd = fpd - f.
+  Tpetra_Vector& fd = fpd;
+  fd.update(-1, *f, 1);
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(3)->update(1, fd, 0);
+
+  // Jxd = J xd.
+  Tpetra_Vector& Jxd = w2;
+  jacobian->apply(xd, Jxd);
+
+  // Norms.
+  const double fdn = fd.normInf(), Jxdn = Jxd.normInf(), xdn = xd.normInf();
+  // d = norm(fd - Jxd).
+  Tpetra_Vector& d = fd;
+  d.update(-1, Jxd, 1);
+  if (Teuchos::nonnull(mv)) mv->getVectorNonConst(4)->update(1, d, 0);
+  const double dn = d.normInf();
+
+  // Assess.
+  const double
+    den = std::max(fdn, Jxdn),
+    e = dn / den;
+  *Teuchos::VerboseObjectBase::getDefaultOStream()
+    << "Albany::Application Check Derivatives level " << check_lvl << ":\n"
+    << "   reldif(f(x + dx) - f(x), J(x) dx) = " << e
+    << ",\n which should be on the order of " << xdn << "\n";
+
+  if (Teuchos::nonnull(mv)) {
+    static int ctr = 0;
+    std::stringstream ss;
+    ss << "dc" << ctr << ".mm";
+    Tpetra_MatrixMarket_Writer::writeDenseFile(ss.str(), mv);
+    ++ctr;
+  }
+}
 } // namespace
 
 void
@@ -833,9 +973,12 @@ computeGlobalResidualImplT(
 
 #ifdef ALBANY_PERIDIGM 
 #if defined(ALBANY_EPETRA)
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
-  peridigmManager.setCurrentTimeAndDisplacement(current_time, xT);
-  peridigmManager.evaluateInternalForce();
+  const Teuchos::RCP<LCM::PeridigmManager>&
+    peridigmManager = LCM::PeridigmManager::self();
+  if (Teuchos::nonnull(peridigmManager)) {
+    peridigmManager->setCurrentTimeAndDisplacement(current_time, xT);
+    peridigmManager->evaluateInternalForce();
+  }
 #endif
 #endif
 
@@ -963,20 +1106,55 @@ computeGlobalResidual(const double current_time,
 
 void
 Albany::Application::
-computeGlobalResidualT(const double current_time,
-		      const Tpetra_Vector* xdotT,
-		      const Tpetra_Vector* xdotdotT,
-		      const Tpetra_Vector& xT,
-		      const Teuchos::Array<ParamVec>& p,
-		      Tpetra_Vector& fT)
+computeGlobalResidualT(
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector& fT)
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   this->computeGlobalResidualImplT(
       current_time,
-      Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT),
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
       p,
       Teuchos::rcpFromRef(fT));
+
+  //Debut output
+  if (writeToMatrixMarketRes != 0) { //If requesting writing to MatrixMarket of residual...
+    char name[100];  //create string for file name
+    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
+      sprintf(name, "rhs%i.mm", countRes);
+      Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(fT));
+    }
+    else {
+      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
+        sprintf(name, "rhs%i.mm", countRes);
+        Tpetra_MatrixMarket_Writer::writeDenseFile(
+            name,
+            Teuchos::rcpFromRef(fT));
+      }
+    }
+  }
+  if (writeToCoutRes != 0) { //If requesting writing of residual to cout...
+    if (writeToCoutRes == -1) { //cout residual time it arises
+      std::cout << "Global Residual #" << countRes << ": " << std::endl;
+      fT.describe(*out, Teuchos::VERB_EXTREME);
+    }
+    else {
+      if (countRes == writeToCoutRes) { //cout residual only at requested count#
+        std::cout << "Global Residual #" << countRes << ": " << std::endl;
+        fT.describe(*out, Teuchos::VERB_EXTREME);
+      }
+    }
+  }
+  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0) {
+    countRes++;  //increment residual counter
+  }
 }
 
 void
@@ -1115,6 +1293,10 @@ computeGlobalJacobianImplT(const double alpha,
   }
 
   jacT->fillComplete();
+
+  if (derivatives_check_ > 0)
+    checkDerivatives(*this, current_time, xdotT, xdotdotT, xT, p, fT, jacT,
+                     derivatives_check_);
 }
 
 #if defined(ALBANY_EPETRA)
@@ -1202,81 +1384,65 @@ computeGlobalJacobian(const double alpha,
 
 void
 Albany::Application::
-computeGlobalJacobianT(const double alpha,
-                       const double beta,
-                       const double omega,
-                       const double current_time,
-                       const Tpetra_Vector* xdotT,
-                       const Tpetra_Vector* xdotdotT,
-                       const Tpetra_Vector& xT,
-                       const Teuchos::Array<ParamVec>& p,
-                       Tpetra_Vector* fT,
-                       Tpetra_CrsMatrix& jacT)
+computeGlobalJacobianT(
+    const double alpha,
+    const double beta,
+    const double omega,
+    const double current_time,
+    const Tpetra_Vector* xdotT,
+    const Tpetra_Vector* xdotdotT,
+    const Tpetra_Vector& xT,
+    const Teuchos::Array<ParamVec>& p,
+    Tpetra_Vector* fT,
+    Tpetra_CrsMatrix& jacT)
 {
   // Create non-owning RCPs to Tpetra objects
   // to be passed to the implementation
   this->computeGlobalJacobianImplT(
-      alpha, beta, omega, current_time,
-      Teuchos::rcp(xdotT, false), Teuchos::rcp(xdotdotT, false), Teuchos::rcpFromRef(xT),
+      alpha,
+      beta,
+      omega,
+      current_time,
+      Teuchos::rcp(xdotT, false),
+      Teuchos::rcp(xdotdotT, false),
+      Teuchos::rcpFromRef(xT),
       p,
-      Teuchos::rcp(fT, false), Teuchos::rcpFromRef(jacT));
- //Debut output
+      Teuchos::rcp(fT, false),
+      Teuchos::rcpFromRef(jacT));
+  //Debut output
   if (writeToMatrixMarketJac != 0) { //If requesting writing to MatrixMarket of Jacobian...
     char name[100];  //create string for file name
     if (writeToMatrixMarketJac == -1) { //write jacobian to MatrixMarket every time it arises
-       sprintf(name, "jac%i.mm", countJac);
-       Tpetra_MatrixMarket_Writer::writeSparseFile(name, Teuchos::rcpFromRef(jacT));
+      sprintf(name, "jac%i.mm", countJac);
+      Tpetra_MatrixMarket_Writer::writeSparseFile(
+          name,
+          Teuchos::rcpFromRef(jacT));
     }
     else {
       if (countJac == writeToMatrixMarketJac) { //write jacobian only at requested count#
         sprintf(name, "jac%i.mm", countJac);
-        Tpetra_MatrixMarket_Writer::writeSparseFile(name, Teuchos::rcpFromRef(jacT));
+        Tpetra_MatrixMarket_Writer::writeSparseFile(
+            name,
+            Teuchos::rcpFromRef(jacT));
       }
     }
   }
   Teuchos::RCP<Teuchos::FancyOStream> out = fancyOStream(rcpFromRef(std::cout));
   if (writeToCoutJac != 0) { //If requesting writing Jacobian to standard output (cout)...
     if (writeToCoutJac == -1) { //cout jacobian every time it arises
-       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-       jacT.describe(*out, Teuchos::VERB_HIGH);
+      std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+      jacT.describe(*out, Teuchos::VERB_HIGH);
     }
     else {
       if (countJac == writeToCoutJac) { //cout jacobian only at requested count#
-       std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
-       jacT.describe(*out, Teuchos::VERB_HIGH);
+        std::cout << "Global Jacobian #" << countJac << ": " << std::endl;
+        jacT.describe(*out, Teuchos::VERB_HIGH);
       }
     }
   }
-  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0)
+  if (writeToMatrixMarketJac != 0 || writeToCoutJac != 0) {
     countJac++; //increment Jacobian counter
-  //Debut output
-  if (writeToMatrixMarketRes != 0 && fT != NULL) { //If requesting writing to MatrixMarket of residual...
-    char name[100];  //create string for file name
-    if (writeToMatrixMarketRes == -1) { //write residual to MatrixMarket every time it arises
-       sprintf(name, "rhs%i.mm", countRes);
-       Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
-    }
-    else {
-      if (countRes == writeToMatrixMarketRes) { //write residual only at requested count#
-        sprintf(name, "rhs%i.mm", countRes);
-        Tpetra_MatrixMarket_Writer::writeDenseFile(name, Teuchos::rcpFromRef(*fT));
-      }
-    }
   }
-  if (writeToCoutRes != 0 && fT != NULL) { //If requesting writing of residual to cout...
-    if (writeToCoutRes == -1) { //cout residual time it arises
-       std::cout << "Global Residual #" << countRes << ": " << std::endl;
-       fT->describe(*out, Teuchos::VERB_EXTREME);
-    }
-    else {
-      if (countRes == writeToCoutRes) { //cout residual only at requested count#
-        std::cout << "Global Residual #" << countRes << ": " << std::endl;
-        fT->describe(*out, Teuchos::VERB_EXTREME);
-      }
-    }
-  }
-  if (writeToMatrixMarketRes != 0 || writeToCoutRes != 0)
-    countRes++;  //increment residual counter
 }
 
 #if defined(ALBANY_EPETRA)

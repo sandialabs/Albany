@@ -26,7 +26,7 @@ namespace Aeras {
                   const int numDim_, const int worksetSize_, 
                   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type& wsElNodeID_, 
                   const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<double*> > >::type& coords_,
-                  const Teuchos::RCP<const Tpetra_Map>& node_mapT_, const int points_per_edge_);
+                  const int points_per_edge_);
 
 
 
@@ -49,7 +49,6 @@ namespace Aeras {
     //Is this necessary here? 
     const bool getInterleavedOrdering() const {return this->interleavedOrdering;}
 
-    void copySolutionToOutputMesh(const Tpetra_Vector& solnT); 
     private:
     //Ioss::Init::Initializer ioInit;
 
@@ -59,7 +58,6 @@ namespace Aeras {
     Teuchos::RCP<Teuchos::FancyOStream> out;
     bool periodic;
     bool contigIDs; //boolean specifying if node / element / face IDs are contiguous; only relevant for 1 processor run 
-    Teuchos::RCP<const Tpetra_Map> node_mapT; //node map
     const int numDim;  
     const int points_per_edge;
     const Albany::WorksetArray<Teuchos::ArrayRCP<Teuchos::ArrayRCP<GO> > >::type wsElNodeID;

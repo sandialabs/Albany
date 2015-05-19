@@ -91,8 +91,6 @@ private:
   ScalarT gravity; // gravity parameter -- Sacado-ized for sensitivities
   ScalarT Omega;   //rotation of earth  -- Sacado-ized for sensitivities
  
-  double ViscCoeff; //viscosity or hv coeff
-                     
   double AlphaAngle;
 
   int numNodes;

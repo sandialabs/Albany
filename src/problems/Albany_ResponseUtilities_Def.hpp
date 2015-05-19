@@ -331,7 +331,6 @@ Albany::ResponseUtilities<EvalT,Traits>::constructResponses(
 #ifdef ALBANY_GOAL
   else if (responseName == "Mechanics Adjoint")
   {
-    std::cout << "I should be building this" << std::endl;
     p->set< Albany::StateManager* >("State Manager Ptr", &stateMgr );
     p->set< RCP<DataLayout> >("Dummy Data Layout", dl->dummy);
     RCP<GOAL::MechanicsAdjoint<EvalT,Traits> > res_ev =

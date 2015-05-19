@@ -42,12 +42,12 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus Aeras"/>
     <Parameter name="Exodus Input File Name" type="string" value="../../grids/QUAD4/cube_quad4_24eles.g"/>
-    <!--Parameter name="Exodus Output File Name" type="string" value="sphere10_quad9.exo"/-->
     <Parameter name="Cubature Degree" type="int" value="6"/>
     <Parameter name="Cubature Rule" type="int" value="3"/>
-    <Parameter name="Element Degree" type="int" value="5"/>
+    <Parameter name="Element Degree" type="int" value="4"/>
     <Parameter name="Transform Type" type="string" value="Spherical"/>
-    <!--Parameter name="Exodus Write Interval" type="int" value="5"/-->
+    <Parameter name="Exodus Output File Name" type="string" value="spectral_24eles_out.exo"/>
+    <Parameter name="Exodus Write Interval" type="int" value="1"/>
     <!--Parameter name="Workset Size" type="int" value="500"/-->
   </ParameterList>
   <ParameterList name="Regression Results">

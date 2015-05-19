@@ -5,6 +5,7 @@
 //*****************************************************************//
 
 #include "AAdapt_AdaptiveSolutionManagerT.hpp"
+#if defined(HAVE_STK)
 #include "AAdapt_CopyRemeshT.hpp"
 #if defined(ALBANY_LCM)
 #include "AAdapt_TopologyModificationT.hpp"
@@ -14,6 +15,7 @@
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
 #include "AAdapt_STKAdaptT.hpp"
+#endif
 #endif
 #ifdef ALBANY_SCOREC
 #include "AAdapt_MeshAdapt.hpp"
@@ -110,50 +112,53 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 
   std::string& method = adaptParams_->get("Method", "");
 
+#if defined(HAVE_STK)
   if (method == "Copy Remesh") {
     adapter_ = Teuchos::rcp(new AAdapt::CopyRemeshT(adaptParams_,
         paramLib_,
         stateMgr_,
         commT_));
-  }
+  } else
 
-#if defined(ALBANY_LCM)
-  else if (method == "Topmod") {
+# if defined(ALBANY_LCM)
+  if (method == "Topmod") {
     adapter_ = Teuchos::rcp(new AAdapt::TopologyModT(adaptParams_,
         paramLib_,
         stateMgr_,
         commT_));
-  }
+  } else
+# endif
 #endif
 
 #if 0
 # if defined(ALBANY_LCM) && defined(LCM_SPECULATIVE)
-  else if (method == "Random") {
+  if (method == "Random") {
     strategy = rcp(new AAdapt::RandomFracture(adaptParams_,
             param_lib_,
             state_mgr_,
             epetra_comm_));
-  }
+  } else
 # endif
 #endif
 #ifdef ALBANY_SCOREC
   // RCP needs to be non-owned because otherwise there is an RCP circle.
-  else if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
-           method == "RPI SPR Size")
+  if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
+      method == "RPI SPR Size") {
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdaptT(adaptParams_, paramLib_, stateMgr_, rc_mgr,
                              commT_));
+  } else
 #endif
 #if defined(ALBANY_LCM) && defined(ALBANY_STK_PERCEPT)
-  else if (method == "Unif Size") {
+  if (method == "Unif Size") {
     adapter_ = Teuchos::rcp(new AAdapt::STKAdaptT<AAdapt::STKUnifRefineField>(adaptParams_,
             paramLib_,
             stateMgr_,
             commT_));
-  }
+  } else
 #endif
 
-  else {
+  {
     TEUCHOS_TEST_FOR_EXCEPTION(true,
         Teuchos::Exceptions::InvalidParameter,
         std::endl <<

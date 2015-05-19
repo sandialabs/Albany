@@ -34,6 +34,18 @@ Albany::ModelEvaluator::ModelEvaluator(
 {
   Teuchos::RCP<Teuchos::FancyOStream> out =
     Teuchos::VerboseObjectBase::getDefaultOStream();
+//IKT, 5/18/15:
+//Test for Spectral elements requested, which do not work now with Albany executable.
+#ifdef ALBANY_AERAS 
+    Teuchos::ParameterList& discParams = appParams->sublist("Discretization");
+    std::string& method = discParams.get("Method", "STK1D");
+    if (method == "Ioss Aeras" || method == "Exodus Aeras" || method == "STK1D Aeras"){
+       TEUCHOS_TEST_FOR_EXCEPTION(true,
+                               Teuchos::Exceptions::InvalidParameter,
+                               "Error: Albany executable does not support discretization method " << method
+                               << "!  Please re-run with AlbanyT executable." << std::endl);
+    }
+#endif
 
   // Parameters (e.g., for sensitivities, SG expansions, ...)
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");

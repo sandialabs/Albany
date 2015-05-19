@@ -21,7 +21,11 @@
 #include <apf.h>
 #include <apfMesh2.h>
 #include <apfMDS.h>
+#if defined(HAVE_STK)
 #include <apfSTK.h>
+#else
+#include <apfAlbany.h>
+#endif
 #include <gmi.h>
 
 namespace Albany {
@@ -110,6 +114,9 @@ private:
 
     //! Utility function that uses some integer arithmetic to choose a good worksetSize
     int computeWorksetSize(const int worksetSizeMax, const int ebSizeMax) const;
+
+    void buildBoxMesh(int nex, int ney, int nez,
+        double wx, double wy, double wz, bool is);
 
     Teuchos::RCP<Teuchos::FancyOStream> out;
 

@@ -110,6 +110,16 @@ class LinearY : public AnalyticFunction {
     Teuchos::Array<double> data;
 };
 
+class Circle : public AnalyticFunction {
+  public:
+    Circle(int neq_, int numDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int numDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
 class GaussianPress : public AnalyticFunction {
   public:
     GaussianPress(int neq_, int numDim_, Teuchos::Array<double> data_);
@@ -243,6 +253,16 @@ class AerasHeaviside : public AnalyticFunction {
 class AerasCosineBell : public AnalyticFunction {
   public:
     AerasCosineBell(int neq_, int spatialDim_, Teuchos::Array<double> data_);
+    void compute(double* x, const double* X);
+  private:
+    int spatialDim; // size of coordinate vector X
+    int neq;    // size of solution vector x
+    Teuchos::Array<double> data;
+};
+
+class AerasSlottedCylinder : public AnalyticFunction {
+  public:
+    AerasSlottedCylinder(int neq_, int spatialDim_, Teuchos::Array<double> data_);
     void compute(double* x, const double* X);
   private:
     int spatialDim; // size of coordinate vector X

@@ -15,9 +15,9 @@ fi
 
 cd $TEST_DIR
 
-export PATH=/home/gahanse/bin:/home/projects/x86-64/openmpi/1.8.4/gnu/4.9.0/cuda/7.0.18/bin:/home/projects/gcc/4.9.0/bin:/home/projects/gmp/5.1.1/bin:/home/projects/mpfr/3.1.2/bin:/home/projects/mpc/1.0.1//bin:/home/projects/x86-64/cuda/7.0.18/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/ibutils/bin:/opt/local/slurm/default/bin
+export PATH=/home/gahanse/bin:/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/bin:/home/projects/gcc/4.7.2/bin:/home/projects/gmp/5.1.1/bin:/home/projects/mpfr/3.1.2/bin:/home/projects/mpc/1.0.1/bin:/home/projects/x86-64/cuda/7.0.28/bin:/usr/lib64/qt-3.3/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:/opt/ibutils/bin:/opt/local/slurm/default/bin
 
-export LD_LIBRARY_PATH=/opt/intel/mkl/lib/intel64:/home/projects/x86-64/openmpi/1.8.4/gnu/4.9.0/cuda/7.0.18/lib:/home/projects/gcc/4.9.0/lib64:/home/projects/gcc/4.9.0/lib:/home/projects/gmp/5.1.1/lib:/home/projects/mpfr/3.1.2/lib:/home/projects/mpc/1.0.1/lib:/home/projects/x86-64/cuda/7.0.18/lib64:/opt/cray/lib64:/usr/lib64
+export LD_LIBRARY_PATH=/opt/intel/mkl/lib/intel64:/home/projects/x86-64/openmpi/1.8.4/gnu/4.7.2/cuda/7.0.28/lib:/home/projects/gcc/4.7.2/lib64:/home/projects/gcc/4.7.2/lib:/home/projects/gmp/5.1.1/lib:/home/projects/mpfr/3.1.2/lib:/home/projects/mpc/1.0.1/lib:/home/projects/x86-64/cuda/7.0.28/lib64:/opt/cray/lib64:/usr/lib64
 
 # Do the proxies to reach the albany github site
 export http_proxy=bc-proxy-5.sandia.gov:80

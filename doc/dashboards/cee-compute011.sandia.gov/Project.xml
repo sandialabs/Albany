@@ -3,6 +3,8 @@
   </SubProject>
   <SubProject name="Trilinos">
   </SubProject>
+  <SubProject name="Peridigm">
+  </SubProject>
   <SubProject name="TrilinosClang++11">
   </SubProject>
   <SubProject name="Albany32Bit">

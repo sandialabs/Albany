@@ -251,14 +251,14 @@ namespace Aeras
 
 #if defined(ALBANY_EPETRA)
     //! Get IDArray for (Ws, Local Node, nComps) -> (local) NodeLID, works for both scalar and vector fields
-    const std::vector<Albany::IDArray>&
-    getElNodeEqID(const std::string& field_name) const
-    {
-      return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;
-    }
+    const std::vector<Albany::IDArray>& getElNodeEqID(const std::string& field_name) const
+        {return nodalDOFsStructContainer.getDOFsStruct(field_name).wsElNodeEqID;}
+
     const Albany::NodalDOFManager& getDOFManager(const std::string& field_name) const
             {return nodalDOFsStructContainer.getDOFsStruct(field_name).dofManager;}
 #endif
+
+
 
     //! Retrieve coodinate vector (num_used_nodes * 3)
     const Teuchos::ArrayRCP<double>& getCoordinates() const;
@@ -469,10 +469,6 @@ namespace Aeras
     void enrichMeshLines();
     void enrichMeshQuads();
 
-#if defined(ALBANY_EPETRA)
-    void computeNodalEpetraMaps(bool overlapped);
-#endif
-
     //! Process spectral Albany mesh for owned nodal quantitites
     void computeOwnedNodesAndUnknownsLines();
     void computeOwnedNodesAndUnknownsQuads();
@@ -506,6 +502,8 @@ namespace Aeras
     //! Create new STK mesh in which spectral elements are interpreted
     //! as a patch of linear quadrilaterals, and use this to setup
     //! Exodus output
+    void createOutputMesh();
+    
     void setupExodusOutput();
 
     //! Call stk_io for creating NetCDF output file

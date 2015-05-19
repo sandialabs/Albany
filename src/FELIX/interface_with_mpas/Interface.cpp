@@ -10,12 +10,15 @@
 #include "Albany_SolverFactory.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 #include <stk_mesh/base/FieldBase.hpp>
+#include <stk_mesh/base/GetEntities.hpp>
 #include "Piro_PerformSolve.hpp"
+#include "Albany_OrdinarySTKFieldContainer.hpp"
+
+#ifdef ALBANY_SEACAS
 #include <stk_io/IossBridge.hpp>
 #include <stk_io/StkMeshIoBroker.hpp>
-#include <stk_mesh/base/GetEntities.hpp>
 #include <Ionit_Initializer.h>
-#include "Albany_OrdinarySTKFieldContainer.hpp"
+#endif
 
 Teuchos::RCP<Albany::MpasSTKMeshStruct> meshStruct;
 Teuchos::RCP<Albany::Application> albanyApp;
@@ -222,10 +225,12 @@ void velocity_solver_solve_fo(int nLayers, int nGlobalVertices,
 }
 
 void velocity_solver_export_fo_velocity(MPI_Comm reducedComm) {
+#ifdef ALBANY_SEACAS
   Teuchos::RCP<stk::io::StkMeshIoBroker> mesh_data = Teuchos::rcp(new stk::io::StkMeshIoBroker(reducedComm));
     mesh_data->set_bulk_data(*meshStruct->bulkData);
     size_t idx = mesh_data->create_output_mesh("IceSheet.exo", stk::io::WRITE_RESULTS);
     mesh_data->process_output_request(idx, 0.0);
+#endif
 }
 
 void velocity_solver_finalize() {

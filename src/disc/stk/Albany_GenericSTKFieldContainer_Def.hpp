@@ -36,6 +36,7 @@ template<bool Interleaved>
 Albany::GenericSTKFieldContainer<Interleaved>::~GenericSTKFieldContainer() {
 }
 
+#ifdef ALBANY_SEACAS
 namespace {
 //amb 13 Nov 2014. After new STK was integrated, fields with output set to false
 // were nonetheless being written to Exodus output files. As a possibly
@@ -52,6 +53,7 @@ inline Ioss::Field::RoleType role_type(const bool output) {
   return output ? Ioss::Field::TRANSIENT : Ioss::Field::INFORMATION;
 }
 }
+#endif
 
 template<bool Interleaved>
 void

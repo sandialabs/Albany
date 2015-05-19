@@ -12,9 +12,10 @@
     Albany_PUMIQPData.cpp
     Albany_PUMINodeData.cpp
     Albany_PUMIVtk.cpp
-    Albany_PUMIExodus.cpp
     Albany_PUMIOutput.cpp
+    Albany_PUMIBuildBox.cpp
     )
+
   SET(HEADERS
     Albany_AbstractPUMIDiscretization.hpp
     Albany_PUMIMeshStruct.hpp
@@ -24,6 +25,18 @@
     Albany_PUMINodeData.hpp
     Albany_PUMINodeData_Def.hpp
     )
+
+  IF(ALBANY_HAVE_STK)
+
+    SET(SOURCES ${SOURCES}
+      Albany_PUMIExodus.cpp
+      )
+    SET(HEADERS ${HEADERS}
+      Albany_PUMIExodus.hpp
+      )
+
+  ENDIF()
+
 
 include_directories (${Trilinos_INCLUDE_DIRS}  ${Trilinos_TPL_INCLUDE_DIRS}
   ${Albany_SOURCE_DIR}/src

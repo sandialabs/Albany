@@ -21,7 +21,7 @@ if [ -z "$TOOL_CHAIN" ]; then
 fi
 
 if [ -z "$BUILD_TYPE" ]; then
-    echo "Specify build type [debug|release]"
+    echo "Specify build type [debug|release|profile|small]"
     exit 1
 fi
 
@@ -87,6 +87,32 @@ case "$BUILD_TYPE" in
 	;;
     release)
 	BUILD_STRING="RELEASE"
+	case "$TOOL_CHAIN" in
+	    gcc)
+		;;
+	    clang)
+		;;
+	    intel)
+		;;
+	    *)
+		;;
+	esac
+	;;
+    profile)
+	BUILD_STRING="RELWITHDEBINFO"
+	case "$TOOL_CHAIN" in
+	    gcc)
+		;;
+	    clang)
+		;;
+	    intel)
+		;;
+	    *)
+		;;
+	esac
+	;;
+    small)
+	BUILD_STRING="MINSIZEREL"
 	case "$TOOL_CHAIN" in
 	    gcc)
 		;;

@@ -217,9 +217,11 @@ build type, the corresponding version of Trilinos must exist.
 
 Currently the options for the toolchain are \verb+gcc+, \verb+clang+
 and \verb+intel+ if the Intel compilers are installed, and for build
-type are \verb+debug+ and \verb+release+. The \verb+clang+ toolchain
-requires installation of the \verb+clang+ and \verb+clang-devel+
-packages.
+type are \verb+debug+ (includes symbolic information), \verb+release+
+(optimization enabled), \verb+profile+ (symbolic information and
+optimization enabled for profiling) and \verb+small+ (minimizes size
+of executables). The \verb+clang+ toolchain requires installation of
+the \verb+clang+ and \verb+clang-devel+ packages.
 
 \section{After initial setup}
 The procedure described before configures and compiles the code. From

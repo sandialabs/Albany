@@ -16,6 +16,7 @@
 #include "Albany_NavierStokes.hpp"
 #include "Albany_GPAMProblem.hpp"
 #include "Albany_LinComprNSProblem.hpp"
+#include "Albany_AdvDiffProblem.hpp"
 #include "Albany_ComprNSProblem.hpp"
 #include "Albany_ODEProblem.hpp"
 #include "Albany_PNPProblem.hpp"
@@ -152,6 +153,12 @@ Albany::ProblemFactory::create()
   }
   else if (method == "LinComprNS 1D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "AdvDiff 1D") {
+    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 1));
+  }
+  else if (method == "AdvDiff 2D") {
+    strategy = rcp(new Albany::AdvDiffProblem(problemParams, paramLib, 2));
   }
   else if (method == "LinComprNS 2D") {
     strategy = rcp(new Albany::LinComprNSProblem(problemParams, paramLib, 2));

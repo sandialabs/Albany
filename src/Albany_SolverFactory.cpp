@@ -56,7 +56,7 @@
   #include "ATO_Solver.hpp"
 #endif
 
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
   #include "SchwarzMultiscale.hpp"
   #include "Schwarz_PiroObserverT.hpp"
 #endif
@@ -626,7 +626,7 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 //#endif /* ALBANY_ATO */
 //    }
   
-#if defined(ALBANY_LCM)
+#if defined(ALBANY_LCM) && defined(HAVE_STK)
   if (solutionMethod == "Coupled Schwarz") {
 
     std::cout <<"In Albany_SolverFactory: solutionMethod = Coupled Schwarz!" << std::endl;
@@ -686,7 +686,6 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
     //piroFactory.setSource<NOX::Tpetra?::Observer>(coupled_observer);
     // WARNING: Coupled Schwarz does not contain a primary Albany::Application instance and so albanyApp is null.
     // FIXME?
-    std::cout << "DEBUG: In Albany::SolverFactory: before createSolver call! \n"; 
     return piroFactory.createSolver<ST>(piroParams, coupled_model_with_solveT, observer);
     }
 #endif

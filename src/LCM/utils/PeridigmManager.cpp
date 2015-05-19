@@ -10,9 +10,19 @@
 #include "PHAL_Dimension.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
 
-LCM::PeridigmManager& LCM::PeridigmManager::self() {
-  static PeridigmManager peridigmManager;
+const Teuchos::RCP<LCM::PeridigmManager>& LCM::PeridigmManager::self() {
+  static Teuchos::RCP<PeridigmManager> peridigmManager;
   return peridigmManager;
+}
+
+void LCM::PeridigmManager::initializeSingleton(
+  const Teuchos::RCP<Teuchos::ParameterList>& params)
+{
+  if ( ! params->sublist("Problem").isSublist("Peridigm Parameters"))
+    return;
+  Teuchos::RCP<LCM::PeridigmManager>* ston =
+    const_cast<Teuchos::RCP<LCM::PeridigmManager>*>(&self());
+  *ston = Teuchos::rcp(new PeridigmManager());
 }
 
 LCM::PeridigmManager::PeridigmManager() : hasPeridynamics(false), enableOptimizationBasedCoupling(false), previousTime(0.0), currentTime(0.0), timeStep(0.0), cubatureDegree(-1)

@@ -348,7 +348,8 @@ createField(const char* name, int value_type)
 void Albany::PUMIDiscretization::reNameExodusOutput(
     const std::string& str)
 {
-  meshOutput->setFileName(str);
+  if (meshOutput)
+    meshOutput->setFileName(str);
 }
 
 void Albany::PUMIDiscretization::writeSolutionT(
@@ -399,9 +400,11 @@ void Albany::PUMIDiscretization::writeAnySolutionToFile(
       const bool overlapped)
 {
   // Skip this write unless the proper interval has been reached.
-  if (outputInterval++ % pumiMeshStruct->outputInterval) return;
+  if (outputInterval++ % pumiMeshStruct->outputInterval)
+    return;
 
-  if (pumiMeshStruct->outputFileName.empty()) return;
+  if (!meshOutput)
+    return;
 
   double time_label = monotonicTimeLabel(time_value);
   int out_step = 0;

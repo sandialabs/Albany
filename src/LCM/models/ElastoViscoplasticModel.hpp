@@ -116,7 +116,7 @@ private:
   ///
   /// Hydrogen and Helium yield surface parameters
   ///
-  RealType alpha1_, alpha2_;
+  RealType alpha1_, alpha2_, Ra_;
 
   ///
   /// flag to print convergence

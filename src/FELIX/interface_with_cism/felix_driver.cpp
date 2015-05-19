@@ -17,7 +17,6 @@
 #include <stk_mesh/base/FieldBase.hpp>
 #include "Piro_PerformSolve.hpp"
 #include <stk_mesh/base/GetEntities.hpp>
-#include <Ionit_Initializer.h>
 #include "Albany_OrdinarySTKFieldContainer.hpp"
 #ifdef CISM_USE_EPETRA
 #include "Thyra_EpetraThyraWrappers.hpp"

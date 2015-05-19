@@ -27,7 +27,7 @@ TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:        
 
 # No GLOBAL VARIABLES
 
-NODAL VARIABLES relative 1.e-4 floor 1e-10
+NODAL VARIABLES relative 1.e-4 floor 5e-7
 	solution_1  # min:               0 @ t1,n1585	max:              10 @ t1,n4403
 	solution_2  # min:               0 @ t1,n4590	max:              10 @ t1,n7788
 	solution_3  # min:               0 @ t1,n2625	max:              20 @ t1,n8051
