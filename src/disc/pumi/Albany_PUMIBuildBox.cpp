@@ -113,7 +113,7 @@ BoxBuilder::BoxBuilder(int nx, int ny, int nz,
   grid(nx + 1, ny + 1, nz + 1),
   mgrid(3,3,3)
 {
-  for (dim = 0; grid.size[dim] > 1 && dim < 3; ++dim);
+  for (dim = 0; dim < 3 && grid.size[dim] > 1; ++dim);
   w[0] = nx ? (wx / nx) : 0;
   w[1] = ny ? (wy / ny) : 0;
   w[2] = nz ? (wz / nz) : 0;
