@@ -834,14 +834,10 @@ Aeras::SpectralDiscretization::getSolutionFieldHistoryImpl(Epetra_MultiVector &r
   }
 }
 
-// IK, 1/8/15, FIXME: getSolutionField*, getField*, setField*,
-// setSolutionField* need to work with enriched nodes rather than STK
-// nodes.
 void
 Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result, const bool overlapped) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::getSolutionField() not implemented!");
-  /*TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
+  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
   Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
@@ -850,7 +846,6 @@ Aeras::SpectralDiscretization::getSolutionField(Epetra_Vector &result, const boo
 
   Teuchos::RCP<Epetra_Map> node_map = Petra::TpetraMap_To_EpetraMap(node_mapT, comm);
   container->fillSolnVector(result, locally_owned, node_map);
-  */
 }
 
 void
@@ -880,8 +875,7 @@ Aeras::SpectralDiscretization::getField(Epetra_Vector &result, const std::string
 void
 Aeras::SpectralDiscretization::getSolutionFieldT(Tpetra_Vector &resultT, const bool overlapped) const
 {
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Aeras::SpectralDiscretization::getSolutionFieldT() not implemented!");
-  /*TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
+  TEUCHOS_TEST_FOR_EXCEPTION(overlapped, std::logic_error, "Not implemented.");
 
   Teuchos::RCP<Albany::AbstractSTKFieldContainer> container = stkMeshStruct->getFieldContainer();
 
@@ -889,7 +883,7 @@ Aeras::SpectralDiscretization::getSolutionFieldT(Tpetra_Vector &resultT, const b
   stk::mesh::Selector locally_owned = metaData.locally_owned_part();
 
   container->fillSolnVectorT(resultT, locally_owned, node_mapT);
-  */
+  
 }
 
 /*****************************************************************/
