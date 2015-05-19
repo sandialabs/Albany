@@ -395,6 +395,9 @@ void AAdapt::AerasXZHydrostaticGaussianBall::compute(double* x, const double* X)
   const double z0      =       data[7];
   const double sig_x   =       data[8];
   const double sig_z   =       data[9];
+
+  const double PI = 3.14159265;
+
   std::vector<double> q0(numTracers);
   for (int nt = 0; nt<numTracers; ++nt) {
     q0[nt] = data[10+nt];
@@ -404,16 +407,23 @@ void AAdapt::AerasXZHydrostaticGaussianBall::compute(double* x, const double* X)
   //Surface Pressure
   x[offset++] = SP0;
   
-  //Velx
   for (int i=0; i<numLevels; ++i) {
+  //Velx
      x[offset++] = U0;
+     //Temperature
      x[offset++] = T0;
+     //cosine bubble
+     //double r = sqrt( (X[0] -x0)*(X[0] -x0) + (i-z0)*(i-z0) );
+     //if (r <= sig_x) x[offset++] = T0 + 0.5*amp * ( 1.0 + cos(PI*r/sig_x) );
+     //else  x[offset++] = T0;
   }
 
   //Tracers
   for (int i=0; i<numLevels; ++i) {
     for (int nt=0; nt<numTracers; ++nt) {
       x[offset++] = q0[nt] + amp*std::exp( -( ((i-z0)*(i-z0)/(sig_z*sig_z)) + ((X[0]-x0)*(X[0]-x0)/(sig_x*sig_x)) ) )  ;
+      //cosine bubble
+      //x[offset++] = q0[nt];
     }
   }
 
