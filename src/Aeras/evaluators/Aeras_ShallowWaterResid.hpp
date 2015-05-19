@@ -151,6 +151,8 @@ public:
  PHX::MDField<ScalarT,Node> utildecomp;
  PHX::MDField<ScalarT,Node> vtildecomp;
 
+ PHX::MDField<ScalarT,QuadPoint,Dim> utilde;
+ PHX::MDField<ScalarT,QuadPoint,Dim> vtilde;
  PHX::MDField<ScalarT,QuadPoint, Dim> ugradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> vgradNodes;
  PHX::MDField<ScalarT,QuadPoint, Dim> utildegradNodes;
@@ -183,31 +185,34 @@ public:
 
  typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
 
- struct ShallowWaterResid_VecDim1_Tag{};
  struct ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag{};
- struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag{};
- struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag{};
+ struct ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag{};
+ //The following are for hyperviscosity
+ struct ShallowWaterResid_VecDim4_Tag{};
+ struct ShallowWaterResid_VecDim6_Tag{};
 
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim1_Tag> ShallowWaterResid_VecDim1_Policy;
  typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_usePrescribedVelocity_Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Policy;
- typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag> ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim4_Tag> ShallowWaterResid_VecDim4_Policy;
+ typedef Kokkos::RangePolicy<ExecutionSpace, ShallowWaterResid_VecDim6_Tag> ShallowWaterResid_VecDim6_Policy;
 
 
- KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim1_Tag& tag, const int& cell) const;
  KOKKOS_INLINE_FUNCTION
  void operator() (const ShallowWaterResid_VecDim3_usePrescribedVelocity_Tag& tag, const int& cell) const;
  KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_no_ibpGradH_Tag& tag, const int& cell) const;
+ void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, const int& cell) const; 
  KOKKOS_INLINE_FUNCTION
- void operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_ibpGradH_Tag& tag, const int& cell) const; 
+ void operator() (const ShallowWaterResid_VecDim4_Tag& tag, const int& cell) const;
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const; 
  
  KOKKOS_INLINE_FUNCTION
  void compute_huAtNodes_vecDim3(const int& cell) const;
  
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual0(const int& cell) const;
+ KOKKOS_INLINE_FUNCTION 
+ void compute_Residual0_useHyperViscosity(const int& cell) const;
 
 #endif
 };

@@ -108,9 +108,11 @@ evaluateFields(typename Traits::EvalData workset)
     }
   }
 #else
-  //FIXME, IKT: the following needs to be converted to the above (Irina D.).
-  if (hvType == CONSTANT) {
+  if (useHyperViscosity == false) //no hyperviscosity 
       hyperViscosity.deep_copy(0.0);
+  else {//hyperviscosity 
+    if (hvType == CONSTANT) 
+      hyperViscosity.deep_copy(hvTau);
   }
 #endif
 
