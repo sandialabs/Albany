@@ -201,8 +201,11 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
  } 
 
  std::vector<PHX::index_size_type> ddims_;
- ddims_.push_back(27);
-
+#ifdef  ALBANY_FAST_FELIX
+ ddims_.push_back(ALBANY_SLFAD_SIZE);
+#else
+ ddims_.push_back(95);
+#endif
  huAtNodes=PHX::MDField<ScalarT,Node,Dim>("huAtNodes",Teuchos::rcp(new PHX::MDALayout<Node,Dim>(numNodes,2)));
  huAtNodes.setFieldData(ViewFactory::buildView(huAtNodes.fieldTag(),ddims_));
  div_hU=PHX::MDField<ScalarT,QuadPoint>("div_hU",Teuchos::rcp(new PHX::MDALayout<QuadPoint>(numQPs)));
