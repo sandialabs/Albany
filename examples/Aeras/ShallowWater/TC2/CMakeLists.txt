@@ -19,7 +19,7 @@ get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 if (ALBANY_EPETRA) 
 add_test(Aeras_${testName} ${Albany.exe})
 endif()
-if (NOT ALBANY_EPETRA) 
+if (NOT ALBANY_MOR) 
 add_test(Aeras_${testName}_Tpetra ${AlbanyT.exe} inputT.xml)
 add_test(Aeras_${testName}_Spectral_Large_Quad9_Tpetra ${AlbanyT.exe}
 inputSpectralT.xml) 
