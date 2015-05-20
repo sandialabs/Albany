@@ -452,20 +452,24 @@ operator() (const ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Tag& tag, c
     ScalarT ulambda = UNodal(cell, node,1);
     ScalarT utheta  = UNodal(cell, node,2);
     kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
+    potentialEnergyAtNodes(node) = gravity*depth;
     uAtNodes(node, 0) = ulambda;
     uAtNodes(node, 1) = utheta;
    }
+   gradient<ScalarT>(potentialEnergyAtNodes, cell, gradPotentialEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
    gradient<ScalarT>(kineticEnergyAtNodes, cell, gradKineticEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
    curl(cell);
 
    for (int qp=0; qp < numQPs; ++qp) {
      for (int node=0; node < numNodes; ++node) {
-       Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) 
-                             - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2))*wBF(cell,node,qp)
-                             - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,0) + source(cell,qp,1)*wBF(cell,node,qp);
-       Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) 
-                             + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1))*wBF(cell,node,qp)
-                             - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,1) + source(cell,qp,2)*wBF(cell,node,qp);
+       Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
+                             + gradPotentialEnergy(qp,0)
+                             - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
+                             )*wBF(cell,node,qp); 
+       Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
+                             + gradPotentialEnergy(qp,1)
+                             + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
+                             )*wBF(cell,node,qp); 
      }
    }
 }
@@ -495,6 +499,7 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
     ScalarT ulambda = UNodal(cell, node,1);
     ScalarT utheta  = UNodal(cell, node,2);
     kineticEnergyAtNodes(node) = 0.5*(ulambda*ulambda + utheta*utheta);
+    potentialEnergyAtNodes(node) = gravity*depth;
     uAtNodes(node, 0) = ulambda;
     uAtNodes(node, 1) = utheta;
     ucomp(node) = ulambda;
@@ -508,19 +513,22 @@ operator() (const ShallowWaterResid_VecDim6_Tag& tag, const int& cell) const
   gradient<ScalarT>(vcomp, cell, vgradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
   gradient<ScalarT>(utildecomp, cell, utildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
   gradient<ScalarT>(vtildecomp, cell, vtildegradNodes, jacobian_inv, grad_at_cub_points_Kokkos);
+  gradient<ScalarT>(potentialEnergyAtNodes, cell, gradPotentialEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
   gradient<ScalarT>(kineticEnergyAtNodes, cell, gradKineticEnergy, jacobian_inv, grad_at_cub_points_Kokkos);
   curl(cell);
 
   for (int qp=0; qp < numQPs; ++qp) {
     for (int node=0; node < numNodes; ++node) {
-      Residual(cell,node,1) += ( UDot(cell,qp,1) + gradKineticEnergy(qp,0) 
-                            - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2))*wBF(cell,node,qp)
-                            - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,0) + source(cell,qp,1)*wBF(cell,node,qp);
+       Residual(cell,node,1) += (   UDot(cell,qp,1) + gradKineticEnergy(qp,0)
+                             + gradPotentialEnergy(qp,0)
+                             - ( coriolis(qp) + curlU(qp) )*U(cell, qp, 2)
+                             )*wBF(cell,node,qp) 
                             -  hyperViscosity(cell,qp,0)*utildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
                             -  hyperViscosity(cell,qp,1)*utildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
-      Residual(cell,node,2) += ( UDot(cell,qp,2) + gradKineticEnergy(qp,1) 
-                            + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1))*wBF(cell,node,qp)
-                            - gravity*U(cell,qp,0)*wGradBF(cell,node,qp,1) + source(cell,qp,2)*wBF(cell,node,qp);
+       Residual(cell,node,2) += (   UDot(cell,qp,2) + gradKineticEnergy(qp,1)
+                             + gradPotentialEnergy(qp,1)
+                             + ( coriolis(qp) + curlU(qp) )*U(cell, qp, 1)
+                             )*wBF(cell,node,qp) 
                             - hyperViscosity(cell,qp,0)*vtildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
                             -  hyperViscosity(cell,qp,1)*vtildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
       Residual(cell,node,4) += U(cell,qp,4)*wBF(cell,node,qp) + ugradNodes(qp,0)*wGradBF(cell,node,qp,0)
