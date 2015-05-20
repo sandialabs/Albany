@@ -30,6 +30,10 @@ struct Indices {
         return y;
       case 2:
         return z;
+      default:
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error,
+                                   "i must be in {0,1,2}.");
+        return x; // for the compiler
     }
   }
   Indices operator+(Indices oi)
@@ -125,7 +129,7 @@ BoxBuilder::BoxBuilder(int nx, int ny, int nz,
 
 void BoxBuilder::formModelTable()
 {
-  int nd[3] = {0,0,0};
+  int nd[4] = {0,0,0,0};
   for (int i = 0; i < mgrid.total(); ++i) {
     Indices mi = mgrid.out(i);
     int mdim = 0;
