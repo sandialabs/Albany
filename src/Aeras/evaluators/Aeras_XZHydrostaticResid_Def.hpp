@@ -71,11 +71,45 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(Residual,fm);
 }
 
+// **********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//Kokkos kernels
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void Residual<EvalT, Traits>::
+operator() (const Residual_Tag& tag, const int& cell) const
+{
+  std::vector<ScalarT> vel(numLevels);
+  for (int level=0; level < numLevels; ++level) {
+    vel[level] = (level+1)*Re;
+  }
+
+  for (int i=0; i < Residual.size(); ++i) 
+    Residual(i)=0.0;
+
+  for (int qp=0; qp < numQPs; ++qp) {
+    for (int node=0; node < numNodes; ++node) {
+      for (int level=0; level < numLevels; ++level) {
+        // Transient Term
+        Residual(cell,node,level) += rhoDot(cell,qp,level)*wBF(cell,node,qp);
+        // Advection Term
+        for (int j=0; j < numDims; ++j) {
+            Residual(cell,node,level) += vel[level]*rhoGrad(cell,qp,level,j)*wBF(cell,node,qp);
+        }
+      }
+    }
+  }
+}
+
+#endif
+// **********************************************************************
+
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void XZHydrostaticResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   std::vector<ScalarT> vel(numLevels);
   for (int level=0; level < numLevels; ++level) {
     vel[level] = (level+1)*Re;
@@ -98,6 +132,9 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#else
+   Kokkos::parallel_for(Residual_Policy(0,workset.numCells),*this);
+#endif
 }
 
 //**********************************************************************
