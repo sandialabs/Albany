@@ -49,7 +49,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+  Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
 #endif
 #endif
 
@@ -72,9 +72,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-      const double val_x = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,0);
-      const double val_y = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,1);
-      const double val_z = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,2);
+      const double val_x = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,0);
+      const double val_y = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,1);
+      const double val_z = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,2);
 #else
       const double val_x = 0.0;
       const double val_y = 0.0;
@@ -107,7 +107,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+  Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
 #endif
 #endif
 
@@ -144,9 +144,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-      const double val_x = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,0);
-      const double val_y = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,1);
-      const double val_z = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,2);
+      const double val_x = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,0);
+      const double val_y = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,1);
+      const double val_z = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,2);
 #else
       const double val_x = 0.0;
       const double val_y = 0.0;
@@ -212,7 +212,7 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-  LCM::PeridigmManager& peridigmManager = LCM::PeridigmManager::self();
+  Teuchos::RCP<LCM::PeridigmManager> peridigmManager = LCM::PeridigmManager::self();
 #endif
 #endif
 
@@ -244,9 +244,9 @@ evaluateFields(typename Traits::EvalData dirichletWorkset) {
 
 #ifdef ALBANY_PERIDIGM
 #ifdef ALBANY_EPETRA
-      const double val_x = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,0);
-      const double val_y = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,1);
-      const double val_z = peridigmManager.getDisplacementNeighborhoodFit(localId,coord,2);
+      const double val_x = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,0);
+      const double val_y = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,1);
+      const double val_z = peridigmManager->getDisplacementNeighborhoodFit(localId,coord,2);
 #else
       const double val_x = 0.0;
       const double val_y = 0.0;

@@ -27,5 +27,5 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/TensileBarPDPS.exodiff
 # Add the tests
 if(ALBANY_IFPACK2)
 add_test(PeridigmCoupling_TensileBarPDPS_np1_Epetra python ../run_exodiff_test.py "${SerialAlbany.exe}" TensileBarPDPS.xml)
-add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.xml)
+#add_test(PeridigmCoupling_TensileBarPDPS_np4_Epetra python ../run_exodiff_test.py "${Albany.exe}" TensileBarPDPS.xml)
 endif()

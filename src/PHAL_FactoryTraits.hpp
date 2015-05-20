@@ -74,9 +74,9 @@ namespace PHAL {
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
     typedef boost::mpl::vector11<
 #elif defined(ALBANY_LCM)
-    typedef boost::mpl::vector10<
+    typedef boost::mpl::vector9<
 #else
-      typedef boost::mpl::vector5<
+    typedef boost::mpl::vector5<
 #endif
         PHAL::Dirichlet<_,Traits>,                //  0
         PHAL::DirichletAggregator<_,Traits>,      //  1
@@ -96,7 +96,7 @@ namespace PHAL {
 #endif
 #if defined(ALBANY_LCM) && defined(HAVE_STK)
         ,
-        LCM::SchwarzBC<_, Traits>                 //  9
+        LCM::SchwarzBC<_, Traits>,                 //  9
         LCM::PDNeighborFitBC<_, Traits>           //  10
 #endif
         > EvaluatorTypes;
