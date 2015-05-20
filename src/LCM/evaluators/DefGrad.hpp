@@ -57,7 +57,18 @@ private:
 
   //! stabilization parameter for the weighted average
   ScalarT alpha;
-  
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT  
+ public:
+ typedef Kokkos::View<int***, PHX::Device>::execution_space ExecutionSpace;
+
+ struct DefGrad_Tag{};
+ typedef Kokkos::RangePolicy<ExecutionSpace, DefGrad_Tag> DefGrad_Policy;
+
+ KOKKOS_INLINE_FUNCTION
+ void operator() (const DefGrad_Tag& tag, const int& cell) const;
+
+
+#endif
 
 };
 
