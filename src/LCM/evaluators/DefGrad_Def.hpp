@@ -9,6 +9,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
+#include "LCM_Utils.h"
 
 #include <typeinfo>
 
@@ -115,7 +116,7 @@ evaluateFields(typename Traits::EvalData workset)
           for (int j = 0; j < numDims; ++j) {
             wJbar = std::exp(
                 (1 - alpha) * Jbar + alpha * std::log(J(cell, qp)));
-            defgrad(cell, qp, i, j) *= std::pow(wJbar / J(cell, qp), 1. / 3.);
+            defgrad(cell, qp, i, j) *= std::cbrt(wJbar / J(cell, qp));
           }
         }
         J(cell, qp) = wJbar;
