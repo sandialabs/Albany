@@ -38,6 +38,9 @@ QCAD::ImplicitPSJacobianT::ImplicitPSJacobianT(int nEigenvals,
    effmass(effMass),
    offset_to_CB(conductionBandOffset)
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 }
 
 QCAD::ImplicitPSJacobianT::~ImplicitPSJacobianT()
@@ -51,6 +54,9 @@ void QCAD::ImplicitPSJacobianT::initialize(const Teuchos::RCP<Tpetra_CrsMatrix>&
 					  const Teuchos::RCP<Tpetra_Vector>& neg_eigenvals, 
                                           const Teuchos::RCP<const Tpetra_MultiVector>& eigenvecs)
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
    schrodingerJacobian = schrodingerJac;
    massMatrix = massMx; 
    neg_eigenvalues = neg_eigenvals;
@@ -66,6 +72,9 @@ void QCAD::ImplicitPSJacobianT::apply(Tpetra_MultiVector const & X,
                                      ST alpha,
                                      ST beta) const
 { 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
   //FIXME: fill in!
 }
 
