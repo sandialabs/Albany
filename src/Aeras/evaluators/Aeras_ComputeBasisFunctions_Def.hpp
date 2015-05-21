@@ -82,7 +82,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
   intrepidBasis->getValues(D2_at_cub_points,   refPoints, Intrepid::OPERATOR_D2);
 
   this->setName("Aeras::ComputeBasisFunctions"+PHX::typeAsString<EvalT>());
-
+/*
 #ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   refWeights_CUDA=Kokkos::View<RealType*, PHX::Device>("refWeights_CUDA", numQPs);
   val_at_cub_points_CUDA=Kokkos::View<RealType**, PHX::Device>("val_at_cub_points_CUDA", numNodes, numQPs);
@@ -98,7 +98,7 @@ ComputeBasisFunctions(const Teuchos::ParameterList& p,
         grad_at_cub_points_CUDA(i,j,k)=grad_at_cub_points(i,j,k);
     }
   }
-#endif
+#endif*/
 }
 
 //**********************************************************************
@@ -126,7 +126,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 //**********************************************************************
 //Kokkos functors:
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
@@ -399,7 +399,7 @@ compute_wGradBF(const int i) const
 }
 
 #endif
-
+*/
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void ComputeBasisFunctions<EvalT, Traits>::
@@ -418,7 +418,7 @@ evaluateFields(typename Traits::EvalData workset)
   // setJacobian only needs to be RealType since the data type is only
   //  used internally for Basis Fns on reference elements, which are
   //  not functions of coordinates. This save 18min of compile time!!!
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
   const double pi = ShallowWaterConstants::self().pi;
   const double DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
@@ -752,7 +752,7 @@ evaluateFields(typename Traits::EvalData workset)
 
 
 
-#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
  pi = ShallowWaterConstants::self().pi;
  DIST_THRESHOLD = ShallowWaterConstants::self().distanceThreshold;
@@ -807,7 +807,7 @@ evaluateFields(typename Traits::EvalData workset)
    
 
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
-
+*/
   //div_check(spatialDim, numelements);
 }
 

@@ -149,11 +149,11 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   refWeights        .resize               (numQPs);
   grad_at_cub_points.resize     (numNodes, numQPs, 2);
   refPoints         .resize               (numQPs, 2);
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   nodal_jacobian.resize(numNodes, 2, 2);
   nodal_inv_jacobian.resize(numNodes, 2, 2);
   nodal_det_j.resize(numNodes);
-#endif
+//#endif
   cubature->getCubature(refPoints, refWeights);
   
   intrepidBasis->getValues(grad_at_cub_points, refPoints, Intrepid::OPERATOR_GRAD);
@@ -181,7 +181,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
   Teuchos::RCP<ParamLib> paramLib = p.get<Teuchos::RCP<ParamLib> >("Parameter Library");
   this->registerSacadoParameter("Gravity", paramLib);
   this->registerSacadoParameter("Omega", paramLib);
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //Allocationg additional data for Kokkos functors
   nodal_jacobian=Kokkos::View<MeshScalarT***, PHX::Device>("nodal_jacobian",numNodes,2,2);
   nodal_inv_jacobian=Kokkos::View<MeshScalarT***, PHX::Device>("nodal_inv_jacobian",numNodes,2,2); 
@@ -255,7 +255,7 @@ ShallowWaterResid(const Teuchos::ParameterList& p,
 nodeToQPMap_Kokkos=Kokkos::View<int*, PHX::Device> ("nodeToQPMap_Kokkos",nNodes);
 for (int i=0; i<nNodes; i++)
  nodeToQPMap_Kokkos(i)=nodeToQPMap[i];
-#endif
+#endif*/
 }
 
 //**********************************************************************
@@ -290,7 +290,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 
 // *********************************************************************
 //Kokkos functors
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 
 template< typename ScalarT, typename ArrayT1,typename ArrayT2, typename ArrayJac, typename ArrayGrad>
 KOKKOS_INLINE_FUNCTION
@@ -634,8 +634,8 @@ template<typename EvalT,typename Traits>
 KOKKOS_INLINE_FUNCTION
 void ShallowWaterResid<EvalT,Traits>::get_coriolis(const int &cell) const {
 
-  double alpha = AlphaAngle; /*must match what is in initial condition for TC2 and TC5.
-                      //see AAdatpt::AerasZonal analytic function. */
+  double alpha = AlphaAngle; //must match what is in initial condition for TC2 and TC5.
+                      //see AAdatpt::AerasZonal analytic function. 
                       //
   for (int qp=0; qp < numQPs; ++qp) {
     const MeshScalarT lambda = sphere_coord(cell, qp, 0);
@@ -643,14 +643,14 @@ void ShallowWaterResid<EvalT,Traits>::get_coriolis(const int &cell) const {
     coriolis(qp) = 2*Omega*( -cos(lambda)*cos(theta)*sin(alpha) + sin(theta)*cos(alpha));
   }
 }
-#endif
+#endif*/
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void ShallowWaterResid<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   PHAL::set(Residual, 0.0);
 
 //Note that vars huAtNodes, div_hU, ... below are redefined locally here. 
@@ -846,7 +846,7 @@ evaluateFields(typename Traits::EvalData workset)
       }
     } // end cell loop
   } //end if !prescribedVelocities
-#else
+/*#else
 a = Aeras::ShallowWaterConstants::self().earthRadius;
 myPi = Aeras::ShallowWaterConstants::self().pi;
 
@@ -863,7 +863,7 @@ myPi = Aeras::ShallowWaterConstants::self().pi;
        Kokkos::parallel_for(ShallowWaterResid_VecDim3_no_usePrescribedVelocity_Policy(0,workset.numCells),*this);
   }
 
-#endif
+#endif*/
 }
 
 //**********************************************************************
@@ -876,7 +876,7 @@ ShallowWaterResid<EvalT,Traits>::getValue(const std::string &n)
   else if (n=="Omega") return Omega;
 }
 //**********************************************************************
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT,typename Traits>
 void
 ShallowWaterResid<EvalT,Traits>::divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
@@ -1023,5 +1023,5 @@ ShallowWaterResid<EvalT,Traits>::get_coriolis(std::size_t cell, Intrepid::FieldC
   }
 
 }
-#endif  
+//#endif  
 }

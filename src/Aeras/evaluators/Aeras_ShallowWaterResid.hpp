@@ -77,11 +77,11 @@ private:
   Teuchos::RCP<Intrepid::Cubature<RealType> > cubature;
   Intrepid::FieldContainer<RealType>    refPoints;
   Intrepid::FieldContainer<RealType>    refWeights;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   Intrepid::FieldContainer<MeshScalarT>  nodal_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_inv_jacobian;
   Intrepid::FieldContainer<MeshScalarT>  nodal_det_j;
-#endif
+//#endif
   PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim>   sphere_coord;
   PHX::MDField<ScalarT,Cell,Node> lambda_nodal;
   PHX::MDField<ScalarT,Cell,Node> theta_nodal;
@@ -99,7 +99,7 @@ private:
   int spatialDim;
   //og: not used
   //PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> GradBF;
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   void divergence(const Intrepid::FieldContainer<ScalarT>  & fieldAtNodes,
       std::size_t cell, Intrepid::FieldContainer<ScalarT>  & div);
 
@@ -118,7 +118,7 @@ private:
   std::vector<LO> qpToNodeMap; 
   std::vector<LO> nodeToQPMap; 
 
-#else
+/*#else
 public:
 
   Kokkos::View<MeshScalarT***, PHX::Device> nodal_jacobian;
@@ -213,7 +213,7 @@ public:
  KOKKOS_INLINE_FUNCTION 
  void compute_Residual3(const int& cell) const;
 
-#endif
+#endif*/
 };
 
 // Warning: these maps are a temporary fix, introduced by Steve Bova,
