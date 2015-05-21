@@ -220,6 +220,9 @@ int main(int argc, char *argv[]) {
   Teuchos::GlobalMPISession mpiSession(&argc,&argv);
   Kokkos::initialize(argc, argv);
 
+// force denormal numbers to zero by setting "flush to zero" and "denormals are zero"
+   _mm_setcsr(_mm_getcsr() | (1 << 15) | (1 << 6));
+
 #ifdef ALBANY_CHECK_FPE
 //	_mm_setcsr(_MM_MASK_MASK &~
 //		(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO) );
