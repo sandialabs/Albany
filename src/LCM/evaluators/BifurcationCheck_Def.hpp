@@ -18,6 +18,7 @@ namespace LCM {
   BifurcationCheck<EvalT, Traits>::
   BifurcationCheck(const Teuchos::ParameterList& p,
                    const Teuchos::RCP<Albany::Layouts>& dl) :
+    parametrization_type_(p.get<std::string>("Parametrization Type Name")),
     tangent_(p.get<std::string>("Material Tangent Name"),dl->qp_tensor4),
     ellipticity_flag_(p.get<std::string>("Ellipticity Flag Name"),dl->qp_scalar),
     direction_(p.get<std::string>("Bifurcation Direction Name"),dl->qp_vector),
@@ -34,6 +35,7 @@ namespace LCM {
     this->addEvaluatedField(min_detA_);
 
     this->setName("BifurcationCheck"+PHX::typeAsString<EvalT>());
+
   }
 
   //----------------------------------------------------------------------------
@@ -68,27 +70,30 @@ namespace LCM {
         //boost::tie(ellipticity_flag, direction) 
          // = Intrepid::check_strong_ellipticity(tangent);
         
-        int parametrization(1);
-    
-        switch(parametrization)
+
+	    if (parametrization_type_ == "Spherical")
         {
-          case 1 :
-            min_detA = spherical_sweep(tangent);
-            break;
-          case 2 :
-            min_detA = stereographic_sweep(tangent);
-            break;        
-          case 3 :
-            min_detA = projective_sweep(tangent);
-            break;
-          case 4 :
-            min_detA = tangent_sweep(tangent);
-            break;
-          case 5 :
-            min_detA = cartesian_sweep(tangent);
-            break; 
-          default :
-             min_detA = spherical_sweep(tangent);
+          min_detA = spherical_sweep(tangent);
+        } 
+        else if(parametrization_type_ == "Stereographic")
+        {
+          min_detA = stereographic_sweep(tangent);
+        } 
+        else if(parametrization_type_ == "Projective")
+        {
+          min_detA = projective_sweep(tangent);
+        } 
+        else if(parametrization_type_ == "Tangent")
+        {
+          min_detA = tangent_sweep(tangent);
+        } 
+        else if(parametrization_type_ == "Cartesian")
+        {
+          min_detA = cartesian_sweep(tangent);
+        } 
+        else
+        {
+          min_detA = spherical_sweep(tangent);
         }
         
         ellipticity_flag = false;
@@ -282,16 +287,19 @@ namespace LCM {
   tangent_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent)
   {
     ScalarT const
-    x_min = -1.0;
+    pi = std::acos(-1.0);
 
     ScalarT const
-    x_max = 1.0;
+    x_min = -pi/2;
 
     ScalarT const
-    y_min = -1.0;
+    x_max = pi/2;
 
     ScalarT const
-    y_max = 1.0;
+    y_min = -pi/2;
+
+    ScalarT const
+    y_max = pi/2;
 
     Intrepid::Index const
     x_num_points = 256;
@@ -321,7 +329,8 @@ namespace LCM {
 
     // Query the parametrization for the minimum and maximum found on the grid.
     std::cout << "\n*** TANGENT PARAMETRIZATION ***\n";
-    std::cout << tangent_param.get_minimum() 
+    std::cout << tangent_param.get_minimum()
+    << "  " << tangent_param.get_arg_minimum()
     << "  " << tangent_param.get_normal_minimum() << std::endl;
 
     ScalarT min_detA = tangent_param.get_minimum();
@@ -333,60 +342,134 @@ namespace LCM {
   typename EvalT::ScalarT BifurcationCheck<EvalT, Traits>::
   cartesian_sweep(Intrepid::Tensor4<ScalarT, 3> const & tangent)
   {
-    ScalarT const
-    x_min = -1.0;
 
     ScalarT const
-    x_max = 1.0;
+    p_min = -1.0;
 
     ScalarT const
-    y_min = -1.0;
+    p_max = 1.0;
 
     ScalarT const
-    y_max = 1.0;
-
-    ScalarT const
-    z_min = -1.0;
-
-    ScalarT const
-    z_max = 1.0;
+    p_surface = 1.0;
 
     Intrepid::Index const
-    x_num_points = 64;
- 
-    Intrepid::Index const
-    y_num_points = 64;
+    p_num_points = 64;
 
     Intrepid::Index const
-    z_num_points = 64;
+    p_surface_num_points = 2;
+
+    // z surface
+    Intrepid::Vector<ScalarT, 3> const
+    cartesian1_min(p_min, p_min, p_surface);
 
     Intrepid::Vector<ScalarT, 3> const
-    cartesian_min(x_min, y_min, z_min);
-
-    Intrepid::Vector<ScalarT, 3> const
-    cartesian_max(x_max, y_max, z_max);
+    cartesian1_max(p_max, p_max, p_surface);
 
     Intrepid::Vector<Intrepid::Index, 3> const
-    cartesian_num_points(x_num_points, y_num_points, z_num_points);
+    cartesian1_num_points(p_num_points, p_num_points, p_surface_num_points);
 
     // Build the parametric grid with the specified parameters.
     Intrepid::ParametricGrid<ScalarT, 3>
-    cartesian_grid(cartesian_min, cartesian_max, cartesian_num_points);
+    cartesian1_grid(cartesian1_min, cartesian1_max, cartesian1_num_points);
 
     // Build a cartesian parametrization for this elasticity.
     Intrepid::CartesianParametrization<ScalarT, 3>
-    cartesian_param(tangent);
+    cartesian1_param(tangent);
 
     // Traverse the grid with the parametrization.
-    cartesian_grid.traverse(cartesian_param);
+    cartesian1_grid.traverse(cartesian1_param);
+
+    // y surface
+    Intrepid::Vector<ScalarT, 3> const
+    cartesian2_min(p_min, p_surface, p_min);
+
+    Intrepid::Vector<ScalarT, 3> const
+    cartesian2_max(p_max, p_surface, p_max);
+
+    Intrepid::Vector<Intrepid::Index, 3> const
+    cartesian2_num_points(p_num_points, p_surface_num_points, p_num_points);
+
+    // Build the parametric grid with the specified parameters.
+    Intrepid::ParametricGrid<ScalarT, 3>
+    cartesian2_grid(cartesian2_min, cartesian2_max, cartesian2_num_points);
+
+    // Build a cartesian parametrization for this elasticity.
+    Intrepid::CartesianParametrization<ScalarT, 3>
+    cartesian2_param(tangent);
+
+    // Traverse the grid with the parametrization.
+    cartesian2_grid.traverse(cartesian2_param);
+
+    // x surface
+    Intrepid::Vector<ScalarT, 3> const
+    cartesian3_min(p_surface, p_min, p_min);
+
+    Intrepid::Vector<ScalarT, 3> const
+    cartesian3_max(p_surface, p_max, p_max);
+
+    Intrepid::Vector<Intrepid::Index, 3> const
+    cartesian3_num_points(p_surface_num_points, p_num_points, p_num_points);
+
+    // Build the parametric grid with the specified parameters.
+    Intrepid::ParametricGrid<ScalarT, 3>
+    cartesian3_grid(cartesian3_min, cartesian3_max, cartesian3_num_points);
+
+    // Build a cartesian parametrization for this elasticity.
+    Intrepid::CartesianParametrization<ScalarT, 3>
+    cartesian3_param(tangent);
+
+    // Traverse the grid with the parametrization.
+    cartesian3_grid.traverse(cartesian3_param);
+
+    ScalarT det_min_index = 1;
+    ScalarT det_max_index = 1;
+
+    if ( cartesian2_param.get_minimum() <= cartesian1_param.get_minimum() 
+      && cartesian2_param.get_minimum() <= cartesian3_param.get_minimum() )
+    {
+	  det_min_index = 2;
+    }
+    
+    if ( cartesian3_param.get_minimum() <= cartesian1_param.get_minimum() 
+      && cartesian3_param.get_minimum() <= cartesian2_param.get_minimum() )
+    {
+	  det_min_index = 3;
+    }
+
+    if ( cartesian2_param.get_maximum() >= cartesian1_param.get_maximum() 
+      && cartesian2_param.get_maximum() >= cartesian3_param.get_maximum() )
+    {
+	  det_max_index = 2;
+    }
+    
+    if ( cartesian3_param.get_maximum() >= cartesian1_param.get_maximum() 
+      && cartesian3_param.get_maximum() >= cartesian2_param.get_maximum() )
+    {
+ 	  det_max_index = 3;
+    }
 
     // Query the parametrization for the minimum and maximum found on the grid.
     std::cout << "\n*** CARTESIAN PARAMETRIZATION ***\n";
-    
-    std::cout << cartesian_param.get_minimum() 
-    << "  " << cartesian_param.get_normal_minimum() << std::endl;
 
-    ScalarT min_detA = cartesian_param.get_minimum();
+    ScalarT min_detA = cartesian1_param.get_minimum();
+    
+    if ( det_min_index==1 ){
+      std::cout << cartesian1_param.get_minimum() 
+      << "  " << cartesian1_param.get_normal_minimum() << std::endl;
+      min_detA = cartesian1_param.get_minimum();
+    }
+
+    if ( det_min_index==2 ){
+      std::cout << cartesian2_param.get_minimum() 
+      << "  " << cartesian2_param.get_normal_minimum() << std::endl;
+      min_detA = cartesian2_param.get_minimum();
+    }
+
+    if ( det_min_index==3 ){
+      std::cout << cartesian3_param.get_minimum() 
+      << "  " << cartesian3_param.get_normal_minimum() << std::endl;
+      min_detA = cartesian3_param.get_minimum();
+    }
     
     return min_detA;   
   }

@@ -736,7 +736,8 @@ computeResidual(ScalarT                       dt,
     sign = shear_np1[s] < 0 ? -1 : 1;
     temp = std::fabs(shear_np1[s] / (tauC + hardness_np1[s]));
     // Establishing filter for active slip systems (help from JTO)
-    if (temp < std::numeric_limits<RealType>::epsilon()) {
+    const double filter = std::numeric_limits<RealType>::epsilon()*100.0;
+    if (temp < filter) {
       dgamma_value2 = dt * g0 * 0.0 * sign;
     }
     else {

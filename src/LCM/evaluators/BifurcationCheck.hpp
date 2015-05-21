@@ -7,6 +7,8 @@
 #if !defined(LCM_BifurcationCheck_hpp)
 #define LCM_BifurcationCheck_hpp
 
+#include <iostream>
+
 #include <Intrepid_MiniTensor.h>
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -47,6 +49,9 @@ namespace LCM {
 
     typedef typename EvalT::ScalarT ScalarT;
     typedef typename EvalT::MeshScalarT MeshScalarT;
+
+    //! Input: Parametrization Type
+    std::string parametrization_type_;
 
     //! Input: material tangent
     PHX::MDField<ScalarT,Cell,QuadPoint,Dim,Dim,Dim,Dim> tangent_;
