@@ -28,7 +28,7 @@ template <typename T>
 T
 lcm_sqrt(T const & x)
 {
-  auto const
+  auto
   zero = Teuchos::ScalarTraits<T>::zero();
 
   if (x == zero) return zero;
@@ -40,7 +40,7 @@ template <typename T>
 T
 lcm_cbrt(T const & x)
 {
-  auto const
+  auto
   zero = Teuchos::ScalarTraits<T>::zero();
 
   if (x == zero) return zero;

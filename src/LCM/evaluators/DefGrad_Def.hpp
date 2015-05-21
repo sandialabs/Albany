@@ -9,6 +9,7 @@
 
 #include "Intrepid_FunctionSpaceTools.hpp"
 #include "Intrepid_RealSpaceTools.hpp"
+#include "LCM_Utils.h"
 
 #include <typeinfo>
 
@@ -18,29 +19,29 @@ namespace LCM {
 template<typename EvalT, typename Traits>
 DefGrad<EvalT, Traits>::
 DefGrad(const Teuchos::ParameterList& p) :
-  GradU         (p.get<std::string>                   ("Gradient QP Variable Name"),
-	         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  weights       (p.get<std::string>                   ("Weights Name"),
-	         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  defgrad       (p.get<std::string>                  ("DefGrad Name"),
-	         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout") ),
-  J             (p.get<std::string>                   ("DetDefGrad Name"),
-	         p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout") ),
-  weightedAverage(false),
-  alpha(0.05)
+    GradU(p.get<std::string>("Gradient QP Variable Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+    weights(p.get<std::string>("Weights Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+    defgrad(p.get<std::string>("DefGrad Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout")),
+    J(p.get<std::string>("DetDefGrad Name"),
+        p.get<Teuchos::RCP<PHX::DataLayout> >("QP Scalar Data Layout")),
+    weightedAverage(false),
+    alpha(0.05)
 {
-  if ( p.isType<bool>("Weighted Volume Average J") )
+  if (p.isType<bool>("Weighted Volume Average J"))
     weightedAverage = p.get<bool>("Weighted Volume Average J");
-  if ( p.isType<RealType>("Average J Stabilization Parameter") )
+  if (p.isType<RealType>("Average J Stabilization Parameter"))
     alpha = p.get<RealType>("Average J Stabilization Parameter");
 
   Teuchos::RCP<PHX::DataLayout> tensor_dl =
-    p.get< Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
+      p.get<Teuchos::RCP<PHX::DataLayout> >("QP Tensor Data Layout");
 
   std::vector<PHX::DataLayout::size_type> dims;
   tensor_dl->dimensions(dims);
-  worksetSize  = dims[0];
-  numQPs  = dims[1];
+  worksetSize = dims[0];
+  numQPs = dims[1];
   numDims = dims[2];
 
   this->addDependentField(GradU);
@@ -49,7 +50,7 @@ DefGrad(const Teuchos::ParameterList& p) :
   this->addEvaluatedField(defgrad);
   this->addEvaluatedField(J);
 
-  this->setName("DefGrad"+PHX::typeAsString<EvalT>());
+  this->setName("DefGrad" + PHX::typeAsString<EvalT>());
 
 }
 
@@ -57,12 +58,12 @@ DefGrad(const Teuchos::ParameterList& p) :
 template<typename EvalT, typename Traits>
 void DefGrad<EvalT, Traits>::
 postRegistrationSetup(typename Traits::SetupData d,
-                      PHX::FieldManager<Traits>& fm)
+    PHX::FieldManager<Traits>& fm)
 {
-  this->utils.setFieldData(weights,fm);
-  this->utils.setFieldData(defgrad,fm);
-  this->utils.setFieldData(J,fm);
-  this->utils.setFieldData(GradU,fm);
+  this->utils.setFieldData(weights, fm);
+  this->utils.setFieldData(defgrad, fm);
+  this->utils.setFieldData(J, fm);
+  this->utils.setFieldData(GradU, fm);
 }
 
 //**********************************************************************
@@ -74,56 +75,51 @@ evaluateFields(typename Traits::EvalData workset)
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
   // Compute DefGrad tensor from displacement gradient
-  for (int cell=0; cell < workset.numCells; ++cell)
-  {
-    for (int qp=0; qp < numQPs; ++qp)
-    {
-      for (int i=0; i < numDims; ++i)
-      {
-        for (int j=0; j < numDims; ++j)
-	{
-          defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
+  for (int cell = 0; cell < workset.numCells; ++cell) {
+    for (int qp = 0; qp < numQPs; ++qp) {
+      for (int i = 0; i < numDims; ++i) {
+        for (int j = 0; j < numDims; ++j) {
+          defgrad(cell, qp, i, j) = GradU(cell, qp, i, j);
         }
-	defgrad(cell,qp,i,i) += 1.0;
+        defgrad(cell, qp, i, i) += 1.0;
       }
     }
   }
   // Since Intrepid will later perform calculations on the entire workset size
   // and not just the used portion, we must fill the excess with reasonable 
   // values. Leaving this out leads to inversion of 0 tensors.
-  for (int cell=workset.numCells; cell < worksetSize; ++cell) 
-    for (int qp=0; qp < numQPs; ++qp) 
-      for (int i=0; i < numDims; ++i)
-	defgrad(cell,qp,i,i) = 1.0;
+  for (int cell = workset.numCells; cell < worksetSize; ++cell) {
+    for (int qp = 0; qp < numQPs; ++qp) {
+      for (int i = 0; i < numDims; ++i) {
+        defgrad(cell, qp, i, i) = 1.0;
+      }
+    }
+  }
 
   Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
 
-  if (weightedAverage)
-  {
+  if (weightedAverage) {
     ScalarT Jbar, wJbar, vol;
-    for (int cell=0; cell < workset.numCells; ++cell)
-    {
+    for (int cell = 0; cell < workset.numCells; ++cell)
+        {
       Jbar = 0.0;
       vol = 0.0;
-      for (int qp=0; qp < numQPs; ++qp)
-      {
-  	Jbar += weights(cell,qp) * std::log( J(cell,qp) );
-  	vol  += weights(cell,qp);
+      for (int qp = 0; qp < numQPs; ++qp) {
+        Jbar += weights(cell, qp) * std::log(J(cell, qp));
+        vol += weights(cell, qp);
       }
       Jbar /= vol;
 
       // Jbar = std::exp(Jbar);
-      for (int qp=0; qp < numQPs; ++qp)
-      {
-  	for (int i=0; i < numDims; ++i)
-  	{
-  	  for (int j=0; j < numDims; ++j)
-  	  {
-  	    wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
-  	    defgrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );
-  	  }
-  	}
-  	J(cell,qp) = wJbar;
+      for (int qp = 0; qp < numQPs; ++qp) {
+        for (int i = 0; i < numDims; ++i) {
+          for (int j = 0; j < numDims; ++j) {
+            wJbar = std::exp(
+                (1 - alpha) * Jbar + alpha * std::log(J(cell, qp)));
+            defgrad(cell, qp, i, j) *= std::cbrt(wJbar / J(cell, qp));
+          }
+        }
+        J(cell, qp) = wJbar;
       }
     }
   }
