@@ -43,7 +43,8 @@ namespace QCAD {
 
       CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 				const Teuchos::RCP<const Teuchos_Comm>& comm, 
-				const Teuchos::RCP<const Tpetra_Vector>& initial_guess);
+				const Teuchos::RCP<const Tpetra_Vector>& initial_guess, 
+                                Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &solver_factory);
     //@}
 
     ~CoupledPoissonSchrodingerT();
@@ -64,6 +65,7 @@ namespace QCAD {
     Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> get_W_factory() const;
 
+    Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> createCombinedRangeSpace() const; 
 
     Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_op_impl(int j) const;
     Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dot_op_impl(int j) const;
@@ -120,11 +122,14 @@ namespace QCAD {
     Teuchos::RCP<const Tpetra_Map> disc_map, disc_overlap_map;
     Teuchos::RCP<Tpetra_Map> combined_SP_map;
     Teuchos::RCP<const Tpetra_Vector> saved_initial_guess;
-    Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_;
+    Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_; 
 
+    //for setting get_W_factory() 
+    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
+    solver_factory_;
 
     Teuchos::RCP<Albany::Application> poissonApp, schrodingerApp;
-    Teuchos::RCP<Teuchos::RCP<Thyra::ModelEvaluator<ST> > > poissonModel, schrodingerModel;
+    Teuchos::RCP<Thyra::ModelEvaluator<ST> > poissonModel, schrodingerModel;
 
     Teuchos::RCP<const Teuchos_Comm> myComm;
 

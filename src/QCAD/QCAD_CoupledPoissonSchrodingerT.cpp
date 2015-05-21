@@ -6,6 +6,9 @@
 
 #include "QCAD_CoupledPoissonSchrodingerT.hpp"
 #include "QCAD_CoupledPSJacobianT.hpp"
+#include "Albany_SolverFactory.hpp"
+#include "Albany_ModelFactory.hpp"
+
 
 /* GAH FIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
@@ -28,7 +31,6 @@ Please remove when issue is resolved
 #include "Albany_EigendataInfoStruct.hpp"
 
 #include "QCAD_CoupledPSJacobianT.hpp"
-#include "QCAD_MultiSolutionObserver.hpp" //for utility functions
 
 //For creating discretiation object without a problem object
 #include "Albany_DiscretizationFactory.hpp"
@@ -51,16 +53,16 @@ std::string QCAD::strdim(const std::string s, const int dim) {
 QCAD::CoupledPoissonSchrodingerT::
 CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams_,
 			  const Teuchos::RCP<const Teuchos_Comm>& comm,
-			  const Teuchos::RCP<const Tpetra_Vector>& initial_guess)
+			  const Teuchos::RCP<const Tpetra_Vector>& initial_guess, 
+                          Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> const &solver_factory):
+  solver_factory_(solver_factory)
 {
- /* using std::string;
-  
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  using std::string;
+  myComm = comm;  
   // make a copy of the appParams, since we modify them below (e.g. discretization list)
   Teuchos::RCP<Teuchos::ParameterList> appParams = Teuchos::rcp( new Teuchos::ParameterList(*appParams_) );
 
-  const Albany_MPI_Comm& mcomm = Albany::getMpiCommFromEpetraComm(*comm);
-  Teuchos::RCP<Teuchos::Comm<int> > tcomm = Albany::createTeuchosCommFromMpiComm(mcomm);
-  commE = comm; 
   // Get sub-problem input xml files from problem parameters
   Teuchos::ParameterList& problemParams = appParams->sublist("Problem");
 
@@ -161,7 +163,7 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
     poisson_discList.set("Exodus Output File Name",poissonExoOutput);
   else poisson_discList.remove("Exodus Output File Name",false); 
 
-  if(poissonXmlFile.length() > 0 and tcomm->getRank() == 0)
+  if(poissonXmlFile.length() > 0 and myComm->getRank() == 0)
     Teuchos::writeParameterListToXmlFile(*poisson_appParams, poissonXmlFile);
 
 
@@ -222,14 +224,14 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
     schro_discList.set("Exodus Output File Name",schrodingerExoOutput);
   else schro_discList.remove("Exodus Output File Name",false); 
 
-  if(schrodingerXmlFile.length() > 0 and tcomm->getRank() == 0)
+  if(schrodingerXmlFile.length() > 0 and myComm->getRank() == 0)
     Teuchos::writeParameterListToXmlFile(*schro_appParams, schrodingerXmlFile);
 
     
   //TODO: need to add meshmover initialization, as in Albany::Application constructor??
 
   //Create a dummy solverFactory for validating application parameter lists
-  Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), tcomm );
+  Albany::SolverFactory validFactory( Teuchos::createParameterList("Empty dummy for Validation"), myComm );
   Teuchos::RCP<const Teuchos::ParameterList> validAppParams = validFactory.getValidAppParameters();
   Teuchos::RCP<const Teuchos::ParameterList> validParameterParams = validFactory.getValidParameterParameters();
   Teuchos::RCP<const Teuchos::ParameterList> validResponseParams = validFactory.getValidResponseParameters();
@@ -244,11 +246,11 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
   poisson_appParams->validateParametersAndSetDefaults(*validAppParams,0);
   poisson_appParams->sublist("Problem").sublist("Parameters").validateParameters(*validParameterParams, 0);
   poisson_appParams->sublist("Problem").sublist("Response Functions").validateParameters(*validResponseParams, 0);
-  poissonApp = Teuchos::rcp(new Albany::Application(tcomm, poisson_appParams, Teuchos::null)); //validates problem params
+  poissonApp = Teuchos::rcp(new Albany::Application(myComm, poisson_appParams, Teuchos::null)); //validates problem params
 
   // Create model evaluator
   Albany::ModelFactory poissonModelFactory(poisson_appParams, poissonApp);
-  poissonModel = poissonModelFactory.create();
+  poissonModel = poissonModelFactory.createT();
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,31 +261,25 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
   schro_appParams->validateParametersAndSetDefaults(*validAppParams,0);
   schro_appParams->sublist("Problem").sublist("Parameters").validateParameters(*validParameterParams, 0);
   schro_appParams->sublist("Problem").sublist("Response Functions").validateParameters(*validResponseParams, 0);
-  schrodingerApp = Teuchos::rcp(new Albany::Application(tcomm, schro_appParams, Teuchos::null)); //validates problem params
+  schrodingerApp = Teuchos::rcp(new Albany::Application(myComm, schro_appParams, Teuchos::null)); //validates problem params
 
   // Create model evaluator
   Albany::ModelFactory schrodingerModelFactory(schro_appParams, schrodingerApp);
-  schrodingerModel = schrodingerModelFactory.create();
+  schrodingerModel = schrodingerModelFactory.createT();
 
   //Save the discretization's maps for convenience (should be the same for Poisson and Schrodinger apps)
-  disc_map = poissonApp->getMap();
-  disc_overlap_map =  poissonApp->getStateMgr().getDiscretization()->getOverlapMap();
-  
-  //Create map for the entire coupled S-P application from the maps from the individual Poisson and Schrodinger applications
-  //  We need to create a map which is the product of 1 disc_map (for P), N disc_maps (for S's), +N extra (for norm. eqns)
-  //  in such a way that the elements for each disc_map are contiguous in index space (so that we can easily get Epetra vector views
-  //  to them separately)
-  combined_SP_map = QCAD::CreateCombinedMap(disc_map, 1+nEigenvals, nEigenvals, comm);
+  disc_map = poissonApp->getMapT();
+  disc_overlap_map =  poissonApp->getStateMgr().getDiscretization()->getOverlapMapT();
 
   // Parameter vectors:  Parameter vectors of coupled PS model evaluator are just the parameter vectors
   //   of the Poisson then Schrodinger model evaluators (in order).
 
   //Get the number of parameter vectors of the Poisson model evaluator
-  EpetraExt::ModelEvaluator::InArgs poisson_inArgs = poissonModel->createInArgs();
+  Thyra::ModelEvaluatorBase::InArgs<ST> poisson_inArgs = poissonModel->createInArgs();
   num_poisson_param_vecs = poisson_inArgs.Np();
 
   //Get the number of parameter vectors of the Schrodginer model evaluator
-  EpetraExt::ModelEvaluator::InArgs schrodinger_inArgs = schrodingerModel->createInArgs();
+  Thyra::ModelEvaluatorBase::InArgs<ST> schrodinger_inArgs = schrodingerModel->createInArgs();
   num_schrodinger_param_vecs = schrodinger_inArgs.Np();
 
   num_param_vecs = num_poisson_param_vecs + num_schrodinger_param_vecs;
@@ -308,11 +304,10 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
 
     // Material database
 
-  Teuchos::RCP<const Teuchos_Comm> commT = Albany::createTeuchosCommFromEpetraComm(commE);
   std::string mtrlDbFilename = "materials.xml";
   if(problemParams.isType<std::string>("MaterialDB Filename"))
     mtrlDbFilename = problemParams.get<std::string>("MaterialDB Filename");
-  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, commT));
+  materialDB = Teuchos::rcp(new QCAD::MaterialDatabase(mtrlDbFilename, myComm));
   
   std::string refMtrlName = materialDB->getParam<std::string>("Reference Material");
   double refmatChi = materialDB->getMaterialParam<double>(refMtrlName,"Electron Affinity");
@@ -363,15 +358,14 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
   discList.set("Solution Vector Components", Teuchos::Array<std::string>(solnVecComps));
   discList.set("Residual Vector Components", Teuchos::Array<std::string>(residVecComps));
   discList.set("Interleaved Ordering", false); //combined vector is concatenated, not "interleaved"
-*/
   /* -- Example XML this would generate --
      <Parameter name="Solution Vector Components" type="Array(string)" value="{Potential, S, Eigenvector0, S, Eigenvector1, S}"/>
      <Parameter name="Residual Vector Components" type="Array(string)" value="{PoissonRes, S, SchroRes0, S, SchroRes1, S}"/>
      <Parameter name="Interleaved Ordering" type="bool" value="false"/>
   */
-/*
+
   // Create discretization object solely for producing collected output
-  Albany::DiscretizationFactory discFactory(appParams, commT);
+  Albany::DiscretizationFactory discFactory(appParams, myComm);
 
   // Get mesh specification object: worksetSize, cell topology, etc
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::MeshSpecsStruct> > meshSpecs =
@@ -385,7 +379,8 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
   Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq)));
   disc = discFactory.createDiscretization(neq, stateInfo,requirements,rigidBodyModes);
 
-  myComm = comm;*/
+  //FIXME: set nominal_values_ 
+
 }
 
 QCAD::CoupledPoissonSchrodingerT::~CoupledPoissonSchrodingerT()
@@ -395,52 +390,91 @@ QCAD::CoupledPoissonSchrodingerT::~CoupledPoissonSchrodingerT()
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCAD::CoupledPoissonSchrodingerT::get_x_space() const
 {
-//  return combined_SP_map;
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  return createCombinedRangeSpace(); 
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCAD::CoupledPoissonSchrodingerT::get_f_space() const
 {
-//  return combined_SP_map;
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  return createCombinedRangeSpace(); 
 }
+
+Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>
+QCAD::CoupledPoissonSchrodingerT::createCombinedRangeSpace() const
+{
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  Teuchos::RCP<Thyra::ProductVectorSpaceBase<ST> > range_space; 
+  // loop over all vectors and build the vector space
+  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
+
+  for (int m = 0; m < 3; ++m) { //assumes product of 3 maps, all disc_maps
+    //FIXME?  double check that this is correct with Erik N. 
+    vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_map));
+  }
+  range_space = Thyra::productVectorSpace<ST>(vs_array);
+  return range_space;
+}
+
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCAD::CoupledPoissonSchrodingerT::get_p_space(int l) const
 {
- /* TEUCHOS_TEST_FOR_EXCEPTION(l >= num_param_vecs || l < 0, Teuchos::Exceptions::InvalidParameter,
+  #ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_param_vecs || l < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error in QCAD::CoupledPoissonSchrodingerT::get_p_space():  " <<
                      "Invalid parameter index l = " << l << std::endl);
-  if(l < num_poisson_param_vecs)
-    return poissonModel->get_p_map(l);
-  else
-    return schrodingerModel->get_p_map(l - num_poisson_param_vecs);
-  */
+  
+  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
+  //Poisson model: 
+  vs_array.push_back(poissonModel->get_p_space(l)); 
+  //Schrodinger model:  
+  vs_array.push_back(schrodingerModel->get_p_space(l));
+  //FIXME: does eigenvalue part have a p space? 
+  return Thyra::productVectorSpace<ST>(vs_array);
+ 
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCAD::CoupledPoissonSchrodingerT::get_g_space(int j) const
 {
-  /*TEUCHOS_TEST_FOR_EXCEPTION(j > num_response_vecs || j < 0, Teuchos::Exceptions::InvalidParameter,
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  TEUCHOS_TEST_FOR_EXCEPTION(j > num_response_vecs || j < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
                      "Error in QCAD::CoupledPoissonSchrodingerT::get_g_space():  " <<
                      "Invalid response index j = " << j << std::endl);
   
-  if(j < poissonApp->getNumResponses())
-    return poissonModel->get_g_space(j);
-  else
-    return schrodingerModel->get_g_space(j - poissonApp->getNumResponses());*/
+  std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
+  //Poisson model: 
+  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+              poissonApp->getResponse(j)->responseMapT())); 
+  //Schrodinger model:  
+  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+              schrodingerApp->getResponse(j)->responseMapT())); 
+  //FIXME: does eigenvalue part have a p space? 
+  return Thyra::productVectorSpace<ST>(vs_array);
 }
 
 Teuchos::RCP<const Teuchos::Array<std::string> > QCAD::CoupledPoissonSchrodingerT::get_p_names(int l) const
 {
-/*  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_param_vecs || l < 0, 
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_param_vecs || l < 0, 
 		     Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
-                     "Error!  Albany::ModelEvaluator::get_p_names():  " <<
+                     "Error!  QCAD::CoupledPoissonSchrodingerT::get_p_names():  " <<
                      "Invalid parameter index l = " << l << std::endl);
   if(l < num_poisson_param_vecs)
     return poissonModel->get_p_names(l);
   else
     return schrodingerModel->get_p_names(l - num_poisson_param_vecs);
-  */
+  
 }
 
 /*
@@ -541,17 +575,11 @@ QCAD::CoupledPoissonSchrodingerT::getUpperBounds() const
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 QCAD::CoupledPoissonSchrodingerT::create_W_op() const
 {
-/*
-  // Get material parameters for quantum region, used in computing quantum density
-  std::string quantumMtrlName = materialDB->getParam<std::string>("Quantum Material");
-  int valleyDegeneracyFactor = materialDB->getMaterialParam<int>(quantumMtrlName,"Number of conduction band min",2);
-  double effMass = materialDB->getMaterialParam<double>(quantumMtrlName,"Transverse Electron Effective Mass");
-
-  std::cout << "DEBUG:  CPS create_W called!!" << std::endl;
-  return Teuchos::rcp( new QCAD::CoupledPSJacobian(nEigenvals, disc_map, combined_SP_map, myComm, 
-						   numDims, valleyDegeneracyFactor, temperature,
-						   length_unit_in_m, energy_unit_in_eV, effMass, offset_to_CB) );
-*/
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  QCAD::CoupledPSJacobianT psJac(myComm); 
+//  return psJac.getThyraCoupledJacobian(Jac_Poisson); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>
@@ -576,7 +604,7 @@ QCAD::CoupledPoissonSchrodingerT::get_W_factory() const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-//  return solver_factory_;
+  return solver_factory_;
 }
 
 void
@@ -597,6 +625,10 @@ Teuchos::RCP<Thyra::LinearOpBase<ST>>
 QCAD::CoupledPoissonSchrodingerT::
 create_DgDx_op_impl(int j) const
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, IKT, 5/21/15: save for later. 
 /*  TEUCHOS_TEST_FOR_EXCEPTION(
     j >= num_response_vecs || j < 0, 
     Teuchos::Exceptions::InvalidParameter,
@@ -614,6 +646,10 @@ create_DgDx_op_impl(int j) const
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 QCAD::CoupledPoissonSchrodingerT::create_DgDx_dot_op_impl(int j) const
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  //FIXME, IKT, 5/21/15: save for later. 
 /*
   TEUCHOS_TEST_FOR_EXCEPTION(
     j >= num_response_vecs || j < 0, 
@@ -633,7 +669,10 @@ Thyra::ModelEvaluatorBase::InArgs<ST>
 QCAD::CoupledPoissonSchrodingerT::
 createInArgsImpl() const
 {
-/*  InArgsSetup inArgs;
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+  Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs;
   inArgs.setModelEvalDescription("QCAD Coupled Poisson-Schrodinger Model Evaluator");
 
   inArgs.setSupports(IN_ARG_t,true);
@@ -646,7 +685,7 @@ createInArgsImpl() const
   // Note: no SG support yet...
 
   return inArgs;
-*/
+
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
@@ -662,23 +701,29 @@ QCAD::CoupledPoissonSchrodingerT::createInArgs() const
 Thyra::ModelEvaluatorBase::OutArgs<ST> 
 QCAD::CoupledPoissonSchrodingerT::createOutArgsImpl() const
 {
-/*
-  OutArgsSetup outArgs;
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
+
+  Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs; 
   outArgs.setModelEvalDescription("QCAD Coupled Poisson-Schrodinger Model Evaluator");
 
   int n_g = num_response_vecs;
   bool bScalarResponse;
 
   // Deterministic
-  outArgs.setSupports(OUT_ARG_f,true);
-  outArgs.setSupports(OUT_ARG_W,true);
+  outArgs.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_f,true);
+  outArgs.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_W_op,true);
   outArgs.set_W_properties(
-    DerivativeProperties(DERIV_LINEARITY_UNKNOWN, DERIV_RANK_FULL, true));
-  outArgs.setSupports(OUT_ARG_WPrec, true);
+      Thyra::ModelEvaluatorBase::DerivativeProperties(
+          Thyra::ModelEvaluatorBase::DERIV_LINEARITY_UNKNOWN,
+          Thyra::ModelEvaluatorBase::DERIV_RANK_FULL,
+          true));
   outArgs.set_Np_Ng(num_param_vecs, n_g);
-
+/*
+ * FIXME, IKT, 5/21/15
   for (int i=0; i<num_param_vecs; i++)
-    outArgs.setSupports(OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
+    outArgs.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++) {
 
     if(i < poissonApp->getNumResponses())
@@ -702,12 +747,12 @@ QCAD::CoupledPoissonSchrodingerT::createOutArgsImpl() const
     for (int j=0; j<num_param_vecs; j++)
       outArgs.setSupports(OUT_ARG_DgDp, i, j,
                           DerivativeSupport(DERIV_MV_BY_COL));
-  }
+  }*/
 
   //Note: no SG support yet...
 
   return outArgs;
-  */
+  
 }
 
 
@@ -717,6 +762,9 @@ evalModelImpl(
     Thyra::ModelEvaluatorBase::InArgs<ST> const & in_args,
     Thyra::ModelEvaluatorBase::OutArgs<ST> const & out_args) const
 {
+#ifdef OUTPUT_TO_SCREEN
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+#endif
 /*  //?? Teuchos::TimeMonitor Timer(*timer); //start timer
 
   //
