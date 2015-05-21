@@ -88,7 +88,7 @@ private:
   void initialize_grad(Intrepid::FieldContainer<RealType> &) const;
 
   // Kokkos
-#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 public:
   Kokkos::View<RealType*, PHX::Device> refWeights_CUDA;
   Kokkos::View<RealType**, PHX::Device> val_at_cub_points_CUDA;
@@ -162,7 +162,7 @@ public:
   void compute_wGradBF (const int cell) const;
 
 
-#endif
+#endif*/
 };
 }
 
