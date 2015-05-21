@@ -36,7 +36,7 @@ public:
 
   ~CoupledPSJacobianT();
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>& Jac_Poisson) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const;
 
 private:
 

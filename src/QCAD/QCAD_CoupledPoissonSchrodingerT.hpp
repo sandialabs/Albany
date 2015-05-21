@@ -124,9 +124,10 @@ namespace QCAD {
     Teuchos::RCP<const Tpetra_Vector> saved_initial_guess;
     Thyra::ModelEvaluatorBase::InArgs<ST> nominal_values_; 
 
+    Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson; 
+
     //for setting get_W_factory() 
-    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const>
-    solver_factory_;
+    Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> solver_factory_;
 
     Teuchos::RCP<Albany::Application> poissonApp, schrodingerApp;
     Teuchos::RCP<Thyra::ModelEvaluator<ST> > poissonModel, schrodingerModel;

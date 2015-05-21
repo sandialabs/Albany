@@ -252,6 +252,16 @@ CoupledPoissonSchrodingerT(const Teuchos::RCP<Teuchos::ParameterList>& appParams
   Albany::ModelFactory poissonModelFactory(poisson_appParams, poissonApp);
   poissonModel = poissonModelFactory.createT();
 
+  //Get Poisson Jacobian 
+  Teuchos::RCP<Tpetra_Operator> const Jac_Poisson_temp =
+        Teuchos::nonnull(poissonModel->create_W_op()) ?
+            ConverterT::getTpetraOperator(poissonModel->create_W_op()) :
+            Teuchos::null;
+  Jac_Poisson =
+        Teuchos::nonnull(Jac_Poisson_temp) ?
+            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(Jac_Poisson_temp, true) :
+            Teuchos::null;
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////
   //! Create Schrodinger application object (similar logic in Albany::SolverFactory::createAlbanyAppAndModel)
@@ -579,7 +589,7 @@ QCAD::CoupledPoissonSchrodingerT::create_W_op() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   QCAD::CoupledPSJacobianT psJac(myComm); 
-//  return psJac.getThyraCoupledJacobian(Jac_Poisson); 
+  return psJac.getThyraCoupledJacobian(Jac_Poisson); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>

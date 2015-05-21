@@ -42,7 +42,7 @@ QCAD::CoupledPSJacobianT::~CoupledPSJacobianT()
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-QCAD::CoupledPSJacobianT::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>& Jac_Poisson) const
+QCAD::CoupledPSJacobianT::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
