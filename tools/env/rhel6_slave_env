@@ -9,18 +9,25 @@
 # JGF 11/14
 #-------------------------------------------
 
-export BOOSTDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/boost_1.55.0
-export NETCDFDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/pnetcdf_4.3.2
-export HDF5DIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/phdf5-1.8.12
-export SUPERLUDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/SuperLU_4.3
-export LAMEDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/lame-4.24.1
-export PARMETISDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/lame-4.24.1
-export CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch # TODO - Fix
-export YAMLDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/yaml_cpp_0.5.1
+export BOOSTDIR=/projects/install/rhel6-x86_64/sems/tpl/boost/1.55.0/gcc/4.7.2/base
+export NETCDFDIR=/projects/install/rhel6-x86_64/sems/tpl/netcdf/4.3.2/gcc/4.7.2/parallel
+export HDF5DIR=/projects/install/rhel6-x86_64/sems/tpl/hdf5/1.8.12/gcc/4.7.2/parallel
+export SUPERLUDIR=/projects/install/rhel6-x86_64/sems/tpl/superlu/4.3/gcc/4.7.2/base
+# export LAMEDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/lame-4.24.1
+export PARMETISDIR=/projects/install/rhel6-x86_64/sems/tpl/parmetis/4.0.3/gcc/4.7.2/base
+# export CISMDIR=/home/ikalash/Desktop/glimmer/felix_interface_branch # TODO - Fix
+# export YAMLDIR=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/yaml_cpp_0.5.1
 
 export SSGUSER=$(whoami)
 
-module load openmpi-x86_64
+export SEMS_MODULE_ROOT=/projects/modulefiles
+
+module use /projects/modulefiles/rhel6-x86_64/sems/compiler
+module use /projects/modulefiles/rhel6-x86_64/sems/tpl
+module use /projects/modulefiles/rhel6-x86_64/sems/utility
+
+module load gcc/4.7.2/base
+module load gcc/4.7.2/openmpi/1.6.5
 
 # Pick up newer cmake
 export PATH=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/cmake-3.0.2/bin:$PATH

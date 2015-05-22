@@ -13,9 +13,14 @@ VERBOSE = False
 """
 TODO:
  - Way to provide overrides from the command line?
- - May need machine categorization in the case where lots of
-   machines have the same env settings.
 """
+
+# Map nodename regex to machine type
+MACHINE_NODENAME_MAP = \
+{
+    "(face|melvin)" : "rhel6_slave",
+    "s968061"       : "jim_mac_laptop"
+}
 
 ALBANY_BUILD_TYPES = \
 {
@@ -295,6 +300,18 @@ def set_env_for_build(build_keys, env_map):
                 os.environ[env_var] = env_setting
 
 ###############################################################################
+def get_machine_type():
+###############################################################################
+    nodename = socket.gethostname().split(".")[0]
+    for regex_str, machinetype in MACHINE_NODENAME_MAP.iteritems():
+        regex = re.compile(regex_str)
+        if (regex.match(nodename)):
+            return machinetype
+
+    expect(False, "Unrecognized machine '%s'" % nodename)
+    return None
+
+###############################################################################
 def set_jenkins_env():
 ###############################################################################
     expect("WORKSPACE" in os.environ,
@@ -358,7 +375,7 @@ def generate_cmake_fragment(generic_fragment_path, env_cmd, frag_name):
 ###############################################################################
 def generate_frag_name(build_types, build_mode, compiler):
 ###############################################################################
-    return "%s-%s-%s-%s" % (LOCAL_CMAKE_BASE_NAME, "-".join(sorted(build_types)), compiler, build_mode)
+    return "%s-%s%s%s" % (LOCAL_CMAKE_BASE_NAME, "-".join(sorted(build_types)), "-%s-" if compiler else "-", build_mode)
 
 ###############################################################################
 def perform_test(mode, build_types, build_mode, manage_environment, gen_cmake, compiler):
@@ -378,8 +395,8 @@ provide a compiler via the -c option. This is OK if your environment
 is already configured for a certain compiler."""
 )
 
-        nodename = socket.gethostname().split(".")[0]
-        env_file_path = os.path.join(exe_dir, "env", "%s_env" % nodename)
+        machine_type = get_machine_type()
+        env_file_path = os.path.join(exe_dir, "env", "%s_env" % machine_type)
         expect(os.path.exists(env_file_path), "env file '%s' does not exist" % env_file_path)
 
         env_cmd = "source %s" % env_file_path
