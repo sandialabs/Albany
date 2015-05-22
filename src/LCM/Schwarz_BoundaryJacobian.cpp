@@ -12,9 +12,9 @@
 #include "Albany_Utils.hpp"
 //#include "Tpetra_LocalMap.h"
 
-#define WRITE_TO_MATRIX_MARKET
+//#define WRITE_TO_MATRIX_MARKET
 //#define OUTPUT_TO_SCREEN
-#define DEBUG_LCM_SCHWARZ
+//#define DEBUG_LCM_SCHWARZ
 
 #ifdef WRITE_TO_MATRIX_MARKET
 static int
