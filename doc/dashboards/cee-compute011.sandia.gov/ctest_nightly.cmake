@@ -5,27 +5,33 @@ if (1)
   set (CTEST_TEST_TYPE Nightly)
 
   # What to build and test
-  set (BUILD_ALB32 TRUE)
-  set (BUILD_ALB64 TRUE)
-  set (BUILD_ALB64CLANG11 TRUE)
   set (DOWNLOAD TRUE)
-  set (BUILD_TRILINOS TRUE)
-  set (BUILD_TRILINOSCLANG11 TRUE)
   set (CLEAN_BUILD TRUE)
+  set (BUILD_SCOREC TRUE)
+  set (BUILD_TRILINOS TRUE)
   set (BUILD_PERIDIGM TRUE)
+  set (BUILD_ALB32 TRUE)
+  set (BUILD_ALB64 FALSE)
+  set (BUILD_TRILINOSCLANG11 TRUE)
+  set (BUILD_ALB64CLANG11 TRUE)
+  set (BUILD_ALBFUNCTOR TRUE)
 else ()
   set (CTEST_DO_SUBMIT OFF)
   set (CTEST_TEST_TYPE Experimental)
+  set (CTEST_DO_SUBMIT ON)
+  set (CTEST_TEST_TYPE Nightly)
 
   # What to build and test
   set (BUILD_ALB64 FALSE)
   set (BUILD_ALB64CLANG11 FALSE)
-  set (DOWNLOAD TRUE)
-  set (BUILD_TRILINOS TRUE)
-  set (BUILD_PERIDIGM TRUE)
-  set (BUILD_ALB32 TRUE)
+  set (DOWNLOAD FALSE)
+  set (BUILD_SCOREC FALSE)
+  set (BUILD_TRILINOS FALSE)
+  set (BUILD_PERIDIGM FALSE)
+  set (BUILD_ALB32 FALSE)
   set (BUILD_TRILINOSCLANG11 FALSE)
   set (CLEAN_BUILD FALSE)
+  set (BUILD_ALBFUNCTOR TRUE)
 endif ()
 
 # Begin User inputs:
@@ -123,7 +129,7 @@ if (DOWNLOAD)
   # Get the SCOREC repo
   #
 
-  if (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC")
+  if (BUILD_SCOREC AND (NOT EXISTS "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC"))
     #  execute_process (COMMAND "${CTEST_SVN_COMMAND}" 
     #    checkout ${SCOREC_REPOSITORY_LOCATION} ${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC
     #    OUTPUT_VARIABLE _out
@@ -139,7 +145,8 @@ if (DOWNLOAD)
     message(STATUS "err: ${_err}")
     message(STATUS "res: ${HAD_ERROR}")
     if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot checkout SCOREC repository!")
+      message ("Cannot checkout SCOREC repository!")
+      set (BUILD_SCOREC FALSE)
     endif ()
   endif ()
 
@@ -225,25 +232,28 @@ if (DOWNLOAD)
   #
   # Update the SCOREC repo
   #
+  if (BUILD_SCOREC)
+    set_property (GLOBAL PROPERTY SubProject SCOREC)
+    set_property (GLOBAL PROPERTY Label SCOREC)
 
-  set_property (GLOBAL PROPERTY SubProject SCOREC)
-  set_property (GLOBAL PROPERTY Label SCOREC)
+    #set (CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
+    set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
+    ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
+    message("Found ${count} changed files")
 
-  #set (CTEST_UPDATE_COMMAND "${CTEST_SVN_COMMAND}")
-  set (CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
-  ctest_update(SOURCE "${CTEST_SOURCE_DIRECTORY}/Trilinos/SCOREC" RETURN_VALUE count)
-  message("Found ${count} changed files")
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Update RETURN_VALUE  HAD_ERROR)
 
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Update RETURN_VALUE  HAD_ERROR)
-
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot update SCOREC!")
+      if (HAD_ERROR)
+        message ("Cannot update SCOREC!")
+        set (BUILD_SCOREC FALSE)
+      endif ()
     endif ()
-  endif ()
 
-  if (count LESS 0)
-    message(FATAL_ERROR "Cannot update SCOREC!")
+    if (count LESS 0)
+      message ("Cannot update SCOREC!")
+      set (BUILD_SCOREC FALSE)
+    endif ()
   endif ()
 
   #
@@ -446,13 +456,18 @@ if (BUILD_TRILINOS)
     "-DCMAKE_CXX_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DCMAKE_C_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
     "-DCMAKE_Fortran_FLAGS:STRING='-O3 -march=native -w -DNDEBUG'"
-    "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
-    "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
-    "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"
     "-DTrilinos_EXTRA_LINK_FLAGS='-L${PREFIX_DIR}/lib -lhdf5_hl -lhdf5 -lz -lm'"
     "-DCMAKE_INSTALL_PREFIX:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
     "${COMMON_CONFIGURE_OPTIONS}"
     )
+
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS
+      "-DTrilinos_EXTRA_REPOSITORIES:STRING=SCOREC"
+      "-DTrilinos_ENABLE_SCOREC:BOOL=ON"
+      "-DSCOREC_DISABLE_STRONG_WARNINGS:BOOL=ON"      
+      "${CONFIGURE_OPTIONS}")
+  endif ()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/TriBuild")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/TriBuild)
@@ -479,43 +494,48 @@ if (BUILD_TRILINOS)
     message(FATAL_ERROR "Cannot configure Trilinos/SCOREC build!")
   endif ()
 
-  #
-  # SCOREC tools build inside Trilinos
-  #
-  # Note that we do a trick here, and just build the SCOREC_libs target, as we
-  # build SCOREC as a Trilinos packages and its not possible to do that
-  # independent of Trilinos. So, while this builds most of SCOREC, other
-  # Trilinos capabilities are also built here.
-  #
+  if (BUILD_SCOREC)
+    #
+    # SCOREC tools build inside Trilinos
+    #
+    # Note that we do a trick here, and just build the SCOREC_libs target, as we
+    # build SCOREC as a Trilinos packages and its not possible to do that
+    # independent of Trilinos. So, while this builds most of SCOREC, other
+    # Trilinos capabilities are also built here.
+    #
 
-  set_property (GLOBAL PROPERTY SubProject SCOREC)
-  set_property (GLOBAL PROPERTY Label SCOREC)
-  set (CTEST_BUILD_TARGET "SCOREC_libs")
+    set_property (GLOBAL PROPERTY SubProject SCOREC)
+    set_property (GLOBAL PROPERTY Label SCOREC)
+    set (CTEST_BUILD_TARGET "SCOREC_libs")
 
-  MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+    MESSAGE("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
-  CTEST_BUILD(
-    BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
-    RETURN_VALUE  HAD_ERROR
-    NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Build
-      RETURN_VALUE  S_HAD_ERROR
+    CTEST_BUILD(
+      BUILD "${CTEST_BINARY_DIRECTORY}/TriBuild"
+      RETURN_VALUE  HAD_ERROR
+      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
       )
 
-    if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit SCOREC build results!")
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build
+        RETURN_VALUE  S_HAD_ERROR
+        )
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit SCOREC build results!")
+        set (BUILD_SCOREC FALSE)
+      endif ()
     endif ()
-  endif ()
 
-  if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build SCOREC!")
-  endif ()
+    if (HAD_ERROR)
+      message ("Cannot build SCOREC!")
+      set (BUILD_SCOREC FALSE)
+    endif ()
 
-  if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in SCOREC build. Exiting!")
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in SCOREC build. Exiting!")
+      set (BUILD_SCOREC FALSE)
+    endif ()
   endif ()
 
   #
@@ -645,22 +665,22 @@ if (BUILD_ALB32)
     "-DENABLE_CONTACT:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SCOREC:BOOL=ON"
     "-DENABLE_SG_MP:BOOL=OFF"
     "-DENABLE_FELIX:BOOL=ON"
     "-DENABLE_AERAS:BOOL=ON"
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
-    "-DENABLE_SEE:BOOL=ON"
     "-DENABLE_AMP:BOOL=ON"
     "-DENABLE_ASCR:BOOL=OFF"
     "-DENABLE_CHECK_FPE:BOOL=ON"
     "-DLAME_INCLUDE_DIR:FILEPATH=${ALB_LAME_DIR}/include"
     "-DLAME_LIBRARY_DIR:FILEPATH=${ALB_LAME_DIR}/build"
-    "-DENABLE_LAME:BOOL=ON"
-    )
-
+    "-DENABLE_LAME:BOOL=ON")
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif ()
   if (BUILD_PERIDIGM)
     set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
       "-DENABLE_PERIDIGM:BOOL=ON"
@@ -769,12 +789,14 @@ if (BUILD_ALB64)
     "-DENABLE_LCM:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
-    "-DENABLE_SCOREC:BOOL=ON"
     "-DENABLE_SG_MP:BOOL=OFF"
     "-DENABLE_QCAD:BOOL=OFF"
     "-DENABLE_MOR:BOOL=OFF"
-    "-DENABLE_CHECK_FPE:BOOL=ON"
-    )
+    "-DENABLE_CHECK_FPE:BOOL=ON")
+  if (BUILD_SCOREC)
+    set (CONFIGURE_OPTIONS ${CONFIGURE_OPTIONS}
+      "-DENABLE_SCOREC:BOOL=ON")
+  endif ()
 
   if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/Albany64Bit")
     file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/Albany64Bit)
@@ -1067,10 +1089,102 @@ if (BUILD_ALB64CLANG11)
   endif ()
 endif ()
 
-# Return the LD_LIBRARY_PATH back to the initial one 
+if (BUILD_ALBFUNCTOR)
+  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
 
-#set (ENV{LD_LIBRARY_PATH} ${INITIAL_LD_LIBRARY_PATH})
+  set_property (GLOBAL PROPERTY SubProject AlbanyFunctor)
+  set_property (GLOBAL PROPERTY Label AlbanyFunctor)
 
+  set (ALB_LAME_DIR "/projects/albany/src/lame-4.24.1/")
 
-# Done!!!
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_MOR:BOOL=ON"
+    "-DENABLE_FELIX:BOOL=ON"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_AMP:BOOL=ON"
+    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_SCOREC:BOOL=OFF"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_SG_MP:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_LAME:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=ON")
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctor)
+  endif ()
 
+  CTEST_CONFIGURE (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    APPEND)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
+    
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany configure results!")
+      set (BUILD_ALBFUNCTOR FALSE)
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure Albany build!")
+    set (BUILD_ALBFUNCTOR FALSE)
+  endif ()
+
+  if (BUILD_ALBFUNCTOR)
+    set (CTEST_BUILD_TARGET all)
+
+    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+    CTEST_BUILD (
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor"
+      RETURN_VALUE  HAD_ERROR
+      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+      APPEND)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build
+        RETURN_VALUE  S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany build results!")
+        set (BUILD_ALBFUNCTOR FALSE)
+      endif ()
+    endif ()
+
+    if (HAD_ERROR)
+      message ("Cannot build Albany!")
+      set (BUILD_ALBFUNCTOR FALSE)
+    endif ()
+
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in Albany build.")
+      set (BUILD_ALBFUNCTOR FALSE)
+    endif ()
+  endif ()
+
+  if (BUILD_ALBFUNCTOR)
+    CTEST_TEST (
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor"
+      RETURN_VALUE HAD_ERROR)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Test
+        RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany test results!")
+      endif ()
+    endif ()
+  endif ()
+endif ()
