@@ -28,6 +28,7 @@ module use /projects/modulefiles/rhel6-x86_64/sems/utility
 
 module load gcc/4.7.2/base
 module load gcc/4.7.2/openmpi/1.6.5
+module load cmake/2.8.12
 
 # Pick up newer cmake
 export PATH=/projects/sems/tpls/gcc_4.4.7/arch_x86_64/cmake-3.0.2/bin:$PATH
