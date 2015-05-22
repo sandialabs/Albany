@@ -1,0 +1,26 @@
+## /usr/local/cubit-14.1/bin/clarox
+## Cubit Version 14.1
+## Cubit Build 393673
+## Revised 2014-08-11 09:13:47 -0600 (Mon, 11 Aug 2014)
+## Running 05/18/2015 06:20:20 PM
+## Command Options:
+## -warning = On
+## -information = On
+brick x 20 y 2 z 1
+webcut volume 1 with plane yplane offset 0 noimprint nomerge
+webcut volume 1 2 with plane xplane offset 0 noimprint nomerge
+surface 24 34 merge off
+imprint all
+merge all
+volume all size 1.000
+volume all scheme map
+mesh volume all
+nodeset 1 surface 11 13
+nodeset 2 curve 11
+nodeset 3 curve 9
+nodeset 4 surface 21 23 29 35
+set duplicate block elements off
+block 1 volume 1 2 3 4
+block 1 name "bulk-block"
+set large exodus file on
+export genesis "dcb-hex.g" block all overwrite

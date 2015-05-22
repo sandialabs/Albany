@@ -1,0 +1,34 @@
+<ParameterList>
+
+  <ParameterList name="ElementBlocks">
+    <ParameterList name="bulk-block">
+      <Parameter name="material" type="string" value="Ceramic" />
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+
+    <ParameterList name="Ceramic">
+
+      <ParameterList name="Material Model"> 
+        <Parameter name="Model Name"
+		   type="string" value="Saint Venant Kirchhoff"/>
+      </ParameterList>
+
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="70e9"/>
+      </ParameterList>
+
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.3"/>
+      </ParameterList>
+
+      <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+
+    </ParameterList>
+
+  </ParameterList>
+
+</ParameterList>
