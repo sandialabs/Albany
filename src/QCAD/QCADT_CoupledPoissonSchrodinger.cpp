@@ -41,7 +41,7 @@ Please remove when issue is resolved
 #include "Ifpack.h"
 
 
-std::string QCADT::strdim(const std::string s, const int dim) {
+std::string QCADT::strdimT(const std::string s, const int dim) {
   std::ostringstream ss;
   ss << s << " " << dim << "D";
   return ss.str();
@@ -103,7 +103,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
     Teuchos::createParameterList("Poisson Application Parameters");
   Teuchos::ParameterList& poisson_probParams = poisson_appParams->sublist("Problem",false);
   
-  poisson_probParams.set("Name", QCADT::strdim("Poisson",numDims));
+  poisson_probParams.set("Name", QCADT::strdimT("Poisson",numDims));
   poisson_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
   poisson_probParams.set("Length Unit In Meters",lenUnit);
   poisson_probParams.set("Energy Unit In Electron Volts",energyUnit);
@@ -171,7 +171,7 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
     Teuchos::createParameterList("Schrodinger Application Parameters");  
   Teuchos::ParameterList& schro_probParams = schro_appParams->sublist("Problem",false);
 
-  schro_probParams.set("Name", QCADT::strdim("Schrodinger",numDims));
+  schro_probParams.set("Name", QCADT::strdimT("Schrodinger",numDims));
   schro_probParams.set("Solution Method", "Continuation");
   schro_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
   schro_probParams.set("Energy Unit In Electron Volts",energyUnit);

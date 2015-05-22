@@ -19,6 +19,20 @@
 #include "Teuchos_RCP.hpp"
 #include "Albany_DataTypes.hpp"
 
+
+
+//Forward Prototypes for utility functions
+namespace QCADT {
+  double n_prefactor(int numDims, int valleyDegeneracyFactor, double T, 
+                     double length_unit_in_m, double energy_unit_in_eV, double effmass);
+  double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+  double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+  double compute_FDIntOneHalf(const double x);
+  double compute_dFDIntOneHalf(const double x);
+  double compute_FDIntMinusOneHalf(const double x);
+  double compute_dFDIntMinusOneHalf(const double x);
+}
+
 namespace QCADT {
 
 /** 

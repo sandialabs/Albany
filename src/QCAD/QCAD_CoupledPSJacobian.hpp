@@ -18,6 +18,18 @@
 
 #include "Teuchos_RCP.hpp"
 
+//Forward Prototypes for utility functions
+namespace QCAD {
+  double n_prefactor(int numDims, int valleyDegeneracyFactor, 
+                     double T, double length_unit_in_m, double energy_unit_in_eV, double effmass);
+  double n_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+  double dn_weight_factor(double eigenvalue, int numDims, double T, double energy_unit_in_eV);
+  double compute_FDIntOneHalf(const double x);
+  double compute_dFDIntOneHalf(const double x);
+  double compute_FDIntMinusOneHalf(const double x);
+  double compute_dFDIntMinusOneHalf(const double x);
+}
+
 namespace QCAD {
 
 /** 

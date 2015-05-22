@@ -25,7 +25,7 @@
 
 // Utility functions
 namespace QCADT {
-  std::string strdim(const std::string s, const int dim);
+  std::string strdimT(const std::string s, const int dim);
 }
 
 
