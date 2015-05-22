@@ -84,6 +84,10 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   Teuchos::RCP<Teuchos::ParameterList> params2D(new Teuchos::ParameterList());
   params2D->set("Use Serial Mesh", params->get("Use Serial Mesh", false));
   params2D->set("Exodus Input File Name", params->get("Exodus Input File Name", "IceSheet.exo"));
+  if (params->isSublist("Side Sets Output"))
+  {
+    params2D->set<std::string>("Exodus Output File Name",params->sublist("Side Sets Output").sublist("basalside").get<std::string>("Exodus Output File Name"));
+  }
 
   sideSetMeshStructs["basalside"] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
 
@@ -182,7 +186,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
     // If we intend to store some field on the side set mesh, we need to register them in the mesh
     Teuchos::ParameterList& basalSideOutputInfo = params->sublist("Side Sets Output").sublist("basalside");
-    params2D->sublist("Required Fields Info",false,"") = basalSideOutputInfo;
+    params2D->set("Required Fields Info", basalSideOutputInfo);
     params2D->set<std::string>("Exodus Output File Name",basalSideOutputInfo.get<std::string>("Exodus Output File Name"));
 
     sideSetMeshStructs["basalside"] = Teuchos::rcp(new Albany::IossSTKMeshStruct(params2D, adaptParams, comm));
@@ -197,7 +201,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
     }
 
     int ws_size = sideSetMeshStructs["basalside"]->getMeshSpecs()[0]->worksetSize;
-    sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params, 1, req, basal_sis, ws_size);
+    sideSetMeshStructs["basalside"]->setFieldAndBulkData(comm, params2D, 1, req, basal_sis, ws_size);
 
 
     this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = sideSetMeshStructs["basalside"]->getMeshSpecs();
@@ -212,8 +216,8 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
   bool Ordering = params->get("Columnwise Ordering", false);
   bool isTetra = true;
 
-  const stk::mesh::BulkData& bulkData2D = *sideSetMeshStructs["basalside"]->bulkData;
-  const stk::mesh::MetaData& metaData2D = *sideSetMeshStructs["basalside"]->metaData; //bulkData2D.mesh_meta_data();
+  stk::mesh::BulkData& bulkData2D = *sideSetMeshStructs["basalside"]->bulkData;
+  stk::mesh::MetaData& metaData2D = *sideSetMeshStructs["basalside"]->metaData; //bulkData2D.mesh_meta_data();
 
   std::vector<double> levelsNormalizedThickness(numLayers + 1), temperatureNormalizedZ;
 
@@ -415,7 +419,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
   AbstractSTKFieldContainer::IntScalarFieldType* proc_rank_field = fieldContainer->getProcRankField();
   VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
-  stk::mesh::FieldBase const* coordinates_field2d = bulkData2D.mesh_meta_data().coordinate_field();
+  stk::mesh::FieldBase const* coordinates_field2d = metaData2D.coordinate_field();
   VectorFieldType* surface_velocity_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity");
   VectorFieldType* surface_velocity_RMS_field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, "surface_velocity_rms");
   ScalarFieldType* surface_height_field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, "surface_height");
@@ -438,6 +442,7 @@ void Albany::ExtrudedSTKMeshStruct::setFieldAndBulkData(
 
     double* coord = stk::mesh::field_data(*coordinates_field, node);
     double const* coord2d = (double const*) stk::mesh::field_data(*coordinates_field2d, node2d);
+
     coord[0] = coord2d[0];
     coord[1] = coord2d[1];
 

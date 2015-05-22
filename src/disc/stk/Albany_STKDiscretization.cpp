@@ -635,6 +635,16 @@ void Albany::STKDiscretization::writeSolution(const Epetra_Vector& soln, const d
      }
   }
   outputInterval++;
+
+  if (Teuchos::nonnull(sideSetDiscretizations))
+  {
+    SideSetDiscretizations::iterator it;
+    for (it=sideSetDiscretizations->begin(); it!=sideSetDiscretizations->end(); ++it)
+    {
+      Epetra_Vector tmp(*it->second->getOverlapMap());
+      it->second->writeSolution (tmp, time, overlapped);
+    }
+  }
 #endif
 }
 #endif
@@ -701,6 +711,16 @@ writeSolutionToFileT(const Tpetra_Vector& solnT, const double time,
      }
   }
   outputInterval++;
+
+  if (Teuchos::nonnull(sideSetDiscretizations))
+  {
+    SideSetDiscretizations::iterator it;
+    for (it=sideSetDiscretizations->begin(); it!=sideSetDiscretizations->end(); ++it)
+    {
+      Tpetra_Vector tmpT(it->second->getOverlapMapT());
+      it->second->writeSolutionToFileT (tmpT, time, overlapped);
+    }
+  }
 #endif
 
 }
@@ -1715,6 +1735,9 @@ void Albany::STKDiscretization::computeSideSets(){
 
       SideStruct sStruct;
 
+      // Save side (global id)
+      sStruct.side_GID = bulkData.identifier(sidee)-1;
+
       // Save elem id. This is the global element id
       sStruct.elem_GID = gid(elem);
 
@@ -2586,6 +2609,112 @@ Albany::STKDiscretization::printVertexConnectivity(){
 }
 
 void
+Albany::STKDiscretization::buildSideIdToSideSetElemIdMap (const std::string& sideSetName)
+{
+  Teuchos::RCP<STKDiscretization>& side_disc = sideSetDiscretizationsSTK->find(sideSetName)->second;
+  Teuchos::RCP<Albany::AbstractSTKMeshStruct> side_mesh_struct = side_disc->getSTKMeshStruct();
+
+  std::map<GO,GO>& map = (*sideIdToSideSetElemIdMap)[sideSetName];
+
+  const stk::mesh::MetaData& side_meta_data = *side_mesh_struct->metaData;
+  const stk::mesh::MetaData& meta_data = *stkMeshStruct->metaData;
+
+  stk::mesh::BulkData& side_bulk_data = *side_mesh_struct->bulkData;
+  stk::mesh::BulkData& bulk_data = *stkMeshStruct->bulkData;
+
+  // Extracting side cells
+  stk::mesh::Selector select_overlap_in_part = stk::mesh::Selector(side_meta_data.universal_part()) & (stk::mesh::Selector(side_meta_data.locally_owned_part()) | stk::mesh::Selector(side_meta_data.globally_shared_part()));
+
+  std::vector<stk::mesh::Entity> side_cells;
+  stk::mesh::get_selected_entities(select_overlap_in_part, side_bulk_data.buckets(stk::topology::ELEMENT_RANK), side_cells);
+
+  // Extracting coordinates (both meshes)
+  AbstractSTKFieldContainer::VectorFieldType* side_coordinates_field = side_mesh_struct->getCoordinatesField();
+  AbstractSTKFieldContainer::VectorFieldType* coordinates_field = stkMeshStruct->getCoordinatesField();
+
+  // Extracting sides in this sideSet
+  stk::mesh::Part& ss_part = *stkMeshStruct->ssPartVec.find(sideSetName)->second;
+  stk::mesh::Selector select_owned_in_sspart = stk::mesh::Selector(ss_part) & stk::mesh::Selector(meta_data.locally_owned_part() );
+  std::vector< stk::mesh::Entity > sides ;
+  stk::mesh::get_selected_entities( select_owned_in_sspart, bulk_data.buckets( meta_data.side_rank() ), sides); // store the result in "sides"
+
+  // Loop over the sides
+  for (int is(0); is<sides.size(); ++is)
+  {
+    stk::mesh::Entity side = sides[is];
+    stk::mesh::EntityId side_id = bulk_data.identifier(side)-1;
+
+    stk::mesh::Entity const* start = bulk_data.begin_nodes(side);
+    stk::mesh::Entity const* end   = bulk_data.end_nodes(side);
+    std::vector<std::vector<double> > nodes;
+    for (stk::mesh::Entity const* it = start; it!=end; ++it)
+    {
+      std::vector<double> coords(3);
+
+      double const* coords_ptr = (double const*) stk::mesh::field_data(*coordinates_field, *it);
+      coords[0] = coords_ptr[0];
+      coords[1] = coords_ptr[1];
+      coords[2] = coords_ptr[2];
+
+      nodes.push_back(coords);
+    }
+
+    // Now we loop on the sideSet cells
+    bool found = false;
+    for (size_t icell(0); icell<side_cells.size(); ++icell)
+    {
+      stk::mesh::EntityId side_cell_id = side_bulk_data.identifier(side_cells[icell]) - 1;
+
+      std::vector<std::vector<double> > side_nodes;
+
+      stk::mesh::Entity const* side_start = side_bulk_data.begin_nodes(side_cells[icell]);
+      stk::mesh::Entity const* side_end   = side_bulk_data.end_nodes(side_cells[icell]);
+
+      // Assume this is the right cell
+      found = true;
+      for (stk::mesh::Entity const* it = side_start; it!=side_end; ++it)
+      {
+        double const* coords = (double const*) stk::mesh::field_data(*side_coordinates_field, *it);
+
+        bool good = false;
+        for (int iP(0); iP<3; ++iP)
+        {
+          double diff = std::sqrt(std::pow(nodes[iP][0]-coords[0],2) + std::pow(nodes[iP][1]-coords[1],2));// + std::pow(nodes[iP][2]-coords[2],2));
+          if (diff<1e-6)
+          {
+            good=true;
+            break;
+          }
+        }
+
+        if (!good)
+        {
+          // this cell point had not mathc in the side points, so this cell can't be the right one
+          found=false;
+          break;
+        }
+      }
+      if (found)
+      {
+        map[side_id] = side_cell_id;
+        break;
+      }
+    }
+
+    if (!found)
+    {
+      std::cout << "WARNING: can't find a correspondence for side " << side_id << " with nodes";
+      for (stk::mesh::Entity const* it = start; it!=end; ++it)
+      {
+        std::cout << " " << bulk_data.identifier(*it)-1;
+      }
+      std::cout << "\n";
+    }
+
+  }
+}
+
+void
 Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
 {
 #ifdef ALBANY_EPETRA
@@ -2653,13 +2782,57 @@ Albany::STKDiscretization::updateMesh(bool /*shouldTransferIPData*/)
   // If the mesh struct stores sideSet mesh structs, we update them
   if (stkMeshStruct->sideSetMeshStructs.size()>0)
   {
+    sideSetDiscretizationsSTK = Teuchos::rcp( new std::map<std::string,Teuchos::RCP<STKDiscretization> >() );
     sideSetDiscretizations = Teuchos::rcp( new std::map<std::string,Teuchos::RCP<AbstractDiscretization> >() );
+    sideIdToSideSetElemIdMap = Teuchos::rcp( new std::map<std::string,std::map<GO,GO> >() );
 
     std::map<std::string,Teuchos::RCP<Albany::AbstractSTKMeshStruct> >::iterator it;
     for (it=stkMeshStruct->sideSetMeshStructs.begin(); it!=stkMeshStruct->sideSetMeshStructs.end(); ++it)
     {
       Teuchos::RCP<STKDiscretization> side_disc = Teuchos::rcp(new STKDiscretization(it->second,commT));
       sideSetDiscretizations->insert(std::make_pair(it->first,side_disc));
+      sideSetDiscretizationsSTK->insert(std::make_pair(it->first,side_disc));
+
+      buildSideIdToSideSetElemIdMap(it->first);
+/*
+      std::map<GO,GO> map = sideIdToSideSetElemIdMap->find(it->first)->second;
+      std::cout << "===========================================\n";
+      for (std::map<GO,GO>::const_iterator itm=map.begin(); itm!=map.end(); ++itm)
+      {
+        std::cout << "side " << itm->first << " becomes cell " << itm->second << "\n";
+      }
+      std::cout << "===========================================\n";
+
+Albany::WsLIDList& elemGIDws2D = side_disc->getElemGIDws();
+std::cout << "---------------------------\n";
+for (std::map<GO, Albany::wsLid >::iterator it=elemGIDws2D.begin(); it!=elemGIDws2D.end(); ++it)
+{
+  std::cout << "Elem " << it->first << ":\n";
+  std::cout << "  ws : " << it->second.ws << "\n";
+  std::cout << "  lid: " << it->second.LID << "\n";
+}
+std::cout << "---------------------------\n";
+*/
     }
   }
+/*
+for (int ws(0); ws<sideSets.size(); ++ws)
+{
+  std::cout << "Workset " << ws << "\n";
+  const Albany::SideSetList& ss = sideSets[ws];
+  std::map<std::string, std::vector<SideStruct> >::const_iterator it;
+  for (it=ss.begin(); it!=ss.end(); ++it)
+  {
+    std::cout << "  SideSet " << it->first << "\n";
+    for (int i(0); i<it->second.size(); ++i)
+    {
+      std::cout << "      side GID: " << it->second[i].side_GID << "\n";
+      std::cout << "      elem GID: " << it->second[i].elem_GID << "\n";
+      std::cout << "      elem LID: " << it->second[i].elem_LID << "\n";
+      std::cout << "      side local_id:" << it->second[i].side_local_id << "\n";
+    }
+  }
+}
+std::cout << "-------------------------------\n";
+*/
 }

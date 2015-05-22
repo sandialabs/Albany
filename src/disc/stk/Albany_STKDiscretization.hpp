@@ -218,6 +218,11 @@ namespace Albany {
       return sideSetDiscretizations;
     }
 
+    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > getSideIdToSideSetElemIdMap () const
+    {
+      return sideIdToSideSetElemIdMap;
+    }
+
     //! Flag if solution has a restart values -- used in Init Cond
     bool hasRestartSolution() const {return stkMeshStruct->hasRestartSolution();}
 
@@ -346,6 +351,7 @@ namespace Albany {
 
     void writeCoordsToMatrixMarket() const;
 
+    void buildSideIdToSideSetElemIdMap (const std::string& sideSetName);
     double previous_time_label;
 
   protected:
@@ -449,6 +455,8 @@ namespace Albany {
 
     // Sideset discretizations
     Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::AbstractDiscretization> > >  sideSetDiscretizations;
+    Teuchos::RCP<std::map<std::string,Teuchos::RCP<Albany::STKDiscretization> > >       sideSetDiscretizationsSTK;
+    Teuchos::RCP<std::map<std::string,std::map<GO,GO> > >                               sideIdToSideSetElemIdMap;
 
     // Used in Exodus writing capability
 #ifdef ALBANY_SEACAS

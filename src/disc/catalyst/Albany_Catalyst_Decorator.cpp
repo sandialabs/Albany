@@ -108,7 +108,12 @@ Teuchos::RCP<AbstractMeshStruct> Decorator::getMeshStruct() const
 
 Teuchos::RCP<SideSetDiscretizations> Decorator::getSideSetDiscretizations () const
 {
-  return discretization->getSideSetDiscretizations;
+  return discretization->getSideSetDiscretizations();
+}
+
+Teuchos::RCP<std::map<std::string,std::map<GO,GO> > > Decorator::getSideIdToSideSetElemIdMap () const
+{
+  return discretization->getSideIdToSideSetElemIdMap();
 }
 
 StateArrays &Decorator::getStateArrays()

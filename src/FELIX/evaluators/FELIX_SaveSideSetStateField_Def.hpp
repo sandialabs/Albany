@@ -8,6 +8,7 @@
 #include <string>
 
 #include "Teuchos_TestForException.hpp"
+#include "Teuchos_VerboseObject.hpp"
 #include "Phalanx_DataLayout.hpp"
 #include "Shards_CellTopology.hpp"
 #include "Intrepid_FieldContainer.hpp"
@@ -98,8 +99,11 @@ evaluateFields(typename Traits::EvalData workset)
   const Albany::SideSetList& ssList = *(workset.sideSets);
   Albany::SideSetList::const_iterator it_ss = ssList.find(sideSetName);
 
+  Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
+
   if(it_ss == ssList.end())
   {
+    *output << "sideset not present.\n";
     return; // Side set not present in this workset
   }
 
@@ -115,17 +119,21 @@ evaluateFields(typename Traits::EvalData workset)
   Albany::WsLIDList& elemGIDws3D = workset.disc->getElemGIDws();
   Albany::WsLIDList& elemGIDws2D = it_disc->second->getElemGIDws();
 
+//std::cout << "cellFieldName: " << cellFieldName << "\n";
+//std::cout << "we're on 3D workset " << workset.wsIndex << "\n";
+
   // Loop on the sides of this sideSet that are in this workset
   const std::vector<Albany::SideStruct>& sideSet = it_ss->second;
   for (std::size_t side=0; side < sideSet.size(); ++side)
   {
     // Get the data that corresponds to the side
 
-    const int elem_GID = sideSet[side].elem_GID;
+    const int side_GID = sideSet[side].side_GID;
+    const int elem3D_GID = sideSet[side].elem_GID;
     const int elem3D_LID = sideSet[side].elem_LID;
     const int elem_side = sideSet[side].side_local_id;
 
-
+//std::cout << "  side " << side_GID << "(" << side << ")" << " belongs to 3D elem " << elem3D_GID << "(" << elem3D_LID << ") at position " << elem_side << "\n";
     // Not sure if this is even possible, but just for debug pourposes
     TEUCHOS_TEST_FOR_EXCEPTION (elemGIDws3D[ sideSet[side].elem_GID ].ws != workset.wsIndex, std::logic_error,
                                 "Error! This workset has a side that belongs to an element not in the workset.\n");
@@ -136,9 +144,11 @@ evaluateFields(typename Traits::EvalData workset)
     // We know the side ID, so we can fetch two things:
     //    1) the 2D-wsIndex where the 2D element lies
     //    2) the LID of the 2D element
-    int wsIndex2D = elemGIDws2D[side].ws;
-    int elem2D_LID = elemGIDws2D[side].LID;
+    int elem2D_GID = workset.disc->getSideIdToSideSetElemIdMap()->find(sideSetName)->second[side_GID];
+    int wsIndex2D = elemGIDws2D[elem2D_GID].ws;
+    int elem2D_LID = elemGIDws2D[elem2D_GID].LID;
 
+//std::cout << "  In 2D, we're on element " << elem2D_GID << "(" << elem2D_LID << ")" << " in workset " << wsIndex2D << "\n";
     // Then, we extract the StateArray of the desired state in the right 2D-ws
     Albany::StateArray::const_iterator it_state = elem_state_arrays[wsIndex2D].find(sideStateName);
 
@@ -150,33 +160,36 @@ evaluateFields(typename Traits::EvalData workset)
     Albany::MDArray state = it_state->second;
 
     std::vector<PHX::DataLayout::size_type> dims;
-    state.dimensions(dims);
+    field.dimensions(dims);
     int size = dims.size();
+
+    // In StateManager, ElemData (1 scalar per cell) is stored as QuadPoint (1 qp),
+    // so size would figure as 2 even if it is actually 1. Therefore we had to
+    // call size on dims computed on field. Then, we call it on state to get
+    // the correct state dimensions
+    state.dimensions(dims);
 
     switch (size)
     {
       case 1:
-        for (int cell = 0; cell < dims[0]; ++cell)
-          state(elem2D_LID) = field(elem3D_LID);
+        state(elem2D_LID) = field(elem3D_LID);
         break;
 
       case 2:
-        for (int cell = 0; cell < dims[0]; ++cell)
-          for (int node = 0; node < numSideNodes; ++node)
-          {
-            int node3D = cellType->getNodeMap(sideDims, elem_side, node);
-            state(elem2D_LID, node) = field(elem3D_LID,node3D);
-          }
+        for (int node = 0; node < dims[1]; ++node)
+        {
+          int node3D = cellType->getNodeMap(sideDims, elem_side, node);
+          state(elem2D_LID, node) = field(elem3D_LID,node3D);
+        }
         break;
 
       case 3:
-        for (int cell = 0; cell < dims[0]; ++cell)
-          for (int node = 0; node < numSideNodes; ++node)
-          {
-            int node3D = cellType->getNodeMap(sideDims, elem_side, node);
-            for (int dim = 0; dim < dims[2]; ++dim)
-              state(elem2D_LID, node, dim) = field(elem3D_LID,node3D,dim);
-          }
+        for (int node = 0; node < dims[1]; ++node)
+        {
+          int node3D = cellType->getNodeMap(sideDims, elem_side, node);
+          for (int dim = 0; dim < dims[2]; ++dim)
+            state(elem2D_LID, node, dim) = field(elem3D_LID,node3D,dim);
+        }
         break;
 
       default:

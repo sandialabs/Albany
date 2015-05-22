@@ -462,8 +462,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     int lid;
     double* values;
 
-    typedef AbstractSTKFieldContainer::ScalarFieldType ScalarFieldType;
-    typedef AbstractSTKFieldContainer::VectorFieldType VectorFieldType;
+    typedef AbstractSTKFieldContainer::QPScalarFieldType QPScalarFieldType;
+    typedef AbstractSTKFieldContainer::QPVectorFieldType QPVectorFieldType;
 
     // Depending on the field type, we need to use different pointers
     if (ftype == "Scalar")
@@ -504,7 +504,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       req_vec.doImport(serial_req_vec,importOperator,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector view
-      ScalarFieldType* field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, *it);
+      QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
 
       //Now we have to stuff the vector in the mesh data
@@ -561,7 +561,7 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       req_mvec.doImport(serial_req_mvec,importOperator,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector views
-      VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, *it);
+      QPVectorFieldType* field = metaData->get_field<QPVectorFieldType>(stk::topology::ELEM_RANK, *it);
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
       for (int i(0); i<fieldDim; ++i)
         req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());

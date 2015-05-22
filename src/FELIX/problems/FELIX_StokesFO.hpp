@@ -145,7 +145,7 @@ protected:
 #include "FELIX_BasalFrictionCoefficient.hpp"
 #include "PHAL_Neumann.hpp"
 #include "PHAL_Source.hpp"
-
+#include <type_traits>
 
 template <typename EvalT>
 Teuchos::RCP<const PHX::FieldTag>
@@ -416,7 +416,7 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     paramList->set<RCP<const Albany::MeshSpecsStruct> >("Mesh Specs Struct", meshSpecsPtr);
     paramList->set<RCP<ParamLib> >("Parameter Library", paramLib);
   }
-  if (params->get("Ice-Hydrology Coupling",false) && fieldManagerChoice==Albany::BUILD_STATE_FM)
+  if (params->get("Ice-Hydrology Coupling",true) && std::is_same<EvalT,AlbanyTraits::Residual>::value)
   {
     // If we are solving the StokesFO problem, in the big picture of the coupling
     // with the hydrology problem, we need to save some data on the 2D mesh
@@ -429,6 +429,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
       fm0.template registerEvaluator<EvalT>(ev);
+      PHX::Tag<typename EvalT::ScalarT> tag("beta_field", dl->dummy);
+      fm0.requireField<EvalT>(tag);
     }
 
     // Ice viscosity interpolation from QP to Cell
@@ -449,6 +451,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
       fm0.template registerEvaluator<EvalT>(ev);
+      PHX::Tag<typename EvalT::ScalarT> tag("FELIX Viscosity Cell", dl->dummy);
+      fm0.requireField<EvalT>(tag);
     }
 
     // Save Sliding Velocity
@@ -459,6 +463,8 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
       fm0.template registerEvaluator<EvalT>(ev);
+      PHX::Tag<typename EvalT::ScalarT> tag("Velocity Norm", dl->dummy);
+      fm0.requireField<EvalT>(tag);
     }
   }
 
