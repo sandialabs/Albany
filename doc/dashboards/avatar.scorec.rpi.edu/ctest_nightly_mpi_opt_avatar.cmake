@@ -8,10 +8,11 @@ SET(CTEST_TEST_TYPE Nightly)
 
 # What to build and test
 SET(BUILD_ALB32 TRUE)
-SET(BUILD_ALB64 TRUE)
+SET(BUILD_ALB64 FALSE)
 SET(BUILD_TRILINOS TRUE)
 SET(BUILD_ALB64CLANG11 TRUE)
 SET(BUILD_TRILINOSCLANG11 TRUE)
+SET(BUILD_ALBFUNCTOR TRUE)
 
 SET(DOWNLOAD TRUE)
 SET(CLEAN_BUILD TRUE)
@@ -582,7 +583,6 @@ IF (BUILD_ALB32)
     "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_MOR:BOOL=ON"
     "-DENABLE_ATO:BOOL=ON"
-    "-DENABLE_SEE:BOOL=ON"
     "-DENABLE_AMP:BOOL=ON"
     "-DENABLE_ASCR:BOOL=OFF"
     #  "-DENABLE_CHECK_FPE:BOOL=ON"
@@ -858,3 +858,100 @@ IF (BUILD_ALB64CLANG11)
   ENDIF()
 ENDIF()
 
+if (BUILD_ALBFUNCTOR)
+  # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
+
+  set_property (GLOBAL PROPERTY SubProject AlbanyFunctorDev)
+  set_property (GLOBAL PROPERTY Label AlbanyFunctorDev)
+
+  set (CONFIGURE_OPTIONS
+    "-DALBANY_TRILINOS_DIR:PATH=${CTEST_BINARY_DIRECTORY}/TrilinosInstall"
+    "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_MOR:BOOL=ON"
+    "-DENABLE_FELIX:BOOL=ON"
+    "-DENABLE_HYDRIDE:BOOL=ON"
+    "-DENABLE_AMP:BOOL=ON"
+    "-DENABLE_ATO:BOOL=ON"
+    "-DENABLE_SCOREC:BOOL=OFF"
+    "-DENABLE_QCAD:BOOL=ON"
+    "-DENABLE_SG_MP:BOOL=OFF"
+    "-DENABLE_ASCR:BOOL=OFF"
+    "-DENABLE_AERAS:BOOL=ON"
+    "-DENABLE_64BIT_INT:BOOL=OFF"
+    "-DENABLE_LAME:BOOL=OFF"
+    "-DENABLE_DEMO_PDES:BOOL=ON"
+    "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
+    "-DENABLE_CHECK_FPE:BOOL=ON")
+  
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev)
+  endif ()
+
+  CTEST_CONFIGURE (
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
+    SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
+    OPTIONS "${CONFIGURE_OPTIONS}"
+    RETURN_VALUE HAD_ERROR
+    APPEND)
+
+  if (CTEST_DO_SUBMIT)
+    ctest_submit (PARTS Configure RETURN_VALUE S_HAD_ERROR)
+    
+    if (S_HAD_ERROR)
+      message ("Cannot submit Albany configure results!")
+      set (BUILD_ALBFUNCTOR FALSE)
+    endif ()
+  endif ()
+
+  if (HAD_ERROR)
+    message ("Cannot configure Albany build!")
+    set (BUILD_ALBFUNCTOR FALSE)
+  endif ()
+
+  if (BUILD_ALBFUNCTOR)
+    set (CTEST_BUILD_TARGET all)
+
+    message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
+
+    CTEST_BUILD (
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
+      RETURN_VALUE  HAD_ERROR
+      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+      APPEND)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Build
+        RETURN_VALUE  S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany build results!")
+        set (BUILD_ALBFUNCTOR FALSE)
+      endif ()
+    endif ()
+
+    if (HAD_ERROR)
+      message ("Cannot build Albany!")
+      set (BUILD_ALBFUNCTOR FALSE)
+    endif ()
+
+    if (BUILD_LIBS_NUM_ERRORS GREATER 0)
+      message ("Encountered build errors in Albany build.")
+      set (BUILD_ALBFUNCTOR FALSE)
+    endif ()
+  endif ()
+
+  if (BUILD_ALBFUNCTOR)
+    CTEST_TEST (
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
+      RETURN_VALUE HAD_ERROR)
+
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Test
+        RETURN_VALUE S_HAD_ERROR)
+
+      if (S_HAD_ERROR)
+        message ("Cannot submit Albany test results!")
+      endif ()
+    endif ()
+  endif ()
+endif ()
