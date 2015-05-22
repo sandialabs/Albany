@@ -65,12 +65,34 @@ postRegistrationSetup(typename Traits::SetupData d,
   this->utils.setFieldData(J, fm);
   this->utils.setFieldData(GradU, fm);
 }
+//**********************************************************************
+#ifdef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+template<typename EvalT, typename Traits>
+KOKKOS_INLINE_FUNCTION
+void DefGrad<EvalT, Traits>::
+operator() (const DefGrad_Tag& tag, const int& cell) const
+{
+  for (int qp=0; qp < numQPs; ++qp)
+    {
+      for (int i=0; i < numDims; ++i)
+      {
+        for (int j=0; j < numDims; ++j)
+        {
+          defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
+        }
+        defgrad(cell,qp,i,i) += 1.0;
+      }
+    }
+  
+}
+#endif
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void DefGrad<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
+#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
   //bool print = false;
   //if (typeid(ScalarT) == typeid(RealType)) print = true;
 
@@ -123,6 +145,70 @@ evaluateFields(typename Traits::EvalData workset)
       }
     }
   }
+#else
+  std::cout <<"inside DefGrad" <<std::endl;
+  Kokkos::parallel_for(DefGrad_Policy(0,workset.numCells), *this);
+  std::cout <<"inside DefGrad" <<std::endl;
+
+ /*
+  for (int cell=0; cell < workset.numCells; ++cell)
+  {
+    for (int qp=0; qp < numQPs; ++qp)
+    {
+      for (int i=0; i < numDims; ++i)
+      {
+        for (int j=0; j < numDims; ++j)
+        {
+          defgrad(cell,qp,i,j) = GradU(cell,qp,i,j);
+        }
+        defgrad(cell,qp,i,i) += 1.0;
+      }
+    }
+  }*/
+
+  // Since Intrepid will later perform calculations on the entire workset size
+  // and not just the used portion, we must fill the excess with reasonable 
+  // values. Leaving this out leads to inversion of 0 tensors.
+  for (int cell=workset.numCells; cell < worksetSize; ++cell)
+    for (int qp=0; qp < numQPs; ++qp)
+      for (int i=0; i < numDims; ++i)
+        defgrad(cell,qp,i,i) = 1.0;
+
+  Intrepid::RealSpaceTools<ScalarT>::det(J, defgrad);
+
+  if (weightedAverage)
+  {
+    ScalarT Jbar, wJbar, vol;
+    for (int cell=0; cell < workset.numCells; ++cell)
+    {
+      Jbar = 0.0;
+      vol = 0.0;
+      for (int qp=0; qp < numQPs; ++qp)
+      {
+        Jbar += weights(cell,qp) * std::log( J(cell,qp) );
+        vol  += weights(cell,qp);
+      }
+      Jbar /= vol;
+
+      // Jbar = std::exp(Jbar);
+      for (int qp=0; qp < numQPs; ++qp)
+      {
+        for (int i=0; i < numDims; ++i)
+        {
+          for (int j=0; j < numDims; ++j)
+          {
+            wJbar = std::exp( (1-alpha) * Jbar + alpha * std::log( J(cell,qp) ) );
+            defgrad(cell,qp,i,j) *= std::pow( wJbar / J(cell,qp) ,1./3. );
+          }
+        }
+        J(cell,qp) = wJbar;
+      }
+    }
+  }
+
+#endif
+
+
 }
 
 //**********************************************************************

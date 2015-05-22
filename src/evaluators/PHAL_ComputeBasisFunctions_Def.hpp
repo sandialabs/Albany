@@ -10,7 +10,7 @@
 #include "Intrepid_FunctionSpaceTools.hpp"
 
 namespace PHAL {
-#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
+//#ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
 ComputeBasisFunctions(const Teuchos::ParameterList& p,
@@ -108,7 +108,7 @@ evaluateFields(typename Traits::EvalData workset)
   Intrepid::FunctionSpaceTools::multiplyMeasure<MeshScalarT>
     (wGradBF, weighted_measure, GradBF);
 }
-#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+/*#else // ALBANY_KOKKOS_UNDER_DEVELOPMENT
 //**********************************************************************
 template<typename EvalT, typename Traits>
 ComputeBasisFunctions<EvalT, Traits>::
@@ -623,34 +623,35 @@ void ComputeBasisFunctions<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
 
-  /** The allocated size of the Field Containers must currently 
-    * match the full workset size of the allocated PHX Fields, 
-    * this is the size that is used in the computation. There is
-    * wasted effort computing on zeroes for the padding on the
-    * final workset. Ideally, these are size numCells.
+  // The allocated size of the Field Containers must currently 
+    // match the full workset size of the allocated PHX Fields, 
+    // this is the size that is used in the computation. There is
+    // wasted effort computing on zeroes for the padding on the
+    // final workset. Ideally, these are size numCells.
   //int containerSize = workset.numCells;
-    */
+    //
   Kokkos::deep_copy(GradBF.get_kokkos_view(),0.0); 
   Kokkos::parallel_for (GradBF.dimension(0), *this);
 //std::cout << "ComputeBasisFunction" <<std::endl;
 //std::cout << wGradBF(1, 1, 1, 1) <<"  " <<jacobian_inv(1,1,1,1) <<"   "<<grad_at_cub_points_CUDA(1,1,1) <<"   "<< weighted_measure(1,1)<<std::endl; 
 
-/*  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
-  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
-  Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
+//  Intrepid::CellTools<RealType>::setJacobian(jacobian, refPoints, coordVec, *cellType);
+//  Intrepid::CellTools<MeshScalarT>::setJacobianInv(jacobian_inv, jacobian);
+//  Intrepid::CellTools<MeshScalarT>::setJacobianDetTemp(jacobian_det, jacobian);
   
 //  Intrepid::FunctionSpaceTools::computeCellMeasureTemp(weighted_measure, jacobian_det, refWeights);
-  computeCellMeasure<MeshScalarT>(weighted_measure, jacobian_det, refWeights);
-  Intrepid::FunctionSpaceTools::HGRADtransformVALUETemp<RealType> (BF, val_at_cub_points); 
-  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>(wBF, weighted_measure, BF);
+//  computeCellMeasure<MeshScalarT>(weighted_measure, jacobian_det, refWeights);
+//  Intrepid::FunctionSpaceTools::HGRADtransformVALUETemp<RealType> (BF, val_at_cub_points); 
+//  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>(wBF, weighted_measure, BF);
    
 
-  Intrepid::FunctionSpaceTools::HGRADtransformGRADTemp<MeshScalarT>
-    (GradBF, jacobian_inv, grad_at_cub_points);
-  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>
-    (wGradBF, weighted_measure, GradBF);
-*/
+ // Intrepid::FunctionSpaceTools::HGRADtransformGRADTemp<MeshScalarT>
+//    (GradBF, jacobian_inv, grad_at_cub_points);
+//  Intrepid::FunctionSpaceTools::multiplyMeasureTemp<MeshScalarT>
+//    (wGradBF, weighted_measure, GradBF);
+
 }
 #endif // ALBANY_KOKKOS_UNDER_DEVELOPMENT
+*/
 //**********************************************************************
 }
