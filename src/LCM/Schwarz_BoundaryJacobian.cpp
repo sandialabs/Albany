@@ -23,7 +23,8 @@ mm_counter = 0;
 
 //#define APPLY_GENERAL_IMPLICIT
 //#define APPLY_H27_H8_EXPLICIT
-#define APPLY_H8_H8_EXPLICIT
+//#define APPLY_H8_H8_EXPLICIT
+#define APPLY_ZEROS
 
 LCM::
 Schwarz_BoundaryJacobian::
@@ -244,6 +245,26 @@ getExplicitOperator() const
 
   return K;
 }
+
+#if defined(APPLY_ZEROS)
+// Returns the result of a Tpetra_Operator applied to a
+// Tpetra_MultiVector X in Y.
+void
+LCM::
+Schwarz_BoundaryJacobian::
+apply(
+    Tpetra_MultiVector const & X,
+    Tpetra_MultiVector & Y,
+    Teuchos::ETransp mode,
+    ST alpha,
+    ST beta) const
+{
+  auto const
+  zero = Teuchos::ScalarTraits<ST>::zero();
+
+  Y.putScalar(zero);
+}
+#endif // APPLY_ZEROS
 
 #if defined(APPLY_H8_H8_EXPLICIT)
 // Returns the result of a Tpetra_Operator applied to a

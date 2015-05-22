@@ -38,7 +38,7 @@ LCM::Schwarz_CoupledJacobian::~Schwarz_CoupledJacobian()
 {
 }
 
-#define EXPLICIT_OFF_DIAGONAL
+//#define EXPLICIT_OFF_DIAGONAL
 
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
