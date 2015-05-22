@@ -29,9 +29,7 @@ SET(SOURCES
 IF (ALBANY_EPETRA)
   SET(SOURCES ${SOURCES} 
     QCAD_Solver.cpp
-#   IK, 1/23/15: commenting out QCAD_SolverT for now as it was causing
-#   problems for those building shared b/c of multiply defined symbols
-#    QCAD_SolverT.cpp
+    QCADT_Solver.cpp
     QCAD_CoupledPoissonSchrodinger.cpp
     QCAD_CoupledPSJacobian.cpp
     QCAD_CoupledPSPreconditioner.cpp
@@ -79,9 +77,7 @@ SET(HEADERS
 IF (ALBANY_EPETRA) 
   SET(HEADERS ${HEADERS} 
     QCAD_Solver.hpp
-#   IK, 1/23/15: commenting out QCAD_SolverT for now as it was causing
-#   problems for those building shared b/c of multiply defined symbols
-#    QCAD_SolverT.hpp
+    QCADT_Solver.hpp
     QCAD_CoupledPoissonSchrodinger.hpp
     QCAD_CoupledPSJacobian.hpp
     QCAD_CoupledPSPreconditioner.hpp

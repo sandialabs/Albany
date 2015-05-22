@@ -4,21 +4,21 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef QCAD_SOLVERT_H
-#define QCAD_SOLVERT_H
+#ifndef QCADT_SOLVERT_H
+#define QCADT_SOLVERT_H
 
 #include <iostream>
 
 #include "LOCA.H"
-#include "LOCA_Epetra.H"
-#include "Epetra_Vector.h"
-#include "Epetra_LocalMap.h"
-#include "LOCA_Epetra_ModelEvaluatorInterface.H"
-#include <NOX_Epetra_MultiVector.H>
+//#include "LOCA_Epetra.H"
+#include "Tpetra_Vector.hpp"
+#include "Tpetra_Map.hpp"
+//#include "LOCA_Epetra_ModelEvaluatorInterface.H"
+//#include <NOX_Epetra_MultiVector.H>
 
 #include "Albany_ModelEvaluator.hpp"
 #include "Albany_Utils.hpp"
-#include "Piro_Epetra_StokhosNOXObserver.hpp"
+//#include "Piro_Epetra_StokhosNOXObserver.hpp"
 
 #include "QCAD_MultiSolutionObserver.hpp"
 
@@ -39,7 +39,7 @@
 
 
 
-namespace QCAD {
+namespace QCADT {
   class SolverParamFn;
   class SolverResponseFn;
   class SolverSubSolver;
@@ -49,18 +49,18 @@ namespace QCAD {
  *
  */
 
-  class SolverT : Thyra::ModelEvaluatorDefaultBase<ST> {
+  class Solver : Thyra::ModelEvaluatorDefaultBase<ST> {
   public:
 
     /** \name Constructors/initializers */
     //@{
 
-      SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+      Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
               const Teuchos::RCP<const Teuchos_Comm>& commT,
               const Teuchos::RCP<const Tpetra_Vector>& initial_guessT); //OK
     //@}
 
-    ~SolverT(); //OK
+    ~Solver(); //OK
 
     Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_x_space() const;
     Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > get_f_space() const;
@@ -114,19 +114,19 @@ namespace QCAD {
 			      const std::map<std::string, SolverSubSolverData>& subSolversData);
 
     void fillSingleSubSolverParams(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT, const std::string& name, 
-				   QCAD::SolverSubSolver& subSolver, int nLeaveOffEnd=0) const;
+				   QCADT::SolverSubSolver& subSolver, int nLeaveOffEnd=0) const;
 
     SolverSubSolver CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, 
                                     const Teuchos::RCP<const Teuchos_Comm>& commT,
 				    const Teuchos::RCP<const Tpetra_Vector>& initial_guess  = Teuchos::null) const;
 
-    SolverSubSolverData CreateSubSolverData(const QCAD::SolverSubSolver& sub) const;
+    SolverSubSolverData CreateSubSolverData(const QCADT::SolverSubSolver& sub) const;
 
 
     const Teuchos::RCP<Teuchos::ParameterList>& getSubSolverParams(const std::string& name) const;
     Teuchos::RCP<const Teuchos::ParameterList> getValidProblemParameters() const;
 
-    /*void printResponses(const QCAD::SolverSubSolver& solver, 
+    /*void printResponses(const QCADT::SolverSubSolver& solver, 
 			const std::string& solverName, 
 			Teuchos::RCP<Teuchos::FancyOStream> out) const;
     */

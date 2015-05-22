@@ -4,9 +4,9 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#include "QCAD_SolverT.hpp"
-#include "QCAD_CoupledPoissonSchrodinger.hpp"
-#include "Piro_Epetra_LOCASolver.hpp"
+#include "QCADT_Solver.hpp"
+#include "QCADT_CoupledPoissonSchrodinger.hpp"
+//#include "Piro_Epetra_LOCASolver.hpp"
 
 #include "Petra_Converters.hpp"
 
@@ -18,7 +18,7 @@ Please remove when issue is resolved
 #undef BOOST_MATH_PROMOTE_DOUBLE_POLICY
 
 #include "Stokhos.hpp"
-#include "Stokhos_Epetra.hpp"
+//#include "Stokhos_Epetra.hpp"
 #include "Sacado_PCE_OrthogPoly.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
@@ -43,12 +43,12 @@ Please remove when issue is resolved
 
 
 
-namespace QCAD {
+namespace QCADT {
   
   void SolveModel(const SolverSubSolver& ss);
   void SolveModel(const SolverSubSolver& ss, 
 		  Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates);
-  void SolveModel(const QCAD::SolverSubSolver& ss, 
+  void SolveModel(const QCADT::SolverSubSolver& ss, 
 		  Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, 
 		  Teuchos::RCP<Albany::EigendataStruct>& pFinalEData);
   void SolveModel(const SolverSubSolver& ss, 
@@ -107,8 +107,8 @@ namespace QCAD {
 
 
 
-QCAD::SolverT::
-SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+QCADT::Solver::
+Solver(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
        const Teuchos::RCP<const Teuchos_Comm>& commT,
        const Teuchos::RCP<const Tpetra_Vector>& initial_guessT) :
   maxIter(0),ps_converge_tol(1e-6)
@@ -280,7 +280,7 @@ SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
   }    
 
   else TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-				  std::endl << "Error in QCAD::Solver constructor:  " <<
+				  std::endl << "Error in QCADT::Solver constructor:  " <<
 				  "Invalid problem name base: " << problemNameBase << std::endl);
 
   //Save the initial guess passed to the solver
@@ -306,7 +306,7 @@ SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
     }    
   }
 
-  //Determine whether we should support DgDp (all sub-solvers must support DpDg for QCAD::Solver to)
+  //Determine whether we should support DgDp (all sub-solvers must support DpDg for QCADT::Solver to)
   bSupportDpDg = true;  
   std::map<std::string, SolverSubSolverData>::const_iterator it;
   for(it = subSolversData.begin(); it != subSolversData.end(); ++it) {
@@ -371,13 +371,13 @@ SolverT(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 
 
 
-QCAD::SolverT::~SolverT()
+QCADT::Solver::~Solver()
 {
 }
 
 
 Teuchos::RCP<Teuchos::ParameterList> 
-QCAD::SolverT::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+QCADT::Solver::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 				     int numDims, int nEigen, const std::string& specialProcessing,
 				     const std::string& xmlOutputFile, const std::string& exoOutputFile) const
 {
@@ -408,7 +408,7 @@ QCAD::SolverT::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>
     Teuchos::createParameterList("Poisson Subapplication Parameters - " + specialProcessing);
   Teuchos::ParameterList& poisson_probParams = poisson_appParams->sublist("Problem",false);
   
-  poisson_probParams.set("Name", QCAD::strdim("Poisson",numDims));
+  poisson_probParams.set("Name", QCADT::strdim("Poisson",numDims));
   poisson_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
   poisson_probParams.set("Length Unit In Meters",lenUnit);
   poisson_probParams.set("Energy Unit In Electron Volts",energyUnit); 
@@ -734,7 +734,7 @@ QCAD::SolverT::createPoissonInputFile(const Teuchos::RCP<Teuchos::ParameterList>
 
 
 Teuchos::RCP<Teuchos::ParameterList> 
-QCAD::SolverT::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+QCADT::Solver::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 					 int numDims, int nEigen, const std::string& specialProcessing,
 					 const std::string& xmlOutputFile, const std::string& exoOutputFile) const
 {
@@ -757,7 +757,7 @@ QCAD::SolverT::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterL
     Teuchos::createParameterList("Schrodinger Subapplication Parameters");
   Teuchos::ParameterList& schro_probParams = schro_appParams->sublist("Problem",false);
 
-  schro_probParams.set("Name", QCAD::strdim("Schrodinger",numDims));
+  schro_probParams.set("Name", QCADT::strdim("Schrodinger",numDims));
   if(eigensolverName == "LOBPCG") 
     schro_probParams.set("Solution Method", "Eigensolve");
   else if(eigensolverName == "LOCA")
@@ -920,7 +920,7 @@ QCAD::SolverT::createSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterL
 
 
 Teuchos::RCP<Teuchos::ParameterList> 
-QCAD::SolverT::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
+QCADT::Solver::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::ParameterList>& appParams,
 						int numDims, int nEigen, const std::string& xmlOutputFile,
 						const std::string& exoOutputFile) const
 {
@@ -946,7 +946,7 @@ QCAD::SolverT::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Par
   Teuchos::ParameterList& ps_probParams = ps_appParams->sublist("Problem",false);
 
   ps_probParams.set("Solution Method", "QCAD Poisson-Schrodinger");  
-  ps_probParams.set("Name", QCAD::strdim("Poisson Schrodinger",numDims));
+  ps_probParams.set("Name", QCADT::strdim("Poisson Schrodinger",numDims));
   ps_probParams.set("Phalanx Graph Visualization Detail", vizDetail);
   ps_probParams.set("Length Unit In Meters",lenUnit);
   ps_probParams.set("Energy Unit In Electron Volts",energyUnit);
@@ -1068,7 +1068,7 @@ QCAD::SolverT::createPoissonSchrodingerInputFile(const Teuchos::RCP<Teuchos::Par
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
-QCAD::SolverT::get_x_space() const
+QCADT::Solver::get_x_space() const
 {
   Teuchos::RCP<const Tpetra_Map> neverused;
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > x_space = Thyra::createVectorSpace<ST>(neverused);
@@ -1076,7 +1076,7 @@ QCAD::SolverT::get_x_space() const
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
-QCAD::SolverT::get_f_space() const
+QCADT::Solver::get_f_space() const
 {
   Teuchos::RCP<const Tpetra_Map> neverused;
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > f_space = Thyra::createVectorSpace<ST>(neverused);
@@ -1084,11 +1084,11 @@ QCAD::SolverT::get_f_space() const
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
-QCAD::SolverT::get_p_space(int l) const
+QCADT::Solver::get_p_space(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
-                     "Error in QCAD::Solver::get_p_map():  " <<
+                     "Error in QCADT::Solver::get_p_map():  " <<
                      "Invalid parameter index l = " <<
                      l << std::endl);
   Teuchos::RCP<const Thyra::VectorSpaceBase<ST> > tpetra_param_space = Thyra::createVectorSpace<ST>(tpetra_param_map);
@@ -1096,11 +1096,11 @@ QCAD::SolverT::get_p_space(int l) const
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST> >
-QCAD::SolverT::get_g_space(int j) const
+QCADT::Solver::get_g_space(int j) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(j > num_g || j < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
-                     "Error in QCAD::Solver::get_g_map():  " <<
+                     "Error in QCADT::Solver::get_g_map():  " <<
                      "Invalid response index j = " <<
                      j << std::endl);
 
@@ -1112,24 +1112,24 @@ QCAD::SolverT::get_g_space(int j) const
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-QCAD::SolverT::getNominalValues() const
+QCADT::Solver::getNominalValues() const
 {
   return nominalValues;
 }
 
 
-/*Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_x_init() const
+/*Teuchos::RCP<const Epetra_Vector> QCADT::Solver::get_x_init() const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-			     "QCAD::Solver get_x_init() called but it shouldn't be");
+			     "QCADT::Solver get_x_init() called but it shouldn't be");
   return saved_initial_guess;
 }
 
-Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_p_init(int l) const
+Teuchos::RCP<const Epetra_Vector> QCADT::Solver::get_p_init(int l) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION(l >= num_p || l < 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl <<
-                     "Error in QCAD::Solver::get_p_init():  " <<
+                     "Error in QCADT::Solver::get_p_init():  " <<
                      "Invalid parameter index l = " <<
                      l << std::endl);
 
@@ -1141,13 +1141,13 @@ Teuchos::RCP<const Epetra_Vector> QCAD::Solver::get_p_init(int l) const
 }*/
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-QCAD::SolverT::createInArgs() const
+QCADT::Solver::createInArgs() const
 {
   return this->createInArgsImpl(); 
 }
 
 Thyra::ModelEvaluatorBase::InArgs<ST>
-QCAD::SolverT::createInArgsImpl() const
+QCADT::Solver::createInArgsImpl() const
 {
   Thyra::ModelEvaluatorBase::InArgsSetup<ST> inArgs; 
   inArgs.setModelEvalDescription("QCAD Solver Model Evaluator Description");
@@ -1156,7 +1156,7 @@ QCAD::SolverT::createInArgsImpl() const
 }
 
 Thyra::ModelEvaluatorBase::OutArgs<ST>
-QCAD::SolverT::createOutArgsImpl() const
+QCADT::Solver::createOutArgsImpl() const
 {
   //EpetraExt version based on Piro_Epetra_NOXSolver.cpp implementation
   Thyra::ModelEvaluatorBase::OutArgsSetup<ST> outArgs;
@@ -1176,7 +1176,7 @@ QCAD::SolverT::createOutArgsImpl() const
 }
 
 void 
-QCAD::SolverT::evalModelImpl(
+QCADT::Solver::evalModelImpl(
     const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT,
     const Thyra::ModelEvaluatorBase::OutArgs<ST>& outArgsT) const
 {
@@ -1203,7 +1203,7 @@ QCAD::SolverT::evalModelImpl(
       subSolvers[ "Poisson" ] = CreateSubSolver( getSubSolverParams("Poisson") , solverCommT, saved_initial_guess);
       fillSingleSubSolverParams(inArgsT, "Poisson", subSolvers[ "Poisson" ]);
 
-      QCAD::SolveModel(subSolvers["Poisson"]);
+      QCADT::SolveModel(subSolvers["Poisson"]);
       eigenvalueResponses.resize(0); // no eigenvalues in the Poisson problem
   }
 
@@ -1217,7 +1217,7 @@ QCAD::SolverT::evalModelImpl(
       Teuchos::RCP<Albany::EigendataStruct> eigenData = Teuchos::null;
       Teuchos::RCP<Albany::EigendataStruct> eigenDataNull = Teuchos::null;
 
-      QCAD::SolveModel(subSolvers["Schrodinger"], eigenDataNull, eigenData);
+      QCADT::SolveModel(subSolvers["Schrodinger"], eigenDataNull, eigenData);
       eigenvalueResponses = *(eigenData->eigenvalueRe); // copy eigenvalues to member variable
       for(std::size_t i=0; i<eigenvalueResponses.size(); ++i) eigenvalueResponses[i] *= -1; //apply minus sign (b/c of eigenval convention)
 
@@ -1227,9 +1227,9 @@ QCAD::SolverT::evalModelImpl(
          ConverterT::getTpetraVector(solnVec) :
          Teuchos::null;
 
-     //IK, FIXME: convert QCAD::MultiSolution_Observer to Thyra/Tpetra!
+     //IK, FIXME: convert QCADT::MultiSolution_Observer to Thyra/Tpetra!
      /* Teuchos::RCP<MultiSolution_Observer> final_obs = 
-	Teuchos::rcp(new QCAD::MultiSolution_Observer(subSolvers["Schrodinger"].app, mainAppParams)); 
+	Teuchos::rcp(new QCADT::MultiSolution_Observer(subSolvers["Schrodinger"].app, mainAppParams)); 
       final_obs->observeSolution(*solnVec, "ZeroSolution", eigenData, 0.0);*/
   }
 /*
@@ -1259,7 +1259,7 @@ QCAD::SolverT::evalModelImpl(
     }
     
     int offset = 0;
-    std::vector<Teuchos::RCP<QCAD::SolverResponseFn> >::const_iterator rit;
+    std::vector<Teuchos::RCP<QCADT::SolverResponseFn> >::const_iterator rit;
     
     for(rit = responseFns.begin(); rit != responseFns.end(); rit++) {
       (*rit)->fillSolverResponses( *gT, dgdpT, offset, subSolvers, paramFnVecs, bSupportDpDg, eigenvalueResponses);
@@ -1285,7 +1285,7 @@ QCAD::SolverT::evalModelImpl(
 
 
 /*void 
-QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
+QCADT::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 					  const OutArgs& outArgs,
 					  std::vector<double>& eigenvalueResponses,
 					  std::map<std::string, SolverSubSolver>& subSolvers) const
@@ -1304,7 +1304,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       // Create final observer to output evecs and Poisson solution
       Teuchos::RCP<Epetra_Vector> solnVec = subSolvers["Poisson"].responses_out->get_g(1); //get the *first* response vector (solution)
       Teuchos::RCP<MultiSolution_Observer> final_obs = 
-	Teuchos::rcp(new QCAD::MultiSolution_Observer(subSolvers["Poisson"].app, mainAppParams)); 
+	Teuchos::rcp(new QCADT::MultiSolution_Observer(subSolvers["Poisson"].app, mainAppParams)); 
       final_obs->observeSolution(*solnVec, "solution", eigenDataToPass, 0.0);
     }
   }
@@ -1318,8 +1318,8 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 
     // get combined S-P map -- utilize a dummy CoupledPoissonSchrodinger object to do this for us...
     const Teuchos::RCP<Teuchos::ParameterList>& ps_paramList = getSubSolverParams("PoissonSchrodinger");
-    const Teuchos::RCP<QCAD::CoupledPoissonSchrodinger> ps_dummy = 
-    	Teuchos::rcp(new QCAD::CoupledPoissonSchrodinger( ps_paramList, solverComm, Teuchos::null));
+    const Teuchos::RCP<QCADT::CoupledPoissonSchrodinger> ps_dummy = 
+    	Teuchos::rcp(new QCADT::CoupledPoissonSchrodinger( ps_paramList, solverComm, Teuchos::null));
 
     Teuchos::RCP<const Epetra_Map> combinedMap = ps_dummy->get_x_map();
 
@@ -1351,14 +1351,14 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
       
       (*(eigenDataToPass->eigenvectorIm))(myGlobalEls[k])->Norm2(&ignored_norm);
       if(ignored_norm > 1e-6) {
-	std::cout << "QCAD::Solver Warning: ignored imaginary part with norm = "
+	std::cout << "QCADT::Solver Warning: ignored imaginary part with norm = "
 		  << ignored_norm << std::endl;
       }
     }
     
     subSolvers[ "PoissonSchrodinger" ] = CreateSubSolver( getSubSolverParams("PoissonSchrodinger") , *solverComm, initial_guess);
     fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "PoissonSchrodinger" ], 1); //Fills (first) param vec with Poisson parameters
-    QCAD::SolveModel(subSolvers["PoissonSchrodinger"]);
+    QCADT::SolveModel(subSolvers["PoissonSchrodinger"]);
     
     //Pull eigenvalues out of solution into eigenvalueResponses
     Teuchos::RCP<Epetra_Vector> solutionVec = outArgs.get_g(1); // 2nd response vector == solution?? -- really should be *last* response vector
@@ -1384,7 +1384,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
     //Write parameters and responses of final Poisson solve
     // Don't worry about sensitivities yet - just output vectors
     
-    const QCAD::SolverSubSolver& ss = subSolvers["Poisson"];
+    const QCADT::SolverSubSolver& ss = subSolvers["Poisson"];
     int poisson_num_p = ss.params_in->Np();     // Number of *vectors* of parameters
     int poisson_num_g = ss.responses_out->Ng(); // Number of *vectors* of responses
     
@@ -1409,7 +1409,7 @@ QCAD::Solver::evalPoissonSchrodingerModel(const InArgs& inArgs,
 
 /*
 void 
-QCAD::Solver::evalCIModel(const InArgs& inArgs,
+QCADT::Solver::evalCIModel(const InArgs& inArgs,
 			  const OutArgs& outArgs,
 			  std::vector<double>& eigenvalueResponses,
 			  std::map<std::string, SolverSubSolver>& subSolvers) const
@@ -1435,12 +1435,12 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
 
   
 
-  //NOTE: Parameters are not supported in Schrodinger CI mode -- we don't take the QCAD::Solver parameteters
+  //NOTE: Parameters are not supported in Schrodinger CI mode -- we don't take the QCADT::Solver parameteters
   //  and fill any of the sub-solver parameters.  If we did, this would be the place to do it.
 
   //Initialize CI solver
   int n1PperBlock = nEigenvectors;
-  QCAD::CISolver ciSolver(n1PperBlock, solverComm, out);
+  QCADT::CISolver ciSolver(n1PperBlock, solverComm, out);
   Teuchos::RCP<Teuchos::ParameterList> ciParams = ciSolver.getDefaultParameterList();
   ciParams->set("Num Excitations", nCIExcitations);
   ciParams->set("Subbasis Particles 0", nCIParticles);	  
@@ -1456,7 +1456,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   // Schrodinger Solve -> eigenstates
   if(bVerbose) *out << "QCAD Solve: Schrodinger solve" << std::endl;
 
-  QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
+  QCADT::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
 		   eigenDataNull, eigenDataToPass);
 
   Teuchos::RCP<Epetra_Vector> rcp_nullvec = Teuchos::null;
@@ -1506,7 +1506,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   // Create final observer to output evecs (MB densities) and solution
   Teuchos::RCP<Epetra_Vector> solnVec = subSolvers["Schrodinger"].responses_out->get_g(1); //get the *first* response vector (solution)
   Teuchos::RCP<MultiSolution_Observer> final_obs = 
-    Teuchos::rcp(new QCAD::MultiSolution_Observer(subSolvers["Schrodinger"].app, mainAppParams)); 
+    Teuchos::rcp(new QCADT::MultiSolution_Observer(subSolvers["Schrodinger"].app, mainAppParams)); 
   final_obs->observeSolution(*solnVec, "ZeroSolution", eigenDataToPass, 0.0);
 
 #else
@@ -1520,7 +1520,7 @@ QCAD::Solver::evalCIModel(const InArgs& inArgs,
   
 /*
 void 
-QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
+QCADT::Solver::evalPoissonCIModel(const InArgs& inArgs,
 				 const OutArgs& outArgs,
 				 std::vector<double>& eigenvalueResponses,
 				 std::map<std::string, SolverSubSolver>& subSolvers) const
@@ -1532,7 +1532,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 
   //Initialize CI solver
   int n1PperBlock = nEigenvectors;
-  QCAD::CISolver ciSolver(n1PperBlock, solverComm, out);
+  QCADT::CISolver ciSolver(n1PperBlock, solverComm, out);
   Teuchos::RCP<Teuchos::ParameterList> ciParams = ciSolver.getDefaultParameterList();
 
   if(bUseTotalSpinSymmetry) {  //default is just Sz-symmetry
@@ -1603,7 +1603,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	if(bVerbose) *out << "QCAD Solve: No-charge Poisson computation" << std::endl;
 	subSolvers[ "NoChargePoisson" ] = CreateSubSolver( getSubSolverParams("NoChargePoisson") , *solverComm);
 	fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "NoChargePoisson" ]);
-	QCAD::SolveModel(subSolvers[ "NoChargePoisson" ], eigenDataToPass, eigenDataNull);
+	QCADT::SolveModel(subSolvers[ "NoChargePoisson" ], eigenDataToPass, eigenDataNull);
 	Teuchos::RCP<Epetra_Vector> g_noCharge = subSolvers[ "NoChargePoisson" ].responses_out->get_g(0); 
 	subSolvers[ "NoChargePoisson" ].freeUp();
 	
@@ -1611,7 +1611,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 	if(bVerbose) *out << "QCAD Solve: Delta Poisson computation" << std::endl;
 	subSolvers[ "DeltaPoisson" ] = CreateSubSolver( getSubSolverParams("DeltaPoisson") , *solverComm);
 	fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "DeltaPoisson" ]);
-	QCAD::SolveModel(subSolvers[ "DeltaPoisson" ], eigenDataToPass, eigenDataNull);
+	QCADT::SolveModel(subSolvers[ "DeltaPoisson" ], eigenDataToPass, eigenDataNull);
 	Teuchos::RCP<Epetra_Vector> g_delta =  subSolvers[ "DeltaPoisson" ].responses_out->get_g(0);
 	subSolvers[ "DeltaPoisson" ].freeUp();
 	
@@ -1682,7 +1682,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
       fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "CIPoisson" ]);
       
       if(bVerbose) *out << "QCAD Solve: CI Poisson iteration " << iter << std::endl;
-      QCAD::SolveModel(subSolvers["CIPoisson"], pStatesToPass, pStatesToLoop,
+      QCADT::SolveModel(subSolvers["CIPoisson"], pStatesToPass, pStatesToLoop,
 		       eigenDataToPass, eigenDataNull);
 
       //TODO - convergence criterion for Poisson-CI Loop -- now don't loop at all, just converge right away
@@ -1690,18 +1690,18 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 
       if(!bCIConverged) { //need to do a Schrodinger solve to update the eigenvectors based on the new potential
 	if(eigensolverName == "LOCA") {
-	  newShift = QCAD::GetEigensolverShift(subSolvers["CIPoisson"], shiftPercentBelowMin); //TODO: does CIPoisson have this repsonse?
-	  QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+	  newShift = QCADT::GetEigensolverShift(subSolvers["CIPoisson"], shiftPercentBelowMin); //TODO: does CIPoisson have this repsonse?
+	  QCADT::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
 	}
 
 	// Schrodinger Solve -> eigenstates
 	if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
-	QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
+	QCADT::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
 			 eigenDataNull, eigenDataToPass);
      
 	// Save solution for predictor-corrector outer iterations -- use in Poisson-CI loop? check if CIPoisson use predictor-corrector?
-	//QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", tmpContainer);
-	//QCAD::CopyContainerToState(tmpContainer, *pStatesToPass, "PS Previous Poisson Potential");
+	//QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", tmpContainer);
+	//QCADT::CopyContainerToState(tmpContainer, *pStatesToPass, "PS Previous Poisson Potential");
       }
 
     } // end of CI loop
@@ -1724,7 +1724,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
     // Create final observer to output evecs (MB densities) and Poisson solution
     Teuchos::RCP<Epetra_Vector> solnVec = subSolvers["CIPoisson"].responses_out->get_g(1); //get the *first* response vector (solution)
     Teuchos::RCP<MultiSolution_Observer> final_obs = 
-      Teuchos::rcp(new QCAD::MultiSolution_Observer(subSolvers["CIPoisson"].app, mainAppParams)); 
+      Teuchos::rcp(new QCADT::MultiSolution_Observer(subSolvers["CIPoisson"].app, mainAppParams)); 
     final_obs->observeSolution(*solnVec, "solution", eigenDataToPass, 0.0);
   }
 
@@ -1738,7 +1738,7 @@ QCAD::Solver::evalPoissonCIModel(const InArgs& inArgs,
 }
 */
 /*
-bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
+bool QCADT::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 			    std::map<std::string, SolverSubSolver>& subSolvers, 
 			    Teuchos::RCP<Albany::EigendataStruct>& eigenDataResult,
 			    bool bPrintNumOfQuantumElectrons) const
@@ -1764,7 +1764,7 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
   fillSingleSubSolverParams(inArgs, "Poisson", subSolvers[ "InitPoisson" ], 1); //any Poisson[x] parameters get set in initial poisson simulation too
 
   if(bVerbose) *out << "QCAD Solve: Initial Poisson solve (no quantum region) " << std::endl;
-  QCAD::SolveModel(subSolvers["InitPoisson"], pStatesToPass, pStatesToLoop);
+  QCADT::SolveModel(subSolvers["InitPoisson"], pStatesToPass, pStatesToLoop);
   
   //Create Schrodinger solver & fill its parameters
   subSolvers[ "Schrodinger" ] = CreateSubSolver( getSubSolverParams("Schrodinger") , *solverComm); // no initial guess
@@ -1791,9 +1791,9 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
   Teuchos::RCP<Teuchos::ParameterList> eigList; //used to hold memory I think - maybe unneeded?
 
   //save initial poisson quantities as first trial
-  QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", trialDensity);
-  QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", trialSolution);
-  if(mode == "mix") QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", acceptedSolution);
+  QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", trialDensity);
+  QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", trialSolution);
+  if(mode == "mix") QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", acceptedSolution);
 
   while(!bConverged && iter < maxIter)
   {
@@ -1805,26 +1805,26 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 
       // reset eigensolver shift for schrodinger solve
       if(eigensolverName == "LOCA") {
-	newShift = QCAD::GetEigensolverShift(subSolvers[ssForShift], shiftPercentBelowMin);
-	QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+	newShift = QCADT::GetEigensolverShift(subSolvers[ssForShift], shiftPercentBelowMin);
+	QCADT::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
       }
 
       if(mode == "damping" && iter > 1 && damping > 0) { //mix in damping * last_CB to current conduction band and divide by (1+damping)
 	if(bVerbose) *out << "QCAD Solve: Damping of " << damping << " applied before Schrodinger iteration " << iter << std::endl;
-	QCAD::AddContainerToState(prevConductionBand, *pStatesToLoop, "PS Conduction Band", damping, 1-damping);
+	QCADT::AddContainerToState(prevConductionBand, *pStatesToLoop, "PS Conduction Band", damping, 1-damping);
       }
       
       // Schrodinger Solve -> eigenstates
       if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
-      QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
+      QCADT::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
 		       eigenDataNull, eigenDataResult);
 
       // Inject last poisson solution into the states passed to the Poisson step (for use in predictor-corrector method)
-      QCAD::CopyContainerToState(trialSolution, *pStatesToPass, "PS Previous Poisson Potential");
+      QCADT::CopyContainerToState(trialSolution, *pStatesToPass, "PS Previous Poisson Potential");
 
       if(mode == "damping") {
 	// Save conduction band to be used for damping on the next schrodinger iteration
-	QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", prevConductionBand);
+	QCADT::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", prevConductionBand);
       }
 
       //We're all done with the initial poisson part, so free it up (this should only free the solver, not the responses or params)
@@ -1832,8 +1832,8 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 
       // Poisson Solve (no mixing)
       if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
-      QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 0.0);
-      QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
+      QCADT::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 0.0);
+      QCADT::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
 		       eigenDataResult, eigenDataNull);
 
       if(bPrintNumOfQuantumElectrons) {
@@ -1852,13 +1852,13 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
       ssForShift = "Poisson"; //from now on, get eigensolver shift from Poisson sub-solver
 
       //Get maximum difference (OLD)
-      //local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, trialSolution, "PS Saved Solution");
+      //local_maxDiff = QCADT::getMaxDifference(*pStatesToLoop, trialSolution, "PS Saved Solution");
       //solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
 
       //Get average difference (Norm2 / num of elements) TODO: condense into a function
-      local_maxDiff = QCAD::getNorm2Difference(*pStatesToLoop, trialSolution, "PS Saved Solution");
+      local_maxDiff = QCADT::getNorm2Difference(*pStatesToLoop, trialSolution, "PS Saved Solution");
       solverComm->SumAll(&local_maxDiff, &global_maxDiff, 1);
-      int global_nEls, local_nEls = QCAD::getElementCount(trialSolution);
+      int global_nEls, local_nEls = QCADT::getElementCount(trialSolution);
       solverComm->SumAll(&local_nEls, &global_nEls, 1);
       global_maxDiff /= global_nEls;
 
@@ -1876,7 +1876,7 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 			    << global_maxDiff << " (tol=" << ps_converge_tol << ")" << std::endl;
 
 	  //if( fabs(stepSize-1.0) < 1e-6 ) //if this is the first step, mix trial density with mixDensity, since trial is 2nd after last accepted density
-	  //  QCAD::AddContainerToContainer(trialDensity, mixDensity, stepSize, 1-stepSize);
+	  //  QCADT::AddContainerToContainer(trialDensity, mixDensity, stepSize, 1-stepSize);
 
 	  stepSize /= STEP_DIVISOR;
 	  stepAccepted = false;
@@ -1896,7 +1896,7 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 	  CopyContainer(trialSolution, acceptedSolution);
 
 	  // save the density one P-S iteration after the accepted density for mixing
-	  QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", mixDensity);
+	  QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", mixDensity);
 
 	  consecutiveAccepts++;
 	  if(consecutiveAccepts == 3 && stepSize+1e-6 < 1.0) stepSize *= STEP_DIVISOR;
@@ -1909,28 +1909,28 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 
 	  // Set mixing based on step size: new trial density = (1-2*stepSize)*acceptedDensity + 2*stepSize * ( trialDensity + currentDensity )/2.0
 	  //  (factors of 2 so that first mixing step (stepSize = 0.5) just gives average of initial trial density and it's resulting density)
-	  //QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0 - stepSize);
-	  //QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0);
+	  //QCADT::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0 - stepSize);
+	  //QCADT::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0);
 
-	  //double debug_norm2 = QCAD::getNorm2(acceptedDensity, solverComm);
+	  //double debug_norm2 = QCADT::getNorm2(acceptedDensity, solverComm);
 	  //if(bVerbose) *out << "QCAD Solve: DEBUG accepted density norm = " << debug_norm2 << std::endl;
-	  QCAD::CopyContainerToState(acceptedDensity, *pStatesToPass, "PS Previous Electron Density");
-	  //QCAD::AddContainerToState(trialDensity, *pStatesToPass, "PS Previous Electron Density", stepSize/(1.-stepSize), (1.-2*stepSize)/(1.-stepSize) );
-	  //QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1 - stepSize);
-	  QCAD::AddContainerToState(mixDensity, *pStatesToPass, "PS Previous Electron Density", stepSize, 1-stepSize); //mix last accepted density and the density following it
-	  QCAD::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0);
+	  QCADT::CopyContainerToState(acceptedDensity, *pStatesToPass, "PS Previous Electron Density");
+	  //QCADT::AddContainerToState(trialDensity, *pStatesToPass, "PS Previous Electron Density", stepSize/(1.-stepSize), (1.-2*stepSize)/(1.-stepSize) );
+	  //QCADT::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1 - stepSize);
+	  QCADT::AddContainerToState(mixDensity, *pStatesToPass, "PS Previous Electron Density", stepSize, 1-stepSize); //mix last accepted density and the density following it
+	  QCADT::SetPreviousDensityMixing(subSolvers["Poisson"].params_in, 1.0);
 	
 	  // Poisson Solve, mixing densities from last Schrodinger solve ("bad" evecs) and last accepted density (acceptedDensity)
 	  if(bVerbose) *out << "QCAD Solve: Poisson re-mix iteration " << iter << " (step = " << stepSize << ")" << std::endl;
-	  QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
+	  QCADT::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
 			   eigenDataResult, eigenDataNull);
       }
 
 
 
       //Quantities from last Poisson step become new trial
-      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", trialDensity);
-      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", trialSolution);
+      QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Electron Density", trialDensity);
+      QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", trialSolution);
       //now run Schro then Poisson to check this new trial...
 
     } // end of while(!stepAccepted)
@@ -1956,10 +1956,10 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 
     //A step has been accepted.  Save the conduction band and solution:
       // Save conduction band to be used to "mix down" the next step
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", savedConductionBand);
+    QCADT::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", savedConductionBand);
 
       // Save solution for predictor-corrector outer iterations      
-    QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", savedSolution);
+    QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", savedSolution);
 
     stepAccepted = false; stepSize = 1.0;
     while(!stepAccepted) {
@@ -1968,43 +1968,43 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
       //   is in savedConductionBand container, and the current "trial" conduction band (depends on step size)
       if(fabs(stepSize-1.0) > 1e-8) { //if this isn't the first (unity) step, mix with the last accepted conduction band
 	if(bVerbose) *out << "QCAD Solve: Stepsize of " << stepSize << " applied before Schrodinger iteration " << iter << std::endl;
-	//QCAD::CopyContainerToState(unityStepTrialConductionBand, *pStatesToLoop, "PS Conduction Band");
-	//QCAD::AddContainerToState(savedConductionBand, *pStatesToLoop, "PS Conduction Band", 1-stepSize, stepSize);
-	QCAD::AddContainerToState(savedConductionBand, *pStatesToLoop, "PS Conduction Band", 0.5, 0.5);
+	//QCADT::CopyContainerToState(unityStepTrialConductionBand, *pStatesToLoop, "PS Conduction Band");
+	//QCADT::AddContainerToState(savedConductionBand, *pStatesToLoop, "PS Conduction Band", 1-stepSize, stepSize);
+	QCADT::AddContainerToState(savedConductionBand, *pStatesToLoop, "PS Conduction Band", 0.5, 0.5);
       }
 
       // Save the conduction band that will be used by the schrodinger step (for later comparison with what comes out of the poisson step)
-      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", trialConductionBand);
+      QCADT::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", trialConductionBand);
 
       // reset eigensolver shift for schrodinger solve
       if(eigensolverName == "LOCA") {
-	newShift = QCAD::GetEigensolverShift(subSolvers[ssForShift], shiftPercentBelowMin);
-	QCAD::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
+	newShift = QCADT::GetEigensolverShift(subSolvers[ssForShift], shiftPercentBelowMin);
+	QCADT::ResetEigensolverShift(subSolvers["Schrodinger"].model, newShift, eigList);
       }
 
       // Schrodinger Solve -> eigenstates
       if(bVerbose) *out << "QCAD Solve: Schrodinger iteration " << iter << std::endl;
-      QCAD::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
+      QCADT::SolveModel(subSolvers["Schrodinger"], pStatesToLoop, pStatesToPass,
 		       eigenDataNull, eigenDataToPass);
 
       // Inject saved solution (of last accepted poisson step) into states given to Poisson step (for use in predictor-corrector method)
-      QCAD::CopyContainerToState(savedSolution, *pStatesToPass, "PS Previous Poisson Potential");
+      QCADT::CopyContainerToState(savedSolution, *pStatesToPass, "PS Previous Poisson Potential");
 
       // Poisson Solve
       if(bVerbose) *out << "QCAD Solve: Poisson iteration " << iter << std::endl;
-      QCAD::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
+      QCADT::SolveModel(subSolvers["Poisson"], pStatesToPass, pStatesToLoop,
 		       eigenDataToPass, eigenDataNull);
 
       // Housekeeping...
       eigenDataNull = Teuchos::null;
       ssForShift = "Poisson"; //from now on, get eigensolver shift from Poisson sub-solver
       if(fabs(stepSize-1.0) <= 1e-8) //record first trial step which uses stepSize == 1.0
-	QCAD::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", unityStepTrialConductionBand);
+	QCADT::CopyStateToContainer(*pStatesToLoop, "PS Conduction Band", unityStepTrialConductionBand);
 
-      QCAD::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", savedSolution); //TRYING OUT... HERE
+      QCADT::CopyStateToContainer(*pStatesToLoop, "PS Saved Solution", savedSolution); //TRYING OUT... HERE
 
       // eval whether difference in potential (i.e. conduction band) has decreased
-      local_maxDiff = QCAD::getMaxDifference(*pStatesToLoop, trialConductionBand, "PS Conduction Band");
+      local_maxDiff = QCADT::getMaxDifference(*pStatesToLoop, trialConductionBand, "PS Conduction Band");
       solverComm->MaxAll(&local_maxDiff, &global_maxDiff, 1);
       if(last_global_maxDiff > global_maxDiff || stepSize/2 < minStep) {
 	stepAccepted = true;
@@ -2025,7 +2025,7 @@ bool QCAD::Solver::doPSLoop(const std::string& mode, const InArgs& inArgs,
 //}
 
 
-void QCAD::SolverT::setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
+void QCADT::Solver::setupParameterMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver,
 					 const std::map<std::string, SolverSubSolverData>& subSolversData )
 {
   std::string s;
@@ -2036,12 +2036,12 @@ void QCAD::SolverT::setupParameterMapping(const Teuchos::ParameterList& list, co
 
     for(std::size_t i=0; i<nParameters; i++) {
       s = list.get<std::string>(Albany::strint("Parameter",i));
-      s = QCAD::string_remove_whitespace(s);
-      fnStrings = QCAD::string_split(s,';',true);
+      s = QCADT::string_remove_whitespace(s);
+      fnStrings = QCADT::string_split(s,';',true);
     
-      std::vector<Teuchos::RCP<QCAD::SolverParamFn> > fnVec;
+      std::vector<Teuchos::RCP<QCADT::SolverParamFn> > fnVec;
       for(std::size_t j=0; j<fnStrings.size(); j++)
-	fnVec.push_back( Teuchos::rcp(new QCAD::SolverParamFn(fnStrings[j], subSolversData)) );
+	fnVec.push_back( Teuchos::rcp(new QCADT::SolverParamFn(fnStrings[j], subSolversData)) );
 
       paramFnVecs.push_back( fnVec );
     }
@@ -2055,20 +2055,20 @@ void QCAD::SolverT::setupParameterMapping(const Teuchos::ParameterList& list, co
 
     for(std::size_t i=0; i<nParameters; i++) {
       std::ostringstream ss;
-      std::vector<Teuchos::RCP<QCAD::SolverParamFn> > fnVec;
+      std::vector<Teuchos::RCP<QCADT::SolverParamFn> > fnVec;
 
       ss << defaultSubSolver << "[" << i << "]";  // "defaultSubSolver[i]"
-      fnVec.push_back( Teuchos::rcp(new QCAD::SolverParamFn( ss.str(), subSolversData)) );
+      fnVec.push_back( Teuchos::rcp(new QCADT::SolverParamFn( ss.str(), subSolversData)) );
       paramFnVecs.push_back( fnVec );
     }
   }
 }
 
 
-void QCAD::SolverT::setupResponseMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver, int nEigenvalues,
+void QCADT::Solver::setupResponseMapping(const Teuchos::ParameterList& list, const std::string& defaultSubSolver, int nEigenvalues,
 					const std::map<std::string, SolverSubSolverData>& subSolversData )
 {
-  Teuchos::RCP<QCAD::SolverResponseFn> fn;
+  Teuchos::RCP<QCADT::SolverResponseFn> fn;
 
   if( list.isType<int>("Number") ) {
     int number = list.get<int>("Number");
@@ -2077,7 +2077,7 @@ void QCAD::SolverT::setupResponseMapping(const Teuchos::ParameterList& list, con
     nResponseDoubles = 0;
     for(int i=0; i<number; i++) {
       s = list.get<std::string>(Albany::strint("Response",i));
-      fn = Teuchos::rcp(new QCAD::SolverResponseFn(s, subSolversData, nEigenvalues));
+      fn = Teuchos::rcp(new QCADT::SolverResponseFn(s, subSolversData, nEigenvalues));
       nResponseDoubles += fn->getNumDoubles();
       responseFns.push_back( fn );
     }
@@ -2086,20 +2086,20 @@ void QCAD::SolverT::setupResponseMapping(const Teuchos::ParameterList& list, con
   else {   // When "Number" is not given, echo all of the responses of the default SubSolver
     std::ostringstream ss;
     ss << defaultSubSolver << "[:]"; // all responses of defaultSubSolver
-    fn = Teuchos::rcp(new QCAD::SolverResponseFn(ss.str(), subSolversData, nEigenvalues));
+    fn = Teuchos::rcp(new QCADT::SolverResponseFn(ss.str(), subSolversData, nEigenvalues));
     nResponseDoubles = fn->getNumDoubles();
     responseFns.push_back( fn );
   }
 }
 
-void QCAD::SolverT::fillSingleSubSolverParams(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT, const std::string& name,
-					     QCAD::SolverSubSolver& subSolver, int nLeaveOffEnd) const
+void QCADT::Solver::fillSingleSubSolverParams(const Thyra::ModelEvaluatorBase::InArgs<ST>& inArgsT, const std::string& name,
+					     QCADT::SolverSubSolver& subSolver, int nLeaveOffEnd) const
 {
   if(num_p > 0) {   // or could use: (inArgs.Np() > 0)
     const Teuchos::RCP<const Thyra::VectorBase<ST> > p = inArgsT.get_p(0);
     const Teuchos::RCP<const Tpetra_Vector> pT = ConverterT::getConstTpetraVector(p);
     const Teuchos::ArrayRCP<const ST> pT_constView = pT->get1dView();
-    std::vector<Teuchos::RCP<QCAD::SolverParamFn> >::const_iterator pit;
+    std::vector<Teuchos::RCP<QCADT::SolverParamFn> >::const_iterator pit;
     for(std::size_t i=0; i<nParameters; i++) {
       for(pit = paramFnVecs[i].begin(); pit != paramFnVecs[i].end()-nLeaveOffEnd; pit++) {
 	(*pit)->fillSingleSubSolverParams(pT_constView[i], name, subSolver);
@@ -2109,20 +2109,20 @@ void QCAD::SolverT::fillSingleSubSolverParams(const Thyra::ModelEvaluatorBase::I
 }
 
 
-const Teuchos::RCP<Teuchos::ParameterList>& QCAD::SolverT::getSubSolverParams(const std::string& name) const
+const Teuchos::RCP<Teuchos::ParameterList>& QCADT::Solver::getSubSolverParams(const std::string& name) const
 {
   return subProblemAppParams.find(name)->second;
 }
 
 
-QCAD::SolverSubSolver 
-QCAD::SolverT::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Teuchos::RCP<const Teuchos_Comm>& commT,
+QCADT::SolverSubSolver 
+QCADT::Solver::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appParams, const Teuchos::RCP<const Teuchos_Comm>& commT,
 			      const Teuchos::RCP<const Tpetra_Vector>& initial_guessT) const
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-  QCAD::SolverSubSolver ret; //value to return
+  QCADT::SolverSubSolver ret; //value to return
 
   RCP<Teuchos::FancyOStream> out(Teuchos::VerboseObjectBase::getDefaultOStream());
   *out << "QCAD Solver creating solver from " << appParams->name() 
@@ -2198,10 +2198,10 @@ QCAD::SolverT::CreateSubSolver(const Teuchos::RCP<Teuchos::ParameterList> appPar
   return ret;
 }
 
-QCAD::SolverSubSolverData
-QCAD::SolverT::CreateSubSolverData(const QCAD::SolverSubSolver& sub) const
+QCADT::SolverSubSolverData
+QCADT::Solver::CreateSubSolverData(const QCADT::SolverSubSolver& sub) const
 {
-  QCAD::SolverSubSolverData ret;
+  QCADT::SolverSubSolverData ret;
   if( sub.params_in->Np() > 0 && sub.responses_out->Ng() > 0 ) {
     ret.deriv_support = sub.modelT->createOutArgs().supports(Thyra::ModelEvaluatorBase::OUT_ARG_DgDp, 0, 0);
   }
@@ -2241,7 +2241,7 @@ QCAD::SolverT::CreateSubSolverData(const QCAD::SolverSubSolver& sub) const
 }
 
 /*
-void QCAD::Solver::printResponses(const SolverSubSolver& solver, const std::string& solverName, Teuchos::RCP<Teuchos::FancyOStream> out) const
+void QCADT::Solver::printResponses(const SolverSubSolver& solver, const std::string& solverName, Teuchos::RCP<Teuchos::FancyOStream> out) const
 {
   int solver_num_p = solver.params_in->Np();     // Number of *vectors* of parameters
   int solver_num_g = solver.responses_out->Ng(); // Number of *vectors* of responses
@@ -2267,7 +2267,7 @@ void QCAD::Solver::printResponses(const SolverSubSolver& solver, const std::stri
 */
 
 Teuchos::RCP<const Teuchos::ParameterList>
-QCAD::SolverT::getValidProblemParameters() const
+QCADT::Solver::getValidProblemParameters() const
 {
   Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::createParameterList("ValidPoissonSchrodingerProblemParams");
 
@@ -2337,35 +2337,35 @@ QCAD::SolverT::getValidProblemParameters() const
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  QCAD::SolverParamFn  (parameter function object) ////////////////////////////////////////////////////////////////////
+//  QCADT::SolverParamFn  (parameter function object) ////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Function string can be of form:
 // "fn1(a,b)>fn2(c,d) ... >SolverName[X:Y]  OR
 // "SolverName[X:Y]"
-QCAD::SolverParamFn::SolverParamFn(const std::string& fnString, 
-			     const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData)
+QCADT::SolverParamFn::SolverParamFn(const std::string& fnString, 
+			     const std::map<std::string, QCADT::SolverSubSolverData>& subSolversData)
 {
-  std::vector<std::string> fnsAndTarget = QCAD::string_split(fnString,'>',true);
+  std::vector<std::string> fnsAndTarget = QCADT::string_split(fnString,'>',true);
   std::vector<std::string>::const_iterator it;  
   std::map<std::string,std::string> target;
 
   if( fnsAndTarget.begin() != fnsAndTarget.end() ) {
     for(it=fnsAndTarget.begin(); it != fnsAndTarget.end()-1; it++) {
-      filters.push_back( QCAD::string_parse_function( *it ) );
+      filters.push_back( QCADT::string_parse_function( *it ) );
     }
     it = fnsAndTarget.end()-1;
-    target = QCAD::string_parse_arrayref( *it );
+    target = QCADT::string_parse_arrayref( *it );
     targetName = target["name"];
     
-    targetIndices = QCAD::string_expand_compoundindex(target["index"], 0, 
+    targetIndices = QCADT::string_expand_compoundindex(target["index"], 0, 
 						      (subSolversData.find(targetName)->second).pLength[0]);
   } 
 }
 
 
-void QCAD::SolverParamFn::fillSingleSubSolverParams(double parameterValue, const std::string& subSolverName,
-						    QCAD::SolverSubSolver& subSolver) const
+void QCADT::SolverParamFn::fillSingleSubSolverParams(double parameterValue, const std::string& subSolverName,
+						    QCADT::SolverSubSolver& subSolver) const
 {
   if(subSolverName != targetName) return;
 
@@ -2398,8 +2398,8 @@ void QCAD::SolverParamFn::fillSingleSubSolverParams(double parameterValue, const
 
 
 /*
-void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue, 
-   const std::map<std::string, QCAD::SolverSubSolver>& subSolvers) const
+void QCADT::SolverParamFn::fillSubSolverParams(double parameterValue, 
+   const std::map<std::string, QCADT::SolverSubSolver>& subSolvers) const
 {
   std::vector< std::vector<std::string> >::const_iterator fit;
   for(fit = filters.begin(); fit != filters.end(); ++fit) {
@@ -2426,8 +2426,8 @@ void QCAD::SolverParamFn::fillSubSolverParams(double parameterValue,
   inArgs->set_p(0, p);
 }*/
 
-double QCAD::SolverParamFn::
-getInitialParam(const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData) const
+double QCADT::SolverParamFn::
+getInitialParam(const std::map<std::string, QCADT::SolverSubSolverData>& subSolversData) const
 {
   //get first target parameter's initial value
   double initVal;
@@ -2456,7 +2456,7 @@ getInitialParam(const std::map<std::string, QCAD::SolverSubSolverData>& subSolve
   return initVal;
 }
 
-double QCAD::SolverParamFn::
+double QCADT::SolverParamFn::
 getFilterScaling() const
 {
   double scaling = 1.0;
@@ -2477,18 +2477,18 @@ getFilterScaling() const
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  QCAD::SolverResponseFn  (response function object) //////////////////////////////////////////////////////////////////
+//  QCADT::SolverResponseFn  (response function object) //////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Function string can be of form:
 // "fn1(a,SolverName[X:Y],b)  OR
 // "SolverName[X:Y]"
-QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString, 
-					 const std::map<std::string, QCAD::SolverSubSolverData>& subSolversData,
+QCADT::SolverResponseFn::SolverResponseFn(const std::string& fnString, 
+					 const std::map<std::string, QCADT::SolverSubSolverData>& subSolversData,
 					 int nEigenvalues)
 {
   using std::string;
-  std::vector<std::string> fnsAndTarget = QCAD::string_split(fnString,'>',true);
+  std::vector<std::string> fnsAndTarget = QCADT::string_split(fnString,'>',true);
   std::vector<std::string>::const_iterator it;  
   std::map<std::string,std::string> arrayRef;
   ArrayRef ar;
@@ -2497,14 +2497,14 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
   //Case: no function name given
   if( fnString.find_first_of('(') == string::npos ) { 
     fnName = "nop";
-    arrayRef = QCAD::string_parse_arrayref( fnString );
+    arrayRef = QCADT::string_parse_arrayref( fnString );
     ar.name = arrayRef["name"];
 
     if(ar.name == "Eigenvalue") {
-      ar.indices = QCAD::string_expand_compoundindex(arrayRef["index"], 0, nEigenvalues);
+      ar.indices = QCADT::string_expand_compoundindex(arrayRef["index"], 0, nEigenvalues);
     }
     else {
-      ar.indices = QCAD::string_expand_compoundindex(arrayRef["index"], 0, (subSolversData.find(ar.name)->second).gLength[0]);
+      ar.indices = QCADT::string_expand_compoundindex(arrayRef["index"], 0, (subSolversData.find(ar.name)->second).gLength[0]);
     }
     params.push_back(ar);
     nParams += ar.indices.size();
@@ -2512,7 +2512,7 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
 
   //Case: function name given
   else {
-    std::vector<std::string> fnAndParams = QCAD::string_parse_function( fnString );
+    std::vector<std::string> fnAndParams = QCADT::string_parse_function( fnString );
     fnName = fnAndParams[0];
 
     for(std::size_t i=1; i<fnAndParams.size(); i++) {
@@ -2525,9 +2525,9 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
 	nParams += 1;
       }
       else {
-	arrayRef = QCAD::string_parse_arrayref( fnAndParams[i] );
+	arrayRef = QCADT::string_parse_arrayref( fnAndParams[i] );
 	ar.name = arrayRef["name"];
-	ar.indices = QCAD::string_expand_compoundindex(arrayRef["index"], 0, (subSolversData.find(ar.name)->second).gLength[0]);
+	ar.indices = QCADT::string_expand_compoundindex(arrayRef["index"], 0, (subSolversData.find(ar.name)->second).gLength[0]);
 
 	params.push_back(ar);
 	nParams += ar.indices.size();
@@ -2565,9 +2565,9 @@ QCAD::SolverResponseFn::SolverResponseFn(const std::string& fnString,
 }
 
 
-void QCAD::SolverResponseFn::fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP<Tpetra_MultiVector>& dgdpT, int offset,
-				 const std::map<std::string, QCAD::SolverSubSolver>& subSolvers,
-				 const std::vector<std::vector<Teuchos::RCP<QCAD::SolverParamFn> > >& paramFnVecs,
+void QCADT::SolverResponseFn::fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP<Tpetra_MultiVector>& dgdpT, int offset,
+				 const std::map<std::string, QCADT::SolverSubSolver>& subSolvers,
+				 const std::vector<std::vector<Teuchos::RCP<QCADT::SolverParamFn> > >& paramFnVecs,
 				 bool bSupportDpDg, const std::vector<double>& eigenvalueResponses) const
 {
   std::size_t nParameters = paramFnVecs.size();
@@ -2634,7 +2634,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP
       }
 
       else {
-	const QCAD::SolverSubSolver& solver = subSolvers.find(solverName)->second;
+	const QCADT::SolverSubSolver& solver = subSolvers.find(solverName)->second;
 	const Teuchos::RCP<Thyra::VectorBase<ST> > sub_g = solver.responses_out->get_g(0); // only use first g vector
         sub_gT = Teuchos::nonnull(sub_g) ?
            ConverterT::getTpetraVector(sub_g) :
@@ -2658,9 +2658,9 @@ void QCAD::SolverResponseFn::fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP
 	  if(dgdpT != Teuchos::null) {
 	    std::vector<double> dgdp_accum(nParameters,0.0);
 	    for(std::size_t i=0; i<nParameters; i++) {
-	      const std::vector<Teuchos::RCP<QCAD::SolverParamFn> >& paramFnVec = paramFnVecs[i];
+	      const std::vector<Teuchos::RCP<QCADT::SolverParamFn> >& paramFnVec = paramFnVecs[i];
 	      for(std::size_t j=0; j<paramFnVec.size(); j++) {
-		const QCAD::SolverParamFn& paramFn = *(paramFnVec[j]);
+		const QCADT::SolverParamFn& paramFn = *(paramFnVec[j]);
 		
 		std::string paramTargetName = paramFn.getTargetName();
 		const std::vector<int>& paramTargetIndices = paramFn.getTargetIndices();
@@ -2792,7 +2792,7 @@ void QCAD::SolverResponseFn::fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP
       */
       gT_nonConstView[offset] = sub_dgdpT_constView[pIndex]; 
 
-      if(dgdpT != Teuchos::null) { //set QCAD::Solver derivative to zero (no derivatives of derivatives)
+      if(dgdpT != Teuchos::null) { //set QCADT::Solver derivative to zero (no derivatives of derivatives)
 	for(std::size_t k=0; k < nParameters; k++)
 	  dgdpT->replaceGlobalValue(offset,k, 0.0); 
       }
@@ -2811,10 +2811,10 @@ void QCAD::SolverResponseFn::fillSolverResponses(Tpetra_Vector& gT, Teuchos::RCP
 #ifdef ALBANY_CI
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  QCAD::CISolver    ///////////////////////////////////////////////////////////////////////////////////////////////////
+//  QCADT::CISolver    ///////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
-QCAD::CISolver::CISolver(int n1PSpinlessStates, Teuchos::RCP<const Epetra_Comm> eComm,
+QCADT::CISolver::CISolver(int n1PSpinlessStates, Teuchos::RCP<const Epetra_Comm> eComm,
 			 Teuchos::RCP<Teuchos::FancyOStream> outStream)
   :n1PperBlock(n1PSpinlessStates)
 {
@@ -2850,7 +2850,7 @@ QCAD::CISolver::CISolver(int n1PSpinlessStates, Teuchos::RCP<const Epetra_Comm> 
 
 
 Teuchos::RCP<Teuchos::ParameterList> 
-QCAD::CISolver::getDefaultParameterList() const
+QCADT::CISolver::getDefaultParameterList() const
 {
   Teuchos::RCP<Teuchos::ParameterList> defaultPL = Teuchos::rcp( new Teuchos::ParameterList );
 
@@ -2923,7 +2923,7 @@ QCAD::CISolver::getDefaultParameterList() const
 // fill 1P matrix without using delta_ij contribution (see above) -- appropriate when the potential energy
 //  used in Schrodinger solve that gives eigenData1P is fixed and not considered to be in part due to the 
 //  CI electrons themselves.
-void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigenData1P)
+void QCADT::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigenData1P)
 {
   const double IMAG_TOL = 1e-8; //tolerace for imaginary parts of eigenvalues
 
@@ -2948,7 +2948,7 @@ void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigen
 
 
 // fill 1P matrix using delta_ij contribution (see above)
-void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigenData1P,
+void QCADT::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigenData1P,
 			      const Teuchos::RCP<Epetra_Vector>& g_noCharge,
 			      const Teuchos::RCP<Epetra_Vector>& g_delta,
 			      double deltaScale, bool bRealEvecs, bool bVerbose)
@@ -2990,7 +2990,7 @@ void QCAD::CISolver::fill1Pmx(const Teuchos::RCP<Albany::EigendataStruct>& eigen
 }
 
 
-void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
+void QCADT::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 			      const SolverSubSolver* coulombSolver, 
 			      const SolverSubSolver* coulombSolver_ImPart,
 			      const Teuchos::RCP<Epetra_Vector>& g_noCharge,
@@ -3006,7 +3006,7 @@ void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
       // Coulomb Poisson Solve - get coulomb els in reponse vector
       if(bVerbose) *out << "QCAD Solve: Coulomb " << i2 << "," << i4 << " Poisson" << std::endl;
       SetCoulombParams( coulombSolver->params_in, i2,i4 ); 
-      QCAD::SolveModel(*coulombSolver, eigenData1P, eigenDataNull);
+      QCADT::SolveModel(*coulombSolver, eigenData1P, eigenDataNull);
       g_reSrc = coulombSolver->responses_out->get_g(0); //only use *first* response vector    
 
       *out << "DEBUG: g_reSrc vector:" << std::endl; //DEBUG
@@ -3017,7 +3017,7 @@ void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 	// Coulomb Poisson Solve - get imaginary coulomb els in reponse vector
 	if(bVerbose) *out << "QCAD Solve: Imaginary Coulomb " << i2 << "," << i4 << " Poisson" << std::endl;
 	SetCoulombParams( coulombSolver_ImPart->params_in, i2,i4 ); 
-	QCAD::SolveModel(*coulombSolver_ImPart, eigenData1P, eigenDataNull);
+	QCADT::SolveModel(*coulombSolver_ImPart, eigenData1P, eigenDataNull);
 	g_imSrc = coulombSolver_ImPart->responses_out->get_g(0); //only use *first* response vector    
 	      
 	*out << "DEBUG: g_imSrc vector:" << std::endl; //DEBUG
@@ -3128,7 +3128,7 @@ void QCAD::CISolver::fill2Pmx(Teuchos::RCP<Albany::EigendataStruct> eigenData1P,
 
 
 Teuchos::RCP<AlbanyCI::Solution> 
-QCAD::CISolver::Solve(Teuchos::RCP<Teuchos::ParameterList> AlbanyCIList) const
+QCADT::CISolver::Solve(Teuchos::RCP<Teuchos::ParameterList> AlbanyCIList) const
 {
   AlbanyCI::Solver solver;
   return solver.solve(AlbanyCIList, mx1P, mx2P, comm, out); //Note: out cannot be null
@@ -3136,7 +3136,7 @@ QCAD::CISolver::Solve(Teuchos::RCP<Teuchos::ParameterList> AlbanyCIList) const
 
 
 Teuchos::RCP<Epetra_MultiVector>
-QCAD::CISolver::ComputeStateDensities(Teuchos::RCP<Albany::EigendataStruct> eigenData1P, Teuchos::RCP<AlbanyCI::Solution> soln)
+QCADT::CISolver::ComputeStateDensities(Teuchos::RCP<Albany::EigendataStruct> eigenData1P, Teuchos::RCP<AlbanyCI::Solution> soln)
 {
   std::vector<double> eigenvalues = soln->getEigenvalues();
   int nCIevals = eigenvalues.size();
@@ -3183,7 +3183,7 @@ QCAD::CISolver::ComputeStateDensities(Teuchos::RCP<Albany::EigendataStruct> eige
 }
 
 
-void QCAD::CISolver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const
+void QCADT::CISolver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, int i2, int i4) const
 {
   TEUCHOS_TEST_FOR_EXCEPTION( inArgs->Np() < 1, Teuchos::Exceptions::InvalidParameter, 
 			      "Cannot set coulomb parameters because there are no parameter vectors.");
@@ -3204,7 +3204,7 @@ void QCAD::CISolver::SetCoulombParams(const Teuchos::RCP<EpetraExt::ModelEvaluat
 
 // Helper Functions
 /*
-void QCAD::SetPreviousDensityMixing(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, double mixingFactor)
+void QCADT::SetPreviousDensityMixing(const Teuchos::RCP<EpetraExt::ModelEvaluator::InArgs> inArgs, double mixingFactor)
 {
   TEUCHOS_TEST_FOR_EXCEPTION( inArgs->Np() < 1, Teuchos::Exceptions::InvalidParameter, 
 			      "Cannot set previous density mixing because there are no parameter vectors.");
@@ -3217,12 +3217,12 @@ void QCAD::SetPreviousDensityMixing(const Teuchos::RCP<EpetraExt::ModelEvaluator
   inArgs->set_p(0, p);
 }*/
 
-void QCAD::SolveModel(const QCAD::SolverSubSolver& ss)
+void QCADT::SolveModel(const QCADT::SolverSubSolver& ss)
 {
   ss.modelT->evalModel( (*ss.params_in), (*ss.responses_out) );
 }
 
-void QCAD::SolveModel(const QCAD::SolverSubSolver& ss, 
+void QCADT::SolveModel(const QCADT::SolverSubSolver& ss, 
 		Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates)
 {
   if(pInitialStates != NULL) 
@@ -3233,7 +3233,7 @@ void QCAD::SolveModel(const QCAD::SolverSubSolver& ss,
   pFinalStates = &(ss.app->getStateMgr().getStateArrays());
 }
 
-void QCAD::SolveModel(const QCAD::SolverSubSolver& ss, 
+void QCADT::SolveModel(const QCADT::SolverSubSolver& ss, 
 		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, 
 		Teuchos::RCP<Albany::EigendataStruct>& pFinalEData)
 {
@@ -3246,7 +3246,7 @@ void QCAD::SolveModel(const QCAD::SolverSubSolver& ss,
 }
 
 
-void QCAD::SolveModel(const QCAD::SolverSubSolver& ss, 
+void QCADT::SolveModel(const QCADT::SolverSubSolver& ss, 
 		Albany::StateArrays*& pInitialStates, Albany::StateArrays*& pFinalStates,
 		Teuchos::RCP<Albany::EigendataStruct>& pInitialEData, 
 		Teuchos::RCP<Albany::EigendataStruct>& pFinalEData)
@@ -3264,7 +3264,7 @@ void QCAD::SolveModel(const QCAD::SolverSubSolver& ss,
 }
 
 /*
-void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
+void QCADT::CopyStateToContainer(Albany::StateArrays& state_arrays,
 			  std::string stateNameToCopy,
 			  std::vector<Intrepid::FieldContainer<RealType> >& dest)
 {
@@ -3294,7 +3294,7 @@ void QCAD::CopyStateToContainer(Albany::StateArrays& state_arrays,
 
 
 //Note: state must be allocated already
-void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+void QCADT::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
 			  Albany::StateArrays& state_arrays,
 			  std::string stateNameOfCopy)
 {
@@ -3317,7 +3317,7 @@ void QCAD::CopyContainerToState(std::vector<Intrepid::FieldContainer<RealType> >
 }
 
 
-void QCAD::CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
+void QCADT::CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
 			 std::vector<Intrepid::FieldContainer<RealType> >& dest)
 {
   int numWorksets = src.size();
@@ -3332,7 +3332,7 @@ void QCAD::CopyContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
 }
 
 // dest = thisFactor * dest + srcFactor * src
-void QCAD::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
+void QCADT::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType> >& src,
 				   std::vector<Intrepid::FieldContainer<RealType> >& dest,
 				   double srcFactor, double thisFactor)
 {
@@ -3357,7 +3357,7 @@ void QCAD::AddContainerToContainer(std::vector<Intrepid::FieldContainer<RealType
 
 // dest[stateName] = thisFactor * dest[stateName] + srcFactor * src
 //  Note: state must be allocated already
-void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
+void QCADT::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >& src,
 			 Albany::StateArrays& state_arrays,
 			 std::string stateName, double srcFactor, double thisFactor)
 {
@@ -3383,7 +3383,7 @@ void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >&
 
 
 //Note: assumes src and dest have allocated states of <stateNameToCopy>
-/*void QCAD::CopyState(Albany::StateArrays& state_arrays,
+/*void QCADT::CopyState(Albany::StateArrays& state_arrays,
 	       Albany::StateArrays& dest_arrays,
 	       std::string stateNameToCopy)
 {
@@ -3401,7 +3401,7 @@ void QCAD::AddContainerToState(std::vector<Intrepid::FieldContainer<RealType> >&
 }
 
 
-void QCAD::AddStateToState(Albany::StateArrays& state_arrays,
+void QCADT::AddStateToState(Albany::StateArrays& state_arrays,
 		     std::string srcStateNameToAdd, 
 		     Albany::StateArrays& dest_arrays,
 		     std::string destStateNameToAddTo)
@@ -3421,7 +3421,7 @@ void QCAD::AddStateToState(Albany::StateArrays& state_arrays,
 }*/
 
 /*
-void QCAD::SubtractStateFromState(Albany::StateArrays& state_arrays, 
+void QCADT::SubtractStateFromState(Albany::StateArrays& state_arrays, 
 			    std::string srcStateNameToSubtract,
 			    Albany::StateArrays& dest_arrays,
 			    std::string destStateNameToSubtractFrom)
@@ -3440,7 +3440,7 @@ void QCAD::SubtractStateFromState(Albany::StateArrays& state_arrays,
   }
 }*/
 /*
-double QCAD::getMaxDifference(Albany::StateArrays& state_arrays, 
+double QCADT::getMaxDifference(Albany::StateArrays& state_arrays, 
 		      std::vector<Intrepid::FieldContainer<RealType> >& prevState,
 		      std::string stateName)
 {
@@ -3471,7 +3471,7 @@ double QCAD::getMaxDifference(Albany::StateArrays& state_arrays,
 }
 
 
-double QCAD::getNorm2Difference(Albany::StateArrays& state_arrays, 
+double QCADT::getNorm2Difference(Albany::StateArrays& state_arrays, 
 				std::vector<Intrepid::FieldContainer<RealType> >& prevState,
 				std::string stateName)
 {
@@ -3499,7 +3499,7 @@ double QCAD::getNorm2Difference(Albany::StateArrays& state_arrays,
 }
 
 
-double QCAD::getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& container, const Teuchos::RCP<const Epetra_Comm>& comm)
+double QCADT::getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& container, const Teuchos::RCP<const Epetra_Comm>& comm)
 {
   double norm2 = 0.0;
   int numWorksets = container.size();
@@ -3525,7 +3525,7 @@ double QCAD::getNorm2(std::vector<Intrepid::FieldContainer<RealType> >& containe
 }
 
 
-int QCAD::getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& container)
+int QCADT::getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& container)
 {
   int cnt = 0;
   int numWorksets = container.size();
@@ -3538,7 +3538,7 @@ int QCAD::getElementCount(std::vector<Intrepid::FieldContainer<RealType> >& cont
 }
 
 
-void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift, 
+void QCADT::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& Solver, double newShift, 
 			   Teuchos::RCP<Teuchos::ParameterList>& eigList) 
 {
   Teuchos::RCP<Piro::Epetra::LOCASolver> pels = Teuchos::rcp_dynamic_cast<Piro::Epetra::LOCASolver>(Solver);
@@ -3560,7 +3560,7 @@ void QCAD::ResetEigensolverShift(const Teuchos::RCP<EpetraExt::ModelEvaluator>& 
 }
 
 
-double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss, double pcBelowMinPotential)
+double QCADT::GetEigensolverShift(const QCADT::SolverSubSolver& ss, double pcBelowMinPotential)
 {
   int Ng = ss.responses_out->Ng();
   TEUCHOS_TEST_FOR_EXCEPT( Ng <= 0 );
@@ -3585,7 +3585,7 @@ double QCAD::GetEigensolverShift(const QCAD::SolverSubSolver& ss, double pcBelow
 
 
 // String functions
-std::vector<std::string> QCAD::string_split(const std::string& s, char delim, bool bProtect)
+std::vector<std::string> QCADT::string_split(const std::string& s, char delim, bool bProtect)
 {
   int last = 0;
   int parenLevel=0, bracketLevel=0, braceLevel=0;
@@ -3610,7 +3610,7 @@ std::vector<std::string> QCAD::string_split(const std::string& s, char delim, bo
   return ret;
 }
 
-std::string QCAD::string_remove_whitespace(const std::string& s)
+std::string QCADT::string_remove_whitespace(const std::string& s)
 {
   std::string ret;
   for(std::size_t i=0; i<s.size(); i++) {
@@ -3622,7 +3622,7 @@ std::string QCAD::string_remove_whitespace(const std::string& s)
 
 //given s="MyFunction(arg1,arg2,arg3)", 
 // returns vector { "MyFunction", "arg1", "arg2", "arg3" }
-std::vector<std::string> QCAD::string_parse_function(const std::string& s)
+std::vector<std::string> QCADT::string_parse_function(const std::string& s)
 {
   std::vector<std::string> ret;
   std::string fnName, fnArgString;
@@ -3639,12 +3639,12 @@ std::vector<std::string> QCAD::string_parse_function(const std::string& s)
   fnName = s.substr(0,firstOpenParen);
   fnArgString = s.substr(firstOpenParen+1,lastCloseParen-firstOpenParen-1);
 
-  ret = QCAD::string_split(fnArgString,',',true);
+  ret = QCADT::string_split(fnArgString,',',true);
   ret.insert(ret.begin(),fnName);  //place function name at beginning of vector returned
   return ret;
 }
 
-std::map<std::string,std::string> QCAD::string_parse_arrayref(const std::string& s)
+std::map<std::string,std::string> QCADT::string_parse_arrayref(const std::string& s)
 {
   std::map<std::string,std::string> ret;
   std::string arName, indexString;
@@ -3666,14 +3666,14 @@ std::map<std::string,std::string> QCAD::string_parse_arrayref(const std::string&
   return ret;
 }
 
-std::vector<int> QCAD::string_expand_compoundindex(const std::string& indexStr, int min_index, int max_index)
+std::vector<int> QCADT::string_expand_compoundindex(const std::string& indexStr, int min_index, int max_index)
 {
   std::vector<int> ret;
-  std::vector<std::string> simpleRanges = QCAD::string_split(indexStr,',',true);
+  std::vector<std::string> simpleRanges = QCADT::string_split(indexStr,',',true);
   std::vector<std::string>::const_iterator it;
 
   for(it = simpleRanges.begin(); it != simpleRanges.end(); it++) {
-    std::vector<std::string> endpts = QCAD::string_split( (*it), ':', true);
+    std::vector<std::string> endpts = QCADT::string_split( (*it), ':', true);
     if(endpts.size() == 1)
       ret.push_back( atoi(endpts[0].c_str()) );
     else if(endpts.size() == 2) {
