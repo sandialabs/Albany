@@ -49,6 +49,7 @@
   #include "QCAD_CoupledPSObserver.hpp"
   #include "QCAD_GenEigensolver.hpp"
 #endif
+  #include "QCADT_CoupledPoissonSchrodinger.hpp"
 #endif
 
 #include "Albany_ModelEvaluatorT.hpp"
@@ -571,7 +572,21 @@ Albany::SolverFactory::createAndGetAlbanyAppT(
 
     if (solutionMethod == "QCAD Poisson-Schrodinger") {
 #ifdef ALBANY_QCAD
-     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "QCAD Poisson-Schrodinger does not work with AlbanyT executable!  QCAD::CoupledPoissonSchrodinger class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
+      std::cout <<"In Albany_SolverFactory: solutionMethod = QCAD Poisson-Schrodinger!" << std::endl;
+      const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
+      const Teuchos::RCP<Teuchos::ParameterList> stratList = Piro::extractStratimikosParams(piroParams);
+      // Create and setup the Piro solver factory
+      Piro::SolverFactory piroFactory;
+      // Setup linear solver
+      Stratimikos::DefaultLinearSolverBuilder linearSolverBuilder;
+      //FIXME, IKT, 5/22/15: inject Ifpack2, MueLu, Teko into Stratimikos.
+      linearSolverBuilder.setParameterList(stratList);
+      const RCP<Thyra::LinearOpWithSolveFactoryBase<ST> > lowsFactory =
+        createLinearSolveStrategy(linearSolverBuilder);
+      const RCP<QCADT::CoupledPoissonSchrodinger> ps_model = 
+            rcp(new QCADT::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess, lowsFactory));
+     //FIXME, IKT, 5/22/15: add observer!
+     //TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "QCAD Poisson-Schrodinger does not work with AlbanyT executable!  QCAD::CoupledPoissonSchrodinger class needs to be implemented with Thyra::ModelEvaluator instead of EpetraExt. \n");
       //const RCP<QCAD::CoupledPoissonSchrodinger> ps_model = rcp(new QCAD::CoupledPoissonSchrodinger(appParams, solverComm, initial_guess));
       //const RCP<ParameterList> piroParams = Teuchos::sublist(appParams, "Piro");
 
