@@ -1,0 +1,196 @@
+#!/usr/bin/env python
+
+"""
+Compares two CMake fragments in a CMake-specific fashion.
+Should provide much better output than what you'd get with
+diff.
+"""
+
+import argparse, sys, os, doctest, re
+
+VERBOSE = False
+
+###############################################################################
+def expect(condition, error_msg):
+###############################################################################
+    if (not condition):
+        raise SystemExit(error_msg)
+
+###############################################################################
+def warning(msg):
+###############################################################################
+    print >> sys.stderr, "WARNING:", msg
+
+###############################################################################
+def parse_command_line(args, description):
+###############################################################################
+    parser = argparse.ArgumentParser(
+usage="""\n%s <cmake-frag-1> <cmake-frag-2>
+
+\033[1mEXAMPLE:\033[0m
+  > %s do-cmake-trilinos-home-rolled do-cmake-trilinos-generated-from-harness
+""" % ((os.path.basename(args[0]), ) * 4),
+
+description=description,
+
+formatter_class=argparse.RawTextHelpFormatter
+)
+
+    parser.add_argument("file1", nargs="1", action="store",
+                        help="First file to compare")
+
+    parser.add_argument("file2", nargs="1", action="store",
+                        help="Second file to compare")
+
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
+                        help="Print extra information")
+
+    args = parser.parse_args(args[1:])
+
+    global VERBOSE
+    VERBOSE = args.verbose
+
+    expect(os.path.isfile(args.file1), "File path '%s' is not a valid file" % args.file1)
+    expect(os.path.isfile(args.file2), "File path '%s' is not a valid file" % args.file2)
+
+    return args.file1, args.file2
+
+###############################################################################
+def get_parameter(data):
+###############################################################################
+    """
+    Parse a cmake parameter definition
+
+    >>> get_parameter('Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON')
+    ('Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES', 'BOOL', 'ON')
+
+    >>> get_parameter('Trilinos_ENABLE_Isorropia:BOOL=OFF')
+    ('Trilinos_ENABLE_Isorropia', 'BOOL', 'OFF')
+
+    >>> get_parameter('SomeParam:FILEPATH=/foo/bar')
+    ('SomeParam', 'PATH', 'PATH')
+
+    >>> get_parameter('SomeParam=hello')
+    ('SomeParam', 'STRING', 'hello')
+
+    >>> get_parameter('SomeParam="hello"')
+    ('SomeParam', 'STRING', 'hello')
+    """
+    param_with_type_re = re.compile(r"([^:=\s]+)(:[^:=\s]+)?=(\S+)")
+    m = param_with_type_re.match(data)
+    expect(m is not None, "Cmake parameter '%s' was not parseable" % data)
+
+    if (m.groups()[1] is None):
+        # No type was specified
+        name, value = m.groups()[0], m.groups()[2]
+        if (value in ["ON", "OFF"]):
+            ptype = "BOOL"
+        elif ("/" in value):
+            ptype = "PATH"
+        else:
+            ptype = "STRING"
+    else:
+        name, ptype, value = m.groups()
+        ptype = ptype[1:] # remove leading colon
+        ptype = "PATH" if ptype == "FILEPATH" else ptype
+
+    if (ptype == "PATH"):
+        value = "PATH" # We don't want to diff paths
+
+    value = value.strip('"')
+    value = value.strip("'")
+
+    return name, ptype, value
+
+###############################################################################
+def get_parameters(file_lines):
+###############################################################################
+    """
+    Given lines from a cmake fragment, return a dict of normalized cmake
+    parameters in form { param_name -> (type, normalized_param_value) }
+
+    >>> teststr = '''
+    ... # Hello -D foo
+    ...
+    ... cmake # Hello -D foo
+    ...  -D Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES=ON
+    ...  -D CMAKE_INSTALL_PREFIX:PATH=${TRILINSTALLDIR}
+    ...  -D CMAKE_BUILD_TYPE:STRING=RELEASE -D BUILD_SHARED_LIBS:BOOL=ON
+    ...  -D TPL_ENABLE_MPI:BOOL=ON
+    ...  -D CMAKE_VERBOSE_MAKEFILE:BOOL=OFF
+    ...  -D Trilinos_ENABLE_ALL_PACKAGES:BOOL=OFF'''
+    >>> get_parameters(teststr.splitlines())
+    {'CMAKE_INSTALL_PREFIX': ('PATH', 'PATH'), 'BUILD_SHARED_LIBS': ('BOOL', 'ON'), 'CMAKE_BUILD_TYPE': ('STRING', 'RELEASE'), 'Trilinos_ENABLE_ALL_PACKAGES': ('BOOL', 'OFF'), 'CMAKE_VERBOSE_MAKEFILE': ('BOOL', 'OFF'), 'TPL_ENABLE_MPI': ('BOOL', 'ON'), 'Trilinos_DISABLE_ENABLED_FORWARD_DEP_PACKAGES': ('BOOL', 'ON')}
+    """
+    rv = {}
+    for line in file_lines:
+        line = line.strip()
+        if ('#' in line):
+            line = line[:line.index('#')]
+
+        if (line != ""):
+            tokens = line.split()
+            next_item_is_parameter = False
+            for token in tokens:
+                if (token == "-D"):
+                    expect(not next_item_is_parameter, "Two -D in a row?")
+                    next_item_is_parameter = True
+                elif (next_item_is_parameter):
+                    next_item_is_parameter = False
+                    name, ptype, value = get_parameter(token)
+                    rv[name] = (ptype, value)
+                else:
+                    pass
+
+            expect(not next_item_is_parameter, "Orphaned -D")
+
+    return rv
+
+###############################################################################
+def cmake_diff(file1_lines, file2_lines):
+###############################################################################
+    """
+    Diff the contents of two cmake fragment files. Return True if they are
+    equivalent.
+    """
+    parameters1 = get_parameters(file1_lines)
+    parameters2 = get_parameters(file2_lines)
+
+    rv = True
+    for param1, data1 in parameters1.iteritems():
+        ptype1, value1 = data1
+        if (param1 in parameters2):
+            ptype2, value2 = parameters2[param1]
+            if (ptype1 != ptype2):
+                print "Parameter '%s' had type '%s' in one file and '%s' in the other" % (param1, ptype1, ptype2)
+                rv = False
+            if (value1 != value2):
+                print "Parameter '%s' had value mismatch '%s' != '%s'" % (param1, value1, value2)
+                rv = False
+        else:
+            print "Parameter '%s' missing from second file" % param1
+            rv = False
+
+    for param2 in parameters2:
+        if (param2 not in parameters1):
+            print "Parameter '%s' missing from first file" % param2
+            rv = False
+
+    return rv
+
+###############################################################################
+def _main_func(description):
+###############################################################################
+    if ("--test" in sys.argv):
+        doctest.testmod(verbose=True)
+        return
+
+    file1, file2 = \
+        parse_command_line(sys.argv, description)
+
+    sys.exit(0 if cmake_diff(open(file1, "r").readlines(), open(file2, "r").readlines()) else 1)
+
+###############################################################################
+
+if (__name__ == "__main__"):
+    _main_func(__doc__)
