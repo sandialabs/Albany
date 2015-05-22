@@ -12,7 +12,7 @@
 #include "Sacado_ParameterRegistration.hpp"
 #include "Teuchos_TestForException.hpp"
 
-#define DEBUG_LCM_SCHWARZ
+//#define DEBUG_LCM_SCHWARZ
 
 //
 // Generic Template Code for Constructor and PostRegistrationSetup
