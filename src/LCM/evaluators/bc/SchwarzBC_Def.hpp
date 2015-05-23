@@ -223,6 +223,9 @@ computeBCs(
   Teuchos::ArrayRCP<ST const>
   coupled_solution_view = coupled_solution->get1dView();
 
+  Teuchos::RCP<Tpetra_Map const>
+  coupled_overlap_node_map = coupled_stk_disc->getOverlapNodeMapT();
+
   for (auto workset = 0; workset < ws_elem_2_node_id.size(); ++workset) {
 
     std::string const &
@@ -238,16 +241,20 @@ computeBCs(
       for (auto node = 0; node < coupled_vertex_count; ++node) {
 
         auto const
-        node_id = ws_elem_2_node_id[workset][element][node];
+        global_node_id = ws_elem_2_node_id[workset][element][node];
+
+        auto const
+        local_node_id =
+            coupled_overlap_node_map->getLocalElement(global_node_id);
 
         double * const
-        pcoord = &(coupled_coordinates[coupled_dimension * node_id]);
+        pcoord = &(coupled_coordinates[coupled_dimension * local_node_id]);
 
         coupled_element_vertices[node].fill(pcoord);
 
         for (auto i = 0; i < coupled_dimension; ++i) {
           coupled_element_solution[node](i) =
-              coupled_solution_view[coupled_dimension * node_id + i];
+              coupled_solution_view[coupled_dimension * local_node_id + i];
         } // dimension loop
 
       } // node loop
