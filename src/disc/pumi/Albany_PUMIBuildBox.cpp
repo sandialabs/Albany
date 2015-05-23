@@ -224,7 +224,6 @@ gmi_model* BoxBuilder::buildModel()
         addModelUse(gb, ab, di);
       }
   }
-  gmi_write_dmg(&gb->model, "adobe.dmg");
   return &gb->model;
 }
 
