@@ -20,6 +20,8 @@
         <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
         <Parameter name="Value" type="double" value="0.3"/>
       </ParameterList>
+      <Parameter name="Output Cauchy Stress" type="bool" value="1"/>
+      <Parameter name="Output eqps" type="bool" value="1"/>
     </ParameterList>
     
   </ParameterList>
