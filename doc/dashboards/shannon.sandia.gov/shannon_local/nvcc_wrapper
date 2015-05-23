@@ -111,6 +111,10 @@ do
   #strip of pedantic because it produces endless warnings about #LINE added by the preprocessor
   -pedantic|-Wpedantic)
     ;;
+  #get rid of some of these other warning flags too - CDash is filled with warnings like
+  #cc1: warning: command line option ‘-Woverloaded-virtual’ is valid for C++/ObjC++ but not for C [enabled by default]
+  -Woverloaded-virtual)
+    ;;
   #strip -Xcompiler because we add it
   -Xcompiler)
     ;;
