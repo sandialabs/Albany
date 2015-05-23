@@ -676,19 +676,6 @@ void Albany::PUMIDiscretization::computeGraphs()
 #endif
 }
 
-static apf::StkModel* findElementBlock(
-    apf::Mesh* m,
-    apf::StkModels& sets,
-    apf::ModelEntity* me)
-{
-  int tag = m->getModelTag(me);
-  int d = m->getDimension();
-  for (size_t i = 0; i < sets[d].getSize(); ++i)
-    if (sets[d][i].apfTag == tag)
-      return &sets[d][i];
-  return 0;
-}
-
 void Albany::PUMIDiscretization::computeWorksetInfo()
 {
   apf::Mesh* m = pumiMeshStruct->getMesh();
@@ -709,8 +696,8 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
 
   buckets.clear();
 
-  std::map<apf::ModelEntity*, int> bucketMap;
-  std::map<apf::ModelEntity*, int>::iterator buck_it;
+  std::map<apf::StkModel*, int> bucketMap;
+  std::map<apf::StkModel*, int>::iterator buck_it;
   apf::StkModels& sets = pumiMeshStruct->getSets();
   int bucket_counter = 0;
 
@@ -721,11 +708,14 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
   apf::MeshEntity* element;
   while ((element = m->iterate(it)))
   {
-    apf::ModelEntity* block = m->toModel(element);
-    // find which bucket holds the elements for the element block
+    apf::ModelEntity* mr = m->toModel(element);
+    apf::StkModel* block = sets.invMaps[getNumDim()][mr];
+    TEUCHOS_TEST_FOR_EXCEPTION(!block, std::logic_error,
+		   "Error: no element block for model region on line " << __LINE__ << " of file " << __FILE__ << std::endl);
+    // find the latest bucket being filled with elements for this block
     buck_it = bucketMap.find(block);
-    if((buck_it == bucketMap.end()) ||  // Make a new bucket to hold the new element block's elements
-       (buckets[buck_it->second].size() >= worksetSize)){ // old bucket is full, put the element in a new one
+    if((buck_it == bucketMap.end()) ||  // this block hasn't been encountered yet
+       (buckets[buck_it->second].size() >= worksetSize)){ // the current bucket for this block is "full"
       // Associate this elem_blk with a new bucket
       bucketMap[block] = bucket_counter;
       // resize the bucket array larger by one
@@ -734,10 +724,7 @@ void Albany::PUMIDiscretization::computeWorksetInfo()
       // save the element in the bucket
       buckets[bucket_counter].push_back(element);
       // save the name of the new element block
-      apf::StkModel* set = findElementBlock(m, sets, block);
-      TEUCHOS_TEST_FOR_EXCEPTION(!set, std::logic_error,
-			   "Error: findElementBlock() failed on line " << __LINE__ << " of file " << __FILE__ << std::endl);
-      std::string EB_name = set->stkName;
+      std::string EB_name = block->stkName;
       wsEBNames[bucket_counter] = EB_name;
       bucket_counter++;
     }
@@ -1101,72 +1088,58 @@ void Albany::PUMIDiscretization::computeSideSets()
   int num_buckets = wsEBNames.size();
   sideSets.resize(num_buckets);
 
-  // loop over side sets
   int d = m->getDimension();
-  for (size_t i = 0; i < sets[d - 1].getSize(); ++i) {
-    apf::StkModel& ss = sets[d - 1][i];
 
-    // get the name of this side set
-    std::string const& ss_name = ss.stkName;
+  // loop over mesh sides
+  apf::MeshIterator* it = m->begin(d - 1);
+  apf::MeshEntity* side;
+  while ((side = m->iterate(it))) {
+    apf::ModelEntity* me = m->toModel(side);
+    if (!sets.invMaps[d - 1].count(me))
+      continue;
+    //side is part of a side set
+    apf::StkModel* sideSet = sets.invMaps[d - 1][me];
+    std::string const& ss_name = sideSet->stkName;
 
-    apf::ModelEntity* me = m->findModelEntity(d - 1, ss.apfTag);
-    apf::MeshIterator* it = m->begin(d - 1);
-    apf::MeshEntity* side;
-    // loop over the sides in this side set
-    while ((side = m->iterate(it))) {
-      if (m->toModel(side) != me)
-        continue;
+    // get the elements adjacent to this side
+    apf::Up side_elems;
+    m->getUp(side, side_elems);
 
-      // get the elements adjacent to this side
-      apf::Up side_elems;
-      m->getUp(side, side_elems);
+    // we are not yet considering non-manifold side sets !
+    TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
+		 "PUMIDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
 
-      // we are not yet considering non-manifold side sets !
-      TEUCHOS_TEST_FOR_EXCEPTION(side_elems.n != 1, std::logic_error,
-		   "PUMIDisc: cannot figure out side set topology for side set "<<ss_name<<std::endl);
+    apf::MeshEntity* elem = side_elems.e[0];
 
-      apf::MeshEntity* elem = side_elems.e[0];
+    // fill in the data holder for a side struct
 
-      // fill in the data holder for a side struct
+    Albany::SideStruct sstruct;
 
-      Albany::SideStruct sstruct;
+    sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
+    int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
+    sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
+    sstruct.elem_ebIndex = pumiMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
+    sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
 
-      sstruct.elem_GID = apf::getNumber(elementNumbering, apf::Node(elem, 0));
-      int workset = elemGIDws[sstruct.elem_GID].ws; // workset ID that this element lives in
-      sstruct.elem_LID = elemGIDws[sstruct.elem_GID].LID; // local element id in this workset
-      sstruct.elem_ebIndex = pumiMeshStruct->ebNameToIndex[wsEBNames[workset]]; // element block that workset lives in
+    Albany::SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws
 
-      sstruct.side_local_id = apf::getLocalSideId(m, elem, side);
+    // Get an iterator to the correct sideset (if it exists)
+    Albany::SideSetList::iterator sit = ssList.find(ss_name);
 
-      Albany::SideSetList& ssList = sideSets[workset]; // Get a ref to the side set map for this ws
-
-      // Get an iterator to the correct sideset (if it exists)
-      Albany::SideSetList::iterator it = ssList.find(ss_name);
-
-      if(it != ssList.end()) // The sideset has already been created
-        it->second.push_back(sstruct); // Save this side to the vector that belongs to the name ss->first
-      else { // Add the key ss_name to the map, and the side vector to that map
-        std::vector<Albany::SideStruct> tmpSSVec;
-        tmpSSVec.push_back(sstruct);
-        ssList.insert(Albany::SideSetList::value_type(ss_name, tmpSSVec));
-      }
+    if (sit != ssList.end()) // The sideset has already been created
+      sit->second.push_back(sstruct); // Save this side to the vector that belongs to the name ss->first
+    else { // Add the key ss_name to the map, and the side vector to that map
+      std::vector<Albany::SideStruct> tmpSSVec;
+      tmpSSVec.push_back(sstruct);
+      ssList.insert(Albany::SideSetList::value_type(ss_name, tmpSSVec));
     }
   }
+  m->end(it);
 }
 
 void Albany::PUMIDiscretization::computeNodeSets()
 {
-#if 0
   // Make sure all the maps are allocated
-  for (std::vector<std::string>::iterator ns_iter = pumiMeshStruct->nsNames.begin();
-        ns_iter != pumiMeshStruct->nsNames.end(); ++ns_iter )
-  { // Iterate over Node Sets
-    nodeSets[*ns_iter].resize(0);
-    nodeSetCoords[*ns_iter].resize(0);
-    nodeset_node_coords[*ns_iter].resize(0);
-  }
-#else
-  // Make sure all the maps are allocated - nvcc will not compile the above !
   for (int i = 0; i < pumiMeshStruct->nsNames.size(); i++)
   { // Iterate over Node Sets
     std::string name = pumiMeshStruct->nsNames[i];
@@ -1174,38 +1147,37 @@ void Albany::PUMIDiscretization::computeNodeSets()
     nodeSetCoords[name].resize(0);
     nodeset_node_coords[name].resize(0);
   }
-#endif
-  //grab the node set geometric objects
-  apf::StkModels sets = pumiMeshStruct->getSets();
+  //grab the analysis model and mesh
+  apf::StkModels& sets = pumiMeshStruct->getSets();
   apf::Mesh* m = pumiMeshStruct->getMesh();
   int mesh_dim = m->getDimension();
-  for (size_t i = 0; i < sets[0].getSize(); ++i)
-  {
-    apf::StkModel& ns = sets[0][i];
-    apf::ModelEntity* me = m->findModelEntity(ns.dim, ns.apfTag);
-    apf::DynamicArray<apf::Node> nodesInSet;
-    apf::getNodesOnClosure(m, me, nodesInSet);
-    std::vector<apf::Node> owned_ns_nodes;
-    for (size_t i=0; i < nodesInSet.getSize(); ++i)
-      if (m->isOwned(nodesInSet[i].entity))
-        owned_ns_nodes.push_back(nodesInSet[i]);
-    std::string const& NS_name = ns.stkName;
-    nodeSets[NS_name].resize(owned_ns_nodes.size());
-    nodeSetCoords[NS_name].resize(owned_ns_nodes.size());
-    nodeset_node_coords[NS_name].resize(owned_ns_nodes.size() * mesh_dim);
-    for (std::size_t i=0; i < owned_ns_nodes.size(); i++)
-    {
-      apf::Node node = owned_ns_nodes[i];
-      nodeSets[NS_name][i].resize(neq);
-      GO node_gid = apf::getNumber(globalNumbering,node);
-      int node_lid = node_mapT->getLocalElement(node_gid);
-      assert(node_lid >= 0);
-      assert(node_lid < numOwnedNodes);
+  //loop over mesh nodes
+  for (size_t i = 0; i < nodes.getSize(); ++i) {
+    apf::Node node = nodes[i];
+    apf::MeshEntity* e = node.entity;
+    if (!m->isOwned(e))
+      continue;
+    std::set<apf::StkModel*> mset;
+    apf::collectEntityModels(m, sets.invMaps[0], m->toModel(e), mset);
+    if (mset.empty())
+      continue;
+    GO node_gid = apf::getNumber(globalNumbering,node);
+    int node_lid = node_mapT->getLocalElement(node_gid);
+    assert(node_lid >= 0);
+    assert(node_lid < numOwnedNodes);
+    APF_ITERATE(std::set<apf::StkModel*>, mset, mit) {
+      apf::StkModel* ns = *mit;
+      std::string const& NS_name = ns->stkName;
+      nodeSets[NS_name].push_back(std::vector<int>());
+      std::vector<int>& dofLids = nodeSets[NS_name].back();
+      std::vector<double>& ns_coords = nodeset_node_coords[NS_name];
+      ns_coords.resize(ns_coords.size() + mesh_dim);
+      double* node_coords = &ns_coords[ns_coords.size() - mesh_dim];
+      nodeSetCoords[NS_name].push_back(node_coords);
+      dofLids.resize(neq);
       for (std::size_t eq=0; eq < neq; eq++)
-        nodeSets[NS_name][i][eq] = getDOF(node_lid, eq);
-      double* node_coords = &(nodeset_node_coords[NS_name][i*mesh_dim]);
-      apf::getComponents(m->getCoordinateField(),node.entity,node.node,node_coords);
-      nodeSetCoords[NS_name][i] = node_coords;
+        dofLids[eq] = getDOF(node_lid, eq);
+      apf::getComponents(m->getCoordinateField(), e, node.node, node_coords);
     }
   }
 }

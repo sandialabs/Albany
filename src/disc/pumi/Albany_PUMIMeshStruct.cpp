@@ -16,7 +16,6 @@
 #include <Shards_BasicTopologies.hpp>
 
 #include <gmi_mesh.h>
-#include <gmi_null.h>
 #ifdef SCOREC_SIMMODEL
 #include <gmi_sim.h>
 #include <SimUtil.h>
@@ -39,6 +38,7 @@ class SizeFunction : public ma::IsotropicFunction {
 };
 
 static void loadSets(
+    apf::Mesh* m,
     const Teuchos::RCP<Teuchos::ParameterList>& params,
     apf::StkModels& sets,
     const char* param_name,
@@ -51,15 +51,34 @@ static void loadSets(
     Teuchos::TwoDArray< std::string > pairs;
     pairs = params->get<Teuchos::TwoDArray<std::string> >(param_name);
     int npairs = pairs.getNumCols();
-    size_t start = sets[mesh_dim].getSize();
-    sets[mesh_dim].setSize(start + npairs);
     for(int i = 0; i < npairs; ++i) {
-      apf::StkModel& set = sets[mesh_dim][start + i];
-      set.dim = geom_dim;
-      set.apfTag = atoi(pairs(0, i).c_str());
-      set.stkName = pairs(1, i);
+      apf::StkModel* set = new apf::StkModel();
+      int geom_tag = atoi(pairs(0, i).c_str());
+      set->ents.push_back(m->findModelEntity(geom_dim, geom_tag));
+      set->stkName = pairs(1, i);
+      sets.models[mesh_dim].push_back(set);
     }
   }
+}
+
+static void getEBSizes(
+    apf::Mesh* mesh,
+    apf::StkModels& sets,
+    std::vector<int>& el_blocks)
+{
+  int d = mesh->getDimension();
+  apf::MeshIterator* mit = mesh->begin(mesh->getDimension());
+  apf::MeshEntity* e;
+  std::map<apf::StkModel*, int> sizeMap;
+  while ((e = mesh->iterate(mit))) {
+    apf::ModelEntity* me = mesh->toModel(e);
+    if (sets.invMaps[d].count(me))
+      ++(sizeMap[sets.invMaps[d][me]]);
+  }
+  mesh->end(mit);
+  el_blocks.resize(sets.models[d].size());
+  for (size_t i = 0; i < sets.models[d].size(); ++i)
+    el_blocks[i] = sizeMap[sets.models[d][i]];
 }
 
 Albany::PUMIMeshStruct::PUMIMeshStruct(
@@ -76,7 +95,6 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 
   compositeTet = false;
 
-  gmi_register_null();
   gmi_register_mesh();
 
   std::string model_file;
@@ -120,11 +138,12 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   mesh->verify();
 
   int d = mesh->getDimension();
-  loadSets(params, sets, "Element Block Associations",   d,     d);
-  loadSets(params, sets, "Node Set Associations",        d - 1, 0);
-  loadSets(params, sets, "Edge Node Set Associations",   1,     0);
-  loadSets(params, sets, "Vertex Node Set Associations", 0,     0);
-  loadSets(params, sets, "Side Set Associations",        d - 1, d - 1);
+  loadSets(mesh, params, sets, "Element Block Associations",   d,     d);
+  loadSets(mesh, params, sets, "Node Set Associations",        d - 1, 0);
+  loadSets(mesh, params, sets, "Edge Node Set Associations",   1,     0);
+  loadSets(mesh, params, sets, "Vertex Node Set Associations", 0,     0);
+  loadSets(mesh, params, sets, "Side Set Associations",        d - 1, d - 1);
+  sets.computeInverse();
 
   // Resize mesh after input if indicated in the input file
   // User has indicated a desired element size in input file
@@ -143,16 +162,13 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
 
   // Build a map to get the EB name given the index
 
-  int numEB = sets[d].getSize(), EB_size;
+  int numEB = sets.models[d].size();
   std::vector<int> el_blocks;
+  getEBSizes(mesh, sets, el_blocks);
 
   for (int eb=0; eb < numEB; eb++){
-    apf::StkModel& set = sets[d][eb];
-    std::string EB_name = set.stkName;
-    apf::ModelEntity* me = mesh->findModelEntity(set.dim, set.apfTag);
-    this->ebNameToIndex[EB_name] = eb;
-    EB_size = apf::countEntitiesOn(mesh, me, numDim);
-    el_blocks.push_back(EB_size);
+    apf::StkModel* set = sets.models[d][eb];
+    this->ebNameToIndex[set->stkName] = eb;
   }
 
   // Set defaults for cubature and workset size, overridden in input file
@@ -176,13 +192,12 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   worksetSize = computeWorksetSize(worksetSizeMax, ebSizeMax);
 
   // Node sets
-  for(size_t ns = 0; ns < sets[0].getSize(); ns++) {
-    nsNames.push_back(sets[0][ns].stkName);
-  }
+  for(size_t ns = 0; ns < sets.models[0].size(); ns++)
+    nsNames.push_back(sets.models[0][ns]->stkName);
 
   // Side sets
-  for(size_t ss = 0; ss < sets[d - 1].getSize(); ss++) {
-    ssNames.push_back(sets[d - 1][ss].stkName);
+  for(size_t ss = 0; ss < sets.models[d - 1].size(); ss++) {
+    ssNames.push_back(sets.models[d - 1][ss]->stkName);
   }
 
   // Construct MeshSpecsStruct
@@ -190,7 +205,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   if (!params->get("Separate Evaluators by Element Block",false))
   {
     // get elements in the first element block
-    std::string EB_name = sets[d][0].stkName;
+    std::string EB_name = sets.models[d][0]->stkName;
     this->meshSpecs[0] = Teuchos::rcp(
         new Albany::MeshSpecsStruct(
           *ctd, numDim, cubatureDegree,
@@ -205,7 +220,7 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
     std::string eb_name;
     for (int eb=0; eb<numEB; eb++)
     {
-      std::string EB_name = sets[d][eb].stkName;
+      std::string EB_name = sets.models[d][eb]->stkName;
       this->meshSpecs[eb] = Teuchos::rcp(new Albany::MeshSpecsStruct(
           *ctd, numDim, cubatureDegree, nsNames, ssNames, worksetSize, EB_name,
           this->ebNameToIndex, this->interleavedOrdering, true));
