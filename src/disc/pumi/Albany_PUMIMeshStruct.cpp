@@ -24,6 +24,8 @@
 #include <ma.h>
 #include <PCU.h>
 
+#include <sstream>
+
 // Capitalize Solution so that it sorts before other fields in Paraview. Saves a
 // few button clicks, e.g. when warping by vector.
 const char* Albany::PUMIMeshStruct::solution_name = "Solution";
@@ -58,6 +60,59 @@ static void loadSets(
       set->stkName = pairs(1, i);
       sets.models[mesh_dim].push_back(set);
     }
+  }
+}
+
+static void readSets(
+    apf::Mesh* m,
+    const char* filename,
+    apf::StkModels& sets)
+{
+  static std::string const dimNames[3] = {
+    "node set",
+    "side set",
+    "element block"};
+  int d = m->getDimension();
+  int dims[3] = {0, d - 1, d};
+  std::ifstream f(filename);
+  TEUCHOS_TEST_FOR_EXCEPTION(!f, std::logic_error,
+      "Could not open associations file " << filename << '\n');
+  std::string sline;
+  int lc = 0;
+  while (std::getline(f, sline)) {
+    if (!sline.length())
+      break;
+    ++lc;
+    int sdi = -1;
+    for (int di = 0; di < 3; ++di)
+      if (sline.compare(0, dimNames[di].length(), dimNames[di]) == 0)
+        sdi = di;
+    TEUCHOS_TEST_FOR_EXCEPTION(sdi == -1, std::logic_error,
+        "Bad associations line #" << lc << " \"" << sline << "\"\n");
+    int sd = dims[sdi];
+    std::stringstream strs(sline.substr(dimNames[sdi].length()));
+    apf::StkModel* set = new apf::StkModel();
+    strs >> set->stkName;
+    int nents;
+    strs >> nents;
+    TEUCHOS_TEST_FOR_EXCEPTION(!strs, std::logic_error,
+        "Bad associations line #" << lc << " \"" << sline << "\"\n");
+    for (int ei = 0; ei < nents; ++ei) {
+      std::string eline;
+      std::getline(f, eline);
+      TEUCHOS_TEST_FOR_EXCEPTION(!f || !eline.length(), std::logic_error,
+          "Missing associations after line #" << lc << "\n");
+      ++lc;
+      std::stringstream strs2(eline);
+      int mdim, mtag;
+      strs2 >> mdim >> mtag;
+      TEUCHOS_TEST_FOR_EXCEPTION(!strs2, std::logic_error,
+          "Bad associations line #" << lc << " \"" << eline << "\"\n");
+      set->ents.push_back(m->findModelEntity(mdim, mtag));
+      TEUCHOS_TEST_FOR_EXCEPTION(!set->ents.back(), std::logic_error,
+          "No model entity (" << mdim << ", " << mtag << ")\n");
+    }
+    sets.models[sd].push_back(set);
   }
 }
 
@@ -138,11 +193,16 @@ Albany::PUMIMeshStruct::PUMIMeshStruct(
   mesh->verify();
 
   int d = mesh->getDimension();
-  loadSets(mesh, params, sets, "Element Block Associations",   d,     d);
-  loadSets(mesh, params, sets, "Node Set Associations",        d - 1, 0);
-  loadSets(mesh, params, sets, "Edge Node Set Associations",   1,     0);
-  loadSets(mesh, params, sets, "Vertex Node Set Associations", 0,     0);
-  loadSets(mesh, params, sets, "Side Set Associations",        d - 1, d - 1);
+  if (params->isParameter("Model Associations File Name")) {
+    std::string afile = params->get<std::string>("Model Associations File Name");
+    readSets(mesh, afile.c_str(), sets);
+  } else {
+    loadSets(mesh, params, sets, "Element Block Associations",   d,     d);
+    loadSets(mesh, params, sets, "Node Set Associations",        d - 1, 0);
+    loadSets(mesh, params, sets, "Edge Node Set Associations",   1,     0);
+    loadSets(mesh, params, sets, "Vertex Node Set Associations", 0,     0);
+    loadSets(mesh, params, sets, "Side Set Associations",        d - 1, d - 1);
+  }
   sets.computeInverse();
 
   // Resize mesh after input if indicated in the input file
@@ -452,6 +512,8 @@ Albany::PUMIMeshStruct::getValidDiscretizationParameters() const
   validPL->set<double>("2D Scale", 1.0, "Depth of Y discretization");
   validPL->set<double>("3D Scale", 1.0, "Height of Z discretization");
   validPL->set<bool>("Hexahedral", true, "Build hexahedral elements");
+
+  validPL->set<std::string>("Model Associations File Name", "", "File with element block/sideset/nodeset associations");
 
   return validPL;
 }
