@@ -991,6 +991,7 @@ if (BUILD_ALB64CLANG11)
     "-DENABLE_64BIT_INT:BOOL=ON"
     "-DENABLE_ALBANY_EPETRA_EXE:BOOL=OFF"
     "-DENABLE_LCM:BOOL=ON"
+    "-DENABLE_QCAD:BOOL=ON"
     "-DENABLE_LCM_SPECULATIVE:BOOL=OFF"
     "-DENABLE_HYDRIDE:BOOL=ON"
     "-DENABLE_SCOREC:BOOL=ON"
@@ -1026,12 +1027,13 @@ if (BUILD_ALB64CLANG11)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit Clang configure results!")
+      message("Cannot submit Albany 64 bit Clang configure results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot configure Albany 64 bit Clang build!")
+    message("Cannot configure Albany 64 bit Clang build!")
+    set (BUILD_ALB64CLANG11 FALSE)
   endif ()
 
   #
@@ -1055,36 +1057,40 @@ if (BUILD_ALB64CLANG11)
       )
 
     if (S_HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit Clang build results!")
+      message("Cannot submit Albany 64 bit Clang build results!")
     endif ()
   endif ()
 
   if (HAD_ERROR)
-    message(FATAL_ERROR "Cannot build Albany 64 bit with Clang!")
+    message("Cannot build Albany 64 bit with Clang!")
+    set (BUILD_ALB64CLANG11 FALSE)
   endif ()
 
   if (BUILD_LIBS_NUM_ERRORS GREATER 0)
-    message(FATAL_ERROR "Encountered build errors in Albany 64 bit Clang build. Exiting!")
+    message("Encountered build errors in Albany 64 bit Clang build. Exiting!")
+    set (BUILD_ALB64CLANG11 FALSE)
   endif ()
 
   #
   # Run Clang Albany 64 bit tests
   #
 
-  CTEST_TEST(
-    BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
-    #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
-    #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
-    #NUMBER_FAILED  TEST_NUM_FAILED
-    )
-
-  if (CTEST_DO_SUBMIT)
-    ctest_submit (PARTS Test
-      RETURN_VALUE  HAD_ERROR
+  if (BUILD_ALB64CLANG11)
+    CTEST_TEST(
+      BUILD "${CTEST_BINARY_DIRECTORY}/Albany64BitC11"
+      #              PARALLEL_LEVEL "${CTEST_PARALLEL_LEVEL}"
+      #              INCLUDE_LABEL "^${TRIBITS_PACKAGE}$"
+      #NUMBER_FAILED  TEST_NUM_FAILED
       )
 
-    if (HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit Albany 64 bit Clang test results!")
+    if (CTEST_DO_SUBMIT)
+      ctest_submit (PARTS Test
+        RETURN_VALUE  HAD_ERROR
+        )
+
+      if (HAD_ERROR)
+        message("Cannot submit Albany 64 bit Clang test results!")
+      endif ()
     endif ()
   endif ()
 endif ()
@@ -1092,8 +1098,8 @@ endif ()
 if (BUILD_ALBFUNCTOR)
   # ALBANY_KOKKOS_UNDER_DEVELOPMENT build
 
-  set_property (GLOBAL PROPERTY SubProject AlbanyFunctor)
-  set_property (GLOBAL PROPERTY Label AlbanyFunctor)
+  set_property (GLOBAL PROPERTY SubProject AlbanyFunctorDev)
+  set_property (GLOBAL PROPERTY Label AlbanyFunctorDev)
 
   set (ALB_LAME_DIR "/projects/albany/src/lame-4.24.1/")
 
@@ -1116,12 +1122,12 @@ if (BUILD_ALBFUNCTOR)
     "-DENABLE_KOKKOS_UNDER_DEVELOPMENT:BOOL=ON"
     "-DENABLE_CHECK_FPE:BOOL=ON")
   
-  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor")
-    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctor)
+  if (NOT EXISTS "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev")
+    file (MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev)
   endif ()
 
   CTEST_CONFIGURE (
-    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor"
+    BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
     SOURCE "${CTEST_SOURCE_DIRECTORY}/Albany"
     OPTIONS "${CONFIGURE_OPTIONS}"
     RETURN_VALUE HAD_ERROR
@@ -1147,14 +1153,14 @@ if (BUILD_ALBFUNCTOR)
     message ("\nBuilding target: '${CTEST_BUILD_TARGET}' ...\n")
 
     CTEST_BUILD (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor"
-      RETURN_VALUE  HAD_ERROR
-      NUMBER_ERRORS  BUILD_LIBS_NUM_ERRORS
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
+      RETURN_VALUE HAD_ERROR
+      NUMBER_ERRORS BUILD_LIBS_NUM_ERRORS
       APPEND)
 
     if (CTEST_DO_SUBMIT)
       ctest_submit (PARTS Build
-        RETURN_VALUE  S_HAD_ERROR)
+        RETURN_VALUE S_HAD_ERROR)
 
       if (S_HAD_ERROR)
         message ("Cannot submit Albany build results!")
@@ -1174,13 +1180,13 @@ if (BUILD_ALBFUNCTOR)
   endif ()
 
   if (BUILD_ALBFUNCTOR)
+    set (CTEST_TEST_TIMEOUT 120)
     CTEST_TEST (
-      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctor"
+      BUILD "${CTEST_BINARY_DIRECTORY}/AlbanyFunctorDev"
       RETURN_VALUE HAD_ERROR)
 
     if (CTEST_DO_SUBMIT)
-      ctest_submit (PARTS Test
-        RETURN_VALUE S_HAD_ERROR)
+      ctest_submit (PARTS Test RETURN_VALUE S_HAD_ERROR)
 
       if (S_HAD_ERROR)
         message ("Cannot submit Albany test results!")
