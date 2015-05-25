@@ -18,6 +18,10 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputNeckingT.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputNeckingT.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/traction_assoc.txt
+               ${CMAKE_CURRENT_BINARY_DIR}/traction_assoc.txt COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/vtxDBCassoc.txt
+               ${CMAKE_CURRENT_BINARY_DIR}/vtxDBCassoc.txt COPYONLY)
 
 # 2. Name the test with the directory name, prepended by SCOREC_
 get_filename_component(testRoot ${CMAKE_CURRENT_SOURCE_DIR} NAME)
