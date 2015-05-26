@@ -388,7 +388,6 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   Teuchos::RCP<Albany::RigidBodyModes> rigidBodyModes(Teuchos::rcp(new Albany::RigidBodyModes(neq)));
   disc = discFactory.createDiscretization(neq, stateInfo,requirements,rigidBodyModes);
 
-  //FIXME: set nominal_values_
   
   //------------------Setup nominal values----------------
   nominal_values_ = this->createInArgsImpl();
@@ -808,7 +807,7 @@ QCADT::CoupledPoissonSchrodinger::createOutArgsImpl() const
           true));
   outArgs.set_Np_Ng(num_param_vecs, n_g);
 /*
- * FIXME, IKT, 5/21/15
+ * FIXME, IKT, 5/21/15, save for later
   for (int i=0; i<num_param_vecs; i++)
     outArgs.setSupports(Thyra::ModelEvaluatorBase::OUT_ARG_DfDp, i, DerivativeSupport(DERIV_MV_BY_COL));
   for (int i=0; i<n_g; i++) {
@@ -858,11 +857,11 @@ evalModelImpl(
   // Get the input arguments
   
   Teuchos::RCP<const Thyra::ProductVectorBase<ST>>
-  xT = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
+  x = Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
           in_args.get_x(), true);
 
   Teuchos::RCP<const Thyra::ProductVectorBase<ST>>
-  x_dotT = Teuchos::nonnull(in_args.get_x_dot()) ?
+  x_dot = Teuchos::nonnull(in_args.get_x_dot()) ?
           Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
               in_args.get_x_dot(), true) :
           Teuchos::null;
@@ -876,21 +875,21 @@ evalModelImpl(
    for (int m=0; m < num_models_; ++m) {
     //Get each Tpetra vector 
     xTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
-        xT->getVectorBlock(m),
+        x->getVectorBlock(m),
         true)->getConstTpetraVector();
    }
-   if (x_dotT != Teuchos::null) {
+   if (x_dot != Teuchos::null) {
      for (int m = 0; m < num_models_; ++m) {
         //Get each Tpetra vector 
         x_dotTs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
-            x_dotT->getVectorBlock(m),
+            x_dot->getVectorBlock(m),
             true)->getConstTpetraVector();
      }
    }
   double alpha     = 0.0;  // M coeff
   double beta      = 1.0;  // J coeff
   double curr_time = 0.0;
-  if (x_dotT != Teuchos::null) {
+  if (x_dot != Teuchos::null) {
     alpha = in_args.get_alpha();
     beta = in_args.get_beta();
     curr_time  = in_args.get_t();
@@ -898,7 +897,7 @@ evalModelImpl(
   }
 
 /*
- //FIXME, IKT, 5/22/15
+ //FIXME NOW, IKT, 5/22/15 
   for (int i=0; i<inArgs.Np(); i++) {
     Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
     if (p != Teuchos::null) {
@@ -951,7 +950,11 @@ evalModelImpl(
 
   //
   // Communicate all the eigenvalues to every processor, since all parts of the mesh need them
-  //
+  */
+  //FIXME, IKT, 5/26/15, placeholders: 
+  int my_nEigenvals;
+  Tpetra_Map dist_eigenval_map;  
+  /*
   int my_nEigenvals = combined_SP_map->NumMyElements() - disc_nMyElements * (1+nEigenvals);
   Epetra_Map dist_eigenval_map(nEigenvals, my_nEigenvals, 0, *myComm);
   Epetra_LocalMap local_eigenval_map(nEigenvals, 0, *myComm);
@@ -967,6 +970,8 @@ evalModelImpl(
   // Get views into 'f' residual vector to use for separate poisson and schrodinger application object calls
   //
   Teuchos::RCP<Tpetra_Vector>   f_poisson, f_norm_local, f_norm_dist;
+   const Teuchos::ArrayRCP<ST> f_norm_local_nonConstView = f_norm_local->get1dViewNonConst(); 
+   const Teuchos::ArrayRCP<ST> f_norm_dist_nonConstView = f_norm_dist->get1dViewNonConst(); 
   Teuchos::RCP<Tpetra_MultiVector> f_schrodinger;
   std::vector<Tpetra_Vector*> f_schrodinger_vec(nEigenvals);
 
@@ -1160,7 +1165,7 @@ evalModelImpl(
   //IKT, 5/26/15: removed all preconditioner stuff since we'll be using Teko. 
 
 /*
-  //IKT, 5/26/15: do dfdp later.
+  //IKT, FIXME 5/26/15: do dfdp later.
   // df/dp
   for (int i=0; i<outArgs.Np(); i++) {
     Teuchos::RCP<Epetra_MultiVector> dfdp_out = 
@@ -1286,63 +1291,70 @@ evalModelImpl(
 
         // Compute normalization equation residuals:  f_norm[i] = abs(1 - evec[i] . M . evec[i])
 	double vec_M_vec;
-	vec.dot( *M_vec, &vec_M_vec );
-	(*f_norm_local)[i] = 1.0 - vec_M_vec;
+        //IKT, FIXME, 5/26/15
+	//vec.dot( *M_vec, &vec_M_vec );
+	f_norm_local_nonConstView[i] = 1.0 - vec_M_vec;
 
       }
-/*
+
       // Fill elements of f_norm_dist that belong to this processor, i.e. loop over
       // eigenvalue indices "owned" by the current proc in the combined distributed map
       std::vector<int> eval_global_elements(my_nEigenvals);
-      dist_eigenval_map.MyGlobalElements(&eval_global_elements[0]);
+      eval_global_elements[0] = dist_eigenval_map.getGlobalNumElements();
       for(int i=0; i<my_nEigenvals; i++)
-	(*f_norm_dist)[i] = (*f_norm_local)[eval_global_elements[i]];
+	f_norm_dist_nonConstView[i] = f_norm_local_nonConstView[eval_global_elements[i]];
 
       
 
       //DEBUG -- print residual in gory detail for debugging
       if(1) {
-	if(myComm->MyPID() == 0) std::cout << "DEBUG: ----------------- Coupled Schrodinger Poisson Info Dump ---------------------" << std::endl;
+	if(myComm->getRank() == 0) std::cout << "DEBUG: ----------------- Coupled Schrodinger Poisson Info Dump ---------------------" << std::endl;
 	double norm, mean;
-*/
+
 	/*std::cout << "x map has " << x->Map().NumGlobalElements() << " global els" << std::endl;
 	  std::cout << "x_poisson map has " << x_poisson->Map().NumGlobalElements() << " global els" << std::endl;
 	  std::cout << "x_schrodinger map has " << x_schrodinger->Map().NumGlobalElements() << " global els (each vec)" << std::endl;
 	  std::cout << "dist_eval_map has " << dist_eigenval_map.NumGlobalElements() << " global els" << std::endl;
 	*/
 
-/*	x->Norm2(&norm); x->MeanValue(&mean);
+       //IKT, 5/26/15, FIXME: 
+       //The following is not defined for product vectors
+       /*norm = x->norm2(); mean = x->meanValue();
 	std::cout << std::setprecision(10);
-	if(myComm->MyPID() == 0) std::cout << "X Norm & Mean = " << norm << " , " << mean << std::endl;
+	if(myComm->getRank() == 0) std::cout << "X Norm & Mean = " << norm << " , " << mean << std::endl;*/
 	
-	x_poisson->Norm2(&norm); x_poisson->MeanValue(&mean);
-	if(myComm->MyPID() == 0) std::cout << "Poisson-part X Norm & Mean = " << norm << " , " << mean << std::endl;
+	norm = x_poisson->norm2(); mean = x_poisson->meanValue();
+	if(myComm->getRank() == 0) std::cout << "Poisson-part X Norm & Mean = " << norm << " , " << mean << std::endl;
 	for(int i=0; i<nEigenvals; i++) {
-	  (*x_schrodinger)(i)->Norm2(&norm);
-	  if(myComm->MyPID() == 0) std::cout << "Schrodinger[" << i << "]-part X Norm = " << norm << std::endl;
+	  norm = x_schrodinger->getVector(i)->norm2();
+	  if(myComm->getRank() == 0) std::cout << "Schrodinger[" << i << "]-part X Norm = " << norm << std::endl;
 	}
 	for(int i=0; i<nEigenvals; i++) 
-	  if(myComm->MyPID() == 0) std::cout << "Eigenvalue[" << i << "] = " << (*stdvec_eigenvals)[i] << std::endl;
+	  if(myComm->getRank() == 0) std::cout << "Eigenvalue[" << i << "] = " << (*stdvec_eigenvals)[i] << std::endl;
 	
-	f_poisson->Norm2(&norm);
-	if(myComm->MyPID() == 0) std::cout << "Poisson-part Residual Norm = " << norm << std::endl; //f_poisson->Print(std::cout);
+	norm = f_poisson->norm2();
+	if(myComm->getRank() == 0) std::cout << "Poisson-part Residual Norm = " << norm << std::endl; //f_poisson->Print(std::cout);
 	for(int i=0; i<nEigenvals; i++) {
 	  if(f_schrodinger_vec[i] != NULL) {
-	    f_schrodinger_vec[i]->Norm2(&norm);
-	    if(myComm->MyPID() == 0) std::cout << "Schrodinger[" << i << "]-part Residual Norm = " << norm << std::endl; //f_schrodinger_vec[i]->Print(std::cout);
+	    norm = f_schrodinger_vec[i]->norm2();
+	    if(myComm->getRank() == 0) std::cout << "Schrodinger[" << i << "]-part Residual Norm = " << norm << std::endl; //f_schrodinger_vec[i]->Print(std::cout);
 	  }
 	}
-	if(myComm->MyPID() == 0) std::cout << "Eigenvalue-part Residual: " << std::endl;
-	f_norm_dist->Print(std::cout); // only rank 0 prints
-      } */
+	if(myComm->getRank() == 0) std::cout << "Eigenvalue-part Residual: " << std::endl;
+	f_norm_dist->print(std::cout); // only rank 0 prints
+      } 
     }
-/*
   // Response functions
-  for (int i=0; i<outArgs.Ng(); i++) {
-    Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
+  for (int i=0; i<out_args.Ng(); i++) {
+   Teuchos::RCP<Thyra::ProductVectorBase<ST>>
+    g_out = Teuchos::nonnull(out_args.get_g(i)) ?
+          Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST>>(
+              out_args.get_g(i), true) :
+          Teuchos::null;
    
     bool g_computed = false;
-
+  // IKT, FIXME, 5/26/15: hold of conversion for now of dg/dx, dg/dp.
+/*
     Derivative dgdx_out = outArgs.get_DgDx(i);
     Derivative dgdxdot_out = outArgs.get_DgDx_dot(i);
         
@@ -1443,22 +1455,29 @@ evalModelImpl(
         g_computed = true;
       }
     }
-
+    */
     if (g_out != Teuchos::null && !g_computed) {
+      //Poisson model:
+      Teuchos::RCP<Tpetra_Vector>
+        g_out_poisson = Teuchos::rcp_dynamic_cast<ThyraVector>(
+                  g_out->getNonconstVectorBlock(0),
+                  true)->getTpetraVector();
+      //Schrodinger model:
+      Teuchos::RCP<Tpetra_Vector>
+        g_out_schrodinger = Teuchos::rcp_dynamic_cast<ThyraVector>(
+                  g_out->getNonconstVectorBlock(1),
+                  true)->getTpetraVector();
       if(i < poissonApp->getNumResponses()) {
-	poissonApp->evaluateResponseT(i, curr_time, xdot_poissonT.get(), NULL, *x_poissonT,
-				     poisson_sacado_param_vec, *g_outT);
+	poissonApp->evaluateResponseT(i, curr_time, xdot_poisson.get(), NULL, *x_poisson,
+				     poisson_sacado_param_vec, *g_out_poisson);
       }
       else {
-	schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xdot_schrodingerT.get(), NULL, 
-                                         *x_schrodingerT, schrodinger_sacado_param_vec, *g_outT);
+	schrodingerApp->evaluateResponseT(i - poissonApp->getNumResponses(), curr_time, xdot_schrodinger->getVector(0).get(), NULL, 
+                                         *x_schrodinger->getVector(0), schrodinger_sacado_param_vec, *g_out_schrodinger);
       }
-      //convert g_outT to Epetra_Vector g_out 
-      Petra::TpetraVector_To_EpetraVector(g_outT, *g_out, commE); 
     }
 
   }
-*/
 }
 
 Teuchos::RCP<Albany::Application>
