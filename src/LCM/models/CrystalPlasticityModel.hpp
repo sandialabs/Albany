@@ -185,7 +185,7 @@ private:
     Intrepid::Tensor<RealType> projector_;
 
     // flow rule parameters
-    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_;
+    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, p_;
   };
 
   ///
@@ -194,7 +194,8 @@ private:
   std::vector<SlipSystemStruct> slip_systems_;
 
   IntegrationScheme integration_scheme_;
-  RealType implicit_nonlinear_solver_tolerance_;
+  RealType implicit_nonlinear_solver_relative_tolerance_;
+  RealType implicit_nonlinear_solver_absolute_tolerance_;
   int implicit_nonlinear_solver_max_iterations_;
   };
 }

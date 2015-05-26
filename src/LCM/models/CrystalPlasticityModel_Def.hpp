@@ -13,7 +13,7 @@
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
-#define LINE_SEARCH
+//#define LINE_SEARCH
 
 #include <typeinfo>
 #include <iostream>
@@ -41,7 +41,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "\n**** Error in CrystalPlasticityModel, invalid value for\"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
     }
   }
-  implicit_nonlinear_solver_tolerance_ = p->get<double>("Implicit Integration Relative Tolerance", 1.0e-6);
+  implicit_nonlinear_solver_relative_tolerance_ = p->get<double>("Implicit Integration Relative Tolerance", 1.0e-6);
+  implicit_nonlinear_solver_absolute_tolerance_ = p->get<double>("Implicit Integration Absolute Tolerance", 1.0e-10);
   implicit_nonlinear_solver_max_iterations_ = p->get<int>("Implicit Integration Max Iterations", 100);
 
   slip_systems_.resize(num_slip_);
@@ -128,7 +129,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     TEUCHOS_TEST_FOR_EXCEPTION(slip_systems_[num_ss].tau_critical_ <= 0, std::logic_error, "\n**** Error in CrystalPlasticityModel, invalid value for Tau Critical\n");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponent");
-    slip_systems_[num_ss].H_ = ss_list.get<RealType>("Hardening", 0);
+    slip_systems_[num_ss].H_ = ss_list.get<RealType>("Hardening", 0.0);
+    slip_systems_[num_ss].p_ = ss_list.get<RealType>("Hardening Exponent",1.0);
   }
 #ifdef PRINT_DEBUG
   std::cout << "<<< done with parameter list\n";
@@ -460,13 +462,15 @@ bool print_debug = false;
 	RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
 
 	// Determine convergence tolerances for the nonlinear solver
-	RealType residual_tolerance = implicit_nonlinear_solver_tolerance_ * residual_val + 1.0e-50;
+	RealType residual_relative_tolerance = implicit_nonlinear_solver_relative_tolerance_ * residual_val;
+	RealType residual_absolute_tolerance = implicit_nonlinear_solver_absolute_tolerance_;
 	int iteration = 0;
 	bool converged = false;
 
 #ifdef PRINT_DEBUG
 	std::cout << "CP model initial residual " << residual_val << std::endl;
-	std::cout << "CP model convergence tolerance " << residual_tolerance << std::endl;
+	std::cout << "CP model convergence tolerance (relative) " << residual_relative_tolerance << std::endl;
+	std::cout << "CP model convergence tolerance (absolute) " << residual_absolute_tolerance << std::endl;
 #endif
 
 	while(!converged){
@@ -549,7 +553,7 @@ bool print_debug = false;
 
 	  iteration += 1;
 
-	  if(residual_val < residual_tolerance){
+	  if(residual_val < residual_relative_tolerance || residual_val < residual_absolute_tolerance ){
 	    converged = true;
 	  }
 	  if(iteration >= implicit_nonlinear_solver_max_iterations_){
@@ -734,18 +738,21 @@ updateHardness(std::vector<ArgT> const &     slip_np1,
 	       std::vector<ScalarT> const &  hardness_n,
 	       std::vector<ArgT> &           hardness_np1) const
 {
-  ScalarT H;
+  ScalarT H, p;
   ArgT temp;
 
   for (int s(0); s < num_slip_; ++s) {
 
     // material parameters
     H = slip_systems_[s].H_;
+    p = slip_systems_[s].p_;
 
     hardness_np1[s] = hardness_n[s];
 
     // calculate additional hardening
-    temp = H * std::fabs(slip_np1[s]);
+    // function form is power law, H \gamma^{p}
+    // if H is not specified, H = 0.0, if p is not specified, p = 1.0
+    temp = H * std::pow(std::fabs(slip_np1[s]),p);
     if (temp > hardness_np1[s]) {
       hardness_np1[s] = temp;
     }
