@@ -32,14 +32,14 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     void computeError();
 
-    void copyInputFields() {}
+    void copyInputFields();
     void freeInputFields() {}
     void freeSizeField() {}
 
   private:
 
     double elem_size;
-    double initialAverageEdgeLength;
+    double averageEdgeLength;
 
 };
 

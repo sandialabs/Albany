@@ -20,6 +20,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSquoze.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSquoze.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSquozeSerial.xml
                ${CMAKE_CURRENT_BINARY_DIR}/inputSquozeSerial.xml COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/inputSquozeSerial2.xml
+               ${CMAKE_CURRENT_BINARY_DIR}/inputSquozeSerial2.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/materials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/materials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/traction_assoc.txt
@@ -41,7 +43,7 @@ IF(ENABLE_MESHMODEL)
     add_test(NAME ${testName}_Necking_Tpetra COMMAND ${AlbanyT.exe} inputNeckingT.xml)
   ENDIF()
   if (ALBANY_MUELU_EXAMPLES)
-    add_test(NAME ${testName}_Pressure_Tpetra COMMAND ${AlbanyT.exe} inputSquoze.xml)
-    add_test(NAME ${testName}_Pressure_Tpetra_SERIAL COMMAND ${SerialAlbanyT.exe} inputSquozeSerial.xml)
+#    add_test(NAME ${testName}_Pressure_Tpetra COMMAND ${AlbanyT.exe} inputSquoze.xml)
+#    add_test(NAME ${testName}_Pressure_Tpetra_SERIAL COMMAND ${SerialAlbanyT.exe} inputSquozeSerial.xml)
   ENDIF()
 ENDIF()
