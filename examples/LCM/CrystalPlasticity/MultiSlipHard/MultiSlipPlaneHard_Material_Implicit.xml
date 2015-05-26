@@ -30,7 +30,8 @@
       </ParameterList>
 
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
-      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-15"/>
+      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-45"/>
+      <Parameter name="Implicit Integration Absolute Tolerance" type="double" value="1.0e-12"/>
       <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
@@ -41,9 +42,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{0.0, 1.0, 0.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
-
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <!-- Specify output to Exodus -->
@@ -75,6 +76,7 @@
 
       <Parameter name="Integration Scheme" type="string" value="Implicit"/>
       <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-45"/>
+      <Parameter name="Implicit Integration Relative Tolerance" type="double" value="1.0e-12"/>
       <Parameter name="Implicit Integration Max Iterations Implicit" type="int" value="100"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
@@ -88,8 +90,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{1.0,1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/> 
       </ParameterList>
 
       <ParameterList name="Slip System 2">
@@ -97,8 +100,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{1.0,1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 3">
@@ -106,8 +110,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{1.0,1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 4">
@@ -115,8 +120,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 5">
@@ -124,8 +130,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 6">
@@ -133,8 +140,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 7">
@@ -142,8 +150,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,-1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 8">
@@ -151,8 +160,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,-1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 9">
@@ -160,8 +170,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{-1.0,-1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 10">
@@ -169,8 +180,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{1.0,-1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 11">
@@ -178,8 +190,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{1.0,-1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <ParameterList name="Slip System 12">
@@ -187,8 +200,9 @@
         <Parameter name="Slip Normal" type="Array(double)"    value="{1.0,-1.0,1.0}"/>
         <Parameter name="Tau Critical" type="double" value="0.6"/>
         <Parameter name="Gamma Dot" type="double" value="0.001"/>
-        <Parameter name="Gamma Exponent" type="double" value="20.0"/>
+        <Parameter name="Gamma Exponent" type="double" value="10.0"/>
         <Parameter name="Hardening" type="double" value="2.0"/>
+        <Parameter name="Hardening Exponent" type="double" value="0.5"/>
       </ParameterList>
 
       <!-- Specify output to Exodus -->
