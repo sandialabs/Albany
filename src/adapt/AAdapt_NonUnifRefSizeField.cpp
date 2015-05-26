@@ -38,7 +38,7 @@ AAdapt::NonUnifRefSizeField::configure(const Teuchos::RCP<Teuchos::ParameterList
        in->maximumImbalance = lbMaxImbalance;
      }
 
-//     in->shouldFixShape = true;
+     in->shouldFixShape = true;
 
      return in;
 
@@ -61,7 +61,7 @@ AAdapt::NonUnifRefSizeField::copyInputFields() {
 
 double AAdapt::NonUnifRefSizeField::getValue(ma::Entity* v) {
   // v is the incoming vertex
-std::cout << "Calling getValue!!!" << std::endl;
+  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Calling getValue() in AAdapt_NonUnifRefSizeField.cpp");
   return 0.5;
 }
 
