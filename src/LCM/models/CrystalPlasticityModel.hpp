@@ -142,6 +142,17 @@ private:
 				  std::vector<ScalarT> const &       hardness_n,
 				  std::vector<ArgT> &                matrix) const ;
 
+  template<typename ArgT>
+  void
+  lineSearch(ScalarT                            dt,
+	     Intrepid::Tensor<ScalarT> const &  Fp_n,
+	     Intrepid::Tensor<ScalarT> const &  F_np1,
+	     std::vector<ScalarT> const &       slip_n,
+	     std::vector<ArgT> const &          slip_np1_km1,
+	     std::vector<ArgT> const &          delta_delta_slip,
+	     std::vector<ScalarT> const &       hardness_n,
+	     RealType &                         alpha) const ;
+
   ///
   /// Check tensor for nans and infs.
   ///
