@@ -22,6 +22,9 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
   
     ~SPRSizeField();
 
+    ma::Input *configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+       { return MeshSizeField::configure(adapt_params_); }
+
     double getValue(ma::Entity* v);
 
     int getCubatureDegree(int num_qp);
@@ -36,13 +39,10 @@ class SPRSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   private:
 
-    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
     apf::Field* field;
     Albany::StateArrayVec& esa;
     Albany::WsLIDList& elemGIDws;
     Teuchos::RCP<Albany::AbstractPUMIDiscretization> pumi_disc;
-
-    Teuchos::RCP<const Teuchos_Comm> commT;
 
     std::string sv_name;
     double rel_err;

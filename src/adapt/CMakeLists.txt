@@ -149,6 +149,7 @@ SET(SOURCES ${SOURCES}
     AAdapt_MeshAdapt.cpp
     AAdapt_UnifSizeField.cpp
     AAdapt_UnifRefSizeField.cpp
+    AAdapt_NonUnifRefSizeField.cpp
    )
 
 SET(HEADERS ${HEADERS}
@@ -156,6 +157,7 @@ SET(HEADERS ${HEADERS}
     AAdapt_MeshAdapt.hpp
     AAdapt_UnifSizeField.hpp
     AAdapt_UnifRefSizeField.hpp
+    AAdapt_NonUnifRefSizeField.hpp
    )
 
 IF(ENABLE_SPR)

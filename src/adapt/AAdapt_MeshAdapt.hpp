@@ -60,8 +60,6 @@ private:
 
   apf::Mesh2* mesh;
 
-  int num_iterations;
-
   Teuchos::RCP<MeshSizeField> szField;
   
   std::string adaptation_method;

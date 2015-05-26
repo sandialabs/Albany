@@ -18,9 +18,13 @@ namespace AAdapt {
 class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
+
     UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
 
     ~UnifRefSizeField();
+
+    ma::Input *configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+       { return MeshSizeField::configure(adapt_params_); }
 
     double getValue(ma::Entity* v);
 
@@ -34,11 +38,8 @@ class UnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   private:
 
-    Teuchos::RCP<const Teuchos_Comm> commT;
-
     double elem_size;
     double initialAverageEdgeLength;
-    Teuchos::RCP<Albany::PUMIMeshStruct> mesh_struct;
 
 };
 

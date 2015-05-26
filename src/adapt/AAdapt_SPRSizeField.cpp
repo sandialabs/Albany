@@ -12,8 +12,7 @@
 #include <apfShape.h>
 
 AAdapt::SPRSizeField::SPRSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
-  commT(disc->getComm()),
-  mesh_struct(disc->getPUMIMeshStruct()),
+  MeshSizeField(disc),
   global_numbering(disc->getAPFGlobalNumbering()),
   esa(disc->getStateArrays().elemStateArrays),
   elemGIDws(disc->getElemGIDws()),

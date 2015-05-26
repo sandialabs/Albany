@@ -777,6 +777,17 @@ ELSE()
   SET(ALBANY_CHECK_FPE FALSE)
 ENDIF()
 
+# Add option to set FTZ and DAZ
+OPTION(ENABLE_FLUSH_DENORMALS "Flag to turn on FTZ and DAZ" OFF)
+IF (ENABLE_FLUSH_DENORMALS)
+  ADD_DEFINITIONS(-DALBANY_FLUSH_DENORMALS)
+  MESSAGE("-- FTZ/DAZ flags             is Enabled, compiling with -DALBANY_FLUSH_DENORMALS")
+  SET(ALBANY_FLUSH_DENORMALS TRUE)
+ELSE()
+  MESSAGE("-- FTZ/DAZ flags             is NOT Enabled.")
+  SET(ALBANY_FLUSH_DENORMALS FALSE)
+ENDIF()
+
 #amb Default to on until the merge.
 OPTION(ENABLE_KOKKOS_UNDER_DEVELOPMENT "Flag to turn on Kokkos experimental code in Albany" OFF)
 IF (ENABLE_KOKKOS_UNDER_DEVELOPMENT)

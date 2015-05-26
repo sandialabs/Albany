@@ -4,25 +4,25 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef AADAPT_UNIFSIZEFIELD_HPP
-#define AADAPT_UNIFSIZEFIELD_HPP
 
-#include "Albany_PUMIDiscretization.hpp"
+#ifndef AADAPT_NONUNIFREFSIZEFIELD_HPP
+#define AADAPT_NONUNIFREFSIZEFIELD_HPP
+
+#include "Albany_AbstractPUMIDiscretization.hpp"
 #include <ma.h>
 #include "Albany_StateManager.hpp"
 #include "AAdapt_MeshSizeField.hpp"
 
 namespace AAdapt {
 
-class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class NonUnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
   public:
-    UnifSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
+    NonUnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
 
-    ~UnifSizeField();
+    ~NonUnifRefSizeField();
 
-    ma::Input *configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
-       { return MeshSizeField::configure(adapt_params_); }
+    ma::Input *configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
 
     double getValue(ma::Entity* v);
 
@@ -30,13 +30,11 @@ class UnifSizeField : public ma::IsotropicFunction, public MeshSizeField {
 
     void computeError();
 
-    void copyInputFields() {}
+    void copyInputFields();
     void freeInputFields() {}
     void freeSizeField() {}
 
   private:
-
-    double elem_size;
 
 };
 
