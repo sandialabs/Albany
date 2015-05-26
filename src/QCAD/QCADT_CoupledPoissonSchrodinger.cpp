@@ -40,6 +40,7 @@ Please remove when issue is resolved
 #include "Ifpack_ConfigDefs.h"
 #include "Ifpack.h"
 
+#define OUTPUT_TO_SCREEN
 
 std::string QCADT::strdim(const std::string s, const int dim) {
   std::ostringstream ss;
@@ -397,19 +398,28 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   num_models_ = 2; 
   //set p_init
   for (int l = 0; l < num_param_vecs; ++l) {
-    Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> p_spaces(num_models_);
-
-    p_spaces[0] = poissonModel->get_p_space(l); 
-    p_spaces[1] = schrodingerModel->get_p_space(l); 
- 
-    Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const> p_space = Thyra::productVectorSpace<ST>(p_spaces);
-
-    Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST> const>>p_vecs(num_models_);
-   
-    p_vecs[0] = poissonModel->getNominalValues().get_p(l); 
-    p_vecs[1] = schrodingerModel->getNominalValues().get_p(l); 
-
-    Teuchos::RCP<Thyra::DefaultProductVector<ST>> p_prod_vec = Thyra::defaultProductVector<ST>(p_space, p_vecs());
+    std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
+    if(l < num_poisson_param_vecs) {
+      //Poisson model: 
+      vs_array.push_back(poissonModel->get_p_space(l)); 
+    }
+    else {
+      //Schrodinger model:  
+      vs_array.push_back(schrodingerModel->get_p_space(l - num_poisson_param_vecs));
+    }
+    Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const> p_space = Thyra::productVectorSpace<ST>(vs_array);
+    
+    std::vector<Teuchos::RCP<Thyra::VectorBase<ST> const>> pvecs_array;
+    if(l < num_poisson_param_vecs) { 
+      //Poisson model: 
+      pvecs_array.push_back(poissonModel->getNominalValues().get_p(l)); 
+    }
+    else {
+      //Schrodinger model:  
+      pvecs_array.push_back(schrodingerModel->getNominalValues().get_p(l - num_poisson_param_vecs)); 
+    }
+  
+    Teuchos::RCP<Thyra::DefaultProductVector<ST>> p_prod_vec = Thyra::defaultProductVector<ST>(p_space, pvecs_array);
 
     if (Teuchos::is_null(p_prod_vec) == true) continue;
 
@@ -502,11 +512,14 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCADT::CoupledPoissonSchrodinger:
                      "Invalid parameter index l = " << l << std::endl);
   
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
-  //Poisson model: 
-  vs_array.push_back(poissonModel->get_p_space(l)); 
-  //Schrodinger model:  
-  vs_array.push_back(schrodingerModel->get_p_space(l));
-  //FIXME: does eigenvalue part have a p space? 
+  if(l < num_poisson_param_vecs) {
+    //Poisson model: 
+    vs_array.push_back(poissonModel->get_p_space(l)); 
+  }
+  else {
+    //Schrodinger model:  
+    vs_array.push_back(schrodingerModel->get_p_space(l - num_poisson_param_vecs));
+  }
   return Thyra::productVectorSpace<ST>(vs_array);
  
 }
@@ -522,13 +535,16 @@ Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCADT::CoupledPoissonSchrodinger:
                      "Invalid response index j = " << j << std::endl);
   
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
-  //Poisson model: 
-  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
-              poissonApp->getResponse(j)->responseMapT())); 
-  //Schrodinger model:  
-  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
-              schrodingerApp->getResponse(j)->responseMapT())); 
-  //FIXME: does eigenvalue part have a p space? 
+  if(j < poissonApp->getNumResponses()) {
+    //Poisson model: 
+    vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+                poissonApp->getResponse(j)->responseMapT())); 
+  }
+  else {
+    //Schrodinger model:  
+    vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(
+                schrodingerApp->getResponse(j - poissonApp->getNumResponses())->responseMapT())); 
+  }
   return Thyra::productVectorSpace<ST>(vs_array);
 }
 
@@ -1532,12 +1548,14 @@ evalModelImpl(
 Teuchos::RCP<Albany::Application>
 QCADT::CoupledPoissonSchrodinger::getPoissonApp() const
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   return poissonApp;
 }
 
 Teuchos::RCP<Albany::Application>
 QCADT::CoupledPoissonSchrodinger::getSchrodingerApp() const
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   return schrodingerApp;
 }
 
@@ -1616,6 +1634,7 @@ void QCADT::CoupledPoissonSchrodinger::separateCombinedVector(const Teuchos::RCP
 Teuchos::RCP<const Teuchos::ParameterList>
 QCADT::CoupledPoissonSchrodinger::getValidAppParameters() const
 {  
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::rcp(new Teuchos::ParameterList("ValidAppParams"));;
   validPL->sublist("Problem",            false, "Problem sublist");
   validPL->sublist("Debug Output",       false, "Debug Output sublist");
@@ -1632,6 +1651,7 @@ QCADT::CoupledPoissonSchrodinger::getValidAppParameters() const
 Teuchos::RCP<const Teuchos::ParameterList>
 QCADT::CoupledPoissonSchrodinger::getValidProblemParameters() const
 {
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   Teuchos::RCP<Teuchos::ParameterList> validPL = Teuchos::createParameterList("ValidPoissonSchrodingerProblemParams");
 
   validPL->set<std::string>("Name", "", "String to designate Problem Class");
