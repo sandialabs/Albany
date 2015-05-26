@@ -15,7 +15,7 @@
 
 namespace AAdapt {
 
-class NonUnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
+class NonUnifRefSizeField : public MeshSizeField {
 
   public:
     NonUnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc);
@@ -23,8 +23,6 @@ class NonUnifRefSizeField : public ma::IsotropicFunction, public MeshSizeField {
     ~NonUnifRefSizeField();
 
     ma::Input *configure(const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_);
-
-    double getValue(ma::Entity* v);
 
     void setParams(const Teuchos::RCP<Teuchos::ParameterList>& p);
 

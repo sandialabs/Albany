@@ -59,9 +59,3 @@ AAdapt::NonUnifRefSizeField::copyInputFields() {
 
 }
 
-double AAdapt::NonUnifRefSizeField::getValue(ma::Entity* v) {
-  // v is the incoming vertex
-  TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "Calling getValue() in AAdapt_NonUnifRefSizeField.cpp");
-  return 0.5;
-}
-
