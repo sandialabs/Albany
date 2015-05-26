@@ -917,25 +917,26 @@ evalModelImpl(
   //
   // Get the output arguments
   //
-  Teuchos::RCP<Thyra::ProductVectorBase<ST>> fT_out =
+  Teuchos::RCP<Thyra::ProductVectorBase<ST>> f_out =
       Teuchos::nonnull(out_args.get_f()) ?
           Teuchos::rcp_dynamic_cast<Thyra::ProductVectorBase<ST>>(
               out_args.get_f(), true) :
           Teuchos::null;
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_op_outT = Teuchos::nonnull(out_args.get_W_op()) ?
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> W_out = Teuchos::nonnull(out_args.get_W_op()) ?
                                                     out_args.get_W_op() : Teuchos::null;
 
 
-/*  //
-  //FIXME, IKT, 5/22/15:
   // Get views into 'x' (and 'xdot'?) vectors to use for separate poisson and schrodinger application object calls
   //
-  int disc_nMyElements = disc_map->NumMyElements();
+  int disc_nMyElements = disc_map->getNodeNumElements();
 
-  Teuchos::RCP<const Epetra_Vector> x_poisson, xdot_poisson, eigenvals_dist;
-  Teuchos::RCP<const Epetra_MultiVector> x_schrodinger, xdot_schrodinger;
-  std::vector<const Epetra_Vector*> xdot_schrodinger_vec(nEigenvals);
+  Teuchos::RCP<const Tpetra_Vector> x_poisson, xdot_poisson, eigenvals_dist;
+  Teuchos::RCP<const Tpetra_MultiVector> x_schrodinger, xdot_schrodinger;
+  
+  std::vector<const Tpetra_Vector*> xdot_schrodinger_vec(nEigenvals);
+/*  //
+  //FIXME, IKT, 5/22/15:
   separateCombinedVector(x, x_poisson, x_schrodinger, eigenvals_dist);
     
   if (x_dot != Teuchos::null) {  //maybe unnecessary - it seems that the coupled PS model evaluator shouldn't support x_dot ...
@@ -958,15 +959,19 @@ evalModelImpl(
 
   Teuchos::RCP<Epetra_Vector> eigenvals =  Teuchos::rcp(new Epetra_Vector(local_eigenval_map));
   eigenvals->Import(*eigenvals_dist, eigenval_importer, Insert);
-  Teuchos::RCP<std::vector<double> > stdvec_eigenvals = Teuchos::rcp(new std::vector<double>(&(*eigenvals)[0], &(*eigenvals)[0] + nEigenvals));
-
+  */
+  Teuchos::RCP<Tpetra_Vector> eigenvals; //FIXME, IKT, 5/26/15: placeholder for now.
+   const Teuchos::ArrayRCP<const ST> eigenvals_constView = eigenvals->get1dView();
+  Teuchos::RCP<std::vector<double> > stdvec_eigenvals = Teuchos::rcp(new std::vector<double>(&eigenvals_constView[0], &eigenvals_constView[0] + nEigenvals));
   //
   // Get views into 'f' residual vector to use for separate poisson and schrodinger application object calls
   //
-  Teuchos::RCP<Epetra_Vector>   f_poisson, f_norm_local, f_norm_dist;
-  Teuchos::RCP<Epetra_MultiVector> f_schrodinger;
-  std::vector<Epetra_Vector*> f_schrodinger_vec(nEigenvals);
+  Teuchos::RCP<Tpetra_Vector>   f_poisson, f_norm_local, f_norm_dist;
+  Teuchos::RCP<Tpetra_MultiVector> f_schrodinger;
+  std::vector<Tpetra_Vector*> f_schrodinger_vec(nEigenvals);
 
+  //FIXME, IKT, 5/26/15:
+  /*
   if(f_out != Teuchos::null) {
     separateCombinedVector(f_out, f_poisson, f_schrodinger, f_norm_dist);
     for(int i=0; i<nEigenvals; i++) f_schrodinger_vec[i] = (*f_schrodinger)(i);
@@ -1023,15 +1028,13 @@ evalModelImpl(
   //
   bool f_poisson_already_computed = false;
   std::vector<bool> f_schrodinger_already_computed(nEigenvals, false);
-/*
- //FIXME? 
-  Teuchos::RCP<Epetra_CrsMatrix> W_out_poisson_crs; //possibly used by preconditioner, so declare here
-  Teuchos::RCP<Epetra_CrsMatrix> W_out_schrodinger_crs; //possibly used by preconditioner, so declare here
+
+  Teuchos::RCP<Tpetra_CrsMatrix> W_out_poisson_crs; //possibly used by preconditioner, so declare here
+  Teuchos::RCP<Tpetra_CrsMatrix> W_out_schrodinger_crs; //possibly used by preconditioner, so declare here
 
   // Mass Matrix -- needed even if we don't need to compute the Jacobian, since it enters into the normalization equations
   //   --> Compute mass matrix using schrodinger equation -- independent of eigenvector so can just use 0th
   //       Note: to compute this, we need to evaluate the schrodinger problem as a transient problem, so create a dummy xdot...
-  */
   const Teuchos::RCP<Tpetra_Operator> M_out_schrodinger = Teuchos::nonnull(schrodingerModel->create_W_op()) ?
             ConverterT::getTpetraOperator(schrodingerModel->create_W_op()) :
             Teuchos::null; //maybe re-use this and not create it every time?
@@ -1040,20 +1043,26 @@ evalModelImpl(
             Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(M_out_schrodinger, true) :
             Teuchos::null;
 
-  /*Teuchos::RCP<const Epetra_Vector> dummy_xdot = schrodingerModel->get_x_dot_init(); // I think this would work as well: Teuchos::rcp(new Epetra_Vector(*disc_map)) 
-  schrodingerApp->computeGlobalJacobian(1.0, 0.0, 0.0, curr_time, dummy_xdot.get(), NULL, *((*x_schrodinger)(0)), 
+  Teuchos::RCP<const Tpetra_Vector> dummy_xdot = 
+      ConverterT::getConstTpetraVector(schrodingerModel->getNominalValues().get_x_dot()); 
+
+  schrodingerApp->computeGlobalJacobianT(1.0, 0.0, 0.0, curr_time, dummy_xdot.get(), NULL, *x_schrodinger->getVector(0), 
 					    schrodinger_sacado_param_vec, f_schrodinger_vec[0], *M_out_schrodinger_crs);
-
-
+  
   // Hamiltionan Matrix -- needed even if we don't need to compute the Jacobian, since this is how we compute the schrodinger residuals
   //   --> Computed as jacobian matrix of schrodinger equation -- independent of eigenvector so can just use 0th
-  Teuchos::RCP<Epetra_Operator> J_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
-  Teuchos::RCP<Epetra_CrsMatrix> J_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(J_out_schrodinger, true);
-  schrodingerApp->computeGlobalJacobian(0.0, 1.0, 0.0, curr_time, dummy_xdot.get(), NULL, *((*x_schrodinger)(0)), 
+  Teuchos::RCP<Tpetra_Operator> const J_out_schrodinger =
+        Teuchos::nonnull(schrodingerModel->create_W_op()) ?
+            ConverterT::getTpetraOperator(schrodingerModel->create_W_op()) :
+            Teuchos::null;
+  Teuchos::RCP<Tpetra_CrsMatrix> J_out_schrodinger_crs =
+        Teuchos::nonnull(J_out_schrodinger) ?
+            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(J_out_schrodinger, true) :
+            Teuchos::null;
+  schrodingerApp->computeGlobalJacobianT(0.0, 1.0, 0.0, curr_time, dummy_xdot.get(), NULL, *x_schrodinger->getVector(0), 
 					    schrodinger_sacado_param_vec, f_schrodinger_vec[0], *J_out_schrodinger_crs);
-
+  
   f_schrodinger_already_computed[0] = true; //residual is not affected by alpha & beta, so both of the above calls compute it.
-
 
   // W 
   if (W_out != Teuchos::null) { 
@@ -1066,14 +1075,18 @@ evalModelImpl(
     //TODO - how to allow general alpha and beta?  This won't work given current logic, so we should test that alpha=0, beta=1 and throw an error otherwise...
 
     // Compute poisson Jacobian
-    Teuchos::RCP<Epetra_Operator> W_out_poisson = poissonModel->create_W(); //maybe re-use this and not create it every time?
-    W_out_poisson_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_poisson, true);
+    const Teuchos::RCP<Tpetra_Operator> W_out_poisson = Teuchos::nonnull(poissonModel->create_W_op()) ?
+            ConverterT::getTpetraOperator(poissonModel->create_W_op()) :
+            Teuchos::null; //maybe re-use this and not create it every time? 
 
-    poissonApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_poisson.get(), NULL, *x_poisson, 
+    Teuchos::RCP<Tpetra_CrsMatrix> W_out_poisson_crs =   Teuchos::nonnull(W_out_poisson) ?
+            Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_out_poisson, true) :
+            Teuchos::null;
+
+    poissonApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xdot_poisson.get(), NULL, *x_poisson, 
 				      poisson_sacado_param_vec, f_poisson.get(), *W_out_poisson_crs);
     f_poisson_already_computed = true;
 
-    
     TEUCHOS_TEST_FOR_EXCEPTION(nEigenvals <= 0, Teuchos::Exceptions::InvalidParameter,"Error! The number of eigenvalues must be greater than zero.");
       
     //Compute schrodinger Jacobian using first eigenvector -- independent of eigenvector since Schro. eqn is linear
@@ -1083,17 +1096,19 @@ evalModelImpl(
     else if(alpha == 0.0 && beta == 1.0)
       W_out_schrodinger_crs = J_out_schrodinger_crs;
     else {
-      Teuchos::RCP<Epetra_Operator> W_out_schrodinger = schrodingerModel->create_W(); //maybe re-use this and not create it every time?
-      W_out_schrodinger_crs = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(W_out_schrodinger, true);
-      schrodingerApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_schrodinger_vec[0], NULL, *((*x_schrodinger)(0)), 
+      const Teuchos::RCP<Tpetra_Operator> W_out_schrodinger = Teuchos::nonnull(schrodingerModel->create_W_op()) ?
+              ConverterT::getTpetraOperator(schrodingerModel->create_W_op()) :
+              Teuchos::null; //maybe re-use this and not create it every time? 
+      Teuchos::RCP<Tpetra_CrsMatrix> W_out_schrodinger_crs =   Teuchos::nonnull(W_out_schrodinger) ?
+              Teuchos::rcp_dynamic_cast<Tpetra_CrsMatrix>(W_out_schrodinger, true) :
+              Teuchos::null;
+      schrodingerApp->computeGlobalJacobianT(alpha, beta, 0.0, curr_time, xdot_schrodinger_vec[0], NULL, *x_schrodinger->getVector(0), 
 					  schrodinger_sacado_param_vec, f_schrodinger_vec[0], *W_out_schrodinger_crs);
       f_schrodinger_already_computed[0] = true;
-    }
-    
+    }    
     Teuchos::RCP<QCADT::CoupledPSJacobian> W_out_psj = Teuchos::rcp_dynamic_cast<QCADT::CoupledPSJacobian>(W_out, true);
-    W_out_psj->initialize(W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger);
-*/
-
+    //FIXME, IKT, 5/26/15: set initialization of ImplicitPSJacobian object, if applicable. 
+    //W_out_psj->initialize(W_out_poisson_crs, W_out_schrodinger_crs, M_out_schrodinger_crs, eigenvals, x_schrodinger);
 
     /*
     // DEBUG --- JACOBIAN TEST -----------------------------------------------------------------------------------------
@@ -1140,114 +1155,12 @@ evalModelImpl(
 
     // DEBUG --- JACOBIAN TEST -----------------------------------------------------------------------------------------
     */
-  /*}
-
-
-  if (WPrec_out != Teuchos::null) {
-     // Get Poisson Preconditioner
-     Teuchos::RCP<Epetra_Operator> WPrec_poisson;
-     
-     // Get the Poisson Jacobian -- (just copy the it if we already computed it)
-     Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs_poisson;
-     if(W_out != Teuchos::null)
-       Extra_W_crs_poisson = Teuchos::rcp( new Epetra_CrsMatrix(*W_out_poisson_crs) ); //Check: does this need to copy?
-     else {
-       Extra_W_crs_poisson = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(poissonModel->create_W(), true);
-       poissonApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_poisson.get(), NULL, *x_poisson, 
-					 poisson_sacado_param_vec, f_poisson.get(), *Extra_W_crs_poisson);
-       f_poisson_already_computed = true;
-     }
-
-     bool poisson_supports_teko_prec = false;  // TODO: I think this should = whether poisson outargs supports OUT_ARG_WPrec
-     if( poisson_supports_teko_prec ) {
-       Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> WPrec_poisson_pre = poissonModel->create_WPrec(); //maybe re-use this and not create it every time?
-       WPrec_poisson = WPrec_poisson_pre->PrecOp;       
-       poissonApp->computeGlobalPreconditioner(Extra_W_crs_poisson, WPrec_poisson);
-     }
-     else {
-       // Use Ifpack to get a pseudo inverse of Extra_W_crs_poisson
-       Teuchos::ParameterList Ifpack_list;
-       Ifpack Ifpack_factory; // allocate an IFPACK factory.
-
-       // create the preconditioner. -- maybe pull this info from input file in FUTURE
-       std::string PrecType = "ILU"; // incomplete LU
-       int OverlapLevel = 1; // must be >= 0. If Comm.NumProc() == 1, it is ignored.
-
-       Teuchos::RCP<Ifpack_Preconditioner> WPrec_poisson_pre = Teuchos::rcp( Ifpack_factory.Create(PrecType, &*Extra_W_crs_poisson, OverlapLevel) );
-       assert(WPrec_poisson_pre != Teuchos::null);
-
-       // specify parameters for ILU -- maybe pull this info from input file in FUTURE
-       Ifpack_list.set("fact: drop tolerance", 1e-9);
-       Ifpack_list.set("fact: level-of-fill", 1);
-       // the combine mode is one of  the following:
-       // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax" (Their meaning is as defined in file Epetra_CombineMode.h)
-       Ifpack_list.set("schwarz: combine mode", "Add");
-
-
-       if( WPrec_poisson_pre->SetParameters(Ifpack_list) != 0 ) // sets the parameters
-	 TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,"Error! Invalid IFPACK Parameters.");	 
-       if( WPrec_poisson_pre->Initialize() != 0)                // initialize preconditioner (must fillComplete matrix by now)
-	 TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,"Error Inializing Ifpack preconditioner");	 
-       if( WPrec_poisson_pre->Compute() != 0)                   // compute preconditioner
-	 TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,"Error Computing Ifpack preconditioner");	 
-
-       WPrec_poisson = Teuchos::rcp_dynamic_cast<Epetra_Operator>(WPrec_poisson_pre, true);
-     }
-
-     // Get Schrodinger Preconditioner
-     Teuchos::RCP<Epetra_Operator> WPrec_schrodinger;
-
-       // Get the Schrodinger Jacobian
-     Teuchos::RCP<Epetra_CrsMatrix> Extra_W_crs_schrodinger;
-     if(W_out != Teuchos::null)
-       Extra_W_crs_schrodinger = Teuchos::rcp( new Epetra_CrsMatrix(*W_out_schrodinger_crs) ); //Check: does this need to copy?
-     else {
-       Extra_W_crs_schrodinger = Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(schrodingerModel->create_W(), true);
-       schrodingerApp->computeGlobalJacobian(alpha, beta, 0.0, curr_time, xdot_schrodinger_vec[0], NULL, *((*x_schrodinger)(0)), 
-					     schrodinger_sacado_param_vec, f_schrodinger_vec[0], *Extra_W_crs_schrodinger);
-       f_schrodinger_already_computed[0] = true;
-     }
-
-     bool schrodinger_supports_teko_prec = false;  // I think this should = whether poisson outargs supports OUT_ARG_WPrec
-     if( schrodinger_supports_teko_prec ) {
-       Teuchos::RCP<EpetraExt::ModelEvaluator::Preconditioner> WPrec_schrodinger_pre = schrodingerModel->create_WPrec(); //maybe re-use this and not create every time?
-       WPrec_schrodinger = WPrec_schrodinger_pre->PrecOp;
-       schrodingerApp->computeGlobalPreconditioner(Extra_W_crs_schrodinger, WPrec_schrodinger);
-     }
-     else {
-       // Use Ifpack to get a pseudo inverse of Extra_W_crs_schrodinger
-       Teuchos::ParameterList Ifpack_list;
-       Ifpack Ifpack_factory; // allocate an IFPACK factory.
-
-       // create the preconditioner. -- maybe pull this info from input file in FUTURE
-       std::string PrecType = "ILU"; // incomplete LU
-       int OverlapLevel = 1; // must be >= 0. If Comm.NumProc() == 1, it is ignored.
-
-       Teuchos::RCP<Ifpack_Preconditioner> WPrec_schrodinger_pre = Teuchos::rcp( Ifpack_factory.Create(PrecType, &*Extra_W_crs_schrodinger, OverlapLevel) );
-       assert(WPrec_schrodinger_pre != Teuchos::null);
-
-       // specify parameters for ILU -- maybe pull this info from input file in FUTURE
-       Ifpack_list.set("fact: drop tolerance", 1e-9);
-       Ifpack_list.set("fact: level-of-fill", 1);
-       // the combine mode is one of the following:
-       // "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"   (Their meaning is as defined in file Epetra_CombineMode.h)
-       Ifpack_list.set("schwarz: combine mode", "Add");
-
-
-       if( WPrec_schrodinger_pre->SetParameters(Ifpack_list) != 0 ) // sets the parameters
-	 TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,"Error! Invalid IFPACK Parameters.");	 
-       if( WPrec_schrodinger_pre->Initialize() != 0)                // initialize preconditioner (must fillComplete matrix by now)
-	 TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,"Error Inializing Ifpack preconditioner");	 
-       if( WPrec_schrodinger_pre->Compute() != 0)                   // compute preconditioner
-	 TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,"Error Computing Ifpack preconditioner");	 
-
-       WPrec_schrodinger = Teuchos::rcp_dynamic_cast<Epetra_Operator>(WPrec_schrodinger_pre, true);
-     }
-
-     Teuchos::RCP<QCADT::CoupledPSPreconditioner> WPrec_out_psp = Teuchos::rcp_dynamic_cast<QCADT::CoupledPSPreconditioner>(WPrec_out, true);
-     WPrec_out_psp->initialize(WPrec_poisson, WPrec_schrodinger);
   }
 
+  //IKT, 5/26/15: removed all preconditioner stuff since we'll be using Teko. 
+
+/*
+  //IKT, 5/26/15: do dfdp later.
   // df/dp
   for (int i=0; i<outArgs.Np(); i++) {
     Teuchos::RCP<Epetra_MultiVector> dfdp_out = 
@@ -1328,19 +1241,21 @@ evalModelImpl(
 				    NULL, f_deriv, Derivative(), Derivative());
   }
   else {  */
-  /*  if (f_out != Teuchos::null) { 
-      Epetra_Vector M_vec(*disc_map);  //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
+    if (f_out != Teuchos::null) { 
+      Teuchos::RCP<Tpetra_Vector> M_vec = Teuchos::rcp(new Tpetra_Vector(disc_map));  
+      //temp storage for mass matrix times vec -- maybe don't allocate this on the stack??
 
       if(!f_poisson_already_computed) {
-	poissonApp->computeGlobalResidual(curr_time, xdot_poisson.get(), NULL, *x_poisson, 
+	poissonApp->computeGlobalResidualT(curr_time, xdot_poisson.get(), NULL, *x_poisson, 
 					  poisson_sacado_param_vec, *f_poisson);
       }
       
       for(int i=0; i<nEigenvals; i++) {
 
 	// Compute Mass_matrix * eigenvector[i]
-	const Epetra_Vector& vec = *((*x_schrodinger)(i));
-	M_out_schrodinger_crs->Multiply(false, vec, M_vec);  
+	const Tpetra_Vector& vec = *x_schrodinger->getVector(i);
+        //FIXME, 5/26/15: figure out Tpetra analog of Multiply
+	//M_out_schrodinger_crs->Multiply(false, vec, M_vec);  
 
 
 	// Compute the schrodinger residual f_schrodinger_vec[i]: H*eigenvector[i] - eigenvalue[i] * M * eigenvector[i]
@@ -1352,10 +1267,10 @@ evalModelImpl(
 	  //				      schrodinger_sacado_param_vec, *(f_schrodinger_vec[i]) );  // H*evec[i] 
 
 	  // H * Psi - E * M * Psi
-	  const Epetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
-	  Hamiltonian_crs.Multiply(false, vec, *(f_schrodinger_vec[i]));
+	  const Tpetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
+         //FIXME, 5/26/15: figure out Tpetra analog of Multiply
+	 //Hamiltonian_crs.Multiply(false, vec, *(f_schrodinger_vec[i]));
 	}
-*/
 	/* ---- DEBUG ----
 	   double He_norm, Me_norm, H_expect;
 	   f_schrodinger_vec[i]->Norm2(&He_norm);
@@ -1366,15 +1281,16 @@ evalModelImpl(
 	*/
 
 	// add -eval[i]*M*evec[i] to H*evec[i] (recall evals are really negative_evals)
-/*	f_schrodinger_vec[i]->Update( (*stdvec_eigenvals)[i], M_vec, 1.0); 
-
+	double eval = (*stdvec_eigenvals)[i];
+	f_schrodinger_vec[i]->update( eval, *M_vec, 1.0); 
 
         // Compute normalization equation residuals:  f_norm[i] = abs(1 - evec[i] . M . evec[i])
 	double vec_M_vec;
-	vec.Dot( M_vec, &vec_M_vec );
+	vec.dot( *M_vec, &vec_M_vec );
 	(*f_norm_local)[i] = 1.0 - vec_M_vec;
-      }
 
+      }
+/*
       // Fill elements of f_norm_dist that belong to this processor, i.e. loop over
       // eigenvalue indices "owned" by the current proc in the combined distributed map
       std::vector<int> eval_global_elements(my_nEigenvals);
@@ -1418,9 +1334,9 @@ evalModelImpl(
 	}
 	if(myComm->MyPID() == 0) std::cout << "Eigenvalue-part Residual: " << std::endl;
 	f_norm_dist->Print(std::cout); // only rank 0 prints
-      }
+      } */
     }
-
+/*
   // Response functions
   for (int i=0; i<outArgs.Ng(); i++) {
     Teuchos::RCP<Epetra_Vector> g_out = outArgs.get_g(i);
