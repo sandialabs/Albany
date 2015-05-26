@@ -21,7 +21,7 @@ static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
@@ -78,8 +78,11 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   //populate (0,0) block with Jac_Poisson
   Teuchos::RCP<Thyra::LinearOpBase<ST>> block00 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
   blocked_op->setNonconstBlock(0, 0, block00);
-  
   //FIXME: populate other blocks
+  blocked_op->setNonconstBlock(0, 1, block00);
+  blocked_op->setNonconstBlock(1, 0, block00);
+  blocked_op->setNonconstBlock(1, 1, block00);
+  
 
   // all done
   blocked_op->endBlockFill();

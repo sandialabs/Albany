@@ -70,6 +70,7 @@ add_subdirectory(ThermoMechanical3D)
 add_subdirectory(ThermoPoroMechanics3D)
 add_subdirectory(UnitTests)
 add_subdirectory(GradientDamage)
+add_subdirectory(ThermoMechanicalCan)
 
 IF(ALBANY_LAME)
     add_subdirectory(LameStaticElasticity3D)
