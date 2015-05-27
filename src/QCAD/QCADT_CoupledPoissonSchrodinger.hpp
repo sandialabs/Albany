@@ -64,8 +64,10 @@ namespace QCADT {
     Teuchos::RCP<Thyra::LinearOpBase<ST> > create_W_op() const;
     Teuchos::RCP<Thyra::PreconditionerBase<ST> > create_W_prec() const;
     Teuchos::RCP<Thyra::LinearOpWithSolveFactoryBase<ST> const> get_W_factory() const;
-
+    
+    Teuchos::RCP<const Tpetra_Map> createEigenvalueMap() const; 
     Teuchos::RCP<Thyra::VectorSpaceBase<ST> const> createCombinedRangeSpace() const; 
+
 
     Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_op_impl(int j) const;
     Teuchos::RCP<Thyra::LinearOpBase<ST> > create_DgDx_dot_op_impl(int j) const;

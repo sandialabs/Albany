@@ -32,7 +32,7 @@ namespace QCADT {
 
 class CoupledPSJacobian {
 public:
-  CoupledPSJacobian(Teuchos::RCP<Teuchos_Comm const> const & commT);
+  CoupledPSJacobian(int num_models, Teuchos::RCP<Teuchos_Comm const> const & commT);
 
   ~CoupledPSJacobian();
 
@@ -40,8 +40,8 @@ public:
 
 private:
 
-  Teuchos::RCP<Teuchos_Comm const>
-  commT_;
+  Teuchos::RCP<Teuchos_Comm const> commT_;
+  int num_models_; 
 };
 
 }

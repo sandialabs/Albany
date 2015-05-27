@@ -393,8 +393,8 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   nominal_values_ = this->createInArgsImpl();
   allocateVectors(); //sets x and x_dot in nominal_values_
 
-  //We are coupling 2 models: Poisson & Schrodinger
-  num_models_ = 2; 
+  //We are coupling 2+nEigenvals models: 1 Poisson eqn + nEigenvals Schrodinger eqns + 1 nEigenvals eigenvalue eqns
+  num_models_ = 1+2*nEigenvals; 
   //set p_init
   for (int l = 0; l < num_param_vecs; ++l) {
     std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
@@ -436,12 +436,15 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> spaces(2); 
-  int num_models_ = 2; //we have 2 models we're coupling 
+  Teuchos::Array<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> spaces(num_models_); 
+  
   //Poisson and Schrodinger have same disc_map
-  for (int m=0; m<num_models_; ++m)
+  for (int m=0; m<1+nEigenvals; ++m)
     spaces[m] = Thyra::createVectorSpace<ST>(disc_map);
 
+  //last space is eigenvalue space
+  spaces[1+nEigenvals] = Thyra::createVectorSpace<ST>(createEigenvalueMap()); 
+  
   Teuchos::RCP<Thyra::DefaultProductVectorSpace<ST> const> space = Thyra::productVectorSpace<ST>(spaces);
   Teuchos::ArrayRCP<Teuchos::RCP<Thyra::VectorBase<ST>>> xT_vecs;
 
@@ -455,10 +458,19 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
   Teuchos::RCP<Tpetra_Vector> xT_schro = Teuchos::rcp(new Tpetra_Vector(*schrodingerApp->getInitialSolutionT())); 
   Teuchos::RCP<Tpetra_Vector> x_dotT_schro = Teuchos::rcp(new Tpetra_Vector(*schrodingerApp->getInitialSolutionDotT())); 
 
+  //Poisson initial solution
   xT_vecs[0] = Thyra::createVector(xT_poisson, spaces[0]);
-  xT_vecs[1] = Thyra::createVector(xT_schro, spaces[1]);
   x_dotT_vecs[0] = Thyra::createVector(x_dotT_poisson, spaces[0]);
-  x_dotT_vecs[1] = Thyra::createVector(x_dotT_schro, spaces[1]);
+  
+  //Schrodinger initial solutions -- they are the same for all nEigenvals Schrodinger equations
+  for (int m=1; m<1+nEigenvals; ++m) {
+    xT_vecs[m] = Thyra::createVector(xT_schro, spaces[m]);
+    x_dotT_vecs[m] = Thyra::createVector(x_dotT_schro, spaces[m]);
+  }
+  
+  //All zero initial solutions for eigenvalues
+  Thyra::put_scalar(Teuchos::ScalarTraits<ST>::zero(), xT_vecs[1+nEigenvals].ptr()); 
+  Thyra::put_scalar(Teuchos::ScalarTraits<ST>::zero(), x_dotT_vecs[1+nEigenvals].ptr()); 
 
   Teuchos::RCP<Thyra::DefaultProductVector<ST>> xT_prod_vec = Thyra::defaultProductVector<ST>(space, xT_vecs());
   Teuchos::RCP<Thyra::DefaultProductVector<ST>> x_dotT_prod_vec = Thyra::defaultProductVector<ST>(space, x_dotT_vecs());
@@ -468,6 +480,17 @@ QCADT::CoupledPoissonSchrodinger::allocateVectors()
   
 }
 
+Teuchos::RCP<const Tpetra_Map>
+QCADT::CoupledPoissonSchrodinger::createEigenvalueMap() const 
+{
+  std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
+  //Create map for eigenvalues -- FIXME: check with Erik N.
+  int myRank = myComm->getRank(); 
+  int nProcs = myComm->getSize(); 
+  int nExtra = nEigenvals % nProcs;
+  int my_nAdditional = (nEigenvals / nProcs) + ((myRank < nExtra) ? 1 : 0);
+  Teuchos::RCP<const Tpetra_Map> dist_eigenval_map = Teuchos::rcp(new const Tpetra_Map(nEigenvals, my_nAdditional, 0, myComm)); 
+}
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCADT::CoupledPoissonSchrodinger::get_x_space() const
 {
@@ -491,10 +514,12 @@ QCADT::CoupledPoissonSchrodinger::createCombinedRangeSpace() const
   // loop over all vectors and build the vector space
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
-  for (int m = 0; m < num_models_; ++m) { 
-    //FIXME, IKT, 5/22/15?  double check that this is correct with Erik N. 
+  //Poisson and Schrodinger models have the same map: disc_map 
+  for (int m = 0; m < 1+nEigenvals; ++m) { 
     vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_map));
   }
+  //Last map is eigenvalue map
+  vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(createEigenvalueMap()));
   range_space = Thyra::productVectorSpace<ST>(vs_array);
   return range_space;
 }
@@ -564,72 +589,6 @@ Teuchos::RCP<const Teuchos::Array<std::string> > QCADT::CoupledPoissonSchrodinge
   
 }
 
-/*
-Teuchos::RCP<const Epetra_Vector> QCADT::CoupledPoissonSchrodinger::get_x_init() const
-{
-  if(saved_initial_guess != Teuchos::null) {
-    std::cout << "DEBUG CPS: returning saved initial guess!" << std::endl;
-    return saved_initial_guess;
-  }
-
-  //Put together x_init's from Poisson and Schrodinger for now (but does this make sense for eigenvectors?) -- TODO: discuss
-  Teuchos::RCP<const Epetra_Vector> poisson_x_init = poissonModel->get_x_init(); // should have disc_map
-  Teuchos::RCP<const Epetra_Vector> schrodinger_x_init = schrodingerModel->get_x_init(); // should have disc_map
-  
-  Teuchos::RCP<Epetra_Vector> x_init = Teuchos::rcp(new Epetra_Vector(*combined_SP_map));
-  Teuchos::RCP<Epetra_Vector> x_init_poisson;
-  Teuchos::RCP<Epetra_MultiVector> x_init_schrodinger;
-
-  separateCombinedVector(x_init, x_init_poisson, x_init_schrodinger);
-
-  std::vector<int> localInds( poisson_x_init->MyLength() );
-  for(int i=0; i < poisson_x_init->MyLength(); i++) localInds[i] = i;
-
-  x_init_poisson->ReplaceMyValues( poisson_x_init->MyLength(), &(*poisson_x_init)[0], &localInds[0] );
-  for(int k=0; k < nEigenvals; k++)
-    (*x_init_schrodinger)(k)->ReplaceMyValues( schrodinger_x_init->MyLength(), &(*schrodinger_x_init)[0], &localInds[0] ); //localInds are the same
-  
-  return x_init;
-}
-
-Teuchos::RCP<const Epetra_Vector> QCADT::CoupledPoissonSchrodinger::get_x_dot_init() const
-{
-  //Put together x_dot_init's from Poisson and Schrodinger for now (but does this make sense for eigenvectors?) -- TODO: discuss
-  Teuchos::RCP<const Epetra_Vector> poisson_x_dot_init = poissonModel->get_x_dot_init(); // should have disc_map
-  Teuchos::RCP<const Epetra_Vector> schrodinger_x_dot_init = schrodingerModel->get_x_dot_init(); // should have disc_map
-  
-  Teuchos::RCP<Epetra_Vector> x_dot_init = Teuchos::rcp(new Epetra_Vector(*combined_SP_map));
-  Teuchos::RCP<Epetra_Vector> x_dot_init_poisson;
-  Teuchos::RCP<Epetra_MultiVector> x_dot_init_schrodinger;
-
-  separateCombinedVector(x_dot_init, x_dot_init_poisson, x_dot_init_schrodinger);
-
-  std::vector<int> localInds( poisson_x_dot_init->MyLength() );
-  for(int i=0; i < poisson_x_dot_init->MyLength(); i++) localInds[i] = i;
-
-  x_dot_init_poisson->ReplaceMyValues( poisson_x_dot_init->MyLength(), &(*poisson_x_dot_init)[0], &localInds[0] );
-  for(int k=0; k < nEigenvals; k++)
-    (*x_dot_init_schrodinger)(k)->ReplaceMyValues( schrodinger_x_dot_init->MyLength(), &(*schrodinger_x_dot_init)[0], &localInds[0] ); //same localInds are the same
-  
-  //Teuchos::RCP<const Epetra_Vector> const_x_dot_init = Teuchos::rcp(new const Epetra_Vector(*x_dot_init));
-  return x_dot_init;
-}
-
-
-Teuchos::RCP<const Epetra_Vector> QCADT::CoupledPoissonSchrodinger::get_p_init(int l) const
-{
-  TEUCHOS_TEST_FOR_EXCEPTION(l >= num_param_vecs || l < 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl <<
-                     "Error in QCADT::CoupledPoissonSchrodinger::get_p_init():  " <<
-                     "Invalid parameter index l = " << l << std::endl);
-
-  if(l < num_poisson_param_vecs)
-    return poissonModel->get_p_init(l);
-  else
-    return schrodingerModel->get_p_init(l - num_poisson_param_vecs);
-}
-*/
-
 Thyra::ModelEvaluatorBase::InArgs<ST>
 QCADT::CoupledPoissonSchrodinger::getNominalValues() const
 {
@@ -664,7 +623,7 @@ QCADT::CoupledPoissonSchrodinger::create_W_op() const
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  QCADT::CoupledPSJacobian psJac(myComm); 
+  QCADT::CoupledPSJacobian psJac(num_models_, myComm); 
   return psJac.getThyraCoupledJacobian(Jac_Poisson); 
 }
 

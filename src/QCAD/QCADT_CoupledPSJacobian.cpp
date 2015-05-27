@@ -25,12 +25,13 @@ mm_counter = 0;
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
-QCADT::CoupledPSJacobian::CoupledPSJacobian(
+QCADT::CoupledPSJacobian::CoupledPSJacobian( int num_models, 
     Teuchos::RCP<Teuchos_Comm const> const & commT)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
+  num_models_ = num_models; 
   commT_ = commT;
 }
 
@@ -44,6 +45,7 @@ QCADT::CoupledPSJacobian::~CoupledPSJacobian()
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
 QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const
 {
+//FIXME: pass necessary variables for Jacobian blocks
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
@@ -69,7 +71,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     //   Where:
     //       n = quantum density function which depends on dimension
 
-  int block_dim = 2; //we have a 2x2 block matrix for QCAD 
+  int block_dim = num_models_;  
   
   // this operator will be square
   Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST>>blocked_op = Thyra::defaultBlockedLinearOp<ST>();
@@ -79,9 +81,6 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   Teuchos::RCP<Thyra::LinearOpBase<ST>> block00 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
   blocked_op->setNonconstBlock(0, 0, block00);
   //FIXME: populate other blocks
-  blocked_op->setNonconstBlock(0, 1, block00);
-  blocked_op->setNonconstBlock(1, 0, block00);
-  blocked_op->setNonconstBlock(1, 1, block00);
   
 
   // all done
