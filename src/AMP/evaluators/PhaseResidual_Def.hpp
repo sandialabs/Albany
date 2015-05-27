@@ -86,7 +86,9 @@ template<typename EvalT, typename Traits>
 void PhaseResidual<EvalT, Traits>::
 evaluateFields(typename Traits::EvalData workset)
 {
- 
+ //current time
+  const RealType time = workset.current_time;
+
   typedef Intrepid::FunctionSpaceTools FST;
 
   // diffusive term
@@ -104,7 +106,6 @@ evaluateFields(typename Traits::EvalData workset)
   // all other problem sources
   PHAL::scale(source_, -1.0);
   FST::integrate<ScalarT>(residual_,source_,w_bf_,Intrepid::COMP_CPP,true);
-
 }
 
 //**********************************************************************

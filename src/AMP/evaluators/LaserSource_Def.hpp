@@ -119,12 +119,40 @@ evaluateFields(typename Traits::EvalData workset)
   const RealType time = workset.current_time;
 
   // source function
-  for (int cell = 0; cell < workset.numCells; ++cell) {
-    for (int qp = 0; qp < num_qps_; ++qp) {
-      laser_source_(cell,qp) = laser_power + particle_dia;
+  ScalarT pi = 3.1415926535897932;
+  ScalarT LaserFlux_Max =(3.0/(pi*laser_beam_radius*laser_beam_radius))*laser_power;
+  ScalarT beta = 1.5*(1.0 - porosity)/(porosity*particle_dia);
+
+//  Parameters for the depth profile of the laser heat source:
+  ScalarT lambda = 2.50;
+  ScalarT a = sqrt(1.0 - powder_hemispherical_reflectivity);
+  ScalarT A = (1.0 - pow(powder_hemispherical_reflectivity,2))*exp(-lambda);
+  ScalarT B = 3.0 + powder_hemispherical_reflectivity*exp(-2*lambda);
+  ScalarT b1 = 1 - a;
+  ScalarT b2 = 1 + a;
+  ScalarT c1 = b2 - powder_hemispherical_reflectivity*b1;
+  ScalarT c2 = b1 - powder_hemispherical_reflectivity*b2;
+  ScalarT C = b1*c2*exp(-2*a*lambda) - b2*c1*exp(2*a*lambda);
+//  Following are few factors defined by the coder to be included while defining the depth profile
+  ScalarT f1 = 1.0/(3.0 - 4.0*powder_hemispherical_reflectivity);
+  ScalarT f2 = 2*powder_hemispherical_reflectivity*a*a/C;
+  ScalarT f3 = 3.0*(1.0 - powder_hemispherical_reflectivity);
+// -----------------------------------------------------------------------------------------------
+  for (std::size_t cell = 0; cell < workset.numCells; ++cell) {
+    for (std::size_t qp = 0; qp < num_qps_; ++qp) {
+	  MeshScalarT X = coord_(cell,qp,0);
+	  MeshScalarT Y = coord_(cell,qp,1);
+	  MeshScalarT Z = coord_(cell,qp,2);
+
+//  Note:(0.0003 -Y) is because of the Y axis for the depth_profile is in the negative direction as per the Gusarov's equation.
+    ScalarT depth_profile = f1*(f2*(A*(b2*exp(2.0*a*beta*(0.0003-Y))-b1*exp(-2.0*a*beta*(0.0003-Y))) - B*(c2*exp(-2.0*a*(lambda - beta*(0.0003-Y)))-c1*exp(2.0*a*(lambda-beta*(0.0003-Y))))) + f3*(exp(-beta*(0.0003-Y))+powder_hemispherical_reflectivity*exp(beta*(0.0003-Y) - 2.0*lambda)));
+    MeshScalarT* XX = &coord_(cell,qp,0);
+    ScalarT radius = sqrt((X - 0.00)*(X - 0.00) + (Z - 0.0)*(Z - 0.0));
+     if (radius < laser_beam_radius && beta*(0.0003-Y) <= lambda)
+	    laser_source_(cell,qp) =beta*LaserFlux_Max*pow((1.0-(radius*radius)/(laser_beam_radius*laser_beam_radius)),2)*depth_profile;
+     else laser_source_(cell,qp) =0.0;
     }
   }
-
 }
 
 //**********************************************************************
