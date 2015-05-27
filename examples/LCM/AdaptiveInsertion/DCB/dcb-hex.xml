@@ -24,7 +24,7 @@
 		 type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF Y">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.0}"/>
-        <Parameter name="BC Values" type="Array(double)" value="{ 0.0, 0.0}"/>
+        <Parameter name="BC Values" type="Array(double)" value="{0.0, 10.0}"/>
       </ParameterList>
     </ParameterList>
     
@@ -35,6 +35,29 @@
       <Parameter name="Parameter 0" type="string" value="Time"/>
     </ParameterList>
     
+    <!-- RESPONSE FUNCTION -->
+    <ParameterList name="Response Functions">
+      <Parameter name="Number" type="int" value="1"/>
+      <Parameter name="Response 0" type="string" value="IP to Nodal Field"/>
+      <ParameterList name="ResponseParams 0">
+        <Parameter name="Number of Fields" type="int" value="1"/>
+        <Parameter name="IP Field Name 0" type="string" value="FirstPK"/>
+        <Parameter name="IP Field Layout 0" type="string" value="Tensor"/>
+        <Parameter name="Output to File" type="bool" value="true"/>
+      </ParameterList>
+    </ParameterList>
+    
+    <!-- Adapt mesh using meshAdapt.
+	 WARNING: Syntax very much in flux at the moment. -->
+    <ParameterList name="Adaptation">
+      <Parameter name="Method" type="string" value="Topmod"/>
+      <Parameter name="Bulk Block Name" type="string" value="bulk-block"/>
+      <Parameter name="Interface Block Name"
+		 type="string" value="Surface Element"/>
+      <Parameter name="Critical Traction" type="double" value="100.0e06"/>
+      <Parameter name="beta" type="double" value="1.0"/>
+    </ParameterList>
+
   </ParameterList>
   
   <!-- MESH, done here, or input from file. If the latter,
@@ -71,7 +94,7 @@
 	<!-- The number of steps in the problem -->
 	<Parameter  name="Max Steps" type="int" value="1000"/>
 	<Parameter  name="Min Value" type="double" value="0.0"/>
-	<Parameter  name="Max Value" type="double" value="0.2"/>
+	<Parameter  name="Max Value" type="double" value="1.5"/>
 	<Parameter  name="Return Failed on Reaching Max Steps"
 		    type="bool" value="0"/>
 	<Parameter name="Hit Continuation Bound" type="bool" value="0"/>
@@ -88,6 +111,9 @@
       <ParameterList name="Direction">
 	<Parameter name="Method" type="string" value="Newton"/>
 	<ParameterList name="Newton">
+          <ParameterList name="Linear Solver">
+            <Parameter name="Tolerance" type="double" value="1e-12"/>
+          </ParameterList>
 	  <Parameter name="Forcing Term Method" type="string" value="Constant"/>
 	  <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
 	  <ParameterList name="Stratimikos Linear Solver">
@@ -122,22 +148,23 @@
 			     type="string" value="Block GMRES"/>
 		  <ParameterList name="Solver Types">
 		    <ParameterList name="Block GMRES">
-		      <Parameter name="Convergence Tolerance"
-				 type="double" value="1e-8"/>
+                      <!--<Parameter name="Explicit Residual Test" type="bool" value="true"/>-->
+                      <!--<Parameter name="Implicit Residual Scaling" type="string" value="None"/>-->
 		      <Parameter name="Output Frequency" type="int" value="10"/>
 		      <Parameter name="Output Style" type="int" value="1"/>
 		      <Parameter name="Verbosity" type="int" value="33"/>
-		      <Parameter name="Maximum Iterations"
-				 type="int" value="200"/>
+		      <Parameter name="Maximum Iterations" type="int" value="1000"/>
 		      <Parameter name="Block Size" type="int" value="1"/>
-		      <Parameter name="Num Blocks" type="int" value="200"/>
-		      <Parameter name="Flexible Gmres" type="bool" value="0"/>
+		      <Parameter name="Num Blocks" type="int" value="3000"/>
+		      <Parameter name="Flexible Gmres" type="bool" value="1"/>
+                      <!--<Parameter name="Convergence Tolerance" type="double" value="0.000000001"/>-->
+                      <!--<Parameter name="junk" type="double" value="1.e-8"/>-->
 		    </ParameterList>
 		  </ParameterList>
 		</ParameterList>
 	      </ParameterList>
               <Parameter name="Preconditioner Type"
-			 type="string" value="None"/>
+			 type="string" value="Ifpack2"/>
               <ParameterList name="Preconditioner Types">
                 <ParameterList name="Ifpack2">
 		  <Parameter name="Overlap" type="int" value="2"/>
@@ -146,9 +173,9 @@
 		    <Parameter name="fact: drop tolerance"
 			       type="double" value="0"/>
 		    <Parameter name="fact: ilut level-of-fill"
-			       type="double" value="1"/>
+			       type="double" value="2"/>
 		    <Parameter name="fact: level-of-fill"
-			       type="int" value="1"/>
+			       type="int" value="2"/>
 		  </ParameterList>
                 </ParameterList>		
 	      </ParameterList>
@@ -203,11 +230,11 @@
           <ParameterList name="Test 0">
             <Parameter name="Test Type" type="string" value="NStep"/>
             <Parameter name="Number of Nonlinear Iterations"
-		       type="int" value="8"/>
+		       type="int" value="1"/>
           </ParameterList>
           <ParameterList name="Test 1">
             <Parameter name="Test Type" type="string" value="NormF"/>
-            <Parameter name="Tolerance" type="double" value="1.0e-4"/>
+            <Parameter name="Tolerance" type="double" value="5.0e-4"/>
           </ParameterList>
         </ParameterList>
         <ParameterList name="Test 3">
