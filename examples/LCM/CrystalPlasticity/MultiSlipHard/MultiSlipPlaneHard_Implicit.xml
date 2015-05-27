@@ -34,7 +34,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="SingleSlipPlane.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlaneHard_Implicit.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="MultiSlipPlaneHard_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
@@ -69,7 +69,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.01"/>
+        <Parameter name="Initial Step Size" type="double" value="0.025"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
@@ -80,7 +80,8 @@
           <Parameter name="Forcing Term Method" type="string" value="Constant"/>
           <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
           <ParameterList name="Stratimikos Linear Solver">
-            <ParameterList name="NOX Stratimikos Options"> 	    </ParameterList>
+            <ParameterList name="NOX Stratimikos Options"> 	  
+            </ParameterList>
             <ParameterList name="Stratimikos">
               <Parameter name="Linear Solver Type" type="string" value="Belos"/>
               <ParameterList name="Linear Solver Types">
