@@ -74,6 +74,7 @@ SET(HEADERS
   Albany_DistributedParameterLibrary.hpp
   Albany_DistributedParameterDerivativeOpT.hpp
   Albany_DistributedParameterLibrary_Tpetra.hpp
+  Albany_EigendataInfoStructT.hpp
   )
 
 IF(ALBANY_EPETRA) 

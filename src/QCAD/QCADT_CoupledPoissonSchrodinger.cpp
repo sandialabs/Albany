@@ -28,7 +28,7 @@ Please remove when issue is resolved
 #include "Albany_Utils.hpp"
 #include "Albany_SolverFactory.hpp"
 #include "Albany_StateInfoStruct.hpp"
-#include "Albany_EigendataInfoStruct.hpp"
+#include "Albany_EigendataInfoStructT.hpp"
 
 //For creating discretiation object without a problem object
 #include "Albany_DiscretizationFactory.hpp"
@@ -999,17 +999,17 @@ evalModelImpl(
     f_norm_local = f_norm_dist = Teuchos::null;
   }
 
-
+*/
   // Create an eigendata struct for passing the eigenvectors to the poisson app
   //  -- note that this requires the *overlapped* eigenvectors
-  Teuchos::RCP<Albany::EigendataStruct> eigenData = Teuchos::rcp( new Albany::EigendataStruct );
-
+  Teuchos::RCP<Albany::EigendataStructT> eigenData = Teuchos::rcp( new Albany::EigendataStructT );
   eigenData->eigenvalueRe = stdvec_eigenvals;
   eigenData->eigenvectorRe = 
-    Teuchos::rcp(new Epetra_MultiVector(*disc_overlap_map, nEigenvals));
+    Teuchos::rcp(new Tpetra_MultiVector(disc_overlap_map, nEigenvals));
   eigenData->eigenvectorIm = Teuchos::null; // no imaginary eigenvalue data... 
 
-    // Importer for overlapped data
+  //FIXME, IKT, 5/27/15: convert the following!
+  /*  // Importer for overlapped data
   Teuchos::RCP<Epetra_Import> overlap_importer =
     Teuchos::rcp(new Epetra_Import(*disc_overlap_map, *disc_map));
 
@@ -1019,10 +1019,12 @@ evalModelImpl(
     //(*(eigenData->eigenvectorRe))(i)->PutScalar(0.0); //DEBUG - zero out eigenvectors passed to Poisson
   }
 
+  */
     // set eigenvalues / eigenvectors for use in poisson problem:
   poissonApp->getStateMgr().setEigenData(eigenData);
 
-
+  //FIXME, IKT, 5/27/15: convert the following!
+ /*
   // Get overlapped version of potential (x_poisson) for passing as auxData to schrodinger app
   Teuchos::RCP<Epetra_MultiVector> overlapped_V = Teuchos::rcp(new Epetra_MultiVector(*disc_overlap_map, 1));
   Teuchos::RCP<Epetra_Vector> ones_vec = Teuchos::rcp(new Epetra_Vector(*disc_overlap_map));
@@ -1030,11 +1032,10 @@ evalModelImpl(
   (*overlapped_V)(0)->Import( *x_poisson, *overlap_importer, Insert );
   (*overlapped_V)(0)->Update(offset_to_CB, *ones_vec, -1.0);
   //std::cout << "DEBUG: Offset to conduction band = " << offset_to_CB << std::endl;
-
+ */
   // set potential for use in schrodinger problem
   schrodingerApp->getStateMgr().setAuxData(overlapped_V);
 
-*/
   
   //
   // Compute the functions
