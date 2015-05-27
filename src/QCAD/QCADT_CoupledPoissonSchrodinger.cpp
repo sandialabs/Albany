@@ -10,7 +10,7 @@
 #include "Albany_ModelFactory.hpp"
 
 
-/* GAH FIXME - Silence warning:
+/* GAHFIXME - Silence warning:
 TRILINOS_DIR/../../../include/pecos_global_defs.hpp:17:0: warning: 
         "BOOST_MATH_PROMOTE_DOUBLE_POLICY" redefined [enabled by default]
 Please remove when issue is resolved
@@ -492,7 +492,7 @@ QCADT::CoupledPoissonSchrodinger::createCombinedRangeSpace() const
   std::vector<Teuchos::RCP<Thyra::VectorSpaceBase<ST> const>> vs_array;
 
   for (int m = 0; m < num_models_; ++m) { 
-    //FIXME?  double check that this is correct with Erik N. 
+    //FIXME, IKT, 5/22/15?  double check that this is correct with Erik N. 
     vs_array.push_back(Thyra::createVectorSpace<ST, LO, GO, KokkosNode>(disc_map));
   }
   range_space = Thyra::productVectorSpace<ST>(vs_array);
@@ -896,22 +896,30 @@ evalModelImpl(
     std::cout << "DEBUG: WARNING: x_dot given to CoupledPoissonSchrodinger evalModel!!" << std::endl;
   }
 
-/*
- //FIXME NOW, IKT, 5/22/15 
-  for (int i=0; i<inArgs.Np(); i++) {
-    Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
-    if (p != Teuchos::null) {
+  for (int i=0; i<in_args.Np(); i++) {
+    Teuchos::RCP<Thyra::ProductVectorBase<ST> const> pT =
+      Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST>>(
+         in_args.get_p(i), true);
+    //Teuchos::RCP<const Epetra_Vector> p = inArgs.get_p(i);
+    if (pT != Teuchos::null) {
       if(i < num_poisson_param_vecs) {
-	for (unsigned int j=0; j<poisson_sacado_param_vec[i].size(); j++)
-	  poisson_sacado_param_vec[i][j].baseValue = (*p)[j];
+        //get Poisson parameter vector
+        Teuchos::RCP<Tpetra_Vector const> pT_poisson = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+                                          pT->getVectorBlock(0), true)->getConstTpetraVector();
+        Teuchos::ArrayRCP<ST const> pT_poisson_constView = pT_poisson->get1dView();
+	for (unsigned int j=0; j<poisson_sacado_param_vec[i].size(); j++) 
+	  poisson_sacado_param_vec[i][j].baseValue = pT_poisson_constView[j];
       }
       else {
+        //get Schrodinger parameter vector
+        Teuchos::RCP<Tpetra_Vector const> pT_schrodinger = Teuchos::rcp_dynamic_cast<const ThyraVector>(
+                                          pT->getVectorBlock(1), true)->getConstTpetraVector();
+        Teuchos::ArrayRCP<ST const> pT_schrodinger_constView = pT_schrodinger->get1dView();
 	for (unsigned int j=0; j<schrodinger_sacado_param_vec[i-num_poisson_param_vecs].size(); j++)
-	  schrodinger_sacado_param_vec[i-num_poisson_param_vecs][j].baseValue = (*p)[j];
+	  schrodinger_sacado_param_vec[i-num_poisson_param_vecs][j].baseValue = pT_schrodinger_constView[j];
       }
     }
   }
-*/
 
   //
   // Get the output arguments
@@ -1259,8 +1267,7 @@ evalModelImpl(
 
 	// Compute Mass_matrix * eigenvector[i]
 	const Tpetra_Vector& vec = *x_schrodinger->getVector(i);
-        //FIXME, 5/26/15: figure out Tpetra analog of Multiply
-	//M_out_schrodinger_crs->Multiply(false, vec, M_vec);  
+	M_out_schrodinger_crs->apply(vec, *M_vec, Teuchos::NO_TRANS, 1.0, 0.0);  
 
 
 	// Compute the schrodinger residual f_schrodinger_vec[i]: H*eigenvector[i] - eigenvalue[i] * M * eigenvector[i]
@@ -1273,8 +1280,7 @@ evalModelImpl(
 
 	  // H * Psi - E * M * Psi
 	  const Tpetra_CrsMatrix& Hamiltonian_crs =  *J_out_schrodinger_crs;
-         //FIXME, 5/26/15: figure out Tpetra analog of Multiply
-	 //Hamiltonian_crs.Multiply(false, vec, *(f_schrodinger_vec[i]));
+	   Hamiltonian_crs.apply(vec, *f_schrodinger_vec[i], Teuchos::NO_TRANS, 1.0, 0.0);
 	}
 	/* ---- DEBUG ----
 	   double He_norm, Me_norm, H_expect;
@@ -1290,9 +1296,9 @@ evalModelImpl(
 	f_schrodinger_vec[i]->update( eval, *M_vec, 1.0); 
 
         // Compute normalization equation residuals:  f_norm[i] = abs(1 - evec[i] . M . evec[i])
-	double vec_M_vec;
-        //IKT, FIXME, 5/26/15
-	//vec.dot( *M_vec, &vec_M_vec );
+	ST vec_M_vec;
+        const Teuchos::ArrayView<ST> vec_M_vec_AV = Teuchos::arrayView(&vec_M_vec, 1);
+	vec.dot( *M_vec, vec_M_vec_AV );
 	f_norm_local_nonConstView[i] = 1.0 - vec_M_vec;
 
       }
