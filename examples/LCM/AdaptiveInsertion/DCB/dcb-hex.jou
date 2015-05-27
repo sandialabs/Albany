@@ -12,7 +12,7 @@ webcut volume 1 2 with plane xplane offset 0 noimprint nomerge
 surface 24 34 merge off
 imprint all
 merge all
-volume all size 1.000
+volume all size 0.1
 volume all scheme map
 mesh volume all
 nodeset 1 surface 11 13

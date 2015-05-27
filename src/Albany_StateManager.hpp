@@ -24,6 +24,7 @@
 #include "Albany_EigendataInfoStruct.hpp"
 #include "Epetra_Vector.h"
 #endif
+#include "Albany_EigendataInfoStructT.hpp"
 #include "Adapt_NodalDataBase.hpp"
 
 namespace Albany {
@@ -161,6 +162,8 @@ public:
   void setAuxData(const Teuchos::RCP<Epetra_MultiVector>& aux_data);
 #endif
 
+  void setEigenDataT(const Teuchos::RCP<Albany::EigendataStructT>& eigdata);
+  void setAuxDataT(const Teuchos::RCP<Tpetra_MultiVector>& aux_data);
   bool areStateVarsAllocated() const {return stateVarsAreAllocated;}
 
 private:
@@ -185,6 +188,8 @@ private:
   Teuchos::RCP<EigendataStruct> eigenData;
   Teuchos::RCP<Epetra_MultiVector> auxData;
 #endif
+  Teuchos::RCP<EigendataStructT> eigenDataT;
+  Teuchos::RCP<Tpetra_MultiVector> auxDataT;
 
 };
 
