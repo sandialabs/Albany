@@ -3,11 +3,11 @@
 
   <ParameterList name="ElementBlocks">
 
-    <ParameterList name="block_1">
+    <ParameterList name="bulk-block">
       <Parameter name="material" type="string" value="TestMat" />
     </ParameterList>
-    <ParameterList name="block_3">
-      <Parameter name="material" type="string" value="TestCohesive" />
+    <ParameterList name="Surface Element">
+      <Parameter name="material" type="string" value="Cohesive" />
       <Parameter name="Surface Element" type="bool" value="true" />
       <Parameter name="Cohesive Element" type="bool" value="true" />
     </ParameterList>
@@ -30,6 +30,26 @@
     
       <!-- Output Flags -->
         <Parameter name="Output Cauchy Stress" type="bool" value="true"/>
+
+    </ParameterList>
+
+    <ParameterList name="Cohesive">
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="Ortiz Pandolfi"/>
+      </ParameterList>
+
+      <Parameter name="delta_c" type="double" value="0.001"/>
+      <Parameter name="sigma_c" type="double" value="100.0e06"/>
+      <Parameter name="beta" type="double" value="1.0"/>
+      <Parameter name="stiff_c" type="double" value="10e9"/>
+
+      <!-- Output -->
+      <Parameter name="Output Cohesive Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Traction" type="bool" value="true"/>
+      <Parameter name="Output Shear Traction" type="bool" value="true"/>
+      <Parameter name="Output Normal Jump" type="bool" value="true"/>
+      <Parameter name="Output Shear Jump" type="bool" value="true"/>
+      <Parameter name="Output Max Jump" type="bool" value="true"/>
 
     </ParameterList>
 
