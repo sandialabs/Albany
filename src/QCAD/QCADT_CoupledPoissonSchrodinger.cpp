@@ -1021,9 +1021,10 @@ evalModelImpl(
 
   */
     // set eigenvalues / eigenvectors for use in poisson problem:
-  poissonApp->getStateMgr().setEigenData(eigenData);
+  poissonApp->getStateMgr().setEigenDataT(eigenData);
 
   //FIXME, IKT, 5/27/15: convert the following!
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_V; //placeholder for now
  /*
   // Get overlapped version of potential (x_poisson) for passing as auxData to schrodinger app
   Teuchos::RCP<Epetra_MultiVector> overlapped_V = Teuchos::rcp(new Epetra_MultiVector(*disc_overlap_map, 1));
@@ -1034,7 +1035,7 @@ evalModelImpl(
   //std::cout << "DEBUG: Offset to conduction band = " << offset_to_CB << std::endl;
  */
   // set potential for use in schrodinger problem
-  schrodingerApp->getStateMgr().setAuxData(overlapped_V);
+  schrodingerApp->getStateMgr().setAuxDataT(overlapped_V);
 
   
   //
