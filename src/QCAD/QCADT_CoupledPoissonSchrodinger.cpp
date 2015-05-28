@@ -87,6 +87,10 @@ CoupledPoissonSchrodinger(const Teuchos::RCP<Teuchos::ParameterList>& appParams_
   bool   bQBOnly        = problemParams.get<bool>("Only solve schrodinger in quantum blocks",true);
   
   nEigenvals   = problemParams.get<int>("Number of Eigenvalues");
+  int myRank = myComm->getRank(); 
+  int nProcs = myComm->getSize(); 
+  int nExtra = nEigenvals % nProcs;
+  my_nEigenvals_ = (nEigenvals / nProcs) + ((myRank < nExtra) ? 1 : 0);
   Teuchos::ParameterList& discList = appParams->sublist("Discretization");
   Teuchos::ParameterList& poisson_subList = problemParams.sublist("Poisson Problem", false);
   Teuchos::ParameterList& schro_subList = problemParams.sublist("Schrodinger Problem", false);
@@ -485,11 +489,7 @@ QCADT::CoupledPoissonSchrodinger::createEigenvalueMap() const
 {
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
   //Create map for eigenvalues -- FIXME: check with Erik N.
-  int myRank = myComm->getRank(); 
-  int nProcs = myComm->getSize(); 
-  int nExtra = nEigenvals % nProcs;
-  int my_nAdditional = (nEigenvals / nProcs) + ((myRank < nExtra) ? 1 : 0);
-  Teuchos::RCP<const Tpetra_Map> dist_eigenval_map = Teuchos::rcp(new const Tpetra_Map(nEigenvals, my_nAdditional, 0, myComm)); 
+  Teuchos::RCP<const Tpetra_Map> dist_eigenval_map = Teuchos::rcp(new const Tpetra_Map(nEigenvals, my_nEigenvals_, 0, myComm)); 
 }
 
 Teuchos::RCP<const Thyra::VectorSpaceBase<ST>> QCADT::CoupledPoissonSchrodinger::get_x_space() const
@@ -950,7 +950,6 @@ evalModelImpl(
   Teuchos::RCP<Tpetra_MultiVector> f_schrodinger;
   std::vector<Tpetra_Vector*> f_schrodinger_vec(nEigenvals);
 
-  //FIXME, IKT, 5/26/15:
   if (f_out != Teuchos::null) {
     //First model is Poisson.
     f_poisson = Teuchos::rcp_dynamic_cast<ThyraVector>(
@@ -984,25 +983,24 @@ evalModelImpl(
 
   
     // Overlapped eigenstate vectors
-   (eigenData->eigenvectorRe)->doImport( *x_schrodinger, *overlap_importer, Tpetra::INSERT );
-   //for(int i=0; i<nEigenvals; i++) {
-     //(*(eigenData->eigenvectorRe))(i)->PutScalar(0.0); //DEBUG - zero out eigenvectors passed to Poisson
-   //}
+   //(eigenData->eigenvectorRe)->doImport( *x_schrodinger, *overlap_importer, Tpetra::INSERT );
+   for(int i=0; i<nEigenvals; i++) {
+     Teuchos::RCP<Tpetra_Vector> eigenData_i = (eigenData->eigenvectorRe)->getVectorNonConst(i); 
+     eigenData_i->doImport(*(x_schrodinger->getVector(i)), *overlap_importer, Tpetra::INSERT); 
+     //eigenData_i->putScalar(0.0); //DEBUG - zero out eigenvectors passed to Poisson
+   }
 
     // set eigenvalues / eigenvectors for use in poisson problem:
   poissonApp->getStateMgr().setEigenDataT(eigenData);
 
-  //FIXME, IKT, 5/27/15: convert the following!
-  Teuchos::RCP<Tpetra_MultiVector> overlapped_V; //placeholder for now
- /*
   // Get overlapped version of potential (x_poisson) for passing as auxData to schrodinger app
-  Teuchos::RCP<Epetra_MultiVector> overlapped_V = Teuchos::rcp(new Epetra_MultiVector(*disc_overlap_map, 1));
-  Teuchos::RCP<Epetra_Vector> ones_vec = Teuchos::rcp(new Epetra_Vector(*disc_overlap_map));
-  ones_vec->PutScalar(1.0);
-  (*overlapped_V)(0)->Import( *x_poisson, *overlap_importer, Insert );
-  (*overlapped_V)(0)->Update(offset_to_CB, *ones_vec, -1.0);
+  Teuchos::RCP<Tpetra_MultiVector> overlapped_V = Teuchos::rcp(new Tpetra_MultiVector(disc_overlap_map, 1));
+  Teuchos::RCP<Tpetra_Vector> ones_vec = Teuchos::rcp(new Tpetra_Vector(disc_overlap_map));
+  ones_vec->putScalar(1.0);
+  Teuchos::RCP<Tpetra_Vector> overlapped_V0 = overlapped_V->getVectorNonConst(0); 
+  overlapped_V0->doImport( *x_poisson, *overlap_importer, Tpetra::INSERT);
+  overlapped_V0->update(offset_to_CB, *ones_vec, -1.0);
   //std::cout << "DEBUG: Offset to conduction band = " << offset_to_CB << std::endl;
- */
   // set potential for use in schrodinger problem
   schrodingerApp->getStateMgr().setAuxDataT(overlapped_V);
 
@@ -1276,12 +1274,11 @@ evalModelImpl(
 
       // Fill elements of f_norm_dist that belong to this processor, i.e. loop over
       // eigenvalue indices "owned" by the current proc in the combined distributed map
-      //FIXME, IKT, 5/27/15: 
-      /*std::vector<int> eval_global_elements(my_nEigenvals);
-      eval_global_elements[0] = dist_eigenval_map.getGlobalNumElements();
-      for(int i=0; i<my_nEigenvals; i++)
+      std::vector<int> eval_global_elements(my_nEigenvals_);
+      eval_global_elements[0] = dist_eigenval_map->getGlobalNumElements();
+      for(int i=0; i<my_nEigenvals_; i++)
 	f_norm_dist_nonConstView[i] = f_norm_local_nonConstView[eval_global_elements[i]];
-      */
+      
       
 
       //DEBUG -- print residual in gory detail for debugging

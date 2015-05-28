@@ -139,6 +139,7 @@ namespace QCADT {
     Teuchos::RCP<const Teuchos_Comm> myComm;
 
     int nEigenvals;
+    int my_nEigenvals_;  
     int num_param_vecs, num_response_vecs;
     int num_poisson_param_vecs, num_schrodinger_param_vecs;
     int num_models_; 
