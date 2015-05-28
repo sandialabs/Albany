@@ -624,7 +624,7 @@ QCADT::CoupledPoissonSchrodinger::create_W_op() const
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   QCADT::CoupledPSJacobian psJac(num_models_, myComm); 
-  return psJac.getThyraCoupledJacobian(Jac_Poisson); 
+  return psJac.getThyraCoupledJacobian(); 
 }
 
 Teuchos::RCP<Thyra::PreconditionerBase<ST>>

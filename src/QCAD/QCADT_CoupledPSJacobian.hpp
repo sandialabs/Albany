@@ -36,7 +36,11 @@ public:
 
   ~CoupledPSJacobian();
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson = Teuchos::null,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger = Teuchos::null,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass = Teuchos::null,
+                                                  Teuchos::RCP<Tpetra_Vector> neg_eigenvals = Teuchos::null, 
+                                                  Teuchos::RCP<const Tpetra_MultiVector> eigenvecs = Teuchos::null) const; 
 
 private:
 

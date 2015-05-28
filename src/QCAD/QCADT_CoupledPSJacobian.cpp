@@ -43,7 +43,11 @@ QCADT::CoupledPSJacobian::~CoupledPSJacobian()
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const
+QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson, 
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass,
+                                                  Teuchos::RCP<Tpetra_Vector> neg_eigenvals, 
+                                                  Teuchos::RCP<const Tpetra_MultiVector> eigenvecs) const
 {
 //FIXME: pass necessary variables for Jacobian blocks
 #ifdef OUTPUT_TO_SCREEN
