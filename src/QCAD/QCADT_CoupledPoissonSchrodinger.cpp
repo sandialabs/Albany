@@ -898,16 +898,29 @@ evalModelImpl(
   int disc_nMyElements = disc_map->getNodeNumElements();
 
   Teuchos::RCP<const Tpetra_Vector> x_poisson, xdot_poisson, eigenvals_dist;
-  Teuchos::RCP<const Tpetra_MultiVector> x_schrodinger, xdot_schrodinger;
+  Teuchos::RCP<Tpetra_MultiVector> x_schrodinger, xdot_schrodinger;
   
   std::vector<const Tpetra_Vector*> xdot_schrodinger_vec(nEigenvals);
-/*  //
-  //FIXME, IKT, 5/22/15:
-  separateCombinedVector(x, x_poisson, x_schrodinger, eigenvals_dist);
-    
+
+  //First model is Poisson.
+  x_poisson = xTs[0];
+
+  //Next nEigenvals models are Schrodinger
+  //IKT, can we accomplish the following with arrayviews?  
+  for (int m=1; m < 1+nEigenvals; ++m) {
+    Teuchos::Array<ST> array(xTs[m]->getMap()->getNodeNumElements());
+    xTs[m]->get1dCopy(array);
+    for (std::size_t i=0; i<xTs[m]->getMap()->getNodeNumElements(); ++i)
+       x_schrodinger->replaceLocalValue(i,m-1,array[i]);
+  }
+ 
+  //Last model is eigenvalues
+  eigenvals_dist = xTs[1+nEigenvals]; 
+  
   if (x_dot != Teuchos::null) {  //maybe unnecessary - it seems that the coupled PS model evaluator shouldn't support x_dot ...
-    separateCombinedVector(x_dot, xdot_poisson, xdot_schrodinger);
-    for(int i=0; i<nEigenvals; i++) xdot_schrodinger_vec[i] = (*xdot_schrodinger)(i);
+    xdot_poisson = x_dotTs[0]; 
+    for (int m=1; m < 1+nEigenvals; ++m) 
+      xdot_schrodinger_vec[m-1] = x_dotTs[m].getRawPtr(); 
   }
   else {
     xdot_poisson = Teuchos::null;
