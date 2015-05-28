@@ -462,8 +462,10 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
     int lid;
     double* values;
 
-    typedef AbstractSTKFieldContainer::QPScalarFieldType QPScalarFieldType;
-    typedef AbstractSTKFieldContainer::QPVectorFieldType QPVectorFieldType;
+    typedef AbstractSTKFieldContainer::QPScalarFieldType  QPScalarFieldType;
+    typedef AbstractSTKFieldContainer::QPVectorFieldType  QPVectorFieldType;
+    typedef AbstractSTKFieldContainer::ScalarFieldType    ScalarFieldType;
+    typedef AbstractSTKFieldContainer::VectorFieldType    VectorFieldType;
 
     // Depending on the field type, we need to use different pointers
     if (ftype == "Scalar")
@@ -504,7 +506,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       req_vec.doImport(serial_req_vec,importOperator,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector view
-      QPScalarFieldType* field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
+      ScalarFieldType* field = metaData->get_field<ScalarFieldType>(stk::topology::NODE_RANK, *it);
+      QPScalarFieldType* qp_field = metaData->get_field<QPScalarFieldType>(stk::topology::ELEM_RANK, *it);
       Teuchos::ArrayRCP<const ST> req_vec_view = req_vec.get1dView();
 
       //Now we have to stuff the vector in the mesh data
@@ -514,7 +517,14 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
         nodeId = bulkData->identifier(nodes[i]) - 1;
         lid    = nodes_map->getLocalElement((GO)(nodeId));
 
-        values = stk::mesh::field_data(*field, node);
+        if (field!=0)
+          values = stk::mesh::field_data(*field, node);
+        else if (qp_field!=0)
+          values = stk::mesh::field_data(*qp_field, node);
+        else
+        {
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Cannot extract the field from the mesh.\n");
+        }
         values[0] = req_vec_view[lid];
       }
     }
@@ -561,7 +571,8 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       req_mvec.doImport(serial_req_mvec,importOperator,Tpetra::INSERT);
 
       // Extracting the mesh field and the tpetra vector views
-      QPVectorFieldType* field = metaData->get_field<QPVectorFieldType>(stk::topology::ELEM_RANK, *it);
+      VectorFieldType* field = metaData->get_field<VectorFieldType>(stk::topology::NODE_RANK, *it);
+      QPVectorFieldType* qp_field = metaData->get_field<QPVectorFieldType>(stk::topology::ELEM_RANK, *it);
       std::vector<Teuchos::ArrayRCP<const ST> > req_mvec_view;
       for (int i(0); i<fieldDim; ++i)
         req_mvec_view.push_back(req_mvec.getVector(i)->get1dView());
@@ -573,7 +584,15 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
         nodeId = bulkData->identifier(nodes[i]) - 1;
         lid    = nodes_map->getLocalElement((GO)(nodeId));
 
-        values = stk::mesh::field_data(*field, node);
+        if (field!=0)
+          values = stk::mesh::field_data(*field, node);
+        else if (qp_field!=0)
+          values = stk::mesh::field_data(*qp_field, node);
+        else
+        {
+          TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Cannot extract the field from the mesh.\n");
+        }
+
         for (int iDim(0); iDim<fieldDim; ++iDim)
           values[iDim] = req_mvec_view[iDim][lid];
       }
@@ -583,6 +602,31 @@ Albany::IossSTKMeshStruct::setFieldAndBulkData (
       TEUCHOS_TEST_FOR_EXCEPTION (true, Teuchos::Exceptions::InvalidParameterValue,
                                   "Sorry, I haven't yet implemented the case of field that are not Scalar nor Vector or not at nodes.\n");
     }
+  }
+
+  if (params->get<bool>("Write points coordinates to ascii file", false))
+  {
+    AbstractSTKFieldContainer::VectorFieldType* coordinates_field = fieldContainer->getCoordinatesField();
+    std::ofstream ofile;
+    ofile.open("coordinates.ascii");
+    if (!ofile.is_open())
+    {
+      TEUCHOS_TEST_FOR_EXCEPTION (true, std::logic_error, "Error! Cannot open coordinates file.\n");
+    }
+
+    ofile << nodes.size() << " " << 4 << "\n";
+
+    stk::mesh::Entity node;
+
+    for (int i(0); i<nodes.size(); ++i)
+    {
+      node   = bulkData->get_entity(stk::topology::NODE_RANK, i + 1);
+      double* coord = stk::mesh::field_data(*coordinates_field, node);
+
+      ofile << coord[0] << " " << coord[1]  << " " << coord[2] << "\n";
+    }
+
+    ofile.close();
   }
 #endif
 
@@ -626,6 +670,7 @@ Albany::IossSTKMeshStruct::getValidDiscretizationParameters() const
   validPL->set<int>("Restart Index", 1, "Exodus time index to read for inital guess/condition.");
   validPL->set<double>("Restart Time", 1.0, "Exodus solution time to read for inital guess/condition.");
   validPL->set<Teuchos::ParameterList>("Required Fields Info",Teuchos::ParameterList());
+  validPL->set<bool>("Write points coordinates to ascii file", "", "Write the mesh points coordinates to file?");
 
   Teuchos::Array<std::string> emptyStringArray;
   validPL->set<Teuchos::Array<std::string> >("Additional Node Sets", emptyStringArray, "Declare additional node sets not present in the input file");

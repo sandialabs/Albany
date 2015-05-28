@@ -423,8 +423,9 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // Save Friction Coefficient
     {
+      entity = Albany::StateStruct::NodalDataToElemNode;
       RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","beta_field","basal_friction",
-                                                                    dl->node_scalar, elementBlockName,true);
+                                                                    dl->node_scalar, elementBlockName,true,&entity);
       p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
@@ -457,8 +458,9 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
 
     // Save Sliding Velocity
     {
+      entity = Albany::StateStruct::NodalDataToElemNode;
       RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","Velocity Norm","sliding_velocity",
-                                                                    dl->node_scalar, elementBlockName,true);
+                                                                    dl->node_scalar, elementBlockName,true,&entity);
       p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
