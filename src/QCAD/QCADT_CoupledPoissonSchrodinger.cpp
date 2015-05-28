@@ -930,22 +930,17 @@ evalModelImpl(
 
   //
   // Communicate all the eigenvalues to every processor, since all parts of the mesh need them
-  */
-  //FIXME, IKT, 5/26/15, placeholders: 
-  int my_nEigenvals;
-  Tpetra_Map dist_eigenval_map;  
-  /*
-  int my_nEigenvals = combined_SP_map->NumMyElements() - disc_nMyElements * (1+nEigenvals);
-  Epetra_Map dist_eigenval_map(nEigenvals, my_nEigenvals, 0, *myComm);
-  Epetra_LocalMap local_eigenval_map(nEigenvals, 0, *myComm);
-  Epetra_Import eigenval_importer(local_eigenval_map, dist_eigenval_map);
+  Teuchos::RCP<const Tpetra_Map> dist_eigenval_map = createEigenvalueMap();  
+  Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+  Teuchos::RCP<Tpetra_Map> local_eigenval_map = Teuchos::rcp(new Tpetra_Map(nEigenvals, 0, myComm, lg));
+  Teuchos::RCP<Tpetra_Import> eigenval_importer = Teuchos::rcp(new Tpetra_Import(dist_eigenval_map, local_eigenval_map)); 
 
-  Teuchos::RCP<Epetra_Vector> eigenvals =  Teuchos::rcp(new Epetra_Vector(local_eigenval_map));
-  eigenvals->Import(*eigenvals_dist, eigenval_importer, Insert);
-  */
-  Teuchos::RCP<Tpetra_Vector> eigenvals; //FIXME, IKT, 5/26/15: placeholder for now.
-   const Teuchos::ArrayRCP<const ST> eigenvals_constView = eigenvals->get1dView();
-  Teuchos::RCP<std::vector<double> > stdvec_eigenvals = Teuchos::rcp(new std::vector<double>(&eigenvals_constView[0], &eigenvals_constView[0] + nEigenvals));
+  Teuchos::RCP<Tpetra_Vector> eigenvals = Teuchos::rcp(new Tpetra_Vector(local_eigenval_map)); 
+  eigenvals->doImport(*eigenvals_dist, *eigenval_importer, Tpetra::INSERT); 
+
+  const Teuchos::ArrayRCP<const ST> eigenvals_constView = eigenvals->get1dView();
+  Teuchos::RCP<std::vector<double> > stdvec_eigenvals = 
+      Teuchos::rcp(new std::vector<double>(&eigenvals_constView[0], &eigenvals_constView[0] + nEigenvals));
   //
   // Get views into 'f' residual vector to use for separate poisson and schrodinger application object calls
   //
@@ -956,22 +951,25 @@ evalModelImpl(
   std::vector<Tpetra_Vector*> f_schrodinger_vec(nEigenvals);
 
   //FIXME, IKT, 5/26/15:
-  /*
-  if(f_out != Teuchos::null) {
-    separateCombinedVector(f_out, f_poisson, f_schrodinger, f_norm_dist);
-    for(int i=0; i<nEigenvals; i++) f_schrodinger_vec[i] = (*f_schrodinger)(i);
-
-    // Create local vector for holding the residual of the normalization equations on each proc.
+  if (f_out != Teuchos::null) {
+    //First model is Poisson.
+    f_poisson = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        f_out->getNonconstVectorBlock(0),
+        true)->getTpetraVector();
+    //Next nEigenvals models are Schrodinger
+    for (int m=1; m < 1+nEigenvals; ++m) 
+      f_schrodinger_vec[m-1] = Teuchos::rcp_dynamic_cast<ThyraVector>(
+        f_out->getNonconstVectorBlock(m-1),
+        true)->getTpetraVector().getRawPtr(); 
     //   (later we sum all procs contributions together and copy into distributed f_norm_dist vector)
-    f_norm_local = Teuchos::rcp(new Epetra_Vector(local_eigenval_map));
+    f_norm_local = Teuchos::rcp(new Tpetra_Vector(local_eigenval_map));
   }
   else {
     f_poisson = Teuchos::null;
     for(int i=0; i<nEigenvals; i++) f_schrodinger_vec[i] = NULL;
     f_norm_local = f_norm_dist = Teuchos::null;
   }
-
-*/
+ 
   // Create an eigendata struct for passing the eigenvectors to the poisson app
   //  -- note that this requires the *overlapped* eigenvectors
   Teuchos::RCP<Albany::EigendataStructT> eigenData = Teuchos::rcp( new Albany::EigendataStructT );
@@ -980,18 +978,17 @@ evalModelImpl(
     Teuchos::rcp(new Tpetra_MultiVector(disc_overlap_map, nEigenvals));
   eigenData->eigenvectorIm = Teuchos::null; // no imaginary eigenvalue data... 
 
-  //FIXME, IKT, 5/27/15: convert the following!
-  /*  // Importer for overlapped data
-  Teuchos::RCP<Epetra_Import> overlap_importer =
-    Teuchos::rcp(new Epetra_Import(*disc_overlap_map, *disc_map));
+  // Importer for overlapped data
+  Teuchos::RCP<Tpetra_Import> overlap_importer =
+    Teuchos::rcp(new Tpetra_Import(disc_map, disc_overlap_map));
 
+  
     // Overlapped eigenstate vectors
-  for(int i=0; i<nEigenvals; i++) {
-    (*(eigenData->eigenvectorRe))(i)->Import( *((*x_schrodinger)(i)), *overlap_importer, Insert );
-    //(*(eigenData->eigenvectorRe))(i)->PutScalar(0.0); //DEBUG - zero out eigenvectors passed to Poisson
-  }
+   (eigenData->eigenvectorRe)->doImport( *x_schrodinger, *overlap_importer, Tpetra::INSERT );
+   //for(int i=0; i<nEigenvals; i++) {
+     //(*(eigenData->eigenvectorRe))(i)->PutScalar(0.0); //DEBUG - zero out eigenvectors passed to Poisson
+   //}
 
-  */
     // set eigenvalues / eigenvectors for use in poisson problem:
   poissonApp->getStateMgr().setEigenDataT(eigenData);
 
@@ -1221,7 +1218,7 @@ evalModelImpl(
   /*if (app->is_adjoint) {  //TODO: support Adjoints?
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
 				   "Error!  QCADT::CoupledPoissonSchrodinger -- adjoints not implemented yet");
-    Derivative f_deriv(f_out, DERIV_TRANS_MV_BY_ROW);
+    Derivative f_deriv(ut, DERIV_TRANS_MV_BY_ROW);
     int response_index = 0; // need to add capability for sending this in
     app->evaluateResponseDerivative(response_index, curr_time, x_dot.get(), *x, 
 				    sacado_param_vec, NULL, 
@@ -1279,11 +1276,12 @@ evalModelImpl(
 
       // Fill elements of f_norm_dist that belong to this processor, i.e. loop over
       // eigenvalue indices "owned" by the current proc in the combined distributed map
-      std::vector<int> eval_global_elements(my_nEigenvals);
+      //FIXME, IKT, 5/27/15: 
+      /*std::vector<int> eval_global_elements(my_nEigenvals);
       eval_global_elements[0] = dist_eigenval_map.getGlobalNumElements();
       for(int i=0; i<my_nEigenvals; i++)
 	f_norm_dist_nonConstView[i] = f_norm_local_nonConstView[eval_global_elements[i]];
-
+      */
       
 
       //DEBUG -- print residual in gory detail for debugging
