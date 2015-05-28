@@ -25,6 +25,7 @@
 
 #include "FELIX_HydrologyRhs.hpp"
 #include "FELIX_HydrologyResidual.hpp"
+#include "FELIX_EffectivePressure.hpp"
 
 //uncomment the following line if you want debug output to be printed to screen
 //#define OUTPUT_TO_SCREEN
@@ -210,6 +211,31 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   ev = rcp(new PHAL::LoadStateField<EvalT,AlbanyTraits>(*p));
   fm0.template registerEvaluator<EvalT>(ev);
 
+  // Effective pressure
+  entity = Albany::StateStruct::NodalDataToElemNode;
+  p = stateMgr.registerStateVariable("effective_pressure", dl->node_scalar, elementBlockName, true, &entity);
+
+  if (PHX::typeAsString<EvalT>()==PHX::typeAsString<AlbanyTraits::Residual>())
+  {
+    p->set<const std::string>("Field Name","N");
+    p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dl->dummy);
+    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    p = rcp(new Teuchos::ParameterList("Effective Pressure"));
+    p->set<std::string> ("Hydraulic Potential Variable Name", dof_names[0]);
+    p->set<std::string> ("Basal Height Variable Name","z_b");
+    p->set<std::string> ("Ice Thickness Variable Name","H");
+    p->set<std::string> ("Effective Pressure Name","N");
+
+    p->set<Teuchos::ParameterList*>("Physical Parameters",&params->sublist("FELIX Physical Parameters"));
+    ev = rcp(new FELIX::EffectivePressure<EvalT,AlbanyTraits>(*p,dl));
+    fm0.template registerEvaluator<EvalT>(ev);
+
+    PHX::Tag<typename EvalT::ScalarT> eff_press_tag("N", dl->dummy);
+    fm0.requireField<EvalT>(eff_press_tag);
+  }
+
   // -------------------- Starting evaluators construction and registration ------------------------ //
 
   ev = evalUtils.constructGatherSolutionEvaluator_noTransient(false, dof_names, offset);
@@ -282,10 +308,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Surface Water Input QP Variable Name","omega");
   p->set<std::string> ("Geothermal Heat Source QP Variable Name","G");
 
-  Teuchos::ParameterList& hydrology_params = params->sublist("FELIX Hydrology");
-  p->set<Teuchos::ParameterList*> ("Hydrology Parameters",&hydrology_params);
-  Teuchos::ParameterList& physical_params = params->sublist("FELIX Physical Parameters");
-  p->set<Teuchos::ParameterList*> ("Physical Parameters",&physical_params);
+  p->set<Teuchos::ParameterList*> ("Hydrology Parameters",&params->sublist("FELIX Hydrology"));
+  p->set<Teuchos::ParameterList*> ("Physical Parameters",&params->sublist("FELIX Physical Parameters"));
 
   //Output
   p->set<std::string> ("RHS QP Name","rhs");
@@ -305,8 +329,8 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   p->set<std::string> ("Drainage Sheet Depth QP Variable Name","h");
   p->set<std::string> ("RHS QP Name","rhs");
 
-  p->set<Teuchos::ParameterList*> ("Hydrology Parameters",&hydrology_params);
-  p->set<Teuchos::ParameterList*> ("Physical Parameters",&physical_params);
+  p->set<Teuchos::ParameterList*> ("Hydrology Parameters",&params->sublist("FELIX Hydrology"));
+  p->set<Teuchos::ParameterList*> ("Physical Parameters",&params->sublist("FELIX Physical Parameters"));
 
   //Output
   p->set<std::string> ("Residual Name", resid_names[0]);
@@ -328,15 +352,6 @@ Hydrology::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
   }
   else if (fieldManagerChoice == Albany::BUILD_RESPONSE_FM)
   {
-    // Saving the hydraulic potential
-    p = rcp(new Teuchos::ParameterList());
-    p->set<const std::string> ("State Name","hydraulic_potential");
-    p->set<const std::string> ("Field Name",dof_names[0]);
-    p->set<const Teuchos::RCP<PHX::DataLayout> >("State Field Layout", dl->node_scalar);
-    p->set<const Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout", dl->dummy);
-    ev = rcp(new PHAL::SaveStateField<EvalT,AlbanyTraits>(*p));
-    fm0.template registerEvaluator<EvalT>(ev);
-
     Albany::ResponseUtilities<EvalT, PHAL::AlbanyTraits> respUtils(dl);
 
     return respUtils.constructResponses(fm0, *responseList, paramList, stateMgr);

@@ -127,7 +127,8 @@ public:
                                const std::string& sideSetStateName,
                                const Teuchos::RCP<PHX::DataLayout>& dl,
                                const std::string& ebName,
-                               const bool outputToExodus);
+                               const bool outputToExodus,
+                               StateStruct::MeshFieldEntity const* fieldEntity = NULL);
 
   Teuchos::RCP<Teuchos::ParameterList>
   registerSideSetStateVariable(const std::string& sideSetName,
