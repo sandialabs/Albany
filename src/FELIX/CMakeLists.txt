@@ -8,7 +8,9 @@
 
   SET(SOURCES
        evaluators/FELIX_BasalFrictionCoefficient.cpp
+       evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
+       evaluators/FELIX_FieldNorm.cpp
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
        evaluators/FELIX_StokesMomentumResid.cpp
@@ -49,8 +51,12 @@ ENDIF()
   SET(HEADERS
        evaluators/FELIX_BasalFrictionCoefficient.hpp
        evaluators/FELIX_BasalFrictionCoefficient_Def.hpp
+       evaluators/FELIX_EffectivePressure.hpp
+       evaluators/FELIX_EffectivePressure_Def.hpp
        evaluators/FELIX_EpsilonL1L2.hpp
        evaluators/FELIX_EpsilonL1L2_Def.hpp
+       evaluators/FELIX_FieldNorm.hpp
+       evaluators/FELIX_FieldNorm_Def.hpp
        evaluators/FELIX_HydrologyResidual.hpp
        evaluators/FELIX_HydrologyResidual_Def.hpp
        evaluators/FELIX_HydrologyRhs.hpp

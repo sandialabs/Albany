@@ -68,7 +68,7 @@ private:
   double*  beta_coeffs;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node,Dim> velocity;
+  PHX::MDField<ScalarT,Cell,Node>     u_norm;
   PHX::MDField<ScalarT,Cell,Node>     beta_given;
   PHX::MDField<ScalarT,Cell,Node>     thickness;
 

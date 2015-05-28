@@ -30,13 +30,14 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
 
   Teuchos::ParameterList* beta_list = p.get<Teuchos::ParameterList*>("Parameter List");
+  Teuchos::ParameterList* physics = p.get<Teuchos::ParameterList*>("Physical Parameters");
 
   std::string betaType = (beta_list->isParameter("Type") ? beta_list->get<std::string>("Type") : "From File");
 
-  mu    = beta_list->get("Coulomb Friction Coefficient",1.0);
-  rho   = beta_list->get("Ice Density",990);
-  g     = beta_list->get("Gravity Acceleration",9.8);
-  alpha = beta_list->get("Water Pressure Fraction",0.5);
+  mu    = beta_list->get<double>("Coulomb Friction Coefficient");
+  alpha = beta_list->get<double>("Water Pressure Fraction");
+  rho   = physics->get<double>("Ice Density");
+  g     = physics->get<double>("Gravity Acceleration");
 
   if (betaType == "From File")
   {
@@ -82,9 +83,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
 
     thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("thickness Field Name"), dl->node_scalar);
-    velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
+    u_norm    = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Velocity Norm Name"), dl->node_scalar);
     this->addDependentField (thickness);
-    this->addDependentField (velocity);
+    this->addDependentField (u_norm);
   }
   else if (betaType == "Regularized Coulomb")
   {
@@ -104,9 +105,9 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
 
     thickness = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("thickness Field Name"), dl->node_scalar);
-    velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
+    u_norm    = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Velocity Norm Name"), dl->node_scalar);
     this->addDependentField (thickness);
-    this->addDependentField (velocity);
+    this->addDependentField (u_norm);
   }
   else if (betaType == "Piecewise Linear")
   {
@@ -177,8 +178,8 @@ BasalFrictionCoefficient<EvalT, Traits>::BasalFrictionCoefficient (const Teuchos
 #endif
     }
 
-    velocity  = PHX::MDField<ScalarT,Cell,Node,Dim>(p.get<std::string> ("Velocity Name"), dl->node_vector);
-    this->addDependentField (velocity);
+    u_norm  = PHX::MDField<ScalarT,Cell,Node>(p.get<std::string> ("Velocity Norm Name"), dl->node_scalar);
+    this->addDependentField (u_norm);
   }
   else
   {
@@ -216,11 +217,16 @@ postRegistrationSetup (typename Traits::SetupData d,
     case FROM_FILE:
         this->utils.setFieldData(beta_given,fm);
         break;
+    case HYDROSTATIC:
+        this->utils.setFieldData(thickness,fm);
+        break;
     case POWER_LAW:
     case REGULARIZED_COULOMB:
         this->utils.setFieldData(thickness,fm);
+        this->utils.setFieldData(u_norm,fm);
+        break;
     case PIECEWISE_LINEAR:
-        this->utils.setFieldData(velocity,fm);
+        this->utils.setFieldData(u_norm,fm);
   }
 
   this->utils.setFieldData(beta,fm);
@@ -241,8 +247,6 @@ template<typename EvalT, typename Traits>
 KOKKOS_INLINE_FUNCTION
 void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 {
-    ScalarT u_norm;
-
     switch (beta_type)
     {
         case FROM_FILE:
@@ -268,13 +272,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 
             for (int node=0; node < numNodes; ++node)
             {
-                // Computing |u|
-                u_norm = 0;
-                for (int dim=0; dim<numDims; ++dim)
-                    u_norm += std::pow(velocity(i,node,dim),2);
-                u_norm = std::sqrt(u_norm + ff);
-
-                beta(i,node) = mu*rho*g*thickness(i,node) * std::pow(u_norm, power);
+                beta(i,node) = mu*rho*g*thickness(i,node) * std::pow(u_norm(i,node), power);
             }
             break;
         }
@@ -286,14 +284,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 
             for (int node=0; node < numNodes; ++node)
             {
-                // Computing |u|
-                u_norm = 0;
-                for (int dim=0; dim<numDims; ++dim)
-                    u_norm += std::pow(velocity(i,node,dim),2);
-                u_norm = std::sqrt (u_norm + ff);
-
-                beta(i,node) = mu*(1-alpha)*rho*g*thickness(i,node) * std::pow (u_norm, power-1)
-                             / std::pow( std::pow(u_norm,*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(i,node),1./power), power);
+                beta(i,node) = mu*(1-alpha)*rho*g*thickness(i,node) * std::pow (u_norm(i,node), power-1)
+                             / std::pow( std::pow(u_norm(i,node),*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(i,node),1./power), power);
             }
             break;
         }
@@ -307,14 +299,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
             ScalarT xi;
             for (int node=0; node < numNodes; ++node)
             {
-                // Computing |u|
-                u_norm = 0;
-                for (int dim=0; dim<numDims; ++dim)
-                    u_norm += std::pow(velocity(i,node,dim),2);
-                u_norm = std::sqrt(u_norm + ff);
-
-                where = std::lower_bound(u_grid,u_grid+nb_pts,u_norm) - u_grid;
-                xi = (u_norm - u_grid[where]) / u_grid_h[where];
+                where = std::lower_bound(u_grid,u_grid+nb_pts,u_norm(i,node)) - u_grid;
+                xi = (u_norm(i,node) - u_grid[where]) / u_grid_h[where];
 
                 beta(i,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1];
             }
@@ -332,14 +318,13 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
     if (printedH!=*homotopyParam)
     {
+        *output << "Basal Friction Coefficient\n";
         *output << "h = " << *homotopyParam << "\n";
         printedH = *homotopyParam;
     }
 #endif
 
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
-    ScalarT u_norm;
-
     switch (beta_type)
     {
         case FROM_FILE:
@@ -371,13 +356,7 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
             {
                 for (int node=0; node < numNodes; ++node)
                 {
-                    // Computing |u|
-                    u_norm = 0;
-                    for (int dim=0; dim<numDims; ++dim)
-                        u_norm += std::pow(velocity(cell,node,dim),2);
-                    u_norm = std::sqrt (u_norm + ff);
-
-                    beta(cell,node) = mu*rho*g*thickness(cell,node) * std::pow (u_norm, power);
+                    beta(cell,node) = mu*rho*g*thickness(cell,node) * std::pow (u_norm(cell,node), power);
                 }
             }
             break;
@@ -392,14 +371,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
             {
                 for (int node=0; node < numNodes; ++node)
                 {
-                    // Computing |u|
-                    u_norm = 0;
-                    for (int dim=0; dim<numDims; ++dim)
-                        u_norm += std::pow(velocity(cell,node,dim),2);
-                    u_norm = std::sqrt(u_norm + ff);
-
-                    beta(cell,node) = mu*(1-alpha)*rho*g*thickness(cell,node) * std::pow (u_norm, power-1)
-                                 / std::pow( std::pow(u_norm,*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(cell,node),1./power), power);
+                    beta(cell,node) = mu*(1-alpha)*rho*g*thickness(cell,node) * std::pow (u_norm(cell,node), power-1)
+                                 / std::pow( std::pow(u_norm(cell,node),*homotopyParam) + L*std::pow((1-alpha)*rho*g*thickness(cell,node),1./power), power);
                 }
             }
             break;
@@ -416,14 +389,8 @@ void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::E
             {
                 for (int node=0; node < numNodes; ++node)
                 {
-                    // Computing |u|
-                    u_norm = 0;
-                    for (int dim=0; dim<numDims; ++dim)
-                        u_norm += std::pow(velocity(cell,node,dim),2);
-                    u_norm = std::sqrt(u_norm + ff);
-
-                    where = std::lower_bound(u_grid,u_grid+nb_pts,getScalarTValue(u_norm)) - u_grid;
-                    xi = (u_norm - u_grid[where]) / u_grid_h[where];
+                    where = std::lower_bound(u_grid,u_grid+nb_pts,getScalarTValue(u_norm(cell,node))) - u_grid;
+                    xi = (u_norm(cell,node) - u_grid[where]) / u_grid_h[where];
                     beta(cell,node) = (1-xi)*beta_coeffs[where] + xi*beta_coeffs[where+1];
                 }
             }
