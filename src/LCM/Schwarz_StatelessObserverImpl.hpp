@@ -3,8 +3,8 @@
 //    This Software is released under the BSD license detailed     //
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
-#ifndef SCHWARZ_STATELESSOBSERVERIMPL_HPP
-#define SCHWARZ_STATELESSOBSERVERIMPL_HPP
+#if !defined(LCM_Schwarz_StatelessObserverImpl_hpp)
+#define LCM_Schwarz_StatelessObserverImpl_hpp
 
 #include "Albany_Application.hpp"
 #include "Albany_DataTypes.hpp"
@@ -75,4 +75,4 @@ private:
 
 } // namespace LCM
 
-#endif // SCHWARZ_STATELESSOBSERVERIMPL_HPP
+#endif // LCM_Schwarz_StatelessObserverImpl_hpp
