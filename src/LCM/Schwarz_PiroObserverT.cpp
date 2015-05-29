@@ -12,21 +12,23 @@
 
 //#define OUTPUT_TO_SCREEN 
 
-LCM::Schwarz_PiroObserverT::Schwarz_PiroObserverT(const Teuchos::RCP<SchwarzMultiscale>& cs_model)
+LCM::Schwarz_PiroObserverT::Schwarz_PiroObserverT(
+    const Teuchos::RCP<SchwarzMultiscale>& cs_model)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   apps_ = cs_model->getApps();
-  n_models_ = apps_.size();  
+  n_models_ = apps_.size();
 #ifdef OUTPUT_TO_SCREEN
-  std::cout << "# models seen by Schwarz_PiroObserverT: " << n_models_ << std::endl;
+  std::cout << "# models seen by Schwarz_PiroObserverT: " << n_models_ << '\n';
 #endif 
-  impl_ = Teuchos::rcp(new ObserverImpl(apps_));  
+  impl_ = Teuchos::rcp(new ObserverImpl(apps_));
 }
 
 void
-LCM::Schwarz_PiroObserverT::observeSolution(const Thyra::VectorBase<ST> &solution)
+LCM::Schwarz_PiroObserverT::observeSolution(
+    const Thyra::VectorBase<ST> &solution)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
@@ -67,16 +69,17 @@ tpetraFromThyra(const Thyra::VectorBase<double> &v, int n_models)
 #endif
 
   const Teuchos::RCP<const Thyra::ProductVectorBase<ST> > v_nonowning_rcp =
-          Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(Teuchos::rcpFromRef(v)); 
-  
+      Teuchos::rcp_dynamic_cast<const Thyra::ProductVectorBase<ST> >(
+          Teuchos::rcpFromRef(v));
+
   //Create a Teuchos array of the vs for each model.
   Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > vs(n_models);
   for (int m = 0; m < n_models; ++m) {
     //Get each Tpetra vector
     vs[m] = Teuchos::rcp_dynamic_cast<const ThyraVector>(
-       v_nonowning_rcp->getVectorBlock(m), true)->getConstTpetraVector();
+        v_nonowning_rcp->getVectorBlock(m), true)->getConstTpetraVector();
   }
-  return vs; 
+  return vs;
 }
 
 } // anonymous namespace
@@ -90,11 +93,11 @@ LCM::Schwarz_PiroObserverT::observeSolutionImpl(
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
   Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > solutions_tpetra =
-    tpetraFromThyra(solution, n_models_);
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > > null_array; 
-  null_array.resize(n_models_); 
-  for (int m=0; m<n_models_; m++) 
-    null_array[m] = Teuchos::null; 
+      tpetraFromThyra(solution, n_models_);
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > null_array;
+  null_array.resize(n_models_);
+  for (int m = 0; m < n_models_; m++)
+    null_array[m] = Teuchos::null;
 
   this->observeTpetraSolutionImpl(
       solutions_tpetra,
@@ -111,10 +114,10 @@ LCM::Schwarz_PiroObserverT::observeSolutionImpl(
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >solutions_tpetra =
-    tpetraFromThyra(solution, n_models_);
-  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >solutions_dot_tpetra =
-    tpetraFromThyra(solution_dot, n_models_);
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > solutions_tpetra =
+      tpetraFromThyra(solution, n_models_);
+  Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > solutions_dot_tpetra =
+      tpetraFromThyra(solution_dot, n_models_);
 
   this->observeTpetraSolutionImpl(
       solutions_tpetra,
