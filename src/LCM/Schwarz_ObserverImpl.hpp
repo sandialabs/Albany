@@ -17,8 +17,8 @@ public:
 
   virtual void observeSolutionT(
       double stamp,
-      Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > non_overlapped_solutionT,
-      Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> > non_overlapped_solution_dotT);
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > non_overlapped_solutionT,
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > non_overlapped_solution_dotT);
 
 private:
   ObserverImpl(const ObserverImpl&);
