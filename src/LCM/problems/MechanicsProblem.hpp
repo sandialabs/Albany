@@ -2715,6 +2715,23 @@ constructEvaluators(PHX::FieldManager<PHAL::AlbanyTraits>& fm0,
     p->set<RealType>("Stabilization Parameter", stab_param);
     p->set<Teuchos::RCP<ParamLib> >("Parameter Library", paramLib);
 
+    // Get material list prior to establishing a new parameter list
+    std::string matName = material_db_->getElementBlockParam<std::string>(
+        eb_name, "material");
+    Teuchos::ParameterList& param_list =
+        material_db_->getElementBlockSublist(eb_name, matName);
+
+    RealType decay_constant(0.0);
+    // Check if Tritium Sublist exists. If true, move forward
+    if (param_list.isSublist("Tritium Coefficients")) {
+
+      Teuchos::ParameterList& tritium_param = material_db_->
+          getElementBlockSublist(eb_name, matName).sublist(
+          "Tritium Coefficients");
+      decay_constant = tritium_param.get<RealType>("Tritium Decay Constant",0.0);
+    }
+    p->set<RealType>("Tritium Decay Constant", decay_constant);
+
     //Output
     p->set<std::string>("Residual Name", "Transport Residual");
     p->set<Teuchos::RCP<PHX::DataLayout> >(
