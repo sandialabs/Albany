@@ -6,8 +6,8 @@
 
 //IK, 9/12/14: no Epetra!
 
-#ifndef SCHWARZ_PIROOBSERVERT_HPP
-#define SCHWARZ_PIROOBSERVERT_HPP
+#if !defined(Schwarz_PiroObserverT_hpp)
+#define Schwarz_PiroObserverT_hpp
 
 #include "Piro_ObserverBase.hpp"
 
@@ -20,47 +20,49 @@
 
 namespace LCM {
 
-class Schwarz_PiroObserverT : public Piro::ObserverBase<ST> {
+class Schwarz_PiroObserverT: public Piro::ObserverBase<ST> {
 public:
-  explicit Schwarz_PiroObserverT(const Teuchos::RCP<SchwarzMultiscale>& cs_model);
+  explicit Schwarz_PiroObserverT(
+      Teuchos::RCP<SchwarzMultiscale> const & cs_model);
 
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution);
+      Thyra::VectorBase<ST> const & solution);
 
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution,
-      const ST stamp);
+      Thyra::VectorBase<ST> const & solution,
+      ST const stamp);
 
   virtual void observeSolution(
-      const Thyra::VectorBase<ST> &solution,
-      const Thyra::VectorBase<ST> &solution_dot,
-      const ST stamp);
+      Thyra::VectorBase<ST> const & solution,
+      Thyra::VectorBase<ST> const & solution_dot,
+      ST const stamp);
 
 protected:
-  int n_models_; 
-
+  int n_models_;
 
 private:
   void observeSolutionImpl(
-      const Thyra::VectorBase<ST> &solution,
-      const ST default_stamp);
+      Thyra::VectorBase<ST> const & solution,
+      ST const default_stamp);
 
   void observeSolutionImpl(
-      const Thyra::VectorBase<ST> &solution,
-      const Thyra::VectorBase<ST> &solution_dot,
-      const ST default_stamp);
+      Thyra::VectorBase<ST> const & solution,
+      Thyra::VectorBase<ST> const & solution_dot,
+      ST const default_stamp);
 
   void observeTpetraSolutionImpl(
-      Teuchos::Array<Teuchos::RCP<const Tpetra_Vector > >solutions,
-      Teuchos::Array<Teuchos::RCP<const Tpetra_Vector> >solutions_dot,
-      const ST default_stamp);
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions,
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> solutions_dot,
+      ST const default_stamp);
 
-  Teuchos::RCP<ObserverImpl> impl_;
+  Teuchos::RCP<ObserverImpl>
+  impl_;
 
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
-  
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
+  apps_;
+
 };
 
 } // namespace Albany
 
-#endif /*SCHWARZ_PIROOBSERVERT_HPP*/
+#endif // Schwarz_PiroObserverT_hpp
