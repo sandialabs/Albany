@@ -122,11 +122,6 @@ public:
 
 private:
 
-  Tpetra_MultiVector
-  make_vector(Tpetra_MultiVector const & X) const;
-
-private:
-
   Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>>
   coupled_apps_;
 
