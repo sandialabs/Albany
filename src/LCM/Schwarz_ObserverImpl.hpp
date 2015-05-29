@@ -13,19 +13,19 @@ namespace LCM {
 class ObserverImpl: public StatelessObserverImpl {
 public:
   explicit ObserverImpl(
-      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > &apps);
+      Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> &apps);
 
   virtual void observeSolutionT(
       double stamp,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > non_overlapped_solutionT,
-      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const> > non_overlapped_solution_dotT);
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solutionT,
+      Teuchos::Array<Teuchos::RCP<Tpetra_Vector const>> non_overlapped_solution_dotT);
 
 private:
   ObserverImpl(const ObserverImpl&);
   ObserverImpl& operator=(const ObserverImpl&);
   protected:
   int n_models_;
-  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application> > apps_;
+  Teuchos::ArrayRCP<Teuchos::RCP<Albany::Application>> apps_;
 };
 
 } // namespace LCM
