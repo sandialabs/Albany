@@ -10,16 +10,6 @@
 #include "Albany_GenericSTKMeshStruct.hpp"
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Utils.hpp"
-//#include "Tpetra_LocalMap.h"
-
-//#define WRITE_TO_MATRIX_MARKET
-//#define OUTPUT_TO_SCREEN
-//#define DEBUG_LCM_SCHWARZ
-
-#ifdef WRITE_TO_MATRIX_MARKET
-static int
-mm_counter = 0;
-#endif // WRITE_TO_MATRIX_MARKET
 
 LCM::
 Schwarz_BoundaryJacobian::
