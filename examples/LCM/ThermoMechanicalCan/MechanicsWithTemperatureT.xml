@@ -3,7 +3,7 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
 
-    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="2"/>
+    <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
 
     <!-- XML filename with material definitions -->
     <Parameter name="MaterialDB Filename" type="string" value="MechanicsWithTemperatureMaterials.xml"/>
@@ -14,8 +14,8 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF X" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF T">
         <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 985.2, 3600 }"/>
         <Parameter name="BC Values"   type="Array(double)" value="{ 300.0, 800.0, 800.0 }"/>
@@ -52,12 +52,12 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="brick_model_1.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="brick_model_2.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V, Temp, S}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V, TempRes, S}"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
-    <Parameter name="Exodus Write Interval" type="int" value="10"/>
+    <!--Parameter name="Exodus Write Interval" type="int" value="10"/-->
     <Parameter name="Use Serial Mesh" type="bool" value="true"/>
   </ParameterList>
   <ParameterList name="Regression Results">
@@ -166,7 +166,7 @@
 		</ParameterList>
 	      </ParameterList>
 	      <Parameter name="Preconditioner Type" type="string" value="MueLu"/>
-	      <ParameterList name="Preconditioner Types">
+	      <!--ParameterList name="Preconditioner Types">
                 <ParameterList name="MueLu">
                   <Parameter name="verbosity" type="string" value="none"/>
                   <Parameter name="max levels" type="int" value="10"/>
@@ -182,7 +182,7 @@
                     <Parameter name="relaxation: type" type="string" value="Symmetric Gauss-Seidel"/>
                   </ParameterList>
                 </ParameterList>
-              </ParameterList>
+              </ParameterList-->
             </ParameterList>
 	  </ParameterList>
 	</ParameterList>

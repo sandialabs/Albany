@@ -15,8 +15,8 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsMaterials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsMaterials.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/MechanicsWithTemperatureMaterials.xml
                ${CMAKE_CURRENT_BINARY_DIR}/MechanicsWithTemperatureMaterials.xml COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_1.g
-               ${CMAKE_CURRENT_BINARY_DIR}/brick_model_1.g COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/brick_model_2.g
+               ${CMAKE_CURRENT_BINARY_DIR}/brick_model_2.g COPYONLY)
 
 # Name the test with the directory name
 get_filename_component(testName ${CMAKE_CURRENT_SOURCE_DIR} NAME)

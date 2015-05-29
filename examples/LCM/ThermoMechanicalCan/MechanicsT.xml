@@ -10,8 +10,8 @@
 
     <ParameterList name="Dirichlet BCs">
       <Parameter name="DBC on NS nodelist_1 for DOF Z" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_2 for DOF X" type="double" value="0.0"/>
-      <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
+      <Parameter name="DBC on NS nodelist_3 for DOF X" type="double" value="0.0"/>
     </ParameterList>
     <ParameterList name="Neumann BCs">
       <ParameterList name="Time Dependent NBC on SS surface_1 for DOF all set P">
@@ -42,7 +42,7 @@
   </ParameterList>
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
-    <Parameter name="Exodus Input File Name" type="string" value="brick_model_1.g"/>
+    <Parameter name="Exodus Input File Name" type="string" value="brick_model_2.g"/>
     <Parameter name="Exodus Output File Name" type="string" value="tm.exo"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{disp, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
