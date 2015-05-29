@@ -129,7 +129,26 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
-  //if (index_i_ == 0 && index_j_ ==1)
+  int nEigenvals = neg_eigenvalues->getGlobalLength(); 
+  Teuchos::RCP<Tpetra_Vector> tempVec = Teuchos::rcp(new Tpetra_Vector(discMap)); 
+  Teuchos::RCP<Tpetra_Vector> tempVec2 = Teuchos::rcp(new Tpetra_Vector(discMap)); 
+   
+  //(0, Schrodinger) block
+  if (index_i_ == 0 && index_j_ > 0 && index_j_ < nEigenvals+1) {
+    Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(index_j_); 
+    massMatrix->apply(*dn_dPsi_j, *tempVec, Teuchos::NO_TRANS, 1.0, 0.0);   //tempVec = massMatrix*dn_dPsi[index_j]
+    Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec, X, 0.0); //Y = tempVec*X 
+  }
+  //(0, eigenvalue) block
+  else if (index_i_ == 0 && index_j_ == nEigenvals+1) {
+   for (int i=0; i<nEigenvals; i++) {
+     Teuchos::RCP<const Tpetra_Vector> dn_dPsi_i = dn_dPsi->getVector(i); 
+     const Teuchos::ArrayRCP<const ST> x_neg_evals_local_constView = x_neg_evals_local->get1dView(); 
+     tempVec->update(-1*x_neg_evals_local_constView[i], *dn_dPsi_i, 0.0); //tempVec = -dn_dEval[i] * scalar(x_neg_eval[i]);
+     massMatrix->apply(*tempVec, *tempVec2, Teuchos::NO_TRANS, 1.0, 0.0); //tempVec2 = M*tempVec
+     Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec2, X, 1.0); //Y += M*(-dn_dEval[i] * scalar(x_neg_eval[i])) 
+   } 
+  }
   //FIXME: fill in!
 }
 
