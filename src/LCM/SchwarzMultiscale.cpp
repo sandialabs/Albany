@@ -877,17 +877,6 @@ evalModelImpl(
           sacado_param_vecs_[m], fTs_out[m].get(), *jacs_[m]);
 
       fs_already_computed[m] = true;
-
-      // So that the Schwarz BC has the latest solution, we force here a
-      // write of the solution to the mesh database. For STK, which we use,
-      // the time parameter is ignored.
-      double const
-      time = 0.0;
-
-      Teuchos::RCP<Albany::AbstractDiscretization> const
-      app_disc = apps_[m]->getDiscretization();
-
-      app_disc->writeSolutionToMeshDatabaseT(*xTs[m], time);
     }
   }
 
@@ -921,6 +910,19 @@ evalModelImpl(
             sacado_param_vecs_[m], *fTs_out[m]);
       }
     }
+  }
+
+  // So that the Schwarz BC has the latest solution, we force here a
+  // write of the solution to the mesh database. For STK, which we use,
+  // the time parameter is ignored.
+  for (auto m = 0; m < num_models_; ++m) {
+    double const
+    time = 0.0;
+
+    Teuchos::RCP<Albany::AbstractDiscretization> const
+    app_disc = apps_[m]->getDiscretization();
+
+    app_disc->writeSolutionToMeshDatabaseT(*xTs[m], time);
   }
 
 #ifdef WRITE_TO_MATRIX_MARKET
