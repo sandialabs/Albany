@@ -450,17 +450,17 @@ computeState(typename Traits::EvalData workset,
               omega = 1.0 - tmp * tmp;
             }
 
-            // compute the hardening residual
-            //
-            Fad deps_ssF = (H - Rd*eps_ssF) * dgamF;
-            Fad eps_resF = eps_ssF - eps_ss_old - deps_ssF;
-
             // increment in equivalent plastic strain
             //
             Fad deq = dgamF * (q1_ * q2_ * pF * YbarF * fstarF * std::sinh(argF)) / (1.0 - fstarF) / YbarF;
             if (smag != 0.0) {
               deq += dgamF * smag2 / (1.0 - fstarF) / YbarF;
             }
+
+            // compute the hardening residual
+            //
+            Fad deps_ssF = (H - Rd*eps_ssF) * deq;
+            Fad eps_resF = eps_ssF - eps_ss_old - deps_ssF;
 
             // void nucleation
             // 
