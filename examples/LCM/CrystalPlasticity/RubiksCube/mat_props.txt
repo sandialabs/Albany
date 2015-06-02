@@ -1,0 +1,6 @@
+C11 168.4
+C12 121.4
+C44 75.4
+tau_critical 0.6
+gamma_dot 1.0
+gamma_exponent 1.0
