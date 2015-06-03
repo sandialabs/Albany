@@ -7,6 +7,10 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${SEACAS_EPU} ${CMAKE
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CreateMaterialsFile.py
                ${CMAKE_CURRENT_BINARY_DIR}/CreateMaterialsFile.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PostProcess.py
+               ${CMAKE_CURRENT_BINARY_DIR}/PostProcess.py COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.gnuplot
+               ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.gnuplot COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/RubiksCube.xml
                ${CMAKE_CURRENT_BINARY_DIR}/RubiksCube.xml COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Materials.xml
