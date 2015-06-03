@@ -1,6 +1,12 @@
 C11 168.4
 C12 121.4
 C44 75.4
-tau_critical 0.6
+tau_critical 0.1
 gamma_dot 1.0
-gamma_exponent 1.0
+gamma_exponent 2.0
+hardening 0.0
+hardening_exponent 0.0
+integration_scheme Implicit
+implicit_integration_relative_tolerance 1.0e-7
+implicit_integration_absolute_tolerance 1.0-12
+implicit_integration_max_iterations 100

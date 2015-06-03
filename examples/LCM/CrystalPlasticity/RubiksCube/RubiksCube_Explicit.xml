@@ -3,19 +3,19 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="Materials.xml"/>
+    <Parameter name="MaterialDB Filename" type="string" value="Explicit_Materials.xml"/>
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_1 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{0.00,  1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00, -0.10}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{0.00,  0.10}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00, -0.01}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_2 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Z" type="double" value="0.0"/>
       <ParameterList name="Time Dependent DBC on NS nodelist_4 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{0.00,  1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{0.00,  0.10}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{0.00,  0.10}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{0.00,  0.01}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_5 for DOF Y" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_6 for DOF Z" type="double" value="0.0"/>
@@ -28,13 +28,13 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="RubiksCube.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="RubiksCube.exo"/>
+    <Parameter name="Exodus Output File Name" type="string" value="RubiksCube_Explicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>
     <Parameter name="Residual Vector Components" type="Array(string)" value="{force, V}"/>
     <Parameter name="Workset Size" type="int" value="300"/>
-    <Parameter name="Exodus Write Interval" type="int" value="1"/>
+    <Parameter name="Exodus Write Interval" type="int" value="10"/>
   </ParameterList>
   <ParameterList name="Piro">
     <ParameterList name="LOCA">
@@ -46,7 +46,7 @@
       <ParameterList name="Stepper">
         <Parameter name="Initial Value" type="double" value="0.0"/>
         <Parameter name="Continuation Parameter" type="string" value="Time"/>
-        <Parameter name="Max Steps" type="int" value="100"/>
+        <Parameter name="Max Steps" type="int" value="1000"/>
         <Parameter name="Max Value" type="double" value="0.05"/>
         <Parameter name="Min Value" type="double" value="0.0"/>
         <Parameter name="Compute Eigenvalues" type="bool" value="0"/>
@@ -57,7 +57,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.001"/>
+        <Parameter name="Initial Step Size" type="double" value="0.0001"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>

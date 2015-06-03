@@ -85,7 +85,8 @@ if __name__ == "__main__":
     outFileName = outFileLabel + 'force_displacement.txt'
     dataFile = open(outFileName, 'w')
     for timeStep in range(numTimeSteps):
-        dataFile.write(str(nodeset_displacement[timeStep]) + "  " + str(nodeset_force[timeStep]) + "\n")
+        # NOTE:  The displacement is doubled here because the BC on the model actually displace both ends in opposite directions
+        dataFile.write(str(2.0*nodeset_displacement[timeStep]) + "  " + str(nodeset_force[timeStep]) + "\n")
     dataFile.close()
     print "Force-displacement data for written to", outFileName
 

@@ -16,7 +16,7 @@ def ParseMaterialParametersFile(file_name, mat_params):
         vals = string.splitfields(param)
         if len(vals) == 2:
             name = vals[0]
-            value = float(vals[1])
+            value = vals[1]
             print " ", name, value
             if name in mat_params.keys():
                 mat_params[name] = value
@@ -196,12 +196,33 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
     for iBlock in range(num_blocks):
         indent = StartParamList(material_names[iBlock], mat_file, indent)
 
+        # Obtain the specifics for this grain
+        (vec1, vec2, vec3) = ConstructBasisVectors(rotations[iBlock])
+        slip_systems = FCCSlipSystems()
+        num_slip_systems = len(slip_systems)
+
         # Material model name
         indent = StartParamList("Material Model", mat_file, indent)
         WriteParameter("Model Name", "string", "CrystalPlasticity", mat_file, indent)
         indent = EndParamList(mat_file, indent)
 
-        (vec1, vec2, vec3) = ConstructBasisVectors(rotations[iBlock])
+        # Integration scheme
+        WriteParameter("Integration Scheme", "string", mat_params["integration_scheme"], mat_file, indent)
+        WriteParameter("Implicit Integration Relative Tolerance", "double", mat_params["implicit_integration_relative_tolerance"], mat_file, indent)
+        WriteParameter("Implicit Integration Absolute Tolerance", "double", mat_params["implicit_integration_absolute_tolerance"], mat_file, indent)
+        WriteParameter("Implicit Integration Max Iterations", "int", mat_params["implicit_integration_max_iterations"], mat_file, indent)
+
+        # Specify output to exodus
+        WriteParameter("Output Cauchy Stress", "bool", "true", mat_file, indent)
+        WriteParameter("Output Fp", "bool", "true", mat_file, indent)
+        WriteParameter("Output L", "bool", "true", mat_file, indent)
+        WriteParameter("Output CP Residual", "bool", "true", mat_file, indent)
+        for i in range(num_slip_systems):
+            WriteParameter("Output tau_" + str(i+1), "bool", "true", mat_file, indent)
+        for i in range(num_slip_systems):
+            WriteParameter("Output tau_hard_" + str(i+1), "bool", "true", mat_file, indent)
+        for i in range(num_slip_systems):
+            WriteParameter("Output gamma_" + str(i+1), "bool", "true", mat_file, indent)
 
         # Elastic modulii and lattice orientation
         indent = StartParamList("Crystal Elasticity", mat_file, indent)
@@ -213,11 +234,8 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Basis Vector 3", "Array(double)", VectorToString(vec3), mat_file, indent)
         indent = EndParamList(mat_file, indent)        
 
-        slip_systems = FCCSlipSystems()
-        num_slip_systems = len(slip_systems)
-
         # Crystal plasticity slip systems
-        WriteParameter("Number of slip Systems", "int", len(slip_systems), mat_file, indent)
+        WriteParameter("Number of Slip Systems", "int", len(slip_systems), mat_file, indent)
         for iSS in range(num_slip_systems):
             direction = slip_systems[iSS][0]
             normal = slip_systems[iSS][1]
@@ -227,18 +245,9 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
             WriteParameter("Tau Critical", "double", mat_params["tau_critical"], mat_file, indent)
             WriteParameter("Gamma Dot", "double", mat_params["gamma_dot"], mat_file, indent)
             WriteParameter("Gamma Exponent", "double", mat_params["gamma_exponent"], mat_file, indent)
+            WriteParameter("Hardening", "double", mat_params["hardening"], mat_file, indent)
+            WriteParameter("Hardening Exponent", "double", mat_params["hardening_exponent"], mat_file, indent)
             indent = EndParamList(mat_file, indent)
-
-        # Specify output to exodus
-        WriteParameter("Output Cauchy Stress", "bool", "true", mat_file, indent)
-        WriteParameter("Output Fp", "bool", "true", mat_file, indent)
-        WriteParameter("Output L", "bool", "true", mat_file, indent)
-        for i in range(num_slip_systems):
-            WriteParameter("Output tau" + str(i+1), "bool", "true", mat_file, indent)            
-        for i in range(num_slip_systems):
-            WriteParameter("Output tau_hard" + str(i+1), "bool", "true", mat_file, indent)
-        for i in range(num_slip_systems):
-            WriteParameter("Output gamma" + str(i+1), "bool", "true", mat_file, indent)            
 
         indent = EndParamList(mat_file, indent)
 
@@ -268,6 +277,12 @@ if __name__ == "__main__":
     mat_params["tau_critical"] = None
     mat_params["gamma_dot"] = None
     mat_params["gamma_exponent"] = None
+    mat_params["hardening"] = None
+    mat_params["hardening_exponent"] = None
+    mat_params["integration_scheme"] = None
+    mat_params["implicit_integration_relative_tolerance"] = None
+    mat_params["implicit_integration_absolute_tolerance"] = None
+    mat_params["implicit_integration_max_iterations"] = None
 
     ParseMaterialParametersFile(mat_params_file_name, mat_params)
 
