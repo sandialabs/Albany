@@ -210,8 +210,44 @@
       <Parameter name="Output Fp" type="bool" value="true"/>
       <Parameter name="Output L" type="bool" value="true"/>
       <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output gamma_1" type="bool" value="true"/>
+      <Parameter name="Output gamma_2" type="bool" value="true"/>
+      <Parameter name="Output gamma_3" type="bool" value="true"/>
+      <Parameter name="Output gamma_4" type="bool" value="true"/>
+      <Parameter name="Output gamma_5" type="bool" value="true"/>
+      <Parameter name="Output gamma_6" type="bool" value="true"/>
+      <Parameter name="Output gamma_7" type="bool" value="true"/>
+      <Parameter name="Output gamma_8" type="bool" value="true"/>
+      <Parameter name="Output gamma_9" type="bool" value="true"/>
+      <Parameter name="Output gamma_10" type="bool" value="true"/>
+      <Parameter name="Output gamma_11" type="bool" value="true"/>
+      <Parameter name="Output gamma_12" type="bool" value="true"/>
       <Parameter name="Output tau_hard_1" type="bool" value="true"/>      
+      <Parameter name="Output tau_hard_1" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_2" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_3" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_4" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_5" type="bool" value="true"/> 
+      <Parameter name="Output tau_hard_6" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_7" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_8" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_9" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_10" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_11" type="bool" value="true"/>
+      <Parameter name="Output tau_hard_12" type="bool" value="true"/>
       <Parameter name="Output tau_1" type="bool" value="true"/>
+      <Parameter name="Output tau_1" type="bool" value="true"/>
+      <Parameter name="Output tau_2" type="bool" value="true"/>
+      <Parameter name="Output tau_3" type="bool" value="true"/>
+      <Parameter name="Output tau_4" type="bool" value="true"/>
+      <Parameter name="Output tau_5" type="bool" value="true"/>
+      <Parameter name="Output tau_6" type="bool" value="true"/>
+      <Parameter name="Output tau_7" type="bool" value="true"/>
+      <Parameter name="Output tau_8" type="bool" value="true"/>
+      <Parameter name="Output tau_9" type="bool" value="true"/>
+      <Parameter name="Output tau_10" type="bool" value="true"/>
+      <Parameter name="Output tau_11" type="bool" value="true"/>
+      <Parameter name="Output tau_12" type="bool" value="true"/>
       <Parameter name="Output CP_Residual" type="bool" value="true"/>
 
     </ParameterList>
