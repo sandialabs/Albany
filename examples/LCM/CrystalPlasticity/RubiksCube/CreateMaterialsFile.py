@@ -48,14 +48,103 @@ def ParseRotationMatricesFile(file_name, rotations):
     for matrix in raw_data:
         vals = string.splitfields(matrix)
         if len(vals) == 9:
-            rot = [float(vals[0]), float(vals[1]), float(vals[2]),
-                   float(vals[3]), float(vals[4]), float(vals[5]),
-                   float(vals[6]), float(vals[7]), float(vals[8])]
+            rot = [[float(vals[0]), float(vals[1]), float(vals[2])],
+                   [float(vals[3]), float(vals[4]), float(vals[5])],
+                   [float(vals[6]), float(vals[7]), float(vals[8])]]
             rotations.append(rot)
 
     print "  read", len(rotations), "rotation matrices"
 
     return
+
+def ConstructBasisVectors(R):
+
+    e1 = [1.0, 0.0, 0.0]
+    e2 = [0.0, 1.0, 0.0]
+    e3 = [0.0, 0.0, 1.0]
+
+    BasisVector1 = [0.0, 0.0, 0.0]
+    BasisVector2 = [0.0, 0.0, 0.0]
+    BasisVector3 = [0.0, 0.0, 0.0]
+    
+    for i in range(3):
+        for j in range(3):
+            BasisVector1[i] += R[i][j]*e1[j]
+            BasisVector2[i] += R[i][j]*e2[j]
+            BasisVector3[i] += R[i][j]*e3[j]
+
+    return (BasisVector1, BasisVector2, BasisVector3)
+
+def VectorToString(vec):
+
+    vec_string = "{" + str(vec[0]) + ", " + str(vec[1]) + ", " + str(vec[2]) + "}"
+    return vec_string
+
+def FCCSlipSystems():
+
+    slip_systems = []
+
+    # system 1
+    direction = (-1.0, 1.0, 0.0)
+    normal = (1.0, 1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 2
+    direction = (0.0, -1.0, 1.0)
+    normal = (1.0, 1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 3
+    direction = (1.0, 0.0, -1.0)
+    normal = (1.0, 1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 4
+    direction = (-1.0, -1.0, 0.0)
+    normal = (-1.0, 1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 5
+    direction = (1.0, 0.0, 1.0)
+    normal = (-1.0, 1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 6
+    direction = (0.0, 1.0, -1.0)
+    normal = (-1.0, 1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 7
+    direction = (1.0, -1.0, 0.0)
+    normal = (-1.0, -1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 8
+    direction = (0.0, 1.0, 1.0)
+    normal = (-1.0, -1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 9
+    direction = (-1.0, 0.0, -1.0)
+    normal = (-1.0, -1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 10
+    direction = (1.0, 1.0, 0.0)
+    normal = (1.0, -1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 11
+    direction = (-1.0, 0.0, 1.0)
+    normal = (1.0, -1.0, 1.0)
+    slip_systems.append((direction, normal))
+
+    # system 12
+    direction = (0.0, -1.0, -1.0)
+    normal = (1.0, -1.0, 1.0)
+    slip_systems.append((direction, normal))
+    
+    return slip_systems
 
 def StartParamList(param_list_name, file, indent):
 
@@ -112,37 +201,48 @@ def WriteMaterialsFile(file_name, mat_params, rotations, num_blocks):
         WriteParameter("Model Name", "string", "CrystalPlasticity", mat_file, indent)
         indent = EndParamList(mat_file, indent)
 
+        (vec1, vec2, vec3) = ConstructBasisVectors(rotations[iBlock])
+
         # Elastic modulii and lattice orientation
         indent = StartParamList("Crystal Elasticity", mat_file, indent)
         WriteParameter("C11", "double", mat_params["C11"], mat_file, indent)
         WriteParameter("C12", "double", mat_params["C12"], mat_file, indent)
         WriteParameter("C44", "double", mat_params["C44"], mat_file, indent)
-        # TODO: COMPUTE THE BASIS VECTORS BASED ON THE ROTATION MATRIX IN rotations[iBlock]
-        WriteParameter("Basis Vector 1", "Array(double)", "{1.0,0.0,0.0}", mat_file, indent)
-        WriteParameter("Basis Vector 2", "Array(double)", "{0.0,1.0,0.0}", mat_file, indent)
-        WriteParameter("Basis Vector 3", "Array(double)", "{0.0,0.0,1.0}", mat_file, indent)
+        WriteParameter("Basis Vector 1", "Array(double)", VectorToString(vec1), mat_file, indent)
+        WriteParameter("Basis Vector 2", "Array(double)", VectorToString(vec2), mat_file, indent)
+        WriteParameter("Basis Vector 3", "Array(double)", VectorToString(vec3), mat_file, indent)
         indent = EndParamList(mat_file, indent)        
 
+        slip_systems = FCCSlipSystems()
+        num_slip_systems = len(slip_systems)
+
         # Crystal plasticity slip systems
-        # TODO CREATE FCC SLIP SYSTEMS
-        WriteParameter("Number of slip Systems", "int", "1", mat_file, indent)
-        indent = StartParamList("Slip System 1", mat_file, indent)
-        WriteParameter("Slip Direction", "Array(double)", "{1.0, 0.0, 0.0}", mat_file, indent)
-        WriteParameter("Slip Normal", "Array(double)", "{0.0, 1.0, 0.0}", mat_file, indent)
-        WriteParameter("Tau Critical", "double", mat_params["tau_critical"], mat_file, indent)
-        WriteParameter("Gamma Dot", "double", mat_params["gamma_dot"], mat_file, indent)
-        WriteParameter("Gamma Exponent", "double", mat_params["gamma_exponent"], mat_file, indent)
-        indent = EndParamList(mat_file, indent)
+        WriteParameter("Number of slip Systems", "int", len(slip_systems), mat_file, indent)
+        for iSS in range(num_slip_systems):
+            direction = slip_systems[iSS][0]
+            normal = slip_systems[iSS][1]
+            indent = StartParamList("Slip System " + str(iSS+1), mat_file, indent)
+            WriteParameter("Slip Direction", "Array(double)", VectorToString(direction), mat_file, indent)
+            WriteParameter("Slip Normal", "Array(double)", VectorToString(normal), mat_file, indent)
+            WriteParameter("Tau Critical", "double", mat_params["tau_critical"], mat_file, indent)
+            WriteParameter("Gamma Dot", "double", mat_params["gamma_dot"], mat_file, indent)
+            WriteParameter("Gamma Exponent", "double", mat_params["gamma_exponent"], mat_file, indent)
+            indent = EndParamList(mat_file, indent)
 
         # Specify output to exodus
         WriteParameter("Output Cauchy Stress", "bool", "true", mat_file, indent)
         WriteParameter("Output Fp", "bool", "true", mat_file, indent)
         WriteParameter("Output L", "bool", "true", mat_file, indent)
-        WriteParameter("Output Mechanical Source", "bool", "true", mat_file, indent)
-        
-        indent = EndParamList(mat_file, indent)
-    indent = EndParamList(mat_file, indent)
+        for i in range(num_slip_systems):
+            WriteParameter("Output tau" + str(i+1), "bool", "true", mat_file, indent)            
+        for i in range(num_slip_systems):
+            WriteParameter("Output tau_hard" + str(i+1), "bool", "true", mat_file, indent)
+        for i in range(num_slip_systems):
+            WriteParameter("Output gamma" + str(i+1), "bool", "true", mat_file, indent)            
 
+        indent = EndParamList(mat_file, indent)
+
+    indent = EndParamList(mat_file, indent)
     indent = EndParamList(mat_file, indent)
     mat_file.close()
 
