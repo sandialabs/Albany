@@ -185,7 +185,7 @@ private:
     Intrepid::Tensor<RealType> projector_;
 
     // flow rule parameters
-    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, p_;
+    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, Rd_;
   };
 
   ///

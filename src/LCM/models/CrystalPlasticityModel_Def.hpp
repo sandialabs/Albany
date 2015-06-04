@@ -130,7 +130,7 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponent");
     slip_systems_[num_ss].H_ = ss_list.get<RealType>("Hardening", 0.0);
-    slip_systems_[num_ss].p_ = ss_list.get<RealType>("Hardening Exponent",1.0);
+    slip_systems_[num_ss].Rd_ = ss_list.get<RealType>("Hardening Exponent",0.0);
   }
 #ifdef PRINT_DEBUG
   std::cout << "<<< done with parameter list\n";
@@ -738,21 +738,31 @@ updateHardness(std::vector<ArgT> const &     slip_np1,
 	       std::vector<ScalarT> const &  hardness_n,
 	       std::vector<ArgT> &           hardness_np1) const
 {
-  ScalarT H, p;
+  ScalarT H, Rd;
   ArgT temp;
 
   for (int s(0); s < num_slip_; ++s) {
 
     // material parameters
     H = slip_systems_[s].H_;
-    p = slip_systems_[s].p_;
+    Rd = slip_systems_[s].Rd_;
 
     hardness_np1[s] = hardness_n[s];
 
     // calculate additional hardening
-    // function form is power law, H \gamma^{p}
-    // if H is not specified, H = 0.0, if p is not specified, p = 1.0
-    temp = H * std::pow(std::fabs(slip_np1[s]),p);
+    //
+    // total hardness = tauC + hardness_np1[s]
+    // TODO: tauC -> tau0. This is a bit confusing.
+    // function form is hardening minus recovery, H/Rd*(1 - exp(-Rd*eqps))
+    // for reference, another flavor is A*(1 - exp(-B/A*eqps)) where H = B and Rd = B/A
+    // if H is not specified, H = 0.0, if Rd is not specified, Rd = 0.0
+    if (Rd > 0.0) {
+    temp = H/Rd *(1.0 - std::exp(-Rd*fabs(slip_np1[s])));
+    }
+    else {
+    temp = H*fabs(slip_np1[s]);
+    }
+    // only evolve if hardness increases
     if (temp > hardness_np1[s]) {
       hardness_np1[s] = temp;
     }
