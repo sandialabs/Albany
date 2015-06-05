@@ -69,7 +69,7 @@
         </ParameterList>
       </ParameterList>
       <ParameterList name="Step Size">
-        <Parameter name="Initial Step Size" type="double" value="0.025"/>
+        <Parameter name="Initial Step Size" type="double" value="0.001"/>
         <Parameter name="Method" type="string" value="Constant"/>
       </ParameterList>
     </ParameterList>
