@@ -25,6 +25,11 @@ FieldNorm<EvalT, Traits>::FieldNorm (const Teuchos::ParameterList& p,
 
   homotopyParam = 0;
 
+  if (p.isParameter("Regularization"))
+  {
+    regularizationParam = p.get<double>("Regularization");
+    homotopyParam = &regularizationParam;
+  }
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_vector->dimensions(dims);
   numNodes = dims[1];
@@ -59,10 +64,9 @@ void FieldNorm<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset
 #ifdef OUTPUT_TO_SCREEN
     Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
 
-    if (printedH!=*homotopyParam)
+    if (homotopyParam!=0 &&  printedH!=*homotopyParam)
     {
-        *output << "Field Norm\n";
-        *output << "h = " << *homotopyParam << "\n";
+        *output << "[Field Norm] h = " << *homotopyParam << "\n";
         printedH = *homotopyParam;
     }
 #endif

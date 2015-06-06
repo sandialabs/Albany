@@ -27,9 +27,9 @@ FELIX::Hydrology::Hydrology (const Teuchos::RCP<Teuchos::ParameterList>& params,
   this->setNumEquations(1);
 
   // Need to allocate a fields in mesh database
-  this->requirements.push_back("basal_height");
+  this->requirements.push_back("surface_height");
   this->requirements.push_back("basal_friction");
-  this->requirements.push_back("sliding_velocity_magnitude");
+  this->requirements.push_back("sliding_velocity");
   this->requirements.push_back("drainage_sheet_depth");
   this->requirements.push_back("ice_thickness");
   this->requirements.push_back("ice_viscosity");
@@ -111,7 +111,7 @@ void FELIX::Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::Me
   Teuchos::Array<Teuchos::Array<int> > offsets;
   offsets.resize(1);
 
-  neumannNames[0] = "Phi";
+  neumannNames[0] = "Hydraulic Potential";
   neumannNames[1] = "all";
   offsets[0].resize(1);
   offsets[0][0] = 0;
@@ -119,9 +119,6 @@ void FELIX::Hydrology::constructNeumannEvaluators (const Teuchos::RCP<Albany::Me
   // Construct BC evaluators for all possible names of conditions
   std::vector<std::string> condNames(1);
   condNames[0] = "neumann";
-
-  Teuchos::ArrayRCP<std::string> dof_names(1);
-  dof_names[0] = "Phi";
 
   nfm.resize(1); // FELIX problem only has one element block
 

@@ -157,6 +157,9 @@ Albany::ExtrudedSTKMeshStruct::ExtrudedSTKMeshStruct(const Teuchos::RCP<Teuchos:
   const CellTopologyData& ctd = *metaData->get_cell_topology(*partVec[0]).getCellTopologyData();
 
   this->meshSpecs[0] = Teuchos::rcp(new Albany::MeshSpecsStruct(ctd, numDim, cub, nsNames, ssNames, worksetSize, partVec[0]->name(), ebNameToIndex, this->interleavedOrdering));
+
+  // Add side set mesh specs
+  this->meshSpecs[0]->sideSetMeshSpecs["basalside"] = sideSetMeshStructs["basalside"]->getMeshSpecs();
 }
 
 Albany::ExtrudedSTKMeshStruct::~ExtrudedSTKMeshStruct()

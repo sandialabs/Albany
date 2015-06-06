@@ -42,13 +42,14 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint> wBF;
+  PHX::MDField<MeshScalarT,Cell,Node,QuadPoint>     wBF;
   PHX::MDField<MeshScalarT,Cell,Node,QuadPoint,Dim> wGradBF;
-  PHX::MDField<ScalarT,Cell,QuadPoint> phi;
-  PHX::MDField<ScalarT,Cell,QuadPoint,Dim> gradPhi;
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu_i;
-  PHX::MDField<ScalarT,Cell,QuadPoint> h;
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhs;
+  PHX::MDField<ScalarT,Cell,QuadPoint>              phi;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>          q;
+  PHX::MDField<ScalarT,Cell>                        mu_i;
+  PHX::MDField<ScalarT,Cell,QuadPoint>              h;
+  PHX::MDField<ScalarT,Cell,QuadPoint>              m;
+  PHX::MDField<ScalarT,Cell,QuadPoint>              constantRhs;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> residual;
@@ -57,14 +58,10 @@ private:
   unsigned int numQPs;
   unsigned int numDims;
 
-  ScalarT k_0;
-
   double mu_w;
   double rho_i;
   double rho_w;
-  double rho_combo;
-  double L;
-  double nonlin_coeff;
+  double has_melt_opening;
 };
 
 } // Namespace FELIX

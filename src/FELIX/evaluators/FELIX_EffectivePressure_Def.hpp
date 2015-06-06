@@ -15,12 +15,12 @@ EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterLis
                                            const Teuchos::RCP<Albany::Layouts>& dl) :
   phi       (p.get<std::string> ("Hydraulic Potential Variable Name"), dl->node_scalar),
   H         (p.get<std::string> ("Ice Thickness Variable Name"), dl->node_scalar),
-  z_b       (p.get<std::string> ("Basal Height Variable Name"), dl->node_scalar),
+  z_s       (p.get<std::string> ("Surface Height Variable Name"), dl->node_scalar),
   N         (p.get<std::string> ("Effective Pressure Name"),dl->node_scalar)
 {
   this->addDependentField(phi);
   this->addDependentField(H);
-  this->addDependentField(z_b);
+  this->addDependentField(z_s);
 
   this->addEvaluatedField(N);
 
@@ -30,10 +30,6 @@ EffectivePressure<EvalT, Traits>::EffectivePressure (const Teuchos::ParameterLis
   rho_i        = physical_params.get<double>("Ice Density");
   rho_w        = physical_params.get<double>("Water Density");
   g            = physical_params.get<double>("Gravity Acceleration");
-
-std::cout << "rho_i = " << rho_i << "\n";
-std::cout << "rho_w = " << rho_w << "\n";
-std::cout << "g = " << g << "\n";
 
   std::vector<PHX::DataLayout::size_type> dims;
   dl->node_scalar->dimensions(dims);
@@ -50,7 +46,7 @@ postRegistrationSetup(typename Traits::SetupData d,
 {
   this->utils.setFieldData(phi,fm);
   this->utils.setFieldData(H,fm);
-  this->utils.setFieldData(z_b,fm);
+  this->utils.setFieldData(z_s,fm);
 
   this->utils.setFieldData(N,fm);
 }
@@ -63,7 +59,7 @@ void EffectivePressure<EvalT, Traits>::evaluateFields (typename Traits::EvalData
   {
     for (int node=0; node < numNodes; ++node)
     {
-      N (cell,node) = rho_w*g*z_b(cell,node) + rho_i*g*H(cell,node) - phi(cell,node);
+      N (cell,node) = rho_w*g*(z_s(cell,node)-H(cell,node)) + rho_i*g*H(cell,node) - phi(cell,node);
     }
   }
 }

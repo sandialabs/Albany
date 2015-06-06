@@ -421,19 +421,36 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     // If we are solving the StokesFO problem, in the big picture of the coupling
     // with the hydrology problem, we need to save some data on the 2D mesh
 
+    const Albany::MeshSpecsStruct& sideMeshSpecs = *meshSpecs.sideSetMeshSpecs.find("basalside")->second[0];
+    RCP<Intrepid::Basis<RealType, Intrepid::FieldContainer<RealType> > >
+            sideIntrepidBasis = Albany::getIntrepidBasis(sideMeshSpecs.ctd);
+    RCP<shards::CellTopology> sideCellType = rcp(new shards::CellTopology (&sideMeshSpecs.ctd));
+
+    const int sideNumNodes = sideIntrepidBasis->getCardinality();
+    const int sideWorksetSize = sideMeshSpecs.worksetSize;
+
+    Intrepid::DefaultCubatureFactory<RealType> sideCubFactory;
+    RCP <Intrepid::Cubature<RealType> > sideCubature = sideCubFactory.create(*sideCellType, sideMeshSpecs.cubatureDegree);
+
+    const int sideNumQPts = sideCubature->getNumPoints();
+    const int sideNumVertices = sideCellType->getNodeCount();
+
+    RCP<Albany::Layouts> side_dl = rcp(new Albany::Layouts(sideWorksetSize,sideNumVertices,sideNumNodes,sideNumQPts,numDim-1, vecDim));
+/*
     // Save Friction Coefficient
     {
       entity = Albany::StateStruct::NodalDataToElemNode;
       RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","beta_field","basal_friction",
-                                                                    dl->node_scalar, elementBlockName,true,&entity);
-      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+                                                                    side_dl->node_scalar, elementBlockName,true,&entity);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",side_dl->dummy);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Cell Field Layout",dl->node_scalar);
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
       fm0.template registerEvaluator<EvalT>(ev);
-      PHX::Tag<typename EvalT::ScalarT> tag("beta_field", dl->dummy);
+      PHX::Tag<typename EvalT::ScalarT> tag("beta_field", side_dl->dummy);
       fm0.requireField<EvalT>(tag);
     }
-
+*/
     // Ice viscosity interpolation from QP to Cell
     {
       RCP<ParameterList> p = rcp(new ParameterList("Quad Points To Cell Interpolation"));
@@ -447,27 +464,30 @@ FELIX::StokesFO::constructEvaluators (PHX::FieldManager<PHAL::AlbanyTraits>& fm0
     // Save Ice Viscosity
     {
       RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","FELIX Viscosity Cell","ice_viscosity",
-                                                                    dl->cell_scalar2, elementBlockName,true);
-      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+                                                                    side_dl->cell_scalar2, elementBlockName,true);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",side_dl->dummy);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Cell Field Layout",dl->cell_scalar2);
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
       fm0.template registerEvaluator<EvalT>(ev);
-      PHX::Tag<typename EvalT::ScalarT> tag("FELIX Viscosity Cell", dl->dummy);
+      PHX::Tag<typename EvalT::ScalarT> tag("FELIX Viscosity Cell", side_dl->dummy);
       fm0.requireField<EvalT>(tag);
     }
-
+/*
     // Save Sliding Velocity
     {
       entity = Albany::StateStruct::NodalDataToElemNode;
       RCP<ParameterList> p = stateMgr.registerSideSetStateVariable ("basalside","Velocity Norm","sliding_velocity",
-                                                                    dl->node_scalar, elementBlockName,true,&entity);
-      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",dl->dummy);
+                                                                    side_dl->node_scalar, elementBlockName,true,&entity);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout",side_dl->dummy);
+      p->set<Teuchos::RCP<PHX::DataLayout> >("Cell Field Layout",dl->node_scalar);
 
       ev = rcp(new FELIX::SaveSideSetStateField<EvalT,PHAL::AlbanyTraits>(*p,meshSpecs));
       fm0.template registerEvaluator<EvalT>(ev);
-      PHX::Tag<typename EvalT::ScalarT> tag("Velocity Norm", dl->dummy);
+      PHX::Tag<typename EvalT::ScalarT> tag("Velocity Norm", side_dl->dummy);
       fm0.requireField<EvalT>(tag);
     }
+*/
   }
 
   if (fieldManagerChoice == Albany::BUILD_RESID_FM)  {

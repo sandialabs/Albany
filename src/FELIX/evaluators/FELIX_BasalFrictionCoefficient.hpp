@@ -49,7 +49,6 @@ public:
 private:
 
   ScalarT* homotopyParam;
-  ScalarT printedH;
 
   double getScalarTValue (const ScalarT& s);
 

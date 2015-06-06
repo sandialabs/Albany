@@ -44,8 +44,9 @@ public:
 
 private:
 
+  ScalarT  regularizationParam;
   ScalarT* homotopyParam;
-  ScalarT printedH;
+  ScalarT  printedH;
 
   // Input:
   PHX::MDField<ScalarT,Cell,Node,Dim> field;

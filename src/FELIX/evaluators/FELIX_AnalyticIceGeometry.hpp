@@ -4,14 +4,16 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_EFFECTIVE_PRESSURE_HPP
-#define FELIX_EFFECTIVE_PRESSURE_HPP 1
+#ifndef FELIX_ANALYTIC_ICE_GEOMETRY_HPP
+#define FELIX_ANALYTIC_ICE_GEOMETRY_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
 #include "Phalanx_Evaluator_Derived.hpp"
 #include "Phalanx_MDField.hpp"
 #include "Albany_Layouts.hpp"
+
+#include <vector>
 
 namespace FELIX
 {
@@ -22,15 +24,16 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits>
-class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
+class AnalyticIceGeometry : public PHX::EvaluatorWithBaseImpl<Traits>,
                           public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
-  typedef typename EvalT::ScalarT ScalarT;
+  typedef typename EvalT::ScalarT       ScalarT;
+  typedef typename EvalT::MeshScalarT   MeshScalarT;
 
-  EffectivePressure (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+  AnalyticIceGeometry (const Teuchos::ParameterList& p,
+                       const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -38,22 +41,20 @@ public:
   void evaluateFields(typename Traits::EvalData d);
 
 private:
-
   // Input:
-  PHX::MDField<ScalarT,Cell,Node> phi;
-  PHX::MDField<ScalarT,Cell,Node> H;
-  PHX::MDField<ScalarT,Cell,Node> z_s;
+  PHX::MDField<MeshScalarT,Cell,QuadPoint,Dim> coordVec;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> N;
+  PHX::MDField<ScalarT,Cell,QuadPoint> H;
+  PHX::MDField<ScalarT,Cell,QuadPoint> z_s;
 
-  unsigned int numNodes;
+  unsigned int numQp, numDim;
 
-  double rho_i;
-  double rho_w;
-  double g;
+  double rho,g;
+
+  MeshScalarT L,dx;
 };
 
 } // Namespace FELIX
 
-#endif // FELIX_EFFECTIVE_PRESSURE_HPP
+#endif // FELIX_ANALYTIC_ICE_GEOMETRY_HPP

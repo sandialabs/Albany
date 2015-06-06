@@ -787,7 +787,7 @@ Albany::StateManager::doSetStateArrays(const Teuchos::RCP<Albany::AbstractDiscre
     //   init_type = "scalar";
     // }
 
-    *out << "StateManager: initializing state:  " << stateName;
+    *out << "StateManager: initializing state:  " << stateName << "\n";
     switch((*stateInfoPtr)[i]->entity){
 
      case Albany::StateStruct::WorksetValue :

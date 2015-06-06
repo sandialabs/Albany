@@ -53,7 +53,8 @@ private:
 
   Teuchos::RCP<const Teuchos::ParameterList> getValidDiscretizationParameters() const;
 
-  void readFileSerial (std::string& fname, Tpetra_MultiVector& content, const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+  void readScalarFileSerial (std::string& fname, Tpetra_MultiVector& content, const Teuchos::RCP<const Teuchos_Comm>& comm) const;
+  void readVectorFileSerial (std::string& fname, Tpetra_MultiVector& contentVec, const Teuchos::RCP<const Teuchos_Comm>& comm) const;
   void fillTpetraVec (Tpetra_Vector& vec, double value);
   void fillTpetraMVec (Tpetra_MultiVector& mvec, const Teuchos::Array<double>& values);
 

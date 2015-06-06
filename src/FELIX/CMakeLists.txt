@@ -11,6 +11,8 @@
        evaluators/FELIX_EffectivePressure.cpp
        evaluators/FELIX_EpsilonL1L2.cpp
        evaluators/FELIX_FieldNorm.cpp
+       evaluators/FELIX_HydrologyDischarge.cpp
+       evaluators/FELIX_HydrologyMelting.cpp
        evaluators/FELIX_HydrologyResidual.cpp
        evaluators/FELIX_HydrologyRhs.cpp
        evaluators/FELIX_QuadPointsToCellInterpolation.cpp
@@ -59,6 +61,10 @@ ENDIF()
        evaluators/FELIX_EpsilonL1L2_Def.hpp
        evaluators/FELIX_FieldNorm.hpp
        evaluators/FELIX_FieldNorm_Def.hpp
+       evaluators/FELIX_HydrologyDischarge.hpp
+       evaluators/FELIX_HydrologyDischarge_Def.hpp
+       evaluators/FELIX_HydrologyMelting.hpp
+       evaluators/FELIX_HydrologyMelting_Def.hpp
        evaluators/FELIX_HydrologyResidual.hpp
        evaluators/FELIX_HydrologyResidual_Def.hpp
        evaluators/FELIX_HydrologyRhs.hpp

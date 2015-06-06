@@ -42,27 +42,27 @@ private:
   typedef typename EvalT::MeshScalarT MeshScalarT;
 
   // Input:
-  PHX::MDField<ScalarT,Cell,QuadPoint> mu_i;
-  PHX::MDField<ScalarT,Cell,QuadPoint> h;
-  PHX::MDField<ScalarT,Cell,QuadPoint> H;
-  PHX::MDField<ScalarT,Cell,QuadPoint> z_b;
-  PHX::MDField<ScalarT,Cell,QuadPoint> u_b;
-  PHX::MDField<ScalarT,Cell,QuadPoint> beta;
-  PHX::MDField<ScalarT,Cell,QuadPoint> omega;
-  PHX::MDField<ScalarT,Cell,QuadPoint> G;
+  PHX::MDField<ScalarT,Cell>            mu_i;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  h;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  H;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  z_s;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  u_b;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  omega;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,QuadPoint> rhs;
+  PHX::MDField<ScalarT,Cell,QuadPoint>  rhs;
 
   unsigned int numQPs;
 
-  ScalarT R;
+  ScalarT h_b;
+  ScalarT l_b;
+
+  double use_net_bump_height;
 
   double mu_w;
   double rho_i;
   double rho_w;
-  double rho_combo;
-  double L;
+  double g;
 };
 
 } // Namespace FELIX

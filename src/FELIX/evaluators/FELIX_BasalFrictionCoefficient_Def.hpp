@@ -236,9 +236,6 @@ template<typename EvalT,typename Traits>
 void BasalFrictionCoefficient<EvalT,Traits>::setHomotopyParamPtr(ScalarT* h)
 {
     homotopyParam = h;
-#ifdef OUTPUT_TO_SCREEN
-    printedH = -1234.56789;
-#endif
 }
 
 //**********************************************************************
@@ -314,16 +311,6 @@ void BasalFrictionCoefficient<EvalT, Traits>::operator () (const int i) const
 template<typename EvalT, typename Traits>
 void BasalFrictionCoefficient<EvalT, Traits>::evaluateFields (typename Traits::EvalData workset)
 {
-#ifdef OUTPUT_TO_SCREEN
-    Teuchos::RCP<Teuchos::FancyOStream> output(Teuchos::VerboseObjectBase::getDefaultOStream());
-    if (printedH!=*homotopyParam)
-    {
-        *output << "Basal Friction Coefficient\n";
-        *output << "h = " << *homotopyParam << "\n";
-        printedH = *homotopyParam;
-    }
-#endif
-
 #ifndef ALBANY_KOKKOS_UNDER_DEVELOPMENT
     switch (beta_type)
     {

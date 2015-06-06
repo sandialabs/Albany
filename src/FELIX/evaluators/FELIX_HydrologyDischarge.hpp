@@ -4,8 +4,8 @@
 //    in the file "license.txt" in the top-level Albany directory  //
 //*****************************************************************//
 
-#ifndef FELIX_EFFECTIVE_PRESSURE_HPP
-#define FELIX_EFFECTIVE_PRESSURE_HPP 1
+#ifndef FELIX_HYDROLOGY_DISCHARGE_HPP
+#define FELIX_HYDROLOGY_DISCHARGE_HPP 1
 
 #include "Phalanx_config.hpp"
 #include "Phalanx_Evaluator_WithBaseImpl.hpp"
@@ -22,15 +22,15 @@ namespace FELIX
 */
 
 template<typename EvalT, typename Traits>
-class EffectivePressure : public PHX::EvaluatorWithBaseImpl<Traits>,
-                          public PHX::EvaluatorDerived<EvalT, Traits>
+class HydrologyDischarge : public PHX::EvaluatorWithBaseImpl<Traits>,
+                         public PHX::EvaluatorDerived<EvalT, Traits>
 {
 public:
 
   typedef typename EvalT::ScalarT ScalarT;
 
-  EffectivePressure (const Teuchos::ParameterList& p,
-                const Teuchos::RCP<Albany::Layouts>& dl);
+  HydrologyDischarge (const Teuchos::ParameterList& p,
+                      const Teuchos::RCP<Albany::Layouts>& dl);
 
   void postRegistrationSetup (typename Traits::SetupData d,
                               PHX::FieldManager<Traits>& fm);
@@ -40,20 +40,19 @@ public:
 private:
 
   // Input:
-  PHX::MDField<ScalarT,Cell,Node> phi;
-  PHX::MDField<ScalarT,Cell,Node> H;
-  PHX::MDField<ScalarT,Cell,Node> z_s;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  gradPhi;
+  PHX::MDField<ScalarT,Cell,QuadPoint>      h;
 
   // Output:
-  PHX::MDField<ScalarT,Cell,Node> N;
+  PHX::MDField<ScalarT,Cell,QuadPoint,Dim>  q;
 
-  unsigned int numNodes;
+  int numQPs;
+  int numDim;
 
-  double rho_i;
-  double rho_w;
-  double g;
+  double mu_w;
+  double k_0;
 };
 
 } // Namespace FELIX
 
-#endif // FELIX_EFFECTIVE_PRESSURE_HPP
+#endif // FELIX_HYDROLOGY_DISCHARGE_HPP
