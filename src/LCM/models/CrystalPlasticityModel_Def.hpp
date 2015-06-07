@@ -13,6 +13,7 @@
 //#define  PRINT_DEBUG
 //#define  PRINT_OUTPUT
 //#define  DECOUPLE
+//#define LINE_SEARCH
 
 #include <typeinfo>
 #include <iostream>
@@ -40,7 +41,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
       TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "\n**** Error in CrystalPlasticityModel, invalid value for\"Integration Scheme\", must be \"Implicit\" or \"Explicit\".\n");
     }
   }
-  implicit_nonlinear_solver_tolerance_ = p->get<double>("Implicit Integration Relative Tolerance", 1.0e-6);
+  implicit_nonlinear_solver_relative_tolerance_ = p->get<double>("Implicit Integration Relative Tolerance", 1.0e-6);
+  implicit_nonlinear_solver_absolute_tolerance_ = p->get<double>("Implicit Integration Absolute Tolerance", 1.0e-10);
   implicit_nonlinear_solver_max_iterations_ = p->get<int>("Implicit Integration Max Iterations", 100);
 
   slip_systems_.resize(num_slip_);
@@ -127,7 +129,8 @@ CrystalPlasticityModel(Teuchos::ParameterList* p,
     TEUCHOS_TEST_FOR_EXCEPTION(slip_systems_[num_ss].tau_critical_ <= 0, std::logic_error, "\n**** Error in CrystalPlasticityModel, invalid value for Tau Critical\n");
     slip_systems_[num_ss].gamma_dot_0_ = ss_list.get<RealType>("Gamma Dot");
     slip_systems_[num_ss].gamma_exp_ = ss_list.get<RealType>("Gamma Exponent");
-    slip_systems_[num_ss].H_ = ss_list.get<RealType>("Hardening", 0);
+    slip_systems_[num_ss].H_ = ss_list.get<RealType>("Hardening", 0.0);
+    slip_systems_[num_ss].Rd_ = ss_list.get<RealType>("Hardening Exponent",0.0);
   }
 #ifdef PRINT_DEBUG
   std::cout << "<<< done with parameter list\n";
@@ -380,6 +383,8 @@ bool print_debug = false;
 
   // Unknown quantities
   std::vector<ScalarT> slip_np1(num_slip_);
+  std::vector<ScalarT> slip_np1_km1(num_slip_);
+  std::vector<ScalarT> delta_delta_slip(num_slip_);
   Intrepid::Tensor<ScalarT> Lp_np1(num_dims_);
   Intrepid::Tensor<ScalarT> Fp_np1(num_dims_);
   Intrepid::Tensor<ScalarT> sigma_np1(num_dims_);
@@ -418,6 +423,7 @@ bool print_debug = false;
       for (int s(0); s < num_slip_; ++s) {
 	slip_n[s] = (*(previous_slips[s]))(cell, pt);
 	slip_np1[s] = slip_n[s]; // initialize state n+1 assuming zero slip increment
+	slip_np1_km1[s] = slip_np1[s];
 	hardness_n[s] = (*(previous_hards[s]))(cell, pt);
       }
 
@@ -448,7 +454,7 @@ bool print_debug = false;
       }
       else if(integration_scheme_ == IMPLICIT){
 
-	// Evaluate quantities under the assumption that slip increment is zero
+	// Evaluate quantities under the initial guess for the slip increment
 	applySlipIncrement(slip_n, slip_np1, Fp_n, Lp_np1, Fp_np1);
 	updateHardness(slip_np1, hardness_n, hardness_np1);
 	computeStress(F_np1, Fp_np1, sigma_np1, S_np1, shear_np1);
@@ -456,16 +462,31 @@ bool print_debug = false;
 	RealType residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
 
 	// Determine convergence tolerances for the nonlinear solver
-	RealType residual_tolerance = implicit_nonlinear_solver_tolerance_ * residual_val + 1.0e-50;
+	RealType residual_relative_tolerance = implicit_nonlinear_solver_relative_tolerance_ * residual_val;
+	RealType residual_absolute_tolerance = implicit_nonlinear_solver_absolute_tolerance_;
 	int iteration = 0;
 	bool converged = false;
 
 #ifdef PRINT_DEBUG
-	std::cout << "\nCP model initial residual " << residual_val << std::endl;
-	std::cout << "CP model convergence tolerance " << residual_tolerance << std::endl;
+	std::cout << "CP model initial residual " << residual_val << std::endl;
+	std::cout << "CP model convergence tolerance (relative) " << residual_relative_tolerance << std::endl;
+	std::cout << "CP model convergence tolerance (absolute) " << residual_absolute_tolerance << std::endl;
 #endif
 
 	while(!converged){
+
+#ifdef LINE_SEARCH
+	  // Line search
+	  for(int s=0 ; s<num_slip_ ; s++){
+	    delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
+	  }
+	  RealType alpha;
+	  lineSearch(dt, Fp_n, F_np1, slip_n, slip_np1_km1, delta_delta_slip, hardness_n, alpha);
+	  for(int s=0 ; s<num_slip_ ; s++){
+	    slip_np1[s] = slip_np1_km1[s] + alpha*delta_delta_slip[s];
+	    slip_np1_km1[s] = slip_np1[s];
+	  }
+#endif
 
 	  // Seed the AD objects
 	  for (int s(0); s < num_slip_; ++s) {
@@ -473,21 +494,21 @@ bool print_debug = false;
 	    slip_np1_ad[s] = Fad(num_slip_, s, slip_np1_val);
 	  }
 
-	  // compute Lp_np1, and Fp_np1
+	  // Compute Lp_np1, and Fp_np1
 	  applySlipIncrement(slip_n, slip_np1_ad, Fp_n, Lp_np1_ad, Fp_np1_ad);
 
-	  // compute hardness_np1
+	  // Compute hardness_np1
 	  updateHardness(slip_np1_ad, hardness_n, hardness_np1_ad);
 
-	  // compute sigma_np1, S_np1, and shear_np1
+	  // Compute sigma_np1, S_np1, and shear_np1
 	  computeStress(F_np1, Fp_np1_ad, sigma_np1_ad, S_np1_ad, shear_np1_ad);
 
-	  // compute slip_residual and norm_slip_residual
+	  // Compute slip_residual and norm_slip_residual
 	  computeResidual(dt, slip_n, slip_np1_ad, hardness_np1_ad, shear_np1_ad, slip_residual_ad, norm_slip_residual_ad);
 	  residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_ad.val());
 
-	  // copy values of slip_np1 and slip_residual from AD objects to ScalarT objects
-	  // construct the matrix for the solver using the derivative information stored in the AD objects
+	  // Copy values of slip_np1 and slip_residual from AD objects to ScalarT objects
+	  // Construct the matrix for the solver using the derivative information stored in the AD objects
 	  for(int i=0 ; i<num_slip_ ; i++){
 	    slip_np1[i] = slip_np1_ad[i].val();
 	    slip_residual[i] = slip_residual_ad[i].val();
@@ -495,12 +516,44 @@ bool print_debug = false;
 	      solver_matrix[num_slip_*i + j] = slip_residual_ad[i].dx(j);
 	    }
 	  }
+
+#ifdef PRINT_DEBUG
+	  std::cout << "\nAD MATRIX" << std::endl;
+	  for(int i=0 ; i<num_slip_ ; i++){
+	    for(int j=0 ; j<num_slip_ ; j++){
+	      std::cout << std::setprecision(4) << Sacado::ScalarValue<ScalarT>::eval(solver_matrix[num_slip_*i+j]) << "  ";
+	    }
+	    std::cout << std::endl;
+	  }
+	  std::cout << std::endl;
+
+	  std::vector<ScalarT> finite_difference_matrix(num_slip_*num_slip_);
+	  constructMatrixFiniteDifference(dt, Fp_n, F_np1, slip_n, slip_np1, hardness_n, finite_difference_matrix);
+	  std::cout << "\nFD MATRIX" << std::endl;
+	  for(int i=0 ; i<num_slip_ ; i++){
+	    for(int j=0 ; j<num_slip_ ; j++){
+	      std::cout << std::setprecision(4) << Sacado::ScalarValue<ScalarT>::eval(finite_difference_matrix[num_slip_*i+j]) << "  ";
+	    }
+	    std::cout << std::endl;
+	  }
+	  std::cout << std::endl;
+
+	  std::cout << "\nDIFFERENCE BETWEEN AD AND FD MATRICES" << std::endl;
+	  for(int i=0 ; i<num_slip_ ; i++){
+	    for(int j=0 ; j<num_slip_ ; j++){
+	      std::cout << std::setprecision(4) << std::fabs(Sacado::ScalarValue<ScalarT>::eval(finite_difference_matrix[num_slip_*i+j]) - Sacado::ScalarValue<ScalarT>::eval(solver_matrix[num_slip_*i+j])) << "  ";
+	    }
+	    std::cout << std::endl;
+	  }
+	  std::cout << std::endl;
+#endif
+
 	  // This call solves the system for the slip increment and applies it to slip_np1
 	  solver.solve(solver_matrix, slip_np1, slip_residual);
 
 	  iteration += 1;
 
-	  if(residual_val < residual_tolerance){
+	  if(residual_val < residual_relative_tolerance || residual_val < residual_absolute_tolerance ){
 	    converged = true;
 	  }
 	  if(iteration >= implicit_nonlinear_solver_max_iterations_){
@@ -685,18 +738,31 @@ updateHardness(std::vector<ArgT> const &     slip_np1,
 	       std::vector<ScalarT> const &  hardness_n,
 	       std::vector<ArgT> &           hardness_np1) const
 {
-  ScalarT H;
+  ScalarT H, Rd;
   ArgT temp;
 
   for (int s(0); s < num_slip_; ++s) {
 
     // material parameters
     H = slip_systems_[s].H_;
+    Rd = slip_systems_[s].Rd_;
 
     hardness_np1[s] = hardness_n[s];
 
     // calculate additional hardening
-    temp = H * std::fabs(slip_np1[s]);
+    //
+    // total hardness = tauC + hardness_np1[s]
+    // TODO: tauC -> tau0. This is a bit confusing.
+    // function form is hardening minus recovery, H/Rd*(1 - exp(-Rd*eqps))
+    // for reference, another flavor is A*(1 - exp(-B/A*eqps)) where H = B and Rd = B/A
+    // if H is not specified, H = 0.0, if Rd is not specified, Rd = 0.0
+    if (Rd > 0.0) {
+    temp = H/Rd *(1.0 - std::exp(-Rd*fabs(slip_np1[s])));
+    }
+    else {
+    temp = H*fabs(slip_np1[s]);
+    }
+    // only evolve if hardness increases
     if (temp > hardness_np1[s]) {
       hardness_np1[s] = temp;
     }
@@ -741,8 +807,8 @@ computeResidual(ScalarT                       dt,
       dgamma_value2 = dt * g0 * 0.0 * sign;
     }
     else {
-    // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
-    dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
+      // JWF - m is positive, we don't need std::fabs(std::pow(temp,m))
+      dgamma_value2 = dt * g0 * std::pow(temp, m) * sign;
     }
     // The difference between the slip increment calculations is the residual for this slip system
     slip_residual[s] = dgamma_value2 - dgamma_value1;
@@ -777,34 +843,127 @@ constructMatrixFiniteDifference(ScalarT                            dt,
   Intrepid::Tensor<ArgT> Fp_np1_temp(num_dims_);
   Intrepid::Tensor<ArgT> sigma_np1_temp(num_dims_), S_np1_temp(num_dims_);
   std::vector<ArgT> shear_np1_temp(num_slip_);
-  std::vector<ArgT> slip_residual_unperturbed(num_slip_);
-  std::vector<ArgT> slip_residual_temp(num_slip_);
+  std::vector<ArgT> slip_residual_temp_plus(num_slip_);
+  std::vector<ArgT> slip_residual_temp_minus(num_slip_);
   ArgT norm_slip_residual_temp;
 
-  // Compute unperturbed slip residual
-  for (int s(0); s < num_slip_; ++s) {
-    slip_np1_temp[s] = slip_np1[s];
-  }
-  applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
-  updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
-  computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
-  computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_unperturbed, norm_slip_residual_temp);
-
-  // Compute the entries in the matrix via forward finite difference
+  // Compute the entries in the matrix via finite difference
   ScalarT epsilon = 1.0e-6;
-  for(int row=0 ; row<num_slip_ ; row++){
+  for(int column=0 ; column<num_slip_ ; column++){
+
+    // Forward probe
     for (int s(0); s < num_slip_; ++s) {
       slip_np1_temp[s] = slip_np1[s];
     }
-    slip_np1_temp[row] += epsilon;
+    slip_np1_temp[column] += epsilon;
     applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
     updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
     computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
-    computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_temp, norm_slip_residual_temp);
-    for(int column=0 ; column<num_slip_ ; column++){
-      matrix[row*num_slip_ + column] = (slip_residual_temp[column] - slip_residual_unperturbed[column])/epsilon;
+    computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_temp_plus, norm_slip_residual_temp);
+
+    // Backward probe
+    for (int s(0); s < num_slip_; ++s) {
+      slip_np1_temp[s] = slip_np1[s];
+    }
+    slip_np1_temp[column] -= epsilon;
+    applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
+    updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
+    computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
+    computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_temp_minus, norm_slip_residual_temp);
+
+    // Central difference approximation of the derivative
+    for(int row=0 ; row<num_slip_ ; row++){
+      matrix[row*num_slip_ + column] = (slip_residual_temp_plus[row] - slip_residual_temp_minus[row])/(2.0*epsilon);
     }
   }
+}
+
+//------------------------------------------------------------------------------
+
+template<typename EvalT, typename Traits>
+template<typename ArgT>
+void CrystalPlasticityModel<EvalT, Traits>::
+lineSearch(ScalarT                            dt,
+	   Intrepid::Tensor<ScalarT> const &  Fp_n,
+	   Intrepid::Tensor<ScalarT> const &  F_np1,
+	   std::vector<ScalarT> const &       slip_n,
+	   std::vector<ArgT> const &          slip_np1_km1,
+	   std::vector<ArgT> const &          delta_delta_slip,
+	   std::vector<ScalarT> const &       hardness_n,
+	   RealType &                         alpha) const
+{
+  std::vector<ArgT> slip_np1_temp(num_slip_);
+  std::vector<ArgT> hardness_np1_temp(num_slip_);
+  Intrepid::Tensor<ArgT> Lp_np1_temp(num_dims_);
+  Intrepid::Tensor<ArgT> Fp_np1_temp(num_dims_);
+  Intrepid::Tensor<ArgT> sigma_np1_temp(num_dims_), S_np1_temp(num_dims_);
+  std::vector<ArgT> shear_np1_temp(num_slip_);
+  std::vector<ArgT> slip_residual_unperturbed(num_slip_);
+  std::vector<ArgT> slip_residual_temp(num_slip_);
+  ArgT slip_increment, norm_slip_residual_temp;
+
+  RealType residual_val;
+  RealType bestAlpha = 1.0;
+  RealType bestResidual = std::numeric_limits<RealType>::max();
+
+  // DJL We'll want to replace this brute-force approach with something clever.
+  std::vector<RealType> candidateAlpha;
+  candidateAlpha.push_back(0.00001);
+  candidateAlpha.push_back(0.0001);
+  candidateAlpha.push_back(0.001);
+  candidateAlpha.push_back(0.01);
+  candidateAlpha.push_back(0.1);
+  candidateAlpha.push_back(0.2);
+  candidateAlpha.push_back(0.3);
+  candidateAlpha.push_back(0.4);
+  candidateAlpha.push_back(0.5);
+  candidateAlpha.push_back(0.6);
+  candidateAlpha.push_back(0.7);
+  candidateAlpha.push_back(0.8);
+  candidateAlpha.push_back(0.9);
+  candidateAlpha.push_back(1.0);
+  candidateAlpha.push_back(1.1);
+  candidateAlpha.push_back(1.2);
+  candidateAlpha.push_back(1.3);
+  candidateAlpha.push_back(1.4);
+  candidateAlpha.push_back(1.5);
+  candidateAlpha.push_back(1.6);
+  candidateAlpha.push_back(1.7);
+  candidateAlpha.push_back(1.8);
+  candidateAlpha.push_back(1.9);
+  candidateAlpha.push_back(2.0);
+  candidateAlpha.push_back(3.0);
+  candidateAlpha.push_back(4.0);
+  candidateAlpha.push_back(5.0);
+  candidateAlpha.push_back(10.0);
+
+  for(unsigned int iAlpha = 0 ; iAlpha < candidateAlpha.size() ; iAlpha++){
+
+    for (int s(0); s < num_slip_; ++s) {
+      slip_np1_temp[s] = slip_np1_km1[s] + candidateAlpha[iAlpha] * delta_delta_slip[s];
+    }
+
+    try{
+      applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
+      updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
+      computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
+      computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_unperturbed, norm_slip_residual_temp);
+      residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_temp);
+      std::cout << "DJL DEBUGGING alpha " << candidateAlpha[iAlpha] << ", residual " << residual_val << std::endl;
+    } catch (...) {
+      std::cout << "DJL DEBUGGING caught exception in line search!" << std::endl;
+      residual_val = std::numeric_limits<RealType>::max();
+    }
+
+    if(residual_val < bestResidual){
+      bestAlpha = candidateAlpha[iAlpha];
+      bestResidual = residual_val;
+    }
+  }
+
+  std::cout << "DJL DEBUGGING Best alpha " << bestAlpha << ", best residual " << bestResidual << "\n" << std::endl;  
+
+  alpha = bestAlpha;
 }
 
 //------------------------------------------------------------------------------

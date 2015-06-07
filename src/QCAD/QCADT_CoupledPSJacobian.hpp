@@ -32,16 +32,20 @@ namespace QCADT {
 
 class CoupledPSJacobian {
 public:
-  CoupledPSJacobian(Teuchos::RCP<Teuchos_Comm const> const & commT);
+  CoupledPSJacobian(int num_models, Teuchos::RCP<Teuchos_Comm const> const & commT);
 
   ~CoupledPSJacobian();
 
-  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const;
+  Teuchos::RCP<Thyra::LinearOpBase<ST>> getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson = Teuchos::null,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger = Teuchos::null,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass = Teuchos::null,
+                                                  Teuchos::RCP<Tpetra_Vector> neg_eigenvals = Teuchos::null, 
+                                                  Teuchos::RCP<const Tpetra_MultiVector> eigenvecs = Teuchos::null) const; 
 
 private:
 
-  Teuchos::RCP<Teuchos_Comm const>
-  commT_;
+  Teuchos::RCP<Teuchos_Comm const> commT_;
+  int num_models_; 
 };
 
 }

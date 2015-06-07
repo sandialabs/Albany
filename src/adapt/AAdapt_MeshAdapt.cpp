@@ -17,6 +17,7 @@
 
 #include "AAdapt_UnifSizeField.hpp"
 #include "AAdapt_UnifRefSizeField.hpp"
+#include "AAdapt_NonUnifRefSizeField.hpp"
 #ifdef SCOREC_SPR
 #include "AAdapt_SPRSizeField.hpp"
 #endif
@@ -45,14 +46,14 @@ MeshAdapt(const Teuchos::RCP<Teuchos::ParameterList>& params_,
     szField = Teuchos::rcp(new AAdapt::UnifSizeField(pumi_discretization));
   else if (method == "RPI UnifRef Size")
     szField = Teuchos::rcp(new AAdapt::UnifRefSizeField(pumi_discretization));
+  else if (method == "RPI NonUnifRef Size")
+    szField = Teuchos::rcp(new AAdapt::NonUnifRefSizeField(pumi_discretization));
 #ifdef SCOREC_SPR
   else if (method == "RPI SPR Size")
     szField = Teuchos::rcp(new AAdapt::SPRSizeField(pumi_discretization));
 #endif
   else
     TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "should not be here");
-
-  num_iterations = params_->get<int>("Max Number of Mesh Adapt Iterations", 1);
 
   // Save the initial output file name
   base_exo_filename = pumiMeshStruct->outputFileName;
@@ -175,6 +176,7 @@ void AAdapt::MeshAdapt::beforeAdapt()
 // why MeshAdapt(T) was templated on SizeField. I find that templating quite
 // unnatural and cumbersome (need to maintain ETI, for example), so I'm going to
 // switch to runtime polymorphism and pay the price right here.
+/*
 static ma::Input*
 configure (apf::Mesh2* mesh, const Teuchos::RCP<AAdapt::MeshSizeField>& sf) {
   { ma::IsotropicFunction*
@@ -186,25 +188,15 @@ configure (apf::Mesh2* mesh, const Teuchos::RCP<AAdapt::MeshSizeField>& sf) {
   TEUCHOS_TEST_FOR_EXCEPTION(true, std::logic_error, "shouldn't be here");
   return 0;
 }
+*/
 
 void AAdapt::MeshAdapt::adaptInPartition(
-  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params_)
+  const Teuchos::RCP<Teuchos::ParameterList>& adapt_params)
 {
   szField->computeError();
 
-  ma::Input* input = configure(mesh, szField);
-  input->maximumIterations = num_iterations;
-  //do not snap on deformation problems even if the model supports it
-  input->shouldSnap = false;
-
-  bool loadBalancing = adapt_params_->get<bool>("Load Balancing",true);
-  double lbMaxImbalance = adapt_params_->get<double>("Maximum LB Imbalance",1.30);
-  if (loadBalancing) {
-    input->shouldRunPreZoltan = true;
-    input->shouldRunMidParma = true;
-    input->shouldRunPostParma = true;
-    input->maximumImbalance = lbMaxImbalance;
-  }
+//  ma::Input* input = configure(mesh, szField);
+  ma::Input* input = szField->configure(adapt_params);
 
   ma::adapt(input);
 

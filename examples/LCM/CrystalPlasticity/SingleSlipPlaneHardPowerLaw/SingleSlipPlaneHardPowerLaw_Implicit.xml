@@ -3,17 +3,17 @@
     <Parameter name="Name" type="string" value="Mechanics 3D"/>
     <Parameter name="Solution Method" type="string" value="Continuation"/>
     <Parameter name="Phalanx Graph Visualization Detail" type="int" value="0"/>
-    <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlaneHard_Material_Implicit.xml"/> -->
+    <Parameter name="MaterialDB Filename" type="string" value="SingleSlipPlaneHardPowerLaw_Material_Implicit.xml"/> -->
     <ParameterList name="Dirichlet BCs">
       <ParameterList name="Time Dependent DBC on NS nodelist_2 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.30}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.60}"/>
       </ParameterList>
       <ParameterList name="Time Dependent DBC on NS nodelist_12 for DOF X">
         <Parameter name="Number of points" type="int" value="2"/>
-        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 1.00}"/>
-        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.30}"/>
+        <Parameter name="Time Values" type="Array(double)" value="{ 0.0, 2.00}"/>
+        <Parameter name="BC Values"   type="Array(double)" value="{ 0.0, 0.60}"/>
       </ParameterList>
       <Parameter name="DBC on NS nodelist_1 for DOF X" type="double" value="0.0"/>
       <Parameter name="DBC on NS nodelist_3 for DOF Y" type="double" value="0.0"/>
@@ -34,7 +34,7 @@
   <ParameterList name="Discretization">
     <Parameter name="Method" type="string" value="Exodus"/>
     <Parameter name="Exodus Input File Name" type="string" value="SingleSlipPlane.g"/>
-    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlaneHard_Implicit.e"/>
+    <Parameter name="Exodus Output File Name" type="string" value="SingleSlipPlaneHardPowerLaw_Implicit.exo"/>
     <Parameter name="Cubature Degree" type="int" value="2"/>
     <Parameter name="Separate Evaluators by Element Block" type="bool" value="true"/>
     <Parameter name="Solution Vector Components" type="Array(string)" value="{displacement, V}"/>

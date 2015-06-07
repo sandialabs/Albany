@@ -102,8 +102,7 @@ private:
   ScalarT CLbar, vol ;
   ScalarT trialPbar;
 
-  RealType stab_param_;
-
+  RealType stab_param_, t_decay_constant_;
 
   // Output:
   PHX::MDField<ScalarT,Cell,Node> TResidual;

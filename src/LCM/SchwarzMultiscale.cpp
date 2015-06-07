@@ -912,6 +912,19 @@ evalModelImpl(
     }
   }
 
+  // So that the Schwarz BC has the latest solution, we force here a
+  // write of the solution to the mesh database. For STK, which we use,
+  // the time parameter is ignored.
+  for (auto m = 0; m < num_models_; ++m) {
+    double const
+    time = 0.0;
+
+    Teuchos::RCP<Albany::AbstractDiscretization> const
+    app_disc = apps_[m]->getDiscretization();
+
+    app_disc->writeSolutionToMeshDatabaseT(*xTs[m], time);
+  }
+
 #ifdef WRITE_TO_MATRIX_MARKET
   //writing to MatrixMarket file for debug
   char name[100];  //create string for file name

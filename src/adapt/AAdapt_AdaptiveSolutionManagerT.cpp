@@ -142,7 +142,7 @@ buildAdapter(const Teuchos::RCP<rc::Manager>& rc_mgr)
 #endif
 #ifdef ALBANY_SCOREC
   // RCP needs to be non-owned because otherwise there is an RCP circle.
-  if (method == "RPI Unif Size" || method == "RPI UnifRef Size" ||
+  if (method == "RPI Unif Size" || method == "RPI UnifRef Size" || method == "RPI NonUnifRef Size" ||
       method == "RPI SPR Size") {
     adapter_ = Teuchos::rcp(
       new AAdapt::MeshAdaptT(adaptParams_, paramLib_, stateMgr_, rc_mgr,

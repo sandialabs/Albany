@@ -21,16 +21,17 @@ static int
 mm_counter = 0;
 #endif // WRITE_TO_MATRIX_MARKET
 
-//#define OUTPUT_TO_SCREEN
+#define OUTPUT_TO_SCREEN
 
 using Thyra::PhysicallyBlockedLinearOpBase;
 
-QCADT::CoupledPSJacobian::CoupledPSJacobian(
+QCADT::CoupledPSJacobian::CoupledPSJacobian( int num_models, 
     Teuchos::RCP<Teuchos_Comm const> const & commT)
 {
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
+  num_models_ = num_models; 
   commT_ = commT;
 }
 
@@ -42,8 +43,13 @@ QCADT::CoupledPSJacobian::~CoupledPSJacobian()
 // getThyraCoupledJacobian method is similar to getThyraMatrix in panzer
 //(Panzer_BlockedTpetraLinearObjFactory_impl.hpp).
 Teuchos::RCP<Thyra::LinearOpBase<ST>>
-QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson) const
+QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix> Jac_Poisson, 
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Jac_Schrodinger,
+                                                  Teuchos::RCP<Tpetra_CrsMatrix> Mass,
+                                                  Teuchos::RCP<Tpetra_Vector> neg_eigenvals, 
+                                                  Teuchos::RCP<const Tpetra_MultiVector> eigenvecs) const
 {
+//FIXME: pass necessary variables for Jacobian blocks
 #ifdef OUTPUT_TO_SCREEN
   std::cout << __PRETTY_FUNCTION__ << "\n";
 #endif
@@ -69,7 +75,7 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
     //   Where:
     //       n = quantum density function which depends on dimension
 
-  int block_dim = 2; //we have a 2x2 block matrix for QCAD 
+  int block_dim = num_models_;  
   
   // this operator will be square
   Teuchos::RCP<Thyra::PhysicallyBlockedLinearOpBase<ST>>blocked_op = Thyra::defaultBlockedLinearOp<ST>();
@@ -78,8 +84,8 @@ QCADT::CoupledPSJacobian::getThyraCoupledJacobian(Teuchos::RCP<Tpetra_CrsMatrix>
   //populate (0,0) block with Jac_Poisson
   Teuchos::RCP<Thyra::LinearOpBase<ST>> block00 = Thyra::createLinearOp<ST, LO, GO, KokkosNode>(Jac_Poisson);
   blocked_op->setNonconstBlock(0, 0, block00);
-  
   //FIXME: populate other blocks
+  
 
   // all done
   blocked_op->endBlockFill();

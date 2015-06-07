@@ -11,9 +11,15 @@
 #include "Albany_Utils.hpp"
 
 AAdapt::UnifRefSizeField::UnifRefSizeField(const Teuchos::RCP<Albany::AbstractPUMIDiscretization>& disc) :
-  mesh_struct(disc->getPUMIMeshStruct()),
-  commT(disc->getComm()) {
-  initialAverageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
+  MeshSizeField(disc) {
+}
+
+void
+AAdapt::UnifRefSizeField::copyInputFields()
+{
+
+  averageEdgeLength = ma::getAverageEdgeLength(mesh_struct->getMesh());
+
 }
 
 AAdapt::UnifRefSizeField::
@@ -28,11 +34,11 @@ void
 AAdapt::UnifRefSizeField::setParams(
     const Teuchos::RCP<Teuchos::ParameterList>& p) {
 
-  elem_size = p->get<double>("Target Element Size", 0.1);
+  elem_size = p->get<double>("Target Element Size", 0.7);
 
 }
 
 double AAdapt::UnifRefSizeField::getValue(ma::Entity* v) {
-  return 0.5 * initialAverageEdgeLength;
+  return elem_size * averageEdgeLength;
 }
 

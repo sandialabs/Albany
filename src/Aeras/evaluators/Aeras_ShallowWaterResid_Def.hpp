@@ -729,7 +729,7 @@ evaluateFields(typename Traits::EvalData workset)
                               +  div_hU(qp)*wBF(cell, node, qp); 
         if (useHyperViscosity) { //hyperviscosity residual(0) = residual(0) - tau*grad(htilde)*grad(phi) 
           Residual(cell,node,0) -= hyperViscosity(cell,qp,0)*htildegradNodes(qp,0)*wGradBF(cell,node,qp,0) 
-                                -  hyperViscosity(cell,qp,1)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
+                                +  hyperViscosity(cell,qp,1)*htildegradNodes(qp,1)*wGradBF(cell,node,qp,1);   
         }
       }
     }

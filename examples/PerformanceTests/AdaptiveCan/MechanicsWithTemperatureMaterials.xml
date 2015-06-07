@@ -1,0 +1,117 @@
+<ParameterList>
+
+  <!-- <Parameter name="Reference Material" type="string" value="Metal"/> -->
+
+  <ParameterList name="ElementBlocks">
+
+    <ParameterList name="wall">
+      <Parameter name="material" type="string" value="304-tube"/>
+      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
+      <Parameter name="Average J Stabilization Parameter" type="double" value="0.0"/>
+      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+    </ParameterList>
+
+    <ParameterList name="lid">
+      <Parameter name="material" type="string" value="304-lid"/>
+      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
+      <Parameter name="Average J Stabilization Parameter" type="double" value="0.0"/>
+      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+    </ParameterList>
+
+    <ParameterList name="base">
+      <Parameter name="material" type="string" value="304-lid"/>
+      <Parameter name="Weighted Volume Average J" type="bool" value="true"/>
+      <Parameter name="Average J Stabilization Parameter" type="double" value="0.0"/>
+      <Parameter name="Volume Average Pressure" type="bool" value="true"/>
+    </ParameterList>
+
+  </ParameterList>
+  <ParameterList name="Materials">
+
+    <ParameterList name="304-tube">
+      <Parameter name="Output Cauchy Stress" type="bool" value="1"/>
+      <Parameter name="Output eqps" type="bool" value="1"/>
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="170.3e9"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.01"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.32"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="0.0"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="82.9374e6"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.002"/>
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="1.08782e9"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.002"/>
+      </ParameterList>
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="45.0"/>
+      </ParameterList>
+      <Parameter name="Density" type="double" value="7920"/>
+      <Parameter name="Reference Temperature" type="double" value="293.0"/>
+      <Parameter name="Initial Temperature" type="double" value="300.0"/>
+      <Parameter name="Thermal Transient Coefficient" type="double" value="1.0"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="1.e-5"/>
+      <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
+      <!--Parameter name="Heat Capacity" type="double" value="500.0"/-->
+    </ParameterList>
+
+    <ParameterList name="304-lid">
+      <Parameter name="Output Cauchy Stress" type="bool" value="1"/>
+      <Parameter name="Output eqps" type="bool" value="1"/>
+      <ParameterList name="Material Model">
+        <Parameter name="Model Name" type="string" value="J2"/>
+      </ParameterList>
+      <ParameterList name="Elastic Modulus">
+        <Parameter name="Elastic Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="110.3e9"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.01"/>
+      </ParameterList>
+      <ParameterList name="Poissons Ratio">
+        <Parameter name="Poissons Ratio Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="0.32"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="0.0"/>
+      </ParameterList>
+      <ParameterList name="Yield Strength">
+        <Parameter name="Yield Strength Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="88.02e6"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.002"/>
+      </ParameterList>
+      <ParameterList name="Hardening Modulus">
+        <Parameter name="Hardening Modulus Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="232.8e6"/>
+        <Parameter name="Reference Temperature" type="double" value="293.0"/>
+        <Parameter name="Linear Temperature Coefficient" type="double" value="-0.002"/>
+      </ParameterList>
+      <ParameterList name="Thermal Conductivity">
+        <Parameter name="Thermal Conductivity Type" type="string" value="Constant"/>
+        <Parameter name="Value" type="double" value="45.0"/>
+      </ParameterList>
+      <Parameter name="Density" type="double" value="7920"/>
+      <Parameter name="Reference Temperature" type="double" value="293.0"/>
+      <Parameter name="Initial Temperature" type="double" value="300.0"/>
+      <Parameter name="Thermal Transient Coefficient" type="double" value="1.0"/>
+      <Parameter name="Thermal Expansion Coefficient" type="double" value="1.e-5"/>
+      <Parameter name="Heat Capacity" type="double" value="0.46e9"/>
+      <!--Parameter name="Heat Capacity" type="double" value="500.0"/-->
+    </ParameterList>
+  </ParameterList>
+</ParameterList>

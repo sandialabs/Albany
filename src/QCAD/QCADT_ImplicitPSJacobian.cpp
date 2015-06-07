@@ -53,7 +53,69 @@ void QCADT::ImplicitPSJacobian::initialize(const Teuchos::RCP<Tpetra_CrsMatrix>&
    massMatrix = massMx; 
    neg_eigenvalues = neg_eigenvals;
    psiVectors = eigenvecs;
-  //FIXME: fill in! 
+
+   // Fill vectors that will be needed in Apply, but do so here so 
+   //   it is only done once per evalModel call, not each time Apply is called
+   
+   int nEigenvalues = neg_eigenvalues->getGlobalLength();
+   int num_discMap_myEls = discMap->getNodeNumElements();
+   // dn_dPsi : vectors of dn/dPsi[i] values
+   dn_dPsi = Teuchos::rcp(new Tpetra_MultiVector( *psiVectors ));
+   const Teuchos::ArrayRCP<const ST> neg_eigenvalues_constView = neg_eigenvalues->get1dView(); 
+   for (int i=0; i<nEigenvalues; i++) {
+     Teuchos::RCP<Tpetra_Vector> dn_dPsi_i = dn_dPsi->getVectorNonConst(i); 
+     Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i); 
+     dn_dPsi_i->scale( n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, energy_unit_in_eV, effmass)
+                          * 2 * n_weight_factor( -neg_eigenvalues_constView[i], numDims, temperature, energy_unit_in_eV), 
+                          *psiVectors_i); 
+   }
+   // dn_dEval : vectors of dn/dEval[i]
+   dn_dEval = Teuchos::rcp(new Tpetra_MultiVector( discMap, nEigenvalues ));
+   for (int i=0; i<nEigenvalues; i++) {
+     double prefactor = n_prefactor(numDims, valleyDegenFactor, temperature, length_unit_in_m, energy_unit_in_eV, effmass);
+     double dweight = dn_weight_factor(-neg_eigenvalues_constView[i], numDims, temperature, energy_unit_in_eV);
+     //DEBUG
+     //double eps = 1e-7;
+     //double dweight = (n_weight_factor( -(*neg_eigenvalues)[i] + eps, numDims, temperature, energy_unit_in_eV) - 
+     //n_weight_factor( -(*neg_eigenvalues)[i], numDims, temperature, energy_unit_in_eV)) / eps; 
+     //const double kbBoltz = 8.617343e-05;
+     //std::cout << "DEBUG: dn_dEval["<<i<<"] dweight arg = " <<  (*neg_eigenvalues)[i]/(kbBoltz*temperature) << std::endl;  
+     //in [eV]
+     //std::cout << "DEBUG: dn_dEval["<<i<<"] factor = " <<  prefactor * dweight << std::endl;  // in [eV]
+     //DEBUG
+     Teuchos::RCP<Tpetra_Vector> dn_dEval_i = dn_dEval->getVectorNonConst(i); 
+     Teuchos::RCP<const Tpetra_Vector> psiVectors_i = psiVectors->getVector(i); 
+     for (int k=0; k<num_discMap_myEls; k++) {
+        const Teuchos::ArrayRCP<ST> dn_dEval_i_nonconstView = dn_dEval_i->get1dViewNonConst();
+        const Teuchos::ArrayRCP<const ST> psiVectors_i_constView = psiVectors_i->get1dView();
+        dn_dEval_i_nonconstView[k] =  prefactor * pow( psiVectors_i_constView[k], 2.0 ) * dweight;
+    //(*dn_dEval)(i)->Print( std::cout << "DEBUG: dn_dEval["<<i<<"]:" << std::endl );
+     }
+   }
+   // mass matrix multiplied by Psi: M*Psi
+   M_Psi = Teuchos::rcp(new Tpetra_MultiVector( discMap, nEigenvalues ));
+   massMatrix->apply(*psiVectors, *M_Psi, Teuchos::NO_TRANS, 1.0, 0.0);
+
+   // transpose(mass matrix) multiplied by Psi: MT*Psi
+   MT_Psi = Teuchos::rcp(new Tpetra_MultiVector( discMap, nEigenvalues ));
+   massMatrix->apply(*psiVectors, *MT_Psi, Teuchos::TRANS, 1.0, 0.0);
+
+   // Prepare the distributed and local eigenvalue maps
+   int my_nEigenvals = domainMap->getNodeNumElements() - num_discMap_myEls * (1+nEigenvalues);
+   //FIXME, IKT, 5/28/15: the following needs the Kokkos node.
+   //dist_evalMap  = Teuchos::rcp(new Tpetra_Map(nEigenvalues, my_nEigenvals, 0, *myComm));
+   Tpetra::LocalGlobal lg = Tpetra::LocallyReplicated;
+   Teuchos::RCP<Tpetra_Map> local_evalMap = Teuchos::rcp(new Tpetra_Map(nEigenvalues, 0, myComm, lg));
+   eval_importer = Teuchos::rcp(new Tpetra_Import(dist_evalMap, local_evalMap));
+
+   // Allocate temporary space for local storage of the eigenvalue part of the x vectors passed to Apply()
+   x_neg_evals_local = Teuchos::rcp(new Tpetra_Vector(local_evalMap));
+}
+
+void QCADT::ImplicitPSJacobian::setIndices(int i, int j) 
+{
+  index_i_ = i; 
+  index_j_ = j; 
 }
 
 
@@ -67,6 +129,26 @@ void QCADT::ImplicitPSJacobian::apply(Tpetra_MultiVector const & X,
 #ifdef OUTPUT_TO_SCREEN
   std::cout << "DEBUG: " << __PRETTY_FUNCTION__ << "\n";
 #endif
+  int nEigenvals = neg_eigenvalues->getGlobalLength(); 
+  Teuchos::RCP<Tpetra_Vector> tempVec = Teuchos::rcp(new Tpetra_Vector(discMap)); 
+  Teuchos::RCP<Tpetra_Vector> tempVec2 = Teuchos::rcp(new Tpetra_Vector(discMap)); 
+   
+  //(0, Schrodinger) block
+  if (index_i_ == 0 && index_j_ > 0 && index_j_ < nEigenvals+1) {
+    Teuchos::RCP<const Tpetra_Vector> dn_dPsi_j = dn_dPsi->getVector(index_j_); 
+    massMatrix->apply(*dn_dPsi_j, *tempVec, Teuchos::NO_TRANS, 1.0, 0.0);   //tempVec = massMatrix*dn_dPsi[index_j]
+    Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec, X, 0.0); //Y = tempVec*X 
+  }
+  //(0, eigenvalue) block
+  else if (index_i_ == 0 && index_j_ == nEigenvals+1) {
+   for (int i=0; i<nEigenvals; i++) {
+     Teuchos::RCP<const Tpetra_Vector> dn_dPsi_i = dn_dPsi->getVector(i); 
+     const Teuchos::ArrayRCP<const ST> x_neg_evals_local_constView = x_neg_evals_local->get1dView(); 
+     tempVec->update(-1*x_neg_evals_local_constView[i], *dn_dPsi_i, 0.0); //tempVec = -dn_dEval[i] * scalar(x_neg_eval[i]);
+     massMatrix->apply(*tempVec, *tempVec2, Teuchos::NO_TRANS, 1.0, 0.0); //tempVec2 = M*tempVec
+     Y.multiply(Teuchos::NO_TRANS, Teuchos::NO_TRANS, 1.0, *tempVec2, X, 1.0); //Y += M*(-dn_dEval[i] * scalar(x_neg_eval[i])) 
+   } 
+  }
   //FIXME: fill in!
 }
 

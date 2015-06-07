@@ -25,6 +25,7 @@
 #ifdef ALBANY_QCAD
 #include "QCAD_PoissonDirichlet.hpp"
 #include "QCAD_PoissonNeumann.hpp"
+#include "QCAD_PoissonSourceNeumann.hpp"
 #endif
 #include "PHAL_Dirichlet.hpp"
 #include "PHAL_Neumann.hpp"
@@ -113,27 +114,30 @@ namespace PHAL {
     static const int id_load_stateField           =  4;
     static const int id_GatherScalarNodalParameter=  5;
     static const int id_qcad_poisson_neumann      =  6; // Only for QCAD probs
-    static const int id_timedep_bc                =  7; // Only for LCM probs
+    static const int id_qcad_poissonsource_neumann=  7; // Only for QCAD probs
+    static const int id_timedep_bc                =  8; // Only for LCM probs
 
 
 #if defined(ALBANY_LCM)
-    typedef boost::mpl::vector8<
+    typedef boost::mpl::vector9<
 #else
-    typedef boost::mpl::vector7<
+    typedef boost::mpl::vector8<
 #endif
-	     PHAL::Neumann<_,Traits>,                   //  0
-	     PHAL::NeumannAggregator<_,Traits>,         //  1
+       PHAL::Neumann<_,Traits>,                   //  0
+       PHAL::NeumannAggregator<_,Traits>,         //  1
        PHAL::GatherCoordinateVector<_,Traits>,    //  2
        PHAL::GatherSolution<_,Traits>,            //  3
        PHAL::LoadStateField<_,Traits>,            //  4
        PHAL::GatherScalarNodalParameter<_,Traits>,//  5
 #ifdef ALBANY_QCAD
-       QCAD::PoissonNeumann<_,Traits>             //  6
+       QCAD::PoissonNeumann<_,Traits>,            //  6
+       QCAD::PoissonSourceNeumann<_,Traits>       //  7
 #else
-       PHAL::Neumann<_,Traits>                    //  6 dummy
+       PHAL::Neumann<_,Traits>,                   //  6 dummy
+       PHAL::Neumann<_,Traits>                    //  7 dummy
 #endif
 #if defined(ALBANY_LCM)
-       , LCM::TimeTracBC<_, Traits>               //  7
+       , LCM::TimeTracBC<_, Traits>               //  8
 #endif
 	  > EvaluatorTypes;
 };

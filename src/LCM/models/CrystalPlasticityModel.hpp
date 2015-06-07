@@ -142,6 +142,17 @@ private:
 				  std::vector<ScalarT> const &       hardness_n,
 				  std::vector<ArgT> &                matrix) const ;
 
+  template<typename ArgT>
+  void
+  lineSearch(ScalarT                            dt,
+	     Intrepid::Tensor<ScalarT> const &  Fp_n,
+	     Intrepid::Tensor<ScalarT> const &  F_np1,
+	     std::vector<ScalarT> const &       slip_n,
+	     std::vector<ArgT> const &          slip_np1_km1,
+	     std::vector<ArgT> const &          delta_delta_slip,
+	     std::vector<ScalarT> const &       hardness_n,
+	     RealType &                         alpha) const ;
+
   ///
   /// Check tensor for nans and infs.
   ///
@@ -174,7 +185,7 @@ private:
     Intrepid::Tensor<RealType> projector_;
 
     // flow rule parameters
-    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_;
+    RealType tau_critical_, gamma_dot_0_, gamma_exp_, H_, Rd_;
   };
 
   ///
@@ -183,7 +194,8 @@ private:
   std::vector<SlipSystemStruct> slip_systems_;
 
   IntegrationScheme integration_scheme_;
-  RealType implicit_nonlinear_solver_tolerance_;
+  RealType implicit_nonlinear_solver_relative_tolerance_;
+  RealType implicit_nonlinear_solver_absolute_tolerance_;
   int implicit_nonlinear_solver_max_iterations_;
   };
 }

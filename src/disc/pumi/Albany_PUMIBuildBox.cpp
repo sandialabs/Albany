@@ -7,6 +7,8 @@
 #include "Albany_PUMIMeshStruct.hpp"
 #include <apfMDS.h>
 #include <sstream>
+#include <gmi_base.h>
+#include <gmi_lookup.h>
 
 namespace Albany {
 
@@ -86,12 +88,15 @@ struct BoxBuilder {
   double w[3];
   bool is_simplex;
   struct { int dim; int tag; } modelTable[27];
+  int modelCounts[4];
   apf::Mesh2* m;
   std::vector<apf::MeshEntity*> v;
   BoxBuilder(int nx, int ny, int nz,
       double wx, double wy, double wz,
       bool is);
   void formModelTable();
+  void addModelUse(gmi_base* gb, agm_bdry ab, Indices di);
+  gmi_model* buildModel();
   int getModelIndex(int i, int d);
   Indices getModelIndices(Indices vi);
   apf::ModelEntity* getModelEntity(Indices mi);
@@ -115,7 +120,7 @@ BoxBuilder::BoxBuilder(int nx, int ny, int nz,
       double wx, double wy, double wz,
       bool is):
   grid(nx + 1, ny + 1, nz + 1),
-  mgrid(3,3,3)
+  mgrid(nx ? 3 : 1,ny ? 3 : 1, nz ? 3 : 1)
 {
   for (dim = 0; dim < 3 && grid.size[dim] > 1; ++dim);
   w[0] = nx ? (wx / nx) : 0;
@@ -123,8 +128,10 @@ BoxBuilder::BoxBuilder(int nx, int ny, int nz,
   w[2] = nz ? (wz / nz) : 0;
   is_simplex = is;
   formModelTable();
-  m = apf::makeEmptyMdsMesh(gmi_load(".null"), dim, false);
+  gmi_model* gm = buildModel();
+  m = apf::makeEmptyMdsMesh(gm, dim, false);
   v.resize(grid.total());
+  buildMeshAndModel();
 }
 
 void BoxBuilder::formModelTable()
@@ -139,6 +146,8 @@ void BoxBuilder::formModelTable()
     modelTable[i].dim = mdim;
     modelTable[i].tag = nd[mdim]++;
   }
+  for (int i = 0; i < 4; ++i)
+    modelCounts[i] = nd[i];
 }
 
 int BoxBuilder::getModelIndex(int i, int d)
@@ -164,6 +173,58 @@ apf::ModelEntity* BoxBuilder::getModelEntity(Indices mi)
   int mdim = modelTable[mj].dim;
   int mtag = modelTable[mj].tag;
   return m->findModelEntity(mdim, mtag);
+}
+
+void BoxBuilder::addModelUse(gmi_base* gb, agm_bdry ab, Indices di)
+{
+  int ddim = modelTable[mgrid.in(di)].dim;
+  int dtag = modelTable[mgrid.in(di)].tag;
+  agm_ent ad = gmi_look_up(gb->lookup, agm_type_from_dim(ddim), dtag);
+  agm_add_use(gb->topo, ab, ad);
+}
+
+gmi_model* BoxBuilder::buildModel()
+{
+  /* plain malloc because gmi_destroy calls plain free */
+  gmi_base* gb = (gmi_base*) malloc(sizeof(*gb));
+  gb->model.ops = &gmi_base_ops;
+  gmi_base_init(gb);
+  agm_ent_type at;
+  agm_ent ae;
+  agm_bdry ab;
+  Indices di;
+  for (int i = 0; i < mgrid.total(); ++i) {
+    int mdim = modelTable[i].dim;
+    int mtag = modelTable[i].tag;
+    at = agm_type_from_dim(mdim);
+    ae = agm_add_ent(gb->topo, at);
+    gmi_set_lookup(gb->lookup, ae, mtag);
+  }
+  for (int i = 0; i < 4; ++i) {
+    at = agm_type_from_dim(i);
+    gmi_freeze_lookup(gb->lookup, at);
+    gb->model.n[i] = agm_ent_count(gb->topo, at);
+    assert(gb->model.n[i] == modelCounts[i]);
+  }
+  for (int i = 0; i < mgrid.total(); ++i) {
+    int mdim = modelTable[i].dim;
+    int mtag = modelTable[i].tag;
+    if (mdim == 0)
+      continue;
+    at = agm_type_from_dim(mdim);
+    ae = gmi_look_up(gb->lookup, at, mtag);
+    Indices mi = mgrid.out(i);
+    ab = agm_add_bdry(gb->topo, ae);
+    for (int j = 0; j < 3; ++j)
+      if (mi[j] == 1) {
+        di = mi;
+        di[j] = 0;
+        addModelUse(gb, ab, di);
+        di[j] = 2;
+        addModelUse(gb, ab, di);
+      }
+  }
+  return &gb->model;
 }
 
 void BoxBuilder::buildCellVert(int i)
@@ -328,24 +389,26 @@ void BoxBuilder::buildSets(apf::StkModels& sets)
   int dims[2] = {0, dim - 1};
   char const* names[2] = {"NodeSet", "SideSet"};
   for (int i = 0; i < 2; ++i) {
-    sets[dims[i]].setSize(6);
+    sets.models[dims[i]].resize(6);
     for (int j = 0; j < 6; ++j) {
       Indices mi = faceTable[j];
       for (int k = dim; k < 3; ++k)
         mi[k] = 0;
       int mj = mgrid.in(mi);
-      apf::StkModel& set = sets[dims[i]][j];
-      set.dim = modelTable[mj].dim;
-      set.apfTag = modelTable[mj].tag;
+      apf::StkModel* set = new apf::StkModel();
+      int mdim = modelTable[mj].dim;
+      int mtag = modelTable[mj].tag;
+      apf::ModelEntity* me = m->findModelEntity(mdim, mtag);
+      set->ents.push_back(me);
       std::stringstream ss;
       ss << names[i] << j;
-      set.stkName = ss.str();
+      set->stkName = ss.str();
+      sets.models[dims[i]][j] = set;
     }
   }
-  sets[dim].setSize(1);
-  sets[dim][0].dim = dim;
-  sets[dim][0].apfTag = 0;
-  sets[dim][0].stkName = "Block0";
+  sets.models[dim].push_back(new apf::StkModel());
+  sets.models[dim][0]->ents.push_back(m->findModelEntity(dim, 0));
+  sets.models[dim][0]->stkName = "Block0";
 }
 
 void PUMIMeshStruct::buildBoxMesh(
@@ -353,7 +416,6 @@ void PUMIMeshStruct::buildBoxMesh(
     double wx, double wy, double wz, bool is)
 {
   BoxBuilder bb(nex, ney, nez, wx, wy, wz, is);
-  bb.buildMeshAndModel();
   mesh = bb.m;
   bb.buildSets(sets);
 }

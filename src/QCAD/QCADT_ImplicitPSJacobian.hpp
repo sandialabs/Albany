@@ -49,6 +49,8 @@ namespace QCADT {
 		      double lengthUnitInMeters, double energyUnitInElectronVolts,
 		      double effMass, double conductionBandOffset);
     ~ImplicitPSJacobian();
+    
+    void setIndices(int i, int j); 
 
     //! Initialize the operator with everything needed to apply it
     void initialize(const Teuchos::RCP<Tpetra_CrsMatrix>& schrodingerJac, 
@@ -110,6 +112,9 @@ namespace QCADT {
     double energy_unit_in_eV;
     double effmass;
     double offset_to_CB;
+    int index_i_; 
+    int index_j_; 
+
   };
 
 }
