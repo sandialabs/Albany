@@ -151,6 +151,7 @@ private:
 	     std::vector<ArgT> const &          slip_np1_km1,
 	     std::vector<ArgT> const &          delta_delta_slip,
 	     std::vector<ScalarT> const &       hardness_n,
+             ScalarT const &                    norm_slip_residual,
 	     RealType &                         alpha) const ;
 
   ///

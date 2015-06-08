@@ -477,15 +477,17 @@ bool print_debug = false;
 
 #ifdef LINE_SEARCH
 	  // Line search
-	  for(int s=0 ; s<num_slip_ ; s++){
-	    delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
-	  }
-	  RealType alpha;
-	  lineSearch(dt, Fp_n, F_np1, slip_n, slip_np1_km1, delta_delta_slip, hardness_n, alpha);
-	  for(int s=0 ; s<num_slip_ ; s++){
-	    slip_np1[s] = slip_np1_km1[s] + alpha*delta_delta_slip[s];
-	    slip_np1_km1[s] = slip_np1[s];
-	  }
+	  if(iteration > 0){
+            for(int s=0 ; s<num_slip_ ; s++){
+	      delta_delta_slip[s] = slip_np1[s] - slip_np1_km1[s];
+	     }
+	    RealType alpha;
+	    lineSearch(dt, Fp_n, F_np1, slip_n, slip_np1_km1, delta_delta_slip, hardness_n, norm_slip_residual, alpha);
+	    for(int s=0 ; s<num_slip_ ; s++){
+	      slip_np1[s] = slip_np1_km1[s] + alpha*delta_delta_slip[s];
+	      slip_np1_km1[s] = slip_np1[s];
+	    }
+          }
 #endif
 
 	  // Seed the AD objects
@@ -723,6 +725,9 @@ applySlipIncrement(std::vector<ScalarT> const &       slip_n,
   confirmTensorSanity(Lp_np1, "Lp_np1 in applySlipIncrement().");
 
   // update plastic deformation gradient
+
+  //std::cout  << "Lp_np1 " << Lp_np1;
+
   expL = Intrepid::exp(Lp_np1);
   Fp_np1 = expL * Fp_n;
 
@@ -890,80 +895,82 @@ lineSearch(ScalarT                            dt,
 	   std::vector<ArgT> const &          slip_np1_km1,
 	   std::vector<ArgT> const &          delta_delta_slip,
 	   std::vector<ScalarT> const &       hardness_n,
+           ScalarT const &                    norm_slip_residual,
 	   RealType &                         alpha) const
 {
-  std::vector<ArgT> slip_np1_temp(num_slip_);
-  std::vector<ArgT> hardness_np1_temp(num_slip_);
-  Intrepid::Tensor<ArgT> Lp_np1_temp(num_dims_);
-  Intrepid::Tensor<ArgT> Fp_np1_temp(num_dims_);
-  Intrepid::Tensor<ArgT> sigma_np1_temp(num_dims_), S_np1_temp(num_dims_);
-  std::vector<ArgT> shear_np1_temp(num_slip_);
+  std::vector<ArgT> slip_np1_k(num_slip_);
+  std::vector<ArgT> hardness_np1_k(num_slip_);
+  Intrepid::Tensor<ArgT> Lp_np1_k(num_dims_);
+  Intrepid::Tensor<ArgT> Fp_np1_k(num_dims_);
+  Intrepid::Tensor<ArgT> sigma_np1_k(num_dims_), S_np1_k(num_dims_);
+  std::vector<ArgT> shear_np1_k(num_slip_);
   std::vector<ArgT> slip_residual_unperturbed(num_slip_);
-  std::vector<ArgT> slip_residual_temp(num_slip_);
-  ArgT slip_increment, norm_slip_residual_temp;
+  std::vector<ArgT> slip_residual_k(num_slip_);
+  ArgT slip_increment, norm_slip_residual_k;
 
-  RealType residual_val;
-  RealType bestAlpha = 1.0;
-  RealType bestResidual = std::numeric_limits<RealType>::max();
+  // Line search taken from Perez & Armero, On the Formulation of Closest-Point 
+  // Projection Algorithms in Elastoplasticity . Part II: Globally Convergent Schemes
+  // (2000), Box I.1. 
+  // We denote configurations k-1 (km1) and k instead of k and k+1
+  // to be consistent with the incoming slip - slip_np1_km1
 
-  // DJL We'll want to replace this brute-force approach with something clever.
-  std::vector<RealType> candidateAlpha;
-  candidateAlpha.push_back(0.00001);
-  candidateAlpha.push_back(0.0001);
-  candidateAlpha.push_back(0.001);
-  candidateAlpha.push_back(0.01);
-  candidateAlpha.push_back(0.1);
-  candidateAlpha.push_back(0.2);
-  candidateAlpha.push_back(0.3);
-  candidateAlpha.push_back(0.4);
-  candidateAlpha.push_back(0.5);
-  candidateAlpha.push_back(0.6);
-  candidateAlpha.push_back(0.7);
-  candidateAlpha.push_back(0.8);
-  candidateAlpha.push_back(0.9);
-  candidateAlpha.push_back(1.0);
-  candidateAlpha.push_back(1.1);
-  candidateAlpha.push_back(1.2);
-  candidateAlpha.push_back(1.3);
-  candidateAlpha.push_back(1.4);
-  candidateAlpha.push_back(1.5);
-  candidateAlpha.push_back(1.6);
-  candidateAlpha.push_back(1.7);
-  candidateAlpha.push_back(1.8);
-  candidateAlpha.push_back(1.9);
-  candidateAlpha.push_back(2.0);
-  candidateAlpha.push_back(3.0);
-  candidateAlpha.push_back(4.0);
-  candidateAlpha.push_back(5.0);
-  candidateAlpha.push_back(10.0);
+  // Establish algorithmic parameters
+  RealType eta = 0.1;
+  RealType beta = 1.0e-4; 
 
-  for(unsigned int iAlpha = 0 ; iAlpha < candidateAlpha.size() ; iAlpha++){
+  // Initialize line search parameter, alpha, for km1 and k
+  RealType alpha_km1 = 1.0;
+  RealType alpha_k = 1.0;
+
+  // Initialize M and M' for km1 and k
+  RealType residual_val_k, residual_val_km1;
+  RealType M_km1, M_prime_km1, M_k;
+  residual_val_km1 = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual);
+  M_km1 = residual_val_km1 * residual_val_km1 / 2.0;
+  M_prime_km1 = -2.0*M_km1;
+ 
+  // Initialize convergence loop
+  int max_iterations =  20;
+  int iteration = 0;
+  bool converged = false;
+  RealType arg1, arg2;
+
+  while(!converged){
 
     for (int s(0); s < num_slip_; ++s) {
-      slip_np1_temp[s] = slip_np1_km1[s] + candidateAlpha[iAlpha] * delta_delta_slip[s];
+      slip_np1_k[s] = slip_np1_km1[s] +  alpha_k* delta_delta_slip[s];
     }
 
     try{
-      applySlipIncrement(slip_n, slip_np1_temp, Fp_n, Lp_np1_temp, Fp_np1_temp);
-      updateHardness(slip_np1_temp, hardness_n, hardness_np1_temp);
-      computeStress(F_np1, Fp_np1_temp, sigma_np1_temp, S_np1_temp, shear_np1_temp);
-      computeResidual(dt, slip_n, slip_np1_temp, hardness_np1_temp, shear_np1_temp, slip_residual_unperturbed, norm_slip_residual_temp);
-      residual_val = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_temp);
-      std::cout << "DJL DEBUGGING alpha " << candidateAlpha[iAlpha] << ", residual " << residual_val << std::endl;
+      
+      // find residual for alpha_k
+      applySlipIncrement(slip_n, slip_np1_k, Fp_n, Lp_np1_k, Fp_np1_k);
+      updateHardness(slip_np1_k, hardness_n, hardness_np1_k);
+      computeStress(F_np1, Fp_np1_k, sigma_np1_k, S_np1_k, shear_np1_k);
+      computeResidual(dt, slip_n, slip_np1_k, hardness_np1_k, shear_np1_k, slip_residual_unperturbed, norm_slip_residual_k);
+      residual_val_k = Sacado::ScalarValue<ScalarT>::eval(norm_slip_residual_k);
+      M_k = residual_val_k * residual_val_k / 2.0; 
+      
+      // test residual      
+      if(M_k <= (1.0 - 2.0 * beta * alpha_km1 * M_km1) || (iteration > max_iterations)) {
+        converged = true;
+      } 
+      else {
+        arg1 = eta*alpha_km1;
+        arg2 = -alpha_km1 * alpha_km1 * M_prime_km1 / (2.0 * (M_k - M_km1 - alpha_km1 * M_prime_km1));      
+        alpha_k = std::max(arg1, arg2);  
+     
+        // increment iteration 
+        iteration += 1;
+        alpha_km1 = alpha_k;
+      } 
     } catch (...) {
       std::cout << "DJL DEBUGGING caught exception in line search!" << std::endl;
-      residual_val = std::numeric_limits<RealType>::max();
     }
 
-    if(residual_val < bestResidual){
-      bestAlpha = candidateAlpha[iAlpha];
-      bestResidual = residual_val;
-    }
   }
 
-  std::cout << "DJL DEBUGGING Best alpha " << bestAlpha << ", best residual " << bestResidual << "\n" << std::endl;  
-
-  alpha = bestAlpha;
+  alpha = alpha_k;
 }
 
 //------------------------------------------------------------------------------
