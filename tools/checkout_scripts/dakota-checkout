@@ -15,23 +15,23 @@
 
 DUMMY1=${TRIKOTADIR:?TRIKOTADIR: not set}
 
-\rm -rf dakota-stable.src.tar*
+\rm -rf dakota-.src.tar*
 
 DLDIR=`pwd`
 
 #-------------------------------------------
 # copy, configure, build, install Dakota
 #-------------------------------------------
+TARBALL=dakota-6.2-public.src.tar.gz
 
 wget -nv --no-check-certificate \
- https://development.sandia.gov/dakota/distributions/dakota/stable/dakota-stable.src.tar.gz
-gunzip dakota-stable.src.tar.gz
+    https://dakota.sandia.gov/sites/default/files/distributions/public/$TARBALL
 
 cd $TRIKOTADIR
 
-tar xf $DLDIR/dakota-stable.src.tar
+tar xzf $DLDIR/$TARBALL
 
 \rm -rf Dakota
 mv dakota-*.src Dakota
 
-\rm $DLDIR/dakota-stable.src.tar
+\rm $DLDIR/$TARBALL
